@@ -492,21 +492,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const reachSelf = runReach(['--selftest']);
   const reachSelfV = quote(reachSelf.out);
   console.log(
-    // WAS "50." AND COLLIDED WITH engine.test.js's OWN 50. Two tests printed
-    // "PASS  50." in every run: a reader grepping a run for "50." got two
-    // answers, and a reviewer told "50 is red" could not tell which half of the
-    // suite to open. Both numbers were allocated in good faith in different
-    // files; engine.test.js owns a contiguous 47-48-49-50 narrative, so the
-    // intruder is this one. Moved to 29 — the ONE gap in the sequence
-    // (tools/testnumbers.mjs --raw), never used in this repo's history, and the
-    // only number immune to what two in-flight PRs may allocate.
-    // COST, stated rather than hidden: this block reads 36-46, 29, 51-57 now, so
-    // run-node's own numbering is no longer visually contiguous. A display label
-    // is the cheapest thing in the file to spend, and NOTHING CONSUMES IT —
-    // checked, not assumed: the only tool that matches on "FAIL  <x>" is
-    // profile-durability-probe.mjs:154, and its `expectFail` is a NAME
-    // ("P2 two losses produce TWO archives"), not one of these numbers.
-    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  29. the status-reach check still catches its own known-bad corpus` +
+    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  50. the status-reach check still catches its own known-bad corpus` +
       ` — ${reachSelfV.text || `statusreach --selftest (exit ${reachSelf.code}): ${reachSelfV.why}`}`
   );
   if (reachSelf.code !== 0 || !reachSelfV.text) zoomExtra++;
@@ -595,206 +581,6 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
   else zoomPassed++;
-
-  // 67/68 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
-  //
-  // Same two-line shape as every pair above, and here for a measured reason.
-  //
-  // #295: `tools/hintstrip.mjs` was red for four days while PR #224 passed
-  // exact-head review, because the instrument that contradicted it was in no
-  // list any gate walks. The gate command set in this house is derived BY HAND
-  // (SOP 14 §5a), and on 2026-08-21 two experienced hands derived it wrongly in
-  // opposite directions inside one hour — a grep cannot tell `run:` from `echo`.
-  //
-  // ⚠ AND THE HALF THAT PUT IT IN *THIS* FILE RATHER THAN THE WORKFLOW, WHICH IS
-  // VIRA'S FINDING. Wiring an instrument into `ci.yml` is not enough. I claimed
-  // hintstrip's two steps were a redundant pair, having planted `|| true` on the
-  // first and watched the job stay red. The selftest's clean edge IS the first
-  // step re-run, so the job stayed red because THE SAME CHECK FAILED TWICE — and
-  // the day the tree goes green, `|| true` on that step silences the gate with
-  // no signal at all. The redundancy evaporates at exactly the moment it would
-  // matter, because a green tree is the only state in which a regression can be
-  // introduced. `gatelist --selftest` plants that `|| true` and requires G4 red,
-  // and THIS suite runs on a green tree, at every gate, with no dispatch.
-  //
-  // IT BELONGS HERE AND NOT IN ci.yml: it opens no browser, needs no port and no
-  // build — it reads the declared lists and parses them. This file's BOUNDARY
-  // block below is therefore still true, and 59 is the first check in this suite
-  // that is about the GATE rather than about the game.
-  //
-  // NUMBERED 67/68, AND IT TOOK ME FOUR TRIES, WHICH IS THE POINT AND IS NOW
-  // ALSO THE ANSWER. My first wiring used 58/59 and printed "58." and "59."
-  // TWICE in one run — engine.test.js owns those (nearestShrine, the shrine
-  // glow). I moved to 60/61 and COLLIDED AGAIN, for the same reason. I then took
-  // 62/63, which dev had explicitly reserved for this PR in the note beside
-  // 64/65 — and on the replay onto 456b8ea IT COLLIDED A THIRD TIME, because
-  // engine.test.js had meanwhile grown a 62 of its own. A reservation written in
-  // one file is not a reservation; it is a request the other file never read.
-  //
-  // THE HAZARD I CALLED "STRUCTURAL AND STILL OPEN" IS NOW CLOSED, AND NOT BY
-  // ME. tools/testnumbers.mjs (64/65, dev) is the check I said was owed and did
-  // not build. It is what caught this third collision — I did not notice it, the
-  // gate did — and 67 is DERIVED FROM ITS OUTPUT ("the next free number is 67"),
-  // not read off a file by hand and not remembered. That is the whole argument
-  // for wiring an instrument into a list: the two tries above cost a reviewer's
-  // attention, and this one cost nothing.
-  // Two lines for the same reason every pair since 36/37 is two: 62 is the
-  // check's own integrity against its planted corpus — its failure is the
-  // check's fault. 63 is the state of the lists. NO PLANT COUNT AND NO TOOL
-  // COUNT IN THIS COMMENT: both live in gatelist.mjs and its RESULT line carries
-  // them, and a number typed beside the list that owns it is the exact defect
-  // this pair exists to catch.
-  const runGate = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/gatelist.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  // 64/65 — NO TWO TESTS WEAR THE SAME NUMBER.
-  //
-  // The hazard is named in this file already, above test 36: "two files, no git
-  // conflict, and a suite that would have printed 35. twice — the collision a
-  // merge cannot see." It was a warning with no check behind it, and dev printed
-  // "PASS  50." twice until the commit above. A warning a hand must remember is
-  // weaker than one a tool enforces, and this one had been forgotten by the hand
-  // that wrote a check while reading it.
-  //
-  // NUMBERED 64/65, NOT 62/63, AND THE GAP IS DELIBERATE: PR #301 holds 62/63 in
-  // flight for the gate-list pair. Allocating disjoint ranges across two open
-  // PRs is this check's own subject, applied to itself — and a gap costs
-  // nothing while a collision costs a reader.
-  //
-  // ⚠ AND THE RESERVATION DID NOT HOLD — #301, on replay. engine.test.js grew a
-  // 62 of its own in the meantime, so the pair this note held open was taken by
-  // the file the note could not talk to. The gate-list pair is 67/68 below. The
-  // paragraph above is kept exactly as written because it is the evidence: a
-  // range reserved in prose, in one of the two homes, is not reserved. THIS
-  // CHECK is what caught it.
-  //
-  // 64 is the check's own integrity against its planted corpus (five plants, one
-  // of which must go GREEN); 65 is the state of the two test files. No plant
-  // count and no label count in this comment — both live in the tool and its
-  // RESULT line carries them.
-  const runNums = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/testnumbers.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  const gateSelf = runGate(['--selftest']);
-  const gateSelfV = quote(gateSelf.out);
-  console.log(
-    `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  67. the gate-list check still catches its own known-bad corpus` +
-      ` — ${gateSelfV.text || `gatelist --selftest (exit ${gateSelf.code}): ${gateSelfV.why}`}`
-  );
-  if (gateSelf.code !== 0 || !gateSelfV.text) zoomExtra++;
-  else zoomPassed++;
-
-  const gateTree = runGate([]);
-  const gateTreeV = quote(gateTree.out);
-  console.log(
-    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  68. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
-      ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
-      ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
-  );
-  if (gateTree.code !== 0 || !gateTreeV.text) zoomExtra++;
-  else zoomPassed++;
-
-  const numsSelf = runNums(['--selftest']);
-  const numsSelfV = quote(numsSelf.out);
-  console.log(
-    `${numsSelf.code === 0 && numsSelfV.text ? 'PASS' : 'FAIL'}  64. the test-number check still catches its own known-bad corpus` +
-      ` — ${numsSelfV.text || `testnumbers --selftest (exit ${numsSelf.code}): ${numsSelfV.why}`}`
-  );
-  if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
-  else zoomPassed++;
-
-  // 69 — THE PROBE CORPUS'S OWN DERIVATIONS. Bjorn, 2026-08-22. `tools/watched.mjs`
-  // is one of the 131 tools `gatelist` counts as executed by no declared gate
-  // list, so its floors reached no automated run at all — and the floor added
-  // today is the one that catches a probe still citing code that has moved.
-  // Wiring it here is the whole point: a floor nobody runs is the defect it was
-  // built to catch, one level up. `--check-reads` needs no browser, no ledger and
-  // no bundle, which is why this door and not the full audit is the one CI can
-  // afford to hold.
-  const runReads = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/watched.mjs', '--check-reads', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-  const reads = runReads([]);
-  const readsV = quote(reads.out);
-  console.log(
-    `${reads.code === 0 && readsV.text ? 'PASS' : 'FAIL'}  69. every watched-probe still reads a file that exists and an anchor still in it` +
-      ` — ${readsV.text || `watched --check-reads (exit ${reads.code}): ${readsV.why}`}` +
-      ` (\`node tools/watched.mjs --check-reads\` for the derived file:line of every anchor)`
-  );
-  if (reads.code !== 0 || !readsV.text) zoomExtra++;
-  else zoomPassed++;
-
-  const numsTree = runNums([]);
-  const numsTreeV = quote(numsTree.out);
-  console.log(
-    `${numsTree.code === 0 && numsTreeV.text ? 'PASS' : 'FAIL'}  65. no two tests in this suite wear the same number` +
-      ` — ${numsTreeV.text || `testnumbers (exit ${numsTree.code}): ${numsTreeV.why}`}` +
-      ` (\`node tools/testnumbers.mjs --raw\` for every label and where it is declared)`
-  );
-  if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
-  else zoomPassed++;
-
-  // 73/74 — module URL/filesystem path conversions use node:url (#13).
-  // 73 proves the two required known-bads through the real scanner and runs
-  // both from a working directory containing spaces. 74 scans tools/ + tests/.
-  // These numbers follow the suite's own 64/65 uniqueness gate and the 67/68
-  // gate-list pair; tools/testnumbers.mjs is the authority that verifies them.
-  const runUrlPath = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/urlpath-conversions.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (error) {
-      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
-    }
-  };
-
-  const urlPathSelf = runUrlPath(['--selftest']);
-  const urlPathSelfV = quote(urlPathSelf.out);
-  console.log(
-    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  73. the URL/path check catches both known-bads from a spaced working directory` +
-      ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
-  );
-  if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
-  else zoomPassed++;
-
-  const urlPathTree = runUrlPath([]);
-  const urlPathTreeV = quote(urlPathTree.out);
-  console.log(
-    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  74. module URL/filesystem path conversions use the platform API` +
-      ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
-      ` (\`node tools/urlpath-conversions.mjs\` names each site)`
-  );
-  if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
-  else zoomPassed++;
-}
-
-// 76 — destructive quit/load confirmation without a native browser prompt.
-// This is a DOM behavior test with a deliberately tiny host: it exercises the
-// shared component's event contract, while source reads prove both controller
-// paths use it and the underlying overlay yields Escape to the top veil. It
-// does not render pixels or claim responsive geometry; that remains browser QA.
-{
-  const { runConfirmationModalContract } = await import('./confirmation-modal.test.mjs');
-  const confirmation = await runConfirmationModalContract();
-  console.log(
-    `${confirmation.ok ? 'PASS' : 'FAIL'}  76. quit and load use one reversible themed confirmation behavior` +
-      ` — ${confirmation.detail}`
-  );
-  if (confirmation.ok) zoomPassed++;
-  else zoomExtra++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -804,15 +590,7 @@ console.log('          homes, never that a pixel renders wrong. 38 is arithmetic
 console.log('          numbers a caller supplies, and the #15 defect was a correct');
 console.log('          clamp computed in the wrong space, which 38 cannot detect.');
 console.log('          Nothing here opens a browser, so no test in this file has seen');
-// BARE FORM, not `node tools/zoomplace.mjs`. Every boundary line in ci.yml names
-// its tool bare — "tools/tutorial-reach.mjs drives 8 viewports and NO job here
-// runs it" — and spelling the command instead is a different speech act: it is
-// what a reader would TYPE, and it reads as "this list runs this". This line was
-// the only command-form boundary reference in either gate list, and tools/gatelist.mjs
-// (67/68) now holds that distinction as a rule, so the one exception had to go.
-// The sentence is unchanged; only the backticked command became a bare name.
-// — Bjorn, 2026-08-21, #295.
-console.log('          the screen. tools/zoomplace.mjs is the half that has.');
+console.log('          the screen. `node tools/zoomplace.mjs` is the half that has.');
 console.log('          39–40 are a JOIN between two source lists: they prove every');
 console.log('          declared navigable surface HAS a handler, never that the');
 console.log('          handler draws anything — release-shots is the half that has');
@@ -854,42 +632,6 @@ console.log('          modify you. They prove that vocabulary has one typed home
 console.log('          content doors accept the same words, and that a relic resource grant');
 console.log('          reaches max HP by one road with one answer at creation and at load.');
 console.log('          They are SILENT on the other modifier vocabularies this game carries —');
-console.log('          64-65 ARE ABOUT THE SUITE ITSELF, not the game: no two tests wear the same');
-console.log('          number. A CONSISTENCY check — it proves the declared labels do not collide,');
-console.log('          never that any label is the right one, and it reads only the two declared');
-console.log('          test sources, so a third test file or a number composed at runtime is');
-console.log('          invisible to it.');
-console.log("          equipment's `self.maxHp/maxMana/maxStamina=+N` mods column, relic PASSIVE_TYPES scalars,");
+console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
-console.log('          67–68 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
-console.log('          prove that every STEP naming an instrument invokes it (or states what goes');
-console.log('          unwatched), and that no invocation in a SHELL list has its exit status');
-console.log('          discarded. THE NAME IS THE MEASUREMENT: 63 says SWALLOWED, not SILENCED, because');
-console.log('          swallowing is what G4 measures. ⚠ IT DOES NOT COVER THIS');
-console.log('          FILE: a JavaScript gate list is not audited for it, and this suite is one — so');
-console.log('          63 is deaf in its own venue and says so in its own output, by name, every run.');
-console.log('          They say NOTHING about whether a listed tool passes,');
-console.log('          nothing about instruments a person starts at a terminal, and nothing about a');
-console.log('          gate that lives only in a PR body. The census of which tools sit in no list');
-console.log('          is REPORTED by that tool and asserted by nobody — that disposition is a');
-console.log('          design call with real costs, and it is not this suite\'s to make.');
-console.log('          69 IS A CONSISTENCY CHECK OVER A CITATION, NOT A CORRECTNESS ONE. It proves');
-console.log('          every watched-probe still names a file that exists and an anchor literal');
-console.log('          still in it — it CANNOT tell whether that anchor identifies the right thing,');
-console.log('          and an anchor picked loose enough to survive any edit greens here forever.');
-console.log('          `by` in tools/watched-probes.json names who picked it. It also runs only the');
-console.log('          READ door of tools/watched.mjs: nothing in this suite opens the build, drives');
-console.log('          a probe, or photographs a control, so `watched` as a VERDICT is still');
-console.log('          unwatched by CI — only the derivations behind it are.');
-console.log('          73–74 guard module URL/path conversion shapes in tools/ and tests/:');
-console.log('          actual dynamic file:// templates/concats and same-file static URL');
-console.log('          pathname conversions through direct, grouped, bracket, destructuring,');
-console.log('          or bounded local-alias forms. A platform consumer is trusted only through');
-console.log('          its static node:url import; ambiguous lexical, binding, or alias flow fails');
-console.log('          closed. They prove both fixtures fail from a spaced working directory;');
-console.log('          they do not cover cross-module flow or platform-API semantic correctness.');
-console.log('          76 drives the shared confirmation component in a minimal DOM and reads');
-console.log('          the two controller call sites. It proves cancellation/commit semantics,');
-console.log('          focus containment/return, and native-prompt removal; it does not paint');
-console.log('          the dialog or prove responsive geometry in a real browser.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

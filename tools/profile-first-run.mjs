@@ -5,7 +5,7 @@
 // WHY THIS IS A BROWSER AND NOT A UNIT TEST. The defect was found by walking the
 // shipped build (Bjorn's `watched` audit, 2026-08-08): clear localStorage, boot,
 // pick a class, type a name, press BEGIN THE CLIMB — storage held `sote_run_v1`
-// and no `sote_meta_v1`, and Title → Profile then printed his own sentence
+// and no `sote_meta_v1`, and Settings → Profile then printed his own sentence
 // back at him in bold. Every part of that lives above the engine: the screens,
 // the click order, the real Storage. tests/engine.test.js 13c holds the same
 // claims at the manager; this holds them where he would see them.
@@ -73,15 +73,7 @@ const ev = async (e) => {
   return r.result.value;
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const boot = async (ms = 1600) => {
-  await c.send('Page.navigate', { url: PAGE });
-  await sleep(ms);
-  if (await ev("!!document.querySelector('.startup-gate')")) {
-    await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
-    await c.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
-    await sleep(260);
-  }
-};
+const boot = async (ms = 1600) => { await c.send('Page.navigate', { url: PAGE }); await sleep(ms); };
 
 let fails = 0;
 const check = (n, ok, d = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${n}${d ? ` — ${d}` : ''}`); if (!ok) fails++; };
@@ -124,12 +116,15 @@ async function walkToTheClimb() {
   }))()`);
 }
 
-// Title → Profile, and hand back the sentence the player reads.
+// Settings → Profile, and hand back the sentence the player reads.
 async function profileSentence() {
-  await ev(`(()=>{const b=document.querySelector('#profile'); if(b) b.click(); return 1;})()`);
+  await ev(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>/settings/i.test(x.textContent)); if(b) b.click(); return 1;})()`);
   await sleep(700);
   return await ev(`(()=>{
-    const body=document.querySelector('.profile-archive-body'); if(!body) return {no:'profile archive'};
+    const body=document.querySelector('.set-body'); if(!body) return {no:'settings body'};
+    const tab=[...body.querySelectorAll('.set-tab')].find(h=>h.dataset.member==='Profile');
+    if(!tab) return {no:'Profile tab'};
+    tab.click();
     const line=body.querySelector('.prof-state');
     return {line: line ? line.textContent.trim() : null};
   })()`);
@@ -156,7 +151,7 @@ if (walk.failed) {
 {
   await boot();
   const s = await profileSentence();
-  check('3 Title → Profile no longer prints his ask back at him',
+  check('3 Settings → Profile no longer prints his ask back at him',
     !!s.line && !/finish your first run/i.test(s.line),
     s.no ? `could not open ${s.no}` : `"${s.line}"`);
 }
@@ -186,24 +181,11 @@ if (walk.failed) {
   await boot();
   // Delete is a two-click, self-resetting confirm (title.js) — the second click
   // is the one that deletes, and driving only the first proves nothing.
-  const gone = await ev(`(async()=>{
+  const gone = await ev(`(()=>{
     const del=document.querySelector('.slot-delete'); if(!del) return {no:'no occupied slot to delete'};
-    const ms=Number(del.dataset.holdMs);
-    if (!(ms > 0)) {
-      del.click();
-      return {ok:true, ms:0};
-    }
-    const pointerId=17;
-    del.dispatchEvent(new PointerEvent('pointerdown', {
-      bubbles:true, pointerId, pointerType:'touch', isPrimary:true,
-      clientX:del.getBoundingClientRect().left + del.getBoundingClientRect().width / 2,
-      clientY:del.getBoundingClientRect().top + del.getBoundingClientRect().height / 2,
-    }));
-    await new Promise((resolve)=>setTimeout(resolve, ms + 160));
-    if (del.isConnected) del.dispatchEvent(new PointerEvent('pointerup', {
-      bubbles:true, pointerId, pointerType:'touch', isPrimary:true,
-    }));
-    return {ok:true, ms};
+    del.click();
+    if (del.dataset.armed !== '1') return {no:'the delete button did not arm'};
+    del.click(); return {ok:true};
   })()`);
   await sleep(600);
   const after = await ev(`({run: localStorage.getItem('sote_run_v1'), meta: localStorage.getItem('sote_meta_v1')})`);
@@ -228,5 +210,5 @@ if (walk.failed) {
 console.log(`\nBOUNDARY: headless Chromium at 390x844, ${DIST ? 'the SHIPPED bundle (dist/AshenSpire.html)' : 'the source tree (index.html)'}, one storage backend.`);
 console.log('It proves WHEN the profile is written and WHAT the Profile screen says. It is silent on');
 console.log('storage that is full or throws, and on every screen it does not open.');
-console.log(fails ? `\nprofile-first-run: RED — ${6 - fails}/6 checks passed; ${fails} failed` : '\nprofile-first-run: OK — 6 checks passed');
+console.log(fails ? `\n${fails} RED` : '\nall green');
 process.exit(fails ? 1 : 0);

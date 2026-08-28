@@ -134,7 +134,6 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 // A UNIX socket path is capped at 108 bytes and Chrome puts `SingletonSocket`
 // inside the profile. 90 leaves room for that name and for the mkdtemp suffix.
@@ -143,8 +142,7 @@ import { fileURLToPath } from 'node:url';
 // its author set it and named rather than moved.
 export const PATH_BUDGET = 90;
 
-// Automated browsers are invisible; their audio should be invisible too.
-const DEFAULT_ARGS = ['--no-sandbox', '--disable-gpu', '--mute-audio', '--remote-debugging-port=0', '--no-first-run'];
+const DEFAULT_ARGS = ['--no-sandbox', '--disable-gpu', '--remote-debugging-port=0', '--no-first-run'];
 const ENDPOINT = /DevTools listening on (ws:\/\/\S+)/;
 
 // Every live profile this process owns. The sweep at exit reads this set, so a
@@ -529,7 +527,7 @@ const SCENARIOS = [
 async function selftest() {
   const { mkdtempSync: mk, writeFileSync, rmSync: rm, mkdirSync } = await import('node:fs');
   const { spawnSync } = await import('node:child_process');
-  const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
+  const HERE = resolve(new URL('.', import.meta.url).pathname);
   const BIN = resolveBrowser();
   if (!BIN) { console.error('browser --selftest: no Chrome/Chromium found — set CHROME'); process.exit(2); }
   console.log(`browser --selftest — ${BIN}\n`);

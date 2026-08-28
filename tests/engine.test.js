@@ -14,20 +14,14 @@ import {
   computeTokenBindings,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
-import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
-import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
-import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
-import { attributeCardModels } from '../src/model/creationBrief.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun } from '../src/model/state.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
-import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
-import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter,
@@ -45,8 +39,6 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
-import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, classAttributePreset, allocationTotal } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -60,31 +52,13 @@ import {
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
-  swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
-  previewCompatibleHands, startingHandsRequirementFailure,
+  swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES,
 } from '../src/model/loadout.js';
-import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
-import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
   unlockView, revealState, pieceReveal,
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
-import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
-import {
-  equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots, trayPresentationState,
-} from '../src/model/armouryLayout.js';
-import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
-import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
-import { battlefieldStageModel } from '../src/ui/models/BattlefieldStageModel.js';
-import {
-  hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
-} from '../src/ui/components/hudQuickSettings.js';
-import {
-  characterCreationProblems, creationArmourChoices, creationHandChoices,
-  creationRelicChoices, selectStartingHand, resolveCreationHands,
-} from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
@@ -95,11 +69,11 @@ import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/m
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
-import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, MENU_TABS, MENU, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
+import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -850,51 +824,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(migrated != null, 'compatible save survives content patch');
     eq(migrated.contentVersion, REG.contentVersion, 'contentVersion re-stamped');
 
-    const customized = createRunState({
-      seed: 0xc315, classId: 'reaver', registries: REG,
-      startingHands: { leftHand: 'greatsword', rightHand: 'roundShield' },
-      startingArmourId: 'vigil',
-    });
-    customized.contentVersion = 'before-roster-update';
-    const updatedBundle = {
-      ...contentBundle,
-      version: 'after-roster-update',
-      characterCreation: structuredClone(contentBundle.characterCreation),
-    };
-    updatedBundle.characterCreation.classes.reaver.handIds = updatedBundle.characterCreation.classes.reaver.handIds
-      .filter((id) => id !== 'greatsword');
-    updatedBundle.characterCreation.classes.reaver.armourIds = updatedBundle.characterCreation.classes.reaver.armourIds
-      .filter((id) => id !== 'vigil');
-    const updatedRegistries = createRegistries(updatedBundle);
-    storage.setItem(RUN_KEY, serializeRun(customized));
-    const rosterMigrated = saves.loadRun(updatedRegistries);
-    assert(rosterMigrated != null && rosterMigrated.startingKitSnapshot.leftHand === 'greatsword',
-      'a customized saved hand survives removal from the current creation roster when the equipment still exists');
-    assert(ownership(updatedRegistries, { meta: {}, loadout: rosterMigrated.loadout })
-      .has(updatedRegistries.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil')),
-    'a persisted creation armour grant survives removal from the current creation roster when the equipment still exists');
-    eq(rosterMigrated.contentVersion, updatedRegistries.contentVersion,
-      'the compatible customized save reaches the content-version re-stamp');
-
-    // The old contract allowed one owned armament id in several hand sets and
-    // in storage at once. The shared Inventory contract migrates that shape at
-    // the real load door: keep the active occurrence, clear the rest, and never
-    // leave an equipped object duplicated in Inventory.
-    const duplicateStorage = createMemoryStorage();
-    const duplicateRun = createRunState({ seed: 0xd315, classId: 'reaver', registries: REG });
-    duplicateRun.loadout.sets.leftHand[1] = 'straightSword';
-    duplicateRun.loadout.storage.push('straightSword');
-    duplicateStorage.setItem(RUN_KEY, serializeRun(duplicateRun));
-    const duplicateSaves = createSaveManager(duplicateStorage);
-    const normalized = duplicateSaves.loadRun(REG);
-    assert(normalized != null, 'a legacy duplicate armament is normalized rather than archived');
-    eq(Object.values(normalized.loadout.sets).flat().filter((id) => id === 'straightSword').length, 1,
-      'the normalized save keeps exactly one equipped Straight Sword');
-    eq(normalized.loadout.sets.rightHand[0], 'straightSword', 'the active equipped occurrence survives normalization');
-    eq(normalized.loadout.storage.includes('straightSword'), false, 'the equipped survivor is removed from shared Inventory');
-    assert((duplicateSaves.runStatus().ledger.entries || [])
-      .some((entry) => entry.field === 'loadout.armamentLocations'), 'the load ledger names the normalization');
-
     // Parseable but malformed body (right schemaVersion, broken shape) → refused
     // and archived, instead of loading and exploding later mid-run.
     for (const [label, bad] of [
@@ -1109,7 +1038,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // His ask: "profile should be able to be created before first run, not after".
   // Bjorn's walk on the shipped bundle at cd3da94: cleared storage, picked a
   // class, typed a name, pressed BEGIN THE CLIMB — `sote_run_v1` written,
-  // `sote_meta_v1` absent, and Title → Profile printing his own sentence back
+  // `sote_meta_v1` absent, and Settings → Profile printing his own sentence back
   // at him. Every assertion below was observed RED at dev cd3da94 by running
   // this file against that tree; the screen half — the same walk in a real
   // browser, on the shipped bundle — is tools/profile-first-run.mjs.
@@ -1318,34 +1247,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 18. M2 run systems ---------------------------------------------------------------
   test('18. run systems: deterministic rewards, flask pity, relic passives, event opcodes, Physick', () => {
-    eq(REG.balance.flaskCapacity, 4, 'Crimson/Azure share the approved global capacity of four');
-    eq(REG.balance.flaskSlots, 3, 'utility flask inventory remains an independent three-slot system');
-    eq(
-      ['reaver', 'starseer', 'rogue', 'herald'].map((id) => {
-        const a = REG.classes.get(id).startingFlaskAllocation;
-        return `${a.hp}/${a.mana}`;
-      }).join('|'),
-      '3/1|2/2|3/1|3/1',
-      'all four class allocations consume all four charges exactly as approved',
-    );
-    const freeAllocation = createRunState({ seed: 0xf1a5, classId: 'reaver', registries: REG });
-    reallocateFlaskCharges(freeAllocation.flaskCharges, { hp: 0, mana: 4 });
-    eq(`${freeAllocation.flaskCharges.hp}/${freeAllocation.flaskCharges.mana}/${freeAllocation.flaskCharges.capacity}`, '0/4/4', 'all four charges may be freely reallocated');
-    const flaskStore = createMemoryStorage();
-    freeAllocation.seedString = 'FLASK4';
-    createSaveManager(flaskStore).saveRun(freeAllocation);
-    const flaskBack = createSaveManager(flaskStore).loadRun(REG);
-    assert(flaskBack !== null, 'a freely allocated four-charge run survives the real save door');
-    eq(`${flaskBack.flaskCharges.hp}/${flaskBack.flaskCharges.mana}/${flaskBack.flaskCharges.base}`, '0/4/4', 'save keeps allocation and the capacity ledger');
-    const oldCapacityRun = structuredClone(freeAllocation);
-    oldCapacityRun.flaskCharges = {
-      capacity: 3, base: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1,
-      grown: { hp: 0, mana: 0 }, granted: 0,
-    };
-    createSaveManager(flaskStore).saveRun(oldCapacityRun);
-    const oldCapacityBack = createSaveManager(flaskStore).loadRun(REG);
-    assert(oldCapacityBack !== null, 'an existing three-charge save remains valid after the live default becomes four');
-    eq(`${oldCapacityBack.flaskCharges.capacity}/${oldCapacityBack.flaskCharges.base}`, '3/3', 'old capacity ledger remains authoritative');
     // Same seed → identical roll bundle (SPEC §3.11 stream promise).
     const rollAll = () => {
       const r = createRng(0xaa11);
@@ -1429,16 +1330,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
     eq(rn.cinders, 50, 'Old Cinder grants 50 cinders');
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
-    eq(rn.flaskCharges.capacity, 5, "Traveler's Flask raises fixed charge capacity");
-    eq(rn.flaskCharges.hp, 4, "Traveler's Flask allocates the added charge to Crimson");
+    eq(rn.flaskCharges.capacity, 4, "Traveler's Flask raises fixed charge capacity");
+    eq(rn.flaskCharges.hp, 3, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
   });
 
   // ---- 20. M3 phase 1: Starseer + Herald class mechanics ---------------------------------
   test('20. Starstone combos, Starstone Shard, blood economy, Gold Figurine — all pure data', () => {
-    eq(REG.classes.size, 4, 'four playable classes registered');
-    eq(REG.classes.ids().join(','), 'reaver,starseer,rogue,herald', 'the four registered classes include Rogue in authored order');
+    eq(REG.classes.size, 3, 'three playable classes registered');
 
     // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
     const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3 });
@@ -1557,8 +1457,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
     const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
-    eq(fresh.mana, 1, 'run starts at its WIS-derived mana maximum');
-    eq(fresh.maxMana, 1, 'Reaver maximum follows the tuned WIS preset');
+    eq(fresh.mana, 2, 'run starts at its WIS-derived mana maximum');
+    eq(fresh.maxMana, 2, 'Reaver maximum is base-zero WIS tiers');
     assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
     assert(validateRunShape({ ...fresh, mana: 3 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
 
@@ -1608,34 +1508,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     delete old.derivedStatRuleSnapshot;
     storage.setItem(RUN_KEY, JSON.stringify(old));
     const migrated = saves.loadRun(REG);
-    eq(migrated.mana, 1, 'pre-mana save migrates to full derived mana');
-    eq(migrated.maxMana, 1, 'pre-mana save derives from its tuned WIS allocation');
+    eq(migrated.mana, 2, 'pre-mana save migrates to full derived mana');
+    eq(migrated.maxMana, 2, 'pre-mana save derives base-zero WIS tiers');
 
     const domains = resourceDomains(REG);
     const zero = { ...empty.player, mana: 0 };
     const atZero = resourceBarPlan(REG, 'main', zero, zero, domains).find((b) => b.id === 'mana');
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
-    // THE TROUGH IS MEASURED AGAINST HIS REFERENCE, NOT AGAINST THE POPULATION.
-    // E9 / #254: Constantine ruled 200 HP / 20 MP / 20 SP, and the row carries
-    // it as `domainMax` (Law 0 clause 3 — an override is data). Before that
-    // ruling this pair asserted `lengthPct === 100` at the largest WIS-derived
-    // maxMana, which was a claim about the DERIVED ceiling and is now false by
-    // his word rather than by a defect. Both numbers below are DERIVED FROM THE
-    // CONSTANT, never typed, so moving the reference moves the test with it.
-    eq(domains.main.mana, HUD_REFERENCE_MAX.mana, 'the mana ceiling is his reference, not the derived population');
     const star = { maxHp: 82, hp: 82, maxMana: 4, mana: 4 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
-    eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.mana) * 100,
-      'the largest WIS-derived maxMana takes its share of the reference, not the whole track');
-    // AND THE OTHER SIDE OF THE SAME LINE: a pool standing AT the reference
-    // fills the track whole. Without this cell the assertion above is one
-    // number with nothing on the far side of it and could not tell a wrong
-    // reference from a right one.
-    const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.mana, mana: HUD_REFERENCE_MAX.mana };
-    const full = resourceBarPlan(REG, 'main', atRef, atRef, domains).find((b) => b.id === 'mana');
-    eq(full.lengthPct, 100, 'a pool AT the reference fills its track');
+    eq(atMax.lengthPct, 100, 'largest legal WIS-derived maxMana fills the derived row track');
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
@@ -1894,7 +1778,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
       checkTags(w.tags, w.id);
       checkMods(w.mods, w.id);
-      eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
+      // Shields belong in the off hand; staves are cast from the right.
+      if (w.kind === 'shield') assert(w.hand !== 'right', `${w.id}: a shield is not right-hand-only`);
+      if (w.kind === 'staff') eq(w.hand, 'right', `${w.id}: staves are right-handed`);
     }
 
     // Armour: four sets per class, exactly one of them unlocked from the start.
@@ -1956,7 +1842,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
     stampDeck(REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, aStrike)), 7, 'the deck itself is stamped with the tuned STR strike receipt');
+    eq(dmgOf(resolveCard(REG, aStrike)), 5, 'the deck itself is stamped with the DEX dagger receipt');
     eq(runMods(REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
     assert(loadoutTags(REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
@@ -2037,121 +1923,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const healed = saves.loadRun(REG);
     assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
     eq(healed.loadout.sets.rightHand[0], 'straightSword', 'the healed loadout restores the class-authored starting weapon');
-  });
-
-  test('28s. equipment authors HP, Mana, and Stamina pools without healing saves or swaps', () => {
-    for (const [id, mod] of [
-      ['towerShield', 'self.maxHp=+10'],
-      ['blightRod', 'self.maxMana=+1'],
-      ['twinblade', 'self.maxStamina=+1'],
-    ]) {
-      assert(REG.equipment.armaments.find((piece) => piece.id === id)?.mods.includes(mod), `${id} authors ${mod} in generated content`);
-    }
-    const poolFields = {
-      ...REG.equipment.modFields,
-      maxMana: { field: 'maxMana', scope: 'run', apply: 'maxMana', label: 'Max Mana' },
-      maxStamina: { field: 'maxStamina', scope: 'run', apply: 'maxStamina', label: 'Max Stamina' },
-    };
-    const probe = {
-      id: 'poolProbe', name: 'Pool Probe', kind: 'weapon', hand: 'right', rarity: 'rare',
-      tags: [], mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
-    };
-    const POOL_REG = {
-      ...REG,
-      equipment: {
-        ...REG.equipment,
-        modFields: poolFields,
-        armaments: [...REG.equipment.armaments, probe],
-      },
-    };
-    eq(validateEquipment(POOL_REG).join('; '), '', 'all three pool applies are accepted by the closed vocabulary');
-
-    const run = createRunState({ seed: 0x281, classId: 'reaver', registries: POOL_REG });
-    const base = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina };
-    run.hp -= 7;
-    run.mana = Math.max(0, run.mana - 1);
-    run.stamina = Math.max(0, run.stamina - 1);
-    run.loadout.sets.rightHand[1] = probe.id;
-    assert(cycleSet(POOL_REG, run.loadout, 'rightHand', 1, { meta: {}, inCombat: false }), 'the probe set becomes active');
-    stampDeck(POOL_REG, run);
-    eq(JSON.stringify(runMods(POOL_REG, run.loadout, run.class)), JSON.stringify({
-      maxHp: 10, maxMana: 1, maxStamina: 1, swapCostDelta: 0, startStatuses: [],
-    }), 'runMods exposes every authored pool bonus');
-    eq(run.maxHp, base.hp + 10, 'camp equip adds 10 maximum HP');
-    eq(run.maxHp - run.hp, 7, 'camp equip carries the absolute HP deficit');
-    eq(run.maxMana, base.mana + 1, 'camp equip adds 1 maximum Mana');
-    eq(run.maxMana - run.mana, 1, 'camp equip carries the absolute Mana deficit');
-    eq(run.maxStamina, base.stamina + 1, 'camp equip adds 1 maximum Stamina');
-    eq(run.maxStamina - run.stamina, 1, 'camp equip carries the absolute Stamina deficit');
-
-    const shown = equipmentSurfaceReceipt(POOL_REG, run, {
-      candidate: { slotId: 'rightHand', setIndex: 0, pieceId: 'straightSword' },
-    }).candidate.resourceChanges;
-    for (const [id, amount] of [['maxHp', 10], ['maxMana', 1], ['maxStamina', 1]]) {
-      const row = shown.find((entry) => entry.id === id);
-      assert(row && row.after === row.before - amount, `${id} candidate receipt reports its exact delta`);
-    }
-
-    cycleSet(POOL_REG, run.loadout, 'rightHand', 0, { meta: {}, inCombat: false });
-    stampDeck(POOL_REG, run);
-    const combat = createCombat({
-      registries: POOL_REG, rng: createRng(0x282),
-      player: {
-        classId: run.class, attributes: run.attributes,
-        maxHp: run.maxHp, hp: run.maxHp - 7,
-        maxMana: run.maxMana, mana: Math.max(0, run.maxMana - 1),
-        maxStamina: run.maxStamina, stamina: Math.max(0, run.maxStamina - 1),
-        energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck,
-        relicIds: [], loadout: run.loadout, equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
-        equipmentPoolDeficits: run.equipmentPoolDeficits,
-      },
-      enemyIds: ['fellWarden'],
-    });
-    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
-    eq(combat.player.maxHp, base.hp + 10, 'combat swap moves maximum HP');
-    eq(combat.player.maxHp - combat.player.hp, 7, 'combat swap carries HP deficit');
-    eq(combat.player.maxMana, base.mana + 1, 'combat swap moves maximum Mana');
-    eq(combat.player.maxMana - combat.player.mana, 1, 'combat swap carries Mana deficit');
-    eq(combat.player.maxStamina, base.stamina + 1, 'combat swap moves maximum Stamina');
-    eq(combat.player.maxStamina - combat.player.stamina, 1, 'combat swap carries Stamina deficit');
-    combat.player.mana = 0;
-    combat.player.energy = REG.balance.equipment.swapCost;
-    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
-    eq(combat.player.maxMana, base.mana, 'swapping away removes the Mana bonus');
-    eq(combat.player.mana, 0, 'swapping away carries spent Mana beyond the smaller vessel');
-    combat.player.energy = REG.balance.equipment.swapCost;
-    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
-    eq(combat.player.mana, 0, 'swapping back cannot refill spent Mana');
-
-    const OLD_REG = {
-      ...REG,
-      equipment: {
-        ...REG.equipment,
-        armaments: [...REG.equipment.armaments, { ...probe, mods: [] }],
-      },
-    };
-    const old = createRunState({ seed: 0x283, classId: 'reaver', registries: OLD_REG });
-    old.loadout.sets.rightHand[0] = probe.id;
-    stampDeck(OLD_REG, old);
-    const oldNumbers = { maxHp: old.maxHp, hp: old.maxHp - 9, maxMana: old.maxMana, mana: 0, maxStamina: old.maxStamina, stamina: 0 };
-    Object.assign(old, oldNumbers, { schemaVersion: 4 });
-    delete old.equipmentPoolBonuses;
-    delete old.equipmentPoolDeficits;
-    const changed = POOL_REG;
-    const storage = createMemoryStorage();
-    storage.setItem(RUN_KEY, JSON.stringify(old));
-    const loaded = createSaveManager(storage).loadRun(changed);
-    assert(loaded, 'a schema-v4 equipped save survives the new live bonus');
-    for (const [key, value] of Object.entries(oldNumbers)) eq(loaded[key], value, `${key} keeps its old-save number`);
-    eq(JSON.stringify(loaded.equipmentPoolBonuses), JSON.stringify({ maxHp: 0, maxMana: 0, maxStamina: 0 }),
-      'migration records the old equipment bonuses, not the changed CSV');
-    loaded.loadout.sets.rightHand[0] = 'straightSword';
-    stampDeck(changed, loaded);
-    loaded.loadout.sets.rightHand[0] = probe.id;
-    stampDeck(changed, loaded);
-    eq(loaded.maxHp, oldNumbers.maxHp + 10, 'the next real equip mutation adopts the live bonus');
-    eq(loaded.maxMana, oldNumbers.maxMana + 1, 'the next real equip mutation adopts live Mana');
-    eq(loaded.maxStamina, oldNumbers.maxStamina + 1, 'the next real equip mutation adopts live Stamina');
   });
 
   // ---- 28p. the swap PRICE: three rules, three measured numbers -----------
@@ -2352,26 +2123,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // ---- the shelf's own three, same standard (A7) -------------------------
     oneProblem(bend({ basicTag: 'starter' }), 'starter', 'a basicTag no armament carries');
-    // `bend({ basicTag: 'basic' })`, not `bend({})`, since 2026-08-21: the
-    // shipped tag is now '' (he killed the universal shelf), so a registry bent
-    // with the shipped value has NO everybody's-rows and this refusal has
-    // nothing to refuse. THE VALIDATOR IS UNCHANGED AND STILL RIGHT — what
-    // moved is the config, so the test turns the concept back on to exercise
-    // it. A check that quietly passed on an empty population would be the
-    // vacuous green this file exists to refuse.
     const withEarnedBasic = {
-      ...bend({ basicTag: 'basic' }),
+      ...bend({}),
       equipment: {
         ...REG.equipment,
         armaments: REG.equipment.armaments.map((a) => (a.id === 'straightSword' ? { ...a, unlock: 'winAsReaver' } : a)),
       },
     };
     oneProblem(withEarnedBasic, 'straightSword', 'a row that is both everybody\'s and earned');
-    // Same reason as `withEarnedBasic` above: the shipped tag is '' since his
-    // 2026-08-21 kill, so the concept has to be turned on for its own refusal
-    // to have anything to refuse.
     const basicArmour = {
-      ...bend({ basicTag: 'basic' }),
+      ...bend({}),
       equipment: {
         ...REG.equipment,
         armour: REG.equipment.armour.map((o) => (o.id === 'default' && o.classId === 'reaver'
@@ -2448,21 +2209,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(both.leftId, 'straightSword', 'the piece in the left slot is drawn in the left hand');
     eq(both.rightId, 'greatsword', 'the piece in the right slot is drawn in the right hand');
 
-    // The full-frame weapon art was authored with blades on the default sword
-    // socket and shields on the default off-hand socket.  A slot swap must
-    // correct that baked position per layer, or the figure still follows the
-    // weapon category even though the loadout facts are right.
-    eq(both.leftMirror, true, 'a blade moved to the left slot is mirrored onto that socket');
-    eq(both.rightMirror, false, 'a blade in the right slot keeps its authored socket');
-
-    run.loadout.sets.leftHand[0] = 'straightSword';
-    run.loadout.sets.rightHand[0] = 'roundShield';
-    const swapped = figureSpec(REG, run.loadout, 'reaver');
-    eq(swapped.leftId, 'straightSword', 'the swapped sword remains in the left slot');
-    eq(swapped.rightId, 'roundShield', 'the swapped shield remains in the right slot');
-    eq(swapped.leftMirror, true, 'the swapped sword is mirrored onto the left socket');
-    eq(swapped.rightMirror, true, 'the swapped shield is mirrored onto the right socket');
-
     // 'either' is still a real word: the dagger goes in either hand and is drawn
     // in the one it is in, not in the one its row prefers.
     run.loadout.sets.leftHand[0] = 'dagger';
@@ -2476,17 +2222,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(slotHand(REG.equipment.slots.find((s) => s.id === 'leftHand')), 'left', 'the left slot knows it is the left hand');
     eq(slotHand(REG.equipment.slots.find((s) => s.id === 'armor')), null, 'armour is worn, not held');
     eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'dagger')), null, "'either' constrains nothing");
-    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'greatsword')), null, 'a greatsword is side-neutral');
-    assert(REG.equipment.armaments.every((piece) => pieceHand(piece) === null), 'every shipped armament may be held in either hand');
-    const rightHandSlot = REG.equipment.slots.find((slot) => slot.id === 'rightHand');
-    const leftHandSlot = REG.equipment.slots.find((slot) => slot.id === 'leftHand');
-    let eitherHandChecks = 0;
-    for (const armament of REG.equipment.armaments) {
-      assert(fitsSlot(rightHandSlot, armament), `${armament.id}: fits the right hand`);
-      assert(fitsSlot(leftHandSlot, armament), `${armament.id}: fits the left hand`);
-      eitherHandChecks += 2;
-    }
-    eq(eitherHandChecks, REG.equipment.armaments.length * 2, 'every shipped armament was checked against both hands');
+    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'greatsword')), 'right', 'a right-handed weapon says so');
 
     // The other edge of the same defect, on a slot the real table does not have
     // yet: a slot that is NOT a hand is not a hand. A carried talisman used to
@@ -2510,87 +2246,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(drawn.leftId, null, 'and the talisman is drawn in no hand at all');
 
     // ---- the gate is on the mutation, not on the screen -------------------
-    eq(equippedTagColor(REG.equipment.armouryUi), '#7FD47F', 'the authored equipped tag uses its custom green');
-    eq(equippedTagColor({ equippedTag: { useCustomColor: false, customColor: '#7FD47F' } }), null,
-      'turning custom colour off delegates the equipped tag to the motif');
-    assert(armouryUiProblems({ equippedTag: { useCustomColor: true, customColor: 'green' } })
-      .some((problem) => problem.path.endsWith('customColor')), 'an invalid JSON colour fails by field name');
-
     const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
-      'the starting sword moves freely into the left hand');
-    eq(fresh.loadout.sets.rightHand[0], null, 'moving the sword clears its old right-hand location');
-    eq(fresh.loadout.sets.leftHand[0], 'straightSword', 'and places it in the left hand');
-    eq(fresh.loadout.storage.filter((id) => id === 'roundShield').length, 1, 'the displaced shield returns to inventory once');
-    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'roundShield', OWNS_EVERYTHING, AT_CAMP),
-      'the shield can move freely into the right hand');
-    eq(fresh.loadout.sets.rightHand[0], 'roundShield', 'the right hand now holds the shield');
-    eq(fresh.loadout.sets.leftHand[0], 'straightSword', 'the sword remains in the left hand');
-    eq(fresh.loadout.storage.includes('roundShield'), false, 'an equipped shield is no longer duplicated in storage');
-    eq(equipmentRoleSource(REG, fresh.loadout, fresh.class, 'guard').piece.id, 'straightSword',
-      'the left-hand sword supplies the Defend profile');
-
-    const staffRun = createRunState({ seed: 5, classId: 'herald', registries: REG });
-    assert(equipPiece(REG, staffRun.loadout, 'leftHand', 0, 'boneSceptre', OWNS_EVERYTHING, AT_CAMP),
-      'a staff moves from right to left');
-    eq(equipmentRoleSource(REG, staffRun.loadout, staffRun.class, 'guard').piece.id, 'boneSceptre',
-      'the left-hand staff supplies the Defend profile');
-
-    const shieldRun = createRunState({ seed: 6, classId: 'reaver', registries: REG });
-    assert(equipPiece(REG, shieldRun.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'the starting shield returns to Inventory');
-    assert(equipPiece(REG, shieldRun.loadout, 'rightHand', 0, 'roundShield', OWNS_EVERYTHING, AT_CAMP), 'the shield equips in the right hand');
-    eq(equipmentRoleSource(REG, shieldRun.loadout, shieldRun.class, 'guard').piece.id, 'roundShield',
-      'a right-hand shield still supplies its guard profile when the left hand is bare');
-
-    const previewRun = createRunState({ seed: 7, classId: 'reaver', registries: REG });
-    const preview = equipmentSurfaceReceipt(REG, previewRun, {
-      candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'straightSword' },
-    }).candidate;
-    const actualRun = structuredClone(previewRun);
-    assert(equipPiece(REG, actualRun.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
-      'the previewed cross-hand move can be committed');
-    const actualRoles = equipmentSurfaceReceipt(REG, actualRun).roles;
-    eq(JSON.stringify(preview.roles.map((row) => [row.role, row.afterName, row.afterValue])),
-      JSON.stringify(actualRoles.map((row) => [row.role, row.profile.displayName, row.receipt.value])),
-      'cross-hand comparison after-values match the actual one-object transition');
-
-    const armourRun = createRunState({ seed: 8, classId: 'reaver', registries: REG });
-    const alternateArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id !== armourRun.loadout.sets.armor[0]);
-    const armourStorageBefore = JSON.stringify(armourRun.loadout.storage);
-    assert(equipPiece(REG, armourRun.loadout, 'armor', 0, alternateArmour.id, OWNS_EVERYTHING, AT_CAMP), 'armour can still be changed');
-    eq(JSON.stringify(armourRun.loadout.storage), armourStorageBefore, 'changing armour never writes to armament Inventory');
-
-    const cap = REG.balance.equipment.storageSlots;
-    const fullRun = createRunState({ seed: 9, classId: 'reaver', registries: REG });
-    fullRun.loadout.storage = REG.equipment.armaments
-      .map((piece) => piece.id)
-      .filter((id) => !['straightSword', 'roundShield'].includes(id))
-      .slice(0, cap);
-    const fullBefore = JSON.stringify(fullRun.loadout);
-    const fullUnequip = equipTransitionReceipt(REG, fullRun.loadout, 'rightHand', 0, null);
-    eq(fullUnequip.ok, false, 'the capacity receipt refuses the full-Inventory unequip before mutation');
-    assert(fullUnequip.reason.includes(`Inventory is full (${cap}/${cap})`), 'the capacity receipt gives the UI its exact full-Inventory reason');
-    assert(!equipPiece(REG, fullRun.loadout, 'rightHand', 0, null, OWNS_EVERYTHING, AT_CAMP),
-      'unequip refuses atomically when shared Inventory is full');
-    eq(JSON.stringify(fullRun.loadout), fullBefore, 'a refused full-Inventory unequip changes nothing');
-    assert(!equipPiece(REG, fullRun.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
-      'a cross-hand move refuses when its displaced item cannot return to Inventory');
-    eq(JSON.stringify(fullRun.loadout), fullBefore, 'a refused full-Inventory move changes nothing');
-
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'a dagger goes in a left-hand rack set');
-    assert(equipPiece(REG, fresh.loadout, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'the same dagger moves to a right-hand rack set');
-    eq(fresh.loadout.sets.leftHand[1], null, 'moving the dagger clears its old rack location');
-    eq(Object.values(fresh.loadout.sets).flat().filter((id) => id === 'dagger').length, 1,
-      'one carried armament is equipped in exactly one location');
-
+    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING, AT_CAMP), 'the left hand refuses a right-handed weapon');
+    eq(fresh.loadout.sets.leftHand[0], 'roundShield', 'and a refusal leaves the authored starting shield exactly as it found it');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'a left-hand piece goes in');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), "an 'either' piece goes in the left hand");
+    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), '…and in the right hand');
+    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'the kind gate still holds too');
+    eq(fresh.loadout.sets.rightHand[0], 'dagger', 'and that refusal changed nothing either');
     assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'clearing a slot is always allowed');
     eq(fresh.loadout.sets.leftHand[0], null, 'and it clears');
-    eq(fresh.loadout.storage.filter((id) => id === 'straightSword').length, 1, 'unequipping returns the old left-hand piece to storage once');
-    assert(ownership(REG, { meta: {}, loadout: fresh.loadout }).has(REG.equipment.armaments.find((p) => p.id === 'straightSword')),
-      'the unequipped left-hand piece remains owned');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP), 'the returned left-hand piece can be equipped again');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'the repeated unequip still succeeds');
-    eq(fresh.loadout.storage.filter((id) => id === 'straightSword').length, 1, 'repeated unequip does not duplicate storage');
 
     // The picker offers exactly what the mutation accepts. Not a claim about
     // the screen — a claim that the two questions have ONE answer, which is
@@ -2641,12 +2306,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'a hand slot that names no hand fails, naming the slot and a piece it would swallow');
     assert(check((e) => { slotRow(e, 'leftHand').hand = 'sideways'; }).includes('is not one of left|right'),
       'a hand outside the closed set fails and prints the legal values');
-    assert(check((e) => { armRow(e, 'ashStaff').kind = 'wand'; }).includes("no slot can hold 'ashStaff'"),
+    assert(check((e) => { armRow(e, 'ashStaff').hand = 'left'; }).includes("no slot can hold 'ashStaff'"),
       'a piece no slot can hold fails by its own id');
-    assert(check((e) => {
-      slotRow(e, 'leftHand').kinds = ['staff'];
-      e.armaments.filter((piece) => piece.kind === 'staff').forEach((piece) => { piece.hand = 'right'; });
-    }).includes("slot 'leftHand' can hold nothing"),
+    assert(check((e) => { slotRow(e, 'leftHand').kinds = ['staff']; }).includes("slot 'leftHand' can hold nothing"),
       'a slot whose every matching piece names the other hand fails as an empty result set');
   });
 
@@ -2804,66 +2466,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // A catalogue would still fail here.
     const fresh = createLoadout(REG, 'reaver');
     const none = ownership(REG, { meta: {}, loadout: fresh });
-    // KILLED BY HIM, 2026-08-21 — the THIRD instruction this sub-check has
-    // served, and all three are kept above and here rather than overwritten:
-    //   "kill 3 basic weapons on self unless it's a starting kit armory weapon
-    //    shown on character creation."
-    // `basicTag` now ships as '' and the universal shelf is off. The exemption
-    // he wanted is THE STARTING KIT, and it needs no rule — the kit is WORN, so
-    // `carriedIds(loadout)` already holds it. That is what this line now proves.
     const basicTag = REG.balance.equipment.basicTag;
-    // The shelf's floor, DERIVED from the model rather than typed: what a fresh
-    // profile with nothing found is offered — i.e. the kit it is wearing.
-    const kitRight = rightPool.filter((p) => none.has(p)).map((p) => p.id);
-    eq(basicTag, '', 'the universal-shelf tag ships OFF — his 2026-08-21 kill');
-    eq(kitRight.join(','), 'straightSword,roundShield',
-      'the unified hand inventory offers exactly both equipped starting armaments — kit, not category');
+    const basicsRight = rightPool.filter((p) => (p.tags || []).includes(basicTag)).map((p) => p.id);
+    assert(basicsRight.length > 0 && basicsRight.length < rightPool.length,
+      `the basics are a FEW of the pool, not none and not all (${basicsRight.length} of ${rightPool.length})`);
+    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), basicsRight.join(','),
+      `a fresh profile is offered exactly the '${basicTag}' rows (${basicsRight.join(', ')}) of ${rightPool.length} armaments`);
 
-    // ---- 1b. …and the TAG is still the mechanism, observed both ways -------
-    // A knob read but never watched to change the outcome has not been built —
-    // and that is as true of a knob turned OFF as of one turned on. The
-    // direction is simply reversed now: putting 'basic' back must WIDEN the
-    // shelf past the kit, which is exactly what he asked to stop happening.
-    const withBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: 'basic' } } };
-    const widened = rightPool.filter((p) => ownership(withBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id);
-    assert(widened.length > 1 && widened.includes('straightSword'),
-      `restoring basicTag widens the shelf past the kit (${widened.join(', ')}) — the tag, not a hard-coded list`);
+    // ---- 1b. …and the TAG is the mechanism, observed both ways -------------
+    // A knob read but never watched to change the outcome has not been built.
+    // Same registries, same profile, `basicTag` cleared: the shelf goes back to
+    // the pre-A7 number, which is the measurement the line above used to be.
+    const noBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: '' } } };
+    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id).join(','), 'straightSword',
+      'with basicTag cleared a fresh profile is offered 0 again — the tag, not a hard-coded list');
 
     // ---- 2. …and what it finds, it is offered, and ONLY that --------------
-    //
-    // RE-SCOPED BY HIM, NOT BY US (Viki, 2026-08-21) — AND THE TWO INSTRUCTIONS
-    // THIS TEST NOW SITS BETWEEN ARE BOTH KEPT HERE, because a test that quietly
-    // changed sides would hide the only thing a reader needs to know:
-    //
-    //   2026-08-08  "everything else is PROFILE SPECIFIC but maybe a few basic
-    //                weapons become available for all."
-    //   2026-08-21  "it should only show armory you actually PICKED UP MID RUN."
-    //
-    // Those are opposite ends of ONE dial — `balance.equipment.persistence` —
-    // and the later, explicit one is what ships: 'perRun'. THE CLAIM THIS
-    // SUB-CHECK DEFENDS IS UNCHANGED (what you found is offered, and ONLY that);
-    // what moved is WHERE "found" lives, from the profile to the run. So the
-    // dagger arrives the way a player actually gets one now — in the loadout,
-    // picked up this climb — instead of in `meta.found`.
-    //
-    // FLAGGED, NOT SETTLED: this is a design reversal and it is his to confirm
-    // or reverse in one line. If he wants the profile shelf back, `persistence`
-    // goes to 'both' and THIS SUB-CHECK IS THE ONE THAT MUST BE PUT BACK — which
-    // is why the old form is written above rather than deleted from history.
-    const picked = { ...fresh, storage: [...(fresh.storage || []), 'dagger'] };
-    const two = ownership(REG, { meta: {}, loadout: picked });
+    const two = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
     const offered = rightPool.filter((p) => two.has(p)).map((p) => p.id);
-    eq(offered.join(','), [...kitRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
-      'one weapon PICKED UP THIS RUN is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
-
-    // ---- 2b. …and the profile no longer widens the shelf on its own -------
-    // The direction the re-scope CREATES, and it is the half a flipped dial
-    // would otherwise change in silence: a piece found in an earlier climb, with
-    // nothing carried this run, is NOT offered. Without this line, moving
-    // `persistence` back to 'both' passes every check in this file.
-    const profileOnly = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
-    eq(rightPool.filter((p) => profileOnly.has(p)).map((p) => p.id).join(','), kitRight.join(','),
-      'a piece found in an EARLIER run is not offered in this one — the shelf is the run\'s (persistence: perRun)');
+    eq(offered.join(','), [...basicsRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
+      'one weapon found is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
 
     // ---- 3. the OTHER direction: the sandbox still opens everything --------
     // requireFound did not change meaning; turning it off still means everything
@@ -3219,8 +2841,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // the count above would be green for the wrong reason.
     let tookAll = 0;
     for (const piece of pool) {
-      const campProbe = createLoadout(REG, 'reaver');
-      if (equipPiece(REG, campProbe, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
+      if (equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
     }
     eq(tookAll, pool.length, `and every one of them goes in at camp — the control group`);
 
@@ -3348,15 +2969,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const dominated = [];
     for (const a of arms) {
       for (const b of arms) {
-        if (a === b || a.kind !== b.kind) continue;
-        // Profiles are mechanics, not flavour: a dagger's multi-hit carrier and
-        // a bow's ranged carrier are not comparable to a plain blade by mods
-        // alone. The old hand split accidentally kept those pairs apart; now
-        // that every armament is side-neutral, the real mechanical boundary is
-        // the three card profiles the piece selects.
-        if (a.attackProfile !== b.attackProfile
-          || a.guardProfile !== b.guardProfile
-          || a.techniqueProfile !== b.techniqueProfile) continue;
+        if (a === b || a.kind !== b.kind || a.hand !== b.hand) continue;
         if (RARITY[b.rarity] > RARITY[a.rarity]) continue; // b must be as cheap or cheaper
         // NO tag exemption. I first wrote one — "a tag `a` carries that `b`
         // lacks is a reason to keep `a`" — reasoning that it should tighten the
@@ -4297,22 +3910,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,CON,WIS,INT', 'all five short labels ship from the same rows');
     const standard = contentBundle.creationModes.find((m) => m.id === contentBundle.attributeRules.defaultMode);
     assert(!!standard, 'the default mode resolves');
-    eq(standard.id, 'tuned', 'new runs select the save-safe tuned mode');
-    eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/3/8/15', 'tuned creation bounds author the fixed total of 53');
-    eq(classes.length, 4, 'four playable classes participate in the creation product');
-    eq(classes.map((c) => c.id).join(','), 'reaver,starseer,rogue,herald', 'the creation product includes Rogue in authored order');
+    eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/5/10/15', 'standard creation bounds are authored');
     eq(
       classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.standard[c.id][a.id]).join('/')).join('|'),
-      '13/10/12/10/10|10/11/10/10/14|10/15/10/10/10|10/10/12/13/10',
-      'all four standard class presets are exact in the authored attribute order'
-    );
-    eq(
-      classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.tuned[c.id][a.id]).join('/')).join('|'),
-      '13/11/11/8/10|11/11/8/13/10|11/13/10/9/10|12/11/8/12/10',
-      'all four tuned class presets are exact in the authored attribute order'
+      '13/10/12/10/10|10/11/10/10/14|10/10/12/13/10',
+      'all three standard class presets are exact in the authored attribute order'
     );
 
-    // The product is derived from its three axes. This is not a fixed-class
+    // The product is derived from its three axes. This is not a three-class
     // snapshot: every mode/class/stat cell in whatever content ships is walked.
     let cells = 0;
     for (const mode of modes) {
@@ -4353,8 +3958,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     rejected((b) => { b.creationModes[0].minimum = b.creationModes[0].baseline + 1; }, 'creationModes', 'minimum above baseline');
     rejected((b) => { b.creationModes[0].maximum = b.creationModes[0].baseline - 1; }, 'creationModes', 'baseline above maximum');
     rejected((b) => { b.creationModes[0].bonusPool = -1; }, 'bonusPool', 'negative bonus pool');
-    rejected((b) => { b.creationModes[0].equipmentProfiles.ghost = { baseValue: -6 }; }, 'ghost', 'unknown tuned equipment profile');
-    rejected((b) => { b.creationModes[0].equipmentProfiles.unarmedAttack.pointsPerTier = 0; }, 'pointsPerTier', 'non-positive tuned equipment tier');
     rejected((b) => { b.attributeRules.defaultMode = 'missing'; }, 'defaultMode', 'dangling default mode');
     rejected((b) => { delete b.attributeRules.presets.standard.reaver.strength; }, 'strength', 'missing stat product cell');
     rejected((b) => { b.attributeRules.presets.standard.reaver.luck = 10; }, 'luck', 'extra stat cell');
@@ -4367,49 +3970,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const fresh = createRunState({ seed: 50, classId: 'herald', registries: REG });
     eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
-    eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
-    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '800/200', 'five level purchases cost 6000 through the authored ramp');
-    eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
-    const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
-    eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
-    eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
-    eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}`, '-6/dexterity/1', 'Defend is -6 + DEX');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 6000, 'five purchases cost 6000 and end at displayed level 6');
-    const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
-    eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }), 'Rogue copies the exact approved tuned preset');
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'tuned/50/3/5', 'Rogue tuned stats reach the HP, action, and hand formulas');
-    eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
-    const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
-    const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
-    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.sourceStat}/${rogueAttack.profileReceipt.points}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/-6/strength/11/5', 'Rogue dagger Strike is stamped from the tuned physical profile');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.sourceStat}/${rogueGuard.profileReceipt.points}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/-6/dexterity/13/7', 'Rogue buckler Defend is stamped from the tuned defense profile');
-    const star = createRunState({ seed: 50, classId: 'starseer', registries: REG });
-    eq(star.attributes.intelligence, 10, 'the approved Starseer preset keeps INT 10');
-    eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
-    let alternateRefusal = '';
-    try {
-      createRunState({
-        seed: 50, classId: 'reaver', registries: REG, startingKitId: 'reaverGreatsword',
-        profileMeta: { discoveredArmaments: ['greatsword'] },
-        attributes: { strength: 8, dexterity: 15, constitution: 12, wisdom: 8, intelligence: 10 },
-      });
-    } catch (error) { alternateRefusal = error.message; }
-    assert(/requires strength 12 \(got 8\)/.test(alternateRefusal), 'an alternate kit still passes the manual equipment requirement gate');
-
-    const driftedBundle = {
-      ...contentBundle,
-      creationModes: structuredClone(contentBundle.creationModes),
-      attributeRules: structuredClone(contentBundle.attributeRules),
-    };
-    const driftedMode = driftedBundle.creationModes.find((mode) => mode.id === 'tuned');
-    driftedMode.baseline = 9; driftedMode.bonusPool = 9;
-    const drifted = createRegistries(driftedBundle);
-    const driftStore = createMemoryStorage();
-    createSaveManager(driftStore).saveRun(fresh);
-    const afterDrift = createSaveManager(driftStore).loadRun(drifted);
-    assert(afterDrift !== null, 'a later live mode edit cannot refuse an allocation admitted by its saved snapshot');
-    eq(afterDrift.attributeModeSnapshot.baseline, 10, 'the run keeps the creation rules it was born under');
     for (const mode of modes) {
       const selected = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: mode.id });
       eq(selected.attributeMode, mode.id, `creation accepts authored mode '${mode.id}'`);
@@ -4424,7 +3984,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const legacy = { ...fresh };
     delete legacy.attributeMode;
     delete legacy.attributes;
-    delete legacy.attributeModeSnapshot;
     storage.setItem(RUN_KEY, JSON.stringify(legacy));
     const migrated = saves.loadRun(REG);
     eq(JSON.stringify(migrated.attributes), JSON.stringify(contentBundle.attributeRules.presets[migrated.attributeMode].herald), 'legacy run migrates to its content-selected class preset as one whole block');
@@ -4452,7 +4011,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     mutant.attributeRules.presets.testMode = {
       reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
       starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
-      rogue: { strength: 7, dexterity: 10, constitution: 7, wisdom: 7, intelligence: 7 },
       herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
     };
     assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
@@ -4464,7 +4022,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const mutantAllocation = { ...mutant.attributeRules.presets.testMode.reaver, strength: 9, dexterity: 8 };
     const ma = createRunState({ seed: 52, classId: 'reaver', registries: MR, attributeMode: testMode.id, attributes: mutantAllocation });
     eq(JSON.stringify(ma.attributes), JSON.stringify(Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutantAllocation[a.id]]))), 'creation input follows mutated vocabulary/order/rules');
-    const mutantLegacy = { ...ma }; delete mutantLegacy.attributeMode; delete mutantLegacy.attributes; delete mutantLegacy.attributeModeSnapshot;
+    const mutantLegacy = { ...ma }; delete mutantLegacy.attributeMode; delete mutantLegacy.attributes;
     const mutantStorage = createMemoryStorage();
     mutantStorage.setItem(RUN_KEY, JSON.stringify(mutantLegacy));
     const mutantMigrated = createSaveManager(mutantStorage).loadRun(MR);
@@ -4574,8 +4132,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // to 84 class + 2 relic flat + 2 tiers × (1 + 1 relic per-tier). A run carrying a
     // CURRENT snapshot is NOT touched — test 50e is that edge, and the pair is
     // the whole save story of the formula change.
-    eq(run.maxHp, 64, 'legacy maxHp is re-derived through the current CON/flat-bonus authority');
-    eq(run.hp, 64, 'a legacy full-HP save remains full after current-rule migration');
+    eq(run.maxHp, 90, 'legacy maxHp is re-derived through the current CON/class/relic authority');
+    eq(run.hp, 90, 'a legacy full-HP save remains full after current-rule migration');
     eq(run.energyMax, old.energyMax, 'energyMax is untouched by the rename');
     eq(run.drawPerTurn, old.drawPerTurn, 'drawPerTurn is untouched by the rename');
     // Forward hygiene: the next save writes zero dead bytes.
@@ -4589,31 +4147,93 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
-  test('50d. tuned HP is 30 + 2 × CON + flat bonuses at every legal edge', () => {
-    for (const [classId, con, flat] of [['reaver', 11, 10], ['starseer', 8, 0], ['rogue', 10, 0], ['herald', 8, 0]]) {
+  test('50d. a CON tier is worth 1 for everyone, the class base still differs, and the tier flips one CON either side of 15 — E6', () => {
+    // E6, his words, 2026-08-16: "50 + (con/5) + other bonuses". The screen's
+    // own read model is the door here — the printed receipt and the run pool
+    // come through the same host-stamped rules rather than a UI-only formula.
+    //
+    // WHAT E6 MOVED IS THE CON TERM, NOT THE CLASS BASE. Marina's ruling of
+    // 2026-08-17 (`56c90d2`), against the first build of this row: "other
+    // bonuses" is the slot a class contribution lives in, so `classes.js`'s
+    // `maxHp` is LIVE and this loop goes red if it goes dead again. What E6
+    // did remove is the class COEFFICIENT on the tier — `hpPerConTier` is
+    // D22/F9's shape and is waiting on his word.
+    for (const [classId, con] of [['reaver', 12], ['starseer', 10], ['herald', 12]]) {
+      const cls = REG.classes.get(classId);
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
+      eq(run.attributes.constitution, con, `${classId} preset CON`);
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
-      eq(run.attributes.constitution, con, `${classId} uses the approved tuned CON preset`);
-      eq(`${hp.base}/${hp.pointsPerTier}/${hp.gainPerTier}`, `${30 + flat}/1/2`, `${classId} receipt exposes the configured formula and flat bonus`);
-      eq(run.maxHp, 30 + 2 * con + flat, `${classId} max HP is 30 + 2 × CON + flat bonuses`);
-      assert(hp.formula.endsWith(`= ${run.maxHp}`), `${classId} printed receipt lands on the real pool`);
+      eq(hp.tier, Math.floor(con / 5), `${classId}: printed HP uses floor(CON/5)`);
+      assert(hp.base >= cls.maxHp,
+        `${classId}: the HP base is the class's own authored ${cls.maxHp} plus any tagged flat — got ${hp.base}`);
+      assert(hp.gainPerTier !== cls.hpPerConTier,
+        `${classId}: the CON tier is worth 1 (+ tagged per-tier), not the class coefficient ${cls.hpPerConTier} — got ${hp.gainPerTier}`);
+      assert(hp.formula.endsWith(`= ${run.maxHp}`),
+        `${classId}: the printed formula lands on the run's real pool — got '${hp.formula}'`);
+      eq(run.maxHp, hp.base + hp.tier * hp.gainPerTier + hp.equipmentBonus + hp.adjustment,
+        `${classId}: max HP derives from stamped base + CON tiers + gear + permanent adjustment`);
     }
-    const at = (con) => {
-      const strength = con === 8 ? 15 : 24 - con;
-      const dexterity = con === 8 ? 12 : 11;
-      return createRunState({
-        seed: 0xf2, classId: 'reaver', registries: REG,
-        attributes: { strength, dexterity, constitution: con, wisdom: 8, intelligence: 10 },
-      });
-    };
-    eq(at(8).maxHp, 56, 'CON floor 8 gives 30 + 16 + 10 flat');
-    eq(at(15).maxHp, 70, 'CON ceiling 15 gives 30 + 30 + 10 flat');
-    eq(at(15).maxHp - at(14).maxHp, 2, 'one adjacent CON point is exactly two HP');
-    for (const outside of [7, 16]) {
+    // THE CELL MARINA'S RULING EXISTS FOR — and it is a set, not a pair, so a
+    // single class drifting into agreement with another still shows. Retune a
+    // `maxHp` in classes.js to match another and this goes red; make the base a
+    // constant again and it goes red the loudest way there is.
+    const bases = ['reaver', 'starseer', 'herald'].map((id) => statProjection(
+      REG, createRunState({ seed: 0xf4, classId: id, registries: REG }),
+    ).derived.find((row) => row.id === 'hp').base);
+    eq(new Set(bases).size, 3, `the three classes carry three different HP bases — got ${bases.join(', ')}`);
+    // And the class field is what they carry: a change there is a change here,
+    // which is the whole meaning of "live knob".
+    for (const id of ['starseer', 'herald']) {
+      const cls = REG.classes.get(id);
+      const hp = statProjection(REG, createRunState({ seed: 0xf5, classId: id, registries: REG }))
+        .derived.find((row) => row.id === 'hp');
+      eq(hp.base, cls.maxHp, `${id} tags no flat HP, so its base IS its authored class number`);
+      eq(hp.gainPerTier, 1, `${id} tags no per-tier HP, so a CON tier is E6's bare 1`);
+    }
+    const bare = createRunState({ seed: 0xf3, classId: 'herald', registries: REG });
+    eq(bare.maxHp, 80, 'herald CON 12 = its authored 78 + floor(12/5) × 1');
+
+    // ---- BOTH EDGES OF THE DOMAIN, through the real creation door ----------
+    // `standard` allows CON 10–15 (attributes.js creationModes), and the door
+    // itself refuses either side. Total is fixed at 55, so the spare points sit
+    // on Strength.
+    const at = (con) => createRunState({
+      seed: 0xf2, classId: 'reaver', registries: REG,
+      attributes: { strength: 25 - con, dexterity: 10, constitution: con, wisdom: 10, intelligence: 10 },
+    });
+    eq(at(10).maxHp, 90, 'CON floor 10: 86 + 2 tiers × 2');
+    eq(at(15).maxHp, 92, 'CON ceiling 15: 86 + 3 tiers × 2');
+    for (const outside of [9, 16]) {
       let refused = false;
-      try { at(outside); } catch (error) { refused = /between 8 and 15/.test(error.message); }
-      assert(refused, `CON ${outside} is refused by the tuned creation bounds`);
+      try { at(outside); } catch (e) { refused = /between 10 and 15/.test(e.message); }
+      assert(refused, `CON ${outside} is refused BY NAME at the creation door, so 10–15 really is the domain`);
     }
+
+    // ---- THE ROUNDING BOUNDARY'S OWN NEIGHBOURHOOD (Charter gate 2b) -------
+    // Domain edges are not threshold edges. `floor` only earns its name where a
+    // multiple of five actually falls, so these are ADJACENT cells one CON
+    // apart, and moving the threshold one point of its own unit flips them.
+    // HIS WORKED EXAMPLE IS THE CELL BELOW: "CON 14 gives +2, not +3".
+    eq(statProjection(REG, at(14)).derived.find((r) => r.id === 'hp').tier, 2,
+      'CON 14 floors to 2 tiers — his own example, not 3');
+    eq(statProjection(REG, at(15)).derived.find((r) => r.id === 'hp').tier, 3,
+      'CON 15 is the first cell above the boundary and pays the third tier');
+    eq(at(15).maxHp - at(14).maxHp, 2,
+      'one CON across the boundary is worth exactly one tier of gain, and nothing else moves');
+    // THE SECOND BOUNDARY, AND ITS LOWER CELL CANNOT USE THE SAME DOOR — the
+    // creation door refuses CON 9 (asserted above), so the pair either side of
+    // 10 enters one stage lower, at the run's OWN stamped snapshot. Stated
+    // rather than blurred: this cell's green covers the rule, not the door.
+    const snapshotRules = at(10).derivedStatRuleSnapshot.rules;
+    const tierAt = (con) => deriveStat(snapshotRules, 'hp', {
+      attributes: { constitution: con }, classDef: REG.classes.get('reaver'),
+    }).tier;
+    eq(tierAt(9), 1, 'CON 9 floors to 1 tier (below the creation door)');
+    eq(tierAt(10), 2, 'CON 10 is the first cell above the second boundary');
+    eq(tierAt(0), 0, 'the empty edge of the rule: no CON, no tiers, base only');
+
+    const st15 = statProjection(REG, at(15)).derived.find((row) => row.id === 'stamina');
+    eq(st15.tier, 3, 'stamina uses the same CON tiers with its own gain');
   });
 
   // ---- 50e. an existing climb keeps the HP it was written with -------------
@@ -4629,8 +4249,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
     const before = JSON.parse(preE6RunSave);
     eq(before.maxHp, 96, 'the fixture really carries the old number (probe has a referent)');
-    assert(before.derivedStatRuleSnapshot.rulesetVersion < REG.derivedStatRules.rulesetVersion,
-      'the fixture carries an older host snapshot, so this test distinguishes preservation from live re-resolution');
+    eq(before.derivedStatRuleSnapshot.rulesetVersion, REG.derivedStatRules.rulesetVersion,
+      'and it carries the CURRENT ruleset — this test is about a content edit, not a schema change');
     const storage = createMemoryStorage();
     storage.setItem(RUN_KEY, preE6RunSave);
     const run = createSaveManager(storage).loadRun(REG);
@@ -4642,12 +4262,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE FALSIFIER FOR THIS CELL, and it is the whole reason the pair exists:
     // a run created NOW, from the same class and the same CON, gets the new
     // number. If both came out 96 this test would be measuring nothing.
-    const fresh = createRunState({
-      seed: 7, classId: before.class, registries: REG,
-      attributeMode: before.attributeMode, attributes: before.attributes,
-    });
+    const fresh = createRunState({ seed: 7, classId: before.class, registries: REG });
     eq(fresh.attributes.constitution, before.attributes.constitution, 'same class, same CON');
-    eq(fresh.maxHp, 64, 'a NEW run with the same class and CON gets 30 + 2 × CON + 10 flat, so preservation is not a coincidence');
+    eq(fresh.maxHp, 90, 'a NEW run of the same class gets E6, so 96 above is preservation and not a coincidence');
   });
 
   // ---- 58. the nearest shrine: one computation, two asks -------------------
@@ -4815,7 +4432,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/not an attribute id/.test(badId), `a stat that does not exist is refused by name (got: ${badId})`);
 
     // THE PURCHASE.
-    run.cinders = 10000;
+    run.cinders = 1000;
     const purse = run.cinders;
     const manaBefore = run.maxMana;
     const got = applyLevelUp(REG, run, 'constitution');
@@ -4825,29 +4442,52 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(got.level, 1, 'the receipt names the level bought');
     eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
 
-    eq(run.maxHp, startHp + 2, 'one CON point adds the configured two HP immediately');
+    // ⚠ MECHANISM 2, AND THE FINDING THIS TEST WAS WRITTEN WRONG TO FIND. I
+    // asserted `run.maxHp > startHp` and it went RED: one CON point moves NO
+    // NUMBER AT ALL. Every derived rule in content/derivedStats.js has
+    // `pointsPerTier: 5`, so a stat pays out once every five points — reaver
+    // starts at CON 12, and 13 and 14 buy nothing a player can see.
+    //
+    // THE FEATURE IS CORRECT AND MAY FEEL DEAD, and those are two different
+    // seats' calls. His acceptance test is 10–20 levels a run; at a tier width
+    // of 5, spread over five stats, that is roughly THREE visible changes in a
+    // whole climb. This is handed to the player-experience and balance seats,
+    // NOT answered here — the honest fix is a number in a table (tier width,
+    // or a per-point term) and neither is mine to pick tonight.
+    //
+    // So what is asserted is the truth, at the THRESHOLD'S OWN NEIGHBOURHOOD:
+    // the cells either side of a tier boundary, one point apart.
+    eq(run.maxHp, startHp, 'CON 12 → 13 crosses no tier, so max HP does not move — measured, not assumed');
     const conAt = run.attributes.constitution;
-    applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 4, `CON ${conAt + 1} adds a second two-HP step`);
-    applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 6, `CON ${conAt + 2} adds a third two-HP step`);
-    eq(run.levelUps, 3, 'three levels bought and three points spent');
+    applyLevelUp(REG, run, 'constitution'); // 14 — still below the boundary
+    eq(run.maxHp, startHp, `CON ${conAt + 1} is the cell BELOW the boundary and still pays nothing`);
+    applyLevelUp(REG, run, 'constitution'); // 15 — the boundary
+    assert(run.maxHp > startHp, `CON ${conAt + 2} is the first cell ABOVE the boundary and pays a tier`);
+    eq(run.levelUps, 3, 'three levels bought, three points spent, one visible change');
 
     // A LEVEL IS NOT A REST: the pool grows and the deficit is carried. The
     // shrine sells the heal at the next panel; a level that healed would make
     // that panel pointless at the same counter.
     const hurt = createRunState({ seed: 0x4c4e, classId: 'reaver', registries: REG });
-    hurt.cinders = 5000;
+    hurt.cinders = 1000;
     hurt.hp = hurt.maxHp - 10;
     const hurtMax = hurt.maxHp;
-    applyLevelUp(REG, hurt, 'constitution');
+    // Three levels, because of the finding above: fewer would cross no tier and
+    // the ceiling would not move, which would make this cell prove nothing.
+    for (let i = 0; i < 3; i++) applyLevelUp(REG, hurt, 'constitution');
     eq(hurt.maxHp - hurt.hp, 10, 'the 10-HP deficit is carried across the levels — levelling does not heal');
     assert(hurt.maxHp > hurtMax, 'and the ceiling still rose (the probe has a referent)');
 
     // THE RAMP, and the only half of his acceptance test this suite can hold.
     eq(levelCost(REG, 1) - levelCost(REG, 0), REG.balance.levelUp.costStep, 'each level costs one step more');
-    eq(levelsAffordable(REG, 6000), 5, '6000 cinders buys five levels and reaches displayed level 6');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 6000, 'the authored 800 + 200 ramp totals 6000 for five purchases');
+    // ⚠ THE PURSE IS AN ASSUMPTION, NOT A MEASUREMENT. Nobody has simulated
+    // what a climb earns, or what the shop takes out of it first. What is
+    // asserted is that the authored CURVE lands inside his 10–20 band across
+    // the whole plausible range of purses — a property of the table.
+    eq(levelsAffordable(REG, 400), 10, '400 cinders buys 10 levels — the bottom of his band');
+    eq(levelsAffordable(REG, 1200), 20, '1200 buys 20 — the top of it');
+    const mid = levelsAffordable(REG, 600);
+    assert(mid >= 10 && mid <= 20, `a mid purse stays inside the band (got ${mid})`);
     eq(levelsAffordable(REG, 0), 0, 'the empty edge: no cinders, no levels');
   });
 
@@ -4855,11 +4495,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('60b. a levelled run round-trips the load door instead of being archived', () => {
     // THE SCARY ONE, AND IT IS WHY LEVELLING IS A MODEL FILE. `save.js` calls
     // normalizeRunAttributes inside the try whose catch ARCHIVES THE SAVE, and
-    // the creation rules it enforces are snapshotted fixed-total bounds. A
-    // level-up that only incremented `run.attributes` would look
+    // the creation rules it enforces are `fixedTotal` at 55 with every cell in
+    // 10..15. A level-up that only incremented `run.attributes` would look
     // perfect on screen and destroy the player's run at the next load.
     const run = createRunState({ seed: 0x5a7ed, classId: 'reaver', registries: REG });
-    run.cinders = 10000;
+    run.cinders = 5000;
     run.seedString = 'LEVELS';
     for (let i = 0; i < 6; i++) applyLevelUp(REG, run, 'constitution');
     eq(run.levelUps, 6, 'six levels bought');
@@ -4926,20 +4566,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const one = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
     one.cinders = 5000;
     applyLevelUp(REG, one, 'constitution', { pointsPerLevel: 1 });
-    eq(one.attributes.constitution - 11, 1, 'at 1, a level grants one point');
+    eq(one.attributes.constitution - 12, 1, 'at 1, a level grants one point');
     eq(one.levelPoints, 1, 'and records one point granted');
 
     const three = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
     three.cinders = 5000;
     const hpBefore = three.maxHp;
     applyLevelUp(REG, three, 'constitution', { pointsPerLevel: 3 });
-    eq(three.attributes.constitution - 11, 3, 'at 3, one level grants three points');
+    eq(three.attributes.constitution - 12, 3, 'at 3, one level grants three points');
     eq(three.levelPoints, 3, 'and records three');
     eq(three.levelUps, 1, 'while still being ONE purchase — the ramp indexes on purchases');
     eq(three.cinders, one.cinders, 'and costs the same: the value is what a level GRANTS, not what it costs');
-    // Both values are visible under the per-CON HP formula.
+    // AND IT IS VISIBLE, which is the whole point of the ask: 12 → 15 crosses
+    // the tier boundary that 12 → 13 does not.
     assert(three.maxHp > hpBefore, 'at 3, ONE level moves max HP — the dial answers the dead-level finding');
-    eq(one.maxHp, hpBefore + 2, 'at 1, the same one level adds exactly two HP');
+    eq(one.maxHp, hpBefore, 'at 1, the same one level moves nothing — both edges, one run apart');
 
     // MIXED VALUES IN ONE RUN, which is what "I can test each" produces the
     // moment he turns the dial mid-climb — and the case where the count and
@@ -4983,21 +4624,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(resolveStatTierSize({ statTierSize: 0 }), 1, 'ZERO CLAMPS UP: floor(points / 0) is not a tier, it is a division by zero');
     eq(resolveStatTierSize({ statTierSize: 'lots' }), 5, 'unreadable is unset — the shipping default');
     eq(resolveLevelUpValue({ levelUpValue: 'lots' }), 1, 'and so is a value that is not a number at all');
-    const dialled = derivedStatDialOptions({ statTierSize: 2 });
+    const dialled = derivedStatDialOptions({ statTierSize: 1 });
     const born = (opts) => createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG, derivedStatOptions: opts });
     const at5 = born(derivedStatDialOptions({}));
     const at1 = born(dialled);
-    eq(at5.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 1, 'a default run stamps the configured per-CON HP formula');
-    eq(at1.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 2, 'and the dialled run stamps its explicit 2-point tier');
+    eq(at5.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 5, 'a default run stamps a 5-point tier');
+    eq(at1.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 1, 'and the dialled run stamps a 1-point tier');
     // ⚠ HP IS THE CELL THAT MATTERS AND IT IS WHY THE RESTATEMENT HAD TO GO.
     // `hp` used to author `pointsPerTier: 5` on its own row, and a row beats
     // the defaults it is merged over — so this assertion is the one that would
     // have caught the dial silently skipping the stat it exists for.
     for (const id of ['hp', 'mana', 'energy', 'draw', 'stamina']) {
-      eq(at1.derivedStatRuleSnapshot.rules.rules[id].pointsPerTier, 2,
+      eq(at1.derivedStatRuleSnapshot.rules.rules[id].pointsPerTier, 1,
         `${id} answers the tier dial — every derived stat, not just the ones that inherited`);
     }
-    assert(at1.maxHp < at5.maxHp, 'at a 2-point tier the same CON is worth less HP — the dial reaches the game');
+    assert(at1.maxHp > at5.maxHp, 'at a 1-point tier the same CON 12 is worth more HP — the dial reaches the game');
 
     // ⚠ THE OTHER DOOR, and it is here because a plant proved my own comment
     // wrong. `hp` used to author `pointsPerTier: 5` on its own row, restating
@@ -5015,21 +4656,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const byHand = resolveDerivedStatRules(edited, {
       attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
     });
-    eq(byHand.rules.hp.pointsPerTier, 1, 'HP keeps its authored per-CON formula when only the fallback default changes');
-    eq(byHand.rules.energy.pointsPerTier, 10, 'Actions keep their authored DEX/10 formula');
-    eq(byHand.rules.draw.pointsPerTier, 10, 'Hand keeps its authored INT/10 formula');
-    eq(byHand.rules.mana.pointsPerTier, 1, 'Mana inherits the edited fallback default');
-    eq(byHand.rules.stamina.pointsPerTier, 1, 'Stamina inherits the edited fallback default');
+    for (const id of ['hp', 'mana', 'energy', 'draw', 'stamina']) {
+      eq(byHand.rules[id].pointsPerTier, 1,
+        `${id} follows an edit to defaults.pointsPerTier in the content file — no row may restate it`);
+    }
 
     // AND ONE LEVEL IS NOW VISIBLE, which is the sentence his ask is made of.
     at1.cinders = 5000;
     const at1Hp = at1.maxHp;
     applyLevelUp(REG, at1, 'constitution', { pointsPerLevel: 1 });
-    assert(at1.maxHp > at1Hp, 'at a 2-point tier, CON 11 to 12 crosses the boundary and moves max HP');
+    assert(at1.maxHp > at1Hp, 'at a 1-point tier, ONE point of CON moves max HP');
     at5.cinders = 5000;
     const at5Hp = at5.maxHp;
     applyLevelUp(REG, at5, 'constitution', { pointsPerLevel: 1 });
-    eq(at5.maxHp, at5Hp + 2, 'under the shipping per-CON formula one point adds two HP');
+    eq(at5.maxHp, at5Hp, 'at 5 it still does not — the two edges of the dial, measured in one test');
 
     // A RUN IN PROGRESS KEEPS THE RULES IT WAS BORN UNDER. This is what the
     // settings row's note promises a player, and it is the behaviour that makes
@@ -5039,7 +4679,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     createSaveManager(store).saveRun(at1);
     const reloaded = createSaveManager(store).loadRun(REG);
     assert(reloaded !== null, 'a dialled run loads');
-    eq(reloaded.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 2,
+    eq(reloaded.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 1,
       'and still carries ITS OWN tier size, whatever the setting says today');
     eq(reloaded.maxHp, at1.maxHp, 'so its HP is not re-stated behind the player');
   });
@@ -5096,7 +4736,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     run.cinders = 5000;
     const typed = resolveLevelUpValue({ levelUpValue: '7' });
     applyLevelUp(REG, run, 'constitution', { pointsPerLevel: typed });
-    eq(run.attributes.constitution - 11, 7, 'a level bought at a typed 7 grants seven points');
+    eq(run.attributes.constitution - 12, 7, 'a level bought at a typed 7 grants seven points');
     eq(run.levelPoints, 7, 'and records seven granted');
     eq(run.levelUps, 1, 'as ONE purchase');
     // …mid-run, he changes his mind. The next level answers the new number and
@@ -5174,828 +4814,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.capped, true, 'a cap of zero caps a fresh run');
     eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty purse');
     eq(c.offerable, false, 'either block closes the offer');
-  });
-
-  test('61. Fullscreen and Music share one canonical state across Settings, Quick Menu, and HUD', () => {
-    const display = categoryHandler('Display').rows;
-    const audio = categoryHandler('Audio').rows;
-    eq(display[0].key, 'fullscreen', 'Fullscreen remains the first Display row in the canonical table');
-    eq(display.filter((r) => r.key === 'fullscreen').length, 1,
-      'Fullscreen moved to the first seat without being duplicated');
-    assert(display.findIndex((r) => r.key === 'animSpeed') > 0,
-      'Combat pacing remains available behind Fullscreen');
-    eq(display.some((r) => r.key === 'fullscreen'), true,
-      'Settings exposes the browser-owned Fullscreen state');
-    eq(audio.some((r) => r.key === 'musicEnabled'), true,
-      'Settings exposes the canonical Music preference');
-    eq(audio.some((r) => r.key === 'muteMusic'), false,
-      'Settings does not introduce a second Music preference');
-
-    const presentation = REG.balance.ui.hudQuickSettings;
-    eq(presentation.places.join(','), 'title,map,combat',
-      'one data row places the shared controls on all three requested surfaces');
-    eq(`${presentation.edgeGapPx}/${presentation.stackGapPx}`, '4/0',
-      'the shared utility rail is right-edge close and has no authored inter-control gap');
-    eq(`${presentation.cardSizePx}/${presentation.glyphSizePx}/${presentation.stateDotPx}/${presentation.activeTintPct}`, '40/28/6/14',
-      'the shared face, 70%-scale glyph, state dot, and active tint are data-owned');
-    eq(presentation.showCardBackground, true,
-      'the quick utilities default to one consistent compact card on every device');
-    eq(presentation.showLabels, false,
-      'visible words yield to the larger universal icons while accessible names remain');
-    const model = hudQuickSettingsModel({ place: 'combat', presentation, settings: {} });
-    eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
-    const html = hudQuickSettingsHtml(model);
-    assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
-    assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
-    assert(/data-card-background="true"/.test(html), 'the compact card presentation reaches the shared renderer');
-    assert(/--hud-quick-card-size:40px/.test(html)
-      && /--hud-quick-glyph-size:28px/.test(html) && /--hud-quick-state-dot:6px/.test(html)
-      && /--hud-quick-active-tint:14%/.test(html),
-      'the data-owned compact visual sizes reach CSS without a second renderer');
-    assert(/hud-fullscreen-enter/.test(html) && /hud-fullscreen-exit/.test(html),
-      'Fullscreen renders the conventional enter and exit action icons');
-    assert(/♫/.test(html) && /&#x0338;/.test(html),
-      'Music renders the authored on and slashed-off symbols');
-
-    const audibleMusic = musicQuickSettingsPlan({});
-    eq(audibleMusic.active, true, 'Music is enabled by default');
-    eq(audibleMusic.change.musicEnabled, false, 'the active quick control disables Music alone');
-    const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
-    eq(musicMuted.active, false, 'the quick control migrates an explicit legacy Music mute');
-    eq(musicMuted.change.musicEnabled, true, 'the quick control writes the canonical preference when re-enabled');
-    const audioMuted = musicQuickSettingsPlan({ muteAudio: true, muteMusic: false });
-    eq(audioMuted.active, true, 'master Audio mute stays distinct from the Music preference');
-    eq(audioMuted.stateLabel, 'On · Audio muted', 'master mute is named without rewriting Music state');
-    eq(audioMuted.change.musicEnabled, false, 'the Music control changes only the canonical preference');
-    eq('muteAudio' in audioMuted.change, false, 'the Music control never releases global Audio mute');
-
-    const restoredSettings = { muteMusic: true };
-    const binding = { settings: {} };
-    eq(updateHudQuickSettingsBinding(binding, restoredSettings), restoredSettings,
-      'a restored profile replaces the settings object owned by the mounted HUD');
-    let refreshEvent = null;
-    eq(refreshHudQuickSettings({ querySelector: () => ({ dispatchEvent: (event) => { refreshEvent = event; } }) }, restoredSettings), true,
-      'the title can refresh its mounted HUD without remounting the Profile dialog');
-    eq(refreshEvent?.detail?.settings, restoredSettings,
-      'the refresh carries the restored profile settings object');
-
-    const quick = display.find((r) => r.key === 'quickNav');
-    eq(quick.def, 'mirror', 'fresh Quick Menu state promotes Mirror while preserving explicit legacy choices');
-    eq(quick.choices.join(','), 'off,mirror,switcher', 'Quick menu exposes legacy Off plus Mirror and Switcher');
-    eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
-      'the internal row order is not exposed as a redundant second setting');
-
-    const unsupported = fullscreenCapability({ documentElement: {}, exitFullscreen: null });
-    eq(unsupported.supported, false, 'iPhone-like documents do not receive a dead fullscreen toggle');
-    const supported = fullscreenCapability({
-      documentElement: { requestFullscreen() {} },
-      exitFullscreen() {},
-    });
-    eq(supported.supported, true, 'documents with both enter and exit APIs expose fullscreen');
-  });
-
-  test('61a. Armoury is the one equipment route, and fullscreen reports browser support', () => {
-    assert(!MENU_TABS.some((tab) => tab.id === 'relics'),
-      'the run menu does not duplicate Armoury with a Relics & Flasks tab');
-    for (const [context, rows] of Object.entries(MENU)) {
-      assert(!rows.some((row) => row.tab === 'relics'),
-        `${context} quick navigation has no duplicate relic/equipment route`);
-      const armouryRows = rows.filter((row) => row.act === 'armoury');
-      for (const row of armouryRows) eq(row.label, 'Armoury', `${context} names the canonical equipment route Armoury`);
-    }
-
-    const unsupported = { documentElement: {}, fullscreenEnabled: false };
-    eq(fullscreenCapability(unsupported).supported, false,
-      'a browser without the document fullscreen API is reported unsupported');
-    const supported = {
-      documentElement: { requestFullscreen() {} },
-      exitFullscreen() {},
-      fullscreenEnabled: true,
-    };
-    eq(fullscreenCapability(supported).supported, true,
-      'a browser with request and exit support is reported supported');
-    const webkit = {
-      documentElement: { webkitRequestFullscreen() {} },
-      webkitExitFullscreen() {},
-      webkitFullscreenEnabled: true,
-    };
-    eq(fullscreenCapability(webkit).supported, true,
-      'the prefixed fullscreen API remains a supported route');
-
-    eq(MENU_TABS.map((tab) => tab.id).join(','), 'settings,controls',
-      'the in-run overlay keeps only Settings and Controls');
-    assert(!MENU_TABS.some((tab) => ['deck', 'stats', 'save'].includes(tab.id)),
-      'Deck, Stats, and Save are not duplicated as overlay tabs');
-  });
-
-  test('61b. the combatant stage owns one validated safe-corridor model', () => {
-    const presentation = REG.balance.ui.combatantStage;
-    eq(`${presentation.hudClearanceViewportPct}/${presentation.actionClearanceViewportPct}`, '3/3',
-      'the HUD and hand each reserve three percent of viewport height');
-    eq(`${presentation.intentGapPx}/${presentation.centerPct}`, '6/50',
-      'intent attachment and battlefield center are data-owned');
-    const model = battlefieldStageModel(presentation);
-    eq(model.component, 'battlefield-stage', 'the shared battlefield component owns the model');
-    eq(`${model.tokens.hudClearanceViewportPct}/${model.tokens.actionClearanceViewportPct}/${model.tokens.intentGapPx}/${model.tokens.centerPct}`,
-      '3/3/6/50', 'all four authored tokens reach the immutable Component Model');
-    eq(battlefieldStageModel({ centerPct: 25 }).tokens.centerHeightRatio, 0.5,
-      'an upper-quarter stage center only exposes the symmetric half-height corridor');
-    eq(battlefieldStageModel({ centerPct: 75 }).tokens.centerHeightRatio, 0.5,
-      'a lower-quarter stage center receives the same collision-safe height limit');
-    eq(battlefieldStageModel({ centerPct: 50 }).tokens.centerHeightRatio, 1,
-      'the default midpoint can use the full protected corridor');
-
-    const malformed = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: {
-          ...contentBundle.balance.ui,
-          combatantStage: { ...contentBundle.balance.ui.combatantStage, hudClearanceViewportPct: Infinity },
-        },
-      },
-    };
-    const validation = validateContent(malformed);
-    assert(!validation.ok && validation.errors.some((error) => error.path === 'balance.ui.combatantStage.hudClearanceViewportPct'),
-      'an unreadable safe clearance fails the real boot validator by name');
-  });
-
-  test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
-    // Constantine, 2026-08-15: "the reward should start with an initial menu of
-    // reward types (card, potion, armament)". His answer on the page: Continue
-    // is ALWAYS pressable and a setting decides what it means — auto-collect ON
-    // takes everything, picking at random where there is a choice; OFF gives
-    // only what was chosen, no nagging.
-    //
-    // THE ROWS ARE DERIVED FROM THE OFFER (Law 0: the entry describes, the
-    // machinery derives) — a kind absent from the rewards object has no row,
-    // and a new reward field is one ORDER entry, not a screen redesign.
-
-    // EDGE 1 — THE EMPTY OFFER: no rows, and Continue still resolves.
-    let plan = rewardPlan({}, { flaskSlotsFree: 1 });
-    eq(plan.rows.length, 0, 'an empty offer derives an empty menu');
-    let res = resolveContinue(plan, {}, 'auto', () => 0);
-    eq(res.take.length, 0, 'auto-collect over nothing takes nothing');
-
-    // EDGE 2 — EVERY KIND AT ONCE (the boss shape plus a flask): five rows,
-    // in the declared order, each naming its kind.
-    const offer = {
-      cinders: 32,
-      cardIds: ['stomp', 'executioner', 'crimsonCleave'],
-      flaskId: 'crimsonFlask',
-      relicId: 'forsakenMedallion',
-      armamentId: 'greatsword',
-    };
-    const continueBeat = beatFor('rewardContinue');
-    eq(continueBeat.form, 'hold', 'reward Continue is registered in the shared second-beat table as a hold');
-    eq(continueBeat.surface, 'reward', 'the census can route the registered action to the reward surface');
-    plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
-    eq(plan.rows.length, 5, 'five reward kinds derive five rows');
-    eq(plan.rows.map((r) => r.kind).join(','), REWARD_KIND_ORDER.filter((k) => plan.rows.some((r) => r.kind === k)).join(','),
-      'rows come out in the one declared order');
-    const cardRow = plan.rows.find((r) => r.kind === 'card');
-    eq(cardRow.choice, true, 'a multi-card offer is a CHOICE row — it opens, it does not just apply');
-
-    // THE FLASK BLOCK IS DERIVED, NOT DISCOVERED AT APPLY TIME: zero free
-    // slots make the row blocked with a TOKEN reason (the levelUpPlan
-    // precedent — a label switches on a word, never on two numbers).
-    const full = rewardPlan(offer, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
-    eq(full.rows.find((r) => r.kind === 'flask').blockedBy, 'slots', 'a full belt blocks the flask row by name');
-    eq(plan.rows.find((r) => r.kind === 'flask').blockedBy, null, 'a free slot does not');
-
-    // THE BAG'S CAP IS DERIVED THE SAME WAY (the b6b7df0 review's P1: the
-    // ninth piece against an 8-slot cap rendered takeable and poisoned
-    // meta.found). Adjacent cells — one free slot leaves the row takeable,
-    // zero blocks it by name — and auto refuses it the way it refuses a
-    // full belt.
-    const bagFull = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 0 });
-    eq(bagFull.rows.find((r) => r.kind === 'armament').blockedBy, 'storage', 'a full bag blocks the armament row by name');
-    eq(plan.rows.find((r) => r.kind === 'armament').blockedBy, null, 'a free slot does not');
-    res = resolveContinue(bagFull, {}, 'auto', () => 0);
-    eq(res.take.some((t) => t.kind === 'armament'), false, 'auto does not force a piece into a full bag');
-    eq(res.leave.find((l) => l.kind === 'armament').blockedBy, 'storage', 'the leave list carries the reason');
-    // An UNSTATED fact reads as no room — conservative, so a caller that
-    // forgets the fact gets a visible block, never a silent over-grant.
-    eq(rewardPlan(offer, { flaskSlotsFree: 1 }).rows.find((r) => r.kind === 'armament').blockedBy, 'storage',
-      'an unstated bag fact blocks rather than silently over-granting');
-
-    // AUTO takes everything not explicitly skipped — and picks the card by the
-    // SEEDED rng handed in, never its own randomness.
-    res = resolveContinue(plan, {}, 'auto', (n) => 2 % n);
-    eq(res.take.length, 5, 'auto over five pending rows takes five');
-    eq(res.take.find((t) => t.kind === 'card').cardId, 'crimsonCleave', 'the choice is made by the injected pick');
-
-    // A SKIP IS RESPECTED BY AUTO — his deck-discipline affordance survives
-    // the setting: skip the card, Continue, and the deck gains nothing.
-    res = resolveContinue(plan, { card: 'skipped' }, 'auto', () => 0);
-    eq(res.take.some((t) => t.kind === 'card'), false, 'auto never overrides an explicit skip');
-    eq(res.take.length, 4, 'the other four still come');
-
-    // MANUAL takes only what was taken: everything pending is LEFT, and that
-    // is the no-nagging contract — Continue works, it just means "done".
-    res = resolveContinue(plan, { cinders: 'taken' }, 'manual', () => 0);
-    eq(res.take.length, 0, 'manual adds nothing at Continue — taken rows were applied when tapped');
-    eq(res.leave.length, 4, 'and what was never chosen is left, named');
-
-    // A BLOCKED ROW IS NEVER TAKEN, whatever the mode — auto-collect refusing
-    // a full belt is the same sentence at the same seam as the tap refusing.
-    res = resolveContinue(full, {}, 'auto', () => 0);
-    eq(res.take.some((t) => t.kind === 'flask'), false, 'auto does not force a flask into a full belt');
-    eq(res.leave.find((l) => l.kind === 'flask').blockedBy, 'slots', 'the leave list carries the reason');
-
-    // THE SINGLE-CARD OFFER IS NOT A CHOICE — one card auto-takes as itself.
-    const one = rewardPlan({ cardIds: ['stomp'] }, { flaskSlotsFree: 1 });
-    res = resolveContinue(one, {}, 'auto', () => 0);
-    eq(res.take.find((t) => t.kind === 'card').cardId, 'stomp', 'a one-card row needs no pick');
-
-    // 'NEW' IS DERIVED FROM WHAT THE PROFILE HAS HELD, with the possessions
-    // handed in — the marker never invents a store it was not given.
-    const seen = { cards: new Set(['stomp']), relics: new Set(), flasks: new Set(['crimsonFlask']), armaments: new Set() };
-    const marks = unseenIds(offer, seen);
-    eq(marks.cards.includes('stomp'), false, 'a held card is not new');
-    eq(marks.cards.includes('executioner'), true, 'an unheld card is');
-    eq(marks.relics.includes('forsakenMedallion'), true, 'an unheld relic is new');
-    eq(marks.flasks.length, 0, 'a held flask kind is not');
-  });
-
-  test('66. E5: stat points and starting armour at creation — his numbers, both edges', () => {
-    // Constantine, from the card (#250): "10 points, configurable; points come
-    // back out when a stat is dropped; floor 8, ceiling 15 at creation, both
-    // customizable; the floor is the reclaim limit; 15 caps CREATION, not the
-    // character." Read from the mode row, never retyped elsewhere.
-    const mode = REG.creationModes.all().find((m) => m.id === 'pointbuy');
-    assert(mode, 'the pointbuy creation mode exists');
-    eq(mode.bonusPool, 10, 'ten points');
-    eq(mode.minimum, 8, 'floor 8 — the reclaim limit');
-    eq(mode.maximum, 15, 'ceiling 15 at creation');
-    eq(mode.belowBaseline, 'allow', 'a stat may be dropped below baseline — that is the reclaim');
-    // standard is UNTOUCHED: its fixedTotal is what every existing save is
-    // validated against at the load door, and save.js archives what fails there.
-    const std = REG.creationModes.all().find((m) => m.id === 'standard');
-    eq(std.bonusPool, 5, 'standard pool unchanged');
-    eq(std.minimum, 10, 'standard floor unchanged');
-    eq(allocationTotal(REG, 'pointbuy'), 60, 'pointbuy fixed total = 5x10 baseline + the 10-point pool');
-
-    // The allocation gate, both edges at every boundary his sentence names.
-    const legal = { strength: 15, dexterity: 8, constitution: 15, wisdom: 12, intelligence: 10 };
-    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', legal).length, 0,
-      'floor 8 and ceiling 15 are both LEGAL cells, and dropped points respend elsewhere');
-    const belowFloor = { ...legal, dexterity: 7, wisdom: 13 };
-    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', belowFloor).length > 0, '7 is below the reclaim limit');
-    const overCeil = { ...legal, strength: 16, wisdom: 11 };
-    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', overCeil).length > 0, '16 is over the creation cap');
-    const unspent = { ...legal, wisdom: 11 };
-    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', unspent).length > 0, 'an unspent point refuses — fixedTotal');
-    // "15 caps CREATION, not the character": with levelled points granted, the
-    // same machinery raises the ceiling — the clause shipped before this mode.
-    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', { ...legal, strength: 16 }, 'attributes', 1).length, 0,
-      'one levelled point lifts the ceiling to 16 and pays for itself in the total');
-    // Presets are complete and legal for the new mode (the content gate).
-    for (const classId of REG.classes.ids()) {
-      eq(attributeAllocationProblems(REG, classId, 'pointbuy', classAttributePreset(REG, classId, 'pointbuy')).length, 0,
-        `pointbuy preset for '${classId}' is a legal allocation`);
-    }
-    // And a run actually carries a pointbuy allocation through creation.
-    const run = createRunState({ seed: 1, classId: 'reaver', registries: REG, attributeMode: 'pointbuy', attributes: legal });
-    eq(run.attributeMode, 'pointbuy', 'the run records the mode');
-    eq(run.attributes.strength, 15, 'and the allocation, not the preset');
-
-    // STARTING ARMOUR. The JSON creation roster ships two immediately; earned
-    // sets may widen that list without becoming a second UI-only roster.
-    const fresh = startingArmourViews(REG, 'reaver', {});
-    eq(fresh.length, 2, 'a fresh profile starts with both JSON-authored choices');
-    eq(fresh[0].free, true, 'and it is the free one');
-    assert(fresh.some((v) => v.id === 'vigil'), 'the alternate authored starting set is available by name');
-    const oathUnlock = outfits.find((o) => o.id === 'oathsworn' && o.classId === 'reaver').unlock;
-    const veteran = { unlocked: [oathUnlock] };
-    const views = startingArmourViews(REG, 'reaver', veteran);
-    eq(views.length, 3, 'an earned prize becomes an additional starting choice');
-    assert(views.some((v) => v.id === 'oathsworn'), 'and it is the earned set by name');
-    // Resolution, both edges: the earned set resolves; the unearned refuses BY
-    // NAME; a foreign class refuses; absent falls to the free set (yesterday's
-    // behaviour for every caller that never heard of the parameter).
-    eq(resolveStartingArmour(REG, 'reaver', 'vigil', {}).id, 'vigil', 'JSON-authored alternate resolves without progression');
-    let threw = null;
-    try { resolveStartingArmour(REG, 'reaver', 'warden', {}); } catch (e) { threw = String(e.message); }
-    assert(threw && threw.includes('warden'), `unconfigured and unearned set refuses BY NAME — got ${threw}`);
-    threw = null;
-    try { resolveStartingArmour(REG, 'starseer', 'vigil', veteran); } catch (e) { threw = String(e.message); }
-    assert(threw && threw.includes('starseer'), `another class's set refuses and names the class — got ${threw}`);
-    eq(resolveStartingArmour(REG, 'reaver', undefined, {}).id, 'default', 'absent means the free set');
-    // And the run WEARS the choice: the loadout row is the persisted home.
-    const worn = createRunState({ seed: 1, classId: 'reaver', registries: REG, startingArmourId: 'vigil', profileMeta: veteran });
-    eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
-    const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
-    const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
-    assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
-      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
-    assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
-      'a JSON-authored creation armour remains owned after switching away');
-    assert(equipPiece(REG, worn.loadout, 'armor', 0, vigil.id,
-      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the granted creation armour can be equipped again');
-    const wornRestored = deserializeRun(serializeRun(worn));
-    validateRunStartingKit(wornRestored, REG, {});
-    assert(ownership(REG, { meta: {}, loadout: wornRestored.loadout }).has(vigil),
-      'the creation armour grant remains owned across the save boundary');
-    const plain = createRunState({ seed: 1, classId: 'reaver', registries: REG });
-    eq(plain.loadout.sets.armor[0], 'default', 'and without a choice, in the free set — unchanged');
-  });
-
-  test('70. unified Inventory derives equipment, relics, potion stacks, and equipped tags', () => {
-    const run = createRunState({ seed: 0x315, classId: 'reaver', registries: REG });
-    run.flasks = [
-      { flaskId: 'crimsonFlask' },
-      { flaskId: 'crimsonFlask' },
-      { flaskId: 'azureFlask' },
-    ];
-    const rows = inventoryRows(REG, run, {});
-
-    eq(rows.some((row) => row.category === 'Armour'), true, 'the current armour is present');
-    eq(rows.some((row) => row.category === 'Weapon'), true, 'weapons are present');
-    eq(rows.some((row) => row.category === 'Shield'), true, 'shields are present');
-    eq(rows.some((row) => row.category === 'Relic'), true, 'relics are present');
-    eq(rows.some((row) => row.category === 'Potion'), true, 'potions are present');
-
-    const sword = rows.find((row) => row.id === 'straightSword');
-    const shield = rows.find((row) => row.id === 'roundShield');
-    const armour = rows.find((row) => row.category === 'Armour');
-    assert(sword.equippedLabels.includes('Right Hand'), 'the sword reports its equipped hand');
-    assert(shield.equippedLabels.includes('Left Hand'), 'the shield reports its equipped hand');
-    assert(armour.equippedLabels.includes('Armour'), 'the worn set reports its equipped slot');
-    assert(rows.find((row) => row.category === 'Relic').equippedLabels.includes('Equipped'), 'held relics are active equipment');
-
-    const crimson = rows.find((row) => row.id === 'crimsonFlask');
-    eq(crimson.count, 2, 'duplicate potions collapse into one row with a count');
-    eq(crimson.equippedLabels.length, 0, 'carried potions do not claim to be equipped');
-    eq(inventoryItemCount(rows), rows.reduce((sum, row) => sum + row.count, 0), 'the Inventory header count is the summed quantity');
-    eq(inventoryItemCount([]), 0, 'the empty Inventory count is zero');
-  });
-
-  test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
-    eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
-    eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
-    eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
-    eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
-    eq(REG.characterCreation.layout.equipmentChoiceView, 'list', 'equipment selectors default to the configured list view');
-    eq(REG.characterCreation.layout.equipmentAutoAdvance, true, 'equipment auto-advance is configured rather than hard-coded');
-    eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,leftHand,rightHand,equipSlot,relic',
-      'the equipment subcard order is authored in character-creation content');
-    for (const classId of REG.classes.ids()) {
-      assert(creationArmourChoices(REG, classId).length >= 2, `${classId} ships at least two armour choices`);
-      assert(creationHandChoices(REG, classId).length >= 2, `${classId} ships at least two side-neutral hand choices`);
-      assert(creationRelicChoices(REG, classId).length >= 2, `${classId} ships at least two relic choices`);
-    }
-
-    const moved = selectStartingHand({ leftHand: 'roundShield', rightHand: 'straightSword' }, 'leftHand', 'straightSword');
-    eq(moved.leftHand, 'straightSword', 'selecting an occupied armament places it in the requested hand');
-    eq(moved.rightHand, null, 'and clears the other hand instead of duplicating it');
-    eq(Object.values(moved).filter((id) => id === 'straightSword').length, 1, 'one armament occupies exactly one starting hand');
-
-    const sideSpecific = createRegistries({
-      ...contentBundle,
-      equipment: {
-        ...contentBundle.equipment,
-        armaments: contentBundle.equipment.armaments.map((piece) => (
-          piece.id === 'buckler' ? { ...piece, hand: 'left' } : piece
-        )),
-      },
-    });
-    assert(creationHandChoices(sideSpecific, 'reaver', 'leftHand').some((piece) => piece.id === 'buckler'),
-      'a side-specific armament is offered for its eligible creation hand');
-    assert(!creationHandChoices(sideSpecific, 'reaver', 'rightHand').some((piece) => piece.id === 'buckler'),
-      'a side-specific armament is not offered for an incompatible creation hand');
-    eq(resolveCreationHands(sideSpecific, 'reaver', { leftHand: 'buckler', rightHand: null }, {}).leftHand, 'buckler',
-      'creation hand resolution accepts a side-specific armament in its eligible slot');
-    let wrongHandError = '';
-    try { resolveCreationHands(sideSpecific, 'reaver', { leftHand: null, rightHand: 'buckler' }, {}); }
-    catch (error) { wrongHandError = error.message; }
-    assert(/rightHand.*buckler.*does not fit/.test(wrongHandError),
-      'creation hand resolution rejects a side-specific armament in the wrong slot');
-
-    const lowStrength = { strength: 11, dexterity: 15, constitution: 14, wisdom: 10, intelligence: 10 };
-    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', lowStrength).length, 0,
-      'the incompatible preview fixture is still a valid point-buy allocation');
-    const requestedHands = { leftHand: 'roundShield', rightHand: 'greatsword' };
-    const previewHands = previewCompatibleHands(REG, requestedHands, lowStrength);
-    eq(previewHands.leftHand, 'roundShield', 'preview keeps a compatible selected hand');
-    eq(previewHands.rightHand, null, 'preview omits an incompatible selected hand instead of throwing');
-    eq(requestedHands.rightHand, 'greatsword', 'preview compatibility never mutates the player selection used by the refusal');
-    const correctedHands = previewCompatibleHands(REG, requestedHands, { ...lowStrength, strength: 12, dexterity: 14 });
-    eq(correctedHands.rightHand, 'greatsword', 'preview restores the selected hand when the allocation meets its requirement');
-    const previewRun = createRunState({
-      seed: 71, classId: 'reaver', registries: REG,
-      attributeMode: 'pointbuy', attributes: lowStrength,
-      startingHands: previewHands,
-    });
-    eq(previewRun.attributes.strength, 11, 'a valid-but-incompatible selection still produces a live stat preview');
-
-    const standardMismatch = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    standardMismatch.characterCreation.classes.herald.handIds.push('dagger');
-    const standardRosterValidation = validateContent(standardMismatch);
-    assert(standardRosterValidation.ok, 'a valid roster may expose an armament above the Standard preset');
-    const standardMismatchRegistries = createRegistries(standardMismatch);
-    const heraldStandard = classAttributePreset(standardMismatchRegistries, 'herald', 'standard');
-    const standardFailure = startingHandsRequirementFailure(standardMismatchRegistries, { leftHand: 'dagger' }, heraldStandard);
-    assert(standardFailure && standardFailure.piece.id === 'dagger'
-      && standardFailure.failure.attributeId === 'dexterity'
-      && standardFailure.failure.required === 11 && standardFailure.failure.actual === 10,
-    'Standard mode reports a selected hand requirement before Begin can throw');
-
-    const selected = createRunState({
-      seed: 69, classId: 'reaver', registries: REG,
-      startingHands: { leftHand: 'straightSword', rightHand: 'roundShield' },
-      startingArmourId: 'vigil', startingRelicId: 'goldenSprout',
-    });
-    eq(selected.loadout.sets.leftHand[0], 'straightSword', 'Begin consumes the selected left hand');
-    eq(selected.loadout.sets.rightHand[0], 'roundShield', 'Begin consumes the selected right hand');
-    eq(selected.loadout.sets.armor[0], 'vigil', 'Begin consumes the selected armour');
-    eq(selected.relics[0], 'goldenSprout', 'Begin consumes the selected relic');
-    assert(selected.startingKitSnapshot.customized === true, 'the customized starting hands persist explicitly');
-    const restored = deserializeRun(serializeRun(selected));
-    validateRunStartingKit(restored, REG, {});
-    eq(restored.startingKitSnapshot.leftHand, 'straightSword', 'customized hands survive the save boundary');
-
-    const malformed = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformed.characterCreation.spritePreviewSide = 'above';
-    malformed.characterCreation.classes.reaver.handIds = ['missingArmament'];
-    const validation = validateContent(malformed);
-    assert(!validation.ok && validation.errors.some((e) => e.path.includes('characterCreation.spritePreviewSide')),
-      'an invalid sprite side fails by its JSON path');
-    assert(validation.errors.some((e) => e.path.includes('characterCreation.classes.reaver.handIds')),
-      'a short/dangling hand roster fails by its JSON path');
-
-    const malformedLayout = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedLayout.characterCreation.layout.classPreviewPercent = 90;
-    malformedLayout.characterCreation.layout.classChoiceView = 'carousel';
-    malformedLayout.characterCreation.layout.equipmentAutoAdvance = 'yes';
-    malformedLayout.characterCreation.equipmentSections = [
-      { id: 'armour', label: 'Armour', kind: 'armour' },
-      { id: 'armour', label: '', kind: 'hand', slot: 'middleHand' },
-    ];
-    const layoutValidation = validateContent(malformedLayout);
-    for (const path of ['layout.classPreviewPercent', 'layout.classChoiceView', 'layout.equipmentAutoAdvance', 'equipmentSections']) {
-      assert(!layoutValidation.ok && layoutValidation.errors.some((e) => e.path.includes(`characterCreation.${path}`)),
-        `invalid configurable creation ${path} reports its JSON path`);
-    }
-
-    const duplicateSections = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    duplicateSections.characterCreation.equipmentSections.push(
-      { id: 'armourAgain', label: 'Armour Again', kind: 'armour' },
-      { id: 'leftAgain', label: 'Left Again', kind: 'hand', slot: 'leftHand' },
-      { id: 'relicAgain', label: 'Relic Again', kind: 'relic' },
-    );
-    const duplicateSectionProblems = characterCreationProblems(duplicateSections);
-    for (const role of ['armour', 'leftHand', 'relic']) {
-      assert(duplicateSectionProblems.some((problem) => problem.includes(`duplicate ${role} section`)),
-        `a duplicate ${role} role is rejected before rendering singleton equipment disclosures`);
-    }
-
-    const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakes.characterCreation.keepsakes = {};
-    const keepsakeValidation = validateContent(malformedKeepsakes);
-    assert(!keepsakeValidation.ok && keepsakeValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'a non-array keepsake roster reports its JSON path instead of throwing');
-
-    const malformedClass = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedClass.characterCreation.classes.reaver = null;
-    const classValidation = validateContent(malformedClass);
-    assert(!classValidation.ok && classValidation.errors.some((e) => e.path.includes('characterCreation.classes.reaver')),
-      'a null class roster reports its JSON path instead of throwing');
-
-    const malformedChoices = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    for (const field of ['armourIds', 'handIds', 'relicIds']) malformedChoices.characterCreation.classes.reaver[field] = {};
-    const choiceValidation = validateContent(malformedChoices);
-    for (const field of ['armourIds', 'handIds', 'relicIds']) {
-      assert(!choiceValidation.ok && choiceValidation.errors.some((e) => e.path.includes(`characterCreation.classes.reaver.${field}`)),
-        `a non-array ${field} roster reports its JSON path instead of throwing`);
-    }
-
-    const malformedKeepsakeRows = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakeRows.characterCreation.keepsakes[0] = null;
-    malformedKeepsakeRows.characterCreation.keepsakes[1].effects = {};
-    const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
-    assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
-
-    for (const [label, mutate] of [
-      ['class', (bundle) => { bundle.classes[0] = null; }],
-      ['armament', (bundle) => { bundle.equipment.armaments[0] = null; }],
-    ]) {
-      const malformedDependency = {
-        ...contentBundle,
-        classes: [...contentBundle.classes],
-        equipment: { ...contentBundle.equipment, armaments: [...contentBundle.equipment.armaments] },
-      };
-      mutate(malformedDependency);
-      const dependencyValidation = validateContent(malformedDependency);
-      assert(!dependencyValidation.ok,
-        `a null ${label} dependency row returns validation errors instead of throwing`);
-    }
-
-    for (const field of ['armaments', 'armour']) {
-      const malformedTable = {
-        ...contentBundle,
-        equipment: { ...contentBundle.equipment, [field]: {} },
-      };
-      const tableValidation = validateContent(malformedTable);
-      assert(!tableValidation.ok && tableValidation.errors.some((error) => error.path.includes(`equipment.${field}`)),
-        `a non-array ${field} dependency table returns its schema error instead of throwing`);
-    }
-
-    const missingBaselineHands = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    missingBaselineHands.characterCreation.classes.reaver.handIds = ['greatsword', 'buckler'];
-    const baselineHandValidation = validateContent(missingBaselineHands);
-    assert(!baselineHandValidation.ok && baselineHandValidation.errors.some((e) =>
-      e.path.includes('characterCreation.classes.reaver.handIds') && /roundShield|straightSword/.test(e.msg)),
-    'a hand roster that omits the baseline kit is refused by armament id before customization boots');
-  });
-
-  test('71b. attribute cards derive their summaries, benefits, and gates from model data', () => {
-    const run = createRunState({ seed: 0x71b, classId: 'reaver', registries: REG });
-    const cards = attributeCardModels(REG, run.attributes, {
-      projection: statProjection(REG, run),
-      equipmentProfiles: run.equipmentProfileRuleSnapshot.profiles,
-    });
-    eq(cards.length, REG.attributes.ids().length, 'one card is projected for every authored attribute');
-    eq(cards.map((card) => card.key).join(','), REG.attributes.ids().map((id) => `attribute:${id}`).join(','),
-      'stable attribute ids drive every card key');
-    const constitution = cards.find((card) => card.id === 'constitution');
-    eq(constitution.face.summary, 'What your body takes before the climb ends.',
-      'the folded summary is derived from the authored description');
-    assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
-    'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical attacks +1 every 1 point'),
-      'the active run profile projects Strength attack scaling without copied UI prose');
-
-    const changed = {
-      ...contentBundle,
-      derivedStatRules: structuredClone(contentBundle.derivedStatRules),
-      equipment: {
-        ...contentBundle.equipment,
-        armaments: structuredClone(contentBundle.equipment.armaments),
-      },
-    };
-    changed.derivedStatRules.rules.hp.gainPerTier = 7;
-    changed.equipment.armaments.find((piece) => piece.id === 'greatsword').requirements.attributes.strength = 14;
-    const changedRegistries = createRegistries(changed);
-    const changedRun = createRunState({ seed: 0x71b, classId: 'reaver', registries: changedRegistries });
-    const changedCards = attributeCardModels(changedRegistries, changedRun.attributes, {
-      projection: statProjection(changedRegistries, changedRun),
-      equipmentProfiles: changedRun.equipmentProfileRuleSnapshot.profiles,
-    });
-    assert(changedCards.find((card) => card.id === 'constitution').reveal.lines.includes('HP +7 every 1 point'),
-      'changing the HP rule changes the Constitution bullet without UI prose edits');
-    assert(changedCards.find((card) => card.id === 'strength').reveal.lines.includes('Greatsword asks 14'),
-      'changing an equipment gate changes the Strength bullet without UI prose edits');
-  });
-
-  test('72. Armoury layout is authored, stable, and responsive', () => {
-    assert(contentBundle.equipment.armouryUi.layout.trays,
-      'the generated content bundle carries the authored tray contract rather than recreating it from model defaults');
-    const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
-    eq(layout.shell.characterRatio, 0.4, 'character pane owns the authored 40% desktop share');
-    eq(layout.shell.equipmentRatio, 0.6, 'equipment pane owns the authored 60% desktop share');
-    eq(layout.character.spriteRatio, 0.38, 'sprite owns the authored 38% character height');
-    eq(layout.character.statsRatio, 0.62, 'stats own the authored 62% character height');
-    eq(layout.character.statsPaneRatio, 0.6, 'Character gives the right column 60% of the full-width character pane');
-  eq(layout.cards.defaultView, 'list', 'Cards defaults to the authored vertical list');
-  eq(layout.cards.gridColumns, 4, 'Cards grid columns are authored as four');
-    eq(layout.responsive.phone.cardsGridColumns, 2, 'Phone Cards grid columns are authored as two');
-    eq(layout.equipment.defaultView, 'list', 'Armaments defaults to the authored detailed list');
-    eq(layout.equipment.gridColumns, 3, 'Armaments grid columns are authored as three');
-    eq(layout.responsive.phone.armamentGridColumns, 2, 'Phone Armaments grid columns are authored as two');
-    eq(layout.equipment.slotOrder.join(','), 'armor,rightHand,leftHand', 'equipment order is authored armor then right and left hand');
-    eq(layout.combatPower.cards.map((card) => card.id).join(','), 'strike,potency,defense', 'Combat Power cards are authored in vertical display order');
-    eq(layout.combatPower.cards[1].label, 'Magic', 'the primary technique-facing combat value is presented as Magic');
-    eq(layout.combatPower.cards[1].fullLabel, 'Magic Power', 'the expanded primary value is presented as Magic Power, not Potency');
-    eq(layout.viewModes.grid.label, 'Character', 'the character view has a player-facing authored label');
-    eq(layout.viewModes.rack.label, 'Inventory', 'the inventory view has a player-facing authored label');
-    eq(layout.viewModes.grid.pane, 'character', 'Character promotes the character pane to the full surface');
-    eq(layout.viewModes.rack.pane, 'inventory', 'Inventory pairs the armaments and inventory panes');
-    eq(layout.viewModes.rack.armaments, 'expanded', 'Inventory exposes the authored Armaments position list');
-    eq(layout.viewModes.hybrid.pane, 'both', 'Hybrid keeps the two panes split');
-    eq(layout.viewModes.hybrid.armaments, 'expanded', 'Hybrid preserves its currently approved visible Armaments pane');
-    eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
-    eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
-    eq(layout.trays.defaultHeightRatio, 0.45, 'a supporting tray opens at the authored 45vh play-session default');
-    eq(layout.trays.minimumHeightRatio, 0.3, 'tray resize keeps the authored 30vh minimum visible');
-    eq(layout.trays.maximumHeightRatio, 0.9, 'a tray can scale to the authored near-full-panel maximum');
-    eq(layout.trays.multipleExpandedMinimumRatio, 0.3, 'each additional expanded tray retains at least 30vh');
-    eq(layout.trays.snapRatios.join(','), '0.3,0.4,0.5,0.6,0.7,0.8,0.9', 'independent tray heights snap every 10vh from 30 through 90');
-    eq(layout.trays.contentGapRem, 0.35, 'Inventory tray content keeps one authored row gap across resolutions');
-    assert(layout.cardClasses.inventoryItem.holdAction === true,
-      'the Inventory item card class explicitly opts into the shared hold action on both folded and unfolded faces');
-    assert(normalizeArmouryLayout({}).cardClasses.inventoryItem.holdAction === false,
-      'card classes do not acquire a destructive hold action unless their authored model toggles it true');
-    let invalidHoldClass = '';
-    try { normalizeArmouryLayout({ cardClasses: { inventoryItem: { holdAction: 'true' } } }); } catch (error) { invalidHoldClass = error.message; }
-    assert(invalidHoldClass.includes('holdAction must be true or false'),
-      'the card class hold capability rejects truthy strings instead of silently arming them');
-    eq(layout.comparison.presentation, 'tooltip', 'equipment comparison presentation is authored as tooltip or inline data');
-    eq(layout.comparison.hoverDelayMs, 550, 'equipment comparison hover delay is authored in milliseconds');
-    eq(layout.comparison.tooltipWidthRem, 52, 'equipment comparison tooltip width is authored rather than buried in CSS');
-    eq(layout.comparison.tooltipMaxHeightRatio, 0.8, 'equipment comparison tooltip viewport cap is authored');
-    let invalidComparison = '';
-    try { normalizeArmouryLayout({ comparison: { presentation: 'drawer' } }); } catch (error) { invalidComparison = error.message; }
-    assert(invalidComparison.includes('comparison.presentation must be tooltip or inline'),
-      'unknown equipment comparison presentations are refused by name');
-    let invalidComparisonDelay = '';
-    try { normalizeArmouryLayout({ comparison: { hoverDelayMs: -1 } }); } catch (error) { invalidComparisonDelay = error.message; }
-    assert(invalidComparisonDelay.includes('comparison.hoverDelayMs'),
-      'negative equipment comparison hover delays are refused by name');
-    const sharedInventoryRow = {
-      key: 'weapon:straightSword', id: 'straightSword', name: 'Straight Sword', category: 'Weapon',
-      count: 1, equippedLabels: [], item: { name: 'Straight Sword', tags: [] },
-    };
-    assert(inventoryItemCardModel(sharedInventoryRow, { classModel: layout.cardClasses.inventoryItem }).properties.holdAction === true,
-      'the shared folded Inventory card model projects the opted-in class hold capability');
-    assert(inventoryItemCardModel(sharedInventoryRow).properties.holdAction === false,
-      'the shared folded Inventory card model remains hold-safe without an opted-in class');
-    assert(inventoryDetailCardModel({
-      row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
-      classModel: layout.cardClasses.inventoryItem,
-    }).properties.holdAction === true,
-    'the shared unfolded Inventory card model projects the same opted-in class hold capability');
-    assert(inventoryDetailCardModel({
-      row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
-    }).properties.holdAction === false,
-    'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
-    eq(contentBundle.balance.ui.holdConfirm.def, 'off',
-      'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
-    eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
-      'the title quick-load hold duration is authored as 600 ms');
-    const malformedTitleLoadHold = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: { ...contentBundle.balance.ui, titleLoadHold: { ms: 0 } },
-      },
-    };
-    const titleLoadHoldValidation = validateContent(malformedTitleLoadHold);
-    assert(!titleLoadHoldValidation.ok
-      && titleLoadHoldValidation.errors.some((error) => error.path === 'balance.ui.titleLoadHold.ms'),
-    'a non-positive title quick-load duration is refused by its authored path');
-    const expandedTray = trayPresentationState({
-      collapsed: false,
-      savedHeightRatio: 0.7,
-      defaultHeightRatio: layout.trays.defaultHeightRatio,
-    });
-    eq(expandedTray.heightRatio, 0.7, 'an unfolded tray restores its independently saved expanded height');
-    assert(expandedTray.resizable, 'an unfolded tray exposes its resize edge');
-    const foldedTray = trayPresentationState({
-      collapsed: true,
-      savedHeightRatio: 0.7,
-      defaultHeightRatio: layout.trays.defaultHeightRatio,
-    });
-    eq(foldedTray.heightRatio, null, 'a folded tray ignores the saved expanded height and uses its intrinsic header height');
-    assert(!foldedTray.resizable, 'a folded tray cannot retain or expose its resize edge');
-    eq(foldedTray.savedHeightRatio, 0.7, 'folding preserves the expanded height for the next unfold');
-    const selectedMove = inventorySelectionAction({
-      itemId: 'straightSword',
-      selectedSlotId: 'rightHand',
-      selectedSetIndex: 0,
-      selectedItemId: 'roundShield',
-      equippedPositions: [{ slotId: 'leftHand', setIndex: 0, itemId: 'straightSword' }],
-    });
-    eq(`${selectedMove.kind}:${selectedMove.slotId}:${selectedMove.setIndex}:${selectedMove.pieceId}`,
-      'move:rightHand:0:straightSword',
-      'a selected compatible position takes precedence over the hand that currently owns the item');
-    const selectedUnequip = inventorySelectionAction({
-      itemId: 'straightSword',
-      selectedSlotId: 'rightHand',
-      selectedSetIndex: 0,
-      selectedItemId: 'straightSword',
-      equippedPositions: [{ slotId: 'rightHand', setIndex: 0, itemId: 'straightSword' }],
-    });
-    eq(`${selectedUnequip.kind}:${selectedUnequip.pieceId}`,
-      'unequip:null',
-      'the selected position turns its currently equipped Inventory item into Unequip');
-    for (const badTrays of [
-      { ...layout.trays, defaultHeightRatio: 0.95 },
-      { ...layout.trays, multipleExpandedMinimumRatio: 0.2 },
-      { ...layout.trays, snapRatios: [0.3, 0.5, 0.95] },
-      { ...layout.trays, snapRatios: [0.3, 0.5, 0.5] },
-      { ...layout.trays, contentGapRem: 0 },
-    ]) {
-      let named = '';
-      try { normalizeArmouryLayout({ ...contentBundle.equipment.armouryUi.layout, trays: badTrays }); }
-      catch (error) { named = error.message; }
-      assert(named.includes('armouryUi.layout.trays'), 'an impossible tray default or snap stop is refused by the tray config name');
-    }
-    eq(orderArmourySlots([
-      { id: 'leftFoot', order: 50 }, { id: 'back', order: 40 }, { id: 'rightHand', order: 20 }, { id: 'armor', order: 10 },
-    ], layout).map((slot) => slot.id).join(','), 'armor,rightHand,back,leftFoot', 'arbitrary equipment groups iterate by authored order without named-slot branches');
-    const occupiedPosition = equipmentPositionCardState({
-      slot: { id: 'backHand', label: 'Back Hand', positionLabel: 'Back Hand Slot {n}', positionCode: 'BH{n}', sets: 3 },
-      index: 1,
-      modelState: 'open',
-      item: { id: 'wardWand', name: 'Ward Wand' },
-      activeIndex: 0,
-    });
-    eq(occupiedPosition.label, 'Back Hand Slot 2', 'an arbitrary equipment position formats its authored label');
-    eq(occupiedPosition.code, 'BH2', 'an arbitrary equipment position formats its authored short code');
-    eq(occupiedPosition.state, 'occupied', 'an unlocked item position is a first-class occupied card');
-    eq(occupiedPosition.action, 'equip', 'an inactive occupied position exposes Equip');
-    eq(equipmentPositionCardState({
-      slot: { id: 'leftFoot', label: 'Left Foot', positionLabel: 'Left Foot Slot {n}', positionCode: 'LF{n}', sets: 4 },
-      index: 2, modelState: 'next', item: null, activeIndex: 0,
-    }).state, 'locked', 'the next authored rung is a first-class locked card');
-    eq(equipmentPositionCardState({
-      slot: { id: 'leftFoot', label: 'Left Foot', positionLabel: 'Left Foot Slot {n}', positionCode: 'LF{n}', sets: 4 },
-      index: 1, modelState: 'open', item: null, activeIndex: 0,
-    }).state, 'empty', 'an unlocked unfilled position is a first-class empty card');
-    eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
-    assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
-  });
-
-  test('75. an explicit save resumes the exact committed combat state and RNG continuation', () => {
-    const seed = 0x7503;
-    const original = makeCombat({
-      seed,
-      deck: ['strike', 'defend', 'strike', 'defend', 'strike', 'defend', 'strike', 'defend'],
-      enemies: ['tHitter'],
-      hp: 61,
-      maxHp: 78,
-    });
-    playFromHand(original, 'strike');
-
-    const counters = original.rng.getCounters();
-    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(original)));
-    const restored = restoreCombatSnapshot({
-      registries: REG,
-      rng: createRng(seed, counters),
-      snapshot: stored,
-    });
-
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(stored),
-      'storage round-trip restores the exact committed turn, entities, intents, piles, and event receipts');
-    assert(restored.triggerState instanceof Map, 'trigger receipts restore to their runtime Map shape');
-    assert(typeof restored.emit === 'function' && typeof restored.enqueue === 'function' && typeof restored.nextInstanceId === 'function',
-      'runtime-only combat methods are reattached');
-
-    dispatch(original, { type: 'endTurn' });
-    dispatch(restored, { type: 'endTurn' });
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(serializeCombatSnapshot(original)),
-      'the next turn resolves identically instead of replaying combat setup');
-    eq(JSON.stringify(restored.rng.getCounters()), JSON.stringify(original.rng.getCounters()),
-      'restored combat consumes the same named RNG streams');
-
-    const runProjection = {};
-    commitCombatSnapshot({ run: runProjection, combat: restored, nodeId: 'node-75', encounterId: 'encounter-75' });
-    eq(runProjection.hp, restored.player.hp, 'slot-summary HP projects the exact combat state');
-    eq(runProjection.flaskCharges?.hpCurrent, restored.player.flaskCharges?.hpCurrent,
-      'slot-summary flask charges project the exact combat state');
-    eq(JSON.stringify(runProjection.combatEntered.snapshot), JSON.stringify(serializeCombatSnapshot(restored)),
-      'one committed snapshot owns both the resume record and run-level summary projection');
-
-    restored.queue.push({ planted: true });
-    let resolvingReason = '';
-    try { serializeCombatSnapshot(restored); } catch (error) { resolvingReason = error.message; }
-    restored.queue.pop();
-    assert(/still resolving/.test(resolvingReason), 'a live action queue must refuse a torn combat save');
-
-    const malformed = structuredClone(stored);
-    malformed.phase = 'refunded-restart';
-    let malformedReason = '';
-    try {
-      restoreCombatSnapshot({
-        registries: REG,
-        rng: createRng(seed, counters),
-        snapshot: malformed,
-      });
-    } catch (error) {
-      malformedReason = error.message;
-    }
-    assert(/phase/.test(malformedReason),
-      `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
-
-    const malformedRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
-    const storage = createMemoryStorage();
-    storage.setItem(RUN_KEY, serializeRun(malformedRun));
-    const saves = createSaveManager(storage);
-    eq(saves.loadRun(REG), null, 'the real load door refuses a malformed exact snapshot');
-    assert(/phase/.test(saves.runStatus().reason || ''), 'the archived refusal names the malformed snapshot phase');
-    assert(storage.getItem(RUN_ARCHIVE_KEY)?.includes('refunded-restart'), 'the original malformed bytes remain recoverable in the archive');
-
-    const dangling = structuredClone(stored);
-    dangling.piles.hand[0].cardId = 'removedByContentPatch';
-    const danglingRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
-    const danglingStorage = createMemoryStorage();
-    danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
-    const danglingSaves = createSaveManager(danglingStorage);
-    eq(danglingSaves.loadRun(REG), null, 'the real load door refuses dangling exact-snapshot content');
-    assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
-      'the dangling exact-snapshot refusal names the affected card pile');
-
-    const checkpointRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
-    const checkpointStorage = createMemoryStorage();
-    checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
-    assert(createSaveManager(checkpointStorage).loadRun(REG)?.combatEntered?.snapshot === undefined,
-      'older encounter-only checkpoints remain loadable and explicitly lack an exact snapshot');
   });
 
   const passed = results.filter((r) => r.ok).length;

@@ -1,17 +1,4 @@
-// src/ui/components/upright.js — THE LAST-RESORT SHORT-SCREEN GATE.
-//
-// CURRENT AFTER #27 (2026-08-20). Landscape is supported wherever the rendered
-// short-wide composition is complete: 340..464 device px high at a fitting wide
-// width. This component no longer stands at 844x390 or at the browser-chrome
-// sensitivity cell 844x344. It remains only below the compact composition's
-// measured lower floor (844x339 is the one-pixel control), where drawing the
-// ordinary board would strand END TURN. styles/ui.css compresses only the gate's
-// decorative spacing there so every sentence remains readable at Text XL.
-//
-// The long decision record below is PRE-#27 history. It is retained because it
-// explains the refusal's ownership, input semantics and player-controlled switch;
-// claims in it that 844x390 is refused or landscape support is owed describe the
-// former runtime and are superseded by the current contract above.
+// src/ui/components/upright.js — THE ORIENTATION GATE.
 //
 // ============================================================================
 // ⚠ AMENDED BY THE OWNER, 2026-08-17. READ THIS BEFORE THE RULING BELOW.
@@ -36,7 +23,7 @@
 // being no door at all. Two different defects, one root — a refusal we knew could
 // misfire and gave nobody a switch for.
 //
-// HISTORICAL — WHAT THE AMENDMENT DID NOT CHANGE, said plainly because the row's default turns
+// WHAT THE AMENDMENT DID NOT CHANGE, said plainly because the row's default turns
 // on it: **the wall is still there.** At 844x390 on this tree, measured, not
 // argued (`node tools/uprightgate.mjs`):
 //
@@ -51,7 +38,7 @@
 // of this held for his word.
 //
 // ============================================================================
-// THE HISTORICAL DECISION, BEFORE #27'S LAYOUT: GATE, NOT SUPPORT.
+// THE DECISION, AND IT CAME BEFORE ANY LAYOUT: GATE, NOT SUPPORT.
 // ============================================================================
 //
 // Sunna, 2026-08-15, on Marina's ruling that this act opens with a decision and
@@ -230,8 +217,8 @@ const SAY = {
 /**
  * updateUprightGate({ short, offerRotate, enabled })
  *
- *   short        no complete narrow or short-wide composition fits this
- *                viewport — the only geometric thing that decides refusal
+ *   short        the viewport is shorter than `uiScale.gateBelowH` — the only
+ *                GEOMETRIC thing that decides whether this shape is refused
  *   offerRotate  main.js asked the same decider about the SWAPPED viewport and
  *                it is not short, AND the primary pointer is coarse — so
  *                "turn it" is a true and doable instruction. WORDING ONLY.

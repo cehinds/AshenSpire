@@ -221,7 +221,7 @@ const READERS = {
     const kitButtons=[...document.querySelectorAll('#cz-kits button')];
     const relevant=[...kitButtons, document.querySelector('.cz-stats summary')].filter(Boolean);
     const boxes=relevant.map((x)=>x.getBoundingClientRect());
-    const derived=[...document.querySelectorAll('#cz-stat-projection .statproj-derived [data-stat] > b')].map((x)=>x.textContent.trim());
+    const derived=[...document.querySelectorAll('#cz-stat-projection > div > b')].map((x)=>x.textContent.trim());
     const roleRows=[...document.querySelectorAll('.cz-kit li')];
     const equipmentRows=roleRows.filter((x)=>/=/.test(x.textContent));
     const signatureRows=roleRows.filter((x)=>/class signature/i.test(x.textContent));
@@ -239,7 +239,7 @@ const READERS = {
     const n=(value)=>Math.round(value*100)/100;
     const viewButtons=[...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
     const boxes=viewButtons.map((x)=>x.getBoundingClientRect());
-    const derived=[...document.querySelectorAll('.statproj-derived [data-stat] > b')].map((x)=>x.textContent.trim());
+    const derived=[...document.querySelectorAll('.armoury-derived [data-stat] > b')].map((x)=>x.textContent.trim());
     const roles=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.dataset.role);
     const receiptText=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.textContent);
     const cards=document.querySelector('[data-region="cards"]');

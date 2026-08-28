@@ -94,15 +94,7 @@ async function runSelftest() {
     console.error('scroll-cue-bleed --selftest: UNKNOWN — AshenSpire.html does not contain the current #29 seam; regenerate the standalone once after the artifact lane clears.');
     return 2;
   }
-  const artifactPlants = common.plants.map((p) => ({
-    ...p,
-    file: 'AshenSpire.html',
-    // Source plants append directly to a stylesheet. The selected standalone
-    // is an HTML document, so the same authored CSS must enter through a style
-    // element or it is only inert text after </html> and the plant is unarmed.
-    ...(p.append != null ? { append: `<style>${p.append}</style>` } : {}),
-  }));
-  return doorSelftest({ ...common, args: ['--artifact', 'AshenSpire.html', ...common.args], extraCopy: ['AshenSpire.html'], plants: artifactPlants });
+  return doorSelftest({ ...common, args: ['--artifact', 'AshenSpire.html', ...common.args], extraCopy: ['AshenSpire.html'], plants: common.plants.map((p) => ({ ...p, file: 'AshenSpire.html' })) });
 }
 
 if (selftest || selftestSource) process.exit(await runSelftest());
@@ -445,13 +437,7 @@ async function main() {
             if (bleed.failures.length) failures.push(`${label}: ${bleed.failures[0]}`);
             if (hasTravel && !cueGreen) failures.push(`${label}: ${vertical.travel.toFixed(1)}px vertical travel without a visible right-edge cue (${component} component px, cue-off ${offComponent}, noise ${noise})`);
             if (!hasTravel && standing > Math.max(4, noise * 2 + 2)) failures.push(`${label}: cue stands with no scroll (${standing} changed px, noise ${noise})`);
-            // Preserve one exact before/after pair for the player-visible shop
-            // repair: the known-bad is 360x640 at Text M / UI S. The broader
-            // XL/XL portrait and M/Auto desktop captures remain the acceptance
-            // overview; this extra cell is the defect itself, not a substitute.
-            const shopBeforeAfter = width === 360 && surface.name === 'shop'
-              && textSize === 'M' && uiScale === 's';
-            if (shopBeforeAfter || (phone && textSize === 'XL' && uiScale === 'xl') || (!phone && textSize === 'M')) {
+            if ((phone && textSize === 'XL' && uiScale === 'xl') || (!phone && textSize === 'M')) {
               await fullShot(`${surface.name}-${width}x${height}-text-${textSize.toLowerCase()}-ui-${appliedUi}`);
               if (shots && surface.name === 'map' && width === 390 && textSize === 'XL' && uiScale === 'xl') {
                 const stem = resolve(ROOT, `${shots}-cue-map`); mkdirSync(dirname(stem), { recursive: true });

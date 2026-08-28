@@ -708,7 +708,7 @@ console.log(`EXCLUDED from the census: ${SELF} — a sentinel may not cite itsel
 console.log('BOUNDARY: this asks whether the relic-modifier vocabulary has one home and one derivation');
 console.log('  path. It is SILENT on whether the numbers are balanced, on whether a relic bonus is');
 console.log('  legible to a player, and on the OTHER modifier vocabularies this game already carries —');
-console.log("  equipment's `self.maxHp/maxMana/maxStamina=+N` mods column, relic PASSIVE_TYPES scalars, and status");
+console.log("  equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars, and status");
 console.log('  MODIFIER_TYPES. A6(a) pins the max-HP addend list BY NAME at its three source homes so a');
 console.log('  fourth road cannot appear quietly — not even one that adds zero — and that is the whole');
 console.log('  of what it claims about them. The pin is the one list TYPED in this file, because the');

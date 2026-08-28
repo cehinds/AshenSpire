@@ -38,7 +38,7 @@
 //      release IS. (It is NOT silent about what run.sh opens; see above.)
 //   2. Five player-facing surfaces have NO ?shot= state and therefore cannot
 //      appear in it at all — the Armoury, the menu tabs, Settings,
-//      Title → Profile, and the profile crisis notice (#66/#67, the newest
+//      Settings → Profile, and the profile crisis notice (#66/#67, the newest
 //      surface in the release). A capture set that silently omits the newest
 //      screens is a green that means nothing.
 // So this drives the built artifact over CDP: ?shot= where one exists, real
@@ -144,8 +144,7 @@ function appShotStates() {
 // of whatever happened to be on screen — including a blank page.
 // `state:` ties an entry to the app state it covers (the derivation above).
 const SCREENS = [
-  { name: 'startup', query: '?shot=startup', landmark: '.startup-gate', state: 'startup' },
-  { name: 'title', query: '?shot=title', landmark: '.title-screen', state: 'title' },
+  { name: 'title', query: '', landmark: '.title-screen' },
   { name: 'map', query: '?shot=map', landmark: '.mapscreen', state: 'map' },
   { name: 'map-atmospheric', query: '?shot=map&shotSettings=' + encodeURIComponent('{"highContrast":false}'), landmark: '.mapscreen' },
   { name: 'combat', query: '?shot=combat', landmark: '.combat', state: 'combat' },
@@ -153,7 +152,6 @@ const SCREENS = [
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
-  { name: 'component-catalog', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {
     name: 'customize-stats', query: '?shot=customize', landmark: '#cz-stat-projection',
     drive: `document.querySelector('.cz-stats').open = true`,
@@ -240,7 +238,13 @@ const SCREENS = [
     // parameter is deleted rather than kept as decoration; it claimed a door
     // that does not open on this state.
     query: '?shot=profile',
-    landmark: '.profile-archive-modal .prof-restore', state: 'profile',
+    landmark: '.prof-restore', state: 'profile',
+    drive: `(() => {
+      const t = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Profile');
+      if (!t) return 'no Profile tab in the settings screen';
+      t.click();
+      return true;
+    })()`,
   },
   { name: 'profile-crisis', query: '?shot=crisis', landmark: '.profile-notice .fresh', state: 'crisis' },
   {
@@ -279,25 +283,6 @@ const SCREENS = [
   //           writes; the artifact is never modified.
   { name: 'compendium-empty', query: '?shot=compendium&shotFound=', landmark: '.compendium .cp-cell', state: 'compendium' },
   { name: 'compendium-held', query: '?shot=compendium&shotFound=' + encodeURIComponent('dagger,towerShield,gorefireBrand,katana'), landmark: '.compendium .cp-cell.state-held' },
-  // The reward MENU (E11/#256) — a SCREENS entry and NOT an EXCLUDED_STATES
-  // line, for the reason the Shrine and the event entries above already carry:
-  // `?shot=reward` exists BECAUSE the reworked screen needed pictures instead
-  // of assertions, and this tool went RED the moment the state joined the
-  // derived denominator unphotographed (Saga's review of #290, comment
-  // 5364846139 — the refusal was correct, same as `event` at 52e0bc1).
-  // Both edges, because the menu's whole subject is derivation from the offer:
-  //   full   every kind present — five rows in REWARD_KIND_ORDER. The landmark
-  //          is the LAST row in that order (relic): the menu renders in
-  //          sequence, so the last kind standing proves the derivation walked
-  //          the whole offer, where any earlier row would go green on a menu
-  //          that stopped short.
-  //   empty  no kinds — the zero edge, where a derivation quietly draws
-  //          furniture for absent rewards. The landmark is Continue, the one
-  //          control the card's contract keeps ALWAYS pressable; zero-row
-  //          proof is a count and lives in the driven walkthrough, not in a
-  //          presence landmark.
-  { name: 'reward', query: '?shot=reward', landmark: '.reward-kind[data-kind="relic"]', state: 'reward' },
-  { name: 'reward-empty', query: '?shot=reward&shotReward=empty', landmark: '#reward-continue' },
   // --- driven: no ?shot= state exists for any of these ---
   {
     name: 'armoury', query: '?shot=combat', landmark: '.armoury, .equip-screen, .equipment',
@@ -305,7 +290,7 @@ const SCREENS = [
   },
   {
     // The quicknav experiment defaults to 'off' (quicknav.js `let mode = 'off'`),
-    // so #combat-menu opens the TABS OVERLAY directly (onMenu('settings') →
+    // so #combat-menu opens the TABS OVERLAY directly (onMenu('deck') →
     // showOverlay, components/overlay.js `.overlay-tabs`). My first two
     // landmarks here were both wrong — `.menu-tabs` and then `.qn-panel`,
     // neither of which the shipped default path ever renders. Measured, not
@@ -314,11 +299,13 @@ const SCREENS = [
     drive: `document.querySelector('#combat-menu').click()`,
   },
   {
-    name: 'settings', query: '?shot=title', landmark: '.settings, .set-body',
+    name: 'settings', query: '', landmark: '.settings, .set-body',
     drive: `[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`,
   },
-  // Profile is a title-screen route and is covered by `profile-drawer` above;
-  // it is deliberately absent from the generated Settings categories below.
+  // (the hand-written `settings-profile` entry lived here and is DELETED: the
+  //  settings categories are now generated from settingsCategories(), so Profile
+  //  is `settings-Profile` below and no longer a name anyone types. Collapsing a
+  //  duplicate that leaves nothing deletable is a patch, not a collapse.)
   // The crisis notice: seeded storage, never a patched bundle. Corrupt bytes
   // (truncated JSON) is the 'corrupt' state; a future schemaVersion is 'newer'.
   {
@@ -446,7 +433,7 @@ const SUB_SURFACE_GROUPS = [
     home: 'src/ui/screens/settings.js — settingsCategories(), derived from the filed rows',
     ids: () => settingsCategories().slice(),
     reach: (id) => ({
-      query: '?shot=title',
+      query: '',
       landmark: '.set-body',
       // #90: the categories are a TAB STRIP now, not six headings down one
       // column, so the drive CLICKS instead of scrolling. This is the harness
