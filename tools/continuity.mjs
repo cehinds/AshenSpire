@@ -120,6 +120,12 @@ function hasCycle(lanes) {
   return lanes.some((lane) => visit(lane.id));
 }
 
+function claimedPathsOverlap(left, right) {
+  const a = left.replace(/\\/g, '/').replace(/\/+$/, '');
+  const b = right.replace(/\\/g, '/').replace(/\/+$/, '');
+  return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+}
+
 function everyString(value, callback, path = '$') {
   if (typeof value === 'string') callback(value, path);
   else if (Array.isArray(value)) value.forEach((item, index) => everyString(item, callback, `${path}[${index}]`));
@@ -153,6 +159,9 @@ export function invariantErrors(doc, raw) {
     if (['candidate-frozen', 'complete'].includes(lane.status) && !lane.headSha) {
       errors.push(`$.lanes.${lane.id}: ${lane.status} lane needs an exact headSha`);
     }
+    if (['candidate-frozen', 'complete'].includes(lane.status) && !lane.verification) {
+      errors.push(`$.lanes.${lane.id}: ${lane.status} lane needs repository-contained verification metadata`);
+    }
     if (['blocked', 'waiting-decision'].includes(lane.status) && !lane.block) {
       errors.push(`$.lanes.${lane.id}: ${lane.status} lane needs an exact block`);
     }
@@ -168,6 +177,19 @@ export function invariantErrors(doc, raw) {
   for (const collision of doc.collisions || []) {
     for (const lane of collision.lanes) if (!laneSet.has(lane)) errors.push(`$.collisions.${collision.resource}: unknown lane ${lane}`);
     if (new Set(collision.lanes).size !== collision.lanes.length) errors.push(`$.collisions.${collision.resource}: lane list repeats an id`);
+  }
+  for (let i = 0; i < (doc.lanes || []).length; i++) {
+    for (let j = i + 1; j < doc.lanes.length; j++) {
+      const left = doc.lanes[i];
+      const right = doc.lanes[j];
+      const overlaps = [];
+      for (const a of left.claimedPaths || []) {
+        for (const b of right.claimedPaths || []) if (claimedPathsOverlap(a, b)) overlaps.push(`${a} <> ${b}`);
+      }
+      if (!overlaps.length) continue;
+      const declared = (doc.collisions || []).some((row) => row.lanes.includes(left.id) && row.lanes.includes(right.id));
+      if (!declared) errors.push(`$.collisions: undeclared claimed-path collision ${left.id} <-> ${right.id} (${overlaps.join(', ')})`);
+    }
   }
 
   const orders = doc.nextActions?.map((action) => action.order) || [];
@@ -371,6 +393,7 @@ async function selftest(doc, raw, schema) {
     ['machine-local path', (x) => { x.lanes[0].next = 'open C:\\temp\\handoff'; }, 'machine-local path'],
     ['missing Git object', (x) => { x.repository.baseSha = '1111111111111111111111111111111111111111'; }, 'missing commit'],
     ['governance blob drift', (x) => { x.repository.governance[0].blob = '2222222222222222222222222222222222222222'; }, 'governance'],
+    ['required collision removed', (x) => { x.collisions = x.collisions.filter((row) => !(row.lanes.includes('k15-content-door') && row.lanes.includes('controls-gates'))); }, 'undeclared claimed-path collision'],
     ['remote branch drift', (x) => { x.repository.branches[0].sha = '3333333333333333333333333333333333333333'; }, 'currentness: dev drift'],
     ['stale snapshot', (x) => x, 'snapshot age', new Date(now.getTime() + (doc.budgets.maxSnapshotAgeHours + 1) * 3_600_000)],
   ];

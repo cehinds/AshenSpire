@@ -193,6 +193,32 @@
         "acknowledgedAt": { "type": ["string", "null"], "format": "date-time" }
       }
     },
+    "verificationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "counts", "result"],
+      "properties": {
+        "command": { "$ref": "#/$defs/nonEmpty" },
+        "counts": { "$ref": "#/$defs/nonEmpty" },
+        "result": { "enum": ["PASS", "FAIL", "UNKNOWN"] }
+      }
+    },
+    "laneVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observedAt", "result", "checks", "boundary"],
+      "properties": {
+        "observedAt": { "type": "string", "format": "date-time" },
+        "result": { "enum": ["LOCAL_GATES_PASS_EXTERNAL_QA_PENDING", "SOURCE_FROZEN_GENERATION_PENDING", "FAIL", "UNKNOWN"] },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": { "$ref": "#/$defs/verificationCheck" }
+        },
+        "boundary": { "$ref": "#/$defs/stringList" }
+      }
+    },
     "lane": {
       "type": "object",
       "additionalProperties": false,
@@ -205,6 +231,7 @@
         "headSha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
         "availability": { "enum": ["local-only", "origin-branch", "integrated"] },
         "owner": { "$ref": "#/$defs/owner" },
+        "verification": { "$ref": "#/$defs/laneVerification" },
         "claimedPaths": { "$ref": "#/$defs/stringList" },
         "dependencies": {
           "type": "array",
