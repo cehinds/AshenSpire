@@ -15,9 +15,11 @@
 //   * The generated view is deterministic — no timestamps or volatile state —
 //     so `render --check` is a reliable drift gate.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { execSync } from 'node:child_process';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -625,6 +627,207 @@ export function renderGovernance(c) {
   return L.join('\n');
 }
 
+// ===========================================================================
+// Stage 3: runtime artifact classes — work capsules, writer leases, append-only
+// events — plus the token-bounded `opsctl wake` compiler. These are per-ticket
+// collections (not singletons), so they load and validate separately from the
+// governance contracts. The wake capsule is disposable stdout, never committed.
+// ===========================================================================
+
+const RUNTIME_SCHEMAS = {
+  capsule: 'schemas/work-capsule.schema.json',
+  lease: 'schemas/lease.schema.json',
+  event: 'schemas/event.schema.json'
+};
+
+// Deterministic, key-sorted JSON — the basis for a stable content hash.
+export function stableStringify(v) {
+  if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+  if (v && typeof v === 'object') {
+    return '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+  }
+  return JSON.stringify(v);
+}
+
+// A capsule's seal is the sha256 over the capsule with current_hash blanked.
+// It is the compare-and-swap value: a stale expected-old-value or any tamper
+// changes the content and so fails to match the stored current_hash.
+export function computeCapsuleHash(capsule) {
+  const clone = { ...capsule, current_hash: '' };
+  return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
+}
+
+// Literal directory prefix of a glob, for conservative overlap/coverage tests.
+function globPrefix(glob) {
+  const s = glob.search(/[*?[]/);
+  const cut = s === -1 ? glob : glob.slice(0, s);
+  const i = cut.lastIndexOf('/');
+  return i === -1 ? '' : cut.slice(0, i + 1);
+}
+
+export function loadRuntime(root = ROOT) {
+  const errors = [];
+  const schemas = {};
+  for (const [k, rel] of Object.entries(RUNTIME_SCHEMAS)) {
+    try { schemas[k] = JSON.parse(readFileSync(resolve(root, rel), 'utf8')); }
+    catch (e) { errors.push(`[runtime] schema load ${rel}: ${e.message}`); }
+  }
+  const capsules = {}, leases = [], events = {};
+
+  const workDir = resolve(root, 'work');
+  if (existsSync(workDir)) {
+    for (const ticket of readdirSync(workDir).sort()) {
+      const f = resolve(workDir, ticket, 'CURRENT.json');
+      if (!existsSync(f)) continue;
+      let cap; try { cap = strictParse(readFileSync(f, 'utf8')); } catch (e) { errors.push(`[capsule ${ticket}] parse: ${e.message}`); continue; }
+      if (schemas.capsule) for (const err of validateSchema(cap, schemas.capsule, '$')) errors.push(`[capsule ${ticket}] schema: ${err}`);
+      capsules[ticket] = cap;
+    }
+  }
+
+  const leaseDir = resolve(root, 'leases');
+  if (existsSync(leaseDir)) {
+    for (const name of readdirSync(leaseDir).sort()) {
+      if (!name.endsWith('.json')) continue;
+      let l; try { l = strictParse(readFileSync(resolve(leaseDir, name), 'utf8')); } catch (e) { errors.push(`[lease ${name}] parse: ${e.message}`); continue; }
+      if (schemas.lease) for (const err of validateSchema(l, schemas.lease, '$')) errors.push(`[lease ${name}] schema: ${err}`);
+      leases.push(l);
+    }
+  }
+
+  const evDir = resolve(root, 'events');
+  if (existsSync(evDir)) {
+    for (const ticket of readdirSync(evDir).sort()) {
+      const tdir = resolve(evDir, ticket);
+      const list = [];
+      for (const name of readdirSync(tdir).sort()) {
+        if (!name.endsWith('.json')) continue;
+        let ev; try { ev = strictParse(readFileSync(resolve(tdir, name), 'utf8')); } catch (e) { errors.push(`[event ${ticket}/${name}] parse: ${e.message}`); continue; }
+        if (schemas.event) for (const err of validateSchema(ev, schemas.event, '$')) errors.push(`[event ${ticket}/${name}] schema: ${err}`);
+        list.push(ev);
+      }
+      list.sort((a, b) => a.seq - b.seq);
+      events[ticket] = list;
+    }
+  }
+  return { capsules, leases, events, errors };
+}
+
+// Cross-checks tying runtime artifacts to the governance contracts and to each
+// other: one-writer lease collisions, lease expiry, append-only event chains,
+// capsule seal (CAS) integrity, evidence ownership, and non-amplifying authority.
+export function runtimeChecks(g, rt) {
+  const errors = [];
+  const roles = g.roles ? new Set(g.roles.roles.map((r) => r.role)) : new Set();
+  const roleMay = new Map(g.roles ? g.roles.roles.map((r) => [r.role, new Set(r.may)]) : []);
+  const evIds = g.evidence ? new Set(g.evidence.evidence.map((e) => e.id)) : new Set();
+  const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
+
+  // Leases: role validity, time-bound, path safety.
+  for (const l of rt.leases) {
+    if (!roles.has(l.actor)) errors.push(`lease '${l.id}' actor role '${l.actor}' is unknown`);
+    if (!roles.has(l.issuer)) errors.push(`lease '${l.id}' issuer role '${l.issuer}' is unknown`);
+    if (l.expiry <= l.issued) errors.push(`lease '${l.id}' expiry is at or before issued (already expired)`);
+    for (const p of l.path_globs) if (p.split('/').includes('..')) errors.push(`lease '${l.id}' path glob '${p}' contains a '..' traversal segment`);
+  }
+  // One writer per overlapping path/ref: two active leases on the same ref with
+  // overlapping globs held by different actors are a collision.
+  const active = rt.leases.filter((l) => !l.revoked);
+  for (let a = 0; a < active.length; a++) for (let b = a + 1; b < active.length; b++) {
+    const la = active[a], lb = active[b];
+    if (la.ref !== lb.ref || la.actor === lb.actor) continue;
+    const overlap = la.path_globs.some((ga) => lb.path_globs.some((gb) => {
+      const pa = globPrefix(ga), pb = globPrefix(gb);
+      return pa.startsWith(pb) || pb.startsWith(pa);
+    }));
+    if (overlap) errors.push(`lease collision: '${la.id}' and '${lb.id}' hold overlapping paths on ref '${la.ref}' for different actors ('${la.actor}' vs '${lb.actor}')`);
+  }
+
+  // Append-only event chains per ticket: one genesis, contiguous seq, unbroken parent chain.
+  for (const [ticket, list] of Object.entries(rt.events)) {
+    let prevId = null;
+    list.forEach((ev, i) => {
+      if (ev.ticket !== ticket) errors.push(`event '${ev.id}' ticket '${ev.ticket}' does not match its directory '${ticket}'`);
+      if (ev.seq !== i + 1) errors.push(`event chain for '${ticket}' is not contiguous at seq ${ev.seq} (expected ${i + 1})`);
+      if (i === 0) { if (ev.parent_event !== null) errors.push(`event chain for '${ticket}': first event '${ev.id}' must be genesis (null parent)`); }
+      else if (ev.parent_event !== prevId) errors.push(`event chain for '${ticket}': event '${ev.id}' parent '${ev.parent_event}' breaks the chain (expected '${prevId}')`);
+      if (ev.evidence_pointer && !evIds.has(ev.evidence_pointer)) errors.push(`event '${ev.id}' evidence_pointer '${ev.evidence_pointer}' has no owner in evidence.json`);
+      prevId = ev.id;
+    });
+  }
+
+  // Capsules: seal/CAS integrity, evidence ownership, authority, lease binding.
+  for (const [ticket, cap] of Object.entries(rt.capsules)) {
+    if (cap.ticket !== ticket) errors.push(`capsule for '${ticket}' has mismatched ticket field '${cap.ticket}'`);
+    if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
+    if (cap.evidence_pointers.length > 8) errors.push(`capsule '${ticket}' has ${cap.evidence_pointers.length} evidence pointers, exceeding the max of 8`);
+    for (const ep of cap.evidence_pointers) if (!evIds.has(ep)) errors.push(`capsule '${ticket}' evidence pointer '${ep}' is not a declared evidence type in evidence.json`);
+    const may = roleMay.get(cap.owner_actor);
+    if (!may) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' is not a declared role`);
+    else for (const a of cap.authority.may) if (!may.has(a)) errors.push(`capsule '${ticket}' authority amplification: may '${a}' is not permitted for role '${cap.owner_actor}'`);
+    const lease = leaseById.get(cap.writer_lease);
+    if (!lease) errors.push(`capsule '${ticket}' references unknown writer_lease '${cap.writer_lease}'`);
+    else {
+      if (lease.revoked) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' is revoked`);
+      if (lease.ticket !== ticket) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' belongs to ticket '${lease.ticket}'`);
+      if (lease.actor !== cap.owner_actor) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' does not match lease actor '${lease.actor}'`);
+      if (lease.ref !== cap.ref) errors.push(`capsule '${ticket}' ref '${cap.ref}' does not match lease ref '${lease.ref}'`);
+      for (const p of cap.affected_paths) {
+        const covered = lease.path_globs.some((g) => globPrefix(p).startsWith(globPrefix(g)));
+        if (!covered) errors.push(`capsule '${ticket}' affected path '${p}' is not covered by its writer lease '${lease.id}'`);
+      }
+    }
+  }
+  return errors;
+}
+
+// Advisory live HEAD (never a validation gate — CI checks out a different SHA).
+function currentHead(root) {
+  try { return execSync('git rev-parse HEAD', { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); }
+  catch { return null; }
+}
+
+// The token-bounded wake compiler: emits ONE disposable capsule for an actor and
+// a work item, reading only the governance contracts it needs plus that ticket's
+// capsule and lease — never dumping full files or history.
+export function runWake(root, actor, work) {
+  const { contracts, errors } = loadContracts(root);
+  if (errors.length) return { errors };
+  const rt = loadRuntime(root);
+  const cap = rt.capsules[work];
+  if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
+  if (actor && actor !== cap.owner_actor) return { errors: [`actor '${actor}' does not own capsule '${work}' (owner is '${cap.owner_actor}')`] };
+  const oi = contracts['owner-intent'];
+  const lease = rt.leases.find((l) => l.id === cap.writer_lease);
+  const head = currentHead(root);
+  const shrt = (o) => (o && o.length > 12) ? o.slice(0, 12) : (o || '?');
+  let freshness;
+  if (!head) freshness = 'unknown (no live HEAD)';
+  else if (head.startsWith(cap.base_oid) || cap.base_oid.startsWith(head)) freshness = `current (base matches HEAD ${shrt(head)})`;
+  else freshness = `STALE — capsule base ${shrt(cap.base_oid)} != live HEAD ${shrt(head)}; re-seat before mutating`;
+  const leaseState = !lease ? 'MISSING' : lease.revoked ? 'REVOKED' : `active until ${lease.expiry}`;
+
+  const L = [];
+  L.push('=== AGENTOPS WAKE CAPSULE ===');
+  L.push(`IDENTITY   : actor=${cap.owner_actor} role=${cap.owner_actor} ticket=${cap.ticket} lease=${cap.writer_lease} (${leaseState})`);
+  L.push(`MISSION    : ${oi.mission}`);
+  L.push(`WORK       : ${cap.objective}`);
+  L.push(`DONE-WHEN  : ${cap.done_when}`);
+  L.push(`AUTHORITY  : may ${cap.authority.may.join(', ')} | must-not ${cap.authority.must_not.join(', ')} | expiry ${cap.authority.expiry}`);
+  L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
+  L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}`);
+  L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
+  L.push(`NEXT ACTION: ${cap.next_action}`);
+  L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
+  L.push(`EVIDENCE   : ${cap.evidence_pointers.slice(0, 8).join(', ') || '—'}`);
+  L.push(`SOURCE     : ${cap.base_oid}`);
+  L.push(`FRESHNESS  : ${freshness}`);
+  L.push(`INVALIDATION: ${cap.invalidation_keys.join(', ')}`);
+  if (cap.blocker) L.push(`BLOCKER    : ${JSON.stringify(cap.blocker)}`);
+  const text = L.join('\n');
+  return { errors: [], text, tokens: Math.ceil(text.length / 4), capsule: cap };
+}
+
 // ---------------------------------------------------------------------------
 // Runners.
 // ---------------------------------------------------------------------------
@@ -633,9 +836,14 @@ const GENERATED_VIEW = 'generated/GOVERNANCE.md';
 export function runValidate(root = ROOT) {
   const { contracts, errors } = loadContracts(root);
   const all = [...errors];
-  // Only run semantic checks when all six contracts parsed + schema-validated.
+  // Governance semantic checks run only once all contracts parsed + schema-valid.
   if (Object.keys(contracts).length === CONTRACTS.length && errors.length === 0) {
     all.push(...semanticChecks(contracts));
+    // Runtime artifacts (capsules/leases/events) validate against the now-valid
+    // governance contracts. Zero runtime artifacts is valid (no active tickets).
+    const rt = loadRuntime(root);
+    all.push(...rt.errors);
+    if (rt.errors.length === 0) all.push(...runtimeChecks(contracts, rt));
   }
   return { contracts, errors: all };
 }
@@ -715,6 +923,27 @@ export function runSelftest(root = ROOT) {
   expectSemantic('expired delegation', (c) => { c.delegation.envelopes[0].expiry = '2020-01-01T00:00:00Z'; }, 'already expired');
   expectSemantic('missing evidence ownership', (c) => { c.qa.gates[0].required_evidence.push('ghost-evidence'); }, 'no owner in evidence.json');
 
+  // Stage 3 runtime plants — cloned from the real on-disk runtime corpus and run
+  // through the same runtimeChecks() the live validate uses.
+  const rt0 = loadRuntime(root);
+  if (rt0.errors.length) return { ok: false, detail: [`baseline runtime corpus is invalid: ${rt0.errors[0]}`] };
+  const baseRt = () => JSON.parse(JSON.stringify(rt0));
+  const expectRuntime = (label, mutate, needle) => {
+    const rt = baseRt();
+    mutate(rt);
+    const errs = runtimeChecks(contracts, rt);
+    const hit = errs.some((e) => e.includes(needle));
+    results.push({ label, pass: hit, errs: hit ? [] : errs });
+  };
+  expectRuntime('overlapping active lease (two writers)', (rt) => { rt.leases.push({ ...rt.leases[0], id: 'lease-collide', actor: 'data-architecture-lead' }); }, 'lease collision');
+  expectRuntime('expired lease', (rt) => { rt.leases[0].expiry = '2019-01-01T00:00:00Z'; }, 'already expired');
+  expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
+  expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
+  expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
+  expectRuntime('broken event chain', (rt) => { rt.events['AS-1001'][2].parent_event = 'AS-1001-0001'; }, 'breaks the chain');
+  expectRuntime('affected path outside lease', (rt) => { rt.capsules['AS-1001'].affected_paths.push('src/**'); }, 'not covered by its writer lease');
+  expectRuntime('capsule references missing lease', (rt) => { rt.capsules['AS-1001'].writer_lease = 'no-such-lease'; }, 'unknown writer_lease');
+
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
 }
@@ -728,7 +957,20 @@ function main(argv) {
   if (cmd === 'validate') {
     const { errors } = runValidate();
     if (errors.length) { console.error('VALIDATE FAIL:'); errors.forEach((e) => console.error('  - ' + e)); return 1; }
-    console.log(`VALIDATE OK: ${CONTRACTS.length} contracts parsed, schema-valid, and cross-consistent.`);
+    console.log(`VALIDATE OK: ${CONTRACTS.length} governance contracts + runtime artifacts parsed, schema-valid, and cross-consistent.`);
+    return 0;
+  }
+  if (cmd === 'wake') {
+    let actor = null, work = null;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--actor') actor = argv[++i];
+      else if (argv[i] === '--work') work = argv[++i];
+    }
+    if (!work) { console.error('wake requires --work <ticket> (and optionally --actor <role>)'); return 2; }
+    const r = runWake(ROOT, actor, work);
+    if (r.errors && r.errors.length) { console.error('WAKE blocked:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    process.stdout.write(r.text + '\n');
+    process.stderr.write(`\n[wake] ~${r.tokens} tokens (startup target 1200 / hard 1500)\n`);
     return 0;
   }
   if (cmd === 'render') {
@@ -756,7 +998,7 @@ function main(argv) {
     console.log(`SELFTEST OK: all ${s.results.length} negative plants correctly caught.`);
     return 0;
   }
-  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | --selftest`);
+  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | wake --work <ticket> [--actor <role>] | --selftest`);
   return 2;
 }
 

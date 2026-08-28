@@ -14,7 +14,7 @@
   "pages_owner_hud": "PLANNED",
   "owner_command_path": "WORKFLOW_FORMS",
   "control_plane_root": ".agentops",
-  "installed_stage": "operational-governance",
+  "installed_stage": "runtime-capsules",
   "installed_contracts": [
     "governance/owner-intent.json",
     "governance/hierarchy.json",
@@ -29,11 +29,18 @@
     "governance/qa.json",
     "governance/evidence.json"
   ],
+  "runtime_artifacts": {
+    "work_capsule": "work/<ticket>/CURRENT.json (schema work-capsule/v1, sealed with a compare-and-swap current_hash)",
+    "writer_lease": "leases/<lease-id>.json (schema lease/v1, one writer per overlapping path/ref)",
+    "event": "events/<ticket>/<event-id>.json (schema event/v1, append-only chain)",
+    "wake_compiler": "opsctl wake --actor <role> --work <ticket> (token-bounded disposable capsule)",
+    "seed_ticket": "AS-1001"
+  },
   "deferred_next_stages": [
-    "wake-compiler (opsctl wake — token-bounded capsule)",
-    "work/<ticket>/CURRENT.json capsules + append-only events",
-    "leases/<lease-id>.json writer leases + compare-and-swap",
-    "owner-command workflows",
-    "pages owner HUD"
+    "clean-clone / context-wipe reconstruction drills (Claude + Codex)",
+    "owner-command workflows (authenticated decision path)",
+    "pages owner HUD (read-only projection)",
+    "migration tooling for existing work",
+    "independent review then exact dev -> main promotion decision"
   ]
 }

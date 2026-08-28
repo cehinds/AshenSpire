@@ -23,10 +23,13 @@ Start at [`BOOTSTRAP.md`](BOOTSTRAP.md).
     information-access.json  startup / on-demand / restricted / forbidden context
     qa.json               risk classes, independent gates, waiver authority
     evidence.json         producer / exact object / verifier / invalidation
-  schemas/              mini-schemas the validator enforces
+  schemas/              mini-schemas the validator enforces (governance + runtime)
+  work/<ticket>/CURRENT.json   sealed work capsule (compare-and-swap current_hash)
+  leases/<lease-id>.json       writer lease (one writer per overlapping path/ref)
+  events/<ticket>/*.json       append-only transition events
   tools/
-    opsctl.mjs            validate | render [--check] | verify | --selftest
-    opsctl.test.mjs       test suite (real corpus + negative plants)
+    opsctl.mjs            validate | render [--check] | verify | wake | --selftest
+    opsctl.test.mjs       test suite (real corpus + 28 negative plants)
   generated/
     GOVERNANCE.md         generated human view (sole writer: opsctl render)
 ```
@@ -34,8 +37,9 @@ Start at [`BOOTSTRAP.md`](BOOTSTRAP.md).
 The JSON is the source of truth; Markdown under `generated/` is a projection.
 Regenerate and drift-check with `node .agentops/tools/opsctl.mjs verify`.
 
-This is the `operational-governance` stage (the governance kernel plus the
-operational contracts). The reusable installer specification and
+This is the `runtime-capsules` stage (the governance kernel, the operational
+contracts, and the runtime capsule/lease/event layer with the `opsctl wake`
+compiler). The reusable installer specification and
 governance census this was built from live under
 [`docs/reconstruction/agentops/`](../docs/reconstruction/agentops/); that bundle
 is read-only installation authority, not runtime context.
