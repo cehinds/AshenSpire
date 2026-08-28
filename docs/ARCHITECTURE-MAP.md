@@ -1,8 +1,14 @@
 # AshenSpire architecture map
 
-This is the behavior-neutral target map for making the repository easier to
-navigate without changing how the game starts or how ES modules resolve. It is
-a migration contract, not permission for a bulk move.
+This is the stable core contract and navigation map for the AshenSpire
+composition/component remodel. It describes ownership boundaries that must
+survive every current-`dev` refresh without changing how the game starts or how
+ES modules resolve. It is a migration contract, not permission for a bulk move.
+
+The changing implementation inventory is generated in
+[`ARCHITECTURE-CURRENT-DEV.md`](./ARCHITECTURE-CURRENT-DEV.md) by
+`tools/update-architecture.mjs`. The refresh routine may update that snapshot;
+it does not rewrite this core contract or the component-model contract.
 
 ## Player door stays fixed
 
@@ -14,30 +20,59 @@ a migration contract, not permission for a bulk move.
 Those public doors remain compatible throughout any restructuring. A structural
 pull request must prove each door it touches before and after the change.
 
-## Current layers, in familiar application terms
+## Core redesign contract
 
-AshenSpire already has the separation commonly expressed as Models, Services,
-Controllers, and Assets. Preserve the existing names because browser imports
-and the no-build ES-module runtime make their paths part of the compatibility
-surface.
+AshenSpire uses a composition/component-based architecture. .NET and Dimitar's
+naming and coding practices are conventions for clarity, not a requirement to
+introduce a .NET runtime, MVC framework, or MVVM folder structure.
 
-| Familiar application term | AshenSpire owner | Boundary |
+- `src/main.js` is the composition root: it wires existing owners and contains
+  no reusable domain owner.
+- `src/model/` owns pure state, schemas, formulas, validation, and projections;
+  it never owns the DOM.
+- `src/engine/` owns headless simulation, orchestration, RNG, and persistence;
+  it never imports presentation code or browser hosts.
+- UI screen hosts act as presenters: they project domain snapshots into
+  immutable Component Models, ask components to render, and bind semantic
+  commands at the boundary.
+- Component Models are serializable, deeply frozen trees. Renderers own DOM
+  markup; Behavior Models and observer-style adapters own interaction wiring.
+- JSON/CSV source data owns content and tuning. Code supplies reusable rules and
+  interpreters rather than one imperative implementation per card, enemy, or
+  item.
+- MVP and Observer are useful presentation techniques inside these boundaries;
+  they are not permission to move game rules into views or make the DOM the
+  source of truth.
+- Public player doors, save compatibility, keyboard/gamepad semantics, and
+  exact-head verification remain stable while seams migrate.
+
+## Current `dev` layers and ownership
+
+AshenSpire already has most of the desired separation. Preserve the existing
+paths because browser imports and the no-build ES-module runtime make them part
+of the compatibility surface.
+
+| Composition/component role | AshenSpire owner | Boundary |
 |---|---|---|
-| Models and interfaces | `src/model/` | Schemas, state, formulas, validation, and read models; no DOM |
-| Services | `src/engine/` | Headless game operations, orchestration, RNG, and persistence |
-| Transport | `src/net/lan.js` | Browser-side LAN discovery, hosting requests, and lobby WebSocket adapter; no game rules |
-| Controllers and views | `src/ui/` | Input translation and rendering; the only layer that owns the DOM |
-| Configuration and domain data | `src/content/` | Pure definitions and balance data; no runtime orchestration |
+| Domain models and contracts | `src/model/` | Schemas, state, formulas, validation, and read models; no DOM |
+| Headless simulation/services | `src/engine/` | Game operations, orchestration, RNG, and persistence; no browser host |
+| Transport adapter | `src/net/lan.js` | Browser-side LAN discovery, hosting requests, and lobby WebSocket adapter; no game rules |
+| Screen hosts / presenters | `src/ui/screens/` | Projects snapshots, chooses composition, and binds semantic commands |
+| Presentation projections | `src/ui/viewModels/` | Domain-to-screen projection and composition of reusable models |
+| Component models and behaviors | `src/ui/models/` | Immutable serializable presentation and interaction records |
+| DOM components / observers | `src/ui/components/` | Markup, DOM ownership, lifecycle/event adapters, and rendering |
+| Configuration and domain data | `src/content/`, `content/source/` | Pure definitions, balance, JSON, and CSV; no runtime orchestration |
 | Assets | `assets/`, `styles/`, `music/` | Player-facing media and presentation resources |
-| Application composition root | `src/main.js` | Wires the layers together; contains no reusable domain owner |
+| Composition root | `src/main.js` | Wires the layers together; contains no reusable domain owner |
 | Verification | `tests/`, `tools/` | Headless behavior checks, browser witnesses, build and support tools |
 
-Dependencies continue to point from UI to engine/model/content and the transport
-adapter, from engine to model/content, and from model to content where
-definitions are required. The composition root may also query transport
+Dependencies continue to point from presenters/components to engine, model,
+content, and transport; from engine to model/content; and from model to content
+where definitions are required. The composition root may also query transport
 availability. Transport does not belong to the engine and does not own game
-rules. Shared contracts belong in `src/model/`; creating a parallel
-`interfaces/` tree would split one source of truth.
+rules. Shared contracts belong in `src/model/`; creating parallel
+`application/`, `infrastructure/`, or `interfaces/` trees without a concrete
+seam would split one source of truth.
 
 ## Root allowlist
 
@@ -94,3 +129,12 @@ These are candidates, not pre-approved work:
 
 Any follow-up must begin from current `dev`, claim exact paths, avoid the
 authoritative CSV/generated-content boundary, and receive independent review.
+
+## Automatic current-`dev` refresh
+
+`.github/workflows/architecture-sync.yml` runs on every push to `dev`, including
+the push created by a merged pull request. It runs
+`tools/update-architecture.mjs --verify`, updates only
+`docs/ARCHITECTURE-CURRENT-DEV.md`, and leaves this contract and
+`docs/COMPONENT-MODEL-ARCHITECTURE.md` untouched. The generated commit is marked
+`[architecture-sync]` so the routine cannot loop on its own update.
