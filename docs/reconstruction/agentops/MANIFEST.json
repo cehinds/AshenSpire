@@ -20,6 +20,9 @@
     {"destination":"recovery/ITM-START_HERE.md","source_label":"physical continuity census","sha256":"3D9A297B59F5C06B4B33DB650299A018423436DE1A23AAFA8C815ADAB945328A"},
     {"destination":"recovery/ITM-CUTOVER-BOOTSTRAP.md","source_label":"physical continuity census","sha256":"41D1789037FC60F676830FDFD7C752FCDA41EC9EDC738077ECF179C8A23FB6CD"},
     {"destination":"recovery/CONTINUITY-README.md","source_label":"coordination reset census","sha256":"6D4347A1BB3A4D7A38AEF5D47862A8EA0054581401BD5A86BD2C2486F11CAB5A"},
-    {"destination":"REUSABLE-INSTALLER-MEGA-PROMPT.md","source_label":"approved owner prompt","sha256":"D2EA11313FD7B865316F567C5B54B97259CAA057709813A1AEB96AFD79858A45"}
+    {"destination":"REUSABLE-INSTALLER-MEGA-PROMPT.md","source_label":"approved owner prompt","sha256":"D2EA11313FD7B865316F567C5B54B97259CAA057709813A1AEB96AFD79858A45"},
+    {"destination":"governance/README.md","source_label":"ITM integration governance census","sha256":"652D933EAF81DF1A509B3D24345BE64294150B09F8584C16DC0DB81CC95FAE7D"},
+    {"destination":"governance/TICKET-SCHEMA.md","source_label":"ITM integration governance census","sha256":"CA89967BE55B7E58AC76C099B913542B7A6AA169E38C0F26742385E3673F775C"},
+    {"destination":"incident/defect.md","source_label":"incident support document census","sha256":"C77C4CDF086006828FC2042E33A911A7AEB356E5918467C75C1D923A860076C1"}
   ]
 }
