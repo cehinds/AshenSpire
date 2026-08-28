@@ -26,6 +26,14 @@
   z-index: 20;
   overflow: visible;
 }
+/* #045 current-build density delta: reclaim only dead vertical room on the
+   combat surface. Controls retain their authored tap floors and ordering. */
+.combat > .topbar.combat-hud.shared-hud {
+  padding-block: calc(1px / var(--ui-zoom, 1));
+}
+.combat > .topbar.combat-hud.shared-hud .hud-top {
+  gap: calc(1px / var(--ui-zoom, 1));
+}
 /* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
    inside any `.topbar`, and this rule set its height and its fill colour while
@@ -245,6 +253,13 @@
 }
 /* End Variant D */
 
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding-block: calc(1px / var(--ui-zoom, 1));
+}
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  column-gap: calc(6px / var(--ui-zoom, 1));
+  row-gap: calc(1px / var(--ui-zoom, 1));
+}
 .topbar.combat-hud.shared-hud .hud-quick-settings {
   right: calc(8px / var(--ui-zoom, 1));
 }
@@ -1388,6 +1403,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
+.combatant.enemy.context-selected .combatant-card {
+  filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
+}
+.combatant.enemy.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
 .combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
 .combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
@@ -1534,10 +1553,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     gap: calc(var(--hud-mobile-row-gap-px) / var(--ui-zoom, 1));
     padding: calc(var(--hud-mobile-outer-pad-px) / var(--ui-zoom, 1)) 1rem;
   }
+  :root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud {
+    gap: 0;
+    padding-block: 0;
+  }
+  :root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud .hud-top {
+    gap: 0;
+  }
   /* Keep the reusable header on one row. Container queries above progressively
      remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
+    line-height: 1;
   }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-top {
     --hud-control-gap: calc(var(--hud-mobile-control-gap-px) / var(--ui-zoom, 1));

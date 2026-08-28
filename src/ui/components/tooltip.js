@@ -6,6 +6,41 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let tipEl = null;
 let showTimer = null;
+let autoHideTimer = null;
+let fadeTimer = null;
+
+function conceal() {
+  if (!tipEl) return;
+  tipEl.style.display = 'none';
+  tipEl.setAttribute('aria-hidden', 'true');
+}
+
+function clearAutoHide() {
+  clearTimeout(autoHideTimer);
+  clearTimeout(fadeTimer);
+  autoHideTimer = null;
+  fadeTimer = null;
+  if (tipEl) tipEl.classList.remove('is-fading');
+}
+
+function scheduleAutoHide(autoHideMs) {
+  clearAutoHide();
+  if (!(autoHideMs > 0)) return;
+  autoHideTimer = setTimeout(() => {
+    if (!tipEl) return;
+    const systemReducedMotion = typeof matchMedia === 'function'
+      && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.body.classList.contains('reduced-motion') || systemReducedMotion) {
+      conceal();
+      return;
+    }
+    tipEl.classList.add('is-fading');
+    fadeTimer = setTimeout(() => {
+      conceal();
+      clearAutoHide();
+    }, 160);
+  }, autoHideMs);
+}
 
 // ---------------------------------------------------------------------------
 // E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
@@ -71,10 +106,17 @@ function ensure() {
   if (!tipEl) {
     tipEl = document.createElement('div');
     tipEl.id = 'tooltip';
+    tipEl.setAttribute('role', 'tooltip');
+    tipEl.setAttribute('aria-hidden', 'true');
     markUiComponent(tipEl, UI.tooltip);
     document.body.appendChild(tipEl);
   }
   return tipEl;
+}
+
+/** Ensure the singleton exists before a control references it with aria-describedby. */
+export function ensureTooltip() {
+  return ensure();
 }
 
 // Container: THE VIEWPORT. #tooltip is `position: fixed` (ui.css:5), so the
@@ -128,12 +170,13 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0) {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
   // place is an ordinary tooltip again unless its own hold sticks it.
   unstick();
+  clearAutoHide();
   const t = ensure();
   t.innerHTML = html;
   t.style.removeProperty('width');
@@ -151,10 +194,16 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     t.style.width = `${widthPx}px`;
     t.style.maxWidth = `${Math.max(0, room.width - 16)}px`;
   }
+  if (appearance?.maxWidthRem) {
+    const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const maxWidthPx = Math.max(0, Math.min(appearance.maxWidthRem * rootFontPx, room.width - 16));
+    t.style.maxWidth = `${maxWidthPx}px`;
+  }
   if (appearance?.maxHeightRatio) {
     t.style.maxHeight = `${Math.max(0, room.height * appearance.maxHeightRatio)}px`;
   }
   t.style.display = 'block';
+  t.setAttribute('aria-hidden', 'false');
   // THE INTENT, NAMED HERE. 'beside' is the tooltip's whole placement rule: it
   // explains a control, so it may not sit on it, and any of the four sides that
   // fits is an acceptable answer.
@@ -165,6 +214,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
   placeAnchored(t, anchor, { intent: resolvedIntent, clear });
+  scheduleAutoHide(autoHideMs);
   return true;
 }
 
@@ -176,7 +226,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 export function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null,
+  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -198,7 +248,7 @@ export function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -208,7 +258,7 @@ export function attachTooltip(el, contentFn, {
     // tooltip is no reason to let a half-started hover fire behind it.
     clearTimeout(showTimer);
     if (stuck) return; // E8: a completed hold outlives the pointer leaving
-    if (tipEl) tipEl.style.display = 'none';
+    conceal();
   });
   el.addEventListener('gpfocus', () => {
     clearTimeout(showTimer);
@@ -224,9 +274,17 @@ export function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-export function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null } = {}) {
+export function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  return showTooltipForRect(el.getBoundingClientRect(), html, {
+    intent, clear: clear || el.parentElement, appearance, placementModel, autoHideMs,
+  });
+}
+
+/** Show the shared tooltip against a caller-owned measured subject rectangle. */
+export function showTooltipForRect(anchor, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+  if (!anchor) return false;
+  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs);
 }
 
 /**
@@ -302,8 +360,9 @@ export function hideTooltip() {
   // change. A stuck tooltip is not a stronger tooltip; it is one that ignores
   // the pointer leaving, and nothing else.
   unstick();
+  clearAutoHide();
   clearTimeout(showTimer);
-  if (tipEl) tipEl.style.display = 'none';
+  conceal();
 }
 
 export function esc(s) {

@@ -7,11 +7,11 @@
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
 import { openPileModal } from '../components/piles.js';
-import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
+import { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -41,8 +41,6 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { combatantInspectorModel } from '../models/CombatantInspectorModel.js';
-import { mountCombatantInspector } from '../components/combatantInspector.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -87,7 +85,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
-        <div class="combatant-inspector-host" hidden></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
@@ -159,8 +156,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
-  let inspectedCombatant = null; // { role, id } for the persistent edge tray
-  let inspectorExpanded = true;
+  let selectedEnemyId = null; // contextual reading selection; never combat targeting
+  let enemyTooltipDelayTimer = null;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -173,6 +170,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // is a separately owned Folding Tray and remains until its label is folded.
   combatEl.addEventListener('click', (event) => {
     if (event.target.closest('.combatant, .combatant-inspector-host')) return;
+    clearTimeout(enemyTooltipDelayTimer);
+    selectedEnemyId = null;
+    combatEl.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
+    combatEl.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
     hideTooltip();
   });
 
@@ -312,7 +313,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const def = registries.statuses.get(statusId);
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
-      return [{ name: presentation.label, detail: presentation.tooltip }];
+      return [{ name: def.name, detail: presentation.tooltip }];
     });
   }
 
@@ -381,71 +382,66 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     };
   }
 
-  function foldedCombatantTooltip(subject) {
+  function enemyContextTooltip(subject) {
     const hp = subject.resources.find((row) => row.label === 'HP');
     const poise = subject.resources.find((row) => row.label === 'Poise');
+    const effects = subject.statuses.map((row) => row.name).join(', ') || 'None';
     return `<div class="tt-title">${esc(subject.name)}</div>`
-      + `<div class="tt-combatant-line">${esc(subject.subtitle || '')}</div>`
-      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
-      + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
+      + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
+      + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
+      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
   }
 
-  function expandedCombatantTooltip(subject, role) {
-    const live = subject.intent || subject.skills.find((row) => row.active);
-    return `${foldedCombatantTooltip(subject)}`
-      + (live ? `<div class="tt-combatant-focus"><b>${esc(live.name)}</b><span>${esc(live.detail || '')}</span></div>` : '')
-      + `<div class="tt-combatant-hint">Full details opened in the ${role === 'player' ? 'left' : 'right'} inspector.</div>`;
+  function showEnemyContext(box, enemy) {
+    clearTimeout(enemyTooltipDelayTimer);
+    if (!box.isConnected || !enemy.alive) return false;
+    const card = box.querySelector('.combatant-card')?.getBoundingClientRect();
+    if (!card) return false;
+    showTooltipForRect(card, enemyContextTooltip(combatantSubject('enemy', enemy)), {
+      intent: 'above',
+      clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
+      appearance: { variant: 'enemy-context', maxWidthRem: 21 },
+      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+    });
+    return true;
   }
 
-  function renderCombatantInspector() {
-    const host = $('.combatant-inspector-host');
-    if (!host || !inspectedCombatant) {
-      if (host) host.hidden = true;
+  function restoreSelectedEnemyContext(exceptId = null) {
+    if (!selectedEnemyId || selectedEnemyId === exceptId) {
+      hideTooltip();
       return;
     }
-    const entity = inspectedCombatant.role === 'player'
-      ? combat.player : getEntity(combat, inspectedCombatant.id);
-    if (!entity) {
-      host.hidden = true;
-      return;
-    }
-    const model = combatantInspectorModel({
-      role: inspectedCombatant.role,
-      expanded: inspectorExpanded,
-      subject: combatantSubject(inspectedCombatant.role, entity),
-      presentation: registries.balance.ui.combatantInspector,
-    });
-    mountCombatantInspector(host, model, {
-      onToggle: (expanded) => {
-        inspectorExpanded = expanded;
-        renderCombatantInspector();
-      },
-    });
+    const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+    const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
+    if (!selectedBox || !showEnemyContext(selectedBox, selectedEntity)) hideTooltip();
   }
 
-  function inspectCombatant(role, entity, box) {
-    inspectedCombatant = { role, id: entity.id };
-    inspectorExpanded = true;
-    const subject = combatantSubject(role, entity);
-    renderCombatantInspector();
-    showTooltipFor(box, expandedCombatantTooltip(subject, role), {
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-expanded' },
-    });
-  }
-
-  function wireCombatantReading(box, role, entity) {
-    const subject = () => combatantSubject(role, entity);
+  function wireEnemyContext(box, enemy) {
+    ensureTooltip();
     box.classList.add('inspectable');
     box.dataset.focusable = '';
-    box.setAttribute('aria-label', `Inspect ${subject().name}`);
-    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
-      delayMs: tooltipPlacement.tokens.hoverDelayMs,
-      focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-folded' },
+    box.tabIndex = -1;
+    box.setAttribute('role', 'button');
+    box.setAttribute('aria-pressed', selectedEnemyId === enemy.id ? 'true' : 'false');
+    box.setAttribute('aria-describedby', 'tooltip');
+    box.setAttribute('aria-label', `Select ${combatantSubject('enemy', enemy).name} for combat details`);
+    box.addEventListener('pointerenter', () => {
+      clearTimeout(enemyTooltipDelayTimer);
+      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    });
+    box.addEventListener('pointerleave', () => {
+      if (selectedEnemyId === enemy.id) return;
+      clearTimeout(enemyTooltipDelayTimer);
+      restoreSelectedEnemyContext(enemy.id);
+    });
+    box.addEventListener('gpfocus', () => {
+      clearTimeout(enemyTooltipDelayTimer);
+      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    });
+    box.addEventListener('gpblur', () => {
+      if (selectedEnemyId === enemy.id) return;
+      clearTimeout(enemyTooltipDelayTimer);
+      restoreSelectedEnemyContext(enemy.id);
     });
     box.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -590,9 +586,22 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   // ---------- rendering ----------
   function renderCombatantStage() {
+    clearTimeout(enemyTooltipDelayTimer);
+    hideTooltip();
+    if (selected || selectedFlask != null) selectedEnemyId = null;
+    if (selectedEnemyId && !combat.enemies.some((enemy) => enemy.id === selectedEnemyId && enemy.alive)) selectedEnemyId = null;
     renderPlayer();
     renderEnemies();
-    renderCombatantInspector();
+    if (selectedEnemyId) {
+      const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+      const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
+      if (selectedBox) {
+        enemyTooltipDelayTimer = setTimeout(
+          () => showEnemyContext(selectedBox, selectedEntity),
+          tooltipPlacement.tokens.hoverDelayMs,
+        );
+      }
+    }
     battlefieldStage.refresh();
   }
 
@@ -604,6 +613,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
+  }
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
+    window.__renderCombatForShot = render;
   }
 
   function renderTopbar() {
@@ -712,7 +724,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     });
   }
 
-  function statusRow(entity) {
+  function statusRow(entity, { tooltips = true } = {}) {
     const row = document.createElement('div');
     row.className = 'statuses';
     markUiComponent(row, UI.statusEffectTray, entity.kind);
@@ -743,12 +755,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // turns); every other pip keeps its stack count.
       const shown = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
-      attachTooltip(el, () => {
-        let extra = '';
-        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
-        if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
-      });
+      if (tooltips) {
+        attachTooltip(el, () => {
+          let extra = '';
+          if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
+          if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
+          return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
+        });
+      }
       row.appendChild(el);
     }
     return row;
@@ -774,7 +788,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     };
   }
 
-  function meterBars(entity) {
+  function meterBars(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     const wrap = document.createElement('div');
     wrap.className = 'meters';
@@ -786,7 +800,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // shows health and poise exactly as the enemies' do — and a zero-threshold
     // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind), tooltips });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
@@ -803,7 +817,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
-      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents);
+      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents, { tooltips });
       if (arcane) wrap.appendChild(arcane);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
@@ -826,21 +840,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         bar.innerHTML =
           `<div class="fill" style="width:${Math.min(100, (inst.meter.value / inst.meter.max) * 100)}%"></div>` +
           `<span class="glyph">${esc(def.icon || '?')}</span>`; // hue is never the only channel
-        attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
+        if (tooltips) attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
         wrap.appendChild(bar);
       }
     }
     return wrap;
   }
 
-  function blockBadge(entity) {
+  function blockBadge(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     if (v.block <= 0) return null;
     const b = document.createElement('div');
     b.className = 'block-badge';
     markUiComponent(b, UI.blockBadge);
     b.textContent = v.block;
-    attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
+    if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
   }
 
@@ -854,25 +868,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const chip = document.createElement('div');
       chip.className = `stance-chip ${p.stanceId}`;
       chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
-      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
       trailing.push(chip);
     }
-    trailing.push(statusRow(p));
+    trailing.push(statusRow(p, { tooltips: false }));
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
       sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
-      blockBadge: blockBadge(p),
-      meters: meterBars(p),
+      blockBadge: blockBadge(p, { tooltips: false }),
+      meters: meterBars(p, { tooltips: false }),
       trailing,
     });
-    wireCombatantReading(box, 'player', p);
     // When a self/buff card is armed, the player is a confirmable target.
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
-      else inspectCombatant('player', p, box);
+      else hideTooltip();
     });
     zone.appendChild(box);
   }
@@ -884,7 +896,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     el.className = `intent ${badge.cls}`;
     markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
-    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
   }
 
@@ -913,21 +924,36 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const box = combatantFrame({
         role: 'enemy',
         entityId: enemy.id,
-        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : ''],
+        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedEnemyId === enemy.id ? 'context-selected' : ''],
         leading,
         sprite: enemySprite(def),
-        blockBadge: blockBadge(enemy),
+        blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
-        meters: meterBars(enemy),
-        trailing: [statusRow(enemy)],
+        meters: meterBars(enemy, { tooltips: false }),
+        trailing: [statusRow(enemy, { tooltips: false })],
       });
-      wireCombatantReading(box, 'enemy', enemy);
       if (enemy.alive) {
+        wireEnemyContext(box, enemy);
         box.addEventListener('click', (event) => {
           event.stopPropagation();
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-          else inspectCombatant('enemy', enemy, box);
+          else {
+            selectedEnemyId = enemy.id;
+            row.querySelectorAll('.combatant.enemy').forEach((candidate) => {
+              const current = candidate === box;
+              candidate.classList.toggle('context-selected', current);
+              candidate.setAttribute('aria-pressed', current ? 'true' : 'false');
+            });
+            clearTimeout(enemyTooltipDelayTimer);
+            // Selection state answers immediately through aria-pressed and the
+            // selected treatment; its contextual reading uses the same configured,
+            // cancellable delay as pointer and focus preview.
+            enemyTooltipDelayTimer = setTimeout(
+              () => showEnemyContext(box, enemy),
+              tooltipPlacement.tokens.hoverDelayMs,
+            );
+          }
         });
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
@@ -1307,6 +1333,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           : null;
         if (cancelledCard) focusElement(cancelledCard);
         else focusHandDefault();
+      }
+      if (selectedEnemyId) {
+        clearTimeout(enemyTooltipDelayTimer);
+        selectedEnemyId = null;
+        hideTooltip();
+        app.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
+        app.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
       }
       return;
     }
