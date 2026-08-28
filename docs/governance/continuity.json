@@ -1,13 +1,13 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-28T04:35:56Z",
+  "updatedAt": "2026-08-28T04:48:20Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
     "defaultBranch": "dev",
     "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
-    "observedAt": "2026-08-28T04:35:56Z",
+    "observedAt": "2026-08-28T04:48:20Z",
     "governance": [
       {
         "path": "docs/governance/README.md",
@@ -167,9 +167,9 @@
     {
       "id": "k15-content-door",
       "branch": "codex/migration-k15-content-door",
-      "status": "active",
+      "status": "candidate-frozen",
       "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
-      "headSha": null,
+      "headSha": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
       "availability": "local-only",
       "owner": {
         "role": "Code Quality & Modernization temporary pod",
@@ -181,15 +181,15 @@
       ],
       "dependencies": [],
       "block": null,
-      "next": "Reconstruct only the approved K15 correction and same-door self-tests against the recorded base.",
+      "next": "Keep tree 9c4146f9a3818d71742ca01ac3b8c34b3fe7d0c immutable for independent QA and an IT Manager III composition decision; focused, self-test, workflow, test-number, and full-suite gates are green.",
       "rollback": "Revert the bounded K15 commit; do not alter generated content."
     },
     {
       "id": "character-creation",
       "branch": "codex/migration-character-creation",
-      "status": "active",
+      "status": "candidate-frozen",
       "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
-      "headSha": null,
+      "headSha": "5d43b042ace212387d59c068e54c1f0265e306a0",
       "availability": "local-only",
       "owner": {
         "role": "Feature / Architecture temporary pod",
@@ -200,87 +200,103 @@
         "content/source/characterCreation.json",
         "src/model/characterCreation.js",
         "src/ui/screens/customize.js",
-        "tests/run-node.mjs"
+        "tests/engine.test.js"
       ],
       "dependencies": [],
       "block": null,
-      "next": "Reconstruct approved source, model, UI, and focused engine tests; defer generated artifacts to the serialized source freeze.",
+      "next": "Keep tree e93deb0851b35197afa128a4217c127171915eaf immutable for independent QA and composition; source/model/UI gates are green and one generated projection intentionally waits for the serialized generation lane.",
       "rollback": "Revert the bounded character-creation commit and regenerate only after restored source is frozen."
     },
     {
       "id": "save-equipment-actionregistry",
       "branch": "codex/migration-save-equipment-actionregistry",
-      "status": "queued",
+      "status": "candidate-frozen",
       "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
-      "headSha": null,
+      "headSha": "a2e832d9b5fd799592d7697f64289592c324b525",
       "availability": "local-only",
       "owner": {
-        "role": "Feature / Architecture temporary pod pending acknowledgement",
-        "acknowledged": false,
-        "acknowledgedAt": null
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:48:20Z"
       },
       "claimedPaths": [
-        "src/model/loadout.js",
+        "README.md",
+        "SPEC.md",
+        "docs/ASSET-COMPONENTS.md",
+        "docs/COMPONENT-CATALOG.md",
+        "docs/COMPONENT-MODEL-ARCHITECTURE.md",
+        "src/engine/combat.js",
         "src/engine/save.js",
         "src/main.js",
+        "src/model/combatSnapshot.js",
+        "src/model/equipmentPresentation.js",
+        "src/model/loadout.js",
+        "src/ui/components/equipmentReceipts.js",
+        "src/ui/input.js",
+        "src/ui/screens/combat.js",
         "src/ui/screens/equipment.js",
-        "tests/run-node.mjs"
+        "src/ui/screens/map.js",
+        "tests/run-node.mjs",
+        "tools/actionregistry-destinations.mjs",
+        "tools/weapon-card-packages.mjs"
       ],
       "dependencies": [
         "k15-content-door"
       ],
-      "block": "Wait for K15 contract currentness and an acknowledged exclusive-path assignment.",
-      "next": "Reconcile stable equipment/save identities first, then add the D/R/T ActionRegistry destinations.",
+      "block": null,
+      "next": "Keep tree 4d7c2148c0f7715316ec4e21a566988edc1ab118 immutable for independent QA and composition; focused identity/ActionRegistry gates and Node 114/0 are green.",
       "rollback": "Revert the bounded save/equipment commit without rewriting existing player data."
     },
     {
       "id": "title-save-slot",
       "branch": "codex/migration-title-save-slot",
-      "status": "blocked",
-      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
-      "headSha": null,
+      "status": "candidate-frozen",
+      "baseSha": "a2e832d9b5fd799592d7697f64289592c324b525",
+      "headSha": "91947b7621345e8b7b54ab87e041e3e165cfe308",
       "availability": "local-only",
       "owner": {
-        "role": "Feature / Architecture temporary pod pending acknowledgement",
-        "acknowledged": false,
-        "acknowledgedAt": null
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:48:20Z"
       },
       "claimedPaths": [
         "src/main.js",
-        "src/ui/components/saveSlotSelection.js",
+        "src/ui/components/saveSlotSelector.js",
+        "src/ui/components/titleSaveSlotTooltip.js",
         "src/ui/screens/title.js",
-        "tests/run-node.mjs"
+        "tools/confirmation-modal.mjs",
+        "tools/title-save-slot-tooltip.mjs"
       ],
       "dependencies": [
         "save-equipment-actionregistry"
       ],
-      "block": "src/main.js ownership is serialized behind save-equipment-actionregistry.",
-      "next": "After the dependency freezes, reconstruct the shared save-slot selector and title tooltip against that exact head.",
+      "block": null,
+      "next": "Keep tree 39c5371b29ba42ea46c2b63e155d1e7d61234b27 immutable for independent QA and composition; it is based on the exact frozen save-equipment-actionregistry head and its focused/full gates are green.",
       "rollback": "Revert the bounded title/save-slot commit; preserve save payloads."
     },
     {
       "id": "controls-gates",
       "branch": "codex/migration-controls-gates",
-      "status": "queued",
-      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "status": "active",
+      "baseSha": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
       "headSha": null,
       "availability": "local-only",
       "owner": {
-        "role": "Incident / Defect temporary pod pending acknowledgement",
-        "acknowledged": false,
-        "acknowledgedAt": null
+        "role": "Incident / Defect temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:48:20Z"
       },
       "claimedPaths": [
-        "src/ui/screens/settings.js",
-        "src/ui/input.js",
-        "tools/settingsreach.mjs",
-        "tools/tapsize.mjs"
+        "src/ui/components/overlay.js",
+        "styles/ui.css",
+        "tools/rebind-capture.mjs",
+        "tools/content-build.mjs"
       ],
       "dependencies": [
         "k15-content-door"
       ],
-      "block": "Wait for the K15-compatible gate contract and an acknowledged exclusive-path assignment.",
-      "next": "Consolidate overlay lifecycle, 44px targets, rebind validation, Settings reach, tapsize, and their known-bad gates.",
+      "block": null,
+      "next": "Finish overlay lifecycle, 44px target, and rebind-capture replay on the exact K15 head; preserve inherited tools/content-build.mjs unchanged, then freeze and rerun focused/full gates.",
       "rollback": "Revert the bounded controls/gates commit and retain its failing fixtures as evidence."
     },
     {
@@ -318,7 +334,7 @@
         "save-equipment-actionregistry",
         "title-save-slot"
       ],
-      "resolution": "Freeze save-equipment-actionregistry first; rebase or reconstruct title-save-slot against that exact accepted head.",
+      "resolution": "Candidate ordering is resolved: title-save-slot is based on the exact frozen save-equipment-actionregistry head; preserve that order during any later composition.",
       "owner": "IT Manager III, Integration & Delivery"
     },
     {
@@ -353,38 +369,50 @@
     {
       "order": 2,
       "lane": "k15-content-door",
-      "action": "Freeze the isolated K15 correction with its deterministic self-test.",
-      "authority": "Existing local implementation authority; independent non-maker QA still required."
+      "action": "Keep the exact K15 candidate immutable and obtain independent non-maker QA before any composition.",
+      "authority": "Independent QA assignment; IT Manager III decides composition or delivery."
     },
     {
       "order": 3,
       "lane": "character-creation",
-      "action": "Freeze approved character-creation source and tests without generated artifacts.",
-      "authority": "Existing local implementation authority; source acceptance and generated-lane authority remain separate."
+      "action": "Keep the exact character-creation candidate immutable; carry its pending projection into the final serialized generation pass.",
+      "authority": "Independent QA and source acceptance; generated-lane authority remains separate."
     },
     {
       "order": 4,
       "lane": "save-equipment-actionregistry",
-      "action": "Acknowledge the exclusive-path assignment, then reconstruct stable save/equipment identity and D/R/T destinations.",
-      "authority": "IT Manager III assignment acknowledgement and collision sequencing."
+      "action": "Keep the exact save/equipment/ActionRegistry candidate immutable and validate its composition order.",
+      "authority": "Independent QA; IT Manager III decides composition and shared-path sequencing."
     },
     {
       "order": 5,
       "lane": "title-save-slot",
-      "action": "Reconstruct after the exact ActionRegistry dependency freezes.",
-      "authority": "IT Manager III clears src/main.js ownership after dependency evidence."
+      "action": "Keep the exact title/save-slot candidate immutable on its recorded save/equipment base and validate the composed pair.",
+      "authority": "Independent QA; IT Manager III decides composition or delivery."
     },
     {
       "order": 6,
       "lane": "controls-gates",
-      "action": "Consolidate controls behavior and discriminating gates after K15 currentness is known.",
-      "authority": "IT Manager III assignment acknowledgement; binding-conflict scope requires its own recorded decision."
+      "action": "Finish and freeze the active controls replay on the exact K15 base, then rerun its discriminating and full gates.",
+      "authority": "Existing acknowledged local implementation authority; binding-conflict scope still requires its own decision."
     },
     {
       "order": 7,
       "lane": "equipment-rogue-adjudication",
       "action": "Resolve mechanics, compatibility, assets, provenance, and generated-content ownership before assigning source.",
       "authority": "IT Manager III decision; Constantine retains release and publication authority."
+    },
+    {
+      "order": 8,
+      "lane": "character-creation",
+      "action": "After source acceptance and one assigned owner, run the root/build/dist/buildordinal generation transaction exactly once for the composed source freeze.",
+      "authority": "IT Manager III assigns the serialized generated-artifact lane; no direct edits or publication."
+    },
+    {
+      "order": 9,
+      "lane": "continuity-control-plane",
+      "action": "Validate the final composed candidate from a clean clone: exact ancestry, object/tree identity, targeted gates, Node suite, generated provenance/byte identity, and diff cleanliness.",
+      "authority": "Independent clean-room QA; push, PR, integration, Pages, and release remain separately authorized."
     }
   ],
   "tombstones": [],

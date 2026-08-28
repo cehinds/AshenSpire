@@ -347,6 +347,7 @@ async function selftest(doc, raw, schema) {
     doc.repository.baseSha,
     ...doc.repository.branches.map((row) => row.sha),
     ...doc.repository.governance.map((row) => row.blob),
+    ...doc.lanes.flatMap((row) => [row.baseSha, row.headSha].filter(Boolean)),
   ]);
   const expectedHashes = new Map(doc.repository.governance.map((row) => [row.path, row.blob]));
   const remoteHeads = new Map(doc.repository.branches.map((row) => [row.name, row.sha]));
