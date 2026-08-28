@@ -1,0 +1,53 @@
+# .github/workflows/agentops-validate.yml — CI for the AgentOps control plane.
+#
+# Runs the governance kernel's own verification entrypoints (the same commands a
+# contributor runs locally) so the validated JSON, its generated view, and the
+# validator's negative-plant corpus are checked automatically on every PR that
+# touches the control plane. Dependency-free: opsctl is Node stdlib only, so
+# there is no install step.
+#
+# Scope is deliberately narrow — it fires only for changes to `.agentops/**`,
+# the root provider adapters, or this workflow itself — and it owns nothing
+# outside the control plane. Least privilege: read-only token, no writes.
+
+name: agentops-validate
+
+on:
+  pull_request:
+    paths:
+      - '.agentops/**'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '.github/workflows/agentops-validate.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: agentops-validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Contracts parse (strict, duplicate-key-rejecting), schema-validate, are
+      # cross-consistent, AND the committed generated view is in sync with them.
+      - name: Validate contracts and check generated view drift
+        run: node .agentops/tools/opsctl.mjs verify
+
+      # Prove every validation check can actually fail — the negative plants run
+      # through the same functions the live `verify` run uses.
+      - name: Prove the validator's negative plants still fail
+        run: node .agentops/tools/opsctl.mjs --selftest
+
+      # Full suite: real on-disk corpus + plants + generated-view drift gate.
+      - name: Run the opsctl test suite
+        run: node .agentops/tools/opsctl.test.mjs
