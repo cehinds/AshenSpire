@@ -60,21 +60,61 @@ const functionBlock = (source, start, end) => {
   return from >= 0 && to > from ? source.slice(from, to) : '';
 };
 
+const git = (...args) => execFileSync('git', args, {
+  cwd: ROOT,
+  encoding: 'utf8',
+}).trimEnd();
+
+function isAncestor(ancestor, descendant) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestor, descendant], {
+      cwd: ROOT,
+      stdio: 'ignore',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function currentBaseMerge(addition) {
+  const rows = git('log', '--first-parent', '--merges', '--format=%H %P', 'HEAD')
+    .split(/\r?\n/).filter(Boolean);
+  for (const row of rows) {
+    const [merge, currentBase, ...migrationParents] = row.split(/\s+/);
+    if (isAncestor(addition, currentBase)) continue;
+    const migrationParent = migrationParents.find((parent) => isAncestor(addition, parent));
+    if (migrationParent) return { merge, currentBase, migrationParent };
+  }
+  return null;
+}
+
 function changedPaths() {
   try {
-    // The historical source commit used a different parent. Find the parent of
-    // the commit that added this gate so a current-dev replay measures only the
-    // ActionRegistry lane and any later repairs, not its prerequisite series.
-    const addition = execFileSync('git', ['log', '--diff-filter=A', '-n', '1', '--format=%H', '--', TOOL_PATH], {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
+    const addition = git('log', '--diff-filter=A', '-n', '1', '--format=%H', '--', TOOL_PATH);
     if (!addition) return ['<actionregistry-addition-unavailable>'];
-    const committed = execFileSync('git', ['diff', '--name-only', `${addition}^...HEAD`], { cwd: ROOT, encoding: 'utf8' })
-      .trimEnd().split(/\r?\n/).filter(Boolean);
-    const working = execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=all'], { cwd: ROOT, encoding: 'utf8' })
-      .trimEnd().split(/\r?\n/).filter(Boolean).map((line) => line.slice(3));
-    return [...new Set([...committed, ...working])].sort();
+    const composed = currentBaseMerge(addition);
+    let committed;
+    let repairs = [];
+    if (composed) {
+      // The first parent is the preserved current dev base. The second-parent
+      // history owns the migration source. Bound this gate to its migration
+      // slice, then include the first-parent repair lineage that touched it.
+      const migrationTip = git('log', '-n', '1', '--format=%H', composed.migrationParent, '--', TOOL_PATH);
+      committed = git('diff', '--name-only', `${addition}^...${migrationTip}`)
+        .split(/\r?\n/).filter(Boolean);
+      const repairTip = git('log', '--first-parent', '-n', '1', '--format=%H', `${composed.merge}..HEAD`, '--', TOOL_PATH);
+      if (repairTip) {
+        repairs = git('diff', '--name-only', `${repairTip}^..HEAD`)
+          .split(/\r?\n/).filter(Boolean);
+      }
+    } else {
+      committed = git('diff', '--name-only', `${addition}^...HEAD`)
+        .split(/\r?\n/).filter(Boolean);
+    }
+    const working = git('status', '--porcelain=v1', '--untracked-files=all')
+      .split(/\r?\n/).filter(Boolean).map((line) => line.slice(3));
+    return [...new Set([...committed, ...repairs, ...working])].sort();
   } catch {
     return ['<git-diff-unavailable>'];
   }
@@ -266,6 +306,14 @@ if (process.argv.includes('--selftest')) {
     const planted = contract(plant(clean)).find(({ code }) => code === expectedCode);
     report(planted?.ok === false, `PLANT-${expectedCode}`, `${name} is caught by ${expectedCode}`);
   }
+  const unrelatedPath = contract(clean, {
+    paths: [...CEILING, 'src/ui/screens/unrelated-first-parent.js'],
+  }).find(({ code }) => code === 'PATH-CEILING');
+  report(
+    unrelatedPath?.ok === false,
+    'PLANT-PATH-CEILING',
+    'an unrelated path introduced beside the migration source is rejected by PATH-CEILING',
+  );
   console.log(`\n${checks - failures}/${checks} ActionRegistry source plants passed.`);
   process.exit(failures ? 1 : 0);
 }
