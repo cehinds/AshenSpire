@@ -15,11 +15,12 @@
 //   * The generated view is deterministic — no timestamps or volatile state —
 //     so `render --check` is a reliable drift gate.
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -787,22 +788,18 @@ function currentHead(root) {
   catch { return null; }
 }
 
-// The token-bounded wake compiler: emits ONE disposable capsule for an actor and
-// a work item, reading only the governance contracts it needs plus that ticket's
-// capsule and lease — never dumping full files or history.
-export function runWake(root, actor, work) {
-  const { contracts, errors } = loadContracts(root);
-  if (errors.length) return { errors };
-  const rt = loadRuntime(root);
+// Build the capsule text from already-loaded contracts + runtime. Pure and
+// deterministic in `frozen` mode (no live-HEAD lookup) — that mode is the basis
+// of the reconstruction goldens and the clean-clone drill.
+export function buildCapsule(contracts, rt, work, { frozen = false, head = null } = {}) {
   const cap = rt.capsules[work];
   if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
-  if (actor && actor !== cap.owner_actor) return { errors: [`actor '${actor}' does not own capsule '${work}' (owner is '${cap.owner_actor}')`] };
   const oi = contracts['owner-intent'];
   const lease = rt.leases.find((l) => l.id === cap.writer_lease);
-  const head = currentHead(root);
   const shrt = (o) => (o && o.length > 12) ? o.slice(0, 12) : (o || '?');
   let freshness;
-  if (!head) freshness = 'unknown (no live HEAD)';
+  if (frozen) freshness = `as-recorded (base ${shrt(cap.base_oid)}); verify live HEAD out-of-band`;
+  else if (!head) freshness = 'unknown (no live HEAD)';
   else if (head.startsWith(cap.base_oid) || cap.base_oid.startsWith(head)) freshness = `current (base matches HEAD ${shrt(head)})`;
   else freshness = `STALE — capsule base ${shrt(cap.base_oid)} != live HEAD ${shrt(head)}; re-seat before mutating`;
   const leaseState = !lease ? 'MISSING' : lease.revoked ? 'REVOKED' : `active until ${lease.expiry}`;
@@ -828,10 +825,39 @@ export function runWake(root, actor, work) {
   return { errors: [], text, tokens: Math.ceil(text.length / 4), capsule: cap };
 }
 
+// The token-bounded wake compiler: emits ONE disposable capsule for an actor and
+// a work item, reading only the governance contracts it needs plus that ticket's
+// capsule and lease — never dumping full files or history. `--frozen` drops the
+// live-HEAD lookup so output is byte-deterministic across clones/providers.
+export function runWake(root, actor, work, { frozen = false } = {}) {
+  const { contracts, errors } = loadContracts(root);
+  if (errors.length) return { errors };
+  const rt = loadRuntime(root);
+  const cap = rt.capsules[work];
+  if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
+  if (actor && actor !== cap.owner_actor) return { errors: [`actor '${actor}' does not own capsule '${work}' (owner is '${cap.owner_actor}')`] };
+  return buildCapsule(contracts, rt, work, { frozen, head: frozen ? null : currentHead(root) });
+}
+
 // ---------------------------------------------------------------------------
 // Runners.
 // ---------------------------------------------------------------------------
 const GENERATED_VIEW = 'generated/GOVERNANCE.md';
+const RECON_DIR = 'generated/reconstruction';
+
+// Every committed generated artifact, as {rel, text}. These are the sole
+// writes of `render` and the drift gate of `verify`. Frozen wake goldens make
+// reconstruction output part of the committed, deterministic surface: any clean
+// clone on any provider must reproduce them byte-for-byte.
+function generatedArtifacts(contracts, rt) {
+  const out = [{ rel: GENERATED_VIEW, text: renderGovernance(contracts) + '\n' }];
+  for (const ticket of Object.keys(rt.capsules).sort()) {
+    const cap = buildCapsule(contracts, rt, ticket, { frozen: true });
+    if (cap.errors && cap.errors.length) continue;
+    out.push({ rel: `${RECON_DIR}/${ticket}.wake.txt`, text: cap.text + '\n' });
+  }
+  return out;
+}
 
 export function runValidate(root = ROOT) {
   const { contracts, errors } = loadContracts(root);
@@ -851,16 +877,71 @@ export function runValidate(root = ROOT) {
 function runRender(root, check) {
   const { contracts, errors } = runValidate(root);
   if (errors.length) return { errors, drift: false };
-  const view = renderGovernance(contracts) + '\n';
-  const target = resolve(root, GENERATED_VIEW);
-  if (check) {
-    let current = null;
-    try { current = readFileSync(target, 'utf8'); } catch { /* missing */ }
-    if (current !== view) return { errors: [], drift: true };
-    return { errors: [], drift: false };
+  const rt = loadRuntime(root);
+  const arts = generatedArtifacts(contracts, rt);
+  const drifted = [];
+  const wrote = [];
+  for (const a of arts) {
+    const target = resolve(root, a.rel);
+    if (check) {
+      let current = null;
+      try { current = readFileSync(target, 'utf8'); } catch { /* missing */ }
+      if (current !== a.text) drifted.push(a.rel);
+    } else {
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, a.text);
+      wrote.push(a.rel);
+    }
   }
-  writeFileSync(target, view);
-  return { errors: [], drift: false, wrote: target };
+  return { errors: [], drift: drifted.length > 0, drifted, wrote };
+}
+
+// The clean-clone / context-wipe reconstruction drill. Copies ONLY the committed
+// .agentops tree into an isolated temp dir (a stand-in for a fresh clone with no
+// chat, memory, or device state), then proves reconstruction from that copy is
+// (a) valid, (b) byte-identical to in-place output, and (c) matches the committed
+// goldens. This is the machine-checked core of the provider-neutral drill spec.
+export function runDrill(root = ROOT) {
+  const steps = [];
+  const record = (name, ok, detail = '') => steps.push({ name, ok, detail });
+
+  const live = runValidate(root);
+  record('in-place verify (contracts + runtime valid)', live.errors.length === 0, live.errors.slice(0, 3).join(' | '));
+  if (live.errors.length) return { ok: false, steps };
+
+  const rt = loadRuntime(root);
+  const tickets = Object.keys(rt.capsules).sort();
+  record('at least one work capsule to reconstruct', tickets.length > 0, `${tickets.length} tickets`);
+
+  // Clean-room copy: nothing but the committed control-plane tree crosses over.
+  const clone = resolve(tmpdir(), `agentops-drill-${process.pid}-${Date.now()}`);
+  let cloneOk = false;
+  try {
+    mkdirSync(clone, { recursive: true });
+    cpSync(root, clone, { recursive: true });
+    const cloneLive = runValidate(clone);
+    record('clean-room clone re-validates from committed files only', cloneLive.errors.length === 0, cloneLive.errors.slice(0, 3).join(' | '));
+
+    for (const ticket of tickets) {
+      const here = runWake(root, null, ticket, { frozen: true });
+      const there = runWake(clone, null, ticket, { frozen: true });
+      const identical = here.text === there.text && !here.errors?.length && !there.errors?.length;
+      record(`reconstruct ${ticket}: clone output byte-identical to in-place`, identical,
+        identical ? `${here.tokens} tokens` : 'frozen capsule differs across clone');
+      // Golden must exist and match (zero evidence loss vs committed record).
+      let golden = null;
+      try { golden = readFileSync(resolve(root, `${RECON_DIR}/${ticket}.wake.txt`), 'utf8'); } catch { /* missing */ }
+      record(`reconstruct ${ticket}: matches committed golden (no evidence loss)`, golden === here.text + '\n',
+        golden === null ? 'golden missing — run render' : (golden === here.text + '\n' ? '' : 'golden drift'));
+    }
+    cloneOk = true;
+  } finally {
+    try { rmSync(clone, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
+  if (!cloneOk) record('clean-room clone completed', false, 'clone step threw');
+
+  const ok = steps.every((s) => s.ok);
+  return { ok, steps };
 }
 
 // Self-test: prove each check can fail. Each plant deep-clones the valid corpus,
@@ -967,29 +1048,36 @@ function main(argv) {
       else if (argv[i] === '--work') work = argv[++i];
     }
     if (!work) { console.error('wake requires --work <ticket> (and optionally --actor <role>)'); return 2; }
-    const r = runWake(ROOT, actor, work);
+    const r = runWake(ROOT, actor, work, { frozen: flags.has('--frozen') });
     if (r.errors && r.errors.length) { console.error('WAKE blocked:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     process.stdout.write(r.text + '\n');
     process.stderr.write(`\n[wake] ~${r.tokens} tokens (startup target 1200 / hard 1500)\n`);
     return 0;
   }
   if (cmd === 'render') {
-    const { errors, drift, wrote } = runRender(ROOT, flags.has('--check'));
+    const { errors, drift, drifted, wrote } = runRender(ROOT, flags.has('--check'));
     if (errors.length) { console.error('RENDER blocked — contracts invalid:'); errors.forEach((e) => console.error('  - ' + e)); return 1; }
     if (flags.has('--check')) {
-      if (drift) { console.error(`RENDER --check FAIL: ${GENERATED_VIEW} is stale; run \`node .agentops/tools/opsctl.mjs render\`.`); return 1; }
-      console.log(`RENDER --check OK: ${GENERATED_VIEW} matches its sources.`);
+      if (drift) { console.error('RENDER --check FAIL: stale generated artifacts; run `node .agentops/tools/opsctl.mjs render`:'); drifted.forEach((d) => console.error('  - ' + d)); return 1; }
+      console.log('RENDER --check OK: all generated artifacts match their sources.');
       return 0;
     }
-    console.log(`RENDER OK: wrote ${wrote}`);
+    console.log(`RENDER OK: wrote ${wrote.length} artifact(s): ${wrote.join(', ')}`);
     return 0;
   }
   if (cmd === 'verify') {
     const v = runValidate();
     if (v.errors.length) { console.error('VERIFY FAIL (validate):'); v.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     const r = runRender(ROOT, true);
-    if (r.drift) { console.error(`VERIFY FAIL: ${GENERATED_VIEW} is stale; run \`node .agentops/tools/opsctl.mjs render\`.`); return 1; }
-    console.log('VERIFY OK: contracts valid, consistent, and generated view in sync.');
+    if (r.drift) { console.error('VERIFY FAIL: stale generated artifacts; run `node .agentops/tools/opsctl.mjs render`:'); r.drifted.forEach((d) => console.error('  - ' + d)); return 1; }
+    console.log('VERIFY OK: contracts + runtime valid, consistent, and all generated views in sync.');
+    return 0;
+  }
+  if (cmd === 'drill') {
+    const d = runDrill();
+    for (const s of d.steps) console.log(`  ${s.ok ? 'PASS' : 'FAIL'}  ${s.name}${s.detail ? ' — ' + s.detail : ''}`);
+    if (!d.ok) { console.error('\nDRILL FAIL: clean-clone reconstruction did not reproduce exact state.'); return 1; }
+    console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss.');
     return 0;
   }
   if (cmd === '--selftest' || cmd === 'selftest') {
@@ -998,7 +1086,7 @@ function main(argv) {
     console.log(`SELFTEST OK: all ${s.results.length} negative plants correctly caught.`);
     return 0;
   }
-  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | wake --work <ticket> [--actor <role>] | --selftest`);
+  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | wake --work <ticket> [--actor <role>] [--frozen] | drill | --selftest`);
   return 2;
 }
 

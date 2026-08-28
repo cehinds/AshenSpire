@@ -3,7 +3,7 @@
 
 # AgentOps governance (generated view)
 
-Project: **AshenSpire** — policy version `1.0.0` — installed stage: `runtime-capsules`
+Project: **AshenSpire** — policy version `1.0.0` — installed stage: `reconstruction-drills`
 
 This Markdown is a projection of validated JSON contracts. It carries no
 authority of its own and is regenerated deterministically from

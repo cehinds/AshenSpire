@@ -1,0 +1,15 @@
+=== AGENTOPS WAKE CAPSULE ===
+IDENTITY   : actor=maker role=maker ticket=AS-1001 lease=lease-AS-1001-maker (active until 2026-09-30T23:59:59Z)
+MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
+WORK       : Seed and validate the AgentOps runtime capsule / lease / event model and the opsctl wake compiler.
+DONE-WHEN  : Runtime schemas, one sealed work capsule, its writer lease, and an append-only event chain validate green, and opsctl wake emits a bounded capsule under the startup token limit.
+AUTHORITY  : may implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-09-30T23:59:59Z
+FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
+REPO/REF   : https://github.com/cehinds/AshenSpire.git @ claude/ashenspire-agentops-stage3-capsules
+BASE       : 985664c2439c373a4d38604b8a53e223c8b8da61 tree seed-illustrative-tree dirty=clean
+NEXT ACTION: Run node .agentops/tools/opsctl.mjs verify and opsctl wake --actor maker --work AS-1001, then open the draft PR.
+STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+EVIDENCE   : test-run-receipt, generated-view-drift-check
+SOURCE     : 985664c2439c373a4d38604b8a53e223c8b8da61
+FRESHNESS  : as-recorded (base 985664c2439c); verify live HEAD out-of-band
+INVALIDATION: base_oid, tree, writer_lease

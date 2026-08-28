@@ -14,7 +14,7 @@
   "pages_owner_hud": "PLANNED",
   "owner_command_path": "WORKFLOW_FORMS",
   "control_plane_root": ".agentops",
-  "installed_stage": "runtime-capsules",
+  "installed_stage": "reconstruction-drills",
   "installed_contracts": [
     "governance/owner-intent.json",
     "governance/hierarchy.json",
@@ -33,11 +33,11 @@
     "work_capsule": "work/<ticket>/CURRENT.json (schema work-capsule/v1, sealed with a compare-and-swap current_hash)",
     "writer_lease": "leases/<lease-id>.json (schema lease/v1, one writer per overlapping path/ref)",
     "event": "events/<ticket>/<event-id>.json (schema event/v1, append-only chain)",
-    "wake_compiler": "opsctl wake --actor <role> --work <ticket> (token-bounded disposable capsule)",
+    "wake_compiler": "opsctl wake --actor <role> --work <ticket> [--frozen] (token-bounded disposable capsule)",
+    "reconstruction_drill": "opsctl drill (clean-clone / context-wipe reconstruction, provider-neutral); spec in RECONSTRUCTION-DRILL.md; goldens in generated/reconstruction/",
     "seed_ticket": "AS-1001"
   },
   "deferred_next_stages": [
-    "clean-clone / context-wipe reconstruction drills (Claude + Codex)",
     "owner-command workflows (authenticated decision path)",
     "pages owner HUD (read-only projection)",
     "migration tooling for existing work",
