@@ -58,8 +58,9 @@ and released facts remain separate.
    may have `headSha: null`; `candidate-frozen` and `complete` may not.
 3. Record acknowledgement before marking a lane active. Record the decision
    owner, retry trigger, and safe next action for every block.
-4. Declare every shared path or serialized lane in `collisions`; do not resolve
-   collisions by copying or hand-merging generated files.
+4. Declare every shared path or serialized lane in `collisions`; the validator
+   derives equal and directory-prefix overlaps and refuses an undeclared lane
+   pair. Do not resolve collisions by copying or hand-merging generated files.
 5. Run:
 
    ```text
@@ -72,11 +73,12 @@ and released facts remain separate.
 6. Freeze the candidate for independent non-maker policy QA. A later edit makes
    a new candidate and invalidates the former exact-head verdict.
 
-The deterministic self-test sends seventeen clean and known-bad cases through
+The deterministic self-test sends eighteen clean and known-bad cases through
 the same validator, including malformed hashes, missing Git objects, governance
 blob drift, stale and moved branch snapshots, dependency cycles, missing owner
-acknowledgement, unsafe generated order, local paths, broken Markdown links,
-budget overflow, and a pruning path that must remain mutation-free.
+acknowledgement, an omitted required collision, unsafe generated order, local
+paths, broken Markdown links, budget overflow, and a pruning path that must
+remain mutation-free.
 
 ## Build and generated-artifact lane
 

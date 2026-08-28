@@ -1,7 +1,7 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-28T04:48:20Z",
+  "updatedAt": "2026-08-28T05:01:26Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
@@ -176,6 +176,19 @@
         "acknowledged": true,
         "acknowledgedAt": "2026-08-28T04:35:56Z"
       },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/content-build.mjs --selftest", "counts": "K15 8/8; external 6/6; internal 2/2; clean 1/1", "result": "PASS" },
+          { "command": "node tools/content-build.mjs --check", "counts": "1 invocation; exit 0", "result": "PASS" },
+          { "command": "node tools/buildversion.mjs --check", "counts": "8/8", "result": "PASS" },
+          { "command": "node tools/verify-shipped.mjs", "counts": "6/6", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "112 passed; 0 failed", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["Local maker evidence only; independent non-maker QA is not recorded."]
+      },
       "claimedPaths": [
         "tools/content-build.mjs"
       ],
@@ -195,6 +208,16 @@
         "role": "Feature / Architecture temporary pod",
         "acknowledged": true,
         "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "SOURCE_FROZEN_GENERATION_PENDING",
+        "checks": [
+          { "command": "node tools/testnumbers.mjs --raw", "counts": "110 unique test labels", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "104 passed; 8 failed solely because src/content/generated/characterCreation.js is intentionally stale", "result": "FAIL" },
+          { "command": "node tools/content-build.mjs --check", "counts": "1 stale generated projection: src/content/generated/characterCreation.js", "result": "FAIL" }
+        ],
+        "boundary": ["Focused source/schema check reported 15/15, but no exact shell command was supplied.", "Generation is intentionally pending; this is not a full-suite PASS or independent QA acceptance."]
       },
       "claimedPaths": [
         "content/source/characterCreation.json",
@@ -218,6 +241,23 @@
         "role": "Feature / Architecture temporary pod",
         "acknowledged": true,
         "acknowledgedAt": "2026-08-28T04:48:20Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/weapon-card-packages.mjs", "counts": "65/65", "result": "PASS" },
+          { "command": "node tools/saveroundtrip.mjs", "counts": "14/14", "result": "PASS" },
+          { "command": "node tools/session-resume-smoke.mjs", "counts": "33/33", "result": "PASS" },
+          { "command": "node tools/actionregistry-destinations.mjs", "counts": "14/14", "result": "PASS" },
+          { "command": "node tools/actionregistry-destinations.mjs --selftest", "counts": "10/10", "result": "PASS" },
+          { "command": "node tools/ui-components.mjs", "counts": "21/21", "result": "PASS" },
+          { "command": "node tools/linkcheck.mjs", "counts": "366/366", "result": "PASS" },
+          { "command": "node tools/content-build.mjs --check", "counts": "1 invocation; exit 0", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "114 passed; 0 failed", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["Local maker evidence only; independent non-maker QA is not recorded."]
       },
       "claimedPaths": [
         "README.md",
@@ -245,7 +285,7 @@
       ],
       "block": null,
       "next": "Keep tree 4d7c2148c0f7715316ec4e21a566988edc1ab118 immutable for independent QA and composition; focused identity/ActionRegistry gates and Node 114/0 are green.",
-      "rollback": "Revert the bounded save/equipment commit without rewriting existing player data."
+      "rollback": "From a clean rollback candidate at a2e832d9b5fd799592d7697f64289592c324b525, run git revert --no-commit a110ac9d6472faeb979f010949315e8374ddb01a..a2e832d9b5fd799592d7697f64289592c324b525, inspect and test the complete six-commit inverse, then commit only with rollback authority; never reset or rewrite player data."
     },
     {
       "id": "title-save-slot",
@@ -258,6 +298,20 @@
         "role": "Feature / Architecture temporary pod",
         "acknowledged": true,
         "acknowledgedAt": "2026-08-28T04:48:20Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/confirmation-modal.mjs", "counts": "8/8", "result": "PASS" },
+          { "command": "node tools/confirmation-modal.mjs --selftest", "counts": "7/7", "result": "PASS" },
+          { "command": "node tools/title-save-slot-tooltip.mjs", "counts": "10/10", "result": "PASS" },
+          { "command": "node tools/saveroundtrip.mjs", "counts": "14/14", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "114 passed; 0 failed", "result": "PASS" },
+          { "command": "node tools/screen-census.mjs", "counts": "21 modules; 19 instrumented; 2 uninstrumented; 0 findings", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["Browser and Experience QA: 0 runs; not accepted.", "Local maker evidence only; independent non-maker QA is not recorded."]
       },
       "claimedPaths": [
         "src/main.js",
@@ -272,19 +326,31 @@
       ],
       "block": null,
       "next": "Keep tree 39c5371b29ba42ea46c2b63e155d1e7d61234b27 immutable for independent QA and composition; it is based on the exact frozen save-equipment-actionregistry head and its focused/full gates are green.",
-      "rollback": "Revert the bounded title/save-slot commit; preserve save payloads."
+      "rollback": "From a clean rollback candidate at 91947b7621345e8b7b54ab87e041e3e165cfe308, run git revert --no-commit a2e832d9b5fd799592d7697f64289592c324b525..91947b7621345e8b7b54ab87e041e3e165cfe308, inspect and test the complete range inverse, then commit only with rollback authority; preserve the a2e832d9 base and save payloads."
     },
     {
       "id": "controls-gates",
       "branch": "codex/migration-controls-gates",
-      "status": "active",
+      "status": "candidate-frozen",
       "baseSha": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
-      "headSha": null,
+      "headSha": "abddb5fa45787048ae7dcb6c3ac3a4f02cbb50cb",
       "availability": "local-only",
       "owner": {
         "role": "Incident / Defect temporary pod",
         "acknowledged": true,
         "acknowledgedAt": "2026-08-28T04:48:20Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/rebind-capture.mjs", "counts": "116/116", "result": "PASS" },
+          { "command": "node tools/rebind-capture.mjs --selftest", "counts": "21/21 plants; ownership guards 15/15; cleanup entries 0", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "112 passed; 0 failed", "result": "PASS" },
+          { "command": "git diff --exit-code 187deb2f7e8b017b61897e6a24dfa4503027f56d..abddb5fa45787048ae7dcb6c3ac3a4f02cbb50cb -- tools/content-build.mjs", "counts": "0 changed lines; exit 0; K15 preserved", "result": "PASS" },
+          { "command": "git status --short", "counts": "0 entries at freeze", "result": "PASS" }
+        ],
+        "boundary": ["Tree ec6264dcf1d8e432df5128e24d55a32a1c1fb2ac; local maker evidence only; independent non-maker QA is not recorded."]
       },
       "claimedPaths": [
         "src/ui/components/overlay.js",
@@ -296,7 +362,7 @@
         "k15-content-door"
       ],
       "block": null,
-      "next": "Finish overlay lifecycle, 44px target, and rebind-capture replay on the exact K15 head; preserve inherited tools/content-build.mjs unchanged, then freeze and rerun focused/full gates.",
+      "next": "Keep tree ec6264dcf1d8e432df5128e24d55a32a1c1fb2ac immutable for independent QA and composition; K15 is preserved and cleanup is zero.",
       "rollback": "Revert the bounded controls/gates commit and retain its failing fixtures as evidence."
     },
     {
@@ -335,6 +401,24 @@
         "title-save-slot"
       ],
       "resolution": "Candidate ordering is resolved: title-save-slot is based on the exact frozen save-equipment-actionregistry head; preserve that order during any later composition.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "tools/content-build.mjs",
+      "lanes": [
+        "k15-content-door",
+        "controls-gates"
+      ],
+      "resolution": "Controls is based on the exact K15 head and its frozen diff proves tools/content-build.mjs unchanged; preserve that ancestry during composition.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "content/source/characterCreation.json within the broader content/source claim",
+      "lanes": [
+        "character-creation",
+        "equipment-rogue-adjudication"
+      ],
+      "resolution": "Character creation retains source ownership; equipment/Rogue remains waiting on an IT Manager III decision that must narrow or explicitly sequence the broader content/source claim.",
       "owner": "IT Manager III, Integration & Delivery"
     },
     {
@@ -393,8 +477,8 @@
     {
       "order": 6,
       "lane": "controls-gates",
-      "action": "Finish and freeze the active controls replay on the exact K15 base, then rerun its discriminating and full gates.",
-      "authority": "Existing acknowledged local implementation authority; binding-conflict scope still requires its own decision."
+      "action": "Keep the exact controls candidate immutable on its K15 base and obtain independent non-maker QA before composition.",
+      "authority": "Independent QA assignment; binding-conflict scope still requires its own decision."
     },
     {
       "order": 7,
