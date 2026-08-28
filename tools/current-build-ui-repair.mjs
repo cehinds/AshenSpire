@@ -291,15 +291,35 @@ async function main() {
       check(!faded.tooltip.visible && faded.tooltip.ariaHidden === 'true', `AUTO-FADE-5000-${shape.name.toUpperCase()}`, 'hidden after configured lifetime');
       receipts.push({ shape: shape.name, state: 'faded', reading: faded, screenshot: await shot(`${shape.name}-tooltip-faded`) });
 
-      // Real keyboard activation is aimed at the same focusable enemy control.
-      await evaluate(`document.querySelector('.combatant.enemy:not(.dead)').focus()`);
-      await key('Enter', 'Enter', 13);
+      // Exercise the production unified cursor rather than assigning DOM focus
+      // from the harness. Escape clears the earlier pointer selection; the
+      // first Arrow enters the cursor ring and subsequent directional moves
+      // converge on the enemy. Space must then reach that role=button and use
+      // the same configured selection delay as pointer/touch/Enter.
+      await key('Escape', 'Escape', 27);
+      let arrowSteps = 0;
+      while (arrowSteps < 24 && !(await evaluate(`document.querySelector('.combatant.enemy:not(.dead)')?.classList.contains('gp-focus')`))) {
+        const direction = await evaluate(`(() => {
+          const target=document.querySelector('.combatant.enemy:not(.dead)');
+          const current=document.querySelector('.gp-focus');
+          if (!target || !current) return 'ArrowUp';
+          const t=target.getBoundingClientRect(), c=current.getBoundingClientRect();
+          const dx=(t.left+t.width/2)-(c.left+c.width/2);
+          const dy=(t.top+t.height/2)-(c.top+c.height/2);
+          return Math.abs(dy)>=Math.abs(dx) ? (dy<0?'ArrowUp':'ArrowDown') : (dx<0?'ArrowLeft':'ArrowRight');
+        })()`);
+        await key(direction, direction, { ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39 }[direction]);
+        arrowSteps += 1;
+      }
+      check(await evaluate(`document.querySelector('.combatant.enemy:not(.dead)')?.classList.contains('gp-focus') === true`),
+        `KEYBOARD-ARROW-REACH-${shape.name.toUpperCase()}`, `${arrowSteps} directional step(s)`);
+      await key(' ', 'Space', 32);
       await wait(220);
       const keyboardBefore = await read();
-      check(!keyboardBefore.tooltip.visible && keyboardBefore.enemy.selected === 'true', `KEYBOARD-BEFORE-500-${shape.name.toUpperCase()}`);
+      check(!keyboardBefore.tooltip.visible && keyboardBefore.enemy.selected === 'true', `KEYBOARD-SPACE-BEFORE-500-${shape.name.toUpperCase()}`);
       await wait(360);
       const keyboardAfter = await read();
-      check(keyboardAfter.tooltip.visible, `KEYBOARD-AFTER-500-${shape.name.toUpperCase()}`);
+      check(keyboardAfter.tooltip.visible, `KEYBOARD-SPACE-AFTER-500-${shape.name.toUpperCase()}`);
 
       const compactSettings = encodeURIComponent(JSON.stringify({ reducedMotion: false, runHudMode: 'compact' }));
       await cdp.send('Page.navigate', { url: `${appUrl}?shot=combat&shotEnemyContext=status&shotSettings=${compactSettings}` }, sessionId);
