@@ -223,7 +223,7 @@ try {
   sparseDefault = balance.ui.audio.musicEnabled === true
     && row.def === balance.ui.audio.musicEnabled
     && settingOn({}, 'musicEnabled') === true;
-  invalidHeals = settingOn({ musicEnabled: 'not-a-boolean' }, 'musicEnabled') === true;
+  invalidHeals = false; // disposable proof plant: break the real collector
 } catch {}
 
 // Disabled at construction: no procedural bed, no timer.
