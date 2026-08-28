@@ -28,40 +28,7 @@ import {
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
-import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
-
-// Focused browser gates may establish only the starting HP/Block named by the
-// story before driving the real LAN intent/event/render path. Keep that setup
-// out of the socket protocol and out of the product snapshot: the tool that
-// owns the gate opts in inside the same launcher process, and normal launchers
-// never call this setter.
-let combatStartStateForTools = null;
-export function setCombatStartStateForTools(state = null) {
-  const badExtraHand = state?.extraHand != null
-    && (!Array.isArray(state.extraHand) || state.extraHand.some((id) => typeof id !== 'string'));
-  const badNextDraw = state?.nextDraw != null
-    && (!Array.isArray(state.nextDraw) || state.nextDraw.some((id) => typeof id !== 'string'));
-  const badFlasks = state?.flasks != null
-    && (!Array.isArray(state.flasks) || state.flasks.some((id) => typeof id !== 'string'));
-  const badRelicIds = state?.relicIds != null
-    && (!Array.isArray(state.relicIds) || state.relicIds.some((id) => typeof id !== 'string'));
-  const badPlayerStatuses = state?.playerStatuses != null
-    && (!Array.isArray(state.playerStatuses) || state.playerStatuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)));
-  const badAlly = state?.ally != null && (typeof state.ally !== 'object'
-    || typeof state.ally.name !== 'string' || !Number.isFinite(state.ally.hp) || !Number.isFinite(state.ally.block)
-    || (state.ally.extraHand != null && (!Array.isArray(state.ally.extraHand)
-      || state.ally.extraHand.some((id) => typeof id !== 'string'))));
-  const badEnemy = state?.enemy != null && (typeof state.enemy !== 'object'
-    || (state.enemy.hp != null && !Number.isFinite(state.enemy.hp))
-    || (state.enemy.statuses != null && (!Array.isArray(state.enemy.statuses)
-      || state.enemy.statuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)))));
-  if (state !== null && (typeof state !== 'object' || typeof state.name !== 'string'
-      || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badNextDraw || badFlasks || badRelicIds || badPlayerStatuses || badAlly || badEnemy)) {
-    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], flasks?: string[], relicIds?: string[], playerStatuses?: { id, stacks }[], ally?: { name, hp, block, extraHand?: string[] }, enemy?: { hp?, statuses? } }');
-  }
-  combatStartStateForTools = state ? structuredClone(state) : null;
-}
 
 // Re-export so tests/other tools share the one definition (no divergent copy).
 export { coopHpMult } from '../src/engine/coopCombat.js';
@@ -334,7 +301,6 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- combat (live shared fight via coopCombat) ---------------------------
   let live = null; // { combat, pool } — the running shared fight
-  let combatReceiptSeq = 0; // stable wire identity; resync reuses session.scene
 
   function memberAsPlayer(m) {
     return {
@@ -363,68 +329,6 @@ export function createSession({ registries, seedString, endless = false, restore
       extraHpMult,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
-    // Co-op player entities intentionally share the engine id `player`; the
-    // active seat key is the authoritative discriminator. Stamp it at emission
-    // time, while that discriminator is still exact, rather than asking the UI
-    // to infer a target later from HP or block deltas.
-    const emit = combat.emit;
-    combat.emit = (type, payload = {}) => emit(type,
-      (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
-        ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
-        : payload);
-    if (combatStartStateForTools) {
-      const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
-      const player = member ? combat.players.get(member.id) : null;
-      const entity = player?.entity;
-      if (!entity) throw new Error(`Tool combat start state cannot find '${combatStartStateForTools.name}'`);
-      entity.hp = combatStartStateForTools.hp;
-      entity.block = combatStartStateForTools.block;
-      if (combatStartStateForTools.flasks) {
-        entity.flasks = combatStartStateForTools.flasks.map((flaskId) => ({ flaskId }));
-      }
-      if (combatStartStateForTools.relicIds) {
-        entity.relicIds = [...combatStartStateForTools.relicIds];
-      }
-      if (combatStartStateForTools.ally) {
-        const allyMember = connectedMembers().find((entry) => entry.name === combatStartStateForTools.ally.name);
-        const allyPlayer = allyMember ? combat.players.get(allyMember.id) : null;
-        const ally = allyPlayer?.entity;
-        if (!ally) throw new Error(`Tool combat start state cannot find ally '${combatStartStateForTools.ally.name}'`);
-        ally.hp = combatStartStateForTools.ally.hp;
-        ally.block = combatStartStateForTools.ally.block;
-        if (combatStartStateForTools.ally.extraHand) {
-          allyPlayer.piles.hand.push(...combatStartStateForTools.ally.extraHand.map((cardId, index) => ({
-            instanceId: `tool-ally-extra-${index + 1}`,
-            cardId,
-            upgraded: false,
-          })));
-        }
-      }
-      for (const row of combatStartStateForTools.playerStatuses || []) {
-        applyStatus(combat, entity, row.id, row.stacks, entity);
-      }
-      if (combatStartStateForTools.extraHand) {
-        player.piles.hand.push(...combatStartStateForTools.extraHand.map((cardId, index) => ({
-          instanceId: `tool-extra-${index + 1}`,
-          cardId,
-          upgraded: false,
-        })));
-      }
-      if (combatStartStateForTools.nextDraw) {
-        player.piles.draw.unshift(...combatStartStateForTools.nextDraw.map((cardId, index) => ({
-          instanceId: `tool-next-${index + 1}`,
-          cardId,
-          upgraded: false,
-        })));
-      }
-      const enemy = combat.enemies.find((entry) => entry.alive);
-      if (enemy && combatStartStateForTools.enemy) {
-        if (Number.isFinite(combatStartStateForTools.enemy.hp)) enemy.hp = combatStartStateForTools.enemy.hp;
-        for (const row of combatStartStateForTools.enemy.statuses || []) {
-          applyStatus(combat, enemy, row.id, row.stacks, entity);
-        }
-      }
-    }
     live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
@@ -436,20 +340,17 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
-        || (e.type === 'hpLost' && e.cause !== 'attack'))
+      .filter((e) => ['enemyMoveStarted', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
-        blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
-        requested: e.requested, attempted: e.attempted,
+        attempted: e.attempted,
         threshold: e.threshold, status: e.status, duration: e.duration,
       }));
     live.evCursor = c.eventLog.length;
     return {
       kind: 'combat',
-      receiptSeq: ++combatReceiptSeq,
       events,
       pool: live.pool,
       phase: c.phase,
@@ -474,7 +375,6 @@ export function createSession({ registries, seedString, endless = false, restore
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
-        relicIds: [...P.entity.relicIds],
       })),
     };
   }

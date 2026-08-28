@@ -113,7 +113,6 @@ const MATRIX_SHAPES = [
   { w: 412, h: 915, d: 2.6, mobile: true, tag: 'portrait' },
   { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait' },
   { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape' },
-  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome' },
 ];
 const MATRIX = MATRIX_SHAPES.flatMap((v) =>
   ['s', 'm', 'l', 'xl'].map((size) => ({ ...v, tag: `${v.tag}-${size}`, cell: true, known: {}, settings: { uiScale: size } })));
@@ -127,11 +126,12 @@ const SHAPES = [
   { w: 915, h: 412, d: 2.6, mobile: true, tag: 'landscape', known: {} },
   // Landscape as a phone actually reports it while the browser chrome is
   // showing. 844x390 is the DEVICE; innerHeight is smaller whenever the address
-  // bar is up. ~46px is Chrome-on-Android's landscape bar, so the number is a
-  // sensitivity reading rather than a device claim. #27 closed the old
-  // knownOpen here with the derived short-wide composition; it is now a normal
-  // blocking row and also joins every fixed-size matrix cell above.
-  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {} },
+  // bar is up, and "landscape already works" is a claim about the shape a player
+  // is actually in. ~46px is Chrome-on-Android's landscape bar; the number is a
+  // stand-in, so this row is a SENSITIVITY reading, not a device.
+  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {},
+    knownOpen: { what: 'landscape degrades as the browser chrome takes height',
+                 why: 'END TURN 43/45 (2 points under .pile.discard), .energy-orb 36/45, .hand-area 17.27px past the bottom edge. Present on dev at bf18a2e and unchanged by the portrait work — this is the WIDE layout, which this branch does not touch. Unfiled: Sunna to confirm, Marina to sequence.' } },
   // TABLET PORTRAIT — Vira's corpus, EldenSpire#24. Every portrait shape above
   // is <=412px wide and there was NO portrait shape between 520 and 1200px, so
   // the whole band where the zoom picks the narrow baseline and the layout
@@ -286,11 +286,9 @@ const FIT = `(() => {
   // was no attribute at all to catch the disagreement.
   const attr = de.getAttribute('data-layout');
   const nmax = ui && ui.narrowMax ? ui.narrowMax : null;
-  // #39: composition mode is owned by viewport width. Zoom remains height-aware,
-  // so comparing local width here would reintroduce the transient height flip.
-  const impliedNarrow = nmax == null ? null : innerWidth <= nmax + 0.001;
+  const impliedNarrow = nmax == null ? null : (innerWidth / z) <= nmax + 0.001;
   const property = {
-    attr, impliedNarrow, rendered: narrowActive, localW: innerWidth / z, viewportW: innerWidth, nmax,
+    attr, impliedNarrow, rendered: narrowActive, localW: innerWidth / z, nmax,
     agree: attr != null && impliedNarrow != null
       && (attr === 'narrow') === impliedNarrow
       && (attr === 'narrow') === narrowActive,
@@ -499,7 +497,7 @@ async function main() {
     console.log(`    narrow layout active: ${fit.narrowActive ? 'YES (.hand-area is a grid)' : 'no (wide layout)'}`);
     if (fit.property && fit.property.attr != null) {
       const P = fit.property;
-      ok(P.agree, `${name}: #24/#39 PROPERTY — width-owned layout agrees: data-layout=${P.attr} · viewport ${n2(P.viewportW)} <= ${P.nmax} is ${P.impliedNarrow} · rendered ${P.rendered ? 'narrow' : 'wide'}`);
+      ok(P.agree, `${name}: #24 PROPERTY — baseline and layout agree: data-layout=${P.attr} · arithmetic ${n2(P.localW)} <= ${P.nmax} is ${P.impliedNarrow} · rendered ${P.rendered ? 'narrow' : 'wide'}`);
     } else {
       ok(false, `${name}: #24 PROPERTY — <html data-layout> is absent, so nothing ties the zoom's baseline to the rendered layout`);
     }

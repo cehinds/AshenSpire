@@ -534,20 +534,8 @@ export const SCHEMAS = Object.freeze({
     bonusPool: int,
     minimum: int,
     maximum: int,
-    // E5 (#250): 'allow' is the reclaim — a stat may drop below its baseline
-    // to the mode's minimum, handing the points back to the pool. The model
-    // branch in attributes.js (allocationProblems' floor) has carried both
-    // semantics since the field existed; this set was closed to what shipped.
-    belowBaseline: en('forbid', 'allow'),
+    belowBaseline: en('forbid'),
     redistribution: en('fixedTotal'),
-    equipmentProfiles: opt(mapOf(obj({
-      baseValue: opt(num),
-      scalingStat: opt(ref('attributes')),
-      pointsPerTier: opt(num),
-      rounding: opt(en('floor', 'ceil', 'round')),
-      gainPerTier: opt(num),
-      cap: opt(num),
-    }))),
   }),
   attributeRules: obj({
     defaultMode: ref('creationModes'),

@@ -28,11 +28,10 @@
 //      for lost.
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
-import { createLoadout, normalizeArmamentLocations, stampDeck } from '../model/loadout.js';
+import { createLoadout, stampDeck } from '../model/loadout.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
-import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -102,8 +101,8 @@ export function createSaveManager(storage) {
   }
 
   // THE DRAWER'S PROMISE (Saga's gate). The calm screen tells every player
-  // "profiles are never deleted to make room" and the crisis dialog says a
-  // profile can come back "any time". The older blanket promise was false:
+  // "They are never deleted to make room for anything else" and the crisis
+  // dialog says they can come back "any time". Both were false: this function
   // pruned by age and then by count, and the count prune was KIND-BLIND —
   // `splice(0, len - 12)` drops the oldest entries whether they are a corrupt
   // run or somebody's two thousand evenings. Twelve is not a freak number: a
@@ -325,7 +324,7 @@ export function createSaveManager(storage) {
   // What shipped did the opposite. `loadMeta()` SYNTHESIZES a profile in memory
   // for every caller (freshMeta) and writes nothing, so a player who cleared
   // storage, picked a class and pressed BEGIN THE CLIMB had `sote_run_v1` and no
-  // `sote_meta_v1` — a run with no player behind it — and Title → Profile
+  // `sote_meta_v1` — a run with no player behind it — and Settings → Profile
   // printed his own sentence back at him as the behaviour (Bjorn's M7 walk,
   // 2026-08-08). Two states for one concept: the profile that exists because
   // every read gets an object, and the profile that exists on disk.
@@ -382,10 +381,6 @@ export function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
-        const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
-        if (snapshotReferenceProblems.length) {
-          throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
-        }
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -452,25 +447,12 @@ export function createSaveManager(storage) {
           why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
         });
       }
-      const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);
-      if (armamentLocationChanges.length) {
-        note(run, {
-          kind: 'overwrite',
-          site: 'save.js:loadRun',
-          field: 'loadout.armamentLocations',
-          was: armamentLocationChanges,
-          now: { sets: run.loadout.sets, storage: run.loadout.storage },
-          why: 'the shared Inventory contract keeps each owned armament in one hand location or in Inventory, never both',
-        });
-      }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
-        if (needsEquipmentStamp || needsCarrierStamp) {
-          stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false });
-        }
+        if (needsEquipmentStamp || needsCarrierStamp) stampDeck(registries, run);
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {

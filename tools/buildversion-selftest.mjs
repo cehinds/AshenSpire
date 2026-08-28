@@ -64,18 +64,6 @@ import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, ORDINAL_CEI
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
-// macOS can report ENOTEMPTY for a just-closed Git worktree while directory
-// entries settle. Node retries that class of recursive-removal failure only
-// when maxRetries is non-zero. Keep the wait bounded and keep the final error:
-// cleanup that is still impossible after five linearly delayed retries
-// (about 1.5 seconds of total backoff) remains a real selftest red.
-const removeTempTree = (dir) => rmSync(dir, {
-  recursive: true,
-  force: true,
-  maxRetries: 5,
-  retryDelay: 100,
-});
-
 const editJson = (root, fn) => {
   const p = resolve(root, ORDINAL_HOME);
   writeFileSync(p, `${JSON.stringify(fn(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
@@ -162,25 +150,10 @@ const PLANTS = [
     plant: (root) => edit(root, 'tools/bundle.mjs', (t) => `${t}\n// planted bundler semantic change\n`),
   },
   {
-    name: 'the shared HUD owner stops deriving the build stamp',
-    row: 'C THREE CONSUMERS',
-    plant: (root) => edit(root, 'src/ui/components/hudmeta.js',
-      (t) => t.replace(
-        '${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}',
-        '${""}',
-      )),
-  },
-  {
-    name: 'map stops mounting the shared stamp owner',
-    row: 'C THREE CONSUMERS',
-    plant: (root) => edit(root, 'src/ui/screens/map.js',
-      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
-  },
-  {
-    name: 'combat stops mounting the shared stamp owner',
+    name: 'a named consumer stops deriving (combat prints no stamp)',
     row: 'C THREE CONSUMERS',
     plant: (root) => edit(root, 'src/ui/screens/combat.js',
-      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
+      (t) => t.replace(/^.*buildStampHtml.*$/gm, '')),
   },
   {
     name: 'the build grows an input outside the digest\'s roots',
@@ -244,7 +217,7 @@ function fresh() {
 // THE TRACEABILITY CORPUS — a second door, and it needed one
 // ---------------------------------------------------------------------------
 //
-// The file plants above all enter at `check(root)`, which reads FILES. `--which`
+// The seven plants above all enter at `check(root)`, which reads FILES. `--which`
 // reads HISTORY, and no file plant can reach it: the defect lives in the shape of
 // the commit graph, not in any byte of any tree. So this corpus builds a real git
 // repository with a real merge in it and enters at `whichCommits()` — the same
@@ -353,7 +326,7 @@ function ordinalHistory() {
         console.log(`          ${detail}`);
       }
     } finally {
-      removeTempTree(dir);
+      rmSync(dir, { recursive: true, force: true });
     }
   }
   return failures;
@@ -391,7 +364,7 @@ function traceability() {
     say(none.length === 0, 'a digest no commit ever shipped returns EMPTY, not a plausible commit',
       `whichCommits → ${JSON.stringify(none)}`);
   } finally {
-    removeTempTree(dir);
+    rmSync(dir, { recursive: true, force: true });
   }
   return failures;
 }
@@ -409,7 +382,7 @@ export async function selftest() {
   try {
     baseline = new Map(check(control).rows.map((r) => [r.name, r]));
   } finally {
-    removeTempTree(control);
+    rmSync(control, { recursive: true, force: true });
   }
   const dirty = [...baseline.values()].filter((r) => !r.ok);
   if (!dirty.length) {
@@ -462,7 +435,7 @@ export async function selftest() {
         if (strays.length) console.log(`          also non-green: ${strays.join(', ')} (stated, not hidden)`);
       }
     } finally {
-      removeTempTree(root);
+      rmSync(root, { recursive: true, force: true });
     }
   }
 
@@ -487,9 +460,7 @@ export async function selftest() {
     console.log(`buildversion --selftest: RED — ${failures} of ${total} known-bads walked through the check.`);
     return 1;
   }
-  // #12: the counted claim terminates the line; the qualifier prints below it.
-  console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red`);
-  console.log('  each by the row or command that owns it,');
+  console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red, each by the row or command that owns it,`);
   console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
   console.log(`  git history and entered at whichCommits(), and ${HIST} planted as a real tree committed twice —`);
   console.log('  the same three doors the real runs use. The last pair is watched RED and GREEN over');

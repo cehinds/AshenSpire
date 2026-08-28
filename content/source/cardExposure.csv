@@ -1,23 +1,6 @@
 # Explicit damage carriers. Tags never imply a school or buildup.
 cardId,damageSchool,exposureBuildupPerHit
 strike,physical,0
-ambush,physical,0
-rogueShiv,physical,0
-quickCut,physical,0
-twinPrick,physical,0
-hamstringRogue,physical,0
-serratedShiv,physical,0
-ricochet,physical,0
-lowBlow,physical,0
-cheapShot,physical,0
-bladeDanceRogue,physical,0
-garrote,physical,0
-fanOfKnives,physical,0
-coupDeGrace,physical,0
-sap,physical,0
-assassinate,physical,0
-thousandCutsRogue,physical,0
-deathblow,physical,0
 gorefireSlash,physical,0
 crimsonCleave,physical,0
 shieldBash,physical,0

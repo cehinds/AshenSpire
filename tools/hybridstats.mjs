@@ -206,12 +206,9 @@ check('co-op UI affordability and host execution agree for all three Mana signat
 
 check('Hybrid Stats panel and co-op active-seat HUD use shared data plans', () => {
   const overlay = readFileSync(resolve(ROOT, 'src/ui/components/overlay.js'), 'utf8');
-  const equipment = readFileSync(resolve(ROOT, 'src/ui/screens/equipment.js'), 'utf8');
   const projection = readFileSync(resolve(ROOT, 'src/model/statProjection.js'), 'utf8');
   const coop = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
   assert(/hybridStatsPlan\s*\(/.test(overlay), 'overlay Stats still hard-codes its rows');
-  assert(/run\.stats[\s\S]*Fights won[\s\S]*Damage dealt[\s\S]*Damage taken/.test(equipment),
-    'Armoury Stats does not preserve the active run telemetry removed from the menu');
   assert(/turn 1 and every later turn/i.test(projection), 'projection does not state the current shared draw meaning');
   assert(/resourceBarPlan\s*\(registries,\s*['"]main['"]/.test(coop), 'co-op never calls the shared main-HUD plan');
   assert(/resourceBars\s*\(/.test(coop), 'co-op never renders the shared resource plan');

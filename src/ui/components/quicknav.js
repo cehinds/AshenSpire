@@ -37,39 +37,27 @@
 // would have put the list off-screen on exactly the shape it is for.
 
 import { viewportLocalBox, placeAnchored } from '../fx.js';
-import { hideTooltip } from './tooltip.js';
+import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { menuRows } from '../uiContent.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { closeFlaskActionMenu } from './flask.js';
-import { quickMenuPanelModel } from '../models/MenuModels.js';
-import { renderQuickMenu } from './menuComponents.js';
 
-// The player's presentation choice, set from applyDisplaySettings (main.js) the same
+// The experiment's own state, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
 // down just to ask which variant is running.
-let mode = 'mirror'; // 'off' | 'mirror' | 'switcher'
+let mode = 'off'; // 'off' | 'mirror' | 'switcher'
 let fixedEnds = true;
-
-export function resolveQuickNavMode(value) {
-  return ['off', 'mirror', 'switcher'].includes(value) ? value : 'mirror';
-}
 
 /** setQuickNav({ mode, fixedEnds }) — called by applyDisplaySettings. */
 export function setQuickNav(opts) {
-  mode = resolveQuickNavMode(opts?.mode);
-  if (opts?.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
+  if (opts.mode != null) mode = ['mirror', 'switcher'].includes(opts.mode) ? opts.mode : 'off';
+  if (opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.quicknav = mode;
-    const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');
-    launchers.forEach((button) => { button.hidden = mode === 'off'; });
     if (mode === 'off') closeQuickNav();
-    window.dispatchEvent(new CustomEvent('ashenspire:quicknav-mode-change', {
-      detail: { mode, folded: quickNavFolds() },
-    }));
   }
 }
 
-/** 'off' | 'mirror' | 'switcher' — the current quick-menu presentation. */
+/** 'off' | 'mirror' | 'switcher' — what the player is currently testing. */
 export function quickNavMode() {
   return mode;
 }
@@ -82,36 +70,20 @@ export function quickNavFolds() {
     && document.documentElement.getAttribute('data-layout') === 'narrow';
 }
 
-let openVeil = null;
-let openAnchor = null;
-let escHandler = null;
-let fullscreenSync = null;
+const MODE_NAMES = { mirror: 'Mirror', switcher: 'Switcher' };
 
-export function closeQuickNav({ restoreFocus = true } = {}) {
-  const anchor = openAnchor;
+let openVeil = null;
+let escHandler = null;
+
+export function closeQuickNav() {
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
     hideTooltip();
   }
-  if (anchor) anchor.setAttribute('aria-expanded', 'false');
-  openAnchor = null;
   if (escHandler) {
     removeEventListener('keydown', escHandler, true);
     escHandler = null;
-  }
-  if (fullscreenSync) {
-    for (const type of ['fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror']) {
-      document.removeEventListener(type, fullscreenSync);
-    }
-    fullscreenSync = null;
-  }
-  if (restoreFocus && anchor?.isConnected) {
-    queueMicrotask(() => {
-      const staysInModal = !!anchor.closest('.modal-veil');
-      const replacementModal = document.querySelector('.modal-veil, .armoury-overlay');
-      if (anchor.isConnected && (staysInModal || !replacementModal)) anchor.focus();
-    });
   }
 }
 
@@ -144,41 +116,67 @@ export function saveAction(onSave) {
  *
  * `actions` maps an `act` id from the MENU table to the handler that already
  * does that thing. An act with no handler is dropped rather than drawn dead.
- * Returns the panel element, or null when there is no anchor/action to show.
+ * Returns the panel element (or null when the variant is off).
  */
-export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, counts = {}, current = null, hasSave = true } = {}) {
+export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = null, hasSave = true } = {}) {
   if (mode === 'off' || !anchorEl) return null;
-  closeFlaskActionMenu({ cancelled: true });
-  closeQuickNav({ restoreFocus: false });
+  closeQuickNav();
 
   const rows = menuRows(context, { fixedEnds, hasSave, counts, current })
-    .filter((r) => typeof actions[r.act] === 'function' || typeof controls[r.act]?.activate === 'function')
-    .map((r) => {
-      const state = controls[r.act]?.read?.() || {};
-      return { ...r, checked: !!state.checked, disabled: !!state.disabled, condition: state.condition || '' };
-    });
+    .filter((r) => typeof actions[r.act] === 'function');
   if (!rows.length) return null;
 
-  const model = quickMenuPanelModel({
-    context,
-    mode,
-    caption: 'Quick menu',
-    rows,
-  });
-  const { veil, panel } = renderQuickMenu(model, {
-    onActivate: async (row, button) => {
-      const handler = controls[row.act]?.activate || actions[row.act];
-      const result = await handler(row.tab, button);
-      if (controls[row.act]) syncControlRows(panel, controls, row.act, result?.announcement || '');
-      const inPlace = controls[row.act] ? 'keep' : result;
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil qn-veil';
+  const panel = document.createElement('div');
+  panel.className = 'qn-panel';
+  // #78 — the house convention for a navigable set: the host names the set, each
+  // control names its member. `menuAct` was the one registered set that did NOT
+  // mark itself (Vira: *the fourth set, the one she called the worst-behaved, is
+  // the one missing from the convention meant to catch sets like it*). It is
+  // also the only place the ORPHAN edge is observable: an act declared in
+  // MENU_ACTS that no context implements never appears here, and the difference
+  // between declared and drawn is exactly the defect. `data-act` / `data-tab`
+  // stay — they are behaviour, not enumeration, and something may read them.
+  panel.dataset.surface = 'menuAct';
+
+  // THE CAPTION IS THE POINT OF SHIPPING THIS AT ALL. An experiment that
+  // outlives the memory of switching it on becomes a bug report — so the list
+  // says, every single time it opens, that it is a test, which variant is
+  // running, and where the way back is. It is a header, not a row: Save and
+  // Save & Quit are the last two rows, always (his constraint, fixed by hand).
+  const cap = document.createElement('div');
+  cap.className = 'qn-cap';
+  cap.textContent = `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`;
+  panel.appendChild(cap);
+
+  for (const r of rows) {
+    if (r.sep) panel.appendChild(Object.assign(document.createElement('div'), { className: 'qn-sep' }));
+    const b = document.createElement('button');
+    b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
+    b.dataset.act = r.act;
+    b.dataset.member = r.act;
+    if (r.tab) b.dataset.tab = r.tab;
+    b.innerHTML = `<span class="qn-ic">${esc(r.icon)}</span><span class="qn-label">${esc(r.label)}</span>`
+      + (r.badge ? `<span class="qn-badge">${esc(r.badge)}</span>` : '');
+    // Law 3 clause 4: the tooltip fires for hover AND for the pad/keyboard focus
+    // cursor. `title=` alone is what the topbar has today, and touch and pad
+    // players never see it.
+    if (r.tip) attachTooltip(b, () => `<div class="tt-title">${esc(r.label)}</div>${esc(r.tip)}`);
+    b.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const fn = actions[r.act];
+      // A row that gives feedback in place (Save) keeps the list open and says
+      // so; everything else is a navigation and the list has done its job.
+      const inPlace = fn(r.tab, b);
       if (inPlace !== 'keep') closeQuickNav();
-    },
-  });
+    });
+    panel.appendChild(b);
+  }
+
+  veil.appendChild(panel);
   document.body.appendChild(veil);
   openVeil = veil;
-  openAnchor = anchorEl;
-  anchorEl.setAttribute('aria-haspopup', 'menu');
-  anchorEl.setAttribute('aria-expanded', 'true');
   position(anchorEl, panel);
 
   veil.addEventListener('click', (ev) => {
@@ -193,32 +191,12 @@ export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, c
   };
   addEventListener('keydown', escHandler, true);
 
-  fullscreenSync = () => syncControlRows(panel, controls);
-  for (const type of ['fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror']) {
-    document.addEventListener(type, fullscreenSync);
-  }
-
   // Keyboard/pad players land on the list rather than nowhere — the same smart
   // default openOverlay() uses, and the reason the vertical list needs no new
   // input code: it IS the focus scope while it is open.
   if (isEngaged()) setTimeout(() => focusFirst('.qn-row.on') || focusFirst('.qn-row'), 0);
 
   return panel;
-}
-
-function syncControlRows(panel, controls, announcedAct = '', announcement = '') {
-  for (const [act, control] of Object.entries(controls)) {
-    const button = panel.querySelector(`.qn-row[data-act="${act}"]`);
-    if (!button || typeof control.read !== 'function') continue;
-    const state = control.read() || {};
-    button.setAttribute('aria-checked', String(!!state.checked));
-    button.disabled = !!state.disabled;
-    button.setAttribute('aria-disabled', String(!!state.disabled));
-    const condition = button.querySelector('.qn-condition');
-    if (condition) condition.textContent = act === announcedAct && announcement ? announcement : (state.condition || '');
-    const visible = button.querySelector('.qn-state');
-    if (visible) visible.textContent = state.checked ? 'ON' : 'OFF';
-  }
 }
 
 // Right-aligned under its button, then bounded regardless — see the header for

@@ -26,10 +26,5 @@ export const equipTargets = [
     "target": "power",
     "classId": "herald",
     "cardId": "urgentHeal"
-  },
-  {
-    "target": "power",
-    "classId": "rogue",
-    "cardId": "ambush"
   }
 ];

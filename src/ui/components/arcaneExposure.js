@@ -2,7 +2,6 @@
 // It never derives carriers, applies damage, or mutates a meter.
 
 import { esc, attachTooltip } from './tooltip.js';
-import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 const EVENT_TYPES = new Set(['arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak']);
 
@@ -62,12 +61,10 @@ export function renderArcaneExposure(registries, enemySnapshot, recentEvents = [
     el.setAttribute('role', 'img');
     el.setAttribute('aria-label', `${receipt.label} — ${receipt.badge}`);
     el.innerHTML = `<span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span>${esc(receipt.label)} — ${esc(receipt.badge)}</span>${eventHtml(receipt.event, registries)}`;
-    markUiComponent(el, UI.arcaneExposureBar, 'immune');
     attachTooltip(el, () => esc(receipt.tooltip));
     return el;
   }
   el.className = `arcane-exposure-meter${receipt.locked ? ' locked' : ''}`;
-  markUiComponent(el, UI.arcaneExposureBar, receipt.locked ? 'locked' : 'active');
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', `${receipt.label}: ${receipt.value} of ${receipt.threshold}${receipt.locked ? ', locked' : ''}`);
   el.innerHTML = `<div class="arcane-exposure-head"><span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span class="arcane-exposure-label">${esc(receipt.label)}</span><strong>${receipt.value} / ${receipt.threshold}</strong>${receipt.locked ? '<em>Locked</em>' : ''}</div>`

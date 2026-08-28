@@ -30,29 +30,6 @@ export const attributes = [
 
 export const creationModes = [
   {
-    id: 'tuned',
-    label: 'Tuned',
-    baseline: 10,
-    bonusPool: 3,
-    minimum: 8,
-    maximum: 15,
-    belowBaseline: 'allow',
-    redistribution: 'fixedTotal',
-    equipmentProfiles: {
-      unarmedAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      bladeAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      daggerPierceAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      bowPierceAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      staffMagicAttack: { baseValue: -6, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      sceptreArcaneAttack: { baseValue: -6, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      unarmedGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      weaponGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      shieldGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      staffGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      sceptreGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-    },
-  },
-  {
     id: 'standard',
     label: 'Standard',
     baseline: 10,
@@ -62,58 +39,16 @@ export const creationModes = [
     belowBaseline: 'forbid',
     redistribution: 'fixedTotal',
   },
-  // E5 (#250) — Constantine's own numbers, verbatim from the card: "10 points,
-  // configurable; points come back out when a stat is dropped; floor 8, ceiling
-  // 15 at creation, both customizable; the floor is the reclaim limit; 15 caps
-  // CREATION, not the character."
-  //   bonusPool 10        the ten points ("configurable" = it is content, here)
-  //   minimum 8 + allow   the floor IS the reclaim limit: a stat may be dropped
-  //                       below its baseline down to 8, and fixedTotal hands
-  //                       the difference back to the pool by construction
-  //   maximum 15          caps creation only — allocationProblems already
-  //                       raises the ceiling by levelled points, which is his
-  //                       "not the character" clause, shipped before this mode
-  // A SECOND MODE, NOT AN EDIT TO `standard`: standard's fixedTotal of 55 is
-  // what every existing save is validated against at the load door, and
-  // save.js ARCHIVES what fails there. Changing standard's pool would refuse
-  // every in-flight run the first boot after update.
-  {
-    id: 'pointbuy',
-    label: 'Assign points',
-    baseline: 10,
-    bonusPool: 10,
-    minimum: 8,
-    maximum: 15,
-    belowBaseline: 'allow',
-    redistribution: 'fixedTotal',
-  },
 ];
 
 // Complete mode × class × attribute product. No Origins are enabled in Phase 1.
-// The pointbuy presets are the EDITOR'S OPENING POSITION and the load-door
-// refill value — a legal allocation (sum 60, cells 8..15), thematically the
-// standard preset with the five extra points laid along each class's grain.
-// The player reshapes them; nothing here is a recommendation.
 export const attributeRules = {
-  defaultMode: 'tuned',
+  defaultMode: 'standard',
   presets: {
-    tuned: {
-      reaver: { strength: 13, dexterity: 11, constitution: 11, wisdom: 8, intelligence: 10 },
-      starseer: { strength: 11, dexterity: 11, constitution: 8, wisdom: 13, intelligence: 10 },
-      herald: { strength: 12, dexterity: 11, constitution: 8, wisdom: 12, intelligence: 10 },
-      rogue: { strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 },
-    },
     standard: {
       reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
       starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
       herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
-      rogue: { strength: 10, dexterity: 15, constitution: 10, wisdom: 10, intelligence: 10 },
-    },
-    pointbuy: {
-      reaver: { strength: 14, dexterity: 10, constitution: 14, wisdom: 11, intelligence: 11 },
-      starseer: { strength: 10, dexterity: 12, constitution: 11, wisdom: 12, intelligence: 15 },
-      herald: { strength: 10, dexterity: 10, constitution: 13, wisdom: 15, intelligence: 12 },
-      rogue: { strength: 10, dexterity: 15, constitution: 12, wisdom: 10, intelligence: 13 },
     },
   },
 };

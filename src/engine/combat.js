@@ -21,7 +21,7 @@ import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
-import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot } from '../model/loadout.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 
 const QUEUE_GUARD = 10000;
@@ -78,10 +78,6 @@ export function createCombat({
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
-    equipmentPoolDeficits: player.equipmentPoolDeficits
-      ? { ...player.equipmentPoolDeficits }
-      : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
-    equipmentChanged: false,
     rng,
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
@@ -568,23 +564,8 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // is kept — it supplies the REASON this throws with, before the price is
   // charged — but it is no longer the only thing enforcing the seal: the
   // mutation asks the same function. Two questions, one home, no second copy.
-  const activeBefore = combat.loadout.active[slotId];
-  const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
   if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {}, inCombat: true })) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
-  }
-  const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
-  if (activeBefore !== combat.loadout.active[slotId]) {
-    combat.equipmentChanged = true;
-    const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
-    for (const maxField of EQUIPMENT_POOL_FIELDS) {
-      const currentField = currentFor[maxField];
-      const floor = maxField === 'maxHp' ? 1 : 0;
-      const nextMax = Math.max(floor, p[maxField] + poolAfter[maxField] - poolBefore[maxField]);
-      combat.equipmentPoolDeficits[currentField] = moveEquipmentPool(
-        p, maxField, nextMax, combat.equipmentPoolDeficits[currentField],
-      );
-    }
   }
 
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;

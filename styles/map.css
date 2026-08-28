@@ -13,50 +13,37 @@
    the flex-item clamp the scrollport needs to be allowed to shrink — without it
    a tall canvas pushes the zoom bar off the bottom. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
+.map-entrance-orientation { display: none; }
 
-/* Map-only Act orientation. It is a sibling after the shared HUD, never part
-   of that component, and leaves a protected right gutter for HUD utilities. */
-.mapscreen > .act-route-strip {
-  box-sizing: border-box;
-  flex: 0 0 auto;
-  display: grid;
-  width: 80%;
-  margin-inline: auto;
-  gap: 3px;
-  padding: 5px 12px 6px;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg-raise);
-  pointer-events: none;
-  user-select: none;
-  cursor: default;
-}
-.mapscreen > .act-route-strip strong {
-  text-align: center; color: var(--gold); font-family: Georgia, serif;
-  font-size: 11px; line-height: 1.1; letter-spacing: 2px;
-}
-.mapscreen > .act-route-strip .map-orientation-progress {
-  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-  align-items: center; gap: 8px;
-}
-.mapscreen > .act-route-strip .map-orientation-progress small {
-  color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
-}
-.mapscreen > .act-route-strip .map-orientation-progress [data-role="boss"] { color: var(--ember); }
-.mapscreen > .act-route-strip .map-orientation-rail {
-  height: 1px; position: relative; background: var(--map-structure);
-}
-.mapscreen > .act-route-strip .map-orientation-rail::after {
-  content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
-  border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
-  transform: translateY(-50%) rotate(45deg);
-}
+/* The full real climb no longer fits on a phone once adjacent floors keep their
+   device-space pitch. This static orientation strip names the same endpoints;
+   it is text and a direction rail, never a second set of node-shaped choices.
+   The real map remains directly below it and owns every interaction. */
 @media (max-width: 700px) {
-  .mapscreen > .act-route-strip {
-    /* Percentage is intentional: body is zoomed, so viewport units render at
-       80% × UI zoom. 80% of the Map surface stays 80% on glass. */
-    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
-    margin-left: auto;
-    margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+  .map-entrance-orientation {
+    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
+    border-bottom: 1px solid var(--line); background: var(--bg-raise);
+    pointer-events: none; user-select: none; cursor: default;
+  }
+  .map-entrance-orientation strong {
+    text-align: center; color: var(--gold); font-family: Georgia, serif;
+    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
+  }
+  .map-orientation-progress {
+    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+    align-items: center; gap: 8px;
+  }
+  .map-orientation-progress small {
+    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
+  }
+  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
+  .map-orientation-rail {
+    height: 1px; position: relative; background: var(--map-structure);
+  }
+  .map-orientation-rail::after {
+    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+    transform: translateY(-50%) rotate(45deg);
   }
 }
 .mapscreen .map-scroll {
@@ -327,15 +314,41 @@
    you are reading past — the fog map has far fewer of them, so they carry more. */
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
-/* ---------- map header — the shared three-row HUD shell --------------------- */
-/* `hudShellHtml` owns the same row structure on map and combat. This file only
-   adds map-specific progress tone, legend placement and Display toggles. */
+/* ---------- horizontal map header (matches the combat top bar) ---------- */
+/* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
+   the map-specific stats, wrapping, and the legend popover. Items are flex so
+   they reflow as customization toggles hide/show them. */
 .map-header {
-  height: auto; min-height: 5.2rem; position: relative;
+  height: auto; min-height: 5.2rem; flex-wrap: wrap; row-gap: 0.6rem; position: relative;
 }
-.map-header .hud-act,
-.map-header .hud-floor { color: var(--muted); letter-spacing: 0.04em; }
+.map-header .hpbar { width: 15rem; }
+.map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
+.map-header .cinders { color: var(--gold); }
+.map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
+.map-header .mh-actions { margin-left: auto; display: flex; gap: 0.8rem; }
+
+/* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
+   a divider, then relic chips; wraps to more rows as they accumulate. */
+.map-substrip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.4rem;
+  padding: 0.4rem 1.4rem; background: var(--panel); border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.map-substrip[hidden] { display: none; }
+.map-substrip .mh-flasks { display: flex; gap: 0.5rem; font-size: 1.5rem; line-height: 1; }
+/* THE FLASK'S BOX IS NOT HERE — one home, `.relic.flask-slot, .map-substrip
+   .mh-flask` in ui.css beside `.flask-identity`, so the same flask is the same
+   control on the map as in the topbar. This line used to be the ONLY rule
+   `.mh-flask` had, and it declared `cursor: default` on a <button> that mounts
+   the flask action menu (map.js:170-193) — the one hint a mouse player gets,
+   saying the opposite of the truth. Deleted rather than moved. */
+.map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 1.6rem; background: var(--line); margin: 0 0.4rem; }
+.map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.map-substrip .relic {
+  width: 2.2rem; height: 2.2rem; border-radius: 5px; background: var(--bg-raise);
+  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
 .map-legend-pop {
   position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
@@ -348,12 +361,16 @@
 /* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
 body.map-compact .map-header { min-height: 4.2rem; gap: 1rem; padding: 0 1rem; }
 body.map-compact .map-header .nm { display: none; }
-/* (compact drops the name; the bar track re-derives itself from the narrower
-   row with no rule of its own — the 12rem `.hpbar` override that used to sit
-   here was the second typed track and went with the first.) */
-body.map-compact .map-header .hud-run-meta { font-size: 1.1rem; }
+body.map-compact .map-header .hpbar { width: 12rem; height: 1.2rem; }
+body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
+body.map-compact .map-substrip { padding: 0.2rem 1rem; }
+body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }
 body.hide-header-seed .map-header .mh-seed { display: none; }
-body.hide-header-relics .map-header .hud-relics { display: none; }
+/* Relics toggle hides the relic chips (and divider) in the sub-strip; when there
+   are also no flasks, the whole strip collapses so there's no empty bar. */
+body.hide-header-relics .map-substrip .mh-relics,
+body.hide-header-relics .map-substrip .mh-div { display: none; }
+body.hide-header-relics .map-substrip.no-flasks { display: none; }
 
 /* PROTOTYPE -> shipped (EldenSpire#23): the act map at a portrait phone's
    width. The narrow design baseline gives the app 433 local px instead of 629,

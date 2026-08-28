@@ -6,7 +6,7 @@
 //
 // Marina ruled the setting rather than the revert, so the gate now answers to one
 // row — `Display / Short-screen warning` — and a row with no check is a promise.
-// This tool drives ONE still-walled shape twice, with the setting ON and OFF, through
+// This tool drives ONE walled shape twice, with the setting ON and OFF, through
 // `?shotSettings`, and requires the two runs to DIFFER in exactly the one way the
 // row claims.
 //
@@ -49,10 +49,11 @@
 //
 // Exit codes  0 held · 1 a finding · 2 usage / no browser / NOTHING MEASURED
 //
-// BOUNDARY: one shape immediately below #27's rendered compact floor (844x339)
-// and one inside its supported band (844x344), one text size, headless Chromium.
-// It proves the row still reaches the refusal where no complete composition can
-// fit, without resurrecting that refusal inside the supported landscape band.
+// BOUNDARY: one walled shape (844x390, a landscape phone — the shape he was
+// holding), one text size, headless Chromium, one Linux box. It proves the ROW
+// REACHES THE GATE in both directions. It proves nothing about whether landscape
+// is playable with the gate down — it is not, and that is measured next door:
+// `.end-turn` at 0% on screen with no scroll path, which is why the default is on.
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
@@ -70,20 +71,18 @@ const useDist = args.includes('--dist');
 const SERVE_ROOT = resolve(argOf('--root') || ROOT);
 printArtifactProvenance(useDist ? resolve(ROOT, 'dist/AshenSpire.html') : resolve(ROOT, 'index.html'), ROOT);
 
-const BROWSERS = [
-  process.env.CHROME,
-  '/usr/bin/google-chrome',
-  '/usr/bin/chromium',
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-].filter(Boolean);
+const BROWSERS = [process.env.CHROME, '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// The one-pixel cell below #27's rendered compact floor. The short-wide door is
-// complete at 340 and not at 339, so the refusal still has an honest job here.
-const WALLED = { w: 844, h: 339 };
-// The first browser-chrome cell players reported, now inside the supported band.
-const FITTING = { w: 844, h: 344 };
+// THE SHAPE HE WAS HOLDING. A landscape phone, and the one uprightgate.mjs
+// measures the wall on: `.end-turn` top 415.41..439.78 in a 390 px viewport, 0%
+// on screen, no scrollable ancestor.
+const WALLED = { w: 844, h: 390 };
+// AND A FITTING ONE, because a row that removes the gate everywhere is
+// indistinguishable here from a row that works — the control cell is a shape the
+// gate must not stand on with the setting ON either.
+const FITTING = { w: 390, h: 844 };
 
 function cdpConnect(url) {
   const ws = new WebSocket(url); let n = 1; const pending = new Map();
@@ -162,7 +161,7 @@ async function main() {
   console.log(`\nuprightsetting — his amendment, both edges`);
   console.log(`  tree: ${useDist ? 'dist/AshenSpire.html' : SERVE_ROOT}\n`);
 
-  console.log(`  THE WALLED SHAPE ${WALLED.w}x${WALLED.h} — one pixel below the compact composition's rendered floor`);
+  console.log(`  THE WALLED SHAPE ${WALLED.w}x${WALLED.h} — a landscape phone, the shape he was holding`);
   // DEFAULT: no shotSettings at all, which is what a ?shot= boot resolves to and
   // what a fresh profile gets. This cell is the one that would have gone red if I
   // had defaulted the row off, and it is the one that keeps uprightgate.mjs green.
@@ -202,8 +201,8 @@ async function main() {
   ok(`OFF changes nothing on a shape that fits`, fitOff.gate === false, `gate=${fitOff.gate}`);
 
   cdp.close(); await dropBrowser(); stop();
-  console.log(`\n  BOUNDARY: two shapes, one text size, headless Chromium. It proves the`);
-  console.log(`  ROW REACHES THE GATE both ways. #27's supported landscape band is the fitting control.`);
+  console.log(`\n  BOUNDARY: two shapes, one text size, headless Chromium, one Linux box. It proves the`);
+  console.log(`  ROW REACHES THE GATE both ways. Landscape SUPPORT is a composition and is still owed.`);
   if (!checks) { console.error(`\n  NOTHING MEASURED — unknown, never a pass.`); process.exit(2); }
   console.log(`\n  ${findings.length ? `FAIL — ${findings.length} finding(s) over ${checks} check(s)` : `PASS — ${checks} checks, 0 findings`}`);
   for (const f of findings) console.log(`    - ${f}`);
@@ -228,10 +227,10 @@ const PLANTS = [
   {
     // THE OTHER DIRECTION, and it is the one a "just default it off" instinct
     // produces: the row works and the gate never stands for anyone.
-    name: 'S2 the gate is forced off for every fresh/default profile',
-    file: 'src/main.js',
-    from: 'updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
-    to: 'updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: false });',
+    name: 'S2 the default flipped to off',
+    file: 'src/ui/screens/settings.js',
+    from: "{ cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',",
+    to: "{ cat: 'Display', key: 'uprightGate', def: false, label: 'Short-screen warning',",
     what: 'the default I held for his word — the one token in this lane that is his to flip',
     expect: 'a fresh profile on a landscape phone gets an unplayable board and no explanation; '
       + 'uprightgate.mjs clause W goes red on 11 of 24 shapes',
@@ -243,7 +242,7 @@ const PLANTS = [
     // He had to ASK for a switch because the screen never said one existed.
     name: 'S3 the gate stops naming the way out',
     file: 'src/ui/components/upright.js',
-    from: '      <p class="upright-hint">${say.hint}</p>',
+    from: '      <p class="upright-hint">${say.hint}</p>\n',
     to: '',
     what: 'the one line on the gate that names the setting',
     expect: 'the refusal is back to a dead end the player has to guess their way out of',

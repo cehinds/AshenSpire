@@ -29,7 +29,6 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
 import * as S from './statuses.js';
@@ -80,14 +79,6 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   C.emit = (type, payload) => emitEvent(C, type, payload);
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
-  // Player combat entities intentionally share the engine id `player`. Events
-  // that resolve against an ally still need the authoritative member id, so
-  // expose the identity of the actual resolved entity rather than whichever
-  // seat happens to be active for source-card bookkeeping.
-  C.playerIdForEntity = (entity) => {
-    for (const [id, P] of C.players) if (P.entity === entity) return id;
-    return null;
-  };
 
   const headcount = players.length;
   C.hpFactor = (registries.balance.coop && registries.balance.coop.headcountHpFactor) || 0.6;
@@ -330,14 +321,6 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const manaCost = def.manaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
-
-  const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
-    id: entry.id,
-    alive: entry.entity.alive,
-    connected: entry.connected,
-    ended: entry.ended,
-  })));
-  if (friendlyPlan.active) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
 
   let target = null;
   if (targetId != null) {

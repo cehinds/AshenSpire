@@ -34,22 +34,17 @@
 // answered, so bleed, frost AND insanity all played the fallback while the
 // settings screen named sounds the build did not make.
 
-// A recipe id automatically tries assets/sfx/<encoded-id>.ogg before using its
-// synth recipe. Add a row here only to override that path or format; both the
-// convention and overrides pass through assetUrl() so standalone builds can
-// inline them. A cue synths immediately while an unknown file warms; only a
-// cached known-good file replaces later cues. Missing/undecodable files remain
-// unavailable in that cache, so every cue keeps the immediate recipe below.
-// (Moved here from music.js so all SFX content has one home.)
+// A real build can point these at files; missing/failed loads fall back to the
+// synth recipes below. (Moved here from music.js so all SFX content has one home.)
 export const SFX_MANIFEST = {
-  // cardPlay: 'assets/sfx/card.wav',  ← optional path/format override
+  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
 };
 
 // Family rows are an explicit content characteristic. Runtime resolution and
 // the content-build reachability check both consume this list; neither guesses
 // that every row before an underscore is intended as a composed-id family.
 export const SFX_FAMILY_IDS = Object.freeze([
-  'procBurst', 'beat', 'holdTick', 'holdCommit', 'rewardTake',
+  'procBurst', 'beat', 'holdTick', 'holdCommit',
 ]);
 
 // Confirm arrivals share one generic fallback gesture. `beat_<phase>` and
@@ -214,16 +209,6 @@ export const SFX_RECIPES = {
   ],
   buy: [
     { kind: 'tone', type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 },
-  ],
-  // REWARD COLLECTION (E11). A FAMILY row — the reward menu composes
-  // `rewardTake_<kind>` per collected row (rewardTake_cinders, rewardTake_card,
-  // rewardTake_flask, rewardTake_armament, rewardTake_relic) and resolution
-  // falls through exact → this family → default, the procBurst shape (#71).
-  // Authoring a per-kind flourish later is ONE exact row here, zero code.
-  // The gesture: a short upward settle — receipt, not fanfare; `victory`
-  // already owns the fanfare and fires once at the screen, not per row.
-  rewardTake: [
-    { kind: 'tone', type: 'sine', freq: 520, to: 780, dur: 0.14, peak: 0.3 },
   ],
   nodeTravel: [
     { kind: 'tone', type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 },
