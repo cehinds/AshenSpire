@@ -46,7 +46,7 @@ import {
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, classAttributePreset, allocationTotal } from '../src/model/attributes.js';
+import { attributeAllocationProblems, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -83,7 +83,8 @@ import {
 } from '../src/ui/components/hudQuickSettings.js';
 import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
-  creationRelicChoices, selectStartingHand, resolveCreationHands,
+  creationRelicChoices, creationModeViews, creationEquipmentSectionViews,
+  selectStartingHand, resolveCreationHands,
 } from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
@@ -5533,18 +5534,53 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
     eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
+    eq(defaultCreationModeId(REG), 'tuned', 'the internal creation default remains tuned for legacy and non-screen callers');
+    eq(creationModeViews(REG).map((row) => row.id).join(','), 'standard,pointbuy',
+      'the player-visible creation modes are the authored Standard and Assign Points pair');
     eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
     eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
     eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
     eq(REG.characterCreation.layout.equipmentChoiceView, 'list', 'equipment selectors default to the configured list view');
     eq(REG.characterCreation.layout.equipmentAutoAdvance, true, 'equipment auto-advance is configured rather than hard-coded');
-    eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,leftHand,rightHand,equipSlot,relic',
+    eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,rightHand,leftHand,equipSlot,relic',
       'the equipment subcard order is authored in character-creation content');
+    const projectedSections = creationEquipmentSectionViews(REG, 'reaver');
+    eq(projectedSections.map((row) => row.id).join(','), 'armour,rightHand,leftHand,relic',
+      'only equipment sections with resolved legal choices are visible');
+    eq(projectedSections.map((row) => row.nextId || '').join(','), 'rightHand,leftHand,relic,',
+      'auto-advance and focus follow the filtered authored section order');
+    assert(!projectedSections.some((row) => row.id === 'equipSlot'),
+      'the empty authored equip slot is absent rather than rendered as a placeholder');
     for (const classId of REG.classes.ids()) {
       assert(creationArmourChoices(REG, classId).length >= 2, `${classId} ships at least two armour choices`);
       assert(creationHandChoices(REG, classId).length >= 2, `${classId} ships at least two side-neutral hand choices`);
       assert(creationRelicChoices(REG, classId).length >= 2, `${classId} ships at least two relic choices`);
     }
+
+    const withAuthoredSlot = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation), equipment: structuredClone(contentBundle.equipment) };
+    withAuthoredSlot.equipment.armaments.push({
+      ...withAuthoredSlot.equipment.armaments[0], id: 'testCharm', name: 'Test Charm', kind: 'talisman', hand: '',
+    });
+    withAuthoredSlot.characterCreation.classes.reaver.equipSlotIds = ['testCharm'];
+    const authoredSlotViews = creationEquipmentSectionViews(createRegistries(withAuthoredSlot), 'reaver');
+    eq(authoredSlotViews.map((row) => row.id).join(','), 'armour,rightHand,leftHand,equipSlot,relic',
+      'a future valid authored option makes its section appear without a screen-code edit');
+    eq(authoredSlotViews.find((row) => row.id === 'equipSlot').choices[0].id, 'testCharm',
+      'the future section carries the resolved authored option');
+
+    const danglingSlot = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    danglingSlot.characterCreation.classes.reaver.equipSlotIds = ['missingCharm'];
+    let danglingSlotError = '';
+    try { creationEquipmentSectionViews(createRegistries(danglingSlot), 'reaver'); } catch (error) { danglingSlotError = error.message; }
+    assert(/equipSlotIds.*missingCharm.*does not resolve/.test(danglingSlotError),
+      'a missing authored equipment option fails closed by its configuration path');
+
+    const incompatibleSlot = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    incompatibleSlot.characterCreation.classes.reaver.equipSlotIds = ['straightSword'];
+    let incompatibleSlotError = '';
+    try { creationEquipmentSectionViews(createRegistries(incompatibleSlot), 'reaver'); } catch (error) { incompatibleSlotError = error.message; }
+    assert(/equipSlotIds.*straightSword.*does not fit.*talisman/.test(incompatibleSlotError),
+      'an incompatible authored equipment option fails closed instead of disappearing or rendering');
 
     const moved = selectStartingHand({ leftHand: 'roundShield', rightHand: 'straightSword' }, 'leftHand', 'straightSword');
     eq(moved.leftHand, 'straightSword', 'selecting an occupied armament places it in the requested hand');
