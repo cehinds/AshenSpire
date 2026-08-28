@@ -5,7 +5,6 @@
 import {
   equipmentKitReceipt,
   equipmentRequirementReceipt,
-  applyEquipTransition,
   equippedIn,
   equippedPieces,
   parseMod,
@@ -271,8 +270,8 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
     throw new Error(`${slot.id}: comparison set ${setIndex} does not exist`);
   }
   const beforePiece = equippedIn(registries, run.loadout, run.class, slot.id);
-  const transitioned = applyEquipTransition(registries, loadout, slot.id, setIndex, piece ? piece.id : null);
-  if (transitioned) loadout.active[slot.id] = setIndex;
+  loadout.sets[slot.id][setIndex] = piece ? piece.id : null;
+  loadout.active[slot.id] = setIndex;
   const comparedRun = { ...run, loadout };
   const afterRoles = rolesFor(registries, comparedRun);
   const beforeByRole = new Map(beforeRoles.map((row) => [row.role, row]));

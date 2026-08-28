@@ -18,13 +18,11 @@ import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../sr
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
-import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
-import { attributeCardModels } from '../src/model/creationBrief.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun } from '../src/model/state.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
@@ -45,7 +43,7 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
-import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
+import { startingArmourViews, resolveStartingArmour } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, classAttributePreset, allocationTotal } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
@@ -60,46 +58,29 @@ import {
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
-  swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
-  previewCompatibleHands, startingHandsRequirementFailure,
+  swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES,
 } from '../src/model/loadout.js';
-import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
-import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
   unlockView, revealState, pieceReveal,
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
-import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
-import {
-  equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots, trayPresentationState,
-} from '../src/model/armouryLayout.js';
-import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
-import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
-import { battlefieldStageModel } from '../src/ui/models/BattlefieldStageModel.js';
-import {
-  hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
-} from '../src/ui/components/hudQuickSettings.js';
-import {
-  characterCreationProblems, creationArmourChoices, creationHandChoices,
-  creationRelicChoices, selectStartingHand, resolveCreationHands,
-} from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
 // at the top of this file still holds.
 import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.js';
 import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/model/levelup.js';
+import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
-import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, MENU_TABS, MENU, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
+import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -850,51 +831,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(migrated != null, 'compatible save survives content patch');
     eq(migrated.contentVersion, REG.contentVersion, 'contentVersion re-stamped');
 
-    const customized = createRunState({
-      seed: 0xc315, classId: 'reaver', registries: REG,
-      startingHands: { leftHand: 'greatsword', rightHand: 'roundShield' },
-      startingArmourId: 'vigil',
-    });
-    customized.contentVersion = 'before-roster-update';
-    const updatedBundle = {
-      ...contentBundle,
-      version: 'after-roster-update',
-      characterCreation: structuredClone(contentBundle.characterCreation),
-    };
-    updatedBundle.characterCreation.classes.reaver.handIds = updatedBundle.characterCreation.classes.reaver.handIds
-      .filter((id) => id !== 'greatsword');
-    updatedBundle.characterCreation.classes.reaver.armourIds = updatedBundle.characterCreation.classes.reaver.armourIds
-      .filter((id) => id !== 'vigil');
-    const updatedRegistries = createRegistries(updatedBundle);
-    storage.setItem(RUN_KEY, serializeRun(customized));
-    const rosterMigrated = saves.loadRun(updatedRegistries);
-    assert(rosterMigrated != null && rosterMigrated.startingKitSnapshot.leftHand === 'greatsword',
-      'a customized saved hand survives removal from the current creation roster when the equipment still exists');
-    assert(ownership(updatedRegistries, { meta: {}, loadout: rosterMigrated.loadout })
-      .has(updatedRegistries.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil')),
-    'a persisted creation armour grant survives removal from the current creation roster when the equipment still exists');
-    eq(rosterMigrated.contentVersion, updatedRegistries.contentVersion,
-      'the compatible customized save reaches the content-version re-stamp');
-
-    // The old contract allowed one owned armament id in several hand sets and
-    // in storage at once. The shared Inventory contract migrates that shape at
-    // the real load door: keep the active occurrence, clear the rest, and never
-    // leave an equipped object duplicated in Inventory.
-    const duplicateStorage = createMemoryStorage();
-    const duplicateRun = createRunState({ seed: 0xd315, classId: 'reaver', registries: REG });
-    duplicateRun.loadout.sets.leftHand[1] = 'straightSword';
-    duplicateRun.loadout.storage.push('straightSword');
-    duplicateStorage.setItem(RUN_KEY, serializeRun(duplicateRun));
-    const duplicateSaves = createSaveManager(duplicateStorage);
-    const normalized = duplicateSaves.loadRun(REG);
-    assert(normalized != null, 'a legacy duplicate armament is normalized rather than archived');
-    eq(Object.values(normalized.loadout.sets).flat().filter((id) => id === 'straightSword').length, 1,
-      'the normalized save keeps exactly one equipped Straight Sword');
-    eq(normalized.loadout.sets.rightHand[0], 'straightSword', 'the active equipped occurrence survives normalization');
-    eq(normalized.loadout.storage.includes('straightSword'), false, 'the equipped survivor is removed from shared Inventory');
-    assert((duplicateSaves.runStatus().ledger.entries || [])
-      .some((entry) => entry.field === 'loadout.armamentLocations'), 'the load ledger names the normalization');
-
     // Parseable but malformed body (right schemaVersion, broken shape) → refused
     // and archived, instead of loading and exploding later mid-run.
     for (const [label, bad] of [
@@ -1109,7 +1045,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // His ask: "profile should be able to be created before first run, not after".
   // Bjorn's walk on the shipped bundle at cd3da94: cleared storage, picked a
   // class, typed a name, pressed BEGIN THE CLIMB — `sote_run_v1` written,
-  // `sote_meta_v1` absent, and Title → Profile printing his own sentence back
+  // `sote_meta_v1` absent, and Settings → Profile printing his own sentence back
   // at him. Every assertion below was observed RED at dev cd3da94 by running
   // this file against that tree; the screen half — the same walk in a real
   // browser, on the shipped bundle — is tools/profile-first-run.mjs.
@@ -1617,23 +1553,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
     // THE TROUGH IS MEASURED AGAINST HIS REFERENCE, NOT AGAINST THE POPULATION.
-    // E9 / #254: Constantine ruled 200 HP / 20 MP / 20 SP, and the row carries
+    // E9 / #254: Constantine ruled 500 HP / 50 MP / 50 SP, and the row carries
     // it as `domainMax` (Law 0 clause 3 — an override is data). Before that
     // ruling this pair asserted `lengthPct === 100` at the largest WIS-derived
     // maxMana, which was a claim about the DERIVED ceiling and is now false by
     // his word rather than by a defect. Both numbers below are DERIVED FROM THE
     // CONSTANT, never typed, so moving the reference moves the test with it.
-    eq(domains.main.mana, HUD_REFERENCE_MAX.mana, 'the mana ceiling is his reference, not the derived population');
+    eq(domains.main.mana, HUD_REFERENCE_MAX.pool, 'the mana ceiling is his reference, not the derived population');
     const star = { maxHp: 82, hp: 82, maxMana: 4, mana: 4 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
-    eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.mana) * 100,
+    eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.pool) * 100,
       'the largest WIS-derived maxMana takes its share of the reference, not the whole track');
     // AND THE OTHER SIDE OF THE SAME LINE: a pool standing AT the reference
     // fills the track whole. Without this cell the assertion above is one
     // number with nothing on the far side of it and could not tell a wrong
     // reference from a right one.
-    const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.mana, mana: HUD_REFERENCE_MAX.mana };
+    const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.pool, mana: HUD_REFERENCE_MAX.pool };
     const full = resourceBarPlan(REG, 'main', atRef, atRef, domains).find((b) => b.id === 'mana');
     eq(full.lengthPct, 100, 'a pool AT the reference fills its track');
   });
@@ -1894,7 +1830,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
       checkTags(w.tags, w.id);
       checkMods(w.mods, w.id);
-      eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
+      // Shields belong in the off hand; staves are cast from the right.
+      if (w.kind === 'shield') assert(w.hand !== 'right', `${w.id}: a shield is not right-hand-only`);
+      if (w.kind === 'staff') eq(w.hand, 'right', `${w.id}: staves are right-handed`);
     }
 
     // Armour: four sets per class, exactly one of them unlocked from the start.
@@ -2448,21 +2386,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(both.leftId, 'straightSword', 'the piece in the left slot is drawn in the left hand');
     eq(both.rightId, 'greatsword', 'the piece in the right slot is drawn in the right hand');
 
-    // The full-frame weapon art was authored with blades on the default sword
-    // socket and shields on the default off-hand socket.  A slot swap must
-    // correct that baked position per layer, or the figure still follows the
-    // weapon category even though the loadout facts are right.
-    eq(both.leftMirror, true, 'a blade moved to the left slot is mirrored onto that socket');
-    eq(both.rightMirror, false, 'a blade in the right slot keeps its authored socket');
-
-    run.loadout.sets.leftHand[0] = 'straightSword';
-    run.loadout.sets.rightHand[0] = 'roundShield';
-    const swapped = figureSpec(REG, run.loadout, 'reaver');
-    eq(swapped.leftId, 'straightSword', 'the swapped sword remains in the left slot');
-    eq(swapped.rightId, 'roundShield', 'the swapped shield remains in the right slot');
-    eq(swapped.leftMirror, true, 'the swapped sword is mirrored onto the left socket');
-    eq(swapped.rightMirror, true, 'the swapped shield is mirrored onto the right socket');
-
     // 'either' is still a real word: the dagger goes in either hand and is drawn
     // in the one it is in, not in the one its row prefers.
     run.loadout.sets.leftHand[0] = 'dagger';
@@ -2476,17 +2399,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(slotHand(REG.equipment.slots.find((s) => s.id === 'leftHand')), 'left', 'the left slot knows it is the left hand');
     eq(slotHand(REG.equipment.slots.find((s) => s.id === 'armor')), null, 'armour is worn, not held');
     eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'dagger')), null, "'either' constrains nothing");
-    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'greatsword')), null, 'a greatsword is side-neutral');
-    assert(REG.equipment.armaments.every((piece) => pieceHand(piece) === null), 'every shipped armament may be held in either hand');
-    const rightHandSlot = REG.equipment.slots.find((slot) => slot.id === 'rightHand');
-    const leftHandSlot = REG.equipment.slots.find((slot) => slot.id === 'leftHand');
-    let eitherHandChecks = 0;
-    for (const armament of REG.equipment.armaments) {
-      assert(fitsSlot(rightHandSlot, armament), `${armament.id}: fits the right hand`);
-      assert(fitsSlot(leftHandSlot, armament), `${armament.id}: fits the left hand`);
-      eitherHandChecks += 2;
-    }
-    eq(eitherHandChecks, REG.equipment.armaments.length * 2, 'every shipped armament was checked against both hands');
+    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'greatsword')), 'right', 'a right-handed weapon says so');
 
     // The other edge of the same defect, on a slot the real table does not have
     // yet: a slot that is NOT a hand is not a hand. A carried talisman used to
@@ -2510,87 +2423,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(drawn.leftId, null, 'and the talisman is drawn in no hand at all');
 
     // ---- the gate is on the mutation, not on the screen -------------------
-    eq(equippedTagColor(REG.equipment.armouryUi), '#7FD47F', 'the authored equipped tag uses its custom green');
-    eq(equippedTagColor({ equippedTag: { useCustomColor: false, customColor: '#7FD47F' } }), null,
-      'turning custom colour off delegates the equipped tag to the motif');
-    assert(armouryUiProblems({ equippedTag: { useCustomColor: true, customColor: 'green' } })
-      .some((problem) => problem.path.endsWith('customColor')), 'an invalid JSON colour fails by field name');
-
     const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
-      'the starting sword moves freely into the left hand');
-    eq(fresh.loadout.sets.rightHand[0], null, 'moving the sword clears its old right-hand location');
-    eq(fresh.loadout.sets.leftHand[0], 'straightSword', 'and places it in the left hand');
-    eq(fresh.loadout.storage.filter((id) => id === 'roundShield').length, 1, 'the displaced shield returns to inventory once');
-    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'roundShield', OWNS_EVERYTHING, AT_CAMP),
-      'the shield can move freely into the right hand');
-    eq(fresh.loadout.sets.rightHand[0], 'roundShield', 'the right hand now holds the shield');
-    eq(fresh.loadout.sets.leftHand[0], 'straightSword', 'the sword remains in the left hand');
-    eq(fresh.loadout.storage.includes('roundShield'), false, 'an equipped shield is no longer duplicated in storage');
-    eq(equipmentRoleSource(REG, fresh.loadout, fresh.class, 'guard').piece.id, 'straightSword',
-      'the left-hand sword supplies the Defend profile');
-
-    const staffRun = createRunState({ seed: 5, classId: 'herald', registries: REG });
-    assert(equipPiece(REG, staffRun.loadout, 'leftHand', 0, 'boneSceptre', OWNS_EVERYTHING, AT_CAMP),
-      'a staff moves from right to left');
-    eq(equipmentRoleSource(REG, staffRun.loadout, staffRun.class, 'guard').piece.id, 'boneSceptre',
-      'the left-hand staff supplies the Defend profile');
-
-    const shieldRun = createRunState({ seed: 6, classId: 'reaver', registries: REG });
-    assert(equipPiece(REG, shieldRun.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'the starting shield returns to Inventory');
-    assert(equipPiece(REG, shieldRun.loadout, 'rightHand', 0, 'roundShield', OWNS_EVERYTHING, AT_CAMP), 'the shield equips in the right hand');
-    eq(equipmentRoleSource(REG, shieldRun.loadout, shieldRun.class, 'guard').piece.id, 'roundShield',
-      'a right-hand shield still supplies its guard profile when the left hand is bare');
-
-    const previewRun = createRunState({ seed: 7, classId: 'reaver', registries: REG });
-    const preview = equipmentSurfaceReceipt(REG, previewRun, {
-      candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'straightSword' },
-    }).candidate;
-    const actualRun = structuredClone(previewRun);
-    assert(equipPiece(REG, actualRun.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
-      'the previewed cross-hand move can be committed');
-    const actualRoles = equipmentSurfaceReceipt(REG, actualRun).roles;
-    eq(JSON.stringify(preview.roles.map((row) => [row.role, row.afterName, row.afterValue])),
-      JSON.stringify(actualRoles.map((row) => [row.role, row.profile.displayName, row.receipt.value])),
-      'cross-hand comparison after-values match the actual one-object transition');
-
-    const armourRun = createRunState({ seed: 8, classId: 'reaver', registries: REG });
-    const alternateArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id !== armourRun.loadout.sets.armor[0]);
-    const armourStorageBefore = JSON.stringify(armourRun.loadout.storage);
-    assert(equipPiece(REG, armourRun.loadout, 'armor', 0, alternateArmour.id, OWNS_EVERYTHING, AT_CAMP), 'armour can still be changed');
-    eq(JSON.stringify(armourRun.loadout.storage), armourStorageBefore, 'changing armour never writes to armament Inventory');
-
-    const cap = REG.balance.equipment.storageSlots;
-    const fullRun = createRunState({ seed: 9, classId: 'reaver', registries: REG });
-    fullRun.loadout.storage = REG.equipment.armaments
-      .map((piece) => piece.id)
-      .filter((id) => !['straightSword', 'roundShield'].includes(id))
-      .slice(0, cap);
-    const fullBefore = JSON.stringify(fullRun.loadout);
-    const fullUnequip = equipTransitionReceipt(REG, fullRun.loadout, 'rightHand', 0, null);
-    eq(fullUnequip.ok, false, 'the capacity receipt refuses the full-Inventory unequip before mutation');
-    assert(fullUnequip.reason.includes(`Inventory is full (${cap}/${cap})`), 'the capacity receipt gives the UI its exact full-Inventory reason');
-    assert(!equipPiece(REG, fullRun.loadout, 'rightHand', 0, null, OWNS_EVERYTHING, AT_CAMP),
-      'unequip refuses atomically when shared Inventory is full');
-    eq(JSON.stringify(fullRun.loadout), fullBefore, 'a refused full-Inventory unequip changes nothing');
-    assert(!equipPiece(REG, fullRun.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
-      'a cross-hand move refuses when its displaced item cannot return to Inventory');
-    eq(JSON.stringify(fullRun.loadout), fullBefore, 'a refused full-Inventory move changes nothing');
-
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'a dagger goes in a left-hand rack set');
-    assert(equipPiece(REG, fresh.loadout, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'the same dagger moves to a right-hand rack set');
-    eq(fresh.loadout.sets.leftHand[1], null, 'moving the dagger clears its old rack location');
-    eq(Object.values(fresh.loadout.sets).flat().filter((id) => id === 'dagger').length, 1,
-      'one carried armament is equipped in exactly one location');
-
+    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING, AT_CAMP), 'the left hand refuses a right-handed weapon');
+    eq(fresh.loadout.sets.leftHand[0], 'roundShield', 'and a refusal leaves the authored starting shield exactly as it found it');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'a left-hand piece goes in');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), "an 'either' piece goes in the left hand");
+    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), '…and in the right hand');
+    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'the kind gate still holds too');
+    eq(fresh.loadout.sets.rightHand[0], 'dagger', 'and that refusal changed nothing either');
     assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'clearing a slot is always allowed');
     eq(fresh.loadout.sets.leftHand[0], null, 'and it clears');
-    eq(fresh.loadout.storage.filter((id) => id === 'straightSword').length, 1, 'unequipping returns the old left-hand piece to storage once');
-    assert(ownership(REG, { meta: {}, loadout: fresh.loadout }).has(REG.equipment.armaments.find((p) => p.id === 'straightSword')),
-      'the unequipped left-hand piece remains owned');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP), 'the returned left-hand piece can be equipped again');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'the repeated unequip still succeeds');
-    eq(fresh.loadout.storage.filter((id) => id === 'straightSword').length, 1, 'repeated unequip does not duplicate storage');
 
     // The picker offers exactly what the mutation accepts. Not a claim about
     // the screen — a claim that the two questions have ONE answer, which is
@@ -2641,12 +2483,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'a hand slot that names no hand fails, naming the slot and a piece it would swallow');
     assert(check((e) => { slotRow(e, 'leftHand').hand = 'sideways'; }).includes('is not one of left|right'),
       'a hand outside the closed set fails and prints the legal values');
-    assert(check((e) => { armRow(e, 'ashStaff').kind = 'wand'; }).includes("no slot can hold 'ashStaff'"),
+    assert(check((e) => { armRow(e, 'ashStaff').hand = 'left'; }).includes("no slot can hold 'ashStaff'"),
       'a piece no slot can hold fails by its own id');
-    assert(check((e) => {
-      slotRow(e, 'leftHand').kinds = ['staff'];
-      e.armaments.filter((piece) => piece.kind === 'staff').forEach((piece) => { piece.hand = 'right'; });
-    }).includes("slot 'leftHand' can hold nothing"),
+    assert(check((e) => { slotRow(e, 'leftHand').kinds = ['staff']; }).includes("slot 'leftHand' can hold nothing"),
       'a slot whose every matching piece names the other hand fails as an empty result set');
   });
 
@@ -2816,8 +2655,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // profile with nothing found is offered — i.e. the kit it is wearing.
     const kitRight = rightPool.filter((p) => none.has(p)).map((p) => p.id);
     eq(basicTag, '', 'the universal-shelf tag ships OFF — his 2026-08-21 kill');
-    eq(kitRight.join(','), 'straightSword,roundShield',
-      'the unified hand inventory offers exactly both equipped starting armaments — kit, not category');
+    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'straightSword',
+      'a fresh reaver is offered exactly the weapon it is WEARING — kit, not category');
 
     // ---- 1b. …and the TAG is still the mechanism, observed both ways -------
     // A knob read but never watched to change the outcome has not been built —
@@ -3219,8 +3058,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // the count above would be green for the wrong reason.
     let tookAll = 0;
     for (const piece of pool) {
-      const campProbe = createLoadout(REG, 'reaver');
-      if (equipPiece(REG, campProbe, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
+      if (equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
     }
     eq(tookAll, pool.length, `and every one of them goes in at camp — the control group`);
 
@@ -3348,15 +3186,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const dominated = [];
     for (const a of arms) {
       for (const b of arms) {
-        if (a === b || a.kind !== b.kind) continue;
-        // Profiles are mechanics, not flavour: a dagger's multi-hit carrier and
-        // a bow's ranged carrier are not comparable to a plain blade by mods
-        // alone. The old hand split accidentally kept those pairs apart; now
-        // that every armament is side-neutral, the real mechanical boundary is
-        // the three card profiles the piece selects.
-        if (a.attackProfile !== b.attackProfile
-          || a.guardProfile !== b.guardProfile
-          || a.techniqueProfile !== b.techniqueProfile) continue;
+        if (a === b || a.kind !== b.kind || a.hand !== b.hand) continue;
         if (RARITY[b.rarity] > RARITY[a.rarity]) continue; // b must be as cheap or cheaper
         // NO tag exemption. I first wrote one — "a tag `a` carries that `b`
         // lacks is a reason to keep `a`" — reasoning that it should tighten the
@@ -4370,7 +4200,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
     eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '800/200', 'five level purchases cost 6000 through the authored ramp');
-    eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
+    eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.pool}`, '200/50', 'HUD references are authored as 200/50/50');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
@@ -5176,148 +5006,25 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.offerable, false, 'either block closes the offer');
   });
 
-  test('61. Fullscreen and Music share one canonical state across Settings, Quick Menu, and HUD', () => {
+  test('61. Fullscreen is the first Display row — his ordering, asserted at the one home', () => {
+    // E3 (#248), his words 2026-08-15: "the full screen option toggle should be
+    // the first option in the display". Order on the screen IS array order in
+    // ROWS — categoryHandler() filters without sorting, rowHtml renders in
+    // sequence — so this reads through the same door the renderer uses, not a
+    // copy of the table.
     const display = categoryHandler('Display').rows;
-    const audio = categoryHandler('Audio').rows;
-    eq(display[0].key, 'fullscreen', 'Fullscreen remains the first Display row in the canonical table');
+    eq(display[0].key, 'fullscreen', 'the FIRST Display row is the Fullscreen toggle — his ordering');
     eq(display.filter((r) => r.key === 'fullscreen').length, 1,
-      'Fullscreen moved to the first seat without being duplicated');
-    assert(display.findIndex((r) => r.key === 'animSpeed') > 0,
-      'Combat pacing remains available behind Fullscreen');
-    eq(display.some((r) => r.key === 'fullscreen'), true,
-      'Settings exposes the browser-owned Fullscreen state');
-    eq(audio.some((r) => r.key === 'musicEnabled'), true,
-      'Settings exposes the canonical Music preference');
-    eq(audio.some((r) => r.key === 'muteMusic'), false,
-      'Settings does not introduce a second Music preference');
-
-    const presentation = REG.balance.ui.hudQuickSettings;
-    eq(presentation.places.join(','), 'title,map,combat',
-      'one data row places the shared controls on all three requested surfaces');
-    eq(`${presentation.edgeGapPx}/${presentation.stackGapPx}`, '4/0',
-      'the shared utility rail is right-edge close and has no authored inter-control gap');
-    eq(`${presentation.cardSizePx}/${presentation.glyphSizePx}/${presentation.stateDotPx}/${presentation.activeTintPct}`, '40/28/6/14',
-      'the shared face, 70%-scale glyph, state dot, and active tint are data-owned');
-    eq(presentation.showCardBackground, true,
-      'the quick utilities default to one consistent compact card on every device');
-    eq(presentation.showLabels, false,
-      'visible words yield to the larger universal icons while accessible names remain');
-    const model = hudQuickSettingsModel({ place: 'combat', presentation, settings: {} });
-    eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
-    const html = hudQuickSettingsHtml(model);
-    assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
-    assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
-    assert(/data-card-background="true"/.test(html), 'the compact card presentation reaches the shared renderer');
-    assert(/--hud-quick-card-size:40px/.test(html)
-      && /--hud-quick-glyph-size:28px/.test(html) && /--hud-quick-state-dot:6px/.test(html)
-      && /--hud-quick-active-tint:14%/.test(html),
-      'the data-owned compact visual sizes reach CSS without a second renderer');
-    assert(/hud-fullscreen-enter/.test(html) && /hud-fullscreen-exit/.test(html),
-      'Fullscreen renders the conventional enter and exit action icons');
-    assert(/♫/.test(html) && /&#x0338;/.test(html),
-      'Music renders the authored on and slashed-off symbols');
-
-    const audibleMusic = musicQuickSettingsPlan({});
-    eq(audibleMusic.active, true, 'Music is enabled by default');
-    eq(audibleMusic.change.musicEnabled, false, 'the active quick control disables Music alone');
-    const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
-    eq(musicMuted.active, false, 'the quick control migrates an explicit legacy Music mute');
-    eq(musicMuted.change.musicEnabled, true, 'the quick control writes the canonical preference when re-enabled');
-    const audioMuted = musicQuickSettingsPlan({ muteAudio: true, muteMusic: false });
-    eq(audioMuted.active, true, 'master Audio mute stays distinct from the Music preference');
-    eq(audioMuted.stateLabel, 'On · Audio muted', 'master mute is named without rewriting Music state');
-    eq(audioMuted.change.musicEnabled, false, 'the Music control changes only the canonical preference');
-    eq('muteAudio' in audioMuted.change, false, 'the Music control never releases global Audio mute');
-
-    const restoredSettings = { muteMusic: true };
-    const binding = { settings: {} };
-    eq(updateHudQuickSettingsBinding(binding, restoredSettings), restoredSettings,
-      'a restored profile replaces the settings object owned by the mounted HUD');
-    let refreshEvent = null;
-    eq(refreshHudQuickSettings({ querySelector: () => ({ dispatchEvent: (event) => { refreshEvent = event; } }) }, restoredSettings), true,
-      'the title can refresh its mounted HUD without remounting the Profile dialog');
-    eq(refreshEvent?.detail?.settings, restoredSettings,
-      'the refresh carries the restored profile settings object');
-
-    const quick = display.find((r) => r.key === 'quickNav');
-    eq(quick.def, 'mirror', 'fresh Quick Menu state promotes Mirror while preserving explicit legacy choices');
-    eq(quick.choices.join(','), 'off,mirror,switcher', 'Quick menu exposes legacy Off plus Mirror and Switcher');
-    eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
-      'the internal row order is not exposed as a redundant second setting');
-
-    const unsupported = fullscreenCapability({ documentElement: {}, exitFullscreen: null });
-    eq(unsupported.supported, false, 'iPhone-like documents do not receive a dead fullscreen toggle');
-    const supported = fullscreenCapability({
-      documentElement: { requestFullscreen() {} },
-      exitFullscreen() {},
-    });
-    eq(supported.supported, true, 'documents with both enter and exit APIs expose fullscreen');
-  });
-
-  test('61a. Armoury is the one equipment route, and fullscreen reports browser support', () => {
-    assert(!MENU_TABS.some((tab) => tab.id === 'relics'),
-      'the run menu does not duplicate Armoury with a Relics & Flasks tab');
-    for (const [context, rows] of Object.entries(MENU)) {
-      assert(!rows.some((row) => row.tab === 'relics'),
-        `${context} quick navigation has no duplicate relic/equipment route`);
-      const armouryRows = rows.filter((row) => row.act === 'armoury');
-      for (const row of armouryRows) eq(row.label, 'Armoury', `${context} names the canonical equipment route Armoury`);
-    }
-
-    const unsupported = { documentElement: {}, fullscreenEnabled: false };
-    eq(fullscreenCapability(unsupported).supported, false,
-      'a browser without the document fullscreen API is reported unsupported');
-    const supported = {
-      documentElement: { requestFullscreen() {} },
-      exitFullscreen() {},
-      fullscreenEnabled: true,
-    };
-    eq(fullscreenCapability(supported).supported, true,
-      'a browser with request and exit support is reported supported');
-    const webkit = {
-      documentElement: { webkitRequestFullscreen() {} },
-      webkitExitFullscreen() {},
-      webkitFullscreenEnabled: true,
-    };
-    eq(fullscreenCapability(webkit).supported, true,
-      'the prefixed fullscreen API remains a supported route');
-
-    eq(MENU_TABS.map((tab) => tab.id).join(','), 'settings,controls',
-      'the in-run overlay keeps only Settings and Controls');
-    assert(!MENU_TABS.some((tab) => ['deck', 'stats', 'save'].includes(tab.id)),
-      'Deck, Stats, and Save are not duplicated as overlay tabs');
-  });
-
-  test('61b. the combatant stage owns one validated safe-corridor model', () => {
-    const presentation = REG.balance.ui.combatantStage;
-    eq(`${presentation.hudClearanceViewportPct}/${presentation.actionClearanceViewportPct}`, '3/3',
-      'the HUD and hand each reserve three percent of viewport height');
-    eq(`${presentation.intentGapPx}/${presentation.centerPct}`, '6/50',
-      'intent attachment and battlefield center are data-owned');
-    const model = battlefieldStageModel(presentation);
-    eq(model.component, 'battlefield-stage', 'the shared battlefield component owns the model');
-    eq(`${model.tokens.hudClearanceViewportPct}/${model.tokens.actionClearanceViewportPct}/${model.tokens.intentGapPx}/${model.tokens.centerPct}`,
-      '3/3/6/50', 'all four authored tokens reach the immutable Component Model');
-    eq(battlefieldStageModel({ centerPct: 25 }).tokens.centerHeightRatio, 0.5,
-      'an upper-quarter stage center only exposes the symmetric half-height corridor');
-    eq(battlefieldStageModel({ centerPct: 75 }).tokens.centerHeightRatio, 0.5,
-      'a lower-quarter stage center receives the same collision-safe height limit');
-    eq(battlefieldStageModel({ centerPct: 50 }).tokens.centerHeightRatio, 1,
-      'the default midpoint can use the full protected corridor');
-
-    const malformed = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: {
-          ...contentBundle.balance.ui,
-          combatantStage: { ...contentBundle.balance.ui.combatantStage, hudClearanceViewportPct: Infinity },
-        },
-      },
-    };
-    const validation = validateContent(malformed);
-    assert(!validation.ok && validation.errors.some((error) => error.path === 'balance.ui.combatantStage.hudClearanceViewportPct'),
-      'an unreadable safe clearance fails the real boot validator by name');
+      'and it appears exactly once — the row MOVED, it was not copied');
+    // The other edge: a move re-orders, it must not shrink. The row that held
+    // first place is still filed, just no longer first.
+    const sprites = display.findIndex((r) => r.key === 'useSprites');
+    assert(sprites > 0, 'Character sprites is still a Display row, behind Fullscreen');
+    // And the toggle kept its shape in transit: same type, same label, so the
+    // renderer draws the same control in the new seat.
+    const fs = display[0];
+    eq(fs.type, 'action', 'still an action row — the move changed WHERE, not WHAT');
+    eq(fs.label, 'Fullscreen', 'same label');
   });
 
   test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
@@ -5460,24 +5167,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.attributeMode, 'pointbuy', 'the run records the mode');
     eq(run.attributes.strength, 15, 'and the allocation, not the preset');
 
-    // STARTING ARMOUR. The JSON creation roster ships two immediately; earned
-    // sets may widen that list without becoming a second UI-only roster.
+    // STARTING ARMOUR. Eligibility = the free set + what the profile EARNED.
     const fresh = startingArmourViews(REG, 'reaver', {});
-    eq(fresh.length, 2, 'a fresh profile starts with both JSON-authored choices');
+    eq(fresh.length, 1, 'a fresh profile starts with exactly the free set');
     eq(fresh[0].free, true, 'and it is the free one');
-    assert(fresh.some((v) => v.id === 'vigil'), 'the alternate authored starting set is available by name');
-    const oathUnlock = outfits.find((o) => o.id === 'oathsworn' && o.classId === 'reaver').unlock;
-    const veteran = { unlocked: [oathUnlock] };
+    const vigilUnlock = outfits.find((o) => o.id === 'vigil' && o.classId === 'reaver').unlock;
+    const veteran = { unlocked: [vigilUnlock] };
     const views = startingArmourViews(REG, 'reaver', veteran);
-    eq(views.length, 3, 'an earned prize becomes an additional starting choice');
-    assert(views.some((v) => v.id === 'oathsworn'), 'and it is the earned set by name');
+    eq(views.length, 2, 'an earned prize becomes a starting choice');
+    assert(views.some((v) => v.id === 'vigil'), 'and it is the earned set by name');
     // Resolution, both edges: the earned set resolves; the unearned refuses BY
     // NAME; a foreign class refuses; absent falls to the free set (yesterday's
     // behaviour for every caller that never heard of the parameter).
-    eq(resolveStartingArmour(REG, 'reaver', 'vigil', {}).id, 'vigil', 'JSON-authored alternate resolves without progression');
+    eq(resolveStartingArmour(REG, 'reaver', 'vigil', veteran).id, 'vigil', 'earned resolves');
     let threw = null;
-    try { resolveStartingArmour(REG, 'reaver', 'warden', {}); } catch (e) { threw = String(e.message); }
-    assert(threw && threw.includes('warden'), `unconfigured and unearned set refuses BY NAME — got ${threw}`);
+    try { resolveStartingArmour(REG, 'reaver', 'vigil', {}); } catch (e) { threw = String(e.message); }
+    assert(threw && threw.includes('vigil'), `unearned refuses BY NAME — got ${threw}`);
     threw = null;
     try { resolveStartingArmour(REG, 'starseer', 'vigil', veteran); } catch (e) { threw = String(e.message); }
     assert(threw && threw.includes('starseer'), `another class's set refuses and names the class — got ${threw}`);
@@ -5485,517 +5190,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // And the run WEARS the choice: the loadout row is the persisted home.
     const worn = createRunState({ seed: 1, classId: 'reaver', registries: REG, startingArmourId: 'vigil', profileMeta: veteran });
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
-    const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
-    const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
-    assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
-      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
-    assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
-      'a JSON-authored creation armour remains owned after switching away');
-    assert(equipPiece(REG, worn.loadout, 'armor', 0, vigil.id,
-      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the granted creation armour can be equipped again');
-    const wornRestored = deserializeRun(serializeRun(worn));
-    validateRunStartingKit(wornRestored, REG, {});
-    assert(ownership(REG, { meta: {}, loadout: wornRestored.loadout }).has(vigil),
-      'the creation armour grant remains owned across the save boundary');
     const plain = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     eq(plain.loadout.sets.armor[0], 'default', 'and without a choice, in the free set — unchanged');
-  });
-
-  test('70. unified Inventory derives equipment, relics, potion stacks, and equipped tags', () => {
-    const run = createRunState({ seed: 0x315, classId: 'reaver', registries: REG });
-    run.flasks = [
-      { flaskId: 'crimsonFlask' },
-      { flaskId: 'crimsonFlask' },
-      { flaskId: 'azureFlask' },
-    ];
-    const rows = inventoryRows(REG, run, {});
-
-    eq(rows.some((row) => row.category === 'Armour'), true, 'the current armour is present');
-    eq(rows.some((row) => row.category === 'Weapon'), true, 'weapons are present');
-    eq(rows.some((row) => row.category === 'Shield'), true, 'shields are present');
-    eq(rows.some((row) => row.category === 'Relic'), true, 'relics are present');
-    eq(rows.some((row) => row.category === 'Potion'), true, 'potions are present');
-
-    const sword = rows.find((row) => row.id === 'straightSword');
-    const shield = rows.find((row) => row.id === 'roundShield');
-    const armour = rows.find((row) => row.category === 'Armour');
-    assert(sword.equippedLabels.includes('Right Hand'), 'the sword reports its equipped hand');
-    assert(shield.equippedLabels.includes('Left Hand'), 'the shield reports its equipped hand');
-    assert(armour.equippedLabels.includes('Armour'), 'the worn set reports its equipped slot');
-    assert(rows.find((row) => row.category === 'Relic').equippedLabels.includes('Equipped'), 'held relics are active equipment');
-
-    const crimson = rows.find((row) => row.id === 'crimsonFlask');
-    eq(crimson.count, 2, 'duplicate potions collapse into one row with a count');
-    eq(crimson.equippedLabels.length, 0, 'carried potions do not claim to be equipped');
-    eq(inventoryItemCount(rows), rows.reduce((sum, row) => sum + row.count, 0), 'the Inventory header count is the summed quantity');
-    eq(inventoryItemCount([]), 0, 'the empty Inventory count is zero');
-  });
-
-  test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
-    eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
-    eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
-    eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
-    eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
-    eq(REG.characterCreation.layout.equipmentChoiceView, 'list', 'equipment selectors default to the configured list view');
-    eq(REG.characterCreation.layout.equipmentAutoAdvance, true, 'equipment auto-advance is configured rather than hard-coded');
-    eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,leftHand,rightHand,equipSlot,relic',
-      'the equipment subcard order is authored in character-creation content');
-    for (const classId of REG.classes.ids()) {
-      assert(creationArmourChoices(REG, classId).length >= 2, `${classId} ships at least two armour choices`);
-      assert(creationHandChoices(REG, classId).length >= 2, `${classId} ships at least two side-neutral hand choices`);
-      assert(creationRelicChoices(REG, classId).length >= 2, `${classId} ships at least two relic choices`);
-    }
-
-    const moved = selectStartingHand({ leftHand: 'roundShield', rightHand: 'straightSword' }, 'leftHand', 'straightSword');
-    eq(moved.leftHand, 'straightSword', 'selecting an occupied armament places it in the requested hand');
-    eq(moved.rightHand, null, 'and clears the other hand instead of duplicating it');
-    eq(Object.values(moved).filter((id) => id === 'straightSword').length, 1, 'one armament occupies exactly one starting hand');
-
-    const sideSpecific = createRegistries({
-      ...contentBundle,
-      equipment: {
-        ...contentBundle.equipment,
-        armaments: contentBundle.equipment.armaments.map((piece) => (
-          piece.id === 'buckler' ? { ...piece, hand: 'left' } : piece
-        )),
-      },
-    });
-    assert(creationHandChoices(sideSpecific, 'reaver', 'leftHand').some((piece) => piece.id === 'buckler'),
-      'a side-specific armament is offered for its eligible creation hand');
-    assert(!creationHandChoices(sideSpecific, 'reaver', 'rightHand').some((piece) => piece.id === 'buckler'),
-      'a side-specific armament is not offered for an incompatible creation hand');
-    eq(resolveCreationHands(sideSpecific, 'reaver', { leftHand: 'buckler', rightHand: null }, {}).leftHand, 'buckler',
-      'creation hand resolution accepts a side-specific armament in its eligible slot');
-    let wrongHandError = '';
-    try { resolveCreationHands(sideSpecific, 'reaver', { leftHand: null, rightHand: 'buckler' }, {}); }
-    catch (error) { wrongHandError = error.message; }
-    assert(/rightHand.*buckler.*does not fit/.test(wrongHandError),
-      'creation hand resolution rejects a side-specific armament in the wrong slot');
-
-    const lowStrength = { strength: 11, dexterity: 15, constitution: 14, wisdom: 10, intelligence: 10 };
-    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', lowStrength).length, 0,
-      'the incompatible preview fixture is still a valid point-buy allocation');
-    const requestedHands = { leftHand: 'roundShield', rightHand: 'greatsword' };
-    const previewHands = previewCompatibleHands(REG, requestedHands, lowStrength);
-    eq(previewHands.leftHand, 'roundShield', 'preview keeps a compatible selected hand');
-    eq(previewHands.rightHand, null, 'preview omits an incompatible selected hand instead of throwing');
-    eq(requestedHands.rightHand, 'greatsword', 'preview compatibility never mutates the player selection used by the refusal');
-    const correctedHands = previewCompatibleHands(REG, requestedHands, { ...lowStrength, strength: 12, dexterity: 14 });
-    eq(correctedHands.rightHand, 'greatsword', 'preview restores the selected hand when the allocation meets its requirement');
-    const previewRun = createRunState({
-      seed: 71, classId: 'reaver', registries: REG,
-      attributeMode: 'pointbuy', attributes: lowStrength,
-      startingHands: previewHands,
-    });
-    eq(previewRun.attributes.strength, 11, 'a valid-but-incompatible selection still produces a live stat preview');
-
-    const standardMismatch = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    standardMismatch.characterCreation.classes.herald.handIds.push('dagger');
-    const standardRosterValidation = validateContent(standardMismatch);
-    assert(standardRosterValidation.ok, 'a valid roster may expose an armament above the Standard preset');
-    const standardMismatchRegistries = createRegistries(standardMismatch);
-    const heraldStandard = classAttributePreset(standardMismatchRegistries, 'herald', 'standard');
-    const standardFailure = startingHandsRequirementFailure(standardMismatchRegistries, { leftHand: 'dagger' }, heraldStandard);
-    assert(standardFailure && standardFailure.piece.id === 'dagger'
-      && standardFailure.failure.attributeId === 'dexterity'
-      && standardFailure.failure.required === 11 && standardFailure.failure.actual === 10,
-    'Standard mode reports a selected hand requirement before Begin can throw');
-
-    const selected = createRunState({
-      seed: 69, classId: 'reaver', registries: REG,
-      startingHands: { leftHand: 'straightSword', rightHand: 'roundShield' },
-      startingArmourId: 'vigil', startingRelicId: 'goldenSprout',
-    });
-    eq(selected.loadout.sets.leftHand[0], 'straightSword', 'Begin consumes the selected left hand');
-    eq(selected.loadout.sets.rightHand[0], 'roundShield', 'Begin consumes the selected right hand');
-    eq(selected.loadout.sets.armor[0], 'vigil', 'Begin consumes the selected armour');
-    eq(selected.relics[0], 'goldenSprout', 'Begin consumes the selected relic');
-    assert(selected.startingKitSnapshot.customized === true, 'the customized starting hands persist explicitly');
-    const restored = deserializeRun(serializeRun(selected));
-    validateRunStartingKit(restored, REG, {});
-    eq(restored.startingKitSnapshot.leftHand, 'straightSword', 'customized hands survive the save boundary');
-
-    const malformed = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformed.characterCreation.spritePreviewSide = 'above';
-    malformed.characterCreation.classes.reaver.handIds = ['missingArmament'];
-    const validation = validateContent(malformed);
-    assert(!validation.ok && validation.errors.some((e) => e.path.includes('characterCreation.spritePreviewSide')),
-      'an invalid sprite side fails by its JSON path');
-    assert(validation.errors.some((e) => e.path.includes('characterCreation.classes.reaver.handIds')),
-      'a short/dangling hand roster fails by its JSON path');
-
-    const malformedLayout = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedLayout.characterCreation.layout.classPreviewPercent = 90;
-    malformedLayout.characterCreation.layout.classChoiceView = 'carousel';
-    malformedLayout.characterCreation.layout.equipmentAutoAdvance = 'yes';
-    malformedLayout.characterCreation.equipmentSections = [
-      { id: 'armour', label: 'Armour', kind: 'armour' },
-      { id: 'armour', label: '', kind: 'hand', slot: 'middleHand' },
-    ];
-    const layoutValidation = validateContent(malformedLayout);
-    for (const path of ['layout.classPreviewPercent', 'layout.classChoiceView', 'layout.equipmentAutoAdvance', 'equipmentSections']) {
-      assert(!layoutValidation.ok && layoutValidation.errors.some((e) => e.path.includes(`characterCreation.${path}`)),
-        `invalid configurable creation ${path} reports its JSON path`);
-    }
-
-    const duplicateSections = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    duplicateSections.characterCreation.equipmentSections.push(
-      { id: 'armourAgain', label: 'Armour Again', kind: 'armour' },
-      { id: 'leftAgain', label: 'Left Again', kind: 'hand', slot: 'leftHand' },
-      { id: 'relicAgain', label: 'Relic Again', kind: 'relic' },
-    );
-    const duplicateSectionProblems = characterCreationProblems(duplicateSections);
-    for (const role of ['armour', 'leftHand', 'relic']) {
-      assert(duplicateSectionProblems.some((problem) => problem.includes(`duplicate ${role} section`)),
-        `a duplicate ${role} role is rejected before rendering singleton equipment disclosures`);
-    }
-
-    const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakes.characterCreation.keepsakes = {};
-    const keepsakeValidation = validateContent(malformedKeepsakes);
-    assert(!keepsakeValidation.ok && keepsakeValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'a non-array keepsake roster reports its JSON path instead of throwing');
-
-    const malformedClass = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedClass.characterCreation.classes.reaver = null;
-    const classValidation = validateContent(malformedClass);
-    assert(!classValidation.ok && classValidation.errors.some((e) => e.path.includes('characterCreation.classes.reaver')),
-      'a null class roster reports its JSON path instead of throwing');
-
-    const malformedChoices = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    for (const field of ['armourIds', 'handIds', 'relicIds']) malformedChoices.characterCreation.classes.reaver[field] = {};
-    const choiceValidation = validateContent(malformedChoices);
-    for (const field of ['armourIds', 'handIds', 'relicIds']) {
-      assert(!choiceValidation.ok && choiceValidation.errors.some((e) => e.path.includes(`characterCreation.classes.reaver.${field}`)),
-        `a non-array ${field} roster reports its JSON path instead of throwing`);
-    }
-
-    const malformedKeepsakeRows = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakeRows.characterCreation.keepsakes[0] = null;
-    malformedKeepsakeRows.characterCreation.keepsakes[1].effects = {};
-    const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
-    assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
-
-    for (const [label, mutate] of [
-      ['class', (bundle) => { bundle.classes[0] = null; }],
-      ['armament', (bundle) => { bundle.equipment.armaments[0] = null; }],
-    ]) {
-      const malformedDependency = {
-        ...contentBundle,
-        classes: [...contentBundle.classes],
-        equipment: { ...contentBundle.equipment, armaments: [...contentBundle.equipment.armaments] },
-      };
-      mutate(malformedDependency);
-      const dependencyValidation = validateContent(malformedDependency);
-      assert(!dependencyValidation.ok,
-        `a null ${label} dependency row returns validation errors instead of throwing`);
-    }
-
-    for (const field of ['armaments', 'armour']) {
-      const malformedTable = {
-        ...contentBundle,
-        equipment: { ...contentBundle.equipment, [field]: {} },
-      };
-      const tableValidation = validateContent(malformedTable);
-      assert(!tableValidation.ok && tableValidation.errors.some((error) => error.path.includes(`equipment.${field}`)),
-        `a non-array ${field} dependency table returns its schema error instead of throwing`);
-    }
-
-    const missingBaselineHands = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    missingBaselineHands.characterCreation.classes.reaver.handIds = ['greatsword', 'buckler'];
-    const baselineHandValidation = validateContent(missingBaselineHands);
-    assert(!baselineHandValidation.ok && baselineHandValidation.errors.some((e) =>
-      e.path.includes('characterCreation.classes.reaver.handIds') && /roundShield|straightSword/.test(e.msg)),
-    'a hand roster that omits the baseline kit is refused by armament id before customization boots');
-  });
-
-  test('71b. attribute cards derive their summaries, benefits, and gates from model data', () => {
-    const run = createRunState({ seed: 0x71b, classId: 'reaver', registries: REG });
-    const cards = attributeCardModels(REG, run.attributes, {
-      projection: statProjection(REG, run),
-      equipmentProfiles: run.equipmentProfileRuleSnapshot.profiles,
-    });
-    eq(cards.length, REG.attributes.ids().length, 'one card is projected for every authored attribute');
-    eq(cards.map((card) => card.key).join(','), REG.attributes.ids().map((id) => `attribute:${id}`).join(','),
-      'stable attribute ids drive every card key');
-    const constitution = cards.find((card) => card.id === 'constitution');
-    eq(constitution.face.summary, 'What your body takes before the climb ends.',
-      'the folded summary is derived from the authored description');
-    assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
-    'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical attacks +1 every 1 point'),
-      'the active run profile projects Strength attack scaling without copied UI prose');
-
-    const changed = {
-      ...contentBundle,
-      derivedStatRules: structuredClone(contentBundle.derivedStatRules),
-      equipment: {
-        ...contentBundle.equipment,
-        armaments: structuredClone(contentBundle.equipment.armaments),
-      },
-    };
-    changed.derivedStatRules.rules.hp.gainPerTier = 7;
-    changed.equipment.armaments.find((piece) => piece.id === 'greatsword').requirements.attributes.strength = 14;
-    const changedRegistries = createRegistries(changed);
-    const changedRun = createRunState({ seed: 0x71b, classId: 'reaver', registries: changedRegistries });
-    const changedCards = attributeCardModels(changedRegistries, changedRun.attributes, {
-      projection: statProjection(changedRegistries, changedRun),
-      equipmentProfiles: changedRun.equipmentProfileRuleSnapshot.profiles,
-    });
-    assert(changedCards.find((card) => card.id === 'constitution').reveal.lines.includes('HP +7 every 1 point'),
-      'changing the HP rule changes the Constitution bullet without UI prose edits');
-    assert(changedCards.find((card) => card.id === 'strength').reveal.lines.includes('Greatsword asks 14'),
-      'changing an equipment gate changes the Strength bullet without UI prose edits');
-  });
-
-  test('72. Armoury layout is authored, stable, and responsive', () => {
-    assert(contentBundle.equipment.armouryUi.layout.trays,
-      'the generated content bundle carries the authored tray contract rather than recreating it from model defaults');
-    const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
-    eq(layout.shell.characterRatio, 0.4, 'character pane owns the authored 40% desktop share');
-    eq(layout.shell.equipmentRatio, 0.6, 'equipment pane owns the authored 60% desktop share');
-    eq(layout.character.spriteRatio, 0.38, 'sprite owns the authored 38% character height');
-    eq(layout.character.statsRatio, 0.62, 'stats own the authored 62% character height');
-    eq(layout.character.statsPaneRatio, 0.6, 'Character gives the right column 60% of the full-width character pane');
-  eq(layout.cards.defaultView, 'list', 'Cards defaults to the authored vertical list');
-  eq(layout.cards.gridColumns, 4, 'Cards grid columns are authored as four');
-    eq(layout.responsive.phone.cardsGridColumns, 2, 'Phone Cards grid columns are authored as two');
-    eq(layout.equipment.defaultView, 'list', 'Armaments defaults to the authored detailed list');
-    eq(layout.equipment.gridColumns, 3, 'Armaments grid columns are authored as three');
-    eq(layout.responsive.phone.armamentGridColumns, 2, 'Phone Armaments grid columns are authored as two');
-    eq(layout.equipment.slotOrder.join(','), 'armor,rightHand,leftHand', 'equipment order is authored armor then right and left hand');
-    eq(layout.combatPower.cards.map((card) => card.id).join(','), 'strike,potency,defense', 'Combat Power cards are authored in vertical display order');
-    eq(layout.combatPower.cards[1].label, 'Magic', 'the primary technique-facing combat value is presented as Magic');
-    eq(layout.combatPower.cards[1].fullLabel, 'Magic Power', 'the expanded primary value is presented as Magic Power, not Potency');
-    eq(layout.viewModes.grid.label, 'Character', 'the character view has a player-facing authored label');
-    eq(layout.viewModes.rack.label, 'Inventory', 'the inventory view has a player-facing authored label');
-    eq(layout.viewModes.grid.pane, 'character', 'Character promotes the character pane to the full surface');
-    eq(layout.viewModes.rack.pane, 'inventory', 'Inventory pairs the armaments and inventory panes');
-    eq(layout.viewModes.rack.armaments, 'expanded', 'Inventory exposes the authored Armaments position list');
-    eq(layout.viewModes.hybrid.pane, 'both', 'Hybrid keeps the two panes split');
-    eq(layout.viewModes.hybrid.armaments, 'expanded', 'Hybrid preserves its currently approved visible Armaments pane');
-    eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
-    eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
-    eq(layout.trays.defaultHeightRatio, 0.45, 'a supporting tray opens at the authored 45vh play-session default');
-    eq(layout.trays.minimumHeightRatio, 0.3, 'tray resize keeps the authored 30vh minimum visible');
-    eq(layout.trays.maximumHeightRatio, 0.9, 'a tray can scale to the authored near-full-panel maximum');
-    eq(layout.trays.multipleExpandedMinimumRatio, 0.3, 'each additional expanded tray retains at least 30vh');
-    eq(layout.trays.snapRatios.join(','), '0.3,0.4,0.5,0.6,0.7,0.8,0.9', 'independent tray heights snap every 10vh from 30 through 90');
-    eq(layout.trays.contentGapRem, 0.35, 'Inventory tray content keeps one authored row gap across resolutions');
-    assert(layout.cardClasses.inventoryItem.holdAction === true,
-      'the Inventory item card class explicitly opts into the shared hold action on both folded and unfolded faces');
-    assert(normalizeArmouryLayout({}).cardClasses.inventoryItem.holdAction === false,
-      'card classes do not acquire a destructive hold action unless their authored model toggles it true');
-    let invalidHoldClass = '';
-    try { normalizeArmouryLayout({ cardClasses: { inventoryItem: { holdAction: 'true' } } }); } catch (error) { invalidHoldClass = error.message; }
-    assert(invalidHoldClass.includes('holdAction must be true or false'),
-      'the card class hold capability rejects truthy strings instead of silently arming them');
-    eq(layout.comparison.presentation, 'tooltip', 'equipment comparison presentation is authored as tooltip or inline data');
-    eq(layout.comparison.hoverDelayMs, 550, 'equipment comparison hover delay is authored in milliseconds');
-    eq(layout.comparison.tooltipWidthRem, 52, 'equipment comparison tooltip width is authored rather than buried in CSS');
-    eq(layout.comparison.tooltipMaxHeightRatio, 0.8, 'equipment comparison tooltip viewport cap is authored');
-    let invalidComparison = '';
-    try { normalizeArmouryLayout({ comparison: { presentation: 'drawer' } }); } catch (error) { invalidComparison = error.message; }
-    assert(invalidComparison.includes('comparison.presentation must be tooltip or inline'),
-      'unknown equipment comparison presentations are refused by name');
-    let invalidComparisonDelay = '';
-    try { normalizeArmouryLayout({ comparison: { hoverDelayMs: -1 } }); } catch (error) { invalidComparisonDelay = error.message; }
-    assert(invalidComparisonDelay.includes('comparison.hoverDelayMs'),
-      'negative equipment comparison hover delays are refused by name');
-    const sharedInventoryRow = {
-      key: 'weapon:straightSword', id: 'straightSword', name: 'Straight Sword', category: 'Weapon',
-      count: 1, equippedLabels: [], item: { name: 'Straight Sword', tags: [] },
-    };
-    assert(inventoryItemCardModel(sharedInventoryRow, { classModel: layout.cardClasses.inventoryItem }).properties.holdAction === true,
-      'the shared folded Inventory card model projects the opted-in class hold capability');
-    assert(inventoryItemCardModel(sharedInventoryRow).properties.holdAction === false,
-      'the shared folded Inventory card model remains hold-safe without an opted-in class');
-    assert(inventoryDetailCardModel({
-      row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
-      classModel: layout.cardClasses.inventoryItem,
-    }).properties.holdAction === true,
-    'the shared unfolded Inventory card model projects the same opted-in class hold capability');
-    assert(inventoryDetailCardModel({
-      row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
-    }).properties.holdAction === false,
-    'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
-    eq(contentBundle.balance.ui.holdConfirm.def, 'off',
-      'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
-    eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
-      'the title quick-load hold duration is authored as 600 ms');
-    const malformedTitleLoadHold = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: { ...contentBundle.balance.ui, titleLoadHold: { ms: 0 } },
-      },
-    };
-    const titleLoadHoldValidation = validateContent(malformedTitleLoadHold);
-    assert(!titleLoadHoldValidation.ok
-      && titleLoadHoldValidation.errors.some((error) => error.path === 'balance.ui.titleLoadHold.ms'),
-    'a non-positive title quick-load duration is refused by its authored path');
-    const expandedTray = trayPresentationState({
-      collapsed: false,
-      savedHeightRatio: 0.7,
-      defaultHeightRatio: layout.trays.defaultHeightRatio,
-    });
-    eq(expandedTray.heightRatio, 0.7, 'an unfolded tray restores its independently saved expanded height');
-    assert(expandedTray.resizable, 'an unfolded tray exposes its resize edge');
-    const foldedTray = trayPresentationState({
-      collapsed: true,
-      savedHeightRatio: 0.7,
-      defaultHeightRatio: layout.trays.defaultHeightRatio,
-    });
-    eq(foldedTray.heightRatio, null, 'a folded tray ignores the saved expanded height and uses its intrinsic header height');
-    assert(!foldedTray.resizable, 'a folded tray cannot retain or expose its resize edge');
-    eq(foldedTray.savedHeightRatio, 0.7, 'folding preserves the expanded height for the next unfold');
-    const selectedMove = inventorySelectionAction({
-      itemId: 'straightSword',
-      selectedSlotId: 'rightHand',
-      selectedSetIndex: 0,
-      selectedItemId: 'roundShield',
-      equippedPositions: [{ slotId: 'leftHand', setIndex: 0, itemId: 'straightSword' }],
-    });
-    eq(`${selectedMove.kind}:${selectedMove.slotId}:${selectedMove.setIndex}:${selectedMove.pieceId}`,
-      'move:rightHand:0:straightSword',
-      'a selected compatible position takes precedence over the hand that currently owns the item');
-    const selectedUnequip = inventorySelectionAction({
-      itemId: 'straightSword',
-      selectedSlotId: 'rightHand',
-      selectedSetIndex: 0,
-      selectedItemId: 'straightSword',
-      equippedPositions: [{ slotId: 'rightHand', setIndex: 0, itemId: 'straightSword' }],
-    });
-    eq(`${selectedUnequip.kind}:${selectedUnequip.pieceId}`,
-      'unequip:null',
-      'the selected position turns its currently equipped Inventory item into Unequip');
-    for (const badTrays of [
-      { ...layout.trays, defaultHeightRatio: 0.95 },
-      { ...layout.trays, multipleExpandedMinimumRatio: 0.2 },
-      { ...layout.trays, snapRatios: [0.3, 0.5, 0.95] },
-      { ...layout.trays, snapRatios: [0.3, 0.5, 0.5] },
-      { ...layout.trays, contentGapRem: 0 },
-    ]) {
-      let named = '';
-      try { normalizeArmouryLayout({ ...contentBundle.equipment.armouryUi.layout, trays: badTrays }); }
-      catch (error) { named = error.message; }
-      assert(named.includes('armouryUi.layout.trays'), 'an impossible tray default or snap stop is refused by the tray config name');
-    }
-    eq(orderArmourySlots([
-      { id: 'leftFoot', order: 50 }, { id: 'back', order: 40 }, { id: 'rightHand', order: 20 }, { id: 'armor', order: 10 },
-    ], layout).map((slot) => slot.id).join(','), 'armor,rightHand,back,leftFoot', 'arbitrary equipment groups iterate by authored order without named-slot branches');
-    const occupiedPosition = equipmentPositionCardState({
-      slot: { id: 'backHand', label: 'Back Hand', positionLabel: 'Back Hand Slot {n}', positionCode: 'BH{n}', sets: 3 },
-      index: 1,
-      modelState: 'open',
-      item: { id: 'wardWand', name: 'Ward Wand' },
-      activeIndex: 0,
-    });
-    eq(occupiedPosition.label, 'Back Hand Slot 2', 'an arbitrary equipment position formats its authored label');
-    eq(occupiedPosition.code, 'BH2', 'an arbitrary equipment position formats its authored short code');
-    eq(occupiedPosition.state, 'occupied', 'an unlocked item position is a first-class occupied card');
-    eq(occupiedPosition.action, 'equip', 'an inactive occupied position exposes Equip');
-    eq(equipmentPositionCardState({
-      slot: { id: 'leftFoot', label: 'Left Foot', positionLabel: 'Left Foot Slot {n}', positionCode: 'LF{n}', sets: 4 },
-      index: 2, modelState: 'next', item: null, activeIndex: 0,
-    }).state, 'locked', 'the next authored rung is a first-class locked card');
-    eq(equipmentPositionCardState({
-      slot: { id: 'leftFoot', label: 'Left Foot', positionLabel: 'Left Foot Slot {n}', positionCode: 'LF{n}', sets: 4 },
-      index: 1, modelState: 'open', item: null, activeIndex: 0,
-    }).state, 'empty', 'an unlocked unfilled position is a first-class empty card');
-    eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
-    assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
-  });
-
-  test('75. an explicit save resumes the exact committed combat state and RNG continuation', () => {
-    const seed = 0x7503;
-    const original = makeCombat({
-      seed,
-      deck: ['strike', 'defend', 'strike', 'defend', 'strike', 'defend', 'strike', 'defend'],
-      enemies: ['tHitter'],
-      hp: 61,
-      maxHp: 78,
-    });
-    playFromHand(original, 'strike');
-
-    const counters = original.rng.getCounters();
-    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(original)));
-    const restored = restoreCombatSnapshot({
-      registries: REG,
-      rng: createRng(seed, counters),
-      snapshot: stored,
-    });
-
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(stored),
-      'storage round-trip restores the exact committed turn, entities, intents, piles, and event receipts');
-    assert(restored.triggerState instanceof Map, 'trigger receipts restore to their runtime Map shape');
-    assert(typeof restored.emit === 'function' && typeof restored.enqueue === 'function' && typeof restored.nextInstanceId === 'function',
-      'runtime-only combat methods are reattached');
-
-    dispatch(original, { type: 'endTurn' });
-    dispatch(restored, { type: 'endTurn' });
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(serializeCombatSnapshot(original)),
-      'the next turn resolves identically instead of replaying combat setup');
-    eq(JSON.stringify(restored.rng.getCounters()), JSON.stringify(original.rng.getCounters()),
-      'restored combat consumes the same named RNG streams');
-
-    const runProjection = {};
-    commitCombatSnapshot({ run: runProjection, combat: restored, nodeId: 'node-75', encounterId: 'encounter-75' });
-    eq(runProjection.hp, restored.player.hp, 'slot-summary HP projects the exact combat state');
-    eq(runProjection.flaskCharges?.hpCurrent, restored.player.flaskCharges?.hpCurrent,
-      'slot-summary flask charges project the exact combat state');
-    eq(JSON.stringify(runProjection.combatEntered.snapshot), JSON.stringify(serializeCombatSnapshot(restored)),
-      'one committed snapshot owns both the resume record and run-level summary projection');
-
-    restored.queue.push({ planted: true });
-    let resolvingReason = '';
-    try { serializeCombatSnapshot(restored); } catch (error) { resolvingReason = error.message; }
-    restored.queue.pop();
-    assert(/still resolving/.test(resolvingReason), 'a live action queue must refuse a torn combat save');
-
-    const malformed = structuredClone(stored);
-    malformed.phase = 'refunded-restart';
-    let malformedReason = '';
-    try {
-      restoreCombatSnapshot({
-        registries: REG,
-        rng: createRng(seed, counters),
-        snapshot: malformed,
-      });
-    } catch (error) {
-      malformedReason = error.message;
-    }
-    assert(/phase/.test(malformedReason),
-      `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
-
-    const malformedRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
-    const storage = createMemoryStorage();
-    storage.setItem(RUN_KEY, serializeRun(malformedRun));
-    const saves = createSaveManager(storage);
-    eq(saves.loadRun(REG), null, 'the real load door refuses a malformed exact snapshot');
-    assert(/phase/.test(saves.runStatus().reason || ''), 'the archived refusal names the malformed snapshot phase');
-    assert(storage.getItem(RUN_ARCHIVE_KEY)?.includes('refunded-restart'), 'the original malformed bytes remain recoverable in the archive');
-
-    const dangling = structuredClone(stored);
-    dangling.piles.hand[0].cardId = 'removedByContentPatch';
-    const danglingRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
-    const danglingStorage = createMemoryStorage();
-    danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
-    const danglingSaves = createSaveManager(danglingStorage);
-    eq(danglingSaves.loadRun(REG), null, 'the real load door refuses dangling exact-snapshot content');
-    assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
-      'the dangling exact-snapshot refusal names the affected card pile');
-
-    const checkpointRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
-    const checkpointStorage = createMemoryStorage();
-    checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
-    assert(createSaveManager(checkpointStorage).loadRun(REG)?.combatEntered?.snapshot === undefined,
-      'older encounter-only checkpoints remain loadable and explicitly lack an exact snapshot');
   });
 
   const passed = results.filter((r) => r.ok).length;

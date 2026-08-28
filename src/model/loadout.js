@@ -155,37 +155,6 @@ export function equipmentRequirementReceipt(registries, piece, attributes = {}) 
   return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
 }
 
-/** First selected-hand requirement failure, shared by every creation mode. */
-export function startingHandsRequirementFailure(registries, hands = {}, attributes = {}) {
-  for (const pieceId of Object.values(hands).filter(Boolean)) {
-    const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
-    if (!piece) throw new Error(`unknown starting armament '${pieceId}'`);
-    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
-    if (!receipt.ok) return { piece, failure: receipt.failures[0] };
-  }
-  return null;
-}
-
-/**
- * A total hand snapshot for character-creation stat previews. The player's
- * actual choices stay untouched so the refusal can name an incompatible item;
- * only pieces the preview run cannot legally equip are omitted from the
- * temporary loadout used to derive its displayed stats.
- */
-export function previewCompatibleHands(registries, hands = {}, attributes = {}) {
-  const next = {
-    leftHand: hands.leftHand || null,
-    rightHand: hands.rightHand || null,
-  };
-  for (const hand of ['leftHand', 'rightHand']) {
-    const id = next[hand];
-    if (!id) continue;
-    const piece = (registries.equipment.armaments || []).find((row) => row.id === id);
-    if (piece && !equipmentRequirementReceipt(registries, piece, attributes).ok) next[hand] = null;
-  }
-  return next;
-}
-
 /** Resolve whether a card fits an equipped weapon without class-id branches. */
 export function cardEquipmentCompatibility(registries, { cardId, classId, pieceId } = {}) {
   const card = registries.cards.get(cardId);
@@ -363,16 +332,15 @@ export function validateEquipment(registries) {
       problems.push(`${piece.id}: hand '${h}' is not one of ${HANDS.join('|')}|either`);
     }
   }
-  // A carried hand slot must name its location even when every shipped piece
-  // is side-neutral. Without this, a slot authored with an empty `hand` takes
-  // an armament and draws it nowhere — wrong, reasonable-looking, and silent.
+  // A slot holding pieces that name a hand must name one itself. Without this,
+  // a slot authored with an empty `hand` takes a weapon and draws it nowhere —
+  // wrong, reasonable-looking, and silent (Law 0 clause 5).
   for (const slot of eq.slots || []) {
     if (slotHand(slot)) continue;
-    const held = pieces.filter((p) => (slot.kinds || []).includes(p.kind));
-    const handed = held.filter((p) => pieceHand(p));
-    if ((slot.storage && held.length) || handed.length) {
+    const handed = pieces.filter((p) => (slot.kinds || []).includes(p.kind) && pieceHand(p));
+    if (handed.length) {
       problems.push(
-        `slot '${slot.id}' accepts ${held.length} held piece(s) (e.g. '${held[0].id}') ` +
+        `slot '${slot.id}' accepts ${handed.length} piece(s) that name a hand (e.g. '${handed[0].id}') ` +
         `but names no hand itself — set hand=${HANDS.join('|')} on that row in equipSlots.csv`
       );
     }
@@ -664,7 +632,6 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
     ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
     ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
   ]);
-  const creationArmourGrant = loadout && loadout.creationArmourGrant;
   // A missing piece resolves to 'unearned' rather than to a fourth value: there
   // is no row to read a hint from, and 'unearned' is the route whose sentence is
   // generic. 'unfound' would promise the player it turns up in treasure, which
@@ -684,9 +651,6 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
   const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
   const why = (piece) => {
     if (!piece) return 'unearned';
-    if (creationArmourGrant
-      && creationArmourGrant.classId === piece.classId
-      && creationArmourGrant.id === piece.id) return null;
     if (piece.unlock !== '' && piece.unlock != null) {
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
@@ -843,12 +807,7 @@ export function createLoadout(registries, classId, startingKit = null, startingA
     if (!pieceId) continue;
     if (sets[slotId]) sets[slotId][0] = pieceId;
   }
-  return {
-    sets,
-    active,
-    storage: [],
-    creationArmourGrant: starting ? { classId, id: starting.id } : null,
-  };
+  return { sets, active, storage: [] };
 }
 
 function profileById(registries, id) {
@@ -1000,8 +959,7 @@ export function equippedPieces(registries, loadout, classId) {
 }
 
 /**
- * figureSpec(registries, loadout, classId) →
- *   { armourId, rightId, leftId, rightMirror, leftMirror }
+ * figureSpec(registries, loadout, classId) → { armourId, rightId, leftId }
  *
  * What the sprite layers should be, derived rather than stored. Slots declare
  * their own `kinds`, so this finds the armour slot by what it accepts instead
@@ -1014,19 +972,10 @@ export function equippedPieces(registries, loadout, classId) {
  * winning: two weapons equipped, one weapon on the figure, no error anywhere
  * (Bjorn photographed it on `dev`, 2026-08-07). Nothing here reads piece.hand;
  * that field gates equipping (fitsSlot), which is a different question.
- *
- * The current full-frame art is authored at the sword socket for every
- * non-shield and at the off-hand socket for shields. The figure itself is
- * mirrored for the viewer, so a slot swap needs a per-layer mirror flag too:
- * `rightMirror` / `leftMirror` move the art onto the socket the slot names.
- * Those flags disappear when the producer is re-rendered from slot-neutral art.
  */
 export function figureSpec(registries, loadout, classId) {
   const slots = (registries.equipment || {}).slots || [];
-  const spec = {
-    armourId: 'default', rightId: null, leftId: null,
-    rightMirror: false, leftMirror: false,
-  };
+  const spec = { armourId: 'default', rightId: null, leftId: null };
   if (!loadout) return spec;
   for (const slot of slots) {
     const piece = equippedIn(registries, loadout, classId, slot.id);
@@ -1036,13 +985,8 @@ export function figureSpec(registries, loadout, classId) {
       continue;
     }
     const hand = slotHand(slot);
-    if (hand === 'right') {
-      spec.rightId = piece.artKey || piece.id;
-      spec.rightMirror = piece.kind === 'shield';
-    } else if (hand === 'left') {
-      spec.leftId = piece.artKey || piece.id;
-      spec.leftMirror = piece.kind !== 'shield';
-    }
+    if (hand === 'right') spec.rightId = piece.artKey || piece.id;
+    else if (hand === 'left') spec.leftId = piece.artKey || piece.id;
     // No hand: this slot is not held (a talisman), so there is nothing to draw
     // in a hand for it. It used to land in the right hand as a weapon layer.
   }
@@ -1778,106 +1722,6 @@ export function carriedIds(loadout) {
 }
 
 /**
- * Normalize saves written while one owned armament could occupy several hand
- * sets. Keep an active occurrence when one exists (slot order breaks ties),
- * clear the others, and remove an equipped survivor from shared Inventory.
- * Returns a receipt for the load-door ledger; an empty array means no change.
- */
-export function normalizeArmamentLocations(registries, loadout) {
-  if (!loadout || !loadout.sets) return [];
-  const eq = (registries || {}).equipment || {};
-  const handSlots = (eq.slots || []).filter((slot) => slotHand(slot));
-  const armamentIds = new Set((eq.armaments || []).map((piece) => piece.id));
-  const occurrences = new Map();
-  for (const slot of handSlots) {
-    const ids = loadout.sets[slot.id] || [];
-    for (let setIndex = 0; setIndex < ids.length; setIndex++) {
-      const id = ids[setIndex];
-      if (!id || !armamentIds.has(id)) continue;
-      const rows = occurrences.get(id) || [];
-      rows.push({ slotId: slot.id, setIndex, active: setIndex === ((loadout.active || {})[slot.id] || 0) });
-      occurrences.set(id, rows);
-    }
-  }
-
-  const changes = [];
-  const storage = [...new Set(loadout.storage || [])];
-  for (const [id, rows] of occurrences) {
-    const kept = rows.find((row) => row.active) || rows[0];
-    const cleared = rows.filter((row) => row !== kept);
-    for (const row of cleared) loadout.sets[row.slotId][row.setIndex] = null;
-    const removedFromStorage = storage.includes(id);
-    if (removedFromStorage) storage.splice(storage.indexOf(id), 1);
-    if (cleared.length || removedFromStorage) changes.push({ id, kept, cleared, removedFromStorage });
-  }
-  if (storage.length !== (loadout.storage || []).length || changes.length) loadout.storage = storage;
-  return changes;
-}
-
-/**
- * Apply the storage/location half of an equipment mutation. Both the real
- * mutation and comparison preview call this function, so a preview cannot
- * invent a duplicate object the committed action would move away.
- */
-function equipTransitionPlan(registries, loadout, slotId, setIndex, itemId) {
-  const ids = ((loadout || {}).sets || {})[slotId];
-  const eq = (registries || {}).equipment || {};
-  const slot = (eq.slots || []).find((candidate) => candidate.id === slotId);
-  if (!slot || !ids || setIndex < 0 || setIndex >= ids.length) {
-    return { ok: false, reason: 'That equipment location is no longer available.' };
-  }
-
-  const previousId = ids[setIndex] || null;
-  if (!slotHand(slot)) {
-    return { ok: true, slot, ids, previousId, nextStorage: loadout.storage || [], storesPrevious: false };
-  }
-
-  const cap = Number.isInteger(((registries.balance || {}).equipment || {}).storageSlots)
-    ? registries.balance.equipment.storageSlots
-    : 8;
-  const nextStorage = [...new Set(loadout.storage || [])].filter((id) => id !== itemId);
-  const storesPrevious = previousId && previousId !== itemId && !nextStorage.includes(previousId);
-  if (storesPrevious && nextStorage.length >= cap) {
-    return {
-      ok: false,
-      reason: `Inventory is full (${nextStorage.length}/${cap}). Make room before ${itemId ? 'moving this item' : 'unequipping this item'}.`,
-    };
-  }
-  return { ok: true, slot, ids, previousId, nextStorage, storesPrevious };
-}
-
-/** A mutation-free capacity verdict for the Armoury's action feedback. */
-export function equipTransitionReceipt(registries, loadout, slotId, setIndex, itemId) {
-  const plan = equipTransitionPlan(registries, loadout, slotId, setIndex, itemId);
-  return { ok: plan.ok, reason: plan.reason || '' };
-}
-
-export function applyEquipTransition(registries, loadout, slotId, setIndex, itemId) {
-  const plan = equipTransitionPlan(registries, loadout, slotId, setIndex, itemId);
-  if (!plan.ok) return false;
-  const { slot, ids, nextStorage, previousId, storesPrevious } = plan;
-  if (!slotHand(slot)) {
-    ids[setIndex] = itemId || null;
-    return true;
-  }
-
-  const eq = (registries || {}).equipment || {};
-  const handSlotIds = new Set((eq.slots || []).filter((candidate) => slotHand(candidate)).map((candidate) => candidate.id));
-  if (itemId) {
-    for (const [otherSlotId, otherIds] of Object.entries(loadout.sets || {})) {
-      if (!handSlotIds.has(otherSlotId)) continue;
-      for (let i = 0; i < otherIds.length; i++) {
-        if (otherIds[i] === itemId && (otherSlotId !== slotId || i !== setIndex)) otherIds[i] = null;
-      }
-    }
-  }
-  if (storesPrevious) nextStorage.push(previousId);
-  loadout.storage = nextStorage;
-  ids[setIndex] = itemId || null;
-  return true;
-}
-
-/**
  * equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) → boolean.
  * Put a piece id into a specific set of a slot; `null` clears it.
  *
@@ -1939,10 +1783,13 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // loosened canEquip's own check is a real second gate rather than an echo.
   const seal = canEquip(registries, slotId, { inCombat: ctx.inCombat });
   if (!seal.ok) return false;
+  if (!itemId) {
+    ids[setIndex] = null;
+    return true;
+  }
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);
   if (!slot) return false;
-  if (!itemId) return applyEquipTransition(registries, loadout, slotId, setIndex, null);
   // Armour ids repeat across classes; the class gate is armourById's, and this
   // one only asks whether the piece may live in this slot at all.
   const piece = slot.kinds.includes('armor')
@@ -1959,5 +1806,6 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   }
   if (!owned.has(piece)) return false;
   if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
-  return applyEquipTransition(registries, loadout, slotId, setIndex, itemId);
+  ids[setIndex] = itemId;
+  return true;
 }

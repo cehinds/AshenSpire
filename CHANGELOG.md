@@ -17,31 +17,7 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
-## 2026-08-26
-
-- **Smith now lets you choose, review, and confirm one permanent card upgrade** ([#350](https://github.com/cehinds/AshenSpire/pull/350), `0.4.0.1362`). Back and Escape return to the Shrine without changing the deck; Confirm upgrades exactly the selected card and clearly says that it leaves the Shrine. The same delivery also makes attribute explanations span their allocator rows, gives folded Shrine choices one footprint, gives Armoury trays useful session-scoped opening sizes and snap stops, adds touch-readable combatant inspection with center-seeking tooltips, and codifies the repeatable gameplay QA process and component-catalog receipts.
-
-## 2026-08-25
-
-- **The title now unfolds from the Ashen Spire threshold into one centered menu** ([#347](https://github.com/cehinds/AshenSpire/pull/347), `0.4.0.1352`). The folded startup mark keeps its logo, subtitle, divider, and input-family invitation centered while its phone background is fully transparent. The revealed title presents Continue, Load, New, Collection, Settings, and Quit as one vertical list; Fullscreen and Music stay anchored at the top right. Load and New share one responsive save-slot dialog with selected, empty, focused, disabled, and occupied states plus Back and Continue controls.
-
-- **Combatants now stay centered inside a safe battlefield corridor** ([#348](https://github.com/cehinds/AshenSpire/pull/348), `0.4.0.1354`). Intent remains full size while the combatant card alone scales between the shared HUD and action hand, preserving explicit breathing room above and below on desktop and phone.
-
-## 2026-08-24
-
-- **Cold boot now opens on the Ashen Spire threshold** ([#346](https://github.com/cehinds/AshenSpire/pull/346), `dev artifact; exact BUILD in PR evidence`). The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled on blur or controller disconnect, and controller buttons already held when polling begins are seeded rather than invented as fresh presses. The title then gives focus to its first available slot. The invitation follows the last active input family, including analog-stick activity, exposes one named startup action without exposing title controls, and keeps pointer/touch focus free of the persistent gamepad cursor. Profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.
-
-- **Fullscreen, music, Settings, and Profile now have one clear home each** ([#344](https://github.com/cehinds/AshenSpire/pull/344), `0.4.0.1271`). Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, including LAN co-op. The Music control now reflects master Audio mute instead of claiming muted music is on, and turning it on releases both mute layers. Browser refusals are explained beside the control instead of disappearing into Settings, and iPhone users see the Add to Home Screen alternative without needing a hover tooltip. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them without losing the active run’s combat totals. Restoring a profile also rebinds the title HUD immediately. The Profile drawer traps keyboard focus and states its real save-retention limits.
-
-- **Development coordination now has one canonical home** ([#335](https://github.com/cehinds/AshenSpire/pull/335), `0.4.0.1191`). The repository now points owners and reviewers to one workflow for routine evidence, status receipts, cross-family handoffs, and the boundary between development approval and Constantine-only release authority. Docs only; release remains RED.
-
 ## 2026-08-23
-
-- **The Armoury is now one configurable equipment workspace** ([#334](https://github.com/cehinds/AshenSpire/pull/334), `0.4.0.1191`). Character, Inventory, and Hybrid views share one loadout and one Inventory; procedural equipment positions support List/Grid presentation, dragging, socket-correct moves, responsive panes, and one Folding Tray grammar with independently sized supporting trays where enabled. Inventory equipment cards now own their complete folded and expanded action surface: the configured hold gesture fills the whole card, early release aborts, and comparison receipts use a wide data-configured hover/focus tooltip or inline presentation.
-
-- **Character creation now owns one shared Inventory and validates every starting hand** ([#329](https://github.com/cehinds/AshenSpire/pull/329), `0.4.0.1126`). Creation preserves customized saves, keeps armour and armament ownership consistent, refuses invalid hand assignments, and introduces the Rogue alongside data-driven starting attributes and kits.
-
-- **Swapped armaments now remain attached to their actual hand sockets** ([#328](https://github.com/cehinds/AshenSpire/pull/328), `0.4.0.1114`). The Armoury maps left- and right-hand equipment through the same socket ownership used by the run model, so swapping and unequipping no longer makes a weapon appear to belong to the opposite hand.
 
 - **Map and combat now share the same three-row HUD** ([#327](https://github.com/cehinds/AshenSpire/pull/327), `0.4.0.1091`). Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.
 

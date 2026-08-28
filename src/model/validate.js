@@ -40,8 +40,6 @@ import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
-import { armouryUiProblems } from './equipmentUi.js';
-import { characterCreationProblems } from './characterCreation.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -87,7 +85,6 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
   'attributeRules',
   'derivedStatRules',
-  'characterCreation',
 ]);
 
 /**
@@ -284,9 +281,6 @@ export function validateContent(bundle) {
   } else if (!Array.isArray(equipment.basicCardProfiles)) {
     err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
   } else {
-    for (const problem of armouryUiProblems(equipment.armouryUi)) {
-      err(problem.path, problem.message);
-    }
     // Player Poise is authored on every equipment row even though it has no
     // combat consumer yet. Missing data must not silently normalize to zero:
     // the receipt is truthful only when every worn source says its number.
@@ -407,24 +401,6 @@ export function validateContent(bundle) {
     for (const problem of startingKitProblems(kitRegistries)) err('equipment.startingKits', problem);
   } catch (error) {
     err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
-  }
-
-  const dependencySafeBundle = {
-    ...b,
-    equipment: {
-      ...(equipment && typeof equipment === 'object' && !Array.isArray(equipment) ? equipment : {}),
-      armaments: Array.isArray(equipment && equipment.armaments) ? equipment.armaments : [],
-      armour: Array.isArray(equipment && equipment.armour) ? equipment.armour : [],
-    },
-  };
-  for (const problem of characterCreationProblems(dependencySafeBundle)) {
-    const split = problem.indexOf(':');
-    err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
-  }
-  const creationKeepsakes = b.characterCreation && b.characterCreation.keepsakes;
-  for (const keepsake of Array.isArray(creationKeepsakes) ? creationKeepsakes : []) {
-    if (!keepsake || typeof keepsake !== 'object' || Array.isArray(keepsake) || !Array.isArray(keepsake.effects)) continue;
-    validateEffects(keepsake.effects, `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
   }
 
   // ---- schema walks --------------------------------------------------------
@@ -623,18 +599,6 @@ export function validateContent(bundle) {
       }
     }
   }
-  // balance.ui.titleLoadHold — the title slot's quick-load gesture. A malformed
-  // value would otherwise fall back inside the view and make the authored row
-  // decorative rather than authoritative, so fail by the row's own name.
-  if (b.balance && b.balance.ui && b.balance.ui.titleLoadHold != null) {
-    const lh = b.balance.ui.titleLoadHold;
-    if (typeof lh !== 'object' || Array.isArray(lh)) {
-      err('balance.ui.titleLoadHold', 'must be an object { ms }');
-    } else if (typeof lh.ms !== 'number' || !Number.isFinite(lh.ms) || lh.ms <= 0) {
-      err('balance.ui.titleLoadHold.ms', `must be a positive number of milliseconds — got ${JSON.stringify(lh.ms)}. `
-        + `The title quick-load gesture needs a real hold boundary distinct from an ordinary tap.`);
-    }
-  }
   // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
   // over. The beat is the only feedback a held control has once a thumb is on
   // top of the fill, and every way this row can be wrong is SILENT: a fraction
@@ -729,90 +693,17 @@ export function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with shared HUD spacing, sizing, metadata, and mobile density tokens');
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, and beltItemGapPx');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
         ['metadataFontPx', 8, 24],
         ['beltItemGapPx', 0, 12],
-        ['portraitScale', 0.5, 1],
-        ['primaryRowGapPx', 0, 24],
-        ['controlGapPx', 0, 12],
-        ['resourceRowGapPx', 0, 12],
-        ['panelPadPx', 0, 12],
-        ['mobilePanelPadPx', 0, 12],
-        ['mobileControlGapPx', 0, 12],
-        ['mobileOuterPadPx', 0, 12],
-        ['mobileRowGapPx', 0, 12],
-        ['cindersMaxWidthPct', 20, 40],
-        ['metadataMaxWidthPct', 20, 40],
       ]) {
         const value = hp[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
           err(`balance.ui.hudPresentation.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
         }
-      }
-      if (typeof hp.metadataShowTotals !== 'boolean') {
-        err('balance.ui.hudPresentation.metadataShowTotals', `must be boolean — got ${JSON.stringify(hp.metadataShowTotals)}`);
-      }
-    }
-    const shrinePresentation = ui.shrinePresentation;
-    if (!shrinePresentation || typeof shrinePresentation !== 'object' || Array.isArray(shrinePresentation)) {
-      err('balance.ui.shrinePresentation', 'must be an object with optionLayout');
-    } else if (!['list', 'grid'].includes(shrinePresentation.optionLayout)) {
-      err('balance.ui.shrinePresentation.optionLayout', `must be 'list' or 'grid' — got ${JSON.stringify(shrinePresentation.optionLayout)}`);
-    }
-    const quickSettings = ui.hudQuickSettings;
-    const quickPlaces = ['title', 'map', 'combat'];
-    if (!quickSettings || typeof quickSettings !== 'object' || Array.isArray(quickSettings)) {
-      err('balance.ui.hudQuickSettings', 'must be an object with places, spacing, visual sizing, background, and label settings');
-    } else {
-      if (!Array.isArray(quickSettings.places)
-        || quickSettings.places.some((place) => !quickPlaces.includes(place))
-        || new Set(quickSettings.places).size !== quickSettings.places.length) {
-        err('balance.ui.hudQuickSettings.places', `must contain unique values from ${quickPlaces.join(', ')} — got ${JSON.stringify(quickSettings.places)}`);
-      }
-      for (const key of ['edgeGapPx', 'stackGapPx']) {
-        const value = quickSettings[key];
-        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 24) {
-          err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [0, 24] — got ${JSON.stringify(value)}`);
-        }
-      }
-      for (const [key, min, max] of [
-        ['cardSizePx', 32, 44],
-        ['glyphSizePx', 16, 32],
-        ['stateDotPx', 3, 12],
-        ['activeTintPct', 0, 30],
-      ]) {
-        const value = quickSettings[key];
-        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
-          err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
-        }
-      }
-      if (typeof quickSettings.showCardBackground !== 'boolean') {
-        err('balance.ui.hudQuickSettings.showCardBackground', `must be boolean — got ${JSON.stringify(quickSettings.showCardBackground)}`);
-      }
-      if (typeof quickSettings.showLabels !== 'boolean') {
-        err('balance.ui.hudQuickSettings.showLabels', `must be boolean — got ${JSON.stringify(quickSettings.showLabels)}`);
-      }
-    }
-    const combatantStage = ui.combatantStage;
-    if (!combatantStage || typeof combatantStage !== 'object' || Array.isArray(combatantStage)) {
-      err('balance.ui.combatantStage', 'must be an object with viewport clearances, intent gap, and center position');
-    } else {
-      for (const key of ['hudClearanceViewportPct', 'actionClearanceViewportPct']) {
-        const value = combatantStage[key];
-        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 25) {
-          err(`balance.ui.combatantStage.${key}`, `must be a finite viewport percentage in [0, 25] — got ${JSON.stringify(value)}`);
-        }
-      }
-      if (typeof combatantStage.intentGapPx !== 'number' || !Number.isFinite(combatantStage.intentGapPx)
-        || combatantStage.intentGapPx < 0 || combatantStage.intentGapPx > 24) {
-        err('balance.ui.combatantStage.intentGapPx', `must be a finite device-pixel gap in [0, 24] — got ${JSON.stringify(combatantStage.intentGapPx)}`);
-      }
-      if (typeof combatantStage.centerPct !== 'number' || !Number.isFinite(combatantStage.centerPct)
-        || combatantStage.centerPct < 25 || combatantStage.centerPct > 75) {
-        err('balance.ui.combatantStage.centerPct', `must be a finite center percentage in [25, 75] — got ${JSON.stringify(combatantStage.centerPct)}`);
       }
     }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
@@ -885,7 +776,7 @@ export function validateContent(bundle) {
   // The growth chain (balance.flaskGrowth) — same refusal shape, same door.
   // Its corpus is `node tools/flaskgrowth.mjs --selftest`, which plants each
   // refusal into the real bundle and watches this call go red.
-  for (const e of flaskGrowthRefusals(dependencySafeBundle)) err(e.key, e.msg);
+  for (const e of flaskGrowthRefusals(b)) err(e.key, e.msg);
 
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {

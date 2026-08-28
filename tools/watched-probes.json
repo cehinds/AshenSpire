@@ -179,12 +179,12 @@
   {
    "id": "M2",
    "by": "Bjorn",
-   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/title.js (Profile route)",
+   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/settings.js (Profile category)",
    "anchors": [
-    "openProfileArchive",
+    "set-profile-mount",
     "renderProfileSection"
    ],
-   "screen": "Title › Profile",
+   "screen": "Settings › Profile",
    "reach": [
     {
      "op": "goto",
@@ -192,16 +192,20 @@
     },
     {
      "op": "click",
-     "sel": "#profile"
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
     }
    ],
-   "focus": ".profile-archive-modal, .profile-archive-body",
+   "focus": "#set-profile-mount, .set-panel",
    "expect": {
     "present": {
-     "the profile drawer": ".profile-archive-modal, .profile-archive-body"
+     "the profile drawer": "#set-profile-mount, .set-panel"
     },
     "measure": {
-     "stateLine": "document.querySelector('.profile-archive-body').innerText.split('\\n')[0].slice(0,80)"
+     "stateLine": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,80)"
     }
    }
   },
@@ -213,7 +217,7 @@
     "ensureProfile",
     "the moment you begin your first climb"
    ],
-   "screen": "Title › Profile, on a device that has never played",
+   "screen": "Settings › Profile, on a device that has never played",
    "why-drive": "localStorage is cleared and the game booted fresh — the exact state a new player opens it in. Then the run is STARTED (class, name, BEGIN THE CLIMB) and storage is read again.",
    "reach": [
     {
@@ -258,18 +262,22 @@
     },
     {
      "op": "click",
-     "sel": "#profile"
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
     }
    ],
-   "focus": ".profile-archive-body",
+   "focus": ".set-panel",
    "expect": {
     "present": {
-     "the Profile section": ".profile-archive-body"
+     "the Profile section": ".set-panel"
     },
     "measure": {
      "storageTrace": "sessionStorage.getItem('__m7')",
      "profileExistedWhenTheRunBegan": "sessionStorage.getItem('__m7profile')",
-     "whatTheScreenSays": "document.querySelector('.profile-archive-body').innerText.split('\\n')[0].slice(0,95)"
+     "whatTheScreenSays": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,95)"
     },
     "wrong": [
      {
@@ -277,7 +285,7 @@
       "why": "THE CLIMB BEGAN AND THERE IS NO PROFILE. After class, name and BEGIN THE CLIMB, localStorage holds sote_run_v1 and no sote_meta_v1 — the profile is still not created"
      },
      {
-      "js": "/finish your first run/.test(document.querySelector('.profile-archive-body').innerText)",
+      "js": "/finish your first run/.test(document.querySelector('.set-panel').innerText)",
       "why": "and the screen says it out loud: 'No profile yet - one is created when you finish your first run.' That sentence IS the behaviour he asked us to change, printed back at him"
      }
     ]
@@ -294,10 +302,9 @@
   {
    "id": "A1",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (openInventoryForSelection opens the one shared Inventory; inventoryBlock filters its item cards to the selected position)",
+   "read": "src/ui/screens/equipment.js (picker on slot pick) · the .on.empty cell died with #140 (basics fill the shelf) — the occupied cell is now the door",
    "anchors": [
-    "openInventoryForSelection",
-    "function inventoryBlock()"
+    "ui.picker()"
    ],
    "screen": "the Armoury › a hand slot's picker",
    "reach": [
@@ -311,27 +318,27 @@
     },
     {
      "op": "click",
-     "sel": "[data-slot-position=\"rightHand:0\"] .armoury-position-action",
+     "sel": ".es-cell.on",
      "ms": 600
     }
    ],
-   "focus": "[data-region=\"inventory\"] .inventory-face",
+   "focus": ".equip-chip",
    "expect": {
     "present": {
-     "the shared Inventory, listing compatible owned items": "[data-region=\"inventory\"] .inventory-face"
+     "the picker, listing what you own": ".equip-chip"
     },
     "measure": {
-     "chips": "[...document.querySelectorAll('[data-region=\"inventory\"] .inventory-face')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,30)).join(' | ')"
+     "chips": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,30)).join(' | ')"
     }
    }
   },
   {
    "id": "A2",
    "by": "Bjorn",
-   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/components/armouryComponents.js (the procedural locked position card the ladder produces) · src/ui/screens/equipment.js (.armoury-position-card.is-locked)",
+   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/screens/equipment.js (the locked cell the ladder produces)",
    "anchors": [
     "fitsSlot",
-    "armoury-position-card is-locked"
+    "es-cell locked"
    ],
    "screen": "the Armoury › the slot ladder",
    "reach": [
@@ -344,17 +351,17 @@
      "sel": "#open-armoury"
     }
    ],
-   "focus": ".armoury-position-card.is-locked",
+   "focus": ".es-cell.locked",
    "expect": {
     "present": {
-        "exactly the next locked position": ".armoury-position-card.is-locked"
+     "exactly the next locked slot": ".es-cell.locked"
     },
     "measure": {
-        "perSlot": "Object.entries([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).map(([id,n])=>id+':'+n+' locked').join(' | ')"
+     "perSlot": "[...document.querySelectorAll('.equip-slot')].map(s=>(s.querySelector('.es-label')||{}).textContent+':'+s.querySelectorAll('.es-cell.locked').length+' locked').join(' | ')"
     },
     "wrong": [
      {
-          "js": "Object.values([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).some(n=>n>1)",
+      "js": "[...document.querySelectorAll('.equip-slot')].some(s=>s.querySelectorAll('.es-cell.locked').length>1)",
       "why": "a slot block shows more than one locked rung — the ladder is showing more than the NEXT locked thing"
      }
     ]
@@ -401,9 +408,9 @@
   {
    "id": "A4",
    "by": "Bjorn",
-   "read": "src/ui/components/trayComponents.js (shared Tray fold control), aria-expanded",
+   "read": "src/ui/screens/equipment.js (btn.className = 'region-fold'), aria-expanded",
    "anchors": [
-    "tray-fold region-fold"
+    "region-fold"
    ],
    "screen": "the Armoury › the CARDS pane's fold",
    "reach": [
@@ -432,7 +439,7 @@
    "by": "Bjorn",
    "read": "src/ui/screens/equipment.js opensCollapsed(regionId, stored) — a context pane opens FOLDED on EVERY shape unless the player's own stored choice says otherwise (D99, #316). REPAIRED 2026-08-22 by Sunna, in another seat's file and said so out loud: this row cited line 424 and a `narrow` third parameter, and #316 removed that parameter. Line 424 is now an unrelated statement, so the derivation pointed at code that does not exist while the row reported green — tools/watched.mjs only checks that this field is NON-EMPTY, never that it still names anything real. That weakness is Bjorn's and is bigger than this row. BJORN, 2026-08-22, resolving the #320 merge onto dev 594e7c3: Sunna's repair is kept whole and the typed line number it carried is DELETED, because this floor now refuses a typed citation in a `read` — the line is derived from the anchor below and printed on every run. The anchor is the SIGNATURE, not the bare symbol: Saga blocked #320 by showing that `opensCollapsed` alone survives #316 untouched, so the probe that named this defect could not have caught it. A parameter change moves the signature; the symbol it does not. DECLARED LIMIT — READ, NOT MEASURED: A5 compares `aria-expanded` strings. It may not be cited as coverage that the pane visually arrives collapsed; that remains UNKNOWN here.",
    "anchors": [
-    "export function opensCollapsed(regionId, stored, mode = null)"
+    "export function opensCollapsed(regionId, stored)"
    ],
    "screen": "the Armoury › the fold, opened and closed",
    "why-drive": "His sentence was 'so that I can see the armory slots better' — so the edge that matters is that the pane OPENS folded, and that the fold still opens. Both edges are driven. SCOPE, STATED RATHER THAN IMPLIED: the rule this row watches is now every shape, but the reach below still drives the PHONE ONLY. That is a narrower drive than the rule, and widening it is a change to Bjorn's probe rather than a repair of a false derivation, so it is left as his call and named here instead of done quietly. tools/armoury-arrival-figure.mjs (#316) asserts the desktop edge in the meantime.",
@@ -483,9 +490,9 @@
   {
    "id": "A9",
    "by": "Bjorn",
-   "read": "src/ui/components/refusal.js · src/ui/components/armouryComponents.js · src/ui/screens/equipment.js (.armoury-position-card.is-locked) · the locked position card's own tooltip",
+   "read": "src/ui/components/refusal.js · src/ui/screens/equipment.js (.es-sealed) · the locked cell's own tooltip",
    "anchors": [
-    "armoury-position-card is-locked"
+    "es-sealed"
    ],
    "screen": "the Armoury › a locked slot, touched",
    "reach": [
@@ -500,13 +507,13 @@
     {
      "op": "js",
      "ms": 400,
-     "code": "const c=document.querySelector('.armoury-position-card.is-locked'); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); c.click(); await sleep(300); return true;"
+     "code": "const c=document.querySelector('.es-cell.locked'); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); c.click(); await sleep(300); return true;"
     }
    ],
-   "focus": ".armoury-position-card.is-locked",
+   "focus": ".es-cell.locked",
    "expect": {
     "present": {
-        "the locked position card": ".armoury-position-card.is-locked",
+     "the locked cell": ".es-cell.locked",
      "a refusal that says why": "#tooltip"
     },
     "measure": {
@@ -523,13 +530,13 @@
   {
    "id": "S1",
    "by": "Bjorn",
-   "read": "src/ui/components/smithUpgradeModal.js (smith-preview-region: explicit choose/review dialog) · src/ui/models/SmithSelectionModel.js (smithSelectionModel: selection state and instance-preserving upgrade pair)",
+   "read": "src/ui/screens/rest.js (tooltipFn: upgradePreviewHtml) · src/ui/components/tooltip.js (pointerenter / gpfocus)",
    "anchors": [
-    "smith-preview-region",
-    "smithSelectionModel"
+    "upgradePreviewHtml",
+    "tooltipFn"
    ],
    "screen": "the Shrine › Smith, a card previewed",
-   "why-drive": "The Smith preview is now explicit modal state. Selecting one candidate must paint its current and upgraded forms without committing the upgrade.",
+   "why-drive": "The preview is a TOOLTIP, so it has to be fired the way a finger fires it. pointerenter is what a tap dispatches first on this browser.",
    "reach": [
     {
      "op": "goto",
@@ -541,24 +548,24 @@
      "sel": "#smith-opt"
     },
     {
-     "op": "click",
+     "op": "js",
      "ms": 400,
-     "sel": ".smith-candidate-card"
+     "code": "const c=document.querySelector('#smith-grid .card'); c.scrollIntoView({block:'center'}); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); return true;"
     }
    ],
-   "focus": ".smith-preview-region",
+   "focus": "#tooltip",
    "expect": {
     "present": {
-     "the upgrade preview": ".smith-preview-region .smith-upgrade-preview",
-     "the smith candidates": ".smith-candidate-card"
+     "the upgrade preview": "#tooltip",
+     "the smith grid": "#smith-grid .card"
     },
     "measure": {
-     "preview": "(document.querySelector('.smith-preview-region')||{}).innerText.replace(/\\s+/g,' ').slice(0,180)"
+     "preview": "(document.getElementById('tooltip')||{}).innerText.replace(/\\s+/g,' ').slice(0,110)"
     },
     "wrong": [
      {
-      "js": "!/→|becomes|upgrade/i.test((document.querySelector('.smith-preview-region')||{}).innerText||'')",
-      "why": "the modal preview says nothing about what the permanent upgrade changes"
+      "js": "!/→|becomes|upgrade/i.test((document.getElementById('tooltip')||{}).innerText||'')",
+      "why": "the tooltip fired but says nothing about what the upgrade CHANGES — he asked to see the upgrade, not the card"
      }
     ]
    }
@@ -1297,10 +1304,9 @@
   {
    "id": "A11",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
+   "read": "src/ui/screens/equipment.js (ui.picker() mounted on the right pane when a slot is picked)",
    "anchors": [
-    "function inventoryBlock()",
-    "box.dataset.filteredFor"
+    "ui.picker()"
    ],
    "screen": "the Armoury › a slot picked, the pane listing what you can switch to",
    "reach": [
@@ -1314,17 +1320,17 @@
     },
     {
      "op": "click",
-     "sel": "[data-slot-position=\"rightHand:0\"] .armoury-position-action",
+     "sel": ".es-cell.on",
      "ms": 600
     }
    ],
-   "focus": "[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"]",
+   "focus": ".equip-chip",
    "expect": {
     "present": {
-     "the selected-position list of compatible options": "[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .inventory-face"
+     "the list of available options": ".equip-chip"
     },
     "measure": {
-     "options": "[...document.querySelectorAll('[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .inventory-face')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,24)).join(' | ')"
+     "options": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,24)).join(' | ')"
     }
    }
   },
@@ -1597,10 +1603,10 @@
   {
    "id": "F2",
    "by": "Bjorn",
-   "read": "src/ui/screens/customize.js (#cz-primary-stats renders the content-owned shortLabel for each primary stat) · src/content/attributes.js (wisdom/WIS, intelligence/INT born; zero faith/arcane in that file)",
+   "read": "src/ui/screens/customize.js (.cz-stats details, #cz-stat-projection from shortLabels) · src/content/attributes.js (wisdom/WIS, intelligence/INT born; zero faith/arcane in that file)",
    "anchors": [
-    "cz-primary-stats",
-    "shortLabel"
+    "cz-stat-projection",
+    "cz-stats"
    ],
    "screen": "customize › ATTRIBUTES & RESOURCES — WIS and INT where Faith and Arcane would have been",
    "reach": [
@@ -1614,26 +1620,26 @@
      "ms": 800
     },
     {
-     "op": "click",
+     "op": "js",
      "ms": 400,
-     "sel": "[data-face='character']"
+     "code": "const d=document.querySelector('.cz-stats'); if(!d) return 'no .cz-stats details'; d.open=true; return true;"
     }
    ],
-   "focus": "#cz-primary-stats",
+   "focus": "#cz-stat-projection",
    "expect": {
     "present": {
-     "the primary stat stack": "#cz-primary-stats"
+     "the stat projection": "#cz-stat-projection"
     },
     "measure": {
-     "line": "document.getElementById('cz-primary-stats').innerText.replace(/\\s+/g,' ')"
+     "line": "document.getElementById('cz-stat-projection').innerText.replace(/\\s+/g,' ')"
     },
     "wrong": [
      {
-      "js": "!/WIS/.test(document.getElementById('cz-primary-stats').innerText)||!/INT/.test(document.getElementById('cz-primary-stats').innerText)",
+      "js": "!/WIS/.test(document.getElementById('cz-stat-projection').innerText)||!/INT/.test(document.getElementById('cz-stat-projection').innerText)",
       "why": "WIS or INT missing from the stat line — the rename did not reach the screen"
      },
      {
-      "js": "/\\bFAI\\b|\\bARC\\b/.test(document.getElementById('cz-primary-stats').innerText)",
+      "js": "/\\bFAI\\b|\\bARC\\b/.test(document.getElementById('cz-stat-projection').innerText)",
       "why": "a dead attribute name is still on the screen"
      }
     ],
@@ -1920,12 +1926,12 @@
   {
    "id": "F1",
    "by": "Bjorn",
-   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · src/content/derivedStats.js (pointsPerTier 5; hp gainPerTier 1, sourceStat vigour) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
+   "read": "src/ui/screens/customize.js (#cz-stat-projection prints 'HP <base> + <t> tier × <g> = <total>') · src/content/derivedStats.js (pointsPerTier 5; hp gainPerTier 1, sourceStat vigour) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
    "anchors": [
-    "cz-derived",
+    "cz-stat-projection",
     "pointsPerTier"
    ],
-   "screen": "customize › CHARACTER — the HP-from-Vigour derivation beside the primary stat stack",
+   "screen": "customize › ATTRIBUTES & RESOURCES — the HP-from-Vigour derivation, printed",
    "why-drive": "His 'vigour shoudl be 1 hp point per' overrules the mock's flat +8 (D17). The projection prints base, tiers and total, so per-point vs per-tier is decidable from the screen's own arithmetic: per point, total − base = VIG.",
    "reach": [
     {
@@ -1938,23 +1944,23 @@
      "ms": 800
     },
     {
-     "op": "click",
+     "op": "js",
      "ms": 400,
-     "sel": "[data-face='character']"
+     "code": "const d=document.querySelector('.cz-stats'); if(!d) return 'no .cz-stats details'; d.open=true; return true;"
     }
    ],
-   "focus": "#cz-derived",
+   "focus": "#cz-stat-projection",
    "expect": {
     "present": {
-     "the paired derived resources": "#cz-derived"
+     "the printed derivation": "#cz-stat-projection"
     },
     "measure": {
-     "vig": "((document.querySelector('#cz-primary-stats [data-stat=vigour] .disc-value')||{}).textContent||'').trim()",
-     "hpLine": "(()=>{const e=document.querySelector('#cz-derived [data-stat=hp]');return e?('HP '+e.dataset.formula):'none';})()"
+     "vig": "(document.getElementById('cz-stat-projection').innerText.match(/VIG\\s*(\\d+)/)||[])[1]",
+     "hpLine": "(document.getElementById('cz-stat-projection').innerText.match(/HP[^=]*=\\s*\\d+/)||['none'])[0].replace(/\\s+/g,' ')"
     },
     "wrong": [
      {
-      "js": "(()=>{const v=document.querySelector('#cz-primary-stats [data-stat=vigour] .disc-value');const h=document.querySelector('#cz-derived [data-stat=hp]');const vig=+(v&&v.textContent);const m=h&&h.dataset.formula.match(/^(\\d+)[^=]*=\\s*(\\d+)/);if(!m||!vig)return 'could not parse the projection metadata';return (+m[2] - +m[1]) !== vig;})()",
+      "js": "(()=>{const t=document.getElementById('cz-stat-projection').innerText;const vig=+(t.match(/VIG\\s*(\\d+)/)||[])[1];const m=t.match(/HP\\s*(\\d+)[^=]*=\\s*(\\d+)/);if(!m||!vig)return 'could not parse the line';return (+m[2] - +m[1]) !== vig;})()",
       "why": "HIS RULE IS PER POINT AND THE SCREEN PRINTS PER TIER. 'vigour shoudl be 1 hp point per' (D17, recorded as overruling the +8) — at VIG 12 the line reads 'HP 84 + 2 tier × 1 = 86': +2, not +12. The rule shipped is 1 per 5-point tier (derivedStats.js pointsPerTier 5). The ledger's F1 evidence is #163 — the RENAME commit, F2's subject: one row's evidence borrowed by the row beside it, the same shape as M7/M2 on 08-08"
      }
     ],

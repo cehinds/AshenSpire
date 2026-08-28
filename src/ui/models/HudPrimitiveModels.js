@@ -30,9 +30,6 @@ export function itemTrayModel(component, kind, behavior) {
 export function panelModel(component, variant, children) {
   return componentModel(component, {
     variant,
-    children: [componentModel(UI.panel, {
-      variant,
-      children: [componentModel(UI.componentBackground, { variant })],
-    }), ...children],
+    children: [componentModel(UI.panel, { variant }), ...children],
   });
 }

@@ -4,8 +4,8 @@
 // The rendered check on E9 / #254.
 //
 // HIS WORDS, 2026-08-15 (#254): "I'd like the hud to look the same both combat
-// and map". HIS RULING, 2026-08-23: the upper references are 200 HP / 20 MP /
-// 20 SP. Two halves of one ask, and they are INDEPENDENT — a repo can honour
+// and map". HIS RULING, 2026-08-23: the upper references are 200 HP / 50 MP /
+// 50 SP. Two halves of one ask, and they are INDEPENDENT — a repo can honour
 // either one alone and still show the player two different HUDs.
 //
 // WHY IT EXISTS, and it is not "the map had no bars" — it had one.
@@ -46,7 +46,7 @@
 //                  that stops carrying `domainMax` (the wire from his ruling to
 //                  the render) goes red here even though both screens still
 //                  agree with each other.
-//   P3R REFERENCE  the reference table IS 200 HP / 20 MP / 20 SP. This is THE
+//   P3R REFERENCE  the reference table IS 200 HP / 50 MP / 50 SP. This is THE
 //                  ONE PLACE his numbers are typed in this tool, deliberately:
 //                  P3 alone would stay green if the constant were edited,
 //                  because it reads the same constant the render reads. If he
@@ -114,7 +114,7 @@
 //     strips — a THIRD renderer for this grammar, named in styles/combat.css's
 //     own comment since before this change. Out of E9's scope, still there,
 //     and this tool's P6 census is scoped to `.topbar` so it will not catch it.
-//   · WHETHER 200/20/20 IS A GOOD SCALE. It is his ruling, made with the cost in
+//   · WHETHER 200/50 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
 //   · Headless Chromium, four shapes, one text size, no accent theme, no
 //     colourblind palette. The runtime platform is printed in the boundary.
@@ -150,7 +150,7 @@ const valuesOf = (flag) => {
 // else in this file reads the reference out of the tree so it cannot drift from
 // the render, and that is precisely why one line has to say what the number is
 // supposed to BE.
-const HIS_REFERENCE = Object.freeze({ hp: 200, mana: 20, stamina: 20 });
+const HIS_REFERENCE = Object.freeze({ hp: 200, pool: 50 });
 
 // ROWS WHOSE READER LEGITIMATELY REFUSES OFF THE BATTLEFIELD. Not a waiver
 // list — a statement about model/resources.js's refusal path, which returns
@@ -243,9 +243,8 @@ const READ = `(() => {
       + (parseFloat(frameStyle.borderTopWidth) || 0)
       + (parseFloat(frameStyle.borderBottomWidth) || 0) : 0;
     const frameBackground = frameStyle ? frameStyle.backgroundColor : '';
-    const frameTransparent = frameBackground === 'transparent' || frameBackground.endsWith(', 0)');
     const framePainted = !!frameStyle && frameBorder > 0
-      || !!frameStyle && !frameTransparent;
+      || !!frameStyle && !(/transparent|\/\s*0\)?$/.test(frameBackground));
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
     bars.push({
@@ -281,19 +280,6 @@ const READ = `(() => {
       floor: el.querySelectorAll('.hud-floor').length,
     } : null;
   };
-  const metadataField = (selector) => {
-    const host = document.querySelector('.topbar .hud-top .hud-run-meta');
-    const el = document.querySelector(selector);
-    if (!host || !el) return { present: false, visible: false };
-    const hb = host.getBoundingClientRect();
-    const b = el.getBoundingClientRect();
-    return {
-      present: true,
-      visible: getComputedStyle(el).display !== 'none' && b.width > 0 && b.height > 0
-        && b.left >= hb.left - 1 && b.right <= hb.right + 1 && b.left >= -1 && b.right <= innerWidth + 1,
-      left: b.left, right: b.right, hostLeft: hb.left, hostRight: hb.right,
-    };
-  };
   return {
     bars,
     lines: [...document.querySelectorAll('.topbar .resbars[data-surface="main"] .resline')]
@@ -310,12 +296,6 @@ const READ = `(() => {
     }),
     centerMeta: receiptBox('.topbar .hud-top .hud-center'),
     runMeta: receiptBox('.topbar .hud-top .hud-run-meta'),
-    runMetaFields: {
-      act: metadataField('.topbar .hud-top .hud-act'),
-      floor: metadataField('.topbar .hud-top .hud-floor'),
-      build: metadataField('.topbar .hud-top .build-number'),
-      source: metadataField('.topbar .hud-top .build-source'),
-    },
     receiptTotals: {
       cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
       floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
@@ -379,8 +359,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 /** The reference this row is measured against, or null for a derived row. */
 function referenceFor(id, table) {
   if (id === 'hp') return table.hp;
-  if (id === 'mana') return table.mana;
-  if (id === 'stamina') return table.stamina;
+  if (id === 'mana' || id === 'stamina') return table.pool;
   return null;
 }
 
@@ -429,20 +408,6 @@ function judgeCell(cell, mapR, comR, refTable) {
       fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Cinders receipt must be centred and exactly one Floor receipt must live in right metadata.`);
     } else {
       ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
-    }
-    const fields = read.runMetaFields || {};
-    const priority = ['act', 'floor', 'build', 'source'];
-    const priorityFindings = [];
-    for (let i = 0; i < priority.length; i++) {
-      const name = priority[i];
-      if (!fields[name]?.visible && priority.slice(i + 1).some((lower) => fields[lower]?.visible)) {
-        priorityFindings.push(`${name}-hidden-before-${priority.slice(i + 1).find((lower) => fields[lower]?.visible)}`);
-      }
-    }
-    if (!fields.act?.visible || !fields.floor?.visible || priorityFindings.length) {
-      fail(`FINDING P8/metadata-priority ${cell} ${screen} fields=${JSON.stringify(fields)} priority=${JSON.stringify(priorityFindings)} — Act and Floor stay visible first; Build, Seed, then Source yield in that order.`);
-    } else {
-      ok(`P8/metadata-priority ${cell} ${screen} — Act and Floor visible; optional metadata yields Build, Seed, Source in priority order`);
     }
     const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame && bar.frame.painted
       && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
@@ -688,7 +653,7 @@ function boundary() {
   console.log('    this tool does not judge that model-surface placement (hudbars A11 does).');
   console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
   console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
-  console.log('  · WHETHER 200/20/20 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
+  console.log('  · WHETHER 200/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
   console.log(`  · Headless Chromium on ${process.platform}, one text size, default accent, no colourblind palette.`);
   console.log('  · NOT WIRED INTO ci.yml — between hand-runs SOP 2\'s silence guard makes this `unknown`.');
   if (unknown) console.log(`  · ${unknown} check(s) resolved UNKNOWN in this run and counted toward nothing.`);
@@ -720,19 +685,19 @@ async function main() {
   console.log('      a curse and an armour mod write); every box read with getBoundingClientRect() off the');
   console.log('      live page. The reference table is imported from src/content/resources.js so it cannot');
   console.log('      drift from the render — P3R is the one line that says what it should BE.');
-  console.log(`      reference read from the tree: HP ${refTable.hp}, MP ${refTable.mana}, SP ${refTable.stamina}`);
+  console.log(`      reference read from the tree: HP ${refTable.hp}, pools ${refTable.pool}`);
   if (onlyShape || onlyPose) {
     console.log(`      NARROWED POPULATION (declared): shape=${onlyShape || 'all'} pose=${onlyPose || 'all'}`);
   }
 
   // ---- P3R — HIS RULING, CHECKED AGAINST THE ONE TYPED COPY ---------------
-  if (refTable.hp !== HIS_REFERENCE.hp || refTable.mana !== HIS_REFERENCE.mana || refTable.stamina !== HIS_REFERENCE.stamina) {
+  if (refTable.hp !== HIS_REFERENCE.hp || refTable.pool !== HIS_REFERENCE.pool) {
     fail(`FINDING P3R/reference src/content/resources.js HUD_REFERENCE_MAX = `
-      + `{ hp: ${refTable.hp}, mana: ${refTable.mana}, stamina: ${refTable.stamina} }, his ruling of 2026-08-22 is `
-      + `{ hp: ${HIS_REFERENCE.hp}, mana: ${HIS_REFERENCE.mana}, stamina: ${HIS_REFERENCE.stamina} } — the reference moved without this gate moving `
+      + `{ hp: ${refTable.hp}, pool: ${refTable.pool} }, his ruling of 2026-08-22 is `
+      + `{ hp: ${HIS_REFERENCE.hp}, pool: ${HIS_REFERENCE.pool} } — the reference moved without this gate moving `
       + 'with it. If he changed his mind, change this line in the same act; if he did not, the scale is wrong.');
   } else {
-    ok(`P3R/reference — HP ${refTable.hp} / MP ${refTable.mana} / SP ${refTable.stamina}, his ruling`);
+    ok(`P3R/reference — HP ${refTable.hp} / pools ${refTable.pool}, his ruling`);
   }
 
   const browserPath = resolveBrowser();
@@ -767,7 +732,7 @@ async function main() {
 
       const ev = async (e) => {
         const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
-        if (r.exceptionDetails) throw new Error(`${r.exceptionDetails.exception?.description || 'threw'} at ${r.exceptionDetails.lineNumber}:${r.exceptionDetails.columnNumber}`);
+        if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw');
         return r.result.value;
       };
       // A HARD BOUND ON EVERY WAIT. A screen that never mounts is a finding, not

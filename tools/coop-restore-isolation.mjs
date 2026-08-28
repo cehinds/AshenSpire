@@ -40,15 +40,15 @@
 // downstream of that lesson.
 //
 //   node tools/coop-restore-isolation.mjs
-//   node tools/coop-restore-isolation.mjs --selftest
 //
 // Exit 0: every check held. Exit 1: a failure. Boundary: node-only, one Linux
-// box, a pristine post-start map fixture — no browser, no LAN socket; what lan.mjs DOES
+// box, the naive bot resolver — no browser, no LAN socket; what lan.mjs DOES
 // with a receipt (how the host surfaces it to the lobby) is a UI subject this
 // tool does not reach.
 
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, restoreSession } from './session.mjs';
 
 const REG = createRegistries(contentBundle);
@@ -58,46 +58,41 @@ const ok = (cond, msg, detail) => {
   if (!cond) fails.push(msg);
 };
 
-// ---- one deterministic source blob for every poison -----------------------
-function pristineStartFixture() {
-  const session = createSession({ registries: REG, seedString: 'PARTYLINE' });
-  session.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
-  session.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
-  session.addMember({ id: 'p3', name: 'Moss', classId: 'reaver' });
-  session.start();
-  return { session, data: session.serialize() };
+// ---- drive a real session to a clean boundary (the resume-smoke walk) ------
+function botTurn(combat, memberId) {
+  const P = combat.players.get(memberId);
+  if (!P || !P.connected || !P.entity.alive || P.ended) return;
+  let guard = 0;
+  while (combat.phase === 'player' && !P.ended && !combat.result && guard++ < 50) {
+    const card = P.piles.hand.find((h) => {
+      const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
+      if ((def.keywords || []).includes('unplayable')) return false;
+      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
+    });
+    const tgt = combat.enemies.find((e) => e.alive);
+    try { if (card) playCard(combat, memberId, card.instanceId, tgt && tgt.id); else { endTurn(combat, memberId); break; } }
+    catch { endTurn(combat, memberId); break; }
+  }
+  if (!P.ended && combat.phase === 'player' && !combat.result) endTurn(combat, memberId);
 }
-
-function startFixtureFindings(data, liveSceneKind) {
-  const findings = [];
-  if (!data || data.v !== 1) findings.push('VERSION');
-  if (liveSceneKind !== 'map' || data?.scene?.kind !== 'map') findings.push('SCENE');
-  const members = Array.isArray(data?.members) ? data.members : [];
-  if (members.length !== 3) findings.push('MEMBERS');
-  if (members.length !== 3 || !members.every((member) => member.alive === true)) findings.push('ALIVE');
-  if (members.length !== 3 || !members.every((member) => member.run?.hp === member.run?.maxHp)) findings.push('HP');
-  return findings;
+function route(S, nodeId) {
+  for (const m of S.connectedMembers()) {
+    S.chooseNode(m.id, nodeId);
+    if (S.scene.kind !== 'map') return;
+  }
 }
-
-if (process.argv.includes('--selftest')) {
-  const { session, data } = pristineStartFixture();
-  const clean = startFixtureFindings(data, session.scene.kind);
-  const defeated = structuredClone(data);
-  defeated.members[1].alive = false;
-  defeated.members[1].run.hp = 0;
-  const defeatedRed = startFixtureFindings(defeated, session.scene.kind);
-  const nonMap = structuredClone(data);
-  nonMap.scene = { ...nonMap.scene, kind: 'combat' };
-  const nonMapRed = startFixtureFindings(nonMap, 'combat');
-  const cleanGreen = clean.length === 0;
-  const defeatedCaught = defeatedRed.includes('ALIVE') && defeatedRed.includes('HP');
-  const nonMapCaught = nonMapRed.includes('SCENE');
-  console.log(`${cleanGreen ? 'GREEN' : 'MISS '} clean post-start fixture: ${clean.join(', ') || 'no findings'}`);
-  console.log(`${defeatedCaught ? 'RED  ' : 'MISS '} defeated-member plant: ${defeatedRed.join(', ') || 'no findings'}`);
-  console.log(`${nonMapCaught ? 'RED  ' : 'MISS '} non-map plant: ${nonMapRed.join(', ') || 'no findings'}`);
-  const passed = Number(defeatedCaught) + Number(nonMapCaught);
-  console.log(`coop-restore-isolation --selftest: ${passed}/2 plants observed RED; clean control ${cleanGreen ? 'GREEN' : 'FAILED'}`);
-  process.exit(cleanGreen && passed === 2 ? 0 : 1);
+function walkToBoundary(S) {
+  let guard = 0;
+  while (guard++ < 40) {
+    const sc = S.scene;
+    if (sc.kind === 'map' && guard > 1) return;
+    if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
+    else if (sc.kind === 'combat') { S.autoResolveCombat(botTurn); for (const m of S.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp; }
+    else if (sc.kind === 'reward') { for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] }); }
+    else if (sc.kind === 'shrine') S.connectedMembers().forEach((m) => S.shrineChoice(m.id, 'rest'));
+    else if (sc.kind === 'event') S.connectedMembers().forEach((m) => S.eventChoice(m.id, 0));
+    else return;
+  }
 }
 
 // ---- the poisons, each applied to PRISTINE bytes ---------------------------
@@ -132,11 +127,14 @@ function poisonNoRun(md) {
 const refusedOf = (S) => (typeof S.refusedMembers === 'function' ? S.refusedMembers() : null);
 
 try {
-  const { session: S, data } = pristineStartFixture();
-  const fixtureFindings = startFixtureFindings(data, S.scene.kind);
-  ok(fixtureFindings.length === 0,
-    'the real v1 3-member session serializes immediately at a clean start map with every member alive at full HP',
-    fixtureFindings.join(', '));
+  const S = createSession({ registries: REG, seedString: 'PARTYLINE' });
+  S.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
+  S.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
+  S.addMember({ id: 'p3', name: 'Moss', classId: 'reaver' });
+  S.start();
+  walkToBoundary(S);
+  ok(S.scene.kind === 'map', 'a real 3-member run reached a clean boundary to persist at');
+  const data = S.serialize();
   ok(data && data.v === 1, 'the real serializer produced the blob (the disk bytes every known-bad is built from)');
   const json = JSON.stringify(data);
   const deckOf = (blob, id) => blob.members.find((m) => m.id === id).run.deck.length;
