@@ -1,7 +1,7 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-28T05:21:15Z",
+  "updatedAt": "2026-08-28T05:28:12Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
@@ -171,7 +171,7 @@
         "checks": [
           { "command": "node tools/continuity.mjs --check", "counts": "1 packet; exit 0", "result": "PASS" },
           { "command": "node tools/continuity.mjs --audit", "counts": "4/4 remote branch heads current; exit 0", "result": "PASS" },
-          { "command": "node tools/continuity.mjs --selftest", "counts": "18/18", "result": "PASS" },
+          { "command": "node tools/continuity.mjs --selftest", "counts": "21/21", "result": "PASS" },
           { "command": "node tools/workflow-lint.mjs", "counts": "226 checks; 0 findings", "result": "PASS" },
           { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
         ],
@@ -452,7 +452,7 @@
           { "command": "node tools/buildversion.mjs --check", "counts": "8/8", "result": "PASS" },
           { "command": "node tools/verify-shipped.mjs", "counts": "6/6", "result": "PASS" },
           { "command": "node tools/rebuild-matches.mjs", "counts": "1 deterministic rebuild; GREEN", "result": "PASS" },
-          { "command": "node tools/continuity.mjs --selftest", "counts": "18/18", "result": "PASS" }
+          { "command": "node tools/continuity.mjs --selftest", "counts": "21/21", "result": "PASS" }
         ],
         "boundary": ["8671379bbc6dc5043caeccabb0380396f4412e20 is the immutable source/artifact head; this branch may carry evidence-only continuity successors after it without moving that identity.", "Local composition evidence only; independent non-maker QA is not recorded and Equipment/Rogue remains an external decision."]
       },

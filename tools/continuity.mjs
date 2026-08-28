@@ -502,6 +502,15 @@ async function selftest(doc, raw, schema) {
     ['machine-local path', (x) => { x.lanes[0].next = 'open C:\\temp\\handoff'; }, 'machine-local path'],
     ['missing Git object', (x) => { x.repository.baseSha = '1111111111111111111111111111111111111111'; }, 'missing commit'],
     ['governance blob drift', (x) => { x.repository.governance[0].blob = '2222222222222222222222222222222222222222'; }, 'governance'],
+    ['frozen lane tree drift', (x) => { x.lanes.find((row) => row.id === 'k15-content-door').treeSha = '4444444444444444444444444444444444444444'; }, 'tree drift for k15-content-door'],
+    ['replay patch-id mismatch', (x) => { x.lanes.find((row) => row.id === 'k15-content-door').compositionReplay.patchId = '5555555555555555555555555555555555555555'; }, 'replay patch-id'],
+    ['literal replay ancestry failure', (x) => {
+      const lane = x.lanes.find((row) => row.id === 'save-equipment-actionregistry');
+      const replacement = x.lanes.find((row) => row.id === 'k15-content-door');
+      lane.headSha = replacement.headSha;
+      lane.treeSha = replacement.treeSha;
+      lane.compositionReplay.originalHead = replacement.headSha;
+    }, 'original head is not a literal ancestor'],
     ['required collision removed', (x) => { x.collisions = x.collisions.filter((row) => !(row.lanes.includes('k15-content-door') && row.lanes.includes('controls-gates'))); }, 'undeclared claimed-path collision'],
     ['remote branch drift', (x) => { x.repository.branches[0].sha = '3333333333333333333333333333333333333333'; }, 'currentness: dev drift'],
     ['stale snapshot', (x) => x, 'snapshot age', new Date(now.getTime() + (doc.budgets.maxSnapshotAgeHours + 1) * 3_600_000)],
