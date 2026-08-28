@@ -3,41 +3,6 @@
 
 export const characterCreation = {
   "spritePreviewSide": "right",
-  "layout": {
-    "classPreviewPercent": 30,
-    "classChoiceView": "list",
-    "equipmentChoiceView": "list",
-    "equipmentAutoAdvance": true
-  },
-  "equipmentSections": [
-    {
-      "id": "armour",
-      "label": "STARTING ARMOUR",
-      "kind": "armour"
-    },
-    {
-      "id": "leftHand",
-      "label": "LEFT HAND",
-      "kind": "hand",
-      "slot": "leftHand"
-    },
-    {
-      "id": "rightHand",
-      "label": "RIGHT HAND",
-      "kind": "hand",
-      "slot": "rightHand"
-    },
-    {
-      "id": "equipSlot",
-      "label": "EQUIP SLOT",
-      "kind": "slot"
-    },
-    {
-      "id": "relic",
-      "label": "RELIC",
-      "kind": "relic"
-    }
-  ],
   "classes": {
     "reaver": {
       "armourIds": [

@@ -8,7 +8,6 @@ import { mountDisclosure } from '../components/disclosure.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
-import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } from '../../model/attributes.js';
@@ -19,18 +18,9 @@ import {
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
-import { renderStatAllocationCard } from '../components/statAllocationCard.js';
-import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
-import {
-  primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
-  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
-  booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton,
-  selectionSectionFace,
-} from '../components/creationCards.js';
 
 export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
   const firstClass = registries.classes.all()[0];
-  const creationLayout = registries.characterCreation.layout || {};
   const state = {
     classId: firstClass.id,
     name: 'Forsaken',
@@ -44,70 +34,48 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     startingRelicId: firstClass.startingRelic,
     attributeMode: defaultCreationModeId(registries),
     attributes: null,
-    classChoiceView: creationLayout.classChoiceView,
-    equipmentChoiceView: creationLayout.equipmentChoiceView,
-    classPreviewPercent: creationLayout.classPreviewPercent,
-    equipmentAutoAdvance: creationLayout.equipmentAutoAdvance,
   };
   let previewAttributes = null;
   let pointBuyOverlay = null;
-  let pointBuyReturnFocus = null;
-  let pointBuyKeydown = null;
-  let refreshSectionFaces = () => {};
-  let refreshCharacterFaces = () => {};
-  let refreshSpriteFaces = () => {};
-  let refreshEquipmentFaces = () => {};
-  const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); refreshSpriteFaces(); refreshEquipmentFaces(); };
+  let refreshFaces = () => {};
   let updateStartRefusal = () => {};
 
   app.innerHTML = `
     <div class="screen customize${catalog ? ' component-catalog' : ''}">
       <div class="cz-scroll">
-        ${catalog ? '' : '<p class="cz-kicker">DIVIDED OATH</p>'}
         <h2 class="cz-title">${catalog ? 'CHARACTER CREATION COMPONENTS' : 'PREPARE YOUR FORSAKEN'}</h2>
-        ${catalog ? '' : '<p class="cz-subtitle">Choose your path. The spire remembers.</p>'}
-        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every creation section, nested disclosure, and reusable selector card.</p>' : ''}
+        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every character-creation section and selector state.</p>' : ''}
         <div class="cz-flow cz-disc">
           <section id="cz-class-panel" class="cz-stage">
-            <div class="cc-class-split" style="--cc-class-preview-share:${state.classPreviewPercent}%">
-              <div id="cz-class-preview-host" class="cc-class-preview-host"></div>
-              <button type="button" class="cc-class-divider" role="separator" aria-label="Resize class preview" aria-orientation="vertical" aria-valuemin="22" aria-valuemax="45" aria-valuenow="${state.classPreviewPercent}"></button>
-              <div class="cc-class-selection">
-                <header class="cc-stage-toolbar"><h3>CLASS SELECTION</h3><div id="cz-class-view-toggle"></div></header>
-                <div id="cz-classes" class="class-row cc-choice-collection" data-view="${state.classChoiceView}"></div>
-                <button type="button" class="cz-next" data-next="character">Continue to Character</button>
-              </div>
-            </div>
+            <div id="cz-classes" class="class-row"></div>
+            <button type="button" class="cz-next" data-next="character">Continue to Character</button>
           </section>
           <section id="cz-character-panel" class="cz-stage">
             <div class="cc-character-grid" data-sprite-side="${esc(registries.characterCreation.spritePreviewSide)}">
               <div class="cc-stats-side">
-                <label class="cc-name-row" for="cz-name"><span>NAME</span><input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false" autocomplete="off" value="Forsaken"></label>
-                <div id="cz-character-fold" class="cc-character-fold cz-disc">
-                  <section id="cz-primary-group" class="cc-character-picker">
-                    <div id="cz-statedit" class="cz-statedit"></div>
-                    <div id="cz-primary-stats" class="cc-primary-stats"></div>
-                    <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
-                  </section>
-                  <section id="cz-sprite-group" class="cc-character-picker">
-                    <div id="cz-styles" class="cz-opts"></div>
-                    <div id="cz-sprite-fold" class="cc-sprite-fold cz-disc">
-                      <section id="cz-sigil-group" class="cc-character-picker"><div id="cz-glyphs" class="cz-opts"></div></section>
-                      <section id="cz-tint-group" class="cc-character-picker"><div id="cz-tints" class="cz-opts"></div></section>
-                    </div>
-                  </section>
-                  <section id="cz-keepsake-group" class="cc-character-picker"><div id="cz-keepsakes" class="cz-keepsakes"></div></section>
-                </div>
+                <label class="cz-label" for="cz-name">NAME</label>
+                <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false" autocomplete="off" value="Forsaken">
+                <div id="cz-statedit" class="cz-statedit"></div>
+                <div id="cz-primary-stats" class="cc-primary-stats"></div>
+                <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
               </div>
               <div class="cc-preview-side">
                 <div id="cz-portrait" class="cz-portrait" aria-label="Live character preview"></div>
               </div>
             </div>
+            <div class="cc-appearance">
+              <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
+              <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
+              <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
+              <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
+            </div>
             <button type="button" class="cz-next" data-next="equipment">Continue to Starting Equip</button>
           </section>
           <section id="cz-equipment-panel" class="cz-stage">
-            <header class="cc-stage-toolbar"><h3>STARTING EQUIPMENT</h3><div class="cc-stage-tools"><div id="cz-auto-advance-toggle"></div><div id="cz-equipment-view-toggle"></div></div></header>
-            <div id="cz-equipment-fold" class="cc-equipment-fold cz-disc"></div>
+            <div class="cc-equip-group"><p class="cz-label">STARTING ARMOUR</p><div id="cz-armours" class="cc-card-selectors"></div></div>
+            <div class="cc-equip-group"><p class="cz-label">LEFT HAND</p><div id="cz-left-hand" class="cc-card-selectors"></div></div>
+            <div class="cc-equip-group"><p class="cz-label">RIGHT HAND</p><div id="cz-right-hand" class="cc-card-selectors"></div></div>
+            <div class="cc-equip-group"><p class="cz-label">RELIC</p><div id="cz-relics" class="cc-card-selectors"></div></div>
             <p class="cc-move-note">An armament is one carried object. Choosing it for the other hand moves it.</p>
             <button type="button" class="cz-next" data-next="seed">Continue to Seed</button>
           </section>
@@ -124,75 +92,9 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     </div>`;
 
   const $ = (selector) => app.querySelector(selector);
-  const customizeScreen = $('.screen.customize');
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
-  const STANDARD = 'standard';
   const POINTBUY = 'pointbuy';
-  const equipmentSections = registries.characterCreation.equipmentSections;
-  const equipmentNodes = new Map();
-  for (const section of equipmentSections) {
-    const node = document.createElement('section');
-    node.className = 'cc-equip-group';
-    node.dataset.equipmentSection = section.id;
-    const choices = document.createElement('div');
-    choices.className = 'cc-card-selectors cc-choice-collection';
-    choices.dataset.view = state.equipmentChoiceView;
-    if (section.kind === 'armour') choices.id = 'cz-armours';
-    else if (section.kind === 'relic') choices.id = 'cz-relics';
-    else if (section.kind === 'hand') choices.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
-    else choices.id = `cz-${section.id}`;
-    node.appendChild(choices);
-    equipmentNodes.set(section.id, node);
-  }
-  let equipmentFold = null;
-
-  function setClassPreviewPercent(percent) {
-    state.classPreviewPercent = Math.max(22, Math.min(45, Math.round(percent)));
-    $('.cc-class-split').style.setProperty('--cc-class-preview-share', `${state.classPreviewPercent}%`);
-    const divider = $('.cc-class-divider');
-    divider.setAttribute('aria-valuenow', String(state.classPreviewPercent));
-  }
-
-  const classDivider = $('.cc-class-divider');
-  classDivider.addEventListener('keydown', (event) => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    event.preventDefault();
-    if (event.key === 'Home') setClassPreviewPercent(22);
-    else if (event.key === 'End') setClassPreviewPercent(45);
-    else setClassPreviewPercent(state.classPreviewPercent + (event.key === 'ArrowRight' ? 2 : -2));
-  });
-  classDivider.addEventListener('pointerdown', (event) => {
-    if (matchMedia('(max-width: 760px)').matches) return;
-    const split = $('.cc-class-split');
-    const move = (moveEvent) => {
-      const rect = split.getBoundingClientRect();
-      setClassPreviewPercent(((moveEvent.clientX - rect.left) / rect.width) * 100);
-    };
-    const finish = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', finish);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', finish, { once: true });
-    move(event);
-  });
-
-  function renderViewToggles() {
-    $('#cz-class-view-toggle').replaceChildren(viewModeToggle(state.classChoiceView, (mode) => {
-      state.classChoiceView = mode;
-      renderClasses();
-    }, 'Class choice view'));
-    $('#cz-equipment-view-toggle').replaceChildren(viewModeToggle(state.equipmentChoiceView, (mode) => {
-      state.equipmentChoiceView = mode;
-      for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = mode;
-      renderViewToggles();
-    }, 'Starting equipment choice view'));
-    $('#cz-auto-advance-toggle').replaceChildren(booleanSettingToggle('Auto-advance on valid choice', state.equipmentAutoAdvance, (value) => {
-      state.equipmentAutoAdvance = value;
-      renderViewToggles();
-    }));
-  }
 
   function baseKit() {
     const views = startingKitViews(registries, state.classId, meta);
@@ -267,39 +169,26 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').replaceChildren(...attributeCardModels(registries, run.attributes, {
-      projection,
-      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-    }).map(primaryStatCard));
+    $('#cz-primary-stats').innerHTML = projection.attributes.map((row) =>
+      `<div class="disc-face cc-primary-stat" data-stat="${esc(row.id)}"><b class="disc-name">${esc(row.shortLabel)}</b><span class="disc-value">${row.value}</span></div>`).join('');
     const poise = playerPoiseThresholdReceipt(registries, run);
-    const resources = resourceStrip(projection.derived, poise);
-    $('#cz-derived').replaceChildren(...resources.childNodes);
-    renderClassPreview();
-  }
-
-  function renderClassPreview() {
-    const cls = registries.classes.get(state.classId);
-    const run = previewRun();
-    const projection = statProjection(registries, run);
-    const sprite = spritesAreEnabled()
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered')
-      : null;
-    const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const pane = classPreviewPane({
-      cls, sprite,
-      resources: classResourceGrid(projection.derived.slice(0, 5)),
-      relic,
-      relicDescription: relicText(relic, registries),
-    });
-    $('#cz-class-preview-host').replaceChildren(pane);
+    $('#cz-derived').innerHTML = projection.derived.map((row) =>
+      `<span data-stat="${esc(row.id)}" data-formula="${esc(row.formula)}" title="${esc(row.formula)}"><b>${esc(row.faceLabel)}</b> ${row.value}</span>`).join('')
+      + `<span data-stat="poise"><b>Poise</b> ${poise.value}</span>`;
   }
 
   function renderModes() {
-    statBox.innerHTML = '';
+    statBox.innerHTML = '<p class="cz-label">PRIMARY STATS</p>';
     const modes = document.createElement('div');
     modes.className = 'se-modes';
     for (const mode of registries.creationModes.all()) {
-      const button = modeChoiceButton(mode, state.attributeMode === mode.id, () => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `cz-opt se-mode${state.attributeMode === mode.id ? ' chosen' : ''}`;
+      button.dataset.creationMode = mode.id;
+      button.textContent = mode.label;
+      button.setAttribute('aria-pressed', state.attributeMode === mode.id ? 'true' : 'false');
+      button.addEventListener('click', () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
           if (!state.attributes) resetAttributes();
@@ -315,25 +204,14 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     statBox.appendChild(modes);
   }
 
-  function closePointBuy({ restoreFocus = true } = {}) {
+  function closePointBuy() {
     if (!pointBuyOverlay) return;
-    if (pointBuyKeydown) window.removeEventListener('keydown', pointBuyKeydown, true);
     pointBuyOverlay.remove();
-    customizeScreen.inert = false;
     pointBuyOverlay = null;
-    pointBuyKeydown = null;
-    if (restoreFocus) {
-      const target = pointBuyReturnFocus?.isConnected
-        ? pointBuyReturnFocus
-        : statBox.querySelector('.se-mode.chosen');
-      if (target) { target.focus(); focusElement(target); }
-    }
-    pointBuyReturnFocus = null;
   }
 
   function openPointBuy() {
-    closePointBuy({ restoreFocus: false });
-    pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closePointBuy();
     const overlay = document.createElement('div');
     overlay.className = 'modal-veil cc-stat-overlay';
     overlay.setAttribute('role', 'dialog');
@@ -341,150 +219,119 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     overlay.setAttribute('aria-labelledby', 'cc-stat-title');
     pointBuyOverlay = overlay;
     app.appendChild(overlay);
-    customizeScreen.inert = true;
-    let needsInitialFocus = true;
-    pointBuyKeydown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault(); event.stopPropagation();
-        overlay.querySelector('[data-stat-cancel]')?.click();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const focusable = [...overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
-        .filter((element) => !element.hidden && element.getClientRects().length);
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault(); event.stopPropagation(); last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault(); event.stopPropagation(); first.focus();
-      } else if (!overlay.contains(document.activeElement)) {
-        event.preventDefault(); event.stopPropagation(); (event.shiftKey ? last : first).focus();
-      }
-    };
-    window.addEventListener('keydown', pointBuyKeydown, true);
 
     const draw = () => {
-      const focusedStep = overlay.querySelector('.se-step.gp-focus')
-        || (overlay.contains(document.activeElement) ? document.activeElement.closest('.se-step') : null);
-      const preservedFocus = focusedStep ? {
-        statId: focusedStep.dataset.statId,
-        action: focusedStep.dataset.statAction,
-        dom: document.activeElement === focusedStep,
-        cursor: focusedStep.classList.contains('gp-focus'),
-      } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
-      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
-      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
-      const allocation = renderStatAllocationCard(overlay, {
-        title: 'ASSIGN POINTS',
-        remaining,
-        modal: true,
-        cancelLabel: 'Standard',
-        rows: orderedAttributes(registries).map((def) => ({
-          id: def.id,
-          label: def.label,
-          shortLabel: def.shortLabel,
-          value: state.attributes[def.id],
-          card: cards.get(def.id),
-          canDecrease: state.attributes[def.id] > mode.minimum,
-          canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
-        })),
-        onDecrease: (id) => {
-          state.attributes[id] -= 1;
+      overlay.innerHTML = `<div class="modal cc-stat-modal"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
+        + `<p class="se-pool">Points to assign: ${remaining}</p><div class="cc-allocation-rows"></div>`
+        + `<div class="cc-stat-actions"><button type="button" class="subtle" data-stat-cancel>Standard</button><button type="button" data-stat-done>Done</button></div></div>`;
+      const rows = overlay.querySelector('.cc-allocation-rows');
+      for (const def of orderedAttributes(registries)) {
+        const value = state.attributes[def.id];
+        const row = document.createElement('div');
+        row.className = 'se-row';
+        row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`;
+        const minus = document.createElement('button');
+        minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
+        minus.setAttribute('aria-label', `Decrease ${def.label}`);
+        minus.setAttribute('aria-disabled', value <= mode.minimum ? 'true' : 'false');
+        const number = document.createElement('span'); number.className = 'se-value'; number.textContent = value;
+        const plus = document.createElement('button');
+        plus.type = 'button'; plus.className = 'se-step'; plus.textContent = '+';
+        plus.setAttribute('aria-label', `Increase ${def.label}`);
+        plus.setAttribute('aria-disabled', value >= mode.maximum || remaining <= 0 ? 'true' : 'false');
+        minus.addEventListener('click', () => {
+          if (value <= mode.minimum) return;
+          state.attributes[def.id] -= 1;
           if (!statsProblem()) previewAttributes = { ...state.attributes };
           draw(); renderCharacterPreview(); updateStartRefusal();
-        },
-        onIncrease: (id) => {
-          state.attributes[id] += 1;
+        });
+        plus.addEventListener('click', () => {
+          if (value >= mode.maximum || remaining <= 0) return;
+          state.attributes[def.id] += 1;
           if (!statsProblem()) previewAttributes = { ...state.attributes };
           draw(); renderCharacterPreview(); updateStartRefusal();
-        },
-      });
-      const done = allocation.done;
+        });
+        row.append(minus, number, plus); rows.appendChild(row);
+      }
+      const done = overlay.querySelector('[data-stat-done]');
       refusesWhen(done, statsProblem, 'Apply these stats');
       done.addEventListener('click', () => {
         if (statsProblem()) return;
         previewAttributes = { ...state.attributes };
         closePointBuy(); renderCharacterPreview(); focusElement(statBox.querySelector('.se-mode.chosen'));
       });
-      allocation.cancel.addEventListener('click', () => {
-        state.attributeMode = STANDARD;
+      overlay.querySelector('[data-stat-cancel]').addEventListener('click', () => {
+        state.attributeMode = defaultCreationModeId(registries);
         previewAttributes = null;
         closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        const standard = statBox.querySelector('.se-mode.chosen');
-        standard?.focus(); focusElement(standard);
       });
-      if (preservedFocus) {
-        const replacement = [...overlay.querySelectorAll('.se-step')].find((button) => (
-          button.dataset.statId === preservedFocus.statId && button.dataset.statAction === preservedFocus.action
-        ));
-        if (replacement) {
-          if (preservedFocus.dom) replacement.focus();
-          if (preservedFocus.cursor) focusElement(replacement);
-        }
-      } else if (needsInitialFocus) {
-        needsInitialFocus = false;
-        queueMicrotask(() => overlay.querySelector('.cc-stat-modal')?.focus());
-      }
     };
     draw();
   }
 
   function renderClasses() {
     classBox.innerHTML = '';
-    classBox.dataset.view = state.classChoiceView;
     for (const cls of registries.classes.all()) {
-      const button = classChoiceCard(cls, {
-        selected: cls.id === state.classId,
-        visual: classGlyph(cls.id),
-        onChoose: () => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `class-pick cz-class${cls.id === state.classId ? ' chosen' : ''}`;
+      button.dataset.class = cls.id;
+      button.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p></div>`;
+      button.addEventListener('click', () => {
         if (state.classId === cls.id) return;
         state.classId = cls.id; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        },
       });
       classBox.appendChild(button);
     }
     for (const cls of LOCKED_CLASSES) {
-      classBox.appendChild(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
+      const card = document.createElement('div');
+      card.className = 'class-pick locked';
+      card.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description)}</p><span class="chip">ARRIVES IN ${esc(cls.milestone)}</span></div>`;
+      classBox.appendChild(card);
     }
-    renderViewToggles();
   }
 
   function renderAppearance() {
     const styleBox = $('#cz-styles');
     styleBox.innerHTML = '';
     for (const style of SPRITE_STYLES) {
-      const button = spriteChoiceButton(style, style.id === state.spriteStyle, () => {
-        state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = `cz-opt style${style.id === state.spriteStyle ? ' chosen' : ''}`;
+      button.textContent = style.name; button.setAttribute('aria-pressed', style.id === state.spriteStyle ? 'true' : 'false');
+      button.addEventListener('click', () => { state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
       styleBox.appendChild(button);
     }
     const tintBox = $('#cz-tints');
     tintBox.innerHTML = '';
     for (const tint of PORTRAIT_TINTS) {
-      const button = tintChoiceButton(tint, tint.id === state.tint, () => {
-        state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = `cz-opt tint${tint.id === state.tint ? ' chosen' : ''}`;
+      button.style.background = tint.css; button.setAttribute('aria-label', tint.name); button.title = tint.name;
+      button.setAttribute('aria-pressed', tint.id === state.tint ? 'true' : 'false');
+      attachTooltip(button, () => esc(tint.name));
+      button.addEventListener('click', () => { state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
       tintBox.appendChild(button);
     }
     const glyphBox = $('#cz-glyphs');
     glyphBox.innerHTML = '';
     for (const glyph of PORTRAIT_GLYPHS) {
-      const button = sigilChoiceButton(glyph, glyph === state.glyph, () => {
-        state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = `cz-opt${glyph === state.glyph ? ' chosen' : ''}`; button.textContent = glyph;
+      button.setAttribute('aria-label', `Sigil ${glyph}`); button.setAttribute('aria-pressed', glyph === state.glyph ? 'true' : 'false');
+      button.addEventListener('click', () => { state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
       glyphBox.appendChild(button);
     }
     const keepsakeBox = $('#cz-keepsakes');
     keepsakeBox.innerHTML = '';
     for (const keepsake of registries.characterCreation.keepsakes) {
-      const button = keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
-        state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces();
-      });
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = `cz-keepsake${keepsake.id === state.keepsakeId ? ' chosen' : ''}`;
+      button.dataset.keepsakeId = keepsake.id; button.setAttribute('aria-pressed', keepsake.id === state.keepsakeId ? 'true' : 'false');
+      button.innerHTML = `<span class="ks-icon">${esc(keepsake.icon)}</span><span><b>${esc(keepsake.name)}</b><small>${esc(keepsake.desc)}</small></span>`;
+      button.addEventListener('click', () => { state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces(); });
       keepsakeBox.appendChild(button);
     }
   }
@@ -494,13 +341,9 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     armourBox.innerHTML = '';
     for (const piece of armourChoices()) {
       const button = pieceChip(registries, piece, { selected: piece.id === state.startingArmourId });
-      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
       button.dataset.startingArmourId = piece.id;
       button.setAttribute('aria-pressed', piece.id === state.startingArmourId ? 'true' : 'false');
-      button.addEventListener('click', () => {
-        state.startingArmourId = piece.id;
-        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('armour');
-      });
+      button.addEventListener('click', () => { state.startingArmourId = piece.id; renderEquipment(); renderCharacterPreview(); refreshFaces(); });
       armourBox.appendChild(button);
     }
     for (const hand of ['leftHand', 'rightHand']) {
@@ -508,12 +351,11 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       box.innerHTML = '';
       for (const piece of creationHandChoices(registries, state.classId, hand)) {
         const button = pieceChip(registries, piece, { selected: state.startingHands[hand] === piece.id });
-        markUiComponent(button, UI.equipmentChoiceCard, hand);
         button.dataset.hand = hand; button.dataset.armamentId = piece.id;
         button.setAttribute('aria-pressed', state.startingHands[hand] === piece.id ? 'true' : 'false');
         button.addEventListener('click', () => {
           state.startingHands = selectStartingHand(state.startingHands, hand, piece.id);
-          renderEquipment(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(hand);
+          renderEquipment(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         });
         box.appendChild(button);
       }
@@ -521,96 +363,17 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     const relicBox = $('#cz-relics');
     relicBox.innerHTML = '';
     for (const relic of creationRelicChoices(registries, state.classId)) {
-      const button = relicChoiceButton(relic, relicText(relic, registries), relic.id === state.startingRelicId, () => {
-        state.startingRelicId = relic.id;
-        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('relic');
-      });
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = `cc-relic-card${relic.id === state.startingRelicId ? ' chosen' : ''}`;
+      button.dataset.relicId = relic.id; button.setAttribute('aria-pressed', relic.id === state.startingRelicId ? 'true' : 'false');
+      button.innerHTML = `<span>${esc(relic.icon || '◆')}</span><b>${esc(relic.name)}</b><small>${esc(relicText(relic, registries))}</small>`;
+      button.addEventListener('click', () => { state.startingRelicId = relic.id; renderEquipment(); renderCharacterPreview(); refreshFaces(); });
       relicBox.appendChild(button);
     }
-    for (const section of equipmentSections.filter((row) => row.kind === 'slot')) {
-      const box = equipmentNodes.get(section.id).querySelector('.cc-card-selectors');
-      if (!box.childElementCount) {
-        const empty = document.createElement('p');
-        empty.className = 'cc-empty-slot';
-        empty.textContent = 'No starting options in this build. Content added to this slot will appear here.';
-        box.appendChild(empty);
-      }
-    }
-    for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = state.equipmentChoiceView;
-    refreshEquipmentFaces();
   }
-
-  function advanceEquipment(sectionId) {
-    if (!state.equipmentAutoAdvance || !equipmentFold) return;
-    const index = equipmentSections.findIndex((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
-    const next = equipmentSections.slice(index + 1).find((section) => section.kind !== 'slot');
-    if (!next) return;
-    equipmentFold.open(next.id);
-    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${next.id}"]`)));
-  }
-
-  const selectedRow = (id, rows) => rows.find((row) => row.id === id);
-  const spriteRows = [
-    { key: 'sigil', label: 'SIGIL', node: $('#cz-sigil-group'), value: () => state.glyph },
-    { key: 'tint', label: 'TINT', node: $('#cz-tint-group'), value: () => (
-      selectedRow(state.tint, PORTRAIT_TINTS)?.name || state.tint
-    ) },
-  ];
-  const spriteFold = mountDisclosure($('#cz-sprite-fold'), spriteRows.map((row) => ({
-    key: row.key, kind: 'pick', disclosure: 'face',
-    face: { label: row.label, value: row.value() },
-    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
-  refreshSpriteFaces = () => {
-    for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
-  };
-
-  const characterRows = [
-    { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
-      selectedRow(state.attributeMode, registries.creationModes.all())?.label || state.attributeMode
-    ) },
-    { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
-      selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
-    ) },
-    { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
-      selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || state.keepsakeId
-    ) },
-  ];
-  const characterFold = mountDisclosure($('#cz-character-fold'), characterRows.map((row) => ({
-    key: row.key, kind: 'pick', disclosure: 'face',
-    face: { label: row.label, value: row.value() },
-    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
-  markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
-  refreshCharacterFaces = () => {
-    for (const row of characterRows) characterFold.setValue(row.key, row.value());
-  };
-  characterFold.open('primary');
-
-  const equipmentValue = (section) => {
-    if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
-      row.classId === state.classId && row.id === state.startingArmourId
-    ))?.name || 'None';
-    if (section.kind === 'relic') return creationRelicChoices(registries, state.classId).find((row) => row.id === state.startingRelicId)?.name || 'None';
-    if (section.kind === 'slot') return 'None';
-    const id = state.startingHands[section.slot];
-    return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty';
-  };
-  const equipmentFaces = new Map(equipmentSections.map((section) => [
-    section.id, selectionSectionFace(section.label, equipmentValue(section)),
-  ]));
-  equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSections.map((section) => ({
-    key: section.id, kind: 'pick', disclosure: 'face',
-    face: { node: equipmentFaces.get(section.id).node },
-    reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-  })));
-  refreshEquipmentFaces = () => {
-    for (const section of equipmentSections) equipmentFaces.get(section.id).setValue(equipmentValue(section));
-  };
-  equipmentFold.open(equipmentSections[0].id);
 
   resetClassChoices();
-  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
+  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview();
 
   const panels = {
     class: $('#cz-class-panel'), character: $('#cz-character-panel'),
@@ -630,151 +393,16 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   if (catalog) {
     const flow = $('.cz-flow');
     const fragment = document.createDocumentFragment();
-    const appendCatalogItem = (row, kind) => {
+    for (const row of sectionRows) {
       const article = document.createElement('article');
       article.className = 'cc-catalog-item';
       article.dataset.catalogComponent = row.key;
       const headingId = `cc-catalog-${row.key}`;
-      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>${esc(kind)}</span></header>`;
+      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>LIVE COMPONENT</span></header>`;
       row.node.setAttribute('aria-labelledby', headingId);
       article.appendChild(row.node);
       fragment.appendChild(article);
-    };
-    for (const row of sectionRows) appendCatalogItem(row, 'LIVE SECTION');
-
-    const choiceSpecimen = (className, choices, idFor, renderer, initial) => {
-      const host = document.createElement('div');
-      host.className = `cc-catalog-specimen ${className}`;
-      let selected = initial;
-      const draw = () => host.replaceChildren(...choices.map((choice) => renderer(
-        choice, idFor(choice) === selected, () => { selected = idFor(choice); draw(); },
-      )));
-      draw();
-      return host;
-    };
-    const specimenRun = previewRun();
-    const specimenProjection = statProjection(registries, specimenRun);
-    const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
-      projection: specimenProjection,
-      equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
-    });
-    const disclosureHost = document.createElement('div');
-    disclosureHost.className = 'cc-character-fold cc-catalog-specimen cz-disc';
-    const disclosureStat = document.createElement('div');
-    disclosureStat.className = 'cc-character-picker';
-    disclosureStat.appendChild(primaryStatCard(specimenAttributes[0]));
-    const disclosureKeepsake = document.createElement('div');
-    disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
-    let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
-    const drawDisclosureKeepsakes = () => disclosureKeepsake.replaceChildren(...registries.characterCreation.keepsakes.slice(0, 2).map((keepsake) => keepsakeChoiceButton(
-      keepsake, keepsake.id === disclosureKeepsakeId,
-      () => { disclosureKeepsakeId = keepsake.id; drawDisclosureKeepsakes(); },
-    )));
-    drawDisclosureKeepsakes();
-    const disclosureSpecimen = mountDisclosure(disclosureHost, [
-      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Standard' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
-      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
-    ]);
-    markUiComponent(disclosureHost, UI.characterDisclosure);
-    disclosureSpecimen.open('sample-primary');
-    const statHost = document.createElement('div');
-    statHost.className = 'cc-primary-stats cc-catalog-specimen';
-    statHost.append(...specimenAttributes.map(primaryStatCard));
-    const classChoiceSpecimen = document.createElement('div');
-    classChoiceSpecimen.className = 'cc-class-selection cc-catalog-specimen';
-    const classChoiceHost = document.createElement('div');
-    classChoiceHost.className = 'class-row';
-    classChoiceHost.dataset.view = 'list';
-    let specimenClassId = state.classId;
-    const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
-      selected: cls.id === specimenClassId,
-      visual: classGlyph(cls.id),
-      onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
-    })));
-    drawClassChoices();
-    classChoiceSpecimen.appendChild(classChoiceHost);
-    const previewRelic = registries.relics.get(state.startingRelicId);
-    const classPreviewHost = classPreviewPane({
-      cls: registries.classes.get(state.classId),
-      sprite: classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered'),
-      resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
-      relic: previewRelic,
-      relicDescription: relicText(previewRelic, registries),
-    });
-    classPreviewHost.classList.add('cc-catalog-specimen');
-    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
-    classResourceSpecimen.classList.add('cc-catalog-specimen');
-    let viewToggleHost = null;
-    const setCatalogView = (mode) => {
-      const next = viewModeToggle(mode, setCatalogView, 'Catalog view choice');
-      next.classList.add('cc-catalog-specimen');
-      if (viewToggleHost) viewToggleHost.replaceWith(next);
-      viewToggleHost = next;
-    };
-    setCatalogView('list');
-    let autoAdvanceSpecimen = null;
-    const setCatalogAutoAdvance = (value) => {
-      const next = booleanSettingToggle('Auto-advance on valid choice', value, setCatalogAutoAdvance);
-      next.classList.add('cc-catalog-specimen');
-      if (autoAdvanceSpecimen) autoAdvanceSpecimen.replaceWith(next);
-      autoAdvanceSpecimen = next;
-    };
-    setCatalogAutoAdvance(true);
-    const armourSpecimen = document.createElement('div');
-    armourSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
-    armourSpecimen.dataset.view = 'list';
-    const specimenArmours = armourChoices().slice(0, 2);
-    let specimenArmourId = specimenArmours[0].id;
-    const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
-      const button = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
-      button.setAttribute('aria-pressed', piece.id === specimenArmourId ? 'true' : 'false');
-      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
-      button.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
-      return button;
-    }));
-    drawArmourChoices();
-    const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
-    const relicSpecimen = document.createElement('div');
-    relicSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
-    let specimenRelicId = specimenRelics[0].id;
-    const drawRelicChoices = () => relicSpecimen.replaceChildren(...specimenRelics.map((relic) => relicChoiceButton(
-      relic, relicText(relic, registries), relic.id === specimenRelicId,
-      () => { specimenRelicId = relic.id; drawRelicChoices(); },
-    )));
-    drawRelicChoices();
-    const selectionFaceSpecimen = selectionSectionFace('STARTING ARMOUR', 'Ashen Vigil').node;
-    selectionFaceSpecimen.classList.add('cc-catalog-specimen');
-    const specimens = [
-      { key: 'character-disclosure', label: 'CHARACTER SUB-DISCLOSURE', node: disclosureHost },
-      { key: 'class-preview-pane', label: 'CLASS PREVIEW PANE', node: classPreviewHost },
-      { key: 'class-resource-grid', label: 'CLASS RESOURCE GRID', node: classResourceSpecimen },
-      { key: 'class-choice-card', label: 'CLASS CHOICE CARD', node: classChoiceSpecimen },
-      { key: 'view-mode-toggle', label: 'LIST / GRID TOGGLE', node: viewToggleHost },
-      { key: 'boolean-setting-toggle', label: 'BOOLEAN SETTING TOGGLE', node: autoAdvanceSpecimen },
-      { key: 'selection-section-face', label: 'SELECTION SUBCARD FACE', node: selectionFaceSpecimen },
-      { key: 'primary-stat-card', label: 'PRIMARY STAT CARD', node: statHost },
-      { key: 'resource-strip', label: 'RESOURCE STRIP', node: resourceStrip(
-        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
-      ) },
-      { key: 'mode-choice', label: 'STANDARD / ASSIGN POINTS', node: choiceSpecimen(
-        'se-modes', registries.creationModes.all(), (row) => row.id, modeChoiceButton, state.attributeMode,
-      ) },
-      { key: 'sprite-choice', label: 'SPRITE CHOICE', node: choiceSpecimen(
-        'cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,
-      ) },
-      { key: 'tint-choice', label: 'TINT SWATCH', node: choiceSpecimen(
-        'cz-opts', PORTRAIT_TINTS, (row) => row.id, tintChoiceButton, state.tint,
-      ) },
-      { key: 'sigil-choice', label: 'SIGIL CHOICE', node: choiceSpecimen(
-        'cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
-      ) },
-      { key: 'keepsake-choice', label: 'KEEPSAKE CARD', node: choiceSpecimen(
-        'cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
-      ) },
-      { key: 'equipment-choice-card', label: 'EQUIPMENT CHOICE CARD', node: armourSpecimen },
-      { key: 'relic-choice-card', label: 'RELIC CHOICE CARD', node: relicSpecimen },
-    ];
-    for (const row of specimens) appendCatalogItem(row, 'REUSABLE COMPONENT');
+    }
     flow.replaceChildren(fragment);
   } else {
     fold = mountDisclosure($('.cz-flow'), sectionRows.map((row) => ({
@@ -782,7 +410,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
     })));
-    refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
+    refreshFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
     fold.open('class');
   }
 

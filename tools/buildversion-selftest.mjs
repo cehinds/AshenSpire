@@ -165,22 +165,19 @@ const PLANTS = [
     name: 'the shared HUD owner stops deriving the build stamp',
     row: 'C THREE CONSUMERS',
     plant: (root) => edit(root, 'src/ui/components/hudmeta.js',
-      (t) => t.replace(
-        '${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}',
-        '${""}',
-      )),
+      (t) => t.replace('${buildStampHtml(place)}', '${""}')),
   },
   {
     name: 'map stops mounting the shared stamp owner',
     row: 'C THREE CONSUMERS',
     plant: (root) => edit(root, 'src/ui/screens/map.js',
-      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
+      (t) => t.replace('${hudShellHtml({', '${(() => "")({')),
   },
   {
     name: 'combat stops mounting the shared stamp owner',
     row: 'C THREE CONSUMERS',
     plant: (root) => edit(root, 'src/ui/screens/combat.js',
-      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
+      (t) => t.replace('${hudShellHtml({', '${(() => "")({')),
   },
   {
     name: 'the build grows an input outside the digest\'s roots',

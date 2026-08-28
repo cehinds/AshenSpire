@@ -53,10 +53,8 @@ import { mountHand } from '../components/hand.js';
 import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
 import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
 import { friendlyTargetPlan } from '../../model/friendlyTargets.js';
-import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 
-export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
+export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
   let snap = null;
@@ -424,11 +422,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     app.innerHTML = `
       <div class="combat coop">
         <header class="topbar combat-hud">
-          ${hudQuickSettingsHtml(hudQuickSettingsModel({
-            place: 'combat',
-            presentation: registries.balance.ui.hudQuickSettings,
-            settings: meta.settings || {},
-          }))}
           <div class="hud-top">
             <div class="resbars-host"></div>
             <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
@@ -459,7 +452,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         </div>
         <div class="fx-layer"></div>
       </div>`;
-    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
     // The active seat gets the same main-HUD plan as solo. Values come only
     // from the host snapshot; a missing current/max pair produces no bar.
@@ -651,11 +643,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
-          ${hudQuickSettingsHtml(hudQuickSettingsModel({
-            place: 'map',
-            presentation: registries.balance.ui.hudQuickSettings,
-            settings: meta.settings || {},
-          }))}
           <span class="mh-stat mh-prog">${snap.actNumber > 3 ? `Act ${snap.actNumber}` : `Act ${snap.actNumber} / 3`} · Floor ${snap.floor}</span>
           <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(snap.seedString)}</span>
           ${voteLine}
@@ -663,7 +650,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
       </div>`;
-    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
     if (mapBoard) mapBoard.teardown();
     mapBoard = mountMapBoard(app.querySelector('.mapscreen'), {
