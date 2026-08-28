@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.continuity.team.v1",
+  "title": "AshenSpire continuity team",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "owner", "writerPolicy", "activeTicketIds"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.continuity.team.v1" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "taskId"],
+      "properties": {
+        "role": { "type": "string", "minLength": 1 },
+        "taskId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "writerPolicy": { "const": "ONE_WRITER_PER_PATH" },
+    "activeTicketIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

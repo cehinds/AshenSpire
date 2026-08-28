@@ -797,6 +797,20 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   else zoomExtra++;
 }
 
+// 77 — repository-native continuity starts from one bounded pointer graph.
+// This is a filesystem/schema/integrity contract only. It proves no external
+// ledger migration, live board state, task transport, or integration outcome.
+{
+  const { runContinuityReconcileContract } = await import('./continuity-reconcile.test.mjs');
+  const continuity = runContinuityReconcileContract();
+  console.log(
+    `${continuity.ok ? 'PASS' : 'FAIL'}  77. the continuity pointer selects one bounded, hash-locked team and ticket graph` +
+      ` — ${continuity.detail}`
+  );
+  if (continuity.ok) zoomPassed++;
+  else zoomExtra++;
+}
+
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
@@ -892,4 +906,7 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
+console.log('          77 reads one repository-local pointer graph and its refusal corpus. It');
+console.log('          does not import projectless ledgers, observe a live task or board, or');
+console.log('          authorize migration, integration, publication, deployment, or release.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

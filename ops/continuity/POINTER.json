@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "ashenspire.continuity.pointer.v1",
+  "revision": 1,
+  "updatedAtUtc": "2026-08-28T07:03:38Z",
+  "previousHistoryId": null,
+  "current": {
+    "teamId": "coordination",
+    "ticketId": "COORDINATION-STRUCTURE-RESET",
+    "team": {
+      "path": "teams/coordination/team.json",
+      "sha256": "E7BEF808B188A22A505172C74A75BC670B0573E9AAF3FA4E96EB8C6EEEA6AB09"
+    },
+    "ticket": {
+      "path": "tickets/COORDINATION-STRUCTURE-RESET/ticket.json",
+      "sha256": "39F303A1C9A9C07F52E6342ACCC9BF17B461054004BBB810E1881A2EBA640108"
+    },
+    "history": {
+      "path": "history/000001-coordination-structure-reset-entered.json",
+      "sha256": "DC9F8E98093277B6232EC89AB9CE5A94E92C865CA5FE8806AC16FED42355F4FF"
+    },
+    "evidence": {
+      "path": "evidence/coordination-structure-reset-entered-work-2026-08-28.md",
+      "sha256": "06B689272A3D78449E8764B12F663FC895B367FD9EDAADC33B79CAB1113192D7"
+    }
+  }
+}

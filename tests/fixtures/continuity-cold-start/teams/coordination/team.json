@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "ashenspire.continuity.team.v1",
+  "id": "coordination",
+  "name": "Cold Start Coordination",
+  "owner": {
+    "role": "Fixture Owner",
+    "taskId": "fixture-task"
+  },
+  "writerPolicy": "ONE_WRITER_PER_PATH",
+  "activeTicketIds": [
+    "COLD-START"
+  ]
+}
