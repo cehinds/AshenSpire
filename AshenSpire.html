@@ -5749,7 +5749,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .topbar.combat-hud.shared-hud .resbars-host > .resbars {
   height: 100%;
-  justify-content: space-between;
+}
+.topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) .resbars-host > .resbars {
+  gap: 0;
+  justify-content: space-evenly;
 }
 .topbar.combat-hud.shared-hud .hud-control-grid {
   grid-column: 2;
@@ -41595,7 +41598,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '62920f5895';
+const SOURCE = '3ef87d99d8';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41629,7 +41632,7 @@ const SOURCE = '62920f5895';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1407';
+const ORDINAL = '1426';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
