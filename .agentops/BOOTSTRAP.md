@@ -39,6 +39,22 @@ extra hop.
 Human-readable views under `generated/` are produced from these JSON files and
 carry no authority of their own.
 
+## Runtime state (per active ticket)
+
+| Artifact | Lives in |
+|---|---|
+| Work capsule (compact current state, sealed with a CAS `current_hash`) | `work/<ticket>/CURRENT.json` |
+| Writer lease (one writer per overlapping path/ref) | `leases/<lease-id>.json` |
+| Append-only event (transition receipt) | `events/<ticket>/<event-id>.json` |
+
+Resume an actor onto a ticket with the token-bounded wake compiler — it reads
+only what that action needs and prints one disposable capsule (never committed):
+
+```sh
+node .agentops/tools/opsctl.mjs wake --actor <role> --work <ticket>
+# e.g. wake --actor maker --work AS-1001
+```
+
 ## Validate before you trust
 
 ```sh
@@ -66,11 +82,12 @@ and overriding an independent QA verdict. See
 
 ## Installed stage
 
-`operational-governance`. The governance kernel (owner intent, hierarchy,
-roles, authority, git-ownership) plus the Stage-2 operational contracts (RACI,
-delegation, escalation, transitions, information-access, QA, evidence) are
-installed and validated. Deferred to later stages (see `project.json →
-deferred_next_stages`): the `opsctl wake` token/context compiler; the
-`work/<ticket>/CURRENT.json` capsules and append-only events; writer leases
-with compare-and-swap; the owner-command workflows; and the read-only Owner HUD
-on GitHub Pages.
+`runtime-capsules`. The governance kernel (owner intent, hierarchy, roles,
+authority, git-ownership), the operational contracts (RACI, delegation,
+escalation, transitions, information-access, QA, evidence), and the runtime
+layer (work capsules, writer leases, append-only events, and the `opsctl wake`
+token-bounded compiler) are installed and validated. Deferred to later stages
+(see `project.json → deferred_next_stages`): clean-clone / context-wipe
+reconstruction drills; the authenticated owner-command workflows; the read-only
+Owner HUD on GitHub Pages; migration tooling for existing work; and the exact
+`dev` → `main` promotion decision.

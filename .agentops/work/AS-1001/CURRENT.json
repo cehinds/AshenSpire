@@ -1,0 +1,47 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 1,
+  "current_hash": "sha256:5f90465cc35dc8494e9a5e169b24a7f4c07097a6cfbf6ef0b5e65bdb0f1c2b4b",
+  "parent_hash": null,
+  "ticket": "AS-1001",
+  "lifecycle_state": "in-progress",
+  "objective": "Seed and validate the AgentOps runtime capsule / lease / event model and the opsctl wake compiler.",
+  "done_when": "Runtime schemas, one sealed work capsule, its writer lease, and an append-only event chain validate green, and opsctl wake emits a bounded capsule under the startup token limit.",
+  "next_action": "Run node .agentops/tools/opsctl.mjs verify and opsctl wake --actor maker --work AS-1001, then open the draft PR.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "claude/ashenspire-agentops-stage3-capsules",
+  "base_oid": "985664c2439c373a4d38604b8a53e223c8b8da61",
+  "tree": "seed-illustrative-tree",
+  "expected_dirty_state": "clean",
+  "owner_actor": "maker",
+  "writer_lease": "lease-AS-1001-maker",
+  "affected_paths": [
+    ".agentops/schemas/**",
+    ".agentops/tools/**",
+    ".agentops/work/**"
+  ],
+  "evidence_pointers": [
+    "test-run-receipt",
+    "generated-view-drift-check"
+  ],
+  "blocker": null,
+  "authority": {
+    "may": [
+      "implement-locally-on-exclusive-paths",
+      "run-tests-and-builds",
+      "commit-on-isolated-branch"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths"
+    ],
+    "expiry": "2026-09-30T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-1001 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}

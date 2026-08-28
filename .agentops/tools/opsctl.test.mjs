@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash } from './opsctl.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -31,7 +31,26 @@ function check(name, cond, detail = '') {
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 20 plants', s.results.length >= 20, String(s.results.length));
+  check('selftest exercises >= 28 plants', s.results.length >= 28, String(s.results.length));
+}
+
+// 2b. Runtime: the seed ticket loads, its capsule is sealed, and the wake
+// compiler emits a bounded capsule under the startup token budget.
+{
+  const rt = loadRuntime();
+  check('runtime loads with zero errors', rt.errors.length === 0, rt.errors.join(' | '));
+  check('seed ticket AS-1001 capsule present', !!rt.capsules['AS-1001']);
+  if (rt.capsules['AS-1001']) {
+    const cap = rt.capsules['AS-1001'];
+    check('AS-1001 capsule seal matches its content', cap.current_hash === computeCapsuleHash(cap));
+  }
+  const w = runWake(ROOT, 'maker', 'AS-1001');
+  check('wake succeeds for maker/AS-1001', (!w.errors || w.errors.length === 0), (w.errors || []).join(' | '));
+  check('wake capsule under startup token hard limit (1500)', w.tokens !== undefined && w.tokens <= 1500, String(w.tokens));
+  check('wake capsule within startup target (1200)', w.tokens !== undefined && w.tokens <= 1200, String(w.tokens));
+  check('wake capsule names the ticket and IDENTITY', !!w.text && w.text.includes('AS-1001') && w.text.includes('IDENTITY'));
+  const wrongActor = runWake(ROOT, 'data-architecture-lead', 'AS-1001');
+  check('wake refuses an actor that does not own the capsule', wrongActor.errors && wrongActor.errors.length > 0);
 }
 
 // 3. The committed generated view has no drift from validated JSON.

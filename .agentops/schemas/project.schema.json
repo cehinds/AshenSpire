@@ -22,6 +22,7 @@
     "control_plane_root": {"type": "string", "minLength": 1},
     "installed_stage": {"type": "string", "minLength": 1},
     "installed_contracts": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "runtime_artifacts": {"type": "object"},
     "deferred_next_stages": {"type": "array", "items": {"type": "string"}}
   }
 }
