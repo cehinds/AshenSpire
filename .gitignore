@@ -14,3 +14,12 @@ npm-debug.log*
 # Local scratch — never commit balance notes or saves from here
 scratch/
 *.local.*
+
+# dist: keep the stable standalone (dist/AshenSpire.html — the root README links
+# it as the canonical twin of the root current-build alias); the version-stamped copies the launcher emits are build
+# artifacts. The name here MUST match what tools/launch.mjs:53 writes: this rule
+# read `EldenSpire-*` after the rename, matched nothing, and one build artifact
+# was committed for it. Verify with:
+#   node tools/launch.mjs --build-only && git status --short dist
+dist/AshenSpire-*.html
+.coop-session.json

@@ -1,0 +1,525 @@
+{
+  "armaments": {
+    "ashStaff": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffOrb",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_ashStaff.webp",
+        "icon_ashStaff.webp"
+      ]
+    },
+    "battleaxe": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "axe",
+        "metal": "A8A090",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_battleaxe.webp",
+        "icon_battleaxe.webp"
+      ]
+    },
+    "blightRod": {
+      "fields": {
+        "accent": "B5541C",
+        "geom": "staffOrb",
+        "metal": "4B3522",
+        "scale": "0.95"
+      },
+      "files": [
+        "weapon_blightRod.webp",
+        "icon_blightRod.webp"
+      ]
+    },
+    "boneSceptre": {
+      "fields": {
+        "accent": "B5541C",
+        "geom": "staffSkull",
+        "metal": "B8AE98",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_boneSceptre.webp",
+        "icon_boneSceptre.webp"
+      ]
+    },
+    "buckler": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "round",
+        "metal": "8E8678",
+        "scale": "0.80"
+      },
+      "files": [
+        "weapon_buckler.webp",
+        "icon_buckler.webp"
+      ]
+    },
+    "dagger": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "dagger",
+        "metal": "C0B8A6",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_dagger.webp",
+        "icon_dagger.webp"
+      ]
+    },
+    "emberlightSceptre": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffFlame",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_emberlightSceptre.webp",
+        "icon_emberlightSceptre.webp"
+      ]
+    },
+    "goldboughBranch": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffBranch",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_goldboughBranch.webp",
+        "icon_goldboughBranch.webp"
+      ]
+    },
+    "gorefireBrand": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "staffFlame",
+        "metal": "4B3522",
+        "scale": "0.95"
+      },
+      "files": [
+        "weapon_gorefireBrand.webp",
+        "icon_gorefireBrand.webp"
+      ]
+    },
+    "greatsword": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "colossal",
+        "metal": "B8B0A0",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_greatsword.webp",
+        "icon_greatsword.webp"
+      ]
+    },
+    "halberd": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "polearm",
+        "metal": "A8A090",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_halberd.webp",
+        "icon_halberd.webp"
+      ]
+    },
+    "katana": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "curved",
+        "metal": "C6BEAC",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_katana.webp",
+        "icon_katana.webp"
+      ]
+    },
+    "kiteShield": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "kite",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_kiteShield.webp",
+        "icon_kiteShield.webp"
+      ]
+    },
+    "lantern": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "lantern",
+        "metal": "6B5D45",
+        "scale": "0.85"
+      },
+      "files": [
+        "weapon_lantern.webp",
+        "icon_lantern.webp"
+      ]
+    },
+    "parryDagger": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "dagger",
+        "metal": "C0B8A6",
+        "scale": "0.85"
+      },
+      "files": [
+        "weapon_parryDagger.webp",
+        "icon_parryDagger.webp"
+      ]
+    },
+    "roundShield": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "round",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_roundShield.webp",
+        "icon_roundShield.webp"
+      ]
+    },
+    "spikedShield": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "spiked",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_spikedShield.webp",
+        "icon_spikedShield.webp"
+      ]
+    },
+    "starstoneStaff": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "staffCrystal",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_starstoneStaff.webp",
+        "icon_starstoneStaff.webp"
+      ]
+    },
+    "straightSword": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "sword",
+        "metal": "B8B0A0",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_straightSword.webp",
+        "icon_straightSword.webp"
+      ]
+    },
+    "torch": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "torch",
+        "metal": "6B5D45",
+        "scale": "0.90"
+      },
+      "files": [
+        "weapon_torch.webp",
+        "icon_torch.webp"
+      ]
+    },
+    "towerShield": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "tower",
+        "metal": "7E766A",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_towerShield.webp",
+        "icon_towerShield.webp"
+      ]
+    },
+    "twinblade": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "twin",
+        "metal": "C0B8A6",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_twinblade.webp",
+        "icon_twinblade.webp"
+      ]
+    },
+    "warhammer": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "hammer",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_warhammer.webp",
+        "icon_warhammer.webp"
+      ]
+    },
+    "wyrmhornStaff": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffHorn",
+        "metal": "B8AE98",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_wyrmhornStaff.webp",
+        "icon_wyrmhornStaff.webp"
+      ]
+    }
+  },
+  "armour": {
+    "herald/default": {
+      "fields": {
+        "leather": "4B3522",
+        "plate": "2E1F1F",
+        "plateLt": "3A2A2A"
+      },
+      "files": [
+        "body_herald_default.webp"
+      ]
+    },
+    "herald/emberhabit": {
+      "fields": {
+        "leather": "3A2618",
+        "plate": "6E3212",
+        "plateLt": "B4602A"
+      },
+      "files": [
+        "body_herald_emberhabit.webp"
+      ]
+    },
+    "herald/ossuary": {
+      "fields": {
+        "leather": "2A2622",
+        "plate": "3A3630",
+        "plateLt": "555047"
+      },
+      "files": [
+        "body_herald_ossuary.webp"
+      ]
+    },
+    "herald/pilgrim": {
+      "fields": {
+        "leather": "3A3226",
+        "plate": "44483A",
+        "plateLt": "747A5C"
+      },
+      "files": [
+        "body_herald_pilgrim.webp"
+      ]
+    },
+    "reaver/default": {
+      "fields": {
+        "leather": "4B3522",
+        "plate": "3E6157",
+        "plateLt": "64907F",
+        "under": "332A1E"
+      },
+      "files": [
+        "body_reaver_default.webp"
+      ]
+    },
+    "reaver/oathsworn": {
+      "fields": {
+        "leather": "5A4626",
+        "plate": "B39C5E",
+        "plateLt": "E0CB8C",
+        "under": "3A3020"
+      },
+      "files": [
+        "body_reaver_oathsworn.webp"
+      ]
+    },
+    "reaver/vigil": {
+      "fields": {
+        "leather": "241C16",
+        "plate": "302B25",
+        "plateLt": "4A433A",
+        "under": "1A1712"
+      },
+      "files": [
+        "body_reaver_vigil.webp"
+      ]
+    },
+    "reaver/warden": {
+      "fields": {
+        "leather": "3A3226",
+        "plate": "3F4C5A",
+        "plateLt": "64798E",
+        "under": "24272A"
+      },
+      "files": [
+        "body_reaver_warden.webp"
+      ]
+    },
+    "rogue/default": {
+      "fields": {
+        "leather": "3C2E25",
+        "plate": "303A35",
+        "plateLt": "52665D",
+        "under": "1D211F"
+      },
+      "files": [
+        "body_rogue_default.webp"
+      ]
+    },
+    "rogue/duelist": {
+      "fields": {
+        "leather": "43362C",
+        "plate": "46515A",
+        "plateLt": "78909A",
+        "under": "25282A"
+      },
+      "files": [
+        "body_rogue_duelist.webp"
+      ]
+    },
+    "rogue/nightveil": {
+      "fields": {
+        "leather": "211F25",
+        "plate": "20272A",
+        "plateLt": "3B4B4A",
+        "under": "151719"
+      },
+      "files": [
+        "body_rogue_nightveil.webp"
+      ]
+    },
+    "rogue/shadow": {
+      "fields": {
+        "leather": "2A2430",
+        "plate": "292136",
+        "plateLt": "534066",
+        "under": "17131F"
+      },
+      "files": [
+        "body_rogue_shadow.webp"
+      ]
+    },
+    "starseer/astral": {
+      "fields": {
+        "plate": "4E1747",
+        "plateLt": "9327A0"
+      },
+      "files": [
+        "body_starseer_astral.webp"
+      ]
+    },
+    "starseer/default": {
+      "fields": {
+        "plate": "17294F",
+        "plateLt": "26406E"
+      },
+      "files": [
+        "body_starseer_default.webp"
+      ]
+    },
+    "starseer/eclipse": {
+      "fields": {
+        "plate": "1C1A2E",
+        "plateLt": "2E2B47"
+      },
+      "files": [
+        "body_starseer_eclipse.webp"
+      ]
+    },
+    "starseer/starlit": {
+      "fields": {
+        "plate": "4A5E96",
+        "plateLt": "93AEE2"
+      },
+      "files": [
+        "body_starseer_starlit.webp"
+      ]
+    }
+  },
+  "audit": {
+    "method": {
+      "alphaMin": 0.9,
+      "averaging": "mean of sRGB over opaque pixels, THEN convert to Oklab",
+      "capabilities": "supports: is this pair separated at all, in lightness. does NOT support: any hue claim below chroma 0.03, any claim about WHICH pair is closest (the whole-figure mean disagrees with a per-pixel measure of the same images in 2 of 3 classes: probe D7b), or any claim that a repaint happened (probe D8: a total hue inversion of a shipped asset reads as 0.44x the tightest real pair).",
+      "colorspaceNote": "body_lab applies to_srgb() to values that are already sRGB-encoded (double gamma). Reproduced to 0.04% on all three classes: probe checks D1a/D1b. Chroma here is low by a median of 27.6% vs what the browser shows, range 18.9-51.8% across the twelve figures \u2014 systematic but NOT uniform, which is why one figure crosses the chroma guard on the encode alone (D2b). Numbers in this block describe a desaturated picture, not the game's.",
+      "colorspaceSuspect": true,
+      "gate": "bash tools/palette-check.sh",
+      "note": "measures the WHOLE figure, so shared unpainted surfaces (the reaver's always-gold cape) dilute it; a masked render is the correct instrument and is not built",
+      "sampleStride": "every 4th pixel (16 floats)",
+      "source": "rendered pixels of body_<class>_<set>.webp",
+      "space": "Oklab (CIE76-style euclidean)",
+      "spriteFilterBoundary": "The armour figure is composited by playerSprite() into .combatant.player > .sprite, and CSS filters that subtree in real game states: .combatant.dead is grayscale(1) (styles/combat.css), and coop .player.down / .coop-pc.dead are grayscale(1) (styles/ui.css). Under grayscale(1) two armour sets are IDENTICAL by construction - chroma is zero and every number here is unreachable. This tool measures the decoded .webp, one transform EARLIER than the delivered pixel, so it is silent about every filtered state. A boundary, not a defect: a dead combatant SHOULD read as drained. What nobody has measured is whether set identity survives the states that are not meant to drain it."
+    },
+    "tightestPairChannels": {
+      "herald": {
+        "dC": 0.0071410358735895865,
+        "dE": 0.04222720860003957,
+        "dHueDeg": 11.71722361572128,
+        "dL": 0.04091937193423567,
+        "hueVerdict": "VALID",
+        "pair": [
+          "ossuary",
+          "pilgrim"
+        ]
+      },
+      "reaver": {
+        "dC": 0.01349629146421006,
+        "dE": 0.02110383465959087,
+        "dHueDeg": 5.709715208316595,
+        "dL": 0.015532392506002468,
+        "hueVerdict": "VALID",
+        "pair": [
+          "default",
+          "warden"
+        ]
+      },
+      "rogue": {
+        "dC": 0.009445505055860386,
+        "dE": 0.014962953275426447,
+        "dHueDeg": 16.109359674032333,
+        "dL": 0.0004997608149597266,
+        "hueVerdict": "VALID",
+        "pair": [
+          "nightveil",
+          "shadow"
+        ]
+      },
+      "starseer": {
+        "dC": 0.010495513393609508,
+        "dE": 0.03543040270888798,
+        "dHueDeg": null,
+        "dL": 0.025977645811370742,
+        "hueVerdict": "HUE_INVALID chroma 0.0077 below guard 0.03",
+        "pair": [
+          "default",
+          "eclipse"
+        ]
+      }
+    },
+    "withinClassMin": {
+      "herald": 0.04222720860003957,
+      "reaver": 0.02110383465959087,
+      "rogue": 0.014962953275426447,
+      "starseer": 0.03543040270888798
+    }
+  }
+}

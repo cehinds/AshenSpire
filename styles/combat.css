@@ -1,0 +1,1691 @@
+/* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
+
+.combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+/* ---------- shared map/combat HUD: THREE ROWS ----------
+   TOP — character/run identity left, Cinders truly centred, progress/build right.
+   RESOURCE — HP/MP/SP + relics left; an equal-cell 2x2 action grid right.
+   BOTTOM — carried potions below the grid's healing + mana cards.
+
+   Law 4, and this block is CONVERTED rather than carried: the old
+   `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
+   header is a box; it gets a px-under-zoom floor and grows intrinsically from
+   what is in it, so it never clips at XL and never balloons. (Ratchet, not
+   sweep — converted because this rule is being rewritten anyway.) */
+.topbar {
+  min-height: calc(52px / var(--ui-zoom, 1)); height: auto;
+  background: var(--bg-raise); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 1.6rem; padding: 0 1.6rem; flex-shrink: 0;
+}
+/* `.topbar` is shared skin. `hudShellHtml` owns the solo map/combat frame; co-op
+   keeps its smaller live-session bar and therefore does not wear `.shared-hud`. */
+.topbar.combat-hud {
+  flex-direction: column; align-items: stretch; justify-content: center;
+  gap: calc(4px / var(--ui-zoom, 1)); padding: calc(4px / var(--ui-zoom, 1)) 1.6rem;
+  position: relative;
+  z-index: 20;
+  overflow: visible;
+}
+/* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
+   THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
+   inside any `.topbar`, and this rule set its height and its fill colour while
+   map.css overrode the width to 15rem — a typed constant standing where a
+   length that ENCODES A MAXIMUM belongs. The map now mounts the shared
+   `.resbars` through ui/components/resbars.js like combat and co-op do.
+   Deleted rather than left inert: a rule matching nothing is a second home
+   waiting for its second copy, and `grep hpbar styles/` should land a reader
+   on the under-model strip, which is the only place the class still lives. */
+.topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
+/* Co-op's compact one-row header remains outside the shared shell. */
+.topbar.combat-hud:not(.shared-hud) .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
+.topbar.combat-hud:not(.shared-hud) .resbars-host {
+  flex: 0 1 calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-top {
+  --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1));
+  --hud-panel-pad: calc(var(--hud-panel-pad-px) / var(--ui-zoom, 1));
+  --hud-control-visual: calc(32px / var(--ui-zoom, 1));
+  --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
+  --hud-utility-visual-size: 2.6rem;
+  display: grid;
+  gap: calc(3px / var(--ui-zoom, 1));
+  min-width: 0;
+}
+
+.shared-hud .hud-mode-grip {
+  position: absolute; z-index: 90; left: 50%; bottom: calc(-22px / var(--ui-zoom, 1));
+  transform: translateX(-50%); box-sizing: border-box;
+  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; border: 0; background: transparent; cursor: ns-resize;
+  display: grid; place-items: start center;
+}
+.shared-hud .hud-mode-grip > span {
+  width: calc(18px / var(--ui-zoom, 1)); height: calc(2px / var(--ui-zoom, 1));
+  border-radius: 999px; background: var(--line); box-shadow: 0 0 0 1px var(--bg-raise);
+  transform: translateY(calc(21px / var(--ui-zoom, 1)));
+}
+.shared-hud .hud-mode-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -9px; }
+
+/* Variant D — Strict Compact HUD
+
+   One intrinsic three-column composition, shared by Map and Combat:
+
+     VITALS              CINDERS             HP  MP  ARMOURY  MENU
+     RELICS               ACT / FLOOR         UTILITY POTIONS
+                          CLASS ICON          FULLSCREEN  MUSIC
+
+   The wrappers become grid-transparent only where their children must enter
+   this one composition. Run Header remains a real center-column component so
+   its three lines cannot scatter across later responsive rules. Other potions
+   own the full second right-rail row. Fullscreen/Music are a compact pair just
+   below the complete HUD, so neither steals a potion cell. */
+:root { --hud-compact-control-cell: var(--tap-floor); }
+:root[data-layout='narrow'] { --hud-compact-control-cell: calc(36px / var(--ui-zoom, 1)); }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 0;
+  gap: 0;
+  padding: calc(5px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+  justify-content: start;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  --compact-gap: calc(2px / var(--ui-zoom, 1));
+  --compact-control-cell: var(--hud-compact-control-cell);
+  --compact-right-step: calc(var(--compact-control-cell) + (var(--compact-gap) * 3) + calc(2px / var(--ui-zoom, 1)));
+  height: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(calc(58px / var(--ui-zoom, 1)), auto) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "vitals center right"
+    "relics center right";
+  column-gap: calc(6px / var(--ui-zoom, 1));
+  row-gap: var(--compact-gap);
+  align-items: start;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] :is(.hud-resource-row, .hud-bottom) { display: contents; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-info-row {
+  grid-area: center;
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(3, min-content);
+  place-content: center;
+  justify-items: center;
+  gap: calc(3px / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-vitals-panel {
+  grid-area: vitals;
+  align-self: start;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .resbars {
+  gap: calc(2px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-relics {
+  grid-area: relics;
+  align-self: end;
+  width: 100%;
+  margin: 0;
+  overflow-x: auto;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-center {
+  order: 1;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: stretch;
+  justify-content: center;
+  width: 100%;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta {
+  order: 2;
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  gap: calc(3px / var(--ui-zoom, 1));
+  font-size: calc(9px / var(--ui-zoom, 1));
+  letter-spacing: 0.02em;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta .build-stamp[data-seed] { display: none !important; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta .hud-progress-total { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta > :not(:first-child)::before {
+  margin-right: calc(3px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity {
+  order: 3;
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: center;
+  gap: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .nm { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .portrait {
+  width: calc(28px / var(--ui-zoom, 1)); height: calc(28px / var(--ui-zoom, 1)); font-size: calc(15px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid {
+  grid-area: right;
+  justify-self: end;
+  align-self: start;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, var(--compact-control-cell));
+  grid-template-rows: var(--compact-control-cell);
+  width: max-content;
+  height: auto;
+  padding: var(--compact-gap);
+  gap: var(--compact-gap);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.hud-actions, .hud-charge-flasks) { display: contents; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.topbar-btn, .flask-slot) {
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions .topbar-btn:nth-child(1) { grid-column: 3; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions .topbar-btn:nth-child(2) { grid-column: 4; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks .flask-slot:nth-child(1) { grid-column: 1; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks .flask-slot:nth-child(2) { grid-column: 2; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions {
+  grid-area: right;
+  justify-self: end;
+  align-self: start;
+  z-index: 2;
+  margin-top: var(--compact-right-step);
+  width: min(100%, calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3)));
+  max-width: calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3));
+  min-height: var(--compact-control-cell);
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--compact-gap);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'][data-has-utility-potions='false'] .hud-potions { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions .flask-slot {
+  box-sizing: border-box;
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
+  display: grid;
+  place-items: center;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions .flask-identity {
+  width: var(--hud-utility-visual-size);
+  height: var(--hud-utility-visual-size);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-settings {
+  position: absolute;
+  top: calc(100% + var(--compact-gap));
+  right: calc(8px / var(--ui-zoom, 1));
+  z-index: 80;
+  margin: 0;
+  flex-direction: column;
+  gap: var(--compact-gap);
+  width: var(--compact-control-cell);
+  max-width: none;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-setting {
+  flex: 0 0 var(--compact-control-cell);
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
+}
+/* End Variant D */
+
+.topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(8px / var(--ui-zoom, 1));
+}
+:root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(9px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud .hud-info-row {
+  display: grid;
+  /* Three negotiating tracks: identity, centered Cinders, and metadata.
+     Cinders and metadata are each capped by data-owned viewport widths; the
+     side tracks still flex so the three components influence one another. */
+  grid-template-columns: minmax(0, 1fr) fit-content(var(--hud-cinders-max-width)) minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  container: run-header / inline-size;
+}
+.topbar.combat-hud.shared-hud .hud-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-identity .nm {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar.combat-hud.shared-hud .hud-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted); font-size: calc(11px / var(--ui-zoom, 1));
+  letter-spacing: 0.08em; white-space: nowrap;
+  min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar.combat-hud .hud-cinders { color: var(--gold); }
+.topbar.combat-hud.shared-hud .hud-run-meta {
+  justify-self: end;
+  width: min(100%, var(--hud-metadata-max-width));
+  max-width: var(--hud-metadata-max-width);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 0.5rem 0.8rem;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(var(--hud-metadata-font-px) / var(--ui-zoom, 1));
+  line-height: 1;
+  letter-spacing: 0.06em;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: inline; }
+:root[data-hud-metadata-show-totals='false'] .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
+.topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed] {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before {
+  content: '· SEED ' attr(data-seed);
+  order: 2;
+  margin-inline: 0.8rem;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number { order: 1; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number::before { content: '·'; margin-right: 0.8rem; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-source { order: 3; }
+
+@container run-header (max-width: 720px) {
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-source { display: none; }
+  .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(36px * var(--hud-portrait-scale)); height: calc(36px * var(--hud-portrait-scale)); font-size: calc(18px * var(--hud-portrait-scale)); }
+}
+@container run-header (max-width: 620px) {
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before { display: none; }
+}
+@container run-header (max-width: 520px) {
+  /* Source and Seed have yielded; Build remains visible so a phone screenshot
+     still identifies the exact source that rendered it. */
+  .topbar.combat-hud.shared-hud .hud-run-meta {
+    gap: 0;
+    font-size: calc((var(--hud-metadata-font-px) * 0.8) / var(--ui-zoom, 1));
+    letter-spacing: 0.02em;
+  }
+  .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { margin-right: 0.15rem; }
+  .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
+}
+/* Optional provenance yields from least to most important as space tightens:
+   Source, Seed, then Build. Act and Floor remain the phone player's primary
+   run-position receipt. */
+@media (max-width: 350px) {
+  .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
+}
+.topbar.combat-hud.shared-hud .hud-resource-row,
+.topbar.combat-hud.shared-hud .hud-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--hud-quick-panel-size);
+  justify-content: space-between;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-resource-row {
+  gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud .hud-bottom { gap: 1rem; }
+.topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
+.topbar.combat-hud.shared-hud .hud-bottom { align-items: center; }
+.topbar.combat-hud.shared-hud .hud-vitals-panel,
+.topbar.combat-hud.shared-hud .hud-control-grid {
+  box-sizing: border-box;
+  height: var(--hud-quick-panel-size);
+  border: 1px solid var(--line-soft);
+  border-radius: calc(8px / var(--ui-zoom, 1));
+  background: color-mix(in srgb, var(--panel) var(--hud-component-background-opacity), transparent);
+  padding: var(--hud-panel-pad);
+}
+.topbar.combat-hud.shared-hud .hud-vitals-panel {
+  grid-column: 1;
+  width: min(100%, var(--hud-resource-available-vw));
+  min-width: 0;
+  /* The Vitals shell is a layout host, not a visible card. Resource troughs
+     retain their own readable geometry without a large border around the
+     longest pool. */
+  border: 0;
+  padding: 0;
+}
+.topbar.combat-hud.shared-hud .hud-vitals-panel .rescard-frame {
+  /* Keep the semantic reference frame for measurement, but never paint a
+     background or outline that implies the panel scales to HP. */
+  background: transparent;
+  border: 0;
+}
+.topbar.combat-hud.shared-hud .resbars-host {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .resbars-host > .resbars {
+  height: 100%;
+}
+.topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) .resbars-host > .resbars {
+  gap: 0;
+  justify-content: space-evenly;
+}
+.topbar.combat-hud.shared-hud .hud-control-grid {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-floor));
+  grid-template-rows: repeat(2, var(--tap-floor));
+  gap: var(--hud-control-gap);
+  align-self: start;
+}
+.topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+.topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
+/* The two semantic row hosts span the same columns, so Armoury/Menu/Health/Mana
+   are four equal cards without discarding either host's accessible grouping.
+   Both rows share the left stack's total height; the cards fill those cells
+   without changing any HP/MP/SP card dimension. */
+.topbar.combat-hud.shared-hud .hud-control-grid :is(.hud-actions, .hud-charge-flasks) {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-floor));
+  gap: var(--hud-control-gap);
+  margin-left: 0;
+}
+.topbar.combat-hud.shared-hud .hud-control-grid :is(.topbar-btn, .flask-slot) {
+  box-sizing: border-box;
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; border: 0; background: transparent;
+}
+.topbar.combat-hud.shared-hud .hud-control-grid .topbar-btn > span,
+.topbar.combat-hud.shared-hud .hud-control-grid .flask-identity {
+  box-sizing: border-box;
+  width: var(--hud-control-visual);
+  height: var(--hud-control-visual);
+  border: 1px solid var(--line-soft);
+  border-radius: calc(7px / var(--ui-zoom, 1));
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.topbar.combat-hud.shared-hud .hud-potions,
+.topbar.combat-hud.shared-hud .hud-relics {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: calc(var(--hud-belt-item-gap-px) / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-potions {
+  /* RTL flex-start packs the first tile against the right edge and grows the
+     tray toward the left as more utility potions arrive. */
+  justify-content: flex-start;
+  flex-direction: row;
+  overflow-x: auto;
+  direction: rtl;
+  scrollbar-width: thin;
+}
+.topbar.combat-hud.shared-hud .hud-relics {
+  justify-content: flex-start;
+  margin-left: 0;
+  width: min(100%, var(--hud-resource-available-vw));
+  overflow-x: auto;
+}
+.topbar.combat-hud.shared-hud .hud-potions { grid-column: 2; }
+.topbar.combat-hud.shared-hud .hud-potions > * { direction: ltr; flex: 0 0 auto; }
+
+/* Utility potions read as relic-sized chips below the primary controls while
+   their real button retains the global tap floor. The flex row is end-anchored:
+   adding a potion moves its left edge, never the HUD's right edge. */
+.topbar.combat-hud.shared-hud .hud-potions .flask-slot {
+  width: var(--hud-utility-visual-size); height: var(--hud-utility-visual-size);
+  min-width: var(--hud-utility-visual-size); min-height: var(--hud-utility-visual-size);
+  padding: 0; border: 0; background: transparent;
+}
+.topbar.combat-hud.shared-hud .hud-potions .flask-identity {
+  width: var(--hud-utility-visual-size);
+  height: var(--hud-utility-visual-size);
+  justify-content: center;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  background: var(--panel);
+}
+.topbar.combat-hud.shared-hud .hud-potions .flask-art {
+  width: 72%; height: 72%;
+}
+
+.topbar.combat-hud.shared-hud .flask-charge { position: relative; }
+.topbar.combat-hud.shared-hud .flask-charge-count {
+  position: absolute; top: 2px; right: 3px;
+  min-width: 1.2em; padding-inline: 0.15em;
+  border-radius: 999px;
+  background: #120f0c; color: var(--parchment);
+  font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+:root:not([data-layout='narrow']) .topbar.combat-hud.shared-hud .flask-charge-count {
+  font-size: calc(14px / var(--ui-zoom, 1));
+}
+.combat.coop .topbar.combat-hud .hud-top {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto auto;
+  align-items: start;
+}
+.combat.coop .topbar.combat-hud .resbars-host { min-width: 10rem; }
+.combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
+.combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
+.topbar .portrait {
+  width: calc(3.8rem * var(--hud-portrait-scale)); height: calc(3.8rem * var(--hud-portrait-scale)); border-radius: 50%; background: var(--panel);
+  border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: calc(2rem * var(--hud-portrait-scale));
+  flex-shrink: 0;
+}
+.topbar .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
+.topbar .relics { display: flex; gap: 0.6rem; margin-left: 0.8rem; }
+.topbar .relic {
+  width: 2.6rem; height: 2.6rem; border-radius: 6px; background: var(--panel);
+  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+}
+.topbar .fight-label { margin-left: auto; color: var(--muted); font-size: 1.2rem; letter-spacing: 0.12em; }
+.topbar .topbar-btn {
+  margin-left: 1rem; width: 3rem; height: 3rem; border-radius: 8px; flex-shrink: 0;
+  background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
+  font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: border-color 140ms, color 140ms;
+}
+.topbar .topbar-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* THE TWO BUTTONS HE PUT AT THE END OF THE TOP ROW, AT THE TAP FLOOR.
+   Measured, and the premise I was handed was wrong: the brief said these were
+   "already at the floor". They are not, and never were — `width/height: 3rem`
+   renders 27 device px against a 44 px floor at 390x844, IDENTICALLY on
+   dev = 08e184a before any of this change (tools/hudbars.mjs A5, run against
+   both trees). Marina's 44.1 was a number from her mock, not from the shipped
+   button, and it travelled.
+   Fixed here because he assigned this row its contents in the same sentence,
+   so the row is this change's to get right. SCOPED TO COMBAT deliberately: the
+   map header wears the same `.topbar-btn` with THREE of them in a row plus a
+   substrip, and growing those is a Law 5 width question on a different screen
+   that belongs to whoever opens it — named in the log, not silently swept.
+   Law 4 clause 4: a floor plus intrinsic growth, never a text multiple. */
+.topbar.combat-hud .topbar-btn {
+  width: auto; height: auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+}
+
+/* ---------- resource bars (content/resources.js + model/resources.js) ----------
+   ONE stylesheet block for both HUDs. The stack is left-aligned so unequal
+   lengths read as a ragged right edge — which IS the information: a longer bar
+   is a bigger pool, at a glance, without a number. Elden Ring's HUD, his
+   reference, does exactly this. */
+.resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
+
+/* ---- THE HYBRID MAIN HUD (approved 2026-08-13) ----
+   Source of the look: the owner pixels in the family repo's approved hybrid —
+   hybrid-confirmation/output/owners/F1-resource-health.png (unit anatomy:
+   24 px unit, 1 px warm border #4c3b1f, ground #120f0c, 9 px pill trough,
+   label on the plate LEFT of the trough) and F2-resource-mana/-stamina.png
+   (now one vertical unit each, by the 2026-08-22 E9 ruling). The BEHAVIOUR under it is unchanged
+   and stays the table's: trough length = lengthPct of its derived track.
+   The ground and border hexes are SAMPLED FROM THE OWNER PIXELS, and that
+   provenance is their justification — they are deliberately not --panel
+   (#241d15) / --line-soft (#4a4034), which the approved plate is darker and
+   warmer than. Health's FILL keeps var(--blood) because the accent themes swap
+   that token (base.css); the owner-vs-token delta is named in
+   content/resources.js, not hidden here. */
+.resbars[data-surface='main'] { align-items: stretch; }
+.resline { display: flex; width: 100%; gap: calc(5px / var(--ui-zoom, 1)); }
+.resunit {
+  /* A solo resource takes the full line; generic authored bands still split a
+     line evenly — nothing types a width (Law 2 by construction). */
+  flex: 1 1 0; min-width: 0;
+  position: relative; display: flex; align-items: center;
+  gap: calc(6px / var(--ui-zoom, 1));
+  /* Chrome geometry: px under zoom (Law 4 clause 3). 24 px is the owner
+     unit height — a floor the label's own glyphs may push past (clause 4). */
+  min-height: calc(24px / var(--ui-zoom, 1));
+  padding: 0 calc(7px / var(--ui-zoom, 1));
+  background: transparent;
+  border: 0;
+  border-radius: calc(6px / var(--ui-zoom, 1));
+  /* The unit is the label's container: its width is set by flex, never by its
+     own content, so "does the word fit" is answerable here (a query on the
+     auto-sized plate would be circular). */
+  container-type: inline-size;
+}
+.rescard-frame {
+  position: absolute; z-index: 0; left: 0; top: 0; bottom: 0;
+  background: #120f0c;            /* owner pixel, F1-resource-health.png */
+  border: 1px solid #4c3b1f;      /* owner pixel, unit border */
+  border-radius: calc(6px / var(--ui-zoom, 1));
+  pointer-events: none;
+}
+.resplate, .restrack { position: relative; z-index: 1; }
+.resplate {
+  flex: none; white-space: nowrap;
+  font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1;
+  letter-spacing: 0.05em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  /* Tabular digits + the derived reservation (set per bar in resbars.js): the
+     trough's track must not move when the label's digit count does. Each
+     reservation applies only in the container window that shows its variant —
+     see the degradation block below. */
+  font-variant-numeric: tabular-nums;
+}
+.restrack { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+/* The pill trough of the approved look. Height is owner anatomy (9 px fill +
+   its border), radius full pill; LENGTH stays the data (inline style %). */
+.resbars[data-surface='main'] .resbar {
+  height: calc(11px / var(--ui-zoom, 1));
+  border-radius: calc(6px / var(--ui-zoom, 1));
+  /* A physical border imposes a two-pixel border-box minimum, which overrides
+     1-4 % troughs on narrow screens. Draw the same rim as an inset shadow so
+     the element's measured width remains the requested percentage. */
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+/* "poise (very skinny bar)" on the MAIN surface. The rule above outranks bare
+   .resbar-skinny (two classes + an attribute vs one class), so without this
+   line a skinny row on the main HUD silently renders at pool height — the
+   cascade loss that already bit this feature once (2026-08-08, a 4 px label
+   in a 6 px trough, found by looking, not by reading). Same data word,
+   per-surface anatomy: a future skinny row gets this by writing
+   `weight: 'skinny'`, never by editing CSS. hudbars A11 asserts the RENDERED
+   height against hp's, not this stylesheet's intention. */
+.resbars[data-surface='main'] .resbar-skinny {
+  height: calc(5px / var(--ui-zoom, 1));
+  border-radius: calc(3px / var(--ui-zoom, 1));
+}
+
+/* ---- PLATE LABEL DEGRADATION, BY MEASURED FIT ----
+   Same grammar as the strip labels below, new container: the UNIT. Thresholds
+   in em so the choice tracks the player's Text size — which is the only thing
+   "does the word fit" depends on. Widest that fits wins: name+numbers, then
+   glyph+numbers, then the bare glyph. */
+.resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }
+@container (min-width: 3.5em) { .resplate .l-glyph { display: inline; } }
+@container (min-width: 6.5em) {
+  .resplate .l-glyph { display: none; }
+  .resplate .l-num { display: inline; }
+  .resplate { min-width: var(--plate-reserve-num, 0); }
+}
+/* 6.75em, and the number is MEASURED, not styled: a container query reads the
+   CONTENT box in CSS px (pre --ui-zoom), where a banded half-unit is 6.94em at
+   390x844 (the approved shape — its plate must read "MP 2/2", the name) and
+   6.59em at 320x640 (free to degrade; the atlas rules only 390). The margin is
+   ~0.2em on both sides; if a future font shifts it, A4's plate-clip assertion
+   and the reserve are what keep a wrong flip from ever clipping. */
+@container (min-width: 6.75em) {
+  .resplate .l-num { display: none; }
+  .resplate .l-full { display: inline; }
+  .resplate { min-width: var(--plate-reserve-full, 0); }
+}
+
+.resbar {
+  /* Chrome geometry: px under zoom, never rem — Law 4 clause 3. A bar is a box.
+     Its inline size is set from data (the trough length); its block size is an
+     ergonomic constant. */
+  height: calc(14px / var(--ui-zoom, 1));
+  container-type: inline-size;
+  flex-shrink: 0;
+
+  /* No absolute minimum width: the trough is the max/reference percentage.
+     A floor would turn different maxima into the same length, contradicting
+     the percentage encoding chosen for E9 / #254. The plate and tooltip keep
+     the exact value readable when the resulting trough is very short. */
+  min-width: 0;
+}
+.resbar > .fill { background: var(--res-tint, var(--muted)); }
+/* "poise (very skinny bar)" — his words, and skinny is a row's `weight`, so a
+   future resource is skinny by writing the word, not by editing this file. */
+.resbar-skinny { height: calc(5px / var(--ui-zoom, 1)); }
+.resbar.full > .fill { animation: pulse-gold 600ms infinite alternate; }
+.reduced-motion .resbar.full > .fill { animation: none; }
+
+/* ---- LABEL DEGRADATION, BY MEASURED FIT ----
+   Three variants ride in the DOM; the container query picks the widest that
+   fits its own trough. Thresholds are in `em`, which inside @container resolves
+   against the container's font-size — so "does the word fit" answers the
+   player's Text-size setting, which is the only thing that question depends on.
+   This is not Law 4 chrome-scaling: the BOX above is text-independent px. */
+.resbar > .label {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1; padding: 0;
+  letter-spacing: 0.06em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  white-space: nowrap; overflow: hidden; pointer-events: none;
+}
+.resbar .l-full, .resbar .l-num, .resbar .l-glyph { display: none; }
+@container (min-width: 2.4em) { .resbar .l-glyph { display: inline; } }
+@container (min-width: 5.5em) { .resbar .l-glyph { display: none; } .resbar .l-num { display: inline; } }
+@container (min-width: 11em)  { .resbar .l-num { display: none; } .resbar .l-full { display: inline; } }
+/* A skinny bar carries NO label at any width — "poise (very skinny bar)" is
+   5 px tall and nothing legible fits in it; the tooltip and the aria-label
+   carry the numbers. LAST, and deliberately so: it has the same specificity as
+   the `.resbar > .label` block above and must win on order. It did not, in the
+   first draft — the poise label rendered a 4 px-tall "0/10" inside a 6 px
+   trough and I found it by rendering, not by reading the cascade. */
+.resbar-skinny > .label { display: none; }
+
+/* ---------- act backdrop ---------- */
+/* One rendered plate per act (tools/backdrops-blender.py → assets/bg/*.webp,
+   ~4 KB each; tools/bundle.mjs base64s them into the standalone build). The
+   plate is geometry only — the bloom around the Goldbough is the ::after
+   radial-gradient below, so it stays perfectly smooth, costs no bytes, and
+   picks up the player's accent colour. Sits behind everything, never eats
+   clicks. */
+.backdrop {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-position: center 38%; background-size: cover; background-repeat: no-repeat;
+  opacity: 0.55;
+}
+.backdrop::after {
+  content: ''; position: absolute; left: 50%; top: 20%; width: 46rem; height: 46rem;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.30), rgba(var(--accent-rgb), 0.10) 38%, transparent 68%);
+  animation: backdropGlow 7s ease-in-out infinite alternate;
+}
+@keyframes backdropGlow { from { opacity: 0.75; } to { opacity: 1; } }
+.reduced-motion .backdrop::after { animation: none; }
+:root[data-ambient='off'] .backdrop::after { animation: none; opacity: 0.7; }
+.backdrop.act-1 { background-image: url('../assets/bg/bg_act1.webp'); }
+.backdrop.act-2 { background-image: url('../assets/bg/bg_act2.webp'); }
+.backdrop.act-3 { background-image: url('../assets/bg/bg_act3.webp'); }
+/* Keep the board legible over art: a floor-to-mid scrim under the combatants. */
+.backdrop::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.30) 0%, rgba(13, 11, 8, 0.10) 38%, rgba(13, 11, 8, 0.82) 100%);
+}
+
+/* ---------- battlefield ---------- */
+/* The combatants sit ON the backdrop, so the field is a positioned layer above
+   it and the rows are pulled up out of the old dead space at the top. */
+/* The battlefield is the flexible row between two intrinsic bands. Its default
+   flex min-height is its combatants' min-content height. At 320x640 and
+   1200x730 with Text XL that prevented it from yielding a single pixel and
+   pushed the hand/card band below the viewport. Let this one flexible row
+   yield only when main.js's existing fit decider says the viewport is not
+   short. The short-screen branch keeps the min-content premise measured by the
+   upright refusal; this selector reads that answer and defines no breakpoint. */
+.field {
+  --battlefield-edge-gap: clamp(0.35rem, 1.2%, 0.8rem);
+  flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1;
+  box-sizing: border-box;
+  padding-block: var(--battlefield-hud-clearance, 0) var(--battlefield-action-clearance, 0);
+  padding-inline-end: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+}
+:root[data-short='false'] .field { min-height: 0; }
+.player-zone {
+  width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-block: var(--battlefield-edge-gap); gap: 0.6rem;
+}
+.enemy-row {
+  flex: 1; display: flex; align-items: center; justify-content: space-evenly;
+  padding-block: var(--battlefield-edge-gap); gap: 1rem;
+}
+.field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
+
+/* Combatant Inspector — the expanded reading is an ordinary Folding Tray,
+   not a second tooltip implementation. Player details own the left edge;
+   enemy details own the right. The host ignores the playfield except where the
+   tray itself is painted, so a folded rail cannot steal combat targeting. */
+.combatant-inspector-host {
+  position: absolute; z-index: 18; top: var(--battlefield-hud-clearance, 0);
+  bottom: var(--battlefield-action-clearance, 0);
+  display: flex; width: min(calc(var(--combatant-inspector-width-rem, 20) * 1rem), 34%);
+  min-width: 0; pointer-events: none;
+}
+.combatant-inspector-host[hidden] { display: none; }
+.combatant-inspector-host.left { left: 0; justify-content: flex-start; }
+.combatant-inspector-host.right {
+  right: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  justify-content: flex-end;
+}
+.combatant-inspector-host > .folding-tray {
+  pointer-events: auto; width: 100%; height: 100%; padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line); border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.45);
+}
+.combatant-inspector-host > .folding-tray[data-collapsed='1'] { width: var(--tap-floor); }
+.combatant-inspector-host .tray-content { padding-top: 0.5rem; }
+.combatant-inspector-summary { display: grid; gap: 0.55rem; }
+.combatant-inspector-summary > div:first-child { display: grid; gap: 0.15rem; }
+.combatant-inspector-summary > div:first-child > strong { color: var(--gold); font-family: var(--font-display); }
+.combatant-inspector-summary > div:first-child > span { color: var(--muted); font-size: 0.8rem; }
+.combatant-inspector-resources { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.3rem; }
+.combatant-inspector-resource {
+  display: flex; justify-content: space-between; gap: 0.4rem; min-width: 0;
+  padding: 0.35rem 0.45rem; border: 1px solid var(--line-soft); border-radius: 0.35rem;
+  font-size: 0.8rem;
+}
+.combatant-inspector-resource span { color: var(--muted); }
+.combatant-inspector-section { margin-top: 0.7rem; padding-top: 0.55rem; border-top: 1px solid var(--line-soft); }
+.combatant-inspector-section h4 {
+  margin: 0 0 0.35rem; color: var(--gold); font-size: 0.75rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.combatant-inspector-section ul { display: grid; gap: 0.3rem; margin: 0; padding: 0; list-style: none; }
+.combatant-inspector-section li {
+  display: grid; gap: 0.12rem; padding: 0.4rem 0.45rem;
+  border-left: 2px solid var(--line-soft); background: color-mix(in srgb, var(--bg) 56%, transparent);
+}
+.combatant-inspector-section li.active { border-left-color: var(--gold); }
+.combatant-inspector-section li strong { color: var(--parchment); font-size: 0.82rem; }
+.combatant-inspector-section li span, .combatant-inspector-section li.empty { color: var(--muted); font-size: 0.75rem; line-height: 1.3; }
+.combatant.inspectable:not(.targetable) { cursor: help; }
+
+:root[data-layout='narrow'] .combatant-inspector-host {
+  width: min(var(--combatant-inspector-mobile-vw, 62vw), calc(var(--combatant-inspector-width-rem, 20) * 1rem));
+}
+:root[data-layout='narrow'] .combatant-inspector-host.right { right: 0; }
+
+/* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
+   Remove unrelated player/action chrome so all conditional enemy states remain
+   readable in one phone still. This selector is unreachable in ordinary play. */
+:root[data-shot-arcane='matrix'] .combat.coop .topbar,
+:root[data-shot-arcane='matrix'] .combat.coop .player-zone,
+:root[data-shot-arcane='matrix'] .combat.coop .coop-flasks,
+:root[data-shot-arcane='matrix'] .combat.coop .hand-area { display: none; }
+:root[data-shot-arcane='matrix'] .combat.coop .field { overflow: visible; padding: 1rem; }
+:root[data-shot-arcane='matrix'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; height: 100%; padding: 0; align-items: center;
+}
+
+.combatant {
+  display: flex; flex-direction: column; align-items: center; position: relative;
+  width: 100%; height: 100%; min-height: 0;
+}
+.combatant[data-ui-component='combatant-frame'] {
+  display: block;
+  overflow: visible;
+}
+.combatant-stack {
+  position: absolute;
+  left: 50%;
+  top: var(--combatant-stage-center, 50%);
+  width: 100%;
+  height: var(--combatant-stack-height, auto);
+  transform: translate(-50%, -50%);
+}
+.combatant-leading {
+  position: absolute; inset: 0 0 auto;
+  display: flex; align-items: flex-end; justify-content: center;
+  flex: 0 0 auto; min-height: 0; width: 100%;
+}
+.combatant-leading:empty { display: none; }
+.combatant-card {
+  position: absolute;
+  top: var(--combatant-card-offset, 0);
+  left: 50%;
+  display: flex; flex: 0 0 auto; flex-direction: column; align-items: center;
+  justify-content: flex-end; gap: 0.4rem; width: 100%; min-height: 0;
+  margin: 0;
+  transform: translateX(-50%) scale(var(--combatant-card-scale, 1));
+  transform-origin: top center;
+}
+.combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+/* The under-model strip. Its bars are the SAME component as the main HUD's —
+   the old .hpbar/.poisebar pair here was two more homes for one grammar, and
+   they are gone rather than kept in parallel (Law 0 clause 4). What survives is
+   the track width, which is this surface's own container. */
+.combatant .meters { width: 13rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.combatant .resbars { width: 100%; }
+/* The bar heights differ by surface — under a model there is less room and no
+   label to hold — so the surface overrides the component's default. */
+.combatant .resbar { height: calc(12px / var(--ui-zoom, 1)); }
+.combatant .resbar-skinny { height: calc(6px / var(--ui-zoom, 1)); }
+/* STILL LIVE, and for a reason worth naming rather than deleting quietly:
+   src/ui/screens/coop.js:177 has its OWN meterBars() drawing `.bar hpbar` and
+   `.bar poisebar` inside `.combatant`. That is a second renderer for one
+   grammar — a pre-existing Law 0 clause 4 breach (the same "second map
+   renderer nobody owns" Law 5 already lists) — and converting it is not this
+   change. These two rules are what keeps co-op's strip from collapsing to
+   zero height. Delete them the day coop.js calls resbars.js. */
+.combatant .hpbar { height: 1.2rem; }
+.combatant .hpbar .fill { background: var(--blood); }
+.combatant .poisebar { height: 0.6rem; }
+.combatant .poisebar .fill { background: var(--gold); }
+.combatant .poisebar.full .fill { animation: pulse-gold 600ms infinite alternate; }
+.combatant .bleedbar { height: 0.6rem; }
+.combatant .bleedbar .fill { background: var(--ember); }
+
+/* #61 — the one threshold-proc meter grammar (M1/M4). Chrome geometry in px
+   (Law 4): the bar is a box, not text. Tint rides --proc-tint from the row's
+   own data; the glyph nub keeps hue from being the only channel. */
+.combatant .procbar { height: 8px; min-height: 8px; position: relative; }
+.combatant .procbar .fill { background: var(--proc-tint, var(--muted)); }
+.combatant .procbar .glyph {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px;
+  line-height: 1;
+  pointer-events: none;
+}
+/* S2: an active resistance dims the meter — state reads without a tooltip. */
+.combatant .procbar.resisted { opacity: 0.45; }
+.combatant .procbar.resisted .fill {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--proc-tint, var(--muted)) 0 4px,
+    transparent 4px 8px
+  );
+}
+/* M4 display cap: collapsed proc meters render as ring-fill pips (conic fill
+   set inline from the row's tint); keep the glyph readable over the ring. */
+.status-icon.proc-pip { color: var(--ink, #fff); text-shadow: 0 0 2px #000; }
+
+/* M5: a matched tag-scoped vulnerability lights the boosted preview number in
+   the status row's tint. */
+.card.tag-boost .ctext .val.up { color: var(--boost-tint); }
+.combatant .nm { font-size: 1.2rem; }
+.combatant.dead { opacity: 0.25; filter: grayscale(1); pointer-events: none; }
+
+/* Likely-target glow: a tinted, slightly-larger clone of the sprite sits behind
+   the real one (which is kept on top), so the target reads as a colored,
+   glowing silhouette — red for an enemy, blue for a self/buff target. */
+.combatant .sprite > *:not(.aim-silho) { position: relative; z-index: 1; }
+.aim-silho {
+  position: absolute; left: 50%; bottom: 0; z-index: 0; pointer-events: none;
+  transform: translateX(-50%) scale(1.16); transform-origin: center bottom;
+  filter: blur(2px); opacity: 0.9;
+  animation: aimGlow 900ms ease-in-out infinite alternate;
+}
+.aim-silho > * { box-shadow: none !important; }
+@keyframes aimGlow { from { opacity: 0.5; } to { opacity: 0.95; } }
+.reduced-motion .aim-silho { animation: none; filter: blur(1px); opacity: 0.8; }
+.combatant.player.armed { cursor: pointer; }
+
+.enemy .sprite { cursor: pointer; }
+.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: 10px; }
+.enemy.hover-target .sprite { outline-style: solid; }
+
+.block-badge {
+  position: absolute; left: -1.4rem; bottom: 3.4rem; z-index: 2;
+  width: 3.4rem; height: 3.8rem; display: flex; align-items: center; justify-content: center;
+  background: var(--frost); color: #0d0b08; font-weight: 800; font-size: 1.4rem;
+  clip-path: polygon(50% 0, 100% 22%, 100% 62%, 50% 100%, 0 62%, 0 22%);
+}
+
+.statuses { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-height: 2.2rem; max-width: 15rem; }
+.status-icon {
+  position: relative; width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  background: var(--panel); border: 1.5px solid var(--muted);
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: default;
+}
+.status-icon .stk {
+  position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 0.9rem; font-weight: 700;
+  background: #14100c; border-radius: 6px; padding: 0 0.3rem; border: 1px solid var(--line);
+}
+.stance-chip {
+  display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem; color: var(--ember);
+  border: 1px solid var(--ember); border-radius: 14px; padding: 0.3rem 1rem;
+}
+.stance-chip.bulwark { color: var(--frost); border-color: var(--frost); }
+
+/* ---------- intents ---------- */
+.intent {
+  display: flex; align-items: center; gap: 0.6rem; margin: 0;
+  background: #1c1610; border: 1.5px solid var(--blood); border-radius: 9px;
+  padding: 0.4rem 1rem; font-weight: 700; font-size: 1.4rem; cursor: default;
+}
+.intent.block { border-color: var(--frost); }
+.intent.buff { border-color: var(--gold); }
+.intent.debuff { border-color: #6a3a7a; }
+.intent.staggered { border-color: var(--gold); color: var(--gold); }
+.intent.delayed { border-style: dashed; }
+.intent .ic { font-size: 1.3rem; }
+
+/* ---------- keyboard shortcut hints (SPEC §7.3) ---------- */
+/* Positional quick-play badge: a square gray keycap straddling the card's
+   top-center edge (approved look — coin placement, square, gray). Static per
+   slot: leftmost card is always 1 … then Q for the 10th. Hidden while a
+   gamepad drives (body.pad-mode, kept live by refreshHintBars). */
+.card .key-hint {
+  position: absolute; top: -1rem; left: 50%; transform: translateX(-50%); z-index: 3;
+  min-width: 2rem; height: 2rem; padding: 0 0.4rem; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: #2b2b28; border: 1.5px solid #8d887c; color: #d8d3c4;
+  font-family: var(--font-body); font-weight: 700; font-size: 1.1rem;
+  pointer-events: none; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+body.pad-mode .card .key-hint { display: none; }
+
+/* Flask quick-use badge on the top-bar flask icons (F/G/H or pad glyphs). */
+/* THE SLOT'S OWN BOX IS NOT HERE — one home, `.relic.flask-slot` in ui.css
+   beside `.flask-identity`. Pointer, not a second copy: `.topbar .relic` below
+   no longer decides how big a flask is, and a reader who edits it should know. */
+.flask-slot { position: relative; }
+.flask-slot .flask-key {
+  /* INSIDE THE BOX, SINCE 2026-08-17. It was `bottom: -0.7rem`, and measured on
+     ?shot=combat at BOTH shapes the badge ran y 161.5 -> 176.7 while its slot
+     ended at 170.9: 5.8 local px hung out of the bottom — over the BUILD stamp
+     line at 390x844 — and its top edge sat 6.4 px above the art's bottom, so
+     27% of a 23.4 px flask art was under a keycap. The slot had no room to hold
+     it because the slot was 26 px tall; it is now at --tap-floor and does.
+     `px`: this is chrome (Law 4 clause 3), and it is a new write.
+
+     AND IT MOVED TO THE CORNER, WHICH IS THE HALF THAT COST THINKING. Inside
+     the box at bottom-CENTRE the keycap still lay across the widest part of the
+     bottle: measured 3.9 px deep x the art's full 23.4 px width = 91 px^2, 17%
+     of a 548 px^2 art. Bottom-RIGHT overlaps only a corner — 4.9 x 3.9 px, 19
+     px^2, 3.5%. The alternative was reserving a band with
+     `:has(.flask-key) { padding-bottom }`, and I measured that instead of
+     preferring it: at Minimum tap size 24 it makes a badged slot 48.4 px tall
+     beside an unbadged charge slot at 36.9, so one row would hold two heights
+     to spare an icon a corner. The corner is one line and costs no cell. */
+  position: absolute; bottom: 2px; right: 2px;
+  min-width: 1.4rem; padding: 0 0.3rem; border-radius: 3px; text-align: center;
+  background: #2b2b28; border: 1px solid #8d887c; color: #d8d3c4;
+  font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; line-height: 1.3rem;
+  pointer-events: none;
+}
+body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
+.enemy-key {
+  position: absolute; top: 0.2rem; left: 0.2rem; z-index: 3;
+  min-width: 1.7rem; height: 1.7rem; padding: 0 0.3rem; border-radius: 4px;
+  background: var(--gold); color: #1c1610; font-family: monospace; font-weight: 700; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
+  box-shadow: 0 0 8px rgba(201, 162, 39, 0.5);
+}
+
+/* ---------- hand + controls ---------- */
+/* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
+   BELOW THE HAND, AND IT HAS TWO CONSUMERS THAT USED TO AGREE BY ACCIDENT.
+   `.combat-action-row` is bottom-anchored to `.hand-area` at a NEGATIVE offset,
+   so it hangs into the band underneath — and nothing in the column reserved that
+   band. It stayed on screen only because the hint strip happened to be the last
+   in-flow row of `.combat` and happened to be about that tall. That is a fact
+   written in two places with nothing checking it: move the strip and the whole
+   action row drops off the bottom of the viewport (measured: 47/52/62 px of new
+   `.combat` overflow, and hintstrip H5 goes from `ok 0 px` to `unknown` at all
+   four wide cells — it does not go RED, which is the second finding).
+   The offset and its reservation are now the same token, so they cannot drift,
+   and `short-wide`'s deeper drop below overrides ONE value instead of leaving a
+   6.4rem hang against a 5.2rem reservation that was never written down. */
+.combat { --action-row-drop: 5.2rem; }
+.hand-area {
+  height: 23rem; flex-shrink: 0; position: relative;
+  display: flex; align-items: flex-end; justify-content: center;
+  margin-bottom: var(--action-row-drop);
+}
+.hand-overlay {
+  width: min(72rem, calc(100% - 2rem)); height: 100%; min-width: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "hand";
+  align-items: end; column-gap: 0.8rem;
+}
+.hand-overlay[data-paging='true'] {
+  grid-template-columns: var(--tap-floor) minmax(0, 1fr) var(--tap-floor);
+  grid-template-areas: "prev hand next";
+}
+/* padding-top RESERVES THE FAN'S LIFT, and the number is not written here.
+   components/hand.js anchors the fan on its DEEPEST card and publishes the lift
+   it used as `--fan-lift` on this element (FAN_LIFT_PROP — one home, Law 0
+   clause 4). Absent -> 0px, so a stylesheet that forgets to reserve it SHOWS the
+   clipping rather than hiding it (Law 0 clause 5).
+   ⚠ `.hand-area`'s `height: 23rem` above is a BOX in text units — Law 4 clause 4,
+   inside the known 400-of-548 set, and NOT converted here (ratchet, not sweep).
+   This act LEANS on it: the wide fan's clearance comes out of that box's slack,
+   so at Text S the slack shrinks with the cards and not with the 6 px step.
+   Measured, not assumed: tools/hintstrip.mjs walks Text S and XL at both
+   shapes. */
+.hand { grid-area: hand; min-width: 0; display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }
+.hand .card { margin: 0 -1.8rem; transform-origin: bottom center; }
+.hand .card:hover, .hand .card.selected {
+  transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
+}
+.hand .card.selected {
+  border-color: var(--gold);
+  outline: 2px solid var(--parchment); outline-offset: 2px;
+}
+
+/* F1 hand paging. These move focus onto a real card; the existing Confirm path
+   remains the one door that selects or plays it. */
+.hand-page {
+  position: static; align-self: center; z-index: 70;
+  width: var(--tap-floor); min-width: var(--tap-floor);
+  height: var(--tap-floor); min-height: var(--tap-floor);
+  display: grid; place-items: center; padding: 0;
+  background: #120f0c; color: var(--parchment);
+  border: 1px solid var(--gold); border-radius: 8px;
+  font: 700 2.4rem/1 var(--font-display); cursor: pointer;
+}
+.hand-page[hidden] { display: none; }
+.hand-page:hover, .hand-page.gp-focus, .hand-page:focus-visible {
+  color: var(--gold); outline: 2px solid var(--parchment); outline-offset: 2px;
+}
+.hand-prev { grid-area: prev; }
+.hand-next { grid-area: next; }
+/* Wide End Turn grows left toward the hand at large text sizes. Keep both
+   controls inside the overlay, but lift them by one ergonomic target so the
+   right-hand control never shares its hit surface. */
+:root:not([data-layout='narrow']) .hand-page {
+  transform: translateY(calc(-1 * var(--tap-floor)));
+}
+
+/* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
+   visual above. The ghost names whether the current point can commit; enemies
+   do not acquire a second outline/label vocabulary for the same target fact. */
+.card-drag-ghost { border: 3px solid var(--gold) !important; }
+.card-drag-ghost[data-drop-state='illegal'] {
+  border-style: dashed !important; filter: grayscale(0.75) brightness(0.7);
+}
+.card-drag-ghost .drop-verdict {
+  position: absolute; left: 50%; top: -2.4rem; transform: translateX(-50%);
+  min-width: max-content; padding: 0.25rem 0.65rem; border-radius: 4px;
+  color: #120f0c; background: var(--gold); border: 1px solid #120f0c;
+  font-size: 0.9rem; font-weight: 900; letter-spacing: 0.08em;
+}
+.card-drag-ghost[data-drop-state='illegal'] .drop-verdict {
+  color: var(--parchment); background: var(--blood); border-style: dashed;
+}
+
+/* The hold-to-inspect copy (armInspect, components/holdconfirm.js). It lives
+   on <body>, not in the hand — geometry (position, size, scale) is written
+   inline in LOCAL px by the one conversion home (fx.js), so nothing here may
+   restate it; this block is only the surface. `pointer-events: none` is also
+   set inline — Law 4: the copy may cover pixels, never a tap floor, and it
+   must vanish on release leaving the hand byte-for-byte untouched. Appears at
+   full size, no transition: the expansion is STATE, not an animation, so it
+   survives reduced-motion the same way the hold fill does (rule 5). */
+.card-inspect {
+  border-color: var(--parchment);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.85);
+}
+
+.combat-action-row {
+  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
+  display: grid;
+  grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
+  grid-template-areas: "energy draw hints end exhaust discard";
+  align-items: end; gap: 0.8rem;
+  pointer-events: none;
+}
+.combat-action-row > * { pointer-events: auto; }
+/* #295 — THE STRIP TAKES THE GUTTER THIS GRID ALREADY DECLARED. It was `.`; it
+   is now `hints`, and no track changed width. The overlap it fixes was never a
+   near miss that got worse: END TURN's column is `minmax(15rem, auto)`, so it
+   widens with its own label, while the strip was centred on the VIEWPORT by a
+   sibling rule. Two homes for "the middle of the bottom band", agreeing only by
+   luck at the shipped text size. One home now.
+
+   `padding-block: 0` IS THE HALF THAT KEEPS H1 GREEN, AND IT DELETES A RULE
+   RATHER THAN TUNING ONE. `.hint-bar`'s `0.4rem` block padding is the padding of
+   a FLOATING PILL — the thing this element stopped being the moment it became a
+   grid cell. Left in, the strip is the tallest item in a bottom-anchored row
+   (53.2 px against 50.4 at Text S), so the row grows UPWARD into the hand and a
+   card lands on the strip by 0.69 px — measured, and the exact cost Sunna
+   recorded as open on falk/295-hintstrip-layout-sunna @ 33ebb8b. Taken out, the
+   strip is its chips' own height, the row's height is unchanged at every text
+   size, and H1's clearance goes back to what it was before this act
+   (5.70 / 6.34 / 7.61 px). The chips keep `--tap-floor`; nothing pressable
+   shrank. Inline padding is untouched — it is the pill's horizontal breathing
+   room and the grid does not supply it.
+
+   NARROW IS NOT REACHED BY ANY OF THIS: `:root[data-layout='narrow'] .hint-bar`
+   is `display: none` (styles/ui.css, #29 slice 0) and narrow re-declares this
+   grid's areas without a `hints` track, so an unplaced item there would have
+   created an implicit track — it cannot, because it renders no box. */
+.combat-action-row > .hint-bar.hint-combat {
+  grid-area: hints; justify-self: center; align-self: end;
+  margin: 0; max-width: 100%; padding-block: 0;
+}
+.energy-orb {
+  position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
+  background: #1c1610; border: 3px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.9rem; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
+}
+.combat-action-row > .energy-orb {
+  grid-area: energy; position: relative; left: auto; bottom: auto; isolation: isolate;
+  width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor));
+  background: transparent; border: 0; border-radius: 0; box-shadow: none;
+}
+.combat-action-row > .energy-orb::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%;
+  background: #1c1610; border: 3px solid var(--gold);
+  box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
+}
+.end-turn {
+  position: absolute; right: 3.4rem; bottom: 7.6rem;
+  min-height: var(--tap-floor); background: #120f0c;
+  border: 1px solid var(--gold); border-radius: 8px;
+}
+.combat-action-row > .end-turn { grid-area: end; position: static; right: auto; bottom: auto; }
+.end-turn .et-key {
+  font-family: var(--font-body); font-size: 1rem; margin-left: 0.7rem; vertical-align: 1px;
+  padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
+  background: var(--panel); border: 1px solid var(--gold);
+}
+.end-turn.pulse { animation: pulse-gold 700ms infinite alternate; }
+
+.pile {
+  position: absolute; bottom: 1.2rem; width: 5.2rem; height: 4rem; border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 1.3rem; cursor: pointer; z-index: 20;
+}
+.pile small { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.08em; }
+.pile.draw { left: 1.6rem; }
+.pile.discard { right: 1.6rem; }
+.pile.exhaust { right: 8.2rem; opacity: 0.85; }
+.combat-action-row > .pile {
+  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
+}
+.combat-action-row > .pile.draw { grid-area: draw; }
+.combat-action-row > .pile.discard { grid-area: discard; }
+.combat-action-row > .pile.exhaust { grid-area: exhaust; }
+
+/* ---------- targeting arrow ---------- */
+#target-arrow { position: fixed; z-index: 400; pointer-events: none; }
+
+/* ---------- fx ---------- */
+.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }
+.float-num {
+  /* `left` is the float's CENTRE; this takes off its own half-width, so the
+     width is never a number anyone maintains (#69). Standalone `translate`
+     rather than `transform`, because num-pop animates transform and the two
+     must compose. */
+  translate: -50% 0;
+  position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 2.5rem;
+  color: var(--parchment);
+  /* A dark outline keeps numbers legible over any sprite. */
+  text-shadow: 0 0 3px #000, 0 0 3px #000, 0 2px 5px #000;
+  transform-origin: center bottom;
+  animation: num-pop 540ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+.float-num.dmg { color: #ff8f6b; }
+.float-num.small { font-size: 2rem; }
+.float-num.heavy { font-size: 3.4rem; }
+.float-num.crit { font-size: 4.4rem; color: #ffc861; text-shadow: 0 0 4px #000, 0 0 10px rgba(201, 162, 39, 0.7), 0 2px 6px #000; }
+.float-num.blk { color: var(--frost); }
+.float-num.heal { color: var(--green); }
+.float-num.burst { color: var(--ember); font-size: 3.6rem; }
+/* Reduced motion: a plain rise, no bounce/overshoot. */
+.reduced-motion .float-num { animation: float-up 260ms ease-out forwards; }
+.fx-banner {
+  position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%);
+  font-family: var(--font-display); font-size: 3rem; letter-spacing: 0.3em; color: var(--gold);
+  text-shadow: 0 0 30px rgba(201, 162, 39, 0.7); animation: banner-pop 300ms ease-out forwards;
+}
+.fx-banner.blood { color: var(--ember); }
+.fx-banner.turn { font-size: 2.4rem; color: var(--parchment); text-shadow: 0 0 24px rgba(230, 220, 195, 0.5); }
+.combat.shake { animation: shake 200ms; }
+
+/* ---------- paced playback: one actor at a time (SPEC §7.4) ---------- */
+/* Attack lunge: enemies step left toward the player, the player steps right. */
+.enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
+.player .sprite.act-attack { animation: lunge-right 280ms ease-out; }
+.sprite.act-move { animation: act-step 260ms ease-out; }
+@keyframes lunge-left {
+  0% { transform: none; }
+  35% { transform: translateX(-26px) scale(1.06); filter: brightness(1.25); }
+  100% { transform: none; }
+}
+@keyframes lunge-right {
+  0% { transform: none; }
+  35% { transform: translateX(26px) scale(1.06); filter: brightness(1.25); }
+  100% { transform: none; }
+}
+@keyframes act-step {
+  0% { transform: none; }
+  40% { transform: translateY(-8px) scale(1.05); filter: brightness(1.35) drop-shadow(0 0 12px rgba(201, 162, 39, 0.55)); }
+  100% { transform: none; }
+}
+.reduced-motion .sprite.act-attack,
+.reduced-motion .sprite.act-move { animation: none; }
+
+/* ---------- ability / relic / status fx ---------- */
+/* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
+   knocked right (struck from the player's side), the player left. A heavy hit
+   (≥15, the same threshold as screen shake) recoils further with a tilt. */
+.sprite.hitflash > :first-child { animation: hitflash 200ms ease-out; }
+.enemy .sprite.hitflash > :first-child { animation: hit-enemy 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.player .sprite.hitflash > :first-child { animation: hit-player 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.enemy .sprite.hitflash.hit-heavy > :first-child { animation: hit-enemy-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.player .sprite.hitflash.hit-heavy > :first-child { animation: hit-player-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+@keyframes hitflash {
+  0% { filter: brightness(2.1) saturate(1.8); transform: translateX(4px); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-enemy {
+  0% { filter: brightness(2.1) saturate(1.8); }
+  30% { transform: translateX(13px); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-player {
+  0% { filter: brightness(2.1) saturate(1.8); }
+  30% { transform: translateX(-13px); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-enemy-heavy {
+  0% { filter: brightness(2.3) saturate(1.9); }
+  28% { transform: translateX(26px) rotate(5deg); }
+  60% { transform: translateX(6px) rotate(1deg); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-player-heavy {
+  0% { filter: brightness(2.3) saturate(1.9); }
+  28% { transform: translateX(-26px) rotate(-5deg); }
+  60% { transform: translateX(-6px) rotate(-1deg); }
+  100% { filter: none; transform: none; }
+}
+/* Death: a slower dissolve — sag, drain, blur to ash. */
+.sprite.crumble > :first-child { animation: crumble 550ms ease-in forwards; }
+@keyframes crumble {
+  40% { opacity: 0.7; filter: grayscale(0.6) blur(1px); }
+  to { opacity: 0.12; transform: translateY(14px) scale(0.9); filter: grayscale(1) blur(3px); }
+}
+
+/* Attack impact: a slashing arc sweeping across the victim. */
+.fx-slash {
+  position: absolute; width: 6.4rem; height: 6.4rem; margin: -3.2rem 0 0 -3.2rem;
+  border-radius: 50%; border-top: 3px solid #f3e9cf; border-right: 3px solid transparent;
+  pointer-events: none; filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.8));
+  animation: slash-sweep 260ms ease-out forwards;
+}
+@keyframes slash-sweep {
+  from { transform: rotate(calc(var(--rot, 0deg) - 90deg)) scale(0.55); opacity: 0; }
+  25% { opacity: 1; }
+  to { transform: rotate(calc(var(--rot, 0deg) + 70deg)) scale(1.2); opacity: 0; }
+}
+
+/* Cast flourish (skills/powers/buff moves) + stagger star. */
+.fx-glyph {
+  position: absolute; margin-left: -1.1rem; pointer-events: none;
+  color: var(--grace); font-size: 2.2rem; text-shadow: 0 0 10px currentColor;
+  animation: glyph-pop 430ms ease-out forwards;
+}
+@keyframes glyph-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  30% { opacity: 1; }
+  to { transform: scale(1.6) translateY(-14px); opacity: 0; }
+}
+
+/* Fully blocked hit: frost spark, armor held. */
+.fx-spark {
+  position: absolute; margin-left: -1rem; pointer-events: none;
+  color: var(--frost); font-size: 2rem; text-shadow: 0 0 8px currentColor;
+  animation: spark-pop 300ms ease-out forwards;
+}
+@keyframes spark-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  40% { opacity: 1; }
+  to { transform: scale(1.5); opacity: 0; }
+}
+
+/* Stagger: the figure teeters. */
+.sprite.wobble > :first-child { animation: wobble 550ms ease-in-out; }
+@keyframes wobble {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(6deg); }
+  40% { transform: rotate(-5deg); }
+  60% { transform: rotate(3deg); }
+  80% { transform: rotate(-2deg); }
+}
+.relic.proc { animation: relicProc 300ms ease-out; }
+@keyframes relicProc {
+  0% { transform: scale(1.45); box-shadow: 0 0 18px var(--gold); }
+  100% { transform: none; }
+}
+.energy-orb.pulse { animation: orbPulse 240ms ease-out; }
+@keyframes orbPulse {
+  0% { transform: scale(1.18); box-shadow: 0 0 34px rgba(201, 162, 39, 0.6); }
+  100% { transform: none; }
+}
+.card-ghost {
+  position: fixed; z-index: 700; pointer-events: none;
+  transition: transform 220ms ease-in, opacity 220ms ease-in;
+}
+.stance-flare {
+  position: absolute; width: 18rem; height: 18rem; border-radius: 50%;
+  pointer-events: none; animation: flare 300ms ease-out forwards;
+}
+@keyframes flare {
+  0% { opacity: 0.7; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@keyframes float-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-42px); } }
+/* Punchy number: snap in with an overshoot, settle, then rise and fade. */
+@keyframes num-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.5); }
+  16% { opacity: 1; transform: translateY(0) scale(1.22); }
+  30% { transform: translateY(-2px) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-48px) scale(1); }
+}
+@keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
+@keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }
+@keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
+
+/* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
+@keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
+.combatant.enemy .sprite > img { animation-duration: 2.6s; }
+.combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img { animation: none; }
+.combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
+
+/* ---------- short-wide combat composition (#27) ---------------------------
+   main.js selects this composition only when the wide board still owns its
+   full 1200 local px and the ordinary vertical composition would raise the
+   upright refusal. The stylesheet follows that derived answer; it does not
+   measure a viewport or restate either threshold.
+
+   The normal board already contains enough flexible height once the refusal's
+   `data-short` answer is false. What it still needs is a shorter hand band so
+   that the battlefield receives a real row rather than collapsing to zero.
+   Card faces keep their complete information hierarchy, while box dimensions
+   shrink only in this wide, height-constrained composition. */
+:root[data-composition='short-wide'] .hand-area { height: 10rem; }
+:root[data-composition='short-wide'] .topbar.combat-hud {
+  gap: calc(2px / var(--ui-zoom, 1));
+  padding-block: calc(3px / var(--ui-zoom, 1));
+}
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-top {
+  gap: calc(2px / var(--ui-zoom, 1));
+}
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-info-row,
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-resource-row,
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
+:root[data-composition='short-wide'] .hand { padding-bottom: 2rem; }
+:root[data-composition='short-wide'] .hand .card {
+  width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
+  transform: translateY(calc(-1 * var(--fan-lift, 0px))) !important;
+}
+:root[data-composition='short-wide'] .hand .card .cost {
+  top: -0.6rem; left: -0.6rem; width: 2.4rem; height: 2.4rem;
+}
+:root[data-composition='short-wide'] .hand .card .mana-cost {
+  top: -0.4rem; right: -0.4rem; min-width: 2.8rem; height: 2rem;
+}
+:root[data-composition='short-wide'] .hand .card .cname {
+  font-size: 0.75rem; min-height: 1.3rem;
+}
+:root[data-composition='short-wide'] .hand .card .art {
+  width: 6.8rem; height: 2.2rem; margin: 0.1rem 0; font-size: 1.7rem;
+}
+:root[data-composition='short-wide'] .hand .card .ctype {
+  width: 6.8rem; padding: 0.1rem 0; font-size: 0.65rem;
+}
+:root[data-composition='short-wide'] .hand .card .ctext {
+  margin-top: 0.15rem; font-size: 0.68rem; line-height: 1.15;
+}
+:root[data-composition='short-wide'] .hand .card:hover,
+:root[data-composition='short-wide'] .hand .card.selected {
+  transform: translateY(-12px) scale(1.1) !important;
+}
+:root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
+:root[data-composition='short-wide'] .player-zone,
+:root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
+:root[data-composition='short-wide'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
+:root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
+:root[data-composition='short-wide'] .combatant .intent {
+  margin-bottom: 0.1rem; padding: 0.15rem 0.5rem; font-size: 1rem;
+}
+:root[data-composition='short-wide'] .combatant .intent .ic { font-size: 1rem; }
+:root[data-composition='short-wide'] .combatant .nm { font-size: 0.95rem; }
+:root[data-composition='short-wide'] .player .sprite > :first-child {
+  width: 5rem !important; height: 7rem !important;
+}
+:root[data-composition='short-wide'] .enemy .sprite > :first-child {
+  width: 4rem !important; height: 5rem !important;
+}
+:root[data-composition='short-wide'] .combatant .meters { width: 8rem; }
+:root[data-composition='short-wide'] .statuses { min-height: 0; gap: 0.15rem; }
+
+/* ==========================================================================
+   PROTOTYPE (EldenSpire#23, track B) — the narrow combat board.
+   ==========================================================================
+   Fires when main.js's resolveLayout() writes data-layout="narrow" on <html>.
+   THE CONDITION IS NOT RESTATED HERE ON PURPOSE. This block used to say "when
+   #app has 520 LOCAL px or fewer", which was true, and which was a second copy
+   of a rule that lives in resolveLayout() with nothing keeping the two in
+   agreement — the same shape as the defect that made this block a container
+   query and locked out three tablet shapes (#24). A comment that restates a
+   condition is a decider that cannot be executed and therefore cannot be
+   tested. Read the function.
+
+   What is safe to say here, because it is about THIS file: the block is inert
+   wherever the wide layout is on screen, and that is checked by running
+   tools/mobilefit.mjs at those shapes rather than by this sentence.
+
+   WHAT REFLOW MEANS HERE, against what "scaling" would have done: the hand
+   stops being a fan of overlapping cards under an absolutely-positioned button
+   and becomes a horizontal strip with the controls in their own row beneath
+   it. END TURN is no longer over the hand at all — not moved a little, not
+   raised above it, out of it. That is the difference between shrinking a
+   1200px layout and laying out for 430.
+
+   ~~NOT DONE HERE, deliberately: `touch-action` is not set on the strip~~ —
+   RESOLVED BY #22, which is the card this note was deferring to. The rule
+   lives below with the deferral kept for its reasoning: which gestures the
+   browser claims IS the design decision, and it is now made, per-axis.
+   - No `clamp()`. It was pitched for type and spacing, and the useful form of
+     it is `clamp(a, Nvw, b)` — a vw length, which under `body { zoom }`
+     resolves in the unzoomed room and is the same defect as everything else on
+     this branch. `clamp()` over rem is just a min and a max, and this block
+     already has exact numbers for the one baseline it targets. It would have
+     been decoration. */
+
+  /* ---- top bar: two rows instead of one clipped one ---- */
+  /* #22's design answer for the narrow hand, per-axis: the strip is a HORIZONTAL
+   scroller and a card drag is a VERTICAL aim, so the axes are split rather than
+   fought over. `pan-x` on the cards: a horizontal touch is the browser's (the
+   hand scrolls — through a card, which is where every touch starts, because
+   cards fill the strip), and a vertical touch stays with the JS drag (the
+   browser may not claim pan-y, so no cancel fires and the aim survives).
+   Vira measured the fight this replaces: five drag attempts on dev fired ZERO
+   card pointerdowns once the scroller owned the follow-through — the player
+   scrolled while trying to aim. Scoped to narrow: the wide hand is not a
+   scroller and its default behaviour is not in question. */
+:root[data-layout='narrow'] .hand .card { touch-action: pan-x; }
+/* The OVERLAP arm of balance.ui.handLayout (C2): when the layout word says
+   overlap, the narrow hand is not a scroller — the whole hand fits its width
+   by derived negative margins (renderHand) and there is nothing legitimate
+   for the browser to claim, which is the WIDE argument below, arriving on a
+   narrow shape because the word changed the composition. Leaving pan-x here
+   would let Chrome cancel a real aimed drag against a strip with zero travel.
+   Scoped to the word: in 'paging' (the default) this rule does not exist and
+   the pan-x above is untouched. */
+:root[data-layout='narrow'][data-hand-layout='overlap'] .hand .card { touch-action: none; }
+/* And the WIDE half, found by the probe going red at 1200x730 where 390x844
+   passed: with default `touch-action: auto` Chrome claims ANY touch drag as a
+   potential scroll and fires pointercancel — even where nothing scrolls — so a
+   real aimed drag died mid-flight on the layout with no scroller at all. Wide
+   has nothing legitimate for the browser to claim on a card, so the answer is
+   none. NOT merged with the rule above into one `none`: on narrow the hand
+   scroller is real, and pan-x THROUGH the cards is how it stays reachable. */
+.hand .card { touch-action: none; }
+
+:root[data-layout='narrow'] .topbar {
+    height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud {
+    flex-wrap: nowrap;
+    gap: calc(var(--hud-mobile-row-gap-px) / var(--ui-zoom, 1));
+    padding: calc(var(--hud-mobile-outer-pad-px) / var(--ui-zoom, 1)) 1rem;
+  }
+  /* Keep the reusable header on one row. Container queries above progressively
+     remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
+    gap: calc(5px / var(--ui-zoom, 1));
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-top {
+    --hud-control-gap: calc(var(--hud-mobile-control-gap-px) / var(--ui-zoom, 1));
+    --hud-panel-pad: calc(var(--hud-mobile-panel-pad-px) / var(--ui-zoom, 1));
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row {
+    gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
+  :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .hud-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .resbars-host { min-width: 0; }
+  /* Still the MAP header's bar — combat's is gone. The old rule typed the
+     combat health bar at 14rem on a phone, a constant that could not tell 72
+     max HP from 84; combat's track is derived from the row now, so the narrow
+     shape needs nothing said about it. */
+  :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
+  :root[data-layout='narrow'] .topbar .nm { font-size: 1rem; }
+  /* The seed string is dev information and it is what was overflowing the bar
+     on a phone. It is not gone, and I checked rather than assuming when I
+     wrote this the first time: overlay.js:163 puts Seed in the Stats panel,
+     reachable from the menu button in this same bar, and gameover.js:17
+     prints it on the run summary. Hidden here, present twice elsewhere. */
+  :root[data-layout='narrow'] .topbar .fight-label { display: none; }
+  :root[data-layout='narrow'] .topbar .relics { margin-left: 0; }
+
+  /* The hint bar was hidden here. It is now hidden GLOBALLY for the narrow
+     layout in styles/ui.css — it was never a fact about combat (#29 slice 0). */
+
+  /* ---- battlefield: give the enemies the width ---- */
+  :root[data-layout='narrow'] .field {
+    padding-block: var(--battlefield-hud-clearance, 0) var(--battlefield-action-clearance, 0);
+    padding-inline: 1.2rem calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  }
+  /* The compact utility pair is vertical below the HUD. Reserve its right-edge
+     column so enemy art and intent never sit beneath a control. */
+  :root[data-layout='narrow'] .topbar.shared-hud[data-hud-mode='compact'] ~ .field {
+    padding-inline-end: calc(1.2rem + var(--hud-compact-control-cell) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  }
+  :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
+  :root[data-layout='narrow'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
+  :root[data-layout='narrow'] .player-zone .combatant,
+  :root[data-layout='narrow'] .enemy-row .combatant { height: 100%; max-height: 100%; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite,
+  :root[data-layout='narrow'] .enemy-row .combatant .sprite { flex: 1 1 auto; overflow: hidden; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img,
+  :root[data-layout='narrow'] .enemy-row .combatant .sprite > img {
+    max-height: 100%; width: auto; object-fit: contain;
+  }
+  /* The player sprite is sized from balance.ui.spriteTiers and does not know
+     about the zone it stands in; at 390x844 it ran 9px past the left edge of
+     the screen. Capped by width, height auto so it does not squash. */
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
+  :root[data-layout='narrow'] .enemy-row { padding-block: 0.6rem; gap: 0.4rem; }
+  /* The complete combatant frame compacts as one component on phones. Intent,
+     art, name, meters and statuses therefore keep their order and stay inside
+     the flexible battlefield instead of painting beneath either fixed HUD. */
+  :root[data-layout='narrow'] .combatant { gap: 0; }
+  :root[data-layout='narrow'] .combatant .intent {
+    margin-bottom: 0; padding: 0 0.5rem; font-size: 1rem;
+  }
+  :root[data-layout='narrow'] .combatant .intent .ic { font-size: 1rem; }
+  :root[data-layout='narrow'] .combatant .nm { font-size: 0.95rem; }
+  :root[data-layout='narrow'] .combatant .meters { width: 8rem; gap: 0; }
+  :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; gap: 0.15rem; }
+  :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
+
+  /* ---- hand + controls: the actual reflow ----
+     Two rows. The hand is a strip that scrolls sideways; every persistent
+     action destination is a cell in the one row beneath it. */
+  :root[data-layout='narrow'] .hand-area {
+    height: auto; flex-shrink: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "hand" "actions";
+    align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
+  }
+  :root[data-layout='narrow'] .hand-overlay {
+    grid-area: hand; width: 100%; height: auto;
+  }
+  /* Same reservation, and the phone is the shape that PROVED it was needed: the
+     fan's lift at the shipped hand of five is 12 px and this rule's own 1.2rem
+     is 12 px, so the centre card's top landed exactly on the border edge —
+     clearance 0.00, measured. At six cards the lift is 15 and the scroller
+     starts eating the card it is featuring. The added room costs the phone up to
+     `--fan-lift` of height, which Law 5 clause 4 spends on purpose. */
+  :root[data-layout='narrow'] .hand {
+    grid-area: hand; height: auto; padding: calc(1.2rem + var(--fan-lift, 0px)) 0 1.6rem;
+    min-width: 0; margin-inline: 0;
+    justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
+    scrollbar-width: thin;
+  }
+  /* The overlay owns the pager columns at 8+ and collapses them completely at
+     0-7. The control row below therefore never pays for a pager it does not use. */
+  /* No negative margin: cards in a scroller must not overlap, or the one on
+     top eats the taps meant for the one beneath — the same mechanism as #21,
+     one level down. */
+  :root[data-layout='narrow'] .hand .card {
+    margin: 0; width: 11.6rem; height: 17.4rem; padding: 2.2rem 0.6rem 0.6rem;
+  }
+  :root[data-layout='narrow'] .hand .card .art { width: 9.6rem; height: 5.2rem; font-size: 2.8rem; }
+  :root[data-layout='narrow'] .hand .card .ctype { width: 9.6rem; }
+  :root[data-layout='narrow'] .hand .card .ctext { font-size: 1rem; margin-top: 0.4rem; }
+  :root[data-layout='narrow'] .hand .card .cname { font-size: 1.05rem; min-height: 2.4rem; }
+  /* A lift of 56px inside an overflow container is clipped, and the container
+     has to clip or it cannot scroll. So the selected card grows in place. */
+  :root[data-layout='narrow'] .hand .card:hover,
+:root[data-layout='narrow'] .hand .card.selected {
+    transform: translateY(-4px) scale(1.04) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Narrow puts the row back in the flow as a grid child of .hand-area, so
+     there is no hang to reserve — the token's consumer is gone and so is the
+     margin. Both halves are dropped together, in one place. */
+  :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
+  :root[data-layout='narrow'] .combat-action-row {
+    grid-area: actions; position: static; inset: auto; width: 100%;
+    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));
+    grid-template-areas: "energy end draw exhaust discard";
+    align-items: center; gap: 0.4rem;
+  }
+  :root[data-layout='narrow'] .combat-action-row > .energy-orb {
+    width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
+  }
+  :root[data-layout='narrow'] .combat-action-row > .end-turn {
+    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    margin: 0; min-width: 0;
+  }
+
+  :root[data-layout='narrow'] .combat-action-row > .pile {
+    width: 100%; height: max(4.2rem, var(--tap-floor)); font-size: 1.1rem;
+  }
+
+  /* Co-op still renders Energy, the shared hand, and End Turn as direct
+     children. Keep that pre-action-row contract explicit so the solo grid can
+     never create implicit co-op tracks or spend the hand's width. */
+  :root[data-layout='narrow'] .combat.coop .hand-area {
+    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr);
+    grid-template-areas: "hand hand" "orb end";
+  }
+  :root[data-layout='narrow'] .combat.coop .hand-area > .energy-orb {
+    grid-area: orb; position: static; left: auto; bottom: auto;
+    width: 5.6rem; height: 5.6rem; font-size: 1.7rem;
+  }
+  :root[data-layout='narrow'] .combat.coop .hand-area > .end-turn {
+    grid-area: end; position: static; right: auto; bottom: auto;
+    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    margin-right: 13.8rem;
+  }

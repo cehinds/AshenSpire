@@ -1,0 +1,11 @@
+{
+  "_comment": "Set Settings > Audio > Music folder to this folder (e.g. 'music/' when served, or an https URL). Each context lists the track files to pick from at random; paths are relative to this manifest. Drop your .mp3/.ogg files into the matching subfolders and list them here. Any context left empty (or a missing/failed file) uses the built-in generated score. See README.md.",
+  "title": [],
+  "map": [],
+  "combat": [],
+  "elite": [],
+  "boss": [],
+  "shop": [],
+  "rest": [],
+  "victory": []
+}

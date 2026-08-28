@@ -1,0 +1,149 @@
+
+REF    dabd7d9 (bjorn/the-camera-lane)  DIRTY — 1 path(s) not in that commit: tools/linebudget-camera.mjs. Every number below is about the WORKING TREE.
+
+DOOR   content/source/weapons.csv +2 rows → node tools/content-build.mjs → OK. Plants land in styles/ui.css BY BYTES, at the shipped fix's own declaration.
+
+  ▸ Ashen Spire is live at http://localhost:8151/
+    Serving /home/user/AshenSpire-w6-bjorn
+    Press Ctrl+C to stop.
+
+RUN    browser pid 24117 · HTTP port 8151 — this run's own.
+
+CONTROL — the tree as it stands. `bands()` on the left, INK counted off the photograph on the right.
+  shape    rule      row  li  head  note  equation  CAMERA  what the row says
+  390x844  flat      0   3   1     2     green     3       "Right Hand swap Actions 2 → 2"
+  390x844  flat      1   3   1     2     green     3       "Left Hand swap Actions 2 → 2"
+  390x844  category  0   3   1     2     green     3       "Right Hand swap Actions 2 → 2"
+  390x844  category  1   3   1     2     green     3       "Left Hand swap Actions 2 → 2"
+  390x844  gear      0   1   1     0     green     1       "Right Hand swap Actions 2 → 4"
+  390x844  gear      1   1   1     0     green     1       "Left Hand swap Actions 2 → 4"
+  360x640  flat      0   3   1     2     green     3       "Right Hand swap Actions 2 → 2"
+  360x640  flat      1   3   1     2     green     3       "Left Hand swap Actions 2 → 2"
+  360x640  category  0   3   1     2     green     3       "Right Hand swap Actions 2 → 2"
+  360x640  category  1   3   1     2     green     3       "Left Hand swap Actions 2 → 2"
+  360x640  gear      0   1   1     0     green     1       "Right Hand swap Actions 2 → 4"
+  360x640  gear      1   1   1     0     green     1       "Left Hand swap Actions 2 → 4"
+  ink floor 8px at 2x (this file's one literal — kept bands measured 30-50 rows, dropped slivers 4-6), ink threshold 28/255 from the crop's own modal background, 2+ pixels to ink a row.
+  12 control cell(s) carrying 2 DISTINCT reading(s) — the rest are replicates, not independent trials.
+  So the control shows the two instruments do not disagree WHERE THE ROW IS FINE; the weight is in the plants, which make them differ.
+
+PLANTED CELLS — one CSS declaration each, at the fix's own declaration, reverted after every one.
+
+  note-crush-0.4  →  CELL FOUND — GREEN AND WRONG
+    the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it
+    390x844/flat row 0: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+    390x844/flat row 1: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+    390x844/category row 0: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+    390x844/category row 1: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+    360x640/flat row 0: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+    360x640/flat row 1: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+    360x640/category row 0: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+    360x640/category row 1: bands() li 2 = head 1 + note 1 → green · camera 1 band(s) of ink
+
+  note-crush-0.62  →  RED (the assertion fires)
+    the same crush, less of it — kept so the pair shows the verdict improving as the defect deepens
+    390x844/flat row 0: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+    390x844/flat row 1: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+    390x844/category row 0: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+    390x844/category row 1: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+    360x640/flat row 0: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+    360x640/flat row 1: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+    360x640/category row 0: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+    360x640/category row 1: bands() li 2 = head 1 + note 2 → RED · camera 1 band(s) of ink
+
+  note-invisible-colour  →  CELL FOUND — GREEN AND WRONG
+    the note is painted in the panel's own background — three correct line boxes, nothing to read
+    390x844/flat row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    390x844/flat row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    390x844/category row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    390x844/category row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/flat row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/flat row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/category row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/category row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+
+  note-visibility-hidden  →  CELL FOUND — GREEN AND WRONG
+    the note reserves its two lines and paints none of them
+    390x844/flat row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    390x844/flat row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    390x844/category row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    390x844/category row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/flat row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/flat row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/category row 0: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+    360x640/category row 1: bands() li 3 = head 1 + note 2 → green · camera 1 band(s) of ink
+
+  note-hidden-on-phones  →  CELL FOUND — GREEN, BOTH READINGS AGREE, AND THE NOTE IS GONE
+    an ordinary mobile edit — and this harness photographs only screens the media query catches
+    390x844/flat row 0: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+    390x844/flat row 1: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+    390x844/category row 0: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+    390x844/category row 1: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+    360x640/flat row 0: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+    360x640/flat row 1: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+    360x640/category row 0: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+    360x640/category row 1: bands() li 1 = head 1 + note 0 → green · camera 1 band(s) of ink
+
+  the-run-on-again  →  RED (the assertion fires)
+    the 18d2976 defect back through the CSS door — the seam breaks, and the seam is what the equation watches
+    390x844/flat row 0: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+    390x844/flat row 1: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+    390x844/category row 0: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+    390x844/category row 1: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+    360x640/flat row 0: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+    360x640/flat row 1: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+    360x640/category row 0: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+    360x640/category row 1: bands() li 3 = head 1 + note 3 → RED · camera 3 band(s) of ink
+
+  viki-grid-verbatim  →  RED (the assertion fires)
+    the sibling's declaration copied literally — the price torn off its own arrow
+    390x844/flat row 0: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+    390x844/flat row 1: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+    390x844/category row 0: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+    390x844/category row 1: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+    360x640/flat row 0: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+    360x640/flat row 1: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+    360x640/category row 0: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+    360x640/category row 1: bands() li 4 = head 2 + note 2 → RED · camera 4 band(s) of ink
+
+BOUNDARY  source tree over http, one Linux box, one Chromium, Armoury → Talisman → set 1, two shapes, three shipped rules.
+          This camera reads INK, and it cannot tell a tall glyph bridging two lines from one tall band — that case is flagged, never counted.
+          Silent about dist/, every other surface, and about whether the sentence MEANS anything — that is Sunna's ruling, not this exit code.
+          It gates ONE assertion in swap-row-reads.mjs. It is silent on every other check in that file.
+          A PASS here means the two readings AGREE, never that the equation is green: a control row can read RED
+          in the table above with both instruments agreeing, and that verdict belongs to swap-row-reads.mjs.
+
+FAIL 32 finding(s):
+  · note-crush-0.4 390x844/flat row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-390x844-flat-row0.png
+  · note-crush-0.4 390x844/flat row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-390x844-flat-row1.png
+  · note-crush-0.4 390x844/category row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-390x844-category-row0.png
+  · note-crush-0.4 390x844/category row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-390x844-category-row1.png
+  · note-crush-0.4 360x640/flat row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-360x640-flat-row0.png
+  · note-crush-0.4 360x640/flat row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-360x640-flat-row1.png
+  · note-crush-0.4 360x640/category row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-360x640-category-row0.png
+  · note-crush-0.4 360x640/category row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 2 line(s), the photograph carries 1 band(s) of ink. the note's own two lines merge into one band — noteLines and liLines fall by the same 1 and the equation absorbs it. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-crush-0.4-360x640-category-row1.png
+  · note-invisible-colour 390x844/flat row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-390x844-flat-row0.png
+  · note-invisible-colour 390x844/flat row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-390x844-flat-row1.png
+  · note-invisible-colour 390x844/category row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-390x844-category-row0.png
+  · note-invisible-colour 390x844/category row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-390x844-category-row1.png
+  · note-invisible-colour 360x640/flat row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-360x640-flat-row0.png
+  · note-invisible-colour 360x640/flat row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-360x640-flat-row1.png
+  · note-invisible-colour 360x640/category row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-360x640-category-row0.png
+  · note-invisible-colour 360x640/category row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note is painted in the panel's own background — three correct line boxes, nothing to read. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-invisible-colour-360x640-category-row1.png
+  · note-visibility-hidden 390x844/flat row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-390x844-flat-row0.png
+  · note-visibility-hidden 390x844/flat row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-390x844-flat-row1.png
+  · note-visibility-hidden 390x844/category row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-390x844-category-row0.png
+  · note-visibility-hidden 390x844/category row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-390x844-category-row1.png
+  · note-visibility-hidden 360x640/flat row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-360x640-flat-row0.png
+  · note-visibility-hidden 360x640/flat row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-360x640-flat-row1.png
+  · note-visibility-hidden 360x640/category row 0: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-360x640-category-row0.png
+  · note-visibility-hidden 360x640/category row 1: THE EQUATION IS GREEN AND THE ROW READS DIFFERENTLY — bands() says 3 line(s), the photograph carries 1 band(s) of ink. the note reserves its two lines and paints none of them. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-visibility-hidden-360x640-category-row1.png
+  · note-hidden-on-phones 390x844/flat row 0: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Flat swap costs ignore talismans and rel…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-390x844-flat-row0.png
+  · note-hidden-on-phones 390x844/flat row 1: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Flat swap costs ignore talismans and rel…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-390x844-flat-row1.png
+  · note-hidden-on-phones 390x844/category row 0: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Weapon category swap costs ignore talism…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-390x844-category-row0.png
+  · note-hidden-on-phones 390x844/category row 1: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Weapon category swap costs ignore talism…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-390x844-category-row1.png
+  · note-hidden-on-phones 360x640/flat row 0: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Flat swap costs ignore talismans and rel…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-360x640-flat-row0.png
+  · note-hidden-on-phones 360x640/flat row 1: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Flat swap costs ignore talismans and rel…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-360x640-flat-row1.png
+  · note-hidden-on-phones 360x640/category row 0: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Weapon category swap costs ignore talism…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-360x640-category-row0.png
+  · note-hidden-on-phones 360x640/category row 1: THE NOTE IS IN THE DOM AND PAINTS NOTHING — "Weapon category swap costs ignore talism…" renders 0 line(s), so the budget is green at 1 = 1 + 0 and UNMOVED AND UNEXPLAINED stays silent because hasNote is still true. Its known-bad deletes the element in equipmentReceipts.js; this door does not. Crop: /home/user/AshenSpire-w6-bjorn/tools/results/linebudget-camera/note-hidden-on-phones-360x640-category-row1.png
+EXIT CODE: 1
