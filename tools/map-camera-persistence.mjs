@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Same-door gate for issue #38: a player-chosen map zoom and vertical camera
-// offset must survive the real Map -> Armaments -> Map remount.
+// Same-door gate for map camera ownership. A player-chosen map zoom and
+// vertical camera offset must survive the real Map -> Armaments -> Map remount
+// (#38), and a debounced camera write must not follow a detached board through
+// Save & Quit to Title (#243).
 
 import { existsSync, mkdirSync, mkdtempSync, cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -19,6 +21,8 @@ const argValue = (name, fallback = '') => {
 };
 const ENTRY = argValue('--entry');
 const SHOT_PREFIX = argValue('--shot-prefix', 'map-camera-persistence');
+const WRITE_TITLE_SHOTS = process.argv.includes('--title-screenshots');
+const TITLE_SHOT_PREFIX = argValue('--title-shot-prefix', 'map-title-return-after');
 const BROWSERS = [
   process.env.CHROME,
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -30,6 +34,10 @@ const BROWSERS = [
 const VIEWPORTS = [
   { name: '390x844', width: 390, height: 844, deviceScaleFactor: 3 },
   { name: '412x915', width: 412, height: 915, deviceScaleFactor: 3 },
+];
+const TITLE_VIEWPORTS = [
+  { name: '390x844', width: 390, height: 844, deviceScaleFactor: 3, mobile: true },
+  { name: '1200x730', width: 1200, height: 730, deviceScaleFactor: 1, mobile: false },
 ];
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -255,6 +263,93 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       committedViewNode,
     };
 
+    // The title-return crash is an 80 ms ownership race, so prove both sides of
+    // that boundary through the shipped controls. The shot state first saves
+    // and quits to create a real Continue slot, then Continue remounts the map.
+    // One known scroll event arms exactly one debounce: a physical smooth wheel
+    // can emit several events, which would make "90 ms from wheel-down" a
+    // different and timing-dependent claim. The player-wheel door remains
+    // covered above; this pair owns the timer boundary itself.
+    const saveAndQuit = `(() => {
+      const menu = document.querySelector('#open-menu');
+      if (!menu) return { ok: false, missing: '#open-menu' };
+      menu.click();
+      const saveTab = document.querySelector('.ov-tab[data-member="save"]');
+      if (!saveTab) return { ok: false, missing: 'Save tab' };
+      saveTab.click();
+      const save = document.querySelector('#ovs-save');
+      const quit = document.querySelector('#ovs-quit');
+      if (!save || !quit) return { ok: false, missing: 'Save / Save & Quit' };
+      save.click();
+      quit.click();
+      return { ok: true };
+    })()`;
+    const runTitleReturn = async (viewport, delay) => {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: viewport.width,
+        height: viewport.height,
+        deviceScaleFactor: viewport.deviceScaleFactor,
+        mobile: viewport.mobile,
+      }, sessionId);
+      await cdp.send('Page.navigate', {
+        url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE`,
+      }, sessionId);
+      await waitFor('seed map before title-return control', `!!document.querySelector('.map-scroll')`);
+      await wait(260); // outlast the board's framing backstop before creating the slot
+      const seeded = await evaluate(saveAndQuit);
+      await waitFor('title with a real Continue slot', `!!document.querySelector('.title-screen .slot-continue')`);
+      await evaluate(`document.querySelector('.slot-continue').click()`);
+      await waitFor('continued map before title-return race', `!!document.querySelector('.map-scroll')`);
+      await wait(260);
+
+      const armed = await evaluate(`(async () => {
+        const port = document.querySelector('.map-scroll');
+        if (!port) return { ok: false, missing: '.map-scroll' };
+        window.__mapTitleReturnErrors = [];
+        window.addEventListener('error', (event) => {
+          window.__mapTitleReturnErrors.push(String(event.error && event.error.stack || event.message || event.error));
+        });
+        const at = performance.now();
+        port.dispatchEvent(new Event('scroll'));
+        await new Promise((done) => setTimeout(done, ${delay}));
+        const door = ${saveAndQuit};
+        return { ok: !!door.ok, door, elapsed: performance.now() - at };
+      })()`);
+      await wait(180); // let the 80 ms camera callback vote after the 70 ms quit
+      const final = await evaluate(`(() => ({
+        title: !!document.querySelector('.title-screen'),
+        continueSlot: !!document.querySelector('.slot-continue'),
+        banner: document.body.innerText.includes('SOMETHING JUST STOPPED WORKING'),
+        errors: window.__mapTitleReturnErrors || [],
+      }))()`);
+      return {
+        delay,
+        pass: !!(seeded.ok && armed.ok && final.title && final.continueSlot
+          && !final.banner && final.errors.length === 0),
+        seeded,
+        armed,
+        final,
+      };
+    };
+
+    results.titleReturn = [];
+    for (const viewport of TITLE_VIEWPORTS) {
+      const early = await runTitleReturn(viewport, 70);
+      if (WRITE_TITLE_SHOTS) {
+        const out = resolve(root, 'docs', 'preview', `${TITLE_SHOT_PREFIX}-${viewport.name}.png`);
+        mkdirSync(resolve(out, '..'), { recursive: true });
+        const png = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
+        writeFileSync(out, Buffer.from(png.data, 'base64'));
+      }
+      const late = await runTitleReturn(viewport, 90);
+      results.titleReturn.push({
+        viewport: viewport.name,
+        pass: early.pass && late.pass,
+        early,
+        late,
+      });
+    }
+
     // Hold the real map scrollport at zero height beyond the 120 ms backstop,
     // then release it through an actual viewport resize. The timeout must stay
     // provisional; the later ResizeObserver pass owns the first real fit.
@@ -354,6 +449,30 @@ async function selftest() {
       + `viewport ${fitCaught ? 'caught' : 'MISSED'}, debounce ${raceCaught ? 'caught' : 'MISSED'}, `
       + `zero-height settle ${settleCaught ? 'caught' : 'MISSED'}`);
     if (!fitCaught || !raceCaught || !settleCaught) process.exitCode = 1;
+
+    // The #243 guard has to precede the callback it protects. Missing,
+    // inverted, and after-the-callback variants each represent a plausible
+    // one-line repair that still lets the detached board save.
+    const guardSeam = '    if (!scroll.isConnected) return;\n';
+    const callbackSeam = '    if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });\n';
+    if (!board.includes(guardSeam) || !board.includes(callbackSeam)) {
+      throw new Error('selftest plant refused: detached-board view-state guard seam is absent');
+    }
+    const guardPlants = [
+      ['missing', board.replace(guardSeam, '')],
+      ['inverted', board.replace(guardSeam, '    if (scroll.isConnected) return;\n')],
+      ['after callback', board.replace(guardSeam + callbackSeam, callbackSeam + guardSeam)],
+    ];
+    for (const [label, plantedBoard] of guardPlants) {
+      writeFileSync(screenPath, clean);
+      writeFileSync(boardPath, plantedBoard);
+      const guardResult = await runProbe(tempRoot, { screenshots: false });
+      const caught = guardResult.titleReturn.every((row) => !row.early.pass && row.late.pass);
+      console.log(`map-camera detached-board selftest (${label}): ${caught ? 'GREEN' : 'RED'} - `
+        + `${guardResult.titleReturn.filter((row) => !row.early.pass).length}/${guardResult.titleReturn.length} early races caught; `
+        + `${guardResult.titleReturn.filter((row) => row.late.pass).length}/${guardResult.titleReturn.length} late controls clean`);
+      if (!caught) process.exitCode = 1;
+    }
   } finally {
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
@@ -386,7 +505,13 @@ if (SELFTEST) {
     + `${settle ? settle.before.viewportHeight : '?'} -> ${settle ? settle.after.viewportHeight : '?'}; `
     + `framing=${settle ? settle.after.framing : '?'}, miss=${settle ? settle.after.framingMiss : '?'}`);
   if (!settle || !settle.pass) failures++;
-  const total = results.length + 3;
+  for (const row of results.titleReturn || []) {
+    console.log(`${row.pass ? 'PASS' : 'FAIL'} ${row.viewport} title return: `
+      + `70 ms ${row.early.pass ? 'clean' : 'RED'}; 90 ms ${row.late.pass ? 'clean' : 'RED'}; `
+      + `early errors=${row.early.final.errors.length}, banner=${row.early.final.banner}`);
+    if (!row.pass) failures++;
+  }
+  const total = results.length + 3 + (results.titleReturn || []).length;
   console.log(`map-camera persistence: ${failures ? 'RED' : 'GREEN'} (${total - failures}/${total})`);
   process.exitCode = failures ? 1 : 0;
 }
