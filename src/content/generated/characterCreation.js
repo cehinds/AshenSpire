@@ -3,6 +3,10 @@
 
 export const characterCreation = {
   "spritePreviewSide": "right",
+  "visibleModeIds": [
+    "standard",
+    "pointbuy"
+  ],
   "layout": {
     "classPreviewPercent": 30,
     "classChoiceView": "list",
@@ -16,21 +20,22 @@ export const characterCreation = {
       "kind": "armour"
     },
     {
-      "id": "leftHand",
-      "label": "LEFT HAND",
-      "kind": "hand",
-      "slot": "leftHand"
-    },
-    {
       "id": "rightHand",
       "label": "RIGHT HAND",
       "kind": "hand",
       "slot": "rightHand"
     },
     {
+      "id": "leftHand",
+      "label": "LEFT HAND",
+      "kind": "hand",
+      "slot": "leftHand"
+    },
+    {
       "id": "equipSlot",
       "label": "EQUIP SLOT",
-      "kind": "slot"
+      "kind": "slot",
+      "slot": "talisman"
     },
     {
       "id": "relic",
@@ -50,6 +55,7 @@ export const characterCreation = {
         "greatsword",
         "buckler"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "forsakenMedallion",
         "goldenSprout"
@@ -64,6 +70,7 @@ export const characterCreation = {
         "ashStaff",
         "starstoneStaff"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "starstoneShard",
         "goldenSprout"
@@ -80,6 +87,7 @@ export const characterCreation = {
         "shortbow",
         "parryDagger"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "cutpursesCoin",
         "goldenSprout"
@@ -94,6 +102,7 @@ export const characterCreation = {
         "boneSceptre",
         "emberlightSceptre"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "goldFigurine",
         "goldenSprout"

@@ -16,7 +16,7 @@ import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.j
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
-import { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
+import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
 import { friendlyTargetMode } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
@@ -1282,14 +1282,15 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
     // The menu key opens Settings. The legacy Deck/Stats/Relics bindings all
     // land in Armoury now that it owns every run-information surface.
+    const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
       ev.preventDefault();
       if (onMenu) onMenu('settings');
       return;
     }
-    if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
+    if (armouryAction) {
       ev.preventDefault();
-      $('#combat-armoury').click();
+      openCombatArmoury(armouryAction);
       return;
     }
 
@@ -1607,12 +1608,15 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  function openCombatArmoury(equipView = '') {
+  function openCombatArmoury(request = '') {
     if (!registries.balance.equipment.enabled) return;
+    const equipView = typeof request === 'string' ? request : '';
+    const destination = request && typeof request === 'object' ? request.destination || '' : '';
     const panel = mountEquipment(document.body, {
       registries,
       run,
       meta: { settings: { customization: run.customization, ...(equipView ? { equipView } : {}) } },
+      destination,
       inCombat: true,
       onSwap: (slotId, setIndex) => {
         let out;

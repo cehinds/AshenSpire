@@ -26,6 +26,7 @@ export function renderRoleCopies(surface) {
 
 export function renderCandidateComparison(candidate, { expanded = false } = {}) {
   const requirements = candidate.requirement ? renderEquipmentRequirements([candidate.requirement]) : renderEquipmentRequirements([]);
+  const attackRows = (candidate.attackPackageChanges || []).map((row) => `<li data-role="attack" data-card-id="${esc(row.cardId)}"><b>${esc(row.name)}</b> <span>x${row.beforeCount} → <strong>x${row.afterCount}</strong></span>${row.sourceHands.length ? `<small>${esc(row.sourceHands.join(' + '))} hand package</small>` : ''}</li>`).join('');
   const roleRows = candidate.roles.map((row) => `<li data-role="${esc(row.role)}"><b>${esc(row.beforeName)} → ${esc(row.afterName)}</b> <span>${row.beforeValue} → <strong>${row.afterValue}</strong></span><small>${esc(row.afterSchool)}${row.afterTags.length ? ` · ${row.afterTags.map(esc).join(' · ')}` : ''}</small></li>`).join('');
   const effects = candidate.addedEffects.length
     ? candidate.addedEffects.map((row) => `<li class="equip-added-effect">${esc(row.label)}</li>`).join('')
@@ -38,7 +39,7 @@ export function renderCandidateComparison(candidate, { expanded = false } = {}) 
     ? candidate.resourceChanges.map((row) => `<li class="equip-resource-change">${esc(row.label)} ${row.before} → <strong>${row.after}</strong>${row.note ? `<small>${esc(row.note)}</small>` : ''}</li>`).join('')
     : '<li class="equip-resource-change none">No resource changes.</li>';
   return `<details class="equip-candidate-comparison"${expanded ? ' open' : ''}><summary>Compare cards and receipts</summary>`
-    + `<ul class="equip-card-changes">${roleRows}</ul>${requirements}`
+    + `<ul class="equip-card-changes">${attackRows}${roleRows}</ul>${requirements}`
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`
     + `<section class="player-poise-receipt"><b>Poise threshold</b><span>${candidate.poise.before} → <strong>${candidate.poise.after}</strong></span><small>${esc(candidate.poise.note)}</small></section>`

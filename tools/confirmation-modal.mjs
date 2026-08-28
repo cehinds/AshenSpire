@@ -2,7 +2,7 @@
 // Focused acceptance for QA remediation #4: Load and Quit Without Saving use
 // one reversible themed confirmation surface, with the safe action focused.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
@@ -12,6 +12,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SHOT_DIR = resolve(ROOT, 'docs', 'preview');
 const CAPTURE_SHOTS = process.argv.includes('--screenshots');
 const ARTIFACT = process.argv.includes('--artifact');
+const SOURCE_CONTRACT = process.argv.includes('--source-contract');
+const SOURCE_SELFTEST = process.argv.includes('--source-selftest');
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const browserPath = [
   process.env.CHROME,
@@ -131,6 +133,80 @@ function check(ok, code, detail) {
   else { failures += 1; console.error(`RED ${code} - ${detail}`); }
 }
 
+function quickLoadSourceChecks({ main, title, selector }) {
+  const confirmStart = main.indexOf('function confirmSlotLoad');
+  const confirmEnd = main.indexOf('function loadActiveSlot', confirmStart);
+  const confirm = confirmStart >= 0 && confirmEnd > confirmStart ? main.slice(confirmStart, confirmEnd) : '';
+  const resumeCalls = confirm.match(/resumeRun\(/g) || [];
+  return [
+    [Boolean(selector), 'QUICK-LOAD-SHARED-SELECTOR', 'the shared save-slot selector component exists'],
+    [/function loadActiveSlot[\s\S]*?openSaveSlotSelector\(/.test(main)
+      && !/title: `Load slot \$\{activeSlot\}\?`/.test(main),
+    'QUICK-LOAD-NO-DIRECT-ACTIVE-SLOT', 'Quick Menu Load routes through selection rather than confirming activeSlot'],
+    [/openSaveSlotSelector/.test(title), 'QUICK-LOAD-TITLE-REUSE', 'Title Load uses the same selector component'],
+    [/saveSlotSelectionModel\(slots, \{ kind: 'load'/.test(selector)
+      && /data-component="title-save-slot-list"/.test(selector)
+      && /data-component="title-save-slot"/.test(selector),
+    'QUICK-LOAD-MODEL-AND-IDS', 'the shared selector preserves the Load projection and stable component IDs'],
+    [/let activatedLoadSlot = null;/.test(selector)
+      && /selectedSlot === slot && activatedLoadSlot === slot/.test(selector)
+      && /requestLoad\(slot, 'hold'\)/.test(selector),
+    'QUICK-LOAD-FIRST-THEN-HOLD', 'first activation selects; repeat and configured hold are distinct deterministic triggers'],
+    [/if \(event\.target === veil\) return close\(\);/.test(selector)
+      && /if \(event\.key === 'Escape'\)/.test(selector)
+      && /queueMicrotask\(restoreLauncher\)/.test(selector),
+    'QUICK-LOAD-CANCEL-FOCUS', 'Escape, Back, and scrim restore the invoking control'],
+    [/onRequestLoad: \(slot\) => confirmSlotLoad\(slot, \{ returnFocusElement \}\)/.test(main),
+    'QUICK-LOAD-NO-BYPASS', 'selection requests the exact confirmation instead of resuming directly'],
+    [resumeCalls.length === 1 && /resumeRun\(slot\);/.test(confirm) && !/resumeRun\(activeSlot\)/.test(confirm),
+    'QUICK-LOAD-EXACT-COMMIT', 'the confirmation commits the selected slot exactly once'],
+  ];
+}
+
+if (SOURCE_CONTRACT || SOURCE_SELFTEST) {
+  const read = (path) => readFileSync(resolve(ROOT, path), 'utf8');
+  const sources = {
+    main: read('src/main.js'),
+    title: read('src/ui/screens/title.js'),
+    selector: existsSync(resolve(ROOT, 'src/ui/components/saveSlotSelector.js'))
+      ? read('src/ui/components/saveSlotSelector.js') : '',
+  };
+  if (SOURCE_CONTRACT) {
+    for (const [ok, code, detail] of quickLoadSourceChecks(sources)) check(ok, code, detail);
+    console.log(`\n${checks - failures}/${checks} quick-load source-contract checks passed.`);
+    process.exit(failures ? 1 : 0);
+  }
+
+  const baseline = quickLoadSourceChecks(sources);
+  check(baseline.every(([ok]) => ok), 'QUICK-LOAD-PLANT-CLEAN', 'clean source satisfies every focused contract');
+  const plants = [
+    ['direct active-slot route', 'QUICK-LOAD-NO-DIRECT-ACTIVE-SLOT', {
+      ...sources, main: sources.main.replace('  openSaveSlotSelector({\n    slots: saveSlotRecords(),', '  confirmSlotLoad(activeSlot, { returnFocusElement });\n  void ({\n    slots: saveSlotRecords(),'),
+    }],
+    ['missing shared slot list', 'QUICK-LOAD-MODEL-AND-IDS', {
+      ...sources, selector: sources.selector.replace('data-component="title-save-slot-list"', 'data-component="missing-slot-list"'),
+    }],
+    ['first activation already armed', 'QUICK-LOAD-FIRST-THEN-HOLD', {
+      ...sources, selector: sources.selector.replace('let activatedLoadSlot = null;', 'let activatedLoadSlot = selectedSlot;'),
+    }],
+    ['confirmation bypass resumes immediately', 'QUICK-LOAD-NO-BYPASS', {
+      ...sources, main: sources.main.replace('onRequestLoad: (slot) => confirmSlotLoad(slot, { returnFocusElement })', 'onRequestLoad: (slot) => resumeRun(slot)'),
+    }],
+    ['cancel loses launcher focus', 'QUICK-LOAD-CANCEL-FOCUS', {
+      ...sources, selector: sources.selector.replace('queueMicrotask(restoreLauncher)', 'queueMicrotask(() => {})'),
+    }],
+    ['wrong-slot double commit', 'QUICK-LOAD-EXACT-COMMIT', {
+      ...sources, main: sources.main.replace('      resumeRun(slot);', '      resumeRun(activeSlot);\n      resumeRun(slot);'),
+    }],
+  ];
+  for (const [name, expectedCode, planted] of plants) {
+    const result = quickLoadSourceChecks(planted).find(([, code]) => code === expectedCode);
+    check(result?.[0] === false, `QUICK-LOAD-PLANT-${expectedCode}`, `${name} is caught by ${expectedCode}`);
+  }
+  console.log(`\n${checks - failures}/${checks} quick-load source plants passed.`);
+  process.exit(failures ? 1 : 0);
+}
+
 let server;
 let cdp;
 let closeBrowser = async () => {};
@@ -151,6 +227,16 @@ try {
     await cdp.send('Log.enable', {}, sessionId);
     await cdp.send('Network.enable', {}, sessionId);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile }, sessionId);
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 }, sessionId);
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
+      const state={connected:false,buttons:Array.from({length:16},()=>({pressed:false,value:0}))};
+      const gamepad={id:'confirmation-test-pad',index:0,connected:true,mapping:'standard',timestamp:0,axes:[0,0,0,0],buttons:state.buttons};
+      Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>state.connected?[gamepad]:[]});
+      window.__confirmationPad={
+        connect(){state.connected=true;const event=new Event('gamepadconnected');Object.defineProperty(event,'gamepad',{value:gamepad});dispatchEvent(event);},
+        set(index,pressed){state.buttons[index]={pressed,value:pressed?1:0};gamepad.timestamp+=1;}
+      };
+    })();` }, sessionId);
     const diagnostics = { console: [], network: [] };
     const releaseEvents = cdp.onEvent((message) => {
       if (message.sessionId !== sessionId) return;
@@ -197,11 +283,35 @@ try {
       await physicalClickAt(point);
     };
     const key = async (keyName) => {
-      const vk = keyName === 'Escape' ? 27 : keyName === 'Tab' ? 9 : keyName.toUpperCase().charCodeAt(0);
+      const vk = keyName === 'Escape' ? 27 : keyName === 'Tab' ? 9 : keyName === 'Enter' ? 13 : keyName.toUpperCase().charCodeAt(0);
       await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: keyName, code: keyName, windowsVirtualKeyCode: vk }, sessionId);
       await wait(80);
       await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: keyName, code: keyName, windowsVirtualKeyCode: vk }, sessionId);
       await wait(180);
+    };
+    const padConfirm = async () => {
+      await ev(`window.__confirmationPad.set(0,true)`); await wait(100);
+      await ev(`window.__confirmationPad.set(0,false)`); await wait(220);
+    };
+    const touchHold = async (selector, durationMs, { cancel = false, probeAfterMs = 0 } = {}) => {
+      const point = await center(selector);
+      const touch = [{ x: point.x, y: point.y, radiusX: 1, radiusY: 1, force: 1, id: 1 }];
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: touch }, sessionId);
+      const probeDelay = Math.min(Math.max(0, probeAfterMs), durationMs);
+      await wait(probeDelay);
+      const probe = probeAfterMs > 0 ? await ev(`(() => {
+        const button = document.querySelector(${JSON.stringify(selector)});
+        return {
+          hold: button?.dataset.hold || null,
+          progress: Number(button?.dataset.holdProgress || 0),
+          confirmation: !!document.querySelector('.confirmation-modal'),
+          title: document.querySelector('#confirmation-modal-title')?.textContent || null
+        };
+      })()`) : null;
+      await wait(durationMs - probeDelay);
+      await cdp.send('Input.dispatchTouchEvent', { type: cancel ? 'touchCancel' : 'touchEnd', touchPoints: [] }, sessionId);
+      await wait(220);
+      return probe;
     };
     const screenshot = async (name) => {
       mkdirSync(SHOT_DIR, { recursive: true });
@@ -237,6 +347,19 @@ try {
     await click('#open-menu');
     await until(`!!document.querySelector('.qn-row[data-act="load"]')`, 'Load command');
     await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('[data-component="title-save-slot-list"]')`, 'Load slot selector');
+    const mapLoadInitial = await ev(`(() => ({
+      map:!!document.querySelector('.mapscreen'),
+      confirmation:!!document.querySelector('.confirmation-modal'),
+      selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null,
+      focused:document.querySelector('[data-slot-pick].gp-focus')?.dataset.slotPick||null
+    }))()`);
+    check(mapLoadInitial.map && !mapLoadInitial.confirmation && mapLoadInitial.selected === mapLoadInitial.focused,
+      `CONFIRMATION-${label}-LOAD-SELECTOR`, `Quick Menu Load opens the occupied-slot selector without leaving Map (${JSON.stringify(mapLoadInitial)})`);
+    await click(`[data-slot-pick="${mapLoadInitial.selected}"]`);
+    check(await ev(`!document.querySelector('.confirmation-modal') && !!document.querySelector('.mapscreen')`),
+      `CONFIRMATION-${label}-LOAD-FIRST-SELECTS`, 'first activation selects without committing or opening confirmation');
+    await click(`[data-slot-pick="${mapLoadInitial.selected}"]`);
     try {
       await until(`!!document.querySelector('.confirmation-modal')`, 'Load confirmation');
     } catch (error) {
@@ -265,6 +388,47 @@ try {
       `CONFIRMATION-${label}-CANCEL-NO-MUTATION`, 'cancelling Load keeps the current map run');
     check(await ev(`document.activeElement?.id === 'open-menu'`),
       `CONFIRMATION-${label}-FOCUS-RETURN`, 'Escape restores the map menu trigger');
+
+    await click('#open-menu');
+    await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('[data-component="title-save-slot-list"]')`, 'keyboard Load selector');
+    await key('Enter');
+    check(await ev(`!document.querySelector('.confirmation-modal')`),
+      `CONFIRMATION-${label}-LOAD-KEY-FIRST`, 'first keyboard activation selects only');
+    await key('Enter');
+    await until(`!!document.querySelector('.confirmation-modal')`, 'keyboard exact-slot confirmation');
+    check((await modalState()).title === 'Load slot 1?',
+      `CONFIRMATION-${label}-LOAD-KEY-REPEAT`, 'second keyboard activation opens the exact-slot confirmation');
+    await key('Escape');
+
+    await click('#open-menu');
+    await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('[data-slot-pick][aria-pressed="true"]')`, 'touch Load selector');
+    const touchSlot = await ev(`document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null`);
+    await touchHold(`[data-slot-pick="${touchSlot}"]`, 180, { cancel: true });
+    check(await ev(`!document.querySelector('.confirmation-modal') && !!document.querySelector('[data-component="title-save-slot-list"]')`),
+      `CONFIRMATION-${label}-LOAD-HOLD-CANCEL`, 'cancelled touch hold leaves selection open and commits nothing');
+    const rearmedHold = await touchHold(`[data-slot-pick="${touchSlot}"]`, 720, { probeAfterMs: 650 });
+    check(rearmedHold?.hold === 'done' && !rearmedHold.confirmation,
+      `CONFIRMATION-${label}-LOAD-HOLD-RELEASE-BOUNDARY`,
+      `the rearmed hold reaches its threshold while the selector retains the live touch until release (${JSON.stringify(rearmedHold)})`);
+    await until(`!!document.querySelector('.confirmation-modal')`, 'rearmed touch hold confirmation');
+    check((await modalState()).title === `Load slot ${touchSlot}?`,
+      `CONFIRMATION-${label}-LOAD-HOLD-REARM`, 'rearmed configured hold opens the exact-slot confirmation');
+    await key('Escape');
+
+    await ev(`window.__confirmationPad.connect()`); await wait(250);
+    await click('#open-menu');
+    await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('[data-component="title-save-slot-list"]')`, 'controller Load selector');
+    await padConfirm();
+    check(await ev(`!document.querySelector('.confirmation-modal')`),
+      `CONFIRMATION-${label}-LOAD-PAD-FIRST`, 'first controller activation selects only');
+    await padConfirm();
+    await until(`!!document.querySelector('.confirmation-modal')`, 'controller exact-slot confirmation');
+    check((await modalState()).title === 'Load slot 1?',
+      `CONFIRMATION-${label}-LOAD-PAD-REPEAT`, 'second controller activation opens the exact-slot confirmation');
+    await key('Escape');
 
     await click('#open-menu');
     await until(`!!document.querySelector('.qn-row[data-act="quit"]')`, 'Quit command');
@@ -324,6 +488,12 @@ try {
     await click('#combat-menu');
     await until(`!!document.querySelector('.qn-row[data-act="load"]')`, 'combat Load command');
     await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('[data-component="title-save-slot-list"]')`, 'combat Load slot selector');
+    const combatSelected = await ev(`document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null`);
+    await click(`[data-slot-pick="${combatSelected}"]`);
+    check(await ev(`!document.querySelector('.confirmation-modal') && !!window.__combat`),
+      `CONFIRMATION-${label}-COMBAT-LOAD-FIRST-SELECTS`, 'first Combat activation selects without mutating the encounter');
+    await click(`[data-slot-pick="${combatSelected}"]`);
     await until(`!!document.querySelector('.confirmation-modal')`, 'combat Load confirmation');
     const combatLoad = await modalState();
     check(combatLoad.title === 'Load slot 1?' && combatLoad.cancel === 'confirmation-cancel-control'
@@ -336,6 +506,10 @@ try {
 
     await click('#combat-menu');
     await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('[data-component="title-save-slot-list"]')`, 'physical Combat Load slot selector');
+    const physicalCombatSlot = await ev(`document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null`);
+    await click(`[data-slot-pick="${physicalCombatSlot}"]`);
+    await click(`[data-slot-pick="${physicalCombatSlot}"]`);
     await until(`!!document.querySelector('.confirmation-confirm')`, 'physical Combat Load confirmation');
     const combatLoadPoint = await center('.confirmation-confirm');
     const combatLoadBefore = await ev(`window.__qaConfirmationCommits`);

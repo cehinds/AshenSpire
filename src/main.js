@@ -53,6 +53,7 @@ import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
+import { openSaveSlotSelector } from './ui/components/saveSlotSelector.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -910,9 +911,19 @@ function resumeRun(slot = 1) {
   }
 }
 
-function loadActiveSlot({ returnFocusElement } = {}) {
+function saveSlotRecords() {
+  return saves.listSlots().map(({ slot, summary }) => ({
+    slot,
+    summary: summary && {
+      ...summary,
+      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
+    },
+  }));
+}
+
+function confirmSlotLoad(slot, { returnFocusElement } = {}) {
   openConfirmationModal({
-    title: `Load slot ${activeSlot}?`,
+    title: `Load slot ${slot}?`,
     message: 'The saved run will replace changes made since your last save.',
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
@@ -920,8 +931,17 @@ function loadActiveSlot({ returnFocusElement } = {}) {
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
-      resumeRun(activeSlot);
+      resumeRun(slot);
     },
+  });
+}
+
+function loadActiveSlot({ returnFocusElement } = {}) {
+  openSaveSlotSelector({
+    slots: saveSlotRecords(),
+    registries,
+    returnFocusElement,
+    onRequestLoad: (slot) => confirmSlotLoad(slot, { returnFocusElement }),
   });
   return false;
 }
@@ -1002,13 +1022,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
-  const slots = saves.listSlots().map(({ slot, summary }) => ({
-    slot,
-    summary: summary && {
-      ...summary,
-      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
-    },
-  }));
+  const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
     // The delete beat rides the shared machinery now: the armer reads the
@@ -1107,13 +1121,16 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury(initialView = '') {
+function showArmoury(request = '') {
+  const initialView = typeof request === 'string' ? request : '';
+  const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
   if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
     registries,
     run,
     meta: armouryMeta,
+    destination,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
