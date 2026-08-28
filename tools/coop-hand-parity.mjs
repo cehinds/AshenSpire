@@ -87,7 +87,7 @@ import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { setCombatStartStateForTools } from './session.mjs';
 
@@ -137,7 +137,7 @@ const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); i
 // its mode axis from. Typed here it would be a second copy that outlives the
 // feature; derived, it dies loudly with its home.
 async function appHandModes() {
-  const { balance } = await import(pathToFileURL(join(ROOT, 'src/content/balance.js')).href);
+  const { balance } = await import(`file://${join(ROOT, 'src/content/balance.js')}`);
   return (balance.ui.handLayoutModes || []).slice();
 }
 

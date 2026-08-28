@@ -122,18 +122,6 @@ const CLASS_SVG = {
       <circle cx="29" cy="52" r="1.7" fill="${t}"/>
       <circle cx="40" cy="96" r="1.5" fill="${t}"/>
     </svg>`,
-  // Rogue — light leathers, lowered hood, paired short blades.
-  rogue: (t, sigil) => `
-    <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
-      <ellipse cx="55" cy="133" rx="25" ry="5" fill="rgba(0,0,0,.45)"/>
-      <path d="M38 58 L31 130 L79 130 L72 58 Q55 51 38 58Z" fill="#202725"/>
-      <path d="M39 58 Q55 52 71 58 L67 82 L43 82Z" fill="#35433f"/>
-      <path d="M42 42 Q55 20 68 42 L66 59 Q55 66 44 59Z" fill="#1b211f" stroke="${t}" stroke-width="1.3"/>
-      <path d="M45 48 Q55 43 65 48" fill="none" stroke="${t}" stroke-width="1.2"/>
-      <path d="M31 72 L48 112" stroke="#c0b7a7" stroke-width="4"/><path d="M79 72 L62 112" stroke="#c0b7a7" stroke-width="4"/>
-      <path d="M27 68 L36 76 M83 68 L74 76" stroke="${t}" stroke-width="3"/>
-      ${sigilMedallion(55, 78, t, sigil, 4)}
-    </svg>`,
   // Herald — hooded pilgrim, halo, prayer beads at the waist.
   herald: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
@@ -225,46 +213,42 @@ export function classSprite(classId, tint, sigil, tintId, style) {
  * class has one), else the chosen sigil glyph in a tinted panel.
  */
 /**
- * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror })
- * → element | null.
+ * equippedFigure({ classId, armourId, rightId, leftId }) → element | null.
  *
  * The figure as LAYERS: a bare-handed body in the armour set's palette, with
  * each held armament stacked over it. All of them are rendered on one shared
  * camera and canvas (tools/equipment-blender.py), which is what lets them be
- * absolutely positioned on top of each other and simply line up. The art is
- * currently authored at type-default sockets; the mirror flags are the
- * temporary per-slot correction until those layers are re-rendered neutral.
+ * absolutely positioned on top of each other and simply line up.
  *
  * Layering is why this is affordable at all: 12 armour sets × 24 armaments ×
  * 24 off-hands pre-rendered is six figures' worth of combinations, while one
  * PNG per piece is 36 files. Any layer that fails to load just removes itself,
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
-export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
+export function equippedFigure({ classId, armourId, rightId, leftId }) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
   el.style.cssText = 'position:relative;width:100%;height:100%;';
-  const layer = (src, z, mirror = false) => {
+  const layer = (src, z) => {
     const img = document.createElement('img');
     img.src = src;
     img.alt = '';
     img.style.cssText =
-      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};` +
-      (mirror ? 'transform:scaleX(-1);' : '');
+      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};`;
     img.addEventListener('error', () => img.remove());
     el.appendChild(img);
   };
   layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
-  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2, leftMirror);
-  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3, rightMirror);
+  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2);
+  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3);
   return el;
 }
 
 /**
  * playerSprite(customization, classId, equip?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
+ * With `equip` ({ armourId, rightId, leftId }) it composites the layered
  * equipment figure; without it, the single rendered class PNG as before.
  */
 export function playerSprite(customization = {}, classId, equip = null) {

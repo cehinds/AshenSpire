@@ -203,8 +203,7 @@ export const weapons = [
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=2",
-      "strike.hits=3",
-      "self.maxStamina=+1"
+      "strike.hits=3"
     ],
     "unlock": "",
     "blurb": "Both ends are the business end.",
@@ -306,8 +305,7 @@ export const weapons = [
     "techniqueProfile": "",
     "mods": [
       "defend.block=+6",
-      "strike.damage=-2",
-      "self.maxHp=+10"
+      "strike.damage=-2"
     ],
     "unlock": "",
     "blurb": "You will not be moved. You will not move.",
@@ -579,10 +577,7 @@ export const weapons = [
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "",
     "techniqueProfile": "staffTechnique",
-    "mods": [
-      "strike.blight=+3",
-      "self.maxMana=+1"
-    ],
+    "mods": "strike.blight=+3",
     "unlock": "",
     "blurb": "Wet to the touch. It should not be.",
     "dropWeight": 7,

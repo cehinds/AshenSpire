@@ -4,8 +4,6 @@
 // whether the equipped badge uses its custom colour; it never reads a raw JSON
 // field and invents its own fallback. `null` means "use the current motif".
 
-import { normalizeArmouryLayout } from './armouryLayout.js';
-
 const HEX_COLOUR = /^#[0-9a-f]{6}$/i;
 
 export function armouryUiProblems(config) {
@@ -14,7 +12,7 @@ export function armouryUiProblems(config) {
     return [{ path: 'equipment.armouryUi', message: 'must be an object' }];
   }
   for (const key of Object.keys(config)) {
-    if (!['equippedTag', 'layout'].includes(key)) {
+    if (key !== 'equippedTag') {
       problems.push({ path: `equipment.armouryUi.${key}`, message: 'Unknown field' });
     }
   }
@@ -39,13 +37,6 @@ export function armouryUiProblems(config) {
       path: 'equipment.armouryUi.equippedTag.customColor',
       message: `must be a six-digit hex colour such as #7FD47F — got ${JSON.stringify(tag.customColor)}`,
     });
-  }
-  if (config.layout !== undefined) {
-    try {
-      normalizeArmouryLayout(config.layout);
-    } catch (error) {
-      problems.push({ path: 'equipment.armouryUi.layout', message: error.message });
-    }
   }
   return problems;
 }

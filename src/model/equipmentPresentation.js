@@ -279,15 +279,13 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   const beforeMods = runMods(registries, run.loadout, run.class);
   const afterMods = runMods(registries, loadout, run.class);
   const resourceChanges = [];
-  for (const [id, label] of [['maxHp', 'Max HP'], ['maxMana', 'Max Mana'], ['maxStamina', 'Max Stamina']]) {
-    if (beforeMods[id] !== afterMods[id]) {
-      resourceChanges.push({
-        id,
-        label,
-        before: run[id],
-        after: run[id] + afterMods[id] - beforeMods[id],
-      });
-    }
+  if (beforeMods.maxHp !== afterMods.maxHp) {
+    resourceChanges.push({
+      id: 'maxHp',
+      label: 'Max HP',
+      before: run.maxHp,
+      after: run.maxHp + afterMods.maxHp - beforeMods.maxHp,
+    });
   }
   resourceChanges.push(...swapPriceChanges(registries, run, run.loadout, loadout, meta, slot.id, setIndex));
   const beforePoise = playerPoiseThresholdReceipt(registries, run);

@@ -101,7 +101,7 @@ export const AI_DISCLOSURE = Object.freeze({
     }),
     Object.freeze({
       heading: 'Your saves',
-      body: `Your profile and runs are yours. When something cannot be read, it is set aside rather than deleted, and Profile on the title screen lists the copies still in the drawer — with a button to save any of them to a file. Profile copies are never deleted to make room. Run copies are kept for up to six months, with the newest 12 in the drawer.`,
+      body: `Your profile and runs are yours. When something cannot be read, it is set aside rather than deleted, and Settings → Profile lists everything that has been set aside — with a button to save any of it to a file. Nothing is ever deleted to make room for anything else.`,
     }),
   ]),
 

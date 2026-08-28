@@ -540,14 +540,6 @@ export const SCHEMAS = Object.freeze({
     // semantics since the field existed; this set was closed to what shipped.
     belowBaseline: en('forbid', 'allow'),
     redistribution: en('fixedTotal'),
-    equipmentProfiles: opt(mapOf(obj({
-      baseValue: opt(num),
-      scalingStat: opt(ref('attributes')),
-      pointsPerTier: opt(num),
-      rounding: opt(en('floor', 'ceil', 'round')),
-      gainPerTier: opt(num),
-      cap: opt(num),
-    }))),
   }),
   attributeRules: obj({
     defaultMode: ref('creationModes'),

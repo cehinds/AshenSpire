@@ -329,12 +329,6 @@ error, and reduced-motion states as relevant.
   layers, but cannot instantiate arbitrary code.
 - Every overlay declares focus, input capture, dismissal, pause, and assistive-tech
   behavior. An inspect gesture can never fall through into a destructive action.
-- If a selectable card has folded and expanded presentations, model it as one
-  semantic action surface: focus, loading/hold progress, cancellation, and the
-  resulting command span the complete visible card. Do not create a nested
-  second action merely because details unfolded. Make the capability an
-  explicit class/model flag; keep comparison/inspection presentation separate
-  from mutation.
 - Render a viewport × text scale × theme × locale matrix and test reachability,
   clipping, focus order, contrast, target size, safe areas, and scroll ownership.
 

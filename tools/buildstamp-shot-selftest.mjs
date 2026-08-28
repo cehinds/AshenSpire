@@ -46,18 +46,17 @@ const edit = (root, rel, fn) => {
   writeFileSync(p, fn(readFileSync(p, 'utf8')), 'utf8');
 };
 
-const OWNER_PLACEMENT = '    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}';
-const COMBAT_REMOVAL = "    ${model.properties.place === 'combat' ? '' : buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}";
+const OWNER_PLACEMENT = '          ${buildStampHtml(place)}';
+const COMBAT_REMOVAL = "          ${place === 'combat' ? '' : buildStampHtml(place)}";
 
 function sourceFindingsFrom(owner, combat) {
   const findings = [];
   if (!/^import \{ buildStampHtml \} from '\.\/buildstamp\.js';$/m.test(owner)
       || !owner.split(/\r?\n/).includes(OWNER_PLACEMENT)) {
-    findings.push('owner-placement: hudmeta does not unconditionally emit the split build stamp');
+    findings.push('owner-placement: hudmeta does not unconditionally emit buildStampHtml(place)');
   }
   if (!/^import \{ hudShellHtml \} from '\.\.\/components\/hudmeta\.js';$/m.test(combat)
-      || !/^import \{ runHudViewModel \} from '\.\.\/viewModels\/RunHudViewModel\.js';$/m.test(combat)
-      || !/\$\{hudShellHtml\(runHudViewModel\(\{/.test(combat)) {
+      || !/\$\{hudShellHtml\(\{/.test(combat)) {
     findings.push('combat-consumer: combat does not import and mount hudShellHtml');
   }
   return findings;
@@ -133,7 +132,7 @@ const PLANTS = [
     name: 'the stamp TYPES a version instead of deriving one',
     expect: /reads "BUILD 9\.9\.9/i,
     plant: (root) => edit(root, 'src/ui/components/buildstamp.js',
-      (t) => t.replace(": esc(BUILD_STAMP_TEXT);", ": 'BUILD 9.9.9+deadbeef01';")),
+      (t) => t.replace('${esc(BUILD_STAMP_TEXT)}', 'BUILD 9.9.9+deadbeef01')),
   },
 ];
 
