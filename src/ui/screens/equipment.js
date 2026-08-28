@@ -34,6 +34,10 @@ import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
+import { armHold, holdMs } from '../components/holdconfirm.js';
+import {
+  armouryRegionConfig, normalizeArmouryHeight, snapArmouryHeight, armouryComponentId,
+} from '../../model/armouryUi.js';
 
 const CFG = () => balance.equipment;
 
@@ -405,7 +409,7 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
   return dropArtOnError(el);
 }
 
-function inventoryFace(row, { selected = false, draggable = false } = {}) {
+function inventoryFace(row, { selected = false, draggable = false, holdHint = '' } = {}) {
   const el = document.createElement('span');
   el.className = `inventory-face${selected ? ' on' : ''}`;
   el.dataset.inventoryItem = row.key;
@@ -419,6 +423,7 @@ function inventoryFace(row, { selected = false, draggable = false } = {}) {
       : `Equipped: ${row.equippedLabels.join(' / ')}`)
     : '';
   el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
+    + (holdHint ? `<span class="inventory-hold-hint" hidden>${esc(holdHint)}</span>` : '')
     + `<span class="inventory-category">${esc(row.category)}</span>`
     + `<span class="inventory-count">×${row.count}</span>`
     + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
@@ -492,6 +497,11 @@ export function mountEquipment(host, {
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
+  const uiCfg = eq.armouryUi || {};
+  const component = (el, key) => {
+    if (el) el.dataset.component = armouryComponentId(uiCfg, key);
+    return el;
+  };
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
   // terms is the whole rule:
@@ -549,6 +559,12 @@ export function mountEquipment(host, {
   // `equipView` is already per-mount at that call site for the same reason.
   const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds)]));
+  const storedHeights = (meta.settings && meta.settings.armouryHeights) || null;
+  const heights = new Map(contextRegions().map((r) => {
+    const cfg = armouryRegionConfig(uiCfg, r.id);
+    return [r.id, normalizeArmouryHeight(uiCfg, r.id, storedHeights && storedHeights[r.id] != null
+      ? storedHeights[r.id] : cfg.default)];
+  }));
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
@@ -581,10 +597,20 @@ export function mountEquipment(host, {
   wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
   host.appendChild(wrap);
 
+  // `armHold` owns a window Escape listener as well as the control listeners.
+  // Disclosure redraws replace those controls, so keep one teardown set for
+  // every mounted action and clear it before each redraw and on close.
+  const holdDisarms = new Set();
+  const disarmHolds = () => {
+    for (const disarm of holdDisarms) disarm();
+    holdDisarms.clear();
+  };
+
   // One teardown home for the listener this mount owns outside its subtree.
   // The 2026-08-23 disclosure correction removed the hold grips and their
   // window listeners; Escape still has to leave through every close road.
   const close = () => {
+    disarmHolds();
     document.removeEventListener('keydown', onKey);
     wrap.remove();
     if (onClose) onClose();
@@ -694,8 +720,14 @@ export function mountEquipment(host, {
     };
   }
 
+  function equipHoldMs() {
+    const cfg = registries.balance && registries.balance.ui && registries.balance.ui.holdConfirm;
+    return cfg ? holdMs((meta && meta.settings) || {}, cfg) : 0;
+  }
+
   function slotBlock(slot) {
     const box = document.createElement('div');
+    component(box, 'slot');
     box.className = 'equip-slot';
     const rule = canSwap(registries, slot.id, { inCombat });
     box.innerHTML =
@@ -741,7 +773,11 @@ export function mountEquipment(host, {
         : null;
       const cell = document.createElement('button');
       cell.type = 'button';
-      cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      const selected = !!picking && picking.slotId === slot.id && picking.setIndex === i;
+      component(cell, selected ? 'slotSelected' : 'slotCard');
+      cell.className = `es-cell${active ? ' on' : ''}${selected ? ' selected' : ''}${piece ? '' : ' empty'}`;
+      cell.dataset.slotId = slot.id;
+      cell.dataset.setIndex = String(i);
       cell.title = piece ? piece.name : 'Empty';
       cell.innerHTML = piece
         ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
@@ -806,6 +842,7 @@ export function mountEquipment(host, {
 
   function pickerBlock() {
     const box = document.createElement('div');
+    component(box, 'picker');
     box.className = 'equip-picker';
     if (!picking) {
       // DERIVED FROM STATE, NOT AUTHORED (#90 follow-on, Freja). The picker with
@@ -917,13 +954,46 @@ export function mountEquipment(host, {
       // removed the always-visible hold shortcut so a folded item is one row,
       // not a row followed by a second action-shaped row.
       const act = () => applyEquipmentChange(picking.slotId, picking.setIndex, candidatePieceId, actionLabel);
+      const row = equipmentRowFor(piece);
+      const holdFace = row ? inventoryFace(row, { selected: equipped, holdHint: `HOLD TO ${equipped ? 'UNEQUIP' : 'EQUIP'}` }) : null;
+      const showFaceHold = (state) => {
+        const hint = holdFace && holdFace.querySelector('.inventory-hold-hint');
+        if (hint) hint.hidden = state !== 'holding';
+      };
+      let faceHold = null;
       if (!seal.ok) sealChip(btn);
       else if (!transition.ok) {
         btn.classList.add('locked');
         refuses(btn, () => transition.reason);
-      } else btn.addEventListener('click', act);
+      } else {
+        const disarm = armHold(btn, {
+          ms: () => equipHoldMs(),
+          id: equipped ? 'armouryUnequip' : 'armouryEquip',
+          onConfirm: act,
+          onState: showFaceHold,
+        });
+        holdDisarms.add(disarm);
+        attachTooltip(btn, () => `<div class="tt-title">${esc(actionLabel)}</div>`
+          + (equipHoldMs() > 0 ? `Press and hold to ${esc(actionLabel.toLowerCase())}.` : `Click to ${esc(actionLabel.toLowerCase())}.`));
+        component(btn.querySelector('.hold-hint'), 'holdTooltip');
+        component(holdFace.querySelector('.inventory-hold-hint'), 'holdTooltip');
+        faceHold = {
+          ms: () => equipHoldMs(),
+          id: equipped ? 'armouryUnequip' : 'armouryEquip',
+          onConfirm: act,
+          onState: showFaceHold,
+        };
+      }
 
-      const row = equipmentRowFor(piece);
+      const reveal = inventoryReveal(registries, row, {
+        comparison,
+        action: btn,
+        instruction: `Compare this item for ${slot.label}.`,
+      });
+      component(reveal, 'inventoryDetail');
+      component(reveal.querySelector('.inventory-model'), 'inventoryModel');
+      component(reveal.querySelector('.inventory-information'), 'inventoryInformation');
+      for (const tag of reveal.querySelectorAll('.inventory-equipped')) component(tag, 'equippedTag');
 
       return {
         key: piece.id,
@@ -933,28 +1003,40 @@ export function mountEquipment(host, {
         actionLabel,
         face: {
           label: piece.name,
-          node: inventoryFace(row, { selected: equipped }),
+          node: holdFace || inventoryFace(row, { selected: equipped }),
+          hold: faceHold,
         },
         reveal: {
-          node: inventoryReveal(registries, row, {
-            comparison,
-            action: btn,
-            instruction: `Compare this item for ${slot.label}.`,
-          }),
+          node: reveal,
           sense: equipped
-            ? 'Equipped. Press to unequip.'
+            ? 'Equipped. Click to inspect; press and hold to unequip.'
             : moving
-              ? `Equipped in ${hands.join(' / ')}. Press to move to ${slot.label}.`
-              : `Press to compare and equip to ${slot.label}.`,
+              ? `Equipped in ${hands.join(' / ')}. Click to inspect; press and hold to move to ${slot.label}.`
+              : `Click to compare; press and hold to equip to ${slot.label}.`,
         },
       };
     });
 
-    const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
-    // The 2026-08-23 correction removes the always-visible hold strip.
-    // The face owns disclosure only; the single action remains inside the
-    // adopted reveal node and therefore exists on glass only while open.
-    // Clicking the title again is mountDisclosure's ordinary refold.
+    const fold = mountDisclosure(list, entries, {
+      moreLabel: 'more',
+      onFace: (face, entry) => {
+        const spec = entry.face && entry.face.hold;
+        if (!spec) return;
+        const disarm = armHold(face, {
+          ...spec,
+          // Short release opens the same folded card; a completed hold is the
+          // only path that mutates the loadout.
+          // Run after the browser's trailing click dispatch. This keeps the
+          // short-press disclosure open even in browsers that deliver the
+          // disclosure listener before the hold listener's click eater.
+          onAbort: () => queueMicrotask(() => fold.open(entry.key)),
+        });
+        holdDisarms.add(disarm);
+        component(face.querySelector('.hold-hint'), 'holdTooltip');
+      },
+    });
+    // The single action remains inside the adopted reveal node and therefore
+    // exists on glass only while open. Clicking the title again refolds it.
     box.addEventListener('click', (ev) => {
       if (!ev.target.closest('.ep-list')) fold.close();
     });
@@ -977,12 +1059,14 @@ export function mountEquipment(host, {
   /** The no-selection shelf: all currently usable item kinds, folded by row. */
   function inventoryBlock() {
     const box = document.createElement('div');
+    component(box, 'inventory');
     box.className = 'inventory-list ep-list';
     const rows = inventoryRows(registries, run, meta);
     const entries = rows.map((row) => {
       const target = inventoryTarget(row);
       const draggable = !!target;
       const face = inventoryFace(row, { draggable });
+      component(face, 'inventoryFace');
       if (draggable) {
         face.addEventListener('dragstart', (ev) => {
           draggingItemId = row.id;
@@ -1005,10 +1089,17 @@ export function mountEquipment(host, {
         disclosure: 'face',
         face: { label: row.name, node: face },
         reveal: {
-          node: inventoryReveal(registries, row, {
+          node: (() => {
+            const reveal = inventoryReveal(registries, row, {
             comparison: target ? comparisonFor(target.slot.id, target.setIndex, target.pieceId) : null,
             instruction: target ? 'Drag this item onto a compatible slot, or select a slot to use its action button.' : '',
-          }),
+            });
+            component(reveal, 'inventoryDetail');
+            component(reveal.querySelector('.inventory-model'), 'inventoryModel');
+            component(reveal.querySelector('.inventory-information'), 'inventoryInformation');
+            for (const tag of reveal.querySelectorAll('.inventory-equipped')) component(tag, 'equippedTag');
+            return reveal;
+          })(),
           sense: `${row.name}. ${row.category}. ${row.count} owned.`,
         },
       };
@@ -1022,6 +1113,7 @@ export function mountEquipment(host, {
   /** The rewrites, live: the actual cards this loadout produces right now. */
   function cardStrip() {
     const box = document.createElement('div');
+    component(box, 'cards');
     box.className = 'equip-cards';
     const surface = equipmentSurfaceReceipt(registries, run);
     const shown = new Set();
@@ -1030,6 +1122,7 @@ export function mountEquipment(host, {
       if (shown.has(key)) continue;
       shown.add(key);
       const card = document.createElement('div');
+      component(card, 'card');
       card.className = 'equip-card-with-count';
       card.appendChild(renderCard(registries, inst, { small: true }));
       const count = document.createElement('em');
@@ -1116,6 +1209,12 @@ export function mountEquipment(host, {
       if (isSubject) { delete el.dataset.collapsed; continue; }
       const shut = folded.get(r.id) === true;
       el.dataset.collapsed = shut ? '1' : '0';
+      const sizing = armouryRegionConfig(uiCfg, r.id);
+      const height = normalizeArmouryHeight(uiCfg, r.id, heights.get(r.id));
+      heights.set(r.id, height);
+      el.style.setProperty('--armoury-region-height', `${height * 100}vh`);
+      el.style.setProperty('--armoury-region-min', `${sizing.min * 100}vh`);
+      el.style.setProperty('--armoury-region-max', `${sizing.max * 100}vh`);
 
       const head = document.createElement('div');
       head.className = 'region-head';
@@ -1154,10 +1253,88 @@ export function mountEquipment(host, {
       });
       head.appendChild(btn);
       el.insertBefore(head, el.firstChild);
+
+      const resizeCfg = uiCfg.drawer && uiCfg.drawer.resize;
+      if (!shut && resizeCfg && resizeCfg.enabled !== false) {
+        const handle = document.createElement('button');
+        handle.type = 'button';
+        handle.className = 'region-resize-handle';
+        handle.dataset.resize = r.id;
+        handle.setAttribute('role', 'separator');
+        handle.setAttribute('aria-orientation', resizeCfg.orientation || 'vertical');
+        handle.setAttribute('aria-valuemin', String(Math.round(sizing.min * 100)));
+        handle.setAttribute('aria-valuemax', String(Math.round(sizing.max * 100)));
+        handle.setAttribute('aria-valuenow', String(Math.round(height * 100)));
+        handle.setAttribute('aria-label', `Resize ${r.label.toLowerCase()} drawer`);
+        handle.title = `Drag to resize ${r.label.toLowerCase()}`;
+        component(handle, 'resizeHandle');
+        attachTooltip(handle, () => `Drag to resize ${r.label.toLowerCase()}. Arrow keys snap by ${Math.round(sizing.keyboardStep * 100)}%.`);
+
+        const paintHeight = (value) => {
+          const next = normalizeArmouryHeight(uiCfg, r.id, value);
+          heights.set(r.id, next);
+          el.style.setProperty('--armoury-region-height', `${next * 100}vh`);
+          handle.setAttribute('aria-valuenow', String(Math.round(next * 100)));
+          return next;
+        };
+        const saveHeight = (value) => {
+          const next = snapArmouryHeight(uiCfg, r.id, value);
+          heights.set(r.id, next);
+          if (onChange) onChange(run.loadout, { armouryHeights: Object.fromEntries(heights) });
+          draw();
+          wrap.querySelector(`[data-resize="${r.id}"]`)?.focus();
+        };
+        handle.addEventListener('keydown', (ev) => {
+          if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(ev.key)) return;
+          ev.preventDefault();
+          const current = heights.get(r.id);
+          const step = sizing.keyboardStep || sizing.snapThreshold || 0.01;
+          const next = ev.key === 'Home' ? sizing.min
+            : ev.key === 'End' ? sizing.max
+              : current + (ev.key === 'ArrowUp' ? step : -step);
+          saveHeight(next);
+        });
+        handle.addEventListener('pointerdown', (ev) => {
+          if (ev.button !== 0) return;
+          ev.preventDefault();
+          const startY = ev.clientY;
+          const startHeight = heights.get(r.id);
+          const pointerId = ev.pointerId;
+          try { handle.setPointerCapture(pointerId); } catch { /* detached edge */ }
+          handle.classList.add('dragging');
+          const onMove = (move) => {
+            const fraction = (startY - move.clientY) / Math.max(1, window.innerHeight || 1);
+            paintHeight(startHeight + fraction);
+          };
+          const end = (_endEv, cancelled) => {
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            window.removeEventListener('pointercancel', onCancel);
+            try { handle.releasePointerCapture(pointerId); } catch { /* already released */ }
+            handle.classList.remove('dragging');
+            if (cancelled) paintHeight(startHeight);
+            else saveHeight(heights.get(r.id));
+          };
+          const onUp = (up) => end(up, false);
+          const onCancel = (cancel) => end(cancel, true);
+          // Listen on the window while dragging so the gesture remains live
+          // even when the pointer leaves the narrow handle or a browser does
+          // not honour pointer capture on a transformed panel.
+          window.addEventListener('pointermove', onMove);
+          window.addEventListener('pointerup', onUp);
+          window.addEventListener('pointercancel', onCancel);
+        });
+        // Keep the resize affordance at the drawer's actual top boundary,
+        // before the header rather than between the header and its contents.
+        // CSS positions it over the border, so it remains reachable without
+        // stealing layout height from the configured drawer.
+        el.insertBefore(handle, el.firstChild);
+      }
     }
   }
 
   function draw() {
+    disarmHolds();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
     // host names the set, each control names its member, so an instrument can
@@ -1180,6 +1357,9 @@ export function mountEquipment(host, {
         <section class="armoury-inventory"></section>
         <div class="armoury-strip"></div>
       </div>`;
+    component(wrap.querySelector('.armoury'), 'panel');
+    component(wrap.querySelector('.armoury-views'), 'toolbar');
+    component(wrap.querySelector('.armoury-close'), 'closeButton');
 
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
@@ -1236,11 +1416,20 @@ export function mountEquipment(host, {
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
+        picking = null;
         view = b.dataset.member;
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
       });
     }
+    // A slot selection is contextual. Clicking ordinary Armoury chrome outside
+    // the slot/inventory options clears it without closing the overlay.
+    wrap.querySelector('.armoury').addEventListener('click', (ev) => {
+      if (!picking) return;
+      if (ev.target.closest('.equip-slot, .equip-picker, .armoury-inventory')) return;
+      picking = null;
+      draw();
+    });
   }
 
   // The removal moved INTO `close()` — see the block there. Leaving a copy here

@@ -521,6 +521,10 @@ export const balance = {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
+    // HOLD LABELS are a display preference, separate from the safety timer.
+    // The progress fill remains available to every held control; this optional
+    // word is hidden by default so compact cards do not grow past their edge.
+    holdHints: { def: false },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
     // durations are holdConfirm above. Three facts, three homes, none restated.

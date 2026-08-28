@@ -67,6 +67,9 @@ import {
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
+import {
+  armouryRegionConfig, normalizeArmouryHeight, snapArmouryHeight, armouryComponentId,
+} from '../src/model/armouryUi.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
@@ -2462,6 +2465,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'a slot whose every matching piece names the other hand fails as an empty result set');
   });
 
+  // ---- 28s. Armoury drawers are independent, snapped, and registry-labelled --
+  test('28s. armoury drawer heights snap independently and asset components have stable ids', () => {
+    const ui = REG.equipment.armouryUi;
+    const inventory = armouryRegionConfig(ui, 'inventory');
+    const cards = armouryRegionConfig(ui, 'cards');
+    eq(inventory.default, 0.1, 'Inventory defaults to ten percent of the viewport');
+    eq(cards.default, 0.1, 'Cards defaults independently to ten percent of the viewport');
+    assert(inventory !== cards, 'each region gets its own config object');
+    eq(normalizeArmouryHeight(ui, 'inventory', 0.01), inventory.min, 'Inventory clamps to its configured minimum');
+    eq(normalizeArmouryHeight(ui, 'cards', 0.99), cards.max, 'Cards clamps to its configured maximum');
+    eq(snapArmouryHeight(ui, 'inventory', 0.19), 0.2, 'Inventory snaps to the nearest authored height');
+    eq(snapArmouryHeight(ui, 'cards', 0.205), 0.2, 'Cards snap threshold is independent and data-driven');
+    eq(armouryComponentId(ui, 'inventoryFace'), 'armoury.inventory.item.folded', 'registry names the folded inventory item');
+    eq(armouryComponentId(ui, 'resizeHandle'), 'armoury.drawer.resize-handle', 'registry names the resize handle');
+  });
+
   // ---- 30. unlocks are earned, remembered, and never taken back -------------
   test('30. unlock conditions evaluate against durable progress, not recent history', () => {
     // The conditions are a closed set, so an unregistered one is caught here
@@ -3416,6 +3435,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // settingOn (no DOM here, so applyDisplaySettings is unreachable from this
     // suite), and that the resulting palette clears WCAG. The second is measured
     // from rendered pixels by `node tools/contrast-audit.mjs --gate`.
+  });
+
+  test('35e. Armoury hold labels are opt-in and resolve from the shared UI config', () => {
+    const spec = REG.balance.ui.holdHints;
+    assert(spec && typeof spec === 'object', 'balance.ui.holdHints is the presentation config home');
+    eq(spec.def, false, 'hold labels default off so narrow cards do not grow on first boot');
+    eq(settingOn({}, 'holdHints'), false, 'a sparse profile keeps hold labels hidden');
+    eq(settingOn({ holdHints: true }, 'holdHints'), true, 'the Settings toggle can show hold labels');
+    const row = settingsRow('holdHints');
+    eq(row.type, undefined, 'hold labels remain a boolean Settings toggle');
+    eq(row.def, spec.def, 'the Settings row derives its default from the shared UI config');
   });
 
   // ---- 35a. Minimum tap size: one home, both edges, and bad data is loud ----

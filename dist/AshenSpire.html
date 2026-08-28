@@ -2400,6 +2400,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .es-cell img { width: 100%; height: 4rem; object-fit: contain; }
 .es-cell span { font-size: 0.95rem; line-height: 1.1; text-align: center; color: var(--muted); }
 .es-cell.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.es-cell.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold) inset, 0 0 16px rgba(201, 162, 39, 0.65);
+}
 .es-cell.on span { color: var(--parchment); }
 .es-cell.empty .es-empty { font-size: 2.2rem; color: var(--line-soft); }
 
@@ -2465,10 +2469,26 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    face's own padding back to the card so the two spellings look identical —
    they are one markup (pieceChipHtml) and they must not become two looks. */
 .ep-list .disc-faces { flex-direction: column; gap: 0; }
-.ep-list .disc-face { padding: 0; border: 0; background: none; text-align: left; width: 100%; }
+.ep-list .disc-face {
+  padding: 0; border: 1px solid var(--line-soft); border-radius: 3px;
+  background: rgba(10, 8, 6, 0.32); text-align: left; width: 100%;
+  min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center; gap: 0.5rem;
+}
+.ep-list .disc-face:hover { border-color: var(--line); }
+.ep-list .disc-face > .inventory-face {
+  width: auto; min-width: 0; grid-column: 1; border: 0; background: none;
+}
+.ep-list .disc-face > .hold-hint {
+  grid-column: 2; margin: 0 0.6rem 0 0; white-space: nowrap;
+  justify-self: end; align-self: center;
+}
 .ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
 .ep-list .disc-face[data-reveal='open'] .equip-chip.as-face,
 .ep-list .disc-face[data-reveal='open'] .inventory-face {
+  border-color: transparent; border-bottom-color: transparent; border-radius: 0;
+}
+.ep-list .disc-face[data-reveal='open'] {
   border-color: var(--gold); border-bottom-color: transparent; border-radius: 3px 3px 0 0;
 }
 .ep-list .disc-reveal {
@@ -2486,6 +2506,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: rgba(10, 8, 6, 0.32); color: var(--parchment);
 }
 .inventory-name { min-width: 0; font-size: 1.2rem; }
+.inventory-hold-hint {
+  color: var(--gold); font-size: 0.82rem; letter-spacing: 0.08em;
+  text-transform: uppercase; white-space: nowrap;
+}
 .inventory-category, .inventory-count {
   color: var(--muted); font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase;
 }
@@ -2519,6 +2543,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    `.subtle.danger` above) and it is reused rather than joined by a second
    spelling — a second red is a second home for one decision. */
 .ep-equip {
+  position: relative;
   align-self: flex-start;
   padding: 0.45rem 1.1rem;
   border: 1px solid var(--line-soft);
@@ -2527,13 +2552,37 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   letter-spacing: 0.08em;
   cursor: pointer;
 }
+.ep-equip .hold-hint {
+  position: absolute; left: 0; bottom: calc(100% + 0.3rem); margin: 0;
+  padding: 0.2rem 0.45rem; border: 1px solid var(--line-soft);
+  background: var(--panel); white-space: nowrap; z-index: 2;
+}
 .ep-equip:hover { border-color: var(--gold); }
 .ep-equip.danger { border-color: var(--blood); color: var(--ember); }
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
+/* The danger hover tint is a shorthand and would erase the shared hold fill.
+   Keep the translucent progress strip visible while an unequip action is
+   held, just as it is for every other shared hold control. */
+.ep-equip.beat-hold,
+.ep-equip.beat-hold:hover,
+.ep-equip.beat-hold:focus,
+.ep-equip.beat-hold:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+}
+
+/* HOLD is an optional label, not the shared safety affordance itself. Keep the
+   progress strip and state classes active when the label is off by default. */
+:root:not([data-hold-hints='on']) .hold-hint,
+:root:not([data-hold-hints='on']) .inventory-hold-hint { display: none !important; }
 
 .armoury-inventory,
-.armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
+.armoury-strip {
+  border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem;
+  box-sizing: border-box;
+}
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
 .equip-card-with-count > .role-copy-count { position: absolute; right: 0.35rem; bottom: 0.35rem; }
@@ -2702,8 +2751,24 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   /* An expanded receipt pane is real content, not overflow behind the modal.
      Share the panel with its subject and give the pane its own scrollport so a
      phone can reach candidate receipts without moving the Armoury off-screen. */
-  flex: 1 1 50%; min-height: var(--tap-floor); overflow-y: auto;
+  flex: 0 0 clamp(var(--armoury-region-min, 6vh), var(--armoury-region-height, 10vh), var(--armoury-region-max, 55vh));
+  min-height: var(--tap-floor); overflow-y: auto;
+  position: relative;
 }
+
+/* Each context drawer owns its own configured viewport fraction. The handle is
+   a real keyboard control as well as a pointer target, so resizing does not
+   depend on a mouse-only affordance. */
+.region-resize-handle {
+  display: block; position: absolute; top: 0; left: 0; z-index: 3;
+  width: 100%; height: 0.7rem;
+  margin: 0; padding: 0; border: 0; border-top: 2px solid var(--line-soft);
+  transform: translateY(-50%);
+  background: var(--panel) linear-gradient(to right, transparent 42%, var(--line-soft) 42% 58%, transparent 58%);
+  cursor: ns-resize; touch-action: none; opacity: 0.72;
+}
+.region-resize-handle:hover, .region-resize-handle:focus-visible,
+.region-resize-handle.dragging { border-top-color: var(--gold); opacity: 1; }
 
 /* Screenshot evidence poses use the real screen/readers but focus the camera on
    the contract under review. They are query-gated dev surfaces; ordinary play
@@ -2715,7 +2780,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
 :root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
 :root[data-shot-evidence='armoury'] .armoury-right { height: 100%; overflow-y: auto !important; }
-:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 0 35%; }
+:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] {
+  flex-basis: clamp(var(--armoury-region-min, 6vh), var(--armoury-region-height, 10vh), var(--armoury-region-max, 55vh));
+}
 :root[data-shot-evidence='armoury'] .equip-card-with-count { display: none; }
 
 /* Grid view: the figure between two columns of slots, hands on the side they
@@ -5722,6 +5789,10 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  // The hold timer and its progress strip remain universal. This separate
+  // display preference only controls the optional HOLD word, whose default is
+  // declared by the Settings row and shared UI config.
+  document.documentElement.dataset.holdHints = settingOn(settings, 'holdHints') ? 'on' : 'off';
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
@@ -8070,6 +8141,10 @@ const balance = {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
+    // HOLD LABELS are a display preference, separate from the safety timer.
+    // The progress fill remains available to every held control; this optional
+    // word is hidden by default so compact cards do not grow past their edge.
+    holdHints: { def: false },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
     // durations are holdConfirm above. Three facts, three homes, none restated.
@@ -16319,6 +16394,134 @@ const armouryUi = {
   "equippedTag": {
     "useCustomColor": true,
     "customColor": "#7FD47F"
+  },
+  "drawer": {
+    "resize": {
+      "enabled": true,
+      "orientation": "vertical"
+    },
+    "regions": {
+      "inventory": {
+        "default": 0.1,
+        "min": 0.06,
+        "max": 0.55,
+        "snap": [
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5
+        ],
+        "snapThreshold": 0.025,
+        "keyboardStep": 0.1
+      },
+      "cards": {
+        "default": 0.1,
+        "min": 0.06,
+        "max": 0.55,
+        "snap": [
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5
+        ],
+        "snapThreshold": 0.025,
+        "keyboardStep": 0.1
+      }
+    }
+  },
+  "assetComponents": {
+    "panel": {
+      "id": "armoury.panel",
+      "label": "Armoury panel",
+      "selector": ".armoury"
+    },
+    "toolbar": {
+      "id": "armoury.toolbar",
+      "label": "View toolbar",
+      "selector": ".armoury-views"
+    },
+    "closeButton": {
+      "id": "armoury.close-button",
+      "label": "Close button",
+      "selector": ".armoury-close"
+    },
+    "slot": {
+      "id": "armoury.slot",
+      "label": "Equipment slot",
+      "selector": ".equip-slot"
+    },
+    "slotCard": {
+      "id": "armoury.slot.card",
+      "label": "Equipment slot card",
+      "selector": ".es-cell"
+    },
+    "slotSelected": {
+      "id": "armoury.slot.selected",
+      "label": "Selected equipment slot",
+      "selector": ".es-cell.selected"
+    },
+    "picker": {
+      "id": "armoury.picker",
+      "label": "Slot inventory picker",
+      "selector": ".equip-picker"
+    },
+    "inventory": {
+      "id": "armoury.inventory",
+      "label": "Inventory drawer",
+      "selector": ".armoury-inventory"
+    },
+    "inventoryFace": {
+      "id": "armoury.inventory.item.folded",
+      "label": "Folded inventory item",
+      "selector": ".inventory-face"
+    },
+    "inventoryDetail": {
+      "id": "armoury.inventory.item.expanded",
+      "label": "Expanded inventory item",
+      "selector": ".inventory-detail"
+    },
+    "inventoryModel": {
+      "id": "armoury.inventory.item.model",
+      "label": "Inventory item model",
+      "selector": ".inventory-model"
+    },
+    "inventoryInformation": {
+      "id": "armoury.inventory.item.information",
+      "label": "Inventory item information",
+      "selector": ".inventory-information"
+    },
+    "equippedTag": {
+      "id": "armoury.inventory.equipped-tag",
+      "label": "Equipped tag",
+      "selector": ".inventory-equipped"
+    },
+    "cards": {
+      "id": "armoury.cards",
+      "label": "Cards drawer",
+      "selector": ".armoury-strip"
+    },
+    "card": {
+      "id": "armoury.cards.item",
+      "label": "Derived card",
+      "selector": ".equip-card-with-count"
+    },
+    "resizeHandle": {
+      "id": "armoury.drawer.resize-handle",
+      "label": "Drawer resize handle",
+      "selector": ".region-resize-handle"
+    },
+    "holdProgress": {
+      "id": "armoury.hold.progress",
+      "label": "Shared hold progress",
+      "selector": ".beat-hold"
+    },
+    "holdTooltip": {
+      "id": "armoury.hold.tooltip",
+      "label": "Hold-to-equip tooltip",
+      "selector": ".hold-hint"
+    }
   }
 };
 
@@ -23585,7 +23788,7 @@ function armouryUiProblems(config) {
     return [{ path: 'equipment.armouryUi', message: 'must be an object' }];
   }
   for (const key of Object.keys(config)) {
-    if (key !== 'equippedTag') {
+    if (!['equippedTag', 'drawer', 'assetComponents'].includes(key)) {
       problems.push({ path: `equipment.armouryUi.${key}`, message: 'Unknown field' });
     }
   }
@@ -23610,6 +23813,87 @@ function armouryUiProblems(config) {
       path: 'equipment.armouryUi.equippedTag.customColor',
       message: `must be a six-digit hex colour such as #7FD47F — got ${JSON.stringify(tag.customColor)}`,
     });
+  }
+
+  const drawer = config.drawer;
+  if (!drawer || typeof drawer !== 'object' || Array.isArray(drawer)) {
+    problems.push({ path: 'equipment.armouryUi.drawer', message: 'must be an object' });
+  } else {
+    for (const key of Object.keys(drawer)) {
+      if (!['resize', 'regions'].includes(key)) {
+        problems.push({ path: `equipment.armouryUi.drawer.${key}`, message: 'Unknown field' });
+      }
+    }
+    const resize = drawer.resize;
+    if (!resize || typeof resize !== 'object' || Array.isArray(resize)) {
+      problems.push({ path: 'equipment.armouryUi.drawer.resize', message: 'must be an object' });
+    } else {
+      for (const key of Object.keys(resize)) {
+        if (!['enabled', 'orientation'].includes(key)) {
+          problems.push({ path: `equipment.armouryUi.drawer.resize.${key}`, message: 'Unknown field' });
+        }
+      }
+      if (typeof resize.enabled !== 'boolean') {
+        problems.push({ path: 'equipment.armouryUi.drawer.resize.enabled', message: 'must be true or false' });
+      }
+      if (resize.orientation !== 'vertical') {
+        problems.push({ path: 'equipment.armouryUi.drawer.resize.orientation', message: "must be 'vertical'" });
+      }
+    }
+    const regions = drawer.regions;
+    if (!regions || typeof regions !== 'object' || Array.isArray(regions)) {
+      problems.push({ path: 'equipment.armouryUi.drawer.regions', message: 'must be an object' });
+    } else {
+      for (const key of Object.keys(regions)) {
+        if (!['inventory', 'cards'].includes(key)) {
+          problems.push({ path: `equipment.armouryUi.drawer.regions.${key}`, message: 'Unknown region' });
+          continue;
+        }
+        const row = regions[key];
+        const path = `equipment.armouryUi.drawer.regions.${key}`;
+        if (!row || typeof row !== 'object' || Array.isArray(row)) {
+          problems.push({ path, message: 'must be an object' });
+          continue;
+        }
+        for (const field of Object.keys(row)) {
+          if (!['default', 'min', 'max', 'snap', 'snapThreshold', 'keyboardStep'].includes(field)) {
+            problems.push({ path: `${path}.${field}`, message: 'Unknown field' });
+          }
+        }
+        for (const field of ['default', 'min', 'max', 'snapThreshold', 'keyboardStep']) {
+          if (!Number.isFinite(Number(row[field]))) problems.push({ path: `${path}.${field}`, message: 'must be a number' });
+        }
+        if (!Array.isArray(row.snap) || row.snap.some((value) => !Number.isFinite(Number(value)))) {
+          problems.push({ path: `${path}.snap`, message: 'must be an array of numbers' });
+        }
+        if (Number(row.min) < 0 || Number(row.max) < Number(row.min) || Number(row.default) < Number(row.min) || Number(row.default) > Number(row.max)) {
+          problems.push({ path, message: 'default/min/max range is invalid' });
+        }
+      }
+    }
+  }
+
+  const components = config.assetComponents;
+  if (!components || typeof components !== 'object' || Array.isArray(components)) {
+    problems.push({ path: 'equipment.armouryUi.assetComponents', message: 'must be an object' });
+  } else {
+    for (const [key, row] of Object.entries(components)) {
+      const path = `equipment.armouryUi.assetComponents.${key}`;
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        problems.push({ path, message: 'must be an object' });
+        continue;
+      }
+      for (const field of Object.keys(row)) {
+        if (!['id', 'label', 'selector'].includes(field)) {
+          problems.push({ path: `${path}.${field}`, message: 'Unknown field' });
+        }
+      }
+      for (const field of ['id', 'label', 'selector']) {
+        if (typeof row[field] !== 'string' || !row[field].trim()) {
+          problems.push({ path: `${path}.${field}`, message: 'must be a non-empty string' });
+        }
+      }
+    }
   }
   return problems;
 }
@@ -32732,8 +33016,45 @@ function beatCue(phase, id, form) {
   return { cue, id, form };
 }
 
+// A completed pointer hold can redraw its control before the finger lifts.
+// The browser then targets the replacement element with the trailing click,
+// which would otherwise be interpreted as a fresh activation. Keep the
+// one-shot lift eater at document scope so it survives that redraw; cancel
+// clears it, and a bounded timeout prevents a missing click from poisoning a
+// later unrelated tap.
+let pendingPointerLift = null;
+let liftListenersReady = false;
+
+function clearPendingPointerLift() {
+  if (pendingPointerLift && pendingPointerLift.timer) clearTimeout(pendingPointerLift.timer);
+  pendingPointerLift = null;
+}
+
+function ensureLiftListeners() {
+  if (liftListenersReady || typeof document === 'undefined') return;
+  liftListenersReady = true;
+  document.addEventListener('pointercancel', (ev) => {
+    if (pendingPointerLift && pendingPointerLift.pointerId === ev.pointerId) clearPendingPointerLift();
+  }, true);
+  document.addEventListener('click', (ev) => {
+    if (!pendingPointerLift || ev.detail === 0) return;
+    clearPendingPointerLift();
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+  }, true);
+}
+
+function swallowCompletedPointerLift(pointerId) {
+  ensureLiftListeners();
+  clearPendingPointerLift();
+  pendingPointerLift = {
+    pointerId,
+    timer: setTimeout(clearPendingPointerLift, 1000),
+  };
+}
+
 /**
- * armHold(btn, { ms, onConfirm, id }) -> disarm() (with .refresh())
+ * armHold(btn, { ms, onConfirm, id, onState, onAbort }) -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
  * finger lands. The function form remains available to rows whose state can
@@ -32742,7 +33063,17 @@ function beatCue(phase, id, form) {
  * `ms <= 0` is the "off" position of the dial and it is the pre-hold behaviour
  * byte for byte: one tap commits. Not a hold with a zero timer.
  */
-function armHold(btn, { ms, onConfirm, id = null }) {
+function armHold(btn, {
+  ms,
+  onConfirm,
+  id = null,
+  onState = null,
+  // Optional second meaning for an early, still press-shaped release. The
+  // hold remains the commit gate; callers may use this callback for the
+  // non-mutating tap that shares the same surface (for example, a folded card
+  // opens on a short press but equips only after the hold reaches full).
+  onAbort = null,
+}) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
   let raf = 0;
@@ -32798,6 +33129,7 @@ function armHold(btn, { ms, onConfirm, id = null }) {
     armed = false;
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
+    if (onState) onState(state);
   }
 
   function begin(origin, track) {
@@ -32820,6 +33152,7 @@ function armHold(btn, { ms, onConfirm, id = null }) {
     heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
+    if (onState) onState('holding');
     const t0 = performance.now();
     const x0 = origin.x;
     const y0 = origin.y;
@@ -32834,6 +33167,7 @@ function armHold(btn, { ms, onConfirm, id = null }) {
         // thumb is still down, which is the confirmation; waiting for the lift
         // would make a completed hold feel like it did nothing.
         fired = true;
+        if (origin.source === 'pointer') swallowCompletedPointerLift(origin.ev.pointerId);
         stop('done');
         onConfirm(ev);
         // A control that survives its own commit (End Turn does — the screen
@@ -32862,7 +33196,16 @@ function armHold(btn, { ms, onConfirm, id = null }) {
       // thing — rule 1, inverted, which is the failure that looks exactly like
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
-      onEnd: () => { if (armed) stop('idle'); return true; },
+      onEnd: (endEv, info = {}) => {
+        const wasArmed = armed;
+        if (wasArmed) stop('idle');
+        // A cancelled gesture or a drag is not a tap. An ordinary early
+        // release is: let the caller open/inspect the shared surface, while
+        // armHold still consumes the trailing synthetic activation so it can
+        // never become a second commit door.
+        if (wasArmed && !info.cancelled && onAbort) onAbort(endEv);
+        return true;
+      },
     });
     return true;
   }
@@ -35505,7 +35848,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'c093df8453';
+const SOURCE = 'b315da580b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35539,7 +35882,7 @@ const SOURCE = 'c093df8453';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1114';
+const ORDINAL = '1126';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -37175,7 +37518,7 @@ function tipHtml(entry) {
 }
 
 /**
- * mountDisclosure(host, entries, { moreLabel })
+ * mountDisclosure(host, entries, { moreLabel, onFace })
  *   → { open(key), close(), setValue(key, value), openKey }
  *
  * `entries` is the model's list, in model order. WHICH ONES ARE DRAWN UP FRONT
@@ -37186,7 +37529,7 @@ function tipHtml(entry) {
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
+function mountDisclosure(host, entries, { moreLabel = 'more', onFace = null } = {}) {
   const rows = [...(entries || [])];
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
@@ -37333,13 +37676,19 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     // an object, and silently erasing the card would be the plausible failure.
     if (entry.face && entry.face.node) button.appendChild(entry.face.node);
     else button.innerHTML = faceHtml(entry);
+    faceBox.appendChild(button);
+    // A face may opt into a shared press/hold affordance, but it is wired
+    // BEFORE disclosure's click listener. That ordering lets an early release
+    // open the card through the hold's onAbort callback and swallow the
+    // trailing synthetic click; a completed hold redraws and never toggles the
+    // disclosure on its way out. Existing callers omit this hook unchanged.
+    if (onFace) onFace(button, entry);
     button.addEventListener('click', () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
     });
     if (tipHtml(entry)) attachTooltip(button, () => tipHtml(entry));
     buttons.set(entry.key, button);
-    faceBox.appendChild(button);
   }
 
   for (const entry of faces) drawFace(entry);
@@ -43877,6 +44226,10 @@ const { statProjection } = require("src/model/statProjection.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
+const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
+const { armouryRegionConfig, normalizeArmouryHeight, snapArmouryHeight, armouryComponentId } = require("src/model/armouryUi.js");
+
+
 
 const CFG = () => balance.equipment;
 
@@ -44248,7 +44601,7 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
   return dropArtOnError(el);
 }
 
-function inventoryFace(row, { selected = false, draggable = false } = {}) {
+function inventoryFace(row, { selected = false, draggable = false, holdHint = '' } = {}) {
   const el = document.createElement('span');
   el.className = `inventory-face${selected ? ' on' : ''}`;
   el.dataset.inventoryItem = row.key;
@@ -44262,6 +44615,7 @@ function inventoryFace(row, { selected = false, draggable = false } = {}) {
       : `Equipped: ${row.equippedLabels.join(' / ')}`)
     : '';
   el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
+    + (holdHint ? `<span class="inventory-hold-hint" hidden>${esc(holdHint)}</span>` : '')
     + `<span class="inventory-category">${esc(row.category)}</span>`
     + `<span class="inventory-count">×${row.count}</span>`
     + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
@@ -44335,6 +44689,11 @@ function mountEquipment(host, {
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
+  const uiCfg = eq.armouryUi || {};
+  const component = (el, key) => {
+    if (el) el.dataset.component = armouryComponentId(uiCfg, key);
+    return el;
+  };
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
   // terms is the whole rule:
@@ -44392,6 +44751,12 @@ function mountEquipment(host, {
   // `equipView` is already per-mount at that call site for the same reason.
   const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds)]));
+  const storedHeights = (meta.settings && meta.settings.armouryHeights) || null;
+  const heights = new Map(contextRegions().map((r) => {
+    const cfg = armouryRegionConfig(uiCfg, r.id);
+    return [r.id, normalizeArmouryHeight(uiCfg, r.id, storedHeights && storedHeights[r.id] != null
+      ? storedHeights[r.id] : cfg.default)];
+  }));
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
@@ -44424,10 +44789,20 @@ function mountEquipment(host, {
   wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
   host.appendChild(wrap);
 
+  // `armHold` owns a window Escape listener as well as the control listeners.
+  // Disclosure redraws replace those controls, so keep one teardown set for
+  // every mounted action and clear it before each redraw and on close.
+  const holdDisarms = new Set();
+  const disarmHolds = () => {
+    for (const disarm of holdDisarms) disarm();
+    holdDisarms.clear();
+  };
+
   // One teardown home for the listener this mount owns outside its subtree.
   // The 2026-08-23 disclosure correction removed the hold grips and their
   // window listeners; Escape still has to leave through every close road.
   const close = () => {
+    disarmHolds();
     document.removeEventListener('keydown', onKey);
     wrap.remove();
     if (onClose) onClose();
@@ -44537,8 +44912,14 @@ function mountEquipment(host, {
     };
   }
 
+  function equipHoldMs() {
+    const cfg = registries.balance && registries.balance.ui && registries.balance.ui.holdConfirm;
+    return cfg ? holdMs((meta && meta.settings) || {}, cfg) : 0;
+  }
+
   function slotBlock(slot) {
     const box = document.createElement('div');
+    component(box, 'slot');
     box.className = 'equip-slot';
     const rule = canSwap(registries, slot.id, { inCombat });
     box.innerHTML =
@@ -44584,7 +44965,11 @@ function mountEquipment(host, {
         : null;
       const cell = document.createElement('button');
       cell.type = 'button';
-      cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      const selected = !!picking && picking.slotId === slot.id && picking.setIndex === i;
+      component(cell, selected ? 'slotSelected' : 'slotCard');
+      cell.className = `es-cell${active ? ' on' : ''}${selected ? ' selected' : ''}${piece ? '' : ' empty'}`;
+      cell.dataset.slotId = slot.id;
+      cell.dataset.setIndex = String(i);
       cell.title = piece ? piece.name : 'Empty';
       cell.innerHTML = piece
         ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
@@ -44649,6 +45034,7 @@ function mountEquipment(host, {
 
   function pickerBlock() {
     const box = document.createElement('div');
+    component(box, 'picker');
     box.className = 'equip-picker';
     if (!picking) {
       // DERIVED FROM STATE, NOT AUTHORED (#90 follow-on, Freja). The picker with
@@ -44760,13 +45146,46 @@ function mountEquipment(host, {
       // removed the always-visible hold shortcut so a folded item is one row,
       // not a row followed by a second action-shaped row.
       const act = () => applyEquipmentChange(picking.slotId, picking.setIndex, candidatePieceId, actionLabel);
+      const row = equipmentRowFor(piece);
+      const holdFace = row ? inventoryFace(row, { selected: equipped, holdHint: `HOLD TO ${equipped ? 'UNEQUIP' : 'EQUIP'}` }) : null;
+      const showFaceHold = (state) => {
+        const hint = holdFace && holdFace.querySelector('.inventory-hold-hint');
+        if (hint) hint.hidden = state !== 'holding';
+      };
+      let faceHold = null;
       if (!seal.ok) sealChip(btn);
       else if (!transition.ok) {
         btn.classList.add('locked');
         refuses(btn, () => transition.reason);
-      } else btn.addEventListener('click', act);
+      } else {
+        const disarm = armHold(btn, {
+          ms: () => equipHoldMs(),
+          id: equipped ? 'armouryUnequip' : 'armouryEquip',
+          onConfirm: act,
+          onState: showFaceHold,
+        });
+        holdDisarms.add(disarm);
+        attachTooltip(btn, () => `<div class="tt-title">${esc(actionLabel)}</div>`
+          + (equipHoldMs() > 0 ? `Press and hold to ${esc(actionLabel.toLowerCase())}.` : `Click to ${esc(actionLabel.toLowerCase())}.`));
+        component(btn.querySelector('.hold-hint'), 'holdTooltip');
+        component(holdFace.querySelector('.inventory-hold-hint'), 'holdTooltip');
+        faceHold = {
+          ms: () => equipHoldMs(),
+          id: equipped ? 'armouryUnequip' : 'armouryEquip',
+          onConfirm: act,
+          onState: showFaceHold,
+        };
+      }
 
-      const row = equipmentRowFor(piece);
+      const reveal = inventoryReveal(registries, row, {
+        comparison,
+        action: btn,
+        instruction: `Compare this item for ${slot.label}.`,
+      });
+      component(reveal, 'inventoryDetail');
+      component(reveal.querySelector('.inventory-model'), 'inventoryModel');
+      component(reveal.querySelector('.inventory-information'), 'inventoryInformation');
+      for (const tag of reveal.querySelectorAll('.inventory-equipped')) component(tag, 'equippedTag');
 
       return {
         key: piece.id,
@@ -44776,28 +45195,40 @@ function mountEquipment(host, {
         actionLabel,
         face: {
           label: piece.name,
-          node: inventoryFace(row, { selected: equipped }),
+          node: holdFace || inventoryFace(row, { selected: equipped }),
+          hold: faceHold,
         },
         reveal: {
-          node: inventoryReveal(registries, row, {
-            comparison,
-            action: btn,
-            instruction: `Compare this item for ${slot.label}.`,
-          }),
+          node: reveal,
           sense: equipped
-            ? 'Equipped. Press to unequip.'
+            ? 'Equipped. Click to inspect; press and hold to unequip.'
             : moving
-              ? `Equipped in ${hands.join(' / ')}. Press to move to ${slot.label}.`
-              : `Press to compare and equip to ${slot.label}.`,
+              ? `Equipped in ${hands.join(' / ')}. Click to inspect; press and hold to move to ${slot.label}.`
+              : `Click to compare; press and hold to equip to ${slot.label}.`,
         },
       };
     });
 
-    const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
-    // The 2026-08-23 correction removes the always-visible hold strip.
-    // The face owns disclosure only; the single action remains inside the
-    // adopted reveal node and therefore exists on glass only while open.
-    // Clicking the title again is mountDisclosure's ordinary refold.
+    const fold = mountDisclosure(list, entries, {
+      moreLabel: 'more',
+      onFace: (face, entry) => {
+        const spec = entry.face && entry.face.hold;
+        if (!spec) return;
+        const disarm = armHold(face, {
+          ...spec,
+          // Short release opens the same folded card; a completed hold is the
+          // only path that mutates the loadout.
+          // Run after the browser's trailing click dispatch. This keeps the
+          // short-press disclosure open even in browsers that deliver the
+          // disclosure listener before the hold listener's click eater.
+          onAbort: () => queueMicrotask(() => fold.open(entry.key)),
+        });
+        holdDisarms.add(disarm);
+        component(face.querySelector('.hold-hint'), 'holdTooltip');
+      },
+    });
+    // The single action remains inside the adopted reveal node and therefore
+    // exists on glass only while open. Clicking the title again refolds it.
     box.addEventListener('click', (ev) => {
       if (!ev.target.closest('.ep-list')) fold.close();
     });
@@ -44820,12 +45251,14 @@ function mountEquipment(host, {
   /** The no-selection shelf: all currently usable item kinds, folded by row. */
   function inventoryBlock() {
     const box = document.createElement('div');
+    component(box, 'inventory');
     box.className = 'inventory-list ep-list';
     const rows = inventoryRows(registries, run, meta);
     const entries = rows.map((row) => {
       const target = inventoryTarget(row);
       const draggable = !!target;
       const face = inventoryFace(row, { draggable });
+      component(face, 'inventoryFace');
       if (draggable) {
         face.addEventListener('dragstart', (ev) => {
           draggingItemId = row.id;
@@ -44848,10 +45281,17 @@ function mountEquipment(host, {
         disclosure: 'face',
         face: { label: row.name, node: face },
         reveal: {
-          node: inventoryReveal(registries, row, {
+          node: (() => {
+            const reveal = inventoryReveal(registries, row, {
             comparison: target ? comparisonFor(target.slot.id, target.setIndex, target.pieceId) : null,
             instruction: target ? 'Drag this item onto a compatible slot, or select a slot to use its action button.' : '',
-          }),
+            });
+            component(reveal, 'inventoryDetail');
+            component(reveal.querySelector('.inventory-model'), 'inventoryModel');
+            component(reveal.querySelector('.inventory-information'), 'inventoryInformation');
+            for (const tag of reveal.querySelectorAll('.inventory-equipped')) component(tag, 'equippedTag');
+            return reveal;
+          })(),
           sense: `${row.name}. ${row.category}. ${row.count} owned.`,
         },
       };
@@ -44865,6 +45305,7 @@ function mountEquipment(host, {
   /** The rewrites, live: the actual cards this loadout produces right now. */
   function cardStrip() {
     const box = document.createElement('div');
+    component(box, 'cards');
     box.className = 'equip-cards';
     const surface = equipmentSurfaceReceipt(registries, run);
     const shown = new Set();
@@ -44873,6 +45314,7 @@ function mountEquipment(host, {
       if (shown.has(key)) continue;
       shown.add(key);
       const card = document.createElement('div');
+      component(card, 'card');
       card.className = 'equip-card-with-count';
       card.appendChild(renderCard(registries, inst, { small: true }));
       const count = document.createElement('em');
@@ -44959,6 +45401,12 @@ function mountEquipment(host, {
       if (isSubject) { delete el.dataset.collapsed; continue; }
       const shut = folded.get(r.id) === true;
       el.dataset.collapsed = shut ? '1' : '0';
+      const sizing = armouryRegionConfig(uiCfg, r.id);
+      const height = normalizeArmouryHeight(uiCfg, r.id, heights.get(r.id));
+      heights.set(r.id, height);
+      el.style.setProperty('--armoury-region-height', `${height * 100}vh`);
+      el.style.setProperty('--armoury-region-min', `${sizing.min * 100}vh`);
+      el.style.setProperty('--armoury-region-max', `${sizing.max * 100}vh`);
 
       const head = document.createElement('div');
       head.className = 'region-head';
@@ -44997,10 +45445,88 @@ function mountEquipment(host, {
       });
       head.appendChild(btn);
       el.insertBefore(head, el.firstChild);
+
+      const resizeCfg = uiCfg.drawer && uiCfg.drawer.resize;
+      if (!shut && resizeCfg && resizeCfg.enabled !== false) {
+        const handle = document.createElement('button');
+        handle.type = 'button';
+        handle.className = 'region-resize-handle';
+        handle.dataset.resize = r.id;
+        handle.setAttribute('role', 'separator');
+        handle.setAttribute('aria-orientation', resizeCfg.orientation || 'vertical');
+        handle.setAttribute('aria-valuemin', String(Math.round(sizing.min * 100)));
+        handle.setAttribute('aria-valuemax', String(Math.round(sizing.max * 100)));
+        handle.setAttribute('aria-valuenow', String(Math.round(height * 100)));
+        handle.setAttribute('aria-label', `Resize ${r.label.toLowerCase()} drawer`);
+        handle.title = `Drag to resize ${r.label.toLowerCase()}`;
+        component(handle, 'resizeHandle');
+        attachTooltip(handle, () => `Drag to resize ${r.label.toLowerCase()}. Arrow keys snap by ${Math.round(sizing.keyboardStep * 100)}%.`);
+
+        const paintHeight = (value) => {
+          const next = normalizeArmouryHeight(uiCfg, r.id, value);
+          heights.set(r.id, next);
+          el.style.setProperty('--armoury-region-height', `${next * 100}vh`);
+          handle.setAttribute('aria-valuenow', String(Math.round(next * 100)));
+          return next;
+        };
+        const saveHeight = (value) => {
+          const next = snapArmouryHeight(uiCfg, r.id, value);
+          heights.set(r.id, next);
+          if (onChange) onChange(run.loadout, { armouryHeights: Object.fromEntries(heights) });
+          draw();
+          wrap.querySelector(`[data-resize="${r.id}"]`)?.focus();
+        };
+        handle.addEventListener('keydown', (ev) => {
+          if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(ev.key)) return;
+          ev.preventDefault();
+          const current = heights.get(r.id);
+          const step = sizing.keyboardStep || sizing.snapThreshold || 0.01;
+          const next = ev.key === 'Home' ? sizing.min
+            : ev.key === 'End' ? sizing.max
+              : current + (ev.key === 'ArrowUp' ? step : -step);
+          saveHeight(next);
+        });
+        handle.addEventListener('pointerdown', (ev) => {
+          if (ev.button !== 0) return;
+          ev.preventDefault();
+          const startY = ev.clientY;
+          const startHeight = heights.get(r.id);
+          const pointerId = ev.pointerId;
+          try { handle.setPointerCapture(pointerId); } catch { /* detached edge */ }
+          handle.classList.add('dragging');
+          const onMove = (move) => {
+            const fraction = (startY - move.clientY) / Math.max(1, window.innerHeight || 1);
+            paintHeight(startHeight + fraction);
+          };
+          const end = (_endEv, cancelled) => {
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            window.removeEventListener('pointercancel', onCancel);
+            try { handle.releasePointerCapture(pointerId); } catch { /* already released */ }
+            handle.classList.remove('dragging');
+            if (cancelled) paintHeight(startHeight);
+            else saveHeight(heights.get(r.id));
+          };
+          const onUp = (up) => end(up, false);
+          const onCancel = (cancel) => end(cancel, true);
+          // Listen on the window while dragging so the gesture remains live
+          // even when the pointer leaves the narrow handle or a browser does
+          // not honour pointer capture on a transformed panel.
+          window.addEventListener('pointermove', onMove);
+          window.addEventListener('pointerup', onUp);
+          window.addEventListener('pointercancel', onCancel);
+        });
+        // Keep the resize affordance at the drawer's actual top boundary,
+        // before the header rather than between the header and its contents.
+        // CSS positions it over the border, so it remains reachable without
+        // stealing layout height from the configured drawer.
+        el.insertBefore(handle, el.firstChild);
+      }
     }
   }
 
   function draw() {
+    disarmHolds();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
     // host names the set, each control names its member, so an instrument can
@@ -45023,6 +45549,9 @@ function mountEquipment(host, {
         <section class="armoury-inventory"></section>
         <div class="armoury-strip"></div>
       </div>`;
+    component(wrap.querySelector('.armoury'), 'panel');
+    component(wrap.querySelector('.armoury-views'), 'toolbar');
+    component(wrap.querySelector('.armoury-close'), 'closeButton');
 
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
@@ -45079,11 +45608,20 @@ function mountEquipment(host, {
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
+        picking = null;
         view = b.dataset.member;
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
       });
     }
+    // A slot selection is contextual. Clicking ordinary Armoury chrome outside
+    // the slot/inventory options clears it without closing the overlay.
+    wrap.querySelector('.armoury').addEventListener('click', (ev) => {
+      if (!picking) return;
+      if (ev.target.closest('.equip-slot, .equip-picker, .armoury-inventory')) return;
+      picking = null;
+      draw();
+    });
   }
 
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
@@ -45192,6 +45730,70 @@ function inventoryItemCount(rows) {
 
 
 Object.assign(module.exports, { inventoryRows, inventoryItemCount });
+
+},
+"src/model/armouryUi.js": function (module, exports, require) {
+// src/model/armouryUi.js — pure Armoury presentation configuration.
+//
+// Heights are fractions of the viewport, not pixels. The authored JSON owns the
+// defaults, bounds, snap points, and component vocabulary; this module only
+// normalises those values so the DOM and the tests use the same arithmetic.
+
+function finite(value, fallback) {
+  return Number.isFinite(Number(value)) ? Number(value) : fallback;
+}
+
+/** Return one independent region's authored height policy. */
+function armouryRegionConfig(ui, regionId) {
+  const row = ui && ui.drawer && ui.drawer.regions && ui.drawer.regions[regionId];
+  if (!row || typeof row !== 'object') {
+    throw new Error(`Unknown Armoury drawer region '${regionId}'`);
+  }
+  const min = Math.max(0, finite(row.min, 0));
+  const max = Math.max(min, finite(row.max, min));
+  const def = Math.min(max, Math.max(min, finite(row.default, min)));
+  const snap = [...new Set((Array.isArray(row.snap) ? row.snap : [])
+    .map((value) => finite(value, NaN))
+    .filter((value) => Number.isFinite(value) && value >= min && value <= max))]
+    .sort((a, b) => a - b);
+  return Object.freeze({
+    min,
+    max,
+    default: def,
+    snap,
+    snapThreshold: Math.max(0, finite(row.snapThreshold, 0)),
+    keyboardStep: Math.max(0, finite(row.keyboardStep, 0)),
+  });
+}
+
+/** Clamp a stored or dragged fraction to the region's authored range. */
+function normalizeArmouryHeight(ui, regionId, value) {
+  const cfg = armouryRegionConfig(ui, regionId);
+  const n = finite(value, cfg.default);
+  return Math.min(cfg.max, Math.max(cfg.min, n));
+}
+
+/** Snap only inside the authored threshold; otherwise preserve the drag value. */
+function snapArmouryHeight(ui, regionId, value) {
+  const cfg = armouryRegionConfig(ui, regionId);
+  const clamped = normalizeArmouryHeight(ui, regionId, value);
+  if (!cfg.snap.length || cfg.snapThreshold <= 0) return clamped;
+  let nearest = cfg.snap[0];
+  for (const point of cfg.snap) {
+    if (Math.abs(point - clamped) < Math.abs(nearest - clamped)) nearest = point;
+  }
+  return Math.abs(nearest - clamped) <= cfg.snapThreshold ? nearest : clamped;
+}
+
+/** Stable component id lookup; labels/selectors stay in the authored registry. */
+function armouryComponentId(ui, key) {
+  const row = ui && ui.assetComponents && ui.assetComponents[key];
+  return row && typeof row.id === 'string' && row.id ? row.id : `armoury.${key}`;
+}
+
+
+
+Object.assign(module.exports, { armouryRegionConfig, normalizeArmouryHeight, snapArmouryHeight, armouryComponentId });
 
 },
 "src/ui/components/arcaneExposure.js": function (module, exports, require) {
@@ -47337,6 +47939,8 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  { cat: 'Display', key: 'holdHints', def: UI_DEFAULTS.holdHints.def, label: 'Hold labels',
+    note: 'Show the optional HOLD label on press-and-hold controls. The progress strip still appears while a hold is active.' },
   // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
   // ALWAYS pressable and a setting decides what it means — auto-collect ON
   // takes everything, picking at random where there is a choice; OFF gives

@@ -2097,6 +2097,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .es-cell img { width: 100%; height: 4rem; object-fit: contain; }
 .es-cell span { font-size: 0.95rem; line-height: 1.1; text-align: center; color: var(--muted); }
 .es-cell.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.es-cell.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold) inset, 0 0 16px rgba(201, 162, 39, 0.65);
+}
 .es-cell.on span { color: var(--parchment); }
 .es-cell.empty .es-empty { font-size: 2.2rem; color: var(--line-soft); }
 
@@ -2162,10 +2166,26 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    face's own padding back to the card so the two spellings look identical —
    they are one markup (pieceChipHtml) and they must not become two looks. */
 .ep-list .disc-faces { flex-direction: column; gap: 0; }
-.ep-list .disc-face { padding: 0; border: 0; background: none; text-align: left; width: 100%; }
+.ep-list .disc-face {
+  padding: 0; border: 1px solid var(--line-soft); border-radius: 3px;
+  background: rgba(10, 8, 6, 0.32); text-align: left; width: 100%;
+  min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center; gap: 0.5rem;
+}
+.ep-list .disc-face:hover { border-color: var(--line); }
+.ep-list .disc-face > .inventory-face {
+  width: auto; min-width: 0; grid-column: 1; border: 0; background: none;
+}
+.ep-list .disc-face > .hold-hint {
+  grid-column: 2; margin: 0 0.6rem 0 0; white-space: nowrap;
+  justify-self: end; align-self: center;
+}
 .ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
 .ep-list .disc-face[data-reveal='open'] .equip-chip.as-face,
 .ep-list .disc-face[data-reveal='open'] .inventory-face {
+  border-color: transparent; border-bottom-color: transparent; border-radius: 0;
+}
+.ep-list .disc-face[data-reveal='open'] {
   border-color: var(--gold); border-bottom-color: transparent; border-radius: 3px 3px 0 0;
 }
 .ep-list .disc-reveal {
@@ -2183,6 +2203,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: rgba(10, 8, 6, 0.32); color: var(--parchment);
 }
 .inventory-name { min-width: 0; font-size: 1.2rem; }
+.inventory-hold-hint {
+  color: var(--gold); font-size: 0.82rem; letter-spacing: 0.08em;
+  text-transform: uppercase; white-space: nowrap;
+}
 .inventory-category, .inventory-count {
   color: var(--muted); font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase;
 }
@@ -2216,6 +2240,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    `.subtle.danger` above) and it is reused rather than joined by a second
    spelling — a second red is a second home for one decision. */
 .ep-equip {
+  position: relative;
   align-self: flex-start;
   padding: 0.45rem 1.1rem;
   border: 1px solid var(--line-soft);
@@ -2224,13 +2249,37 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   letter-spacing: 0.08em;
   cursor: pointer;
 }
+.ep-equip .hold-hint {
+  position: absolute; left: 0; bottom: calc(100% + 0.3rem); margin: 0;
+  padding: 0.2rem 0.45rem; border: 1px solid var(--line-soft);
+  background: var(--panel); white-space: nowrap; z-index: 2;
+}
 .ep-equip:hover { border-color: var(--gold); }
 .ep-equip.danger { border-color: var(--blood); color: var(--ember); }
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
+/* The danger hover tint is a shorthand and would erase the shared hold fill.
+   Keep the translucent progress strip visible while an unequip action is
+   held, just as it is for every other shared hold control. */
+.ep-equip.beat-hold,
+.ep-equip.beat-hold:hover,
+.ep-equip.beat-hold:focus,
+.ep-equip.beat-hold:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+}
+
+/* HOLD is an optional label, not the shared safety affordance itself. Keep the
+   progress strip and state classes active when the label is off by default. */
+:root:not([data-hold-hints='on']) .hold-hint,
+:root:not([data-hold-hints='on']) .inventory-hold-hint { display: none !important; }
 
 .armoury-inventory,
-.armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
+.armoury-strip {
+  border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem;
+  box-sizing: border-box;
+}
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
 .equip-card-with-count > .role-copy-count { position: absolute; right: 0.35rem; bottom: 0.35rem; }
@@ -2399,8 +2448,24 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   /* An expanded receipt pane is real content, not overflow behind the modal.
      Share the panel with its subject and give the pane its own scrollport so a
      phone can reach candidate receipts without moving the Armoury off-screen. */
-  flex: 1 1 50%; min-height: var(--tap-floor); overflow-y: auto;
+  flex: 0 0 clamp(var(--armoury-region-min, 6vh), var(--armoury-region-height, 10vh), var(--armoury-region-max, 55vh));
+  min-height: var(--tap-floor); overflow-y: auto;
+  position: relative;
 }
+
+/* Each context drawer owns its own configured viewport fraction. The handle is
+   a real keyboard control as well as a pointer target, so resizing does not
+   depend on a mouse-only affordance. */
+.region-resize-handle {
+  display: block; position: absolute; top: 0; left: 0; z-index: 3;
+  width: 100%; height: 0.7rem;
+  margin: 0; padding: 0; border: 0; border-top: 2px solid var(--line-soft);
+  transform: translateY(-50%);
+  background: var(--panel) linear-gradient(to right, transparent 42%, var(--line-soft) 42% 58%, transparent 58%);
+  cursor: ns-resize; touch-action: none; opacity: 0.72;
+}
+.region-resize-handle:hover, .region-resize-handle:focus-visible,
+.region-resize-handle.dragging { border-top-color: var(--gold); opacity: 1; }
 
 /* Screenshot evidence poses use the real screen/readers but focus the camera on
    the contract under review. They are query-gated dev surfaces; ordinary play
@@ -2412,7 +2477,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
 :root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
 :root[data-shot-evidence='armoury'] .armoury-right { height: 100%; overflow-y: auto !important; }
-:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 0 35%; }
+:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] {
+  flex-basis: clamp(var(--armoury-region-min, 6vh), var(--armoury-region-height, 10vh), var(--armoury-region-max, 55vh));
+}
 :root[data-shot-evidence='armoury'] .equip-card-with-count { display: none; }
 
 /* Grid view: the figure between two columns of slots, hands on the side they

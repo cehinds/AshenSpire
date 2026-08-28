@@ -347,6 +347,8 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  { cat: 'Display', key: 'holdHints', def: UI_DEFAULTS.holdHints.def, label: 'Hold labels',
+    note: 'Show the optional HOLD label on press-and-hold controls. The progress strip still appears while a hold is active.' },
   // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
   // ALWAYS pressable and a setting decides what it means — auto-collect ON
   // takes everything, picking at random where there is a choice; OFF gives

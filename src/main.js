@@ -563,6 +563,10 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  // The hold timer and its progress strip remain universal. This separate
+  // display preference only controls the optional HOLD word, whose default is
+  // declared by the Settings row and shared UI config.
+  document.documentElement.dataset.holdHints = settingOn(settings, 'holdHints') ? 'on' : 'off';
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);

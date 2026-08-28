@@ -2,5 +2,49 @@
   "equippedTag": {
     "useCustomColor": true,
     "customColor": "#7FD47F"
+  },
+  "drawer": {
+    "resize": {
+      "enabled": true,
+      "orientation": "vertical"
+    },
+    "regions": {
+      "inventory": {
+        "default": 0.1,
+        "min": 0.06,
+        "max": 0.55,
+        "snap": [0.1, 0.2, 0.3, 0.4, 0.5],
+        "snapThreshold": 0.025,
+        "keyboardStep": 0.1
+      },
+      "cards": {
+        "default": 0.1,
+        "min": 0.06,
+        "max": 0.55,
+        "snap": [0.1, 0.2, 0.3, 0.4, 0.5],
+        "snapThreshold": 0.025,
+        "keyboardStep": 0.1
+      }
+    }
+  },
+  "assetComponents": {
+    "panel": { "id": "armoury.panel", "label": "Armoury panel", "selector": ".armoury" },
+    "toolbar": { "id": "armoury.toolbar", "label": "View toolbar", "selector": ".armoury-views" },
+    "closeButton": { "id": "armoury.close-button", "label": "Close button", "selector": ".armoury-close" },
+    "slot": { "id": "armoury.slot", "label": "Equipment slot", "selector": ".equip-slot" },
+    "slotCard": { "id": "armoury.slot.card", "label": "Equipment slot card", "selector": ".es-cell" },
+    "slotSelected": { "id": "armoury.slot.selected", "label": "Selected equipment slot", "selector": ".es-cell.selected" },
+    "picker": { "id": "armoury.picker", "label": "Slot inventory picker", "selector": ".equip-picker" },
+    "inventory": { "id": "armoury.inventory", "label": "Inventory drawer", "selector": ".armoury-inventory" },
+    "inventoryFace": { "id": "armoury.inventory.item.folded", "label": "Folded inventory item", "selector": ".inventory-face" },
+    "inventoryDetail": { "id": "armoury.inventory.item.expanded", "label": "Expanded inventory item", "selector": ".inventory-detail" },
+    "inventoryModel": { "id": "armoury.inventory.item.model", "label": "Inventory item model", "selector": ".inventory-model" },
+    "inventoryInformation": { "id": "armoury.inventory.item.information", "label": "Inventory item information", "selector": ".inventory-information" },
+    "equippedTag": { "id": "armoury.inventory.equipped-tag", "label": "Equipped tag", "selector": ".inventory-equipped" },
+    "cards": { "id": "armoury.cards", "label": "Cards drawer", "selector": ".armoury-strip" },
+    "card": { "id": "armoury.cards.item", "label": "Derived card", "selector": ".equip-card-with-count" },
+    "resizeHandle": { "id": "armoury.drawer.resize-handle", "label": "Drawer resize handle", "selector": ".region-resize-handle" },
+    "holdProgress": { "id": "armoury.hold.progress", "label": "Shared hold progress", "selector": ".beat-hold" },
+    "holdTooltip": { "id": "armoury.hold.tooltip", "label": "Hold-to-equip tooltip", "selector": ".hold-hint" }
   }
 }

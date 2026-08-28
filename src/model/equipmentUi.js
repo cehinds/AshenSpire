@@ -12,7 +12,7 @@ export function armouryUiProblems(config) {
     return [{ path: 'equipment.armouryUi', message: 'must be an object' }];
   }
   for (const key of Object.keys(config)) {
-    if (key !== 'equippedTag') {
+    if (!['equippedTag', 'drawer', 'assetComponents'].includes(key)) {
       problems.push({ path: `equipment.armouryUi.${key}`, message: 'Unknown field' });
     }
   }
@@ -37,6 +37,87 @@ export function armouryUiProblems(config) {
       path: 'equipment.armouryUi.equippedTag.customColor',
       message: `must be a six-digit hex colour such as #7FD47F — got ${JSON.stringify(tag.customColor)}`,
     });
+  }
+
+  const drawer = config.drawer;
+  if (!drawer || typeof drawer !== 'object' || Array.isArray(drawer)) {
+    problems.push({ path: 'equipment.armouryUi.drawer', message: 'must be an object' });
+  } else {
+    for (const key of Object.keys(drawer)) {
+      if (!['resize', 'regions'].includes(key)) {
+        problems.push({ path: `equipment.armouryUi.drawer.${key}`, message: 'Unknown field' });
+      }
+    }
+    const resize = drawer.resize;
+    if (!resize || typeof resize !== 'object' || Array.isArray(resize)) {
+      problems.push({ path: 'equipment.armouryUi.drawer.resize', message: 'must be an object' });
+    } else {
+      for (const key of Object.keys(resize)) {
+        if (!['enabled', 'orientation'].includes(key)) {
+          problems.push({ path: `equipment.armouryUi.drawer.resize.${key}`, message: 'Unknown field' });
+        }
+      }
+      if (typeof resize.enabled !== 'boolean') {
+        problems.push({ path: 'equipment.armouryUi.drawer.resize.enabled', message: 'must be true or false' });
+      }
+      if (resize.orientation !== 'vertical') {
+        problems.push({ path: 'equipment.armouryUi.drawer.resize.orientation', message: "must be 'vertical'" });
+      }
+    }
+    const regions = drawer.regions;
+    if (!regions || typeof regions !== 'object' || Array.isArray(regions)) {
+      problems.push({ path: 'equipment.armouryUi.drawer.regions', message: 'must be an object' });
+    } else {
+      for (const key of Object.keys(regions)) {
+        if (!['inventory', 'cards'].includes(key)) {
+          problems.push({ path: `equipment.armouryUi.drawer.regions.${key}`, message: 'Unknown region' });
+          continue;
+        }
+        const row = regions[key];
+        const path = `equipment.armouryUi.drawer.regions.${key}`;
+        if (!row || typeof row !== 'object' || Array.isArray(row)) {
+          problems.push({ path, message: 'must be an object' });
+          continue;
+        }
+        for (const field of Object.keys(row)) {
+          if (!['default', 'min', 'max', 'snap', 'snapThreshold', 'keyboardStep'].includes(field)) {
+            problems.push({ path: `${path}.${field}`, message: 'Unknown field' });
+          }
+        }
+        for (const field of ['default', 'min', 'max', 'snapThreshold', 'keyboardStep']) {
+          if (!Number.isFinite(Number(row[field]))) problems.push({ path: `${path}.${field}`, message: 'must be a number' });
+        }
+        if (!Array.isArray(row.snap) || row.snap.some((value) => !Number.isFinite(Number(value)))) {
+          problems.push({ path: `${path}.snap`, message: 'must be an array of numbers' });
+        }
+        if (Number(row.min) < 0 || Number(row.max) < Number(row.min) || Number(row.default) < Number(row.min) || Number(row.default) > Number(row.max)) {
+          problems.push({ path, message: 'default/min/max range is invalid' });
+        }
+      }
+    }
+  }
+
+  const components = config.assetComponents;
+  if (!components || typeof components !== 'object' || Array.isArray(components)) {
+    problems.push({ path: 'equipment.armouryUi.assetComponents', message: 'must be an object' });
+  } else {
+    for (const [key, row] of Object.entries(components)) {
+      const path = `equipment.armouryUi.assetComponents.${key}`;
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        problems.push({ path, message: 'must be an object' });
+        continue;
+      }
+      for (const field of Object.keys(row)) {
+        if (!['id', 'label', 'selector'].includes(field)) {
+          problems.push({ path: `${path}.${field}`, message: 'Unknown field' });
+        }
+      }
+      for (const field of ['id', 'label', 'selector']) {
+        if (typeof row[field] !== 'string' || !row[field].trim()) {
+          problems.push({ path: `${path}.${field}`, message: 'must be a non-empty string' });
+        }
+      }
+    }
   }
   return problems;
 }

@@ -146,8 +146,45 @@ export function beatCue(phase, id, form) {
   return { cue, id, form };
 }
 
+// A completed pointer hold can redraw its control before the finger lifts.
+// The browser then targets the replacement element with the trailing click,
+// which would otherwise be interpreted as a fresh activation. Keep the
+// one-shot lift eater at document scope so it survives that redraw; cancel
+// clears it, and a bounded timeout prevents a missing click from poisoning a
+// later unrelated tap.
+let pendingPointerLift = null;
+let liftListenersReady = false;
+
+function clearPendingPointerLift() {
+  if (pendingPointerLift && pendingPointerLift.timer) clearTimeout(pendingPointerLift.timer);
+  pendingPointerLift = null;
+}
+
+function ensureLiftListeners() {
+  if (liftListenersReady || typeof document === 'undefined') return;
+  liftListenersReady = true;
+  document.addEventListener('pointercancel', (ev) => {
+    if (pendingPointerLift && pendingPointerLift.pointerId === ev.pointerId) clearPendingPointerLift();
+  }, true);
+  document.addEventListener('click', (ev) => {
+    if (!pendingPointerLift || ev.detail === 0) return;
+    clearPendingPointerLift();
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+  }, true);
+}
+
+function swallowCompletedPointerLift(pointerId) {
+  ensureLiftListeners();
+  clearPendingPointerLift();
+  pendingPointerLift = {
+    pointerId,
+    timer: setTimeout(clearPendingPointerLift, 1000),
+  };
+}
+
 /**
- * armHold(btn, { ms, onConfirm, id }) -> disarm() (with .refresh())
+ * armHold(btn, { ms, onConfirm, id, onState, onAbort }) -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
  * finger lands. The function form remains available to rows whose state can
@@ -156,7 +193,17 @@ export function beatCue(phase, id, form) {
  * `ms <= 0` is the "off" position of the dial and it is the pre-hold behaviour
  * byte for byte: one tap commits. Not a hold with a zero timer.
  */
-export function armHold(btn, { ms, onConfirm, id = null }) {
+export function armHold(btn, {
+  ms,
+  onConfirm,
+  id = null,
+  onState = null,
+  // Optional second meaning for an early, still press-shaped release. The
+  // hold remains the commit gate; callers may use this callback for the
+  // non-mutating tap that shares the same surface (for example, a folded card
+  // opens on a short press but equips only after the hold reaches full).
+  onAbort = null,
+}) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
   let raf = 0;
@@ -212,6 +259,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
     armed = false;
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
+    if (onState) onState(state);
   }
 
   function begin(origin, track) {
@@ -234,6 +282,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
     heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
+    if (onState) onState('holding');
     const t0 = performance.now();
     const x0 = origin.x;
     const y0 = origin.y;
@@ -248,6 +297,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
         // thumb is still down, which is the confirmation; waiting for the lift
         // would make a completed hold feel like it did nothing.
         fired = true;
+        if (origin.source === 'pointer') swallowCompletedPointerLift(origin.ev.pointerId);
         stop('done');
         onConfirm(ev);
         // A control that survives its own commit (End Turn does — the screen
@@ -276,7 +326,16 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
       // thing — rule 1, inverted, which is the failure that looks exactly like
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
-      onEnd: () => { if (armed) stop('idle'); return true; },
+      onEnd: (endEv, info = {}) => {
+        const wasArmed = armed;
+        if (wasArmed) stop('idle');
+        // A cancelled gesture or a drag is not a tap. An ordinary early
+        // release is: let the caller open/inspect the shared surface, while
+        // armHold still consumes the trailing synthetic activation so it can
+        // never become a second commit door.
+        if (wasArmed && !info.cancelled && onAbort) onAbort(endEv);
+        return true;
+      },
     });
     return true;
   }

@@ -139,7 +139,7 @@ function tipHtml(entry) {
 }
 
 /**
- * mountDisclosure(host, entries, { moreLabel })
+ * mountDisclosure(host, entries, { moreLabel, onFace })
  *   → { open(key), close(), setValue(key, value), openKey }
  *
  * `entries` is the model's list, in model order. WHICH ONES ARE DRAWN UP FRONT
@@ -150,7 +150,7 @@ function tipHtml(entry) {
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
+export function mountDisclosure(host, entries, { moreLabel = 'more', onFace = null } = {}) {
   const rows = [...(entries || [])];
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
@@ -297,13 +297,19 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     // an object, and silently erasing the card would be the plausible failure.
     if (entry.face && entry.face.node) button.appendChild(entry.face.node);
     else button.innerHTML = faceHtml(entry);
+    faceBox.appendChild(button);
+    // A face may opt into a shared press/hold affordance, but it is wired
+    // BEFORE disclosure's click listener. That ordering lets an early release
+    // open the card through the hold's onAbort callback and swallow the
+    // trailing synthetic click; a completed hold redraws and never toggles the
+    // disclosure on its way out. Existing callers omit this hook unchanged.
+    if (onFace) onFace(button, entry);
     button.addEventListener('click', () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
     });
     if (tipHtml(entry)) attachTooltip(button, () => tipHtml(entry));
     buttons.set(entry.key, button);
-    faceBox.appendChild(button);
   }
 
   for (const entry of faces) drawFace(entry);
