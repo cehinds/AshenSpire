@@ -254,6 +254,13 @@ let lastMusicFolder;
 // and shrinks to fit small ones; S–XL are fixed overrides. Legacy numeric values
 // ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
 const UI_NAMED = UI.uiScale.named;
+// The last geometry actually applied to the page. A phone's soft keyboard and
+// browser chrome can change innerHeight without changing the available width;
+// that transient height is still allowed to raise the short-screen refusal,
+// but it must not silently swap the board composition or UI size (#39).
+// Width changes remain the honest signal for a new composition: rotation and
+// desktop-window resizing both recompute through the same decider below.
+let appliedUiGeometry = null;
 
 // EldenSpire#23 — TWO baselines, ONE decider.
 //
@@ -418,8 +425,16 @@ function resolveLayout(uiScale, vw, vh) {
   return layoutForCap(named != null ? named : Infinity, vw, vh);
 }
 
-function applyUiScale(settings) {
-  const { zoom, narrow, short } = resolveLayout(settings.uiScale);
+function applyUiScale(settings, { preserveOnHeightOnly = false } = {}) {
+  const resolved = resolveLayout(settings.uiScale);
+  const viewportWidth = typeof window === 'undefined' ? null : window.innerWidth;
+  const keepGeometry = preserveOnHeightOnly
+    && appliedUiGeometry != null
+    && viewportWidth === appliedUiGeometry.viewportWidth;
+  const zoom = keepGeometry ? appliedUiGeometry.zoom : resolved.zoom;
+  const narrow = keepGeometry ? appliedUiGeometry.narrow : resolved.narrow;
+  const short = resolved.short;
+  appliedUiGeometry = { viewportWidth, zoom, narrow };
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -503,7 +518,11 @@ function reflexAutoScale() {
   // zoom stays put, so the local width crosses narrowMax with nothing else
   // changing. Gating this on Auto left the attribute stale at exactly the
   // shapes a fixed size is most likely to be small in (#24).
-  applyUiScale((saves.loadMeta().settings) || {});
+  // A resize with the same width is browser chrome or keyboard territory. Keep
+  // the composition and zoom that were chosen before the height moved, while
+  // applyUiScale still refreshes the current short-screen refusal. A width
+  // change (including rotation) recomputes normally.
+  applyUiScale((saves.loadMeta().settings) || {}, { preserveOnHeightOnly: true });
 }
 if (typeof window !== 'undefined') {
   window.addEventListener('resize', () => {

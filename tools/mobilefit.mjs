@@ -56,6 +56,8 @@
 //   node tools/mobilefit.mjs --dist          dist/AshenSpire.html over file://
 //   node tools/mobilefit.mjs --only 390x844
 //   node tools/mobilefit.mjs --shots DIR     also write a PNG per shape
+//   node tools/mobilefit.mjs --stability-only  #39 height-loss/restore gate
+//   node tools/mobilefit.mjs --selftest      same-door known-bad + clean edge
 //   CHROME=/path/to/chrome node tools/mobilefit.mjs
 //
 // Exit codes
@@ -79,6 +81,7 @@ import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
+import { doorSelftest } from './doorplant.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
@@ -116,6 +119,21 @@ const MATRIX_SHAPES = [
 ];
 const MATRIX = MATRIX_SHAPES.flatMap((v) =>
   ['s', 'm', 'l', 'xl'].map((size) => ({ ...v, tag: `${v.tag}-${size}`, cell: true, known: {}, settings: { uiScale: size } })));
+
+// EldenSpire#39 / AshenSpire#39 — every portrait-phone shape named by the
+// report. The two edges are the full-height board and a 45% transient height
+// loss, followed by the return edge on the SAME mounted page. A fresh navigate
+// at each height would miss the defect: the real input is a resize after a soft
+// keyboard or browser chrome moves, so this table drives that exact door.
+const HEIGHT_STABILITY_SHAPES = [
+  { w: 360, h: 640, d: 2 },
+  { w: 375, h: 667, d: 2 },
+  { w: 390, h: 844, d: 3 },
+  { w: 393, h: 852, d: 3 },
+  { w: 412, h: 915, d: 2.6 },
+  { w: 414, h: 896, d: 3 },
+  { w: 430, h: 932, d: 3 },
+];
 
 const SHAPES = [
   { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop', reference: true, known: { endTurn: 45 } },
@@ -184,6 +202,8 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const only = argOf('--only');
 const shotsDir = argOf('--shots');
 const useDist = args.includes('--dist');
+const stabilityOnly = args.includes('--stability-only');
+const selftest = args.includes('--selftest');
 
 const fails = [];
 // A shape marked knownOpen carries a defect this branch does not own. Its
@@ -448,6 +468,87 @@ async function main() {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, S);
   };
 
+  // #39's runtime gate. The viewport is changed in place so the browser fires
+  // the same resize event as a keyboard/address-bar height change. Geometry
+  // must stay stable at both edges; the short-screen refusal must still follow
+  // the CURRENT height, not the retained layout geometry.
+  const stabilityRows = [];
+  const stabilityShapes = only
+    ? HEIGHT_STABILITY_SHAPES.filter((v) => `${v.w}x${v.h}` === only)
+    : HEIGHT_STABILITY_SHAPES;
+  if (stabilityOnly && only && stabilityShapes.length === 0) {
+    console.error(`mobilefit: --only ${only} matched no #39 height-stability shape. Nothing was tested, so this is unknown, not a pass.`);
+    console.error(`  shapes: ${HEIGHT_STABILITY_SHAPES.map((v) => `${v.w}x${v.h}`).join(', ')}`);
+    cdp.close(); await dropBrowser(); if (server) server.close();
+    process.exit(2);
+  }
+  for (const vp of stabilityShapes) {
+    const name = `${vp.w}x${vp.h}`;
+    const lossH = Math.floor(vp.h * 0.55);
+    const state = `(() => ({
+      layout: document.documentElement.getAttribute('data-layout'),
+      zoom: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')),
+      width: innerWidth,
+      height: innerHeight,
+      gateBelowH: window.__uiScale && window.__uiScale.gateBelowH,
+      gateUp: !!document.querySelector('.upright-veil'),
+      advice: document.querySelector('.upright-veil')?.dataset.advice || null,
+    }))()`;
+    console.log(`\n  ${name} height stability (#39) — full ${vp.h}px -> 45% loss ${lossH}px -> full ${vp.h}px`);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: true }, S);
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=customize` }, S);
+    await until(`!!document.querySelector('#cz-name') && !!document.querySelector('#seed-input')`, `${name}: character creation`);
+    await wait(900);
+    const full = await evalIn(state);
+    ok(full.layout === 'narrow', `${name}: height-stability full edge starts narrow (data-layout=${full.layout})`);
+    ok(!full.gateUp, `${name}: height-stability full edge keeps the short-screen refusal down`);
+
+    if (shotsDir && name === '390x844') {
+      const shot = await cdp.send('Page.captureScreenshot', { format: 'png' }, S);
+      const out = join(resolve(shotsDir), 'phone-layout-stable-390x844-full.png');
+      writeFileSync(out, Buffer.from(shot.data, 'base64'));
+      console.log(`    shot (full-height edge): ${out}`);
+    }
+
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: lossH, deviceScaleFactor: vp.d, mobile: true }, S);
+    await wait(450);
+    const loss = await evalIn(state);
+    const shouldRefuse = loss.gateBelowH != null && loss.height < loss.gateBelowH;
+    ok(loss.layout === full.layout, `${name}: height-stability 45% loss keeps data-layout ${full.layout} (got ${loss.layout})`);
+    ok(Math.abs(loss.zoom - full.zoom) < 0.0001, `${name}: height-stability 45% loss keeps --ui-zoom ${full.zoom} (got ${loss.zoom})`);
+    ok(loss.gateUp === shouldRefuse, `${name}: height-stability refusal still follows current height ${loss.height}px < ${loss.gateBelowH}px (${shouldRefuse}; gate ${loss.gateUp ? 'up' : 'down'})`);
+
+    if (shotsDir && name === '390x844') {
+      const shot = await cdp.send('Page.captureScreenshot', { format: 'png' }, S);
+      const out = join(resolve(shotsDir), 'phone-layout-stable-390x464-loss.png');
+      writeFileSync(out, Buffer.from(shot.data, 'base64'));
+      console.log(`    shot (45%-loss edge): ${out}`);
+    }
+
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: true }, S);
+    await wait(450);
+    const restored = await evalIn(state);
+    ok(restored.layout === full.layout, `${name}: height-stability restore keeps data-layout ${full.layout} (got ${restored.layout})`);
+    ok(Math.abs(restored.zoom - full.zoom) < 0.0001, `${name}: height-stability restore keeps --ui-zoom ${full.zoom} (got ${restored.zoom})`);
+    ok(!restored.gateUp, `${name}: height-stability restore lowers the short-screen refusal`);
+    stabilityRows.push({ name, full: `${full.layout}/${full.zoom}`, loss: `${loss.layout}/${loss.zoom}`, restored: `${restored.layout}/${restored.zoom}`, lossH, refused: loss.gateUp });
+  }
+
+  if (stabilityRows.length) {
+    console.log('\n  HEIGHT STABILITY (#39)');
+    console.log('  shape     full         45% height loss     restored      refusal at loss');
+    for (const r of stabilityRows) console.log(`  ${r.name.padEnd(9)} ${r.full.padEnd(12)} ${`${r.loss} @ ${r.lossH}px`.padEnd(19)} ${r.restored.padEnd(13)} ${r.refused ? 'up' : 'down'}`);
+  }
+  if (stabilityOnly) {
+    console.log(`\n  ${fails.length ? `FAIL — ${fails.length} height-stability assertion(s)` : `PASS — ${stabilityRows.length} phone shapes held both height edges and the restore edge`}.`);
+    for (const f of fails) console.log(`    - ${f}`);
+    cdp.close();
+    await dropBrowser();
+    if (server) server.close();
+    process.exit(fails.length ? 1 : 0);
+  }
+
   const rows = [];
   let matchedOnly = false;
   const ceiling = {}; // per-control grid reading at the design baseline — the bar
@@ -623,4 +724,21 @@ async function main() {
   process.exit(fails.length ? 1 : 0);
 }
 
-main().catch((e) => { console.error(`mobilefit: ${e.message}`); process.exit(2); });
+if (selftest) {
+  const code = await doorSelftest({
+    tool: 'mobilefit.mjs',
+    args: ['--stability-only'],
+    timeoutMs: 300000,
+    extraCopy: ['assets'],
+    plants: [{
+      name: '#39 height-only resize may reselect geometry',
+      file: 'src/main.js',
+      find: '  const keepGeometry = preserveOnHeightOnly\n    && appliedUiGeometry != null\n    && viewportWidth === appliedUiGeometry.viewportWidth;',
+      replace: '  const keepGeometry = false\n    && appliedUiGeometry != null\n    && viewportWidth === appliedUiGeometry.viewportWidth;',
+      expectRed: /height-stability 45% loss keeps data-layout narrow \(got wide\)/,
+    }],
+  });
+  process.exit(code);
+} else {
+  main().catch((e) => { console.error(`mobilefit: ${e.message}`); process.exit(2); });
+}
