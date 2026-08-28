@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `codex/migration-continuity-integration-current`
-- Source commit: `1bef1e2a7a6d58bab5c40277dc6e85c8440c1280`
+- Source branch: `dev`
+- Source commit: `6fdd3927fc97b237babf2eebcb8e9db37953a281`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
