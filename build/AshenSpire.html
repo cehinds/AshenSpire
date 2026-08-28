@@ -5521,8 +5521,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   padding: 0;
   border: 0;
 }
-.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .resbars {
-  gap: calc(2px / var(--ui-zoom, 1));
+  .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .resbars {
+    gap: calc(1px / var(--ui-zoom, 1));
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-relics {
   grid-area: relics;
@@ -5796,8 +5796,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    stays centred against the unchanged two-row quick-control panel. Compact HUD
    keeps its explicit 2px row gap above because its vitals panel is intrinsic. */
 .topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) .resbars-host > .resbars {
-  gap: 0;
-  justify-content: space-evenly;
+  gap: calc(2px / var(--ui-zoom, 1));
+  justify-content: center;
 }
 .topbar.combat-hud.shared-hud .hud-control-grid {
   grid-column: 2;
@@ -41754,7 +41754,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '017c4a4b22';
+const SOURCE = 'e729333e2e';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41788,7 +41788,7 @@ const SOURCE = '017c4a4b22';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1432';
+const ORDINAL = '1446';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
