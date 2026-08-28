@@ -1774,11 +1774,14 @@ button.rs-reset {
 .startup-gate .build-stamp {
   position: absolute;
   z-index: 2;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: max(1rem, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  width: 100%;
+  transform: none;
   color: var(--parchment);
   text-align: center;
+  text-indent: 0.02em;
 }
 @media (max-width: 30rem) {
   .startup-mark { width: 94vw; padding-inline: 0.8rem; }
@@ -4759,14 +4762,25 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%);
 }
 .startup-mark {
-  width: min(86%, 62rem);
+  width: min(94vw, 72rem);
   padding: 8.2rem 2.8rem 5.2rem;
   border: 0;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 88%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));
-  box-shadow: 0 2rem 7rem rgba(0, 0, 0, 0.58);
+  background: transparent;
+  box-shadow: none;
 }
-.startup-wordmark { color: var(--parchment); font-size: 7rem; line-height: 0.95; letter-spacing: 0.04em; text-indent: 0.04em; white-space: nowrap; }
-.startup-subtitle { margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; white-space: nowrap; }
+.startup-wordmark {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  color: var(--parchment);
+  font-size: clamp(3rem, 6vw, 7rem);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-indent: 0.02em;
+  white-space: nowrap;
+}
+.startup-subtitle { width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; text-align: center; text-indent: 0.16em; white-space: nowrap; }
 .startup-rule { position: relative; width: min(46rem, 86%); height: 1px; margin-top: 1.6rem; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .startup-rule span { position: absolute; left: 50%; top: 50%; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%) rotate(45deg); border: 1px solid var(--gold); background: var(--bg); }
 .startup-prompt { margin-top: 3.2rem; }
@@ -41754,7 +41768,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e729333e2e';
+const SOURCE = '74d3722a46';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41788,7 +41802,7 @@ const SOURCE = 'e729333e2e';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1446';
+const ORDINAL = '1448';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
