@@ -41,18 +41,18 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. |
 | `title-menu-gem` | semantic child | `title.mountTitle` | Title Menu Item | Decorative diamond separator shown beneath a menu label. |
 | `title-tagline` | title content record | `title.mountTitle` | Title screen | Replaceable centered closing line beneath the main menu. |
-| `title-menu-modal` | `saveSlotSelectionModel` + save-slot records | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal; selected card, accessibility state, and primary action target share one immutable projection, while `load-review` confirms a twice-activated save before loading. |
-| `title-modal-close-control` | modal action record + authored tap floor | `title.mountTitle` | Title Menu Modal | Tap-floor-sized close control that restores focus to the title menu. |
+| `title-menu-modal` | save-slot records + selected slot | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal with slot selection, Back, Continue, and delete affordance. |
+| `title-modal-close-control` | modal action record | `title.mountTitle` | Title Menu Modal | Named close control that restores focus to the title menu. |
 | `title-modal-heading` | modal-kind projection | `title.mountTitle` | Title Menu Modal | LOAD GAME or NEW GAME accessible dialog heading. |
 | `title-modal-divider` | semantic child | `title.mountTitle` | Title Menu Modal | Gold rule and diamond beneath the dialog heading. |
-| `title-save-slot-list` | `saveSlotSelectionModel` | `title.mountTitle` | Title Menu Modal | Immutable Load/New selection aggregate whose child records identify the selected slot and semantic select command. |
-| `title-save-slot` | `saveSlotSelectionModel` child + save summary + `balance.ui.titleLoadHold` | `title.mountTitle` | Load/New modal | Occupied, empty, selected, focused, disabled, and hoverable slot surface; New Game keeps focus and selected styling on the same empty slot, while occupied Load slots support one-tap selection, second-activation review, and pointer/touch hold-to-load. |
+| `title-save-slot-list` | save-slot records | `title.mountTitle` | Title Menu Modal | Vertical host for all available save-slot choices. |
+| `title-save-slot` | save summary + selection state | `title.mountTitle` | Load/New modal | Occupied, empty, selected, focused, disabled, and hoverable slot surface. |
 | `title-save-slot-copy` | save summary record | `title.mountTitle` | Title Save Slot | Slot number, class, act, floor, HP, and seed receipt, or Empty copy. |
 | `title-save-slot-state` | slot availability projection | `title.mountTitle` | Title Save Slot | READY or EMPTY trailing state label. |
-| `title-save-slot-delete` | slot id + hold-confirm behavior + authored tap floor | `title.mountTitle` | Occupied Title Save Slot | Tap-floor-sized destructive control with shared hold-confirm timing. |
-| `title-modal-actions` | `saveSlotSelectionModel` action projection + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue group; Continue remains enabled for and targets the selected slot, while the `load-review` variant becomes Back to Saves / Load Save. |
-| `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu, or from `load-review` to the Load Game slot list with selection preserved. |
-| `title-modal-continue-control` | `saveSlotSelectionModel` action child | `title.mountTitle` | Title Modal Actions | Carries the selected slot as its semantic load/create command payload; the review variant exposes a positive Load Save action. |
+| `title-save-slot-delete` | slot id + hold-confirm behavior | `title.mountTitle` | Occupied Title Save Slot | Named destructive control with shared hold-confirm timing. |
+| `title-modal-actions` | selected slot + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue action group. |
+| `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu without changing a slot. |
+| `title-modal-continue-control` | modal kind + selected slot | `title.mountTitle` | Title Modal Actions | Loads or starts the selected slot; disabled until the current modal has a valid choice. |
 | `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition with remembered Expanded and Razor Strip snap states. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
@@ -276,13 +276,8 @@ sync without duplicating persistence.
 | `menu-tab` | `menuTabModel` | `menuComponents.renderMenuOverlay` | One declared tab control. |
 | `menu-panel` | `menuPanelModel` | `menuComponents.updateMenuSelection` | Content host for the selected tab. |
 | `menu-footer` | `menuFooterModel` | `menuComponents.renderMenuOverlay` | Persistent run-action footer beneath Settings/Controls. |
-| `save-game-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn to the active slot and remain in the run. |
-| `save-quit-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn and return to the title screen. |
-| `confirmation-modal` | `ConfirmationService` state + semantic callbacks | `confirmationModal.openConfirmationModal` | Shared themed Load / Quit Without Saving review surface. Danger variants expose `alertdialog`, focus neutral Back first, trap focus, cancel without mutation, restore the launcher, preserve the covered menu on Escape, and retain a bounded top-layer input shield across committed navigation. Parchment eyebrow text preserves blood/ember on borders while clearing 4.5:1; real hit-tested behavior and computed contrast are covered from Map and Combat at 1200×730, 390×844, and 320×640. |
-| `confirmation-cancel-control` | confirmation cancel command | `confirmationModal.openConfirmationModal` | Stable neutral Back action; initial focus target for danger decisions, with launcher restoration and no state mutation. |
-| `confirmation-action` | confirmation commit command | `confirmationModal.openConfirmationModal` | Explicit danger action; parchment text clears 4.5:1 while the danger border retains blood/ember, and the destructive callback runs exactly once and never before activation. |
-| `controls-rebind-capture` | `rebind-capture-service` state | `controls.renderControls` | Controls keyboard/pad binding surface. An armed keyboard capture owns its keydown before the surrounding overlay. |
-| `controls-key-rebind-control` | action id + capture state | `controls.renderControls` | Stable keyboard rebind action. Press… is cancelled by Escape without mutation, then focus returns to this control; re-arming accepts a free key. |
+| `save-game-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save the active slot and remain in the run. |
+| `save-quit-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save and return to the title screen. |
 
 ```text
 quick-menu-panel
@@ -299,29 +294,7 @@ menu-overlay
 └─ menu-footer
    ├─ save-game-control
    └─ save-quit-control
-
-confirmation-modal
-├─ confirmation-cancel-control
-└─ confirmation-action
 ```
-
-Both lifecycle controls enter the same `commitCombatSnapshot` boundary. The
-focused rendered contract (`node tools/combat-save.mjs`) advances beyond combat
-entry, saves in place, uses Save and Quit, loads through the occupied-slot
-review action, and proves exact snapshot identity at 1200×730 and 390×844.
-Its `--selftest` corpus plants a restarted encounter, a missing commit, and a
-restore that drops the saved hand through copied real source doors.
-
-Load and Quit Without Saving use `confirmation-modal` rather than the browser's
-native prompt. `node tools/confirmation-modal.mjs` proves both commands from Map
-and Combat, cancellation/focus restoration, layered Escape, exact-once commit,
-real coordinate-based double activation without Title/enemy click-through,
-computed action/eyebrow contrast of at least 4.5:1, viewport fit, 44px actions,
-and captured console/network diagnostics at
-1200×730, 390×844, and 320×640. Its `--selftest` corpus plants bypass, unsafe
-initial focus, underlying-overlay Escape, cancel mutation, double commit, broken
-focus return, target/overflow regressions, premature input-shield removal, and
-low-contrast danger text.
 
 ## Armoury components
 

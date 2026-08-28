@@ -762,12 +762,9 @@ export function endActionPress(cancelled = false) {
 // ---- keyboard navigation ----------------------------------------------------
 
 // Controls tab: capture the next keypress to rebind a keyboard action.
-// The stable service id lets receipts and browser gates name this ownership
-// boundary without turning its private state into a second public API.
-export const REBIND_CAPTURE_SERVICE_ID = 'rebind-capture-service';
 let keyCapture = null;
-export function captureNextKey(onCommit, { onCancel = null } = {}) {
-  keyCapture = { onCommit, onCancel };
+export function captureNextKey(cb) {
+  keyCapture = cb;
 }
 export function cancelKeyCapture() {
   keyCapture = null;
@@ -779,18 +776,10 @@ function onKeydown(ev) {
     const k = ev.key;
     if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
     ev.preventDefault();
-    // This listener and the overlay Escape listener both live on window in the
-    // capture phase. stopPropagation() does not stop a later listener on the
-    // SAME target, so an armed Escape used to bind Escape and then close the
-    // Controls overlay. Capture owns the whole keydown until it settles.
-    ev.stopImmediatePropagation();
-    const capture = keyCapture;
+    ev.stopPropagation();
+    const cb = keyCapture;
     keyCapture = null;
-    if (k === 'Escape') {
-      capture.onCancel?.();
-      return;
-    }
-    capture.onCommit(k);
+    cb(k);
     return;
   }
   if (gateInput({ family: 'keyboard', kind: 'key', phase: 'down', key: ev.key, repeat: ev.repeat === true })) {

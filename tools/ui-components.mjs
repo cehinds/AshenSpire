@@ -33,8 +33,7 @@ const REQUIRED_IDS = Object.freeze([
   'health-damage-indicator',
   'quick-menu-panel', 'quick-menu-caption', 'quick-menu-row', 'menu-overlay',
   'menu-tab-strip', 'menu-tab', 'menu-panel', 'menu-footer', 'save-game-control',
-  'save-quit-control', 'controls-rebind-capture', 'controls-key-rebind-control',
-  'armoury-overlay', 'armoury-panel',
+  'save-quit-control', 'armoury-overlay', 'armoury-panel',
   'armoury-header', 'armoury-view-switcher', 'armoury-body', 'armoury-figure',
   'equipment-slot', 'equipment-set-cell', 'armoury-inventory', 'inventory-item-card',
   'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
@@ -75,7 +74,6 @@ export function receipt() {
     customize: read('src/ui/screens/customize.js'),
     rest: read('src/ui/screens/rest.js'),
     smithSelectionModel: read('src/ui/models/SmithSelectionModel.js'),
-    saveSlotSelectionModel: read('src/ui/models/SaveSlotSelectionModel.js'),
     smithUpgradeModal: read('src/ui/components/smithUpgradeModal.js'),
     catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
     catalogHtml: read('docs/component-catalog.html'),
@@ -97,8 +95,6 @@ export function receipt() {
     coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
-    controls: read('src/ui/screens/controls.js'),
-    input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
     uiCss: read('styles/ui.css'),
@@ -365,29 +361,6 @@ export function findings(r) {
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');
   }
-  if (!/export function saveSlotSelectionModel/.test(r.saveSlotSelectionModel)
-      || /\b(document|window)\b|innerHTML|createElement/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlotList/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
-      || !/command: 'select-save-slot'/.test(r.saveSlotSelectionModel)
-      || !/command: kind === 'new' \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
-      || !/import \{ saveSlotSelectionModel \}/.test(r.title)
-      || !/const selectionModel = \(kind = modal\) => saveSlotSelectionModel\(slots, \{ kind, selectedSlot \}\)/.test(r.title)
-      || !/const target = selectionModel\(\)\.properties\.actionSlot/.test(r.title)) {
-    bad.push('C20 title save slots no longer derive selected styling and the primary command target from one immutable model');
-  }
-  const controlsIds = ['controls-rebind-capture', 'controls-key-rebind-control'];
-  if (!/export const REBIND_CAPTURE_SERVICE_ID = 'rebind-capture-service'/.test(r.input)
-      || !/ev\.stopImmediatePropagation\(\);[\s\S]*if \(k === 'Escape'\)/.test(r.input)
-      || !/capture\.onCancel\?\.\(\)/.test(r.input)
-      || !/UI\.controlsRebindCapture/.test(r.controls)
-      || !/UI\.controlsKeyRebindControl/.test(r.controls)
-      || !/onCancel:[\s\S]*reset\(btn, 'Key'\)[\s\S]*btn\.focus/.test(r.controls)
-      || !controlsIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
-        && r.catalogHtml.includes(`['${id}'`))) {
-    bad.push('C21 Controls rebind capture lost its stable ids or armed-Escape ownership contract');
-  }
   return bad;
 }
 
@@ -413,13 +386,11 @@ function selftest() {
     ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
     ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
-    ['detach title from save-slot selection model', 'C20 ', (r) => ({ ...r, title: r.title.replace('import { saveSlotSelectionModel }', 'import { detachedSaveSlotSelectionModel }') })],
-    ['let armed Escape reach the overlay', 'C21 ', (r) => ({ ...r, input: r.input.replace('ev.stopImmediatePropagation();\n    const capture = keyCapture;', 'ev.stopPropagation();\n    const capture = keyCapture;') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 21/21 reusable component contracts hold');
+  else console.log('PASS clean source: 19/19 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -435,5 +406,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 21/21 reusable component contracts hold');
+  else console.log('ui-components: OK — 19/19 reusable component contracts hold');
 }

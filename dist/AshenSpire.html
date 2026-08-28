@@ -768,42 +768,6 @@ body.hide-hints .hint-bar { display: none; }
    `body.hide-hints` above is the player's own switch and is untouched. */
 :root[data-layout='narrow'] .hint-bar { display: none; }
 
-/* ---------- shared confirmation ---------- */
-.confirmation-veil {
-  z-index: 1200; box-sizing: border-box; padding: 2%;
-}
-.confirmation-veil.confirmation-input-shield {
-  padding: 0; background: transparent;
-}
-.confirmation-modal {
-  width: 36rem; max-width: 96%; max-height: 86%; padding: 1.6rem;
-  display: grid; gap: 1.2rem; overflow: auto;
-  box-shadow: 0 1.6rem 5rem rgba(0, 0, 0, 0.62);
-}
-.confirmation-modal header { display: grid; gap: 0.35rem; }
-.confirmation-modal h2 { margin: 0; color: var(--parchment); }
-.confirmation-eyebrow {
-  font-size: 0.85rem; letter-spacing: 0.16em;
-}
-.confirmation-eyebrow,
-.confirmation-modal .confirmation-confirm {
-  /* Blood/ember stays on the danger borders; prose uses the authored AA token. */
-  color: var(--parchment);
-}
-.confirmation-copy { color: var(--parchment); line-height: 1.5; }
-.confirmation-copy > :first-child { margin-top: 0; }
-.confirmation-copy > :last-child { margin-bottom: 0; }
-.confirmation-modal footer { display: flex; justify-content: flex-end; gap: 0.7rem; }
-.confirmation-modal footer button {
-  min-height: var(--tap-floor); height: auto; padding: 0.55rem 1rem;
-}
-.confirmation-modal.danger { border-color: var(--blood); }
-@media (max-width: 540px) {
-  .confirmation-veil { padding: 3%; }
-  .confirmation-modal { max-width: 100%; padding: 1.2rem; }
-  .confirmation-modal footer { display: grid; grid-template-columns: 1fr 1fr; }
-}
-
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -4662,12 +4626,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
 .title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
-.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
+.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
 .title-modal-close:hover, .title-modal-close:focus-visible { border-color: var(--gold); outline: 2px solid color-mix(in srgb, var(--gold) 42%, transparent); outline-offset: 2px; }
 .title-modal-rule { width: min(38.3rem, 74%); margin-top: 1.7rem; }
 .title-slot-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
 .title-slot-row { display: flex; align-items: stretch; gap: 0.8rem; }
-.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
+.title-slot-pick { display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
 .title-slot-pick:hover, .title-slot-pick:focus-visible, .title-slot-row.is-selected .title-slot-pick { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent); outline: none; }
 .title-slot-pick:disabled { cursor: default; opacity: 0.74; }
 .title-slot-copy { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
@@ -4678,18 +4642,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-slot-seed { font-family: monospace; }
 .title-slot-state { flex: 0 0 auto; color: var(--muted); font-size: 0.9rem; letter-spacing: 0.14em; }
 .title-slot-row.is-selected .title-slot-state { color: var(--gold); }
-.title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
-.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
+.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; }
 .title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
 .title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
 .title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
 .title-modal-continue { border-color: var(--gold); color: var(--gold); }
 .title-modal-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-.title-load-review { width: min(52rem, 94%); }
-.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); }
-.title-load-review-copy { margin: 1.2rem 0 0; color: var(--muted); font-size: 1.08rem; text-align: center; }
-.title-load-review-confirm { border-color: var(--green); color: var(--green); }
-.title-load-review-confirm:hover, .title-load-review-confirm:focus-visible { background: color-mix(in srgb, var(--green) 14%, transparent); border-color: var(--green); color: var(--green); }
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
@@ -4709,11 +4667,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .title-slot-tag, .title-slot-seed { font-size: calc(0.82rem / var(--ui-zoom, 1)); }
   .title-slot-meta { font-size: calc(1.1rem / var(--ui-zoom, 1)); }
   .title-slot-state { display: none; }
-  .title-slot-pick > .hold-hint { display: block; right: calc(1.2rem / var(--ui-zoom, 1)); bottom: calc(0.55rem / var(--ui-zoom, 1)); }
   .title-modal-actions { gap: calc(1rem / var(--ui-zoom, 1)); margin: calc(2rem / var(--ui-zoom, 1)) 0 0; }
   .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(1.2rem / var(--ui-zoom, 1)); }
-  .title-load-review-slot { margin-top: calc(1.8rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)); }
-  .title-load-review-copy { font-size: calc(1rem / var(--ui-zoom, 1)); }
 }
 
 /* Folded companion to the title hall: the first interaction reveals the
@@ -7457,9 +7412,9 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
 // treasure] → … → boss → game over. One rng is created from the seed and its
 // stream counters are saved with the run after every committed choice, so a
-// whole run is reproducible from its seed string. Explicit combat saves carry
-// an exact committed-turn snapshot; the node-entry receipt remains the
-// backward-compatible recovery path for older saves and interrupted sessions.
+// whole run is reproducible from its seed string and a reload restores
+// exactly (mid-combat: the combat restarts from its start — StS behavior,
+// because counters are saved BEFORE the combat begins).
 
 const { contentBundle } = require("src/content/index.js");
 const { validateContent } = require("src/model/validate.js");
@@ -7471,7 +7426,6 @@ const { recordArmamentDiscovery } = require("src/model/startingKits.js");
 const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
 const { createRng, seedToString, seedFromString, seedProblem } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
-const { commitCombatSnapshot, restoreCombatSnapshot } = require("src/engine/combatSnapshot.js");
 const { buildActMap } = require("src/engine/actmap.js");
 const { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } = require("src/engine/save.js");
 const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, rollArmamentDrop, applyGraceRefill } = require("src/engine/encounters.js");
@@ -7506,7 +7460,6 @@ const { mountEquipment, resetArmouryTraySession } = require("src/ui/screens/equi
 const { openOverlay, closeOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
-const { openConfirmationModal } = require("src/ui/components/confirmationModal.js");
 const { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } = require("src/ui/input.js");
 const { mountStartupGate } = require("src/ui/components/startupGate.js");
 const { startupGateModel } = require("src/ui/models/StartupGateModels.js");
@@ -8354,8 +8307,7 @@ function resumeRun(slot = 1) {
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
   if (run.combatEntered && run.combatEntered.encounterId) {
-    // Current saves resume the exact committed turn. Older saves that only
-    // carry the encounter receipt still use the deterministic restart path.
+    // Mid-combat save: restart that combat from its start (SPEC §3.12).
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
   } else if (run.shopStock) {
     showShop();
@@ -8364,38 +8316,18 @@ function resumeRun(slot = 1) {
   }
 }
 
-function loadActiveSlot({ returnFocusElement } = {}) {
-  openConfirmationModal({
-    title: `Load slot ${activeSlot}?`,
-    message: 'The saved run will replace changes made since your last save.',
-    confirmLabel: 'Load saved run',
-    consequence: 'DISCARDS UNSAVED CHANGES',
-    tone: 'danger',
-    returnFocusElement,
-    onConfirm: () => {
-      closeOverlay();
-      resumeRun(activeSlot);
-    },
-  });
-  return false;
+function loadActiveSlot() {
+  if (!window.confirm('Load the active slot? Unsaved progress in this session will be lost.')) return false;
+  resumeRun(activeSlot);
+  return true;
 }
 
-function quitWithoutSaving({ returnFocusElement } = {}) {
-  openConfirmationModal({
-    title: 'Quit without saving?',
-    message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
-    confirmLabel: 'Quit without saving',
-    consequence: 'LEAVES THE RUN',
-    tone: 'danger',
-    returnFocusElement,
-    onConfirm: () => {
-      closeOverlay();
-      audio.stopMusic();
-      run = null;
-      showTitle();
-    },
-  });
-  return false;
+function quitWithoutSaving() {
+  if (!window.confirm('Quit without saving? Changes since the last save will be lost.')) return false;
+  audio.stopMusic();
+  run = null;
+  showTitle();
+  return true;
 }
 
 // ---- screens --------------------------------------------------------------------
@@ -8948,15 +8880,12 @@ function startFight(pool, nodeId) {
 }
 
 function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
-  const savedSnapshot = resuming ? run.combatEntered?.snapshot : null;
-  run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
-  // The entry receipt is a deterministic recovery checkpoint. An explicit Save
-  // Game replaces it with an exact committed-turn snapshot below.
-  if (!resuming) persist();
+  run.combatEntered = { nodeId, encounterId };
+  if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot }) : createCombat({
+  const combat = createCombat({
     registries,
     rng,
     player: {
@@ -8995,9 +8924,6 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
-  // A restored combat owns the live loadout copy from its snapshot. Rejoin it
-  // to the run so later swaps and the post-combat receipt share one object.
-  if (savedSnapshot) run.loadout = combat.loadout;
   // `?shotHand=<n>` — STAND WITH A FULLER HAND.
   //
   // A REACH STATE, the same shape and reason as ?shotMaxHp beside it: the
@@ -9061,12 +8987,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
-      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       return activeSlot;
     },
     onQuit: () => {
-      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       showTitle();
     },
@@ -10632,14 +10556,6 @@ const balance = {
     holdConfirm: {
       def: 'off',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
-    },
-    // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
-    // not the irreversible-action safety dial above: a short activation still
-    // selects/reviews the save, while a stationary hold loads it directly.
-    // Keeping the duration here lets the interaction be tuned without changing
-    // the title screen's event wiring.
-    titleLoadHold: {
-      ms: 600,
     },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
@@ -21054,18 +20970,6 @@ function validateContent(bundle) {
       }
     }
   }
-  // balance.ui.titleLoadHold — the title slot's quick-load gesture. A malformed
-  // value would otherwise fall back inside the view and make the authored row
-  // decorative rather than authoritative, so fail by the row's own name.
-  if (b.balance && b.balance.ui && b.balance.ui.titleLoadHold != null) {
-    const lh = b.balance.ui.titleLoadHold;
-    if (typeof lh !== 'object' || Array.isArray(lh)) {
-      err('balance.ui.titleLoadHold', 'must be an object { ms }');
-    } else if (typeof lh.ms !== 'number' || !Number.isFinite(lh.ms) || lh.ms <= 0) {
-      err('balance.ui.titleLoadHold.ms', `must be a positive number of milliseconds — got ${JSON.stringify(lh.ms)}. `
-        + `The title quick-load gesture needs a real hold boundary distinct from an ordinary tap.`);
-    }
-  }
   // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
   // over. The beat is the only feedback a held control has once a thumb is on
   // top of the fill, and every way this row can be wrong is SILENT: a fraction
@@ -30450,7 +30354,6 @@ const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
 const { openLedger, closeLedger, note } = require("src/model/healLedger.js");
-const { combatSnapshotProblems } = require("src/model/combatSnapshot.js");
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -31015,14 +30918,6 @@ function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger
       }
     }
   }
-  if (run.combatEntered !== null && typeOk(run.combatEntered, 'object')) {
-    const entered = run.combatEntered;
-    if (typeof entered.nodeId !== 'string' || !entered.nodeId) problems.push('combatEntered.nodeId must be a non-empty string');
-    if (typeof entered.encounterId !== 'string' || !entered.encounterId) problems.push('combatEntered.encounterId must be a non-empty string');
-    if (entered.snapshot !== undefined) {
-      for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
-    }
-  }
   // A level count is a whole number of purchases and can never be negative. The
   // ALLOCATION check that reads it lives at the load door
   // (attributes.js:grantedAttributePoints); this is the shape check, and a
@@ -31331,146 +31226,6 @@ function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExpo
 
 
 Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, initializeRunFlaskCharges, migrateRunSchema, deserializeRun, createPlayerCombatEntity, stampPlayerPoiseMax, createEnemyCombatEntity });
-
-},
-"src/model/combatSnapshot.js": function (module, exports, require) {
-// src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
-//
-// The snapshot is persisted inside run.combatEntered.snapshot. This module
-// owns what that data means and how it is validated; engine/combat.js owns the
-// runtime methods detached for storage and reattached after loading.
-
-const COMBAT_SNAPSHOT_VERSION = 1;
-
-const PHASES = Object.freeze(['player', 'enemy', 'ended']);
-const RESULTS = Object.freeze([null, 'victory', 'defeat']);
-const SNAPSHOT_PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
-
-function record(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function finite(value) {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
-function nonEmptyString(value) {
-  return typeof value === 'string' && value.length > 0;
-}
-
-function entityProblems(entity, path, { player = false } = {}) {
-  const problems = [];
-  if (!record(entity)) return [`${path} must be an object`];
-  if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
-  if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
-  const defKey = player ? 'classId' : 'enemyId';
-  if (!nonEmptyString(entity[defKey])) problems.push(`${path}.${defKey} must be a non-empty string`);
-  for (const key of ['hp', 'maxHp', 'block']) {
-    if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
-  }
-  if (finite(entity.maxHp) && entity.maxHp <= 0) problems.push(`${path}.maxHp must be positive`);
-  if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
-    problems.push(`${path}.hp must be between 0 and maxHp`);
-  }
-  if (!record(entity.statuses)) problems.push(`${path}.statuses must be an object`);
-  if (typeof entity.alive !== 'boolean') problems.push(`${path}.alive must be boolean`);
-  return problems;
-}
-
-function cardProblems(card, path) {
-  if (!record(card)) return [`${path} must be an object`];
-  const problems = [];
-  if (!nonEmptyString(card.instanceId)) problems.push(`${path}.instanceId must be a non-empty string`);
-  if (!nonEmptyString(card.cardId)) problems.push(`${path}.cardId must be a non-empty string`);
-  if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
-  return problems;
-}
-
-/** Return field-addressed problems; an empty array means the stored shape is sound. */
-function combatSnapshotProblems(snapshot) {
-  if (!record(snapshot)) return ['snapshot must be an object'];
-  const problems = [];
-  if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
-  if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
-  if (!PHASES.includes(snapshot.phase)) problems.push(`phase must be one of ${PHASES.join(', ')}`);
-  if (!RESULTS.includes(snapshot.result)) problems.push("result must be null, 'victory', or 'defeat'");
-  if ((snapshot.phase === 'ended') !== (snapshot.result !== null)) problems.push('phase/result must describe the same ended state');
-  for (const key of ['handMax', 'drawPerTurn', 'swapsLeft', 'idCounter']) {
-    if (!Number.isInteger(snapshot[key]) || snapshot[key] < 0) problems.push(`${key} must be a non-negative integer`);
-  }
-  if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
-  if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
-  if (!record(snapshot.equipmentPoolDeficits)) problems.push('equipmentPoolDeficits must be an object');
-  if (snapshot.loadout !== null && !record(snapshot.loadout)) problems.push('loadout must be an object or null');
-  if (snapshot.attributes !== null && !record(snapshot.attributes)) problems.push('attributes must be an object or null');
-  if (!record(snapshot.swapCostRule)) problems.push('swapCostRule must be an object');
-  if (!Array.isArray(snapshot.eventLog)) problems.push('eventLog must be an array');
-  if (!Array.isArray(snapshot.triggerState)
-      || snapshot.triggerState.some((entry) => !Array.isArray(entry) || entry.length !== 2 || !nonEmptyString(entry[0]))) {
-    problems.push('triggerState must be an array of [key, value] entries');
-  }
-
-  problems.push(...entityProblems(snapshot.player, 'player', { player: true }));
-  if (!Array.isArray(snapshot.enemies)) problems.push('enemies must be an array');
-  else snapshot.enemies.forEach((enemy, index) => problems.push(...entityProblems(enemy, `enemies[${index}]`)));
-
-  if (!record(snapshot.piles)) problems.push('piles must be an object');
-  else {
-    const seen = new Set();
-    for (const pile of SNAPSHOT_PILES) {
-      const cards = snapshot.piles[pile];
-      if (!Array.isArray(cards)) {
-        problems.push(`piles.${pile} must be an array`);
-        continue;
-      }
-      cards.forEach((card, index) => {
-        problems.push(...cardProblems(card, `piles.${pile}[${index}]`));
-        if (record(card) && nonEmptyString(card.instanceId)) {
-          if (seen.has(card.instanceId)) problems.push(`card instance '${card.instanceId}' appears in more than one pile position`);
-          seen.add(card.instanceId);
-        }
-      });
-    }
-  }
-  return problems;
-}
-
-/** Throw with a stable field-addressed reason, then return the original value. */
-function assertCombatSnapshot(snapshot) {
-  const problems = combatSnapshotProblems(snapshot);
-  if (problems.length) throw new Error(`Malformed combat snapshot: ${problems.join('; ')}`);
-  return snapshot;
-}
-
-/** Validate content references after registries exist at the run load door. */
-function combatSnapshotReferenceProblems(snapshot, registries) {
-  if (snapshot == null) return [];
-  const problems = [];
-  const has = (registry, id, path) => {
-    if (nonEmptyString(id) && !registry.has(id)) problems.push(`${path} '${id}' is unknown`);
-  };
-  has(registries.classes, snapshot.player?.classId, 'player.classId');
-  for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
-  for (const flask of snapshot.player?.flasks || []) has(registries.flasks, flask?.flaskId, 'player.flasks.flaskId');
-  if (snapshot.player?.stanceId != null) has(registries.stances, snapshot.player.stanceId, 'player.stanceId');
-  for (const id of Object.keys(snapshot.player?.statuses || {})) has(registries.statuses, id, 'player.statuses');
-  for (let index = 0; index < (snapshot.enemies || []).length; index++) {
-    const enemy = snapshot.enemies[index];
-    has(registries.enemies, enemy?.enemyId, `enemies[${index}].enemyId`);
-    for (const id of Object.keys(enemy?.statuses || {})) has(registries.statuses, id, `enemies[${index}].statuses`);
-  }
-  for (const pile of SNAPSHOT_PILES) {
-    for (const card of snapshot.piles?.[pile] || []) has(registries.cards, card?.cardId, `piles.${pile}.cardId`);
-  }
-  return problems;
-}
-
-const COMBAT_SNAPSHOT_PHASES = PHASES;
-const COMBAT_SNAPSHOT_RESULTS = RESULTS;
-const COMBAT_SNAPSHOT_PILES = SNAPSHOT_PILES;
-
-
-Object.assign(module.exports, { COMBAT_SNAPSHOT_VERSION, combatSnapshotProblems, assertCombatSnapshot, combatSnapshotReferenceProblems, COMBAT_SNAPSHOT_PHASES, COMBAT_SNAPSHOT_RESULTS, COMBAT_SNAPSHOT_PILES });
 
 },
 "src/model/unlocks.js": function (module, exports, require) {
@@ -34496,109 +34251,6 @@ function statProjection(registries, run) {
 Object.assign(module.exports, { playerPoiseThresholdReceipt, statProjection });
 
 },
-"src/engine/combatSnapshot.js": function (module, exports, require) {
-// src/engine/combatSnapshot.js — CombatSnapshotService.
-//
-// A save is a committed combat state, not a replay instruction. Registries,
-// RNG, queues, buffers, and runtime methods stay outside persisted data; this
-// service validates the versioned model and reconnects those dependencies.
-
-const { emitEvent } = require("src/engine/triggers.js");
-const { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } = require("src/model/combatSnapshot.js");
-
-/** Return the JSON-safe state of one fully committed combat turn. */
-function serializeCombatSnapshot(combat) {
-  if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
-  if (combat._buffer !== null || (combat.queue && combat.queue.length)) {
-    throw new Error('Combat is still resolving; wait for the action to finish before saving');
-  }
-  const snapshot = structuredClone({
-    version: COMBAT_SNAPSHOT_VERSION,
-    equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
-    equipmentPoolDeficits: combat.equipmentPoolDeficits,
-    equipmentChanged: !!combat.equipmentChanged,
-    turn: combat.turn,
-    phase: combat.phase,
-    result: combat.result,
-    handMax: combat.handMax,
-    drawPerTurn: combat.drawPerTurn,
-    player: combat.player,
-    enemies: combat.enemies,
-    loadout: combat.loadout,
-    attributes: combat.attributes,
-    swapCostRule: combat.swapCostRule,
-    swapsLeft: combat.swapsLeft,
-    piles: combat.piles,
-    eventLog: combat.eventLog,
-    triggerState: [...combat.triggerState.entries()],
-    idCounter: combat._idCounter,
-    emitDepth: combat._emitDepth,
-  });
-  assertCombatSnapshot(snapshot);
-  return snapshot;
-}
-
-/** Restore a snapshot without replaying combat start, draws, or enemy rolls. */
-function restoreCombatSnapshot({ registries, rng, snapshot }) {
-  assertCombatSnapshot(snapshot);
-  const saved = structuredClone(snapshot);
-  const combat = {
-    registries,
-    rng,
-    equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
-    equipmentPoolDeficits: saved.equipmentPoolDeficits,
-    equipmentChanged: saved.equipmentChanged,
-    turn: saved.turn,
-    phase: saved.phase,
-    result: saved.result,
-    handMax: saved.handMax,
-    drawPerTurn: saved.drawPerTurn,
-    player: saved.player,
-    enemies: saved.enemies,
-    loadout: saved.loadout,
-    attributes: saved.attributes,
-    swapCostRule: saved.swapCostRule,
-    swapsLeft: saved.swapsLeft,
-    piles: saved.piles,
-    queue: [],
-    eventLog: saved.eventLog,
-    _buffer: null,
-    triggerState: new Map(saved.triggerState),
-    _idCounter: saved.idCounter,
-    _emitDepth: saved.emitDepth,
-  };
-  combat.emit = (type, payload) => emitEvent(combat, type, payload);
-  combat.enqueue = (action) => combat.queue.push(action);
-  combat.nextInstanceId = () => `gen${++combat._idCounter}`;
-  return combat;
-}
-
-/**
- * Commit the one exact-snapshot record the run and slot summary both project.
- * Storage and RNG stamping remain createSaveManager responsibilities.
- */
-function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
-  if (!run || typeof run !== 'object') throw new Error('Cannot save combat without a run');
-  if (typeof nodeId !== 'string' || !nodeId) throw new Error('Combat save requires nodeId');
-  if (typeof encounterId !== 'string' || !encounterId) throw new Error('Combat save requires encounterId');
-  const snapshot = serializeCombatSnapshot(combat);
-  run.loadout = structuredClone(combat.loadout);
-  run.flasks = structuredClone(combat.player.flasks);
-  run.flaskCharges = structuredClone(combat.player.flaskCharges);
-  run.equipmentPoolDeficits = structuredClone(combat.equipmentPoolDeficits);
-  for (const field of ['hp', 'mana', 'stamina']) {
-    run[field] = combat.player[field];
-    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
-    run[maxField] = combat.player[maxField];
-  }
-  run.combatEntered = { nodeId, encounterId, snapshot };
-  return snapshot;
-}
-
-
-Object.assign(module.exports, { serializeCombatSnapshot, restoreCombatSnapshot, commitCombatSnapshot });
-
-},
 "src/engine/actmap.js": function (module, exports, require) {
 // src/engine/actmap.js — the ONE act-boot path: generate the act's map, then
 // pre-roll every unknown (?) node (EldenSpire#54).
@@ -35278,7 +34930,6 @@ const { createLoadout, normalizeArmamentLocations, stampDeck } = require("src/mo
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
 const { openLedger, closeLedger, note, readLedger } = require("src/model/healLedger.js");
-const { combatSnapshotReferenceProblems } = require("src/model/combatSnapshot.js");
 
 const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -35628,10 +35279,6 @@ function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
-        const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
-        if (snapshotReferenceProblems.length) {
-          throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
-        }
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -36053,13 +35700,11 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 // records handed in by main.js. The same modal shell serves LOAD and NEW so the
 // art and spacing can evolve without duplicating the screen structure.
 
-const { attachTooltip, esc, hideTooltip } = require("src/ui/components/tooltip.js");
-const { armHold, beatArmer } = require("src/ui/components/holdconfirm.js");
+const { esc } = require("src/ui/components/tooltip.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
-const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
-const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { focusElement } = require("src/ui/input.js");
 
 function focusTitleDefault(app, { showCursor = true } = {}) {
@@ -36077,6 +35722,10 @@ function slotCopy({ slot, summary }) {
     <span class="title-slot-name">${esc(summary.className)}</span>
     <span class="title-slot-meta">Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP</span>
     <span class="title-slot-seed">SEED ${esc(summary.seedString)}</span>`;
+}
+
+function firstSlot(slots, predicate) {
+  return slots.find(({ summary }) => predicate(summary))?.slot ?? null;
 }
 
 function mountTitle(app, {
@@ -36098,27 +35747,18 @@ function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
-  let activatedLoadSlot = null;
-  let loadReviewSlot = null;
 
-  const selectionModel = (kind = modal) => saveSlotSelectionModel(slots, { kind, selectedSlot });
-
-  const modalSlotHtml = (model) => model.children
-    .filter((child) => child.component === UI.titleSaveSlot)
-    .map(({ properties }) => {
-      const { slot, selectable, selected } = properties;
-      const summary = slots.find((record) => record.slot === slot)?.summary || null;
-      const loadHint = model.properties.kind === 'load' && summary
-        ? ` title="Select slot ${slot}. Hold to load now; activate the selected slot again to review." aria-label="Slot ${slot}, ${esc(summary.className)}. Hold to load now; activate twice to review."`
-        : '';
-      return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}" data-component="title-save-slot">
-        <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${loadHint}${selectable ? '' : ' disabled'}>
-          <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy({ slot, summary })}</span>
-          <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
-        </button>
-        ${summary && onDelete ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>` : ''}
-      </div>`;
-    }).join('');
+  const modalSlotHtml = (kind) => slots.map(({ slot, summary }) => {
+    const selectable = kind === 'new' || !!summary;
+    const selected = selectedSlot === slot;
+    return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}" data-component="title-save-slot">
+      <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${selectable ? '' : ' disabled'}>
+        <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy({ slot, summary })}</span>
+        <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
+      </button>
+      ${summary && onDelete ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>` : ''}
+    </div>`;
+  }).join('');
 
   const menuHtml = () => {
     const continueSlot = occupied[0]?.slot ?? null;
@@ -36147,36 +35787,17 @@ function mountTitle(app, {
 
   const modalHtml = () => {
     if (!modal) return '';
-    if (modal === 'load' && loadReviewSlot != null) {
-      const record = slots.find(({ slot }) => slot === loadReviewSlot);
-      if (!record?.summary) loadReviewSlot = null;
-      else return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
-        <section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
-          <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
-          <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
-          <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
-            <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy(record)}</span>
-          </article>
-          <p class="title-load-review-copy">Load this saved climb now?</p>
-          <div class="title-modal-actions" data-component="title-modal-actions">
-            <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
-            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
-          </div>
-        </section>
-      </div>`;
-    }
-    const model = selectionModel();
     const title = modal === 'load' ? 'LOAD GAME' : 'NEW GAME';
+    const canContinue = selectedSlot != null && (modal === 'new' || !!slots.find(({ slot }) => slot === selectedSlot)?.summary);
     return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
       <section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
         <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
         <h2 id="title-modal-heading" data-component="title-modal-heading">${title}</h2>
         <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
-        <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${modalSlotHtml(model)}</div>
+        <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${modalSlotHtml(modal)}</div>
         <div class="title-modal-actions" data-component="title-modal-actions">
           <button class="title-modal-back" data-component="title-modal-back-control" type="button" data-title-action="back">BACK</button>
-          <button class="title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue" data-action-slot="${model.properties.actionSlot ?? ''}"${model.properties.canContinue ? '' : ' disabled'}>CONTINUE</button>
+          <button class="title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue"${canContinue ? '' : ' disabled'}>CONTINUE</button>
         </div>
       </section>
     </div>`;
@@ -36192,65 +35813,16 @@ function mountTitle(app, {
 
   const openModal = (kind) => {
     modal = kind;
-    selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
-    activatedLoadSlot = null;
-    loadReviewSlot = null;
+    selectedSlot = kind === 'new' ? firstSlot(slots, (summary) => !summary) ?? slots[0]?.slot ?? null : firstSlot(slots, (summary) => !!summary);
     render();
-    focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
+    focusModal();
   };
 
   const closeModal = () => {
     modal = null;
     selectedSlot = null;
-    activatedLoadSlot = null;
-    loadReviewSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
-  };
-
-  const closeLoadReview = () => {
-    const slot = loadReviewSlot;
-    loadReviewSlot = null;
-    render();
-    focusModal(`[data-slot-pick="${slot}"]`);
-  };
-
-  const activateSlot = (slot) => {
-    hideTooltip();
-    if (modal === 'load') {
-      if (selectedSlot === slot && activatedLoadSlot === slot) {
-        loadReviewSlot = slot;
-        render();
-        focusModal('[data-title-action="review-load"]');
-        return;
-      }
-      selectedSlot = slot;
-      activatedLoadSlot = slot;
-    } else {
-      selectedSlot = slot;
-    }
-    render();
-    focusModal(`[data-slot-pick="${selectedSlot}"]`);
-  };
-
-  const wireLoadSlots = (root) => {
-    if (modal !== 'load') return;
-    const configured = Number(registries.balance.ui.titleLoadHold?.ms);
-    const duration = Number.isFinite(configured) && configured > 0 ? configured : 600;
-    root.querySelectorAll('.title-slot-pick.is-filled').forEach((button) => {
-      const slot = +button.dataset.slotPick;
-      const record = slots.find((candidate) => candidate.slot === slot);
-      attachTooltip(button, () => `<div class="tt-title">Slot ${slot} · ${esc(record?.summary?.className || 'Saved climb')}</div>`
-        + 'Tap once to select. Tap the selected slot again to review. Hold to load now.');
-      armHold(button, {
-        ms: duration,
-        id: 'loadSave',
-        pointerOnly: true,
-        hintHost: button,
-        onTap: () => activateSlot(slot),
-        onConfirm: () => { hideTooltip(); onContinue(slot); },
-      });
-    });
   };
 
   const wireDelete = (root) => {
@@ -36283,8 +35855,7 @@ function mountTitle(app, {
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
-        if (loadReviewSlot != null) closeLoadReview();
-        else closeModal();
+        closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
         const first = controls[0];
@@ -36307,13 +35878,10 @@ function mountTitle(app, {
         else if (action === 'settings') onSettings();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
-        else if (action === 'review-back') closeLoadReview();
-        else if (action === 'review-load') onContinue(loadReviewSlot);
         else if (action === 'modal-continue') {
-          const target = selectionModel().properties.actionSlot;
-          if (target == null) return;
-          if (modal === 'load') onContinue(target);
-          else onNew(target);
+          if (selectedSlot == null) return;
+          if (modal === 'load') onContinue(selectedSlot);
+          else onNew(selectedSlot);
         }
       });
     });
@@ -36321,12 +35889,12 @@ function mountTitle(app, {
       if (event.target === event.currentTarget) closeModal();
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
-      if (modal === 'load' && button.classList.contains('is-filled')) return;
       button.addEventListener('click', () => {
-        activateSlot(+button.dataset.slotPick);
+        selectedSlot = +button.dataset.slot;
+        render();
+        focusModal(`[data-slot-pick="${selectedSlot}"]`);
       });
     });
-    wireLoadSlots(root);
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
@@ -37775,11 +37343,6 @@ const UI_COMPONENTS = Object.freeze({
   menuFooter: 'menu-footer',
   saveGameControl: 'save-game-control',
   saveQuitControl: 'save-quit-control',
-  confirmationModal: 'confirmation-modal',
-  confirmationCancel: 'confirmation-cancel-control',
-  confirmationAction: 'confirmation-action',
-  controlsRebindCapture: 'controls-rebind-capture',
-  controlsKeyRebindControl: 'controls-key-rebind-control',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',
   inventoryBelt: 'inventory-belt',
@@ -38200,7 +37763,7 @@ function beatCue(phase, id, form) {
  */
 function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
-  feedbackHosts = null, pointerOnly = false,
+  feedbackHosts = null,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -38310,12 +37873,6 @@ function armHold(btn, {
     // the `click` a lifted finger may generate can be swallowed after either a
     // real hold or an off-mode release commit. A key or pad generates NO click
     // here — input.js owns its activation — so it must never set this flag.
-    // Some holds are a pointer/touch shortcut rather than a safety beat. They
-    // must not turn keyboard or controller activation into a timed gesture:
-    // declining those sources here lets the ordinary focused-control click
-    // keep its authored meaning. Safety beats leave pointerOnly false and
-    // retain the three-input parity described at the top of this file.
-    if (pointerOnly && origin.source !== 'pointer') return false;
     if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
     committedThisPress = false;
@@ -38425,16 +37982,8 @@ function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
-    if (ev.detail === 0) {
-      if (pointerOnly && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
-    if (!heldThisPress) {
-      if (pointerOnly && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
+    if (ev.detail === 0) { onConfirm(ev); return; }
+    if (!heldThisPress) { onConfirm(ev); return; }
     const tapped = !committedThisPress;
     heldThisPress = false;
     committedThisPress = false;
@@ -38458,7 +38007,7 @@ function armHold(btn, {
   btn.addEventListener('click', onClick);
   btn.addEventListener('carddragstart', onCardDragStart);
   btn.addEventListener('contextmenu', onContextMenu);
-  if (!pointerOnly) addEventListener('keydown', onKeyEsc);
+  addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
     stop('idle');
@@ -38470,7 +38019,7 @@ function armHold(btn, {
     btn.removeEventListener('click', onClick);
     btn.removeEventListener('carddragstart', onCardDragStart);
     btn.removeEventListener('contextmenu', onContextMenu);
-    if (!pointerOnly) removeEventListener('keydown', onKeyEsc);
+    removeEventListener('keydown', onKeyEsc);
   };
   // Re-read the dial and the action's state. Cheap, idempotent, and the only
   // way a control whose own screen rewrites its innerHTML keeps its dressing.
@@ -39925,12 +39474,9 @@ function endActionPress(cancelled = false) {
 // ---- keyboard navigation ----------------------------------------------------
 
 // Controls tab: capture the next keypress to rebind a keyboard action.
-// The stable service id lets receipts and browser gates name this ownership
-// boundary without turning its private state into a second public API.
-const REBIND_CAPTURE_SERVICE_ID = 'rebind-capture-service';
 let keyCapture = null;
-function captureNextKey(onCommit, { onCancel = null } = {}) {
-  keyCapture = { onCommit, onCancel };
+function captureNextKey(cb) {
+  keyCapture = cb;
 }
 function cancelKeyCapture() {
   keyCapture = null;
@@ -39942,18 +39488,10 @@ function onKeydown(ev) {
     const k = ev.key;
     if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
     ev.preventDefault();
-    // This listener and the overlay Escape listener both live on window in the
-    // capture phase. stopPropagation() does not stop a later listener on the
-    // SAME target, so an armed Escape used to bind Escape and then close the
-    // Controls overlay. Capture owns the whole keydown until it settles.
-    ev.stopImmediatePropagation();
-    const capture = keyCapture;
+    ev.stopPropagation();
+    const cb = keyCapture;
     keyCapture = null;
-    if (k === 'Escape') {
-      capture.onCancel?.();
-      return;
-    }
-    capture.onCommit(k);
+    cb(k);
     return;
   }
   if (gateInput({ family: 'keyboard', kind: 'key', phase: 'down', key: ev.key, repeat: ev.repeat === true })) {
@@ -40259,7 +39797,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setInputGate, setActionControl, releaseActionControl, beginActionPress, endActionPress, REBIND_CAPTURE_SERVICE_ID, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setInputGate, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -40555,10 +40093,9 @@ const QUICK_MENU_ROWS = [
     tip: 'Open the compact character and vitality view.' },
   { act: 'load', icon: '↥', label: 'Load', band: 'run', tone: 'danger',
     tip: 'Replace unsaved progress with the active slot after confirmation.' },
-  { act: 'save', icon: '💾', label: 'Save', band: 'run',
-    tip: 'Write the exact committed combat turn to this slot and stay here.' },
+  { act: 'save', icon: '💾', label: 'Save', band: 'run', tip: 'Write the climb to its slot and stay here.' },
   { act: 'saveQuit', icon: '↯', label: 'Save and Quit', band: 'run',
-    tip: 'Write the exact committed combat turn, then return to the title.' },
+    tip: 'Save the active climb, then return to the title.' },
   { act: 'quit', icon: '⏻', label: 'Quit Without Saving', band: 'run', tone: 'danger',
     tip: 'Discard changes since the last save and return to the title after confirmation.' },
 ];
@@ -41102,7 +40639,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f3aedc1ad1';
+const SOURCE = '20424f3657';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41136,7 +40673,7 @@ const SOURCE = 'f3aedc1ad1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1378';
+const ORDINAL = '1362';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -43344,16 +42881,6 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 
 const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-350",
-    "date": "2026-08-26",
-    "group": "2026-08-26",
-    "summary": "Smith now lets you choose, review, and confirm one permanent card upgrade",
-    "detail": "Back and Escape return to the Shrine without changing the deck; Confirm upgrades exactly the selected card and clearly says that it leaves the Shrine. The same delivery also makes attribute explanations span their allocator rows, gives folded Shrine choices one footprint, gives Armoury trays useful session-scoped opening sizes and snap stops, adds touch-readable combatant inspection with center-seeking tooltips, and codifies the repeatable gameplay QA process and component-catalog receipts.",
-    "build": "0.4.0.1362",
-    "pullRequest": 350,
-    "url": "https://github.com/cehinds/AshenSpire/pull/350"
-  },
-  {
     "id": "pr-347",
     "date": "2026-08-25",
     "group": "2026-08-25",
@@ -45075,85 +44602,6 @@ function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {})
 
 
 Object.assign(module.exports, { musicQuickSettingsPlan, hudQuickSettingsModel });
-
-},
-"src/ui/models/SaveSlotSelectionModel.js": function (module, exports, require) {
-// DOM-free selection authority shared by the title Load and New Game doors.
-// The selected card, primary-action availability, and command target are one
-// immutable projection so the screen cannot render three different answers.
-const { behaviorModel } = require("src/ui/models/BehaviorModel.js");
-const { componentModel } = require("src/ui/models/ComponentModel.js");
-const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
-
-const VALID_KINDS = Object.freeze(['load', 'new']);
-
-function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}) {
-  if (!VALID_KINDS.includes(kind)) throw new Error(`Unknown save-slot selection kind: ${kind}`);
-
-  const records = (Array.isArray(slots) ? slots : []).map(({ slot, summary }) => ({
-    slot: Number(slot),
-    hasSave: Boolean(summary),
-    selectable: kind === 'new' || Boolean(summary),
-  }));
-  const requestedSlot = Number(selectedSlot);
-  const requested = records.find((record) => record.slot === requestedSlot && record.selectable) || null;
-  const preferred = records.find((record) => record.selectable && (kind !== 'new' || !record.hasSave))
-    || records.find((record) => record.selectable)
-    || null;
-  // An absent selection chooses the authored default. An explicit invalid
-  // selection fails closed instead of silently targeting a different slot.
-  const selected = selectedSlot == null ? preferred : requested;
-
-  const slotModels = records.map((record) => componentModel(UI.titleSaveSlot, {
-    variant: record.hasSave ? 'occupied' : 'empty',
-    properties: {
-      slot: record.slot,
-      hasSave: record.hasSave,
-      selectable: record.selectable,
-      selected: record.slot === selected?.slot,
-    },
-    accessibility: {
-      role: 'button',
-      pressed: record.slot === selected?.slot,
-      disabled: !record.selectable,
-    },
-    behaviors: record.selectable ? [behaviorModel(`select-save-slot-${record.slot}`, {
-      event: 'activate',
-      command: 'select-save-slot',
-      payload: { slot: record.slot },
-    })] : [],
-  }));
-  const actionSlot = selected?.slot ?? null;
-  const actionModel = componentModel(UI.titleModalContinueControl, {
-    variant: kind,
-    properties: {
-      enabled: actionSlot != null,
-      slot: actionSlot,
-      label: 'CONTINUE',
-    },
-    accessibility: { role: 'button', disabled: actionSlot == null },
-    behaviors: actionSlot == null ? [] : [behaviorModel(`${kind}-selected-save-slot`, {
-      event: 'activate',
-      command: kind === 'new' ? 'create-in-save-slot' : 'load-save-slot',
-      payload: { slot: actionSlot },
-    })],
-  });
-
-  return componentModel(UI.titleSaveSlotList, {
-    variant: kind,
-    properties: {
-      kind,
-      selectedSlot: actionSlot,
-      actionSlot,
-      canContinue: actionSlot != null,
-    },
-    accessibility: { role: 'group', label: kind === 'new' ? 'New Game save slots' : 'Load Game save slots' },
-    children: [...slotModels, actionModel],
-  });
-}
-
-
-Object.assign(module.exports, { saveSlotSelectionModel });
 
 },
 "src/ui/screens/profileNotice.js": function (module, exports, require) {
@@ -52492,10 +51940,10 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
         actions: {
           tab: (id) => onMenu(id),
           ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
         },
       });
     });
@@ -56769,10 +56217,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           tab: (id) => onMenu(id),
           inventory: () => openCombatArmoury('rack'),
           character: () => openCombatArmoury('grid'),
-          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
         },
       });
     });
@@ -60361,7 +59809,6 @@ const { menuTabs } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
 const { statProjection } = require("src/model/statProjection.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
-const { topVeil } = require("src/ui/components/veil.js");
 const { menuOverlayModel } = require("src/ui/models/MenuModels.js");
 const { renderMenuOverlay, updateMenuSelection } = require("src/ui/components/menuComponents.js");
 
@@ -60575,10 +60022,10 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
       actions: {
         tab: (id) => selectTab(id),
         ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-        ...(onLoad ? { load: () => { const loaded = onLoad({ returnFocusElement: anchor }); if (loaded) closeOverlay(); return loaded; } } : {}),
+        ...(onLoad ? { load: () => { const loaded = onLoad(); if (loaded) closeOverlay(); return loaded; } } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
         ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
-        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave({ returnFocusElement: anchor }); if (quit) closeOverlay(); return quit; } } : {}),
+        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave(); if (quit) closeOverlay(); return quit; } } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');
@@ -60629,9 +60076,6 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
     if (ev.key === 'Escape') {
-      // A confirmation opened above this overlay owns Escape. Without this
-      // paint-order guard one press cancels the confirmation and the menu below.
-      if (topVeil() !== openVeil) return;
       // Esc peels ONE layer. With the mirrored list open over the overlay, the
       // list is the layer the player is looking at; closing both would take away
       // a screen they never asked to leave.
@@ -60677,7 +60121,6 @@ const { ACTIONS, getBindings, getKeyBindings, keyLabel, captureNextButton, cance
 
 
 const { padName } = require("src/ui/uiContent.js");
-const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 // Standard-mapping button labels (navigator gamepad "standard" layout).
 // Button names come from the shared PAD_BUTTONS table (uiContent.js) — this
@@ -60700,7 +60143,7 @@ function renderControls(container, { settings, onChange }) {
     <div class="rebind-list"></div>
     <p class="set-note" style="margin-top:10px">Click a <b>Rebind</b>, then press a key or controller button. Arrow keys / D-pad always navigate.</p>`;
 
-  const list = markUiComponent(container.querySelector('.rebind-list'), UI.controlsRebindCapture);
+  const list = container.querySelector('.rebind-list');
   const bindings = getBindings();
   const keyBindings = getKeyBindings();
 
@@ -60721,8 +60164,6 @@ function renderControls(container, { settings, onChange }) {
         <button class="subtle rebind-btn rebind-pad" data-action="${a.id}">Pad</button>
       </div>`;
     list.appendChild(row);
-    const keyControl = row.querySelector('.rebind-key');
-    if (keyControl) markUiComponent(keyControl, UI.controlsKeyRebindControl, a.id);
   }
 
   let capturing = null; // the armed <button>, or null
@@ -60783,12 +60224,7 @@ function renderControls(container, { settings, onChange }) {
         if (badge) badge.textContent = keyLabel(id);
         reset(btn, 'Key');
         capturing = null;
-        btn.focus({ preventScroll: true });
-      }, { onCancel: () => {
-        reset(btn, 'Key');
-        btn.focus({ preventScroll: true });
-        capturing = null;
-      } });
+      });
     });
   });
 }
@@ -60844,189 +60280,6 @@ function showBossIntro({ name, act }, { hold = false } = {}) {
 
 
 Object.assign(module.exports, { showBossIntro });
-
-},
-"src/ui/components/confirmationModal.js": function (module, exports, require) {
-// Shared themed confirmation surface for reversible, potentially destructive
-// choices. The action is not committed until the primary button is pressed.
-
-const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
-
-let activeClose = null;
-const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
-const CONFIRMATION_INPUT_SHIELD_MS = 600;
-
-function holdNavigationInputShield({ veil, durationMs }) {
-  veil.className += ' confirmation-input-shield';
-  veil.setAttribute('aria-hidden', 'true');
-
-  let timer = null;
-  let released = false;
-  const shieldEvents = ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend'];
-  const keyEvents = ['keydown', 'keyup'];
-  const release = () => {
-    if (released) return;
-    released = true;
-    if (timer != null) clearTimeout(timer);
-    shieldEvents.forEach((type) => veil.removeEventListener(type, consume, true));
-    keyEvents.forEach((type) => window.removeEventListener(type, consume, true));
-    veil.remove();
-  };
-  const consume = (event) => {
-    event.preventDefault?.();
-    event.stopImmediatePropagation?.();
-    // A real second physical click may carry detail 2 even though the original
-    // button was removed. Release only after that activation has landed on the
-    // shield; otherwise the timeout covers the platform double-click window.
-    if (event.type === 'click' && Number(event.detail) > 1) queueMicrotask(release);
-  };
-  shieldEvents.forEach((type) => veil.addEventListener(type, consume, true));
-  keyEvents.forEach((type) => window.addEventListener(type, consume, true));
-
-  const armRelease = () => { timer = setTimeout(release, Math.max(0, Number(durationMs) || 0)); };
-  const afterDestinationPaint = () => {
-    if (typeof window.requestAnimationFrame !== 'function') return armRelease();
-    window.requestAnimationFrame(() => window.requestAnimationFrame(armRelease));
-  };
-  return Object.freeze({ release, afterDestinationPaint });
-}
-
-function closeConfirmationModal({ restoreFocus = false } = {}) {
-  activeClose?.({ restoreFocus });
-}
-
-function openConfirmationModal({
-  title,
-  message,
-  confirmLabel = 'Continue',
-  cancelLabel = 'Back',
-  consequence = '',
-  tone = 'normal',
-  onConfirm,
-  onCancel = () => {},
-  returnFocusElement = document.activeElement,
-  component = UI.confirmationModal,
-  inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
-} = {}) {
-  // One service, one active decision. Repeated activation replaces the stale
-  // surface without committing or reporting a cancellation that was not made.
-  closeConfirmationModal();
-
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil confirmation-veil';
-
-  const dialog = document.createElement('section');
-  dialog.className = `modal confirmation-modal${tone === 'danger' ? ' danger' : ''}`;
-  dialog.setAttribute('role', tone === 'danger' ? 'alertdialog' : 'dialog');
-  dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-labelledby', 'confirmation-modal-title');
-  dialog.setAttribute('aria-describedby', 'confirmation-modal-copy');
-  dialog.tabIndex = -1;
-  markUiComponent(dialog, component, tone);
-
-  const header = document.createElement('header');
-  const eyebrow = document.createElement('span');
-  eyebrow.className = 'confirmation-eyebrow';
-  eyebrow.textContent = consequence;
-  eyebrow.hidden = !consequence;
-  const heading = document.createElement('h2');
-  heading.id = 'confirmation-modal-title';
-  heading.textContent = title || 'Confirm action';
-  header.append(eyebrow, heading);
-
-  const copy = document.createElement('p');
-  copy.id = 'confirmation-modal-copy';
-  copy.className = 'confirmation-copy';
-  copy.textContent = message || '';
-
-  const footer = document.createElement('footer');
-  const cancelButton = document.createElement('button');
-  cancelButton.type = 'button';
-  cancelButton.className = 'subtle confirmation-cancel';
-  cancelButton.textContent = cancelLabel;
-  markUiComponent(cancelButton, UI.confirmationCancel, 'neutral');
-  const confirmButton = document.createElement('button');
-  confirmButton.type = 'button';
-  confirmButton.className = `subtle confirmation-confirm${tone === 'danger' ? ' danger' : ''}`;
-  confirmButton.textContent = confirmLabel;
-  markUiComponent(confirmButton, UI.confirmationAction, tone);
-  footer.append(cancelButton, confirmButton);
-  dialog.append(header, copy, footer);
-  veil.appendChild(dialog);
-  document.body.appendChild(veil);
-
-  let closed = false;
-  const close = ({ restoreFocus = true, retainInputShield = false } = {}) => {
-    if (closed) return;
-    closed = true;
-    window.removeEventListener('keydown', onKeydown, true);
-    if (retainInputShield) dialog.remove();
-    else veil.remove();
-    if (activeClose === close) activeClose = null;
-    if (restoreFocus && returnFocusElement instanceof HTMLElement && returnFocusElement.isConnected) {
-      returnFocusElement.focus({ preventScroll: true });
-    }
-  };
-  activeClose = close;
-
-  const cancel = () => {
-    if (closed) return;
-    close();
-    onCancel();
-  };
-
-  function onKeydown(event) {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      cancel();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    const controls = [cancelButton, confirmButton];
-    const at = controls.indexOf(document.activeElement);
-    if (event.shiftKey && at <= 0) {
-      event.preventDefault();
-      confirmButton.focus({ preventScroll: true });
-    } else if (!event.shiftKey && at === controls.length - 1) {
-      event.preventDefault();
-      cancelButton.focus({ preventScroll: true });
-    }
-  }
-
-  cancelButton.addEventListener('click', cancel);
-  confirmButton.addEventListener('click', () => {
-    if (closed) return;
-    close({ restoreFocus: false, retainInputShield: true });
-    const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
-    window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
-      detail: { component, tone },
-    }));
-    try {
-      onConfirm?.();
-    } finally {
-      // Destination callbacks synchronously replace the app surface today.
-      // Two paints let its hit-test tree settle before the bounded shield timer
-      // begins; a physical second click is swallowed and may release it sooner.
-      shield.afterDestinationPaint();
-    }
-  });
-  veil.addEventListener('click', (event) => {
-    if (event.target === veil) cancel();
-  });
-  window.addEventListener('keydown', onKeydown, true);
-  // Quick-menu actions close their list after awaiting the controller result,
-  // and that close restores focus to the launcher. Run after that microtask so
-  // the standing confirmation, not the covered screen, owns final focus.
-  setTimeout(() => {
-    if (!closed) cancelButton.focus({ preventScroll: true });
-  }, 0);
-
-  return Object.freeze({ veil, dialog, cancelButton, confirmButton, close, cancel });
-}
-
-
-Object.assign(module.exports, { CONFIRMATION_COMMIT_EVENT, CONFIRMATION_INPUT_SHIELD_MS, closeConfirmationModal, openConfirmationModal });
 
 },
 "src/ui/components/startupGate.js": function (module, exports, require) {

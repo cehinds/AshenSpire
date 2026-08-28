@@ -290,10 +290,9 @@ const QUICK_MENU_ROWS = [
     tip: 'Open the compact character and vitality view.' },
   { act: 'load', icon: '↥', label: 'Load', band: 'run', tone: 'danger',
     tip: 'Replace unsaved progress with the active slot after confirmation.' },
-  { act: 'save', icon: '💾', label: 'Save', band: 'run',
-    tip: 'Write the exact committed combat turn to this slot and stay here.' },
+  { act: 'save', icon: '💾', label: 'Save', band: 'run', tip: 'Write the climb to its slot and stay here.' },
   { act: 'saveQuit', icon: '↯', label: 'Save and Quit', band: 'run',
-    tip: 'Write the exact committed combat turn, then return to the title.' },
+    tip: 'Save the active climb, then return to the title.' },
   { act: 'quit', icon: '⏻', label: 'Quit Without Saving', band: 'run', tone: 'danger',
     tip: 'Discard changes since the last save and return to the title after confirmation.' },
 ];

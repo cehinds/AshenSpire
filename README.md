@@ -8,9 +8,8 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
 
-**[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
-workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
-is the readable projection, with timestamped updates and Daily Briefs.
+**[AshenSpire Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)** —
+the latest project status appears first, with timestamped updates and Daily Briefs below it.
 
 **[AshenSpire UI Component Catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** —
 the interactive reference for stable component IDs, model and renderer names,
@@ -26,16 +25,9 @@ player-facing changes. The current Smith modal write-up is
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
-**[Development governance](docs/governance/README.md)** — the versioned
-authority, lifecycle, ticket, quality, decision, and runbook control plane.
-The legacy **[coordination workflow](docs/COORDINATION-WORKFLOW.md)** remains a
-compatibility entry point. The **[Art integration runbook](docs/governance/RUNBOOKS/art.md)**
-defines the Proposal → Approved → Active lifecycle and, when active, the
-mandatory integration package triggered by an approved art suggestion without
-granting implementation, publication, or release authority. Its independently
-reviewed governance head is Approved before canonical integration and Active
-when that exact head is contained in canonical `dev`; no merge-time status or
-version edit is required.
+**[Development coordination workflow](docs/COORDINATION-WORKFLOW.md)** — the
+shared rules for routine ownership, evidence, status reporting, cross-family
+handoffs, and the boundary between development approval and release authority.
 
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build

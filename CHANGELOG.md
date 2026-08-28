@@ -17,10 +17,6 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
-## 2026-08-26
-
-- **Smith now lets you choose, review, and confirm one permanent card upgrade** ([#350](https://github.com/cehinds/AshenSpire/pull/350), `0.4.0.1362`). Back and Escape return to the Shrine without changing the deck; Confirm upgrades exactly the selected card and clearly says that it leaves the Shrine. The same delivery also makes attribute explanations span their allocator rows, gives folded Shrine choices one footprint, gives Armoury trays useful session-scoped opening sizes and snap stops, adds touch-readable combatant inspection with center-seeking tooltips, and codifies the repeatable gameplay QA process and component-catalog receipts.
-
 ## 2026-08-25
 
 - **The title now unfolds from the Ashen Spire threshold into one centered menu** ([#347](https://github.com/cehinds/AshenSpire/pull/347), `0.4.0.1352`). The folded startup mark keeps its logo, subtitle, divider, and input-family invitation centered while its phone background is fully transparent. The revealed title presents Continue, Load, New, Collection, Settings, and Quit as one vertical list; Fullscreen and Music stay anchored at the top right. Load and New share one responsive save-slot dialog with selected, empty, focused, disabled, and occupied states plus Back and Continue controls.
