@@ -1,0 +1,394 @@
+[
+  {
+    "tree": "source",
+    "surface": "grace",
+    "shape": "320x640",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "title": "Reallocate Flask Charges",
+      "capacity": 3,
+      "steps": [
+        "hp-o",
+        "hp+o",
+        "mana-o",
+        "mana+o"
+      ],
+      "counts": [
+        2,
+        1
+      ],
+      "totalLine": "3 of 3 assigned",
+      "fullMana": true
+    },
+    "failures": [
+      "grace: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-grace-320x640.png"
+  },
+  {
+    "tree": "source",
+    "surface": "creation",
+    "shape": "320x640",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "kitCount": 2,
+      "chosenKit": 1,
+      "alternateSelected": true,
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roleRows": 4,
+      "equipmentReceiptRows": 3,
+      "signatureRows": 1,
+      "hasReceiptMath": true,
+      "rolesVisible": true
+    },
+    "failures": [
+      "creation: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-creation-320x640.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-creation-detail-320x640.png"
+  },
+  {
+    "tree": "source",
+    "surface": "armoury",
+    "shape": "320x640",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 44,
+      "controlsOutside": 0,
+      "view": "hybrid",
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roles": [
+        "attack",
+        "guard",
+        "technique"
+      ],
+      "hasReceiptMath": true,
+      "cardsRegionOpen": true,
+      "cardCount": 4,
+      "candidateOpen": true,
+      "candidateRoles": 3,
+      "hasRequirements": true,
+      "hasPoise": true,
+      "hasEffects": true,
+      "hasResources": true,
+      "candidateProofVisible": true,
+      "primaryProofVisible": true
+    },
+    "failures": [],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-armoury-320x640.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-armoury-detail-320x640.png"
+  },
+  {
+    "tree": "dist",
+    "surface": "grace",
+    "shape": "320x640",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "title": "Reallocate Flask Charges",
+      "capacity": 3,
+      "steps": [
+        "hp-o",
+        "hp+o",
+        "mana-o",
+        "mana+o"
+      ],
+      "counts": [
+        2,
+        1
+      ],
+      "totalLine": "3 of 3 assigned",
+      "fullMana": true
+    },
+    "failures": [
+      "grace: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-grace-320x640.png"
+  },
+  {
+    "tree": "dist",
+    "surface": "creation",
+    "shape": "320x640",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "kitCount": 2,
+      "chosenKit": 1,
+      "alternateSelected": true,
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roleRows": 4,
+      "equipmentReceiptRows": 3,
+      "signatureRows": 1,
+      "hasReceiptMath": true,
+      "rolesVisible": true
+    },
+    "failures": [
+      "creation: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-creation-320x640.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-creation-detail-320x640.png"
+  },
+  {
+    "tree": "dist",
+    "surface": "armoury",
+    "shape": "320x640",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 44,
+      "controlsOutside": 0,
+      "view": "hybrid",
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roles": [
+        "attack",
+        "guard",
+        "technique"
+      ],
+      "hasReceiptMath": true,
+      "cardsRegionOpen": true,
+      "cardCount": 4,
+      "candidateOpen": true,
+      "candidateRoles": 3,
+      "hasRequirements": true,
+      "hasPoise": true,
+      "hasEffects": true,
+      "hasResources": true,
+      "candidateProofVisible": true,
+      "primaryProofVisible": true
+    },
+    "failures": [],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-armoury-320x640.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-armoury-detail-320x640.png"
+  },
+  {
+    "tree": "source",
+    "surface": "grace",
+    "shape": "390x844",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "title": "Reallocate Flask Charges",
+      "capacity": 3,
+      "steps": [
+        "hp-o",
+        "hp+o",
+        "mana-o",
+        "mana+o"
+      ],
+      "counts": [
+        2,
+        1
+      ],
+      "totalLine": "3 of 3 assigned",
+      "fullMana": true
+    },
+    "failures": [
+      "grace: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-grace-390x844.png"
+  },
+  {
+    "tree": "source",
+    "surface": "creation",
+    "shape": "390x844",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "kitCount": 2,
+      "chosenKit": 1,
+      "alternateSelected": true,
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roleRows": 4,
+      "equipmentReceiptRows": 3,
+      "signatureRows": 1,
+      "hasReceiptMath": true,
+      "rolesVisible": true
+    },
+    "failures": [
+      "creation: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-creation-390x844.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-creation-detail-390x844.png"
+  },
+  {
+    "tree": "source",
+    "surface": "armoury",
+    "shape": "390x844",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 44,
+      "controlsOutside": 0,
+      "view": "hybrid",
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roles": [
+        "attack",
+        "guard",
+        "technique"
+      ],
+      "hasReceiptMath": true,
+      "cardsRegionOpen": true,
+      "cardCount": 4,
+      "candidateOpen": true,
+      "candidateRoles": 3,
+      "hasRequirements": true,
+      "hasPoise": true,
+      "hasEffects": true,
+      "hasResources": true,
+      "candidateProofVisible": true,
+      "primaryProofVisible": true
+    },
+    "failures": [],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-armoury-390x844.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\source-armoury-detail-390x844.png"
+  },
+  {
+    "tree": "dist",
+    "surface": "grace",
+    "shape": "390x844",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "title": "Reallocate Flask Charges",
+      "capacity": 3,
+      "steps": [
+        "hp-o",
+        "hp+o",
+        "mana-o",
+        "mana+o"
+      ],
+      "counts": [
+        2,
+        1
+      ],
+      "totalLine": "3 of 3 assigned",
+      "fullMana": true
+    },
+    "failures": [
+      "grace: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-grace-390x844.png"
+  },
+  {
+    "tree": "dist",
+    "surface": "creation",
+    "shape": "390x844",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 0,
+      "controlsOutside": 0,
+      "kitCount": 2,
+      "chosenKit": 1,
+      "alternateSelected": true,
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roleRows": 4,
+      "equipmentReceiptRows": 3,
+      "signatureRows": 1,
+      "hasReceiptMath": true,
+      "rolesVisible": true
+    },
+    "failures": [
+      "creation: relevant controls are at least 44px"
+    ],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-creation-390x844.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-creation-detail-390x844.png"
+  },
+  {
+    "tree": "dist",
+    "surface": "armoury",
+    "shape": "390x844",
+    "reading": {
+      "mounted": true,
+      "horizontalOverflow": 0,
+      "minControl": 44,
+      "controlsOutside": 0,
+      "view": "hybrid",
+      "derived": [
+        "HP",
+        "Mana",
+        "Stamina",
+        "Actions / turn",
+        "Draw / turn and opening hand"
+      ],
+      "roles": [
+        "attack",
+        "guard",
+        "technique"
+      ],
+      "hasReceiptMath": true,
+      "cardsRegionOpen": true,
+      "cardCount": 4,
+      "candidateOpen": true,
+      "candidateRoles": 3,
+      "hasRequirements": true,
+      "hasPoise": true,
+      "hasEffects": true,
+      "hasResources": true,
+      "candidateProofVisible": true,
+      "primaryProofVisible": true
+    },
+    "failures": [],
+    "shot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-armoury-390x844.png",
+    "detailShot": "C:\\repos\\AshenSpire-issue-282\\audit-evidence\\presentation-matrix\\dist-armoury-detail-390x844.png"
+  }
+]
