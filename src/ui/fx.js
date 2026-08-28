@@ -187,8 +187,8 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *           'under'  — under it, and only under it. When it does not fit, the
  *                      bound answers; that is the caller's declared preference,
  *                      not a failure to consider the alternatives.
- *   align   'start' | 'end' — which edge of the anchor the free axis lines up
- *                      with. Only 'under' reads it; 'beside' slides the free axis
+ *   align   'start' | 'center' | 'end' — where the anchor's free axis lines up
+ *                      for 'above' and 'under'; 'beside' slides the free axis
  *                      to stay on screen, which is what made three of its
  *                      candidates usable at all.
  *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
@@ -253,10 +253,15 @@ export function placeAnchored(el, anchor, {
     // axis as well is what made three candidates fail — the below/above ones were
     // rejected for horizontal overflow while the vertical room they existed to use
     // sat empty.
-    const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
+    const anchoredX = align === 'end'
+      ? a.left + a.width - b.width
+      : align === 'center'
+        ? a.left + (a.width - b.width) / 2
+        : a.left;
+    const slideX = Math.min(Math.max(pad, anchoredX), Math.max(pad, room.width - pad * 2 - b.width));
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
-    const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
-    const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
+    const under = { left: slideX, top: a.top + a.height + gap };
+    const above = { left: slideX, top: a.top - b.height - gap };
     const aboveLeft = { left: a.left - b.width - gap, top: above.top };
     const aboveRight = { left: a.left + a.width + gap, top: above.top };
     const right = { left: a.left + a.width + gap, top: slideY };

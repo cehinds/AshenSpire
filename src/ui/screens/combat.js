@@ -392,13 +392,26 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
   }
 
+  function renderedContentRect(el) {
+    const rects = [...(el?.children || [])]
+      .map((child) => child.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0);
+    if (!rects.length) return el?.getBoundingClientRect() || null;
+    const left = Math.min(...rects.map((rect) => rect.left));
+    const top = Math.min(...rects.map((rect) => rect.top));
+    const right = Math.max(...rects.map((rect) => rect.right));
+    const bottom = Math.max(...rects.map((rect) => rect.bottom));
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
+  }
+
   function showEnemyContext(box, enemy) {
     clearTimeout(enemyTooltipDelayTimer);
     if (!box.isConnected || !enemy.alive) return false;
-    const card = box.querySelector('.combatant-card')?.getBoundingClientRect();
+    const card = renderedContentRect(box.querySelector('.combatant-card'));
     if (!card) return false;
     showTooltipForRect(card, enemyContextTooltip(combatantSubject('enemy', enemy)), {
       intent: 'above',
+      align: 'center',
       clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
       appearance: { variant: 'enemy-context', maxWidthRem: 21 },
       autoHideMs: tooltipPlacement.tokens.autoFadeMs,

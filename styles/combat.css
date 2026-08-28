@@ -404,6 +404,12 @@
 .topbar.combat-hud.shared-hud .resbars-host > .resbars {
   height: 100%;
 }
+/* Three equal-height resource rows previously used `space-between`, so all
+   remaining panel height landed in the two internal gaps. `space-evenly` with
+   no authored gap splits that same remainder across four spaces instead: each
+   HP→MP and MP→SP gap is exactly half its prior rendered size while the stack
+   stays centred against the unchanged two-row quick-control panel. Compact HUD
+   keeps its explicit 2px row gap above because its vitals panel is intrinsic. */
 .topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) .resbars-host > .resbars {
   gap: 0;
   justify-content: space-evenly;

@@ -36583,7 +36583,7 @@ function ensureTooltip() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start') {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
@@ -36626,7 +36626,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     })
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
-  placeAnchored(t, anchor, { intent: resolvedIntent, clear });
+  placeAnchored(t, anchor, { intent: resolvedIntent, clear, align });
   scheduleAutoHide(autoHideMs);
   return true;
 }
@@ -36639,7 +36639,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
+  intent = 'beside', align = 'start', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -36661,7 +36661,7 @@ function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs, align);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -36687,17 +36687,17 @@ function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+function showTooltipFor(el, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
   return showTooltipForRect(el.getBoundingClientRect(), html, {
-    intent, clear: clear || el.parentElement, appearance, placementModel, autoHideMs,
+    intent, align, clear: clear || el.parentElement, appearance, placementModel, autoHideMs,
   });
 }
 
 /** Show the shared tooltip against a caller-owned measured subject rectangle. */
-function showTooltipForRect(anchor, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+function showTooltipForRect(anchor, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!anchor) return false;
-  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs);
+  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align);
 }
 
 /**
@@ -36976,8 +36976,8 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *           'under'  — under it, and only under it. When it does not fit, the
  *                      bound answers; that is the caller's declared preference,
  *                      not a failure to consider the alternatives.
- *   align   'start' | 'end' — which edge of the anchor the free axis lines up
- *                      with. Only 'under' reads it; 'beside' slides the free axis
+ *   align   'start' | 'center' | 'end' — where the anchor's free axis lines up
+ *                      for 'above' and 'under'; 'beside' slides the free axis
  *                      to stay on screen, which is what made three of its
  *                      candidates usable at all.
  *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
@@ -37042,10 +37042,15 @@ function placeAnchored(el, anchor, {
     // axis as well is what made three candidates fail — the below/above ones were
     // rejected for horizontal overflow while the vertical room they existed to use
     // sat empty.
-    const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
+    const anchoredX = align === 'end'
+      ? a.left + a.width - b.width
+      : align === 'center'
+        ? a.left + (a.width - b.width) / 2
+        : a.left;
+    const slideX = Math.min(Math.max(pad, anchoredX), Math.max(pad, room.width - pad * 2 - b.width));
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
-    const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
-    const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
+    const under = { left: slideX, top: a.top + a.height + gap };
+    const above = { left: slideX, top: a.top - b.height - gap };
     const aboveLeft = { left: a.left - b.width - gap, top: above.top };
     const aboveRight = { left: a.left + a.width + gap, top: above.top };
     const right = { left: a.left + a.width + gap, top: slideY };
@@ -41237,7 +41242,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'bd6cbcc2c7';
+const SOURCE = '3d1fd64b0e';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41271,7 +41276,7 @@ const SOURCE = 'bd6cbcc2c7';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1396';
+const ORDINAL = '1399';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -55712,13 +55717,26 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
   }
 
+  function renderedContentRect(el) {
+    const rects = [...(el?.children || [])]
+      .map((child) => child.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0);
+    if (!rects.length) return el?.getBoundingClientRect() || null;
+    const left = Math.min(...rects.map((rect) => rect.left));
+    const top = Math.min(...rects.map((rect) => rect.top));
+    const right = Math.max(...rects.map((rect) => rect.right));
+    const bottom = Math.max(...rects.map((rect) => rect.bottom));
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
+  }
+
   function showEnemyContext(box, enemy) {
     clearTimeout(enemyTooltipDelayTimer);
     if (!box.isConnected || !enemy.alive) return false;
-    const card = box.querySelector('.combatant-card')?.getBoundingClientRect();
+    const card = renderedContentRect(box.querySelector('.combatant-card'));
     if (!card) return false;
     showTooltipForRect(card, enemyContextTooltip(combatantSubject('enemy', enemy)), {
       intent: 'above',
+      align: 'center',
       clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
       appearance: { variant: 'enemy-context', maxWidthRem: 21 },
       autoHideMs: tooltipPlacement.tokens.autoFadeMs,

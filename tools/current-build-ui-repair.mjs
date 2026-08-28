@@ -68,6 +68,15 @@ function boxReader() {
   const intent = enemy?.querySelector('.intent');
   const hud = document.querySelector('.topbar.combat-hud');
   const card = enemy?.querySelector('.combatant-card');
+  const subject = card ? (() => {
+    const boxes = [...card.children].map(rect).filter((box) => box && box.width > 0 && box.height > 0);
+    if (!boxes.length) return rect(card);
+    const left = Math.min(...boxes.map((box) => box.left));
+    const top = Math.min(...boxes.map((box) => box.top));
+    const right = Math.max(...boxes.map((box) => box.right));
+    const bottom = Math.max(...boxes.map((box) => box.bottom));
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
+  })() : null;
   const title = document.querySelector('.title-stack');
   const wordmark = document.querySelector('[data-component="title-wordmark"]');
   const lines = [...(tip?.querySelectorAll('.tt-title, .tt-combatant-line') || [])].map((el) => el.textContent.replace(/\s+/g, ' ').trim());
@@ -76,6 +85,13 @@ function boxReader() {
   const hudTop = hud?.querySelector('.hud-top');
   const titleBox = rect(title);
   const wordmarkRange = wordmark ? (() => { const range=new Range(); range.selectNodeContents(wordmark); return rect(range); })() : null;
+  const centerDelta = tipBox && subject
+    ? ((tipBox.left + tipBox.right) - (subject.left + subject.right)) / 2
+    : null;
+  const edgeGaps = tipBox && subject
+    ? [subject.left - tipBox.right, tipBox.left - subject.right, subject.top - tipBox.bottom, tipBox.top - subject.bottom]
+      .filter((gap) => gap >= -.5)
+    : [];
   return {
     viewport: { width: innerWidth, height: innerHeight },
     title: titleBox && { ...titleBox, centerDelta: ((titleBox.left + titleBox.right) / 2) - (innerWidth / 2),
@@ -90,7 +106,7 @@ function boxReader() {
       lines,
       box: tipBox,
     },
-    enemy: { selected: enemy?.getAttribute('aria-pressed') || null, box: rect(enemy), card: rect(card), intent: rect(intent) },
+    enemy: { selected: enemy?.getAttribute('aria-pressed') || null, box: rect(enemy), card: rect(card), subject, intent: rect(intent) },
     hud: hud ? {
       box: rect(hud), mode: hud.dataset.hudMode || 'regular',
       paddingTop: Number.parseFloat(hudStyle.paddingTop), paddingBottom: Number.parseFloat(hudStyle.paddingBottom),
@@ -102,6 +118,9 @@ function boxReader() {
       tipIntentOverlap: overlap(tipBox, rect(intent)),
       tipHudOverlap: overlap(tipBox, rect(hud)),
       onGlass: !tipBox || (tipBox.left >= -.5 && tipBox.top >= -.5 && tipBox.right <= innerWidth + .5 && tipBox.bottom <= innerHeight + .5),
+      subjectCenterDelta: centerDelta,
+      subjectEdgeGaps: edgeGaps,
+      nearSubject: !tipBox || edgeGaps.some((gap) => gap <= 14),
     },
     redundantEnemyTooltips: enemy ? enemy.querySelectorAll('[data-tooltip], [aria-describedby="tooltip"]:not(.combatant.enemy)').length : -1,
   };
@@ -249,9 +268,43 @@ async function main() {
           && expected[3] === 'Effects Crimson Blight' && !/Intent|Move set|Block|Damage/i.test(expected.join(' ')),
         `EXACT-CONTENT-${shape.name.toUpperCase()}`, expected.join(' | '));
       check(!visible.geometry.tipIntentOverlap && !visible.geometry.tipHudOverlap && visible.geometry.onGlass
-          && visible.tooltip.placement === 'above' && visible.tooltip.box.bottom <= visible.enemy.card.top + .5,
+          && visible.geometry.nearSubject && visible.tooltip.placement === 'above',
         `TOOLTIP-GEOMETRY-${shape.name.toUpperCase()}`, JSON.stringify(visible.geometry));
       receipts.push({ shape: shape.name, state: 'visible', reading: visible, screenshot: await shot(`${shape.name}-tooltip-visible`) });
+
+      const edge = shape.mobile ? 'right' : 'left';
+      await move(2, shape.height - 2);
+      await wait(80);
+      await evaluate(`(() => {
+        const enemy=document.querySelector('.combatant.enemy:not(.dead)');
+        enemy.style.transformOrigin='center';
+        enemy.style.transform='scale(.78)';
+        const card=enemy.querySelector('.combatant-card');
+        const boxes=[...card.children].map((el)=>el.getBoundingClientRect()).filter((r)=>r.width>0&&r.height>0);
+        const left=Math.min(...boxes.map((r)=>r.left)), right=Math.max(...boxes.map((r)=>r.right));
+        const delta=${JSON.stringify(edge)}==='left' ? 6-left : innerWidth-6-right;
+        enemy.style.transform='translateX('+delta+'px) scale(.78)';
+        enemy.dispatchEvent(new Event('gpfocus',{bubbles:true}));
+      })()`);
+      await wait(560);
+      const transformed = await read();
+      check(transformed.tooltip.visible && transformed.geometry.onGlass && transformed.geometry.nearSubject
+          && !transformed.geometry.tipIntentOverlap && !transformed.geometry.tipHudOverlap,
+        `TOOLTIP-TRANSFORMED-${edge.toUpperCase()}-EDGE-${shape.name.toUpperCase()}`, JSON.stringify(transformed.geometry));
+      receipts.push({ shape: shape.name, state: `transformed-${edge}-edge`, reading: transformed,
+        screenshot: await shot(`${shape.name}-tooltip-transformed-${edge}-edge`) });
+      await evaluate(`(() => {
+        const enemy=document.querySelector('.combatant.enemy:not(.dead)');
+        enemy.dispatchEvent(new Event('gpblur',{bubbles:true}));
+        enemy.dispatchEvent(new Event('gpfocus',{bubbles:true}));
+      })()`);
+      await wait(560);
+      const transformedRepeat = await read();
+      const samePlacement = transformed.tooltip.box && transformedRepeat.tooltip.box
+        && Math.abs(transformed.tooltip.box.left - transformedRepeat.tooltip.box.left) <= .5
+        && Math.abs(transformed.tooltip.box.top - transformedRepeat.tooltip.box.top) <= .5;
+      check(samePlacement && transformedRepeat.geometry.nearSubject,
+        `TOOLTIP-TRANSFORMED-DETERMINISTIC-${shape.name.toUpperCase()}`, JSON.stringify(transformedRepeat.geometry));
 
       // Start from a clean state; explicit click/tap selection owns aria-pressed
       // immediately but shares the same 500ms cancellable reveal delay.

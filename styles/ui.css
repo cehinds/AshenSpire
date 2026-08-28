@@ -40,13 +40,13 @@
 #tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
 #tooltip[data-tooltip-variant='enemy-context'] {
   --place-gap: 6px;
-  max-width: 21rem;
-  padding: 0.2rem 0.5rem;
-  font-size: 1rem;
-  line-height: 1;
+  max-width: 31.5rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 1.5rem;
+  line-height: 1.1;
   overflow-wrap: anywhere;
 }
-#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.1rem; font-size: 1rem; line-height: 1; }
+#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
 #tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
 #tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
 #tooltip .tt-combatant-focus {
@@ -4271,9 +4271,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .title-screen > * { position: relative; z-index: 1; }
 .title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
-.title-stack { width: min(94%, 90rem); margin-inline: auto; text-align: center; align-self: center; }
+.title-stack {
+  box-sizing: border-box;
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  margin-inline: 0;
+  text-align: center;
+  align-self: center;
+}
 .title-screen .title-big {
-  margin: 0;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
   color: var(--parchment);
   font-size: 5.8rem;
   line-height: 0.95;

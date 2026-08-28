@@ -170,7 +170,7 @@ export function ensureTooltip() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start') {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
@@ -213,7 +213,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     })
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
-  placeAnchored(t, anchor, { intent: resolvedIntent, clear });
+  placeAnchored(t, anchor, { intent: resolvedIntent, clear, align });
   scheduleAutoHide(autoHideMs);
   return true;
 }
@@ -226,7 +226,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 export function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
+  intent = 'beside', align = 'start', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -248,7 +248,7 @@ export function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs, align);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -274,17 +274,17 @@ export function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-export function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+export function showTooltipFor(el, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
   return showTooltipForRect(el.getBoundingClientRect(), html, {
-    intent, clear: clear || el.parentElement, appearance, placementModel, autoHideMs,
+    intent, align, clear: clear || el.parentElement, appearance, placementModel, autoHideMs,
   });
 }
 
 /** Show the shared tooltip against a caller-owned measured subject rectangle. */
-export function showTooltipForRect(anchor, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+export function showTooltipForRect(anchor, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!anchor) return false;
-  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs);
+  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align);
 }
 
 /**
