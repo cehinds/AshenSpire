@@ -200,7 +200,14 @@ const CONTRACTS = [
   { name: 'hierarchy', file: 'governance/hierarchy.json', schema: 'schemas/hierarchy.schema.json' },
   { name: 'roles', file: 'governance/roles.json', schema: 'schemas/roles.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
-  { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' }
+  { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
+  { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
+  { name: 'delegation', file: 'governance/delegation.json', schema: 'schemas/delegation.schema.json' },
+  { name: 'escalation', file: 'governance/escalation.json', schema: 'schemas/escalation.schema.json' },
+  { name: 'transitions', file: 'governance/transitions.json', schema: 'schemas/transitions.schema.json' },
+  { name: 'information-access', file: 'governance/information-access.json', schema: 'schemas/information-access.schema.json' },
+  { name: 'qa', file: 'governance/qa.json', schema: 'schemas/qa.schema.json' },
+  { name: 'evidence', file: 'governance/evidence.json', schema: 'schemas/evidence.schema.json' }
 ];
 
 export function loadContracts(root = ROOT) {
@@ -315,6 +322,110 @@ export function semanticChecks(c) {
     }
   }
 
+  // ---- Stage 2: operational governance contracts ----
+  const actorIds = c.hierarchy ? new Set(c.hierarchy.nodes.map((x) => x.actor_id)) : new Set();
+
+  // 6. RACI: exactly one Accountable; named roles declared; no maker self-acceptance.
+  if (c.raci) {
+    for (const it of c.raci.items) {
+      if (it.accountable.length !== 1) {
+        errors.push(`raci: item '${it.id}' must have exactly one Accountable, found ${it.accountable.length}`);
+      }
+      for (const grp of ['responsible', 'accountable', 'consulted', 'informed']) {
+        for (const r of it[grp]) if (!roles.has(r)) errors.push(`raci: item '${it.id}' ${grp} names unknown role '${r}'`);
+      }
+      const isAcceptance = it.kind === 'decision' && (it.id.includes('qa') || it.id.includes('acceptance'));
+      if (isAcceptance && it.accountable.includes('maker')) {
+        errors.push(`raci: acceptance decision '${it.id}' makes 'maker' Accountable (self-approval)`);
+      }
+    }
+  }
+
+  // 7. Delegation: subset-of-parent, decreasing depth, deputy cannot delegate an
+  //    Owner-excluded action, time-bound, path-safe, declared roles.
+  if (c.delegation) {
+    const byId = new Map(c.delegation.envelopes.map((e) => [e.id, e]));
+    const deputyRole = c['owner-intent'] ? c['owner-intent'].deputy.role : null;
+    const excluded = c['owner-intent'] ? new Set(c['owner-intent'].deputy.excluded_actions) : new Set();
+    for (const e of c.delegation.envelopes) {
+      if (!roles.has(e.delegator_role)) errors.push(`delegation: envelope '${e.id}' delegator role '${e.delegator_role}' is unknown`);
+      if (!roles.has(e.delegatee_role)) errors.push(`delegation: envelope '${e.id}' delegatee role '${e.delegatee_role}' is unknown`);
+      for (const p of e.scope_paths) if (p.split('/').includes('..')) errors.push(`delegation: envelope '${e.id}' scope path '${p}' contains a '..' traversal segment`);
+      if (e.expiry <= e.effective) errors.push(`delegation: envelope '${e.id}' expiry is at or before effective (already expired)`);
+      if (deputyRole && e.delegator_role === deputyRole) {
+        for (const a of e.delegated_actions) if (excluded.has(a)) errors.push(`delegation: envelope '${e.id}' amplifies authority — deputy delegates Owner-excluded action '${a}'`);
+      }
+      if (e.parent_id !== null) {
+        const parent = byId.get(e.parent_id);
+        if (!parent) errors.push(`delegation: envelope '${e.id}' has unknown parent_id '${e.parent_id}'`);
+        else {
+          const pset = new Set(parent.delegated_actions);
+          for (const a of e.delegated_actions) if (!pset.has(a)) errors.push(`delegation: envelope '${e.id}' amplifies authority — action '${a}' not held by parent '${parent.id}'`);
+          if (!(e.max_subdelegation_depth < parent.max_subdelegation_depth)) errors.push(`delegation: envelope '${e.id}' subdelegation depth ${e.max_subdelegation_depth} is not less than parent '${parent.id}' (${parent.max_subdelegation_depth})`);
+        }
+      }
+    }
+  }
+
+  // 8. Escalation: routes are acyclic and name known actors.
+  if (c.escalation) {
+    for (const cl of c.escalation.classes) {
+      const seen = new Set();
+      for (const a of cl.route) {
+        if (seen.has(a)) { errors.push(`escalation: class '${cl.id}' has a circular route (revisits '${a}')`); break; }
+        seen.add(a);
+        if (actorIds.size && !actorIds.has(a)) errors.push(`escalation: class '${cl.id}' route names unknown actor '${a}'`);
+      }
+      if (cl.wake && actorIds.size && !actorIds.has(cl.wake)) errors.push(`escalation: class '${cl.id}' wake names unknown actor '${cl.wake}'`);
+    }
+  }
+
+  // 9. Transitions: known states; protected transitions exclude maker/qa actors.
+  if (c.transitions) {
+    const states = new Set(c.transitions.states);
+    const protectedStates = new Set(c.transitions.protected_states);
+    for (const t of c.transitions.transitions) {
+      if (!states.has(t.from)) errors.push(`transitions: transition from unknown state '${t.from}'`);
+      if (!states.has(t.to)) errors.push(`transitions: transition to unknown state '${t.to}'`);
+      for (const r of t.permitted_actor_roles) if (!roles.has(r)) errors.push(`transitions: transition ${t.from}->${t.to} names unknown role '${r}'`);
+      if (t.protected || protectedStates.has(t.to)) {
+        for (const r of t.permitted_actor_roles) {
+          if (r === 'maker' || r === 'qa-independent') errors.push(`transitions: illegal transition ${t.from}->${t.to} permits '${r}' on a protected transition`);
+        }
+      }
+    }
+  }
+
+  // 10. Information access: bounded startup and no forbidden preload.
+  if (c['information-access']) {
+    const ia = c['information-access'];
+    if (ia.startup.length > ia.max_startup_items) errors.push(`information-access: startup has ${ia.startup.length} items, exceeding max_startup_items ${ia.max_startup_items}`);
+    const forbidden = new Set(ia.forbidden);
+    for (const s of ia.startup) if (forbidden.has(s)) errors.push(`information-access: forbidden class '${s}' present in startup (forbidden preload)`);
+    for (const s of ia.on_demand) if (forbidden.has(s)) errors.push(`information-access: forbidden class '${s}' present in on_demand (forbidden preload)`);
+  }
+
+  // 11. QA: independent verifier (never maker), valid waiver authority, evidence ownership.
+  if (c.qa) {
+    const evIds = c.evidence ? new Set(c.evidence.evidence.map((e) => e.id)) : new Set();
+    const riskIds = new Set(c.qa.risk_classes.map((r) => r.id));
+    for (const g of c.qa.gates) {
+      if (!roles.has(g.verifier_role)) errors.push(`qa: gate '${g.id}' verifier role '${g.verifier_role}' is unknown`);
+      if (g.verifier_role === 'maker') errors.push(`qa: gate '${g.id}' allows the maker to self-approve (verifier_role 'maker')`);
+      if (!(g.waiver_authority_role === 'owner' || g.waiver_authority_role === 'it-manager-iii')) errors.push(`qa: gate '${g.id}' waiver authority '${g.waiver_authority_role}' must be owner or it-manager-iii`);
+      if (!riskIds.has(g.risk_class)) errors.push(`qa: gate '${g.id}' references unknown risk_class '${g.risk_class}'`);
+      for (const ev of g.required_evidence) if (!evIds.has(ev)) errors.push(`qa: gate '${g.id}' required evidence '${ev}' has no owner in evidence.json`);
+    }
+  }
+
+  // 12. Evidence: producer and verifier roles are declared (or the generator writer).
+  if (c.evidence) {
+    for (const e of c.evidence.evidence) {
+      if (!knownRoles.has(e.producer_role)) errors.push(`evidence: type '${e.id}' producer role '${e.producer_role}' is unknown`);
+      if (!knownRoles.has(e.verifier_role)) errors.push(`evidence: type '${e.id}' verifier role '${e.verifier_role}' is unknown`);
+    }
+  }
+
   return errors;
 }
 
@@ -412,6 +523,105 @@ export function renderGovernance(c) {
   L.push('');
   L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
   L.push('');
+
+  // ---- Stage 2 sections ----
+  if (c.raci) {
+    L.push('## RACI (exactly one Accountable per item)');
+    L.push('');
+    L.push(c.raci.principle);
+    L.push('');
+    L.push('| Item | Kind | Responsible | Accountable | Consulted | Informed |');
+    L.push('|---|---|---|---|---|---|');
+    for (const it of c.raci.items) {
+      L.push(`| ${it.id} | ${it.kind} | ${it.responsible.join(', ')} | ${it.accountable.join(', ')} | ${it.consulted.join(', ') || '—'} | ${it.informed.join(', ') || '—'} |`);
+    }
+    L.push('');
+  }
+
+  if (c.delegation) {
+    L.push('## Delegation envelopes (non-amplifying)');
+    L.push('');
+    L.push(`Rule: \`${c.delegation.non_amplification_rule}\``);
+    L.push('');
+    L.push('| Envelope | Parent | Delegator → Delegatee | Actions | Max subdepth | Effective → Expiry |');
+    L.push('|---|---|---|---|---|---|');
+    for (const e of c.delegation.envelopes) {
+      L.push(`| ${e.id} | ${e.parent_id || '—'} | ${e.delegator_role} → ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} → ${e.expiry} |`);
+    }
+    L.push('');
+  }
+
+  if (c.escalation) {
+    L.push('## Escalation (time requests a decision, never authority)');
+    L.push('');
+    L.push(c.escalation.principle);
+    L.push('');
+    L.push('| Class | Attempts | SLA (min) | Route | Wake | Authority effect | Continues work |');
+    L.push('|---|---|---|---|---|---|---|');
+    for (const cl of c.escalation.classes) {
+      L.push(`| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' → ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`);
+    }
+    L.push('');
+  }
+
+  if (c.transitions) {
+    L.push('## Lifecycle transitions and permitted actors');
+    L.push('');
+    L.push(`States: ${c.transitions.states.map((s) => '`' + s + '`').join(' → ')}`);
+    L.push('');
+    L.push(`Protected states: ${c.transitions.protected_states.map((s) => '`' + s + '`').join(', ')}`);
+    L.push('');
+    L.push('| From | To | Guard | Permitted actors | Protected |');
+    L.push('|---|---|---|---|---|');
+    for (const t of c.transitions.transitions) {
+      L.push(`| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`);
+    }
+    L.push('');
+  }
+
+  if (c['information-access']) {
+    const ia = c['information-access'];
+    L.push('## Information access and context loading');
+    L.push('');
+    L.push(ia.principle);
+    L.push('');
+    L.push(`- **Startup** (≤ ${ia.max_startup_items}, target ${ia.startup_token_target} / hard ${ia.startup_token_hard_limit} tokens): ${ia.startup.map((s) => '`' + s + '`').join(', ')}`);
+    L.push(`- **On demand:** ${ia.on_demand.join('; ')}`);
+    L.push(`- **Restricted:** ${ia.restricted.join('; ')}`);
+    L.push(`- **Forbidden (never loaded):** ${ia.forbidden.join('; ')}`);
+    L.push('');
+  }
+
+  if (c.qa) {
+    L.push('## QA independence and risk-selected gates');
+    L.push('');
+    L.push(c.qa.principle);
+    L.push('');
+    L.push('| Risk class | Required suites | Independent QA |');
+    L.push('|---|---|---|');
+    for (const r of c.qa.risk_classes) L.push(`| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`);
+    L.push('');
+    L.push('| Gate | Risk | Verifier | Independent of maker | Waiver authority | Required evidence |');
+    L.push('|---|---|---|---|---|---|');
+    for (const g of c.qa.gates) {
+      L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
+    }
+    L.push('');
+  }
+
+  if (c.evidence) {
+    L.push('## Evidence responsibility');
+    L.push('');
+    L.push(c.evidence.principle);
+    L.push('');
+    L.push('| Evidence | Producer | Exact object | Verifier | Invalidation keys |');
+    L.push('|---|---|---|---|---|');
+    for (const e of c.evidence.evidence) {
+      L.push(`| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`);
+    }
+    L.push('');
+  }
+
   return L.join('\n');
 }
 
@@ -495,6 +705,16 @@ export function runSelftest(root = ROOT) {
   expectSemantic('hierarchy two roots', (c) => { c.hierarchy.nodes[1].escalation_parent = null; }, 'exactly one root');
   expectSemantic('deputy not in hierarchy', (c) => { c['owner-intent'].deputy.actor_id = 'phantom'; }, 'not present in the hierarchy');
 
+  // Stage 2 required negative plants.
+  expectSemantic('invalid RACI (two Accountable)', (c) => { c.raci.items[0].accountable = ['maker', 'it-manager-iii']; }, 'exactly one Accountable');
+  expectSemantic('authority amplification (deputy delegates excluded)', (c) => { c.delegation.envelopes[0].delegated_actions.push('mutate main or release'); }, 'amplifies authority');
+  expectSemantic('circular escalation', (c) => { c.escalation.classes[0].route = ['it-manager-iii', 'project-management-lead', 'it-manager-iii']; }, 'circular route');
+  expectSemantic('illegal transition (maker on protected)', (c) => { c.transitions.transitions[c.transitions.transitions.length - 1].permitted_actor_roles.push('maker'); }, 'illegal transition');
+  expectSemantic('maker self-approval (QA verifier)', (c) => { c.qa.gates[0].verifier_role = 'maker'; }, 'self-approve');
+  expectSemantic('forbidden information preload', (c) => { c['information-access'].startup.push('all-chat-transcripts'); }, 'forbidden preload');
+  expectSemantic('expired delegation', (c) => { c.delegation.envelopes[0].expiry = '2020-01-01T00:00:00Z'; }, 'already expired');
+  expectSemantic('missing evidence ownership', (c) => { c.qa.gates[0].required_evidence.push('ghost-evidence'); }, 'no owner in evidence.json');
+
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
 }
@@ -508,7 +728,7 @@ function main(argv) {
   if (cmd === 'validate') {
     const { errors } = runValidate();
     if (errors.length) { console.error('VALIDATE FAIL:'); errors.forEach((e) => console.error('  - ' + e)); return 1; }
-    console.log('VALIDATE OK: 6 contracts parsed, schema-valid, and cross-consistent.');
+    console.log(`VALIDATE OK: ${CONTRACTS.length} contracts parsed, schema-valid, and cross-consistent.`);
     return 0;
   }
   if (cmd === 'render') {

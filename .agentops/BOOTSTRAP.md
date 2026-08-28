@@ -24,10 +24,17 @@ extra hop.
 | Truth | Lives in |
 |---|---|
 | Owner intent, deputy grant | `governance/owner-intent.json` |
-| Hierarchy and escalation | `governance/hierarchy.json` |
+| Hierarchy and escalation ownership | `governance/hierarchy.json` |
 | Roles (may / must / must-not) | `governance/roles.json` |
 | Per-action authority | `governance/authority.json` |
 | Git path/ref ownership, one-writer | `governance/git-ownership.json` |
+| RACI (one Accountable per item) | `governance/raci.json` |
+| Delegation envelopes, subdelegation limits | `governance/delegation.json` |
+| Escalation timers and routing | `governance/escalation.json` |
+| Lifecycle transitions and permitted actors | `governance/transitions.json` |
+| Information-access / context-loading rules | `governance/information-access.json` |
+| QA independence and risk-selected gates | `governance/qa.json` |
+| Artifact/evidence responsibility | `governance/evidence.json` |
 
 Human-readable views under `generated/` are produced from these JSON files and
 carry no authority of their own.
@@ -59,8 +66,11 @@ and overriding an independent QA verdict. See
 
 ## Installed stage
 
-`governance-kernel`. Deferred to later stages (see `project.json →
-deferred_next_stages`): RACI, delegation, escalation, transition, information-
-access, and QA contracts; the `opsctl wake` token/context compiler; the work /
-event / evidence / lease capsules; the owner-command workflows; and the
-read-only Owner HUD on GitHub Pages.
+`operational-governance`. The governance kernel (owner intent, hierarchy,
+roles, authority, git-ownership) plus the Stage-2 operational contracts (RACI,
+delegation, escalation, transitions, information-access, QA, evidence) are
+installed and validated. Deferred to later stages (see `project.json →
+deferred_next_stages`): the `opsctl wake` token/context compiler; the
+`work/<ticket>/CURRENT.json` capsules and append-only events; writer leases
+with compare-and-swap; the owner-command workflows; and the read-only Owner HUD
+on GitHub Pages.

@@ -1,0 +1,52 @@
+{
+  "schema": "agentops/escalation/v1",
+  "policy_version": "1.0.0",
+  "principle": "Elapsed time changes routing only, never truth, evidence, or authority. A time-based escalation requests a decision from a higher owner; it never silently enlarges the escalating actor's authority. No blocker remains inert or ownerless past its SLA.",
+  "default_sla_minutes": 5,
+  "classes": [
+    {
+      "id": "technical-blocker",
+      "hazard": "An unresolved technical ambiguity, ownership contest, or integration question stalls reversible work.",
+      "attempts_before_escalate": 1,
+      "sla_minutes": 5,
+      "route": ["help-desk", "it-manager-iii"],
+      "wake": "it-manager-iii",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": true
+    },
+    {
+      "id": "data-contract-withhold",
+      "hazard": "A cross-domain data contract is unsafe and the Data Architecture lead has withheld it.",
+      "attempts_before_escalate": 1,
+      "sla_minutes": 5,
+      "route": ["data-architecture-lead", "it-manager-iii"],
+      "wake": "it-manager-iii",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": true
+    },
+    {
+      "id": "deputy-overdue",
+      "hazard": "The deputy has held custody of a blocker past its resolution window without entered work.",
+      "attempts_before_escalate": 1,
+      "sla_minutes": 10,
+      "route": ["it-manager-iii", "constantine"],
+      "wake": "constantine",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": true
+    },
+    {
+      "id": "owner-exclusive-now",
+      "hazard": "An owner-exclusive, safety, credential, irreversible, or intent-conflict decision is required.",
+      "attempts_before_escalate": 0,
+      "sla_minutes": 0,
+      "route": ["constantine"],
+      "wake": "constantine",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": false
+    }
+  ],
+  "rules": {
+    "acyclic_route": "Each route is an ordered list of actor_ids with no repeats; it must terminate at the Owner or a role that itself routes to the Owner.",
+    "authority_effect_fixed": "authority_effect must be request-decision for every class; escalation never grants authority."
+  }
+}

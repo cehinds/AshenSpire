@@ -14,23 +14,25 @@
   "pages_owner_hud": "PLANNED",
   "owner_command_path": "WORKFLOW_FORMS",
   "control_plane_root": ".agentops",
-  "installed_stage": "governance-kernel",
+  "installed_stage": "operational-governance",
   "installed_contracts": [
     "governance/owner-intent.json",
     "governance/hierarchy.json",
     "governance/roles.json",
     "governance/authority.json",
-    "governance/git-ownership.json"
-  ],
-  "deferred_next_stages": [
+    "governance/git-ownership.json",
     "governance/raci.json",
     "governance/delegation.json",
     "governance/escalation.json",
     "governance/transitions.json",
     "governance/information-access.json",
     "governance/qa.json",
-    "wake-compiler (opsctl wake)",
-    "work/event/evidence/lease capsules",
+    "governance/evidence.json"
+  ],
+  "deferred_next_stages": [
+    "wake-compiler (opsctl wake — token-bounded capsule)",
+    "work/<ticket>/CURRENT.json capsules + append-only events",
+    "leases/<lease-id>.json writer leases + compare-and-swap",
     "owner-command workflows",
     "pages owner HUD"
   ]
