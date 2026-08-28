@@ -405,10 +405,11 @@ function setFocus(el, remember = true) {
   }
   if (el) {
     el.classList.add('gp-focus');
-    // A real menu owns both the visual gamepad cursor and DOM focus. Keyboard
-    // arrows already move the latter through the menu's key handler; keeping
-    // it aligned here gives D-pad navigation the same accessible focus state.
-    if (el.closest && el.closest('[role="menu"]') && document.activeElement !== el
+    // ARIA menus and button-like custom controls own both the visual cursor and
+    // DOM focus.  Keeping the two aligned lets the browser deliver native
+    // keyboard activation keys (notably Space) to a role=button reached with
+    // Arrow/D-pad navigation, while Enter/A still uses the unified press path.
+    if (el.closest && (el.closest('[role="menu"]') || el.matches?.('[role="button"]')) && document.activeElement !== el
       && typeof el.focus === 'function') el.focus();
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
