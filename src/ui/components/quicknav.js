@@ -44,32 +44,23 @@ import { closeFlaskActionMenu } from './flask.js';
 import { quickMenuPanelModel } from '../models/MenuModels.js';
 import { renderQuickMenu } from './menuComponents.js';
 
-// The player's presentation choice, set from applyDisplaySettings (main.js) the same
+// The experiment's own state, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
 // down just to ask which variant is running.
-let mode = 'mirror'; // 'off' | 'mirror' | 'switcher'
+let mode = 'off'; // 'off' | 'mirror' | 'switcher'
 let fixedEnds = true;
-
-export function resolveQuickNavMode(value) {
-  return ['off', 'mirror', 'switcher'].includes(value) ? value : 'mirror';
-}
 
 /** setQuickNav({ mode, fixedEnds }) — called by applyDisplaySettings. */
 export function setQuickNav(opts) {
-  mode = resolveQuickNavMode(opts?.mode);
-  if (opts?.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
+  if (opts.mode != null) mode = ['mirror', 'switcher'].includes(opts.mode) ? opts.mode : 'off';
+  if (opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.quicknav = mode;
-    const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');
-    launchers.forEach((button) => { button.hidden = mode === 'off'; });
     if (mode === 'off') closeQuickNav();
-    window.dispatchEvent(new CustomEvent('ashenspire:quicknav-mode-change', {
-      detail: { mode, folded: quickNavFolds() },
-    }));
   }
 }
 
-/** 'off' | 'mirror' | 'switcher' — the current quick-menu presentation. */
+/** 'off' | 'mirror' | 'switcher' — what the player is currently testing. */
 export function quickNavMode() {
   return mode;
 }
@@ -82,36 +73,20 @@ export function quickNavFolds() {
     && document.documentElement.getAttribute('data-layout') === 'narrow';
 }
 
-let openVeil = null;
-let openAnchor = null;
-let escHandler = null;
-let fullscreenSync = null;
+const MODE_NAMES = { mirror: 'Mirror', switcher: 'Switcher' };
 
-export function closeQuickNav({ restoreFocus = true } = {}) {
-  const anchor = openAnchor;
+let openVeil = null;
+let escHandler = null;
+
+export function closeQuickNav() {
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
     hideTooltip();
   }
-  if (anchor) anchor.setAttribute('aria-expanded', 'false');
-  openAnchor = null;
   if (escHandler) {
     removeEventListener('keydown', escHandler, true);
     escHandler = null;
-  }
-  if (fullscreenSync) {
-    for (const type of ['fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror']) {
-      document.removeEventListener(type, fullscreenSync);
-    }
-    fullscreenSync = null;
-  }
-  if (restoreFocus && anchor?.isConnected) {
-    queueMicrotask(() => {
-      const staysInModal = !!anchor.closest('.modal-veil');
-      const replacementModal = document.querySelector('.modal-veil, .armoury-overlay');
-      if (anchor.isConnected && (staysInModal || !replacementModal)) anchor.focus();
-    });
   }
 }
 
@@ -144,41 +119,31 @@ export function saveAction(onSave) {
  *
  * `actions` maps an `act` id from the MENU table to the handler that already
  * does that thing. An act with no handler is dropped rather than drawn dead.
- * Returns the panel element, or null when there is no anchor/action to show.
+ * Returns the panel element (or null when the variant is off).
  */
-export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, counts = {}, current = null, hasSave = true } = {}) {
+export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = null, hasSave = true } = {}) {
   if (mode === 'off' || !anchorEl) return null;
   closeFlaskActionMenu({ cancelled: true });
-  closeQuickNav({ restoreFocus: false });
+  closeQuickNav();
 
   const rows = menuRows(context, { fixedEnds, hasSave, counts, current })
-    .filter((r) => typeof actions[r.act] === 'function' || typeof controls[r.act]?.activate === 'function')
-    .map((r) => {
-      const state = controls[r.act]?.read?.() || {};
-      return { ...r, checked: !!state.checked, disabled: !!state.disabled, condition: state.condition || '' };
-    });
+    .filter((r) => typeof actions[r.act] === 'function');
   if (!rows.length) return null;
 
   const model = quickMenuPanelModel({
     context,
     mode,
-    caption: 'Quick menu',
+    caption: `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`,
     rows,
   });
   const { veil, panel } = renderQuickMenu(model, {
-    onActivate: async (row, button) => {
-      const handler = controls[row.act]?.activate || actions[row.act];
-      const result = await handler(row.tab, button);
-      if (controls[row.act]) syncControlRows(panel, controls, row.act, result?.announcement || '');
-      const inPlace = controls[row.act] ? 'keep' : result;
+    onActivate: (row, button) => {
+      const inPlace = actions[row.act](row.tab, button);
       if (inPlace !== 'keep') closeQuickNav();
     },
   });
   document.body.appendChild(veil);
   openVeil = veil;
-  openAnchor = anchorEl;
-  anchorEl.setAttribute('aria-haspopup', 'menu');
-  anchorEl.setAttribute('aria-expanded', 'true');
   position(anchorEl, panel);
 
   veil.addEventListener('click', (ev) => {
@@ -193,32 +158,12 @@ export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, c
   };
   addEventListener('keydown', escHandler, true);
 
-  fullscreenSync = () => syncControlRows(panel, controls);
-  for (const type of ['fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror']) {
-    document.addEventListener(type, fullscreenSync);
-  }
-
   // Keyboard/pad players land on the list rather than nowhere — the same smart
   // default openOverlay() uses, and the reason the vertical list needs no new
   // input code: it IS the focus scope while it is open.
   if (isEngaged()) setTimeout(() => focusFirst('.qn-row.on') || focusFirst('.qn-row'), 0);
 
   return panel;
-}
-
-function syncControlRows(panel, controls, announcedAct = '', announcement = '') {
-  for (const [act, control] of Object.entries(controls)) {
-    const button = panel.querySelector(`.qn-row[data-act="${act}"]`);
-    if (!button || typeof control.read !== 'function') continue;
-    const state = control.read() || {};
-    button.setAttribute('aria-checked', String(!!state.checked));
-    button.disabled = !!state.disabled;
-    button.setAttribute('aria-disabled', String(!!state.disabled));
-    const condition = button.querySelector('.qn-condition');
-    if (condition) condition.textContent = act === announcedAct && announcement ? announcement : (state.condition || '');
-    const visible = button.querySelector('.qn-state');
-    if (visible) visible.textContent = state.checked ? 'ON' : 'OFF';
-  }
 }
 
 // Right-aligned under its button, then bounded regardless — see the header for

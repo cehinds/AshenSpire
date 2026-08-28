@@ -8,34 +8,15 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
 
-**[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
-workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
-is the readable projection, with timestamped updates and Daily Briefs.
-
-**[AshenSpire UI Component Catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** —
-the interactive reference for stable component IDs, model and renderer names,
-live visual specimens, and reuse surfaces. UI delivery summaries list the exact
-changed IDs; an origin-bound UI change updates both catalog formats in the same change.
-
-**[QA Testing](docs/QA-TESTING.md)** and the
-**[feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md)** — the repeatable
-design, build, responsive playtest, evidence, and documentation process used for
-player-facing changes. The current Smith modal write-up is
-[here](docs/qa/2026-08-25-smith-modal-design.md).
+**[AshenSpire Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)** —
+the latest project status appears first, with timestamped updates and Daily Briefs below it.
 
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
-**[Development governance](docs/governance/README.md)** — the versioned
-authority, lifecycle, ticket, quality, decision, and runbook control plane.
-The legacy **[coordination workflow](docs/COORDINATION-WORKFLOW.md)** remains a
-compatibility entry point. The **[Art integration runbook](docs/governance/RUNBOOKS/art.md)**
-defines the Proposal → Approved → Active lifecycle and, when active, the
-mandatory integration package triggered by an approved art suggestion without
-granting implementation, publication, or release authority. Its independently
-reviewed governance head is Approved before canonical integration and Active
-when that exact head is contained in canonical `dev`; no merge-time status or
-version edit is required.
+**[Development coordination workflow](docs/COORDINATION-WORKFLOW.md)** — the
+shared rules for routine ownership, evidence, status reporting, cross-family
+handoffs, and the boundary between development approval and release authority.
 
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
@@ -70,14 +51,7 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-Armoury reference captures: [Character](docs/preview/armoury-1191-character-desktop.png),
-[Inventory](docs/preview/armoury-1191-inventory-desktop.png),
-[Hybrid](docs/preview/armoury-1191-hybrid-desktop.png),
-[whole-card hold progress](docs/preview/armoury-1191-hold-progress-desktop.png),
-[comparison tooltip](docs/preview/armoury-1191-comparison-tooltip-desktop.png), and
-[390×844 phone](docs/preview/armoury-1191-phone.png).
-
-The in-game changelog is checked through the real title → Settings → Changelog route
+The About changelog is checked through the real title → Settings → About route
 by `node tools/about-changelog.mjs`.
 
 ## UI component library
@@ -90,27 +64,9 @@ top/right/bottom/left folded and unfolded state. The [Markdown catalog](docs/COM
 chat-friendly reference. The [component model architecture](docs/COMPONENT-MODEL-ARCHITECTURE.md)
 defines the model, renderer, host, behavior, service, and infrastructure
 boundaries used as screens migrate. The [Folding Tray contract](docs/TRAY-COMPONENTS.md)
-defines the shared Top, Right, Bottom, and Left disclosure grammar. The
-[Armoury layout contract](docs/ARMOURY-LAYOUT-BRIEF.md) and
-[asset-component index](docs/ASSET-COMPONENTS.md) name the exact Character,
-Armaments, Inventory, Cards, Stats, card-hold, comparison, and resizing
-surfaces shown in the current build. Any merge or PR that changes a UI element
-or component must update the interactive and Markdown catalogs in the same
-origin-bound change and include `Changed catalog components: <id...>` plus this
-catalog link in its summary. If the surface has no stable ID, add one first.
-
-The catalog now decomposes the complete title flow as reusable families:
-`startup-gate` contains the transparent-on-phone folded mark, deterministic ash,
-wordmark, subtitle, divider, and input-family prompt; `title-menu` contains the
-six centered actions and their selection ornament; and `title-menu-modal`
-contains the shared Load/New heading, slot list, slot receipts and states,
-hold-to-delete control, and Back/Continue action group. Reference captures:
-[folded wide](docs/preview/startup-folded-wide-1440x900.png),
-[folded phone](docs/preview/startup-folded-mobile-390x844.png),
-[title wide](docs/preview/title-menu-wide-1440x900.png), and
-[Load phone](docs/preview/title-load-mobile-390x844.png). Catalog QA is recorded
-at [title-family wide](docs/preview/component-catalog-title-wide-1440x900.png)
-and [startup-family phone](docs/preview/component-catalog-startup-mobile-390x844.png).
+defines the shared Top, Right, Bottom, and Left disclosure grammar. Any merge or PR that changes a UI element
+or component must update the catalog when needed and include this catalog link
+in its summary.
 
 More: the three [class sprites](docs/preview/class-sprites.svg).
 
@@ -144,13 +100,12 @@ No install, no framework, no build step for the source.
 - **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
 - **Four distinct classes:** Reaver leads with strike damage, Rogue with defense and actions, Starseer with magic, and Herald with a balanced martial-support kit. Their starting attributes and equipment are data-owned and validated through the shared character-creation flow.
 - **One reusable run HUD:** Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
-- **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
 - **Character creation, one panel at a time:** six folded picks — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Below them, **starting armour** and **stat points** sit open as rows of their own: both change the run, so neither folds, and editing them never marches you on to the next section. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.
 - **Rewards you open before you collect:** post-fight spoils are a menu — cinders, cards, flasks, armaments, relics — and nothing joins your run until you take it, so you can look first and back out unchanged. A reward you have no room for says so on its own row, and is the only row that offers Skip. Continue is always pressable; Settings → Advanced → Reward collection decides whether it sweeps up the rest for you or simply means *done*.
 - **A merchant who buys back:** the shop is five collapsing bars — cards, relics, flasks, remove-a-card, and Sell — one open at a time. He buys back relics and flasks at half his own cheapest price, and the Sell bar can be switched off entirely in Settings.
-- **An in-game development changelog:** Settings → Changelog reads the repository changelog as concise expandable rows, while development build stamps link back to the exact source repository and release-shaped standalone files remain inert.
+- **An in-game development changelog:** Settings → About reads the repository changelog as concise expandable rows, while development build stamps link back to the exact source repository and release-shaped standalone files remain inert.
 - **Responsive browser play:** portrait and fitting short-wide landscape layouts stay playable down to 340 CSS pixels high; smaller viewports show a clear, recoverable short-screen warning instead of a clipped board — a warning that reads whole even at the largest accessibility text size. Fullscreen is one toggle, first under Settings → Display.
 
 Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, UI mockups, art direction). The original brief: **[PROMPT.md](PROMPT.md)**.

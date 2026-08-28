@@ -26,7 +26,6 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
 import { openLedger, closeLedger, note } from './healLedger.js';
-import { combatSnapshotProblems } from './combatSnapshot.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -589,14 +588,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (v[key] !== undefined && (!Number.isFinite(v[key]) || v[key] < 0)) {
         problems.push(`mapView.${key} must be a non-negative finite number when present`);
       }
-    }
-  }
-  if (run.combatEntered !== null && typeOk(run.combatEntered, 'object')) {
-    const entered = run.combatEntered;
-    if (typeof entered.nodeId !== 'string' || !entered.nodeId) problems.push('combatEntered.nodeId must be a non-empty string');
-    if (typeof entered.encounterId !== 'string' || !entered.encounterId) problems.push('combatEntered.encounterId must be a non-empty string');
-    if (entered.snapshot !== undefined) {
-      for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
     }
   }
   // A level count is a whole number of purchases and can never be negative. The

@@ -28,7 +28,7 @@ single place that constructs it.
 | `armoury.attributeCard` | Expandable attribute card | `.character-attributes .disc-face` | `src/ui/components/disclosure.js` |
 | `armoury.relicsCard` | Foldable Relics group with count and name summary | `.character-info-card.relicsCard` | `src/ui/screens/equipment.js` |
 | `armoury.equipmentPane` | Vertical armaments pane (left in Inventory, right in Hybrid) | `.armoury-equipment` | `src/ui/screens/equipment.js` |
-| `armoury.armamentsHeader` | Shared Folding Tray header for Armaments and item count | `.armoury-equipment-head` | `src/ui/screens/equipment.js` + `src/ui/components/trayComponents.js` |
+| `armoury.armamentsHeader` | Shared tray-pattern Armaments header and item count | `.armoury-equipment-head` | `src/ui/screens/equipment.js` |
 | `armoury.armamentsFoldButton` | Armaments fold/unfold control | `.armoury-equipment-head [data-fold="armaments"]` | `src/ui/screens/equipment.js` |
 | `armoury.armamentsExpanded` | Expanded Armaments state with List/Grid control | `.armoury-equipment[data-collapsed="0"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.armamentsFolded` | Folded Armaments name-and-count state | `.armoury-equipment[data-collapsed="1"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |
@@ -52,14 +52,14 @@ single place that constructs it.
 | `armoury.emptyPositionGridCard` | Empty grid tile/drop target | `.armoury-position-grid-card.is-empty` | `src/ui/screens/equipment.js` |
 | `armoury.lockedPositionGridCard` | Locked grid tile | `.armoury-position-grid-card.is-locked` | `src/ui/screens/equipment.js` |
 | `armoury.armamentGridDetails` | Shared selected-position Details area | `.armoury-position-grid-detail` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.inventoryCard` | One authoritative carried-item Inventory panel | `.armoury-inventory` | `src/ui/screens/equipment.js` |
+| `armoury.inventoryCard` | Unified Inventory panel | `.armoury-inventory` | `src/ui/screens/equipment.js` |
 | `armoury.paneSplitter` | Draggable/keyboard pane resizer with snapping | `.armoury-pane-splitter` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.itemCard` | Folded inventory/picker item; disclosure face and whole-card action host | `.inventory-face, .equip-chip.as-face` | `src/ui/screens/equipment.js` |
-| `armoury.inventoryItemClass` | Inventory item class with one folded/expanded action surface, delegated whole-card hold progress, and whole-card drag | `[data-card-class="inventoryItem"]` | `content/source/armouryUi.json` + `src/ui/components/holdconfirm.js` |
+| `armoury.itemCard` | Folded inventory/picker item | `.inventory-face, .equip-chip.as-face` | `src/ui/screens/equipment.js` |
+| `armoury.inventoryItemClass` | Inventory item class with model-opted folded/unfolded hold action and whole-card drag | `[data-card-class="inventoryItem"]` | `content/source/armouryUi.json` + `src/ui/components/holdconfirm.js` |
 | `armoury.itemReveal` | Model, description, tags, and available action | `.inventory-detail, .disc-reveal` | `src/ui/screens/equipment.js` + `src/ui/components/disclosure.js` |
-| `armoury.comparisonTooltipAnchor` | Focusable expanded-item anchor for delayed hover/focus comparison | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/tooltip.js` |
+| `armoury.comparisonTooltipAnchor` | Expanded item comparison anchor | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/tooltip.js` |
 | `armoury.equipmentComparison` | Full receipt in delayed tooltip or inline card mode | `[data-ui-component="equipment-comparison"]` | `content/source/armouryUi.json` + `src/ui/screens/equipment.js` |
-| `armoury.inventoryTrayResizeHandle` | Independent Inventory height handle when Inventory is mounted as a resizable supporting tray | `[data-component="armoury.inventoryTrayResizeHandle"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.inventoryTrayResizeHandle` | Independent Inventory tray height handle | `[data-component="armoury.inventoryTrayResizeHandle"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.cardsCard` | Folded equipment-card panel with list/grid toggle | `.armoury-strip` | `src/ui/screens/equipment.js` |
 | `armoury.cardList` | Configurable vertical list or grid | `.armoury-card-list` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.cardRow` | Folded equipment card row with count and cost | `.armoury-card-row` | `src/ui/screens/equipment.js` + `styles/ui.css` |
@@ -93,29 +93,22 @@ Proportions and order are authored in
 - Inventory pane widths are player-resizable. Snap ratios, saved default,
   compact-density boundary, and position-card fold boundaries are authored in
   `armouryUi.json` rather than embedded in the renderer;
-- Armaments, Inventory, Cards, and Stats use the shared Folding Tray structure.
-  Resizable supporting Inventory, Cards, and Stats tray heights are independent
-  saved ratios. Inventory disables height resizing while it fills Inventory
-  view, and Armaments is currently non-resizable. The supporting-tray
+- Inventory, Cards, and Stats tray heights are independent saved ratios. Their
   default/minimum/maximum/snap stops are authored under `layout.trays`. Resize
   handles exist only while the corresponding tray is unfolded;
 - selectable Inventory item cards opt into the core action gesture through
   `layout.cardClasses.inventoryItem.holdAction: true`. Omitted card classes
   default to `false`; the shared Settings hold dial defaults off. When enabled,
-  the folded face and unfolded reveal are one action surface. The shared hold
-  state paints the complete visible card—including the title and reveal—rather
-  than treating its in-card action label as a second button. Releasing early
-  aborts without changing equipment. The HOLD hint stays inside the card. The
-  folded card is also the native and pointer drag source; crossing the shared
-  hold slop cancels the hold and changes the gesture into a drag;
+  the folded face and unfolded detail use the same action and progress strip,
+  with the HOLD hint kept inside the card. The folded card is also the native
+  and pointer drag source; crossing the shared hold slop cancels the hold and
+  changes the gesture into a drag;
 - equipment comparison presentation is authored under `layout.comparison`.
   `presentation` accepts `tooltip` or `inline`; `hoverDelayMs` controls only
   the pointer-hover delay, while `tooltipWidthRem` and
   `tooltipMaxHeightRatio` keep the full receipt readable without escaping the
-  viewport. Tooltip presentation appears after the authored pointer delay or
-  on focus. The shipped Inventory class reserves press-hold for
-  Equip/Move/Unequip, so comparison never competes for that gesture and
-  `inline` is the always-visible presentation;
+  viewport. The shipped Inventory class reserves press-hold for Equip/Unequip,
+  so `inline` is the always-visible touch presentation;
 - cards: list by default, grid columns authored as `4`, with the presentation
   toggle in the Cards tray header; only cards with an equipment source appear;
   phone grid columns are separately authored as `2`;
@@ -151,15 +144,15 @@ the same change as its renderer. Do not create a second hand-authored catalog.
 
 ## Preview captures
 
-These build-1191 captures are the visual reference for the current component
-contract:
+These captures are the visual reference for the current component contract:
 
-- [Character view — desktop](preview/armoury-1191-character-desktop.png)
-- [Inventory view — desktop](preview/armoury-1191-inventory-desktop.png)
-- [Hybrid view — desktop](preview/armoury-1191-hybrid-desktop.png)
-- [Whole-card hold progress — desktop](preview/armoury-1191-hold-progress-desktop.png)
-- [Comparison tooltip — desktop](preview/armoury-1191-comparison-tooltip-desktop.png)
-- [Responsive Armoury — 390×844](preview/armoury-1191-phone.png)
+- [Character view — 1440×900](preview-armoury-stats-1440x900.png)
+- [Inventory view — 1440×900](preview-armoury-equipment-1440x900.png)
+- [Hybrid view — 1440×900](preview-armoury-hybrid-1440x900.png)
+- [Cards list — 1440×900](preview-armoury-cards-list-1440x900.png)
+- [Expanded card — 1440×900](preview-armoury-card-expanded-1440x900.png)
+- [Cards grid — 1440×900](preview-armoury-cards-grid-1440x900.png)
+- [Compact Inventory view — 390×844](preview-armoury-phone-390x844.png)
 
 The captures show the shared `armoury.shell`, `armoury.characterPane`,
 `armoury.spritePane`, `armoury.combatPowerGroup`,

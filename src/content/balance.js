@@ -263,72 +263,16 @@ export const balance = {
       // Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
       // legacy badge; the primary row, control grid, and vital rows each own
       // their own gap so responsive layouts do not hide a second copy.
-      portraitScale: 0.58,
-      primaryRowGapPx: 4,
-      controlGapPx: 0,
+      portraitScale: 0.7,
+      primaryRowGapPx: 8,
+      controlGapPx: 2,
       resourceRowGapPx: 2,
-      panelPadPx: 0,
-      mobilePanelPadPx: 0,
-      mobileControlGapPx: 1,
-      mobileOuterPadPx: 4,
-      mobileRowGapPx: 3,
       // Header columns negotiate inside one grid: the center Cinders track and
       // right metadata trail each cap at 30% of the viewport. Act/Floor show
       // their current values by default; totals remain an opt-in.
       cindersMaxWidthPct: 30,
       metadataMaxWidthPct: 30,
       metadataShowTotals: false,
-    },
-    // The two always-nearby comfort controls are one shared component on the
-    // title, map, and combat surfaces. Places and spacing are authored here so
-    // a future surface or denser theme does not require another renderer.
-    hudQuickSettings: {
-      places: ['title', 'map', 'combat'],
-      edgeGapPx: 4,
-      stackGapPx: 0,
-      // One visual card on every device. The 40px face sits inside the shared
-      // tap floor, while its 28px icon occupies 70% of the authored face.
-      cardSizePx: 40,
-      glyphSizePx: 28,
-      stateDotPx: 6,
-      activeTintPct: 14,
-      showCardBackground: true,
-      showLabels: false,
-    },
-    // BattlefieldStageModel owns the protected vertical corridor between the
-    // shared run HUD and the hand. Percentages are viewport-height shares on
-    // the glass; intentGapPx is the visible device-pixel attachment distance.
-    combatantStage: {
-      hudClearanceViewportPct: 3,
-      actionClearanceViewportPct: 3,
-      intentGapPx: 6,
-      centerPct: 50,
-    },
-    // Contextual explanations point back toward the readable centre instead of
-    // blindly choosing the first side with room. Combatants add a persistent,
-    // foldable edge inspector while the shared floating tooltip remains the
-    // short-lived hover/tap explanation.
-    tooltipPlacement: {
-      hoverDelayMs: 500,
-      topBandViewportPct: 25,
-      sideBandViewportPct: 30,
-    },
-    combatantInspector: {
-      widthRem: 20,
-      mobileWidthViewportPct: 62,
-    },
-    // Shrine options default to one vertical list. `grid` preserves the
-    // horizontal wide-screen composition as an authored alternative; narrow
-    // screens still collapse it to a list for touch and readable labels.
-    shrinePresentation: {
-      optionLayout: 'list', // list | grid
-      // The four option faces share one folded footprint. Percentages own the
-      // responsive size; the bounds preserve the 44 px interaction floor and
-      // keep a wide monitor from turning a choice into a banner.
-      foldedCardWidthViewportPct: 88,
-      foldedCardMaxWidthRem: 44,
-      foldedCardHeightViewportPct: 10,
-      foldedCardMaxHeightRem: 7,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -598,14 +542,6 @@ export const balance = {
       def: 'off',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
-    // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
-    // not the irreversible-action safety dial above: a short activation still
-    // selects/reviews the save, while a stationary hold loads it directly.
-    // Keeping the duration here lets the interaction be tuned without changing
-    // the title screen's event wiring.
-    titleLoadHold: {
-      ms: 600,
-    },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
     // durations are holdConfirm above. Three facts, three homes, none restated.
@@ -767,7 +703,7 @@ export const balance = {
     // The beds carry their own gain staging on top of this bus (music.js,
     // gains 0.34–0.6), so 50 is clearly audible from first boot without
     // crowding the feedback layer.
-    audio: { musicEnabled: true, musicVolume: 50, sfxVolume: 75 },
+    audio: { musicVolume: 50, sfxVolume: 75 },
   },
 
   // ---- Armaments & armour (equipment) ---------------------------------------

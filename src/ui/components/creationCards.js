@@ -3,7 +3,6 @@
 // a look-alike maintained beside it.
 
 import { attachTooltip } from './tooltip.js';
-import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 function appendVisual(host, visual) {
@@ -23,13 +22,18 @@ function choiceButton({ className, selected, label, text, onChoose }) {
   return button;
 }
 
-export function primaryStatCard(model) {
-  const host = document.createElement('div');
-  host.className = 'cc-attribute-card';
-  host.dataset.stat = model.id;
-  mountDisclosure(host, [model]);
-  host.querySelector('.disc-face')?.classList.add('cc-primary-stat');
-  return markUiComponent(host, UI.primaryStatCard);
+export function primaryStatCard(row) {
+  const card = document.createElement('div');
+  card.className = 'disc-face cc-primary-stat';
+  card.dataset.stat = row.id;
+  const name = document.createElement('b');
+  name.className = 'disc-name';
+  name.textContent = row.shortLabel;
+  const value = document.createElement('span');
+  value.className = 'disc-value';
+  value.textContent = row.value;
+  card.append(name, value);
+  return markUiComponent(card, UI.primaryStatCard);
 }
 
 export function resourceStrip(rows, poise) {

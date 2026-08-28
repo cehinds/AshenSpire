@@ -21,11 +21,10 @@ const DEFAULTS = Object.freeze({
     foldGroupsBelowPx: 260,
   },
   trays: {
-    defaultHeightRatio: 0.45,
-    minimumHeightRatio: 0.3,
+    defaultHeightRatio: 0.1,
+    minimumHeightRatio: 0.1,
     maximumHeightRatio: 0.9,
-    multipleExpandedMinimumRatio: 0.3,
-    snapRatios: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+    snapRatios: [0.1, 0.3, 0.5, 0.7, 0.9],
     snapTolerance: 0.035,
     contentGapRem: 0.35,
   },
@@ -127,10 +126,6 @@ export function normalizeArmouryLayout(source = {}) {
     || Number(trays.defaultHeightRatio) > Number(trays.maximumHeightRatio)) {
     throw new Error('armouryUi.layout.trays.defaultHeightRatio must be within the tray minimum and maximum');
   }
-  if (Number(trays.multipleExpandedMinimumRatio) < Number(trays.minimumHeightRatio)
-    || Number(trays.multipleExpandedMinimumRatio) > Number(trays.maximumHeightRatio)) {
-    throw new Error('armouryUi.layout.trays.multipleExpandedMinimumRatio must be within the tray minimum and maximum');
-  }
   positive(Number(trays.contentGapRem), 'trays.contentGapRem');
   const trayStops = trays.snapRatios.map(Number);
   if (new Set(trayStops).size !== trayStops.length
@@ -205,7 +200,6 @@ export function normalizeArmouryLayout(source = {}) {
       defaultHeightRatio: ratio(Number(trays.defaultHeightRatio), 'trays.defaultHeightRatio'),
       minimumHeightRatio: ratio(Number(trays.minimumHeightRatio), 'trays.minimumHeightRatio'),
       maximumHeightRatio: ratio(Number(trays.maximumHeightRatio), 'trays.maximumHeightRatio'),
-      multipleExpandedMinimumRatio: ratio(Number(trays.multipleExpandedMinimumRatio), 'trays.multipleExpandedMinimumRatio'),
       snapRatios: Object.freeze(trays.snapRatios.map((value) => ratio(Number(value), 'trays.snapRatios'))),
       snapTolerance: ratio(Number(trays.snapTolerance), 'trays.snapTolerance'),
       contentGapRem: positive(Number(trays.contentGapRem), 'trays.contentGapRem'),

@@ -3,9 +3,9 @@
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
 // treasure] → … → boss → game over. One rng is created from the seed and its
 // stream counters are saved with the run after every committed choice, so a
-// whole run is reproducible from its seed string. Explicit combat saves carry
-// an exact committed-turn snapshot; the node-entry receipt remains the
-// backward-compatible recovery path for older saves and interrupted sessions.
+// whole run is reproducible from its seed string and a reload restores
+// exactly (mid-combat: the combat restarts from its start — StS behavior,
+// because counters are saved BEFORE the combat begins).
 
 import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
@@ -17,7 +17,6 @@ import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
-import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import {
@@ -30,10 +29,8 @@ import {
   rollArmamentDrop,
   applyGraceRefill,
 } from './engine/encounters.js';
-import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
-import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
+import { mountTitle } from './ui/screens/title.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
-import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
@@ -47,22 +44,19 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
-import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
-import { openOverlay, closeOverlay } from './ui/components/overlay.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions } from './ui/screens/settings.js';
+import { mountEquipment } from './ui/screens/equipment.js';
+import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
-import { openConfirmationModal } from './ui/components/confirmationModal.js';
-import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
-import { mountStartupGate } from './ui/components/startupGate.js';
-import { startupGateModel } from './ui/models/StartupGateModels.js';
+import { initInput, setBindings, setKeyBindings } from './ui/input.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { initAudio } from './ui/audio.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
 import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
@@ -223,13 +217,11 @@ if (shotState) {
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
-let activeMeta = saves.loadMeta();
-let activeSettings = activeMeta.settings || (activeMeta.settings = {});
-const audio = initAudio(activeSettings);
+const audio = initAudio(saves.loadMeta().settings || {});
 sfx.sink = (id) => audio.sfx(id);
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
-initInput({ getSettings: () => activeSettings });
+initInput({ getSettings: () => saves.loadMeta().settings || {} });
 
 // All presentation config is data (content/balance.js → balance.ui): accent
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
@@ -260,29 +252,12 @@ projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
 projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
 projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
 projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
-projectHudToken('panelPadPx', 0, 12, '--hud-panel-pad-px', 'px');
-projectHudToken('mobilePanelPadPx', 0, 12, '--hud-mobile-panel-pad-px', 'px');
-projectHudToken('mobileControlGapPx', 0, 12, '--hud-mobile-control-gap-px', 'px');
-projectHudToken('mobileOuterPadPx', 0, 12, '--hud-mobile-outer-pad-px', 'px');
-projectHudToken('mobileRowGapPx', 0, 12, '--hud-mobile-row-gap-px', 'px');
 projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
 projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
 if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
   throw new Error(`balance.ui.hudPresentation.metadataShowTotals must be boolean, got ${JSON.stringify(HUD_PRESENTATION.metadataShowTotals)}`);
 }
 document.documentElement.dataset.hudMetadataShowTotals = String(HUD_PRESENTATION.metadataShowTotals);
-const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
-for (const [key, cssName] of [
-  ['edgeGapPx', '--hud-quick-edge-gap'],
-  ['stackGapPx', '--hud-quick-stack-gap'],
-  ['cardSizePx', '--hud-quick-card-size'],
-  ['glyphSizePx', '--hud-quick-glyph-size'],
-  ['stateDotPx', '--hud-quick-state-dot'],
-  ['activeTintPct', '--hud-quick-active-tint'],
-]) {
-  document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
-}
-document.documentElement.dataset.hudQuickCardBackground = String(HUD_QUICK_SETTINGS.showCardBackground);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -621,7 +596,7 @@ function applyDisplaySettings(settings) {
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
-  setQuickNav({ mode: settings.quickNav });
+  setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
   // Walked-node fade → data attr on the root; styles/map.css carries the ladder.
   // Same shape as `ambient` below: an unknown stored value lands on the default
   // rather than on a silent no-fade, and the default here restates the settings
@@ -643,7 +618,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
-  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
+  audio.setVolumes(settings);
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak).
   const folder = settings.musicFolder || '';
@@ -652,7 +627,7 @@ function applyDisplaySettings(settings) {
     audio.configureMusic({ folder });
   }
 }
-applyDisplaySettings(activeSettings);
+applyDisplaySettings(saves.loadMeta().settings);
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
@@ -675,14 +650,13 @@ applyDisplaySettings(activeSettings);
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
-  for (const key of Object.keys(activeSettings)) delete activeSettings[key];
-  Object.assign(activeSettings, settings);
-  activeMeta.settings = activeSettings;
   applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
   applyUiScale(settings);         // UI zoom / Auto fit
+  audio.setVolumes(settings);     // music, sfx, mute
+  audio.configureMusic({ folder: settings.musicFolder || '' });
+  lastMusicFolder = settings.musicFolder || '';
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
-  refreshHudQuickSettings(app, settings);
 }
 
 
@@ -692,7 +666,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
+  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -730,11 +704,7 @@ function showLobby() {
       // preference is the VIEWER's (ui/components/mapboard.js): a co-op client
       // is a viewer, and it was opening at a literal while the same player's
       // solo map honoured their setting.
-      mountCoop(app, {
-        registries, conn, myId, myIds, meta: saves.loadMeta(),
-        onSettingsChange: persistSettingsChange,
-        onLeave: () => showTitle(),
-      });
+      mountCoop(app, { registries, conn, myId, myIds, meta: saves.loadMeta(), onLeave: () => showTitle() });
     },
   });
 }
@@ -744,7 +714,6 @@ function randomSeedString() {
 }
 
 function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, slot = 1 }) {
-  resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -894,54 +863,18 @@ function advanceAct() {
 }
 
 function resumeRun(slot = 1) {
-  resetArmouryTraySession();
   activeSlot = slot;
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
   if (run.combatEntered && run.combatEntered.encounterId) {
-    // Current saves resume the exact committed turn. Older saves that only
-    // carry the encounter receipt still use the deterministic restart path.
+    // Mid-combat save: restart that combat from its start (SPEC §3.12).
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
   } else if (run.shopStock) {
     showShop();
   } else {
     showMap();
   }
-}
-
-function loadActiveSlot({ returnFocusElement } = {}) {
-  openConfirmationModal({
-    title: `Load slot ${activeSlot}?`,
-    message: 'The saved run will replace changes made since your last save.',
-    confirmLabel: 'Load saved run',
-    consequence: 'DISCARDS UNSAVED CHANGES',
-    tone: 'danger',
-    returnFocusElement,
-    onConfirm: () => {
-      closeOverlay();
-      resumeRun(activeSlot);
-    },
-  });
-  return false;
-}
-
-function quitWithoutSaving({ returnFocusElement } = {}) {
-  openConfirmationModal({
-    title: 'Quit without saving?',
-    message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
-    confirmLabel: 'Quit without saving',
-    consequence: 'LEAVES THE RUN',
-    tone: 'danger',
-    returnFocusElement,
-    onConfirm: () => {
-      closeOverlay();
-      audio.stopMusic();
-      run = null;
-      showTitle();
-    },
-  });
-  return false;
 }
 
 // ---- screens --------------------------------------------------------------------
@@ -963,43 +896,9 @@ function showProfileNoticeIfNeeded() {
   return true;
 }
 
-let startupGatePending = !shotState;
-let unmountStartupGate = null;
-
-function startupInputFamily(forced = '') {
-  if (['pointer', 'touch', 'keyboard', 'controller'].includes(forced)) return forced;
-  if (hasGamepad()) return 'controller';
-  if ((navigator.maxTouchPoints || 0) > 0 || matchMedia('(pointer: coarse)').matches) return 'touch';
-  return 'keyboard';
-}
-
-function showStartupGate({ forcedFamily = '' } = {}) {
-  if (unmountStartupGate) unmountStartupGate();
-  audio.music('title');
-  const family = startupInputFamily(forcedFamily);
-  unmountStartupGate = mountStartupGate(app, {
-    model: startupGateModel({ inputFamily: family }),
-    registerInputGate: setInputGate,
-    onReveal: ({ family }) => {
-      startupGatePending = false;
-      unmountStartupGate = null;
-      showTitle({
-        skipStartup: true,
-        focusDefault: true,
-        focusCursor: family === 'keyboard' || family === 'controller',
-      });
-    },
-  });
-}
-
-function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
+function showTitle() {
   if (showProfileNoticeIfNeeded()) return;
-  if (startupGatePending && !skipStartup) {
-    showStartupGate();
-    return;
-  }
   audio.music('title');
-  resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
   const slots = saves.listSlots().map(({ slot, summary }) => ({
@@ -1023,9 +922,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
-    onProfile: showProfile,
     onSettings: showSettings,
-    onSettingsChange: persistSettingsChange,
     onQuit: quitGame,
     onCustom: () => {
       const empty = slots.find((s) => !s.summary);
@@ -1033,7 +930,6 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     },
     onLan: showLobby,
   });
-  if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
   // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');
@@ -1041,65 +937,32 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   });
 }
 
-function showProfile() {
-  openProfileArchive({
-    saves,
-    onRestored: () => applyRestoredSettings(saves.loadMeta().settings || {}),
-  });
-}
-
-function persistSettingsChange(changed) {
-  if (!saves.profileStatus().quarantined) {
-    activeMeta = saves.loadMeta();
-    activeSettings = activeMeta.settings || (activeMeta.settings = {});
-  }
-  Object.assign(activeSettings, changed);
-  activeMeta.settings = activeSettings;
-  const res = saves.saveMeta(activeMeta);
-  applyDisplaySettings(activeSettings);
-  refreshHudQuickSettings(app, activeSettings);
-  remountMapIfShowing(changed);
-  if (changed.bindings) setBindings(changed.bindings);
-  if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-  if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
-  return res;
-}
-
-const quickMenuControls = {
-  fullscreen: {
-    read: () => {
-      const capability = fullscreenCapability(document);
-      const checked = isFullscreen(document);
-      return {
-        checked,
-        disabled: !capability.supported,
-        condition: capability.supported ? `Fullscreen ${checked ? 'on' : 'off'}.` : 'Unavailable in this browser.',
-      };
-    },
-    activate: async () => {
-      const result = await toggleFullscreen(document);
-      return result.ok || result.reason === 'unsupported'
-        ? {}
-        : { announcement: 'Fullscreen was refused by the browser. State is unchanged.' };
-    },
-  },
-  music: {
-    read: () => ({
-      checked: resolveMusicEnabled(activeSettings),
-      condition: musicEnabledCondition(activeSettings),
-    }),
-    activate: () => {
-      const next = !resolveMusicEnabled(activeSettings);
-      const persisted = persistSettingsChange({ musicEnabled: next });
-      return { changed: { musicEnabled: next }, persisted };
-    },
-  },
-};
-
 function showSettings() {
   openSettings({
-    meta: activeMeta,
-    onChange: persistSettingsChange,
+    meta: saves.loadMeta(),
+    // The Profile section (#67) needs the manager itself: it lists, exports and
+    // restores archives. Without it the section does not render at all.
+    saves,
+    // …and a restore swaps the whole profile, so the screen must be re-dressed
+    // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
+    // save keeps the old profile's contrast, motion and text size.
+    onProfileRestored: (restored) => applyRestoredSettings(restored),
+    onChange: (changed) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, changed);
+      // saveMeta refuses while the profile is quarantined — correctly, it is
+      // protecting the original bytes. Nobody read that {ok:false}, so a player
+      // who pressed "Not now" and then turned the music down got a silent
+      // no-op: the change applies for this session and does not persist, and
+      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
+      // saying so is the whole fix.
+      const res = saves.saveMeta(meta);
+      applyDisplaySettings(meta.settings);
+      remountMapIfShowing(changed);
+      if (res && res.ok === false) {
+        showSettingsNotice(QUARANTINE_NOTICE);
+      }
+    },
   });
 }
 
@@ -1107,13 +970,11 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury(initialView = '') {
-  const armouryMeta = saves.loadMeta();
-  if (initialView) armouryMeta.settings.equipView = initialView;
+function showArmoury() {
   mountEquipment(document.body, {
     registries,
     run,
-    meta: armouryMeta,
+    meta: saves.loadMeta(),
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -1171,14 +1032,14 @@ function quitGame() {
   }
 }
 
-// The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
-// equipment, deck, relics, flasks, and run stats.
-function showOverlay(initialTab = 'settings') {
+// The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
+// map and combat screens via their onMenu callback.
+function showOverlay(initialTab = 'deck') {
   if (!run) return;
   openOverlay({
     registries,
     run,
-    meta: activeMeta,
+    meta: saves.loadMeta(),
     initialTab,
     // The overlay gets the save manager too (#67, Sunna's D18). Without it this
     // door discarded saveMeta's {ok:false} exactly as the modal used to, and
@@ -1187,18 +1048,20 @@ function showOverlay(initialTab = 'settings') {
     // turning those down mid-fight is the one who most needs them to still be
     // there tomorrow.
     saves,
-    onSettingsChange: persistSettingsChange,
-    quickControls: quickMenuControls,
-    onArmoury: (view) => {
-      const combatArmoury = app.querySelector('#combat-armoury');
-      closeOverlay();
-      if (!combatArmoury) return showArmoury(view);
-      combatArmoury.dataset.equipView = view;
-      combatArmoury.click();
-      delete combatArmoury.dataset.equipView;
+    onProfileRestored: (restored) => applyRestoredSettings(restored),
+    onSettingsChange: (changed) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, changed);
+      const res = saves.saveMeta(meta);
+      applyDisplaySettings(meta.settings);
+      remountMapIfShowing(changed);
+      if (changed.bindings) setBindings(changed.bindings);
+      if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+      // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
+      if (res && res.ok === false) {
+        showSettingsNotice(QUARANTINE_NOTICE);
+      }
     },
-    onLoad: loadActiveSlot,
-    onQuitWithoutSave: quitWithoutSaving,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1207,6 +1070,7 @@ function showOverlay(initialTab = 'settings') {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
+    onExit: quitGame, // "Quit Game" — leave the app entirely
   });
 }
 
@@ -1375,15 +1239,11 @@ function showMap() {
   mountMap(app, {
     registries,
     run,
-    meta: activeMeta,
+    meta: saves.loadMeta(),
     onPick: enterNode,
     onSettings: showSettings,
-    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
-    onLoad: loadActiveSlot,
-    onQuitWithoutSave: quitWithoutSaving,
-    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1494,15 +1354,12 @@ function startFight(pool, nodeId) {
 }
 
 function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
-  const savedSnapshot = resuming ? run.combatEntered?.snapshot : null;
-  run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
-  // The entry receipt is a deterministic recovery checkpoint. An explicit Save
-  // Game replaces it with an exact committed-turn snapshot below.
-  if (!resuming) persist();
+  run.combatEntered = { nodeId, encounterId };
+  if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot }) : createCombat({
+  const combat = createCombat({
     registries,
     rng,
     player: {
@@ -1541,9 +1398,6 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
-  // A restored combat owns the live loadout copy from its snapshot. Rejoin it
-  // to the run so later swaps and the post-combat receipt share one object.
-  if (savedSnapshot) run.loadout = combat.loadout;
   // `?shotHand=<n>` — STAND WITH A FULLER HAND.
   //
   // A REACH STATE, the same shape and reason as ?shotMaxHp beside it: the
@@ -1598,21 +1452,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
-    meta: activeMeta,
+    meta: saves.loadMeta(),
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
-    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
-    onLoad: loadActiveSlot,
-    onQuitWithoutSave: quitWithoutSaving,
-    quickControls: quickMenuControls,
     onSave: () => {
-      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       return activeSlot;
     },
     onQuit: () => {
-      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       showTitle();
     },
@@ -1898,11 +1746,7 @@ function poseFxShowcase() {
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
-  mountCoop(app, {
-    registries, conn: stub, myId, meta: saves.loadMeta(),
-    onSettingsChange: persistSettingsChange,
-    onLeave() {},
-  });
+  mountCoop(app, { registries, conn: stub, myId, meta: saves.loadMeta(), onLeave() {} });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
 }
 function coopCombatShot() {
@@ -2414,8 +2258,6 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const meta = saves.loadMeta();
   if (found != null) meta.found = found ? found.split(',') : [];
   mountCompendium(app, { registries, meta, onBack: showTitle });
-} else if (shotState === 'startup') {
-  showStartupGate({ forcedFamily: shotParams.get('shotInput') || '' });
 } else if (shotState === 'title') {
   // A REACH STATE, the same shape as `?shot=rest` and for the same sentence:
   // one state for the one screen being watched, so the watch has a measurement
@@ -2435,18 +2277,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   showTitle();
 } else if (shotState === 'profile') {
-  // A REACH STATE for title-screen Profile (`profileRestore` in secondbeat.js —
+  // A REACH STATE for Settings → Profile (`profileRestore` in secondbeat.js —
   // the inline .prof-confirm box). The set-aside profile is real and set aside
   // BY THE REAL ACT that sets one aside: ensureProfile writes profile A
   // through the real writer, startNewProfile archives it through
   // replacePrimaryWith — the one path allowed to replace the primary — and
   // the drawer entry the screen lists is that archive read back through
   // saves.listArchives. The instrument still opens the section by the
-  // player's own door: Profile on the title screen.
+  // player's own door: the Profile tab in the Settings modal.
   saves.ensureProfile();
   saves.startNewProfile();
   showTitle();
-  showProfile();
+  showSettings();
 } else if (shotState === 'crisis') {
   // The worst morning (`freshProfile` in secondbeat.js — the .confirm-fresh
   // modal). The torn bytes were planted at the storage seam beside
