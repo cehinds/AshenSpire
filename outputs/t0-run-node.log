@@ -1,0 +1,200 @@
+PASS  1. damage order: (6+2 Str) ×0.75 Weak ×1.5 Vuln = 9, floor once, min 0
+PASS  2. block absorbs first, expires at player turn start; Unbreakable retains with cap
+PASS  3. block = floor((5 + 2 Dex) × 0.75 Frail) = 5
+PASS  4. fixed seed → identical draw order across runs, reshuffle included
+PASS  5. draws past 10-card hand go to discard (handFull)
+PASS  6. Exhaust / Ethereal / Retain / Innate / X-cost / upgrade removes Exhaust
+PASS  7. Bleed procs at its table threshold for clamp(15% maxHp, 8, 35) as its own event; resets to zero; threshold constant; +3 poise per proc
+PASS  7b. Frost procs at 10 for clamp(8% maxHp, 4, 20); leaves Weak and Frost-Exposed; no poise, no stagger
+PASS  7c. Insanity procs at 14 for clamp(18% maxHp, 10, 40); +8 poise; direct stagger bypasses the bar
+PASS  7d. Bleed resistance: beast-tagged target gains Clotted after proc, points halve with a procResisted receipt, resist expires
+PASS  7e. Frost-Exposed boosts only tagged hits; declared stacking composes; the ceiling is stack-invariant
+PASS  7e2. Frost-Exposed changes a real Starstone hit through cardTagging.csv
+PASS  7e3. Unraveled changes a real Blight hit through cardTagging.csv
+PASS  7f. proc vocabulary known-bads: bad threshold, bad percent, unknown tag, bad duration, bad stacking — red, naming rows
+PASS  7g. bleed 12 + frost 10 in one play on a beast: both proc, 8+4 attributed, both reset, both resistances land
+PASS  8. Blight ticks at enemy turn start, expires entirely after 3 turns, re-apply refreshes
+PASS  9. Poise fill Staggers: skips turn, +50% window, poiseMax ×1.25, cancels Held Blade
+PASS  10b. re-entering the current stance is a no-op (no onEnter re-trigger)
+PASS  10. stance exclusivity; Gorefire per-hit Bleed; Bulwark on-Skill block
+PASS  11. maxConsecutive never violated over 200 rolls (weight 9999:1)
+PASS  12. map gen: fixed-seed snapshot; constraints over 200 seeds
+PASS  13. save round-trip; unknown schemaVersion and dangling ids refused + archived
+PASS  13b. profile: stamped and read, newer refused AND preserved, archives keyed, never silently empty, evidence survives the next write, drawer has a handle
+PASS  13c. a profile exists before the run does, is written first, survives an abandon, and never overwrites one that is there
+PASS  14. bot (leftmost affordable, end turn) finishes a seeded boss fight without throwing
+PASS  15. shipped content validates; closed sets enforced; scripts budget < 5%
+PASS  16. every token binds (base + upgrade); Strike previews 9 with +3 Str; Strike+ shows 6 under Weak
+PASS  17. throwaway status (meter + hook + modifier) works with zero engine changes
+PASS  18. run systems: deterministic rewards, flask pity, relic passives, event opcodes, Physick
+PASS  19. keepsakes: effect lists validate and apply as run effects
+PASS  20. Starstone combos, Starstone Shard, blood economy, Gold Figurine — all pure data
+PASS  20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans
+PASS  21. act-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase
+PASS  22. Endless Spire: act loop math, per-cycle scaling, mod wiring
+PASS  23. 'ally' target falls back to self in solo; co-op cards validate
+PASS  24. a once-per-combat relic held by two co-op players fires for each
+PASS  25. outfits + unlocks compile and cross-reference correctly
+PASS  26. card tags resolve, stay distinct from engine keywords, and index
+PASS  27. weapons and armour sets validate against the tag registry
+PASS  28. armaments rewrite Strike/Defend, cost energy to swap, and survive a save
+PASS  28s. equipment authors HP, Mana, and Stamina pools without healing saves or swaps
+PASS  28p. his three swap prices are data, and they really are three different prices
+PASS  28q. a swap-cost rule this build has never seen works with zero code
+PASS  28r. every way to author the swap price wrong is refused BY NAME
+PASS  28b. which hand a piece is in is the slot's fact, not the piece's
+PASS  30. unlock conditions evaluate against durable progress, not recent history
+PASS  31. armament drops are seeded, prefer the unheld, and run dry rather than repeat
+PASS  31b. the picker offers only what the profile owns, and the slot ladder shows exactly one step ahead
+PASS  31c. cycleSet refuses a set the ladder has not opened, and never strands a held one
+PASS  31e. cycleSet asks the slot’s own swap rule, on the slot where asking is not vacuous
+PASS  31d. a fight seals what a set holds without sealing which set is active
+PASS  32. no armament is strictly dominated by one of equal or lower rarity
+PASS  33. every armament and armour set has art rendered from its CURRENT row
+PASS  34. armour sets of a class are perceptibly separated in the rendered image
+PASS  35. accessibility defaults resolve from ONE home, and high contrast is on
+PASS  35a. the tap floor is one home, defaults to 44, and a bad stored value is refused by name
+PASS  35b. SFX recipes are content; a malformed recipe fails naming its id (#46)
+PASS  35d. composed sfx ids resolve to a real recipe; the family row covers unauthored statuses (#66)
+PASS  35c. music beds validate; 'silence' is the one word for deliberate quiet; quiet-shaped mistakes fail by name
+PASS  47. the Compendium withholds by ONE rule, and a planted row tells the rule from the table
+PASS  48. a typed seed is refused by name, and the sentence cannot disagree with the alphabet
+PASS  49. every act plate the code names exists on disk, for every act it can reach
+PASS  49b. the run-shape knobs cap the act, move the roll, and refuse bad values by name
+PASS  50. five-stat creation vocabulary and class presets come from one complete content product
+PASS  50b. a retired attribute name is refused at the boot door, by name
+PASS  50c. a save written under the retired name loads through the real door, healed, and saves clean
+PASS  50d. tuned HP is 30 + 2 × CON + flat bonuses at every legal edge
+PASS  50e. a run saved before E6 loads with its own HP, unchanged and unhealed
+PASS  58. nearestShrine answers the same question the unfog and the glow both ask
+PASS  59. a shrine you have stood on lights the next shrine, and nothing else
+PASS  60. a level is one attribute point bought with cinders, and the pools follow
+PASS  60b. a levelled run round-trips the load door instead of being archived
+PASS  60c. the level value and the tier size each change what a level does
+PASS  60d. a typed level value resolves to an integer in domain, whatever is stored
+PASS  60e. one derivation answers "can he afford a level", with a reason
+PASS  61. Fullscreen and Music share one canonical state across Settings, Quick Menu, and HUD
+PASS  61a. Armoury is the one equipment route, and fullscreen reports browser support
+PASS  61b. the combatant stage owns one validated safe-corridor model
+PASS  62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)
+PASS  66. E5: stat points and starting armour at creation — his numbers, both edges
+PASS  70. unified Inventory derives equipment, relics, potion stacks, and equipped tags
+PASS  71. character creation choices are validated data and Begin consumes the selected loadout
+PASS  71b. attribute cards derive their summaries, benefits, and gates from model data
+PASS  72. Armoury layout is authored, stable, and responsive
+PASS  75. an explicit save resumes the exact committed combat state and RNG continuation
+PASS  36. the zoom-unit check still catches its own known-bad corpus — corpus held — known-bad recall 2/2, known-good cleared 4/4; non-JS skip count measured.
+PASS  37. the carried set of unconverted px writes is exactly as recorded — 0 carried, 0 new, 0 vanished, 0 inadmissible of 0 checked. (`node tools/zoomunits.mjs` for the ledger, `--raw` for the bare red)
+PASS  38. clampBox keeps a box inside its named container — 7/7 cases. (arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)
+PASS  39. the surface check still catches its own known-bad corpus — 14/14 planted breakages went red and the tree came back clean.
+PASS  40. every declared navigable surface has a handler — 5 navigable sets, 21 members, 0 declared with no handler. (`node tools/surfaces.mjs` for the sets, `--selftest` for the reds)
+PASS  41. the screen census still catches its own known-bad corpus — 11/11 planted edits went red and the tree came back clean.
+PASS  42. every screen in the tree is mountable, and the census can still read it — 21 screen modules at a110ac9d-dirty, 19 reachable by an instrument, 2 by nothing, 0 findings. (`node tools/screen-census.mjs` for the checklist itself)
+PASS  43. the card-text mark check still catches its own known-bad corpus — corpus held — known-bad recall 3/3, known-good cleared 4/4; mark vocabulary kw st-bleed val up down.
+PASS  44. every card-text mark rule reaches both places card text is drawn — clean — all 8 card-text mark selector(s) reach both drawing sites; SELECTORS ONLY, no pixel was compared. (`node tools/markhome.mjs` for the ledger)
+PASS  45. the link check still catches its own known-bad corpus — 5/5 planted breakages went red, and the clean tree came back with 0.
+PASS  46. every named import in the tree resolves to a real export — 364/364 module graphs link, 0 broken (10 frozen fixture module(s) excluded by path). (`node tools/linkcheck.mjs` names the file and the error)
+PASS  29. the status-reach check still catches its own known-bad corpus — corpus held — 15 assertions over 12 planted mechanisms, 2 of them required to go GREEN.
+PASS  51. every shipped status has something that applies it — 50/50 shipped statuses have at least one applier, by routes R1-R6. (`node tools/statusreach.mjs` names the row and the route)
+PASS  52. the closed-set check still catches its own known-bad corpus — known-bad recall 7/7 — 5 plants, 1 floor, 1 clean baseline, all read off a copied tree on disk.
+PASS  53. every exported closed set is read by something — 103 exported closed set(s) over 190 source file(s); readers searched across 373 file(s) in src/, tools/, tests/. 0 with no reader. (`node tools/closedsets.mjs` for the table, `--selftest` for the reds)
+PASS  54. the grace-refill refusals still catch their own known-bad corpus — all plants behaved — 17 content plants, 4 behaviour checks, 5 retired (counted at run time, never typed).
+PASS  55. a grace pours what balance.graceRefill says it pours — 0 refill row(s) — 0 flask(s) poured into an empty run's 3 slot(s), 0 row(s) NOT BINDING. (`node tools/gracerefill.mjs` names each row and what it resolves to)
+PASS  56. the one-vocabulary check still catches its own known-bad corpus — known-bad recall 12/12 — 12 plants + 1 clean baseline, each entering as file bytes in a copied real tree, tool run whole from that copy.
+PASS  57. the relic-modifier vocabulary has one home and one derivation path — 7/7 checks passed over 358 scanned file(s), 3 declared tag(s), 3 relic resource id(s). (`node tools/onevocab.mjs` names the copy and the door that disagreed)
+PASS  67. the gate-list check still catches its own known-bad corpus — known-bad recall 10/10 — 10 plants + 1 clean baseline, each entering as file bytes in a copied real tree, tool run whole from that copy.
+PASS  68. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed — OK — 4 check(s), 0 findings; 29 of 176 tool(s) executed by a declared gate list. (`node tools/gatelist.mjs --raw` for the census, `--since <ref>` for what a ref ADDED)
+PASS  64. the test-number check still catches its own known-bad corpus — known-bad recall 5/5 — 5 plants including one that must go GREEN, each entering as file bytes in a copied real tree.
+PASS  69. every watched-probe still reads a file that exists and an anchor still in it — OK — 47 probe(s), 77 anchor(s), 0 dead derivations. (`node tools/watched.mjs --check-reads` for the derived file:line of every anchor)
+PASS  65. no two tests in this suite wear the same number — OK — 110 test labels, all unique across 2 homes. (`node tools/testnumbers.mjs --raw` for every label and where it is declared)
+PASS  73. the URL/path check catches both known-bads from a spaced working directory — clean tree GREEN; required fixtures caught 2/2; spaced-working-directory symptoms proved 2/2.
+PASS  74. module URL/filesystem path conversions use the platform API — scanned 184 JavaScript module(s) under tools/ and tests/; 0 unconverted module URL/filesystem path site(s). (`node tools/urlpath-conversions.mjs` names each site)
+PASS  76. quit and load use one reversible themed confirmation behavior — load + quit share one themed dialog; cancel, focus trap/return, single commit, and transient input shield pass
+
+112 passed, 0 failed
+BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY
+          check over coordinate spaces — they prove a transform has two
+          homes, never that a pixel renders wrong. 38 is arithmetic on
+          numbers a caller supplies, and the #15 defect was a correct
+          clamp computed in the wrong space, which 38 cannot detect.
+          Nothing here opens a browser, so no test in this file has seen
+          the screen. tools/zoomplace.mjs is the half that has.
+          39–40 are a JOIN between two source lists: they prove every
+          declared navigable surface HAS a handler, never that the
+          handler draws anything — release-shots is the half that has
+          watched a panel paint.
+          41–42 are a CENSUS, not a verdict: they prove every screen in
+          src/ui/screens/ is mountable and that the census can still read
+          its homes. A screen counted as reached is one an instrument NAMES
+          a way into — not one anything ran, passed, or photographed.
+          43–44 read SELECTORS, not pixels. They prove no card-text mark
+          rule is keyed to one of the two containers card text is drawn
+          in; they are silent on what colour it ends up, on inline styles,
+          and on any other route to one container only. The render
+          comparison that would close that has no home in this suite.
+          45–46 LINK, THEY DO NOT RUN. Every named import resolves to a real
+          export and not one module body was executed — so they prove the
+          eleven hand-started instruments START, never that any of them
+          WORKS. A name that exists but is wrong links green, and
+          release-shots must still be RUN by a person before a delivery.
+          50–51 prove a status has a DOOR, never that the door opens on
+          anything. They read definitions: nothing here says a card is in
+          a pool, that a run can draw it, or that the numbers are balanced.
+          Cases 7e2 and 7e3 separately exercise one real tagged hit for
+          each exposure; they do not prove broader card coverage.
+          52–53 ASK ONE QUESTION: is each exported closed set READ anywhere.
+          They are silent on whether a set has a second, hand-typed copy
+          somewhere — the defect that made the question worth asking. Green
+          means no vocabulary is decoration, never that none is duplicated.
+          That silence now has exactly ONE exception and it is named, not general:
+          56–57 close it for the relic-modifier vocabulary alone. Every other
+          closed set in the tree is still unwatched for a second copy.
+          54–55 NEVER OPEN A BROWSER. 54 proves the boot refusals fire and the
+          shrine pours, through the real bundle and the real registry; 55 reports
+          the shipped table. Neither has seen the settings rows or the shrine
+          sentence — those are photographed (`?shot=rest`), not asserted.
+          Neither settles whether 3+3 is release balance; the old no-Mana
+          A/B is stale, so that needs a Mana-aware simulation and player review.
+          56–57 GUARD ONE VOCABULARY: the tags and resource ids a relic uses to
+          modify you. They prove that vocabulary has one typed home, that both
+          content doors accept the same words, and that a relic resource grant
+          reaches max HP by one road with one answer at creation and at load.
+          They are SILENT on the other modifier vocabularies this game carries —
+          64-65 ARE ABOUT THE SUITE ITSELF, not the game: no two tests wear the same
+          number. A CONSISTENCY check — it proves the declared labels do not collide,
+          never that any label is the right one, and it reads only the two declared
+          test sources, so a third test file or a number composed at runtime is
+          invisible to it.
+          equipment's `self.maxHp/maxMana/maxStamina=+N` mods column, relic PASSIVE_TYPES scalars,
+          status MODIFIER_TYPES — and on whether any of those numbers is balanced.
+          67–68 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They
+          prove that every STEP naming an instrument invokes it (or states what goes
+          unwatched), and that no invocation in a SHELL list has its exit status
+          discarded. THE NAME IS THE MEASUREMENT: 63 says SWALLOWED, not SILENCED, because
+          swallowing is what G4 measures. ⚠ IT DOES NOT COVER THIS
+          FILE: a JavaScript gate list is not audited for it, and this suite is one — so
+          63 is deaf in its own venue and says so in its own output, by name, every run.
+          They say NOTHING about whether a listed tool passes,
+          nothing about instruments a person starts at a terminal, and nothing about a
+          gate that lives only in a PR body. The census of which tools sit in no list
+          is REPORTED by that tool and asserted by nobody — that disposition is a
+          design call with real costs, and it is not this suite's to make.
+          69 IS A CONSISTENCY CHECK OVER A CITATION, NOT A CORRECTNESS ONE. It proves
+          every watched-probe still names a file that exists and an anchor literal
+          still in it — it CANNOT tell whether that anchor identifies the right thing,
+          and an anchor picked loose enough to survive any edit greens here forever.
+          `by` in tools/watched-probes.json names who picked it. It also runs only the
+          READ door of tools/watched.mjs: nothing in this suite opens the build, drives
+          a probe, or photographs a control, so `watched` as a VERDICT is still
+          unwatched by CI — only the derivations behind it are.
+          73–74 guard module URL/path conversion shapes in tools/ and tests/:
+          actual dynamic file:// templates/concats and same-file static URL
+          pathname conversions through direct, grouped, bracket, destructuring,
+          or bounded local-alias forms. A platform consumer is trusted only through
+          its static node:url import; ambiguous lexical, binding, or alias flow fails
+          closed. They prove both fixtures fail from a spaced working directory;
+          they do not cover cross-module flow or platform-API semantic correctness.
+          76 drives the shared confirmation component in a minimal DOM and reads
+          the two controller call sites. It proves cancellation/commit semantics,
+          focus containment/return, and native-prompt removal; it does not paint
+          the dialog or prove responsive geometry in a real browser.

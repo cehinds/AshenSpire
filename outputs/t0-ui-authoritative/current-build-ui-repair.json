@@ -1,0 +1,1994 @@
+{
+  "target": "source",
+  "checks": 45,
+  "failures": 0,
+  "failedAssertions": [],
+  "receipts": [
+    {
+      "shape": "desktop",
+      "state": "title",
+      "reading": {
+        "viewport": {
+          "width": 1200,
+          "height": 730
+        },
+        "title": {
+          "left": 150,
+          "top": 115.22225189208984,
+          "right": 1050,
+          "bottom": 218.11288452148438,
+          "width": 900,
+          "height": 102.89063262939453,
+          "centerDelta": 0,
+          "wordmark": {
+            "left": 371.78125,
+            "top": 109.22225189208984,
+            "right": 829.359375,
+            "bottom": 175.22225952148438,
+            "width": 457.578125,
+            "height": 66.00000762939453,
+            "centerDelta": 0.5703125
+          }
+        },
+        "tooltip": {
+          "count": 0,
+          "visible": false,
+          "role": null,
+          "ariaHidden": null,
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": null,
+          "box": null,
+          "card": null,
+          "intent": null
+        },
+        "hud": null,
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": -1
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\desktop-title-centered.png"
+    },
+    {
+      "shape": "desktop",
+      "state": "combat",
+      "reading": {
+        "viewport": {
+          "width": 1200,
+          "height": 730
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": "false",
+          "box": {
+            "left": 368.625,
+            "top": 163.99490356445312,
+            "right": 755.3125,
+            "bottom": 427.1824035644531,
+            "width": 386.6875,
+            "height": 263.1875
+          },
+          "card": {
+            "left": 391.1068115234375,
+            "top": 199.08865356445312,
+            "right": 732.8306884765625,
+            "bottom": 426.64678955078125,
+            "width": 341.723876953125,
+            "height": 227.55813598632812
+          },
+          "intent": {
+            "left": 538.984375,
+            "top": 164.08865356445312,
+            "right": 584.953125,
+            "bottom": 193.08865356445312,
+            "width": 45.96875,
+            "height": 29
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 1.073026418685913,
+            "right": 1200,
+            "bottom": 142.1042764186859,
+            "width": 1200,
+            "height": 141.03125
+          },
+          "mode": "expanded",
+          "paddingTop": 1,
+          "paddingBottom": 1,
+          "topGap": 1,
+          "children": {
+            ".hud-top": {
+              "left": 16,
+              "top": 2.073026418685913,
+              "right": 1184,
+              "bottom": 140.1042764186859,
+              "width": 1168,
+              "height": 138.03125
+            },
+            ".hud-info-row": {
+              "left": 16,
+              "top": 2.073026418685913,
+              "right": 1184,
+              "bottom": 24.104276418685913,
+              "width": 1168,
+              "height": 22.03125
+            },
+            ".hud-center": {
+              "left": 588.703125,
+              "top": 5.588651657104492,
+              "right": 611.296875,
+              "bottom": 20.588651657104492,
+              "width": 22.59375,
+              "height": 15
+            },
+            ".hud-run-meta": {
+              "left": 824,
+              "top": 7.588651657104492,
+              "right": 1184,
+              "bottom": 18.588651657104492,
+              "width": 360,
+              "height": 11
+            },
+            ".hud-identity": {
+              "left": 16,
+              "top": 2.073026418685913,
+              "right": 578.703125,
+              "bottom": 24.104276418685913,
+              "width": 562.703125,
+              "height": 22.03125
+            },
+            ".hud-resource-row": {
+              "left": 16,
+              "top": 25.104276657104492,
+              "right": 1184,
+              "bottom": 113.10427665710449,
+              "width": 1168,
+              "height": 88
+            },
+            ".hud-bottom": {
+              "left": 16,
+              "top": 114.10427856445312,
+              "right": 1184,
+              "bottom": 140.10427856445312,
+              "width": 1168,
+              "height": 26
+            },
+            ".hud-control-grid": {
+              "left": 1096,
+              "top": 25.104276657104492,
+              "right": 1184,
+              "bottom": 113.10427665710449,
+              "width": 88,
+              "height": 88
+            },
+            ".hud-vitals-panel": {
+              "left": 16,
+              "top": 25.104276657104492,
+              "right": 1000,
+              "bottom": 113.10427665710449,
+              "width": 984,
+              "height": 88
+            },
+            ".hud-potions": {
+              "left": 1096,
+              "top": 114.10427856445312,
+              "right": 1184,
+              "bottom": 140.10427856445312,
+              "width": 88,
+              "height": 26
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\desktop-combat-hud.png"
+    },
+    {
+      "shape": "desktop",
+      "state": "before-delay",
+      "reading": {
+        "viewport": {
+          "width": 1200,
+          "height": 730
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": "false",
+          "box": {
+            "left": 368.625,
+            "top": 162.921875,
+            "right": 755.3125,
+            "bottom": 426.109375,
+            "width": 386.6875,
+            "height": 263.1875
+          },
+          "card": {
+            "left": 391.1068115234375,
+            "top": 198.015625,
+            "right": 732.8306884765625,
+            "bottom": 425.5737609863281,
+            "width": 341.723876953125,
+            "height": 227.55813598632812
+          },
+          "intent": {
+            "left": 538.984375,
+            "top": 163.015625,
+            "right": 584.953125,
+            "bottom": 192.015625,
+            "width": 45.96875,
+            "height": 29
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 1200,
+            "bottom": 141.03125,
+            "width": 1200,
+            "height": 141.03125
+          },
+          "mode": "expanded",
+          "paddingTop": 1,
+          "paddingBottom": 1,
+          "topGap": 1,
+          "children": {
+            ".hud-top": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 138.03125
+            },
+            ".hud-info-row": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 23.03125,
+              "width": 1168,
+              "height": 22.03125
+            },
+            ".hud-center": {
+              "left": 588.703125,
+              "top": 4.515625,
+              "right": 611.296875,
+              "bottom": 19.515625,
+              "width": 22.59375,
+              "height": 15
+            },
+            ".hud-run-meta": {
+              "left": 824,
+              "top": 6.515625,
+              "right": 1184,
+              "bottom": 17.515625,
+              "width": 360,
+              "height": 11
+            },
+            ".hud-identity": {
+              "left": 16,
+              "top": 1,
+              "right": 578.703125,
+              "bottom": 23.03125,
+              "width": 562.703125,
+              "height": 22.03125
+            },
+            ".hud-resource-row": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 1168,
+              "height": 88
+            },
+            ".hud-bottom": {
+              "left": 16,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 26
+            },
+            ".hud-control-grid": {
+              "left": 1096,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 88,
+              "height": 88
+            },
+            ".hud-vitals-panel": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1000,
+              "bottom": 112.03125,
+              "width": 984,
+              "height": 88
+            },
+            ".hud-potions": {
+              "left": 1096,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 88,
+              "height": 26
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\desktop-tooltip-before-delay.png"
+    },
+    {
+      "shape": "desktop",
+      "state": "visible",
+      "reading": {
+        "viewport": {
+          "width": 1200,
+          "height": 730
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": true,
+          "role": "tooltip",
+          "ariaHidden": "false",
+          "placement": "above",
+          "variant": "enemy-context",
+          "lines": [
+            "Wandering Soldier",
+            "HP 22/22",
+            "Poise 0/10",
+            "Effects Crimson Blight"
+          ],
+          "box": {
+            "left": 391.09375,
+            "top": 148.015625,
+            "right": 492.15625,
+            "bottom": 192.015625,
+            "width": 101.0625,
+            "height": 44
+          }
+        },
+        "enemy": {
+          "selected": "false",
+          "box": {
+            "left": 368.625,
+            "top": 162.921875,
+            "right": 755.3125,
+            "bottom": 426.109375,
+            "width": 386.6875,
+            "height": 263.1875
+          },
+          "card": {
+            "left": 391.1068115234375,
+            "top": 198.015625,
+            "right": 732.8306884765625,
+            "bottom": 425.5737609863281,
+            "width": 341.723876953125,
+            "height": 227.55813598632812
+          },
+          "intent": {
+            "left": 538.984375,
+            "top": 163.015625,
+            "right": 584.953125,
+            "bottom": 192.015625,
+            "width": 45.96875,
+            "height": 29
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 1200,
+            "bottom": 141.03125,
+            "width": 1200,
+            "height": 141.03125
+          },
+          "mode": "expanded",
+          "paddingTop": 1,
+          "paddingBottom": 1,
+          "topGap": 1,
+          "children": {
+            ".hud-top": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 138.03125
+            },
+            ".hud-info-row": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 23.03125,
+              "width": 1168,
+              "height": 22.03125
+            },
+            ".hud-center": {
+              "left": 588.703125,
+              "top": 4.515625,
+              "right": 611.296875,
+              "bottom": 19.515625,
+              "width": 22.59375,
+              "height": 15
+            },
+            ".hud-run-meta": {
+              "left": 824,
+              "top": 6.515625,
+              "right": 1184,
+              "bottom": 17.515625,
+              "width": 360,
+              "height": 11
+            },
+            ".hud-identity": {
+              "left": 16,
+              "top": 1,
+              "right": 578.703125,
+              "bottom": 23.03125,
+              "width": 562.703125,
+              "height": 22.03125
+            },
+            ".hud-resource-row": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 1168,
+              "height": 88
+            },
+            ".hud-bottom": {
+              "left": 16,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 26
+            },
+            ".hud-control-grid": {
+              "left": 1096,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 88,
+              "height": 88
+            },
+            ".hud-vitals-panel": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1000,
+              "bottom": 112.03125,
+              "width": 984,
+              "height": 88
+            },
+            ".hud-potions": {
+              "left": 1096,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 88,
+              "height": 26
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\desktop-tooltip-visible.png"
+    },
+    {
+      "shape": "desktop",
+      "state": "selected",
+      "reading": {
+        "viewport": {
+          "width": 1200,
+          "height": 730
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": true,
+          "role": "tooltip",
+          "ariaHidden": "false",
+          "placement": "above",
+          "variant": "enemy-context",
+          "lines": [
+            "Wandering Soldier",
+            "HP 22/22",
+            "Poise 0/10",
+            "Effects Crimson Blight"
+          ],
+          "box": {
+            "left": 391.09375,
+            "top": 148.015625,
+            "right": 492.15625,
+            "bottom": 192.015625,
+            "width": 101.0625,
+            "height": 44
+          }
+        },
+        "enemy": {
+          "selected": "true",
+          "box": {
+            "left": 368.625,
+            "top": 162.921875,
+            "right": 755.3125,
+            "bottom": 426.109375,
+            "width": 386.6875,
+            "height": 263.1875
+          },
+          "card": {
+            "left": 391.1068115234375,
+            "top": 198.015625,
+            "right": 732.8306884765625,
+            "bottom": 425.5737609863281,
+            "width": 341.723876953125,
+            "height": 227.55813598632812
+          },
+          "intent": {
+            "left": 538.984375,
+            "top": 163.015625,
+            "right": 584.953125,
+            "bottom": 192.015625,
+            "width": 45.96875,
+            "height": 29
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 1200,
+            "bottom": 141.03125,
+            "width": 1200,
+            "height": 141.03125
+          },
+          "mode": "expanded",
+          "paddingTop": 1,
+          "paddingBottom": 1,
+          "topGap": 1,
+          "children": {
+            ".hud-top": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 138.03125
+            },
+            ".hud-info-row": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 23.03125,
+              "width": 1168,
+              "height": 22.03125
+            },
+            ".hud-center": {
+              "left": 588.703125,
+              "top": 4.515625,
+              "right": 611.296875,
+              "bottom": 19.515625,
+              "width": 22.59375,
+              "height": 15
+            },
+            ".hud-run-meta": {
+              "left": 824,
+              "top": 6.515625,
+              "right": 1184,
+              "bottom": 17.515625,
+              "width": 360,
+              "height": 11
+            },
+            ".hud-identity": {
+              "left": 16,
+              "top": 1,
+              "right": 578.703125,
+              "bottom": 23.03125,
+              "width": 562.703125,
+              "height": 22.03125
+            },
+            ".hud-resource-row": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 1168,
+              "height": 88
+            },
+            ".hud-bottom": {
+              "left": 16,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 26
+            },
+            ".hud-control-grid": {
+              "left": 1096,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 88,
+              "height": 88
+            },
+            ".hud-vitals-panel": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1000,
+              "bottom": 112.03125,
+              "width": 984,
+              "height": 88
+            },
+            ".hud-potions": {
+              "left": 1096,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 88,
+              "height": 26
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\desktop-tooltip-selected.png"
+    },
+    {
+      "shape": "desktop",
+      "state": "faded",
+      "reading": {
+        "viewport": {
+          "width": 1200,
+          "height": 730
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": "above",
+          "variant": "enemy-context",
+          "lines": [
+            "Wandering Soldier",
+            "HP 22/22",
+            "Poise 0/10",
+            "Effects Crimson Blight"
+          ],
+          "box": null
+        },
+        "enemy": {
+          "selected": "true",
+          "box": {
+            "left": 368.625,
+            "top": 162.921875,
+            "right": 755.3125,
+            "bottom": 426.109375,
+            "width": 386.6875,
+            "height": 263.1875
+          },
+          "card": {
+            "left": 391.1068115234375,
+            "top": 198.015625,
+            "right": 732.8306884765625,
+            "bottom": 425.5737609863281,
+            "width": 341.723876953125,
+            "height": 227.55813598632812
+          },
+          "intent": {
+            "left": 538.984375,
+            "top": 163.015625,
+            "right": 584.953125,
+            "bottom": 192.015625,
+            "width": 45.96875,
+            "height": 29
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 1200,
+            "bottom": 141.03125,
+            "width": 1200,
+            "height": 141.03125
+          },
+          "mode": "expanded",
+          "paddingTop": 1,
+          "paddingBottom": 1,
+          "topGap": 1,
+          "children": {
+            ".hud-top": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 138.03125
+            },
+            ".hud-info-row": {
+              "left": 16,
+              "top": 1,
+              "right": 1184,
+              "bottom": 23.03125,
+              "width": 1168,
+              "height": 22.03125
+            },
+            ".hud-center": {
+              "left": 588.703125,
+              "top": 4.515625,
+              "right": 611.296875,
+              "bottom": 19.515625,
+              "width": 22.59375,
+              "height": 15
+            },
+            ".hud-run-meta": {
+              "left": 824,
+              "top": 6.515625,
+              "right": 1184,
+              "bottom": 17.515625,
+              "width": 360,
+              "height": 11
+            },
+            ".hud-identity": {
+              "left": 16,
+              "top": 1,
+              "right": 578.703125,
+              "bottom": 23.03125,
+              "width": 562.703125,
+              "height": 22.03125
+            },
+            ".hud-resource-row": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 1168,
+              "height": 88
+            },
+            ".hud-bottom": {
+              "left": 16,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 1168,
+              "height": 26
+            },
+            ".hud-control-grid": {
+              "left": 1096,
+              "top": 24.03125,
+              "right": 1184,
+              "bottom": 112.03125,
+              "width": 88,
+              "height": 88
+            },
+            ".hud-vitals-panel": {
+              "left": 16,
+              "top": 24.03125,
+              "right": 1000,
+              "bottom": 112.03125,
+              "width": 984,
+              "height": 88
+            },
+            ".hud-potions": {
+              "left": 1096,
+              "top": 113.03125,
+              "right": 1184,
+              "bottom": 139.03125,
+              "width": 88,
+              "height": 26
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\desktop-tooltip-faded.png"
+    },
+    {
+      "shape": "desktop",
+      "state": "compact-hud",
+      "reading": {
+        "viewport": {
+          "width": 1200,
+          "height": 730
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": "false",
+          "box": {
+            "left": 368.625,
+            "top": 131.16464233398438,
+            "right": 755.3125,
+            "bottom": 429.3833923339844,
+            "width": 386.6875,
+            "height": 298.21875
+          },
+          "card": {
+            "left": 368.625,
+            "top": 168.77401733398438,
+            "right": 755.3125,
+            "bottom": 426.2740173339844,
+            "width": 386.6875,
+            "height": 257.5
+          },
+          "intent": {
+            "left": 538.984375,
+            "top": 133.77401733398438,
+            "right": 584.953125,
+            "bottom": 162.77401733398438,
+            "width": 45.96875,
+            "height": 29
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 3.274017095565796,
+            "right": 1200,
+            "bottom": 109.2740170955658,
+            "width": 1200,
+            "height": 106
+          },
+          "mode": "compact",
+          "paddingTop": 1,
+          "paddingBottom": 1,
+          "topGap": 1,
+          "children": {
+            ".hud-top": {
+              "left": 8,
+              "top": 4.274017333984375,
+              "right": 1192,
+              "bottom": 107.27401733398438,
+              "width": 1184,
+              "height": 103
+            },
+            ".hud-info-row": {
+              "left": 571,
+              "top": 4.274017333984375,
+              "right": 629,
+              "bottom": 107.27401733398438,
+              "width": 58,
+              "height": 103
+            },
+            ".hud-center": {
+              "left": 571,
+              "top": 26.774017333984375,
+              "right": 629,
+              "bottom": 41.774017333984375,
+              "width": 58,
+              "height": 15
+            },
+            ".hud-run-meta": {
+              "left": 571,
+              "top": 44.774017333984375,
+              "right": 629,
+              "bottom": 53.774017333984375,
+              "width": 58,
+              "height": 9
+            },
+            ".hud-identity": {
+              "left": 586,
+              "top": 56.774017333984375,
+              "right": 614,
+              "bottom": 84.77401733398438,
+              "width": 28,
+              "height": 28
+            },
+            ".hud-resource-row": {
+              "left": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "width": 0,
+              "height": 0
+            },
+            ".hud-bottom": {
+              "left": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "width": 0,
+              "height": 0
+            },
+            ".hud-control-grid": {
+              "left": 1004,
+              "top": 4.274017333984375,
+              "right": 1192,
+              "bottom": 54.274017333984375,
+              "width": 188,
+              "height": 50
+            },
+            ".hud-vitals-panel": {
+              "left": 8,
+              "top": 4.274017333984375,
+              "right": 565,
+              "bottom": 80.27401733398438,
+              "width": 557,
+              "height": 76
+            },
+            ".hud-potions": {
+              "left": 1010,
+              "top": 56.274017333984375,
+              "right": 1192,
+              "bottom": 100.27401733398438,
+              "width": 182,
+              "height": 44
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "delta": {
+        "candidate": 106,
+        "prior": 115,
+        "reduction": 9,
+        "vh": 1.2328767123287672
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\desktop-combat-hud-compact.png"
+    },
+    {
+      "shape": "mobile",
+      "state": "title",
+      "reading": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "title": {
+          "left": 18.453125,
+          "top": 234.3914337158203,
+          "right": 371.53125,
+          "bottom": 313.1570739746094,
+          "width": 353.078125,
+          "height": 78.76564025878906,
+          "centerDelta": -0.0078125,
+          "wordmark": {
+            "left": 20.03125,
+            "top": 229.3914337158203,
+            "right": 370.296875,
+            "bottom": 281.3914489746094,
+            "width": 350.265625,
+            "height": 52.00001525878906,
+            "centerDelta": 0.1640625
+          }
+        },
+        "tooltip": {
+          "count": 0,
+          "visible": false,
+          "role": null,
+          "ariaHidden": null,
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": null,
+          "box": null,
+          "card": null,
+          "intent": null
+        },
+        "hud": null,
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": -1
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\mobile-title-centered.png"
+    },
+    {
+      "shape": "mobile",
+      "state": "combat",
+      "reading": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": "false",
+          "box": {
+            "left": 113.3125,
+            "top": 153.9210662841797,
+            "right": 220.46875,
+            "bottom": 560.1398162841797,
+            "width": 107.15625,
+            "height": 406.21875
+          },
+          "card": {
+            "left": 116.2890625,
+            "top": 255.8741912841797,
+            "right": 217.4921875,
+            "bottom": 478.6745300292969,
+            "width": 101.203125,
+            "height": 222.8003387451172
+          },
+          "intent": {
+            "left": 152.671875,
+            "top": 235.4835662841797,
+            "right": 181.109375,
+            "bottom": 249.4835662841797,
+            "width": 28.4375,
+            "height": 14
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0.6085613965988159,
+            "right": 390,
+            "bottom": 128.60856139659882,
+            "width": 390,
+            "height": 128
+          },
+          "mode": "expanded",
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "topGap": 0,
+          "children": {
+            ".hud-top": {
+              "left": 9,
+              "top": 0.6085613965988159,
+              "right": 381,
+              "bottom": 127.60856139659882,
+              "width": 372,
+              "height": 127
+            },
+            ".hud-info-row": {
+              "left": 9,
+              "top": 0.6085613965988159,
+              "right": 381,
+              "bottom": 15.217936396598816,
+              "width": 372,
+              "height": 14.609375
+            },
+            ".hud-center": {
+              "left": 183.703125,
+              "top": 2.4054365158081055,
+              "right": 206.296875,
+              "bottom": 13.405436515808105,
+              "width": 22.59375,
+              "height": 11
+            },
+            ".hud-run-meta": {
+              "left": 275.703125,
+              "top": 3.5148115158081055,
+              "right": 381,
+              "bottom": 12.311686515808105,
+              "width": 105.296875,
+              "height": 8.796875
+            },
+            ".hud-identity": {
+              "left": 9,
+              "top": 0.6085613965988159,
+              "right": 178.703125,
+              "bottom": 15.217936396598816,
+              "width": 169.703125,
+              "height": 14.609375
+            },
+            ".hud-resource-row": {
+              "left": 9,
+              "top": 15.217936515808105,
+              "right": 381,
+              "bottom": 104.2179365158081,
+              "width": 372,
+              "height": 89
+            },
+            ".hud-bottom": {
+              "left": 9,
+              "top": 104.21793365478516,
+              "right": 381,
+              "bottom": 127.60855865478516,
+              "width": 372,
+              "height": 23.390625
+            },
+            ".hud-control-grid": {
+              "left": 292,
+              "top": 15.217936515808105,
+              "right": 381,
+              "bottom": 104.2179365158081,
+              "width": 89,
+              "height": 89
+            },
+            ".hud-vitals-panel": {
+              "left": 9,
+              "top": 15.217936515808105,
+              "right": 288,
+              "bottom": 104.2179365158081,
+              "width": 279,
+              "height": 89
+            },
+            ".hud-potions": {
+              "left": 292,
+              "top": 104.21793365478516,
+              "right": 381,
+              "bottom": 127.60855865478516,
+              "width": 89,
+              "height": 23.390625
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\mobile-combat-hud.png"
+    },
+    {
+      "shape": "mobile",
+      "state": "before-delay",
+      "reading": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": "true",
+          "box": {
+            "left": 113.3125,
+            "top": 153.3125,
+            "right": 220.46875,
+            "bottom": 559.53125,
+            "width": 107.15625,
+            "height": 406.21875
+          },
+          "card": {
+            "left": 116.2890625,
+            "top": 255.265625,
+            "right": 217.4921875,
+            "bottom": 478.06597900390625,
+            "width": 101.203125,
+            "height": 222.80035400390625
+          },
+          "intent": {
+            "left": 152.671875,
+            "top": 234.875,
+            "right": 181.109375,
+            "bottom": 248.875,
+            "width": 28.4375,
+            "height": 14
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 128,
+            "width": 390,
+            "height": 128
+          },
+          "mode": "expanded",
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "topGap": 0,
+          "children": {
+            ".hud-top": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 127
+            },
+            ".hud-info-row": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 14.609375,
+              "width": 372,
+              "height": 14.609375
+            },
+            ".hud-center": {
+              "left": 183.703125,
+              "top": 1.796875,
+              "right": 206.296875,
+              "bottom": 12.796875,
+              "width": 22.59375,
+              "height": 11
+            },
+            ".hud-run-meta": {
+              "left": 275.703125,
+              "top": 2.90625,
+              "right": 381,
+              "bottom": 11.703125,
+              "width": 105.296875,
+              "height": 8.796875
+            },
+            ".hud-identity": {
+              "left": 9,
+              "top": 0,
+              "right": 178.703125,
+              "bottom": 14.609375,
+              "width": 169.703125,
+              "height": 14.609375
+            },
+            ".hud-resource-row": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 372,
+              "height": 89
+            },
+            ".hud-bottom": {
+              "left": 9,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 23.390625
+            },
+            ".hud-control-grid": {
+              "left": 292,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 89,
+              "height": 89
+            },
+            ".hud-vitals-panel": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 288,
+              "bottom": 103.609375,
+              "width": 279,
+              "height": 89
+            },
+            ".hud-potions": {
+              "left": 292,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 89,
+              "height": 23.390625
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\mobile-tooltip-before-delay.png"
+    },
+    {
+      "shape": "mobile",
+      "state": "visible",
+      "reading": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": true,
+          "role": "tooltip",
+          "ariaHidden": "false",
+          "placement": "above",
+          "variant": "enemy-context",
+          "lines": [
+            "Wandering Soldier",
+            "HP 22/22",
+            "Poise 0/10",
+            "Effects Crimson Blight"
+          ],
+          "box": {
+            "left": 19.8125,
+            "top": 210.09375,
+            "right": 110.875,
+            "bottom": 249.859375,
+            "width": 91.0625,
+            "height": 39.765625
+          }
+        },
+        "enemy": {
+          "selected": "true",
+          "box": {
+            "left": 113.3125,
+            "top": 153.3125,
+            "right": 220.46875,
+            "bottom": 559.53125,
+            "width": 107.15625,
+            "height": 406.21875
+          },
+          "card": {
+            "left": 116.2890625,
+            "top": 255.265625,
+            "right": 217.4921875,
+            "bottom": 478.06597900390625,
+            "width": 101.203125,
+            "height": 222.80035400390625
+          },
+          "intent": {
+            "left": 152.671875,
+            "top": 234.875,
+            "right": 181.109375,
+            "bottom": 248.875,
+            "width": 28.4375,
+            "height": 14
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 128,
+            "width": 390,
+            "height": 128
+          },
+          "mode": "expanded",
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "topGap": 0,
+          "children": {
+            ".hud-top": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 127
+            },
+            ".hud-info-row": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 14.609375,
+              "width": 372,
+              "height": 14.609375
+            },
+            ".hud-center": {
+              "left": 183.703125,
+              "top": 1.796875,
+              "right": 206.296875,
+              "bottom": 12.796875,
+              "width": 22.59375,
+              "height": 11
+            },
+            ".hud-run-meta": {
+              "left": 275.703125,
+              "top": 2.90625,
+              "right": 381,
+              "bottom": 11.703125,
+              "width": 105.296875,
+              "height": 8.796875
+            },
+            ".hud-identity": {
+              "left": 9,
+              "top": 0,
+              "right": 178.703125,
+              "bottom": 14.609375,
+              "width": 169.703125,
+              "height": 14.609375
+            },
+            ".hud-resource-row": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 372,
+              "height": 89
+            },
+            ".hud-bottom": {
+              "left": 9,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 23.390625
+            },
+            ".hud-control-grid": {
+              "left": 292,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 89,
+              "height": 89
+            },
+            ".hud-vitals-panel": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 288,
+              "bottom": 103.609375,
+              "width": 279,
+              "height": 89
+            },
+            ".hud-potions": {
+              "left": 292,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 89,
+              "height": 23.390625
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\mobile-tooltip-visible.png"
+    },
+    {
+      "shape": "mobile",
+      "state": "selected",
+      "reading": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": true,
+          "role": "tooltip",
+          "ariaHidden": "false",
+          "placement": "above",
+          "variant": "enemy-context",
+          "lines": [
+            "Wandering Soldier",
+            "HP 22/22",
+            "Poise 0/10",
+            "Effects Crimson Blight"
+          ],
+          "box": {
+            "left": 19.8125,
+            "top": 210.09375,
+            "right": 110.875,
+            "bottom": 249.859375,
+            "width": 91.0625,
+            "height": 39.765625
+          }
+        },
+        "enemy": {
+          "selected": "true",
+          "box": {
+            "left": 113.3125,
+            "top": 153.3125,
+            "right": 220.46875,
+            "bottom": 559.53125,
+            "width": 107.15625,
+            "height": 406.21875
+          },
+          "card": {
+            "left": 116.2890625,
+            "top": 255.265625,
+            "right": 217.4921875,
+            "bottom": 478.06597900390625,
+            "width": 101.203125,
+            "height": 222.80035400390625
+          },
+          "intent": {
+            "left": 152.671875,
+            "top": 234.875,
+            "right": 181.109375,
+            "bottom": 248.875,
+            "width": 28.4375,
+            "height": 14
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 128,
+            "width": 390,
+            "height": 128
+          },
+          "mode": "expanded",
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "topGap": 0,
+          "children": {
+            ".hud-top": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 127
+            },
+            ".hud-info-row": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 14.609375,
+              "width": 372,
+              "height": 14.609375
+            },
+            ".hud-center": {
+              "left": 183.703125,
+              "top": 1.796875,
+              "right": 206.296875,
+              "bottom": 12.796875,
+              "width": 22.59375,
+              "height": 11
+            },
+            ".hud-run-meta": {
+              "left": 275.703125,
+              "top": 2.90625,
+              "right": 381,
+              "bottom": 11.703125,
+              "width": 105.296875,
+              "height": 8.796875
+            },
+            ".hud-identity": {
+              "left": 9,
+              "top": 0,
+              "right": 178.703125,
+              "bottom": 14.609375,
+              "width": 169.703125,
+              "height": 14.609375
+            },
+            ".hud-resource-row": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 372,
+              "height": 89
+            },
+            ".hud-bottom": {
+              "left": 9,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 23.390625
+            },
+            ".hud-control-grid": {
+              "left": 292,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 89,
+              "height": 89
+            },
+            ".hud-vitals-panel": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 288,
+              "bottom": 103.609375,
+              "width": 279,
+              "height": 89
+            },
+            ".hud-potions": {
+              "left": 292,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 89,
+              "height": 23.390625
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\mobile-tooltip-selected.png"
+    },
+    {
+      "shape": "mobile",
+      "state": "faded",
+      "reading": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": "above",
+          "variant": "enemy-context",
+          "lines": [
+            "Wandering Soldier",
+            "HP 22/22",
+            "Poise 0/10",
+            "Effects Crimson Blight"
+          ],
+          "box": null
+        },
+        "enemy": {
+          "selected": "true",
+          "box": {
+            "left": 113.3125,
+            "top": 153.3125,
+            "right": 220.46875,
+            "bottom": 559.53125,
+            "width": 107.15625,
+            "height": 406.21875
+          },
+          "card": {
+            "left": 116.2890625,
+            "top": 255.265625,
+            "right": 217.4921875,
+            "bottom": 478.06597900390625,
+            "width": 101.203125,
+            "height": 222.80035400390625
+          },
+          "intent": {
+            "left": 152.671875,
+            "top": 234.875,
+            "right": 181.109375,
+            "bottom": 248.875,
+            "width": 28.4375,
+            "height": 14
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 128,
+            "width": 390,
+            "height": 128
+          },
+          "mode": "expanded",
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "topGap": 0,
+          "children": {
+            ".hud-top": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 127
+            },
+            ".hud-info-row": {
+              "left": 9,
+              "top": 0,
+              "right": 381,
+              "bottom": 14.609375,
+              "width": 372,
+              "height": 14.609375
+            },
+            ".hud-center": {
+              "left": 183.703125,
+              "top": 1.796875,
+              "right": 206.296875,
+              "bottom": 12.796875,
+              "width": 22.59375,
+              "height": 11
+            },
+            ".hud-run-meta": {
+              "left": 275.703125,
+              "top": 2.90625,
+              "right": 381,
+              "bottom": 11.703125,
+              "width": 105.296875,
+              "height": 8.796875
+            },
+            ".hud-identity": {
+              "left": 9,
+              "top": 0,
+              "right": 178.703125,
+              "bottom": 14.609375,
+              "width": 169.703125,
+              "height": 14.609375
+            },
+            ".hud-resource-row": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 372,
+              "height": 89
+            },
+            ".hud-bottom": {
+              "left": 9,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 372,
+              "height": 23.390625
+            },
+            ".hud-control-grid": {
+              "left": 292,
+              "top": 14.609375,
+              "right": 381,
+              "bottom": 103.609375,
+              "width": 89,
+              "height": 89
+            },
+            ".hud-vitals-panel": {
+              "left": 9,
+              "top": 14.609375,
+              "right": 288,
+              "bottom": 103.609375,
+              "width": 279,
+              "height": 89
+            },
+            ".hud-potions": {
+              "left": 292,
+              "top": 103.609375,
+              "right": 381,
+              "bottom": 127,
+              "width": 89,
+              "height": 23.390625
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\mobile-tooltip-faded.png"
+    },
+    {
+      "shape": "mobile",
+      "state": "compact-hud",
+      "reading": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "title": null,
+        "tooltip": {
+          "count": 1,
+          "visible": false,
+          "role": "tooltip",
+          "ariaHidden": "true",
+          "placement": null,
+          "variant": null,
+          "lines": [],
+          "box": null
+        },
+        "enemy": {
+          "selected": "false",
+          "box": {
+            "left": 113.953125,
+            "top": 128.08349609375,
+            "right": 221.78125,
+            "bottom": 561.91162109375,
+            "width": 107.828125,
+            "height": 433.828125
+          },
+          "card": {
+            "left": 116.50483703613281,
+            "top": 242.89599609375,
+            "right": 219.1982879638672,
+            "bottom": 467.568603515625,
+            "width": 102.69345092773438,
+            "height": 224.672607421875
+          },
+          "intent": {
+            "left": 153.6328125,
+            "top": 222.50537109375,
+            "right": 182.0703125,
+            "bottom": 236.50537109375,
+            "width": 28.4375,
+            "height": 14
+          }
+        },
+        "hud": {
+          "box": {
+            "left": 0,
+            "top": 2.380375862121582,
+            "right": 390,
+            "bottom": 102.77100086212158,
+            "width": 390,
+            "height": 100.390625
+          },
+          "mode": "compact",
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "topGap": 0,
+          "children": {
+            ".hud-top": {
+              "left": 9,
+              "top": 2.380375862121582,
+              "right": 381,
+              "bottom": 101.77100086212158,
+              "width": 372,
+              "height": 99.390625
+            },
+            ".hud-info-row": {
+              "left": 166,
+              "top": 2.380375862121582,
+              "right": 224,
+              "bottom": 101.77100086212158,
+              "width": 58,
+              "height": 99.390625
+            },
+            ".hud-center": {
+              "left": 166,
+              "top": 23.067874908447266,
+              "right": 224,
+              "bottom": 34.067874908447266,
+              "width": 58,
+              "height": 11
+            },
+            ".hud-run-meta": {
+              "left": 166,
+              "top": 39.067874908447266,
+              "right": 224,
+              "bottom": 48.067874908447266,
+              "width": 58,
+              "height": 9
+            },
+            ".hud-identity": {
+              "left": 181,
+              "top": 53.067874908447266,
+              "right": 209,
+              "bottom": 81.06787872314453,
+              "width": 28,
+              "height": 28.000003814697266
+            },
+            ".hud-resource-row": {
+              "left": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "width": 0,
+              "height": 0
+            },
+            ".hud-bottom": {
+              "left": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "width": 0,
+              "height": 0
+            },
+            ".hud-control-grid": {
+              "left": 225,
+              "top": 2.380375862121582,
+              "right": 381,
+              "bottom": 44.38037586212158,
+              "width": 156,
+              "height": 42
+            },
+            ".hud-vitals-panel": {
+              "left": 9,
+              "top": 2.380375862121582,
+              "right": 166,
+              "bottom": 78.38037586212158,
+              "width": 157,
+              "height": 76
+            },
+            ".hud-potions": {
+              "left": 231,
+              "top": 46.380374908447266,
+              "right": 381,
+              "bottom": 82.38037872314453,
+              "width": 150,
+              "height": 36.000003814697266
+            }
+          }
+        },
+        "geometry": {
+          "tipIntentOverlap": false,
+          "tipHudOverlap": false,
+          "onGlass": true
+        },
+        "redundantEnemyTooltips": 0
+      },
+      "delta": {
+        "candidate": 100.390625,
+        "prior": 112.390625,
+        "reduction": 12,
+        "vh": 1.4218009478672986
+      },
+      "screenshot": "C:\\repos\\AshenSpire-ui-current-build-tooltip-hud-logo\\outputs\\t0-ui-authoritative\\mobile-combat-hud-compact.png"
+    }
+  ]
+}
