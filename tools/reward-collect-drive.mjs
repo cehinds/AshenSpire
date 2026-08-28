@@ -136,9 +136,10 @@ if (process.argv.includes('--selftest')) {
 
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { fileURLToPath } from 'node:url';
 
 const SEED = 'FALK'; // armaments stream first draw = 11 ≤ 60: the treasure drops
-const { port } = await serve({ root: new URL('..', import.meta.url).pathname, port: 8207, open: false });
+const { port } = await serve({ root: fileURLToPath(new URL('..', import.meta.url)), port: 8207, open: false });
 await launchBrowser({
   prefix: 'reward-collect-', browser: process.env.CHROME || '/usr/bin/chromium',
   headless: '--headless=new', awaitEndpoint: false,
