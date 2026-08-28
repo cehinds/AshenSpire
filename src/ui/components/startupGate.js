@@ -34,14 +34,16 @@ export function mountStartupGate(app, {
     <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
-      <div class="startup-mark" data-component="startup-mark">
-        ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
-        <h1 class="startup-wordmark" data-component="startup-wordmark">${esc(properties.wordmark)}</h1>
-        ${properties.subtitle ? `<p class="startup-subtitle" data-component="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
-        <div class="startup-rule" data-component="startup-divider" aria-hidden="true"><span></span></div>
-        <p class="startup-prompt" data-component="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
+      <div class="startup-anchor">
+        <div class="startup-mark" data-component="startup-mark">
+          ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
+          <h1 class="startup-wordmark" data-component="startup-wordmark">${esc(properties.wordmark)}</h1>
+          ${properties.subtitle ? `<p class="startup-subtitle" data-component="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
+          <div class="startup-rule" data-component="startup-divider" aria-hidden="true"><span></span></div>
+          <p class="startup-prompt" data-component="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
+        </div>
+        ${buildStampHtml('startup')}
       </div>
-      ${buildStampHtml('startup')}
     </section>`;
 
   const root = app.querySelector('.startup-gate');
