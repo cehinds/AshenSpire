@@ -4,10 +4,11 @@
 // records handed in by main.js. The same modal shell serves LOAD and NEW so the
 // art and spacing can evolve without duplicating the screen structure.
 
-import { attachTooltip, esc, hideTooltip } from '../components/tooltip.js';
-import { armHold, beatArmer } from '../components/holdconfirm.js';
+import { esc } from '../components/tooltip.js';
+import { beatArmer } from '../components/holdconfirm.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
+import { openSaveSlotSelector } from '../components/saveSlotSelector.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
@@ -49,8 +50,6 @@ export function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
-  let activatedLoadSlot = null;
-  let loadReviewSlot = null;
 
   const selectionModel = (kind = modal) => saveSlotSelectionModel(slots, { kind, selectedSlot });
 
@@ -59,11 +58,8 @@ export function mountTitle(app, {
     .map(({ properties }) => {
       const { slot, selectable, selected } = properties;
       const summary = slots.find((record) => record.slot === slot)?.summary || null;
-      const loadHint = model.properties.kind === 'load' && summary
-        ? ` title="Select slot ${slot}. Hold to load now; activate the selected slot again to review." aria-label="Slot ${slot}, ${esc(summary.className)}. Hold to load now; activate twice to review."`
-        : '';
       return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}" data-component="title-save-slot">
-        <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${loadHint}${selectable ? '' : ' disabled'}>
+        <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${selectable ? '' : ' disabled'}>
           <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy({ slot, summary })}</span>
           <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
         </button>
@@ -98,27 +94,8 @@ export function mountTitle(app, {
 
   const modalHtml = () => {
     if (!modal) return '';
-    if (modal === 'load' && loadReviewSlot != null) {
-      const record = slots.find(({ slot }) => slot === loadReviewSlot);
-      if (!record?.summary) loadReviewSlot = null;
-      else return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
-        <section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
-          <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
-          <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
-          <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
-            <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy(record)}</span>
-          </article>
-          <p class="title-load-review-copy">Load this saved climb now?</p>
-          <div class="title-modal-actions" data-component="title-modal-actions">
-            <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
-            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
-          </div>
-        </section>
-      </div>`;
-    }
     const model = selectionModel();
-    const title = modal === 'load' ? 'LOAD GAME' : 'NEW GAME';
+    const title = 'NEW GAME';
     return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
       <section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
         <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
@@ -144,71 +121,41 @@ export function mountTitle(app, {
   const openModal = (kind) => {
     modal = kind;
     selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
-    activatedLoadSlot = null;
-    loadReviewSlot = null;
     render();
     focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
+  };
+
+  const openLoadSelector = (launcher) => {
+    openSaveSlotSelector({
+      host: app,
+      slots,
+      meta,
+      registries,
+      inlineReview: true,
+      returnFocusElement: launcher,
+      onRequestLoad: (slot) => onContinue(slot),
+      onDelete,
+    });
   };
 
   const closeModal = () => {
     modal = null;
     selectedSlot = null;
-    activatedLoadSlot = null;
-    loadReviewSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
   };
 
-  const closeLoadReview = () => {
-    const slot = loadReviewSlot;
-    loadReviewSlot = null;
-    render();
-    focusModal(`[data-slot-pick="${slot}"]`);
-  };
-
   const activateSlot = (slot) => {
-    hideTooltip();
-    if (modal === 'load') {
-      if (selectedSlot === slot && activatedLoadSlot === slot) {
-        loadReviewSlot = slot;
-        render();
-        focusModal('[data-title-action="review-load"]');
-        return;
-      }
-      selectedSlot = slot;
-      activatedLoadSlot = slot;
-    } else {
-      selectedSlot = slot;
-    }
+    selectedSlot = slot;
     render();
     focusModal(`[data-slot-pick="${selectedSlot}"]`);
-  };
-
-  const wireLoadSlots = (root) => {
-    if (modal !== 'load') return;
-    const configured = Number(registries.balance.ui.titleLoadHold?.ms);
-    const duration = Number.isFinite(configured) && configured > 0 ? configured : 600;
-    root.querySelectorAll('.title-slot-pick.is-filled').forEach((button) => {
-      const slot = +button.dataset.slotPick;
-      const record = slots.find((candidate) => candidate.slot === slot);
-      attachTooltip(button, () => `<div class="tt-title">Slot ${slot} · ${esc(record?.summary?.className || 'Saved climb')}</div>`
-        + 'Tap once to select. Tap the selected slot again to review. Hold to load now.');
-      armHold(button, {
-        ms: duration,
-        id: 'loadSave',
-        pointerOnly: true,
-        hintHost: button,
-        onTap: () => activateSlot(slot),
-        onConfirm: () => { hideTooltip(); onContinue(slot); },
-      });
-    });
   };
 
   const wireDelete = (root) => {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slot) });
+      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete) });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };
@@ -234,8 +181,7 @@ export function mountTitle(app, {
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
-        if (loadReviewSlot != null) closeLoadReview();
-        else closeModal();
+        closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
         const first = controls[0];
@@ -253,18 +199,16 @@ export function mountTitle(app, {
       button.addEventListener('click', () => {
         const action = button.dataset.titleAction;
         if (action === 'continue') onContinue(occupied[0].slot);
-        else if (action === 'load' || action === 'new') openModal(action);
+        else if (action === 'load') openLoadSelector(button);
+        else if (action === 'new') openModal(action);
         else if (action === 'collection' && onCompendium) onCompendium();
         else if (action === 'settings') onSettings();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
-        else if (action === 'review-back') closeLoadReview();
-        else if (action === 'review-load') onContinue(loadReviewSlot);
         else if (action === 'modal-continue') {
           const target = selectionModel().properties.actionSlot;
           if (target == null) return;
-          if (modal === 'load') onContinue(target);
-          else onNew(target);
+          onNew(target);
         }
       });
     });
@@ -272,12 +216,10 @@ export function mountTitle(app, {
       if (event.target === event.currentTarget) closeModal();
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
-      if (modal === 'load' && button.classList.contains('is-filled')) return;
       button.addEventListener('click', () => {
         activateSlot(+button.dataset.slotPick);
       });
     });
-    wireLoadSlots(root);
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
