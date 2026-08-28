@@ -26,6 +26,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark, deterministic ash, family prompt, and shared build receipt; Title is not mounted behind it. |
+| `title-menu` | title content records | `title.mountTitle` | Title screen | Centered unfurled Continue / Load / New / Collection / Settings / Quit menu. |
+| `title-menu-modal` | save-slot records + selected slot | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal with slot selection, Back, Continue, and delete affordance. |
 | `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
