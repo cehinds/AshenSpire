@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "ashenspire.escalation.cell.v1",
+  "name": "ITM3 Decision and Escalation Cell",
+  "ticketSystem": "HELP_DESK_DEDUPLICATED",
+  "seats": [
+    { "role": "TRIAGE", "assignment": "PERMANENT", "agentSession": "pilot-triage", "ticketRow": "PILOT-001", "evidence": "pilot://entered", "wake": "Classify.", "writerAuthority": "QUEUE_TRIAGE_ONLY", "qaVerdictAuthority": false, "responsibility": "Deduplicate." },
+    { "role": "RESOLUTION", "assignment": "PERMANENT", "agentSession": "pilot-resolution", "ticketRow": "PILOT-001", "evidence": "pilot://entered", "wake": "Resolve.", "writerAuthority": "ASSIGNED_RESOLUTION_PATHS_ONLY", "qaVerdictAuthority": true, "responsibility": "Resolve." },
+    { "role": "DECISION_AND_ESCALATION", "assignment": "PERMANENT", "agentSession": "pilot-decision", "ticketRow": "PILOT-001", "evidence": "pilot://entered", "wake": "Decide.", "writerAuthority": "PILOT_SOLE_WRITER", "qaVerdictAuthority": false, "responsibility": "Decide." }
+  ],
+  "fallbackHistory": [
+    { "role": "QA1_TEMPORARY_SUPPORT", "agentSession": "pilot-qa1-support", "ticketRow": "PILOT-001", "status": "HISTORICAL_TEMPORARY_HANDOFF", "writerAuthority": "NONE", "qaVerdictAuthority": false, "evidence": "pilot://entered", "wake": "Support only." }
+  ],
+  "classifications": ["NEEDS_CONSTANTINE_NOW", "ITM3_DECISION_OVERDUE", "TEAM_REMEDIABLE_BLOCKER"],
+  "queuePolicy": { "oneActiveItemPerDedupKey": true, "ownerPacketRequired": true, "attemptsAndAgeRequired": true, "wakeAndContinuingWorkRequired": true, "exactGuardOnly": true, "noAcknowledgementLoop": true, "overdueFallbackSeconds": 900, "overdueClassification": "ITM3_DECISION_OVERDUE" }
+}

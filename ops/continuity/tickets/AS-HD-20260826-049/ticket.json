@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "ashenspire.continuity.ticket.v2",
+  "id": "AS-HD-20260826-049",
+  "title": "Repository-native continuity and feature promotion channels",
+  "priority": "T0",
+  "status": {
+    "value": "CANDIDATE FROZEN",
+    "atUtc": "2026-08-28T07:54:55Z"
+  },
+  "teamId": "coordination",
+  "owner": {
+    "role": "IT Manager III / Main",
+    "taskId": "01a02bc1-1611-7a22-9803-8c5e617ab711"
+  },
+  "entry": {
+    "agentSession": "/root/ticket_dedupe",
+    "branch": "codex/coordination-structure-reset",
+    "worktree": "C:\\repos\\AshenSpire-coordination-reset",
+    "base": "a110ac9d6472faeb979f010949315e8374ddb01a",
+    "candidateHeadAtEntry": "7d48610f4b7054e1f5ec4680829aab33214ed176",
+    "objective": "Reversibly establish canonical continuity records and origin-backed per-feature commit-pointer promotion channels.",
+    "firstAction": "Implemented pointer, schemas, ticket/team/history/evidence structures, bounded validation, cold start, then began adversarial-gap correction.",
+    "evidenceTarget": "Frozen correction commit, full suite, cold reconstruction, and stable-TEST promotion pilot.",
+    "nextHandoff": "Exact frozen commit to independent QA."
+  },
+  "scope": {
+    "allowedRoots": [
+      "ops/continuity",
+      "tools/continuity-reconcile.mjs",
+      "tools/continuity-feature-channels.mjs",
+      "tools/continuity-escalation.mjs",
+      "tests/continuity-reconcile.test.mjs",
+      "tests/fixtures/continuity-cold-start",
+      "tests/fixtures/continuity-feature-pilot",
+      "tests/fixtures/continuity-escalation-pilot",
+      "tests/run-node.mjs"
+    ],
+    "serializedLanes": [
+      "continuity-pointer",
+      "shared-integration",
+      "generated-artifacts"
+    ],
+    "forbiddenActions": [
+      "destructive-migration",
+      "external-ledger-rewrite",
+      "force-ref-rewrite",
+      "push-before-self-review",
+      "unreviewed-integration",
+      "deployment",
+      "release"
+    ]
+  },
+  "authority": {
+    "allowedActions": [
+      "local-implementation",
+      "local-tests",
+      "local-evidence",
+      "local-commit",
+      "coherent-dev-checkpoint-after-self-review"
+    ],
+    "withheldActions": [
+      "push-before-self-review",
+      "test-promotion-without-exact-dev-commit",
+      "release-promotion-without-passed-test-revision",
+      "shared-dev-integration-without-reviewed-pr",
+      "merge",
+      "publication",
+      "deployment",
+      "release"
+    ]
+  },
+  "blocker": null,
+  "deliveryFacts": {
+    "localCandidate": { "value": true, "atUtc": "2026-08-28T07:54:55Z", "evidence": "evidence/AS-HD-20260826-049-terminal-local-candidate-2026-08-28.md" },
+    "pushed": { "value": false, "atUtc": null, "evidence": null },
+    "pullRequest": { "value": false, "atUtc": null, "evidence": null },
+    "devIntegrated": { "value": false, "atUtc": null, "evidence": null },
+    "hostedVerified": { "value": false, "atUtc": null, "evidence": null },
+    "resolved": { "value": false, "atUtc": null, "evidence": null },
+    "released": { "value": false, "atUtc": null, "evidence": null }
+  },
+  "migrationBoundary": "ADDITIVE_REPOSITORY_NATIVE_CHANNELS_ONLY",
+  "historyRefs": [
+    {
+      "id": "000001-AS-HD-20260826-049-entered-work",
+      "path": "history/000001-AS-HD-20260826-049-entered-work.json",
+      "sha256": "23923C3B7F8ADA3CD3E999BB4AAE4FC38C532A767E7E9CF8FDD715711AAE8063"
+    },
+    {
+      "id": "000002-AS-HD-20260826-049-terminal-local-candidate",
+      "path": "history/000002-AS-HD-20260826-049-terminal-local-candidate.json",
+      "sha256": "970C9F2724AE4D3ED739DF8F5B4033FE3A417B93ED9D9DC4BE4B7BAF52EDF3F2"
+    },
+    {
+      "id": "000003-AS-HD-20260826-050-manager-cycle-takeover",
+      "path": "history/000003-AS-HD-20260826-050-manager-cycle-takeover.json",
+      "sha256": "72F53C4079907F13F0E91F4B18326ED6E6758FAA99F0211A8EE493B0767DA884"
+    },
+    {
+      "id": "000004-AS-HD-20260826-049-correction-unverified-timeout",
+      "path": "history/000004-AS-HD-20260826-049-correction-unverified-timeout.json",
+      "sha256": "61787F9F8B051A63CC95C1864F5763526A60DECD1F9824204D3D0C619F47ED34"
+    }
+  ]
+}

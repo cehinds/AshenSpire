@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "ashenspire.feature.release.v1",
+  "ticketId": "AS-HD-20260826-049",
+  "channel": "RELEASE",
+  "ref": "codex/feature/AS-HD-20260826-049/release",
+  "revision": 0,
+  "immutable": true,
+  "commit": null,
+  "originObservedCommit": null,
+  "observedAtUtc": null,
+  "currentness": "ORIGIN_REF_ABSENT",
+  "promotedFromTestRevision": null,
+  "promotedFromTestCommit": null,
+  "guard": {
+    "code": "RELEASE_NO_PASSED_TEST",
+    "blocks": ["SHARED_DEV_INTEGRATION"],
+    "retryTrigger": "Promote an identical commit from a passed immutable TEST revision.",
+    "safeWork": ["dev-repair", "test-qa"]
+  }
+}

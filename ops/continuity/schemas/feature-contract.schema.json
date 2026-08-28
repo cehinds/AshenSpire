@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.feature.contract.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "ticketId", "owner", "immediateEntry", "refs", "claims", "retention", "promotionRules", "verification", "excludedEvidence"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.feature.contract.v1" },
+    "ticketId": { "type": "string", "minLength": 1 },
+    "owner": { "$ref": "#/$defs/owner" },
+    "immediateEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["directiveSource", "controllingCurrentWork", "assignmentTiming", "assignmentMode", "temporaryProtocol", "occupiedSeatProtocol", "startedRequires", "preWorkApprovalLoop", "currentEntry"],
+      "properties": {
+        "directiveSource": { "type": "string", "minLength": 1 },
+        "controllingCurrentWork": { "const": true },
+        "assignmentTiming": { "const": "SAME_CYCLE" },
+        "assignmentMode": { "enum": ["PERMANENT_OWNER", "BOUNDED_TEMPORARY_AGENT"] },
+        "temporaryProtocol": { "type": "string", "minLength": 1 },
+        "occupiedSeatProtocol": { "type": "string", "minLength": 1 },
+        "startedRequires": { "type": "array", "minItems": 5, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "preWorkApprovalLoop": { "const": false },
+        "currentEntry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["agentSession", "branch", "worktree", "base", "firstAction", "nextHandoff", "soleWriter"],
+          "properties": {
+            "agentSession": { "type": "string", "minLength": 1 },
+            "branch": { "type": "string", "minLength": 1 },
+            "worktree": { "type": "string", "minLength": 1 },
+            "base": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            "firstAction": { "type": "string", "minLength": 1 },
+            "nextHandoff": { "type": "string", "minLength": 1 },
+            "soleWriter": { "const": true }
+          }
+        }
+      }
+    },
+    "refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dev", "test", "release"],
+      "properties": {
+        "dev": { "type": "string", "minLength": 1 },
+        "test": { "type": "string", "minLength": 1 },
+        "release": { "type": "string", "minLength": 1 }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exclusivePaths", "serializedLanes"],
+      "properties": {
+        "exclusivePaths": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "serializedLanes": { "type": "array", "uniqueItems": true, "items": { "enum": ["shared-integration", "generated-artifacts"] } }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commitPointersOnly", "copiedTreesForbidden", "localWorktreeSoleCustodyForbidden", "cleanupRequiresOriginCommit", "cleanupRequiresResolvablePointer", "removeOnlyUnintegratedRemoteRefForbidden"],
+      "properties": {
+        "commitPointersOnly": { "const": true },
+        "copiedTreesForbidden": { "const": true },
+        "localWorktreeSoleCustodyForbidden": { "const": true },
+        "cleanupRequiresOriginCommit": { "const": true },
+        "cleanupRequiresResolvablePointer": { "const": true },
+        "removeOnlyUnintegratedRemoteRefForbidden": { "const": true }
+      }
+    },
+    "promotionRules": { "type": "array", "minItems": 7, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ackDeadlineSeconds", "completeDeadlineSeconds", "timeoutResult", "continueAuthorizedSequence", "passClaimForbiddenOnTimeout", "hardStops", "timeoutRecordRequires"],
+      "properties": {
+        "ackDeadlineSeconds": { "const": 300 },
+        "completeDeadlineSeconds": { "const": 600 },
+        "timeoutResult": { "const": "UNVERIFIED_TIMEOUT" },
+        "continueAuthorizedSequence": { "const": true },
+        "passClaimForbiddenOnTimeout": { "const": true },
+        "hardStops": { "const": ["SECURITY_FAILURE", "DESTRUCTIVE_DATA_FAILURE", "TECHNICAL_BRANCH_PROTECTION_FAILURE"] },
+        "timeoutRecordRequires": { "const": ["startedAtUtc", "ackAtUtc", "completedAtUtc", "attempt", "testsRun", "rollback", "nextVerificationOpportunity"] }
+      }
+    },
+    "excludedEvidence": { "type": "array", "minItems": 4, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  },
+  "$defs": {
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "taskId"],
+      "properties": {
+        "role": { "type": "string", "minLength": 1 },
+        "taskId": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

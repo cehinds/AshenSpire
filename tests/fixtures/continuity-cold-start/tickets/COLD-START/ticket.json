@@ -1,24 +1,59 @@
 {
-  "schemaVersion": "ashenspire.continuity.ticket.v1",
+  "schemaVersion": "ashenspire.continuity.ticket.v2",
   "id": "COLD-START",
   "title": "Cold-start continuity fixture",
   "priority": "T0",
-  "status": "ENTERED_WORK",
+  "status": {
+    "value": "IN PROGRESS",
+    "atUtc": "2026-08-28T00:00:00Z"
+  },
   "teamId": "coordination",
   "owner": {
     "role": "Fixture Owner",
     "taskId": "fixture-task"
   },
+  "entry": {
+    "agentSession": "fixture-agent",
+    "branch": "codex/fixture",
+    "worktree": "fixture-only",
+    "base": "0000000000000000000000000000000000000000",
+    "candidateHeadAtEntry": "0000000000000000000000000000000000000000",
+    "objective": "Validate cold reconstruction without external context.",
+    "firstAction": "Create bounded commit-pointer records.",
+    "evidenceTarget": "Cold-start and refusal corpus.",
+    "nextHandoff": "Fixture result to the test runner."
+  },
   "scope": {
     "allowedRoots": [
       "tests/fixtures/continuity-cold-start"
+    ],
+    "serializedLanes": [
+      "fixture-pointer"
     ],
     "forbiddenActions": [
       "mutation"
     ]
   },
+  "blocker": null,
+  "authority": {
+    "allowedActions": ["fixture-validation"],
+    "withheldActions": ["mutation"]
+  },
+  "deliveryFacts": {
+    "localCandidate": { "value": false, "atUtc": null, "evidence": null },
+    "pushed": { "value": false, "atUtc": null, "evidence": null },
+    "pullRequest": { "value": false, "atUtc": null, "evidence": null },
+    "devIntegrated": { "value": false, "atUtc": null, "evidence": null },
+    "hostedVerified": { "value": false, "atUtc": null, "evidence": null },
+    "resolved": { "value": false, "atUtc": null, "evidence": null },
+    "released": { "value": false, "atUtc": null, "evidence": null }
+  },
   "migrationBoundary": "FIXTURE_ONLY",
-  "historyIds": [
-    "000001-cold-start-entered"
+  "historyRefs": [
+    {
+      "id": "000001-cold-start-entered",
+      "path": "history/000001-cold-start-entered.json",
+      "sha256": "DBD845E1743E3CCA7A37C82ED7309F5A437677B3C0892AE38D78E0C8745FCB4F"
+    }
   ]
 }

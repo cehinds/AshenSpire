@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "ashenspire.feature.test.v1",
+  "ticketId": "PILOT-001",
+  "channel": "TEST",
+  "ref": "codex/feature/PILOT-001/test",
+  "revision": 1,
+  "immutable": true,
+  "commit": "1111111111111111111111111111111111111111",
+  "originObservedCommit": "1111111111111111111111111111111111111111",
+  "observedAtUtc": "2026-08-28T00:03:00Z",
+  "currentness": "CURRENT",
+  "promotedFromDevRevision": 1,
+  "promotedFromDevCommit": "1111111111111111111111111111111111111111",
+  "qa": {
+    "status": "PASS",
+    "testRevision": 1,
+    "commit": "1111111111111111111111111111111111111111",
+    "atUtc": "2026-08-28T00:04:00Z",
+    "evidence": "evidence/test-r1-pass.md"
+  },
+  "guard": null
+}

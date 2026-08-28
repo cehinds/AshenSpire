@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "ashenspire.feature.test.v1",
+  "ticketId": "AS-HD-20260826-049",
+  "channel": "TEST",
+  "ref": "codex/feature/AS-HD-20260826-049/test",
+  "revision": 0,
+  "immutable": true,
+  "commit": null,
+  "originObservedCommit": null,
+  "observedAtUtc": null,
+  "currentness": "ORIGIN_REF_ABSENT",
+  "promotedFromDevRevision": null,
+  "promotedFromDevCommit": null,
+  "qa": {
+    "status": "NOT_RUN",
+    "testRevision": null,
+    "commit": null,
+    "atUtc": null,
+    "evidence": null
+  },
+  "guard": {
+    "code": "TEST_NO_PROMOTION",
+    "blocks": ["RELEASE_PROMOTION"],
+    "retryTrigger": "Promote one exact current origin-backed DEV commit to a new TEST revision.",
+    "safeWork": ["dev-repair", "dev-checkpoint"]
+  }
+}

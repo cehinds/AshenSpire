@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "ashenspire.feature.release.v1",
+  "ticketId": "PILOT-001",
+  "channel": "RELEASE",
+  "ref": "codex/feature/PILOT-001/release",
+  "revision": 1,
+  "immutable": true,
+  "commit": "1111111111111111111111111111111111111111",
+  "originObservedCommit": "1111111111111111111111111111111111111111",
+  "observedAtUtc": "2026-08-28T00:06:00Z",
+  "currentness": "CURRENT",
+  "promotedFromTestRevision": 1,
+  "promotedFromTestCommit": "1111111111111111111111111111111111111111",
+  "guard": null
+}

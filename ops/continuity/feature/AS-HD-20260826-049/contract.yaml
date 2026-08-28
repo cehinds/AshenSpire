@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "ashenspire.feature.contract.v1",
+  "ticketId": "AS-HD-20260826-049",
+  "owner": {
+    "role": "IT Manager III / Main",
+    "taskId": "01a02bc1-1611-7a22-9803-8c5e617ab711"
+  },
+  "immediateEntry": {
+    "directiveSource": "Constantine direct owner directive",
+    "controllingCurrentWork": true,
+    "assignmentTiming": "SAME_CYCLE",
+    "assignmentMode": "BOUNDED_TEMPORARY_AGENT",
+    "temporaryProtocol": "Begin the highest-value reversible non-colliding work, preserve one writer, then hand off the exact frozen commit.",
+    "occupiedSeatProtocol": "Record higher-priority occupants and perform the smallest useful non-colliding preparation.",
+    "startedRequires": [
+      "entered-agent",
+      "ticket",
+      "branch-worktree-or-scope",
+      "first-action",
+      "next-handoff"
+    ],
+    "preWorkApprovalLoop": false,
+    "currentEntry": {
+      "agentSession": "/root/ticket_dedupe",
+      "branch": "codex/coordination-structure-reset",
+      "worktree": "C:\\repos\\AshenSpire-coordination-reset",
+      "base": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "firstAction": "Implement continuity pointer/schema/migration/validator and correct adversarial gaps.",
+      "nextHandoff": "Exact frozen commit to independent QA.",
+      "soleWriter": true
+    }
+  },
+  "refs": {
+    "dev": "codex/feature/AS-HD-20260826-049/dev",
+    "test": "codex/feature/AS-HD-20260826-049/test",
+    "release": "codex/feature/AS-HD-20260826-049/release"
+  },
+  "claims": {
+    "exclusivePaths": [
+      "ops/continuity",
+      "tools/continuity-reconcile.mjs",
+      "tools/continuity-feature-channels.mjs",
+      "tools/continuity-escalation.mjs",
+      "tests/continuity-reconcile.test.mjs",
+      "tests/fixtures/continuity-cold-start",
+      "tests/fixtures/continuity-feature-pilot",
+      "tests/fixtures/continuity-escalation-pilot"
+    ],
+    "serializedLanes": ["shared-integration", "generated-artifacts"]
+  },
+  "retention": {
+    "commitPointersOnly": true,
+    "copiedTreesForbidden": true,
+    "localWorktreeSoleCustodyForbidden": true,
+    "cleanupRequiresOriginCommit": true,
+    "cleanupRequiresResolvablePointer": true,
+    "removeOnlyUnintegratedRemoteRefForbidden": true
+  },
+  "promotionRules": [
+    "DEV checkpoints become valid only when the exact commit is observed on the origin DEV ref.",
+    "TEST promotion copies the identical origin-backed DEV commit pointer; it never copies a tree.",
+    "TEST revisions are immutable; a QA failure guards only that revision's RELEASE promotion.",
+    "DEV may advance while TEST and RELEASE retain their independently valid exact commits.",
+    "RELEASE promotion copies an identical commit from a passed TEST revision.",
+    "Accepted RELEASE integrates into shared dev only through a reviewed pull request.",
+    "Shared generated artifacts and integration lanes remain serialized."
+  ],
+  "verification": {
+    "ackDeadlineSeconds": 300,
+    "completeDeadlineSeconds": 600,
+    "timeoutResult": "UNVERIFIED_TIMEOUT",
+    "continueAuthorizedSequence": true,
+    "passClaimForbiddenOnTimeout": true,
+    "hardStops": ["SECURITY_FAILURE", "DESTRUCTIVE_DATA_FAILURE", "TECHNICAL_BRANCH_PROTECTION_FAILURE"],
+    "timeoutRecordRequires": ["startedAtUtc", "ackAtUtc", "completedAtUtc", "attempt", "testsRun", "rollback", "nextVerificationOpportunity"]
+  },
+  "excludedEvidence": [
+    "secrets",
+    "transient-browser-profiles",
+    "temporary-evidence",
+    "copied-source-trees"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "ashenspire.escalation.item.v1",
+  "id": "PILOT-001/BLOCKER",
+  "helpDeskTicketId": "PILOT-001",
+  "dedupKey": "PILOT-001:BLOCKER",
+  "classification": "TEAM_REMEDIABLE_BLOCKER",
+  "status": "CLOSED",
+  "enteredAtUtc": "2026-08-28T00:00:00Z",
+  "lastReviewedAtUtc": "2026-08-28T00:02:00Z",
+  "ageSeconds": 120,
+  "attempts": [
+    { "atUtc": "2026-08-28T00:01:00Z", "actor": "team", "action": "Apply bounded repair.", "outcome": "PASS" }
+  ],
+  "wake": { "trigger": "Repair result available.", "nextAction": "Close with evidence." },
+  "continuingWork": ["independent-work"],
+  "guard": { "code": "PILOT_REVISION_BLOCK", "blocks": ["PILOT_PROMOTION"], "doesNotBlock": ["INDEPENDENT_WORK"] },
+  "ownerPacket": {
+    "hazard": "Pilot promotion was unsafe before repair.",
+    "attempts": "One bounded repair passed.",
+    "options": ["Close with evidence.", "Escalate if the repair regresses."],
+    "recommendation": "Close with evidence.",
+    "delayConsequence": "Only the pilot promotion waits.",
+    "exactAuthority": "Team may close the remediable blocker after passing evidence."
+  },
+  "closure": { "atUtc": "2026-08-28T00:02:00Z", "actor": "team", "outcome": "REMEDIATED", "evidence": "pilot://repair-pass" }
+}

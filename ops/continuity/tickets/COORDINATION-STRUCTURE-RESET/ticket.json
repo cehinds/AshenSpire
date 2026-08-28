@@ -1,9 +1,12 @@
 {
-  "schemaVersion": "ashenspire.continuity.ticket.v1",
+  "schemaVersion": "ashenspire.continuity.ticket.v2",
   "id": "COORDINATION-STRUCTURE-RESET",
   "title": "Repository-native coordination structure reset",
   "priority": "T0",
-  "status": "ENTERED_WORK",
+  "status": {
+    "value": "IN PROGRESS",
+    "atUtc": "2026-08-28T07:27:44Z"
+  },
   "teamId": "coordination",
   "owner": {
     "role": "IT Manager III",
@@ -17,6 +20,9 @@
       "tests/fixtures/continuity-cold-start",
       "tests/run-node.mjs"
     ],
+    "serializedLanes": [
+      "continuity-pointer"
+    ],
     "forbiddenActions": [
       "destructive-migration",
       "external-ledger-rewrite",
@@ -27,8 +33,27 @@
       "release"
     ]
   },
+  "blocker": null,
+  "deliveryFacts": {
+    "localCandidate": { "value": false, "atUtc": null, "evidence": null },
+    "pushed": { "value": false, "atUtc": null, "evidence": null },
+    "pullRequest": { "value": false, "atUtc": null, "evidence": null },
+    "devIntegrated": { "value": false, "atUtc": null, "evidence": null },
+    "hostedVerified": { "value": false, "atUtc": null, "evidence": null },
+    "resolved": { "value": false, "atUtc": null, "evidence": null },
+    "released": { "value": false, "atUtc": null, "evidence": null }
+  },
   "migrationBoundary": "ADDITIVE_BOOTSTRAP_ONLY",
-  "historyIds": [
-    "000001-coordination-structure-reset-entered"
+  "historyRefs": [
+    {
+      "id": "000001-coordination-structure-reset-entered",
+      "path": "history/000001-coordination-structure-reset-entered.json",
+      "sha256": "DC9F8E98093277B6232EC89AB9CE5A94E92C865CA5FE8806AC16FED42355F4FF"
+    },
+    {
+      "id": "000002-coordination-structure-reset-contract-corrected",
+      "path": "history/000002-coordination-structure-reset-contract-corrected.json",
+      "sha256": "B7FEF719402BF7B182DFA19BA61B64F315A22467250606A0193F67B41A5DB074"
+    }
   ]
 }

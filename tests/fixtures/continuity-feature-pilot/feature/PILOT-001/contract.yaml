@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "ashenspire.feature.contract.v1",
+  "ticketId": "PILOT-001",
+  "owner": { "role": "Pilot Owner", "taskId": "pilot-task" },
+  "immediateEntry": {
+    "directiveSource": "Pilot owner directive",
+    "controllingCurrentWork": true,
+    "assignmentTiming": "SAME_CYCLE",
+    "assignmentMode": "BOUNDED_TEMPORARY_AGENT",
+    "temporaryProtocol": "Begin reversible work and hand off the exact commit.",
+    "occupiedSeatProtocol": "Record occupants and perform non-colliding preparation.",
+    "startedRequires": ["entered-agent", "ticket", "branch-worktree-or-scope", "first-action", "next-handoff"],
+    "preWorkApprovalLoop": false,
+    "currentEntry": {
+      "agentSession": "pilot-agent",
+      "branch": "codex/pilot",
+      "worktree": "fixture-only",
+      "base": "0000000000000000000000000000000000000000",
+      "firstAction": "Create commit pointer metadata.",
+      "nextHandoff": "Stable TEST revision to QA.",
+      "soleWriter": true
+    }
+  },
+  "refs": {
+    "dev": "codex/feature/PILOT-001/dev",
+    "test": "codex/feature/PILOT-001/test",
+    "release": "codex/feature/PILOT-001/release"
+  },
+  "claims": {
+    "exclusivePaths": ["src/pilot-one"],
+    "serializedLanes": ["shared-integration", "generated-artifacts"]
+  },
+  "retention": {
+    "commitPointersOnly": true,
+    "copiedTreesForbidden": true,
+    "localWorktreeSoleCustodyForbidden": true,
+    "cleanupRequiresOriginCommit": true,
+    "cleanupRequiresResolvablePointer": true,
+    "removeOnlyUnintegratedRemoteRefForbidden": true
+  },
+  "promotionRules": [
+    "DEV is origin-backed.",
+    "TEST copies the DEV commit pointer.",
+    "TEST revisions are immutable.",
+    "DEV may continue independently.",
+    "RELEASE copies a passed TEST commit.",
+    "Shared dev integration uses review.",
+    "Generated and integration lanes serialize."
+  ],
+  "verification": {
+    "ackDeadlineSeconds": 300,
+    "completeDeadlineSeconds": 600,
+    "timeoutResult": "UNVERIFIED_TIMEOUT",
+    "continueAuthorizedSequence": true,
+    "passClaimForbiddenOnTimeout": true,
+    "hardStops": ["SECURITY_FAILURE", "DESTRUCTIVE_DATA_FAILURE", "TECHNICAL_BRANCH_PROTECTION_FAILURE"],
+    "timeoutRecordRequires": ["startedAtUtc", "ackAtUtc", "completedAtUtc", "attempt", "testsRun", "rollback", "nextVerificationOpportunity"]
+  },
+  "excludedEvidence": ["secrets", "transient-browser-profiles", "temporary-evidence", "copied-source-trees"]
+}
