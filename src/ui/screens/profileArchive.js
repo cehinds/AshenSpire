@@ -1,7 +1,7 @@
-// src/ui/screens/profileArchive.js — title-screen Profile archive (#67, Sunna's D8/D5).
+// src/ui/screens/profileArchive.js — Settings → Profile (#67, Sunna's D8/D5).
 //
 // WHY THIS FILE EXISTS. The crisis dialog told the player "You can come back to
-// it any time from the title screen's Profile route and Settings had Display, Audio,
+// it any time from Settings → Profile" and Settings had Display, Audio,
 // Accessibility, Advanced — no Profile. The word "archive" appeared on no
 // screen in the game, and profileNotice.js was the only file that had ever
 // called listArchives/getArchive/exportArchive/restoreProfile. Constantine's
@@ -154,7 +154,7 @@ export function renderProfileSection(container, { saves, onRestored }) {
     <div class="prof-archive">
       <p class="prof-state">${esc(stateLine)}</p>
       ${notices}
-      <p class="set-note">Set-aside profiles are never deleted to make room. Set-aside runs stay in this device’s drawer for up to six months, with the newest 12 kept here.</p>
+      <p class="set-note">Set-aside profiles and runs are kept with this game’s data on this device. They are never deleted to make room for anything else.</p>
       ${rows}
       <p class="prof-result" role="status"></p>
     </div>`;
@@ -221,57 +221,4 @@ export function renderProfileSection(container, { saves, onRestored }) {
       });
     });
   });
-}
-
-/** Title-screen route to the profile and recovery drawer. */
-export function openProfileArchive({ saves, onRestored = null } = {}) {
-  if (!saves) return null;
-  const returnFocus = document.activeElement;
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-  veil.innerHTML = `
-    <div class="modal profile-archive-modal" role="dialog" aria-modal="true" aria-label="Profile">
-      <div class="profile-archive-head">
-        <div><p>Player data</p><h2>Profile</h2></div>
-        <button class="subtle" data-profile-close type="button" aria-label="Close profile">✕</button>
-      </div>
-      <div class="profile-archive-body"></div>
-    </div>`;
-  document.body.appendChild(veil);
-  renderProfileSection(veil.querySelector('.profile-archive-body'), { saves, onRestored });
-  const dialog = veil.querySelector('.profile-archive-modal');
-  const closeButton = veil.querySelector('[data-profile-close]');
-  const focusStops = () => [...dialog.querySelectorAll(
-    'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  )].filter((element) => element.getClientRects().length > 0);
-  function onKey(event) {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      close();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    const stops = focusStops();
-    if (!stops.length) return;
-    const first = stops[0];
-    const last = stops[stops.length - 1];
-    const active = document.activeElement;
-    if (event.shiftKey && (active === first || !dialog.contains(active))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-  const close = () => {
-    veil.removeEventListener('keydown', onKey);
-    veil.remove();
-    if (returnFocus?.isConnected && typeof returnFocus.focus === 'function') returnFocus.focus();
-  };
-  veil.addEventListener('keydown', onKey);
-  veil.addEventListener('click', (event) => { if (event.target === veil) close(); });
-  closeButton.addEventListener('click', close);
-  closeButton.focus();
-  return veil;
 }

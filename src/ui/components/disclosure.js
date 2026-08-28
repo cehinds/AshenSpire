@@ -119,12 +119,11 @@ function revealHtml(entry) {
     + (entry.reveal.receipt ? `<p class="disc-receipt">${esc(entry.reveal.receipt)}</p>` : '');
 }
 
-/** A FACE IS A LABEL, AN OPTIONAL ONE-LINE SUMMARY, AND A VALUE. One home for that markup, because it is
+/** A FACE IS A LABEL AND A VALUE. One home for that markup, because it is
  *  drawn at mount and re-drawn every time a folded picker's choice changes;
  *  two spellings of it would be two answers to "what did I pick?". */
 function faceHtml(entry) {
   return `<b class="disc-name">${esc(entry.face.label)}</b>`
-    + (entry.face.summary ? `<span class="disc-summary">${esc(entry.face.summary)}</span>` : '')
     + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
 }
 
@@ -140,7 +139,7 @@ function tipHtml(entry) {
 }
 
 /**
- * mountDisclosure(host, entries, { moreLabel, armFace? })
+ * mountDisclosure(host, entries, { moreLabel })
  *   → { open(key), close(), setValue(key, value), openKey }
  *
  * `entries` is the model's list, in model order. WHICH ONES ARE DRAWN UP FRONT
@@ -151,7 +150,7 @@ function tipHtml(entry) {
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null } = {}) {
+export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
   const rows = [...(entries || [])];
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
@@ -298,16 +297,10 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     // an object, and silently erasing the card would be the plausible failure.
     if (entry.face && entry.face.node) button.appendChild(entry.face.node);
     else button.innerHTML = faceHtml(entry);
-    const toggle = () => {
+    button.addEventListener('click', () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
-    };
-    // Composite Inventory faces use the same physical card for a short reveal
-    // tap and a configured hold action. The caller owns that action and returns
-    // true when it armed the face; every existing disclosure keeps the ordinary
-    // one-click toggle path.
-    const armed = armFace ? armFace({ button, entry, onTap: toggle }) === true : false;
-    if (!armed) button.addEventListener('click', toggle);
+    });
     if (tipHtml(entry)) attachTooltip(button, () => tipHtml(entry));
     buttons.set(entry.key, button);
     faceBox.appendChild(button);

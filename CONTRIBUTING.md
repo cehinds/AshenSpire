@@ -8,15 +8,6 @@
 4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
 5. **Tests green before merge.** Open `tests/index.html` — all assertions pass, zero console errors. New mechanics ship with new assertions.
 
-## Coordination and release boundary
-
-The project-specific operating contract for routine ownership, evidence,
-status reports, cross-family handoffs, and release authority is documented in
-[docs/COORDINATION-WORKFLOW.md](docs/COORDINATION-WORKFLOW.md). Routine review
-or approval may permit integration to `dev`; it never grants authority to
-promote `release` or `main`, create a release tag, publish a release, or approve
-final release quality control.
-
 ## Branch model
 
 ```
