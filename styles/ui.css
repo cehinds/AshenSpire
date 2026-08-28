@@ -30,11 +30,24 @@
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
 }
+#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+.reduced-motion #tooltip { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #tooltip { transition: none !important; } }
 #tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 #tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
 #tooltip .tt-kw b { color: var(--parchment); }
 #tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
 #tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
+#tooltip[data-tooltip-variant='enemy-context'] {
+  --place-gap: 6px;
+  max-width: 31.5rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
+#tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
 #tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
 #tooltip .tt-combatant-focus {
   display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
@@ -4258,13 +4271,24 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .title-screen > * { position: relative; z-index: 1; }
 .title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
-.title-stack { width: min(94%, 90rem); margin: 0 auto; text-align: center; }
+.title-stack {
+  box-sizing: border-box;
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  margin-inline: 0;
+  text-align: center;
+  align-self: center;
+}
 .title-screen .title-big {
-  margin: 0;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
   color: var(--parchment);
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
+  text-indent: 0.02em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -4397,7 +4421,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.0075em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }

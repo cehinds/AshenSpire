@@ -74,11 +74,14 @@ function findings(r) {
 function parityFindings(map, combat) {
   const bad = [];
   const near = (a, b) => Math.abs(a - b) <= 0.75;
+  const headerReductionVh = ((map.header.height - combat.header.height) / combat.viewport.height) * 100;
+  if (headerReductionVh < 1 || headerReductionVh > 5) {
+    bad.push(`Combat HUD density delta is ${headerReductionVh.toFixed(2)}vh, expected 1–5vh below Map's unchanged shared baseline`);
+  }
+  if (combat.hudTop.height > map.hudTop.height + 0.75) {
+    bad.push(`Combat HUD content grew: Map ${map.hudTop.height.toFixed(2)}px, Combat ${combat.hudTop.height.toFixed(2)}px`);
+  }
   for (const [name, left, right] of [
-    ['header height', map.header.height, combat.header.height],
-    ['HUD content height', map.hudTop.height, combat.hudTop.height],
-    ['Quick Access top', map.quickPanel.top, combat.quickPanel.top],
-    ['Fullscreen/Music top', map.stack.top, combat.stack.top],
     ['Fullscreen/Music right edge', map.stack.right, combat.stack.right],
   ]) {
     if (!near(left, right)) bad.push(`${name} differs: Map ${left.toFixed(2)}px, Combat ${right.toFixed(2)}px`);

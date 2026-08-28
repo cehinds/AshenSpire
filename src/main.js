@@ -1602,6 +1602,17 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
     delete combat.enemies[2].arcaneExposure;
   }
+  if (shotState === 'combat' && shotParams.get('shotEnemyContext') === 'status') {
+    // Dev-only rendered-evidence pose for the contextual enemy tooltip. The
+    // shot boot uses memory storage, and this host-state fixture is applied
+    // before mount so the browser proves real status presentation without
+    // fabricating or editing DOM after render.
+    const subject = combat.enemies.find((enemy) => enemy.alive);
+    if (!subject || !registries.statuses.has('crimsonBlight')) {
+      throw new Error('?shotEnemyContext=status needs a living enemy and Crimson Blight');
+    }
+    subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
+  }
   const label =
     enc.pool === 'boss'
       ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()

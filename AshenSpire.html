@@ -330,11 +330,24 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
 }
+#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+.reduced-motion #tooltip { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #tooltip { transition: none !important; } }
 #tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 #tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
 #tooltip .tt-kw b { color: var(--parchment); }
 #tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
 #tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
+#tooltip[data-tooltip-variant='enemy-context'] {
+  --place-gap: 6px;
+  max-width: 21rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.1rem; font-size: 1rem; line-height: 1; }
+#tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
 #tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
 #tooltip .tt-combatant-focus {
   display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
@@ -807,10 +820,6 @@ body.hide-hints .hint-bar { display: none; }
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
-.rebind-btn {
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
-  height: auto;
-}
 .pad-btn {
   min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: 6px;
   background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
@@ -4558,13 +4567,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .title-screen > * { position: relative; z-index: 1; }
 .title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
-.title-stack { width: min(94%, 90rem); margin: 0 auto; text-align: center; }
+.title-stack { width: min(94%, 90rem); margin-inline: auto; text-align: center; align-self: center; }
 .title-screen .title-big {
   margin: 0;
   color: var(--parchment);
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
+  text-indent: 0.02em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -4697,7 +4707,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.0075em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
@@ -5387,6 +5397,14 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   z-index: 20;
   overflow: visible;
 }
+/* #045 current-build density delta: reclaim only dead vertical room on the
+   combat surface. Controls retain their authored tap floors and ordering. */
+.combat > .topbar.combat-hud.shared-hud {
+  padding-block: calc(1px / var(--ui-zoom, 1));
+}
+.combat > .topbar.combat-hud.shared-hud .hud-top {
+  gap: calc(1px / var(--ui-zoom, 1));
+}
 /* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
    inside any `.topbar`, and this rule set its height and its fill colour while
@@ -5606,6 +5624,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 /* End Variant D */
 
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding-block: calc(1px / var(--ui-zoom, 1));
+}
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  column-gap: calc(6px / var(--ui-zoom, 1));
+  row-gap: calc(1px / var(--ui-zoom, 1));
+}
 .topbar.combat-hud.shared-hud .hud-quick-settings {
   right: calc(8px / var(--ui-zoom, 1));
 }
@@ -5749,10 +5774,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .topbar.combat-hud.shared-hud .resbars-host > .resbars {
   height: 100%;
-}
-.topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) .resbars-host > .resbars {
-  gap: 0;
-  justify-content: space-evenly;
+  justify-content: space-between;
 }
 .topbar.combat-hud.shared-hud .hud-control-grid {
   grid-column: 2;
@@ -6749,6 +6771,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
+.combatant.enemy.context-selected .combatant-card {
+  filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
+}
+.combatant.enemy.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
 .combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
 .combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
@@ -6895,10 +6921,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     gap: calc(var(--hud-mobile-row-gap-px) / var(--ui-zoom, 1));
     padding: calc(var(--hud-mobile-outer-pad-px) / var(--ui-zoom, 1)) 1rem;
   }
+  :root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud {
+    gap: 0;
+    padding-block: 0;
+  }
+  :root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud .hud-top {
+    gap: 0;
+  }
   /* Keep the reusable header on one row. Container queries above progressively
      remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
+    line-height: 1;
   }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-top {
     --hud-control-gap: calc(var(--hud-mobile-control-gap-px) / var(--ui-zoom, 1));
@@ -7514,7 +7548,6 @@ const { openOverlay, closeOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
 const { openConfirmationModal } = require("src/ui/components/confirmationModal.js");
-const { openSaveSlotSelector } = require("src/ui/components/saveSlotSelector.js");
 const { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } = require("src/ui/input.js");
 const { mountStartupGate } = require("src/ui/components/startupGate.js");
 const { startupGateModel } = require("src/ui/models/StartupGateModels.js");
@@ -8372,19 +8405,9 @@ function resumeRun(slot = 1) {
   }
 }
 
-function saveSlotRecords() {
-  return saves.listSlots().map(({ slot, summary }) => ({
-    slot,
-    summary: summary && {
-      ...summary,
-      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
-    },
-  }));
-}
-
-function confirmSlotLoad(slot, { returnFocusElement } = {}) {
+function loadActiveSlot({ returnFocusElement } = {}) {
   openConfirmationModal({
-    title: `Load slot ${slot}?`,
+    title: `Load slot ${activeSlot}?`,
     message: 'The saved run will replace changes made since your last save.',
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
@@ -8392,17 +8415,8 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
-      resumeRun(slot);
+      resumeRun(activeSlot);
     },
-  });
-}
-
-function loadActiveSlot({ returnFocusElement } = {}) {
-  openSaveSlotSelector({
-    slots: saveSlotRecords(),
-    registries,
-    returnFocusElement,
-    onRequestLoad: (slot) => confirmSlotLoad(slot, { returnFocusElement }),
   });
   return false;
 }
@@ -8483,7 +8497,13 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
-  const slots = saveSlotRecords();
+  const slots = saves.listSlots().map(({ slot, summary }) => ({
+    slot,
+    summary: summary && {
+      ...summary,
+      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
+    },
+  }));
   mountTitle(app, {
     slots,
     // The delete beat rides the shared machinery now: the armer reads the
@@ -8582,16 +8602,13 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury(request = '') {
-  const initialView = typeof request === 'string' ? request : '';
-  const destination = request && typeof request === 'object' ? request.destination || '' : '';
+function showArmoury(initialView = '') {
   const armouryMeta = saves.loadMeta();
   if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
     registries,
     run,
     meta: armouryMeta,
-    destination,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -9062,6 +9079,17 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     combat.enemies[0].arcaneExposure = { ...structuredClone(authored), value: 0 };
     combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
     delete combat.enemies[2].arcaneExposure;
+  }
+  if (shotState === 'combat' && shotParams.get('shotEnemyContext') === 'status') {
+    // Dev-only rendered-evidence pose for the contextual enemy tooltip. The
+    // shot boot uses memory storage, and this host-state fixture is applied
+    // before mount so the browser proves real status presentation without
+    // fabricating or editing DOM after render.
+    const subject = combat.enemies.find((enemy) => enemy.alive);
+    if (!subject || !registries.statuses.has('crimsonBlight')) {
+      throw new Error('?shotEnemyContext=status needs a living enemy and Crimson Blight');
+    }
+    subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
   }
   const label =
     enc.pool === 'boss'
@@ -10369,6 +10397,7 @@ const balance = {
     // short-lived hover/tap explanation.
     tooltipPlacement: {
       hoverDelayMs: 500,
+      autoFadeMs: 5000,
       topBandViewportPct: 25,
       sideBandViewportPct: 30,
     },
@@ -20303,10 +20332,6 @@ Object.assign(module.exports, { derivedStatRules });
 
 const characterCreation = {
   "spritePreviewSide": "right",
-  "visibleModeIds": [
-    "standard",
-    "pointbuy"
-  ],
   "layout": {
     "classPreviewPercent": 30,
     "classChoiceView": "list",
@@ -20320,22 +20345,21 @@ const characterCreation = {
       "kind": "armour"
     },
     {
-      "id": "rightHand",
-      "label": "RIGHT HAND",
-      "kind": "hand",
-      "slot": "rightHand"
-    },
-    {
       "id": "leftHand",
       "label": "LEFT HAND",
       "kind": "hand",
       "slot": "leftHand"
     },
     {
+      "id": "rightHand",
+      "label": "RIGHT HAND",
+      "kind": "hand",
+      "slot": "rightHand"
+    },
+    {
       "id": "equipSlot",
       "label": "EQUIP SLOT",
-      "kind": "slot",
-      "slot": "talisman"
+      "kind": "slot"
     },
     {
       "id": "relic",
@@ -20355,7 +20379,6 @@ const characterCreation = {
         "greatsword",
         "buckler"
       ],
-      "equipSlotIds": [],
       "relicIds": [
         "forsakenMedallion",
         "goldenSprout"
@@ -20370,7 +20393,6 @@ const characterCreation = {
         "ashStaff",
         "starstoneStaff"
       ],
-      "equipSlotIds": [],
       "relicIds": [
         "starstoneShard",
         "goldenSprout"
@@ -20387,7 +20409,6 @@ const characterCreation = {
         "shortbow",
         "parryDagger"
       ],
-      "equipSlotIds": [],
       "relicIds": [
         "cutpursesCoin",
         "goldenSprout"
@@ -20402,7 +20423,6 @@ const characterCreation = {
         "boneSceptre",
         "emberlightSceptre"
       ],
-      "equipSlotIds": [],
       "relicIds": [
         "goldFigurine",
         "goldenSprout"
@@ -21277,6 +21297,22 @@ function validateContent(bundle) {
       if (typeof combatantStage.centerPct !== 'number' || !Number.isFinite(combatantStage.centerPct)
         || combatantStage.centerPct < 25 || combatantStage.centerPct > 75) {
         err('balance.ui.combatantStage.centerPct', `must be a finite center percentage in [25, 75] — got ${JSON.stringify(combatantStage.centerPct)}`);
+      }
+    }
+    const tooltipPlacement = ui.tooltipPlacement;
+    if (!tooltipPlacement || typeof tooltipPlacement !== 'object' || Array.isArray(tooltipPlacement)) {
+      err('balance.ui.tooltipPlacement', 'must be an object with hover, fade, and safe-placement tokens');
+    } else {
+      for (const [key, min, max] of [
+        ['hoverDelayMs', 0, 600000],
+        ['autoFadeMs', 0, 600000],
+        ['topBandViewportPct', 0, 50],
+        ['sideBandViewportPct', 0, 50],
+      ]) {
+        const value = tooltipPlacement[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.tooltipPlacement.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
       }
     }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
@@ -27455,7 +27491,7 @@ Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, s
 // Pure character-creation configuration reads and validation.
 
 const SIDES = Object.freeze(['left', 'right']);
-const REQUIRED_CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
+const CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
 const CHOICE_VIEWS = Object.freeze(['list', 'grid']);
 const EQUIPMENT_SECTION_KINDS = Object.freeze(['armour', 'hand', 'slot', 'relic']);
 
@@ -27463,30 +27499,12 @@ function config(source) {
   return (source && source.characterCreation) || source || {};
 }
 
-function rows(source, key) {
-  const value = source && source[key];
-  return value && typeof value.all === 'function' ? value.all() : (Array.isArray(value) ? value : []);
-}
-
-function creationSlotFields(cfg) {
-  return (Array.isArray(cfg.equipmentSections) ? cfg.equipmentSections : [])
-    .filter((row) => row && row.kind === 'slot' && typeof row.id === 'string' && row.id)
-    .map((row) => `${row.id}Ids`);
-}
-
 function characterCreationProblems(source) {
   const cfg = config(source);
   const problems = [];
-  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
+  const allowedRoot = new Set(['spritePreviewSide', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
   for (const key of Object.keys(cfg || {})) if (!allowedRoot.has(key)) problems.push(`characterCreation.${key}: Unknown field`);
   if (!SIDES.includes(cfg.spritePreviewSide)) problems.push(`characterCreation.spritePreviewSide: must be ${SIDES.join('|')}`);
-  const modeIds = new Set(rows(source, 'creationModes').filter((row) => row && typeof row.id === 'string').map((row) => row.id));
-  if (!Array.isArray(cfg.visibleModeIds) || cfg.visibleModeIds.length < 1) {
-    problems.push('characterCreation.visibleModeIds: must contain at least one creation mode');
-  } else {
-    if (new Set(cfg.visibleModeIds).size !== cfg.visibleModeIds.length) problems.push('characterCreation.visibleModeIds: contains duplicate ids');
-    for (const id of cfg.visibleModeIds) if (!modeIds.has(id)) problems.push(`characterCreation.visibleModeIds: unknown creation mode '${id}'`);
-  }
   const layout = cfg.layout;
   if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
     problems.push('characterCreation.layout: must be an object');
@@ -27519,7 +27537,6 @@ function characterCreationProblems(source) {
       if (typeof row.label !== 'string' || !row.label) problems.push(`${path}.label: must be non-empty`);
       if (!EQUIPMENT_SECTION_KINDS.includes(row.kind)) problems.push(`${path}.kind: must be ${EQUIPMENT_SECTION_KINDS.join('|')}`);
       if (row.kind === 'hand' && !['leftHand', 'rightHand'].includes(row.slot)) problems.push(`${path}.slot: hand sections require leftHand|rightHand`);
-      if (row.kind === 'slot' && (typeof row.slot !== 'string' || !row.slot)) problems.push(`${path}.slot: slot sections require a target equipment slot`);
     }
     const requireExactlyOne = (role, matches) => {
       const count = sections.filter((row) => row && typeof row === 'object' && !Array.isArray(row) && matches(row)).length;
@@ -27547,18 +27564,9 @@ function characterCreationProblems(source) {
   const relicIds = new Set(relics);
   const armaments = Array.isArray(equipment.armaments) ? equipment.armaments : [];
   const armour = Array.isArray(equipment.armour) ? equipment.armour : [];
-  const slots = Array.isArray(equipment.slots) ? equipment.slots : [];
   const armamentIds = new Set(armaments
     .filter((row) => row && typeof row === 'object')
     .map((row) => row.id));
-  const slotFields = creationSlotFields(cfg);
-  const classFields = new Set([...REQUIRED_CLASS_FIELDS, ...slotFields]);
-  for (const [index, section] of (Array.isArray(sections) ? sections : []).entries()) {
-    if (!section || section.kind !== 'slot' || typeof section.slot !== 'string') continue;
-    if (!slots.some((row) => row && row.id === section.slot)) {
-      problems.push(`characterCreation.equipmentSections.${index}.slot: unknown equipment slot '${section.slot}'`);
-    }
-  }
   for (const [classId, row] of Object.entries(cfg.classes)) {
     const path = `characterCreation.classes.${classId}`;
     if (!classIds.has(classId)) problems.push(`${path}: unknown class`);
@@ -27566,19 +27574,14 @@ function characterCreationProblems(source) {
       problems.push(`${path}: must be an object`);
       continue;
     }
-    for (const key of Object.keys(row)) if (!classFields.has(key)) problems.push(`${path}.${key}: Unknown field`);
-    for (const field of REQUIRED_CLASS_FIELDS) {
+    for (const key of Object.keys(row)) if (!CLASS_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
+    for (const field of CLASS_FIELDS) {
       const values = row[field];
       if (!Array.isArray(values) || values.length < 2) {
         problems.push(`${path}.${field}: must contain at least two choices`);
         continue;
       }
       if (new Set(values).size !== values.length) problems.push(`${path}.${field}: contains duplicate ids`);
-    }
-    for (const field of slotFields) {
-      const values = row[field];
-      if (!Array.isArray(values)) problems.push(`${path}.${field}: must be an array`);
-      else if (new Set(values).size !== values.length) problems.push(`${path}.${field}: contains duplicate ids`);
     }
     const armourIds = Array.isArray(row.armourIds) ? row.armourIds : [];
     const handIds = Array.isArray(row.handIds) ? row.handIds : [];
@@ -27589,17 +27592,6 @@ function characterCreationProblems(source) {
       }
     }
     for (const id of handIds) if (!armamentIds.has(id)) problems.push(`${path}.handIds: unknown armament '${id}'`);
-    for (const section of sections.filter((candidate) => candidate && candidate.kind === 'slot')) {
-      const field = `${section.id}Ids`;
-      const targetSlot = slots.find((candidate) => candidate && candidate.id === section.slot);
-      for (const id of Array.isArray(row[field]) ? row[field] : []) {
-        const piece = armaments.find((candidate) => candidate && candidate.id === id);
-        if (!piece) problems.push(`${path}.${field}: unknown armament '${id}'`);
-        else if (!fitsCreationHandSlot({ equipment: { slots } }, section.slot, piece)) {
-          problems.push(`${path}.${field}: armament '${id}' does not fit slot '${section.slot}'`);
-        }
-      }
-    }
     for (const id of configuredRelicIds) if (!relicIds.has(id)) problems.push(`${path}.relicIds: unknown relic '${id}'`);
     const baselineKit = (Array.isArray(equipment.startingKits) ? equipment.startingKits : [])
       .find((candidate) => candidate && candidate.classId === classId && candidate.baseline === true);
@@ -27632,16 +27624,6 @@ function classCreationConfig(registries, classId) {
   return row;
 }
 
-function creationModeViews(registries) {
-  const ids = config(registries).visibleModeIds;
-  if (!Array.isArray(ids) || !ids.length) throw new Error('characterCreation.visibleModeIds: must contain at least one creation mode');
-  return ids.map((id) => {
-    const mode = rows(registries, 'creationModes').find((row) => row && row.id === id);
-    if (!mode) throw new Error(`characterCreation.visibleModeIds: creation mode '${id}' does not resolve`);
-    return mode;
-  });
-}
-
 function creationArmourChoices(registries, classId) {
   const ids = classCreationConfig(registries, classId).armourIds;
   return ids.map((id) => (registries.equipment.armour || []).find((row) => row.classId === classId && row.id === id));
@@ -27663,56 +27645,6 @@ function creationHandChoices(registries, classId, slotId = null) {
 
 function creationRelicChoices(registries, classId) {
   return classCreationConfig(registries, classId).relicIds.map((id) => registries.relics.get(id));
-}
-
-function strictArmamentChoices(registries, classId, field) {
-  return (classCreationConfig(registries, classId)[field] || []).map((id) => {
-    const piece = (registries.equipment.armaments || []).find((row) => row && row.id === id);
-    if (!piece) throw new Error(`characterCreation.classes.${classId}.${field}: '${id}' does not resolve`);
-    return piece;
-  });
-}
-
-/**
- * Pure projection for the Starting Equipment disclosure. Authored order is
- * preserved, but a section is visible only when every authored id resolves and
- * at least one legal choice remains. `nextId` therefore owns auto-advance and
- * focus order after empty sections are removed.
- */
-function creationEquipmentSectionViews(registries, classId, { armourChoices = null } = {}) {
-  const sections = config(registries).equipmentSections;
-  if (!Array.isArray(sections)) throw new Error('characterCreation.equipmentSections: must be an array');
-  const projected = sections.map((section) => {
-    let choices;
-    if (section.kind === 'armour') {
-      choices = armourChoices || creationArmourChoices(registries, classId);
-      for (const piece of choices) {
-        if (!piece || piece.classId !== classId) throw new Error(`characterCreation.classes.${classId}.armourIds: choice does not resolve for class '${classId}'`);
-      }
-    } else if (section.kind === 'hand') {
-      choices = strictArmamentChoices(registries, classId, 'handIds')
-        .filter((piece) => fitsCreationHandSlot(registries, section.slot, piece));
-    } else if (section.kind === 'relic') {
-      choices = creationRelicChoices(registries, classId);
-    } else if (section.kind === 'slot') {
-      const field = `${section.id}Ids`;
-      const slot = (registries.equipment.slots || []).find((row) => row && row.id === section.slot);
-      if (!slot) throw new Error(`characterCreation.equipmentSections.${section.id}.slot: '${section.slot}' does not resolve`);
-      choices = strictArmamentChoices(registries, classId, field);
-      for (const piece of choices) {
-        if (!fitsCreationHandSlot(registries, section.slot, piece)) {
-          throw new Error(`characterCreation.classes.${classId}.${field}: '${piece.id}' does not fit equipment slot '${section.slot}'`);
-        }
-      }
-    } else {
-      throw new Error(`characterCreation.equipmentSections.${section.id || '?'}: unknown kind '${section.kind}'`);
-    }
-    return Object.freeze({ ...section, choices: Object.freeze([...choices]) });
-  }).filter((section) => section.choices.length > 0);
-  return Object.freeze(projected.map((section, index) => Object.freeze({
-    ...section,
-    nextId: projected[index + 1]?.id || null,
-  })));
 }
 
 function selectStartingHand(current, targetHand, itemId) {
@@ -27746,7 +27678,7 @@ function resolveCreationRelic(registries, classId, requestedId) {
 }
 
 
-Object.assign(module.exports, { characterCreationProblems, classCreationConfig, creationModeViews, creationArmourChoices, creationHandChoices, creationRelicChoices, creationEquipmentSectionViews, selectStartingHand, resolveCreationHands, resolveCreationRelic });
+Object.assign(module.exports, { characterCreationProblems, classCreationConfig, creationArmourChoices, creationHandChoices, creationRelicChoices, selectStartingHand, resolveCreationHands, resolveCreationRelic });
 
 },
 "src/model/equipmentUi.js": function (module, exports, require) {
@@ -28783,8 +28715,6 @@ function validateEquipment(registries) {
       if (!profile) problems.push(`${piece.id}: unknown ${role} profile '${profileId}'`);
       else if (profile.role !== role) problems.push(`${piece.id}: ${role}Profile '${profileId}' has wrong role '${profile.role}'`);
     }
-    try { WeaponCardPackageModel.fromPiece(registries, piece); }
-    catch (error) { problems.push(error.message); }
   }
 
   for (const piece of pieces) {
@@ -29454,181 +29384,12 @@ function equipmentKitReceipt(registries, loadout, classId, attributes, equipment
   return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
 }
 
-// ---------------------------------------------------------------------------
-// Weapon card packages
-// ---------------------------------------------------------------------------
-
-const WEAPON_CARD_PACKAGE_COMPATIBILITY = 'attack-v1';
-
-function attackProfileFor(registries, profileId, owner) {
-  const profile = profileById(registries, profileId);
-  if (!profile) throw new Error(`${owner}: missing attack profile '${profileId}'`);
-  if (profile.role !== 'attack' || profile.compatibility !== WEAPON_CARD_PACKAGE_COMPATIBILITY) {
-    throw new Error(`${owner}: attack profile '${profileId}' is not ${WEAPON_CARD_PACKAGE_COMPATIBILITY}`);
-  }
-  if (!profile.baseCardId || !registries.cards.has(profile.baseCardId)) {
-    throw new Error(`${owner}: attack profile '${profileId}' has no valid filler card`);
-  }
-  return profile;
-}
-
-/**
- * The authored weapon-package seam. Existing `attackProfile` rows adapt to an
- * empty priority list plus that profile as filler; explicit packages may add
- * ordered one-off card refs without changing the number of attack instances.
- */
-const WeaponCardPackageModel = Object.freeze({
-  fromPiece(registries, piece) {
-    if (!piece) return null;
-    const explicit = piece.weaponCardPackage;
-    if (explicit == null && !piece.attackProfile) return null;
-    if (explicit != null && (!explicit || typeof explicit !== 'object' || Array.isArray(explicit))) {
-      throw new Error(`${piece.id}: weaponCardPackage must be an object`);
-    }
-    const source = explicit || {};
-    if (explicit && source.compatibility !== WEAPON_CARD_PACKAGE_COMPATIBILITY) {
-      throw new Error(`${piece.id}: weapon package compatibility must be ${WEAPON_CARD_PACKAGE_COMPATIBILITY}`);
-    }
-    const handsRequired = source.handsRequired ?? piece.handsRequired ?? 1;
-    if (![1, 2].includes(handsRequired)) throw new Error(`${piece.id}: handsRequired must be 1 or 2`);
-    const fillerAttackProfileId = explicit ? source.fillerAttackProfileId : piece.attackProfile;
-    if (!fillerAttackProfileId) throw new Error(`${piece.id}: weapon package is missing fillerAttackProfileId`);
-    const filler = attackProfileFor(registries, fillerAttackProfileId, piece.id);
-    const priorityAttackRefs = source.priorityAttackRefs == null ? [] : source.priorityAttackRefs;
-    if (!Array.isArray(priorityAttackRefs)) throw new Error(`${piece.id}: priorityAttackRefs must be an array`);
-    const seen = new Set();
-    const priorities = priorityAttackRefs.map((raw, index) => {
-      const ref = typeof raw === 'string' ? { cardId: raw } : raw;
-      if (!ref || typeof ref !== 'object' || Array.isArray(ref) || !ref.cardId) {
-        throw new Error(`${piece.id}: priorityAttackRefs[${index}] must name cardId`);
-      }
-      if (!registries.cards.has(ref.cardId)) throw new Error(`${piece.id}: priority attack card '${ref.cardId}' is unknown`);
-      const profileId = ref.profileId || filler.id;
-      attackProfileFor(registries, profileId, piece.id);
-      const key = `${ref.cardId}|${profileId}`;
-      if (seen.has(key)) throw new Error(`${piece.id}: duplicate priority attack ref '${key}'`);
-      seen.add(key);
-      return { cardId: ref.cardId, profileId };
-    });
-    return Object.freeze({
-      weaponId: piece.id,
-      handsRequired,
-      priorityAttackRefs: Object.freeze(priorities),
-      fillerAttackProfileId: filler.id,
-      compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
-    });
-  },
-});
-
-function handSource(registries, loadout, classId, hand) {
-  const slot = ((registries.equipment || {}).slots || []).find((row) => slotHand(row) === hand);
-  if (!slot) throw new Error(`No equipment slot declares hand '${hand}'`);
-  const piece = equippedIn(registries, loadout, classId, slot.id);
-  return { hand, slotId: slot.id, piece, package: WeaponCardPackageModel.fromPiece(registries, piece) };
-}
-
-function quotaRefs(registries, source, count) {
-  const filler = attackProfileFor(registries, source.package.fillerAttackProfileId, source.package.weaponId);
-  const refs = source.package.priorityAttackRefs.slice(0, count);
-  while (refs.length < count) refs.push({ cardId: filler.baseCardId, profileId: filler.id });
-  return refs.map((ref) => ({
-    sourceHand: source.hand,
-    weaponId: source.package.weaponId,
-    cardId: ref.cardId,
-    profileId: ref.profileId,
-  }));
-}
-
-/** Pure deterministic projection from active hand equipment to authored slots. */
-function buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount = undefined } = {}) {
-  const configured = Number(((registries.balance || {}).equipment || {}).roleCopies?.attack);
-  const count = attackSlotCount === undefined ? configured : Number(attackSlotCount);
-  if (!Number.isInteger(count) || count < 0) throw new Error(`attackSlotCount must be a non-negative integer (got ${attackSlotCount})`);
-  const right = handSource(registries, loadout, classId, 'right');
-  const left = handSource(registries, loadout, classId, 'left');
-  if (right.piece && left.piece && right.piece.id === left.piece.id) {
-    throw new Error(`duplicate equipped armament '${right.piece.id}' has no distinct equipment-instance identity`);
-  }
-  const eligible = [right, left].filter((source) => source.package);
-  const twoHanded = eligible.find((source) => source.package.handsRequired === 2);
-  if (twoHanded && ((twoHanded.hand === 'right' ? left.piece : right.piece) || eligible.length > 1)) {
-    throw new Error(`${twoHanded.package.weaponId}: two-handed weapon conflicts with occupied offhand`);
-  }
-
-  let refs;
-  if (twoHanded) refs = quotaRefs(registries, twoHanded, count);
-  else if (eligible.length === 2) {
-    refs = [
-      ...quotaRefs(registries, right, Math.ceil(count / 2)),
-      ...quotaRefs(registries, left, Math.floor(count / 2)),
-    ];
-  } else if (eligible.length === 1) refs = quotaRefs(registries, eligible[0], count);
-  else {
-    const profileId = ((registries.balance || {}).equipment || {}).unarmedProfiles?.attack;
-    const profile = attackProfileFor(registries, profileId, 'zero-weapon plan');
-    refs = Array.from({ length: count }, () => ({ sourceHand: null, weaponId: null, cardId: profile.baseCardId, profileId: profile.id }));
-  }
-  const slots = refs.map((ref, index) => ({ equipmentAttackSlotId: `attack:${index}`, ...ref }));
-  const fingerprint = slots.map((slot) => [slot.equipmentAttackSlotId, slot.sourceHand || '-', slot.weaponId || '-', slot.cardId, slot.profileId].join(':')).join('|');
-  return Object.freeze({ attackSlotCount: count, fingerprint, slots: Object.freeze(slots.map(Object.freeze)) });
-}
-
-/** Rebind stable attack instances without replacing instances or touching metadata. */
-function applyEquippedWeaponCardPlan(plan, cards, { allowSubset = false } = {}) {
-  if (!plan || !Array.isArray(plan.slots)) throw new Error('applyEquippedWeaponCardPlan requires an EquippedWeaponCardPlan');
-  const attacks = (cards || []).filter((card) => card.equipmentRole === 'attack');
-  if (!allowSubset && attacks.length !== plan.attackSlotCount) {
-    throw new Error(`attack instance count ${attacks.length} does not match authored ${plan.attackSlotCount}`);
-  }
-  const missingIds = attacks.filter((card) => !card.equipmentAttackSlotId);
-  if (missingIds.length) {
-    if (allowSubset || attacks.length !== plan.attackSlotCount) throw new Error('legacy attack slots can migrate only from the authoritative full deck');
-    attacks.forEach((card, index) => { card.equipmentAttackSlotId = `attack:${index}`; });
-  }
-  const byId = new Map(plan.slots.map((slot) => [slot.equipmentAttackSlotId, slot]));
-  const seen = new Set();
-  for (const card of attacks) {
-    if (seen.has(card.equipmentAttackSlotId)) throw new Error(`duplicate equipmentAttackSlotId '${card.equipmentAttackSlotId}'`);
-    seen.add(card.equipmentAttackSlotId);
-    const slot = byId.get(card.equipmentAttackSlotId);
-    if (!slot) throw new Error(`unknown equipmentAttackSlotId '${card.equipmentAttackSlotId}'`);
-    card.cardId = slot.cardId;
-    card.profileId = slot.profileId;
-    card.equipmentPlanFingerprint = plan.fingerprint;
-    if (slot.sourceHand) card.sourceHand = slot.sourceHand;
-    else delete card.sourceHand;
-    if (slot.weaponId) card.weaponId = slot.weaponId;
-    else delete card.weaponId;
-    if (slot.sourceEquipmentInstanceId) card.sourceEquipmentInstanceId = slot.sourceEquipmentInstanceId;
-    else delete card.sourceEquipmentInstanceId;
-  }
-  return attacks.length;
-}
-
-const WeaponDeckCompositionService = Object.freeze({
-  buildEquippedWeaponCardPlan,
-  applyEquippedWeaponCardPlan,
-});
-
 /** The ten-card role distribution, as instance-ready refs. */
 function startingDeckRefs(registries, loadout, classId) {
   const cls = registries.classes.get(classId);
   const copies = ((registries.balance || {}).equipment || {}).roleCopies || {};
   const refs = [];
   for (const row of equipmentKitPlan(registries, loadout, classId)) {
-    if (row.role === 'attack') {
-      const attackPlan = buildEquippedWeaponCardPlan(registries, loadout, classId);
-      refs.push(...attackPlan.slots.map((slot) => ({
-        cardId: slot.cardId,
-        equipmentRole: 'attack',
-        profileId: slot.profileId,
-        equipmentAttackSlotId: slot.equipmentAttackSlotId,
-        equipmentPlanFingerprint: attackPlan.fingerprint,
-        ...(slot.sourceHand ? { sourceHand: slot.sourceHand } : {}),
-        ...(slot.weaponId ? { weaponId: slot.weaponId } : {}),
-      })));
-      continue;
-    }
     for (let i = 0; i < (copies[row.role] || 0); i++) {
       refs.push({ cardId: row.profile.baseCardId, equipmentRole: row.role, profileId: row.profile.id });
     }
@@ -29729,37 +29490,6 @@ function loadoutSignature(loadout) {
     .join('|');
 }
 
-function equipmentChangedPayload(reason, before, after) {
-  const changedPositions = [];
-  const slotIds = new Set([...Object.keys((before || {}).sets || {}), ...Object.keys((after || {}).sets || {})]);
-  for (const slotId of [...slotIds].sort()) {
-    const beforeIds = ((before || {}).sets || {})[slotId] || [];
-    const afterIds = ((after || {}).sets || {})[slotId] || [];
-    const count = Math.max(beforeIds.length, afterIds.length);
-    for (let setIndex = 0; setIndex < count; setIndex++) {
-      const beforeItemId = beforeIds[setIndex] || null;
-      const afterItemId = afterIds[setIndex] || null;
-      const beforeActive = (((before || {}).active || {})[slotId] || 0) === setIndex;
-      const afterActive = (((after || {}).active || {})[slotId] || 0) === setIndex;
-      if (beforeItemId !== afterItemId || beforeActive !== afterActive) {
-        changedPositions.push({ slotId, setIndex, beforeItemId, afterItemId, beforeActive, afterActive });
-      }
-    }
-  }
-  return {
-    reason,
-    beforeLoadoutSignature: loadoutSignature(before),
-    afterLoadoutSignature: loadoutSignature(after),
-    changedPositions,
-  };
-}
-
-function emitEquipmentChanged(ctx, reason, before, after) {
-  if (ctx && typeof ctx.onEquipmentChanged === 'function') {
-    ctx.onEquipmentChanged(equipmentChangedPayload(reason, before, after));
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Collecting mods
 // ---------------------------------------------------------------------------
@@ -29769,13 +29499,11 @@ function emitEquipmentChanged(ctx, reason, before, after) {
  * The prefix is dropped because it has already done its job (choosing the
  * card); order is slot order, and the applier honours it.
  */
-function cardMods(registries, loadout, classId, { attackSourceWeaponId = undefined } = {}) {
+function cardMods(registries, loadout, classId) {
   const eq = registries.equipment || {};
   const fields = eq.modFields || {};
   const out = new Map();
   for (const piece of equippedPieces(registries, loadout, classId)) {
-    const packageModel = WeaponCardPackageModel.fromPiece(registries, piece);
-    if (attackSourceWeaponId !== undefined && packageModel && piece.id !== attackSourceWeaponId) continue;
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
@@ -30039,40 +29767,19 @@ function applyCardMods(def, mods, opts = {}) {
  * Re-stamping is idempotent, so calling it after every swap is safe. Pass
  * `cards` to stamp a hand mid-combat; it defaults to the run deck.
  */
-function stampDeck(registries, run, cards, {
-  adoptEquipmentBonuses = true,
-  reconcileEquipmentPools = true,
-} = {}) {
-  if (reconcileEquipmentPools) reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
+function stampDeck(registries, run, cards, { adoptEquipmentBonuses = true } = {}) {
+  reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
-  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
-  for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
-    const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
-    const desired = attackPlan.slots.find((slot) => slot.equipmentAttackSlotId === inst.equipmentAttackSlotId);
-    const next = desired && run.equipmentProfileRuleSnapshot.profiles[desired.profileId];
-    if (prior && next && prior.compatibility !== next.compatibility) {
-      throw new Error(`Incompatible attack profile swap: ${inst.profileId} (${prior.compatibility}) -> ${desired.profileId} (${next.compatibility})`);
-    }
-  }
-  applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
-    let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
-    if (inst.equipmentRole === 'attack') {
-      const profile = profileById(registries, inst.profileId);
-      const piece = inst.weaponId
-        ? (registries.equipment.armaments || []).find((candidate) => candidate.id === inst.weaponId) || null
-        : null;
-      row = { role: 'attack', profile, piece };
-      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot);
-    }
+    const row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
     if (row && row.profile) {
       const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
       const nextCompatibility = run.equipmentProfileRuleSnapshot.profiles[row.profile.id].compatibility;
       if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
-      if (inst.equipmentRole !== 'attack') inst.cardId = row.profile.baseCardId;
+      inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };
     }
@@ -30096,9 +29803,7 @@ function stampDeck(registries, run, cards, {
     else delete inst.damageSchool;
     if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
     else delete inst.exposureBuildupPerHit;
-    const mods = cardMods(registries, run.loadout, run.class, {
-      attackSourceWeaponId: inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
-    });
+    const mods = cardMods(registries, run.loadout, run.class);
     const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
       : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
@@ -30464,16 +30169,7 @@ function cycleSet(registries, loadout, slotId, index, ctx) {
   }
   if (!canSwap(registries, slotId, { inCombat: ctx.inCombat }).ok) return false;
   if (index >= openedSets(registries, slot, { meta: ctx.meta || {}, loadout })) return false;
-  const before = structuredClone(loadout);
   loadout.active[slotId] = index;
-  try {
-    buildEquippedWeaponCardPlan(registries, loadout, ctx.classId || null);
-  } catch (error) {
-    loadout.active[slotId] = before.active[slotId];
-    console.error(`cycleSet('${slotId}', ${index}): ${error.message} — refusing.`);
-    return false;
-  }
-  emitEquipmentChanged(ctx, 'swapSet', before, loadout);
   return true;
 }
 
@@ -30669,16 +30365,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);
   if (!slot) return false;
-  const before = structuredClone(loadout);
-  const appearedElsewhere = itemId && Object.entries(loadout.sets || {}).some(([otherSlotId, values]) => (
-    values.some((value, index) => value === itemId && (otherSlotId !== slotId || index !== setIndex))
-  ));
-  const reason = !itemId ? 'unequip' : appearedElsewhere ? 'move' : 'equip';
-  if (!itemId) {
-    const changed = applyEquipTransition(registries, loadout, slotId, setIndex, null);
-    if (changed) emitEquipmentChanged(ctx, reason, before, loadout);
-    return changed;
-  }
+  if (!itemId) return applyEquipTransition(registries, loadout, slotId, setIndex, null);
   // Armour ids repeat across classes; the class gate is armourById's, and this
   // one only asks whether the piece may live in this slot at all.
   const piece = slot.kinds.includes('armor')
@@ -30695,23 +30382,11 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   }
   if (!owned.has(piece)) return false;
   if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
-  const next = structuredClone(loadout);
-  if (!applyEquipTransition(registries, next, slotId, setIndex, itemId)) return false;
-  try {
-    buildEquippedWeaponCardPlan(registries, next, ctx.classId || null);
-  } catch (error) {
-    console.error(`equipPiece('${slotId}', '${itemId}'): ${error.message} — refusing.`);
-    return false;
-  }
-  loadout.sets = next.sets;
-  loadout.active = next.active;
-  loadout.storage = next.storage;
-  emitEquipmentChanged(ctx, reason, before, loadout);
-  return true;
+  return applyEquipTransition(registries, loadout, slotId, setIndex, itemId);
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
 
 },
 "src/model/relicModifiers.js": function (module, exports, require) {
@@ -31856,88 +31531,6 @@ function combatSnapshotReferenceProblems(snapshot, registries) {
   for (const pile of SNAPSHOT_PILES) {
     for (const card of snapshot.piles?.[pile] || []) has(registries.cards, card?.cardId, `piles.${pile}.cardId`);
   }
-  const loadout = snapshot.loadout;
-  if (loadout !== null) {
-    const equipment = registries.equipment || {};
-    const slots = equipment.slots || [];
-    if (!record(loadout.sets)) problems.push('loadout.sets must be an object');
-    if (!record(loadout.active)) problems.push('loadout.active must be an object');
-    if (!Array.isArray(loadout.storage)) problems.push('loadout.storage must be an array');
-
-    const armamentById = new Map((equipment.armaments || []).map((piece) => [piece.id, piece]));
-    const armourForClass = new Map((equipment.armour || [])
-      .filter((piece) => piece.classId === snapshot.player?.classId)
-      .map((piece) => [piece.id, piece]));
-    const armamentLocations = new Map();
-    const locateArmament = (id, path) => {
-      const first = armamentLocations.get(id);
-      if (first) problems.push(`${path} '${id}' is a duplicate equipped armament/location identity; first appears at ${first}`);
-      else armamentLocations.set(id, path);
-    };
-    const validatePiece = (id, slot, path) => {
-      if (id === null) return;
-      if (!nonEmptyString(id)) {
-        problems.push(`${path} must be null or a non-empty string`);
-        return;
-      }
-      const armourSlot = (slot.kinds || []).includes('armor');
-      const piece = armourSlot ? armourForClass.get(id) : armamentById.get(id);
-      if (!piece) {
-        const type = armourSlot ? `armour for class '${snapshot.player?.classId}'` : 'armament';
-        problems.push(`${path} '${id}' is unknown ${type}`);
-        return;
-      }
-      if (!(slot.kinds || []).includes(piece.kind)) {
-        problems.push(`${path} '${id}' kind '${piece.kind}' is invalid for slot '${slot.id}'`);
-      }
-      if (slot.hand && (piece.hand === 'left' || piece.hand === 'right') && piece.hand !== slot.hand) {
-        problems.push(`${path} '${id}' hand '${piece.hand}' is invalid for slot hand '${slot.hand}'`);
-      }
-      if (!armourSlot) locateArmament(id, path);
-    };
-
-    for (const slot of slots) {
-      const ids = record(loadout.sets) ? loadout.sets[slot.id] : undefined;
-      const active = record(loadout.active) ? loadout.active[slot.id] : undefined;
-      if (!Array.isArray(ids)) {
-        problems.push(`loadout.sets.${slot.id} must be an array`);
-      } else {
-        const expected = Math.max(1, slot.sets);
-        if (ids.length !== expected) problems.push(`loadout.sets.${slot.id} must contain exactly ${expected} positions`);
-        ids.forEach((id, index) => validatePiece(id, slot, `loadout.sets.${slot.id}[${index}]`));
-      }
-      if (!Number.isInteger(active)) {
-        problems.push(`loadout.active.${slot.id} must be an integer`);
-      } else if (Array.isArray(ids) && (active < 0 || active >= ids.length)) {
-        problems.push(`loadout.active.${slot.id} must be in range 0..${Math.max(0, ids.length - 1)}`);
-      }
-    }
-    if (Array.isArray(loadout.storage)) {
-      loadout.storage.forEach((id, index) => {
-        const path = `loadout.storage[${index}]`;
-        if (!nonEmptyString(id)) problems.push(`${path} must be a non-empty armament id`);
-        else if (!armamentById.has(id)) problems.push(`${path} '${id}' is unknown armament`);
-        else locateArmament(id, path);
-      });
-    }
-    const grant = loadout.creationArmourGrant;
-    if (grant != null) {
-      if (!record(grant)) {
-        problems.push('loadout.creationArmourGrant must be an object or null');
-      } else {
-        if (!nonEmptyString(grant.classId)) {
-          problems.push('loadout.creationArmourGrant.classId must be a non-empty string');
-        } else if (grant.classId !== snapshot.player?.classId) {
-          problems.push(`loadout.creationArmourGrant.classId '${grant.classId}' does not match player.classId '${snapshot.player?.classId}'`);
-        }
-        if (!nonEmptyString(grant.id)) {
-          problems.push('loadout.creationArmourGrant.id must be a non-empty string');
-        } else if (!((equipment.armour || []).some((piece) => piece.classId === grant.classId && piece.id === grant.id))) {
-          problems.push(`loadout.creationArmourGrant.id '${grant.id}' is unknown armour for class '${grant.classId}'`);
-        }
-      }
-    }
-  }
   return problems;
 }
 
@@ -32679,18 +32272,12 @@ function createCombat({
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
-    ...(c.acquiredAt !== undefined ? { acquiredAt: structuredClone(c.acquiredAt) } : {}),
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
-    ...(c.equipmentAttackSlotId ? { equipmentAttackSlotId: c.equipmentAttackSlotId } : {}),
-    ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
-    ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
-    ...(c.weaponId ? { weaponId: c.weaponId } : {}),
-    ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -33110,12 +32697,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // mutation asks the same function. Two questions, one home, no second copy.
   const activeBefore = combat.loadout.active[slotId];
   const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
-  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, {
-    meta: {},
-    inCombat: true,
-    classId: p.classId,
-    onEquipmentChanged: (event) => combat.emit('equipmentChanged', event),
-  })) {
+  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {}, inCombat: true })) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
@@ -33135,10 +32717,10 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.energy -= price.cost;
 
-  // Stable generated attack slots rebind wherever combat currently holds them.
-  // The intent resolves before this mutation, so no in-flight card changes
-  // underneath its own effects.
-  const piles = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust];
+  // The new numbers reach the draw and discard piles always; the hand only if
+  // the config says a swap re-arms what you are already holding.
+  const piles = [combat.piles.draw, combat.piles.discard];
+  if (cfg.restampHand) piles.push(combat.piles.hand);
   const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
@@ -35761,7 +35343,7 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 //      for lost.
 
 const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } = require("src/model/state.js");
-const { createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } = require("src/model/loadout.js");
+const { createLoadout, normalizeArmamentLocations, stampDeck } = require("src/model/loadout.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
 const { openLedger, closeLedger, note, readLedger } = require("src/model/healLedger.js");
@@ -35794,50 +35376,6 @@ const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older th
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
 function runKey(slot = 1) {
   return slot === 1 ? RUN_KEY : `${RUN_KEY}_s${slot}`;
-}
-
-const COMBAT_SNAPSHOT_PILE_ORDER = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
-
-/**
- * Migrate one exact active-combat snapshot through the same weapon-package
- * composer as an ordinary run. The snapshot loadout is authoritative while a
- * combat is active; the top-level run loadout is only its persisted projection.
- * Work on a clone so a refused plan cannot leave a partially rebound snapshot.
- */
-function migrateCombatSnapshotWeaponCards(registries, run) {
-  const stored = run.combatEntered?.snapshot;
-  if (!stored) return;
-  const snapshot = structuredClone(stored);
-  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
-  const attacks = cards.filter((card) => card.equipmentRole === 'attack');
-
-  if (snapshot.loadout === null) {
-    if (attacks.length) throw new Error('combat snapshot has generated attack slots but no authoritative loadout');
-    return;
-  }
-
-  const classId = snapshot.player?.classId || run.class;
-  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
-  // Full-pile order is the one legacy assignment door: draw, hand, discard,
-  // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
-  // even when zero attacks were recognized keeps the authored count fail closed.
-  WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
-  stampDeck(registries, {
-    class: classId,
-    loadout: snapshot.loadout,
-    attributes: snapshot.attributes || run.attributes,
-    equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
-    equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
-    deck: cards,
-  }, cards, {
-    adoptEquipmentBonuses: false,
-    reconcileEquipmentPools: false,
-  });
-
-  // Commit only after validation and every pile rebind succeed. Resume then
-  // observes the exact same loadout in run state and restored combat state.
-  run.combatEntered.snapshot = snapshot;
-  run.loadout = structuredClone(snapshot.loadout);
 }
 
 /**
@@ -36211,6 +35749,8 @@ function createSaveManager(storage) {
       }
       // A run saved before equipment existed has no loadout. Give it the bare
       // starting one and re-stamp, rather than throwing away someone's climb.
+      const needsEquipmentStamp = !run.loadout || !run.equipmentProfileRuleSnapshot;
+      const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
         // ONE OF THE THREE UNGATED HEALS. tests/engine.test.js 28 deletes
@@ -36242,15 +35782,10 @@ function createSaveManager(storage) {
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
-        migrateCombatSnapshotWeaponCards(registries, run);
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
-        // Every load crosses the same deterministic composition door. This is
-        // also the one-time migration for legacy role-only attack instances:
-        // deck order binds them to attack:0..N-1; no instance is appended.
-        stampDeck(registries, run, undefined, {
-          adoptEquipmentBonuses: false,
-          reconcileEquipmentPools: false,
-        });
+        if (needsEquipmentStamp || needsCarrierStamp) {
+          stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false });
+        }
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {
@@ -36587,11 +36122,10 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 // records handed in by main.js. The same modal shell serves LOAD and NEW so the
 // art and spacing can evolve without duplicating the screen structure.
 
-const { esc } = require("src/ui/components/tooltip.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { attachTooltip, esc, hideTooltip } = require("src/ui/components/tooltip.js");
+const { armHold, beatArmer } = require("src/ui/components/holdconfirm.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
-const { openSaveSlotSelector } = require("src/ui/components/saveSlotSelector.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
@@ -36633,6 +36167,8 @@ function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
+  let activatedLoadSlot = null;
+  let loadReviewSlot = null;
 
   const selectionModel = (kind = modal) => saveSlotSelectionModel(slots, { kind, selectedSlot });
 
@@ -36641,8 +36177,11 @@ function mountTitle(app, {
     .map(({ properties }) => {
       const { slot, selectable, selected } = properties;
       const summary = slots.find((record) => record.slot === slot)?.summary || null;
+      const loadHint = model.properties.kind === 'load' && summary
+        ? ` title="Select slot ${slot}. Hold to load now; activate the selected slot again to review." aria-label="Slot ${slot}, ${esc(summary.className)}. Hold to load now; activate twice to review."`
+        : '';
       return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}" data-component="title-save-slot">
-        <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${selectable ? '' : ' disabled'}>
+        <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${loadHint}${selectable ? '' : ' disabled'}>
           <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy({ slot, summary })}</span>
           <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
         </button>
@@ -36677,8 +36216,27 @@ function mountTitle(app, {
 
   const modalHtml = () => {
     if (!modal) return '';
+    if (modal === 'load' && loadReviewSlot != null) {
+      const record = slots.find(({ slot }) => slot === loadReviewSlot);
+      if (!record?.summary) loadReviewSlot = null;
+      else return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
+        <section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
+          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
+          <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
+          <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
+          <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
+            <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy(record)}</span>
+          </article>
+          <p class="title-load-review-copy">Load this saved climb now?</p>
+          <div class="title-modal-actions" data-component="title-modal-actions">
+            <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
+            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
+          </div>
+        </section>
+      </div>`;
+    }
     const model = selectionModel();
-    const title = 'NEW GAME';
+    const title = modal === 'load' ? 'LOAD GAME' : 'NEW GAME';
     return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
       <section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
         <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
@@ -36704,41 +36262,71 @@ function mountTitle(app, {
   const openModal = (kind) => {
     modal = kind;
     selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
+    activatedLoadSlot = null;
+    loadReviewSlot = null;
     render();
     focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
-  };
-
-  const openLoadSelector = (launcher) => {
-    openSaveSlotSelector({
-      host: app,
-      slots,
-      meta,
-      registries,
-      inlineReview: true,
-      returnFocusElement: launcher,
-      onRequestLoad: (slot) => onContinue(slot),
-      onDelete,
-    });
   };
 
   const closeModal = () => {
     modal = null;
     selectedSlot = null;
+    activatedLoadSlot = null;
+    loadReviewSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
   };
 
+  const closeLoadReview = () => {
+    const slot = loadReviewSlot;
+    loadReviewSlot = null;
+    render();
+    focusModal(`[data-slot-pick="${slot}"]`);
+  };
+
   const activateSlot = (slot) => {
-    selectedSlot = slot;
+    hideTooltip();
+    if (modal === 'load') {
+      if (selectedSlot === slot && activatedLoadSlot === slot) {
+        loadReviewSlot = slot;
+        render();
+        focusModal('[data-title-action="review-load"]');
+        return;
+      }
+      selectedSlot = slot;
+      activatedLoadSlot = slot;
+    } else {
+      selectedSlot = slot;
+    }
     render();
     focusModal(`[data-slot-pick="${selectedSlot}"]`);
+  };
+
+  const wireLoadSlots = (root) => {
+    if (modal !== 'load') return;
+    const configured = Number(registries.balance.ui.titleLoadHold?.ms);
+    const duration = Number.isFinite(configured) && configured > 0 ? configured : 600;
+    root.querySelectorAll('.title-slot-pick.is-filled').forEach((button) => {
+      const slot = +button.dataset.slotPick;
+      const record = slots.find((candidate) => candidate.slot === slot);
+      attachTooltip(button, () => `<div class="tt-title">Slot ${slot} · ${esc(record?.summary?.className || 'Saved climb')}</div>`
+        + 'Tap once to select. Tap the selected slot again to review. Hold to load now.');
+      armHold(button, {
+        ms: duration,
+        id: 'loadSave',
+        pointerOnly: true,
+        hintHost: button,
+        onTap: () => activateSlot(slot),
+        onConfirm: () => { hideTooltip(); onContinue(slot); },
+      });
+    });
   };
 
   const wireDelete = (root) => {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete) });
+      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slot) });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };
@@ -36764,7 +36352,8 @@ function mountTitle(app, {
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
-        closeModal();
+        if (loadReviewSlot != null) closeLoadReview();
+        else closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
         const first = controls[0];
@@ -36782,16 +36371,18 @@ function mountTitle(app, {
       button.addEventListener('click', () => {
         const action = button.dataset.titleAction;
         if (action === 'continue') onContinue(occupied[0].slot);
-        else if (action === 'load') openLoadSelector(button);
-        else if (action === 'new') openModal(action);
+        else if (action === 'load' || action === 'new') openModal(action);
         else if (action === 'collection' && onCompendium) onCompendium();
         else if (action === 'settings') onSettings();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
+        else if (action === 'review-back') closeLoadReview();
+        else if (action === 'review-load') onContinue(loadReviewSlot);
         else if (action === 'modal-continue') {
           const target = selectionModel().properties.actionSlot;
           if (target == null) return;
-          onNew(target);
+          if (modal === 'load') onContinue(target);
+          else onNew(target);
         }
       });
     });
@@ -36799,10 +36390,12 @@ function mountTitle(app, {
       if (event.target === event.currentTarget) closeModal();
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
+      if (modal === 'load' && button.classList.contains('is-filled')) return;
       button.addEventListener('click', () => {
         activateSlot(+button.dataset.slotPick);
       });
     });
+    wireLoadSlots(root);
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
@@ -36826,6 +36419,41 @@ const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComp
 
 let tipEl = null;
 let showTimer = null;
+let autoHideTimer = null;
+let fadeTimer = null;
+
+function conceal() {
+  if (!tipEl) return;
+  tipEl.style.display = 'none';
+  tipEl.setAttribute('aria-hidden', 'true');
+}
+
+function clearAutoHide() {
+  clearTimeout(autoHideTimer);
+  clearTimeout(fadeTimer);
+  autoHideTimer = null;
+  fadeTimer = null;
+  if (tipEl) tipEl.classList.remove('is-fading');
+}
+
+function scheduleAutoHide(autoHideMs) {
+  clearAutoHide();
+  if (!(autoHideMs > 0)) return;
+  autoHideTimer = setTimeout(() => {
+    if (!tipEl) return;
+    const systemReducedMotion = typeof matchMedia === 'function'
+      && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.body.classList.contains('reduced-motion') || systemReducedMotion) {
+      conceal();
+      return;
+    }
+    tipEl.classList.add('is-fading');
+    fadeTimer = setTimeout(() => {
+      conceal();
+      clearAutoHide();
+    }, 160);
+  }, autoHideMs);
+}
 
 // ---------------------------------------------------------------------------
 // E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
@@ -36891,10 +36519,17 @@ function ensure() {
   if (!tipEl) {
     tipEl = document.createElement('div');
     tipEl.id = 'tooltip';
+    tipEl.setAttribute('role', 'tooltip');
+    tipEl.setAttribute('aria-hidden', 'true');
     markUiComponent(tipEl, UI.tooltip);
     document.body.appendChild(tipEl);
   }
   return tipEl;
+}
+
+/** Ensure the singleton exists before a control references it with aria-describedby. */
+function ensureTooltip() {
+  return ensure();
 }
 
 // Container: THE VIEWPORT. #tooltip is `position: fixed` (ui.css:5), so the
@@ -36948,12 +36583,13 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start') {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
   // place is an ordinary tooltip again unless its own hold sticks it.
   unstick();
+  clearAutoHide();
   const t = ensure();
   t.innerHTML = html;
   t.style.removeProperty('width');
@@ -36971,10 +36607,16 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     t.style.width = `${widthPx}px`;
     t.style.maxWidth = `${Math.max(0, room.width - 16)}px`;
   }
+  if (appearance?.maxWidthRem) {
+    const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const maxWidthPx = Math.max(0, Math.min(appearance.maxWidthRem * rootFontPx, room.width - 16));
+    t.style.maxWidth = `${maxWidthPx}px`;
+  }
   if (appearance?.maxHeightRatio) {
     t.style.maxHeight = `${Math.max(0, room.height * appearance.maxHeightRatio)}px`;
   }
   t.style.display = 'block';
+  t.setAttribute('aria-hidden', 'false');
   // THE INTENT, NAMED HERE. 'beside' is the tooltip's whole placement rule: it
   // explains a control, so it may not sit on it, and any of the four sides that
   // fits is an acceptable answer.
@@ -36984,7 +36626,8 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     })
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
-  placeAnchored(t, anchor, { intent: resolvedIntent, clear });
+  placeAnchored(t, anchor, { intent: resolvedIntent, clear, align });
+  scheduleAutoHide(autoHideMs);
   return true;
 }
 
@@ -36996,7 +36639,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null,
+  intent = 'beside', align = 'start', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -37018,7 +36661,7 @@ function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs, align);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -37028,7 +36671,7 @@ function attachTooltip(el, contentFn, {
     // tooltip is no reason to let a half-started hover fire behind it.
     clearTimeout(showTimer);
     if (stuck) return; // E8: a completed hold outlives the pointer leaving
-    if (tipEl) tipEl.style.display = 'none';
+    conceal();
   });
   el.addEventListener('gpfocus', () => {
     clearTimeout(showTimer);
@@ -37044,9 +36687,17 @@ function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null } = {}) {
+function showTooltipFor(el, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  return showTooltipForRect(el.getBoundingClientRect(), html, {
+    intent, align, clear: clear || el.parentElement, appearance, placementModel, autoHideMs,
+  });
+}
+
+/** Show the shared tooltip against a caller-owned measured subject rectangle. */
+function showTooltipForRect(anchor, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+  if (!anchor) return false;
+  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align);
 }
 
 /**
@@ -37122,8 +36773,9 @@ function hideTooltip() {
   // change. A stuck tooltip is not a stronger tooltip; it is one that ignores
   // the pointer leaving, and nothing else.
   unstick();
+  clearAutoHide();
   clearTimeout(showTimer);
-  if (tipEl) tipEl.style.display = 'none';
+  conceal();
 }
 
 function esc(s) {
@@ -37131,7 +36783,7 @@ function esc(s) {
 }
 
 
-Object.assign(module.exports, { attachTooltip, showTooltipFor, stickTooltip, showTooltipAt, hideTooltip, esc });
+Object.assign(module.exports, { ensureTooltip, attachTooltip, showTooltipFor, showTooltipForRect, stickTooltip, showTooltipAt, hideTooltip, esc });
 
 },
 "src/ui/fx.js": function (module, exports, require) {
@@ -37324,8 +36976,8 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *           'under'  — under it, and only under it. When it does not fit, the
  *                      bound answers; that is the caller's declared preference,
  *                      not a failure to consider the alternatives.
- *   align   'start' | 'end' — which edge of the anchor the free axis lines up
- *                      with. Only 'under' reads it; 'beside' slides the free axis
+ *   align   'start' | 'center' | 'end' — where the anchor's free axis lines up
+ *                      for 'above' and 'under'; 'beside' slides the free axis
  *                      to stay on screen, which is what made three of its
  *                      candidates usable at all.
  *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
@@ -37390,14 +37042,21 @@ function placeAnchored(el, anchor, {
     // axis as well is what made three candidates fail — the below/above ones were
     // rejected for horizontal overflow while the vertical room they existed to use
     // sat empty.
-    const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
+    const anchoredX = align === 'end'
+      ? a.left + a.width - b.width
+      : align === 'center'
+        ? a.left + (a.width - b.width) / 2
+        : a.left;
+    const slideX = Math.min(Math.max(pad, anchoredX), Math.max(pad, room.width - pad * 2 - b.width));
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
-    const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
-    const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
+    const under = { left: slideX, top: a.top + a.height + gap };
+    const above = { left: slideX, top: a.top - b.height - gap };
+    const aboveLeft = { left: a.left - b.width - gap, top: above.top };
+    const aboveRight = { left: a.left + a.width + gap, top: above.top };
     const right = { left: a.left + a.width + gap, top: slideY };
     const left = { left: a.left - b.width - gap, top: slideY };
     const candidates = intent === 'under' ? [under]
-      : intent === 'above' ? [above, under]
+      : intent === 'above' ? [above, aboveLeft, aboveRight, under]
         : intent === 'left' ? [left, right, under, above]
           : intent === 'right' ? [right, left, under, above] : [
       right,
@@ -37407,14 +37066,17 @@ function placeAnchored(el, anchor, {
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {
-      const c = anchorLocalBox(layer, clear);
+      const clearBoxes = (Array.isArray(clear) ? clear : [clear])
+        .filter(Boolean)
+        .map((candidate) => anchorLocalBox(layer, candidate));
       // LEAST OVERLAP, NOT "MUST CLEAR". A veto would have no answer on the shape
       // where the group fills the room, and "no answer" resolves to the bound,
       // which lands ON the group — worse than the candidate that grazes it.
       let best = usable[0];
-      let bestArea = overlapArea(box(best), c);
+      const blockedArea = (candidate) => clearBoxes.reduce((sum, clearBox) => sum + overlapArea(box(candidate), clearBox), 0);
+      let bestArea = blockedArea(best);
       for (const p of usable.slice(1)) {
-        const area = overlapArea(box(p), c);
+        const area = blockedArea(p);
         if (area < bestArea) { best = p; bestArea = area; }
       }
       at0 = best;
@@ -38352,6 +38014,7 @@ function tooltipPlacementModel(presentation = {}) {
     variant: 'edge-aware',
     tokens: {
       hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, 500)),
+      autoFadeMs: Math.max(0, finite(presentation.autoFadeMs, 5000)),
       topBandViewportPct: clampPct(presentation.topBandViewportPct, 25),
       sideBandViewportPct: clampPct(presentation.sideBandViewportPct, 30),
     },
@@ -39731,9 +39394,9 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 //   'key'    — the canonical binding is the keyboard key; screens match it via
 //              matchAction(ev, id). A pad press dispatches that same key, so the
 //              screens' own handlers run for controller + keyboard alike.
-// Deck, Relics, and Stats keep their stable action ids and bindings while their
-// `destination` names only the semantic place the player asked for. Raw
-// Armoury views, trays, selectors, and focus stay in equipment.js.
+// The Deck and Stats actions jump the in-run overlay straight to those tabs.
+// The stable legacy `relics` action id now opens Armoury, preserving existing
+// bindings while giving equipment and carried items one canonical destination.
 const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
@@ -39741,25 +39404,15 @@ const ACTIONS = [
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
-  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
-  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
+  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3 },
+  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5 },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
   { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
   { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
-
-const ACTION_DESTINATIONS = new Set(['cards', 'equipment', 'character']);
-
-/** One exact semantic destination or null. Duplicate, dangling, and unknown
- * registry rows fail closed rather than silently opening a generic Armoury. */
-function actionDestination(id) {
-  const rows = ACTIONS.filter((action) => action.id === id && action.destination);
-  if (rows.length !== 1 || !ACTION_DESTINATIONS.has(rows[0].destination)) return null;
-  return rows[0].destination;
-}
 
 // Confirm's keyboard key, read off its own row rather than typed here. It is
 // FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
@@ -39899,16 +39552,6 @@ function matchAction(ev, id) {
   const k = keyBindings[id];
   if (!k) return false;
   return (ev.key || '').toLowerCase() === k.toLowerCase();
-}
-
-/** Resolve the one destination-bearing action matched by this live binding.
- * Pads and hint chips synthesize that same current key, so every input source
- * converges here without a second destination table. */
-function actionDestinationForEvent(ev) {
-  const matches = ACTIONS.filter((action) => action.destination && matchAction(ev, action.id));
-  if (matches.length !== 1) return null;
-  const destination = actionDestination(matches[0].id);
-  return destination ? Object.freeze({ actionId: matches[0].id, destination }) : null;
 }
 
 // Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
@@ -40064,10 +39707,11 @@ function setFocus(el, remember = true) {
   }
   if (el) {
     el.classList.add('gp-focus');
-    // A real menu owns both the visual gamepad cursor and DOM focus. Keyboard
-    // arrows already move the latter through the menu's key handler; keeping
-    // it aligned here gives D-pad navigation the same accessible focus state.
-    if (el.closest && el.closest('[role="menu"]') && document.activeElement !== el
+    // ARIA menus and button-like custom controls own both the visual cursor and
+    // DOM focus.  Keeping the two aligned lets the browser deliver native
+    // keyboard activation keys (notably Space) to a role=button reached with
+    // Arrow/D-pad navigation, while Enter/A still uses the unified press path.
+    if (el.closest && (el.closest('[role="menu"]') || el.matches?.('[role="button"]')) && document.activeElement !== el
       && typeof el.focus === 'function') el.focus();
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
@@ -40755,7 +40399,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionDestination, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, actionDestinationForEvent, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setInputGate, setActionControl, releaseActionControl, beginActionPress, endActionPress, REBIND_CAPTURE_SERVICE_ID, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setInputGate, setActionControl, releaseActionControl, beginActionPress, endActionPress, REBIND_CAPTURE_SERVICE_ID, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -41598,7 +41242,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '3ef87d99d8';
+const SOURCE = '3d1fd64b0e';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41632,7 +41276,7 @@ const SOURCE = '3ef87d99d8';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1426';
+const ORDINAL = '1399';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -45573,286 +45217,6 @@ function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {})
 Object.assign(module.exports, { musicQuickSettingsPlan, hudQuickSettingsModel });
 
 },
-"src/ui/components/saveSlotSelector.js": function (module, exports, require) {
-// Shared Load-slot surface for Title and the in-run Quick Menu. Selection is
-// projected by SaveSlotSelectionModel; callers only decide what a confirmed
-// exact slot means. The component never reads or mutates save storage.
-
-const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
-const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
-const { focusElement } = require("src/ui/input.js");
-const { armHold, beatArmer } = require("src/ui/components/holdconfirm.js");
-const { esc, hideTooltip } = require("src/ui/components/tooltip.js");
-const { mountTitleSaveSlotTooltip } = require("src/ui/components/titleSaveSlotTooltip.js");
-
-let activeSelector = null;
-
-function saveSlotCopyHtml({ slot, summary }) {
-  if (!summary) {
-    return `<span class="title-slot-tag">SLOT ${slot}</span><span class="title-slot-empty">Empty</span>`;
-  }
-  return `<span class="title-slot-tag">SLOT ${slot}</span>
-    <span class="title-slot-name">${esc(summary.className)}</span>
-    <span class="title-slot-meta">Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP</span>
-    <span class="title-slot-seed">SEED ${esc(summary.seedString)}</span>`;
-}
-
-function closeSaveSlotSelector({ restoreFocus = true } = {}) {
-  activeSelector?.close({ restoreFocus });
-}
-
-function openSaveSlotSelector({
-  host = document.body,
-  slots = [],
-  meta = null,
-  registries,
-  returnFocusElement = null,
-  inlineReview = false,
-  onRequestLoad,
-  onDelete = null,
-} = {}) {
-  closeSaveSlotSelector({ restoreFocus: false });
-
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil title-modal-veil';
-  veil.dataset.titleModalScrim = '';
-  let selectedSlot = saveSlotSelectionModel(slots, { kind: 'load' }).properties.selectedSlot;
-  let activatedLoadSlot = null;
-  let loadReviewSlot = null;
-  let closed = false;
-  let holdCleanups = [];
-  let tooltipCleanup = null;
-
-  const clearSlotHolds = () => {
-    for (const cleanup of holdCleanups.splice(0)) cleanup();
-  };
-
-  const model = () => saveSlotSelectionModel(slots, { kind: 'load', selectedSlot });
-  const selectedButton = () => veil.querySelector(`[data-slot-pick="${selectedSlot}"]`);
-  const focus = (selector = '.title-slot-pick:not([disabled]), .title-modal-back') => {
-    const control = veil.querySelector(selector);
-    if (!control) return false;
-    control.focus({ preventScroll: true });
-    focusElement(control);
-    return document.activeElement === control;
-  };
-  const restoreLauncher = () => {
-    if (!returnFocusElement?.isConnected) return;
-    returnFocusElement.focus({ preventScroll: true });
-    focusElement(returnFocusElement);
-  };
-  const close = ({ restoreFocus = true } = {}) => {
-    if (closed) return;
-    closed = true;
-    clearSlotHolds();
-    tooltipCleanup?.();
-    tooltipCleanup = null;
-    hideTooltip();
-    veil.remove();
-    if (activeSelector?.veil === veil) activeSelector = null;
-    if (restoreFocus) queueMicrotask(restoreLauncher);
-  };
-  const requestLoad = (slot, trigger) => {
-    const record = slots.find((candidate) => candidate.slot === slot);
-    if (!record?.summary || typeof onRequestLoad !== 'function') return;
-    close({ restoreFocus: false });
-    onRequestLoad(slot, { trigger, returnFocusElement });
-  };
-
-  const slotRows = (selection) => selection.children
-    .filter((child) => child.component === UI.titleSaveSlot)
-    .map(({ properties }) => {
-      const { slot, selectable, selected } = properties;
-      const record = slots.find((candidate) => candidate.slot === slot);
-      const summary = record?.summary || null;
-      const hint = summary
-        ? ` title="Select slot ${slot}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate the selected slot again to review." aria-label="Slot ${slot}, ${esc(summary.className)}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate twice to review."`
-        : '';
-      return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}" data-component="title-save-slot">
-        <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${hint}${selectable ? '' : ' disabled'}>
-          <span class="title-slot-copy" data-component="title-save-slot-copy">${saveSlotCopyHtml({ slot, summary })}</span>
-          <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
-        </button>
-        ${summary && onDelete ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>` : ''}
-      </div>`;
-    }).join('');
-
-  const render = () => {
-    if (closed) return;
-    clearSlotHolds();
-    tooltipCleanup?.();
-    tooltipCleanup = null;
-    if (inlineReview && loadReviewSlot != null) {
-      const record = slots.find(({ slot }) => slot === loadReviewSlot);
-      if (record?.summary) {
-        veil.innerHTML = `<section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
-          <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
-          <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
-          <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
-            <span class="title-slot-copy" data-component="title-save-slot-copy">${saveSlotCopyHtml(record)}</span>
-          </article>
-          <p class="title-load-review-copy">Load this saved climb now?</p>
-          <div class="title-modal-actions" data-component="title-modal-actions">
-            <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
-            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
-          </div>
-        </section>`;
-        return;
-      }
-      loadReviewSlot = null;
-    }
-
-    const selection = model();
-    veil.innerHTML = `<section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-      <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
-      <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD GAME</h2>
-      <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
-      <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${slotRows(selection)}</div>
-      <div class="title-modal-actions" data-component="title-modal-actions">
-        <button class="title-modal-back" data-component="title-modal-back-control" type="button" data-title-action="back">BACK</button>
-        <button class="title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue" data-action-slot="${selection.properties.actionSlot ?? ''}"${selection.properties.canContinue ? '' : ' disabled'}>CONTINUE</button>
-      </div>
-    </section>`;
-
-    const duration = Number(registries?.balance?.ui?.titleLoadHold?.ms);
-    const holdMs = Number.isFinite(duration) && duration > 0 ? duration : 600;
-    veil.querySelectorAll('.title-slot-pick.is-filled').forEach((button) => {
-      const slot = Number(button.dataset.slotPick);
-      let clearPendingRelease = null;
-      const disarmHold = armHold(button, {
-        ms: holdMs,
-        id: 'loadSave',
-        pointerOnly: true,
-        hintHost: button,
-        onTap: () => activateSlot(slot),
-        onConfirm: (startEvent) => {
-          hideTooltip();
-          if (inlineReview) {
-            requestLoad(slot, 'hold');
-            return;
-          }
-
-          // armHold completes while the pointer is still down. Opening the
-          // Quick Menu confirmation at that instant lets the trailing touch
-          // release hit-test the new veil and cancel it. Retain this selector
-          // as the input owner until the same pointer ends, then cross the
-          // navigation boundary on the next task after its click is swallowed.
-          const pointerId = startEvent?.pointerId;
-          if (!Number.isInteger(pointerId)) return;
-          const clear = () => {
-            button.removeEventListener('pointerup', release);
-            button.removeEventListener('pointercancel', cancel);
-            if (clearPendingRelease === clear) clearPendingRelease = null;
-          };
-          const release = (endEvent) => {
-            if (endEvent.pointerId !== pointerId) return;
-            clear();
-            setTimeout(() => { if (!closed) requestLoad(slot, 'hold'); }, 0);
-          };
-          const cancel = (endEvent) => {
-            if (endEvent.pointerId === pointerId) clear();
-          };
-          clearPendingRelease?.();
-          clearPendingRelease = clear;
-          button.addEventListener('pointerup', release);
-          button.addEventListener('pointercancel', cancel);
-        },
-      });
-      holdCleanups.push(() => {
-        clearPendingRelease?.();
-        disarmHold();
-      });
-    });
-
-    if (onDelete && meta && registries) {
-      const arm = beatArmer(meta, registries);
-      veil.querySelectorAll('.title-slot-delete').forEach((button) => {
-        arm(button, 'deleteSave', {
-          onConfirm: () => {
-            const slot = Number(button.dataset.slotDelete);
-            close({ restoreFocus: false });
-            onDelete(slot);
-          },
-        });
-        button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
-      });
-    }
-
-    tooltipCleanup = mountTitleSaveSlotTooltip({
-      root: veil,
-      owner: selectedButton(),
-    });
-  };
-
-  const activateSlot = (slot) => {
-    hideTooltip();
-    if (selectedSlot === slot && activatedLoadSlot === slot) {
-      if (inlineReview) {
-        loadReviewSlot = slot;
-        render();
-        focus('[data-title-action="review-load"]');
-      } else {
-        requestLoad(slot, 'repeat');
-      }
-      return;
-    }
-    selectedSlot = slot;
-    activatedLoadSlot = slot;
-    render();
-    focus(`[data-slot-pick="${selectedSlot}"]`);
-  };
-
-  veil.addEventListener('click', (event) => {
-    if (event.target === veil) return close();
-    const button = event.target.closest('[data-title-action], [data-slot-pick]');
-    if (!button || !veil.contains(button)) return;
-    const action = button.dataset.titleAction;
-    if (action === 'close-modal' || action === 'back') close();
-    else if (action === 'review-back') {
-      const slot = loadReviewSlot;
-      loadReviewSlot = null;
-      render();
-      focus(`[data-slot-pick="${slot}"]`);
-    } else if (action === 'review-load') requestLoad(loadReviewSlot, 'review');
-    else if (action === 'modal-continue') requestLoad(model().properties.actionSlot, 'continue');
-    else if (button.dataset.slotPick && !button.classList.contains('is-filled')) activateSlot(Number(button.dataset.slotPick));
-  });
-  veil.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      if (loadReviewSlot != null) {
-        const slot = loadReviewSlot;
-        loadReviewSlot = null;
-        render();
-        focus(`[data-slot-pick="${slot}"]`);
-      } else close();
-    } else if (event.key === 'Tab') {
-      const controls = [...veil.querySelectorAll('.title-menu-modal button:not([disabled])')];
-      const first = controls[0];
-      const last = controls.at(-1);
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus({ preventScroll: true });
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus({ preventScroll: true });
-      }
-    }
-  });
-
-  host.appendChild(veil);
-  activeSelector = { veil, close };
-  render();
-  queueMicrotask(() => focus(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`));
-  return activeSelector;
-}
-
-
-Object.assign(module.exports, { saveSlotCopyHtml, closeSaveSlotSelector, openSaveSlotSelector });
-
-},
 "src/ui/models/SaveSlotSelectionModel.js": function (module, exports, require) {
 // DOM-free selection authority shared by the title Load and New Game doors.
 // The selected card, primary-action availability, and command target are one
@@ -45930,311 +45294,6 @@ function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}) {
 
 
 Object.assign(module.exports, { saveSlotSelectionModel });
-
-},
-"src/ui/components/titleSaveSlotTooltip.js": function (module, exports, require) {
-// Title/save-slot-only tooltip adapter.
-//
-// This deliberately owns presentation geometry only. The selected save-slot
-// button remains the focus, input, activation, hold, and load authority.
-
-const TITLE_SAVE_SLOT_TOOLTIP_COPY = 'Activate again—or hold—to load.';
-
-const TOOLTIP_ID = 'title-save-slot-tooltip';
-const NARROW_MAX_WIDTH = 480;
-const FLOAT_WIDTH = 252;
-const GAP = 12;
-let activeCleanup = null;
-
-const numberValue = (value) => {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
-};
-
-function measuredSafeInsets() {
-  const rootStyle = getComputedStyle(document.documentElement);
-  const explicit = (side) => numberValue(rootStyle.getPropertyValue(`--title-tooltip-safe-${side}`));
-  const probe = document.createElement('div');
-  probe.setAttribute('aria-hidden', 'true');
-  Object.assign(probe.style, {
-    position: 'fixed',
-    visibility: 'hidden',
-    pointerEvents: 'none',
-    paddingTop: 'env(safe-area-inset-top, 0px)',
-    paddingRight: 'env(safe-area-inset-right, 0px)',
-    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    paddingLeft: 'env(safe-area-inset-left, 0px)',
-  });
-  document.body.appendChild(probe);
-  const style = getComputedStyle(probe);
-  const safe = {
-    top: Math.max(explicit('top'), numberValue(style.paddingTop)),
-    right: Math.max(explicit('right'), numberValue(style.paddingRight)),
-    bottom: Math.max(explicit('bottom'), numberValue(style.paddingBottom)),
-    left: Math.max(explicit('left'), numberValue(style.paddingLeft)),
-  };
-  probe.remove();
-  return safe;
-}
-
-function visualPlan() {
-  const viewport = window.visualViewport || {
-    offsetLeft: 0,
-    offsetTop: 0,
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
-  const safe = measuredSafeInsets();
-  return {
-    width: viewport.width,
-    height: viewport.height,
-    safe,
-    bounds: {
-      left: viewport.offsetLeft + safe.left,
-      top: viewport.offsetTop + safe.top,
-      right: viewport.offsetLeft + viewport.width - safe.right,
-      bottom: viewport.offsetTop + viewport.height - safe.bottom,
-    },
-  };
-}
-
-const intersects = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
-  * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)) > 0.01;
-
-const inside = (candidate, size, bounds) => candidate.left >= bounds.left
-  && candidate.top >= bounds.top
-  && candidate.left + size.width <= bounds.right
-  && candidate.top + size.height <= bounds.bottom;
-
-function addDescription(owner, id) {
-  const ids = new Set((owner.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean));
-  ids.add(id);
-  owner.setAttribute('aria-describedby', [...ids].join(' '));
-}
-
-function removeDescription(owner, id) {
-  const ids = (owner.getAttribute('aria-describedby') || '').split(/\s+/).filter((entry) => entry && entry !== id);
-  if (ids.length) owner.setAttribute('aria-describedby', ids.join(' '));
-  else owner.removeAttribute('aria-describedby');
-}
-
-function resetNaturalSize(tip) {
-  tip.style.width = 'auto';
-  tip.style.height = 'auto';
-  tip.style.maxWidth = 'none';
-  tip.style.maxHeight = 'none';
-}
-
-function hardExclusions(root, owner) {
-  return [...root.querySelectorAll(
-    '[data-slot-pick], [data-slot-delete], .title-modal-close, .title-modal-actions button, #title-modal-heading, .title-modal-rule, .hold-hint',
-  )].filter((element) => element !== owner && element.getClientRects().length);
-}
-
-function sideCandidates(ownerRect, size, bounds, gap) {
-  return [
-    { side: 'block-end', left: Math.min(ownerRect.right - size.width, bounds.right - size.width), top: ownerRect.bottom + gap },
-    { side: 'inline-end', left: ownerRect.right + gap, top: ownerRect.top + (ownerRect.height - size.height) / 2 },
-    { side: 'inline-start', left: ownerRect.left - size.width - gap, top: ownerRect.top + (ownerRect.height - size.height) / 2 },
-    { side: 'block-start', left: Math.min(ownerRect.right - size.width, bounds.right - size.width), top: ownerRect.top - size.height - gap },
-  ];
-}
-
-function baseStyles(tip) {
-  Object.assign(tip.style, {
-    boxSizing: 'border-box',
-    zIndex: '940',
-    minHeight: '44px',
-    padding: '8px 12px',
-    border: '1px solid rgba(200, 155, 76, 0.72)',
-    borderRadius: '10px',
-    background: 'rgba(18, 14, 10, 0.98)',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.38)',
-    color: '#f4e7c8',
-    font: '600 14px/1.35 system-ui, sans-serif',
-    letterSpacing: '0.01em',
-    textAlign: 'left',
-    whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
-  });
-  tip.style.overflow = 'visible';
-  tip.style.pointerEvents = 'none';
-  tip.style.transition = 'none';
-  tip.style.setProperty('transition', 'none', 'important');
-  tip.style.animation = 'none';
-  tip.style.setProperty('animation', 'none', 'important');
-}
-
-function mountReserve({ tip, owner, root, visual, natural }) {
-  const row = owner.closest('.title-slot-row');
-  const modal = owner.closest('.title-menu-modal');
-  const zoom = numberValue(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  if (!row) return false;
-  tip.remove();
-  row.appendChild(tip);
-  Object.assign(row.style, { flexWrap: 'wrap', rowGap: '0px' });
-  Object.assign(tip.style, {
-    position: 'relative',
-    inset: 'auto',
-    flex: '1 0 100%',
-    width: '100%',
-    height: `${Math.ceil(natural.height) / zoom}px`,
-    maxWidth: '100%',
-    margin: '0',
-  });
-  tip.dataset.placement = 'reserve';
-  if (modal) {
-    modal.style.boxSizing = 'border-box';
-    modal.style.maxHeight = `${Math.max(1, visual.bounds.bottom - visual.bounds.top) / zoom}px`;
-    modal.style.overflowY = 'auto';
-    modal.style.overflowX = 'hidden';
-    const rect = tip.getBoundingClientRect();
-    if (rect.bottom > visual.bounds.bottom) modal.scrollTop += rect.bottom - visual.bounds.bottom + GAP;
-    if (rect.top < visual.bounds.top) modal.scrollTop -= visual.bounds.top - rect.top + GAP;
-    requestAnimationFrame(() => {
-      if (!tip.isConnected) return;
-      const settled = tip.getBoundingClientRect();
-      if (settled.bottom > visual.bounds.bottom) modal.scrollTop += settled.bottom - visual.bounds.bottom;
-      if (settled.top < visual.bounds.top) modal.scrollTop -= visual.bounds.top - settled.top;
-    });
-  }
-  return true;
-}
-
-function mountFloat({ tip, root, owner, visual, natural }) {
-  const zoom = numberValue(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  tip.remove();
-  root.appendChild(tip);
-  Object.assign(tip.style, {
-    position: 'fixed',
-    width: `${Math.ceil(natural.width) / zoom}px`,
-    height: `${Math.ceil(natural.height) / zoom}px`,
-    maxWidth: `${Math.ceil(natural.width) / zoom}px`,
-    margin: '0',
-  });
-  const ownerRect = owner.getBoundingClientRect();
-  const gap = GAP;
-  const candidates = sideCandidates(ownerRect, natural, visual.bounds, gap);
-  const exclusions = hardExclusions(root, owner);
-  const chosen = candidates.find((candidate) => {
-    const rect = {
-      left: candidate.left,
-      top: candidate.top,
-      right: candidate.left + natural.width,
-      bottom: candidate.top + natural.height,
-    };
-    return inside(candidate, natural, visual.bounds)
-      && !intersects(rect, ownerRect)
-      && exclusions.every((element) => !intersects(rect, element.getBoundingClientRect()));
-  });
-  if (!chosen) {
-    if (visual.width <= NARROW_MAX_WIDTH) {
-      const forced = candidates[0];
-      tip.style.left = `${forced.left / zoom}px`;
-      tip.style.top = `${forced.top / zoom}px`;
-      tip.dataset.placement = forced.side;
-      return true;
-    }
-    return false;
-  }
-  tip.style.left = `${chosen.left / zoom}px`;
-  tip.style.top = `${chosen.top / zoom}px`;
-  tip.dataset.placement = chosen.side;
-  return true;
-}
-
-function plan(context) {
-  const { tip, owner, root } = context;
-  const zoom = numberValue(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  if (!owner.isConnected || !root.isConnected) return false;
-  owner.style.removeProperty('min-height');
-  resetNaturalSize(tip);
-  tip.remove();
-  root.appendChild(tip);
-  Object.assign(tip.style, {
-    position: 'fixed',
-    visibility: 'hidden',
-    width: `${Math.min(FLOAT_WIDTH, Math.max(44, visualPlan().width - 2 * GAP)) / zoom}px`,
-  });
-  const measured = tip.getBoundingClientRect();
-  const visual = visualPlan();
-  const natural = {
-    width: Math.min(FLOAT_WIDTH, Math.max(44, visual.bounds.right - visual.bounds.left - 2 * GAP)),
-    height: Math.ceil(measured.height),
-  };
-  tip.dataset.safeInsets = JSON.stringify(visual.safe);
-  tip.style.visibility = 'visible';
-  const next = { ...context, visual, natural };
-  if (visual.width <= NARROW_MAX_WIDTH) return mountReserve(next);
-  if (mountFloat(next)) return true;
-  return mountReserve(next);
-}
-
-function mountTitleSaveSlotTooltip({ root, owner } = {}) {
-  activeCleanup?.();
-  if (!(root instanceof HTMLElement) || !(owner instanceof HTMLButtonElement) || !owner.isConnected) return () => {};
-
-  const tip = document.createElement('div');
-  tip.id = TOOLTIP_ID;
-  tip.dataset.titleSaveSlotTooltip = '';
-  tip.setAttribute('role', 'tooltip');
-  tip.setAttribute('data-component', 'tooltip');
-  tip.textContent = TITLE_SAVE_SLOT_TOOLTIP_COPY;
-  baseStyles(tip);
-  addDescription(owner, TOOLTIP_ID);
-
-  const row = owner.closest('.title-slot-row');
-  const modal = owner.closest('.title-menu-modal');
-  const saved = {
-    rowFlexWrap: row?.style.flexWrap || '',
-    rowGap: row?.style.rowGap || '',
-    modalBoxSizing: modal?.style.boxSizing || '',
-    modalMaxHeight: modal?.style.maxHeight || '',
-    modalOverflowY: modal?.style.overflowY || '',
-    modalOverflowX: modal?.style.overflowX || '',
-  };
-  let frame = 0;
-  const replan = () => {
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(() => plan({ tip, owner, root }));
-  };
-  const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(replan) : null;
-  resizeObserver?.observe(owner);
-  window.addEventListener('resize', replan);
-  window.visualViewport?.addEventListener('resize', replan);
-  window.visualViewport?.addEventListener('scroll', replan);
-  plan({ tip, owner, root });
-  document.fonts?.ready.then(replan).catch(() => {});
-
-  let cleaned = false;
-  const cleanup = () => {
-    if (cleaned) return;
-    cleaned = true;
-    cancelAnimationFrame(frame);
-    resizeObserver?.disconnect();
-    window.removeEventListener('resize', replan);
-    window.visualViewport?.removeEventListener('resize', replan);
-    window.visualViewport?.removeEventListener('scroll', replan);
-    removeDescription(owner, TOOLTIP_ID);
-    tip.remove();
-    if (row) {
-      row.style.flexWrap = saved.rowFlexWrap;
-      row.style.rowGap = saved.rowGap;
-    }
-    if (modal) {
-      modal.style.boxSizing = saved.modalBoxSizing;
-      modal.style.maxHeight = saved.modalMaxHeight;
-      modal.style.overflowY = saved.modalOverflowY;
-      modal.style.overflowX = saved.modalOverflowX;
-    }
-    if (activeCleanup === cleanup) activeCleanup = null;
-  };
-  activeCleanup = cleanup;
-  return cleanup;
-}
-
-
-Object.assign(module.exports, { TITLE_SAVE_SLOT_TOOLTIP_COPY, mountTitleSaveSlotTooltip });
 
 },
 "src/ui/screens/profileNotice.js": function (module, exports, require) {
@@ -46750,9 +45809,9 @@ const { createRunState } = require("src/model/state.js");
 const { attributeCardModels } = require("src/model/creationBrief.js");
 const { statProjection, playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
 const { startingKitViews, startingArmourViews } = require("src/model/startingKits.js");
-const { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal } = require("src/model/attributes.js");
+const { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } = require("src/model/attributes.js");
 const { previewCompatibleHands, startingHandsRequirementFailure } = require("src/model/loadout.js");
-const { creationModeViews, creationEquipmentSectionViews, creationRelicChoices, selectStartingHand } = require("src/model/characterCreation.js");
+const { creationHandChoices, creationRelicChoices, selectStartingHand } = require("src/model/characterCreation.js");
 
 
 
@@ -46770,7 +45829,6 @@ const { primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton, ti
 function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
   const firstClass = registries.classes.all()[0];
   const creationLayout = registries.characterCreation.layout || {};
-  const visibleModes = creationModeViews(registries);
   const state = {
     classId: firstClass.id,
     name: 'Forsaken',
@@ -46780,10 +45838,9 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     keepsakeId: registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
-    startingSlotChoices: {},
     startingArmourId: null,
     startingRelicId: firstClass.startingRelic,
-    attributeMode: visibleModes[0].id,
+    attributeMode: defaultCreationModeId(registries),
     attributes: null,
     classChoiceView: creationLayout.classChoiceView,
     equipmentChoiceView: creationLayout.equipmentChoiceView,
@@ -46870,8 +45927,22 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   const statBox = $('#cz-statedit');
   const STANDARD = 'standard';
   const POINTBUY = 'pointbuy';
-  let equipmentSectionViews = [];
-  let equipmentNodes = new Map();
+  const equipmentSections = registries.characterCreation.equipmentSections;
+  const equipmentNodes = new Map();
+  for (const section of equipmentSections) {
+    const node = document.createElement('section');
+    node.className = 'cc-equip-group';
+    node.dataset.equipmentSection = section.id;
+    const choices = document.createElement('div');
+    choices.className = 'cc-card-selectors cc-choice-collection';
+    choices.dataset.view = state.equipmentChoiceView;
+    if (section.kind === 'armour') choices.id = 'cz-armours';
+    else if (section.kind === 'relic') choices.id = 'cz-relics';
+    else if (section.kind === 'hand') choices.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
+    else choices.id = `cz-${section.id}`;
+    node.appendChild(choices);
+    equipmentNodes.set(section.id, node);
+  }
   let equipmentFold = null;
 
   function setClassPreviewPercent(percent) {
@@ -46940,7 +46011,6 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     const kit = baseKit();
     state.startingKitId = kit.id;
     state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
-    state.startingSlotChoices = {};
     state.startingArmourId = armourChoices()[0].id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
     if (state.attributeMode === POINTBUY) resetAttributes();
@@ -47026,7 +46096,7 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     statBox.innerHTML = '';
     const modes = document.createElement('div');
     modes.className = 'se-modes';
-    for (const mode of visibleModes) {
+    for (const mode of registries.creationModes.all()) {
       const button = modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
@@ -47217,76 +46287,64 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     }
   }
 
-  function renderEquipment(preferredOpenId = null) {
-    equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices() });
-    equipmentNodes = new Map();
-    for (const section of equipmentSectionViews) {
-      const node = document.createElement('section');
-      node.className = 'cc-equip-group';
-      node.dataset.equipmentSection = section.id;
-      const box = document.createElement('div');
-      box.className = 'cc-card-selectors cc-choice-collection';
-      box.dataset.view = state.equipmentChoiceView;
-      if (section.kind === 'armour') box.id = 'cz-armours';
-      else if (section.kind === 'relic') box.id = 'cz-relics';
-      else if (section.kind === 'hand') box.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
-      else box.id = `cz-${section.id}`;
-      node.appendChild(box);
-      equipmentNodes.set(section.id, node);
-
-      for (const piece of section.choices) {
-        if (section.kind === 'relic') {
-          const button = relicChoiceButton(piece, relicText(piece, registries), piece.id === state.startingRelicId, () => {
-            state.startingRelicId = piece.id;
-            renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); advanceEquipment(section.id);
-          });
-          box.appendChild(button);
-          continue;
-        }
-        const selected = section.kind === 'armour'
-          ? piece.id === state.startingArmourId
-          : section.kind === 'hand'
-            ? state.startingHands[section.slot] === piece.id
-            : state.startingSlotChoices[section.id] === piece.id;
-        const button = pieceChip(registries, piece, { selected });
-        markUiComponent(button, UI.equipmentChoiceCard, section.id);
-        if (section.kind === 'armour') button.dataset.startingArmourId = piece.id;
-        else if (section.kind === 'hand') { button.dataset.hand = section.slot; button.dataset.armamentId = piece.id; }
-        else button.dataset.startingSlotItemId = piece.id;
-        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  function renderEquipment() {
+    const armourBox = $('#cz-armours');
+    armourBox.innerHTML = '';
+    for (const piece of armourChoices()) {
+      const button = pieceChip(registries, piece, { selected: piece.id === state.startingArmourId });
+      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
+      button.dataset.startingArmourId = piece.id;
+      button.setAttribute('aria-pressed', piece.id === state.startingArmourId ? 'true' : 'false');
+      button.addEventListener('click', () => {
+        state.startingArmourId = piece.id;
+        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('armour');
+      });
+      armourBox.appendChild(button);
+    }
+    for (const hand of ['leftHand', 'rightHand']) {
+      const box = $(`#cz-${hand === 'leftHand' ? 'left' : 'right'}-hand`);
+      box.innerHTML = '';
+      for (const piece of creationHandChoices(registries, state.classId, hand)) {
+        const button = pieceChip(registries, piece, { selected: state.startingHands[hand] === piece.id });
+        markUiComponent(button, UI.equipmentChoiceCard, hand);
+        button.dataset.hand = hand; button.dataset.armamentId = piece.id;
+        button.setAttribute('aria-pressed', state.startingHands[hand] === piece.id ? 'true' : 'false');
         button.addEventListener('click', () => {
-          if (section.kind === 'armour') state.startingArmourId = piece.id;
-          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
-          else state.startingSlotChoices[section.id] = piece.id;
-          renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
+          state.startingHands = selectStartingHand(state.startingHands, hand, piece.id);
+          renderEquipment(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(hand);
         });
         box.appendChild(button);
       }
     }
-
-    const equipmentFaces = new Map(equipmentSectionViews.map((section) => [
-      section.id, selectionSectionFace(section.label, equipmentValue(section)),
-    ]));
-    equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSectionViews.map((section) => ({
-      key: section.id, kind: 'pick', disclosure: 'face',
-      face: { node: equipmentFaces.get(section.id).node },
-      reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-    })));
-    refreshEquipmentFaces = () => {
-      for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
-    };
-    const openId = equipmentSectionViews.some((section) => section.id === preferredOpenId)
-      ? preferredOpenId
-      : equipmentSectionViews[0]?.id;
-    if (openId) equipmentFold.open(openId);
+    const relicBox = $('#cz-relics');
+    relicBox.innerHTML = '';
+    for (const relic of creationRelicChoices(registries, state.classId)) {
+      const button = relicChoiceButton(relic, relicText(relic, registries), relic.id === state.startingRelicId, () => {
+        state.startingRelicId = relic.id;
+        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('relic');
+      });
+      relicBox.appendChild(button);
+    }
+    for (const section of equipmentSections.filter((row) => row.kind === 'slot')) {
+      const box = equipmentNodes.get(section.id).querySelector('.cc-card-selectors');
+      if (!box.childElementCount) {
+        const empty = document.createElement('p');
+        empty.className = 'cc-empty-slot';
+        empty.textContent = 'No starting options in this build. Content added to this slot will appear here.';
+        box.appendChild(empty);
+      }
+    }
+    for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = state.equipmentChoiceView;
+    refreshEquipmentFaces();
   }
 
   function advanceEquipment(sectionId) {
     if (!state.equipmentAutoAdvance || !equipmentFold) return;
-    const current = equipmentSectionViews.find((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
-    if (!current?.nextId) return;
-    equipmentFold.open(current.nextId);
-    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${current.nextId}"]`)));
+    const index = equipmentSections.findIndex((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
+    const next = equipmentSections.slice(index + 1).find((section) => section.kind !== 'slot');
+    if (!next) return;
+    equipmentFold.open(next.id);
+    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${next.id}"]`)));
   }
 
   const selectedRow = (id, rows) => rows.find((row) => row.id === id);
@@ -47307,7 +46365,7 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
 
   const characterRows = [
     { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
-      selectedRow(state.attributeMode, visibleModes)?.label || state.attributeMode
+      selectedRow(state.attributeMode, registries.creationModes.all())?.label || state.attributeMode
     ) },
     { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
       selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
@@ -47331,11 +46389,24 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
       row.classId === state.classId && row.id === state.startingArmourId
     ))?.name || 'None';
-    if (section.kind === 'relic') return section.choices.find((row) => row.id === state.startingRelicId)?.name || 'None';
-    if (section.kind === 'slot') return section.choices.find((row) => row.id === state.startingSlotChoices[section.id])?.name || 'None';
+    if (section.kind === 'relic') return creationRelicChoices(registries, state.classId).find((row) => row.id === state.startingRelicId)?.name || 'None';
+    if (section.kind === 'slot') return 'None';
     const id = state.startingHands[section.slot];
     return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty';
   };
+  const equipmentFaces = new Map(equipmentSections.map((section) => [
+    section.id, selectionSectionFace(section.label, equipmentValue(section)),
+  ]));
+  equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSections.map((section) => ({
+    key: section.id, kind: 'pick', disclosure: 'face',
+    face: { node: equipmentFaces.get(section.id).node },
+    reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
+  })));
+  refreshEquipmentFaces = () => {
+    for (const section of equipmentSections) equipmentFaces.get(section.id).setValue(equipmentValue(section));
+  };
+  equipmentFold.open(equipmentSections[0].id);
+
   resetClassChoices();
   renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
 
@@ -47484,7 +46555,7 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
         specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
       { key: 'mode-choice', label: 'STANDARD / ASSIGN POINTS', node: choiceSpecimen(
-        'se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,
+        'se-modes', registries.creationModes.all(), (row) => row.id, modeChoiceButton, state.attributeMode,
       ) },
       { key: 'sprite-choice', label: 'SPRITE CHOICE', node: choiceSpecimen(
         'cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,
@@ -48902,18 +47973,6 @@ const LAYOUTS = {
   'figure:0|slots:list': buildArmoury, // Rack keeps the shared shell
 };
 
-const ARMOURY_DESTINATIONS = Object.freeze({
-  cards: Object.freeze({ view: 'grid', region: 'cards' }),
-  equipment: Object.freeze({ view: 'rack', region: null }),
-  character: Object.freeze({ view: 'grid', region: null }),
-});
-
-/** Translate a semantic action destination inside the Armoury boundary. */
-function armouryDestinationPlan(destination) {
-  if (typeof destination !== 'string' || !Object.hasOwn(ARMOURY_DESTINATIONS, destination)) return null;
-  return { ...ARMOURY_DESTINATIONS[destination] };
-}
-
 /** Every declared view id, in authored order. The one enumeration. */
 function viewIds() {
   return (CFG().views || []).map((v) => (v && typeof v === 'object' ? v.id : v));
@@ -49382,13 +48441,8 @@ function inventoryReveal(registries, row, {
  *             route the change through the engine intent that charges for it
  */
 function mountEquipment(host, {
-  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquipmentChanged,
+  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
 }) {
-  const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
-  if (destination && !destinationPlan) {
-    console.error(`mountEquipment(): unknown action destination ${JSON.stringify(destination)}; refusing to open.`);
-    return null;
-  }
   closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
   // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
@@ -49459,7 +48513,7 @@ function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = destinationPlan?.view || ((stored && IDS.includes(stored)) ? stored : shapeDefault);
+  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
@@ -49475,7 +48529,6 @@ function mountEquipment(host, {
     ? Object.fromEntries(armouryTraySession.folded) : null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
-  if (destinationPlan?.region) folded.set(destinationPlan.region, false);
   const clampTrayHeight = (value) => Math.min(
     layout.trays.maximumHeightRatio,
     Math.max(layout.trays.minimumHeightRatio, Number(value)),
@@ -49605,8 +48658,6 @@ function mountEquipment(host, {
   const owned = () => ownership(registries, { meta, loadout: run.loadout });
   const ladderCtx = () => ({ meta, loadout: run.loadout });
   let draggingItemId = null;
-  let pendingEquipmentChanged = null;
-  const captureEquipmentChanged = (event) => { pendingEquipmentChanged = event; };
 
   /** Every piece the CONTENT has for this slot, owned or not. Does it exist? */
   function authoredFor(slot) {
@@ -49639,7 +48690,7 @@ function mountEquipment(host, {
     const hadSelection = !!picking;
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
-      { inCombat, attributes: run.attributes, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
+      { inCombat, attributes: run.attributes }
     );
     if (!changed) {
       notice = `${actionLabel} was refused. The loadout was not changed.`;
@@ -49701,9 +48752,7 @@ function mountEquipment(host, {
         if (refused) { notice = refused; draw(); }
         return;
       }
-      if (!cycleSet(registries, run.loadout, slot.id, position.index, {
-        meta, inCombat, classId: run.class, onEquipmentChanged: captureEquipmentChanged,
-      })) return;
+      if (!cycleSet(registries, run.loadout, slot.id, position.index, { meta, inCombat })) return;
       if (openPicker) openInventoryForSelection(slot.id, position.index);
       sfx.play('cardPlay');
       commit(openPicker ? foldSettings() : null);
@@ -50113,27 +49162,23 @@ function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards armoury-card-list';
-    box.dataset.component = 'armoury.cardList';
     box.dataset.cardView = cardView;
     const gridColumns = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
       ? layout.responsive.phone.cardsGridColumns
       : layout.cards.gridColumns;
     box.style.setProperty('--armoury-card-grid-columns', String(gridColumns));
-    const groups = new Map();
+    const surface = equipmentSurfaceReceipt(registries, run);
+    const shown = new Set();
     for (const inst of run.deck || []) {
       // This tray is the equipment-card surface. Class/signature cards do not
       // belong here; they have no armament source to inspect or compare.
       if (!inst.equipmentRole) continue;
-      const key = inst.equipmentRole === 'attack'
-        ? `${inst.equipmentRole}|${inst.cardId}|${inst.profileId}`
-        : inst.equipmentRole;
-      const group = groups.get(key) || { inst, count: 0 };
-      group.count += 1;
-      groups.set(key, group);
-    }
-    for (const { inst, count: copyCount } of groups.values()) {
+      const key = inst.equipmentRole;
+      if (shown.has(key)) continue;
+      shown.add(key);
       const rendered = renderCard(registries, inst, {});
       const def = resolveCard(registries, inst);
+      const copyCount = inst.equipmentRole ? surface.roleCopies[inst.equipmentRole] : surface.signature.copies;
       const art = rendered.querySelector('.art')?.textContent || '❖';
       const type = rendered.querySelector('.ctype')?.textContent || def.type;
       const cost = rendered.querySelector('.cost')?.textContent || String(def.cost);
@@ -50146,7 +49191,6 @@ function mountEquipment(host, {
       const row = document.createElement('details');
       row.className = 'armoury-card-row';
       row.dataset.cardRow = '1';
-      row.dataset.component = 'armoury.cardRow';
       const summary = document.createElement('summary');
       summary.className = 'armoury-card-row-summary';
       summary.innerHTML = '<span class="armoury-card-row-caret" aria-hidden="true">▸</span>'
@@ -50183,7 +49227,7 @@ function mountEquipment(host, {
       row.append(summary, detail);
       box.appendChild(row);
     }
-    if (!groups.size) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment cards are active.</p>');
+    if (!shown.size) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment cards are active.</p>');
     return box;
   }
 
@@ -50460,16 +49504,6 @@ function mountEquipment(host, {
     // Idempotent, and a no-op until the first talisman growth row is authored.
     syncFlaskGrowth(registries, run);
     if (onChange) onChange(run.loadout, settingChange || undefined);
-    if (pendingEquipmentChanged) {
-      if (onEquipmentChanged) onEquipmentChanged(pendingEquipmentChanged);
-      if (typeof CustomEvent === 'function') {
-        host.dispatchEvent(new CustomEvent('ashenspire:equipmentChanged', {
-          detail: pendingEquipmentChanged,
-          bubbles: true,
-        }));
-      }
-      pendingEquipmentChanged = null;
-    }
     draw();
   }
 
@@ -50881,23 +49915,12 @@ function mountEquipment(host, {
   };
   document.addEventListener('keydown', onKey);
 
-  const focusArmouryDestination = () => {
-    if (!destinationPlan || !wrap.isConnected) return;
-    const target = destinationPlan.region
-      ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`)
-      : wrap.querySelector(`[data-surface="armouryView"] [data-member="${destinationPlan.view}"]`);
-    if (!target) return;
-    target.focus({ preventScroll: true });
-    target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
-  };
-
   draw();
-  if (destinationPlan) queueMicrotask(focusArmouryDestination);
   return { close, redraw: draw };
 }
 
 
-Object.assign(module.exports, { resetArmouryTraySession, armouryDestinationPlan, viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, pieceChip, mountEquipment });
+Object.assign(module.exports, { resetArmouryTraySession, viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, pieceChip, mountEquipment });
 
 },
 "src/model/equipmentPresentation.js": function (module, exports, require) {
@@ -50905,8 +49928,7 @@ Object.assign(module.exports, { resetArmouryTraySession, armouryDestinationPlan,
 // and the Armoury render this receipt; neither screen redoes kit, requirement,
 // resource, or inert player-Poise arithmetic.
 
-const { equipmentKitReceipt, buildEquippedWeaponCardPlan, equipmentRequirementReceipt, applyEquipTransition, equippedIn, equippedPieces, parseMod, resolveSwapCostRule, runMods, swapCostFor } = require("src/model/loadout.js");
-
+const { equipmentKitReceipt, equipmentRequirementReceipt, applyEquipTransition, equippedIn, equippedPieces, parseMod, resolveSwapCostRule, runMods, swapCostFor } = require("src/model/loadout.js");
 
 
 
@@ -50957,27 +49979,6 @@ function rolesFor(registries, run) {
     run.attributes,
     run.equipmentProfileRuleSnapshot,
   ).map((row) => ({ ...row, copies: copies[row.role] }));
-}
-
-function attackPackageCounts(registries, run) {
-  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
-  const groups = new Map();
-  for (const slot of plan.slots) {
-    const key = `${slot.cardId}|${slot.profileId}`;
-    const profile = (registries.equipment.basicCardProfiles || []).find((row) => row.id === slot.profileId);
-    const row = groups.get(key) || {
-      key,
-      cardId: slot.cardId,
-      profileId: slot.profileId,
-      name: profile && profile.baseCardId === slot.cardId ? profile.displayName : registries.cards.get(slot.cardId).name,
-      count: 0,
-      sourceHands: [],
-    };
-    row.count += 1;
-    if (slot.sourceHand && !row.sourceHands.includes(slot.sourceHand)) row.sourceHands.push(slot.sourceHand);
-    groups.set(key, row);
-  }
-  return [...groups.values()];
 }
 
 function explicitEffects(registries, beforePiece, afterPiece) {
@@ -51200,9 +50201,6 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   if (transitioned) loadout.active[slot.id] = setIndex;
   const comparedRun = { ...run, loadout };
   const afterRoles = rolesFor(registries, comparedRun);
-  const beforeAttackPackages = attackPackageCounts(registries, run);
-  const afterAttackPackages = attackPackageCounts(registries, comparedRun);
-  const packageKeys = new Set([...beforeAttackPackages.map((row) => row.key), ...afterAttackPackages.map((row) => row.key)]);
   const beforeByRole = new Map(beforeRoles.map((row) => [row.role, row]));
   const beforeMods = runMods(registries, run.loadout, run.class);
   const afterMods = runMods(registries, loadout, run.class);
@@ -51237,19 +50235,6 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
       afterSchool: after.profile.damageSchool,
       afterTags: after.profile.tags || [],
     })),
-    attackPackageChanges: [...packageKeys].map((key) => {
-      const before = beforeAttackPackages.find((row) => row.key === key);
-      const after = afterAttackPackages.find((row) => row.key === key);
-      const row = after || before;
-      return {
-        cardId: row.cardId,
-        profileId: row.profileId,
-        name: row.name,
-        beforeCount: before ? before.count : 0,
-        afterCount: after ? after.count : 0,
-        sourceHands: after ? after.sourceHands : [],
-      };
-    }),
     addedEffects: explicitEffects(registries, beforePiece, piece),
     resourceChanges,
     poise: {
@@ -51630,7 +50615,6 @@ function renderRoleCopies(surface) {
 
 function renderCandidateComparison(candidate, { expanded = false } = {}) {
   const requirements = candidate.requirement ? renderEquipmentRequirements([candidate.requirement]) : renderEquipmentRequirements([]);
-  const attackRows = (candidate.attackPackageChanges || []).map((row) => `<li data-role="attack" data-card-id="${esc(row.cardId)}"><b>${esc(row.name)}</b> <span>x${row.beforeCount} → <strong>x${row.afterCount}</strong></span>${row.sourceHands.length ? `<small>${esc(row.sourceHands.join(' + '))} hand package</small>` : ''}</li>`).join('');
   const roleRows = candidate.roles.map((row) => `<li data-role="${esc(row.role)}"><b>${esc(row.beforeName)} → ${esc(row.afterName)}</b> <span>${row.beforeValue} → <strong>${row.afterValue}</strong></span><small>${esc(row.afterSchool)}${row.afterTags.length ? ` · ${row.afterTags.map(esc).join(' · ')}` : ''}</small></li>`).join('');
   const effects = candidate.addedEffects.length
     ? candidate.addedEffects.map((row) => `<li class="equip-added-effect">${esc(row.label)}</li>`).join('')
@@ -51643,7 +50627,7 @@ function renderCandidateComparison(candidate, { expanded = false } = {}) {
     ? candidate.resourceChanges.map((row) => `<li class="equip-resource-change">${esc(row.label)} ${row.before} → <strong>${row.after}</strong>${row.note ? `<small>${esc(row.note)}</small>` : ''}</li>`).join('')
     : '<li class="equip-resource-change none">No resource changes.</li>';
   return `<details class="equip-candidate-comparison"${expanded ? ' open' : ''}><summary>Compare cards and receipts</summary>`
-    + `<ul class="equip-card-changes">${attackRows}${roleRows}</ul>${requirements}`
+    + `<ul class="equip-card-changes">${roleRows}</ul>${requirements}`
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`
     + `<section class="player-poise-receipt"><b>Poise threshold</b><span>${candidate.poise.before} → <strong>${candidate.poise.after}</strong></span><small>${esc(candidate.poise.note)}</small></section>`
@@ -53365,7 +52349,7 @@ const { passiveFlag } = require("src/model/registries.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
-const { matchAction, actionDestinationForEvent, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
+const { matchAction, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
@@ -53687,11 +52671,10 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
     if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
       if (onMenu) onMenu('settings');
-    } else if (armouryAction) {
-      if (onArmoury) onArmoury(armouryAction);
+    } else if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
+      if (onArmoury) onArmoury();
     } else if (ev.key === '+' || ev.key === '=') {
       board.stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {
@@ -56174,7 +55157,7 @@ function observeCardFrames(wrap) {
  * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
  * wants Stagger's own text, which is content and not this file's to know).
  */
-function resourceBars(plan, { surface, tooltipExtra } = {}) {
+function resourceBars(plan, { surface, tooltipExtra, tooltips = true } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'resbars';
   wrap.dataset.surface = surface || 'main';
@@ -56188,7 +55171,7 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
     for (const group of groupByBand(plan)) {
       const line = document.createElement('div');
       line.className = 'resline';
-      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
+      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra, tooltips));
       wrap.appendChild(line);
     }
     // The full unit is the invisible reference track. The bordered card behind
@@ -56197,7 +55180,7 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => syncCardFrames(wrap));
     observeCardFrames(wrap);
   } else {
-    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
+    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra, tooltips));
   }
   return wrap;
 }
@@ -56213,7 +55196,7 @@ function groupByBand(plan) {
 }
 
 /** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
-function hybridUnit(bar, tooltipExtra) {
+function hybridUnit(bar, tooltipExtra, tooltips) {
   const unit = document.createElement('div');
   unit.className = 'resunit';
   unit.dataset.res = bar.id;
@@ -56270,7 +55253,7 @@ function hybridUnit(bar, tooltipExtra) {
   track.appendChild(troughEl(bar));
   unit.appendChild(track);
 
-  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
+  if (tooltips) attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
   return unit;
 }
 
@@ -56289,7 +55272,7 @@ function syncCardFrames(root) {
 }
 
 /** The under-model strip bar: trough with the label inside (unchanged shape). */
-function stripBar(bar, tooltipExtra) {
+function stripBar(bar, tooltipExtra, tooltips) {
   const el = troughEl(bar);
   const label = document.createElement('div');
   label.className = 'label';
@@ -56298,7 +55281,7 @@ function stripBar(bar, tooltipExtra) {
     `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
     `<span class="l-glyph">${esc(bar.glyph)}</span>`;
   el.appendChild(label);
-  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
+  if (tooltips) attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
   return el;
 }
 
@@ -56349,16 +55332,16 @@ Object.assign(module.exports, { resourceBars });
 const { dispatch, previewCard, previewIntent, getEntity } = require("src/engine/combat.js");
 const { resolveCard } = require("src/model/registries.js");
 const { openPileModal } = require("src/ui/components/piles.js");
-const { attachTooltip, hideTooltip, showTooltipFor, esc } = require("src/ui/components/tooltip.js");
+const { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
+const { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
-const { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
+const { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
 const { clearTargetSilhouettes, renderTargetSilhouette } = require("src/ui/components/friendlyTargets.js");
 const { friendlyTargetMode } = require("src/model/friendlyTargets.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
@@ -56383,8 +55366,6 @@ const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
 const { battlefieldStageModel } = require("src/ui/models/BattlefieldStageModel.js");
 const { wireBattlefieldStage } = require("src/ui/components/battlefieldStage.js");
 const { tooltipPlacementModel } = require("src/ui/models/TooltipPlacementModel.js");
-const { combatantInspectorModel } = require("src/ui/models/CombatantInspectorModel.js");
-const { mountCombatantInspector } = require("src/ui/components/combatantInspector.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -56429,7 +55410,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
-        <div class="combatant-inspector-host" hidden></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
@@ -56501,8 +55481,8 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
-  let inspectedCombatant = null; // { role, id } for the persistent edge tray
-  let inspectorExpanded = true;
+  let selectedEnemyId = null; // contextual reading selection; never combat targeting
+  let enemyTooltipDelayTimer = null;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -56515,6 +55495,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // is a separately owned Folding Tray and remains until its label is folded.
   combatEl.addEventListener('click', (event) => {
     if (event.target.closest('.combatant, .combatant-inspector-host')) return;
+    clearTimeout(enemyTooltipDelayTimer);
+    selectedEnemyId = null;
+    combatEl.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
+    combatEl.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
     hideTooltip();
   });
 
@@ -56654,7 +55638,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const def = registries.statuses.get(statusId);
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
-      return [{ name: presentation.label, detail: presentation.tooltip }];
+      return [{ name: def.name, detail: presentation.tooltip }];
     });
   }
 
@@ -56723,71 +55707,79 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     };
   }
 
-  function foldedCombatantTooltip(subject) {
+  function enemyContextTooltip(subject) {
     const hp = subject.resources.find((row) => row.label === 'HP');
     const poise = subject.resources.find((row) => row.label === 'Poise');
+    const effects = subject.statuses.map((row) => row.name).join(', ') || 'None';
     return `<div class="tt-title">${esc(subject.name)}</div>`
-      + `<div class="tt-combatant-line">${esc(subject.subtitle || '')}</div>`
-      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
-      + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
+      + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
+      + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
+      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
   }
 
-  function expandedCombatantTooltip(subject, role) {
-    const live = subject.intent || subject.skills.find((row) => row.active);
-    return `${foldedCombatantTooltip(subject)}`
-      + (live ? `<div class="tt-combatant-focus"><b>${esc(live.name)}</b><span>${esc(live.detail || '')}</span></div>` : '')
-      + `<div class="tt-combatant-hint">Full details opened in the ${role === 'player' ? 'left' : 'right'} inspector.</div>`;
+  function renderedContentRect(el) {
+    const rects = [...(el?.children || [])]
+      .map((child) => child.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0);
+    if (!rects.length) return el?.getBoundingClientRect() || null;
+    const left = Math.min(...rects.map((rect) => rect.left));
+    const top = Math.min(...rects.map((rect) => rect.top));
+    const right = Math.max(...rects.map((rect) => rect.right));
+    const bottom = Math.max(...rects.map((rect) => rect.bottom));
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
   }
 
-  function renderCombatantInspector() {
-    const host = $('.combatant-inspector-host');
-    if (!host || !inspectedCombatant) {
-      if (host) host.hidden = true;
+  function showEnemyContext(box, enemy) {
+    clearTimeout(enemyTooltipDelayTimer);
+    if (!box.isConnected || !enemy.alive) return false;
+    const card = renderedContentRect(box.querySelector('.combatant-card'));
+    if (!card) return false;
+    showTooltipForRect(card, enemyContextTooltip(combatantSubject('enemy', enemy)), {
+      intent: 'above',
+      align: 'center',
+      clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
+      appearance: { variant: 'enemy-context', maxWidthRem: 21 },
+      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+    });
+    return true;
+  }
+
+  function restoreSelectedEnemyContext(exceptId = null) {
+    if (!selectedEnemyId || selectedEnemyId === exceptId) {
+      hideTooltip();
       return;
     }
-    const entity = inspectedCombatant.role === 'player'
-      ? combat.player : getEntity(combat, inspectedCombatant.id);
-    if (!entity) {
-      host.hidden = true;
-      return;
-    }
-    const model = combatantInspectorModel({
-      role: inspectedCombatant.role,
-      expanded: inspectorExpanded,
-      subject: combatantSubject(inspectedCombatant.role, entity),
-      presentation: registries.balance.ui.combatantInspector,
-    });
-    mountCombatantInspector(host, model, {
-      onToggle: (expanded) => {
-        inspectorExpanded = expanded;
-        renderCombatantInspector();
-      },
-    });
+    const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+    const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
+    if (!selectedBox || !showEnemyContext(selectedBox, selectedEntity)) hideTooltip();
   }
 
-  function inspectCombatant(role, entity, box) {
-    inspectedCombatant = { role, id: entity.id };
-    inspectorExpanded = true;
-    const subject = combatantSubject(role, entity);
-    renderCombatantInspector();
-    showTooltipFor(box, expandedCombatantTooltip(subject, role), {
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-expanded' },
-    });
-  }
-
-  function wireCombatantReading(box, role, entity) {
-    const subject = () => combatantSubject(role, entity);
+  function wireEnemyContext(box, enemy) {
+    ensureTooltip();
     box.classList.add('inspectable');
     box.dataset.focusable = '';
-    box.setAttribute('aria-label', `Inspect ${subject().name}`);
-    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
-      delayMs: tooltipPlacement.tokens.hoverDelayMs,
-      focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-folded' },
+    box.tabIndex = -1;
+    box.setAttribute('role', 'button');
+    box.setAttribute('aria-pressed', selectedEnemyId === enemy.id ? 'true' : 'false');
+    box.setAttribute('aria-describedby', 'tooltip');
+    box.setAttribute('aria-label', `Select ${combatantSubject('enemy', enemy).name} for combat details`);
+    box.addEventListener('pointerenter', () => {
+      clearTimeout(enemyTooltipDelayTimer);
+      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    });
+    box.addEventListener('pointerleave', () => {
+      if (selectedEnemyId === enemy.id) return;
+      clearTimeout(enemyTooltipDelayTimer);
+      restoreSelectedEnemyContext(enemy.id);
+    });
+    box.addEventListener('gpfocus', () => {
+      clearTimeout(enemyTooltipDelayTimer);
+      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    });
+    box.addEventListener('gpblur', () => {
+      if (selectedEnemyId === enemy.id) return;
+      clearTimeout(enemyTooltipDelayTimer);
+      restoreSelectedEnemyContext(enemy.id);
     });
     box.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -56932,9 +55924,22 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
 
   // ---------- rendering ----------
   function renderCombatantStage() {
+    clearTimeout(enemyTooltipDelayTimer);
+    hideTooltip();
+    if (selected || selectedFlask != null) selectedEnemyId = null;
+    if (selectedEnemyId && !combat.enemies.some((enemy) => enemy.id === selectedEnemyId && enemy.alive)) selectedEnemyId = null;
     renderPlayer();
     renderEnemies();
-    renderCombatantInspector();
+    if (selectedEnemyId) {
+      const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+      const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
+      if (selectedBox) {
+        enemyTooltipDelayTimer = setTimeout(
+          () => showEnemyContext(selectedBox, selectedEntity),
+          tooltipPlacement.tokens.hoverDelayMs,
+        );
+      }
+    }
     battlefieldStage.refresh();
   }
 
@@ -56946,6 +55951,9 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
+  }
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
+    window.__renderCombatForShot = render;
   }
 
   function renderTopbar() {
@@ -57054,7 +56062,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     });
   }
 
-  function statusRow(entity) {
+  function statusRow(entity, { tooltips = true } = {}) {
     const row = document.createElement('div');
     row.className = 'statuses';
     markUiComponent(row, UI.statusEffectTray, entity.kind);
@@ -57085,12 +56093,14 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       // turns); every other pip keeps its stack count.
       const shown = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
-      attachTooltip(el, () => {
-        let extra = '';
-        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
-        if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
-      });
+      if (tooltips) {
+        attachTooltip(el, () => {
+          let extra = '';
+          if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
+          if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
+          return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
+        });
+      }
       row.appendChild(el);
     }
     return row;
@@ -57116,7 +56126,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     };
   }
 
-  function meterBars(entity) {
+  function meterBars(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     const wrap = document.createElement('div');
     wrap.className = 'meters';
@@ -57128,7 +56138,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     // shows health and poise exactly as the enemies' do — and a zero-threshold
     // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind), tooltips });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
@@ -57145,7 +56155,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
-      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents);
+      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents, { tooltips });
       if (arcane) wrap.appendChild(arcane);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
@@ -57168,21 +56178,21 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         bar.innerHTML =
           `<div class="fill" style="width:${Math.min(100, (inst.meter.value / inst.meter.max) * 100)}%"></div>` +
           `<span class="glyph">${esc(def.icon || '?')}</span>`; // hue is never the only channel
-        attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
+        if (tooltips) attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
         wrap.appendChild(bar);
       }
     }
     return wrap;
   }
 
-  function blockBadge(entity) {
+  function blockBadge(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     if (v.block <= 0) return null;
     const b = document.createElement('div');
     b.className = 'block-badge';
     markUiComponent(b, UI.blockBadge);
     b.textContent = v.block;
-    attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
+    if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
   }
 
@@ -57196,25 +56206,23 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const chip = document.createElement('div');
       chip.className = `stance-chip ${p.stanceId}`;
       chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
-      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
       trailing.push(chip);
     }
-    trailing.push(statusRow(p));
+    trailing.push(statusRow(p, { tooltips: false }));
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
       sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
-      blockBadge: blockBadge(p),
-      meters: meterBars(p),
+      blockBadge: blockBadge(p, { tooltips: false }),
+      meters: meterBars(p, { tooltips: false }),
       trailing,
     });
-    wireCombatantReading(box, 'player', p);
     // When a self/buff card is armed, the player is a confirmable target.
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
-      else inspectCombatant('player', p, box);
+      else hideTooltip();
     });
     zone.appendChild(box);
   }
@@ -57226,7 +56234,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     el.className = `intent ${badge.cls}`;
     markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
-    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
   }
 
@@ -57255,21 +56262,36 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const box = combatantFrame({
         role: 'enemy',
         entityId: enemy.id,
-        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : ''],
+        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedEnemyId === enemy.id ? 'context-selected' : ''],
         leading,
         sprite: enemySprite(def),
-        blockBadge: blockBadge(enemy),
+        blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
-        meters: meterBars(enemy),
-        trailing: [statusRow(enemy)],
+        meters: meterBars(enemy, { tooltips: false }),
+        trailing: [statusRow(enemy, { tooltips: false })],
       });
-      wireCombatantReading(box, 'enemy', enemy);
       if (enemy.alive) {
+        wireEnemyContext(box, enemy);
         box.addEventListener('click', (event) => {
           event.stopPropagation();
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-          else inspectCombatant('enemy', enemy, box);
+          else {
+            selectedEnemyId = enemy.id;
+            row.querySelectorAll('.combatant.enemy').forEach((candidate) => {
+              const current = candidate === box;
+              candidate.classList.toggle('context-selected', current);
+              candidate.setAttribute('aria-pressed', current ? 'true' : 'false');
+            });
+            clearTimeout(enemyTooltipDelayTimer);
+            // Selection state answers immediately through aria-pressed and the
+            // selected treatment; its contextual reading uses the same configured,
+            // cancellable delay as pointer and focus preview.
+            enemyTooltipDelayTimer = setTimeout(
+              () => showEnemyContext(box, enemy),
+              tooltipPlacement.tokens.hoverDelayMs,
+            );
+          }
         });
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
@@ -57624,15 +56646,14 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
 
     // The menu key opens Settings. The legacy Deck/Stats/Relics bindings all
     // land in Armoury now that it owns every run-information surface.
-    const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
       ev.preventDefault();
       if (onMenu) onMenu('settings');
       return;
     }
-    if (armouryAction) {
+    if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
       ev.preventDefault();
-      openCombatArmoury(armouryAction);
+      $('#combat-armoury').click();
       return;
     }
 
@@ -57649,6 +56670,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           : null;
         if (cancelledCard) focusElement(cancelledCard);
         else focusHandDefault();
+      }
+      if (selectedEnemyId) {
+        clearTimeout(enemyTooltipDelayTimer);
+        selectedEnemyId = null;
+        hideTooltip();
+        app.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
+        app.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
       }
       return;
     }
@@ -57950,15 +56978,12 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  function openCombatArmoury(request = '') {
+  function openCombatArmoury(equipView = '') {
     if (!registries.balance.equipment.enabled) return;
-    const equipView = typeof request === 'string' ? request : '';
-    const destination = request && typeof request === 'object' ? request.destination || '' : '';
     const panel = mountEquipment(document.body, {
       registries,
       run,
       meta: { settings: { customization: run.customization, ...(equipView ? { equipView } : {}) } },
-      destination,
       inCombat: true,
       onSwap: (slotId, setIndex) => {
         let out;
@@ -58430,7 +57455,7 @@ function eventHtml(event, registries) {
   return '';
 }
 
-function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
+function renderArcaneExposure(registries, enemySnapshot, recentEvents = [], { tooltips = true } = {}) {
   const receipt = arcaneExposureReceipt(registries, enemySnapshot, recentEvents);
   if (!receipt) return null;
   const el = document.createElement('div');
@@ -58440,7 +57465,7 @@ function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
     el.setAttribute('aria-label', `${receipt.label} — ${receipt.badge}`);
     el.innerHTML = `<span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span>${esc(receipt.label)} — ${esc(receipt.badge)}</span>${eventHtml(receipt.event, registries)}`;
     markUiComponent(el, UI.arcaneExposureBar, 'immune');
-    attachTooltip(el, () => esc(receipt.tooltip));
+    if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
     return el;
   }
   el.className = `arcane-exposure-meter${receipt.locked ? ' locked' : ''}`;
@@ -58451,7 +57476,7 @@ function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
     + `<div class="arcane-exposure-track"><span style="width:${receipt.fillPercent}%"></span></div>`
     + (receipt.status ? `<div class="magic-vulnerable-receipt">${esc(receipt.status.label)} ${receipt.status.value}% · ${receipt.status.duration} turns</div>` : '')
     + eventHtml(receipt.event, registries);
-  attachTooltip(el, () => esc(receipt.tooltip));
+  if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
   return el;
 }
 
@@ -58940,117 +57965,6 @@ function wireBattlefieldStage(field, model) {
 
 
 Object.assign(module.exports, { wireBattlefieldStage });
-
-},
-"src/ui/models/CombatantInspectorModel.js": function (module, exports, require) {
-const { componentModel } = require("src/ui/models/ComponentModel.js");
-const { trayModel } = require("src/ui/models/TrayModels.js");
-const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
-
-function combatantInspectorModel({
-  role,
-  expanded = true,
-  subject,
-  presentation = {},
-} = {}) {
-  if (role !== 'player' && role !== 'enemy') throw new Error(`Unknown combatant inspector role: ${role}`);
-  if (!subject?.name) throw new Error('Combatant inspector requires a named subject');
-  const edge = role === 'player' ? 'left' : 'right';
-  const tray = trayModel({
-    id: `combatant-inspector-${role}`,
-    name: subject.name,
-    summary: expanded ? (subject.subtitle || (role === 'player' ? 'Player' : 'Enemy')) : '',
-    edge,
-    expanded,
-    resizable: false,
-    items: [],
-  });
-  return componentModel(UI.combatantInspector, {
-    variant: edge,
-    properties: {
-      role,
-      edge,
-      expanded,
-      subject,
-    },
-    tokens: {
-      widthRem: Number.isFinite(presentation.widthRem) ? presentation.widthRem : 20,
-      mobileWidthViewportPct: Number.isFinite(presentation.mobileWidthViewportPct)
-        ? presentation.mobileWidthViewportPct : 62,
-    },
-    accessibility: {
-      label: `${subject.name} details`,
-    },
-    children: [tray],
-  });
-}
-
-
-Object.assign(module.exports, { combatantInspectorModel });
-
-},
-"src/ui/components/combatantInspector.js": function (module, exports, require) {
-const { childModel } = require("src/ui/models/ComponentModel.js");
-const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
-const { renderTray } = require("src/ui/components/trayComponents.js");
-const { esc } = require("src/ui/components/tooltip.js");
-
-function resourceRows(resources) {
-  return (resources || []).map((row) => `
-    <div class="combatant-inspector-resource">
-      <span>${esc(row.label)}</span>
-      <strong>${esc(row.value)}${row.max == null ? '' : ` / ${esc(row.max)}`}</strong>
-    </div>`).join('');
-}
-
-function detailRows(title, rows, empty) {
-  const body = (rows || []).length
-    ? rows.map((row) => `
-      <li${row.active ? ' class="active"' : ''}>
-        <strong>${esc(row.name)}</strong>
-        ${row.detail ? `<span>${esc(row.detail)}</span>` : ''}
-      </li>`).join('')
-    : `<li class="empty">${esc(empty)}</li>`;
-  return `<section class="combatant-inspector-section"><h4>${esc(title)}</h4><ul>${body}</ul></section>`;
-}
-
-function mountCombatantInspector(host, model, { onToggle = null } = {}) {
-  if (!host) throw new Error('Combatant inspector requires a host');
-  if (!model || model.component !== UI.combatantInspector) throw new Error('Combatant inspector requires its Component Model');
-  const tray = childModel(model, UI.foldingTray);
-  host.innerHTML = '';
-  host.hidden = false;
-  host.className = `combatant-inspector-host ${model.properties.edge}`;
-  host.style.setProperty('--combatant-inspector-width-rem', String(model.tokens.widthRem));
-  host.style.setProperty('--combatant-inspector-mobile-vw', `${model.tokens.mobileWidthViewportPct}vw`);
-  host.setAttribute('aria-label', model.accessibility.label);
-  markUiComponent(host, model.component, model.variant);
-
-  const rendered = renderTray(tray, {
-    onToggle: () => onToggle?.(!model.properties.expanded),
-    renderContent: (content) => {
-      const subject = model.properties.subject;
-      content.innerHTML = `
-        <div class="combatant-inspector-summary">
-          <div>
-            <strong>${esc(subject.name)}</strong>
-            <span>${esc(subject.subtitle || '')}</span>
-          </div>
-          <div class="combatant-inspector-resources">${resourceRows(subject.resources)}</div>
-        </div>
-        ${subject.intent ? detailRows('Current intent', [subject.intent], 'No current intent.') : ''}
-        ${detailRows(subject.skillLabel || 'Skills', subject.skills, 'No active skills.')}
-        ${detailRows('Active effects', subject.statuses, 'No active effects.')}`;
-    },
-  });
-  rendered.element.dataset.role = 'context';
-  host.appendChild(rendered.element);
-  host.addEventListener('click', (event) => event.stopPropagation());
-  return rendered;
-}
-
-
-Object.assign(module.exports, { mountCombatantInspector });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
@@ -61662,23 +60576,6 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
     onSettingsChange, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave,
   };
 
-  // The body is shared, but the marker and scroll offset belong to one render.
-  // Clear both before EVERY dispatch; Settings alone reclaims its marker, while
-  // Controls keeps this shared body as its sole vertical scroll owner.
-  const dispatchPanel = (id) => {
-    body.removeAttribute('data-settings-host');
-    body.scrollTop = 0;
-    const panel = panelFor(id);
-    if (!panel) {
-      console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
-        + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
-        + ' the declaration, the panel is the handler, and one of them is missing.');
-      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
-      return;
-    }
-    panel(body, ctx);
-  };
-
   const saveButton = veil.querySelector('#ov-save');
   const quitButton = veil.querySelector('#ov-quit');
   if (!onSave && saveButton) saveButton.hidden = true;
@@ -61701,7 +60598,15 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.
-    dispatchPanel(id);
+    const panel = panelFor(id);
+    if (!panel) {
+      console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
+        + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
+        + ' the declaration, the panel is the handler, and one of them is missing.');
+      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
+      return;
+    }
+    panel(body, ctx);
   }
 
   veil.querySelectorAll('.ov-tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.member)));
@@ -61736,7 +60641,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
             ...quickControls.music,
             activate: async (...args) => {
               const result = await quickControls.music.activate(...args);
-              if (currentTab === 'settings' && result?.changed) dispatchPanel('settings');
+              if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);
               return result;
             },
           },

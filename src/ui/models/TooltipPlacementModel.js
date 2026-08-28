@@ -12,6 +12,7 @@ export function tooltipPlacementModel(presentation = {}) {
     variant: 'edge-aware',
     tokens: {
       hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, 500)),
+      autoFadeMs: Math.max(0, finite(presentation.autoFadeMs, 5000)),
       topBandViewportPct: clampPct(presentation.topBandViewportPct, 25),
       sideBandViewportPct: clampPct(presentation.sideBandViewportPct, 30),
     },
