@@ -179,6 +179,89 @@ export function createCombat({
 }
 
 // ---------------------------------------------------------------------------
+// Exact mid-combat saves
+// ---------------------------------------------------------------------------
+
+const COMBAT_SNAPSHOT_VERSION = 1;
+
+/**
+ * serializeCombatSnapshot(combat) -> JSON-safe exact combat state.
+ *
+ * Registries, RNG, and the three runtime methods are dependencies rather than
+ * state, so they are reattached by restoreCombatSnapshot. A save can only be
+ * taken between dispatches: a live queue or event buffer means an action is
+ * only half committed and is refused instead of recording a torn turn.
+ */
+export function serializeCombatSnapshot(combat) {
+  if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
+  if (combat._buffer !== null || (combat.queue && combat.queue.length)) {
+    throw new Error('Combat is still resolving; wait for the action to finish before saving');
+  }
+  return structuredClone({
+    version: COMBAT_SNAPSHOT_VERSION,
+    equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    equipmentPoolDeficits: combat.equipmentPoolDeficits,
+    equipmentChanged: !!combat.equipmentChanged,
+    turn: combat.turn,
+    phase: combat.phase,
+    result: combat.result,
+    handMax: combat.handMax,
+    drawPerTurn: combat.drawPerTurn,
+    player: combat.player,
+    enemies: combat.enemies,
+    loadout: combat.loadout,
+    attributes: combat.attributes,
+    swapCostRule: combat.swapCostRule,
+    swapsLeft: combat.swapsLeft,
+    piles: combat.piles,
+    eventLog: combat.eventLog,
+    triggerState: [...combat.triggerState.entries()],
+    idCounter: combat._idCounter,
+    emitDepth: combat._emitDepth,
+  });
+}
+
+/** Restore a snapshot without replaying combat-start, draws, or enemy rolls. */
+export function restoreCombatSnapshot({ registries, rng, snapshot }) {
+  if (!snapshot || snapshot.version !== COMBAT_SNAPSHOT_VERSION) {
+    throw new Error(`Unsupported combat snapshot version '${snapshot && snapshot.version}'`);
+  }
+  if (!snapshot.player || !Array.isArray(snapshot.enemies) || !snapshot.piles) {
+    throw new Error('Combat snapshot is incomplete');
+  }
+  const saved = structuredClone(snapshot);
+  const combat = {
+    registries,
+    rng,
+    equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
+    equipmentPoolDeficits: saved.equipmentPoolDeficits,
+    equipmentChanged: !!saved.equipmentChanged,
+    turn: saved.turn,
+    phase: saved.phase,
+    result: saved.result,
+    handMax: saved.handMax,
+    drawPerTurn: saved.drawPerTurn,
+    player: saved.player,
+    enemies: saved.enemies,
+    loadout: saved.loadout,
+    attributes: saved.attributes,
+    swapCostRule: saved.swapCostRule,
+    swapsLeft: saved.swapsLeft,
+    piles: saved.piles,
+    queue: [],
+    eventLog: saved.eventLog || [],
+    _buffer: null,
+    triggerState: new Map(saved.triggerState || []),
+    _idCounter: Number.isInteger(saved.idCounter) ? saved.idCounter : 0,
+    _emitDepth: Number.isInteger(saved.emitDepth) ? saved.emitDepth : 0,
+  };
+  combat.emit = (type, payload) => emitEvent(combat, type, payload);
+  combat.enqueue = (action) => combat.queue.push(action);
+  combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+  return combat;
+}
+
+// ---------------------------------------------------------------------------
 // Queue draining + end check (SPEC §3.9: queue drains fully before control
 // returns to the UI)
 // ---------------------------------------------------------------------------

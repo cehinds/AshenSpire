@@ -517,7 +517,7 @@ export function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 export function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  if (cat === 'Advanced') return 'Optional gameplay rules, interface controls, balance tuning, and diagnostics.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;

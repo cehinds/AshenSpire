@@ -17,7 +17,7 @@ import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, getEntity, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
@@ -99,6 +99,9 @@ import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, de
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
 import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, MENU_TABS, MENU, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
+import { rebindConflictModel, applyRebind } from '../src/ui/models/RebindCaptureModel.js';
+import { restReviewModel, levelReviewModel } from '../src/ui/models/ShrineReviewModel.js';
+import { ACTIONS } from '../src/ui/input.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -5893,6 +5896,35 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }).state, 'empty', 'an unlocked unfilled position is a first-class empty card');
     eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
     assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
+  });
+
+  test('71c QA remediation models preserve exact combat and reversible choices', () => {
+    const original = makeCombat({ seed: 0x71c, deck: ['strike', 'defend'], enemies: ['tHitter'], hp: 61, maxHp: 78 });
+    const strike = original.piles.hand.find((card) => card.cardId === 'strike');
+    dispatch(original, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: 'e1' });
+    const snapshot = serializeCombatSnapshot(original);
+    const restored = restoreCombatSnapshot({ registries: REG, rng: original.rng, snapshot });
+    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(snapshot),
+      'an exact combat snapshot is a fixed point after runtime dependencies are restored');
+    assert(restored.triggerState instanceof Map, 'trigger receipts restore as a Map');
+    assert(typeof restored.emit === 'function' && typeof restored.enqueue === 'function' && typeof restored.nextInstanceId === 'function',
+      'runtime combat methods are reattached instead of serialized');
+
+    const currentKeys = Object.fromEntries(ACTIONS.filter((action) => action.defKey).map((action) => [action.id, action.defKey]));
+    const conflict = rebindConflictModel({ kind: 'key', actionId: 'endTurn', value: currentKeys.flask1.toUpperCase(), bindings: currentKeys, actions: ACTIONS });
+    assert(conflict.hasConflict && conflict.conflictingId === 'flask1', 'a duplicate key is case-insensitive and names the action it conflicts with');
+    const untouched = applyRebind(conflict, currentKeys);
+    eq(untouched.endTurn, currentKeys.endTurn, 'an unresolved conflict mutates nothing');
+    const replaced = applyRebind(conflict, currentKeys, { replace: true });
+    eq(replaced.endTurn, currentKeys.flask1, 'Replace assigns the normalized requested key');
+    eq(replaced.flask1, currentKeys.endTurn, 'Replace swaps the displaced action so it remains reachable');
+
+    const rest = restReviewModel({ hp: 34, maxHp: 50, mana: 1, maxMana: 4, heal: 16 });
+    eq(`${rest.rows[0].before}:${rest.rows[0].delta}:${rest.rows[0].after}`, '34:16:50', 'Rest review publishes health before, delta, and after');
+    eq(`${rest.rows[1].before}:${rest.rows[1].delta}:${rest.rows[1].after}`, '1:3:4', 'Rest review publishes mana before, delta, and after');
+    const level = levelReviewModel({ attribute: 'wisdom', label: 'Wisdom', before: 13, cost: 800, cinders: 900 });
+    eq(`${level.rows[0].before}:${level.rows[0].delta}:${level.rows[0].after}`, '13:1:14', 'Level review grants exactly one selected point');
+    eq(`${level.rows[1].before}:${level.rows[1].delta}:${level.rows[1].after}`, '900:-800:100', 'Level review publishes exact cost and remaining cinders');
   });
 
   const passed = results.filter((r) => r.ok).length;

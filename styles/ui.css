@@ -469,16 +469,48 @@ body.hide-hints .hint-bar { display: none; }
 :root[data-layout='narrow'] .hint-bar { display: none; }
 
 /* ---------- controls / rebinds ---------- */
-.rebind-list { display: flex; flex-direction: column; }
-.rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+.controls-intro, .rebind-list, .binding-conflict { width: min(100%, 760px); margin-inline: auto; }
+.controls-intro .set-note { max-width: 62ch; }
+.rebind-list { display: flex; flex-direction: column; gap: 4px; }
+.rebind-head { display: grid; grid-template-columns: minmax(12rem, 1fr) repeat(2, minmax(9rem, auto)); gap: 8px; padding: 0 10px 6px; color: var(--muted); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.rebind-row { display: grid; grid-template-columns: minmax(12rem, 1fr) auto; align-items: center; min-height: var(--tap-floor); padding: 4px 8px; }
+.rebind-row .rebind-ctl { display: grid; grid-template-columns: 7rem 6rem 7rem 6rem; align-items: center; gap: 6px; }
+.rebind-btn { min-height: 36px; padding: 4px 8px; }
 .pad-btn {
-  min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: 6px;
+  min-width: 0; text-align: center; padding: 0.35rem 0.55rem; border-radius: 6px;
   background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
   font-size: 1.2rem; font-variant-numeric: tabular-nums;
 }
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
 .pad-live { color: var(--green); font-size: 1.1rem; }
 .pad-off { color: var(--muted); font-size: 1.1rem; }
+.binding-conflict { margin-top: 8px; padding: 12px; border: 1px solid var(--ember); border-radius: 8px; background: var(--panel); }
+.binding-conflict p { margin: 5px 0 10px; }
+.binding-conflict > div { display: flex; gap: 6px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .rebind-head { display: none; }
+  .rebind-row { grid-template-columns: 1fr; gap: 6px; padding: 8px; }
+  .rebind-row .rebind-ctl { grid-template-columns: 1fr auto 1fr auto; }
+}
+
+/* Shared confirmation/review surface. */
+.confirmation-veil { z-index: 1200; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+.confirmation-modal { width: min(92vw, 560px); max-height: min(86vh, 680px); padding: 20px; display: grid; gap: 16px; overflow: auto; }
+.confirmation-modal header { display: grid; gap: 5px; }
+.confirmation-modal h2 { margin: 0; color: var(--gold); }
+.confirmation-eyebrow { color: var(--ember); font-size: 0.85rem; letter-spacing: 0.16em; min-height: 1em; }
+.confirmation-copy { color: var(--parchment); line-height: 1.45; }
+.confirmation-copy p { margin: 0; }
+.confirmation-modal footer { display: flex; justify-content: flex-end; gap: 8px; }
+.confirmation-modal.danger { border-color: color-mix(in srgb, var(--red) 65%, var(--line)); }
+.shrine-review-summary { display: grid; gap: 6px; }
+.shrine-review-row { display: grid; grid-template-columns: minmax(7rem, 1fr) auto auto auto; align-items: center; gap: 10px; min-height: var(--tap-floor); padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 7px; }
+.shrine-review-row .gain { color: var(--green); }
+.shrine-review-row .cost { color: var(--ember); }
+@media (max-width: 540px) {
+  .confirmation-modal { width: 96vw; padding: 14px; }
+  .confirmation-modal footer { display: grid; grid-template-columns: 1fr 1fr; }
+}
 
 /* ---------- custom climb ---------- */
 .mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
@@ -759,6 +791,11 @@ button.rs-reset {
   box-sizing: border-box;
 }
 .shrine-option-list > #rest-opt,
+.shrine-option-list > #smith-opt,
+.shrine-option-list > .shrine-fold:not([open]) {
+  height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
+}
+.shrine-option-list > #rest-opt,
 .shrine-option-list > #smith-opt {
   display: grid; grid-template-columns: auto minmax(0, 1fr);
   align-items: center; gap: 18px; padding: 12px 20px; text-align: left;
@@ -792,7 +829,7 @@ button.rs-reset {
 .shrine-fold > summary {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center; gap: 10px;
-  min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
+  min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem)); height: 100%;
   box-sizing: border-box; padding: 10px 14px;
   cursor: pointer; list-style: none;
 }
@@ -4389,8 +4426,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: min(86%, 62rem);
   padding: 8.2rem 2.8rem 5.2rem;
   border: 0;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 88%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));
-  box-shadow: 0 2rem 7rem rgba(0, 0, 0, 0.58);
+  margin-inline: auto;
+  justify-self: center;
+  background: transparent;
+  box-shadow: none;
 }
 .startup-wordmark { color: var(--parchment); font-size: 7rem; line-height: 0.95; letter-spacing: 0.04em; text-indent: 0.04em; white-space: nowrap; }
 .startup-subtitle { margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; white-space: nowrap; }

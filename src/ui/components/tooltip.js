@@ -1,11 +1,13 @@
 // src/ui/components/tooltip.js — one shared tooltip, ≤150 ms hover (SPEC §7.3)
 
 import { placeAnchored, viewportLocalBox } from '../fx.js';
-import { tooltipPlacementIntent } from '../models/TooltipPlacementModel.js';
+import { tooltipPlacementIntent, tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let tipEl = null;
 let showTimer = null;
+let activeAnchor = null;
+const defaultPlacement = tooltipPlacementModel();
 
 // ---------------------------------------------------------------------------
 // E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
@@ -56,8 +58,9 @@ let showTimer = null;
 // is watchable; see there. Persistence is granted only where an exit exists.
 //
 // WHAT IS DELIBERATELY NOT HERE: no timeout — his sentence gives a closed list
-// of endings and a clock is not on it; no dismissal on a press elsewhere — he
-// did not say that, and inventing it is how a silence becomes a rule.
+// of endings and a clock is not on it. Click-away dismissal is now part of the
+// shared tooltip contract: a press outside the active anchor is an explicit
+// selection change, so ensure() routes it through the same unconditional exit.
 // ---------------------------------------------------------------------------
 let stuck = false;
 let stuckWatch = null;
@@ -73,6 +76,11 @@ function ensure() {
     tipEl.id = 'tooltip';
     markUiComponent(tipEl, UI.tooltip);
     document.body.appendChild(tipEl);
+    document.addEventListener('pointerdown', (event) => {
+      if (!tipEl || tipEl.style.display !== 'block') return;
+      if (activeAnchor && activeAnchor.contains?.(event.target)) return;
+      hideTooltip();
+    }, true);
   }
   return tipEl;
 }
@@ -128,13 +136,14 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = defaultPlacement, anchorElement = null) {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
   // place is an ordinary tooltip again unless its own hold sticks it.
   unstick();
   const t = ensure();
+  activeAnchor = anchorElement;
   t.innerHTML = html;
   t.style.removeProperty('width');
   t.style.removeProperty('max-width');
@@ -176,7 +185,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 export function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null,
+  intent = 'beside', clear = null, delayMs = defaultPlacement.tokens.hoverDelayMs, focusDelayMs = defaultPlacement.tokens.hoverDelayMs, appearance = null, placementModel = defaultPlacement,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -198,7 +207,7 @@ export function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, el);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -226,7 +235,7 @@ export function attachTooltip(el, contentFn, {
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
 export function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel || defaultPlacement, el);
 }
 
 /**
@@ -303,6 +312,7 @@ export function hideTooltip() {
   // the pointer leaving, and nothing else.
   unstick();
   clearTimeout(showTimer);
+  activeAnchor = null;
   if (tipEl) tipEl.style.display = 'none';
 }
 

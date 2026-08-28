@@ -3,9 +3,9 @@
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
 // treasure] → … → boss → game over. One rng is created from the seed and its
 // stream counters are saved with the run after every committed choice, so a
-// whole run is reproducible from its seed string and a reload restores
-// exactly (mid-combat: the combat restarts from its start — StS behavior,
-// because counters are saved BEFORE the combat begins).
+// whole run is reproducible from its seed string. Explicit combat saves carry
+// an exact committed-turn snapshot; the node-entry receipt remains the
+// backward-compatible recovery path for older saves and interrupted sessions.
 
 import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
@@ -16,7 +16,7 @@ import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
-import { createCombat } from './engine/combat.js';
+import { createCombat, restoreCombatSnapshot, serializeCombatSnapshot } from './engine/combat.js';
 import { buildActMap } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import {
@@ -51,6 +51,7 @@ import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
+import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -898,7 +899,8 @@ function resumeRun(slot = 1) {
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
   if (run.combatEntered && run.combatEntered.encounterId) {
-    // Mid-combat save: restart that combat from its start (SPEC §3.12).
+    // Current saves resume the exact committed turn. Older saves that only
+    // carry the encounter receipt still use the deterministic restart path.
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
   } else if (run.shopStock) {
     showShop();
@@ -908,17 +910,32 @@ function resumeRun(slot = 1) {
 }
 
 function loadActiveSlot() {
-  if (!window.confirm('Load the active slot? Unsaved progress in this session will be lost.')) return false;
-  resumeRun(activeSlot);
-  return true;
+  openConfirmationModal({
+    title: `Load slot ${activeSlot}?`,
+    message: '<p>The saved run will replace changes made since your last save.</p>',
+    confirmLabel: 'Load saved run',
+    consequence: 'DISCARDS UNSAVED CHANGES',
+    tone: 'danger',
+    onConfirm: () => { closeOverlay(); resumeRun(activeSlot); },
+  });
+  return false;
 }
 
 function quitWithoutSaving() {
-  if (!window.confirm('Quit without saving? Changes since the last save will be lost.')) return false;
-  audio.stopMusic();
-  run = null;
-  showTitle();
-  return true;
+  openConfirmationModal({
+    title: 'Quit without saving?',
+    message: '<p>Changes since your last save will be lost. Your existing save slot will remain available.</p>',
+    confirmLabel: 'Quit without saving',
+    consequence: 'LEAVES THE RUN',
+    tone: 'danger',
+    onConfirm: () => {
+      closeOverlay();
+      audio.stopMusic();
+      run = null;
+      showTitle();
+    },
+  });
+  return false;
 }
 
 // ---- screens --------------------------------------------------------------------
@@ -1471,12 +1488,15 @@ function startFight(pool, nodeId) {
 }
 
 function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
-  run.combatEntered = { nodeId, encounterId };
-  if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
+  const savedSnapshot = resuming ? run.combatEntered?.snapshot : null;
+  run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
+  // The entry receipt is a deterministic recovery checkpoint. An explicit Save
+  // Game replaces it with an exact committed-turn snapshot below.
+  if (!resuming) persist();
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot }) : createCombat({
     registries,
     rng,
     player: {
@@ -1515,6 +1535,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  // A restored combat owns the live loadout copy from its snapshot. Rejoin it
+  // to the run so later swaps and the post-combat receipt share one object.
+  if (savedSnapshot) run.loadout = combat.loadout;
   // `?shotHand=<n>` — STAND WITH A FULLER HAND.
   //
   // A REACH STATE, the same shape and reason as ?shotMaxHp beside it: the
@@ -1578,10 +1601,14 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
+      run.loadout = combat.loadout;
+      run.combatEntered = { nodeId, encounterId, snapshot: serializeCombatSnapshot(combat) };
       persist();
       return activeSlot;
     },
     onQuit: () => {
+      run.loadout = combat.loadout;
+      run.combatEntered = { nodeId, encounterId, snapshot: serializeCombatSnapshot(combat) };
       persist();
       showTitle();
     },

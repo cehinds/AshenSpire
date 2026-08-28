@@ -372,6 +372,8 @@ function buildArmoury(L, ui) {
     const next = ui.armamentView === 'list' ? 'grid' : 'list';
     rendered.sort.classList.add('armoury-card-view-toggle', 'armoury-armament-view-toggle');
     rendered.sort.dataset.component = 'armoury.armamentViewToggle';
+    rendered.sort.dataset.currentView = ui.armamentView;
+    rendered.sort.setAttribute('aria-pressed', ui.armamentView === 'grid' ? 'true' : 'false');
     rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
       + (ui.armamentView === 'list'
         ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
@@ -833,6 +835,13 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    const beforeId = run.loadout.sets?.[slotId]?.[setIndex] || null;
+    const beforeItem = beforeId && ((eq.armaments || []).find((item) => item.id === beforeId)
+      || (eq.armour || []).find((item) => item.id === beforeId));
+    const nextItem = pieceId && ((eq.armaments || []).find((item) => item.id === pieceId)
+      || (eq.armour || []).find((item) => item.id === pieceId));
+    const targetSlot = (eq.slots || []).find((slot) => slot.id === slotId);
+    const targetLabel = targetSlot?.label || 'selected slot';
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
       { inCombat, attributes: run.attributes }
@@ -843,6 +852,9 @@ export function mountEquipment(host, {
       return false;
     }
     if (hadSelection) clearInventorySelection();
+    notice = pieceId
+      ? `${nextItem?.name || pieceId} is equipped in ${targetLabel}, position ${setIndex + 1}.`
+      : `${beforeItem?.name || beforeId || 'Item'} was unequipped and returned to Inventory.`;
     sfx.play('cardPlay');
     commit(hadSelection ? foldSettings() : null);
     return true;
@@ -1728,6 +1740,8 @@ export function mountEquipment(host, {
     if (r.id === 'cards' && rendered.sort) {
       const next = cardView === 'list' ? 'grid' : 'list';
       rendered.sort.classList.add('armoury-card-view-toggle');
+      rendered.sort.dataset.currentView = cardView;
+      rendered.sort.setAttribute('aria-pressed', cardView === 'grid' ? 'true' : 'false');
       rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
         + (cardView === 'list'
           ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'

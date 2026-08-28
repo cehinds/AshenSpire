@@ -102,9 +102,9 @@ export const ACTIONS = [
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4 },
-  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5 },
+  { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
+  { id: 'relics', label: 'Open Inventory', short: 'Inventory', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'stats', label: 'Open Character', short: 'Character', kind: 'key', defKey: 't', defBtn: 5 },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
@@ -763,8 +763,8 @@ export function endActionPress(cancelled = false) {
 
 // Controls tab: capture the next keypress to rebind a keyboard action.
 let keyCapture = null;
-export function captureNextKey(cb) {
-  keyCapture = cb;
+export function captureNextKey(cb, { onCancel = null } = {}) {
+  keyCapture = { cb, onCancel };
 }
 export function cancelKeyCapture() {
   keyCapture = null;
@@ -776,10 +776,11 @@ function onKeydown(ev) {
     const k = ev.key;
     if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
     ev.preventDefault();
-    ev.stopPropagation();
-    const cb = keyCapture;
+    ev.stopImmediatePropagation();
+    const capture = keyCapture;
     keyCapture = null;
-    cb(k);
+    if (k === 'Escape') capture.onCancel?.();
+    else capture.cb(k);
     return;
   }
   if (gateInput({ family: 'keyboard', kind: 'key', phase: 'down', key: ev.key, repeat: ev.repeat === true })) {
