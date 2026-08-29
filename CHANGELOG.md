@@ -17,7 +17,7 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
-## 2026-08-29
+## 2026-08-28
 
 - **The Review & Approval Hub refreshes its owner decisions and adds Context Rotation** ([#361](https://github.com/cehinds/AshenSpire/pull/361), `0.4.0.1454`). The owner-facing hub promotes the two bounded Art decisions into cards that need Constantine without approving either, adds the #053 Context Rotation dashboard and its 13-team / 52-seat report, and separates registration and cold-start acceptance from execution, rotation, and successor-resume proof. Local-only evidence URLs now resolve to the explicit unavailable page instead of leaking author-local file paths. Evidence and hub only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.
 
