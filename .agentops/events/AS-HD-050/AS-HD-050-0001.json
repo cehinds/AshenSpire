@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-050-0001",
+  "ticket": "AS-HD-050",
+  "seq": 1,
+  "parent_event": null,
+  "kind": "genesis",
+  "actor": "help-desk",
+  "at": "2026-08-29T00:00:00Z",
+  "summary": "Genesis: recovered from the Review Hub rendered snapshot after the originating session ended at its usage limit; the physical-ledger backlog did not survive."
+}
