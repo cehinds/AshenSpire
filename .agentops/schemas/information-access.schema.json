@@ -3,7 +3,7 @@
   "title": "information-access",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "policy_version", "principle", "max_startup_items", "startup_token_target", "startup_token_hard_limit", "startup", "on_demand", "restricted", "forbidden", "rules"],
+  "required": ["schema", "policy_version", "principle", "max_startup_items", "startup_token_target", "startup_token_hard_limit", "startup", "on_demand", "restricted", "forbidden", "reporting", "rules"],
   "properties": {
     "schema": {"const": "agentops/information-access/v1"},
     "policy_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
@@ -15,6 +15,16 @@
     "on_demand": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
     "restricted": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
     "forbidden": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "reporting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["style", "must", "must_not"],
+      "properties": {
+        "style": {"type": "string", "minLength": 1},
+        "must": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+        "must_not": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1}
+      }
+    },
     "rules": {"type": "object"}
   }
 }
