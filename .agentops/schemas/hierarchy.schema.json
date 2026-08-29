@@ -3,35 +3,158 @@
   "title": "hierarchy",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "policy_version", "nodes", "escalation_routing"],
+  "required": [
+    "schema",
+    "policy_version",
+    "nodes",
+    "escalation_routing",
+    "authority_tiers"
+  ],
   "properties": {
-    "schema": {"const": "agentops/hierarchy/v1"},
-    "policy_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "schema": {
+      "const": "agentops/hierarchy/v1"
+    },
+    "policy_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
     "nodes": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["actor_id", "role", "escalation_parent", "owns_escalations"],
+        "required": [
+          "actor_id",
+          "role",
+          "escalation_parent",
+          "owns_escalations"
+        ],
         "properties": {
-          "actor_id": {"type": "string", "minLength": 1},
-          "role": {"type": "string", "minLength": 1},
-          "escalation_parent": {"type": ["string", "null"]},
-          "owns_escalations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+          "actor_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "escalation_parent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owns_escalations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     },
     "escalation_routing": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["default_sla_minutes", "deputy_custody_at_minutes", "deputy_overdue_to_owner_at_minutes", "immediate_owner_classes"],
+      "required": [
+        "default_sla_minutes",
+        "deputy_custody_at_minutes",
+        "deputy_overdue_to_owner_at_minutes",
+        "immediate_owner_classes"
+      ],
       "properties": {
-        "default_sla_minutes": {"type": "integer"},
-        "deputy_custody_at_minutes": {"type": "integer"},
-        "deputy_overdue_to_owner_at_minutes": {"type": "integer"},
-        "immediate_owner_classes": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
-        "note": {"type": "string"}
+        "default_sla_minutes": {
+          "type": "integer"
+        },
+        "deputy_custody_at_minutes": {
+          "type": "integer"
+        },
+        "deputy_overdue_to_owner_at_minutes": {
+          "type": "integer"
+        },
+        "immediate_owner_classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "authority_tiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principle",
+        "levels",
+        "rules"
+      ],
+      "properties": {
+        "principle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "levels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "p",
+              "label",
+              "actors",
+              "holds",
+              "cannot"
+            ],
+            "properties": {
+              "p": {
+                "type": "number"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actors": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "holds": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "cannot": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "rules": {
+          "type": "object"
+        }
       }
     }
   }

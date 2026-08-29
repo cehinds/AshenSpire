@@ -104,5 +104,112 @@
       "intent-conflict"
     ],
     "note": "Elapsed time changes routing only, never truth, evidence, or authority. FYIs remain dashboard-only and are not escalations."
+  },
+  "authority_tiers": {
+    "principle": "A P-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection \u2014 decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a P3 verdict binds P0 and P1 alike and is cleared only by a recorded waiver from the role the QA contract names.",
+    "levels": [
+      {
+        "p": 0,
+        "label": "Owner",
+        "actors": [
+          "constantine"
+        ],
+        "holds": [
+          "main and release mutation",
+          "tags",
+          "release publication",
+          "Pages source and deployment",
+          "final release readiness",
+          "Gate E playtest",
+          "Gate F per-action approval",
+          "every owner-exclusive decision class"
+        ],
+        "cannot": [
+          "overrule an independent QA verdict without a recorded waiver named in qa.json"
+        ]
+      },
+      {
+        "p": 1,
+        "label": "Deputy \u2014 IT Manager III, Integration and Delivery",
+        "actors": [
+          "it-manager-iii"
+        ],
+        "holds": [
+          "technical assignment and sequencing",
+          "path and maker ownership",
+          "integration and delivery to dev",
+          "Gate B and Gate C",
+          "incident and P0 command",
+          "standard-risk QA waiver",
+          "branch-rewrite permission",
+          "the wake target for every technical escalation"
+        ],
+        "cannot": [
+          "main, release, tag, publication or Pages",
+          "Gate E or Gate F",
+          "overruling an independent QA verdict"
+        ]
+      },
+      {
+        "p": 2,
+        "label": "Standing coordination",
+        "actors": [
+          "project-management-lead",
+          "data-architecture-lead",
+          "help-desk"
+        ],
+        "holds": [
+          "intake, triage, routing and receipts",
+          "portfolio, dependency, WIP and capacity visibility",
+          "completion councils and Gate D convening",
+          "cross-domain data-contract review, including WITHHOLD"
+        ],
+        "cannot": [
+          "technical assignment or integration",
+          "delivery, promotion or release",
+          "board mutation"
+        ]
+      },
+      {
+        "p": 3,
+        "label": "Independent verification",
+        "actors": [
+          "qa-independent"
+        ],
+        "holds": [
+          "the exact-head verdict, which no tier may overrule",
+          "Gate A",
+          "WITHHOLD that blocks promotion at any level"
+        ],
+        "cannot": [
+          "implementing what it verifies",
+          "assigning work to itself"
+        ],
+        "note": "Ranked below P2 in decision authority and above every tier in verdict finality. That is deliberate: independence comes from a non-maker reviewer at an immutable head, not from position."
+      },
+      {
+        "p": 4,
+        "label": "Delivery seats",
+        "actors": [
+          "maker",
+          "it-support"
+        ],
+        "holds": [
+          "implementation inside one writer lease",
+          "returning exact evidence"
+        ],
+        "cannot": [
+          "claiming an overlapping path or ref",
+          "push, PR, merge, deploy or release",
+          "changing product behaviour to clear a blocker"
+        ]
+      }
+    ],
+    "rules": {
+      "not_a_capability_ladder": "A P-level never selects a model or an effort; decision 0006's risk-and-station matrix does that, and a tier named after a role is rejected.",
+      "authority_is_per_action": "Holding a tier grants only the actions that tier enumerates. Authority for one action implies authority for none of the others.",
+      "independence_binds_upward": "A P3 verdict binds every tier including P0. It is cleared only by the waiver authority qa.json names for that risk class, recorded with its reason.",
+      "escalation_follows_the_tree": "A tier is not a routing table. Escalation follows escalation_parent and the classes in escalation.json; only owner-exclusive classes reach P0."
+    }
   }
 }

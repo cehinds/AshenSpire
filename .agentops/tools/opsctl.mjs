@@ -275,6 +275,52 @@ export function loadContracts(root = ROOT) {
 export function semanticChecks(c) {
   const errors = [];
 
+  // --- authority tiers (P0-P4) and ticket flow ----------------------------
+  // A rank system is dangerous in exactly two ways: an actor can fall outside
+  // it and be ungoverned, and it can start deciding things ranks must not
+  // decide. Both are checked here.
+  if (c.hierarchy && c.hierarchy.authority_tiers && c.roles) {
+    const at = c.hierarchy.authority_tiers;
+    const nodes = new Set(c.hierarchy.nodes.map((n) => n.actor_id));
+    const placed = new Map();
+    for (const lv of at.levels) {
+      for (const a of lv.actors) {
+        if (!nodes.has(a)) errors.push(`hierarchy: authority tier P${lv.p} names '${a}', which is not a hierarchy node`);
+        if (placed.has(a)) errors.push(`hierarchy: '${a}' is placed in both P${placed.get(a)} and P${lv.p}; an actor holds one tier`);
+        placed.set(a, lv.p);
+      }
+    }
+    // An actor outside the ladder has authority nobody wrote down.
+    for (const n of nodes) if (!placed.has(n)) errors.push(`hierarchy: '${n}' is a hierarchy node in no authority tier; its decision authority is undeclared`);
+    const owner = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    const p0 = at.levels.find((l) => l.p === 0);
+    if (owner && p0 && !p0.actors.includes(owner)) errors.push(`hierarchy: P0 does not contain the owner '${owner}'`);
+    if (owner && at.levels.some((l) => l.p !== 0 && l.actors.includes(owner))) errors.push(`hierarchy: the owner '${owner}' appears below P0`);
+    // The ladder must keep saying it is not a capability ladder; 0006 forbids
+    // selection by rank, and this is where that would quietly erode.
+    if (!/never.*(model|effort)|not.*(model|effort)/i.test(at.rules.not_a_capability_ladder || '')) {
+      errors.push('hierarchy: authority tiers no longer state that a P-level never selects model or effort');
+    }
+  }
+  if (c.escalation && c.escalation.ticket_flow && c.roles) {
+    const tf = c.escalation.ticket_flow;
+    const roleSet = new Set(c.roles.roles.map((r) => r.role));
+    const owner = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    for (const st of tf.steps) {
+      if (!roleSet.has(st.actor)) errors.push(`escalation: ticket_flow step ${st.n} names actor '${st.actor}', which roles.json does not declare`);
+      // The whole point: the Owner is not a step in the ordinary flow. Both
+      // spellings must be rejected — the owner's actor id AND the 'owner' role,
+      // since routing to the role reaches the same person by another name.
+      const ownerRole = (c.roles.roles.find((r) => /^owner$/i.test(r.role)) || {}).role;
+      if ((owner && st.actor === owner) || (ownerRole && st.actor === ownerRole)) {
+        errors.push(`escalation: ticket_flow step ${st.n} routes to the owner; the owner is reached only through an owner-exclusive escalation class`);
+      }
+    }
+    for (const e of ['SENT', 'RECEIVED', 'ACKNOWLEDGED']) {
+      if (!tf.handoff_events.includes(e)) errors.push(`escalation: ticket_flow drops the '${e}' handoff event; a failed transport would prove receipt`);
+    }
+  }
+
   // --- branch hygiene -----------------------------------------------------
   // Rebase is the standard way to bring a branch forward, but it rewrites
   // history someone else may already hold. The permission that makes that
@@ -1965,6 +2011,31 @@ export function renderHubSite(contracts, rt) {
       L.push('<div class="wrap"><table><tr><th>Pool</th><th>Delivery capability</th><th>Stewardship between tickets</th></tr>');
       for (const p of tm.capability_pools) L.push(`<tr><td><code>${hubEsc(p.id)}</code></td><td>${hubEsc(p.delivery_capability)}</td><td>${hubEsc(p.stewardship)}</td></tr>`);
       L.push('</table></div></section>');
+      const at = contracts.hierarchy && contracts.hierarchy.authority_tiers;
+      if (at) {
+        L.push('<section><h2>Authority tiers</h2>');
+        L.push(`<p class="sub">${hubEsc(at.principle)}</p>`);
+        L.push('<div class="wrap"><table><tr><th>Tier</th><th>Who</th><th>Holds</th><th>Cannot</th></tr>');
+        for (const lv of at.levels) {
+          L.push(`<tr><td><strong>P${lv.p}</strong><br><span class="sub">${hubEsc(lv.label)}</span></td>`
+            + `<td>${lv.actors.map((a) => `<code>${hubEsc(a)}</code>`).join('<br>')}</td>`
+            + `<td>${lv.holds.map(hubEsc).join('; ')}</td>`
+            + `<td class="warn">${lv.cannot.map(hubEsc).join('; ')}</td></tr>`);
+          if (lv.note) L.push(`<tr><td></td><td colspan="3" class="sub">${hubEsc(lv.note)}</td></tr>`);
+        }
+        L.push('</table></div>');
+        L.push(`<p class="sub">${Object.values(at.rules).map(hubEsc).join(' · ')}</p></section>`);
+      }
+      const tf = contracts.escalation && contracts.escalation.ticket_flow;
+      if (tf) {
+        L.push('<section><h2>Where a question goes</h2>');
+        L.push(`<p class="sub">${hubEsc(tf.principle)}</p>`);
+        L.push('<div class="wrap"><table><tr><th>#</th><th>Actor</th><th>Does</th></tr>');
+        for (const st of tf.steps) L.push(`<tr><td>${st.n}</td><td><code>${hubEsc(st.actor)}</code></td><td>${hubEsc(st.does)}</td></tr>`);
+        L.push('</table></div>');
+        L.push(`<p class="sub">Handoffs keep ${tf.handoff_events.map((e) => `<span class="pill">${hubEsc(e)}</span>`).join(' ')} distinct. ${hubEsc(tf.handoff_rule)}</p>`);
+        L.push(`<p class="sub"><strong>${hubEsc(tf.owner_is_last_resort)}</strong></p></section>`);
+      }
       const pg2 = contracts['promotion-gates'];
       if (pg2) {
         L.push('<section><h2>Promotion gates</h2>');
@@ -2549,6 +2620,12 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('tiers: an actor in no tier', (c) => { c.hierarchy.authority_tiers.levels = c.hierarchy.authority_tiers.levels.filter((l) => l.p !== 4); }, 'in no authority tier');
+  expectSemantic('tiers: an actor in two tiers', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 2).actors.push('maker'); }, 'an actor holds one tier');
+  expectSemantic('tiers: the owner demoted below P0', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 1).actors.push('constantine'); }, 'appears below P0');
+  expectSemantic('tiers: the ladder starting to pick models', (c) => { c.hierarchy.authority_tiers.rules.not_a_capability_ladder = 'higher tiers get better tools'; }, 'never selects model or effort');
+  expectSemantic('ticket flow: a step routed straight to the owner', (c) => { c.escalation.ticket_flow.steps[0].actor = 'owner'; }, 'routes to the owner');
+  expectSemantic('ticket flow: a dropped handoff event', (c) => { c.escalation.ticket_flow.handoff_events = ['SENT', 'RECEIVED']; }, "drops the 'ACKNOWLEDGED' handoff event");
   expectSemantic('branch hygiene: rewrite permission held by a pool', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'qa-guild'; }, 'is not a declared role');
   expectSemantic('branch hygiene: rewrite permission held by a non-standing role', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'maker'; }, 'is not a standing role');
   expectSemantic('branch hygiene: no prior head recorded', (c) => { c['git-ownership'].branch_hygiene.records = ['the branch']; }, 'cannot be undone');
