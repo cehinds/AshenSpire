@@ -981,6 +981,15 @@ function currentHead(root) {
   catch { return null; }
 }
 
+// Is HEAD on a branch, or detached? Reseating onto a detached HEAD would pin a
+// capsule to a commit no branch carries — see runReseat.
+function onBranch(root) {
+  try {
+    execFileSync('git', ['symbolic-ref', '--quiet', 'HEAD'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
 // Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
 // work, so an absent ref is normal for an unstarted seat — but wake must say so
 // rather than printing a checkout instruction that silently cannot be followed.
@@ -1280,7 +1289,14 @@ export function renderHud(contracts, rt) {
   const protectedStates = new Set(contracts.transitions.protected_states);
   const ownerActor = oi.owner.actor_id;
 
-  const needsYou = tickets.filter((t) => { const b = rt.capsules[t].blocker; return b && b.wake === ownerActor; });
+  // Derived through the same dispatch the executor uses, so the HUD and the
+  // wake issues can never disagree about what is the Owner's. Reading
+  // `blocker.wake` here was wrong twice over: a capsule no longer carries a
+  // wake target at all, so this silently showed nothing, and even when it did,
+  // it trusted the capsule's own claim about who it reached.
+  const dispatch = computeDispatch(contracts, rt);
+  const needsYou = dispatch.filter((e) => e.kind === 'owner-decision').map((e) => e.ticket);
+  const dispatchReason = new Map(dispatch.map((e) => [e.ticket, e]));
   const promotion = tickets.filter((t) => protectedStates.has(rt.capsules[t].lifecycle_state));
   const ownerReserved = contracts['owner-command'].actions.filter((a) => a.protected && a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner').map((a) => a.id);
 
@@ -1307,7 +1323,7 @@ export function renderHud(contracts, rt) {
 
   L.push('<section><h2>Needs you now</h2>');
   if (needsYou.length === 0) L.push('<p class="none">No owner decisions are pending on the current committed state.</p>');
-  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Blocker</th></tr>'); for (const t of needsYou) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(JSON.stringify(rt.capsules[t].blocker))}</td></tr>`); L.push('</table></div>'); }
+  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Why it reached you</th></tr>'); for (const t of needsYou) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(dispatchReason.get(t).reason)}</td></tr>`); L.push('</table></div>'); }
   L.push(`<p class="sub">Owner-exclusive command actions: ${ownerReserved.map((a) => `<span class="pill">${esc(a)}</span>`).join(' ')}</p>`);
   L.push('</section>');
 
@@ -1900,6 +1916,65 @@ export function runReseal(root, ticket, { reason, actor, now = new Date().toISOS
   return { ok: true, ticket, revision: cap.revision, seal: cap.current_hash, parent: prior.seal, event: id };
 }
 
+
+// ---------------------------------------------------------------------------
+// Reseat: advance an UNSTARTED seat's base to live HEAD.
+//
+// A capsule's base_oid pins the commit its instructions were written against.
+// Every merge to dev moves HEAD, so a seat that was assigned days ago wakes to
+// `FRESHNESS: STALE ... re-seat before mutating` and correctly stops. Without a
+// tool for this, every seat stops forever and the executor just files issues
+// nobody can act on.
+//
+// Only 'proposed' and 'assigned' reseat. Those seats have done nothing, so
+// starting from current HEAD is what they wanted anyway. A capsule that is
+// already in-progress has work standing on its base: moving it would silently
+// rebase a seat's assumptions, so that stays a human decision.
+// ---------------------------------------------------------------------------
+const RESEATABLE = new Set(['proposed', 'assigned']);
+
+export function runReseat(root, ticket, { actor = null, now = new Date().toISOString() } = {}) {
+  const file = resolve(root, 'work', ticket, 'CURRENT.json');
+  if (!existsSync(file)) return { ok: false, errors: [`no capsule for '${ticket}' under .agentops/work/`] };
+  const cap = JSON.parse(readFileSync(file, 'utf8'));
+  if (!RESEATABLE.has(cap.lifecycle_state)) {
+    return { ok: false, errors: [`capsule ${ticket} is '${cap.lifecycle_state}', not unstarted; work already stands on its base, so re-seating it is not automatic`] };
+  }
+  const head = currentHead(root);
+  if (!head) return { ok: false, errors: ['no live HEAD to reseat onto'] };
+  // A detached HEAD is not a place a seat can be sent. CI checks a pull request
+  // out as a synthetic merge commit that no branch carries and nothing keeps;
+  // reseating there would pin every capsule to a SHA that disappears when the
+  // run ends, and a clean clone could never reconstruct the base. Caught in CI
+  // by exactly that mechanism.
+  if (!onBranch(root)) {
+    return { ok: false, errors: [`HEAD is detached at ${head.slice(0, 12)}; reseating would pin the capsule to a commit no branch carries`] };
+  }
+  if (cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
+
+  const from = cap.base_oid;
+  cap.base_oid = head;
+  writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
+  const r = runReseal(root, ticket, {
+    actor: actor || cap.owner_actor,
+    now,
+    reason: `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
+  });
+  if (!r.ok) return r;
+  return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
+}
+
+export function runReseatAll(root, { actor = null, now = new Date().toISOString() } = {}) {
+  const rt = loadRuntime(root);
+  const done = [], skipped = [];
+  for (const ticket of Object.keys(rt.capsules).sort()) {
+    const r = runReseat(root, ticket, { actor, now });
+    if (r.ok && !r.unchanged) done.push(r);
+    else skipped.push({ ticket, why: r.ok ? 'already on HEAD' : r.errors[0] });
+  }
+  return { done, skipped };
+}
+
 // ---------------------------------------------------------------------------
 // CLI.
 // ---------------------------------------------------------------------------
@@ -1923,6 +1998,26 @@ function main(argv) {
     if (r.errors && r.errors.length) { console.error('WAKE blocked:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     process.stdout.write(r.text + '\n');
     process.stderr.write(`\n[wake] ~${r.tokens} tokens (startup target 1200 / hard 1500)\n`);
+    return 0;
+  }
+  if (cmd === 'reseat') {
+    let work = null, actor = null;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--work') work = argv[++i];
+      else if (argv[i] === '--actor') actor = argv[++i];
+    }
+    if (flags.has('--all')) {
+      const { done, skipped } = runReseatAll(ROOT, { actor });
+      done.forEach((r) => console.log(`RESEAT ${r.ticket} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`));
+      skipped.forEach((r) => console.log(`  skip ${r.ticket}: ${r.why}`));
+      console.log(`\nRESEAT: ${done.length} reseated, ${skipped.length} left alone.`);
+      return 0;
+    }
+    if (!work) { console.error('reseat requires --work <ticket> or --all'); return 2; }
+    const r = runReseat(ROOT, work, { actor });
+    if (!r.ok) { console.error('RESEAT FAIL:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    if (r.unchanged) { console.log(`RESEAT: ${r.ticket} is already on live HEAD.`); return 0; }
+    console.log(`RESEAT OK: ${r.ticket} ${r.from.slice(0, 12)} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`);
     return 0;
   }
   if (cmd === 'reseal') {

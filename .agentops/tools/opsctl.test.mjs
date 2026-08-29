@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -254,6 +254,16 @@ function check(name, cond, detail = '') {
     const live = computeCapsuleHash(loadRuntime().capsules['AS-1001']);
     check('HUD decision link prefills the live compare-and-swap hash', !!url && url.searchParams.get('hash') === live, url ? String(url.searchParams.get('hash')) : 'no link');
     check('HUD decision link prefills the ticket', !!url && url.searchParams.get('target') === 'AS-1001');
+  // The HUD's "Needs you now" and the executor's owner-decision issues must be
+  // the same set. Reading blocker.wake made them silently diverge: after the
+  // blocker migration dropped that field, the HUD showed nothing at all.
+  {
+    const rtOwned = loadRuntime();
+    rtOwned.capsules['AS-HD-050'].blocker = { kind: 'test', escalation_class: 'owner-exclusive-now', summary: 'owner must decide' };
+    const html = renderHud(loadContracts().contracts, rtOwned);
+    check('HUD lists a ticket whose escalation class reaches the owner', html.includes('AS-HD-050') && !/No owner decisions are pending/.test(html));
+    check('HUD gives the reason the ticket reached the owner', html.includes('owner must decide'));
+  }
   }
   // The repository self-publishes its tree to GitHub Pages, so a standalone
   // copy at /hud/index.html gives the HUD a tidy URL. Guard it against silent
@@ -353,6 +363,48 @@ function check(name, cond, detail = '') {
   check('reseal refuses without a reason', !missing.ok && /--reason/.test(missing.errors.join(' ')));
   const ghost = runReseal(ROOT, 'AS-0000', { reason: 'x' });
   check('reseal refuses an unknown ticket', !ghost.ok);
+}
+
+// 2j. Reseat: a stale base is why every woken seat stopped on arrival. Only
+// unstarted seats follow the branch; a seat with work standing on its base is
+// never silently rebased; and a detached HEAD is refused outright.
+//
+// The positive path MUTATES capsules, so it runs against a throwaway copy in a
+// scratch git repo — never the real corpus. An earlier version of this test
+// reseated the live tree, which passed locally (HEAD already matched) and in CI
+// pinned every capsule to the synthetic PR merge commit.
+{
+  const started = runReseat(ROOT, 'AS-1001');
+  check('an in-progress seat refuses to reseat', !started.ok && /not unstarted/.test(started.errors.join(' ')), JSON.stringify(started));
+  check('reseat refuses an unknown ticket', !runReseat(ROOT, 'AS-0000').ok);
+
+  const sandbox = resolve(tmpdir(), `agentops-reseat-${process.pid}-${Date.now()}`);
+  const agentops = resolve(sandbox, '.agentops');
+  const git = (...a) => execFileSync('git', a, { cwd: sandbox, stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    mkdirSync(sandbox, { recursive: true });
+    cpSync(ROOT, agentops, { recursive: true });
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.invalid');
+    git('config', 'user.name', 'test');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'base');
+
+    const before = JSON.parse(readFileSync(resolve(agentops, 'work/AS-HD-057/CURRENT.json'), 'utf8'));
+    const r = runReseat(agentops, 'AS-HD-057');
+    check('an unstarted seat reseats onto the branch HEAD', r.ok && !r.unchanged && r.base !== before.base_oid, JSON.stringify(r));
+    check('reseating bumps the revision and records an event', r.ok && r.revision === (before.revision || 0) + 1 && !!r.event, JSON.stringify(r));
+    const after = JSON.parse(readFileSync(resolve(agentops, 'work/AS-HD-057/CURRENT.json'), 'utf8'));
+    check('the reseated capsule links to the seal it succeeded', after.parent_hash === before.current_hash, `${after.parent_hash} vs ${before.current_hash}`);
+    check('reseating twice is a no-op', (() => { const again = runReseat(agentops, 'AS-HD-057'); return again.ok && again.unchanged === true; })());
+
+    // The CI shape: a pull request is checked out as a detached merge commit.
+    git('checkout', '-q', '--detach');
+    const det = runReseat(agentops, 'AS-HD-050');
+    check('reseat refuses a detached HEAD', !det.ok && /detached/.test(det.errors.join(' ')), JSON.stringify(det));
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);
