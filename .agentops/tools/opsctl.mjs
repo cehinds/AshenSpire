@@ -710,6 +710,27 @@ export function hierarchyRoles(contracts) {
   return new Set((h.nodes || []).map((n) => n.role));
 }
 
+// D5: a lease may only grant path globs that git-ownership actually declares,
+// and only to the role that owns them. Without this, "one writer per
+// overlapping path" is unenforced for every path outside .agentops/ — a lease
+// could grant any role any glob and verify would stay green. A lease may
+// declare `undeclared_paths_ok: true` for a deliberate exception; that is an
+// explicit, reviewable choice rather than a silent gap.
+export function pathGrantErrors(contracts, lease) {
+  const errors = [];
+  if (lease.path_grant_exception) return errors;
+  const decls = (contracts['git-ownership'] && contracts['git-ownership'].paths) || [];
+  for (const g of lease.path_globs) {
+    const owner = decls.find((d) => globPrefix(g).startsWith(globPrefix(d.glob)));
+    if (!owner) {
+      errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
+    } else if (owner.owner_role !== lease.actor) {
+      errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
+    }
+  }
+  return errors;
+}
+
 export function computeCapsuleHash(capsule) {
   const clone = { ...capsule, current_hash: '' };
   return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
@@ -781,6 +802,7 @@ export function runtimeChecks(g, rt) {
   // when it blocks, escalation routing has nowhere to send it and the only
   // recorded outcome is silence. Declaring the role is not enough.
   const hierRoles = hierarchyRoles(g);
+  for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
   const roleMay = new Map(g.roles ? g.roles.roles.map((r) => [r.role, new Set(r.may)]) : []);
   const evIds = g.evidence ? new Set(g.evidence.evidence.map((e) => e.id)) : new Set();
   const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
@@ -1589,6 +1611,8 @@ export function runSelftest(root = ROOT) {
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
   expectRuntime('broken event chain', (rt) => { rt.events['AS-1001'][2].parent_event = 'AS-1001-0001'; }, 'breaks the chain');
   expectRuntime('affected path outside lease', (rt) => { rt.capsules['AS-1001'].affected_paths.push('src/**'); }, 'not covered by its writer lease');
+  expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
+  expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
   expectRuntime('capsule ref outside any declared ref namespace', (rt) => { rt.capsules['AS-1001'].ref = 'wildcat/not-declared'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'wildcat/not-declared'; }, 'no declared ref');
   expectRuntime('capsule owner role with no hierarchy node', (rt) => { rt.capsules['AS-1001'].owner_actor = 'generator'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).actor = 'generator'; }, 'no node in hierarchy');
   expectRuntime('capsule references missing lease', (rt) => { rt.capsules['AS-1001'].writer_lease = 'no-such-lease'; }, 'unknown writer_lease');

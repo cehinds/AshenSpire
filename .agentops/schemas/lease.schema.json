@@ -16,6 +16,12 @@
     "actions": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
     "issued": {"type": "string", "minLength": 1},
     "expiry": {"type": "string", "minLength": 1},
-    "revoked": {"type": "boolean"}
+    "revoked": {"type": "boolean"},
+    "path_grant_exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {"reason": {"type": "string", "minLength": 1}}
+    }
   }
 }

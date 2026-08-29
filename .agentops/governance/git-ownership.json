@@ -82,6 +82,54 @@
       "owner_role": "it-manager-iii",
       "serialized_lane": "reconstruction",
       "note": "Reconstruction bundle is read-only authority for installation; changes are protected."
+    },
+    {
+      "glob": "src/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-source",
+      "note": "Game source. Implementation only; sequencing and gating belong to it-manager-iii and are not path writes."
+    },
+    {
+      "glob": "assets/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-assets",
+      "note": "Produced art and asset packages staged by the authoring seat."
+    },
+    {
+      "glob": "content/**",
+      "owner_role": "data-architecture-lead",
+      "serialized_lane": "product-content",
+      "note": "Structured game content; the data contract owner withholds unsafe shapes."
+    },
+    {
+      "glob": "tests/**",
+      "owner_role": "qa-independent",
+      "serialized_lane": "qa-fixtures",
+      "note": "Fixtures and red plants belong to the independent verifier, not to the seat under test."
+    },
+    {
+      "glob": "docs/art/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-docs",
+      "note": "Art contracts and motif records authored alongside the assets they describe."
+    },
+    {
+      "glob": "docs/hub/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-docs",
+      "note": "Owner-facing view specifications."
+    },
+    {
+      "glob": "docs/governance/**",
+      "owner_role": "project-management-lead",
+      "serialized_lane": "governance-docs",
+      "note": "Census, classification and sequencing records; distinct from the machine-readable contracts."
+    },
+    {
+      "glob": "game-design/docs/**",
+      "owner_role": "help-desk",
+      "serialized_lane": "intake-docs",
+      "note": "Intake and routing records surfaced to design."
     }
   ],
   "generated_serialization": {

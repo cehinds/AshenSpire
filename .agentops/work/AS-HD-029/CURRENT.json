@@ -1,7 +1,7 @@
 {
   "schema": "agentops/work-capsule/v1",
   "revision": 1,
-  "current_hash": "sha256:1ea47a870bc8ded2718c1425afad217e4ae6b1d646a6d70ceb8c0683837ce7be",
+  "current_hash": "sha256:38f57a96f5a531a2e4e52743e68654d09eb14bc8efbf3e291f516a9be54a138a",
   "parent_hash": null,
   "ticket": "AS-HD-029",
   "lifecycle_state": "assigned",
@@ -16,7 +16,7 @@
   "owner_actor": "it-manager-iii",
   "writer_lease": "lease-AS-HD-029-it-manager-iii",
   "affected_paths": [
-    "src/**"
+    ".agentops/leases/**"
   ],
   "evidence_pointers": [],
   "blocker": null,

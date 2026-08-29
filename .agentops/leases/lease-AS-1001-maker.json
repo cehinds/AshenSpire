@@ -19,5 +19,8 @@
   ],
   "issued": "2026-08-28T00:00:00Z",
   "expiry": "2026-09-30T23:59:59Z",
-  "revoked": false
+  "revoked": false,
+  "path_grant_exception": {
+    "reason": "Seed capsule that authored the control plane itself, issued before .agentops/schemas/** was assigned to it-manager-iii. Retained as historical evidence; no new lease may grant schemas to maker."
+  }
 }

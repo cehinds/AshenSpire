@@ -168,6 +168,14 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/events/**` | maker | per-ticket |
 | `.agentops/leases/**` | it-manager-iii | governance |
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
+| `src/**` | maker | product-source |
+| `assets/**` | maker | product-assets |
+| `content/**` | data-architecture-lead | product-content |
+| `tests/**` | qa-independent | qa-fixtures |
+| `docs/art/**` | maker | product-docs |
+| `docs/hub/**` | maker | product-docs |
+| `docs/governance/**` | project-management-lead | governance-docs |
+| `game-design/docs/**` | help-desk | intake-docs |
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 
