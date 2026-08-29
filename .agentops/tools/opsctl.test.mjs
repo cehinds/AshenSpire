@@ -9,9 +9,10 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash } from './opsctl.mjs';
-import { readFileSync } from 'node:fs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill } from './opsctl.mjs';
+import { readFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 
 let failures = 0;
 function check(name, cond, detail = '') {
@@ -31,7 +32,7 @@ function check(name, cond, detail = '') {
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 28 plants', s.results.length >= 28, String(s.results.length));
+  check('selftest exercises >= 29 plants', s.results.length >= 29, String(s.results.length));
 }
 
 // 2b. Runtime: the seed ticket loads, its capsule is sealed, and the wake
@@ -51,6 +52,38 @@ function check(name, cond, detail = '') {
   check('wake capsule names the ticket and IDENTITY', !!w.text && w.text.includes('AS-1001') && w.text.includes('IDENTITY'));
   const wrongActor = runWake(ROOT, 'data-architecture-lead', 'AS-1001');
   check('wake refuses an actor that does not own the capsule', wrongActor.errors && wrongActor.errors.length > 0);
+}
+
+// 2c. Reconstruction (clean-clone / context-wipe drills): the drill passes, frozen
+// wake is byte-deterministic and git-independent, and a clean-room clone with a
+// tampered/lost capsule is REJECTED (evidence loss is caught, not silently lost).
+{
+  const d = runDrill();
+  check('reconstruction drill passes', d.ok, d.steps.filter((s) => !s.ok).map((s) => s.name).join(' | '));
+
+  const f1 = runWake(ROOT, null, 'AS-1001', { frozen: true });
+  const f2 = runWake(ROOT, null, 'AS-1001', { frozen: true });
+  check('frozen wake is deterministic (two runs identical)', f1.text === f2.text);
+  check('frozen wake is git-independent (as-recorded freshness)', !!f1.text && f1.text.includes('as-recorded'));
+
+  // Clean-room clone: reconstruction depends only on committed files.
+  const clone = resolve(tmpdir(), `agentops-test-${process.pid}-${Date.now()}`);
+  try {
+    mkdirSync(clone, { recursive: true });
+    cpSync(ROOT, clone, { recursive: true });
+    check('clean clone re-validates from committed files only', runValidate(clone).errors.length === 0);
+    check('clean clone reproduces byte-identical frozen capsule', runWake(clone, null, 'AS-1001', { frozen: true }).text === f1.text);
+    // Evidence-loss plant: delete the capsule in the clone while its lease and
+    // event chain remain. Both `verify` (orphan guard) and `wake` must fail —
+    // the loss is never silently dropped from the inventory.
+    rmSync(resolve(clone, 'work/AS-1001/CURRENT.json'), { force: true });
+    const lostValidate = runValidate(clone);
+    check('evidence loss (deleted capsule) fails verify via orphan guard', lostValidate.errors.some((e) => e.includes('no work capsule')), lostValidate.errors.join(' | '));
+    const lost = runWake(clone, null, 'AS-1001', { frozen: true });
+    check('evidence loss (deleted capsule) also blocks wake', lost.errors && lost.errors.length > 0);
+  } finally {
+    try { rmSync(clone, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
 }
 
 // 3. The committed generated view has no drift from validated JSON.

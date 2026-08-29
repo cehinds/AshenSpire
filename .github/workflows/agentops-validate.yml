@@ -51,3 +51,8 @@ jobs:
       # Full suite: real on-disk corpus + plants + generated-view drift gate.
       - name: Run the opsctl test suite
         run: node .agentops/tools/opsctl.test.mjs
+
+      # Clean-clone / context-wipe reconstruction: prove a fresh copy of the
+      # committed control-plane reproduces exact state with zero evidence loss.
+      - name: Run the reconstruction drill
+        run: node .agentops/tools/opsctl.mjs drill

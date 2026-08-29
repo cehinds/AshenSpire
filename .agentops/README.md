@@ -27,19 +27,21 @@ Start at [`BOOTSTRAP.md`](BOOTSTRAP.md).
   work/<ticket>/CURRENT.json   sealed work capsule (compare-and-swap current_hash)
   leases/<lease-id>.json       writer lease (one writer per overlapping path/ref)
   events/<ticket>/*.json       append-only transition events
+  RECONSTRUCTION-DRILL.md      provider-neutral clean-clone / context-wipe drill spec
   tools/
-    opsctl.mjs            validate | render [--check] | verify | wake | --selftest
-    opsctl.test.mjs       test suite (real corpus + 28 negative plants)
+    opsctl.mjs            validate | render [--check] | verify | wake [--frozen] | drill | --selftest
+    opsctl.test.mjs       test suite (real corpus + 29 negative plants + reconstruction)
   generated/
     GOVERNANCE.md         generated human view (sole writer: opsctl render)
+    reconstruction/<ticket>.wake.txt   frozen wake goldens (drift-gated by verify)
 ```
 
 The JSON is the source of truth; Markdown under `generated/` is a projection.
 Regenerate and drift-check with `node .agentops/tools/opsctl.mjs verify`.
 
-This is the `runtime-capsules` stage (the governance kernel, the operational
-contracts, and the runtime capsule/lease/event layer with the `opsctl wake`
-compiler). The reusable installer specification and
-governance census this was built from live under
+This is the `reconstruction-drills` stage (the governance kernel, the
+operational contracts, the runtime capsule/lease/event layer with `opsctl
+wake`, and the clean-clone reconstruction drill). The reusable installer
+specification and governance census this was built from live under
 [`docs/reconstruction/agentops/`](../docs/reconstruction/agentops/); that bundle
 is read-only installation authority, not runtime context.

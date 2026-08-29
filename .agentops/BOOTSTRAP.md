@@ -55,6 +55,14 @@ node .agentops/tools/opsctl.mjs wake --actor <role> --work <ticket>
 # e.g. wake --actor maker --work AS-1001
 ```
 
+Prove a clean clone reconstructs exact work state (zero evidence loss,
+provider-neutral) with the reconstruction drill — see
+[`RECONSTRUCTION-DRILL.md`](RECONSTRUCTION-DRILL.md):
+
+```sh
+node .agentops/tools/opsctl.mjs drill
+```
+
 ## Validate before you trust
 
 ```sh
@@ -82,12 +90,13 @@ and overriding an independent QA verdict. See
 
 ## Installed stage
 
-`runtime-capsules`. The governance kernel (owner intent, hierarchy, roles,
+`reconstruction-drills`. The governance kernel (owner intent, hierarchy, roles,
 authority, git-ownership), the operational contracts (RACI, delegation,
-escalation, transitions, information-access, QA, evidence), and the runtime
-layer (work capsules, writer leases, append-only events, and the `opsctl wake`
-token-bounded compiler) are installed and validated. Deferred to later stages
-(see `project.json → deferred_next_stages`): clean-clone / context-wipe
-reconstruction drills; the authenticated owner-command workflows; the read-only
-Owner HUD on GitHub Pages; migration tooling for existing work; and the exact
-`dev` → `main` promotion decision.
+escalation, transitions, information-access, QA, evidence), the runtime layer
+(work capsules, writer leases, append-only events, `opsctl wake`), and the
+clean-clone / context-wipe reconstruction drill (`opsctl drill` + committed
+frozen goldens + `RECONSTRUCTION-DRILL.md`) are installed and validated.
+Deferred to later stages (see `project.json → deferred_next_stages`): the
+authenticated owner-command workflows; the read-only Owner HUD on GitHub Pages;
+migration tooling for existing work; and the exact `dev` → `main` promotion
+decision.
