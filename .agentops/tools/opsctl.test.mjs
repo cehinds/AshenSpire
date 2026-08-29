@@ -26,7 +26,7 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all eighteen contracts loaded', Object.keys(contracts).length === 18, Object.keys(contracts).join(','));
+  check('all nineteen contracts loaded', Object.keys(contracts).length === 19, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
@@ -637,6 +637,48 @@ function check(name, cond, detail = '') {
   check('every capsule that declares a pairing uses a declared effort',
     declared.every(([, c]) => efforts.has(c.model_effort.effort)),
     declared.map(([t, c]) => `${t}:${c.model_effort.effort}`).join(', ') || '(none declare one)');
+}
+
+// 2q. Dev delivery, promotion readiness and the Pages source (decision 0005).
+// The Pages half is the part with teeth. Earlier in this repository's life a
+// Pages deployment replaced a live site with no recorded prior state to
+// restore; the decision already forbade that, and nothing enforced it.
+{
+  const { contracts } = loadContracts();
+  const d = contracts.delivery;
+  check('delivery contract loads', !!d && d.schema === 'agentops/delivery/v1');
+  check('delivery to dev is a discretion, not a duty', d.dev_delivery.is_a_duty === false);
+  check('delivery never authorizes a direct push to dev', d.dev_delivery.authorizes_direct_push === false);
+  check('all eight independence conditions are carried', d.dev_delivery.all_must_pass_at_one_exact_head.length === 8,
+    String(d.dev_delivery.all_must_pass_at_one_exact_head.length));
+  check('FAIL and UNKNOWN both force WAIT',
+    ['FAIL', 'UNKNOWN'].every((v) => d.dev_delivery.wait_required_on.includes(v)));
+  check('waiting does not authorize a speculative patch',
+    d.dev_delivery.waiting_does_not_authorize.some((x) => /speculative/.test(x)));
+  // Readiness is a claim about a packet, never about the product.
+  check('declaring a packet ready grants nothing', d.promotion_readiness.grants.length === 0);
+  check('promotion actions are owner-exclusive and per action',
+    d.promotion_readiness.authority_is_per_action === true && d.promotion_readiness.owner_exclusive_actions.length >= 5);
+  check('all ten promotion packet fields are carried', d.promotion_packet.required_fields.length === 10,
+    String(d.promotion_packet.required_fields.length));
+  check('UNKNOWN blocks', d.promotion_packet.unknown_blocks === true);
+  // Pages.
+  check('the desired Pages source is main', d.pages.desired_source === 'main');
+  const ref = contracts['git-ownership'].refs.find((r) => r.ref === d.pages.desired_source);
+  check('the desired Pages source is a protected declared ref', !!ref && ref.mutation === 'protected', ref ? ref.mutation : 'not declared');
+  check('a Pages switch is not authorized by the decision itself', d.pages.switch_authorized_by_this_decision === false);
+  check('a Pages switch escalates to the owner',
+    contracts.escalation.classes.find((x) => x.id === d.pages.switch_requires.escalation_class).wake === contracts['owner-intent'].owner.actor_id);
+  check('a Pages switch needs a change window and a candidate already on main',
+    d.pages.switch_requires.change_window === true && d.pages.switch_requires.candidate_must_have_reached === 'main');
+  // The one that matters: rollback is recorded before the switch, not after it
+  // goes wrong.
+  check('the Pages switch packet records a rollback',
+    d.pages.switch_packet_records.some((x) => /rollback/i.test(x)));
+  check('a switch is incomplete until deployment AND hosted verification pass',
+    d.pages.complete_only_when.length === 2);
+  check('a failed deployment authorizes no different source',
+    /no different source/i.test(d.pages.on_failure));
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

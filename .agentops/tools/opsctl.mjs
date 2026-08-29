@@ -239,6 +239,7 @@ const CONTRACTS = [
   { name: 'teams', file: 'governance/teams.json', schema: 'schemas/teams.schema.json' },
   { name: 'promotion-gates', file: 'governance/promotion-gates.json', schema: 'schemas/promotion-gates.schema.json' },
   { name: 'model-effort', file: 'governance/model-effort.json', schema: 'schemas/model-effort.schema.json' },
+  { name: 'delivery', file: 'governance/delivery.json', schema: 'schemas/delivery.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
   { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
   { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
@@ -273,6 +274,48 @@ export function loadContracts(root = ROOT) {
 // ---------------------------------------------------------------------------
 export function semanticChecks(c) {
   const errors = [];
+
+  // --- delivery and Pages -------------------------------------------------
+  // Decision 0005 governs delivery to dev, promotion readiness and the Pages
+  // source. The Pages half is the part with teeth: a source switch must record
+  // its rollback BEFORE it happens, so a failed deployment has somewhere to go
+  // back to. Encoded after a Pages deployment replaced a live site in this
+  // repository with no recorded prior state to restore.
+  if (c.delivery) {
+    const d = c.delivery;
+    if (c.roles) {
+      const roleSet = new Set(c.roles.roles.map((r) => r.role));
+      for (const [label, role] of [['dev_delivery', d.dev_delivery.actor_role], ['promotion_readiness', d.promotion_readiness.actor_role], ['pages.switch_requires', d.pages.switch_requires.authorizing_role]]) {
+        if (!roleSet.has(role)) errors.push(`delivery: ${label} names actor role '${role}', which roles.json does not declare`);
+      }
+    }
+    // Declaring a packet ready must grant nothing; that is the whole difference
+    // between "ready to be considered" and "release-ready".
+    if (d.promotion_readiness.grants.length) {
+      errors.push(`delivery: promotion_readiness declares grants (${d.promotion_readiness.grants.join(', ')}); declaring a packet ready grants no promotion authority`);
+    }
+    // The Pages source must be a ref the policy actually knows, and a protected
+    // one — an unprotected desired source is a site anyone can repoint.
+    if (c['git-ownership']) {
+      const ref = c['git-ownership'].refs.find((r) => r.ref === d.pages.desired_source);
+      if (!ref) errors.push(`delivery: the desired Pages source '${d.pages.desired_source}' is not a declared ref`);
+      else if (ref.mutation !== 'protected') errors.push(`delivery: the desired Pages source '${d.pages.desired_source}' is '${ref.mutation}', not protected`);
+    }
+    // A switch must escalate to the owner, and must record a rollback.
+    if (c.escalation) {
+      const cls = c.escalation.classes.find((x) => x.id === d.pages.switch_requires.escalation_class);
+      if (!cls) errors.push(`delivery: a Pages switch escalates as '${d.pages.switch_requires.escalation_class}', which escalation.json does not declare`);
+      else if (c['owner-intent'] && cls.wake !== c['owner-intent'].owner.actor_id) {
+        errors.push(`delivery: a Pages switch escalates as '${cls.id}', which wakes '${cls.wake}' rather than the owner`);
+      }
+    }
+    if (!d.pages.switch_packet_records.some((x) => /rollback/i.test(x))) {
+      errors.push('delivery: the Pages switch packet records no rollback; a failed deployment would have nowhere to return to');
+    }
+    if (!d.promotion_packet.required_fields.some((x) => /rollback/i.test(x))) {
+      errors.push('delivery: the promotion packet requires no rollback field');
+    }
+  }
 
   // --- model and effort ---------------------------------------------------
   // Decision 0006's load-bearing sentence is that selecting a model grants
@@ -2434,6 +2477,10 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('delivery: promotion readiness claiming a grant', (c) => { c.delivery.promotion_readiness.grants = ['release']; }, 'grants no promotion authority');
+  expectSemantic('delivery: a Pages source that is not protected', (c) => { c.delivery.pages.desired_source = 'dev'; }, "is 'pr-only', not protected");
+  expectSemantic('delivery: a Pages switch that skips the owner', (c) => { c.delivery.pages.switch_requires.escalation_class = 'technical-blocker'; }, 'rather than the owner');
+  expectSemantic('delivery: a Pages switch packet with no rollback', (c) => { c.delivery.pages.switch_packet_records = c.delivery.pages.switch_packet_records.filter((x) => !/rollback/i.test(x)); }, 'nowhere to return to');
   expectSemantic('model-effort: the contract claiming a grant', (c) => { c['model-effort'].grants = ['integration']; }, 'model selection grants no authority');
   expectSemantic('model-effort: max effort with no exceptional reason required', (c) => { delete c['model-effort'].tiers.find((t) => t.allowed_efforts.includes('max')).requires_exceptional_reason; }, "allows 'max' effort without requiring an exceptional reason");
   expectSemantic('model-effort: a tier named after a role', (c) => { c['model-effort'].tiers[0].id = 'it-manager-iii'; }, 'never role rank');
