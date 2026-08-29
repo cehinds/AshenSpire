@@ -1289,7 +1289,14 @@ export function renderHud(contracts, rt) {
   const protectedStates = new Set(contracts.transitions.protected_states);
   const ownerActor = oi.owner.actor_id;
 
-  const needsYou = tickets.filter((t) => { const b = rt.capsules[t].blocker; return b && b.wake === ownerActor; });
+  // Derived through the same dispatch the executor uses, so the HUD and the
+  // wake issues can never disagree about what is the Owner's. Reading
+  // `blocker.wake` here was wrong twice over: a capsule no longer carries a
+  // wake target at all, so this silently showed nothing, and even when it did,
+  // it trusted the capsule's own claim about who it reached.
+  const dispatch = computeDispatch(contracts, rt);
+  const needsYou = dispatch.filter((e) => e.kind === 'owner-decision').map((e) => e.ticket);
+  const dispatchReason = new Map(dispatch.map((e) => [e.ticket, e]));
   const promotion = tickets.filter((t) => protectedStates.has(rt.capsules[t].lifecycle_state));
   const ownerReserved = contracts['owner-command'].actions.filter((a) => a.protected && a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner').map((a) => a.id);
 
@@ -1316,7 +1323,7 @@ export function renderHud(contracts, rt) {
 
   L.push('<section><h2>Needs you now</h2>');
   if (needsYou.length === 0) L.push('<p class="none">No owner decisions are pending on the current committed state.</p>');
-  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Blocker</th></tr>'); for (const t of needsYou) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(JSON.stringify(rt.capsules[t].blocker))}</td></tr>`); L.push('</table></div>'); }
+  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Why it reached you</th></tr>'); for (const t of needsYou) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(dispatchReason.get(t).reason)}</td></tr>`); L.push('</table></div>'); }
   L.push(`<p class="sub">Owner-exclusive command actions: ${ownerReserved.map((a) => `<span class="pill">${esc(a)}</span>`).join(' ')}</p>`);
   L.push('</section>');
 

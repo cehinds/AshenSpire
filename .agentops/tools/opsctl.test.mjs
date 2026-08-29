@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -254,6 +254,16 @@ function check(name, cond, detail = '') {
     const live = computeCapsuleHash(loadRuntime().capsules['AS-1001']);
     check('HUD decision link prefills the live compare-and-swap hash', !!url && url.searchParams.get('hash') === live, url ? String(url.searchParams.get('hash')) : 'no link');
     check('HUD decision link prefills the ticket', !!url && url.searchParams.get('target') === 'AS-1001');
+  // The HUD's "Needs you now" and the executor's owner-decision issues must be
+  // the same set. Reading blocker.wake made them silently diverge: after the
+  // blocker migration dropped that field, the HUD showed nothing at all.
+  {
+    const rtOwned = loadRuntime();
+    rtOwned.capsules['AS-HD-050'].blocker = { kind: 'test', escalation_class: 'owner-exclusive-now', summary: 'owner must decide' };
+    const html = renderHud(loadContracts().contracts, rtOwned);
+    check('HUD lists a ticket whose escalation class reaches the owner', html.includes('AS-HD-050') && !/No owner decisions are pending/.test(html));
+    check('HUD gives the reason the ticket reached the owner', html.includes('owner must decide'));
+  }
   }
   // The repository self-publishes its tree to GitHub Pages, so a standalone
   // copy at /hud/index.html gives the HUD a tidy URL. Guard it against silent
