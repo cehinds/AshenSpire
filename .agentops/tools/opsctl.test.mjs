@@ -32,7 +32,7 @@ function check(name, cond, detail = '') {
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 28 plants', s.results.length >= 28, String(s.results.length));
+  check('selftest exercises >= 29 plants', s.results.length >= 29, String(s.results.length));
 }
 
 // 2b. Runtime: the seed ticket loads, its capsule is sealed, and the wake
@@ -73,10 +73,14 @@ function check(name, cond, detail = '') {
     cpSync(ROOT, clone, { recursive: true });
     check('clean clone re-validates from committed files only', runValidate(clone).errors.length === 0);
     check('clean clone reproduces byte-identical frozen capsule', runWake(clone, null, 'AS-1001', { frozen: true }).text === f1.text);
-    // Evidence-loss plant: delete the capsule in the clone → validation must fail.
+    // Evidence-loss plant: delete the capsule in the clone while its lease and
+    // event chain remain. Both `verify` (orphan guard) and `wake` must fail —
+    // the loss is never silently dropped from the inventory.
     rmSync(resolve(clone, 'work/AS-1001/CURRENT.json'), { force: true });
+    const lostValidate = runValidate(clone);
+    check('evidence loss (deleted capsule) fails verify via orphan guard', lostValidate.errors.some((e) => e.includes('no work capsule')), lostValidate.errors.join(' | '));
     const lost = runWake(clone, null, 'AS-1001', { frozen: true });
-    check('evidence loss (deleted capsule) is caught, not silently lost', lost.errors && lost.errors.length > 0);
+    check('evidence loss (deleted capsule) also blocks wake', lost.errors && lost.errors.length > 0);
   } finally {
     try { rmSync(clone, { recursive: true, force: true }); } catch { /* best effort */ }
   }
