@@ -1900,6 +1900,57 @@ export function runReseal(root, ticket, { reason, actor, now = new Date().toISOS
   return { ok: true, ticket, revision: cap.revision, seal: cap.current_hash, parent: prior.seal, event: id };
 }
 
+
+// ---------------------------------------------------------------------------
+// Reseat: advance an UNSTARTED seat's base to live HEAD.
+//
+// A capsule's base_oid pins the commit its instructions were written against.
+// Every merge to dev moves HEAD, so a seat that was assigned days ago wakes to
+// `FRESHNESS: STALE ... re-seat before mutating` and correctly stops. Without a
+// tool for this, every seat stops forever and the executor just files issues
+// nobody can act on.
+//
+// Only 'proposed' and 'assigned' reseat. Those seats have done nothing, so
+// starting from current HEAD is what they wanted anyway. A capsule that is
+// already in-progress has work standing on its base: moving it would silently
+// rebase a seat's assumptions, so that stays a human decision.
+// ---------------------------------------------------------------------------
+const RESEATABLE = new Set(['proposed', 'assigned']);
+
+export function runReseat(root, ticket, { actor = null, now = new Date().toISOString() } = {}) {
+  const file = resolve(root, 'work', ticket, 'CURRENT.json');
+  if (!existsSync(file)) return { ok: false, errors: [`no capsule for '${ticket}' under .agentops/work/`] };
+  const cap = JSON.parse(readFileSync(file, 'utf8'));
+  if (!RESEATABLE.has(cap.lifecycle_state)) {
+    return { ok: false, errors: [`capsule ${ticket} is '${cap.lifecycle_state}', not unstarted; work already stands on its base, so re-seating it is not automatic`] };
+  }
+  const head = currentHead(root);
+  if (!head) return { ok: false, errors: ['no live HEAD to reseat onto'] };
+  if (cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
+
+  const from = cap.base_oid;
+  cap.base_oid = head;
+  writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
+  const r = runReseal(root, ticket, {
+    actor: actor || cap.owner_actor,
+    now,
+    reason: `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
+  });
+  if (!r.ok) return r;
+  return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
+}
+
+export function runReseatAll(root, { actor = null, now = new Date().toISOString() } = {}) {
+  const rt = loadRuntime(root);
+  const done = [], skipped = [];
+  for (const ticket of Object.keys(rt.capsules).sort()) {
+    const r = runReseat(root, ticket, { actor, now });
+    if (r.ok && !r.unchanged) done.push(r);
+    else skipped.push({ ticket, why: r.ok ? 'already on HEAD' : r.errors[0] });
+  }
+  return { done, skipped };
+}
+
 // ---------------------------------------------------------------------------
 // CLI.
 // ---------------------------------------------------------------------------
@@ -1923,6 +1974,26 @@ function main(argv) {
     if (r.errors && r.errors.length) { console.error('WAKE blocked:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     process.stdout.write(r.text + '\n');
     process.stderr.write(`\n[wake] ~${r.tokens} tokens (startup target 1200 / hard 1500)\n`);
+    return 0;
+  }
+  if (cmd === 'reseat') {
+    let work = null, actor = null;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--work') work = argv[++i];
+      else if (argv[i] === '--actor') actor = argv[++i];
+    }
+    if (flags.has('--all')) {
+      const { done, skipped } = runReseatAll(ROOT, { actor });
+      done.forEach((r) => console.log(`RESEAT ${r.ticket} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`));
+      skipped.forEach((r) => console.log(`  skip ${r.ticket}: ${r.why}`));
+      console.log(`\nRESEAT: ${done.length} reseated, ${skipped.length} left alone.`);
+      return 0;
+    }
+    if (!work) { console.error('reseat requires --work <ticket> or --all'); return 2; }
+    const r = runReseat(ROOT, work, { actor });
+    if (!r.ok) { console.error('RESEAT FAIL:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    if (r.unchanged) { console.log(`RESEAT: ${r.ticket} is already on live HEAD.`); return 0; }
+    console.log(`RESEAT OK: ${r.ticket} ${r.from.slice(0, 12)} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`);
     return 0;
   }
   if (cmd === 'reseal') {

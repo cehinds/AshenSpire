@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -353,6 +353,22 @@ function check(name, cond, detail = '') {
   check('reseal refuses without a reason', !missing.ok && /--reason/.test(missing.errors.join(' ')));
   const ghost = runReseal(ROOT, 'AS-0000', { reason: 'x' });
   check('reseal refuses an unknown ticket', !ghost.ok);
+}
+
+// 2j. Reseat: a stale base is why every woken seat stopped on arrival. Only
+// unstarted seats follow the branch; a seat with work standing on its base does
+// not get silently rebased.
+{
+  const onHead = runReseat(ROOT, 'AS-HD-057');
+  check('an unstarted seat already on HEAD reseats to a no-op', onHead.ok && onHead.unchanged === true, JSON.stringify(onHead));
+  const started = runReseat(ROOT, 'AS-1001');
+  check('an in-progress seat refuses to reseat', !started.ok && /not unstarted/.test(started.errors.join(' ')), JSON.stringify(started));
+  const ghost = runReseat(ROOT, 'AS-0000');
+  check('reseat refuses an unknown ticket', !ghost.ok);
+  // The whole point: after reseating, wake reports a usable base rather than
+  // telling the seat to stop before it starts.
+  const w = runWake(ROOT, 'it-support', 'AS-HD-057');
+  check('a reseated seat wakes with a current base, not STALE', !!w.text && /FRESHNESS  : current/.test(w.text), (w.text || '').split('\n').find((l) => l.startsWith('FRESHNESS')));
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);
