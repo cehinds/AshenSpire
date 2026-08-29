@@ -203,7 +203,7 @@
     "authority_tier": 2,
     "one_lead_per_team": true,
     "spins_out": "agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant",
-    "identity_rule": "A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns \u2014 and a waiver approved by the wrong team's lead would satisfy a role-only check. Each lead therefore carries its own actor_id and the one team it leads, and a self-certification names that actor.",
+    "identity_rule": "A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns. Each lead therefore carries its own actor_id and the one team it leads, and any record naming a lead names that actor rather than the shared role.",
     "leads": [
       {
         "actor_id": "lead-art-tech-art",

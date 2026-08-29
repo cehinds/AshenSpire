@@ -328,7 +328,7 @@
     },
     {
       "role": "team-lead",
-      "mission": "Hold one team persistently: spin out its agent seats, approve their self-certification inside the standing grant from the IT Manager III, and answer for the team's work.",
+      "mission": "Hold one team persistently: spin out and staff its agent seats, keep its roster and capacity current, and answer for the team's work.",
       "may": [
         "spin-out-agent-seat"
       ],

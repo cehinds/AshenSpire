@@ -27,9 +27,27 @@ enumerated in §2. Option B — "four approved first-party full-body inputs, exa
 provenance/ownership, class-by-class new-detail approval, UI crop/state evidence, and a
 manifest/reader steward" — is **not** the selected path and is closed unless the owner reopens it.
 
-## 2. The frozen packet — 12 files, verified at this HEAD
+## 2. The frozen packet — 12 files
 
-Every SHA-256 below was recomputed at `d7c6e440` and matches the identity carried in
+> **Retrieval note, added by it-manager-iii at PR #423.** The commit this section
+> originally named (`d7c6e440`) is not reachable in this repository, and none of
+> the twelve paths below exists in the current tree: the Hub rebuild (`3e98769e`)
+> removed `review-approval-hub/evidence/` when the Hub became generated output.
+> The blobs themselves survive and are reachable at **`62f6867a`** ("Publish
+> review approval hub"), so the packet can still be verified:
+>
+> ```
+> git cat-file blob 62f6867a:<path from the table below>
+> ```
+>
+> Nothing in the table has been altered — the paths, byte counts and SHA-256
+> values are this seat's evidence and remain as authored. Only the commit to read
+> them from is corrected, so the next actor does not have to search history to
+> reproduce the claim. Relocating the files under a path the current tree keeps
+> belongs to the authoring seat (AS-HD-040), not to this correction.
+
+
+Every SHA-256 below was recomputed by the authoring seat and matches the identity carried in
 `docs/art-evidence/2026-08-28/class-facelift-fullbody-source-provenance-preflight-2026-08-28.md`
 where that census names the file. Concept-crop hashes: 4/4 MATCH.
 

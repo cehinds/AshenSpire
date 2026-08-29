@@ -208,7 +208,7 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 
 ### `team-lead`
 
-- **Mission:** Hold one team persistently: spin out its agent seats, approve their self-certification inside the standing grant from the IT Manager III, and answer for the team's work.
+- **Mission:** Hold one team persistently: spin out and staff its agent seats, keep its roster and capacity current, and answer for the team's work.
 - **May:** spin-out-agent-seat
 - **Must:** name itself on every seat it spins out; keep its team's roster and capacity current
 - **Must not:** approve-its-own-implementation, waive-independent-qa, push-pr-merge-deploy-or-release, amend-its-own-grant
@@ -335,7 +335,7 @@ Every team has one persistent lead. The lead is standing; the pod it forms for a
 
 Role `team-lead` at **P2**, one per team. Spins out agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant. Holds no waiver over independent QA (decision 0010).
 
-A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns — and a waiver approved by the wrong team's lead would satisfy a role-only check. Each lead therefore carries its own actor_id and the one team it leads, and a self-certification names that actor.
+A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns. Each lead therefore carries its own actor_id and the one team it leads, and any record naming a lead names that actor rather than the shared role.
 
 | Team | Lead actor | Seat |
 |---|---|---|
