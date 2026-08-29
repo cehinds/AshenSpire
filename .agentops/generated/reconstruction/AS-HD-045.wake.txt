@@ -9,6 +9,7 @@ REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-045
 BASE       : f4a30c2d929a8429acd46fa02ca8a4798b6d2915 tree recovered-from-hub-snapshot dirty=clean
 NEXT ACTION: Await the exact field-by-field read timing from Application, then re-read and record the boundary; withhold production adoption until one coherent render epoch is proven.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : —
 SOURCE     : f4a30c2d929a8429acd46fa02ca8a4798b6d2915
 FRESHNESS  : as-recorded (base f4a30c2d929a); verify live HEAD out-of-band

@@ -9,6 +9,7 @@ REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-050
 BASE       : 4a515339189c6f3ec003eef74e86dc38526f93fe tree recovered-from-hub-snapshot dirty=clean
 NEXT ACTION: Await the owner authorization for one append-only successor; on mismatch route only the residual to Help Desk.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : —
 SOURCE     : 4a515339189c6f3ec003eef74e86dc38526f93fe
 FRESHNESS  : as-recorded (base 4a515339189c); verify live HEAD out-of-band

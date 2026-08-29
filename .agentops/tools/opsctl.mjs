@@ -889,6 +889,8 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null 
   L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
   L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
+  const rep = contracts['information-access'].reporting;
+  L.push(`REPORTING  : ${rep.style} Must: ${rep.must.join('; ')}. Never: ${rep.must_not.join('; ')}.`);
   L.push(`EVIDENCE   : ${cap.evidence_pointers.slice(0, 8).join(', ') || '—'}`);
   L.push(`SOURCE     : ${cap.base_oid}`);
   L.push(`FRESHNESS  : ${freshness}`);
