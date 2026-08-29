@@ -871,6 +871,25 @@ export function renderGovernance(c) {
   L.push('| Ref | Owner role | Mutation |');
   L.push('|---|---|---|');
   for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  L.push('');
+  L.push('### Paths');
+  L.push('');
+  L.push('| Path glob | Owner role | Serialized lane |');
+  L.push('|---|---|---|');
+  for (const p of c['git-ownership'].paths) L.push(`| \`${p.glob}\` | ${p.owner_role} | ${p.serialized_lane} |`);
+  if (c['git-ownership'].branch_hygiene) {
+    const bh = c['git-ownership'].branch_hygiene;
+    L.push('');
+    L.push('### Branch hygiene');
+    L.push('');
+    L.push(bh.principle);
+    L.push('');
+    L.push(`Default: \`${bh.default_update_method}\`. Rewriting a branch that is not the acting role's own needs \`${bh.permission_role}\`; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
+  }
+  L.push('');
+  L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
+  L.push('');
+
   if (c['promotion-gates']) {
     const pg = c['promotion-gates'];
     L.push('');
@@ -912,33 +931,7 @@ export function renderGovernance(c) {
     L.push(`${c.teams.charter_exception.principle} Concurrence: ${c.teams.charter_exception.requires_concurrence.map((r) => '`' + r + '`').join(' + ')}; escalates as \`${c.teams.charter_exception.escalation_class}\`.`);
   }
   L.push('');
-  L.push('### Paths');
-  L.push('');
-  L.push('| Path glob | Owner role | Serialized lane |');
-  L.push('|---|---|---|');
-  for (const p of c['git-ownership'].paths) L.push(`| \`${p.glob}\` | ${p.owner_role} | ${p.serialized_lane} |`);
-  if (c['git-ownership'].branch_hygiene) {
-    const bh = c['git-ownership'].branch_hygiene;
-    L.push('');
-    L.push('### Branch hygiene');
-    L.push('');
-    L.push(bh.principle);
-    L.push('');
-    L.push(`Default: \`${bh.default_update_method}\`. Rewriting a branch that is not the acting role's own needs \`${bh.permission_role}\`; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
-  }
-  if (c['information-access'] && c['information-access'].canonical_documents) {
-    L.push('');
-    L.push('### Canonical documents');
-    L.push('');
-    L.push('| Topic | Canonical path | Superseded | Decision |');
-    L.push('|---|---|---|---|');
-    for (const d of c['information-access'].canonical_documents) {
-      L.push(`| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((x) => '`' + x + '`').join(', ') || '—'} | \`${d.decision}\` |`);
-    }
-  }
-  L.push('');
-  L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
-  L.push('');
+
 
   // ---- Stage 2 sections ----
   if (c.raci) {
@@ -1023,6 +1016,16 @@ export function renderGovernance(c) {
     L.push(`- **Restricted:** ${ia.restricted.join('; ')}`);
     L.push(`- **Forbidden (never loaded):** ${ia.forbidden.join('; ')}`);
     L.push('');
+    if (ia.canonical_documents) {
+      L.push('');
+      L.push('### Canonical documents');
+      L.push('');
+      L.push('| Topic | Canonical path | Superseded | Decision |');
+      L.push('|---|---|---|---|');
+      for (const d of c['information-access'].canonical_documents) {
+        L.push(`| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((x) => '`' + x + '`').join(', ') || '—'} | \`${d.decision}\` |`);
+      }
+    }
   }
 
   if (c.qa) {
@@ -2390,16 +2393,82 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // only proves the committed view matches what `render` emits — it cannot notice
 // that render emits nothing for a whole contract. Five contracts were in exactly
 // that state (delivery, model-effort, owner-command, transitions, migration),
-// three of them since well before the tiers work. A contract's `principle` is
-// its one-sentence statement of intent, so requiring it to appear verbatim makes
-// the projection provably total.
+// three of them since well before the tiers work.
+//
+// A first cut probed each contract's `principle` and skipped the six that state
+// none. Codex was right that this proved nothing for those six: `renderGovernance`
+// could drop the Roles or Authority matrix block entirely and `verify` would still
+// pass. So every contract now names a probe, and every probe is drawn from the
+// contract's OWN data rather than from a heading — a heading is prose this file
+// could rename, while an actor id or a grant action cannot be renamed without
+// changing the contract it came from.
+//
+// A probe value must also be UNIQUE to its block. `roles` first probed role ids,
+// and dropping the whole Roles section did not fail: `owner`, `maker` and the
+// rest still appeared in the hierarchy and authority tables. Probes therefore
+// name text only their own section renders (a role's mission, a node's owned
+// escalation classes), and probeStrengthErrors below proves each one still fails
+// when its block is removed.
+const VIEW_PROBES = {
+  authority: (x) => x.grants.map((g) => g.action),
+  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => e.id)],
+  delivery: (x) => [x.principle],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => cl.id)],
+  evidence: (x) => [x.principle],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => r.ref)],
+  hierarchy: (x) => x.nodes.map((n) => n.owns_escalations.join(', ')),
+  'information-access': (x) => [x.principle],
+  migration: (x) => [x.principle],
+  'model-effort': (x) => [x.principle],
+  'owner-command': (x) => [x.principle],
+  'owner-intent': (x) => [x.mission, x.measurable_end_state, x.owner.actor_id, x.deputy.actor_id],
+  project: (x) => [x.project_name, x.installed_stage],
+  'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
+  qa: (x) => [x.principle],
+  raci: (x) => [x.principle],
+  roles: (x) => x.roles.map((r) => r.mission),
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability)],
+  transitions: (x) => [x.principle, ...x.states],
+};
+
+// A probe value shared by two contracts lets one mask the other: the masked
+// contract's block can vanish while its values still appear, rendered by the
+// other. That is exactly how `roles` first slipped through. Probe sets must
+// therefore be disjoint, and this is checked alongside coverage rather than
+// left to a reviewer to notice.
+export function probeStrengthErrors(contracts) {
+  const errors = [];
+  const seen = new Map();
+  for (const name of Object.keys(contracts).sort()) {
+    const probe = VIEW_PROBES[name];
+    if (!probe) continue;                       // viewCoverageErrors reports this
+    let needles = [];
+    try { needles = probe(contracts[name]).filter((n) => typeof n === 'string' && n.length); } catch { continue; }
+    for (const n of needles) {
+      if (seen.has(n) && seen.get(n) !== name) {
+        errors.push(`view probe ${JSON.stringify(n.slice(0, 60))} is claimed by both '${seen.get(n)}' and '${name}'; a shared probe lets one contract mask the other`);
+      } else seen.set(n, name);
+    }
+  }
+  return errors;
+}
+
 export function viewCoverageErrors(contracts, viewText) {
   const errors = [];
   for (const name of Object.keys(contracts).sort()) {
-    const principle = contracts[name] && contracts[name].principle;
-    if (!principle) continue;                       // not every contract states one
-    if (!viewText.includes(principle)) {
-      errors.push(`generated view omits the '${name}' contract entirely; its principle appears nowhere`);
+    const probe = VIEW_PROBES[name];
+    // No opt-out. A new contract with no probe is the same silent gap this check
+    // exists to close, so its absence is itself the failure.
+    if (!probe) { errors.push(`contract '${name}' declares no view probe; add one to VIEW_PROBES so its projection is provable`); continue; }
+    let needles;
+    try { needles = probe(contracts[name]).filter((n) => typeof n === 'string' && n.length); }
+    catch (e) { errors.push(`view probe for '${name}' could not read the contract: ${e && e.message || e}`); continue; }
+    if (!needles.length) { errors.push(`view probe for '${name}' yielded nothing to look for`); continue; }
+    const missing = needles.filter((n) => !viewText.includes(n));
+    if (missing.length === needles.length) {
+      errors.push(`generated view omits the '${name}' contract entirely; none of its ${needles.length} probe value(s) appear`);
+    } else if (missing.length) {
+      errors.push(`generated view drops ${missing.length} of ${needles.length} '${name}' probe value(s), first: ${JSON.stringify(missing[0].slice(0, 80))}`);
     }
   }
   return errors;
@@ -2484,7 +2553,7 @@ function runRender(root, check) {
   const arts = generatedArtifacts(contracts, rt);
   const gov = arts.find((a) => a.rel === GENERATED_VIEW);
   if (gov) {
-    const missed = viewCoverageErrors(contracts, gov.text);
+    const missed = [...probeStrengthErrors(contracts), ...viewCoverageErrors(contracts, gov.text)];
     if (missed.length) return { errors: missed, drift: false };
   }
   const drifted = [];
@@ -2826,16 +2895,58 @@ export function runSelftest(root = ROOT) {
   // Stage 10 — the human view's completeness. `verify` proves only that the
   // committed view matches what `render` emits; it cannot notice that `render`
   // emits nothing at all for a whole contract, and five were in exactly that
-  // state. Enters through the same pure function the live render uses, with one
-  // contract's projection deleted from the rendered text.
+  // state. Every contract must therefore reach the view, including the six that
+  // state no `principle` — an earlier cut exempted those, which Codex correctly
+  // called out as proving nothing for them. Each block is deleted in turn.
   {
     const govText = renderGovernance(contracts);
-    const live = viewCoverageErrors(contracts, govText);
-    results.push({ label: 'generated governance view projects every contract', pass: live.length === 0, errs: live });
-    const dropped = govText.split('\n').filter((l) => !l.includes(contracts.migration.principle)).join('\n');
-    const caught2 = viewCoverageErrors(contracts, dropped);
-    const hit2 = caught2.some((e) => e.includes("'migration'"));
-    results.push({ label: 'coverage check catches an unprojected contract', pass: hit2, errs: hit2 ? [] : caught2 });
+    results.push({ label: 'generated governance view projects every contract', pass: viewCoverageErrors(contracts, govText).length === 0, errs: viewCoverageErrors(contracts, govText) });
+    results.push({ label: 'no two contracts share a view probe', pass: probeStrengthErrors(contracts).length === 0, errs: probeStrengthErrors(contracts) });
+
+    // Cut each contract's section out of the rendered view and assert the gate
+    // names that contract. Headings are prose the renderer owns, which is fine
+    // here: the plant is asserting the checker's behaviour, not the prose.
+    const lines = govText.split('\n');
+    const cut = (start, end) => {
+      const a = lines.indexOf(start);
+      const b = lines.findIndex((l, i) => i > a && l === end);
+      if (a < 0 || b < 0) return null;
+      return lines.slice(0, a).concat(lines.slice(b)).join('\n');
+    };
+    const SECTIONS = [
+      ['owner-intent', '## Owner intent', '## Hierarchy and escalation'],
+      ['hierarchy', '## Hierarchy and escalation', '## Roles'],
+      ['roles', '## Roles', '## Authority matrix'],
+      ['authority', '## Authority matrix', '## Git ownership (one writer per overlapping path or ref)'],
+      ['promotion-gates', '## Promotion gates', '## Teams'],
+      ['teams', '## Teams', '## RACI (exactly one Accountable per item)'],
+      ['raci', '## RACI (exactly one Accountable per item)', '## Delegation envelopes (non-amplifying)'],
+      ['delegation', '## Delegation envelopes (non-amplifying)', '## Escalation (time requests a decision, never authority)'],
+      ['escalation', '## Escalation (time requests a decision, never authority)', '## Lifecycle transitions and permitted actors'],
+      ['transitions', '## Lifecycle transitions and permitted actors', '## Information access and context loading'],
+      ['information-access', '## Information access and context loading', '## QA independence and risk-selected gates'],
+      ['qa', '## QA independence and risk-selected gates', '## Authority tiers'],
+      ['delivery', '## Delivery and the Pages source', '## Model and effort selection'],
+      ['model-effort', '## Model and effort selection', '## Owner commands'],
+      ['owner-command', '## Owner commands', '## Legacy migration'],
+      ['migration', '## Legacy migration', '## Evidence responsibility'],
+    ];
+    for (const [name, start, end] of SECTIONS) {
+      const blinded = cut(start, end);
+      if (blinded === null) { results.push({ label: `coverage plant can locate the '${name}' section`, pass: false, errs: [`heading ${JSON.stringify(start)} or ${JSON.stringify(end)} not found in the rendered view`] }); continue; }
+      const errs = viewCoverageErrors(contracts, blinded);
+      const hit = errs.some((e) => e.includes(`'${name}'`));
+      results.push({ label: `coverage check catches an unprojected '${name}' contract`, pass: hit, errs: hit ? [] : errs });
+    }
+
+    // ...and a contract added with no probe at all must fail rather than skip.
+    const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };
+    const ghost = viewCoverageErrors(withGhost, govText);
+    results.push({ label: 'a contract with no declared view probe is a failure, not a skip', pass: ghost.some((e) => e.includes('declares no view probe')), errs: ghost });
+
+    // ...and a probe shared between two contracts must be reported.
+    const shared = probeStrengthErrors({ ...contracts, project: { ...contracts.project, project_name: contracts.roles.roles[0].mission } });
+    results.push({ label: 'probe-strength check catches a shared probe value', pass: shared.some((e) => e.includes('lets one contract mask the other')), errs: shared });
   }
 
   const failed = results.filter((r) => !r.pass);

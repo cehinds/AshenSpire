@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -101,18 +101,21 @@ function check(name, cond, detail = '') {
 
     // Drift only proves the committed file matches what render emits. It says
     // nothing about a contract render emits nothing for — which is how five
-    // contracts stayed out of the human view while `verify` reported OK. A
-    // contract's `principle` is its one-sentence statement of intent, so its
-    // presence is the minimum bar for "this policy is readable by a person".
+    // contracts stayed out of the human view while `verify` reported OK.
     const missed = viewCoverageErrors(contracts, expected);
-    check('every contract with a principle reaches the generated view', missed.length === 0, missed.join(' | '));
-    // A floor on the count would let a new contract opt out of the check by
-    // simply not declaring a principle. Pinning the exemption list instead makes
-    // that a suite failure, so the choice is made deliberately and once.
-    const silent = Object.keys(contracts).filter((k) => !contracts[k].principle).sort();
-    const allowed = ['authority', 'delegation', 'hierarchy', 'owner-intent', 'project', 'roles'];
-    check('no new contract escapes view coverage by omitting its principle',
-      silent.join(',') === allowed.join(','), `exempt now: ${silent.join(',')}`);
+    check('every contract reaches the generated view', missed.length === 0, missed.join(' | '));
+
+    // Coverage is only as good as the probes. Two contracts sharing a probe
+    // value means one can mask the other; that is how `roles` first passed
+    // while its whole section was deleted.
+    const weak = probeStrengthErrors(contracts);
+    check('no two contracts share a view probe', weak.length === 0, weak.join(' | '));
+
+    // No contract may opt out. An unprobed contract is the same silent gap.
+    const unprobed = viewCoverageErrors({ ...contracts, 'ghost-contract': { principle: 'x' } }, expected);
+    check('an unprobed contract fails rather than skipping',
+      unprobed.some((e) => e.includes('declares no view probe')), unprobed.join(' | '));
+
     // ...and the check itself must be able to fail, or it proves nothing.
     const blinded = expected.split('\n').filter((l) => !l.includes(contracts.migration.principle)).join('\n');
     check('coverage check fails when a contract is unprojected',

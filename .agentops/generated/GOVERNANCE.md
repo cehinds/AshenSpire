@@ -165,6 +165,41 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `claude/*` | maker | isolated-continuation |
 | `recovery/*` | per-seat | isolated-continuation |
 
+### Paths
+
+| Path glob | Owner role | Serialized lane |
+|---|---|---|
+| `.agentops/governance/**` | it-manager-iii | governance |
+| `.agentops/schemas/**` | it-manager-iii | governance |
+| `.agentops/tools/**` | maker | agentops-tooling |
+| `.agentops/generated/**` | generator | governance |
+| `.agentops/work/**` | maker | per-ticket |
+| `.agentops/events/**` | maker | per-ticket |
+| `.agentops/leases/**` | it-manager-iii | governance |
+| `docs/reconstruction/**` | it-manager-iii | reconstruction |
+| `src/**` | maker | product-source |
+| `assets/**` | maker | product-assets |
+| `content/**` | data-architecture-lead | product-content |
+| `tests/**` | qa-independent | qa-fixtures |
+| `docs/art/**` | maker | product-docs |
+| `docs/hub/**` | maker | product-docs |
+| `docs/governance/**` | project-management-lead | governance-docs |
+| `game-design/docs/**` | help-desk | intake-docs |
+| `tools/**` | it-support | support-tooling |
+| `hud/**` | generator | generated-artifact |
+| `review-approval-hub/**` | generator | generated-artifact |
+| `buildordinal.json` | maker | generated-artifact |
+| `*.html` | maker | generated-artifact |
+
+### Branch hygiene
+
+A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard — so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.
+
+Default: `rebase`. Rewriting a branch that is not the acting role's own needs `it-manager-iii`; absent that, merge the base branch in, which leaves every existing checkout valid. Records: the branch, the prior head, the new head, the role that authorized the rewrite, why the rebase was preferred to a merge. Never: rewriting a protected or pr-only ref; discarding a commit that carries evidence without recording where that evidence now lives.
+
+Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
+
+
 ## Promotion gates
 
 Promotion is a sequence of separately evidenced gates against one frozen head, not a single approval. Authority for one gate implies authority for none of the others, and any change to the candidate returns it to the first gate. A gate is passed by recorded evidence at an exact SHA, never by the fact that a job ran.
@@ -212,47 +247,6 @@ Not standing teams: they own no backlog, no decision stream and no source path, 
 ### Charter exception
 
 The charter decides by default. Where it genuinely cannot resolve a case, the two coordinating roles may jointly carry it to the Owner — but only after exhausting what the charter already lets them settle between them. Concurrence is required so no single role can manufacture an owner decision to escape its own boundary. Concurrence: `it-manager-iii` + `project-management-lead`; escalates as `owner-exclusive-now`.
-
-### Paths
-
-| Path glob | Owner role | Serialized lane |
-|---|---|---|
-| `.agentops/governance/**` | it-manager-iii | governance |
-| `.agentops/schemas/**` | it-manager-iii | governance |
-| `.agentops/tools/**` | maker | agentops-tooling |
-| `.agentops/generated/**` | generator | governance |
-| `.agentops/work/**` | maker | per-ticket |
-| `.agentops/events/**` | maker | per-ticket |
-| `.agentops/leases/**` | it-manager-iii | governance |
-| `docs/reconstruction/**` | it-manager-iii | reconstruction |
-| `src/**` | maker | product-source |
-| `assets/**` | maker | product-assets |
-| `content/**` | data-architecture-lead | product-content |
-| `tests/**` | qa-independent | qa-fixtures |
-| `docs/art/**` | maker | product-docs |
-| `docs/hub/**` | maker | product-docs |
-| `docs/governance/**` | project-management-lead | governance-docs |
-| `game-design/docs/**` | help-desk | intake-docs |
-| `tools/**` | it-support | support-tooling |
-| `hud/**` | generator | generated-artifact |
-| `review-approval-hub/**` | generator | generated-artifact |
-| `buildordinal.json` | maker | generated-artifact |
-| `*.html` | maker | generated-artifact |
-
-### Branch hygiene
-
-A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard — so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.
-
-Default: `rebase`. Rewriting a branch that is not the acting role's own needs `it-manager-iii`; absent that, merge the base branch in, which leaves every existing checkout valid. Records: the branch, the prior head, the new head, the role that authorized the rewrite, why the rebase was preferred to a merge. Never: rewriting a protected or pr-only ref; discarding a commit that carries evidence without recording where that evidence now lives.
-
-### Canonical documents
-
-| Topic | Canonical path | Superseded | Decision |
-|---|---|---|---|
-| art policy | `docs/governance/RUNBOOKS/art.md` | `docs/ART-DESIGN-INTEGRATION-POLICY.md` | `docs/governance/DECISIONS/0004-art-policy-adoption.md` |
-| team charters | `docs/governance/TEAM-CHARTERS.md` | — | `docs/governance/DECISIONS/0007-standing-coordination-roles-and-completion-council.md` |
-
-Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 
 ## RACI (exactly one Accountable per item)
 
@@ -340,6 +334,13 @@ Minimal sufficient context. A cold-start agent loads only what the current actio
 - **Restricted:** credential, token, or secret material; owner private decision context; another writer's in-flight uncommitted workspace
 - **Forbidden (never loaded):** full-git-history; full-backlog-or-portfolio; all-chat-transcripts; raw-tool-logs; whole-diffs-or-screenshot-sets; unrelated-source-trees; the-reconstruction-installer-bundle-at-startup
 
+
+### Canonical documents
+
+| Topic | Canonical path | Superseded | Decision |
+|---|---|---|---|
+| art policy | `docs/governance/RUNBOOKS/art.md` | `docs/ART-DESIGN-INTEGRATION-POLICY.md` | `docs/governance/DECISIONS/0004-art-policy-adoption.md` |
+| team charters | `docs/governance/TEAM-CHARTERS.md` | — | `docs/governance/DECISIONS/0007-standing-coordination-roles-and-completion-council.md` |
 ## QA independence and risk-selected gates
 
 QA is risk-selected and independent. The verifier of an exact object is never its maker. Only applicable checks run; independent checks run in parallel unless data dependencies require order; every verdict binds to the exact object and a changed identity invalidates only dependent evidence. A waiver is a recorded owner/deputy decision, never a maker's.
