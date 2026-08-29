@@ -1626,12 +1626,25 @@ export function runtimeChecks(g, rt) {
         if (!ran.has(suite)) errors.push(`capsule ${t}: self-certification for '${cert.risk_class}' work does not record the required '${suite}' suite; a waiver of independence does not waive the suites`);
       }
     }
-    if (rt.capsules[t].team && cert.team !== rt.capsules[t].team) {
-      errors.push(`capsule ${t}: self-certification names team '${cert.team}' but the capsule's team is '${rt.capsules[t].team}'`);
+    // `team` is optional on a capsule, and skipping the comparison when it was
+    // absent meant a teamless capsule could carry a waiver naming any team at
+    // all — the one comparison tying the waiver to the work simply did not run.
+    // A waiver requires a team, so its absence is the error.
+    const alias = new Map((g.teams && g.teams.legacy_aliases || []).map((a) => [a.legacy, a.routes_to]));
+    const canon = (x) => (x == null ? x : (alias.get(x) || x));
+    const capsuleTeam = rt.capsules[t].team;
+    if (!capsuleTeam) {
+      errors.push(`capsule ${t}: records a self-certification but declares no team; a waiver cannot be scoped to a team the capsule does not name`);
+    } else if (canon(cert.team) !== canon(capsuleTeam)) {
+      // Compared canonically: a capsule on the legacy alias 'art' and a waiver
+      // on 'art-tech-art' are the same team, and comparing them raw made every
+      // waiver on an aliased capsule impossible — rejected whichever spelling
+      // it used.
+      errors.push(`capsule ${t}: self-certification names team '${cert.team}' but the capsule's team is '${capsuleTeam}'`);
     }
     const lead = (leadRoster || []).find((l) => l.actor_id === cert.approving_lead);
     if (!lead) errors.push(`capsule ${t}: self-certification approved by '${cert.approving_lead}', which is not a declared team lead`);
-    else if (lead.team !== cert.team) errors.push(`capsule ${t}: self-certification approved by '${cert.approving_lead}', who leads '${lead.team}', not the certifying seat's team '${cert.team}'`);
+    else if (canon(lead.team) !== canon(cert.team)) errors.push(`capsule ${t}: self-certification approved by '${cert.approving_lead}', who leads '${lead.team}', not the certifying seat's team '${cert.team}'`);
     if (cert.exact_head !== rt.capsules[t].base_oid) {
       errors.push(`capsule ${t}: self-certification is authored at ${cert.exact_head.slice(0, 12)} but the capsule stands on ${String(rt.capsules[t].base_oid).slice(0, 12)}; a changed candidate voids the waiver`);
     }
@@ -3278,6 +3291,18 @@ export function runSelftest(root = ROOT) {
     expectRuntime('a waiver citing some other envelope', withCert({ envelope: 'itm-to-qa-review' }), 'not the standing grant');
     expectRuntime('a waiver recorded as an independent verdict kind', withCert({ verdict_kind: 'independent-pass' }), 'is not the declared');
     expectRuntime('a waiver naming a team the capsule does not belong to', withCert({ team: 'qa-guild', approving_lead: 'lead-qa-guild' }), "but the capsule's team is");
+    // `team` is optional on a capsule, so skipping the comparison when it was
+    // absent let a teamless capsule carry a waiver naming any team at all.
+    expectRuntime('a waiver on a capsule that names no team', (rt) => { withCert({})(rt); delete rt.capsules['AS-HD-050'].team; }, 'declares no team');
+    // ...and comparing raw made a waiver on an aliased capsule impossible in
+    // either spelling, which is a deadlock rather than a bypass.
+    {
+      const okAlias = baseRt();
+      withCert({ team: 'art-tech-art', approving_lead: 'lead-art-tech-art' })(okAlias);
+      okAlias.capsules['AS-HD-050'].team = 'art';
+      const errs = runtimeChecks(contracts, okAlias).filter((e) => e.includes('self-certification'));
+      results.push({ label: 'a waiver on a legacy-aliased team resolves instead of deadlocking', pass: errs.length === 0, errs });
+    }
   }
 
   expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.leads = c.teams.team_leads.leads.filter((l) => l.team !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
