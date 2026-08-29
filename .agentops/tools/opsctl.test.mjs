@@ -10,7 +10,7 @@
 // drift from its JSON sources.
 
 import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
-import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -737,6 +737,32 @@ function check(name, cond, detail = '') {
   for (const out of ['hud/**', 'review-approval-hub/**', 'buildordinal.json', '*.html']) {
     check(`generated output '${out}' has a declared writer`, decls.some((d) => d.glob === out),
       decls.map((d) => d.glob).join(', '));
+  }
+}
+
+// 2t. Recovered Hub evidence. The Review & Approval Hub was committed build
+// output with no source, and issue #392 recorded its rendered snapshot as the
+// only surviving source for the team census — while noting it could not be
+// located. It was in PR #378's branch. The prose is extracted here before that
+// build output is retired, so retiring it loses nothing.
+{
+  const dir = resolve(ROOT, '../docs/reconstruction/hub-snapshot');
+  if (existsSync(dir)) {
+    const pages = readdirSync(dir).filter((f) => f.endsWith('.md'));
+    check('recovered hub snapshot is present', pages.length >= 10, String(pages.length));
+    const census = resolve(dir, 'reviews__as-hd-20260826-043-current-team-census.md');
+    check('the team census #392 could not locate is preserved', existsSync(census));
+    if (existsSync(census)) {
+      const t = readFileSync(census, 'utf8');
+      // Guards against the file surviving as an empty stub.
+      check('the census carries its roster figures', /13 functional teams/.test(t) && /20 canonical homes/.test(t), String(t.length));
+      check('the census records where it came from', /PR #378|AS-HD-20260826-053-event0002/.test(t));
+    }
+    const rotation = resolve(dir, 'reviews__as-hd-20260826-053-context-rotation.md');
+    check('the 52-seat rotation readback is preserved', existsSync(rotation));
+    if (existsSync(rotation)) {
+      check('the rotation readback carries its seat denominator', /52 seats|of 52 seats/.test(readFileSync(rotation, 'utf8')));
+    }
   }
 }
 

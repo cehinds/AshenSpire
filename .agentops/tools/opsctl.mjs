@@ -275,6 +275,27 @@ export function loadContracts(root = ROOT) {
 export function semanticChecks(c) {
   const errors = [];
 
+  // --- branch hygiene -----------------------------------------------------
+  // Rebase is the standard way to bring a branch forward, but it rewrites
+  // history someone else may already hold. The permission that makes that
+  // acceptable has to name a real standing role, and no rewrite may touch a
+  // ref whose mutation policy forbids it.
+  if (c['git-ownership'] && c['git-ownership'].branch_hygiene) {
+    const bh = c['git-ownership'].branch_hygiene;
+    if (c.roles && !c.roles.roles.some((r) => r.role === bh.permission_role)) {
+      errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a declared role`);
+    }
+    if (c.teams && !c.teams.standing_roles.some((r) => r.id === bh.permission_role)) {
+      errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a standing role; a rewrite permission cannot rest with a pool or an absent role`);
+    }
+    if (!bh.never.some((n) => /protected|pr-only/i.test(n))) {
+      errors.push('git-ownership: branch_hygiene does not forbid rewriting a protected or pr-only ref');
+    }
+    if (!bh.records.some((r) => /prior head/i.test(r))) {
+      errors.push('git-ownership: branch_hygiene records no prior head; a rewrite with no recorded predecessor cannot be undone');
+    }
+  }
+
   // --- canonical documents ------------------------------------------------
   // Decision 0004 moved the art policy to one live path and said plainly:
   // never recreate two live copies. A duplicate policy is worse than none,
@@ -2528,6 +2549,10 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('branch hygiene: rewrite permission held by a pool', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'qa-guild'; }, 'is not a declared role');
+  expectSemantic('branch hygiene: rewrite permission held by a non-standing role', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'maker'; }, 'is not a standing role');
+  expectSemantic('branch hygiene: no prior head recorded', (c) => { c['git-ownership'].branch_hygiene.records = ['the branch']; }, 'cannot be undone');
+  expectSemantic('branch hygiene: protected refs left rewritable', (c) => { c['git-ownership'].branch_hygiene.never = ['nothing in particular']; }, 'does not forbid rewriting a protected or pr-only ref');
   expectSemantic('canonical docs: a canonical path that does not exist', (c) => { c['information-access'].canonical_documents[0].path = 'docs/governance/RUNBOOKS/ghost.md'; }, 'which does not exist');
   expectSemantic('canonical docs: a superseded copy still live', (c) => { c['information-access'].canonical_documents[0].superseded_paths = ['docs/governance/TEAM-CHARTERS.md']; }, 'both look authoritative');
   expectSemantic('delivery: promotion readiness claiming a grant', (c) => { c.delivery.promotion_readiness.grants = ['release']; }, 'grants no promotion authority');
