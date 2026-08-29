@@ -1735,10 +1735,14 @@ function mirrorTargets(root, arts) {
   const out = [];
   for (const m of MIRRORS) {
     const destRoot = resolve(root, m.to);
-    // Absent in an .agentops-only checkout (the drill's clean room): nothing to
-    // mirror there, and inventing the tree would make the clone diverge from
-    // what a real checkout holds.
-    if (!existsSync(dirname(destRoot.replace(/\/$/, '')))) continue;
+    // The published tree itself must already exist. Testing its PARENT instead
+    // was wrong for a directory mirror: the parent is the repository root,
+    // which exists in the drill's .agentops-only clean room too, so verify
+    // there demanded a review-approval-hub/ that a clean room never has. Both
+    // published trees are committed, so a real checkout always has them; a
+    // clean room has neither and mirrors nothing.
+    const publishedTree = m.from.endsWith('/') ? destRoot : dirname(destRoot);
+    if (!existsSync(publishedTree)) continue;
     if (m.from.endsWith('/')) {
       for (const a of arts.filter((x) => x.rel.startsWith(m.from))) {
         out.push({ rel: a.rel, target: resolve(destRoot, a.rel.slice(m.from.length)), text: a.text });
