@@ -163,5 +163,24 @@
     "lane": "governance",
     "rule": "A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift."
   },
-  "collision_rule": "Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues."
+  "collision_rule": "Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.",
+  "branch_hygiene": {
+    "principle": "A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard \u2014 so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.",
+    "default_update_method": "rebase",
+    "alternative_when_permission_is_absent": "merge the base branch in, which leaves every existing checkout valid",
+    "rewrite_requires_permission_when": "the branch is not the acting role's own",
+    "permission_role": "it-manager-iii",
+    "force_push_follows_the_same_rule": true,
+    "records": [
+      "the branch",
+      "the prior head",
+      "the new head",
+      "the role that authorized the rewrite",
+      "why the rebase was preferred to a merge"
+    ],
+    "never": [
+      "rewriting a protected or pr-only ref",
+      "discarding a commit that carries evidence without recording where that evidence now lives"
+    ]
+  }
 }

@@ -10,7 +10,7 @@
 // drift from its JSON sources.
 
 import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
-import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -737,6 +737,59 @@ function check(name, cond, detail = '') {
   for (const out of ['hud/**', 'review-approval-hub/**', 'buildordinal.json', '*.html']) {
     check(`generated output '${out}' has a declared writer`, decls.some((d) => d.glob === out),
       decls.map((d) => d.glob).join(', '));
+  }
+}
+
+// 2t. Recovered Hub evidence. The Review & Approval Hub was committed build
+// output with no source, and issue #392 recorded its rendered snapshot as the
+// only surviving source for the team census — while noting it could not be
+// located. It was in PR #378's branch. The prose is extracted here before that
+// build output is retired, so retiring it loses nothing.
+{
+  const dir = resolve(ROOT, '../docs/reconstruction/hub-snapshot');
+  if (existsSync(dir)) {
+    const pages = readdirSync(dir).filter((f) => f.endsWith('.md'));
+    check('recovered hub snapshot is present', pages.length >= 10, String(pages.length));
+    const census = resolve(dir, 'reviews__as-hd-20260826-043-current-team-census.md');
+    check('the team census #392 could not locate is preserved', existsSync(census));
+    if (existsSync(census)) {
+      const t = readFileSync(census, 'utf8');
+      // Guards against the file surviving as an empty stub.
+      check('the census carries its roster figures', /13 functional teams/.test(t) && /20 canonical homes/.test(t), String(t.length));
+      check('the census records where it came from', /PR #378|AS-HD-20260826-053-event0002/.test(t));
+    }
+    const rotation = resolve(dir, 'reviews__as-hd-20260826-053-context-rotation.md');
+    check('the 52-seat rotation readback is preserved', existsSync(rotation));
+    if (existsSync(rotation)) {
+      check('the rotation readback carries its seat denominator', /52 seats|of 52 seats/.test(readFileSync(rotation, 'utf8')));
+    }
+  }
+}
+
+// 2u. Per-team evidence recovered from the census, and the two-context P rule.
+{
+  const { contracts } = loadContracts();
+  const at = contracts.hierarchy.authority_tiers;
+  check('the authority ladder uses the owner-specified P namespace', at.namespace === 'P');
+  check('all five tiers P0-P4 are declared', at.levels.map((l) => l.p).join('') === '01234', at.levels.map((l) => l.p).join(''));
+  // A shared letter is safe only while the separating rule is explicit.
+  check('the two P contexts are separated by subject', /subject/i.test(at.disambiguation.rule));
+  check('no subject is readable as both authority and priority',
+    !at.disambiguation.authority_subjects.some((a) => at.disambiguation.priority_subjects.some((b) => b.toLowerCase() === a.toLowerCase())));
+  check('the historical ambiguous rows are called out', /census|2026-08-28/.test(at.disambiguation.known_ambiguous_artifact));
+
+  const dir = resolve(ROOT, '../docs/reconstruction/team-evidence');
+  if (existsSync(dir)) {
+    const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
+    check('per-team evidence was split out of the census', files.length >= 10, String(files.length));
+    // These are evidence, not assignments. If that framing is lost, a seat
+    // could read a 2026-08-28 status row as a live objective.
+    const sample = readFileSync(resolve(dir, files[0]), 'utf8');
+    check('team evidence states it is not a backlog or an objective', /not\*\* a current backlog|not a current backlog/.test(sample));
+    check('team evidence creates no assignment', /creates no assignment/.test(sample));
+    check('team evidence cites its capture date', /2026-08-28/.test(sample));
+    check('team evidence distinguishes its row priority from an authority tier',
+      /not an authority tier/.test(sample));
   }
 }
 
