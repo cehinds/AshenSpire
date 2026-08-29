@@ -33,6 +33,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.pil
 <tr><td><code>lease-AS-HD-053-help-desk</code></td><td>help-desk</td><td><code>AS-HD-053</code></td><td><code>recovery/as-hd-053</code></td><td>2026-10-31T23:59:59Z</td></tr>
 <tr><td><code>lease-AS-HD-054-project-management-lead</code></td><td>project-management-lead</td><td><code>AS-HD-054</code></td><td><code>recovery/as-hd-054</code></td><td>2026-10-31T23:59:59Z</td></tr>
 <tr><td><code>lease-AS-HD-055-qa-independent</code></td><td>qa-independent</td><td><code>AS-HD-055</code></td><td><code>recovery/as-hd-055</code></td><td>2026-10-31T23:59:59Z</td></tr>
+<tr><td><code>lease-AS-HD-056-maker</code></td><td>maker</td><td><code>AS-HD-056</code></td><td><code>recovery/as-hd-056</code></td><td>2026-10-31T23:59:59Z</td></tr>
 </table></div><p class="sub">One writer per overlapping path/ref; collisions are rejected by <code>opsctl verify</code>.</p></section>
 <section><h2>Traceability — ticket → actor → task → branch → commit → evidence</h2><div class="wrap"><table><tr><th>Ticket</th><th>Owner</th><th>State</th><th>Ref</th><th>Base</th><th>Evidence</th><th>Wake tokens</th></tr>
 <tr><td><code>AS-1001</code></td><td>maker</td><td>in-progress</td><td><code>claude/ashenspire-agentops-stage3-capsules</code></td><td><code>985664c2439c</code></td><td>test-run-receipt, generated-view-drift-check</td><td>612</td></tr>
@@ -43,6 +44,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.pil
 <tr><td><code>AS-HD-053</code></td><td>help-desk</td><td>assigned</td><td><code>recovery/as-hd-053</code></td><td><code>4a515339189c</code></td><td>—</td><td>667</td></tr>
 <tr><td><code>AS-HD-054</code></td><td>project-management-lead</td><td>assigned</td><td><code>recovery/as-hd-054</code></td><td><code>f4a30c2d929a</code></td><td>—</td><td>704</td></tr>
 <tr><td><code>AS-HD-055</code></td><td>qa-independent</td><td>assigned</td><td><code>recovery/as-hd-055</code></td><td><code>f4a30c2d929a</code></td><td>—</td><td>606</td></tr>
+<tr><td><code>AS-HD-056</code></td><td>maker</td><td>assigned</td><td><code>recovery/as-hd-056</code></td><td><code>f4a30c2d929a</code></td><td>—</td><td>794</td></tr>
 </table></div></section>
 <section><h2>Decide</h2>
 <div class="wrap"><table><tr><th>Ticket</th><th>State</th><th>Compare-and-swap hash</th><th>Decision</th></tr>
@@ -54,6 +56,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.pil
 <tr><td><code>AS-HD-053</code></td><td>assigned</td><td><code>sha256:23774275e1827ff5…</code></td><td><a href="https://github.com/cehinds/AshenSpire/issues/new?template=owner-decision.yml&amp;title=%5Bdecision%5D%20AS-HD-053&amp;target=AS-HD-053&amp;hash=sha256%3A23774275e1827ff57d4e678713a74f9837139ae897a757044911389b4b21b20f">File a decision →</a></td></tr>
 <tr><td><code>AS-HD-054</code></td><td>assigned</td><td><code>sha256:ed1c444605eb6ff8…</code></td><td><a href="https://github.com/cehinds/AshenSpire/issues/new?template=owner-decision.yml&amp;title=%5Bdecision%5D%20AS-HD-054&amp;target=AS-HD-054&amp;hash=sha256%3Aed1c444605eb6ff85b12d0b80dcf448a0a45d28fbd1a7bb9ea718781a2b6ae02">File a decision →</a></td></tr>
 <tr><td><code>AS-HD-055</code></td><td>assigned</td><td><code>sha256:ef05606be41cc2f7…</code></td><td><a href="https://github.com/cehinds/AshenSpire/issues/new?template=owner-decision.yml&amp;title=%5Bdecision%5D%20AS-HD-055&amp;target=AS-HD-055&amp;hash=sha256%3Aef05606be41cc2f74adce8cbd24db755700bad2db7f120625aa4e763a56622e7">File a decision →</a></td></tr>
+<tr><td><code>AS-HD-056</code></td><td>assigned</td><td><code>sha256:e29ad6136dd2fadc…</code></td><td><a href="https://github.com/cehinds/AshenSpire/issues/new?template=owner-decision.yml&amp;title=%5Bdecision%5D%20AS-HD-056&amp;target=AS-HD-056&amp;hash=sha256%3Ae29ad6136dd2fadc8147bb3c55f84135621e9d92a1c066d68d8457c86127243b">File a decision →</a></td></tr>
 </table></div>
 <p class="sub">Decisions are enumerated and compare-and-swap-checked: a command filed against a hash that has since moved is rejected as stale, never applied to unseen state. Only the owner's own issues execute. <a href="https://github.com/cehinds/AshenSpire/issues/new?template=help-desk-ticket.yml">File a Help Desk ticket →</a></p>
 </section>
