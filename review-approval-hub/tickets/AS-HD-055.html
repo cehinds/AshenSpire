@@ -15,9 +15,9 @@
 <dt>Done when</dt><dd>Every candidate presented for integration carries an independent verdict authored at its exact head, and the negative-plant corpus still fails for the right reason on each run.</dd>
 <dt>Next action</dt><dd>Author an independent verdict for PR #423 (branch claude/ashenspire-framework-continue-bhjo30) at whatever head the PR carries when this seat wakes. The candidate has now changed twice under Codex review, so Gate A has restarted twice and every receipt against an earlier head is void; the branch is frozen again from the commit carrying this instruction onward. Run verify, --selftest, opsctl.test.mjs and drill at that head. Verify specifically that deleting ANY rendered section of the governance view fails the coverage gate, not merely any contract: per-contract probes passed while seven individual sections were still deletable. The maker authored the change and cannot sign it. Then resume waiting.</dd>
 <dt>Branch</dt><dd><code>recovery/as-hd-055</code></dd>
-<dt>Base</dt><dd><code>ddb10ad1f988</code></dd>
-<dt>Revision</dt><dd>19 · seal <code>sha256:dfb4a9e04ea8df6d…</code></dd>
-<dt>Succeeds</dt><dd><code>sha256:869ac921e45151c9…</code></dd>
+<dt>Base</dt><dd><code>3fd0f758c3b9</code></dd>
+<dt>Revision</dt><dd>20 · seal <code>sha256:8c833145f32d25ba…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:dfb4a9e04ea8df6d…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
 <dt>May</dt><dd><span class="pill">author-exact-head-verdict</span> <span class="pill">maintain-red-plants-and-fixtures</span></dd>
@@ -54,6 +54,7 @@
 <li><code>AS-HD-055-0021</code> · state-change · qa-independent · 2026-08-29T22:18:42.120Z<br>Reseated from c2c2b3d87d30 to live HEAD 48678df930fe; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 17; parent_hash names sha256:2610b860de70254f1e08ce48e5b46736183609987cc8a2666f650a632a9c1340.</li>
 <li><code>AS-HD-055-0022</code> · state-change · qa-independent · 2026-08-29T22:25:14.042Z<br>Reseated from 48678df930fe to live HEAD 9c1d6af54e0f; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 18; parent_hash names sha256:3c7f7e8d9dfcef5d9894a9af27cbc8aa66f5824679ae1c2f806b866f9ec24ac9.</li>
 <li><code>AS-HD-055-0023</code> · state-change · qa-independent · 2026-08-29T22:32:47.986Z<br>Reseated from 9c1d6af54e0f to live HEAD ddb10ad1f988; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 19; parent_hash names sha256:869ac921e45151c9cb448f9312615a9743da718ceb0269be0d28a4f5a40726b4.</li>
+<li><code>AS-HD-055-0024</code> · state-change · qa-independent · 2026-08-29T22:34:11.384Z<br>Reseated from ddb10ad1f988 to live HEAD 3fd0f758c3b9; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 20; parent_hash names sha256:dfb4a9e04ea8df6d0cd92d9b9a28f0921bf0df0b83b9d4870ca1b6670b0aa107.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>

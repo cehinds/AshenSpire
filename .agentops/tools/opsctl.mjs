@@ -2575,14 +2575,26 @@ export function renderResultConsumerErrors(sourceText) {
   lines.forEach((line, i) => {
     const m = line.match(/(?:const|let)\s+(?:\{([^}]*)\}|(\w+))\s*=\s*runRender\(/);
     if (!m) return;
+    // Both failure modes, in both call shapes. Checking only `errors` here was
+    // the same omission this function exists to catch, one level up: a caller
+    // could destructure `errors` alone and silently accept stale artifacts
+    // while this reported success.
+    const MODES = [
+      ['errors', 'a view failure'],
+      ['drift', 'a stale committed artifact'],
+    ];
     if (m[1] !== undefined) {                       // destructured at the call site
       const named = m[1].split(',').map((x) => x.trim().split(':')[0].trim());
-      if (!named.includes('errors')) errors.push(`line ${i + 1}: destructures runRender() without 'errors'; a view failure would be silently dropped`);
+      for (const [field, what] of MODES) {
+        if (!named.includes(field)) errors.push(`line ${i + 1}: destructures runRender() without '${field}'; ${what} would be silently dropped`);
+      }
       return;
     }
     const v = m[2];
     const window = lines.slice(i, i + 10).join('\n');
-    if (!window.includes(`${v}.errors`)) errors.push(`line ${i + 1}: reads runRender() result '${v}' without checking '${v}.errors'; a view failure would be silently dropped`);
+    for (const [field, what] of MODES) {
+      if (!window.includes(`${v}.${field}`)) errors.push(`line ${i + 1}: reads runRender() result '${v}' without checking '${v}.${field}'; ${what} would be silently dropped`);
+    }
   });
   if (!errors.length && !/runRender\(/.test(sourceText)) errors.push('no runRender() call sites found; the consumer check is looking at the wrong source');
   return errors;
@@ -3068,7 +3080,11 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'every runRender() call site checks .errors as well as .drift', pass: consumers.length === 0, errs: consumers });
     const reverted = src.replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
     const caughtC = renderResultConsumerErrors(reverted);
-    results.push({ label: 'consumer check catches a call site that drops .errors', pass: caughtC.some((e) => e.includes('silently dropped')), errs: caughtC });
+    results.push({ label: 'consumer check catches a call site that drops .errors', pass: caughtC.some((e) => e.includes("checking 'r.errors'")), errs: caughtC });
+    // Both failure modes, or the check only half does its job.
+    const noDrift = src.replace("const { errors, drift, drifted, wrote } = runRender(", "const { errors, drifted, wrote } = runRender(");
+    const caughtD = renderResultConsumerErrors(noDrift);
+    results.push({ label: 'consumer check catches a call site that drops .drift', pass: caughtD.some((e) => e.includes("without 'drift'")), errs: caughtD });
     const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   wake /.test(l)).join('\n');
     const caught = subcommandDocErrors(gutted, src);
     const hit = caught.some((e) => e.includes("'wake'"));
