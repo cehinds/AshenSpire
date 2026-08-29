@@ -1,0 +1,193 @@
+{
+  "schema": "agentops/teams/v1",
+  "policy_version": "1.0.0",
+  "principle": "Standing coordination is scarce and named; delivery capability is pooled and temporary. A pool is a capability the project can draw on, never a department that owns a backlog, a decision stream, or a source path because the path fits its specialty. A pod is formed for one contract-ready ticket and dissolves; its chat and local workspace are never an authority source, so losing the conversation loses no work.",
+  "source": "docs/governance/TEAM-CHARTERS.md",
+  "standing_roles": [
+    {
+      "id": "help-desk",
+      "charter_heading": "Help Desk",
+      "responsibility": "Intake, contract and status hygiene, routing, acknowledgements, receipts, and Project workflow projection.",
+      "boundary": "No implementation, product, technical-decision, integration, board-mutation, or delivery authority."
+    },
+    {
+      "id": "project-management-lead",
+      "charter_heading": "Project Management Lead",
+      "responsibility": "Portfolio and milestone recommendations; dependency, blocker, WIP and capacity visibility; completion councils; handoffs; risk and decision log; promotion-readiness planning; stakeholder summaries.",
+      "boundary": "Recommends and coordinates; does not decide technical assignment or integration, and gains no product, board, delivery, promotion, or release authority."
+    },
+    {
+      "id": "data-architecture-lead",
+      "charter_heading": "Data Architecture & Systems Lead",
+      "responsibility": "Schema, ID, alias and deprecation; source-generator-projection lineage; migration, version and compatibility; generated manifests; save, content and data quality; cross-domain data-contract review.",
+      "boundary": "May WITHHOLD an unsafe contract; does not self-assign implementation or replace domain intent or IT Manager III authority."
+    },
+    {
+      "id": "it-manager-iii",
+      "charter_heading": "IT Manager III, Integration & Delivery",
+      "responsibility": "Mandatory technical relay; technical sequencing; path and maker ownership; architecture reconciliation; incident and P0 command; integration and delivery gates.",
+      "boundary": "Decides technical assignment and integration within granted authority; Constantine retains main/release, Pages, tags, publication, playtest, and final release actions."
+    }
+  ],
+  "capability_pools": [
+    {
+      "id": "art-tech-art",
+      "charter_heading": "Art / Tech Art",
+      "delivery_capability": "Visual direction, assets, optimization, manifests, previews, provenance and licensing.",
+      "stewardship": "Audit reuse, consistency, hard-coded art, missing credits, and runtime budgets; prepare isolated proposals and handoffs."
+    },
+    {
+      "id": "feature-architecture",
+      "charter_heading": "Feature / Architecture",
+      "delivery_capability": "Features, architecture, models, components, services, tooling, and runtime integration.",
+      "stewardship": "Reconcile code and contracts, strengthen reusable boundaries, and draft bounded proposals without inventing product scope."
+    },
+    {
+      "id": "incident-defect",
+      "charter_heading": "Incident / Defect",
+      "delivery_capability": "Reproduction, containment, repair, regression evidence, and incident and P0 technical response.",
+      "stewardship": "Maintain known-bad plants and defect evidence; no unassigned repair."
+    },
+    {
+      "id": "code-quality-modernization",
+      "charter_heading": "Code Quality & Modernization",
+      "delivery_capability": "Small risk-ranked code, architecture, test, documentation, configuration, repository and tooling-debt reduction.",
+      "stewardship": "Maintain the modernization register and read-only audits; no idle patching or product-behaviour change."
+    },
+    {
+      "id": "game-systems",
+      "charter_heading": "Game Systems",
+      "delivery_capability": "Mechanics, balance intent, unlock and behaviour and data contracts, acceptance conditions.",
+      "stewardship": "Identify SPEC and GDD conflicts, unreachable content, balance drift, and unclear player feedback."
+    },
+    {
+      "id": "experience-design",
+      "charter_heading": "Experience Design",
+      "delivery_capability": "UX, interaction intent, narrative, names, UI copy, tutorials, accessibility text, changelog and documentation clarity.",
+      "stewardship": "Reconcile wording and intent across GDD, SPEC, data and config, UI, help, and changelog."
+    },
+    {
+      "id": "experience-accessibility-review",
+      "charter_heading": "Experience & Accessibility Review",
+      "delivery_capability": "Temporary review of interaction, readability, accessibility, responsive behaviour, input modes, player-facing language, and experience evidence.",
+      "stewardship": "Form only for applicable tickets; preserve domain intent and independent QA verdict ownership."
+    },
+    {
+      "id": "qa-guild",
+      "charter_heading": "QA Guild",
+      "delivery_capability": "Independent functional, regression, experience, responsive, accessibility, input, persistence, artifact and hosted evidence.",
+      "stewardship": "Maintain playbooks, RED plants, known-bad cases, fixtures, viewports, and evidence indexes."
+    },
+    {
+      "id": "platform-release",
+      "charter_heading": "Platform / Release",
+      "delivery_capability": "CI, generated-artifact lanes, environments, packaging, deployment, release staging and operational evidence.",
+      "stewardship": "Audit provenance and environment drift; never infer publication, deployment, promotion, or release authority."
+    }
+  ],
+  "pool_rules": {
+    "standing": false,
+    "owns_backlog": false,
+    "owns_source_paths": false,
+    "note": "A pool is drawn into a temporary pod for a ticket. Legacy task names such as App Team2, IT Support2 and IT Support3 are tasks, not standing organizations. No standing Audio, Localization, Telemetry, Security or Community department exists absent a later product-scope decision."
+  },
+  "pods": {
+    "formed_by": "help-desk",
+    "requires_contract_ready_ticket": true,
+    "leads": 1,
+    "max_helpers": 3,
+    "one_maker_per_path": true,
+    "requires_acknowledgement": true,
+    "dissolves_after": "accepted handoff or cancellation",
+    "chat_is_authority_source": false
+  },
+  "wip_limits": {
+    "it_manager_iii_integration_items": 1,
+    "implementations_per_maker": 1,
+    "serialized_generated_artifact_lanes": 1,
+    "overlapping_active_path_claims": 0,
+    "idle_capacity": "Read-only audits, modernization-register refreshes, documentation reconciliation, tooling and quality observations, or stale-context identification, returned through Help Desk as evidence or a proposal. No patch unless separately assigned."
+  },
+  "charter_exception": {
+    "principle": "The charter decides by default. Where it genuinely cannot resolve a case, the two coordinating roles may jointly carry it to the Owner \u2014 but only after exhausting what the charter already lets them settle between them. Concurrence is required so no single role can manufacture an owner decision to escape its own boundary.",
+    "requires_concurrence": [
+      "it-manager-iii",
+      "project-management-lead"
+    ],
+    "exhaust_charter_first": true,
+    "escalation_class": "owner-exclusive-now",
+    "records": [
+      "what the charter says",
+      "what was attempted at charter level",
+      "why it does not resolve",
+      "what each concurring role recommends"
+    ]
+  },
+  "legacy_aliases": [
+    {
+      "legacy": "application",
+      "routes_to": "feature-architecture",
+      "note": "App Team is a legacy task name; feature and architecture work is pooled."
+    },
+    {
+      "legacy": "art",
+      "routes_to": "art-tech-art",
+      "note": "Direct rename."
+    },
+    {
+      "legacy": "code-quality-modernization",
+      "routes_to": "code-quality-modernization",
+      "note": "Unchanged."
+    },
+    {
+      "legacy": "data-architecture-systems",
+      "routes_to": "data-architecture-lead",
+      "note": "A standing role, not a pool."
+    },
+    {
+      "legacy": "game-design",
+      "routes_to": "game-systems",
+      "note": "Mechanics, balance and data contracts; design intent sits with Experience Design."
+    },
+    {
+      "legacy": "help-desk",
+      "routes_to": "help-desk",
+      "note": "A standing role, unchanged."
+    },
+    {
+      "legacy": "incident-it-support",
+      "routes_to": "incident-defect",
+      "note": "Incident and P0 response is pooled; IT Support3 was a task name."
+    },
+    {
+      "legacy": "itm-integration-delivery",
+      "routes_to": "it-manager-iii",
+      "note": "A standing role, formerly named Main."
+    },
+    {
+      "legacy": "project-management",
+      "routes_to": "project-management-lead",
+      "note": "A standing role, not a pool."
+    },
+    {
+      "legacy": "qa-experience",
+      "routes_to": "experience-accessibility-review",
+      "note": "Forms per applicable ticket; QA verdict ownership stays independent."
+    },
+    {
+      "legacy": "qa-functional",
+      "routes_to": "qa-guild",
+      "note": "Independent functional and regression evidence."
+    },
+    {
+      "legacy": "review-approval-hub",
+      "routes_to": "platform-release",
+      "note": "The Hub is now generated output under the generated-artifact lane; approval gates themselves live in transitions.json and authority.json, not a team."
+    },
+    {
+      "legacy": "writing",
+      "routes_to": "experience-design",
+      "note": "Narrative, copy and documentation clarity."
+    }
+  ]
+}

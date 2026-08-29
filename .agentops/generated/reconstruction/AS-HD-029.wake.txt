@@ -1,16 +1,16 @@
 === AGENTOPS WAKE CAPSULE ===
 IDENTITY   : actor=it-manager-iii role=it-manager-iii ticket=AS-HD-029 lease=lease-AS-HD-029-it-manager-iii (active until 2026-10-31T23:59:59Z)
 MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
-WORK       : Clear the P0 NO_SAFE_ASSIGNMENT condition at Application for context adoption.
-DONE-WHEN  : One unchanged object passes the strict sequence fresh App custody/PASS -> CQM -> Data -> QA1 -> QA2 with gate credit recorded.
+WORK       : Sequence the P0 NO_SAFE_ASSIGNMENT chain at Application by issuing and rebinding the writer leases each gate needs.
+DONE-WHEN  : Every gate in the chain (fresh Application custody/PASS -> CQM -> Data -> QA1 -> QA2) has an issued lease naming its holder and its exact entry condition, and no two of them collide on an overlapping path or ref.
 AUTHORITY  : may resolve-technical-ambiguity, assign-and-rebind-work, issue-and-revoke-lease, create-isolated-ref | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
 FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
 REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-029
-BASE       : 4a515339189c6f3ec003eef74e86dc38526f93fe tree recovered-from-hub-snapshot dirty=clean
-NEXT ACTION: Re-establish Application custody on one unchanged object; the latest R6 attempt is quarantined with gate credit 0.
+BASE       : 0f17725607b540f8fd917240199f8a3ba1cc55a2 tree recovered-from-hub-snapshot dirty=clean
+NEXT ACTION: Establish which gates already hold a lease and which do not. Issue or rebind only leases; the implementation behind each gate belongs to a maker seat and is outside this grant.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
 REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : —
-SOURCE     : 4a515339189c6f3ec003eef74e86dc38526f93fe
-FRESHNESS  : as-recorded (base 4a515339189c); verify live HEAD out-of-band
+SOURCE     : 0f17725607b540f8fd917240199f8a3ba1cc55a2
+FRESHNESS  : as-recorded (base 0f17725607b5); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease

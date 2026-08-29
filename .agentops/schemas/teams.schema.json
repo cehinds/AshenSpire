@@ -1,0 +1,263 @@
+{
+  "$schema": "agentops-mini-schema/v1",
+  "title": "teams",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "policy_version",
+    "principle",
+    "source",
+    "standing_roles",
+    "capability_pools",
+    "pool_rules",
+    "pods",
+    "wip_limits",
+    "charter_exception",
+    "legacy_aliases"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentops/teams/v1"
+    },
+    "policy_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "principle": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "standing_roles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "charter_heading",
+          "responsibility",
+          "boundary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "responsibility": {
+            "type": "string",
+            "minLength": 1
+          },
+          "boundary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "charter_heading": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "capability_pools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "charter_heading",
+          "delivery_capability",
+          "stewardship"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "delivery_capability": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stewardship": {
+            "type": "string",
+            "minLength": 1
+          },
+          "charter_heading": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "pool_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standing",
+        "owns_backlog",
+        "owns_source_paths",
+        "note"
+      ],
+      "properties": {
+        "standing": {
+          "const": false
+        },
+        "owns_backlog": {
+          "const": false
+        },
+        "owns_source_paths": {
+          "const": false
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "pods": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formed_by",
+        "requires_contract_ready_ticket",
+        "leads",
+        "max_helpers",
+        "one_maker_per_path",
+        "requires_acknowledgement",
+        "dissolves_after",
+        "chat_is_authority_source"
+      ],
+      "properties": {
+        "formed_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requires_contract_ready_ticket": {
+          "const": true
+        },
+        "leads": {
+          "const": 1
+        },
+        "max_helpers": {
+          "type": "number"
+        },
+        "one_maker_per_path": {
+          "const": true
+        },
+        "requires_acknowledgement": {
+          "const": true
+        },
+        "dissolves_after": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chat_is_authority_source": {
+          "const": false
+        }
+      }
+    },
+    "wip_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "it_manager_iii_integration_items",
+        "implementations_per_maker",
+        "serialized_generated_artifact_lanes",
+        "overlapping_active_path_claims",
+        "idle_capacity"
+      ],
+      "properties": {
+        "it_manager_iii_integration_items": {
+          "type": "number"
+        },
+        "implementations_per_maker": {
+          "type": "number"
+        },
+        "serialized_generated_artifact_lanes": {
+          "type": "number"
+        },
+        "overlapping_active_path_claims": {
+          "const": 0
+        },
+        "idle_capacity": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "charter_exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principle",
+        "requires_concurrence",
+        "exhaust_charter_first",
+        "escalation_class",
+        "records"
+      ],
+      "properties": {
+        "principle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requires_concurrence": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "exhaust_charter_first": {
+          "const": true
+        },
+        "escalation_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "legacy_aliases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "legacy",
+          "routes_to",
+          "note"
+        ],
+        "properties": {
+          "legacy": {
+            "type": "string",
+            "minLength": 1
+          },
+          "routes_to": {
+            "type": "string",
+            "minLength": 1
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

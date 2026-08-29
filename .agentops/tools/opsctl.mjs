@@ -4,10 +4,26 @@
 //
 // Subcommands:
 //   validate            Parse + schema-validate + cross-contract checks. Exit 1 on any failure.
-//   render              (Re)generate .agentops/generated/GOVERNANCE.md from validated JSON.
-//   render --check      Regenerate in memory and fail (exit 1) if the committed view has drifted.
+//   render              (Re)generate every view under .agentops/generated/ plus the published
+//                       mirrors (/hud/, /review-approval-hub/) from validated JSON.
+//   render --check      Regenerate in memory and fail (exit 1) if a committed view has drifted.
 //   verify              validate, then render --check. The CI entry point.
+//   wake                Compile one seat's bounded startup capsule. --frozen for the goldens.
+//   dispatch            Which seats are due and who each wakes, derived from the contracts.
+//                       --json for the seat executor. Nothing is decided here.
+//   reseat              Advance an unstarted seat's base_oid to live HEAD and reseal.
+//                       --all for every eligible seat. Refuses started seats and a detached HEAD.
+//   reseal              Re-establish a capsule's compare-and-swap seal after a legitimate
+//                       content change, keeping the chain. Requires --reason.
+//   command             Owner-command path: --dry-run to decide, --apply to write.
+//   drill               Clean-clone / context-wipe reconstruction drill.
+//   migrate             Read-only legacy inventory; --plan proposes genesis stubs.
 //   --selftest          Prove every check can actually fail, using in-memory negative plants.
+//
+// This list is not maintained by hand: `--selftest` fails if a dispatched
+// subcommand is missing from it. It had drifted to 5 of 8 before that check
+// existed (issue #392, D8), and the one it omitted was `wake` — the single
+// command a cold-start seat depends on.
 //
 // Design invariants:
 //   * Git history + validated JSON are authoritative; the Markdown view is a
@@ -19,7 +35,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, cpSync
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -220,6 +236,10 @@ const CONTRACTS = [
   { name: 'owner-intent', file: 'governance/owner-intent.json', schema: 'schemas/owner-intent.schema.json' },
   { name: 'hierarchy', file: 'governance/hierarchy.json', schema: 'schemas/hierarchy.schema.json' },
   { name: 'roles', file: 'governance/roles.json', schema: 'schemas/roles.schema.json' },
+  { name: 'teams', file: 'governance/teams.json', schema: 'schemas/teams.schema.json' },
+  { name: 'promotion-gates', file: 'governance/promotion-gates.json', schema: 'schemas/promotion-gates.schema.json' },
+  { name: 'model-effort', file: 'governance/model-effort.json', schema: 'schemas/model-effort.schema.json' },
+  { name: 'delivery', file: 'governance/delivery.json', schema: 'schemas/delivery.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
   { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
   { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
@@ -254,6 +274,285 @@ export function loadContracts(root = ROOT) {
 // ---------------------------------------------------------------------------
 export function semanticChecks(c) {
   const errors = [];
+
+  // --- authority tiers (P0-P4) and ticket flow ----------------------------
+  // A rank system is dangerous in exactly two ways: an actor can fall outside
+  // it and be ungoverned, and it can start deciding things ranks must not
+  // decide. Both are checked here.
+  if (c.hierarchy && c.hierarchy.authority_tiers && c.roles) {
+    const at = c.hierarchy.authority_tiers;
+    const nodes = new Set(c.hierarchy.nodes.map((n) => n.actor_id));
+    const placed = new Map();
+    for (const lv of at.levels) {
+      for (const a of lv.actors) {
+        if (!nodes.has(a)) errors.push(`hierarchy: authority tier P${lv.p} names '${a}', which is not a hierarchy node`);
+        if (placed.has(a)) errors.push(`hierarchy: '${a}' is placed in both P${placed.get(a)} and P${lv.p}; an actor holds one tier`);
+        placed.set(a, lv.p);
+      }
+    }
+    // An actor outside the ladder has authority nobody wrote down.
+    for (const n of nodes) if (!placed.has(n)) errors.push(`hierarchy: '${n}' is a hierarchy node in no authority tier; its decision authority is undeclared`);
+    const owner = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    const p0 = at.levels.find((l) => l.p === 0);
+    if (owner && p0 && !p0.actors.includes(owner)) errors.push(`hierarchy: P0 does not contain the owner '${owner}'`);
+    if (owner && at.levels.some((l) => l.p !== 0 && l.actors.includes(owner))) errors.push(`hierarchy: the owner '${owner}' appears below P0`);
+    // The ladder must keep saying it is not a capability ladder; 0006 forbids
+    // selection by rank, and this is where that would quietly erode.
+    if (!/never.*(model|effort)|not.*(model|effort)/i.test(at.rules.not_a_capability_ladder || '')) {
+      errors.push('hierarchy: authority tiers no longer state that a level never selects model or effort');
+    }
+    // P<n> means two things here, and that is the owner's decision: on a team or
+    // actor it is authority, on an issue or ticket it is priority. A shared
+    // letter is safe only while the rule separating them is written down and the
+    // two subject lists stay disjoint — an overlap would make some subject
+    // readable both ways, which is the actual hazard.
+    const dis = at.disambiguation;
+    if (at.namespace === 'P') {
+      if (!dis) {
+        errors.push("hierarchy: authority tiers share the 'P' namespace with incident priority but declare no disambiguation rule");
+      } else {
+        const overlap = dis.authority_subjects.filter((a) => dis.priority_subjects.some((b) => b.toLowerCase() === a.toLowerCase()));
+        if (overlap.length) {
+          errors.push(`hierarchy: '${overlap.join(', ')}' is listed as both an authority and a priority subject; a P-code on it would be readable both ways`);
+        }
+        if (!/subject/i.test(dis.rule)) {
+          errors.push('hierarchy: the disambiguation rule no longer says the subject decides the meaning');
+        }
+      }
+    }
+  }
+  if (c.escalation && c.escalation.ticket_flow && c.roles) {
+    const tf = c.escalation.ticket_flow;
+    const roleSet = new Set(c.roles.roles.map((r) => r.role));
+    const owner = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    for (const st of tf.steps) {
+      if (!roleSet.has(st.actor)) errors.push(`escalation: ticket_flow step ${st.n} names actor '${st.actor}', which roles.json does not declare`);
+      // The whole point: the Owner is not a step in the ordinary flow. Both
+      // spellings must be rejected — the owner's actor id AND the 'owner' role,
+      // since routing to the role reaches the same person by another name.
+      const ownerRole = (c.roles.roles.find((r) => /^owner$/i.test(r.role)) || {}).role;
+      if ((owner && st.actor === owner) || (ownerRole && st.actor === ownerRole)) {
+        errors.push(`escalation: ticket_flow step ${st.n} routes to the owner; the owner is reached only through an owner-exclusive escalation class`);
+      }
+    }
+    for (const e of ['SENT', 'RECEIVED', 'ACKNOWLEDGED']) {
+      if (!tf.handoff_events.includes(e)) errors.push(`escalation: ticket_flow drops the '${e}' handoff event; a failed transport would prove receipt`);
+    }
+  }
+
+  // --- branch hygiene -----------------------------------------------------
+  // Rebase is the standard way to bring a branch forward, but it rewrites
+  // history someone else may already hold. The permission that makes that
+  // acceptable has to name a real standing role, and no rewrite may touch a
+  // ref whose mutation policy forbids it.
+  if (c['git-ownership'] && c['git-ownership'].branch_hygiene) {
+    const bh = c['git-ownership'].branch_hygiene;
+    if (c.roles && !c.roles.roles.some((r) => r.role === bh.permission_role)) {
+      errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a declared role`);
+    }
+    if (c.teams && !c.teams.standing_roles.some((r) => r.id === bh.permission_role)) {
+      errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a standing role; a rewrite permission cannot rest with a pool or an absent role`);
+    }
+    if (!bh.never.some((n) => /protected|pr-only/i.test(n))) {
+      errors.push('git-ownership: branch_hygiene does not forbid rewriting a protected or pr-only ref');
+    }
+    if (!bh.records.some((r) => /prior head/i.test(r))) {
+      errors.push('git-ownership: branch_hygiene records no prior head; a rewrite with no recorded predecessor cannot be undone');
+    }
+  }
+
+  // --- canonical documents ------------------------------------------------
+  // Decision 0004 moved the art policy to one live path and said plainly:
+  // never recreate two live copies. A duplicate policy is worse than none,
+  // because both look authoritative. Checked against the working tree, and
+  // skipped in an .agentops-only clean room where docs/ does not exist.
+  if (c['information-access'] && c['information-access'].canonical_documents && existsSync(resolve(ROOT, '../docs'))) {
+    for (const doc of c['information-access'].canonical_documents) {
+      if (!existsSync(resolve(ROOT, '..', doc.path))) {
+        errors.push(`information-access: the canonical document for '${doc.topic}' is declared at '${doc.path}', which does not exist`);
+      }
+      for (const old of doc.superseded_paths) {
+        if (existsSync(resolve(ROOT, '..', old))) {
+          errors.push(`information-access: '${old}' still exists alongside the canonical '${doc.path}' for '${doc.topic}'; two live copies both look authoritative`);
+        }
+      }
+    }
+  }
+
+  // --- delivery and Pages -------------------------------------------------
+  // Decision 0005 governs delivery to dev, promotion readiness and the Pages
+  // source. The Pages half is the part with teeth: a source switch must record
+  // its rollback BEFORE it happens, so a failed deployment has somewhere to go
+  // back to. Encoded after a Pages deployment replaced a live site in this
+  // repository with no recorded prior state to restore.
+  if (c.delivery) {
+    const d = c.delivery;
+    if (c.roles) {
+      const roleSet = new Set(c.roles.roles.map((r) => r.role));
+      for (const [label, role] of [['dev_delivery', d.dev_delivery.actor_role], ['promotion_readiness', d.promotion_readiness.actor_role], ['pages.switch_requires', d.pages.switch_requires.authorizing_role]]) {
+        if (!roleSet.has(role)) errors.push(`delivery: ${label} names actor role '${role}', which roles.json does not declare`);
+      }
+    }
+    // Declaring a packet ready must grant nothing; that is the whole difference
+    // between "ready to be considered" and "release-ready".
+    if (d.promotion_readiness.grants.length) {
+      errors.push(`delivery: promotion_readiness declares grants (${d.promotion_readiness.grants.join(', ')}); declaring a packet ready grants no promotion authority`);
+    }
+    // The Pages source must be a ref the policy actually knows, and a protected
+    // one — an unprotected desired source is a site anyone can repoint.
+    if (c['git-ownership']) {
+      const ref = c['git-ownership'].refs.find((r) => r.ref === d.pages.desired_source);
+      if (!ref) errors.push(`delivery: the desired Pages source '${d.pages.desired_source}' is not a declared ref`);
+      else if (ref.mutation !== 'protected') errors.push(`delivery: the desired Pages source '${d.pages.desired_source}' is '${ref.mutation}', not protected`);
+    }
+    // A switch must escalate to the owner, and must record a rollback.
+    if (c.escalation) {
+      const cls = c.escalation.classes.find((x) => x.id === d.pages.switch_requires.escalation_class);
+      if (!cls) errors.push(`delivery: a Pages switch escalates as '${d.pages.switch_requires.escalation_class}', which escalation.json does not declare`);
+      else if (c['owner-intent'] && cls.wake !== c['owner-intent'].owner.actor_id) {
+        errors.push(`delivery: a Pages switch escalates as '${cls.id}', which wakes '${cls.wake}' rather than the owner`);
+      }
+    }
+    if (!d.pages.switch_packet_records.some((x) => /rollback/i.test(x))) {
+      errors.push('delivery: the Pages switch packet records no rollback; a failed deployment would have nowhere to return to');
+    }
+    if (!d.promotion_packet.required_fields.some((x) => /rollback/i.test(x))) {
+      errors.push('delivery: the promotion packet requires no rollback field');
+    }
+  }
+
+  // --- model and effort ---------------------------------------------------
+  // Decision 0006's load-bearing sentence is that selecting a model grants
+  // nothing and a stronger model does not outrank a weaker one. Encoded as a
+  // rule so a tier cannot quietly acquire authority by being the "big" one.
+  if (c['model-effort']) {
+    const me = c['model-effort'];
+    if (me.grants.length) errors.push(`model-effort: the contract declares grants (${me.grants.join(', ')}); model selection grants no authority`);
+    const seenTier = new Set();
+    for (const t of me.tiers) {
+      if (seenTier.has(t.id)) errors.push(`model-effort: tier '${t.id}' is declared twice`);
+      seenTier.add(t.id);
+      // A tier that permits max effort without demanding the exceptional reason
+      // turns the escape hatch into the default.
+      if (t.allowed_efforts.includes('max') && t.requires_exceptional_reason !== true) {
+        errors.push(`model-effort: tier '${t.id}' allows 'max' effort without requiring an exceptional reason`);
+      }
+    }
+    // Selection is by risk and station, never role rank: a tier naming a role
+    // would reintroduce exactly that.
+    if (c.roles) {
+      const roleSet = new Set(c.roles.roles.map((r) => r.role));
+      for (const t of me.tiers) {
+        if (roleSet.has(t.id)) errors.push(`model-effort: tier '${t.id}' is named after a role; selection follows risk and station, never role rank`);
+      }
+    }
+  }
+
+  // --- promotion gates ---------------------------------------------------
+  // Decision 0009 defines Gates A-F: who may act, what evidence each needs,
+  // and — the part that matters most — what each explicitly does NOT grant.
+  // It lived only as a decision record, so nothing stopped a transition guard
+  // paraphrasing a gate wrongly, or a gate quietly claiming release authority.
+  if (c['promotion-gates'] && c.roles && c.transitions) {
+    const pg = c['promotion-gates'];
+    const roleSet = new Set(c.roles.roles.map((r) => r.role));
+    const states = new Set(c.transitions.states);
+    const seenGate = new Set();
+    const ownerReserved = new Set(['main', 'release', 'tag', 'publication', 'Pages']);
+    for (const g of pg.gates) {
+      if (seenGate.has(g.id)) errors.push(`promotion-gates: gate '${g.id}' is declared twice`);
+      seenGate.add(g.id);
+      // An actor that is not a declared role cannot be held to the gate.
+      // 'owner' is a declared role in roles.json, so this covers E and F too.
+      if (!roleSet.has(g.actor_role)) errors.push(`promotion-gates: gate ${g.id} names actor role '${g.actor_role}', which roles.json does not declare`);
+      for (const { from, to } of g.guards_transitions || []) {
+        if (!states.has(from)) errors.push(`promotion-gates: gate ${g.id} guards a move from '${from}', which is not a declared lifecycle state`);
+        if (!states.has(to)) errors.push(`promotion-gates: gate ${g.id} guards a move to '${to}', which is not a declared lifecycle state`);
+        if (!c.transitions.transitions.some((m) => m.from === from && m.to === to)) {
+          errors.push(`promotion-gates: gate ${g.id} guards '${from}' -> '${to}', which transitions.json does not declare`);
+        }
+      }
+      // "Authority for one action implies none of the others." Only Gate F may
+      // touch the owner-reserved surfaces, and only per individual action.
+      for (const grant of g.grants || []) {
+        if (ownerReserved.has(grant) && g.id !== 'F') {
+          errors.push(`promotion-gates: gate ${g.id} grants '${grant}', which is owner-reserved and belongs to Gate F alone`);
+        }
+      }
+      for (const r of g.required_roles || []) if (!roleSet.has(r)) errors.push(`promotion-gates: gate ${g.id} requires role '${r}', which roles.json does not declare`);
+    }
+    // Every protected promotion move should be gated. An ungated protected move
+    // is one a seat could argue its way through with no named evidence.
+    const gated = new Set(pg.gates.flatMap((g) => (g.guards_transitions || []).map((t) => `${t.from}->${t.to}`)));
+    for (const m of c.transitions.transitions) {
+      if (m.protected && !gated.has(`${m.from}->${m.to}`)) {
+        errors.push(`promotion-gates: protected transition '${m.from}' -> '${m.to}' is not guarded by any declared gate`);
+      }
+    }
+  }
+
+  // --- teams -----------------------------------------------------------
+  // The charter is the authority on who stands and who is pooled. Encoding it
+  // as prose let a capsule contradict it silently; these make that a hard error.
+  if (c.teams && c.roles && c.hierarchy) {
+    const declaredRoles = new Set(c.roles.roles.map((r) => r.role));
+    const hier = new Set(c.hierarchy.nodes.map((n) => n.actor_id));
+    const poolIds = new Set();
+    const standingIds = new Set();
+    for (const r of c.teams.standing_roles) {
+      if (standingIds.has(r.id)) errors.push(`teams: standing role '${r.id}' is declared twice`);
+      standingIds.add(r.id);
+      // A standing role that no role contract declares, or that has no
+      // hierarchy node, cannot actually receive or escalate anything.
+      if (!declaredRoles.has(r.id)) errors.push(`teams: standing role '${r.id}' is not a declared role`);
+      if (!hier.has(r.id)) errors.push(`teams: standing role '${r.id}' has no hierarchy node`);
+    }
+    for (const p of c.teams.capability_pools) {
+      if (poolIds.has(p.id)) errors.push(`teams: capability pool '${p.id}' is declared twice`);
+      poolIds.add(p.id);
+      // "Pools are not standing delivery teams." A pool that is also a declared
+      // role would become one the moment a capsule named it as an owner.
+      if (declaredRoles.has(p.id)) errors.push(`teams: capability pool '${p.id}' is also a declared role; a pool must not be able to hold a seat`);
+    }
+    // The contract is a projection of docs/governance/TEAM-CHARTERS.md. If an
+    // entry is renamed here and not there, the two have silently diverged and
+    // the prose stops being the thing this encodes.
+    let charterText = null;
+    try { charterText = readFileSync(resolve(ROOT, '../docs/governance/TEAM-CHARTERS.md'), 'utf8'); } catch { /* .agentops-only checkout */ }
+    if (charterText !== null) {
+      for (const e of [...c.teams.standing_roles, ...c.teams.capability_pools]) {
+        if (!charterText.includes(e.charter_heading)) {
+          errors.push(`teams: '${e.id}' claims charter heading '${e.charter_heading}', which has no heading in the charter prose`);
+        }
+      }
+    }
+    // Every legacy dropdown name must land somewhere real. An alias pointing at
+    // nothing routes a ticket into silence, which is the failure the Help Desk
+    // exists to prevent.
+    const targets = new Set([...standingIds, ...poolIds]);
+    const seenLegacy = new Set();
+    for (const a of c.teams.legacy_aliases) {
+      if (seenLegacy.has(a.legacy)) errors.push(`teams: legacy alias '${a.legacy}' is declared twice`);
+      seenLegacy.add(a.legacy);
+      if (!targets.has(a.routes_to)) errors.push(`teams: legacy alias '${a.legacy}' routes to '${a.routes_to}', which is neither a standing role nor a capability pool`);
+    }
+    const ce = c.teams.charter_exception;
+    for (const role of ce.requires_concurrence) {
+      if (!declaredRoles.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a declared role`);
+      if (!standingIds.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a standing role; only standing roles may carry an exception to the owner`);
+    }
+    if (c.escalation && !c.escalation.classes.some((x) => x.id === ce.escalation_class)) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which escalation.json does not declare`);
+    }
+    // The exception must actually reach the Owner. A class that wakes anyone
+    // else would let the two roles "escalate" to themselves.
+    const ownerId = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    const cls = c.escalation && c.escalation.classes.find((x) => x.id === ce.escalation_class);
+    if (cls && ownerId && cls.wake !== ownerId) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which wakes '${cls.wake}' rather than the owner`);
+    }
+  }
+
   const roles = c.roles ? new Set(c.roles.roles.map((r) => r.role)) : new Set();
   const knownRoles = new Set([...roles, ...SYNTHETIC_ROLES]);
 
@@ -273,7 +572,9 @@ export function semanticChecks(c) {
       if (p.glob.split('/').includes('..')) errors.push(`git-ownership: path glob '${p.glob}' contains a '..' traversal segment`);
     }
     for (const r of c['git-ownership'].refs) {
-      if (!knownRoles.has(r.owner_role)) errors.push(`git-ownership: ref '${r.ref}' names unknown role '${r.owner_role}'`);
+      // A per_seat namespace is owned by whichever lease holds the ticket, so
+      // its owner_role is a marker rather than a declared role.
+      if (!r.per_seat && !knownRoles.has(r.owner_role)) errors.push(`git-ownership: ref '${r.ref}' names unknown role '${r.owner_role}'`);
     }
     // 3. One writer per overlapping path: two path globs whose literal prefixes
     //    nest must be owned by the same role, else it is a collision.
@@ -284,10 +585,24 @@ export function semanticChecks(c) {
       const slash = cut.lastIndexOf('/');
       return slash === -1 ? '' : cut.slice(0, slash + 1);
     };
+    // Two globs overlap when one's matched set could contain the other's. The
+    // earlier form compared directory prefixes alone, and a root-level file has
+    // no directory — its prefix is '', which every string starts with, so any
+    // root-level path was reported as overlapping the whole tree. That made the
+    // one-writer rule unable to express a root-level owner at all, which is
+    // exactly what the generated build output needs.
+    const overlaps = (ga, gb) => {
+      const dirA = literalPrefix(ga), dirB = literalPrefix(gb);
+      const rootA = dirA === '', rootB = dirB === '';
+      // Root-level globs never reach into a subdirectory, and a subdirectory
+      // glob never reaches back up to the root.
+      if (rootA !== rootB) return false;
+      if (rootA && rootB) return globCovers(ga, gb) || globCovers(gb, ga);
+      return dirA.startsWith(dirB) || dirB.startsWith(dirA);
+    };
     for (let a = 0; a < paths.length; a++) {
       for (let b = a + 1; b < paths.length; b++) {
-        const pa = literalPrefix(paths[a].glob), pb = literalPrefix(paths[b].glob);
-        const nests = pa.startsWith(pb) || pb.startsWith(pa);
+        const nests = overlaps(paths[a].glob, paths[b].glob);
         if (nests && paths[a].owner_role !== paths[b].owner_role) {
           errors.push(`git-ownership: overlapping paths '${paths[a].glob}' and '${paths[b].glob}' have different writers ('${paths[a].owner_role}' vs '${paths[b].owner_role}')`);
         }
@@ -556,6 +871,46 @@ export function renderGovernance(c) {
   L.push('| Ref | Owner role | Mutation |');
   L.push('|---|---|---|');
   for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  if (c['promotion-gates']) {
+    const pg = c['promotion-gates'];
+    L.push('');
+    L.push('## Promotion gates');
+    L.push('');
+    L.push(pg.principle);
+    L.push('');
+    L.push('| Gate | Name | Who acts | Guards | Required evidence | Grants |');
+    L.push('|---|---|---|---|---|---|');
+    for (const g of pg.gates) {
+      const guards = (g.guards_transitions || []).map((t) => `\`${t.from}\` → \`${t.to}\``).join('<br>') || '—';
+      L.push(`| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${guards} | ${g.required_evidence.join(', ') || '—'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`);
+    }
+    L.push('');
+    L.push(`${pg.immutable_candidate}`);
+  }
+  if (c.teams) {
+    L.push('');
+    L.push('## Teams');
+    L.push('');
+    L.push(`${c.teams.principle}`);
+    L.push('');
+    L.push('### Standing coordination roles');
+    L.push('');
+    L.push('| Role | Standing responsibility | Boundary |');
+    L.push('|---|---|---|');
+    for (const r of c.teams.standing_roles) L.push(`| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`);
+    L.push('');
+    L.push('### Capability pools');
+    L.push('');
+    L.push('Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.');
+    L.push('');
+    L.push('| Pool | Delivery capability | Stewardship between tickets |');
+    L.push('|---|---|---|');
+    for (const p of c.teams.capability_pools) L.push(`| \`${p.id}\` | ${p.delivery_capability} | ${p.stewardship} |`);
+    L.push('');
+    L.push('### Charter exception');
+    L.push('');
+    L.push(`${c.teams.charter_exception.principle} Concurrence: ${c.teams.charter_exception.requires_concurrence.map((r) => '`' + r + '`').join(' + ')}; escalates as \`${c.teams.charter_exception.escalation_class}\`.`);
+  }
   L.push('');
   L.push('### Paths');
   L.push('');
@@ -692,6 +1047,83 @@ export function stableStringify(v) {
 // A capsule's seal is the sha256 over the capsule with current_hash blanked.
 // It is the compare-and-swap value: a stale expected-old-value or any tamper
 // changes the content and so fails to match the stored current_hash.
+// A ref is declared when it equals a git-ownership ref, or matches one written
+// as a `prefix/*` namespace. Nothing else is a sanctioned working ref.
+export function refDeclaration(contracts, ref) {
+  const decls = (contracts['git-ownership'] && contracts['git-ownership'].refs) || [];
+  return decls.find((d) => d.ref === ref || (d.ref.endsWith('/*') && ref.startsWith(d.ref.slice(0, -1)))) || null;
+}
+
+// A ref must be declared AND the seat must be entitled to it. Matching the name
+// alone would let a capsule name `main` — owner-exclusive and protected — and
+// pass, after which wake would hand a seat a protected branch as its working
+// ref. A per_seat namespace is owned by whichever lease holds the ticket, so
+// any role may hold its own; a protected ref is never a working ref at all.
+export function refEntitlementErrors(contracts, label, ref, actor) {
+  const d = refDeclaration(contracts, ref);
+  if (!d) return [`${label} ref '${ref}' matches no declared ref in git-ownership.refs`];
+  if (!refNameValid(ref)) return [`${label} ref '${ref}' is not a valid git branch name; git could not create it`];
+  // A seat works on an isolated continuation branch and nothing else.
+  // Rejecting only `protected` left `dev` reachable: it is pr-only, but it is
+  // owned by it-manager-iii, so an ITM3 seat could name it and pass — local
+  // readiness would then point work straight at the integration ref.
+  if (d.mutation !== 'isolated-continuation') {
+    return [`${label} ref '${ref}' is '${d.mutation}', not an isolated-continuation branch; a seat may only work on an isolated ref`];
+  }
+  if (d.per_seat) return [];
+  if (d.owner_role !== actor) return [`${label} ref '${ref}' is owned by '${d.owner_role}', not '${actor}'`];
+  return [];
+}
+
+// Every role that actually holds work must resolve to a hierarchy node, or a
+// blocked seat has no escalation parent and its only outcome is silence.
+export function hierarchyRoles(contracts) {
+  const h = contracts.hierarchy || {};
+  return new Set((h.nodes || []).map((n) => n.role));
+}
+
+// D5: a lease may only grant path globs that git-ownership actually declares,
+// and only to the role that owns them. Without this, "one writer per
+// overlapping path" is unenforced for every path outside .agentops/ — a lease
+// could grant any role any glob and verify would stay green. A lease may
+// declare `undeclared_paths_ok: true` for a deliberate exception; that is an
+// explicit, reviewable choice rather than a silent gap.
+// Does a declared git-ownership path cover this glob? A declared root-level
+// path (buildordinal.json, *.html) has no directory prefix, and every string
+// starts with '' — so the prefix form let the first root-level declaration
+// claim ownership of every lease glob in the repository, silently disabling the
+// grant check entirely. Shared with the overlap detector so the two cannot
+// drift apart.
+export function globCovers(declGlob, glob) {
+  const dirD = globPrefix(declGlob), dirG = globPrefix(glob);
+  const rootD = dirD === '', rootG = dirG === '';
+  if (rootD !== rootG) return false;              // root never covers a subtree, nor the reverse
+  if (rootD && rootG) {
+    const rx = new RegExp('^' + declGlob.split('*').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*') + '$');
+    return rx.test(glob) || declGlob === glob;
+  }
+  return dirG.startsWith(dirD);
+}
+
+export function pathGrantErrors(contracts, lease) {
+  const errors = [];
+  // An exception covers only the globs it names. A lease carrying one is still
+  // fully validated for every other glob, so a grandfathered lease cannot be
+  // widened later under cover of its own exception.
+  const exempt = new Set(((lease.path_grant_exception || {}).globs) || []);
+  const decls = (contracts['git-ownership'] && contracts['git-ownership'].paths) || [];
+  for (const g of lease.path_globs) {
+    if (exempt.has(g)) continue;
+    const owner = decls.find((d) => globCovers(d.glob, g));
+    if (!owner) {
+      errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
+    } else if (owner.owner_role !== lease.actor) {
+      errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
+    }
+  }
+  return errors;
+}
+
 export function computeCapsuleHash(capsule) {
   const clone = { ...capsule, current_hash: '' };
   return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
@@ -759,6 +1191,99 @@ export function loadRuntime(root = ROOT) {
 export function runtimeChecks(g, rt) {
   const errors = [];
   const roles = g.roles ? new Set(g.roles.roles.map((r) => r.role)) : new Set();
+  // A role that holds work but has no hierarchy node has no escalation parent:
+  // when it blocks, escalation routing has nowhere to send it and the only
+  // recorded outcome is silence. Declaring the role is not enough.
+  const hierRoles = hierarchyRoles(g);
+  // A blocker names an escalation CLASS, never a wake target. escalation.json
+  // owns who a class reaches, so a capsule cannot route itself to the Owner to
+  // jump the queue, nor away from the Owner to dodge a protected decision.
+  const escClasses = g.escalation ? new Set(g.escalation.classes.map((c) => c.id)) : new Set();
+  for (const t of Object.keys(rt.capsules)) {
+    const b = rt.capsules[t].blocker;
+    if (b && !escClasses.has(b.escalation_class)) {
+      errors.push(`capsule ${t}: blocker names escalation class '${b.escalation_class}', which escalation.json does not declare`);
+    }
+  }
+  // A seat whose own role may not move it out of its current state is stranded:
+  // it holds a lease and a capsule, and no permitted transition exists for it.
+  // Six of seven seat-holding roles sat like this — assigned forever, with
+  // nothing in validate that noticed. A dead seat must be a hard error.
+  if (g.transitions) {
+    for (const t of Object.keys(rt.capsules)) {
+      const cap = rt.capsules[t];
+      if (cap.blocker) continue;                      // blocked seats route by escalation, not transition
+      const out = g.transitions.transitions.filter((m) => m.from === cap.lifecycle_state && !m.protected);
+      if (!out.length) continue;                      // terminal or owner-only: not the seat's move to make
+      if (!out.some((m) => m.permitted_actor_roles.includes(cap.owner_actor))) {
+        errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
+      }
+    }
+  }
+  // "Pools are not standing delivery teams and do not own a backlog, decision
+  // stream, or source path merely because the path fits their specialty."
+  // Enforced where it can actually be violated: a capsule or a lease naming a
+  // pool as its holder would make it one.
+  if (g['model-effort']) {
+    const me = g['model-effort'];
+    for (const t of Object.keys(rt.capsules)) {
+      const mx = rt.capsules[t].model_effort;
+      if (mx == null) continue;
+      const tiers = me.tiers.filter((x) => x.allowed_efforts.includes(mx.effort));
+      if (!tiers.length) {
+        errors.push(`capsule ${t}: effort '${mx.effort}' matches no declared risk-and-station tier`);
+      } else if (tiers.every((x) => x.requires_exceptional_reason) && !mx.exceptional_reason) {
+        errors.push(`capsule ${t}: effort '${mx.effort}' is only allowed with a recorded exceptional reason`);
+      }
+    }
+  }
+  if (g.teams) {
+    const pools = new Set(g.teams.capability_pools.map((p) => p.id));
+    // A capsule may name the team it serves. Optional, because most work is
+    // path-scoped rather than team-scoped — but if it names one, that name must
+    // be a current standing role or pool, or a legacy alias that resolves to
+    // one. An unresolvable team is a ticket nobody owns.
+    const roster = new Set([...pools, ...g.teams.standing_roles.map((r) => r.id)]);
+    const aliases = new Map(g.teams.legacy_aliases.map((a) => [a.legacy, a.routes_to]));
+    for (const t of Object.keys(rt.capsules)) {
+      const team = rt.capsules[t].team;
+      if (team == null) continue;
+      if (!roster.has(team) && !aliases.has(team)) {
+        errors.push(`capsule ${t}: team '${team}' is neither a standing role, a capability pool, nor a declared legacy alias`);
+      }
+    }
+    for (const t of Object.keys(rt.capsules)) {
+      if (pools.has(rt.capsules[t].owner_actor)) {
+        errors.push(`capsule ${t}: owner_actor '${rt.capsules[t].owner_actor}' is a capability pool, not a standing team; a pool cannot hold a seat or own a backlog`);
+      }
+    }
+    for (const l of rt.leases) {
+      if (!l.revoked && pools.has(l.actor)) {
+        errors.push(`lease ${l.id}: actor '${l.actor}' is a capability pool, not a standing team; a pool cannot hold a writer lease`);
+      }
+    }
+  }
+  for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
+  // Entitlement must hold for every active lease, not only the one a capsule
+  // happens to select: a second unrevoked lease on a protected ref is
+  // authoritative too, and would otherwise never be looked at.
+  for (const l of rt.leases) if (!l.revoked) errors.push(...refEntitlementErrors(g, `lease '${l.id}'`, l.ref, l.actor));
+  // A per-seat ref is isolated by definition, so exactly one active lease may
+  // hold it. Path-overlap alone does not catch two seats pointed at the same
+  // branch with disjoint paths — they would still collide on the ref.
+  {
+    const byRef = new Map();
+    for (const l of rt.leases) {
+      if (l.revoked) continue;
+      const d = refDeclaration(g, l.ref);
+      // Every isolated ref is one seat's branch, per_seat or not: two makers
+      // on one claude/* ref collide even with disjoint paths.
+      if (!d || d.mutation !== 'isolated-continuation') continue;
+      if (byRef.has(l.ref)) {
+        errors.push(`isolated ref '${l.ref}' is held by both '${byRef.get(l.ref)}' and '${l.id}'; an isolated ref belongs to exactly one seat`);
+      } else byRef.set(l.ref, l.id);
+    }
+  }
   const roleMay = new Map(g.roles ? g.roles.roles.map((r) => [r.role, new Set(r.may)]) : []);
   const evIds = g.evidence ? new Set(g.evidence.evidence.map((e) => e.id)) : new Set();
   const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
@@ -822,7 +1347,15 @@ export function runtimeChecks(g, rt) {
       if (lease.revoked) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' is revoked`);
       if (lease.ticket !== ticket) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' belongs to ticket '${lease.ticket}'`);
       if (lease.actor !== cap.owner_actor) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' does not match lease actor '${lease.actor}'`);
+      if (hierRoles.size && !hierRoles.has(cap.owner_actor)) {
+        errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' has no node in hierarchy.json, so a blocked seat has no escalation parent`);
+      }
       if (lease.ref !== cap.ref) errors.push(`capsule '${ticket}' ref '${cap.ref}' does not match lease ref '${lease.ref}'`);
+      // Capsule and lease agreeing proves nothing if both name a ref namespace
+      // no policy declares. Every working ref must fall under a declared
+      // git-ownership ref pattern, so `wake` cannot hand a seat a checkout
+      // instruction the control plane never sanctioned.
+      errors.push(...refEntitlementErrors(g, `capsule '${ticket}'`, cap.ref, cap.owner_actor));
       for (const p of cap.affected_paths) {
         const covered = lease.path_globs.some((g) => globPrefix(p).startsWith(globPrefix(g)));
         if (!covered) errors.push(`capsule '${ticket}' affected path '${p}' is not covered by its writer lease '${lease.id}'`);
@@ -861,10 +1394,44 @@ function currentHead(root) {
   catch { return null; }
 }
 
+// Is HEAD on a branch, or detached? Reseating onto a detached HEAD would pin a
+// capsule to a commit no branch carries — see runReseat.
+function onBranch(root) {
+  try {
+    execFileSync('git', ['symbolic-ref', '--quiet', 'HEAD'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
+// Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
+// work, so an absent ref is normal for an unstarted seat — but wake must say so
+// rather than printing a checkout instruction that silently cannot be followed.
+function refExists(root, ref) {
+  try {
+    // execFileSync, never execSync: the ref comes from capsule JSON, and a
+    // shell would expand `$(...)` in it — waking a seat would then run
+    // arbitrary commands. An argument array cannot be interpreted as syntax.
+    // Fully qualified as refs/heads/: an unqualified name is ambiguous and
+    // would report a same-named TAG as an existing working branch.
+    execFileSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${ref}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
+// A ref that passes policy must still be a name git can actually create;
+// otherwise wake hands a seat a branch that cannot exist. Checked with git's
+// own rules, again without a shell.
+export function refNameValid(ref) {
+  try {
+    execFileSync('git', ['check-ref-format', '--branch', ref], { stdio: ['ignore', 'ignore', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
 // Build the capsule text from already-loaded contracts + runtime. Pure and
 // deterministic in `frozen` mode (no live-HEAD lookup) — that mode is the basis
 // of the reconstruction goldens and the clean-clone drill.
-export function buildCapsule(contracts, rt, work, { frozen = false, head = null } = {}) {
+export function buildCapsule(contracts, rt, work, { frozen = false, head = null, root = ROOT } = {}) {
   const cap = rt.capsules[work];
   if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
   const oi = contracts['owner-intent'];
@@ -885,9 +1452,21 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null 
   L.push(`DONE-WHEN  : ${cap.done_when}`);
   L.push(`AUTHORITY  : may ${cap.authority.may.join(', ')} | must-not ${cap.authority.must_not.join(', ')} | expiry ${cap.authority.expiry}`);
   L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
-  L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}`);
+  const refNote = frozen ? '' : (refExists(root, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
+  L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
   L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
+  // A seat at a gated state must know which gate stands in front of it, who
+  // may open it, and what evidence it needs — otherwise it discovers the wall
+  // by walking into it. Decision 0009 named them; this is where a seat reads it.
+  const pgc = contracts['promotion-gates'];
+  if (pgc) {
+    const ahead = pgc.gates.filter((g) => (g.guards_transitions || []).some((t) => t.from === cap.lifecycle_state));
+    for (const g of ahead) {
+      const to = (g.guards_transitions || []).filter((t) => t.from === cap.lifecycle_state).map((t) => t.to).join('/');
+      L.push(`GATE       : ${g.id} (${g.name}) stands before ${to} — ${g.actor_role} acts; evidence ${g.required_evidence.join(', ') || 'none declared'}`);
+    }
+  }
   L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
   const rep = contracts['information-access'].reporting;
   L.push(`REPORTING  : ${rep.style} Must: ${rep.must.join('; ')}. Never: ${rep.must_not.join('; ')}.`);
@@ -911,7 +1490,7 @@ export function runWake(root, actor, work, { frozen = false } = {}) {
   const cap = rt.capsules[work];
   if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
   if (actor && actor !== cap.owner_actor) return { errors: [`actor '${actor}' does not own capsule '${work}' (owner is '${cap.owner_actor}')`] };
-  return buildCapsule(contracts, rt, work, { frozen, head: frozen ? null : currentHead(root) });
+  return buildCapsule(contracts, rt, work, { frozen, head: frozen ? null : currentHead(root), root });
 }
 
 // ===========================================================================
@@ -1134,7 +1713,14 @@ export function renderHud(contracts, rt) {
   const protectedStates = new Set(contracts.transitions.protected_states);
   const ownerActor = oi.owner.actor_id;
 
-  const needsYou = tickets.filter((t) => { const b = rt.capsules[t].blocker; return b && b.wake === ownerActor; });
+  // Derived through the same dispatch the executor uses, so the HUD and the
+  // wake issues can never disagree about what is the Owner's. Reading
+  // `blocker.wake` here was wrong twice over: a capsule no longer carries a
+  // wake target at all, so this silently showed nothing, and even when it did,
+  // it trusted the capsule's own claim about who it reached.
+  const dispatch = computeDispatch(contracts, rt);
+  const needsYou = dispatch.filter((e) => e.kind === 'owner-decision').map((e) => e.ticket);
+  const dispatchReason = new Map(dispatch.map((e) => [e.ticket, e]));
   const promotion = tickets.filter((t) => protectedStates.has(rt.capsules[t].lifecycle_state));
   const ownerReserved = contracts['owner-command'].actions.filter((a) => a.protected && a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner').map((a) => a.id);
 
@@ -1161,7 +1747,7 @@ export function renderHud(contracts, rt) {
 
   L.push('<section><h2>Needs you now</h2>');
   if (needsYou.length === 0) L.push('<p class="none">No owner decisions are pending on the current committed state.</p>');
-  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Blocker</th></tr>'); for (const t of needsYou) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(JSON.stringify(rt.capsules[t].blocker))}</td></tr>`); L.push('</table></div>'); }
+  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Why it reached you</th></tr>'); for (const t of needsYou) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(dispatchReason.get(t).reason)}</td></tr>`); L.push('</table></div>'); }
   L.push(`<p class="sub">Owner-exclusive command actions: ${ownerReserved.map((a) => `<span class="pill">${esc(a)}</span>`).join(' ')}</p>`);
   L.push('</section>');
 
@@ -1304,6 +1890,383 @@ export function runMigrate(root, { plan = false } = {}) {
   return { ok: true, errors: [], summary, missing, workItems: m.work_items, stubs };
 }
 
+
+// ---------------------------------------------------------------------------
+// The Review & Approval Hub — a multi-page static site generated from the same
+// validated state everything else reads.
+//
+// It replaces a committed Next.js export: 1457 build-output files with no
+// source on any branch, unbuildable, uneditable, and already drifted from the
+// control plane it claimed to show. Nothing here is built or fetched; every
+// page is a projection of contracts + capsules + leases + events, so `verify`
+// drift-gates the site exactly as it gates GOVERNANCE.md, and it cannot rot
+// away from the truth again without CI saying so.
+// ---------------------------------------------------------------------------
+const HUB_DIR = 'generated/hub';
+
+const hubEsc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+
+const HUB_CSS = [
+  ':root{--bg:#f7f7f8;--fg:#1b1d21;--card:#fff;--line:#e2e3e7;--muted:#5c6169;--accent:#6b4bd6;--warn:#b23b2e;--ok:#1c7d4d}',
+  '@media(prefers-color-scheme:dark){:root{--bg:#15161a;--fg:#e9eaee;--card:#1e2026;--line:#2c2f37;--muted:#9aa0aa;--accent:#a48bff;--warn:#ff7a6b;--ok:#4bd694}}',
+  '*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}',
+  'header{padding:20px;border-bottom:1px solid var(--line)}h1{margin:0 0 4px;font-size:20px}.sub{color:var(--muted);font-size:13px}',
+  'nav{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px}nav a{color:var(--accent);text-decoration:none}nav a:hover{text-decoration:underline}',
+  'main{max-width:1000px;margin:0 auto;padding:20px;display:grid;gap:16px}',
+  'section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}',
+  'h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}',
+  'table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}',
+  'code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}',
+  '.pill{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px}',
+  '.none{color:var(--muted);font-style:italic}.ok{color:var(--ok)}.warn{color:var(--warn)}.wrap{overflow-x:auto}',
+  'a{color:var(--accent)}dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px}dt{color:var(--muted)}dd{margin:0}',
+  'ol.chain{margin:0;padding-left:18px;font-size:13px}ol.chain li{margin-bottom:8px}',
+  'footer{max-width:1000px;margin:0 auto;padding:12px 20px 32px;color:var(--muted);font-size:12px}',
+].join('');
+
+// One shell so every page shares chrome and a reader never lands somewhere with
+// no way back. `up` is '' at the site root and '../' one level down.
+function hubPage(project, title, up, bodyHtml) {
+  return [
+    '<!DOCTYPE html>',
+    '<!-- GENERATED by .agentops/tools/opsctl.mjs render — do not edit by hand. Deterministic projection of validated repository state. -->',
+    '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+    `<title>${hubEsc(project.project_name)} — ${hubEsc(title)}</title>`,
+    `<style>${HUB_CSS}</style></head><body>`,
+    '<header>',
+    `<h1>${hubEsc(title)}</h1>`,
+    `<div class="sub">${hubEsc(project.project_name)} · Review &amp; Approval Hub · generated from committed state by <code>opsctl render</code></div>`,
+    `<nav><a href="${up}index.html">Overview</a><a href="${up}decisions.html">Decisions</a><a href="${up}help-desk.html">Help desk</a><a href="${up}seats.html">Seats &amp; teams</a></nav>`,
+    '</header><main>',
+    bodyHtml,
+    '</main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>',
+    '</body></html>',
+  ].join('\n');
+}
+
+export function renderHubSite(contracts, rt) {
+  const project = contracts.project;
+  const oi = contracts['owner-intent'];
+  const tickets = Object.keys(rt.capsules).sort();
+  const dispatch = computeDispatch(contracts, rt);
+  const byTicket = new Map(dispatch.map((e) => [e.ticket, e]));
+  const owner = oi.owner.actor_id;
+  const issueBase = `${String(project.repository).replace(/\.git$/, '')}/issues/new`;
+  const q = (o) => Object.entries(o).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  const ownerDue = dispatch.filter((e) => e.kind === 'owner-decision');
+  const out = [];
+
+  // --- Overview -------------------------------------------------------------
+  {
+    const L = [];
+    L.push('<section><h2>Needs you now</h2>');
+    if (!ownerDue.length) L.push(`<p class="none">Nothing is waiting on ${hubEsc(owner)}. ${dispatch.length} item(s) are moving as seat work.</p>`);
+    else {
+      L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Why it reached you</th></tr>');
+      for (const e of ownerDue) L.push(`<tr><td><a href="tickets/${hubEsc(e.ticket)}.html"><code>${hubEsc(e.ticket)}</code></a></td><td>${hubEsc(e.reason)}</td></tr>`);
+      L.push('</table></div>');
+    }
+    L.push('</section>');
+
+    L.push('<section><h2>Every ticket</h2><div class="wrap"><table><tr><th>Ticket</th><th>Seat</th><th>State</th><th>Due</th><th>Waking</th></tr>');
+    for (const t of tickets) {
+      const cap = rt.capsules[t];
+      const d = byTicket.get(t);
+      L.push(`<tr><td><a href="tickets/${hubEsc(t)}.html"><code>${hubEsc(t)}</code></a></td><td>${hubEsc(cap.owner_actor)}</td><td>${hubEsc(cap.lifecycle_state)}</td><td>${d ? (d.kind === 'owner-decision' ? '<span class="warn">owner</span>' : '<span class="ok">seat</span>') : '<span class="none">—</span>'}</td><td>${d ? hubEsc(d.wake) : '<span class="none">nobody</span>'}</td></tr>`);
+    }
+    L.push('</table></div><p class="sub">"Due" is derived by <code>opsctl dispatch</code> from the contracts: a blocked ticket routes by its declared escalation class, an unblocked one by whoever may move it out of its state.</p></section>');
+    out.push({ rel: `${HUB_DIR}/index.html`, text: hubPage(project, 'Overview', '', L.join('\n')) + '\n' });
+  }
+
+  // --- Decisions ------------------------------------------------------------
+  {
+    const L = [];
+    L.push('<section><h2>Waiting on the owner</h2>');
+    if (!ownerDue.length) L.push('<p class="none">No decision is pending on the current committed state.</p>');
+    else {
+      L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Reason</th></tr>');
+      for (const e of ownerDue) L.push(`<tr><td><a href="tickets/${hubEsc(e.ticket)}.html"><code>${hubEsc(e.ticket)}</code></a></td><td>${hubEsc(e.reason)}</td></tr>`);
+      L.push('</table></div>');
+    }
+    L.push('</section>');
+
+    L.push('<section><h2>File a decision</h2><div class="wrap"><table><tr><th>Ticket</th><th>State</th><th>Compare-and-swap hash</th><th></th></tr>');
+    for (const t of tickets) {
+      const cap = rt.capsules[t];
+      const hash = computeCapsuleHash(cap);
+      const link = `${issueBase}?${q({ template: 'owner-decision.yml', title: `[decision] ${t}`, target: t, hash })}`;
+      L.push(`<tr><td><code>${hubEsc(t)}</code></td><td>${hubEsc(cap.lifecycle_state)}</td><td><code>${hubEsc(hash.slice(0, 23))}…</code></td><td><a href="${hubEsc(link)}">File →</a></td></tr>`);
+    }
+    L.push('</table></div>');
+    L.push('<p class="sub">Each link carries the capsule’s live hash. A decision filed against a hash that has since moved is rejected as stale rather than applied to state you did not see, and only the owner’s own issues execute.</p></section>');
+
+    const reserved = contracts['owner-command'].actions.filter((a) => a.protected).map((a) => a.id);
+    L.push(`<section><h2>Protected — owner only</h2><p class="sub">${reserved.map((a) => `<span class="pill">${hubEsc(a)}</span>`).join(' ')}</p>`);
+    L.push(`<p class="sub">${oi.protected_decision_classes.map(hubEsc).join(' · ')}</p></section>`);
+    out.push({ rel: `${HUB_DIR}/decisions.html`, text: hubPage(project, 'Decisions', '', L.join('\n')) + '\n' });
+  }
+
+  // --- Seats ----------------------------------------------------------------
+  {
+    const L = [];
+    L.push('<section><h2>Seats and their writer leases</h2><div class="wrap"><table><tr><th>Lease</th><th>Seat</th><th>Ticket</th><th>Ref</th><th>Paths</th><th>Expiry</th></tr>');
+    for (const l of rt.leases.filter((x) => !x.revoked)) {
+      L.push(`<tr><td><code>${hubEsc(l.id)}</code></td><td>${hubEsc(l.actor)}</td><td><a href="tickets/${hubEsc(l.ticket)}.html"><code>${hubEsc(l.ticket)}</code></a></td><td><code>${hubEsc(l.ref)}</code></td><td>${l.path_globs.map((g) => `<code>${hubEsc(g)}</code>`).join(' ')}</td><td>${hubEsc(l.expiry)}</td></tr>`);
+    }
+    L.push('</table></div><p class="sub">One writer per overlapping path or ref. Collisions, undeclared refs and path grants a role was never given are rejected by <code>opsctl verify</code>.</p></section>');
+
+    L.push('<section><h2>Escalation routing</h2><div class="wrap"><table><tr><th>Class</th><th>Route</th><th>Wakes</th><th>Work continues</th></tr>');
+    for (const c of contracts.escalation.classes) {
+      L.push(`<tr><td><code>${hubEsc(c.id)}</code></td><td>${c.route.map(hubEsc).join(' → ')}</td><td>${hubEsc(c.wake)}</td><td>${c.continuing_work_allowed ? 'yes' : '<span class="warn">no</span>'}</td></tr>`);
+    }
+    L.push('</table></div><p class="sub">A ticket names a class, never a wake target, so nothing can route itself to the owner to jump the queue or away from the owner to dodge a protected decision.</p></section>');
+    if (contracts.teams) {
+      const tm = contracts.teams;
+      L.push('<section><h2>Standing coordination roles</h2><div class="wrap"><table><tr><th>Role</th><th>Standing responsibility</th><th>Boundary</th></tr>');
+      for (const r of tm.standing_roles) L.push(`<tr><td><code>${hubEsc(r.id)}</code></td><td>${hubEsc(r.responsibility)}</td><td>${hubEsc(r.boundary)}</td></tr>`);
+      L.push('</table></div></section>');
+      L.push('<section><h2>Capability pools</h2>');
+      L.push('<p class="sub">Not standing teams. They own no backlog, no decision stream and no source path, and validate rejects a capsule or lease that names one as its holder.</p>');
+      L.push('<div class="wrap"><table><tr><th>Pool</th><th>Delivery capability</th><th>Stewardship between tickets</th></tr>');
+      for (const p of tm.capability_pools) L.push(`<tr><td><code>${hubEsc(p.id)}</code></td><td>${hubEsc(p.delivery_capability)}</td><td>${hubEsc(p.stewardship)}</td></tr>`);
+      L.push('</table></div></section>');
+      const at = contracts.hierarchy && contracts.hierarchy.authority_tiers;
+      if (at) {
+        L.push('<section><h2>Authority tiers</h2>');
+        L.push(`<p class="sub">${hubEsc(at.principle)}</p>`);
+        if (at.disambiguation) {
+          L.push(`<p class="sub"><strong>P-codes mean two things.</strong> ${hubEsc(at.disambiguation.rule)} `
+            + `Authority: ${at.disambiguation.authority_subjects.map((x) => `<span class="pill">${hubEsc(x)}</span>`).join(' ')} · `
+            + `Priority: ${at.disambiguation.priority_subjects.map((x) => `<span class="pill">${hubEsc(x)}</span>`).join(' ')}</p>`);
+          L.push(`<p class="sub warn">${hubEsc(at.disambiguation.never)}</p>`);
+        }
+        L.push('<div class="wrap"><table><tr><th>Tier</th><th>Who</th><th>Holds</th><th>Cannot</th></tr>');
+        for (const lv of at.levels) {
+          L.push(`<tr><td><strong>P${lv.p}</strong><br><span class="sub">${hubEsc(lv.label)}</span></td>`
+            + `<td>${lv.actors.map((a) => `<code>${hubEsc(a)}</code>`).join('<br>')}</td>`
+            + `<td>${lv.holds.map(hubEsc).join('; ')}</td>`
+            + `<td class="warn">${lv.cannot.map(hubEsc).join('; ')}</td></tr>`);
+          if (lv.note) L.push(`<tr><td></td><td colspan="3" class="sub">${hubEsc(lv.note)}</td></tr>`);
+        }
+        L.push('</table></div>');
+        L.push(`<p class="sub">${Object.values(at.rules).map(hubEsc).join(' · ')}</p></section>`);
+      }
+      const tf = contracts.escalation && contracts.escalation.ticket_flow;
+      if (tf) {
+        L.push('<section><h2>Where a question goes</h2>');
+        L.push(`<p class="sub">${hubEsc(tf.principle)}</p>`);
+        L.push('<div class="wrap"><table><tr><th>#</th><th>Actor</th><th>Does</th></tr>');
+        for (const st of tf.steps) L.push(`<tr><td>${st.n}</td><td><code>${hubEsc(st.actor)}</code></td><td>${hubEsc(st.does)}</td></tr>`);
+        L.push('</table></div>');
+        L.push(`<p class="sub">Handoffs keep ${tf.handoff_events.map((e) => `<span class="pill">${hubEsc(e)}</span>`).join(' ')} distinct. ${hubEsc(tf.handoff_rule)}</p>`);
+        L.push(`<p class="sub"><strong>${hubEsc(tf.owner_is_last_resort)}</strong></p></section>`);
+      }
+      const pg2 = contracts['promotion-gates'];
+      if (pg2) {
+        L.push('<section><h2>Promotion gates</h2>');
+        L.push(`<p class="sub">${hubEsc(pg2.principle)}</p>`);
+        L.push('<div class="wrap"><table><tr><th>Gate</th><th>Name</th><th>Who acts</th><th>Guards</th><th>Evidence</th><th>Grants</th></tr>');
+        for (const g of pg2.gates) {
+          const guards = (g.guards_transitions || []).map((t) => `<code>${hubEsc(t.from)}</code> → <code>${hubEsc(t.to)}</code>`).join('<br>') || '—';
+          L.push(`<tr><td><strong>${hubEsc(g.id)}</strong></td><td>${hubEsc(g.name)}</td><td>${hubEsc(g.actor_role)}</td><td>${guards}</td><td>${g.required_evidence.map(hubEsc).join(', ') || '—'}</td><td>${g.grants.length ? g.grants.map(hubEsc).join(', ') : '<span class="none">nothing</span>'}</td></tr>`);
+        }
+        L.push(`</table></div><p class="sub">${hubEsc(pg2.immutable_candidate)}</p></section>`);
+      }
+      const ce = tm.charter_exception;
+      L.push('<section><h2>When the charter cannot resolve it</h2>');
+      L.push(`<p>${hubEsc(ce.principle)}</p>`);
+      L.push(`<p class="sub">Concurrence required: ${ce.requires_concurrence.map((r) => `<span class="pill">${hubEsc(r)}</span>`).join(' ')} · escalates as <code>${hubEsc(ce.escalation_class)}</code> · records ${ce.records.map(hubEsc).join('; ')}.</p>`);
+      L.push(`<p class="sub">Pods dissolve after ${hubEsc(tm.pods.dissolves_after)}; one lead and at most ${tm.pods.max_helpers} helpers. A pod's chat is never an authority source.</p></section>`);
+    }
+    out.push({ rel: `${HUB_DIR}/seats.html`, text: hubPage(project, 'Seats and teams', '', L.join('\n')) + '\n' });
+  }
+
+  // --- Help desk ------------------------------------------------------------
+  {
+    const L = [];
+    L.push(`<section><h2>Raise something</h2><p><a href="${hubEsc(issueBase)}?${q({ template: 'help-desk-ticket.yml' })}">File a Help Desk ticket →</a></p>`);
+    L.push('<p class="sub">Help Desk is the intake route. A ticket that turns out to need a protected decision escalates to the owner through the routing on the Seats page rather than being answered here.</p></section>');
+    const blocked = tickets.filter((t) => rt.capsules[t].blocker);
+    L.push('<section><h2>Open blockers</h2>');
+    if (!blocked.length) L.push('<p class="none">Nothing is blocked.</p>');
+    else {
+      L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Kind</th><th>Escalation class</th><th>Summary</th></tr>');
+      for (const t of blocked) {
+        const b = rt.capsules[t].blocker;
+        L.push(`<tr><td><a href="tickets/${hubEsc(t)}.html"><code>${hubEsc(t)}</code></a></td><td>${hubEsc(b.kind)}</td><td><code>${hubEsc(b.escalation_class)}</code></td><td>${hubEsc(b.summary)}</td></tr>`);
+      }
+      L.push('</table></div>');
+    }
+    L.push('</section>');
+    out.push({ rel: `${HUB_DIR}/help-desk.html`, text: hubPage(project, 'Help desk', '', L.join('\n')) + '\n' });
+  }
+
+  // --- One page per ticket --------------------------------------------------
+  for (const t of tickets) {
+    const cap = rt.capsules[t];
+    const lease = rt.leases.find((l) => l.id === cap.writer_lease);
+    const d = byTicket.get(t);
+    const events = (rt.events && rt.events[t]) ? rt.events[t] : [];
+    const L = [];
+
+    L.push('<section><h2>Assignment</h2><dl>');
+    const row = (k, v) => L.push(`<dt>${hubEsc(k)}</dt><dd>${v}</dd>`);
+    row('Seat', hubEsc(cap.owner_actor));
+    row('State', hubEsc(cap.lifecycle_state));
+    row('Objective', hubEsc(cap.objective));
+    row('Done when', hubEsc(cap.done_when));
+    row('Next action', hubEsc(cap.next_action));
+    row('Branch', `<code>${hubEsc(cap.ref)}</code>`);
+    row('Base', `<code>${hubEsc(cap.base_oid.slice(0, 12))}</code>`);
+    row('Revision', `${cap.revision} · seal <code>${hubEsc(String(cap.current_hash).slice(0, 23))}…</code>`);
+    row('Succeeds', cap.parent_hash ? `<code>${hubEsc(cap.parent_hash.slice(0, 23))}…</code>` : '<span class="none">nothing (genesis)</span>');
+    L.push('</dl></section>');
+
+    L.push('<section><h2>Authority</h2><dl>');
+    row('May', cap.authority.may.map((a) => `<span class="pill">${hubEsc(a)}</span>`).join(' '));
+    row('Must not', cap.authority.must_not.map((a) => `<span class="pill">${hubEsc(a)}</span>`).join(' '));
+    row('Expires', hubEsc(cap.authority.expiry));
+    if (lease) {
+      row('Writer lease', `<code>${hubEsc(lease.id)}</code> issued by ${hubEsc(lease.issuer)}`);
+      row('Paths', lease.path_globs.map((g) => `<code>${hubEsc(g)}</code>`).join(' '));
+    }
+    L.push('</dl></section>');
+
+    L.push('<section><h2>Status</h2>');
+    if (cap.blocker) {
+      L.push(`<p class="warn">Blocked — ${hubEsc(cap.blocker.kind)}, escalating as <code>${hubEsc(cap.blocker.escalation_class)}</code>.</p><p>${hubEsc(cap.blocker.summary)}</p>`);
+    } else if (d) {
+      L.push(`<p class="ok">Due: ${hubEsc(d.reason)} — waking ${hubEsc(d.wake)}.</p>`);
+    } else {
+      L.push('<p class="none">Nothing due; this ticket wakes nobody.</p>');
+    }
+    L.push('</section>');
+
+    L.push('<section><h2>Event chain</h2>');
+    if (!events.length) L.push('<p class="none">No events recorded.</p>');
+    else {
+      L.push('<ol class="chain">');
+      for (const ev of [...events].sort((a, b) => a.seq - b.seq)) {
+        L.push(`<li><code>${hubEsc(ev.id)}</code> · ${hubEsc(ev.kind)} · ${hubEsc(ev.actor)} · ${hubEsc(ev.at)}<br>${hubEsc(ev.summary)}</li>`);
+      }
+      L.push('</ol>');
+    }
+    L.push('<p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>');
+
+    out.push({ rel: `${HUB_DIR}/tickets/${t}.html`, text: hubPage(project, t, '../', L.join('\n')) + '\n' });
+  }
+
+  return out;
+}
+
+
+// ---------------------------------------------------------------------------
+// The tool's own header, kept honest.
+//
+// The docblock had drifted to 5 of 8 subcommands (issue #392, D8) and the one
+// it omitted was `wake` — the command the cold-start bootstrap depends on. A
+// header a cold seat reads to learn the interface is documentation the same
+// way a capsule is: wrong is worse than absent. Pure over both texts, so a
+// negative plant enters exactly where the live check does.
+// ---------------------------------------------------------------------------
+export function subcommandDocErrors(headerText, sourceText) {
+  const dispatched = [...new Set([...sourceText.matchAll(/cmd === '([a-z-]+)'/g)].map((m) => m[1]))]
+    // `selftest` is the bare alias of `--selftest`; documenting one covers both.
+    .filter((c) => c !== 'selftest');
+  const errors = [];
+  for (const c of dispatched.sort()) {
+    const token = c.startsWith('--') ? c : `//   ${c} `;
+    const documented = c.startsWith('--')
+      ? new RegExp(`^//\\s+${c}\\s`, 'm').test(headerText)
+      : headerText.includes(token);
+    if (!documented) errors.push(`opsctl header does not document dispatched subcommand '${c}'`);
+  }
+  return errors;
+}
+
+// The header is everything above the first non-comment line: the block a reader
+// sees before any code.
+export function opsctlHeader(sourceText) {
+  const lines = sourceText.split('\n');
+  const end = lines.findIndex((l) => l.trim() !== '' && !l.startsWith('//'));
+  return lines.slice(0, end === -1 ? lines.length : end).join('\n');
+}
+
+
+// ---------------------------------------------------------------------------
+// The Help Desk intake form, generated from the roster.
+//
+// Its team dropdown was the only place in the repository the thirteen team
+// names existed (issue #392, D9), and it had already diverged from the charter:
+// it offered names the charter calls legacy task names, and omitted pools the
+// charter declares. Generating it means the form a person files a ticket into
+// and the contract that routes it cannot disagree.
+// ---------------------------------------------------------------------------
+export function renderHelpDeskTemplate(contracts) {
+  const tm = contracts.teams;
+  // Legacy names stay selectable: open tickets and muscle memory both use them,
+  // and the alias map is what turns one into a current owner.
+  const options = ['unsure / route it', ...tm.legacy_aliases.map((a) => a.legacy).sort()];
+  const L = [];
+  L.push('# GENERATED by .agentops/tools/opsctl.mjs render — do not edit by hand.');
+  L.push('# The team list is projected from .agentops/governance/teams.json so the');
+  L.push('# intake form and the roster that routes it cannot diverge.');
+  L.push('name: Help Desk ticket');
+  L.push('description: File work for the Help Desk queue — a request, a bug, a blocker, or a question.');
+  L.push('title: "[ticket] "');
+  L.push('labels: ["help-desk"]');
+  L.push('body:');
+  L.push('  - type: markdown');
+  L.push('    attributes:');
+  L.push('      value: |');
+  L.push('        Files a Help Desk ticket. This is **intake only** — it records and routes');
+  L.push('        the request; it does not authorize any protected transition. Decisions');
+  L.push('        that need owner authority go through the *Owner decision* form instead.');
+  L.push('');
+  L.push('  - type: dropdown');
+  L.push('    id: kind');
+  L.push('    attributes:');
+  L.push('      label: Kind');
+  L.push('      options:');
+  for (const k of ['request — new work', 'bug — something is wrong', 'blocker — work is stopped', 'question — needs an answer', 'evidence — recording a result']) L.push(`        - ${k}`);
+  L.push('    validations:');
+  L.push('      required: true');
+  L.push('');
+  L.push('  - type: dropdown');
+  L.push('    id: team');
+  L.push('    attributes:');
+  L.push('      label: Suggested team');
+  L.push('      description: Best guess is fine; Help Desk routes it.');
+  L.push('      options:');
+  for (const o of options) L.push(`        - ${o}`);
+  L.push('    validations:');
+  L.push('      required: true');
+  L.push('');
+  L.push('  - type: textarea');
+  L.push('    id: what');
+  L.push('    attributes:');
+  L.push('      label: What is needed');
+  L.push('      description: What should be true when this is done.');
+  L.push('    validations:');
+  L.push('      required: true');
+  L.push('');
+  L.push('  - type: textarea');
+  L.push('    id: evidence');
+  L.push('    attributes:');
+  L.push('      label: Evidence / where to look');
+  L.push('      description: Screenshots, exact paths, commits, or a URL. Optional.');
+  L.push('');
+  L.push('  - type: dropdown');
+  L.push('    id: urgency');
+  L.push('    attributes:');
+  L.push('      label: Urgency');
+  L.push('      options:');
+  for (const u of ['normal', 'blocking other work', 'needs owner attention']) L.push(`        - ${u}`);
+  L.push('    validations:');
+  L.push('      required: true');
+  return L.join('\n');
+}
+
 // ---------------------------------------------------------------------------
 // Runners.
 // ---------------------------------------------------------------------------
@@ -1311,6 +2274,7 @@ const GENERATED_VIEW = 'generated/GOVERNANCE.md';
 const RECON_DIR = 'generated/reconstruction';
 const HUD_VIEW = 'generated/hud/index.html';
 const MIGRATION_VIEW = 'generated/migration/PLAN.md';
+const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 
 // Every committed generated artifact, as {rel, text}. These are the sole
 // writes of `render` and the drift gate of `verify`. Frozen wake goldens make
@@ -1324,6 +2288,8 @@ function generatedArtifacts(contracts, rt) {
     out.push({ rel: `${RECON_DIR}/${ticket}.wake.txt`, text: cap.text + '\n' });
   }
   out.push({ rel: HUD_VIEW, text: renderHud(contracts, rt) + '\n' });
+  out.push(...renderHubSite(contracts, rt));
+  if (contracts.teams) out.push({ rel: HELPDESK_VIEW, text: renderHelpDeskTemplate(contracts) + '\n' });
   if (contracts.migration) out.push({ rel: MIGRATION_VIEW, text: renderMigration(contracts, rt) + '\n' });
   return out;
 }
@@ -1343,6 +2309,45 @@ export function runValidate(root = ROOT) {
   return { contracts, errors: all };
 }
 
+// Published mirrors. The repository serves its own tree, so the generated HUD
+// and Hub need a copy at a tidy URL outside .agentops/. Keeping these as a
+// hand-run `cp` drifted twice in one session, both times caught only by a test
+// telling a human to go and copy a file; render now writes them itself.
+//
+// They are deliberately NOT generatedArtifacts: those are resolved against
+// `root`, and the reconstruction drill reconstructs from a copy of .agentops
+// alone, where a path outside it cannot exist. A mirror is therefore written
+// only when its destination tree is actually present.
+const MIRRORS = [
+  { from: HUD_VIEW, to: '../hud/index.html' },
+  { from: `${HUB_DIR}/`, to: '../review-approval-hub/' },
+  { from: HELPDESK_VIEW, to: '../.github/ISSUE_TEMPLATE/help-desk-ticket.yml' },
+];
+
+function mirrorTargets(root, arts) {
+  const out = [];
+  for (const m of MIRRORS) {
+    const destRoot = resolve(root, m.to);
+    // The published tree itself must already exist. Testing its PARENT instead
+    // was wrong for a directory mirror: the parent is the repository root,
+    // which exists in the drill's .agentops-only clean room too, so verify
+    // there demanded a review-approval-hub/ that a clean room never has. Both
+    // published trees are committed, so a real checkout always has them; a
+    // clean room has neither and mirrors nothing.
+    const publishedTree = m.from.endsWith('/') ? destRoot : dirname(destRoot);
+    if (!existsSync(publishedTree)) continue;
+    if (m.from.endsWith('/')) {
+      for (const a of arts.filter((x) => x.rel.startsWith(m.from))) {
+        out.push({ rel: a.rel, target: resolve(destRoot, a.rel.slice(m.from.length)), text: a.text });
+      }
+    } else {
+      const a = arts.find((x) => x.rel === m.from);
+      if (a) out.push({ rel: a.rel, target: destRoot, text: a.text });
+    }
+  }
+  return out;
+}
+
 function runRender(root, check) {
   const { contracts, errors } = runValidate(root);
   if (errors.length) return { errors, drift: false };
@@ -1360,6 +2365,17 @@ function runRender(root, check) {
       mkdirSync(dirname(target), { recursive: true });
       writeFileSync(target, a.text);
       wrote.push(a.rel);
+    }
+  }
+  for (const m of mirrorTargets(root, arts)) {
+    if (check) {
+      let current = null;
+      try { current = readFileSync(m.target, 'utf8'); } catch { /* missing */ }
+      if (current !== m.text) drifted.push(`${m.rel} (published mirror)`);
+    } else {
+      mkdirSync(dirname(m.target), { recursive: true });
+      writeFileSync(m.target, m.text);
+      wrote.push(`${m.rel} -> mirror`);
     }
   }
   return { errors: [], drift: drifted.length > 0, drifted, wrote };
@@ -1453,8 +2469,26 @@ export function runDrill(root = ROOT) {
     try { rmSync(clone, { recursive: true, force: true }); } catch { /* best effort */ }
   }
 
+  // D6 (issue #392): the drill proves render determinism, and its one-line
+  // verdict was read as proving continuity. It printed "zero evidence loss"
+  // for a fleet where every seat's own wake said `re-seat before mutating`.
+  // The goldens are deliberately frozen — a golden must be deterministic — so
+  // staleness cannot show up there. It is reported here instead: non-fatal,
+  // because a stale base is not evidence loss, but never invisible again.
+  const stale = [];
+  const head = currentHead(root);
+  let total = 0;
+  if (head) {
+    const rtNow = loadRuntime(root);
+    total = Object.keys(rtNow.capsules).length;
+    for (const t of Object.keys(rtNow.capsules).sort()) {
+      const cap = rtNow.capsules[t];
+      if (cap.base_oid !== head) stale.push({ ticket: t, base: cap.base_oid, state: cap.lifecycle_state });
+    }
+  }
+
   const ok = steps.every((s) => s.ok);
-  return { ok, steps };
+  return { ok, steps, stale, head, total };
 }
 
 // Self-test: prove each check can fail. Each plant deep-clones the valid corpus,
@@ -1512,6 +2546,8 @@ export function runSelftest(root = ROOT) {
   expectSemantic('dangling authority role', (c) => { c.authority.grants[0].routine_owner_role = 'ghost-role'; }, 'unknown role');
   expectSemantic('path traversal glob', (c) => { c['git-ownership'].paths.push({ glob: '../etc/**', owner_role: 'maker', serialized_lane: 'x' }); }, 'traversal');
   expectSemantic('overlapping writers', (c) => { c['git-ownership'].paths.push({ glob: '.agentops/governance/extra/**', owner_role: 'maker', serialized_lane: 'x' }); }, 'overlapping paths');
+  expectSemantic('overlapping root-level writers', (c) => { c['git-ownership'].paths.push({ glob: 'index.html', owner_role: 'it-support', serialized_lane: 'x' }); }, 'overlapping paths');
+  expectSemantic('a root glob colliding with a root file', (c) => { c['git-ownership'].paths.push({ glob: 'buildordinal.*', owner_role: 'help-desk', serialized_lane: 'x' }); }, 'overlapping paths');
   expectSemantic('amplifying deputy grant', (c) => { c['owner-intent'].deputy.excluded_actions.push(c['owner-intent'].deputy.included_actions[0]); }, 'amplifying grant');
   expectSemantic('hierarchy dangling parent', (c) => { c.hierarchy.nodes[1].escalation_parent = 'nobody'; }, 'unknown escalation_parent');
   expectSemantic('hierarchy two roots', (c) => { c.hierarchy.nodes[1].escalation_parent = null; }, 'exactly one root');
@@ -1546,6 +2582,18 @@ export function runSelftest(root = ROOT) {
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
   expectRuntime('broken event chain', (rt) => { rt.events['AS-1001'][2].parent_event = 'AS-1001-0001'; }, 'breaks the chain');
   expectRuntime('affected path outside lease', (rt) => { rt.capsules['AS-1001'].affected_paths.push('src/**'); }, 'not covered by its writer lease');
+  expectRuntime('exempted lease cannot be widened with an unnamed glob', (rt) => { rt.leases.find((x) => x.id === 'lease-AS-1001-maker').path_globs.push('content/**'); }, 'git-ownership assigns that path to');
+  expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
+  expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
+  expectRuntime('a second active lease on a protected ref', (rt) => { const base = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support'); rt.leases.push({ ...base, id: 'lease-AS-HD-057-shadow', ref: 'main' }); }, 'not an isolated-continuation branch');
+  expectRuntime('two seats holding the same isolated ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'claude/ashenspire-agentops-stage3-capsules'; }, 'belongs to exactly one seat');
+  expectRuntime('capsule ref that git cannot create', (rt) => { rt.capsules['AS-HD-040'].ref = 'recovery/foo..bar'; rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'recovery/foo..bar'; }, 'not a valid git branch name');
+  expectRuntime('two seats holding the same per-seat ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support').ref = 'recovery/as-hd-029'; }, 'belongs to exactly one seat');
+  expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'not an isolated-continuation branch');
+  expectRuntime('capsule claiming the pr-only integration ref', (rt) => { rt.capsules['AS-HD-029'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-HD-029'].writer_lease).ref = 'dev'; }, 'not an isolated-continuation branch');
+
+  expectRuntime('capsule ref outside any declared ref namespace', (rt) => { rt.capsules['AS-1001'].ref = 'wildcat/not-declared'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'wildcat/not-declared'; }, 'no declared ref');
+  expectRuntime('capsule owner role with no hierarchy node', (rt) => { rt.capsules['AS-1001'].owner_actor = 'generator'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).actor = 'generator'; }, 'no node in hierarchy');
   expectRuntime('capsule references missing lease', (rt) => { rt.capsules['AS-1001'].writer_lease = 'no-such-lease'; }, 'unknown writer_lease');
   expectRuntime('evidence loss: capsule deleted, lease/events orphaned', (rt) => { delete rt.capsules['AS-1001']; }, 'no work capsule');
 
@@ -1582,8 +2630,274 @@ export function runSelftest(root = ROOT) {
   expectMigration('migration: two work items claim one capsule', (c) => { c.migration.work_items[1].new_capsule = 'AS-1001'; c.migration.work_items[1].status = 'migrated'; }, 'claimed by two work items');
   expectMigration('migration: proposed item whose capsule already exists', (c) => { c.migration.work_items[2].new_capsule = 'AS-1001'; }, "'proposed' but capsule 'AS-1001' already exists");
 
+  // Stage 7 dispatch plants — the routing surface. A capsule must not be able
+  // to choose who it escalates to, and a seat must not be able to exist with no
+  // move it is permitted to make.
+  expectRuntime('blocker naming an undeclared escalation class', (rt) => { rt.capsules['AS-HD-056'].blocker.escalation_class = 'ghost-class'; }, 'escalation.json does not declare');
+  expectMigration('transition narrowed until a live seat is stranded', (c) => {
+    for (const m of c.transitions.transitions) if (m.from === 'assigned' && m.to === 'in-progress') m.permitted_actor_roles = ['maker'];
+  }, 'the seat is stranded');
+
+  // Stage 8 teams plants — the charter, now enforceable. Each reproduces a way
+  // the prose could be contradicted while everything else still validated.
+  expectSemantic('teams: standing role with no hierarchy node', (c) => { c.teams.standing_roles.push({ id: 'ghost-lead', responsibility: 'x', boundary: 'y' }); }, 'is not a declared role');
+  expectSemantic('teams: a pool that is also a role could hold a seat', (c) => { c.teams.capability_pools.push({ id: 'maker', delivery_capability: 'x', stewardship: 'y' }); }, 'must not be able to hold a seat');
+  expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
+  expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
+  expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('tiers: a shared namespace with no disambiguation rule', (c) => { delete c.hierarchy.authority_tiers.disambiguation; }, 'declare no disambiguation rule');
+  expectSemantic('tiers: a subject readable as both authority and priority', (c) => { c.hierarchy.authority_tiers.disambiguation.priority_subjects.push('team'); }, 'readable both ways');
+  expectSemantic('tiers: the disambiguation rule losing its subject test', (c) => { c.hierarchy.authority_tiers.disambiguation.rule = 'use judgement'; }, 'subject decides the meaning');
+  expectSemantic('tiers: an actor in no tier', (c) => { c.hierarchy.authority_tiers.levels = c.hierarchy.authority_tiers.levels.filter((l) => l.p !== 4); }, 'in no authority tier');
+  expectSemantic('tiers: an actor in two tiers', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 2).actors.push('maker'); }, 'an actor holds one tier');
+  expectSemantic('tiers: the owner demoted below P0', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 1).actors.push('constantine'); }, 'appears below P0');
+  expectSemantic('tiers: the ladder starting to pick models', (c) => { c.hierarchy.authority_tiers.rules.not_a_capability_ladder = 'higher tiers get better tools'; }, 'never selects model or effort');
+  expectSemantic('ticket flow: a step routed straight to the owner', (c) => { c.escalation.ticket_flow.steps[0].actor = 'owner'; }, 'routes to the owner');
+  expectSemantic('ticket flow: a dropped handoff event', (c) => { c.escalation.ticket_flow.handoff_events = ['SENT', 'RECEIVED']; }, "drops the 'ACKNOWLEDGED' handoff event");
+  expectSemantic('branch hygiene: rewrite permission held by a pool', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'qa-guild'; }, 'is not a declared role');
+  expectSemantic('branch hygiene: rewrite permission held by a non-standing role', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'maker'; }, 'is not a standing role');
+  expectSemantic('branch hygiene: no prior head recorded', (c) => { c['git-ownership'].branch_hygiene.records = ['the branch']; }, 'cannot be undone');
+  expectSemantic('branch hygiene: protected refs left rewritable', (c) => { c['git-ownership'].branch_hygiene.never = ['nothing in particular']; }, 'does not forbid rewriting a protected or pr-only ref');
+  expectSemantic('canonical docs: a canonical path that does not exist', (c) => { c['information-access'].canonical_documents[0].path = 'docs/governance/RUNBOOKS/ghost.md'; }, 'which does not exist');
+  expectSemantic('canonical docs: a superseded copy still live', (c) => { c['information-access'].canonical_documents[0].superseded_paths = ['docs/governance/TEAM-CHARTERS.md']; }, 'both look authoritative');
+  expectSemantic('delivery: promotion readiness claiming a grant', (c) => { c.delivery.promotion_readiness.grants = ['release']; }, 'grants no promotion authority');
+  expectSemantic('delivery: a Pages source that is not protected', (c) => { c.delivery.pages.desired_source = 'dev'; }, "is 'pr-only', not protected");
+  expectSemantic('delivery: a Pages switch that skips the owner', (c) => { c.delivery.pages.switch_requires.escalation_class = 'technical-blocker'; }, 'rather than the owner');
+  expectSemantic('delivery: a Pages switch packet with no rollback', (c) => { c.delivery.pages.switch_packet_records = c.delivery.pages.switch_packet_records.filter((x) => !/rollback/i.test(x)); }, 'nowhere to return to');
+  expectSemantic('model-effort: the contract claiming a grant', (c) => { c['model-effort'].grants = ['integration']; }, 'model selection grants no authority');
+  expectSemantic('model-effort: max effort with no exceptional reason required', (c) => { delete c['model-effort'].tiers.find((t) => t.allowed_efforts.includes('max')).requires_exceptional_reason; }, "allows 'max' effort without requiring an exceptional reason");
+  expectSemantic('model-effort: a tier named after a role', (c) => { c['model-effort'].tiers[0].id = 'it-manager-iii'; }, 'never role rank');
+  expectRuntime('a capsule claiming max effort with no reason', (rt) => { rt.capsules['AS-1001'].model_effort = { model: 'x', effort: 'max', why: 'y', escalate_when: 'z' }; }, 'recorded exceptional reason');
+  expectRuntime('a capsule claiming an undeclared effort', (rt) => { rt.capsules['AS-1001'].model_effort = { model: 'x', effort: 'ludicrous', why: 'y', escalate_when: 'z' }; }, 'matches no declared risk-and-station tier');
+  expectSemantic('gates: a gate claiming owner-reserved authority', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'C').grants = ['release']; }, 'owner-reserved and belongs to Gate F alone');
+  expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
+  expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
+  expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
+  expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
+  expectRuntime('a capsule naming a team that is on no roster', (rt) => { rt.capsules['AS-HD-050'].team = 'audio'; }, 'nor a declared legacy alias');
+  expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');
+
+  // Stage 9 — the tool's own header (issue #392, D8). Enters through the same
+  // pure function the live check uses, with a header that omits one command.
+  {
+    const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+    const live = subcommandDocErrors(opsctlHeader(src), src);
+    results.push({ label: 'opsctl header documents every dispatched subcommand', pass: live.length === 0, errs: live });
+    const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   wake /.test(l)).join('\n');
+    const caught = subcommandDocErrors(gutted, src);
+    const hit = caught.some((e) => e.includes("'wake'"));
+    results.push({ label: 'header check catches an undocumented subcommand', pass: hit, errs: hit ? [] : caught });
+  }
+
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
+}
+
+
+// ---------------------------------------------------------------------------
+// Dispatch: which seats are due to be woken, and who reaches the Owner.
+//
+// Every answer is DERIVED from the contracts, never from a hand-maintained
+// list and never from the capsule's own say-so:
+//   - a blocked capsule routes by its declared escalation_class, and the class
+//     in escalation.json names the wake target. A capsule cannot nominate who
+//     it escalates to, so nothing can route itself to the Owner to jump a queue
+//     or route away from the Owner to dodge a protected decision.
+//   - an unblocked capsule is due for whoever transitions.json says may move it
+//     out of its current state. Terminal states have no outgoing move and wake
+//     nobody; a state whose every outgoing move is protected is the Owner's.
+// The workflow that consumes this stays dumb: it files issues, it decides
+// nothing.
+// ---------------------------------------------------------------------------
+export function computeDispatch(contracts, rt, { now = new Date().toISOString() } = {}) {
+  const esc = contracts.escalation;
+  const owner = contracts['owner-intent'].owner.actor_id;
+  const classById = new Map(esc.classes.map((c) => [c.id, c]));
+  const moves = contracts.transitions.transitions;
+  const entries = [];
+
+  const escalate = (cap, classId, why) => {
+    const cls = classById.get(classId);
+    // Unreachable via validate (a declared class is enforced there); belt and
+    // braces so a dispatch can never silently drop a blocked seat.
+    if (!cls) return { ticket: cap.ticket, kind: 'owner-decision', wake: owner, reason: `${why} (undeclared escalation class '${classId}')`, escalation_class: classId };
+    return {
+      ticket: cap.ticket,
+      kind: cls.wake === owner ? 'owner-decision' : 'seat-wake',
+      wake: cls.wake,
+      route: cls.route,
+      reason: why,
+      escalation_class: classId,
+      continuing_work_allowed: cls.continuing_work_allowed,
+    };
+  };
+
+  for (const ticket of Object.keys(rt.capsules).sort()) {
+    const cap = rt.capsules[ticket];
+    const lease = rt.leases.find((l) => l.id === cap.writer_lease);
+
+    if (cap.blocker) {
+      entries.push(escalate(cap, cap.blocker.escalation_class, cap.blocker.summary));
+      continue;
+    }
+
+    // A seat with no live lease cannot act, and the lease is not its own to
+    // reissue — that is an ownership question, so it escalates rather than
+    // waking a seat that would immediately stop.
+    const dead = !lease ? 'writer lease is missing'
+      : lease.revoked ? `writer lease ${lease.id} is revoked`
+      : (lease.expiry <= now) ? `writer lease ${lease.id} expired ${lease.expiry}`
+      : null;
+    if (dead) { entries.push(escalate(cap, 'technical-blocker', dead)); continue; }
+
+    const outgoing = moves.filter((m) => m.from === cap.lifecycle_state);
+    if (!outgoing.length) continue;                       // terminal: wakes nobody
+    const open = outgoing.filter((m) => !m.protected);
+    if (!open.length) {
+      entries.push({
+        ticket, kind: 'owner-decision', wake: owner,
+        reason: `every move out of '${cap.lifecycle_state}' is a protected transition`,
+        next_states: outgoing.map((m) => m.to),
+      });
+      continue;
+    }
+    const roles = [...new Set(open.flatMap((m) => m.permitted_actor_roles))];
+    entries.push({
+      ticket,
+      kind: 'seat-wake',
+      // The capsule's own actor only gets the wake when the contract agrees it
+      // may move this state; otherwise the permitted role does, whoever holds it.
+      wake: roles.includes(cap.owner_actor) ? cap.owner_actor : roles[0],
+      eligible_roles: roles,
+      reason: `'${cap.lifecycle_state}' is ready to move to ${open.map((m) => m.to).join(' or ')}`,
+      next_states: open.map((m) => m.to),
+    });
+  }
+  return entries;
+}
+
+
+// ---------------------------------------------------------------------------
+// Reseal: re-establish a capsule's compare-and-swap seal after its content
+// legitimately changed, WITHOUT losing the chain that proves what it succeeded.
+//
+// Hand-resealing is how the AS-HD-029 chain broke twice: the content was
+// updated and the file re-hashed, but `revision` stayed put and `parent_hash`
+// stayed null, so the successor link to the previous seal was simply gone. The
+// predecessor is therefore never taken from the working tree (which by then
+// already holds the new content) — it is read from the last COMMITTED version
+// of the same file, the one a clean clone would reconstruct.
+// ---------------------------------------------------------------------------
+export function committedCapsuleSeal(root, ticket) {
+  const rel = `.agentops/work/${ticket}/CURRENT.json`;
+  try {
+    const raw = execFileSync('git', ['show', `HEAD:${rel}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString();
+    const prev = JSON.parse(raw);
+    return { seal: prev.current_hash || null, revision: prev.revision || 0 };
+  } catch {
+    return { seal: null, revision: 0 };   // genesis: never committed before
+  }
+}
+
+export function runReseal(root, ticket, { reason, actor, now = new Date().toISOString() } = {}) {
+  const file = resolve(root, 'work', ticket, 'CURRENT.json');
+  if (!existsSync(file)) return { ok: false, errors: [`no capsule for '${ticket}' under .agentops/work/`] };
+  if (!reason) return { ok: false, errors: ['reseal requires --reason: an unexplained reseal is indistinguishable from tampering'] };
+
+  const cap = JSON.parse(readFileSync(file, 'utf8'));
+  const prior = committedCapsuleSeal(root, ticket);
+  const who = actor || cap.owner_actor;
+
+  // Nothing changed but the seal? Then there is nothing to record and no new
+  // revision to mint — resealing anyway would inflate the chain with a link
+  // that proves nothing.
+  const restored = { ...cap, current_hash: prior.seal || '' };
+  if (prior.seal && computeCapsuleHash(restored) === prior.seal && cap.revision === prior.revision) {
+    return { ok: true, unchanged: true, ticket, seal: prior.seal };
+  }
+
+  cap.revision = prior.revision + 1;
+  cap.parent_hash = prior.seal;
+  cap.current_hash = '';
+  cap.current_hash = computeCapsuleHash(cap);
+  writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
+
+  const dir = resolve(root, 'events', ticket);
+  mkdirSync(dir, { recursive: true });
+  const seq = readdirSync(dir).filter((f) => f.endsWith('.json')).length + 1;
+  const id = `${ticket}-${String(seq).padStart(4, '0')}`;
+  const ev = {
+    schema: 'agentops/event/v1',
+    id,
+    ticket,
+    seq,
+    parent_event: seq > 1 ? `${ticket}-${String(seq - 1).padStart(4, '0')}` : null,
+    kind: 'state-change',
+    actor: who,
+    at: now,
+    summary: `${reason} Resealed as revision ${cap.revision}; parent_hash names ${prior.seal || 'no predecessor (genesis)'}.`,
+  };
+  writeFileSync(resolve(dir, `${id}.json`), JSON.stringify(ev, null, 2) + '\n');
+  return { ok: true, ticket, revision: cap.revision, seal: cap.current_hash, parent: prior.seal, event: id };
+}
+
+
+// ---------------------------------------------------------------------------
+// Reseat: advance an UNSTARTED seat's base to live HEAD.
+//
+// A capsule's base_oid pins the commit its instructions were written against.
+// Every merge to dev moves HEAD, so a seat that was assigned days ago wakes to
+// `FRESHNESS: STALE ... re-seat before mutating` and correctly stops. Without a
+// tool for this, every seat stops forever and the executor just files issues
+// nobody can act on.
+//
+// Only 'proposed' and 'assigned' reseat. Those seats have done nothing, so
+// starting from current HEAD is what they wanted anyway. A capsule that is
+// already in-progress has work standing on its base: moving it would silently
+// rebase a seat's assumptions, so that stays a human decision.
+// ---------------------------------------------------------------------------
+const RESEATABLE = new Set(['proposed', 'assigned']);
+
+export function runReseat(root, ticket, { actor = null, now = new Date().toISOString() } = {}) {
+  const file = resolve(root, 'work', ticket, 'CURRENT.json');
+  if (!existsSync(file)) return { ok: false, errors: [`no capsule for '${ticket}' under .agentops/work/`] };
+  const cap = JSON.parse(readFileSync(file, 'utf8'));
+  if (!RESEATABLE.has(cap.lifecycle_state)) {
+    return { ok: false, errors: [`capsule ${ticket} is '${cap.lifecycle_state}', not unstarted; work already stands on its base, so re-seating it is not automatic`] };
+  }
+  const head = currentHead(root);
+  if (!head) return { ok: false, errors: ['no live HEAD to reseat onto'] };
+  // A detached HEAD is not a place a seat can be sent. CI checks a pull request
+  // out as a synthetic merge commit that no branch carries and nothing keeps;
+  // reseating there would pin every capsule to a SHA that disappears when the
+  // run ends, and a clean clone could never reconstruct the base. Caught in CI
+  // by exactly that mechanism.
+  if (!onBranch(root)) {
+    return { ok: false, errors: [`HEAD is detached at ${head.slice(0, 12)}; reseating would pin the capsule to a commit no branch carries`] };
+  }
+  if (cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
+
+  const from = cap.base_oid;
+  cap.base_oid = head;
+  writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
+  const r = runReseal(root, ticket, {
+    actor: actor || cap.owner_actor,
+    now,
+    reason: `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
+  });
+  if (!r.ok) return r;
+  return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
+}
+
+export function runReseatAll(root, { actor = null, now = new Date().toISOString() } = {}) {
+  const rt = loadRuntime(root);
+  const done = [], skipped = [];
+  for (const ticket of Object.keys(rt.capsules).sort()) {
+    const r = runReseat(root, ticket, { actor, now });
+    if (r.ok && !r.unchanged) done.push(r);
+    else skipped.push({ ticket, why: r.ok ? 'already on HEAD' : r.errors[0] });
+  }
+  return { done, skipped };
 }
 
 // ---------------------------------------------------------------------------
@@ -1611,6 +2925,52 @@ function main(argv) {
     process.stderr.write(`\n[wake] ~${r.tokens} tokens (startup target 1200 / hard 1500)\n`);
     return 0;
   }
+  if (cmd === 'reseat') {
+    let work = null, actor = null;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--work') work = argv[++i];
+      else if (argv[i] === '--actor') actor = argv[++i];
+    }
+    if (flags.has('--all')) {
+      const { done, skipped } = runReseatAll(ROOT, { actor });
+      done.forEach((r) => console.log(`RESEAT ${r.ticket} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`));
+      skipped.forEach((r) => console.log(`  skip ${r.ticket}: ${r.why}`));
+      console.log(`\nRESEAT: ${done.length} reseated, ${skipped.length} left alone.`);
+      return 0;
+    }
+    if (!work) { console.error('reseat requires --work <ticket> or --all'); return 2; }
+    const r = runReseat(ROOT, work, { actor });
+    if (!r.ok) { console.error('RESEAT FAIL:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    if (r.unchanged) { console.log(`RESEAT: ${r.ticket} is already on live HEAD.`); return 0; }
+    console.log(`RESEAT OK: ${r.ticket} ${r.from.slice(0, 12)} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`);
+    return 0;
+  }
+  if (cmd === 'reseal') {
+    let work = null, reason = null, actor = null;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--work') work = argv[++i];
+      else if (argv[i] === '--reason') reason = argv[++i];
+      else if (argv[i] === '--actor') actor = argv[++i];
+    }
+    if (!work) { console.error('reseal requires --work <ticket> --reason "<why>" [--actor <role>]'); return 2; }
+    const r = runReseal(ROOT, work, { reason, actor });
+    if (!r.ok) { console.error('RESEAL FAIL:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    if (r.unchanged) { console.log(`RESEAL: ${r.ticket} already matches its committed seal; nothing to record.`); return 0; }
+    console.log(`RESEAL OK: ${r.ticket} revision ${r.revision}\n  seal   ${r.seal}\n  parent ${r.parent || '(genesis)'}\n  event  ${r.event}`);
+    return 0;
+  }
+  if (cmd === 'dispatch') {
+    const json = flags.has('--json');
+    const { contracts, errors } = runValidate();
+    if (errors.length) { console.error('DISPATCH FAIL: state is not valid; refusing to wake anyone.'); errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    const entries = computeDispatch(contracts, loadRuntime());
+    if (json) { console.log(JSON.stringify(entries, null, 2)); return 0; }
+    if (!entries.length) { console.log('DISPATCH: nothing due.'); return 0; }
+    for (const e of entries) console.log(`${e.kind === 'owner-decision' ? 'OWNER ' : 'SEAT  '} ${e.ticket}  wake=${e.wake}  ${e.reason}`);
+    const owed = entries.filter((e) => e.kind === 'owner-decision').length;
+    console.log(`\nDISPATCH: ${entries.length} due (${owed} need the Owner, ${entries.length - owed} are seat work).`);
+    return 0;
+  }
   if (cmd === 'render') {
     const { errors, drift, drifted, wrote } = runRender(ROOT, flags.has('--check'));
     if (errors.length) { console.error('RENDER blocked — contracts invalid:'); errors.forEach((e) => console.error('  - ' + e)); return 1; }
@@ -1634,7 +2994,13 @@ function main(argv) {
     const d = runDrill();
     for (const s of d.steps) console.log(`  ${s.ok ? 'PASS' : 'FAIL'}  ${s.name}${s.detail ? ' — ' + s.detail : ''}`);
     if (!d.ok) { console.error('\nDRILL FAIL: clean-clone reconstruction did not reproduce exact state.'); return 1; }
-    console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss.');
+    if (d.stale && d.stale.length) {
+      console.log('');
+      for (const s of d.stale) console.log(`  STALE  ${s.ticket} (${s.state}) base ${s.base.slice(0, 12)} != HEAD ${d.head.slice(0, 12)}`);
+      console.log(`\nDRILL OK: reconstruction reproduces exact state with zero evidence loss — but ${d.stale.length} of ${d.total} capsule(s) are pinned behind live HEAD, and their own wake says re-seat before mutating. Not evidence loss; run \`opsctl reseat --all\`.`);
+    } else {
+      console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss; every capsule is seated on live HEAD.');
+    }
     return 0;
   }
   if (cmd === 'command') {

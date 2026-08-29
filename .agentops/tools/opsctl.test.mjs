@@ -9,8 +9,9 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand } from './opsctl.mjs';
-import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
+import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -25,7 +26,7 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all fifteen contracts loaded', Object.keys(contracts).length === 15, Object.keys(contracts).join(','));
+  check('all nineteen contracts loaded', Object.keys(contracts).length === 19, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
@@ -181,7 +182,7 @@ function check(name, cond, detail = '') {
     // A decision that answers an owner-decision blocker must clear it, or the
     // capsule reports itself blocked forever after the answer arrived.
     const blocked = readCap();
-    blocked.blocker = { kind: 'owner-decision', wake: 'constantine', summary: 'awaiting the owner' };
+    blocked.blocker = { kind: 'owner-decision', escalation_class: 'owner-exclusive-now', summary: 'awaiting the owner' };
     blocked.current_hash = computeCapsuleHash(blocked);
     writeFileSync(capPath, JSON.stringify(blocked, null, 2) + '\n');
     const bh = computeCapsuleHash(loadRuntime(box).capsules['AS-1001']);
@@ -253,6 +254,16 @@ function check(name, cond, detail = '') {
     const live = computeCapsuleHash(loadRuntime().capsules['AS-1001']);
     check('HUD decision link prefills the live compare-and-swap hash', !!url && url.searchParams.get('hash') === live, url ? String(url.searchParams.get('hash')) : 'no link');
     check('HUD decision link prefills the ticket', !!url && url.searchParams.get('target') === 'AS-1001');
+  // The HUD's "Needs you now" and the executor's owner-decision issues must be
+  // the same set. Reading blocker.wake made them silently diverge: after the
+  // blocker migration dropped that field, the HUD showed nothing at all.
+  {
+    const rtOwned = loadRuntime();
+    rtOwned.capsules['AS-HD-050'].blocker = { kind: 'test', escalation_class: 'owner-exclusive-now', summary: 'owner must decide' };
+    const html = renderHud(loadContracts().contracts, rtOwned);
+    check('HUD lists a ticket whose escalation class reaches the owner', html.includes('AS-HD-050') && !/No owner decisions are pending/.test(html));
+    check('HUD gives the reason the ticket reached the owner', html.includes('owner must decide'));
+  }
   }
   // The repository self-publishes its tree to GitHub Pages, so a standalone
   // copy at /hud/index.html gives the HUD a tidy URL. Guard it against silent
@@ -274,6 +285,512 @@ function check(name, cond, detail = '') {
   const planned = runMigrate(ROOT, { plan: true });
   check('migrate --plan proposes >= 1 genesis stub', planned.ok && planned.stubs.length >= 1, String(planned.stubs && planned.stubs.length));
   check('proposed genesis stub is schema-shaped (work-capsule/v1)', planned.ok && planned.stubs.every((st) => st.schema === 'agentops/work-capsule/v1'));
+}
+
+// 2g. Ref existence is advisory but must not lie. It is answered against the
+// root the caller selected (not the module's own checkout, which would make a
+// clean-room clone report the host's branches), and only a real BRANCH counts —
+// an unqualified `git rev-parse` would resolve a same-named TAG and tell a seat
+// its working branch already exists.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const ref = rt.capsules['AS-1001'].ref;
+  const repo = resolve(tmpdir(), `agentops-reftest-${process.pid}-${Date.now()}`);
+  const git = (...a) => execFileSync('git', a, { cwd: repo, stdio: ['ignore', 'pipe', 'ignore'] });
+  const note = () => {
+    const c = buildCapsule(contracts, rt, 'AS-1001', { frozen: false, head: null, root: repo });
+    const line = (c.text || '').split('\n').find((l) => l.startsWith('REPO/REF'));
+    return line || '';
+  };
+  try {
+    mkdirSync(repo, { recursive: true });
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.invalid');
+    git('config', 'user.name', 'test');
+    git('commit', '-q', '--allow-empty', '-m', 'base');
+    check('ref existence uses the caller-selected root, not the module checkout', note().includes('NOT CREATED YET'), note());
+    git('tag', ref);
+    check('a same-named TAG is not mistaken for the working branch', note().includes('NOT CREATED YET'), note());
+    git('branch', ref);
+    check('a real branch at the selected root reports as existing', note().includes('(exists)'), note());
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+}
+
+// 2h. Dispatch: who is due and who reaches the Owner, derived from contracts.
+// The point of the executor is that policy lives in governance JSON, so these
+// assert the derivation — not a hardcoded roster.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const d = computeDispatch(contracts, rt);
+  check('dispatch returns an entry for every non-terminal capsule', d.length > 0, String(d.length));
+  check('every dispatch entry names a wake target', d.every((e) => !!e.wake), JSON.stringify(d.filter((e) => !e.wake)));
+  check('a blocked capsule routes by its escalation class, not its own say-so',
+    d.filter((e) => e.escalation_class).every((e) => {
+      const cls = contracts.escalation.classes.find((c) => c.id === e.escalation_class);
+      return cls && e.wake === cls.wake;
+    }));
+  // The bug that froze six of seven seat-holding roles: dispatch woke `maker`
+  // for every seat because no other role was permitted to leave 'assigned'.
+  const byTicket = Object.fromEntries(d.map((e) => [e.ticket, e]));
+  check('an it-support seat wakes it-support, not maker', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake === 'it-support', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake);
+  check('a qa seat wakes qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake === 'qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake);
+  check('every unblocked seat wakes its own capsule owner',
+    d.filter((e) => !e.escalation_class).every((e) => e.wake === rt.capsules[e.ticket].owner_actor),
+    JSON.stringify(d.filter((e) => !e.escalation_class && e.wake !== rt.capsules[e.ticket].owner_actor)));
+  // A dead lease is an ownership question, so it escalates rather than waking a
+  // seat that would stop the moment it read its own capsule.
+  const rtDead = loadRuntime();
+  const victim = rtDead.capsules['AS-HD-057'];
+  rtDead.leases.find((l) => l.id === victim.writer_lease).revoked = true;
+  const dead = computeDispatch(contracts, rtDead).find((e) => e.ticket === 'AS-HD-057');
+  check('a revoked lease escalates instead of waking the seat', !!dead && dead.escalation_class === 'technical-blocker' && /revoked/.test(dead.reason), JSON.stringify(dead));
+  // Terminal work wakes nobody — an executor that re-files finished tickets is
+  // noise that trains its readers to ignore it.
+  const rtDone = loadRuntime();
+  rtDone.capsules['AS-HD-057'].lifecycle_state = 'released';
+  check('a released capsule wakes nobody', !computeDispatch(contracts, rtDone).some((e) => e.ticket === 'AS-HD-057'));
+}
+
+// 2i. Reseal: the compare-and-swap chain survives a legitimate content change.
+{
+  const r = runReseal(ROOT, 'AS-1001', { reason: 'test', actor: 'maker' });
+  check('reseal refuses to mint a link when nothing changed', r.ok && r.unchanged === true, JSON.stringify(r));
+  const missing = runReseal(ROOT, 'AS-1001', { actor: 'maker' });
+  check('reseal refuses without a reason', !missing.ok && /--reason/.test(missing.errors.join(' ')));
+  const ghost = runReseal(ROOT, 'AS-0000', { reason: 'x' });
+  check('reseal refuses an unknown ticket', !ghost.ok);
+}
+
+// 2j. Reseat: a stale base is why every woken seat stopped on arrival. Only
+// unstarted seats follow the branch; a seat with work standing on its base is
+// never silently rebased; and a detached HEAD is refused outright.
+//
+// The positive path MUTATES capsules, so it runs against a throwaway copy in a
+// scratch git repo — never the real corpus. An earlier version of this test
+// reseated the live tree, which passed locally (HEAD already matched) and in CI
+// pinned every capsule to the synthetic PR merge commit.
+{
+  const started = runReseat(ROOT, 'AS-1001');
+  check('an in-progress seat refuses to reseat', !started.ok && /not unstarted/.test(started.errors.join(' ')), JSON.stringify(started));
+  check('reseat refuses an unknown ticket', !runReseat(ROOT, 'AS-0000').ok);
+
+  const sandbox = resolve(tmpdir(), `agentops-reseat-${process.pid}-${Date.now()}`);
+  const agentops = resolve(sandbox, '.agentops');
+  const git = (...a) => execFileSync('git', a, { cwd: sandbox, stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    mkdirSync(sandbox, { recursive: true });
+    cpSync(ROOT, agentops, { recursive: true });
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.invalid');
+    git('config', 'user.name', 'test');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'base');
+
+    const before = JSON.parse(readFileSync(resolve(agentops, 'work/AS-HD-057/CURRENT.json'), 'utf8'));
+    const r = runReseat(agentops, 'AS-HD-057');
+    check('an unstarted seat reseats onto the branch HEAD', r.ok && !r.unchanged && r.base !== before.base_oid, JSON.stringify(r));
+    check('reseating bumps the revision and records an event', r.ok && r.revision === (before.revision || 0) + 1 && !!r.event, JSON.stringify(r));
+    const after = JSON.parse(readFileSync(resolve(agentops, 'work/AS-HD-057/CURRENT.json'), 'utf8'));
+    check('the reseated capsule links to the seal it succeeded', after.parent_hash === before.current_hash, `${after.parent_hash} vs ${before.current_hash}`);
+    check('reseating twice is a no-op', (() => { const again = runReseat(agentops, 'AS-HD-057'); return again.ok && again.unchanged === true; })());
+
+    // The CI shape: a pull request is checked out as a detached merge commit.
+    git('checkout', '-q', '--detach');
+    const det = runReseat(agentops, 'AS-HD-050');
+    check('reseat refuses a detached HEAD', !det.ok && /detached/.test(det.errors.join(' ')), JSON.stringify(det));
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+}
+
+// 2k. The Review & Approval Hub. It replaces a committed Next.js export whose
+// source existed nowhere: unbuildable, uneditable, and already drifted from the
+// control plane it claimed to show. Every page is now a projection, so the
+// drift gate that protects GOVERNANCE.md protects the site too.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const pages = renderHubSite(contracts, rt);
+  const rels = pages.map((p) => p.rel);
+  check('hub generates a page per ticket plus the four fixed pages',
+    rels.length === Object.keys(rt.capsules).length + 4, String(rels.length));
+  for (const fixed of ['index', 'decisions', 'seats', 'help-desk']) {
+    check(`hub has ${fixed}.html`, rels.includes(`generated/hub/${fixed}.html`));
+  }
+  const byRel = Object.fromEntries(pages.map((p) => [p.rel, p.text]));
+  // The old Hub drifted because it was a snapshot. These assert the pages read
+  // live state, not a frozen copy of it.
+  const home = byRel['generated/hub/index.html'];
+  check('hub overview lists every ticket', Object.keys(rt.capsules).every((t) => home.includes(t)));
+  check('hub overview names the seat that each ticket wakes',
+    computeDispatch(contracts, rt).every((e) => home.includes(e.wake)));
+  const ticketPage = byRel['generated/hub/tickets/AS-HD-057.html'];
+  check('a ticket page carries its live seal', ticketPage.includes(rt.capsules['AS-HD-057'].current_hash.slice(0, 23)));
+  check('a ticket page replays its event chain',
+    (rt.events['AS-HD-057'] || []).every((ev) => ticketPage.includes(ev.id)));
+  // A published page must not become an exfiltration route for repository state
+  // the owner did not choose to publish.
+  check('hub carries no credential material', !pages.some((p) => /ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY|Authorization:/i.test(p.text)));
+  check('hub escapes generated content', !pages.some((p) => /<script/i.test(p.text)));
+  // Absent in .agentops-only checkouts (the reconstruction clone), where this
+  // simply does not run — same rule as the HUD mirror.
+  let mirrored = null;
+  try { mirrored = readFileSync(resolve(ROOT, '../review-approval-hub/index.html'), 'utf8'); } catch { /* not present */ }
+  if (mirrored !== null) {
+    check('published review-approval-hub/ mirror is in sync with the generated hub',
+      mirrored === home,
+      'refresh review-approval-hub/ from .agentops/generated/hub/ after `opsctl render`');
+  }
+}
+
+// 2l. The team charter, now a contract. It lived as prose in
+// docs/governance/TEAM-CHARTERS.md, where nothing stopped a capsule
+// contradicting it. These assert the parts that were only ever assertions.
+{
+  const { contracts } = loadContracts();
+  const tm = contracts.teams;
+  check('teams contract loads', !!tm && tm.schema === 'agentops/teams/v1');
+  check('the four standing coordination roles are declared', tm.standing_roles.length === 4, String(tm.standing_roles.length));
+  check('every standing role is a real role with a hierarchy node',
+    tm.standing_roles.every((r) => contracts.roles.roles.some((x) => x.role === r.id) && contracts.hierarchy.nodes.some((n) => n.actor_id === r.id)));
+  check('the nine capability pools are declared', tm.capability_pools.length === 9, String(tm.capability_pools.length));
+  // The charter's load-bearing sentence.
+  check('a pool is not standing and owns no backlog or path',
+    tm.pool_rules.standing === false && tm.pool_rules.owns_backlog === false && tm.pool_rules.owns_source_paths === false);
+  check('no pool is also a declared role',
+    !tm.capability_pools.some((p) => contracts.roles.roles.some((x) => x.role === p.id)));
+  // The rule that would have made losing a session survivable.
+  check('a pod chat is never an authority source', tm.pods.chat_is_authority_source === false);
+  // The exception the owner authorised: two standing roles, jointly, after
+  // exhausting what the charter already lets them settle.
+  const ce = tm.charter_exception;
+  check('a charter exception needs two standing roles to concur',
+    ce.requires_concurrence.length >= 2 && ce.requires_concurrence.every((r) => tm.standing_roles.some((s) => s.id === r)));
+  check('a charter exception must exhaust charter-level resolution first', ce.exhaust_charter_first === true);
+  check('a charter exception reaches the owner',
+    contracts.escalation.classes.find((x) => x.id === ce.escalation_class).wake === contracts['owner-intent'].owner.actor_id);
+  // No live seat may be held by a pool.
+  const rt = loadRuntime();
+  const pools = new Set(tm.capability_pools.map((p) => p.id));
+  check('no live capsule is held by a capability pool', !Object.values(rt.capsules).some((c) => pools.has(c.owner_actor)));
+  check('no live lease is held by a capability pool', !rt.leases.some((l) => !l.revoked && pools.has(l.actor)));
+  // The contract must not silently diverge from the prose it was built from.
+  // Each entry names its own charter heading, so this is an exact check rather
+  // than a guess at how an id maps to a title.
+  let charter = null;
+  try { charter = readFileSync(resolve(ROOT, '../docs/governance/TEAM-CHARTERS.md'), 'utf8'); } catch { /* not present in an .agentops-only checkout */ }
+  if (charter !== null) {
+    const missing = [...tm.standing_roles, ...tm.capability_pools].filter((e) => !charter.includes(e.charter_heading));
+    check('every contract entry names a heading that exists in the charter prose',
+      missing.length === 0, missing.map((e) => e.charter_heading).join(' | '));
+  }
+}
+
+// 2m. D6 and D8 from the continuity audit (issue #392).
+{
+  // D6: the drill printed "zero evidence loss" for a fleet where every seat's
+  // own wake said `re-seat before mutating`. The goldens stay frozen; staleness
+  // is reported alongside them instead, non-fatally.
+  const d = runDrill(ROOT);
+  check('drill reports how many capsules are pinned behind live HEAD', Array.isArray(d.stale) && typeof d.total === 'number', JSON.stringify({ stale: d.stale && d.stale.length, total: d.total }));
+  check('drill counts every capsule, not just the stale ones', d.total === Object.keys(loadRuntime().capsules).length, `${d.total}`);
+  check('a stale capsule is named with its ticket, base and state',
+    d.stale.every((x) => x.ticket && x.base && x.state), JSON.stringify(d.stale));
+  check('staleness does not fail the drill (it is not evidence loss)', d.ok === true);
+  // An in-progress seat is never auto-reseated, so it is the one that legitimately
+  // stays behind — and the drill must still say so rather than hide it.
+  const started = Object.entries(loadRuntime().capsules).filter(([, c]) => c.lifecycle_state === 'in-progress').map(([t]) => t);
+  check('an in-progress capsule left behind HEAD is still reported',
+    started.every((t) => d.stale.some((x) => x.ticket === t) || loadRuntime().capsules[t].base_oid === d.head),
+    `in-progress: ${started.join(', ')}`);
+
+  // D8: the header had drifted to 5 of 8 subcommands, omitting `wake` — the one
+  // a cold-start seat depends on. It is now checked against dispatch itself.
+  const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+  check('opsctl header documents every dispatched subcommand', subcommandDocErrors(opsctlHeader(src), src).length === 0, subcommandDocErrors(opsctlHeader(src), src).join(' | '));
+  check('the header check reads only the comment block, not the code', !opsctlHeader(src).includes('export function'));
+  const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   drill /.test(l)).join('\n');
+  check('removing a subcommand from the header is caught', subcommandDocErrors(gutted, src).some((e) => e.includes("'drill'")));
+}
+
+// 2n. The Help Desk intake form, generated (the rest of D9). Its team dropdown
+// was the only place the thirteen team names existed, and it had already
+// diverged from the charter it was supposed to route into.
+{
+  const { contracts } = loadContracts();
+  const tm = contracts.teams;
+  const yml = renderHelpDeskTemplate(contracts);
+  check('intake form is generated and marked as such', yml.startsWith('# GENERATED by'));
+  check('intake form keeps the routing escape hatch', yml.includes('- unsure / route it'));
+  // Legacy names stay selectable — open tickets and muscle memory both use them.
+  check('every legacy team name is still offered', tm.legacy_aliases.every((a) => yml.includes(`        - ${a.legacy}`)),
+    tm.legacy_aliases.filter((a) => !yml.includes(`        - ${a.legacy}`)).map((a) => a.legacy).join(', '));
+  // ...and every one of them resolves to something that can actually hold work.
+  const roster = new Set([...tm.standing_roles.map((r) => r.id), ...tm.capability_pools.map((p) => p.id)]);
+  check('every legacy name routes to a current role or pool', tm.legacy_aliases.every((a) => roster.has(a.routes_to)),
+    tm.legacy_aliases.filter((a) => !roster.has(a.routes_to)).map((a) => `${a.legacy}->${a.routes_to}`).join(', '));
+  check('no legacy name is declared twice', new Set(tm.legacy_aliases.map((a) => a.legacy)).size === tm.legacy_aliases.length);
+  // Scoped to the team dropdown itself: counting options file-wide would also
+  // sweep up the kind and urgency lists and pass for the wrong reason.
+  const teamBlock = yml.slice(yml.indexOf('    id: team')).split('    validations:')[0];
+  const teamOptions = (teamBlock.match(/^        - .+$/gm) || []).map((l) => l.replace('        - ', ''));
+  check('the team dropdown offers exactly the aliases plus the escape hatch',
+    teamOptions.length === tm.legacy_aliases.length + 1, `${teamOptions.length} vs ${tm.legacy_aliases.length + 1}`);
+  check('no team option is absent from the roster or the alias map',
+    teamOptions.filter((o) => o !== 'unsure / route it').every((o) => tm.legacy_aliases.some((a) => a.legacy === o)),
+    teamOptions.join(', '));
+  // The generated form must match what GitHub actually serves. Absent in an
+  // .agentops-only checkout, same rule as the other published mirrors.
+  let live = null;
+  try { live = readFileSync(resolve(ROOT, '../.github/ISSUE_TEMPLATE/help-desk-ticket.yml'), 'utf8'); } catch { /* not present */ }
+  if (live !== null) {
+    check('the published intake form is in sync with the generated one', live === yml + '\n',
+      'run `opsctl render`');
+  }
+  // A capsule may name a team; if it does, the name must resolve.
+  const rt = loadRuntime();
+  const named = Object.entries(rt.capsules).filter(([, c]) => c.team != null);
+  const aliases = new Set(tm.legacy_aliases.map((a) => a.legacy));
+  check('every capsule that names a team names a resolvable one',
+    named.every(([, c]) => roster.has(c.team) || aliases.has(c.team)),
+    named.map(([t, c]) => `${t}:${c.team}`).join(', ') || '(none name a team)');
+}
+
+// 2o. Promotion Gates A-F (decision 0009), now a contract. They defined who may
+// act, what evidence each gate needs, and — the part that matters most — what
+// each explicitly does NOT grant. None of it was encoded, so a transition guard
+// could paraphrase a gate wrongly and nothing would notice.
+{
+  const { contracts } = loadContracts();
+  const pg = contracts['promotion-gates'];
+  check('promotion-gates contract loads', !!pg && pg.schema === 'agentops/promotion-gates/v1');
+  check('all six gates A-F are declared', pg.gates.map((g) => g.id).join('') === 'ABCDEF', pg.gates.map((g) => g.id).join(''));
+  const roles = new Set(contracts.roles.roles.map((r) => r.role));
+  check('every gate names a declared actor role', pg.gates.every((g) => roles.has(g.actor_role)),
+    pg.gates.filter((g) => !roles.has(g.actor_role)).map((g) => `${g.id}:${g.actor_role}`).join(', '));
+  // The invariant the decision repeats most: authority for one action implies
+  // none of the others.
+  const ownerReserved = ['main', 'release', 'tag', 'publication', 'Pages'];
+  check('no gate grants owner-reserved authority', pg.gates.every((g) => (g.grants || []).length === 0),
+    pg.gates.filter((g) => (g.grants || []).length).map((g) => g.id).join(', '));
+  check('Gate F is the only gate with per-action authority',
+    pg.gates.find((g) => g.id === 'F').authority_is_per_action === true
+      && !pg.gates.filter((g) => g.id !== 'F').some((g) => g.authority_is_per_action));
+  check('Gates E and F are the owner\'s', ['E', 'F'].every((id) => pg.gates.find((g) => g.id === id).actor_role === 'owner'));
+  check('Gate C records what it does not grant', (pg.gates.find((g) => g.id === 'C').explicitly_not_granted || []).includes('release'));
+  check('Gate B cannot be satisfied by a merge alone', (pg.gates.find((g) => g.id === 'B').not_satisfied_by || []).some((x) => /merge/.test(x)));
+  check('a correction returns to Gate A', pg.gates.find((g) => g.id === 'E').returns_to_gate_on_correction === 'A');
+  // Every protected promotion move is gated — the check that found `pushed ->
+  // pr-open` sitting protected and ungated.
+  const gated = new Set(pg.gates.flatMap((g) => (g.guards_transitions || []).map((t) => `${t.from}->${t.to}`)));
+  const ungated = contracts.transitions.transitions.filter((m) => m.protected && !gated.has(`${m.from}->${m.to}`));
+  check('every protected transition is guarded by a gate', ungated.length === 0, ungated.map((m) => `${m.from}->${m.to}`).join(', '));
+  // A seat standing at a gated state must be told which gate is in front of it.
+  const rt = loadRuntime();
+  // No live capsule has reached a gated state yet, so this drives one there in
+  // memory rather than leaving the line untested until the first promotion.
+  const gatedStates = [...new Set(pg.gates.flatMap((g) => (g.guards_transitions || []).map((t) => t.from)))];
+  for (const state of gatedStates) {
+    const rtAt = loadRuntime();
+    rtAt.capsules['AS-1001'].lifecycle_state = state;
+    const w = buildCapsule(contracts, rtAt, 'AS-1001', { frozen: true });
+    const line = (w.text || '').split('\n').find((l) => l.startsWith('GATE'));
+    const expected = pg.gates.find((g) => (g.guards_transitions || []).some((t) => t.from === state));
+    check(`wake names the gate standing before '${state}'`, !!line && line.includes(`: ${expected.id} (`), line || 'no GATE line');
+    check(`the '${state}' gate line names who may act`, !!line && line.includes(expected.actor_role), line || 'no GATE line');
+  }
+  // An ungated state must not gain a spurious gate line.
+  const rtUngated = loadRuntime();
+  rtUngated.capsules['AS-1001'].lifecycle_state = 'assigned';
+  check('an ungated state gets no gate line',
+    !(buildCapsule(contracts, rtUngated, 'AS-1001', { frozen: true }).text || '').includes('GATE       :'));
+}
+
+// 2p. Adaptive model and effort selection (decision 0006). Its load-bearing
+// sentence — selecting a model grants nothing, and a stronger model does not
+// outrank a weaker one — was policy nobody could enforce.
+{
+  const { contracts } = loadContracts();
+  const me = contracts['model-effort'];
+  check('model-effort contract loads', !!me && me.schema === 'agentops/model-effort/v1');
+  check('the four risk-and-station tiers are declared', me.tiers.length === 4, String(me.tiers.length));
+  check('model selection grants nothing', me.grants.length === 0, me.grants.join(', '));
+  check('no tier is named after a role',
+    !me.tiers.some((t) => contracts.roles.roles.some((r) => r.role === t.id)));
+  // The escape hatch stays an escape hatch.
+  const maxTiers = me.tiers.filter((t) => t.allowed_efforts.includes('max'));
+  check('max effort exists and always demands an exceptional reason',
+    maxTiers.length > 0 && maxTiers.every((t) => t.requires_exceptional_reason === true));
+  check('the assignment record keeps all four fields',
+    ['model', 'effort', 'why', 'escalate_when'].every((f) => me.assignment_record.required_fields.includes(f)));
+  check('a reassignment records the pairing too', me.assignment_record.recorded_on.includes('reassignment'));
+  check('independence is not a model choice', /non-maker/.test(me.rules.independence_is_not_a_model));
+  // A capsule may declare its pairing; if it does, the effort must be one a
+  // declared tier allows.
+  const rt = loadRuntime();
+  const efforts = new Set(me.tiers.flatMap((t) => t.allowed_efforts));
+  const declared = Object.entries(rt.capsules).filter(([, c]) => c.model_effort);
+  check('every capsule that declares a pairing uses a declared effort',
+    declared.every(([, c]) => efforts.has(c.model_effort.effort)),
+    declared.map(([t, c]) => `${t}:${c.model_effort.effort}`).join(', ') || '(none declare one)');
+}
+
+// 2q. Dev delivery, promotion readiness and the Pages source (decision 0005).
+// The Pages half is the part with teeth. Earlier in this repository's life a
+// Pages deployment replaced a live site with no recorded prior state to
+// restore; the decision already forbade that, and nothing enforced it.
+{
+  const { contracts } = loadContracts();
+  const d = contracts.delivery;
+  check('delivery contract loads', !!d && d.schema === 'agentops/delivery/v1');
+  check('delivery to dev is a discretion, not a duty', d.dev_delivery.is_a_duty === false);
+  check('delivery never authorizes a direct push to dev', d.dev_delivery.authorizes_direct_push === false);
+  check('all eight independence conditions are carried', d.dev_delivery.all_must_pass_at_one_exact_head.length === 8,
+    String(d.dev_delivery.all_must_pass_at_one_exact_head.length));
+  check('FAIL and UNKNOWN both force WAIT',
+    ['FAIL', 'UNKNOWN'].every((v) => d.dev_delivery.wait_required_on.includes(v)));
+  check('waiting does not authorize a speculative patch',
+    d.dev_delivery.waiting_does_not_authorize.some((x) => /speculative/.test(x)));
+  // Readiness is a claim about a packet, never about the product.
+  check('declaring a packet ready grants nothing', d.promotion_readiness.grants.length === 0);
+  check('promotion actions are owner-exclusive and per action',
+    d.promotion_readiness.authority_is_per_action === true && d.promotion_readiness.owner_exclusive_actions.length >= 5);
+  check('all ten promotion packet fields are carried', d.promotion_packet.required_fields.length === 10,
+    String(d.promotion_packet.required_fields.length));
+  check('UNKNOWN blocks', d.promotion_packet.unknown_blocks === true);
+  // Pages.
+  check('the desired Pages source is main', d.pages.desired_source === 'main');
+  const ref = contracts['git-ownership'].refs.find((r) => r.ref === d.pages.desired_source);
+  check('the desired Pages source is a protected declared ref', !!ref && ref.mutation === 'protected', ref ? ref.mutation : 'not declared');
+  check('a Pages switch is not authorized by the decision itself', d.pages.switch_authorized_by_this_decision === false);
+  check('a Pages switch escalates to the owner',
+    contracts.escalation.classes.find((x) => x.id === d.pages.switch_requires.escalation_class).wake === contracts['owner-intent'].owner.actor_id);
+  check('a Pages switch needs a change window and a candidate already on main',
+    d.pages.switch_requires.change_window === true && d.pages.switch_requires.candidate_must_have_reached === 'main');
+  // The one that matters: rollback is recorded before the switch, not after it
+  // goes wrong.
+  check('the Pages switch packet records a rollback',
+    d.pages.switch_packet_records.some((x) => /rollback/i.test(x)));
+  check('a switch is incomplete until deployment AND hosted verification pass',
+    d.pages.complete_only_when.length === 2);
+  check('a failed deployment authorizes no different source',
+    /no different source/i.test(d.pages.on_failure));
+}
+
+// 2r. The last two decision records with checkable content: 0002's legacy
+// lifecycle mapping and 0004's one-canonical-path rule.
+{
+  const { contracts } = loadContracts();
+  const t = contracts.transitions;
+  check('every legacy lifecycle value has a canonical treatment',
+    t.legacy_values.length >= 5 && t.legacy_values.every((v) => v.legacy && v.canonical_treatment),
+    String(t.legacy_values.length));
+  // The compatibility token the charter says still routes to IT Manager III.
+  check('READY FOR MAIN is carried as a legacy value', t.legacy_values.some((v) => v.legacy === 'READY FOR MAIN'));
+  // CLOSED was the ambiguous one: the decision insists it is resolved into a
+  // real terminal state rather than kept as a synonym.
+  check('CLOSED must be resolved rather than kept as a synonym',
+    /RESOLVED and CANCELLED/.test(t.legacy_values.find((v) => v.legacy === 'CLOSED').canonical_treatment));
+  check('old evidence is never rewritten', /never rewritten|do not rewrite/i.test(t.legacy_rule));
+
+  // 0004: one canonical live path, and never two.
+  const docs = contracts['information-access'].canonical_documents;
+  check('canonical documents are declared', docs.length >= 1);
+  check('every canonical document exists',
+    docs.every((d) => existsSync(resolve(ROOT, '..', d.path))),
+    docs.filter((d) => !existsSync(resolve(ROOT, '..', d.path))).map((d) => d.path).join(', '));
+  check('no superseded copy is still live',
+    docs.every((d) => d.superseded_paths.every((p) => !existsSync(resolve(ROOT, '..', p)))),
+    docs.flatMap((d) => d.superseded_paths.filter((p) => existsSync(resolve(ROOT, '..', p)))).join(', '));
+  check('the art policy sits at its post-0004 canonical path',
+    docs.some((d) => d.path === 'docs/governance/RUNBOOKS/art.md'));
+  check('every canonical document cites the decision that placed it',
+    docs.every((d) => d.decision.startsWith('docs/governance/DECISIONS/')));
+}
+
+// 2s. Path-glob coverage. A declared root-level path has no directory prefix,
+// and every string starts with '' — so the prefix form let the first root-level
+// declaration claim ownership of every lease glob in the repository, silently
+// disabling the grant check that D5 exists to enforce. Adding a writer for the
+// generated build output is what exposed it.
+{
+  // Root never covers a subtree, nor the reverse.
+  check('a root file does not cover a subtree', !globCovers('buildordinal.json', 'src/**'));
+  check('a root wildcard does not cover a subtree', !globCovers('*.html', 'src/**'));
+  check('a subtree does not cover a root file', !globCovers('src/**', 'buildordinal.json'));
+  // Root-level matching is by name, not by "starts with nothing".
+  check('a root wildcard covers a matching root file', globCovers('*.html', 'index.html'));
+  check('a root wildcard does not cover a different extension', !globCovers('*.html', 'buildordinal.json'));
+  check('an exact root file covers itself', globCovers('buildordinal.json', 'buildordinal.json'));
+  // Subtree matching still works the way the one-writer rule depends on.
+  check('a subtree covers a path inside it', globCovers('.agentops/**', '.agentops/work/**'));
+  check('a subtree does not cover its sibling', !globCovers('src/**', 'assets/**'));
+
+  // The live corpus: every generated output the tool writes must have a
+  // declared writer, or two seats could claim it and verify would stay green.
+  const { contracts } = loadContracts();
+  const decls = contracts['git-ownership'].paths;
+  for (const out of ['hud/**', 'review-approval-hub/**', 'buildordinal.json', '*.html']) {
+    check(`generated output '${out}' has a declared writer`, decls.some((d) => d.glob === out),
+      decls.map((d) => d.glob).join(', '));
+  }
+}
+
+// 2t. Recovered Hub evidence. The Review & Approval Hub was committed build
+// output with no source, and issue #392 recorded its rendered snapshot as the
+// only surviving source for the team census — while noting it could not be
+// located. It was in PR #378's branch. The prose is extracted here before that
+// build output is retired, so retiring it loses nothing.
+{
+  const dir = resolve(ROOT, '../docs/reconstruction/hub-snapshot');
+  if (existsSync(dir)) {
+    const pages = readdirSync(dir).filter((f) => f.endsWith('.md'));
+    check('recovered hub snapshot is present', pages.length >= 10, String(pages.length));
+    const census = resolve(dir, 'reviews__as-hd-20260826-043-current-team-census.md');
+    check('the team census #392 could not locate is preserved', existsSync(census));
+    if (existsSync(census)) {
+      const t = readFileSync(census, 'utf8');
+      // Guards against the file surviving as an empty stub.
+      check('the census carries its roster figures', /13 functional teams/.test(t) && /20 canonical homes/.test(t), String(t.length));
+      check('the census records where it came from', /PR #378|AS-HD-20260826-053-event0002/.test(t));
+    }
+    const rotation = resolve(dir, 'reviews__as-hd-20260826-053-context-rotation.md');
+    check('the 52-seat rotation readback is preserved', existsSync(rotation));
+    if (existsSync(rotation)) {
+      check('the rotation readback carries its seat denominator', /52 seats|of 52 seats/.test(readFileSync(rotation, 'utf8')));
+    }
+  }
+}
+
+// 2u. Per-team evidence recovered from the census, and the two-context P rule.
+{
+  const { contracts } = loadContracts();
+  const at = contracts.hierarchy.authority_tiers;
+  check('the authority ladder uses the owner-specified P namespace', at.namespace === 'P');
+  check('all five tiers P0-P4 are declared', at.levels.map((l) => l.p).join('') === '01234', at.levels.map((l) => l.p).join(''));
+  // A shared letter is safe only while the separating rule is explicit.
+  check('the two P contexts are separated by subject', /subject/i.test(at.disambiguation.rule));
+  check('no subject is readable as both authority and priority',
+    !at.disambiguation.authority_subjects.some((a) => at.disambiguation.priority_subjects.some((b) => b.toLowerCase() === a.toLowerCase())));
+  check('the historical ambiguous rows are called out', /census|2026-08-28/.test(at.disambiguation.known_ambiguous_artifact));
+
+  const dir = resolve(ROOT, '../docs/reconstruction/team-evidence');
+  if (existsSync(dir)) {
+    const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
+    check('per-team evidence was split out of the census', files.length >= 10, String(files.length));
+    // These are evidence, not assignments. If that framing is lost, a seat
+    // could read a 2026-08-28 status row as a live objective.
+    const sample = readFileSync(resolve(dir, files[0]), 'utf8');
+    check('team evidence states it is not a backlog or an objective', /not\*\* a current backlog|not a current backlog/.test(sample));
+    check('team evidence creates no assignment', /creates no assignment/.test(sample));
+    check('team evidence cites its capture date', /2026-08-28/.test(sample));
+    check('team evidence distinguishes its row priority from an authority tier',
+      /not an authority tier/.test(sample));
+  }
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

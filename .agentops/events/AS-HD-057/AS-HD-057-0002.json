@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-057-0002",
+  "ticket": "AS-HD-057",
+  "seq": 2,
+  "parent_event": "AS-HD-057-0001",
+  "kind": "assigned",
+  "actor": "it-manager-iii",
+  "at": "2026-08-29T09:36:00Z",
+  "summary": "Assigned to it-support with writer lease lease-AS-HD-057-it-support on tools/**."
+}

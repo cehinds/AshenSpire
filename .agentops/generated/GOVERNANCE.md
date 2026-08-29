@@ -61,6 +61,9 @@ authority of its own and is regenerated deterministically from
 | `project-management-lead` | project-management-lead | `it-manager-iii` | portfolio-sequencing-recommendation, dependency-and-capacity-visibility, completion-council |
 | `data-architecture-lead` | data-architecture-lead | `it-manager-iii` | data-contract-withhold, schema-lineage, migration-compatibility |
 | `help-desk` | help-desk | `it-manager-iii` | intake, routing, contract-completeness, status-hygiene |
+| `maker` | maker | `it-manager-iii` | implementation-blocker, path-collision, lease-expiry, local-verification-failure |
+| `qa-independent` | qa-independent | `it-manager-iii` | verdict-withhold, fixture-or-plant-regression, exact-head-drift |
+| `it-support` | it-support | `it-manager-iii` | tooling-failure, environment-or-access-blocker, routing-outage |
 
 Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owner classes: owner-exclusive, safety, credential, irreversible, intent-conflict.
 
@@ -121,6 +124,14 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 - **Must:** review the exact frozen head named by the ticket; be a non-maker for the reviewed object
 - **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
 - **Approval ceiling:** qa-verdict
+
+### `it-support`
+
+- **Mission:** Restore the ability to work: repair local tooling, environment, routing and access blockers, and return exact evidence of the repair.
+- **May:** repair-local-tooling-and-environment, restore-routing-and-access, return-exact-support-evidence
+- **Must:** reproduce-a-blocker-before-repairing-it; return-exact-evidence-of-the-repair
+- **Must not:** push-pr-merge-deploy-or-release, change-product-behaviour-to-clear-a-blocker, override-an-independent-qa-verdict
+- **Approval ceiling:** May restore capability only. Any repair that would change what the work produces, or that needs a protected transition, is escalated to it-manager-iii rather than performed.
 
 ### `app-dev-i`
 
@@ -224,6 +235,55 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `dev` | it-manager-iii | pr-only |
 | `test` | it-manager-iii | gate-c-fast-forward-only |
 | `claude/*` | maker | isolated-continuation |
+| `recovery/*` | per-seat | isolated-continuation |
+
+## Promotion gates
+
+Promotion is a sequence of separately evidenced gates against one frozen head, not a single approval. Authority for one gate implies authority for none of the others, and any change to the candidate returns it to the first gate. A gate is passed by recorded evidence at an exact SHA, never by the fact that a job ran.
+
+| Gate | Name | Who acts | Guards | Required evidence | Grants |
+|---|---|---|---|---|---|
+| **A** | Exact candidate QA | `qa-independent` | `accepted` → `pushed` | test-run-receipt, generated-view-drift-check | nothing |
+| **B** | Dev integration and hosted verification | `it-manager-iii` | `pushed` → `pr-open`<br>`pr-open` → `dev-integrated` | hosted-evidence-url | nothing |
+| **C** | Exact fast-forward to test | `it-manager-iii` | `dev-integrated` → `hosted-verified` | hosted-evidence-url, rollback-procedure | nothing |
+| **D** | Five-role exact-test acceptance | `project-management-lead` | `hosted-verified` → `resolved` | acceptance-ledger | nothing |
+| **E** | Owner playtest | `owner` | — | playtest-receipt | nothing |
+| **F** | Separate main and release actions | `owner` | `resolved` → `released` | promotion-packet, rollback-procedure | nothing |
+
+Any code, content, configuration or artifact change creates a new candidate and restarts Gate A. A changed head invalidates every receipt recorded against the former SHA.
+
+## Teams
+
+Standing coordination is scarce and named; delivery capability is pooled and temporary. A pool is a capability the project can draw on, never a department that owns a backlog, a decision stream, or a source path because the path fits its specialty. A pod is formed for one contract-ready ticket and dissolves; its chat and local workspace are never an authority source, so losing the conversation loses no work.
+
+### Standing coordination roles
+
+| Role | Standing responsibility | Boundary |
+|---|---|---|
+| `help-desk` | Intake, contract and status hygiene, routing, acknowledgements, receipts, and Project workflow projection. | No implementation, product, technical-decision, integration, board-mutation, or delivery authority. |
+| `project-management-lead` | Portfolio and milestone recommendations; dependency, blocker, WIP and capacity visibility; completion councils; handoffs; risk and decision log; promotion-readiness planning; stakeholder summaries. | Recommends and coordinates; does not decide technical assignment or integration, and gains no product, board, delivery, promotion, or release authority. |
+| `data-architecture-lead` | Schema, ID, alias and deprecation; source-generator-projection lineage; migration, version and compatibility; generated manifests; save, content and data quality; cross-domain data-contract review. | May WITHHOLD an unsafe contract; does not self-assign implementation or replace domain intent or IT Manager III authority. |
+| `it-manager-iii` | Mandatory technical relay; technical sequencing; path and maker ownership; architecture reconciliation; incident and P0 command; integration and delivery gates. | Decides technical assignment and integration within granted authority; Constantine retains main/release, Pages, tags, publication, playtest, and final release actions. |
+
+### Capability pools
+
+Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.
+
+| Pool | Delivery capability | Stewardship between tickets |
+|---|---|---|
+| `art-tech-art` | Visual direction, assets, optimization, manifests, previews, provenance and licensing. | Audit reuse, consistency, hard-coded art, missing credits, and runtime budgets; prepare isolated proposals and handoffs. |
+| `feature-architecture` | Features, architecture, models, components, services, tooling, and runtime integration. | Reconcile code and contracts, strengthen reusable boundaries, and draft bounded proposals without inventing product scope. |
+| `incident-defect` | Reproduction, containment, repair, regression evidence, and incident and P0 technical response. | Maintain known-bad plants and defect evidence; no unassigned repair. |
+| `code-quality-modernization` | Small risk-ranked code, architecture, test, documentation, configuration, repository and tooling-debt reduction. | Maintain the modernization register and read-only audits; no idle patching or product-behaviour change. |
+| `game-systems` | Mechanics, balance intent, unlock and behaviour and data contracts, acceptance conditions. | Identify SPEC and GDD conflicts, unreachable content, balance drift, and unclear player feedback. |
+| `experience-design` | UX, interaction intent, narrative, names, UI copy, tutorials, accessibility text, changelog and documentation clarity. | Reconcile wording and intent across GDD, SPEC, data and config, UI, help, and changelog. |
+| `experience-accessibility-review` | Temporary review of interaction, readability, accessibility, responsive behaviour, input modes, player-facing language, and experience evidence. | Form only for applicable tickets; preserve domain intent and independent QA verdict ownership. |
+| `qa-guild` | Independent functional, regression, experience, responsive, accessibility, input, persistence, artifact and hosted evidence. | Maintain playbooks, RED plants, known-bad cases, fixtures, viewports, and evidence indexes. |
+| `platform-release` | CI, generated-artifact lanes, environments, packaging, deployment, release staging and operational evidence. | Audit provenance and environment drift; never infer publication, deployment, promotion, or release authority. |
+
+### Charter exception
+
+The charter decides by default. Where it genuinely cannot resolve a case, the two coordinating roles may jointly carry it to the Owner — but only after exhausting what the charter already lets them settle between them. Concurrence is required so no single role can manufacture an owner decision to escape its own boundary. Concurrence: `it-manager-iii` + `project-management-lead`; escalates as `owner-exclusive-now`.
 
 ### Paths
 
@@ -234,7 +294,22 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/tools/**` | maker | agentops-tooling |
 | `.agentops/generated/**` | generator | governance |
 | `.agentops/work/**` | maker | per-ticket |
+| `.agentops/events/**` | maker | per-ticket |
+| `.agentops/leases/**` | it-manager-iii | governance |
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
+| `src/**` | maker | product-source |
+| `assets/**` | maker | product-assets |
+| `content/**` | data-architecture-lead | product-content |
+| `tests/**` | qa-independent | qa-fixtures |
+| `docs/art/**` | maker | product-docs |
+| `docs/hub/**` | maker | product-docs |
+| `docs/governance/**` | project-management-lead | governance-docs |
+| `game-design/docs/**` | help-desk | intake-docs |
+| `tools/**` | it-support | support-tooling |
+| `hud/**` | generator | generated-artifact |
+| `review-approval-hub/**` | generator | generated-artifact |
+| `buildordinal.json` | maker | generated-artifact |
+| `*.html` | maker | generated-artifact |
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 
@@ -281,8 +356,8 @@ Protected states: `pushed`, `pr-open`, `dev-integrated`, `hosted-verified`, `rel
 | From | To | Guard | Permitted actors | Protected |
 |---|---|---|---|---|
 | proposed | assigned | contract-ready + acknowledged | help-desk, it-manager-iii | no |
-| assigned | in-progress | writer-lease-held + exclusive-paths | maker | no |
-| in-progress | local | local-commit-on-isolated-branch | maker | no |
+| assigned | in-progress | writer-lease-held + exclusive-paths | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk | no |
+| in-progress | local | local-commit-on-isolated-branch | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk | no |
 | local | qa-review | frozen-exact-head | maker, it-manager-iii | no |
 | qa-review | accepted | independent-qa-pass at exact head | qa-independent | no |
 | accepted | pushed | independence-PASS + fresh-base | it-manager-iii | yes |

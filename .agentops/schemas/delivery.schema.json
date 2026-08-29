@@ -1,0 +1,75 @@
+{
+  "$schema": "agentops-mini-schema/v1",
+  "title": "delivery",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "policy_version", "principle", "source", "dev_delivery", "promotion_readiness", "promotion_packet", "pages", "rules"],
+  "properties": {
+    "schema": {"const": "agentops/delivery/v1"},
+    "policy_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "principle": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1},
+    "dev_delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_role", "is_a_duty", "authorizes_direct_push", "process", "all_must_pass_at_one_exact_head", "verdicts", "wait_required_on", "wait_permitted_after_pass_for", "waiting_does_not_authorize"],
+      "properties": {
+        "actor_role": {"type": "string", "minLength": 1},
+        "is_a_duty": {"const": false},
+        "authorizes_direct_push": {"const": false},
+        "process": {"type": "string", "minLength": 1},
+        "all_must_pass_at_one_exact_head": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "verdicts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "wait_required_on": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "wait_permitted_after_pass_for": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "waiting_does_not_authorize": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "promotion_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_role", "means", "does_not_mean", "grants", "owner_exclusive_actions", "authority_is_per_action"],
+      "properties": {
+        "actor_role": {"type": "string", "minLength": 1},
+        "means": {"type": "string", "minLength": 1},
+        "does_not_mean": {"type": "string", "minLength": 1},
+        "grants": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "owner_exclusive_actions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "authority_is_per_action": {"const": true}
+      }
+    },
+    "promotion_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unknown_blocks", "required_fields"],
+      "properties": {
+        "unknown_blocks": {"const": true},
+        "required_fields": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "pages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["desired_source", "switch_authorized_by_this_decision", "switch_requires", "switch_packet_records", "complete_only_when", "on_failure"],
+      "properties": {
+        "desired_source": {"type": "string", "minLength": 1},
+        "switch_authorized_by_this_decision": {"const": false},
+        "switch_requires": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["authorizing_role", "escalation_class", "change_window", "candidate_must_have_reached"],
+          "properties": {
+            "authorizing_role": {"type": "string", "minLength": 1},
+            "escalation_class": {"type": "string", "minLength": 1},
+            "change_window": {"const": true},
+            "candidate_must_have_reached": {"type": "string", "minLength": 1}
+          }
+        },
+        "switch_packet_records": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "complete_only_when": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "on_failure": {"type": "string", "minLength": 1}
+      }
+    },
+    "rules": {"type": "object"}
+  }
+}
