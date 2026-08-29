@@ -2413,21 +2413,21 @@ const VIEW_PROBES = {
   authority: (x) => x.grants.map((g) => g.action),
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => e.id)],
   delivery: (x) => [x.principle],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => cl.id)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => cl.id), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => st.does)],
   evidence: (x) => [x.principle],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => r.ref)],
-  hierarchy: (x) => x.nodes.map((n) => n.owns_escalations.join(', ')),
-  'information-access': (x) => [x.principle],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => r.ref), ...x.paths.map((pp) => pp.glob), x.branch_hygiene.principle, x.collision_rule],
+  hierarchy: (x) => [...x.nodes.map((n) => n.owns_escalations.join(', ')), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => lv.label)],
+  'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => d.topic)],
   migration: (x) => [x.principle],
   'model-effort': (x) => [x.principle],
   'owner-command': (x) => [x.principle],
-  'owner-intent': (x) => [x.mission, x.measurable_end_state, x.owner.actor_id, x.deputy.actor_id],
+  'owner-intent': (x) => [x.mission, x.measurable_end_state, x.risk_tolerance, ...x.non_negotiable_invariants, x.owner.reserved_authority.join('; '), x.deputy.grant_summary, x.deputy.non_amplifying_rule],
   project: (x) => [x.project_name, x.installed_stage],
   'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
   qa: (x) => [x.principle],
   raci: (x) => [x.principle],
   roles: (x) => x.roles.map((r) => r.mission),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability)],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle],
   transitions: (x) => [x.principle, ...x.states],
 };
 
@@ -2903,41 +2903,31 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'generated governance view projects every contract', pass: viewCoverageErrors(contracts, govText).length === 0, errs: viewCoverageErrors(contracts, govText) });
     results.push({ label: 'no two contracts share a view probe', pass: probeStrengthErrors(contracts).length === 0, errs: probeStrengthErrors(contracts) });
 
-    // Cut each contract's section out of the rendered view and assert the gate
-    // names that contract. Headings are prose the renderer owns, which is fine
-    // here: the plant is asserting the checker's behaviour, not the prose.
+    // Every rendered section, swept generically. A hardcoded section list was
+    // the first attempt and it hid the same bug one level down: contracts that
+    // render several blocks were probed by one value that lived in the earliest
+    // block, so `## Authority tiers`, `### Branch hygiene`, `### Paths`,
+    // `### Canonical documents`, `### Charter exception`, `### Where a question
+    // goes` and `## Owner and deputy` could all be deleted with `verify` still
+    // green (Codex named three; the sweep found seven). Enumerating headings
+    // from the rendered text instead means a section added later is covered the
+    // day it appears, with no list to remember to update.
     const lines = govText.split('\n');
-    const cut = (start, end) => {
-      const a = lines.indexOf(start);
-      const b = lines.findIndex((l, i) => i > a && l === end);
-      if (a < 0 || b < 0) return null;
-      return lines.slice(0, a).concat(lines.slice(b)).join('\n');
-    };
-    const SECTIONS = [
-      ['owner-intent', '## Owner intent', '## Hierarchy and escalation'],
-      ['hierarchy', '## Hierarchy and escalation', '## Roles'],
-      ['roles', '## Roles', '## Authority matrix'],
-      ['authority', '## Authority matrix', '## Git ownership (one writer per overlapping path or ref)'],
-      ['promotion-gates', '## Promotion gates', '## Teams'],
-      ['teams', '## Teams', '## RACI (exactly one Accountable per item)'],
-      ['raci', '## RACI (exactly one Accountable per item)', '## Delegation envelopes (non-amplifying)'],
-      ['delegation', '## Delegation envelopes (non-amplifying)', '## Escalation (time requests a decision, never authority)'],
-      ['escalation', '## Escalation (time requests a decision, never authority)', '## Lifecycle transitions and permitted actors'],
-      ['transitions', '## Lifecycle transitions and permitted actors', '## Information access and context loading'],
-      ['information-access', '## Information access and context loading', '## QA independence and risk-selected gates'],
-      ['qa', '## QA independence and risk-selected gates', '## Authority tiers'],
-      ['delivery', '## Delivery and the Pages source', '## Model and effort selection'],
-      ['model-effort', '## Model and effort selection', '## Owner commands'],
-      ['owner-command', '## Owner commands', '## Legacy migration'],
-      ['migration', '## Legacy migration', '## Evidence responsibility'],
-    ];
-    for (const [name, start, end] of SECTIONS) {
-      const blinded = cut(start, end);
-      if (blinded === null) { results.push({ label: `coverage plant can locate the '${name}' section`, pass: false, errs: [`heading ${JSON.stringify(start)} or ${JSON.stringify(end)} not found in the rendered view`] }); continue; }
+    const heads = [];
+    lines.forEach((l, i) => { if (/^#{2,3} /.test(l)) heads.push(i); });
+    let swept = 0;
+    for (let k = 0; k < heads.length; k++) {
+      const a = heads[k];
+      const b = k + 1 < heads.length ? heads[k + 1] : lines.length;
+      // A heading with no body of its own carries no contract data, so its
+      // removal is a formatting loss rather than a policy loss.
+      if (!lines.slice(a + 1, b).some((x) => x.trim())) continue;
+      swept++;
+      const blinded = lines.slice(0, a).concat(lines.slice(b)).join('\n');
       const errs = viewCoverageErrors(contracts, blinded);
-      const hit = errs.some((e) => e.includes(`'${name}'`));
-      results.push({ label: `coverage check catches an unprojected '${name}' contract`, pass: hit, errs: hit ? [] : errs });
+      results.push({ label: `coverage check catches the deletion of ${JSON.stringify(lines[a])}`, pass: errs.length > 0, errs: errs.length ? [] : ['deleted with no error reported'] });
     }
+    results.push({ label: 'the section sweep found sections to sweep', pass: swept >= 25, errs: [String(swept)] });
 
     // ...and a contract added with no probe at all must fail rather than skip.
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };

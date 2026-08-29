@@ -13,11 +13,11 @@
 <dt>State</dt><dd>assigned</dd>
 <dt>Objective</dt><dd>Provide independent exact-head verdicts for recovered work, and keep the red plants and fixtures honest.</dd>
 <dt>Done when</dt><dd>Every candidate presented for integration carries an independent verdict authored at its exact head, and the negative-plant corpus still fails for the right reason on each run.</dd>
-<dt>Next action</dt><dd>Author an independent verdict for PR #423 (branch claude/ashenspire-framework-continue-bhjo30) at whatever head the PR carries when this seat wakes. it-manager-iii withdrew the first freeze to fix two Codex review findings; that changed the candidate and restarts Gate A, so any receipt against the earlier head is void. The branch is frozen again from the commit carrying this instruction onward. Run verify, --selftest, opsctl.test.mjs and drill at that head. Check specifically that the view-coverage gate fails when any single contract's section is deleted from the rendered view, and that no two contracts share a probe value — both were wrong on the first candidate. The maker authored the change and cannot sign it. Then resume waiting.</dd>
+<dt>Next action</dt><dd>Author an independent verdict for PR #423 (branch claude/ashenspire-framework-continue-bhjo30) at whatever head the PR carries when this seat wakes. The candidate has now changed twice under Codex review, so Gate A has restarted twice and every receipt against an earlier head is void; the branch is frozen again from the commit carrying this instruction onward. Run verify, --selftest, opsctl.test.mjs and drill at that head. Verify specifically that deleting ANY rendered section of the governance view fails the coverage gate, not merely any contract: per-contract probes passed while seven individual sections were still deletable. The maker authored the change and cannot sign it. Then resume waiting.</dd>
 <dt>Branch</dt><dd><code>recovery/as-hd-055</code></dd>
-<dt>Base</dt><dd><code>c2c2b3d87d30</code></dd>
-<dt>Revision</dt><dd>16 · seal <code>sha256:2610b860de70254f…</code></dd>
-<dt>Succeeds</dt><dd><code>sha256:65a22d2a201303f4…</code></dd>
+<dt>Base</dt><dd><code>48678df930fe</code></dd>
+<dt>Revision</dt><dd>17 · seal <code>sha256:3c7f7e8d9dfcef5d…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:2610b860de70254f…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
 <dt>May</dt><dd><span class="pill">author-exact-head-verdict</span> <span class="pill">maintain-red-plants-and-fixtures</span></dd>
@@ -50,6 +50,8 @@
 <li><code>AS-HD-055-0017</code> · state-change · it-manager-iii · 2026-08-29T22:05:29.354Z<br>it-manager-iii declares a freeze on claude/ashenspire-framework-continue-bhjo30 and hands the QA seat the resulting head. Naming a SHA here was self-defeating: the commit carrying the instruction moves the head it names. The freeze, not a literal SHA, is what makes the target exact. Resealed as revision 15; parent_hash names sha256:8ca1323e5d5b7cc570b5b94fd5c7ceb70f9bb5bca3c48fe02aaf3ad24512520b.</li>
 <li><code>AS-HD-055-0018</code> · state-change · it-manager-iii · 2026-08-29T22:13:03.573Z<br>Candidate changed: two Codex P2 findings fixed (heading nesting, and six contracts escaping the coverage gate). Gate A restarts; receipts against the earlier head are void. Freeze re-declared. Resealed as revision 16; parent_hash names sha256:65a22d2a201303f4b8df7e061f3280d5c92ac3d5a5ec3097d5f76b5eec32bcd1.</li>
 <li><code>AS-HD-055-0019</code> · state-change · qa-independent · 2026-08-29T22:13:03.637Z<br>Reseated from 5e743adbbb48 to live HEAD c2c2b3d87d30; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 16; parent_hash names sha256:65a22d2a201303f4b8df7e061f3280d5c92ac3d5a5ec3097d5f76b5eec32bcd1.</li>
+<li><code>AS-HD-055-0020</code> · state-change · it-manager-iii · 2026-08-29T22:18:42.049Z<br>Second candidate change under review: Codex found the coverage gate still blind to nested sections. Per-contract probes were insufficient; the sweep is now generic over rendered sections. Gate A restarts again. Resealed as revision 17; parent_hash names sha256:2610b860de70254f1e08ce48e5b46736183609987cc8a2666f650a632a9c1340.</li>
+<li><code>AS-HD-055-0021</code> · state-change · qa-independent · 2026-08-29T22:18:42.120Z<br>Reseated from c2c2b3d87d30 to live HEAD 48678df930fe; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 17; parent_hash names sha256:2610b860de70254f1e08ce48e5b46736183609987cc8a2666f650a632a9c1340.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>

@@ -116,6 +116,24 @@ function check(name, cond, detail = '') {
     check('an unprobed contract fails rather than skipping',
       unprobed.some((e) => e.includes('declares no view probe')), unprobed.join(' | '));
 
+    // Per-contract coverage is not enough: a contract that renders several
+    // blocks can be probed by one value living in the earliest of them, leaving
+    // the rest deletable. Sweep every rendered section that carries a body.
+    {
+      const lines = expected.split('\n');
+      const heads = [];
+      lines.forEach((l, i) => { if (/^#{2,3} /.test(l)) heads.push(i); });
+      const uncovered = [];
+      for (let k = 0; k < heads.length; k++) {
+        const a = heads[k];
+        const b = k + 1 < heads.length ? heads[k + 1] : lines.length;
+        if (!lines.slice(a + 1, b).some((x) => x.trim())) continue;
+        const blinded = lines.slice(0, a).concat(lines.slice(b)).join('\n');
+        if (viewCoverageErrors(contracts, blinded).length === 0) uncovered.push(lines[a]);
+      }
+      check('deleting any rendered section fails the coverage gate', uncovered.length === 0, uncovered.join(' | '));
+    }
+
     // ...and the check itself must be able to fail, or it proves nothing.
     const blinded = expected.split('\n').filter((l) => !l.includes(contracts.migration.principle)).join('\n');
     check('coverage check fails when a contract is unprojected',

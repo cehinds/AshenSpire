@@ -6,11 +6,11 @@ DONE-WHEN  : Every reported blocker is either reproduced and repaired with exact
 AUTHORITY  : may repair-local-tooling-and-environment, restore-routing-and-access, return-exact-support-evidence | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths, change-product-behaviour-to-clear-a-blocker | expiry 2026-10-31T23:59:59Z
 FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
 REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-057
-BASE       : c2c2b3d87d3027e49d7bc944e71ee73e91b7ddda tree recovered-from-hub-snapshot dirty=clean
+BASE       : 48678df930fe092084063cf4f33c36185a7e9917 tree recovered-from-hub-snapshot dirty=clean
 NEXT ACTION: Take the open tooling defects from the AS-HD-053 continuity audit (issue #392) that fall inside tools/**: reproduce each before repairing it, and escalate any that would need .agentops/tools/**, which AS-1001 holds.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
 REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : —
-SOURCE     : c2c2b3d87d3027e49d7bc944e71ee73e91b7ddda
-FRESHNESS  : as-recorded (base c2c2b3d87d30); verify live HEAD out-of-band
+SOURCE     : 48678df930fe092084063cf4f33c36185a7e9917
+FRESHNESS  : as-recorded (base 48678df930fe); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
