@@ -766,5 +766,32 @@ function check(name, cond, detail = '') {
   }
 }
 
+// 2u. Per-team evidence recovered from the census, and the two-context P rule.
+{
+  const { contracts } = loadContracts();
+  const at = contracts.hierarchy.authority_tiers;
+  check('the authority ladder uses the owner-specified P namespace', at.namespace === 'P');
+  check('all five tiers P0-P4 are declared', at.levels.map((l) => l.p).join('') === '01234', at.levels.map((l) => l.p).join(''));
+  // A shared letter is safe only while the separating rule is explicit.
+  check('the two P contexts are separated by subject', /subject/i.test(at.disambiguation.rule));
+  check('no subject is readable as both authority and priority',
+    !at.disambiguation.authority_subjects.some((a) => at.disambiguation.priority_subjects.some((b) => b.toLowerCase() === a.toLowerCase())));
+  check('the historical ambiguous rows are called out', /census|2026-08-28/.test(at.disambiguation.known_ambiguous_artifact));
+
+  const dir = resolve(ROOT, '../docs/reconstruction/team-evidence');
+  if (existsSync(dir)) {
+    const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
+    check('per-team evidence was split out of the census', files.length >= 10, String(files.length));
+    // These are evidence, not assignments. If that framing is lost, a seat
+    // could read a 2026-08-28 status row as a live objective.
+    const sample = readFileSync(resolve(dir, files[0]), 'utf8');
+    check('team evidence states it is not a backlog or an objective', /not\*\* a current backlog|not a current backlog/.test(sample));
+    check('team evidence creates no assignment', /creates no assignment/.test(sample));
+    check('team evidence cites its capture date', /2026-08-28/.test(sample));
+    check('team evidence distinguishes its row priority from an authority tier',
+      /not an authority tier/.test(sample));
+  }
+}
+
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);
 process.exit(failures === 0 ? 0 : 1);

@@ -301,13 +301,24 @@ export function semanticChecks(c) {
     if (!/never.*(model|effort)|not.*(model|effort)/i.test(at.rules.not_a_capability_ladder || '')) {
       errors.push('hierarchy: authority tiers no longer state that a level never selects model or effort');
     }
-    // P<n> is the priority namespace — promotion-gates and authority.json both
-    // gate on a 'P0/P1 WITHHOLD', and hierarchy declares 'incident-p0'. An
-    // authority tier wearing the same label makes a P0 incident readable as an
-    // owner authorization, which the recovered 2026-08-28 census shows is not
-    // hypothetical: it carries a row reading 'P0 IT Manager III'.
-    if (at.namespace === 'P' || at.levels.some((l) => /^P/.test(String(l.label)))) {
-      errors.push("hierarchy: authority tiers use the 'P' namespace, which denotes incident and defect priority; a P0 incident would read as an owner authorization");
+    // P<n> means two things here, and that is the owner's decision: on a team or
+    // actor it is authority, on an issue or ticket it is priority. A shared
+    // letter is safe only while the rule separating them is written down and the
+    // two subject lists stay disjoint — an overlap would make some subject
+    // readable both ways, which is the actual hazard.
+    const dis = at.disambiguation;
+    if (at.namespace === 'P') {
+      if (!dis) {
+        errors.push("hierarchy: authority tiers share the 'P' namespace with incident priority but declare no disambiguation rule");
+      } else {
+        const overlap = dis.authority_subjects.filter((a) => dis.priority_subjects.some((b) => b.toLowerCase() === a.toLowerCase()));
+        if (overlap.length) {
+          errors.push(`hierarchy: '${overlap.join(', ')}' is listed as both an authority and a priority subject; a P-code on it would be readable both ways`);
+        }
+        if (!/subject/i.test(dis.rule)) {
+          errors.push('hierarchy: the disambiguation rule no longer says the subject decides the meaning');
+        }
+      }
     }
   }
   if (c.escalation && c.escalation.ticket_flow && c.roles) {
@@ -2023,6 +2034,12 @@ export function renderHubSite(contracts, rt) {
       if (at) {
         L.push('<section><h2>Authority tiers</h2>');
         L.push(`<p class="sub">${hubEsc(at.principle)}</p>`);
+        if (at.disambiguation) {
+          L.push(`<p class="sub"><strong>P-codes mean two things.</strong> ${hubEsc(at.disambiguation.rule)} `
+            + `Authority: ${at.disambiguation.authority_subjects.map((x) => `<span class="pill">${hubEsc(x)}</span>`).join(' ')} · `
+            + `Priority: ${at.disambiguation.priority_subjects.map((x) => `<span class="pill">${hubEsc(x)}</span>`).join(' ')}</p>`);
+          L.push(`<p class="sub warn">${hubEsc(at.disambiguation.never)}</p>`);
+        }
         L.push('<div class="wrap"><table><tr><th>Tier</th><th>Who</th><th>Holds</th><th>Cannot</th></tr>');
         for (const lv of at.levels) {
           L.push(`<tr><td><strong>P${lv.p}</strong><br><span class="sub">${hubEsc(lv.label)}</span></td>`
@@ -2628,7 +2645,9 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
-  expectSemantic('tiers: reusing the priority namespace', (c) => { c.hierarchy.authority_tiers.namespace = 'P'; }, 'would read as an owner authorization');
+  expectSemantic('tiers: a shared namespace with no disambiguation rule', (c) => { delete c.hierarchy.authority_tiers.disambiguation; }, 'declare no disambiguation rule');
+  expectSemantic('tiers: a subject readable as both authority and priority', (c) => { c.hierarchy.authority_tiers.disambiguation.priority_subjects.push('team'); }, 'readable both ways');
+  expectSemantic('tiers: the disambiguation rule losing its subject test', (c) => { c.hierarchy.authority_tiers.disambiguation.rule = 'use judgement'; }, 'subject decides the meaning');
   expectSemantic('tiers: an actor in no tier', (c) => { c.hierarchy.authority_tiers.levels = c.hierarchy.authority_tiers.levels.filter((l) => l.p !== 4); }, 'in no authority tier');
   expectSemantic('tiers: an actor in two tiers', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 2).actors.push('maker'); }, 'an actor holds one tier');
   expectSemantic('tiers: the owner demoted below P0', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 1).actors.push('constantine'); }, 'appears below P0');

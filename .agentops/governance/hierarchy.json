@@ -106,7 +106,7 @@
     "note": "Elapsed time changes routing only, never truth, evidence, or authority. FYIs remain dashboard-only and are not escalations."
   },
   "authority_tiers": {
-    "principle": "An A-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection \u2014 decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a A3 verdict binds A0 and A1 alike and is cleared only by a recorded waiver from the role the QA contract names.",
+    "principle": "A P-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection \u2014 decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a P3 verdict binds P0 and P1 alike and is cleared only by a recorded waiver from the role the QA contract names.",
     "levels": [
       {
         "p": 0,
@@ -185,7 +185,7 @@
           "implementing what it verifies",
           "assigning work to itself"
         ],
-        "note": "Ranked below A2 in decision authority and above every tier in verdict finality. That is deliberate: independence comes from a non-maker reviewer at an immutable head, not from position."
+        "note": "Ranked below P2 in decision authority and above every tier in verdict finality. That is deliberate: independence comes from a non-maker reviewer at an immutable head, not from position."
       },
       {
         "p": 4,
@@ -206,13 +206,34 @@
       }
     ],
     "rules": {
-      "not_a_capability_ladder": "An A-level never selects a model or an effort; decision 0006's risk-and-station matrix does that, and a tier named after a role is rejected.",
+      "not_a_capability_ladder": "A P-level never selects a model or an effort; decision 0006's risk-and-station matrix does that, and a tier named after a role is rejected.",
       "authority_is_per_action": "Holding a tier grants only the actions that tier enumerates. Authority for one action implies authority for none of the others.",
-      "independence_binds_upward": "An A3 verdict binds every tier including A0. It is cleared only by the waiver authority qa.json names for that risk class, recorded with its reason.",
-      "escalation_follows_the_tree": "A tier is not a routing table. Escalation follows escalation_parent and the classes in escalation.json; only owner-exclusive classes reach A0.",
-      "namespace_is_reserved": "Authority tiers never use the P<n> namespace, which denotes incident and defect priority. A tier label that does is rejected."
+      "independence_binds_upward": "A P3 verdict binds every tier including P0. It is cleared only by the waiver authority qa.json names for that risk class, recorded with its reason.",
+      "escalation_follows_the_tree": "A tier is not a routing table. Escalation follows escalation_parent and the classes in escalation.json; only owner-exclusive classes reach P0.",
+      "namespace_is_reserved": "P<n> is shared with incident and defect priority. The subject disambiguates: a code on a team or actor is authority, a code on an issue, ticket or directive is priority. The contract must keep saying so."
     },
-    "namespace": "A",
-    "namespace_note": "The owner specified these as P0-P4. They are recorded as A0-A4 because P<n> is already the priority namespace in this repository: promotion-gates.json and authority.json both gate on a 'P0/P1 WITHHOLD', decision 0009 accepts a 'P2' defect, and hierarchy.json declares an 'incident-p0' escalation class. The recovered 2026-08-28 census makes the hazard concrete \u2014 it carries a row reading 'P0 IT Manager III', meaning a P0-PRIORITY row owned by the IT Manager III, which under an authority reading would say the IT Manager III is the Owner. Numbering, ordering and meaning are exactly as the owner specified; only the letter differs, so a P0 incident can never be misread as an owner authorization."
+    "namespace": "P",
+    "namespace_note": "P<n> carries two meanings in this project, separated by SUBJECT, per the owner: on a team or an actor it is AUTHORITY (this ladder); on an issue, ticket or directive it is PRIORITY (P0 most urgent). 'P1 Help Desk lead' is an authority statement; 'P1 WITHHOLD' and 'incident-p0' are priority. Nothing infers one from the other, and neither reading is ever applied to a subject of the other kind.",
+    "disambiguation": {
+      "rule": "The subject decides the meaning. A P-code attached to a team or an actor is authority; a P-code attached to an issue, ticket, directive or defect is priority.",
+      "authority_subjects": [
+        "team",
+        "actor",
+        "role",
+        "seat",
+        "lead"
+      ],
+      "priority_subjects": [
+        "issue",
+        "ticket",
+        "directive",
+        "defect",
+        "blocker",
+        "incident",
+        "WITHHOLD"
+      ],
+      "never": "Read a priority code as authority, or an authority code as priority, because the two share a letter.",
+      "known_ambiguous_artifact": "The recovered 2026-08-28 census carries rows such as 'P0 IT Manager III', where a priority code and an actor name sit adjacent in rendered output. Those rows are historical PRIORITY rows and predate this rule. They are evidence, not authority statements, and docs/reconstruction/team-evidence/ labels each one accordingly."
+    }
   }
 }
