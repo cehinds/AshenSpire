@@ -209,10 +209,10 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 ### `team-lead`
 
 - **Mission:** Hold one team persistently: spin out its agent seats, approve their self-certification inside the standing grant from the IT Manager III, and answer for the team's work.
-- **May:** spin-out-agent-seat, approve-maker-self-certification, record-independence-waiver
-- **Must:** name itself and the standing envelope on every self-certification it approves; be a different actor from the seat whose work it approves
-- **Must not:** approve-its-own-implementation, waive-independence-for-a-high-risk-object, push-pr-merge-deploy-or-release, amend-its-own-grant
-- **Approval ceiling:** Waives independence for low and standard risk only, and only for a seat on its own team. A high-risk object stays with the owner waiver; anything needing a protected transition is escalated to it-manager-iii rather than performed.
+- **May:** spin-out-agent-seat
+- **Must:** name itself on every seat it spins out; keep its team's roster and capacity current
+- **Must not:** approve-its-own-implementation, waive-independent-qa, push-pr-merge-deploy-or-release, amend-its-own-grant
+- **Approval ceiling:** Forms and staffs its own team. Holds no waiver over independent QA: decision 0010 withdrew that mechanism pending an authenticated approval path.
 
 ## Authority matrix
 
@@ -331,9 +331,9 @@ The charter decides by default. Where it genuinely cannot resolve a case, the tw
 
 ### Team leads
 
-Every team has one persistent lead. The lead is standing; the pod it forms for a ticket is not. Leading a team confers no backlog and no source path — those still come from git-ownership and an assigned ticket.
+Every team has one persistent lead. The lead is standing; the pod it forms for a ticket is not. Leading a team confers no backlog, no source path and no waiver over independent QA — those come from git-ownership, an assigned ticket, and qa.json respectively.
 
-Role `team-lead` at **P2**, one per team, standing grant from `it-manager-iii` under envelope `itm-to-team-lead-self-certification`. Spins out agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant.
+Role `team-lead` at **P2**, one per team. Spins out agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant. Holds no waiver over independent QA (decision 0010).
 
 A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns — and a waiver approved by the wrong team's lead would satisfy a role-only check. Each lead therefore carries its own actor_id and the one team it leads, and a self-certification names that actor.
 
@@ -380,7 +380,6 @@ Rule: `effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ acti
 | itm-to-maker-feature | — | it-manager-iii → maker | implement-locally, run-tests-and-builds, commit-on-isolated-branch | 1 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
 | maker-to-helper-disjoint | itm-to-maker-feature | maker → maker | run-tests-and-builds | 0 | 2026-01-01T00:00:00Z → 2026-06-30T23:59:59Z |
 | itm-to-qa-review | — | it-manager-iii → qa-independent | perform-independent-qa | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
-| itm-to-team-lead-self-certification | — | it-manager-iii → team-lead | approve-maker-self-certification, record-independence-waiver | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
 
 ## Escalation (time requests a decision, never authority)
 
@@ -468,19 +467,7 @@ QA is risk-selected and independent. The verifier of an exact object is never it
 | accept-high-risk-object | high | qa-independent | yes | owner | test-run-receipt, security-scan-receipt, hosted-verification-receipt |
 | data-contract-clearance | standard | data-architecture-lead | yes | it-manager-iii | data-lineage-receipt |
 
-### Self-certification (independence waived, never faked)
-
-A maker may sign its own exact-head evidence only when its own team lead records a waiver of independence beside it. The waiver never becomes an independent verdict: the maker's receipt and the lead's waiver are two separate records, and neither is written as a qa-independent PASS.
-
-Permitted risk classes: `low`, `standard`. High risk is excluded because the IT Manager III holds only the standard-risk QA waiver, so it cannot delegate a high-risk waiver it does not itself hold; a high-risk object stays with the owner waiver this contract already names.
-
-Approver: `team-lead`, leading the certifying seat's own team and never the seat itself, under standing grant `itm-to-team-lead-self-certification` from `it-manager-iii`. Recorded as `self-certified`.
-
-That grant must be live and must actually carry `approve-maker-self-certification` and `record-independence-waiver`: an envelope with the right roles but the wrong actions, or one outside its effective window, backs nothing.
-
-Every self-certification records: the certifying seat, the approving team lead, the standing envelope, the exact head, the suites actually run, why independence was waived.
-
-Never: recorded or rendered as a qa-independent verdict; used for a risk class this contract does not permit; approved by the seat that produced the work.
+A waiver of independence is never recorded by the party it constrains. Any future self-certification mechanism must be carried by a separately authenticated action from the approving role, not by a field the certifying seat writes into its own capsule and reseals.
 
 ## Authority tiers
 

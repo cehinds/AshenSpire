@@ -594,16 +594,6 @@ export function semanticChecks(c, now = new Date().toISOString()) {
         if (!lv) errors.push(`teams: team_leads.role '${tl.role}' is in no authority tier`);
         else if (lv.p !== tl.authority_tier) errors.push(`teams: team_leads declares tier P${tl.authority_tier} but the ladder places '${tl.role}' at P${lv.p}`);
       }
-      // The standing grant must be a real envelope that actually says this.
-      if (c.delegation) {
-        const env = c.delegation.envelopes.find((e) => e.id === tl.delegation_envelope);
-        if (!env) errors.push(`teams: team_leads names standing envelope '${tl.delegation_envelope}', which delegation.json does not declare`);
-        else {
-          if (env.delegator_role !== tl.standing_grant_from) errors.push(`teams: team_leads says the standing grant comes from '${tl.standing_grant_from}' but envelope '${env.id}' is delegated by '${env.delegator_role}'`);
-          if (env.delegatee_role !== tl.role) errors.push(`teams: standing envelope '${env.id}' grants '${env.delegatee_role}', not the team lead role '${tl.role}'`);
-          if (env.max_subdelegation_depth !== 0) errors.push(`teams: standing envelope '${env.id}' allows subdelegation; a lead must not pass the independence waiver on`);
-        }
-      }
     }
 
     // The naming convention shares its leading letter with the tier namespace,
@@ -819,111 +809,6 @@ export function semanticChecks(c, now = new Date().toISOString()) {
       for (const ev of g.required_evidence) if (!evIds.has(ev)) errors.push(`qa: gate '${g.id}' required evidence '${ev}' has no owner in evidence.json`);
     }
 
-    // Self-certification lets a maker sign its own work when its team lead
-    // waives independence. That is the one place in this corpus where the
-    // maker/verifier separation is deliberately relaxed, so every way it could
-    // widen into a self-approval is checked, not described.
-    if (c.qa.self_certification) {
-      const sc = c.qa.self_certification;
-      if (!roles.has(sc.approver_role)) errors.push(`qa: self_certification approver role '${sc.approver_role}' is unknown`);
-      if (sc.approver_role === 'maker') errors.push("qa: self_certification lets the maker approve its own certification (approver_role 'maker')");
-      for (const g of c.qa.gates) {
-        if (sc.approver_role === g.verifier_role) errors.push(`qa: self_certification approver '${sc.approver_role}' is also the verifier of gate '${g.id}'; the approver of a waiver must not be the reviewer it waives`);
-      }
-      for (const rc of sc.permitted_risk_classes) {
-        if (!riskIds.has(rc)) errors.push(`qa: self_certification permits unknown risk class '${rc}'`);
-        // A class the owner reserved cannot be cleared by a delegated grant:
-        // the deputy has no high-risk waiver to delegate in the first place.
-        for (const g of c.qa.gates) {
-          if (g.risk_class === rc && g.waiver_authority_role === 'owner') {
-            errors.push(`qa: self_certification permits risk class '${rc}', but gate '${g.id}' reserves its waiver to the owner; a delegated grant cannot clear it`);
-          }
-        }
-      }
-      // Allowlist, not blacklist. Naming four forbidden spellings left every
-      // other independent-looking one available — 'qa-independent-pass' passed
-      // validation and would have been published in the view as the recorded
-      // verdict. One dedicated kind is the whole point of the field.
-      if (sc.verdict_kind !== 'self-certified') {
-        errors.push(`qa: self_certification verdict_kind '${sc.verdict_kind}' is not the dedicated kind 'self-certified'; a waiver must be recorded under its own name and never one that reads as an independent verdict`);
-      }
-      // The grant's source must be a role that actually holds waiver authority.
-      // Reconciling the three fields against each other only proved they agreed:
-      // setting all of them to 'maker' validated cleanly and let a maker mint
-      // the grant used to bypass its own review.
-      const waiverAuthorities = new Set(c.qa.gates.map((g) => g.waiver_authority_role));
-      if (!waiverAuthorities.has(sc.standing_authority_from)) {
-        errors.push(`qa: self_certification takes its standing authority from '${sc.standing_authority_from}', which holds no gate's waiver_authority_role (${[...waiverAuthorities].join(', ')}); a waiver cannot be minted by a role that has none to give`);
-      }
-      // The standing grant has to exist and actually carry these actions.
-      if (c.delegation) {
-        const env = c.delegation.envelopes.find((e) => e.id === sc.delegation_envelope);
-        if (!env) errors.push(`qa: self_certification names standing envelope '${sc.delegation_envelope}', which delegation.json does not declare`);
-        else {
-          if (env.delegatee_role !== sc.approver_role) errors.push(`qa: standing envelope '${env.id}' grants '${env.delegatee_role}', not the approver role '${sc.approver_role}'`);
-          if (env.delegator_role !== sc.standing_authority_from) errors.push(`qa: self_certification says its standing authority comes from '${sc.standing_authority_from}' but envelope '${env.id}' is delegated by '${env.delegator_role}'`);
-          // Right roles, right dates, wrong grant: an envelope carrying some
-          // unrelated action would otherwise read as backing this waiver.
-          // Both halves of the waiver are pinned here rather than read from the
-          // contract. Taking the list from qa.json was the previous fix and it
-          // proved only that two mutable lists agreed: trimming both to drop
-          // `record-independence-waiver` validated cleanly, leaving a lead able
-          // to approve a self-certification with no authority to record the
-          // waiver that makes it auditable. A contract cannot be the sole source
-          // of the constraint it is being checked against.
-          const REQUIRED_WAIVER_ACTIONS = ['approve-maker-self-certification', 'record-independence-waiver'];
-          const granted = new Set(env.delegated_actions);
-          for (const need of REQUIRED_WAIVER_ACTIONS) {
-            if (!granted.has(need)) errors.push(`qa: standing envelope '${env.id}' does not grant '${need}'; both halves of the waiver are required, and an unrelated grant cannot authorize bypassing independent QA`);
-            if (!sc.requires_envelope_actions.includes(need)) errors.push(`qa: self_certification.requires_envelope_actions omits '${need}'; the contract must keep demanding both halves of the waiver`);
-          }
-          for (const declared of sc.requires_envelope_actions) {
-            if (!granted.has(declared)) errors.push(`qa: standing envelope '${env.id}' does not grant '${declared}', which self_certification requires`);
-          }
-          // Ordering is not currency. `expiry > effective` says only that the
-          // window is the right way round, so a 2020-2021 envelope satisfied it
-          // and an expired grant kept reading as authoritative. Both bounds are
-          // compared against the verification time instead.
-          // Comparing the strings is not comparing the instants. Lexical order
-          // put "9" after "2026-…", so an envelope of "0".."9" passed the schema
-          // (any non-empty string), passed ordering, and passed currency — a
-          // malformed grant reading as live authority to bypass independent QA.
-          // Parse first, and treat unparseable as unbacked rather than as valid.
-          // Date.parse is too forgiving to lean on: it accepts "9" happily, so
-          // the malformed case above was rejected only by the coincidence of
-          // landing in the past. The shape is required first, then parsed.
-          const ISO = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
-          const at = (label, v) => {
-            if (typeof v !== 'string' || !ISO.test(v) || Number.isNaN(Date.parse(v))) {
-              errors.push(`qa: standing envelope '${env.id}' has a malformed ${label} ${JSON.stringify(v)}; a grant whose window cannot be read backs nothing`);
-              return null;
-            }
-            // The regex proves the shape, not the calendar. Node normalizes
-            // 2026-02-30 to March 2 without complaint, so a date that does not
-            // exist was passing both the pattern and the parse. Round-tripping
-            // is what actually rejects it.
-            const t = Date.parse(v);
-            if (new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z') !== v) {
-              errors.push(`qa: standing envelope '${env.id}' has a ${label} of ${JSON.stringify(v)}, which is not a real instant (it normalizes to ${new Date(t).toISOString()}); a grant whose window cannot be read backs nothing`);
-              return null;
-            }
-            return t;
-          };
-          const eff = at('effective', env.effective);
-          const exp = at('expiry', env.expiry);
-          const nowT = Date.parse(now);
-          if (eff !== null && exp !== null && !Number.isNaN(nowT)) {
-            if (eff > nowT) errors.push(`qa: standing envelope '${env.id}' is not yet effective (${env.effective} > ${now}); the self-certification grant is unbacked`);
-            if (exp <= nowT) errors.push(`qa: standing envelope '${env.id}' expired at ${env.expiry}; the self-certification grant is unbacked and must be renewed before a lead may waive independence`);
-          }
-        }
-      }
-      // The record must keep both halves, or the waiver becomes invisible.
-      const joined = sc.records.join(' ').toLowerCase();
-      for (const need of ['seat', 'lead', 'head']) {
-        if (!joined.includes(need)) errors.push(`qa: self_certification records nothing naming the ${need}; the waiver could not be audited`);
-      }
-    }
   }
 
   // 12. Evidence: producer and verifier roles are declared (or the generator writer).
@@ -1106,7 +991,7 @@ export function renderGovernance(c) {
       L.push('');
       L.push(tl.principle);
       L.push('');
-      L.push(`Role \`${tl.role}\` at **P${tl.authority_tier}**, one per team, standing grant from \`${tl.standing_grant_from}\` under envelope \`${tl.delegation_envelope}\`. Spins out ${tl.spins_out}.`);
+      L.push(`Role \`${tl.role}\` at **P${tl.authority_tier}**, one per team. Spins out ${tl.spins_out}. Holds no waiver over independent QA (decision 0010).`);
       L.push('');
       L.push(tl.identity_rule);
       L.push('');
@@ -1240,23 +1125,8 @@ export function renderGovernance(c) {
       L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
     }
     L.push('');
-    if (c.qa.self_certification) {
-      const sc = c.qa.self_certification;
-      L.push('### Self-certification (independence waived, never faked)');
-      L.push('');
-      L.push(sc.principle);
-      L.push('');
-      L.push(`Permitted risk classes: ${sc.permitted_risk_classes.map((x) => '`' + x + '`').join(', ')}. High risk is excluded because ${sc.high_risk_is_excluded_because}`);
-      L.push('');
-      L.push(`Approver: \`${sc.approver_role}\`, leading the certifying seat's own team and never the seat itself, under standing grant \`${sc.delegation_envelope}\` from \`${sc.standing_authority_from}\`. Recorded as \`${sc.verdict_kind}\`.`);
-      L.push('');
-      L.push(`That grant must be live and must actually carry ${sc.requires_envelope_actions.map((a) => '\`' + a + '\`').join(' and ')}: an envelope with the right roles but the wrong actions, or one outside its effective window, backs nothing.`);
-      L.push('');
-      L.push(`Every self-certification records: ${sc.records.join(', ')}.`);
-      L.push('');
-      L.push(`Never: ${sc.never.join('; ')}.`);
-      L.push('');
-    }
+    L.push(c.qa.rules.independence_is_not_self_recorded);
+    L.push('');
   }
 
   if (c.hierarchy && c.hierarchy.authority_tiers) {
@@ -1591,64 +1461,6 @@ export function runtimeChecks(g, rt) {
     }
   }
 
-  // A recorded self-certification is where the waiver actually happens, and
-  // until now nothing checked one. The static roster proved that leads have
-  // team identities; this proves a given waiver used the right one. Without it
-  // a game-systems capsule could carry a waiver approved by the art lead and
-  // `verify` would still pass.
-  const sc = g.qa && g.qa.self_certification;
-  const leadRoster = g.teams && g.teams.team_leads && g.teams.team_leads.leads;
-  for (const t of Object.keys(rt.capsules).sort()) {
-    const cert = rt.capsules[t].self_certification;
-    if (!cert) continue;
-    if (!sc) { errors.push(`capsule ${t}: records a self-certification, but qa.json declares no self_certification policy`); continue; }
-    if (cert.verdict_kind !== sc.verdict_kind) errors.push(`capsule ${t}: self-certification verdict_kind '${cert.verdict_kind}' is not the declared '${sc.verdict_kind}'`);
-    if (cert.envelope !== sc.delegation_envelope) errors.push(`capsule ${t}: self-certification cites envelope '${cert.envelope}', not the standing grant '${sc.delegation_envelope}'`);
-    // `certifying_seat` was an unbound string, so a lead could approve its own
-    // output by writing 'maker' in that field. The capsule's owner_actor is the
-    // seat that actually holds the work, so the waiver is compared against that
-    // rather than against whatever it claims about itself.
-    const holder = rt.capsules[t].owner_actor;
-    if (cert.certifying_seat !== holder) errors.push(`capsule ${t}: self-certification names certifying seat '${cert.certifying_seat}', but the capsule is held by '${holder}'; the waiver must name the seat that owns the work`);
-    if (cert.approving_lead === holder) errors.push(`capsule ${t}: self-certification is approved by '${cert.approving_lead}', which is the seat holding the capsule; a lead cannot approve its own output`);
-    if (cert.certifying_seat === cert.approving_lead) errors.push(`capsule ${t}: self-certification is approved by the same actor that produced it ('${cert.approving_lead}')`);
-    // Without a risk class on the candidate the low/standard allowlist was
-    // unenforceable at runtime: the same record satisfied a high-risk object,
-    // and `suites_run: ['unit']` satisfied any gate.
-    const rc = g.qa.risk_classes.find((r) => r.id === cert.risk_class);
-    if (!rc) errors.push(`capsule ${t}: self-certification declares risk class '${cert.risk_class}', which qa.json does not define`);
-    else {
-      if (!sc.permitted_risk_classes.includes(cert.risk_class)) {
-        errors.push(`capsule ${t}: self-certification claims risk class '${cert.risk_class}', which self_certification does not permit (${sc.permitted_risk_classes.join(', ')}); that class keeps its declared waiver authority`);
-      }
-      const ran = new Set(cert.suites_run);
-      for (const suite of rc.required_suites) {
-        if (!ran.has(suite)) errors.push(`capsule ${t}: self-certification for '${cert.risk_class}' work does not record the required '${suite}' suite; a waiver of independence does not waive the suites`);
-      }
-    }
-    // `team` is optional on a capsule, and skipping the comparison when it was
-    // absent meant a teamless capsule could carry a waiver naming any team at
-    // all — the one comparison tying the waiver to the work simply did not run.
-    // A waiver requires a team, so its absence is the error.
-    const alias = new Map((g.teams && g.teams.legacy_aliases || []).map((a) => [a.legacy, a.routes_to]));
-    const canon = (x) => (x == null ? x : (alias.get(x) || x));
-    const capsuleTeam = rt.capsules[t].team;
-    if (!capsuleTeam) {
-      errors.push(`capsule ${t}: records a self-certification but declares no team; a waiver cannot be scoped to a team the capsule does not name`);
-    } else if (canon(cert.team) !== canon(capsuleTeam)) {
-      // Compared canonically: a capsule on the legacy alias 'art' and a waiver
-      // on 'art-tech-art' are the same team, and comparing them raw made every
-      // waiver on an aliased capsule impossible — rejected whichever spelling
-      // it used.
-      errors.push(`capsule ${t}: self-certification names team '${cert.team}' but the capsule's team is '${capsuleTeam}'`);
-    }
-    const lead = (leadRoster || []).find((l) => l.actor_id === cert.approving_lead);
-    if (!lead) errors.push(`capsule ${t}: self-certification approved by '${cert.approving_lead}', which is not a declared team lead`);
-    else if (canon(lead.team) !== canon(cert.team)) errors.push(`capsule ${t}: self-certification approved by '${cert.approving_lead}', who leads '${lead.team}', not the certifying seat's team '${cert.team}'`);
-    if (cert.exact_head !== rt.capsules[t].base_oid) {
-      errors.push(`capsule ${t}: self-certification is authored at ${cert.exact_head.slice(0, 12)} but the capsule stands on ${String(rt.capsules[t].base_oid).slice(0, 12)}; a changed candidate voids the waiver`);
-    }
-  }
   for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
   // Entitlement must hold for every active lease, not only the one a capsule
   // happens to select: a second unrevoked lease on a protected ref is
@@ -2697,7 +2509,7 @@ const VIEW_PROBES = {
   'owner-intent': (x) => [x.mission, x.measurable_end_state, x.risk_tolerance, ...x.non_negotiable_invariants, x.owner.reserved_authority.join('; '), x.deputy.grant_summary, x.deputy.non_amplifying_rule],
   project: (x) => [x.project_name, x.installed_stage],
   'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
-  qa: (x) => [x.principle, x.self_certification.principle, x.self_certification.high_risk_is_excluded_because, ...x.self_certification.requires_envelope_actions],
+  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded],
   raci: (x) => [x.principle],
   roles: (x) => x.roles.map((r) => r.mission),
   teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => l.actor_id), ...x.team_leads.leads.map((l) => l.seat_name), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
@@ -3254,115 +3066,8 @@ export function runSelftest(root = ROOT) {
   expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
   expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
   expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
-  // Stage 11 team-lead and self-certification plants. The owner granted a lead
-  // the power to waive QA independence for its own team; this is the one place
-  // the maker/verifier separation is deliberately relaxed, so each way it could
-  // widen into a plain self-approval is planted.
-  expectSemantic('team lead: role that is not declared', (c) => { c.teams.team_leads.role = 'ghost-lead'; }, 'is not a declared role');
-  expectSemantic('team lead: a capability pool made into the lead role', (c) => { c.teams.team_leads.role = 'qa-guild'; }, 'is also a capability pool');
-  // The recorded waiver is where the bypass actually happens. The static roster
-  // proved leads have team identities; these prove a given waiver used the right
-  // one — a game-systems capsule waived by the art lead used to pass.
-  {
-    const withCert = (over) => (rt) => {
-      const c = rt.capsules['AS-HD-050'];
-      c.team = 'game-systems';
-      c.self_certification = Object.assign({
-        certifying_seat: c.owner_actor, approving_lead: 'lead-game-systems', team: 'game-systems',
-        risk_class: 'standard', envelope: 'itm-to-team-lead-self-certification', exact_head: c.base_oid,
-        suites_run: ['unit', 'regression', 'deterministic-view'],
-        why_independence_was_waived: 'bounded reversible change', verdict_kind: 'self-certified',
-      }, over);
-    };
-    const control = baseRt(); withCert({})(control);
-    results.push({ label: 'a well-formed self-certification passes', pass: runtimeChecks(contracts, control).filter((e) => e.includes('self-certification')).length === 0, errs: runtimeChecks(contracts, control).filter((e) => e.includes('self-certification')) });
-    expectRuntime("a waiver approved by another team's lead", withCert({ approving_lead: 'lead-art-tech-art' }), "not the certifying seat's team");
-    // `certifying_seat` was an unbound string, so a lead could approve its own
-    // work by naming some other seat in that field.
-    expectRuntime('a waiver naming a seat that does not hold the capsule', withCert({ certifying_seat: 'it-support' }), 'must name the seat that owns the work');
-    expectRuntime('a lead approving the capsule it holds', (rt) => { withCert({ approving_lead: 'lead-game-systems' })(rt); rt.capsules['AS-HD-050'].owner_actor = 'lead-game-systems'; rt.capsules['AS-HD-050'].self_certification.certifying_seat = 'lead-game-systems'; }, 'cannot approve its own output');
-    // Without a risk class the low/standard allowlist was unenforceable at
-    // runtime, and one 'unit' run satisfied every gate.
-    expectRuntime('a waiver over an owner-reserved risk class', withCert({ risk_class: 'high' }), 'does not permit');
-    expectRuntime('a waiver claiming a risk class qa.json never declared', withCert({ risk_class: 'trivial' }), 'which qa.json does not define');
-    expectRuntime('a waiver that skips the suites its risk class requires', withCert({ suites_run: ['unit'] }), 'does not waive the suites');
-    expectRuntime('a waiver approved by an actor that leads nothing', withCert({ approving_lead: 'ghost-lead' }), 'not a declared team lead');
-    expectRuntime('a waiver authored against a different head', withCert({ exact_head: '0'.repeat(40) }), 'a changed candidate voids the waiver');
-    expectRuntime('a waiver citing some other envelope', withCert({ envelope: 'itm-to-qa-review' }), 'not the standing grant');
-    expectRuntime('a waiver recorded as an independent verdict kind', withCert({ verdict_kind: 'independent-pass' }), 'is not the declared');
-    expectRuntime('a waiver naming a team the capsule does not belong to', withCert({ team: 'qa-guild', approving_lead: 'lead-qa-guild' }), "but the capsule's team is");
-    // `team` is optional on a capsule, so skipping the comparison when it was
-    // absent let a teamless capsule carry a waiver naming any team at all.
-    expectRuntime('a waiver on a capsule that names no team', (rt) => { withCert({})(rt); delete rt.capsules['AS-HD-050'].team; }, 'declares no team');
-    // ...and comparing raw made a waiver on an aliased capsule impossible in
-    // either spelling, which is a deadlock rather than a bypass.
-    {
-      const okAlias = baseRt();
-      withCert({ team: 'art-tech-art', approving_lead: 'lead-art-tech-art' })(okAlias);
-      okAlias.capsules['AS-HD-050'].team = 'art';
-      const errs = runtimeChecks(contracts, okAlias).filter((e) => e.includes('self-certification'));
-      results.push({ label: 'a waiver on a legacy-aliased team resolves instead of deadlocking', pass: errs.length === 0, errs });
-    }
-  }
-
-  expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.leads = c.teams.team_leads.leads.filter((l) => l.team !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
-  // Identity, not role. Every lead shares the 'team-lead' role, so without a
-  // per-lead actor one team's lead satisfied the grant for another team's maker.
-  expectSemantic('team lead: two leads claiming one team', (c) => { c.teams.team_leads.leads[1].team = c.teams.team_leads.leads[0].team; }, 'one_lead_per_team allows one');
-  expectSemantic('team lead: one actor leading two teams', (c) => { c.teams.team_leads.leads[1].actor_id = c.teams.team_leads.leads[0].actor_id; }, 'is declared twice');
-  expectSemantic('team lead: a lead named after a role rather than an actor', (c) => { c.teams.team_leads.leads[0].actor_id = 'maker'; }, 'a lead is an actor, not a role');
-  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Some Lead III | qa-guild | Ashenspire'; }, 'does not name its own team');
-  expectSemantic('team lead: a seat name outside the naming convention', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | art-tech-art helper | art-tech-art | Ashenspire'; }, 'does not follow naming_convention');
-  expectSemantic('team lead: a tier that disagrees with the ladder', (c) => { c.teams.team_leads.authority_tier = 1; }, 'but the ladder places');
-  expectSemantic('team lead: a standing grant that does not exist', (c) => { c.teams.team_leads.delegation_envelope = 'ghost-envelope'; }, 'which delegation.json does not declare');
-  expectSemantic('team lead: a grant that may be passed on', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').max_subdelegation_depth = 1; }, 'must not pass the independence waiver on');
   expectSemantic('naming: a numbered P used as a seat kind', (c) => { c.teams.naming_convention.persistent_lead = 'P2 | <role> III | <team> | Ashenspire'; }, 'authority-tier namespace, not a seat kind');
   expectSemantic('naming: the two P namespaces no longer distinguished', (c) => { c.teams.naming_convention.not_the_tier_namespace = 'use judgement'; }, 'would be read as one');
-  expectSemantic('self-cert: the maker approving itself', (c) => { c.qa.self_certification.approver_role = 'maker'; }, 'approve its own certification');
-  expectSemantic('self-cert: the approver is also the verifier it waives', (c) => { c.qa.self_certification.approver_role = 'qa-independent'; }, 'must not be the reviewer it waives');
-  expectSemantic('self-cert: reaching a risk class the owner reserved', (c) => { c.qa.self_certification.permitted_risk_classes.push('high'); }, 'reserves its waiver to the owner');
-  expectSemantic('self-cert: recorded as a real independent verdict', (c) => { c.qa.self_certification.verdict_kind = 'independent-pass'; }, "not the dedicated kind 'self-certified'");
-  // A blacklist of four spellings left every other one available.
-  expectSemantic('self-cert: an independent-looking verdict spelling outside the blacklist', (c) => { c.qa.self_certification.verdict_kind = 'qa-independent-pass'; }, "not the dedicated kind 'self-certified'");
-  // Three self-consistent fields proved only that they agreed with each other.
-  expectSemantic('self-cert: the maker minting the grant that clears its own review', (c) => {
-    c.qa.self_certification.standing_authority_from = 'maker';
-    c.teams.team_leads.standing_grant_from = 'maker';
-    c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegator_role = 'maker';
-  }, 'holds no gate');
-  // Shape is not calendar: Node normalizes 2026-02-30 to March 2 silently.
-  expectSemantic('self-cert: a standing grant dated to a day that does not exist', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').effective = '2026-02-30T00:00:00Z'; }, 'not a real instant');
-  expectSemantic('self-cert: a standing grant naming a different role', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegatee_role = 'it-support'; }, 'not the approver role');
-  expectSemantic('self-cert: a standing grant carrying the wrong actions', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegated_actions = ['run-tests-and-builds']; }, 'unrelated grant cannot authorize');
-  // Reading the required actions from the contract proved only that two mutable
-  // lists agreed; trimming both together dropped half the waiver silently.
-  expectSemantic('self-cert: both action lists trimmed together to drop the waiver record', (c) => {
-    c.qa.self_certification.requires_envelope_actions = ['approve-maker-self-certification'];
-    c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegated_actions = ['approve-maker-self-certification'];
-  }, "requires_envelope_actions omits 'record-independence-waiver'");
-  // Both bounds against the clock, not merely against each other. An ordered
-  // 2020-2021 window satisfied the old check while being long expired.
-  {
-    const c1 = base();
-    const e1 = c1.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification');
-    e1.effective = '2020-01-01T00:00:00Z'; e1.expiry = '2021-01-01T00:00:00Z';
-    const errs1 = semanticChecks(c1);
-    results.push({ label: 'self-cert: an expired standing grant, correctly ordered', pass: errs1.some((e) => e.includes('expired at')), errs: errs1 });
-    const errs2 = semanticChecks(base(), '2020-01-01T00:00:00Z');
-    results.push({ label: 'self-cert: a standing grant not yet effective', pass: errs2.some((e) => e.includes('not yet effective')), errs: errs2 });
-    // A window is only current if it can be read at all. Lexical comparison put
-    // "9" after "2026-...", so an envelope of "0".."9" satisfied the schema,
-    // the ordering check and the currency check at once.
-    for (const [label, eff, exp] of [['"0".."9"', '0', '9'], ['a non-date expiry', '2026-01-01T00:00:00Z', '99999']]) {
-      const c2 = base();
-      const e2 = c2.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification');
-      e2.effective = eff; e2.expiry = exp;
-      const errs3 = semanticChecks(c2);
-      results.push({ label: `self-cert: a standing grant with ${label} for a window`, pass: errs3.some((e) => e.includes('cannot be read backs nothing')), errs: errs3 });
-    }
-  }
-  expectSemantic('self-cert: an unauditable record', (c) => { c.qa.self_certification.records = ['something happened']; }, 'could not be audited');
-
   expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
   expectRuntime('a capsule naming a team that is on no roster', (rt) => { rt.capsules['AS-HD-050'].team = 'audio'; }, 'nor a declared legacy alias');
   expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');
