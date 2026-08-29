@@ -1,0 +1,19 @@
+{
+  "$schema": "agentops-mini-schema/v1",
+  "title": "event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "ticket", "seq", "parent_event", "kind", "actor", "at", "summary"],
+  "properties": {
+    "schema": {"const": "agentops/event/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "ticket": {"type": "string", "minLength": 1},
+    "seq": {"type": "integer"},
+    "parent_event": {"type": ["string", "null"]},
+    "kind": {"enum": ["genesis", "assigned", "lease-issued", "state-change", "evidence-recorded", "blocker", "lease-revoked", "resolved"]},
+    "actor": {"type": "string", "minLength": 1},
+    "at": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "evidence_pointer": {"type": "string", "minLength": 1}
+  }
+}

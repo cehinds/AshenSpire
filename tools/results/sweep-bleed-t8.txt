@@ -1,0 +1,41 @@
+measure-classes — 1000 runs/class, policy=reaverkit
+seeds: runsim's own formula (i*2654435761)>>>0, i=1..1000 — the 30-run datum is this set's prefix
+
+Reaver    wins  34/1000 = 3.4%  Wilson95 [2.4%, 4.7%]
+  deaths by act: act1×208 act2×677 act3×81  by pool: normal×380 boss×348 elite×224 ambush×12 event×2
+  top killers: boss:a2_bossStitchedKing×226  elite:a2_eliteDuelist×135  normal:a2_procession×117  normal:a2_surgery×90  elite:eliteWyrm×80
+  dmg/combat dealt 55.6 taken 28.2  kit: bleed 10.98/combat · poiseBreaks 0.18/combat  stanceEnters 9.22/run (runs with ≥1: 831/1000)
+  bleed economy: applied 10.98 pts/combat → fills 0.757/combat, effect dmg 10.28/combat (≈bursts for Reaver, ≈DoT ticks for Herald) — stranded 4.98 pts/combat = 45.4% of all applied bleed never burst
+  stagger windows: 2.58/run — converted 158/2585 (6.1%), expired unused 321, enemy died mid-window 2088
+  hp economy/combat: self-tax 3.10 · healed 2.41 · net attrition 28.85
+  act1 deaths 207/1000: by floor f5×12 f6×21 f8×25 f9×26 f10×23 f11×30 f13×70 — mean hp entering the fatal fight 34.6%
+  act1 killers: elite:eliteWyrm×80  boss:bossOmen×70  normal:packHunt×17  normal:patrol×14
+  act1 mean hp%% after each fight floor: f1 89% · f2 77% · f3 69% · f4 62% · f5 53% · f6 51% · f8 50% · f9 51% · f10 49% · f11 48% · f13 36%
+
+Starseer  wins  49/1000 = 4.9%  Wilson95 [3.7%, 6.4%]
+  deaths by act: act1×256 act2×607 act3×88  by pool: boss×424 normal×309 elite×203 ambush×13 event×2
+  top killers: boss:a2_bossStitchedKing×237  normal:a2_procession×116  boss:bossOmen×115  elite:a2_eliteDuelist×113  elite:eliteWyrm×85
+  dmg/combat dealt 63.7 taken 28.2  kit: starstoneCharge 6.89/combat
+  bleed economy: applied 1.60 pts/combat → fills 0.134/combat, effect dmg 2.73/combat (≈bursts for Reaver, ≈DoT ticks for Herald) — stranded 0.58 pts/combat = 36.5% of all applied bleed never burst
+  stagger windows: 0.99/run — converted 0/990 (0.0%), expired unused 87, enemy died mid-window 899
+  hp economy/combat: self-tax 2.03 · healed 2.09 · net attrition 28.09
+  act1 deaths 255/1000: by floor f3×2 f4×3 f5×20 f6×33 f8×21 f9×21 f10×22 f11×18 f13×115 — mean hp entering the fatal fight 43.6%
+  act1 killers: boss:bossOmen×115  elite:eliteWyrm×85  normal:packHunt×13  normal:patrol×12
+  act1 mean hp%% after each fight floor: f1 89% · f2 78% · f3 71% · f4 63% · f5 55% · f6 53% · f8 53% · f9 54% · f10 54% · f11 53% · f13 38%
+
+Herald    wins 193/1000 = 19.3%  Wilson95 [17.0%, 21.9%]
+  deaths by act: act1×70 act2×606 act3×131  by pool: boss×367 normal×292 elite×141 ambush×6 event×1
+  top killers: boss:a2_bossStitchedKing×249  elite:a2_eliteDuelist×115  boss:a3_bossRotValkyrie×84  normal:a2_procession×81  normal:a2_surgery×55
+  dmg/combat dealt 61.9 taken 31.5  kit: crimsonBlight 4.54/combat
+  bleed economy: applied 1.86 pts/combat → fills 0.166/combat, effect dmg 10.62/combat (≈bursts for Reaver, ≈DoT ticks for Herald) — stranded 0.70 pts/combat = 37.4% of all applied bleed never burst
+  hp economy/combat: self-tax 8.41 · healed 12.13 · net attrition 27.83
+  act1 deaths 70/1000: by floor f4×1 f5×3 f6×4 f8×5 f9×13 f10×6 f11×4 f13×34 — mean hp entering the fatal fight 37.3%
+  act1 killers: boss:bossOmen×34  elite:eliteWyrm×17  normal:packHunt×9  normal:bruiser×4
+  act1 mean hp%% after each fight floor: f1 92% · f2 85% · f3 81% · f4 75% · f5 68% · f6 65% · f8 65% · f9 67% · f10 66% · f11 65% · f13 57%
+
+pairwise two-proportion tests (pooled z, two-sided):
+  reaver 34/1000 vs starseer 49/1000: p = 0.0926
+  reaver 34/1000 vs herald 193/1000: p = 0.00
+  starseer 49/1000 vs herald 193/1000: p = 0.00
+
+boundary: naive-bot floor only — absolute rates say nothing about the spec band for experienced players (SPEC.md M3: ~35–50%).

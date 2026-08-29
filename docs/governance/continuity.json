@@ -1,0 +1,594 @@
+{
+  "$schema": "./continuity.schema.json",
+  "formatVersion": "1.0.0",
+  "updatedAt": "2026-08-28T18:45:28Z",
+  "repository": {
+    "slug": "cehinds/AshenSpire",
+    "remote": "origin",
+    "defaultBranch": "dev",
+    "baseSha": "5af802e619ec5093a058c50511e14e97ea99bf12",
+    "observedAt": "2026-08-28T18:45:28Z",
+    "governance": [
+      {
+        "path": "docs/governance/README.md",
+        "blob": "ea9ecbb65cab54ab3d04be4f5ba594e0747ebd54"
+      },
+      {
+        "path": "docs/governance/AUTHORITY.md",
+        "blob": "4e047d9d50e9366c3a10766f8a386e9b3b998174"
+      },
+      {
+        "path": "docs/governance/WORKFLOW.md",
+        "blob": "f3cf50ff22c822a6314b5f74666ad164dcce791c"
+      },
+      {
+        "path": "docs/governance/QUALITY-GATES.md",
+        "blob": "3f52f4c971926d321b55a3a3b87df29b906e672f"
+      },
+      {
+        "path": "docs/governance/TICKET-SCHEMA.md",
+        "blob": "b911ae8a3351d40df89c3698435ffe81c2b67286"
+      },
+      {
+        "path": "docs/COORDINATION-WORKFLOW.md",
+        "blob": "579c2c1837eb353a7068133c37ade808526e70cc"
+      }
+    ],
+    "branches": [
+      {
+        "name": "dev",
+        "role": "integration",
+        "sha": "3e4bf419d78f1807ff3b2790d4ac8af70dfcc1ca",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      },
+      {
+        "name": "test",
+        "role": "playtest",
+        "sha": "d163fd2c53e72705d12f78f8652bf93acd9fc0e8",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      },
+      {
+        "name": "release",
+        "role": "release-staging",
+        "sha": "c0713d34d1777c2719bb780b3f7c4b1715bb2dc5",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      },
+      {
+        "name": "main",
+        "role": "stable",
+        "sha": "ab9dd4bf51ae99569c0b11484b25649097d28ee2",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      }
+    ]
+  },
+  "authority": {
+    "technicalRelay": "IT Manager III, Integration & Delivery",
+    "releaseOwner": "Constantine",
+    "workflowTruth": "GitHub Project #4 Status",
+    "directDevMutationAllowed": false,
+    "remoteActionsRequireSeparateAuthority": true
+  },
+  "budgets": {
+    "maxBytes": 40000,
+    "maxEstimatedTokens": 10000,
+    "maxSnapshotAgeHours": 48,
+    "maxLanes": 24,
+    "maxNextActions": 12,
+    "maxTombstones": 24
+  },
+  "generatedArtifacts": {
+    "status": "candidate-frozen",
+    "owner": "Data Architecture & Systems Lead, single local writer",
+    "artifact": {
+      "path": "build/AshenSpire.html",
+      "bytes": 4206957,
+      "sha256": "56AA0206BA2A8662D284BCA80E0C493D17838177DC7BCCFCB9A19405B7FF7D31",
+      "buildOrdinal": 1407,
+      "sourceDigest": "62920f5895"
+    },
+    "command": "node tools/launch.mjs --build-only",
+    "order": [
+      "buildordinal.json",
+      "build/AshenSpire.html",
+      "AshenSpire.html",
+      "dist/AshenSpire.html"
+    ],
+    "verification": [
+      "node tools/verify-shipped.mjs",
+      "node tools/rebuild-matches.mjs",
+      "git diff --check"
+    ],
+    "directEditsAllowed": false
+  },
+  "bootstrap": {
+    "clone": [
+      "git clone https://github.com/cehinds/AshenSpire.git",
+      "git fetch --all --tags"
+    ],
+    "setup": [
+      "git switch dev",
+      "node tools/continuity.mjs --check",
+      "node tools/continuity.mjs --audit"
+    ],
+    "build": [
+      "No dependency install or source build is required for index.html",
+      "After an authorized source freeze only: node tools/launch.mjs --build-only"
+    ],
+    "tests": [
+      "Run the lane-targeted check and its same-door --selftest",
+      "node tools/testnumbers.mjs --raw when numbered tests change",
+      "node tests/run-node.mjs",
+      "node tools/verify-shipped.mjs when generated artifacts change",
+      "git diff --check"
+    ],
+    "pages": {
+      "developmentUrl": "https://cehinds.github.io/AshenSpire/AshenSpire.html",
+      "observedSource": "dev branch repository root",
+      "proofRequired": [
+        "record deployed commit and Pages run",
+        "verify hosted artifact identity",
+        "run the intended hosted player flow"
+      ],
+      "releaseFact": false
+    },
+    "recovery": [
+      "Stop on a stale SHA, missing object, dependency, or collision finding",
+      "Preserve the branch, worktree, artifacts, and evidence until exact-target deletion authority exists",
+      "Recreate a clean worktree from the recorded base or frozen head; never reset a protected or dirty checkout",
+      "Regenerate derived artifacts from restored source authority; never hand-edit them"
+    ]
+  },
+  "lanes": [
+    {
+      "id": "continuity-control-plane",
+      "branch": "codex/migration-continuity-control-plane",
+      "status": "candidate-frozen",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": "c29d5f9d3aa355fb191cc3f662f03991ef426e90",
+      "treeSha": "ae0488fc72fde5777f8239b5446a9e74c142d370",
+      "evidenceOnlySuccessors": [
+        "16aa7fccdba53aafd7980d517b811ab609284d5d",
+        "92b3ed0b80ee48936364edcd7e89e751fedbbbc9",
+        "96b9f5b23fa47eb5cc39a36a8a2939a1177b38e7"
+      ],
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T05:01:26Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/continuity.mjs --check", "counts": "1 packet; exit 0", "result": "PASS" },
+          { "command": "node tools/continuity.mjs --audit", "counts": "4/4 remote branch heads current; exit 0", "result": "PASS" },
+          { "command": "node tools/continuity.mjs --selftest", "counts": "21/21", "result": "PASS" },
+          { "command": "node tools/workflow-lint.mjs", "counts": "226 checks; 0 findings", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["c29d5f9d3aa355fb191cc3f662f03991ef426e90 is the immutable original candidate; composition carries evidence-only successors without moving that identity.", "Project #4, Pages, and independent QA facts remain UNKNOWN until their typed owners record them."]
+      },
+      "claimedPaths": [
+        "docs/governance/CONTINUITY.md",
+        "docs/governance/continuity.schema.json",
+        "docs/governance/continuity.json",
+        "tools/continuity.mjs",
+        ".github/workflows/continuity-maintenance.yml"
+      ],
+      "dependencies": [],
+      "block": null,
+      "next": "Keep original candidate c29d5f9d3aa355fb191cc3f662f03991ef426e90 and tree ae0488fc72fde5777f8239b5446a9e74c142d370 immutable; the composition branch carries continuity-only evidence successors for final independent QA.",
+      "rollback": "Revert the one bounded continuity commit before activation."
+    },
+    {
+      "id": "k15-content-door",
+      "branch": "codex/migration-k15-content-door",
+      "status": "candidate-frozen",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
+      "treeSha": "9c4146f9a3818d71742ca01ac3b8c34b3fe7d0c1",
+      "compositionReplay": {
+        "mode": "patch-equivalent",
+        "originalHead": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": "7759f0bfebb514ff8ae0dd046593d8a18528d581",
+        "patchId": "bef165e986bfc8a041552240e96fb82095eb3653"
+      },
+      "availability": "local-only",
+      "owner": {
+        "role": "Code Quality & Modernization temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/content-build.mjs --selftest", "counts": "K15 8/8; external 6/6; internal 2/2; clean 1/1", "result": "PASS" },
+          { "command": "node tools/content-build.mjs --check", "counts": "1 invocation; exit 0", "result": "PASS" },
+          { "command": "node tools/buildversion.mjs --check", "counts": "8/8", "result": "PASS" },
+          { "command": "node tools/verify-shipped.mjs", "counts": "6/6", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "112 passed; 0 failed", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["Local maker evidence only; independent non-maker QA is not recorded."]
+      },
+      "claimedPaths": [
+        "tools/content-build.mjs"
+      ],
+      "dependencies": [],
+      "block": null,
+      "next": "Keep tree 9c4146f9a3818d71742ca01ac3b8c34b3fe7d0c1 immutable; its patch-equivalent composition replay is recorded for final independent QA.",
+      "rollback": "Revert the bounded K15 commit; do not alter generated content."
+    },
+    {
+      "id": "character-creation",
+      "branch": "codex/migration-character-creation",
+      "status": "candidate-frozen",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": "5d43b042ace212387d59c068e54c1f0265e306a0",
+      "treeSha": "e93deb0851b35197afa128a4217c127171915eaf",
+      "compositionReplay": {
+        "mode": "patch-equivalent",
+        "originalHead": "5d43b042ace212387d59c068e54c1f0265e306a0",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": "06941412dfa01fe510d50fc81259e44301eb9b33",
+        "patchId": "49d7a0de556d043519c51669e61b81026d9aaeb5"
+      },
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "SOURCE_FROZEN_GENERATION_PENDING",
+        "checks": [
+          { "command": "node tools/testnumbers.mjs --raw", "counts": "110 unique test labels", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "104 passed; 8 failed solely because src/content/generated/characterCreation.js is intentionally stale", "result": "FAIL" },
+          { "command": "node tools/content-build.mjs --check", "counts": "1 stale generated projection: src/content/generated/characterCreation.js", "result": "FAIL" }
+        ],
+        "boundary": ["Focused source/schema check reported 15/15, but no exact shell command was supplied.", "Generation is intentionally pending; this is not a full-suite PASS or independent QA acceptance."]
+      },
+      "claimedPaths": [
+        "content/source/characterCreation.json",
+        "src/model/characterCreation.js",
+        "src/ui/screens/customize.js",
+        "tests/engine.test.js"
+      ],
+      "dependencies": [],
+      "block": null,
+      "next": "Keep tree e93deb0851b35197afa128a4217c127171915eaf immutable; its patch-equivalent replay and completed generated projection are recorded in the frozen composition candidate.",
+      "rollback": "Revert the bounded character-creation commit and regenerate only after restored source is frozen."
+    },
+    {
+      "id": "save-equipment-actionregistry",
+      "branch": "codex/migration-save-equipment-actionregistry",
+      "status": "candidate-frozen",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": "a2e832d9b5fd799592d7697f64289592c324b525",
+      "treeSha": "4d7c2148c0f7715316ec4e21a566988edc1ab118",
+      "compositionReplay": {
+        "mode": "literal-ancestor",
+        "originalHead": "a2e832d9b5fd799592d7697f64289592c324b525",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": null,
+        "patchId": null
+      },
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:48:20Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/weapon-card-packages.mjs", "counts": "65/65", "result": "PASS" },
+          { "command": "node tools/saveroundtrip.mjs", "counts": "14/14", "result": "PASS" },
+          { "command": "node tools/session-resume-smoke.mjs", "counts": "33/33", "result": "PASS" },
+          { "command": "node tools/actionregistry-destinations.mjs", "counts": "14/14", "result": "PASS" },
+          { "command": "node tools/actionregistry-destinations.mjs --selftest", "counts": "10/10", "result": "PASS" },
+          { "command": "node tools/ui-components.mjs", "counts": "21/21", "result": "PASS" },
+          { "command": "node tools/linkcheck.mjs", "counts": "366/366", "result": "PASS" },
+          { "command": "node tools/content-build.mjs --check", "counts": "1 invocation; exit 0", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "114 passed; 0 failed", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["Local maker evidence only; independent non-maker QA is not recorded."]
+      },
+      "claimedPaths": [
+        "README.md",
+        "SPEC.md",
+        "docs/ASSET-COMPONENTS.md",
+        "docs/COMPONENT-CATALOG.md",
+        "docs/COMPONENT-MODEL-ARCHITECTURE.md",
+        "src/engine/combat.js",
+        "src/engine/save.js",
+        "src/main.js",
+        "src/model/combatSnapshot.js",
+        "src/model/equipmentPresentation.js",
+        "src/model/loadout.js",
+        "src/ui/components/equipmentReceipts.js",
+        "src/ui/input.js",
+        "src/ui/screens/combat.js",
+        "src/ui/screens/equipment.js",
+        "src/ui/screens/map.js",
+        "tests/run-node.mjs",
+        "tools/actionregistry-destinations.mjs",
+        "tools/weapon-card-packages.mjs"
+      ],
+      "dependencies": [
+        "k15-content-door"
+      ],
+      "block": null,
+      "next": "Keep tree 4d7c2148c0f7715316ec4e21a566988edc1ab118 immutable for independent QA and composition; focused identity/ActionRegistry gates and Node 114/0 are green.",
+      "rollback": "From a clean rollback candidate at a2e832d9b5fd799592d7697f64289592c324b525, run git revert --no-commit a110ac9d6472faeb979f010949315e8374ddb01a..a2e832d9b5fd799592d7697f64289592c324b525, inspect and test the complete six-commit inverse, then commit only with rollback authority; never reset or rewrite player data."
+    },
+    {
+      "id": "title-save-slot",
+      "branch": "codex/migration-title-save-slot",
+      "status": "candidate-frozen",
+      "baseSha": "a2e832d9b5fd799592d7697f64289592c324b525",
+      "headSha": "91947b7621345e8b7b54ab87e041e3e165cfe308",
+      "treeSha": "39c5371b29ba42ea46c2b63e155d1e7d61234b27",
+      "compositionReplay": {
+        "mode": "literal-ancestor",
+        "originalHead": "91947b7621345e8b7b54ab87e041e3e165cfe308",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": null,
+        "patchId": null
+      },
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:48:20Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/confirmation-modal.mjs", "counts": "8/8", "result": "PASS" },
+          { "command": "node tools/confirmation-modal.mjs --selftest", "counts": "7/7", "result": "PASS" },
+          { "command": "node tools/title-save-slot-tooltip.mjs", "counts": "10/10", "result": "PASS" },
+          { "command": "node tools/saveroundtrip.mjs", "counts": "14/14", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "114 passed; 0 failed", "result": "PASS" },
+          { "command": "node tools/screen-census.mjs", "counts": "21 modules; 19 instrumented; 2 uninstrumented; 0 findings", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["Browser and Experience QA: 0 runs; not accepted.", "Local maker evidence only; independent non-maker QA is not recorded."]
+      },
+      "claimedPaths": [
+        "src/main.js",
+        "src/ui/components/saveSlotSelector.js",
+        "src/ui/components/titleSaveSlotTooltip.js",
+        "src/ui/screens/title.js",
+        "tools/confirmation-modal.mjs",
+        "tools/title-save-slot-tooltip.mjs"
+      ],
+      "dependencies": [
+        "save-equipment-actionregistry"
+      ],
+      "block": null,
+      "next": "Keep tree 39c5371b29ba42ea46c2b63e155d1e7d61234b27 immutable for independent QA and composition; it is based on the exact frozen save-equipment-actionregistry head and its focused/full gates are green.",
+      "rollback": "From a clean rollback candidate at 91947b7621345e8b7b54ab87e041e3e165cfe308, run git revert --no-commit a2e832d9b5fd799592d7697f64289592c324b525..91947b7621345e8b7b54ab87e041e3e165cfe308, inspect and test the complete range inverse, then commit only with rollback authority; preserve the a2e832d9 base and save payloads."
+    },
+    {
+      "id": "controls-gates",
+      "branch": "codex/migration-controls-gates",
+      "status": "candidate-frozen",
+      "baseSha": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
+      "headSha": "abddb5fa45787048ae7dcb6c3ac3a4f02cbb50cb",
+      "treeSha": "ec6264dcf1d8e432df5128e24d55a32a1c1fb2ac",
+      "compositionReplay": {
+        "mode": "patch-equivalent",
+        "originalHead": "abddb5fa45787048ae7dcb6c3ac3a4f02cbb50cb",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": "0458ae909561f91af83a9154f315959e3b52a347",
+        "patchId": "13cbd12afefd667bf244c717a731a4afc7bb420b"
+      },
+      "availability": "local-only",
+      "owner": {
+        "role": "Incident / Defect temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:48:20Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T04:55:00Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/rebind-capture.mjs", "counts": "116/116", "result": "PASS" },
+          { "command": "node tools/rebind-capture.mjs --selftest", "counts": "21/21 plants; ownership guards 15/15; cleanup entries 0", "result": "PASS" },
+          { "command": "node tests/run-node.mjs", "counts": "112 passed; 0 failed", "result": "PASS" },
+          { "command": "git diff --exit-code 187deb2f7e8b017b61897e6a24dfa4503027f56d..abddb5fa45787048ae7dcb6c3ac3a4f02cbb50cb -- tools/content-build.mjs", "counts": "0 changed lines; exit 0; K15 preserved", "result": "PASS" },
+          { "command": "git status --short", "counts": "0 entries at freeze", "result": "PASS" }
+        ],
+        "boundary": ["Tree ec6264dcf1d8e432df5128e24d55a32a1c1fb2ac; local maker evidence only; independent non-maker QA is not recorded."]
+      },
+      "claimedPaths": [
+        "src/ui/components/overlay.js",
+        "styles/ui.css",
+        "tools/rebind-capture.mjs",
+        "tools/content-build.mjs"
+      ],
+      "dependencies": [
+        "k15-content-door"
+      ],
+      "block": null,
+      "next": "Keep tree ec6264dcf1d8e432df5128e24d55a32a1c1fb2ac immutable for independent QA and composition; K15 is preserved and cleanup is zero.",
+      "rollback": "Revert the bounded controls/gates commit and retain its failing fixtures as evidence."
+    },
+    {
+      "id": "continuity-integration",
+      "branch": "codex/migration-continuity-integration",
+      "status": "candidate-frozen",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": "8671379bbc6dc5043caeccabb0380396f4412e20",
+      "treeSha": "7721891b2590378020486318b46ae7e526d0a959",
+      "availability": "local-only",
+      "owner": {
+        "role": "Data Architecture & Systems Lead, composed-source and generated-artifact writer",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T05:06:23Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T05:06:23Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tests/run-node.mjs", "counts": "114 passed; 0 failed", "result": "PASS" },
+          { "command": "node tools/content-build.mjs --check", "counts": "15/15 generated projections current", "result": "PASS" },
+          { "command": "node tools/buildversion.mjs --check", "counts": "8/8", "result": "PASS" },
+          { "command": "node tools/verify-shipped.mjs", "counts": "6/6", "result": "PASS" },
+          { "command": "node tools/rebuild-matches.mjs", "counts": "1 deterministic rebuild; GREEN", "result": "PASS" },
+          { "command": "node tools/continuity.mjs --selftest", "counts": "21/21", "result": "PASS" }
+        ],
+        "boundary": ["8671379bbc6dc5043caeccabb0380396f4412e20 is the immutable source/artifact head; this branch may carry evidence-only continuity successors after it without moving that identity.", "Local composition evidence only; independent non-maker QA is not recorded and Equipment/Rogue remains an external decision."]
+      },
+      "claimedPaths": [
+        "src/content/generated/characterCreation.js",
+        "buildordinal.json",
+        "build/AshenSpire.html",
+        "AshenSpire.html",
+        "dist/AshenSpire.html"
+      ],
+      "dependencies": [
+        "k15-content-door",
+        "character-creation",
+        "save-equipment-actionregistry",
+        "title-save-slot",
+        "controls-gates",
+        "continuity-control-plane"
+      ],
+      "block": null,
+      "next": "Keep source/artifact head 8671379bbc6dc5043caeccabb0380396f4412e20 and tree 7721891b2590378020486318b46ae7e526d0a959 immutable through final clean-room validation and independent QA; later continuity-only commits do not replace them.",
+      "rollback": "On a clean rollback candidate, revert exact generated commit 8671379bbc6dc5043caeccabb0380396f4412e20 to restore parent 0458ae909561f91af83a9154f315959e3b52a347; test the inverse and commit only with rollback authority. Source-lane rollbacks remain owned by their recorded ranges."
+    },
+    {
+      "id": "equipment-rogue-adjudication",
+      "branch": "codex/migration-equipment-rogue-adjudication",
+      "status": "waiting-decision",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "IT Manager III decision relay; maker unassigned",
+        "acknowledged": false,
+        "acknowledgedAt": null
+      },
+      "claimedPaths": [
+        "content/source",
+        "src/content",
+        "src/model/loadout.js",
+        "src/engine/save.js",
+        "assets"
+      ],
+      "dependencies": [
+        "save-equipment-actionregistry",
+        "character-creation"
+      ],
+      "block": "IT Manager III must adjudicate mechanics, save/loadout, asset-manifest, provenance, and generated-content conflicts before source assignment.",
+      "next": "Submit EVIDENCE / OPTIONS / REC / NEXT / AUTH; implement only the paths and mechanics selected in the recorded decision.",
+      "rollback": "Retain evidence and revert only an approved bounded source commit; regenerate derived content from restored source."
+    }
+  ],
+  "collisions": [
+    {
+      "resource": "src/main.js",
+      "lanes": [
+        "save-equipment-actionregistry",
+        "title-save-slot"
+      ],
+      "resolution": "Candidate ordering is resolved: title-save-slot is based on the exact frozen save-equipment-actionregistry head; preserve that order during any later composition.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "tools/content-build.mjs",
+      "lanes": [
+        "k15-content-door",
+        "controls-gates"
+      ],
+      "resolution": "Controls is based on the exact K15 head and its frozen diff proves tools/content-build.mjs unchanged; preserve that ancestry during composition.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "content/source/characterCreation.json within the broader content/source claim",
+      "lanes": [
+        "character-creation",
+        "equipment-rogue-adjudication"
+      ],
+      "resolution": "Character creation retains source ownership; equipment/Rogue remains waiting on an IT Manager III decision that must narrow or explicitly sequence the broader content/source claim.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "src/model/loadout.js and src/engine/save.js",
+      "lanes": [
+        "save-equipment-actionregistry",
+        "equipment-rogue-adjudication"
+      ],
+      "resolution": "Settle stable identity and compatibility before any Rogue/equipment mechanics assignment.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "src/content/generated/characterCreation.js within the broader src/content claim",
+      "lanes": [
+        "continuity-integration",
+        "equipment-rogue-adjudication"
+      ],
+      "resolution": "The frozen composed candidate owns the generated projection; Equipment/Rogue remains external until IT Manager III narrows or sequences its broader src/content claim.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "generated root/build/dist/buildordinal lane",
+      "lanes": [
+        "character-creation",
+        "save-equipment-actionregistry",
+        "title-save-slot",
+        "controls-gates",
+        "equipment-rogue-adjudication",
+        "continuity-integration"
+      ],
+      "resolution": "Data Architecture & Systems Lead completed the single local generation transaction at 8671379b; keep those bytes frozen and permit no hand merge or second writer.",
+      "owner": "IT Manager III, Integration & Delivery"
+    }
+  ],
+  "nextActions": [
+    {
+      "order": 1,
+      "lane": "continuity-integration",
+      "action": "Run final independent non-maker functional, policy, data-contract, and generated-artifact QA against immutable source/artifact head 8671379bbc6dc5043caeccabb0380396f4412e20; the local candidate and generated artifacts are frozen and generation is complete.",
+      "authority": "Independent QA assignment only. Project #4, Pages, and QA facts remain UNKNOWN until their typed owners record them; acceptance does not authorize remote mutation."
+    },
+    {
+      "order": 2,
+      "lane": "continuity-integration",
+      "action": "After independent QA, route exact-head push and normal-PR sequencing to IT Manager III using the recorded original-to-composition lineage.",
+      "authority": "IT Manager III must separately authorize push and PR; merge, Project mutation, Pages, publication, and release remain ungranted."
+    },
+    {
+      "order": 3,
+      "lane": "continuity-integration",
+      "action": "Only after authorized integration to dev and an actual Pages deployment, capture hosted proof: deployed commit, Pages run, artifact identity, and intended player flow.",
+      "authority": "Hosted proof requires separate integration and Pages authority and is not release approval; all hosted facts are currently UNKNOWN."
+    },
+    {
+      "order": 4,
+      "lane": "equipment-rogue-adjudication",
+      "action": "Resolve Equipment/Rogue mechanics, compatibility, assets, provenance, and generated-content ownership as a separate external decision before assigning source.",
+      "authority": "IT Manager III decision; Constantine retains publication and release authority."
+    }
+  ],
+  "tombstones": [],
+  "forensicEvidence": []
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-1001-0001",
+  "ticket": "AS-1001",
+  "seq": 1,
+  "parent_event": null,
+  "kind": "genesis",
+  "actor": "help-desk",
+  "at": "2026-08-28T00:00:00Z",
+  "summary": "Ticket AS-1001 opened: seed and validate the AgentOps runtime capsule / lease / event model."
+}

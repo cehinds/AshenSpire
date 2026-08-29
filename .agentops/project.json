@@ -1,0 +1,50 @@
+{
+  "schema": "agentops/project/v1",
+  "policy_version": "1.0.0",
+  "project_name": "AshenSpire",
+  "repository": "https://github.com/cehinds/AshenSpire.git",
+  "default_branch": "main",
+  "development_branch": "dev",
+  "engine_stack": "node-esm-stdlib; browser single-file HTML build",
+  "providers": "PROVIDER_NEUTRAL",
+  "risk_profile": "STANDARD",
+  "startup_token_target": 1200,
+  "startup_token_hard_limit": 1500,
+  "blocker_routing_sla_minutes": 5,
+  "pages_owner_hud": "PLANNED",
+  "owner_command_path": "WORKFLOW_FORMS",
+  "control_plane_root": ".agentops",
+  "installed_stage": "migration-tooling",
+  "installed_contracts": [
+    "governance/owner-intent.json",
+    "governance/hierarchy.json",
+    "governance/roles.json",
+    "governance/authority.json",
+    "governance/git-ownership.json",
+    "governance/raci.json",
+    "governance/delegation.json",
+    "governance/escalation.json",
+    "governance/transitions.json",
+    "governance/information-access.json",
+    "governance/qa.json",
+    "governance/evidence.json",
+    "governance/owner-command.json",
+    "governance/migration.json"
+  ],
+  "runtime_artifacts": {
+    "work_capsule": "work/<ticket>/CURRENT.json (schema work-capsule/v1, sealed with a compare-and-swap current_hash)",
+    "writer_lease": "leases/<lease-id>.json (schema lease/v1, one writer per overlapping path/ref)",
+    "event": "events/<ticket>/<event-id>.json (schema event/v1, append-only chain)",
+    "wake_compiler": "opsctl wake --actor <role> --work <ticket> [--frozen] (token-bounded disposable capsule)",
+    "reconstruction_drill": "opsctl drill (clean-clone / context-wipe reconstruction, provider-neutral); spec in RECONSTRUCTION-DRILL.md; goldens in generated/reconstruction/",
+    "owner_command": "opsctl command --dry-run (--request <json> | --file <path>): enumerated, authenticated, allowlisted, compare-and-swap-checked; dry-run only (no live mutation this stage)",
+    "owner_hud": "generated/hud/index.html (read-only, redacted, deterministic); published by .github/workflows/pages.yml (workflow_dispatch only, inert until Pages is enabled)",
+    "migration": "opsctl migrate [--plan]: read-only inventory + classification of legacy sources (governance/migration.json) with proposed genesis stubs; report in generated/migration/PLAN.md; no legacy evidence mutated",
+    "seed_ticket": "AS-1001"
+  },
+  "deferred_next_stages": [
+    "owner-command live executor (append decision event + CAS-update state, protected environment)",
+    "migration cutover: create real genesis capsules + replace legacy entrypoints with one pointer (owner-gated)",
+    "independent review then exact dev -> main promotion decision"
+  ]
+}
