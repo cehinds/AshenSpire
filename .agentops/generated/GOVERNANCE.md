@@ -122,6 +122,78 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 - **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
 - **Approval ceiling:** qa-verdict
 
+### `app-dev-i`
+
+- **Mission:** App Dev I (programmers team) — junior application developer; the maker archetype at entry level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `app-dev-ii`
+
+- **Mission:** App Dev II (programmers team) — standard application developer; the maker archetype at mid level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `app-dev-iii`
+
+- **Mission:** App Dev III (programmers team) — senior application developer; the maker archetype at senior level, eligible to lead a pod. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling (integration and protected transitions remain it-manager-iii's).
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `artist-i`
+
+- **Mission:** Designer / Artist I (art team) — junior; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `artist-ii`
+
+- **Mission:** Designer / Artist II (art team) — standard; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `artist-iii`
+
+- **Mission:** Designer / Artist III (art team) — senior, eligible to lead a pod; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `qa-technician-i`
+
+- **Mission:** QA Technician I (QA team) — junior; the qa-independent archetype at entry level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** author-exact-head-verdict, maintain-red-plants-and-fixtures
+- **Must:** review the exact frozen head named by the ticket; be a non-maker for the reviewed object
+- **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
+- **Approval ceiling:** qa-verdict
+
+### `qa-technician-ii`
+
+- **Mission:** QA Technician II (QA team) — standard; the qa-independent archetype at mid level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** author-exact-head-verdict, maintain-red-plants-and-fixtures
+- **Must:** review the exact frozen head named by the ticket; be a non-maker for the reviewed object
+- **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
+- **Approval ceiling:** qa-verdict
+
+### `qa-technician-iii`
+
+- **Mission:** QA Technician III (QA team) — senior, eligible to lead a QA pod; the qa-independent archetype at senior level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.
+- **May:** author-exact-head-verdict, maintain-red-plants-and-fixtures
+- **Must:** review the exact frozen head named by the ticket; be a non-maker for the reviewed object
+- **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
+- **Approval ceiling:** qa-verdict
+
 ## Authority matrix
 
 | Action | Routine owner role | Scope | Protected | Required evidence |
