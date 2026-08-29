@@ -66,12 +66,29 @@ node .agentops/tools/opsctl.mjs drill
 ```
 
 Owner decisions flow through the authenticated owner-command path — enumerated,
-allowlisted, and compare-and-swap-checked. This stage ships the dry-run (records
-what it would do; no repository mutation):
+allowlisted, and compare-and-swap-checked. `--dry-run` validates and reports
+what it would do without touching the repository; `--apply` performs the same
+validation and then writes:
 
 ```sh
 node .agentops/tools/opsctl.mjs command --dry-run --request '<owner-command-request json>'
+node .agentops/tools/opsctl.mjs command --apply   --request '<owner-command-request json>'
 ```
+
+Applying appends **one append-only decision event** and re-seals **only** the
+target capsule. It moves lifecycle state only where `owner-command.json`
+declares a `lifecycle_target` and `transitions.json` declares that exact
+transition from the capsule's current state for the authenticating role — an
+undeclared or unpermitted move is rejected and nothing is written. A stale
+`expected_current_hash` is refused rather than applied to unseen state, and the
+seal is re-checked immediately before the write.
+
+In the browser, the owner files decisions from the HUD's **Decide** table: each
+row links to the *Owner decision* issue form prefilled with the ticket and its
+live compare-and-swap hash. `.github/workflows/owner-command.yml` executes only
+issues the repository owner authored, resolves the actor role from the
+authenticated GitHub identity (never from the issue body), and reports the
+result back on the issue. Help Desk intake uses the *Help Desk ticket* form.
 
 The read-only Owner HUD is a redacted, deterministic projection at
 `generated/hud/index.html`. It is a plain static file: the repository
