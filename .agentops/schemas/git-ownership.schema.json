@@ -19,6 +19,7 @@
           "ref": {"type": "string", "minLength": 1},
           "owner_role": {"type": "string", "minLength": 1},
           "mutation": {"type": "string", "minLength": 1},
+          "per_seat": {"type": "boolean"},
           "note": {"type": "string"}
         }
       }

@@ -29,9 +29,10 @@
     },
     {
       "ref": "recovery/*",
-      "owner_role": "maker",
+      "owner_role": "per-seat",
       "mutation": "isolated-continuation",
-      "note": "Isolated continuation branches for seats recovered after a lost session; reversible local work, never pushed directly to dev or main."
+      "note": "Isolated continuation branch per recovered seat. Ownership follows the ticket's writer lease, so any role may hold its own recovery ref; it is never a shared or protected ref.",
+      "per_seat": true
     }
   ],
   "paths": [

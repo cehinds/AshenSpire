@@ -273,7 +273,9 @@ export function semanticChecks(c) {
       if (p.glob.split('/').includes('..')) errors.push(`git-ownership: path glob '${p.glob}' contains a '..' traversal segment`);
     }
     for (const r of c['git-ownership'].refs) {
-      if (!knownRoles.has(r.owner_role)) errors.push(`git-ownership: ref '${r.ref}' names unknown role '${r.owner_role}'`);
+      // A per_seat namespace is owned by whichever lease holds the ticket, so
+      // its owner_role is a marker rather than a declared role.
+      if (!r.per_seat && !knownRoles.has(r.owner_role)) errors.push(`git-ownership: ref '${r.ref}' names unknown role '${r.owner_role}'`);
     }
     // 3. One writer per overlapping path: two path globs whose literal prefixes
     //    nest must be owned by the same role, else it is a collision.
@@ -694,13 +696,23 @@ export function stableStringify(v) {
 // changes the content and so fails to match the stored current_hash.
 // A ref is declared when it equals a git-ownership ref, or matches one written
 // as a `prefix/*` namespace. Nothing else is a sanctioned working ref.
-export function refDeclared(contracts, ref) {
+export function refDeclaration(contracts, ref) {
   const decls = (contracts['git-ownership'] && contracts['git-ownership'].refs) || [];
-  return decls.some((d) => {
-    if (d.ref === ref) return true;
-    if (d.ref.endsWith('/*')) return ref.startsWith(d.ref.slice(0, -1));
-    return false;
-  });
+  return decls.find((d) => d.ref === ref || (d.ref.endsWith('/*') && ref.startsWith(d.ref.slice(0, -1)))) || null;
+}
+
+// A ref must be declared AND the seat must be entitled to it. Matching the name
+// alone would let a capsule name `main` — owner-exclusive and protected — and
+// pass, after which wake would hand a seat a protected branch as its working
+// ref. A per_seat namespace is owned by whichever lease holds the ticket, so
+// any role may hold its own; a protected ref is never a working ref at all.
+export function refEntitlementErrors(contracts, label, ref, actor) {
+  const d = refDeclaration(contracts, ref);
+  if (!d) return [`${label} ref '${ref}' matches no declared ref in git-ownership.refs`];
+  if (d.mutation === 'protected') return [`${label} ref '${ref}' is a protected ref and may never be a seat working ref`];
+  if (d.per_seat) return [];
+  if (d.owner_role !== actor) return [`${label} ref '${ref}' is owned by '${d.owner_role}', not '${actor}'`];
+  return [];
 }
 
 // Every role that actually holds work must resolve to a hierarchy node, or a
@@ -878,9 +890,7 @@ export function runtimeChecks(g, rt) {
       // no policy declares. Every working ref must fall under a declared
       // git-ownership ref pattern, so `wake` cannot hand a seat a checkout
       // instruction the control plane never sanctioned.
-      if (!refDeclared(g, cap.ref)) {
-        errors.push(`capsule '${ticket}' ref '${cap.ref}' matches no declared ref in git-ownership.refs`);
-      }
+      errors.push(...refEntitlementErrors(g, `capsule '${ticket}'`, cap.ref, cap.owner_actor));
       for (const p of cap.affected_paths) {
         const covered = lease.path_globs.some((g) => globPrefix(p).startsWith(globPrefix(g)));
         if (!covered) errors.push(`capsule '${ticket}' affected path '${p}' is not covered by its writer lease '${lease.id}'`);
@@ -1618,6 +1628,8 @@ export function runSelftest(root = ROOT) {
   expectRuntime('exempted lease cannot be widened with an unnamed glob', (rt) => { rt.leases.find((x) => x.id === 'lease-AS-1001-maker').path_globs.push('content/**'); }, 'git-ownership assigns that path to');
   expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
   expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
+  expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'protected ref and may never be a seat working ref');
+  expectRuntime('capsule claiming a ref owned by another role', (rt) => { rt.capsules['AS-1001'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'dev'; }, "is owned by 'it-manager-iii'");
   expectRuntime('capsule ref outside any declared ref namespace', (rt) => { rt.capsules['AS-1001'].ref = 'wildcat/not-declared'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'wildcat/not-declared'; }, 'no declared ref');
   expectRuntime('capsule owner role with no hierarchy node', (rt) => { rt.capsules['AS-1001'].owner_actor = 'generator'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).actor = 'generator'; }, 'no node in hierarchy');
   expectRuntime('capsule references missing lease', (rt) => { rt.capsules['AS-1001'].writer_lease = 'no-such-lease'; }, 'unknown writer_lease');
