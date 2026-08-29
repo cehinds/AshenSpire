@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -488,6 +488,33 @@ function check(name, cond, detail = '') {
     check('every contract entry names a heading that exists in the charter prose',
       missing.length === 0, missing.map((e) => e.charter_heading).join(' | '));
   }
+}
+
+// 2m. D6 and D8 from the continuity audit (issue #392).
+{
+  // D6: the drill printed "zero evidence loss" for a fleet where every seat's
+  // own wake said `re-seat before mutating`. The goldens stay frozen; staleness
+  // is reported alongside them instead, non-fatally.
+  const d = runDrill(ROOT);
+  check('drill reports how many capsules are pinned behind live HEAD', Array.isArray(d.stale) && typeof d.total === 'number', JSON.stringify({ stale: d.stale && d.stale.length, total: d.total }));
+  check('drill counts every capsule, not just the stale ones', d.total === Object.keys(loadRuntime().capsules).length, `${d.total}`);
+  check('a stale capsule is named with its ticket, base and state',
+    d.stale.every((x) => x.ticket && x.base && x.state), JSON.stringify(d.stale));
+  check('staleness does not fail the drill (it is not evidence loss)', d.ok === true);
+  // An in-progress seat is never auto-reseated, so it is the one that legitimately
+  // stays behind — and the drill must still say so rather than hide it.
+  const started = Object.entries(loadRuntime().capsules).filter(([, c]) => c.lifecycle_state === 'in-progress').map(([t]) => t);
+  check('an in-progress capsule left behind HEAD is still reported',
+    started.every((t) => d.stale.some((x) => x.ticket === t) || loadRuntime().capsules[t].base_oid === d.head),
+    `in-progress: ${started.join(', ')}`);
+
+  // D8: the header had drifted to 5 of 8 subcommands, omitting `wake` — the one
+  // a cold-start seat depends on. It is now checked against dispatch itself.
+  const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+  check('opsctl header documents every dispatched subcommand', subcommandDocErrors(opsctlHeader(src), src).length === 0, subcommandDocErrors(opsctlHeader(src), src).join(' | '));
+  check('the header check reads only the comment block, not the code', !opsctlHeader(src).includes('export function'));
+  const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   drill /.test(l)).join('\n');
+  check('removing a subcommand from the header is caught', subcommandDocErrors(gutted, src).some((e) => e.includes("'drill'")));
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);
