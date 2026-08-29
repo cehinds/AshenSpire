@@ -32,7 +32,7 @@ function check(name, cond, detail = '') {
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 39 plants', s.results.length >= 39, String(s.results.length));
+  check('selftest exercises >= 47 plants', s.results.length >= 47, String(s.results.length));
 }
 
 // 2b. Runtime: the seed ticket loads, its capsule is sealed, and the wake
@@ -106,6 +106,11 @@ function check(name, cond, detail = '') {
   check('strictParse rejects duplicate keys', dup);
   let trail = false; try { strictParse('{} x'); } catch { trail = true; }
   check('strictParse rejects trailing content', trail);
+  let frac = false; try { strictParse('1.'); } catch { frac = true; }
+  check('strictParse rejects a fraction with no digits (1.)', frac);
+  let exp = false; try { strictParse('1e'); } catch { exp = true; }
+  check('strictParse rejects an exponent with no digits (1e)', exp);
+  check('strictParse still accepts a well-formed number', strictParse('-12.5e+3') === -12500);
   check('validateSchema flags type mismatch', validateSchema(5, { type: 'string' }).length === 1);
   check('validateSchema accepts integer for number', validateSchema(5, { type: 'number' }).length === 0);
   check('validateSchema honours pattern', validateSchema('1.2', { type: 'string', pattern: '^[0-9]+\\.[0-9]+\\.[0-9]+$' }).length === 1);
@@ -140,8 +145,17 @@ function check(name, cond, detail = '') {
   let hud = '';
   try { hud = readFileSync(resolve(ROOT, 'generated/hud/index.html'), 'utf8'); } catch { /* missing */ }
   check('HUD is generated and names the project', hud.includes('Owner HUD') && hud.includes('AshenSpire'));
-  check('HUD carries the source-commit placeholder (injected at deploy)', hud.includes('__SOURCE_COMMIT__'));
+  check('HUD is self-sufficient (no unresolved deploy-time placeholder)', hud.length > 0 && !hud.includes('__SOURCE_COMMIT__'));
   check('HUD carries no credential material', hud.length > 0 && !/(ghp_[A-Za-z0-9]|github_pat_|BEGIN [A-Z ]*PRIVATE KEY|Authorization:\s*Bearer)/.test(hud));
+  // The repository self-publishes its tree to GitHub Pages, so a standalone
+  // copy at /hud/index.html gives the HUD a tidy URL. Guard it against silent
+  // drift from the generated source. Absent in .agentops-only checkouts (the
+  // reconstruction clone), where this check simply does not run.
+  let hudMirror = null;
+  try { hudMirror = readFileSync(resolve(ROOT, '../hud/index.html'), 'utf8'); } catch { /* mirror not present in this checkout */ }
+  if (hudMirror !== null) {
+    check('published /hud/ mirror is in sync with the generated HUD', hudMirror === hud, 'refresh hud/index.html from .agentops/generated/hud/index.html after `opsctl render`');
+  }
 }
 
 // 2f. Migration tooling: read-only inventory validates, classifies legacy
