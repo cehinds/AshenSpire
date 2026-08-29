@@ -647,8 +647,19 @@ export function flattenInline(text, where, labels = new Set()) {
   return flattenCodeSpans(flattenEmphasis(text, codeSpanRanges(text)));
 }
 
-export function parseChangelog(markdown) {
+// #310: the build stamp in each receipt is derivable from buildordinal.json at
+// the merge, but it is hand-typed here — so it is checked, not trusted. A stamp
+// is either exactly `0.4.0.<ordinal>` or a prose escape carrying no leading
+// digit (the documented "dev artifact; exact BUILD in PR evidence" shape).
+// Ordinals are receipts of real builds, so: date groups run newest-first; a
+// build cited by an older group is never newer than one a newer group cites
+// (ties allowed — docs/evidence merges share an ordinal); nothing cites a build
+// that does not exist yet (`currentOrdinal`, from buildordinal.json).
+const STAMP = /^0\.4\.0\.(\d+)$/;
+
+export function parseChangelog(markdown, { currentOrdinal } = {}) {
   const entries = [];
+  const receipts = [];
   const labels = linkDefinitionLabels(markdown);
   let group = '';
   for (const line of markdown.split(/\r?\n/)) {
@@ -663,6 +674,11 @@ export function parseChangelog(markdown) {
     if (!date) throw new Error(`receipt has no dated group: ${line}`);
     const pullRequest = Number(prText);
     const where = `receipt #${pullRequest}`;
+    const stamp = build.match(STAMP);
+    if (!stamp && /^\d/.test(build)) {
+      throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`0.4.0.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
+    }
+    receipts.push({ where, group, date, ordinal: stamp ? Number(stamp[1]) : null });
     entries.push({
       id: `pr-${pullRequest}`,
       date,
@@ -677,6 +693,32 @@ export function parseChangelog(markdown) {
   if (!entries.length) throw new Error('no changelog receipts found');
   const ids = entries.map((entry) => entry.id);
   if (new Set(ids).size !== ids.length) throw new Error('duplicate stable changelog id');
+
+  // ---- #310: the ordinal column, enforced ----
+  const groups = [];
+  for (const r of receipts) {
+    if (!groups.length || groups[groups.length - 1].group !== r.group) {
+      groups.push({ group: r.group, date: r.date, ordinals: [] });
+    }
+    if (r.ordinal !== null) groups[groups.length - 1].ordinals.push(r.ordinal);
+  }
+  for (let i = 1; i < groups.length; i++) {
+    const newer = groups[i - 1], older = groups[i];
+    if (older.date > newer.date) {
+      throw new Error(`date group '${older.group}' sits below '${newer.group}' but is newer — this file runs newest first`);
+    }
+    if (newer.ordinals.length && older.ordinals.length
+      && Math.max(...older.ordinals) > Math.min(...newer.ordinals)) {
+      throw new Error(`ordinal runs backward: group '${older.group}' cites build ${Math.max(...older.ordinals)}, newer group '${newer.group}' cites ${Math.min(...newer.ordinals)} — an older merge cannot ship a newer build`);
+    }
+  }
+  if (typeof currentOrdinal === 'number') {
+    for (const r of receipts) {
+      if (r.ordinal !== null && r.ordinal > currentOrdinal) {
+        throw new Error(`${r.where}: cites build ${r.ordinal}, but buildordinal.json says only ${currentOrdinal} builds exist — a receipt cannot name a build that has not happened`);
+      }
+    }
+  }
   return entries;
 }
 function generatedText(entries) {
@@ -687,8 +729,13 @@ async function generatedEntries() {
   return (await import(`${pathToFileURL(GENERATED).href}?t=${Date.now()}`)).GENERATED_CHANGELOG;
 }
 
+function currentOrdinal() {
+  try { return JSON.parse(readFileSync(resolve(ROOT, 'buildordinal.json'), 'utf8')).ordinal; }
+  catch { return undefined; } // absent in a plant root; the other #310 checks still run
+}
+
 async function checkProjection() {
-  const expected = parseChangelog(readFileSync(OWNER, 'utf8'));
+  const expected = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
   const got = await generatedEntries();
   if (JSON.stringify(got) !== JSON.stringify(expected)) throw new Error('generated changelog drifted from CHANGELOG.md; run --write');
   return expected;
@@ -866,7 +913,7 @@ async function browserCheck(entries, { sourceOnly = false, screenshotDir = null 
 }
 
 async function selftest() {
-  const good = parseChangelog(readFileSync(OWNER, 'utf8'));
+  const good = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
   const parserPlants = [
     ['malformed receipt', '- **No metadata**'],
     ['mismatched PR', '- **Mismatch** ([#1](https://github.com/cehinds/AshenSpire/pull/2), `0.4.0.1`).'],
@@ -876,6 +923,27 @@ async function selftest() {
   for (const [name, body] of parserPlants) {
     try { parseChangelog(`# Test\n\n## 2026-08-20\n\n${body}\n`); console.error(`MISS ${name}`); }
     catch { caught++; console.log(`CAUGHT ${name}`); }
+  }
+
+  // #310 plants: the ordinal column can refuse. Four must be CAUGHT; the fifth,
+  // inverted, proves the shapes the real file uses (within-group ascent, a
+  // shared ordinal across groups, a prose stamp) still PASS.
+  const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
+  const ordinalPlants = [
+    ['version-shaped stamp that is not 0.4.0.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.1.77')}\n`, {}],
+    ['ordinal rising into an older group', `## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.9')}\n`, {}],
+    ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
+    ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
+  ];
+  for (const [name, body, opts] of ordinalPlants) {
+    try { parseChangelog(`# Test\n\n${body}`, opts); console.error(`MISS ${name}`); process.exitCode = 1; }
+    catch { caught++; console.log(`CAUGHT ${name}`); }
+  }
+  try {
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse');
+  } catch (error) {
+    console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
   }
   const { validateChangelog } = await import('../src/content/changelog.js');
   const modelPlants = [
@@ -1376,7 +1444,7 @@ async function selftest() {
 // a boundary they cannot is how a narrow check gets cited as a wide one.
 try {
   if (process.argv.includes('--write')) {
-    const entries = parseChangelog(readFileSync(OWNER, 'utf8'));
+    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
     writeFileSync(GENERATED, generatedText(entries));
     console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
   } else if (process.argv.includes('--selftest')) {
