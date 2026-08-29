@@ -825,6 +825,24 @@ export function runtimeChecks(g, rt) {
   // recorded outcome is silence. Declaring the role is not enough.
   const hierRoles = hierarchyRoles(g);
   for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
+  // Entitlement must hold for every active lease, not only the one a capsule
+  // happens to select: a second unrevoked lease on a protected ref is
+  // authoritative too, and would otherwise never be looked at.
+  for (const l of rt.leases) if (!l.revoked) errors.push(...refEntitlementErrors(g, `lease '${l.id}'`, l.ref, l.actor));
+  // A per-seat ref is isolated by definition, so exactly one active lease may
+  // hold it. Path-overlap alone does not catch two seats pointed at the same
+  // branch with disjoint paths — they would still collide on the ref.
+  {
+    const byRef = new Map();
+    for (const l of rt.leases) {
+      if (l.revoked) continue;
+      const d = refDeclaration(g, l.ref);
+      if (!d || !d.per_seat) continue;
+      if (byRef.has(l.ref)) {
+        errors.push(`per-seat ref '${l.ref}' is held by both '${byRef.get(l.ref)}' and '${l.id}'; an isolated ref belongs to exactly one seat`);
+      } else byRef.set(l.ref, l.id);
+    }
+  }
   const roleMay = new Map(g.roles ? g.roles.roles.map((r) => [r.role, new Set(r.may)]) : []);
   const evIds = g.evidence ? new Set(g.evidence.evidence.map((e) => e.id)) : new Set();
   const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
@@ -1634,6 +1652,8 @@ export function runSelftest(root = ROOT) {
   expectRuntime('exempted lease cannot be widened with an unnamed glob', (rt) => { rt.leases.find((x) => x.id === 'lease-AS-1001-maker').path_globs.push('content/**'); }, 'git-ownership assigns that path to');
   expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
   expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
+  expectRuntime('a second active lease on a protected ref', (rt) => { const base = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support'); rt.leases.push({ ...base, id: 'lease-AS-HD-057-shadow', ref: 'main' }); }, 'not an isolated-continuation branch');
+  expectRuntime('two seats holding the same per-seat ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support').ref = 'recovery/as-hd-029'; }, 'belongs to exactly one seat');
   expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'not an isolated-continuation branch');
   expectRuntime('capsule claiming the pr-only integration ref', (rt) => { rt.capsules['AS-HD-029'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-HD-029'].writer_lease).ref = 'dev'; }, 'not an isolated-continuation branch');
 
