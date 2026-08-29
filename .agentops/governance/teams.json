@@ -205,16 +205,17 @@
     "spins_out": "agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant",
     "standing_grant_from": "it-manager-iii",
     "delegation_envelope": "itm-to-team-lead-self-certification",
-    "teams": [
-      "art-tech-art",
-      "feature-architecture",
-      "incident-defect",
-      "code-quality-modernization",
-      "game-systems",
-      "experience-design",
-      "experience-accessibility-review",
-      "qa-guild",
-      "platform-release"
+    "identity_rule": "A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns — and a waiver approved by the wrong team's lead would satisfy a role-only check. Each lead therefore carries its own actor_id and the one team it leads, and a self-certification names that actor.",
+    "leads": [
+      { "actor_id": "lead-art-tech-art", "team": "art-tech-art", "seat_name": "P | Art & Tech Art Lead III | art-tech-art | Ashenspire" },
+      { "actor_id": "lead-feature-architecture", "team": "feature-architecture", "seat_name": "P | Feature Architecture Lead III | feature-architecture | Ashenspire" },
+      { "actor_id": "lead-incident-defect", "team": "incident-defect", "seat_name": "P | Incident & Defect Lead III | incident-defect | Ashenspire" },
+      { "actor_id": "lead-code-quality-modernization", "team": "code-quality-modernization", "seat_name": "P | Code Quality Lead III | code-quality-modernization | Ashenspire" },
+      { "actor_id": "lead-game-systems", "team": "game-systems", "seat_name": "P | Game Systems Lead III | game-systems | Ashenspire" },
+      { "actor_id": "lead-experience-design", "team": "experience-design", "seat_name": "P | Experience Design Lead III | experience-design | Ashenspire" },
+      { "actor_id": "lead-experience-accessibility-review", "team": "experience-accessibility-review", "seat_name": "P | Accessibility Review Lead III | experience-accessibility-review | Ashenspire" },
+      { "actor_id": "lead-qa-guild", "team": "qa-guild", "seat_name": "P | QA Guild Lead III | qa-guild | Ashenspire" },
+      { "actor_id": "lead-platform-release", "team": "platform-release", "seat_name": "P | Platform & Release Lead III | platform-release | Ashenspire" }
     ]
   }
 }

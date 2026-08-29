@@ -564,13 +564,29 @@ export function semanticChecks(c, now = new Date().toISOString()) {
       const tl = c.teams.team_leads;
       if (!declaredRoles.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is not a declared role`);
       if (poolIds.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is also a capability pool, which must not be able to hold a seat`);
-      for (const team of tl.teams) {
-        if (!poolIds.has(team)) errors.push(`teams: team_leads names team '${team}', which is not a declared capability pool`);
+      // A lead is an actor, not a role. Every lead shares the 'team-lead' role,
+      // so a role-only check could not tell which team a lead owns and one
+      // team's lead satisfied the grant for another team's maker — defeating
+      // approver_must_lead_the_certifying_seats_team, which was a boolean the
+      // contract asserted and nothing could enforce. Identity is checked here.
+      const ledTeams = new Map();
+      const leadActors = new Map();
+      for (const l of tl.leads) {
+        if (!poolIds.has(l.team)) errors.push(`teams: team lead '${l.actor_id}' leads '${l.team}', which is not a declared capability pool`);
+        if (ledTeams.has(l.team)) errors.push(`teams: team '${l.team}' is led by both '${ledTeams.get(l.team)}' and '${l.actor_id}'; one_lead_per_team allows one`);
+        else ledTeams.set(l.team, l.actor_id);
+        if (leadActors.has(l.actor_id)) errors.push(`teams: lead actor '${l.actor_id}' is declared twice`);
+        else leadActors.set(l.actor_id, l.team);
+        // A shared actor id across two teams would reintroduce exactly the
+        // ambiguity the per-lead identity exists to remove.
+        if (declaredRoles.has(l.actor_id)) errors.push(`teams: lead actor '${l.actor_id}' collides with the role of the same name; a lead is an actor, not a role`);
+        if (c.teams.naming_convention && !l.seat_name.startsWith('P | ')) errors.push(`teams: lead '${l.actor_id}' has seat_name ${JSON.stringify(l.seat_name)}, which does not follow naming_convention.persistent_lead`);
+        if (!l.seat_name.includes(l.team)) errors.push(`teams: lead '${l.actor_id}' has a seat_name that does not name its own team '${l.team}'`);
       }
       // Every team gets a lead, or the ones left out have no approver and the
       // roster silently means something narrower than it says.
       for (const p of c.teams.capability_pools) {
-        if (!tl.teams.includes(p.id)) errors.push(`teams: capability pool '${p.id}' has no team lead; team_leads must name every team`);
+        if (!ledTeams.has(p.id)) errors.push(`teams: capability pool '${p.id}' has no team lead; team_leads must name every team`);
       }
       // A tier declared here and a tier declared in the ladder must agree.
       if (c.hierarchy && c.hierarchy.authority_tiers) {
@@ -1092,7 +1108,11 @@ export function renderGovernance(c) {
       L.push('');
       L.push(`Role \`${tl.role}\` at **P${tl.authority_tier}**, one per team, standing grant from \`${tl.standing_grant_from}\` under envelope \`${tl.delegation_envelope}\`. Spins out ${tl.spins_out}.`);
       L.push('');
-      L.push(`Teams with a lead: ${tl.teams.map((x) => '`' + x + '`').join(', ')}.`);
+      L.push(tl.identity_rule);
+      L.push('');
+      L.push('| Team | Lead actor | Seat |');
+      L.push('|---|---|---|');
+      for (const l of tl.leads) L.push(`| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`);
     }
     if (c.teams.naming_convention) {
       const nc = c.teams.naming_convention;
@@ -2621,7 +2641,7 @@ const VIEW_PROBES = {
   qa: (x) => [x.principle, x.self_certification.principle, x.self_certification.high_risk_is_excluded_because, ...x.self_certification.requires_envelope_actions],
   raci: (x) => [x.principle],
   roles: (x) => x.roles.map((r) => r.mission),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
   transitions: (x) => [x.principle, ...x.states],
 };
 
@@ -2667,6 +2687,17 @@ export function renderResultConsumerErrors(sourceText) {
   });
   if (!errors.length && !/runRender\(/.test(sourceText)) errors.push('no runRender() call sites found; the consumer check is looking at the wrong source');
   return errors;
+}
+
+// The whole governance gate over a rendered artifact list, extracted so the
+// absent-view case can be exercised rather than asserted about. `if (gov)` used
+// to skip the gate entirely when generatedArtifacts stopped registering the
+// view, and the drift loop walks the same list so it could not report it
+// either — the human view could be abandoned with `verify` still green.
+export function governanceGateErrors(contracts, arts) {
+  const gov = arts.find((a) => a.rel === GENERATED_VIEW);
+  if (!gov) return [`generated artifacts do not include '${GENERATED_VIEW}'; the human governance view is missing and nothing downstream can check it`];
+  return [...probeStrengthErrors(contracts), ...viewCoverageErrors(contracts, gov.text)];
 }
 
 export function probeStrengthErrors(contracts) {
@@ -2784,11 +2815,14 @@ function runRender(root, check) {
   if (errors.length) return { errors, drift: false };
   const rt = loadRuntime(root);
   const arts = generatedArtifacts(contracts, rt);
-  const gov = arts.find((a) => a.rel === GENERATED_VIEW);
-  if (gov) {
-    const missed = [...probeStrengthErrors(contracts), ...viewCoverageErrors(contracts, gov.text)];
-    if (missed.length) return { errors: missed, drift: false };
-  }
+  // A missing governance artifact must fail, not skip. `if (gov)` meant that if
+  // generatedArtifacts ever stopped registering the view, the coverage gate was
+  // silently bypassed and the drift loop could not report it either — it walks
+  // the same shortened list. The whole point of this gate is that the human view
+  // cannot quietly disappear, so its absence is the loudest case, not an
+  // optional one.
+  const missed = governanceGateErrors(contracts, arts);
+  if (missed.length) return { errors: missed, drift: false };
   const drifted = [];
   const wrote = [];
   for (const a of arts) {
@@ -3120,7 +3154,14 @@ export function runSelftest(root = ROOT) {
   // widen into a plain self-approval is planted.
   expectSemantic('team lead: role that is not declared', (c) => { c.teams.team_leads.role = 'ghost-lead'; }, 'is not a declared role');
   expectSemantic('team lead: a capability pool made into the lead role', (c) => { c.teams.team_leads.role = 'qa-guild'; }, 'is also a capability pool');
-  expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.teams = c.teams.team_leads.teams.filter((t) => t !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
+  expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.leads = c.teams.team_leads.leads.filter((l) => l.team !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
+  // Identity, not role. Every lead shares the 'team-lead' role, so without a
+  // per-lead actor one team's lead satisfied the grant for another team's maker.
+  expectSemantic('team lead: two leads claiming one team', (c) => { c.teams.team_leads.leads[1].team = c.teams.team_leads.leads[0].team; }, 'one_lead_per_team allows one');
+  expectSemantic('team lead: one actor leading two teams', (c) => { c.teams.team_leads.leads[1].actor_id = c.teams.team_leads.leads[0].actor_id; }, 'is declared twice');
+  expectSemantic('team lead: a lead named after a role rather than an actor', (c) => { c.teams.team_leads.leads[0].actor_id = 'maker'; }, 'a lead is an actor, not a role');
+  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Some Lead III | qa-guild | Ashenspire'; }, 'does not name its own team');
+  expectSemantic('team lead: a seat name outside the naming convention', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | art-tech-art helper | art-tech-art | Ashenspire'; }, 'does not follow naming_convention');
   expectSemantic('team lead: a tier that disagrees with the ladder', (c) => { c.teams.team_leads.authority_tier = 1; }, 'but the ladder places');
   expectSemantic('team lead: a standing grant that does not exist', (c) => { c.teams.team_leads.delegation_envelope = 'ghost-envelope'; }, 'which delegation.json does not declare');
   expectSemantic('team lead: a grant that may be passed on', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').max_subdelegation_depth = 1; }, 'must not pass the independence waiver on');
@@ -3239,6 +3280,12 @@ export function runSelftest(root = ROOT) {
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };
     const ghost = viewCoverageErrors(withGhost, govText);
     results.push({ label: 'a contract with no declared view probe is a failure, not a skip', pass: ghost.some((e) => e.includes('declares no view probe')), errs: ghost });
+    // ...and a missing governance artifact is the loudest case, not a skipped one.
+    const rtNow2 = loadRuntime(root);
+    const artsNow = generatedArtifacts(contracts, rtNow2);
+    results.push({ label: 'the governance gate passes on the real artifact list', pass: governanceGateErrors(contracts, artsNow).length === 0, errs: governanceGateErrors(contracts, artsNow) });
+    const without = governanceGateErrors(contracts, artsNow.filter((a) => a.rel !== GENERATED_VIEW));
+    results.push({ label: 'a missing governance view fails rather than skipping the gate', pass: without.some((e) => e.includes('is missing and nothing downstream')), errs: without });
 
     // ...and a probe shared between two contracts must be reported.
     const shared = probeStrengthErrors({ ...contracts, project: { ...contracts.project, project_name: contracts.roles.roles[0].mission } });

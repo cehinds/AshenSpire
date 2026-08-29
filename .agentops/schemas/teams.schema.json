@@ -263,7 +263,8 @@
         "spins_out",
         "standing_grant_from",
         "delegation_envelope",
-        "teams"
+        "identity_rule",
+        "leads"
       ],
       "properties": {
         "principle": { "type": "string", "minLength": 1 },
@@ -273,10 +274,20 @@
         "spins_out": { "type": "string", "minLength": 1 },
         "standing_grant_from": { "type": "string", "minLength": 1 },
         "delegation_envelope": { "type": "string", "minLength": 1 },
-        "teams": {
+        "identity_rule": { "type": "string", "minLength": 1 },
+        "leads": {
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["actor_id", "team", "seat_name"],
+            "properties": {
+              "actor_id": { "type": "string", "minLength": 1 },
+              "team": { "type": "string", "minLength": 1 },
+              "seat_name": { "type": "string", "minLength": 1 }
+            }
+          }
         }
       }
     },

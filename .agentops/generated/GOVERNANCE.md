@@ -335,7 +335,19 @@ Every team has one persistent lead. The lead is standing; the pod it forms for a
 
 Role `team-lead` at **P2**, one per team, standing grant from `it-manager-iii` under envelope `itm-to-team-lead-self-certification`. Spins out agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant.
 
-Teams with a lead: `art-tech-art`, `feature-architecture`, `incident-defect`, `code-quality-modernization`, `game-systems`, `experience-design`, `experience-accessibility-review`, `qa-guild`, `platform-release`.
+A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns — and a waiver approved by the wrong team's lead would satisfy a role-only check. Each lead therefore carries its own actor_id and the one team it leads, and a self-certification names that actor.
+
+| Team | Lead actor | Seat |
+|---|---|---|
+| `art-tech-art` | `lead-art-tech-art` | P | Art & Tech Art Lead III | art-tech-art | Ashenspire |
+| `feature-architecture` | `lead-feature-architecture` | P | Feature Architecture Lead III | feature-architecture | Ashenspire |
+| `incident-defect` | `lead-incident-defect` | P | Incident & Defect Lead III | incident-defect | Ashenspire |
+| `code-quality-modernization` | `lead-code-quality-modernization` | P | Code Quality Lead III | code-quality-modernization | Ashenspire |
+| `game-systems` | `lead-game-systems` | P | Game Systems Lead III | game-systems | Ashenspire |
+| `experience-design` | `lead-experience-design` | P | Experience Design Lead III | experience-design | Ashenspire |
+| `experience-accessibility-review` | `lead-experience-accessibility-review` | P | Accessibility Review Lead III | experience-accessibility-review | Ashenspire |
+| `qa-guild` | `lead-qa-guild` | P | QA Guild Lead III | qa-guild | Ashenspire |
+| `platform-release` | `lead-platform-release` | P | Platform & Release Lead III | platform-release | Ashenspire |
 
 ### Seat naming
 
