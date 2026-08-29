@@ -38,7 +38,7 @@
     "wake_compiler": "opsctl wake --actor <role> --work <ticket> [--frozen] (token-bounded disposable capsule)",
     "reconstruction_drill": "opsctl drill (clean-clone / context-wipe reconstruction, provider-neutral); spec in RECONSTRUCTION-DRILL.md; goldens in generated/reconstruction/",
     "owner_command": "opsctl command --dry-run (--request <json> | --file <path>): enumerated, authenticated, allowlisted, compare-and-swap-checked; dry-run only (no live mutation this stage)",
-    "owner_hud": "generated/hud/index.html (read-only, redacted, deterministic); a plain static file served by the repository's own branch-published GitHub Pages site (Deploy from a branch: dev, root) and reachable at /hud/ via a thin redirect; no separate publish workflow",
+    "owner_hud": "generated/hud/index.html (read-only, redacted, deterministic); a plain static file served by the repository's own branch-published GitHub Pages site (Deploy from a branch: main, root) and reachable at /hud/; no separate publish workflow. Publishing main means the live site is the released state: a regenerated HUD on dev reaches it only through an owner-authorized dev -> main promotion.",
     "migration": "opsctl migrate [--plan]: read-only inventory + classification of legacy sources (governance/migration.json) with proposed genesis stubs; report in generated/migration/PLAN.md; no legacy evidence mutated",
     "seed_ticket": "AS-1001"
   },

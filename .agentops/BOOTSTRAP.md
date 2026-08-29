@@ -76,10 +76,15 @@ node .agentops/tools/opsctl.mjs command --dry-run --request '<owner-command-requ
 The read-only Owner HUD is a redacted, deterministic projection at
 `generated/hud/index.html`. It is a plain static file: the repository
 publishes its own tree to GitHub Pages (Settings → Pages → Deploy from a
-branch → `dev`, root), so the HUD is served with the rest of the site and
-reachable at `/hud/` (a thin redirect to the generated file). There is no
-separate publish workflow — regenerating the file with `opsctl render` and
-pushing is all it takes.
+branch → `main`, root), so the HUD is served with the rest of the site and
+reachable at `/hud/` (a copy of the generated file). There is no separate
+publish workflow — regenerating the file with `opsctl render` and pushing is
+all it takes.
+
+Because Pages publishes `main`, the live site is the **released** state:
+regenerating the HUD on `dev` does not change it until an owner-authorized
+`dev` → `main` promotion. Publication stays a protected transition rather
+than a side effect of routine integration.
 
 ## Validate before you trust
 
