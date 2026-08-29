@@ -7,20 +7,24 @@
 #
 # SOP 3's four requirements, and where each is honestly met or not:
 #
-#  1. RUNS ON EVERY PUSH AND PR — → NOT MET since `b55e078`. The `on:` block
-#     below is `workflow_dispatch:` alone: exactly the "workflow_dispatch-only"
-#     shape the old text here ruled out while still reading "→ MET". The edit
-#     that turned automatic runs off changed `on:` and said so; this header sits
-#     fifty lines above it and nobody edited it. That is how a second copy is
-#     born — one fact, two homes, nothing checking they agree. EldenSpire#35.
-#     Under SOP 2's silence guard a workflow that never fires is `unknown`, and
-#     unknown blocks. Every gate in this repo is now a seat's hand-run.
+#  1. RUNS ON EVERY PUSH AND PR — → MET again 2026-08-29 (owner Tier-2 decision,
+#     recorded on cehinds/AshenSpire#392). The `on:` block below is option (a):
+#     `push: branches: [dev, main, release]` + `pull_request:`, so one run per
+#     commit. This header and that block were edited in the SAME change on
+#     purpose — the 2026-08-01 shutoff moved `on:` and left this line reading
+#     "→ MET", which is exactly the two-homes drift (EldenSpire#35) that turned
+#     a disabled workflow into a green-reading one. They agree now; keep them
+#     edited together.
+#     RESIDUAL, not erased by re-enabling: a feature branch with NO PR OPEN still
+#     gets no CI, so SOP 3's "open the draft PR early" is load-bearing, not
+#     advice. Until the first automatic run lands, this reads `unknown (not yet
+#     fired)` rather than green.
 #
-#     THE STANDING BOUNDARY, and it belongs here rather than on a card. Nothing
-#     in this repo is `verified-at` a CI ref while this holds. The permanent
-#     loss is requirement 2's four platform claims below: no seat hand-runs
-#     `windows-latest` or `macos-latest`, so those four are `unknown` and stay
-#     `unknown` — not green, and not red either. Aging is not a fix.
+#     THE STANDING BOUNDARY, narrowed by this decision. requirement 2's four
+#     platform claims were `unknown` because no seat hand-ran `windows-latest` or
+#     `macos-latest`; option (a) puts the full 3-OS matrix back on every PR, so
+#     those four move from `unknown` to measured on the next run against each
+#     branch — not before. Aging is still not a fix; a real run is.
 #
 #  2. EVERY RUNNER THE CODE MAKES A PLATFORM-SPECIFIC CLAIM ON — this repo makes
 #     four, and they are not hypothetical:
@@ -82,13 +86,26 @@
 name: ci
 
 on:
-  # AUTOMATIC CI DISABLED 2026-08-01, at the repo owner's request — GitHub Actions
-  # minutes cost money on private repos, and this workflow is the most expensive
-  # one here: a 3-OS matrix on every push to every branch, where Windows bills at
-  # 2x and macOS at 10x the Linux rate.
+  # RE-ENABLED 2026-08-29 by the owner's Tier-2 decision (recorded on
+  # cehinds/AshenSpire#392), using option (a) below: one run per commit, scoped to
+  # the integration branches. A feature branch is billed once — through its PR —
+  # not on every push to every branch; the SOP 3 mitigation is to open the draft
+  # PR early, which this makes load-bearing rather than advisory. The measured
+  # disabled-era history and the (a)/(b)/(c) cost analysis are preserved below it
+  # as the reasoning this choice rests on.
+  push:
+    branches: [dev, main, release]
+  pull_request:
+  workflow_dispatch:
   #
-  # It now runs ONLY when started by hand: Actions tab -> "Run workflow".
-  # Nothing below this block changed; every job, guard and boundary is intact.
+  # ---- HISTORY (the cost analysis behind the choice above) --------------------
+  # AUTOMATIC CI was DISABLED 2026-08-01, at the repo owner's request — GitHub
+  # Actions minutes cost money on private repos, and this workflow is the most
+  # expensive one here: a 3-OS matrix on every push to every branch, where Windows
+  # bills at 2x and macOS at 10x the Linux rate.
+  #
+  # During that window it ran ONLY when started by hand: Actions tab -> "Run
+  # workflow". Every job, guard and boundary stayed intact throughout.
   #
   # DO NOT RE-ENABLE BY RESTORING WHAT WAS HERE. The old text told you to put
   # back `push: branches: ['**']` + `pull_request:`. That pair is a measured
@@ -144,7 +161,7 @@ on:
   # before anyone commits to a number. Every RATIO here is independent of the
   # allowance; the allowance itself has never been read off this account's
   # billing page by anyone.
-  workflow_dispatch:
+  # ---- END HISTORY -----------------------------------------------------------
 
 # One in-flight run per ref; a superseded run's result is not evidence about HEAD.
 concurrency:
