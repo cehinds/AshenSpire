@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `2df6f4acb54c4c169a0b80f08ea8b5613e9f2650`
+- Source commit: `61b4cd352bd31b55b67c37c11e5d4713fbac2c2f`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **1759**.
-Extensions: `.bat` 1, `.css` 4, `.csv` 13, `.gitattributes` 1, `.gitignore` 2, `.html` 40, `.js` 201, `.json` 199, `.md` 105, `.mjs` 186, `.nojekyll` 1, `.png` 841, `.py` 4, `.sh` 4, `.svg` 10, `.txt` 31, `.webp` 106, `.yml` 9, `(none)` 1.
+Tracked files: **1815**.
+Extensions: `.bat` 1, `.css` 4, `.csv` 13, `.gitattributes` 1, `.gitignore` 2, `.html` 40, `.js` 201, `.json` 226, `.md` 133, `.mjs` 186, `.nojekyll` 1, `.png` 841, `.py` 4, `.sh` 4, `.svg` 10, `.txt` 31, `.webp` 106, `.yml` 10, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
