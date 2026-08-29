@@ -4,10 +4,26 @@
 //
 // Subcommands:
 //   validate            Parse + schema-validate + cross-contract checks. Exit 1 on any failure.
-//   render              (Re)generate .agentops/generated/GOVERNANCE.md from validated JSON.
-//   render --check      Regenerate in memory and fail (exit 1) if the committed view has drifted.
+//   render              (Re)generate every view under .agentops/generated/ plus the published
+//                       mirrors (/hud/, /review-approval-hub/) from validated JSON.
+//   render --check      Regenerate in memory and fail (exit 1) if a committed view has drifted.
 //   verify              validate, then render --check. The CI entry point.
+//   wake                Compile one seat's bounded startup capsule. --frozen for the goldens.
+//   dispatch            Which seats are due and who each wakes, derived from the contracts.
+//                       --json for the seat executor. Nothing is decided here.
+//   reseat              Advance an unstarted seat's base_oid to live HEAD and reseal.
+//                       --all for every eligible seat. Refuses started seats and a detached HEAD.
+//   reseal              Re-establish a capsule's compare-and-swap seal after a legitimate
+//                       content change, keeping the chain. Requires --reason.
+//   command             Owner-command path: --dry-run to decide, --apply to write.
+//   drill               Clean-clone / context-wipe reconstruction drill.
+//   migrate             Read-only legacy inventory; --plan proposes genesis stubs.
 //   --selftest          Prove every check can actually fail, using in-memory negative plants.
+//
+// This list is not maintained by hand: `--selftest` fails if a dispatched
+// subcommand is missing from it. It had drifted to 5 of 8 before that check
+// existed (issue #392, D8), and the one it omitted was `wake` — the single
+// command a cold-start seat depends on.
 //
 // Design invariants:
 //   * Git history + validated JSON are authoritative; the Markdown view is a
@@ -1788,6 +1804,39 @@ export function renderHubSite(contracts, rt) {
   return out;
 }
 
+
+// ---------------------------------------------------------------------------
+// The tool's own header, kept honest.
+//
+// The docblock had drifted to 5 of 8 subcommands (issue #392, D8) and the one
+// it omitted was `wake` — the command the cold-start bootstrap depends on. A
+// header a cold seat reads to learn the interface is documentation the same
+// way a capsule is: wrong is worse than absent. Pure over both texts, so a
+// negative plant enters exactly where the live check does.
+// ---------------------------------------------------------------------------
+export function subcommandDocErrors(headerText, sourceText) {
+  const dispatched = [...new Set([...sourceText.matchAll(/cmd === '([a-z-]+)'/g)].map((m) => m[1]))]
+    // `selftest` is the bare alias of `--selftest`; documenting one covers both.
+    .filter((c) => c !== 'selftest');
+  const errors = [];
+  for (const c of dispatched.sort()) {
+    const token = c.startsWith('--') ? c : `//   ${c} `;
+    const documented = c.startsWith('--')
+      ? new RegExp(`^//\\s+${c}\\s`, 'm').test(headerText)
+      : headerText.includes(token);
+    if (!documented) errors.push(`opsctl header does not document dispatched subcommand '${c}'`);
+  }
+  return errors;
+}
+
+// The header is everything above the first non-comment line: the block a reader
+// sees before any code.
+export function opsctlHeader(sourceText) {
+  const lines = sourceText.split('\n');
+  const end = lines.findIndex((l) => l.trim() !== '' && !l.startsWith('//'));
+  return lines.slice(0, end === -1 ? lines.length : end).join('\n');
+}
+
 // ---------------------------------------------------------------------------
 // Runners.
 // ---------------------------------------------------------------------------
@@ -1987,8 +2036,26 @@ export function runDrill(root = ROOT) {
     try { rmSync(clone, { recursive: true, force: true }); } catch { /* best effort */ }
   }
 
+  // D6 (issue #392): the drill proves render determinism, and its one-line
+  // verdict was read as proving continuity. It printed "zero evidence loss"
+  // for a fleet where every seat's own wake said `re-seat before mutating`.
+  // The goldens are deliberately frozen — a golden must be deterministic — so
+  // staleness cannot show up there. It is reported here instead: non-fatal,
+  // because a stale base is not evidence loss, but never invisible again.
+  const stale = [];
+  const head = currentHead(root);
+  let total = 0;
+  if (head) {
+    const rtNow = loadRuntime(root);
+    total = Object.keys(rtNow.capsules).length;
+    for (const t of Object.keys(rtNow.capsules).sort()) {
+      const cap = rtNow.capsules[t];
+      if (cap.base_oid !== head) stale.push({ ticket: t, base: cap.base_oid, state: cap.lifecycle_state });
+    }
+  }
+
   const ok = steps.every((s) => s.ok);
-  return { ok, steps };
+  return { ok, steps, stale, head, total };
 }
 
 // Self-test: prove each check can fail. Each plant deep-clones the valid corpus,
@@ -2144,6 +2211,18 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
   expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');
+
+  // Stage 9 — the tool's own header (issue #392, D8). Enters through the same
+  // pure function the live check uses, with a header that omits one command.
+  {
+    const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+    const live = subcommandDocErrors(opsctlHeader(src), src);
+    results.push({ label: 'opsctl header documents every dispatched subcommand', pass: live.length === 0, errs: live });
+    const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   wake /.test(l)).join('\n');
+    const caught = subcommandDocErrors(gutted, src);
+    const hit = caught.some((e) => e.includes("'wake'"));
+    results.push({ label: 'header check catches an undocumented subcommand', pass: hit, errs: hit ? [] : caught });
+  }
 
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
@@ -2450,7 +2529,13 @@ function main(argv) {
     const d = runDrill();
     for (const s of d.steps) console.log(`  ${s.ok ? 'PASS' : 'FAIL'}  ${s.name}${s.detail ? ' — ' + s.detail : ''}`);
     if (!d.ok) { console.error('\nDRILL FAIL: clean-clone reconstruction did not reproduce exact state.'); return 1; }
-    console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss.');
+    if (d.stale && d.stale.length) {
+      console.log('');
+      for (const s of d.stale) console.log(`  STALE  ${s.ticket} (${s.state}) base ${s.base.slice(0, 12)} != HEAD ${d.head.slice(0, 12)}`);
+      console.log(`\nDRILL OK: reconstruction reproduces exact state with zero evidence loss — but ${d.stale.length} of ${d.total} capsule(s) are pinned behind live HEAD, and their own wake says re-seat before mutating. Not evidence loss; run \`opsctl reseat --all\`.`);
+    } else {
+      console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss; every capsule is seated on live HEAD.');
+    }
     return 0;
   }
   if (cmd === 'command') {
