@@ -1,0 +1,47 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 1,
+  "current_hash": "sha256:ed1c444605eb6ff85b12d0b80dcf448a0a45d28fbd1a7bb9ea718781a2b6ae02",
+  "parent_hash": null,
+  "ticket": "AS-HD-054",
+  "lifecycle_state": "assigned",
+  "objective": "Seal the team/seat census and per-seat classification that team rotation depends on.",
+  "done_when": "A sealed census records every team and seat with an exact classification (ready / repair-required / active-write-deferred / no-current-session), and the totals reconcile against the declared denominator.",
+  "next_action": "Reconcile the surviving evidence into a sealed census; where a seat has no surviving source, classify it as unrecoverable rather than inferring a state.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "recovery/as-hd-054",
+  "base_oid": "f4a30c2d929a8429acd46fa02ca8a4798b6d2915",
+  "tree": "recovered-from-hub-snapshot",
+  "expected_dirty_state": "clean",
+  "owner_actor": "project-management-lead",
+  "writer_lease": "lease-AS-HD-054-project-management-lead",
+  "affected_paths": [
+    "docs/governance/**"
+  ],
+  "evidence_pointers": [],
+  "blocker": {
+    "kind": "evidence-loss",
+    "wake": "it-manager-iii",
+    "summary": "The physical-ledger workspace holding the per-seat backlog is not in this repository and did not survive the originating session. The Review Hub rendered snapshot is the only surviving source; some seats may be unrecoverable."
+  },
+  "authority": {
+    "may": [
+      "recommend-sequencing",
+      "expose-dependencies-wip-capacity",
+      "convene-completion-council",
+      "summarize-stakeholders"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths"
+    ],
+    "expiry": "2026-10-31T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-HD-054 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}

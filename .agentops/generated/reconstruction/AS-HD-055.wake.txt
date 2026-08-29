@@ -1,0 +1,15 @@
+=== AGENTOPS WAKE CAPSULE ===
+IDENTITY   : actor=qa-independent role=qa-independent ticket=AS-HD-055 lease=lease-AS-HD-055-qa-independent (active until 2026-10-31T23:59:59Z)
+MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
+WORK       : Provide independent exact-head verdicts for recovered work, and keep the red plants and fixtures honest.
+DONE-WHEN  : Every candidate presented for integration carries an independent verdict authored at its exact head, and the negative-plant corpus still fails for the right reason on each run.
+AUTHORITY  : may author-exact-head-verdict, maintain-red-plants-and-fixtures | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
+FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
+REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-055
+BASE       : f4a30c2d929a8429acd46fa02ca8a4798b6d2915 tree recovered-from-hub-snapshot dirty=clean
+NEXT ACTION: Wait for an exact frozen head to verify; do not author a verdict for a moving target. Keep the plant corpus current as the validator changes.
+STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+EVIDENCE   : —
+SOURCE     : f4a30c2d929a8429acd46fa02ca8a4798b6d2915
+FRESHNESS  : as-recorded (base f4a30c2d929a); verify live HEAD out-of-band
+INVALIDATION: base_oid, tree, writer_lease
