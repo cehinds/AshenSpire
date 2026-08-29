@@ -917,6 +917,25 @@ export function renderGovernance(c) {
   L.push('| Path glob | Owner role | Serialized lane |');
   L.push('|---|---|---|');
   for (const p of c['git-ownership'].paths) L.push(`| \`${p.glob}\` | ${p.owner_role} | ${p.serialized_lane} |`);
+  if (c['git-ownership'].branch_hygiene) {
+    const bh = c['git-ownership'].branch_hygiene;
+    L.push('');
+    L.push('### Branch hygiene');
+    L.push('');
+    L.push(bh.principle);
+    L.push('');
+    L.push(`Default: \`${bh.default_update_method}\`. Rewriting a branch that is not the acting role's own needs \`${bh.permission_role}\`; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
+  }
+  if (c['information-access'] && c['information-access'].canonical_documents) {
+    L.push('');
+    L.push('### Canonical documents');
+    L.push('');
+    L.push('| Topic | Canonical path | Superseded | Decision |');
+    L.push('|---|---|---|---|');
+    for (const d of c['information-access'].canonical_documents) {
+      L.push(`| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((x) => '`' + x + '`').join(', ') || '—'} | \`${d.decision}\` |`);
+    }
+  }
   L.push('');
   L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
   L.push('');
@@ -959,10 +978,27 @@ export function renderGovernance(c) {
       L.push(`| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' → ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`);
     }
     L.push('');
+    if (c.escalation.ticket_flow) {
+      const tf = c.escalation.ticket_flow;
+      L.push('### Where a question goes');
+      L.push('');
+      L.push(tf.principle);
+      L.push('');
+      L.push('| # | Actor | Does |');
+      L.push('|---|---|---|');
+      for (const st of tf.steps) L.push(`| ${st.n} | \`${st.actor}\` | ${st.does} |`);
+      L.push('');
+      L.push(`Handoffs keep ${tf.handoff_events.map((e) => '`' + e + '`').join(', ')} distinct. ${tf.handoff_rule}`);
+      L.push('');
+      L.push(`**${tf.owner_is_last_resort}**`);
+      L.push('');
+    }
   }
 
   if (c.transitions) {
     L.push('## Lifecycle transitions and permitted actors');
+    L.push('');
+    L.push(c.transitions.principle);
     L.push('');
     L.push(`States: ${c.transitions.states.map((s) => '`' + s + '`').join(' → ')}`);
     L.push('');
@@ -1003,6 +1039,80 @@ export function renderGovernance(c) {
     for (const g of c.qa.gates) {
       L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
     }
+    L.push('');
+  }
+
+  if (c.hierarchy && c.hierarchy.authority_tiers) {
+    const at = c.hierarchy.authority_tiers;
+    L.push('## Authority tiers');
+    L.push('');
+    L.push(at.principle);
+    L.push('');
+    if (at.disambiguation) {
+      L.push(`**P-codes mean two things.** ${at.disambiguation.rule} Authority subjects: ${at.disambiguation.authority_subjects.map((x) => '`' + x + '`').join(', ')}. Priority subjects: ${at.disambiguation.priority_subjects.map((x) => '`' + x + '`').join(', ')}.`);
+      L.push('');
+    }
+    L.push('| Tier | Who | Holds | Cannot |');
+    L.push('|---|---|---|---|');
+    for (const lv of at.levels) {
+      L.push(`| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '`' + a + '`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`);
+    }
+    L.push('');
+    L.push(Object.values(at.rules).join(' '));
+    L.push('');
+  }
+
+  if (c.delivery) {
+    const d = c.delivery;
+    L.push('## Delivery and the Pages source');
+    L.push('');
+    L.push(d.principle);
+    L.push('');
+    L.push(`Delivery to \`dev\` is held by \`${d.dev_delivery.actor_role}\`: a discretion, never a duty, and never a direct push. Every item below must be \`PASS\` at one exact head; \`FAIL\` and \`UNKNOWN\` both require \`WAIT\`.`);
+    L.push('');
+    for (const cond of d.dev_delivery.all_must_pass_at_one_exact_head) L.push(`- ${cond}`);
+    L.push('');
+    L.push(`Desired Pages source: \`${d.pages.desired_source}\`. A switch needs the \`${d.pages.switch_requires.authorizing_role}\`, a change window, and a candidate already on \`${d.pages.switch_requires.candidate_must_have_reached}\`. ${d.pages.on_failure}`);
+    L.push('');
+    L.push(`The promotion packet carries ${d.promotion_packet.required_fields.length} required fields; missing, contradictory, stale or unverified is \`UNKNOWN\`, and \`UNKNOWN\` blocks.`);
+    L.push('');
+  }
+
+  if (c['model-effort']) {
+    const me = c['model-effort'];
+    L.push('## Model and effort selection');
+    L.push('');
+    L.push(me.principle);
+    L.push('');
+    L.push(`Every assignment and reassignment records: \`${me.assignment_record.format}\``);
+    L.push('');
+    L.push('| Risk and station | Default model | Efforts | Typical work |');
+    L.push('|---|---|---|---|');
+    for (const t of me.tiers) {
+      L.push(`| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`);
+    }
+    L.push('');
+    L.push(Object.values(me.rules).join(' '));
+    L.push('');
+  }
+
+  if (c['owner-command']) {
+    L.push('## Owner commands');
+    L.push('');
+    L.push(c['owner-command'].principle);
+    L.push('');
+    L.push('| Action | Authenticator roles | CAS | Protected |');
+    L.push('|---|---|---|---|');
+    for (const a of c['owner-command'].actions) {
+      L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`);
+    }
+    L.push('');
+  }
+
+  if (c.migration) {
+    L.push('## Legacy migration');
+    L.push('');
+    L.push(c.migration.principle);
     L.push('');
   }
 
@@ -2276,6 +2386,25 @@ const HUD_VIEW = 'generated/hud/index.html';
 const MIGRATION_VIEW = 'generated/migration/PLAN.md';
 const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 
+// A contract that never reaches the human view is policy nobody reads. `verify`
+// only proves the committed view matches what `render` emits — it cannot notice
+// that render emits nothing for a whole contract. Five contracts were in exactly
+// that state (delivery, model-effort, owner-command, transitions, migration),
+// three of them since well before the tiers work. A contract's `principle` is
+// its one-sentence statement of intent, so requiring it to appear verbatim makes
+// the projection provably total.
+export function viewCoverageErrors(contracts, viewText) {
+  const errors = [];
+  for (const name of Object.keys(contracts).sort()) {
+    const principle = contracts[name] && contracts[name].principle;
+    if (!principle) continue;                       // not every contract states one
+    if (!viewText.includes(principle)) {
+      errors.push(`generated view omits the '${name}' contract entirely; its principle appears nowhere`);
+    }
+  }
+  return errors;
+}
+
 // Every committed generated artifact, as {rel, text}. These are the sole
 // writes of `render` and the drift gate of `verify`. Frozen wake goldens make
 // reconstruction output part of the committed, deterministic surface: any clean
@@ -2353,6 +2482,11 @@ function runRender(root, check) {
   if (errors.length) return { errors, drift: false };
   const rt = loadRuntime(root);
   const arts = generatedArtifacts(contracts, rt);
+  const gov = arts.find((a) => a.rel === GENERATED_VIEW);
+  if (gov) {
+    const missed = viewCoverageErrors(contracts, gov.text);
+    if (missed.length) return { errors: missed, drift: false };
+  }
   const drifted = [];
   const wrote = [];
   for (const a of arts) {
@@ -2689,6 +2823,21 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'header check catches an undocumented subcommand', pass: hit, errs: hit ? [] : caught });
   }
 
+  // Stage 10 — the human view's completeness. `verify` proves only that the
+  // committed view matches what `render` emits; it cannot notice that `render`
+  // emits nothing at all for a whole contract, and five were in exactly that
+  // state. Enters through the same pure function the live render uses, with one
+  // contract's projection deleted from the rendered text.
+  {
+    const govText = renderGovernance(contracts);
+    const live = viewCoverageErrors(contracts, govText);
+    results.push({ label: 'generated governance view projects every contract', pass: live.length === 0, errs: live });
+    const dropped = govText.split('\n').filter((l) => !l.includes(contracts.migration.principle)).join('\n');
+    const caught2 = viewCoverageErrors(contracts, dropped);
+    const hit2 = caught2.some((e) => e.includes("'migration'"));
+    results.push({ label: 'coverage check catches an unprojected contract', pass: hit2, errs: hit2 ? [] : caught2 });
+  }
+
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
 }
@@ -2986,6 +3135,10 @@ function main(argv) {
     const v = runValidate();
     if (v.errors.length) { console.error('VERIFY FAIL (validate):'); v.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     const r = runRender(ROOT, true);
+    // runRender reports two different failures. Reading only `drift` let a
+    // whole contract go unprojected in silence, which is what this check exists
+    // to prevent — so both are surfaced.
+    if (r.errors && r.errors.length) { console.error('VERIFY FAIL (generated view):'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     if (r.drift) { console.error('VERIFY FAIL: stale generated artifacts; run `node .agentops/tools/opsctl.mjs render`:'); r.drifted.forEach((d) => console.error('  - ' + d)); return 1; }
     console.log('VERIFY OK: contracts + runtime valid, consistent, and all generated views in sync.');
     return 0;

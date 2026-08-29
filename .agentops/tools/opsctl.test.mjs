@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -98,6 +98,25 @@ function check(name, cond, detail = '') {
     try { actual = readFileSync(resolve(ROOT, 'generated/GOVERNANCE.md'), 'utf8'); } catch { /* missing */ }
     check('committed generated view is not drifted', actual === expected,
       actual === '' ? 'view missing' : 'view differs from render output');
+
+    // Drift only proves the committed file matches what render emits. It says
+    // nothing about a contract render emits nothing for — which is how five
+    // contracts stayed out of the human view while `verify` reported OK. A
+    // contract's `principle` is its one-sentence statement of intent, so its
+    // presence is the minimum bar for "this policy is readable by a person".
+    const missed = viewCoverageErrors(contracts, expected);
+    check('every contract with a principle reaches the generated view', missed.length === 0, missed.join(' | '));
+    // A floor on the count would let a new contract opt out of the check by
+    // simply not declaring a principle. Pinning the exemption list instead makes
+    // that a suite failure, so the choice is made deliberately and once.
+    const silent = Object.keys(contracts).filter((k) => !contracts[k].principle).sort();
+    const allowed = ['authority', 'delegation', 'hierarchy', 'owner-intent', 'project', 'roles'];
+    check('no new contract escapes view coverage by omitting its principle',
+      silent.join(',') === allowed.join(','), `exempt now: ${silent.join(',')}`);
+    // ...and the check itself must be able to fail, or it proves nothing.
+    const blinded = expected.split('\n').filter((l) => !l.includes(contracts.migration.principle)).join('\n');
+    check('coverage check fails when a contract is unprojected',
+      viewCoverageErrors(contracts, blinded).some((e) => e.includes("'migration'")));
   }
 }
 
