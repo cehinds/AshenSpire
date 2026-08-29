@@ -80,6 +80,16 @@
         "fixture-or-plant-regression",
         "exact-head-drift"
       ]
+    },
+    {
+      "actor_id": "it-support",
+      "role": "it-support",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "tooling-failure",
+        "environment-or-access-blocker",
+        "routing-outage"
+      ]
     }
   ],
   "escalation_routing": {

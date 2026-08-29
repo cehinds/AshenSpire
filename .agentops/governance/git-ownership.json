@@ -130,6 +130,12 @@
       "owner_role": "help-desk",
       "serialized_lane": "intake-docs",
       "note": "Intake and routing records surfaced to design."
+    },
+    {
+      "glob": "tools/**",
+      "owner_role": "it-support",
+      "serialized_lane": "support-tooling",
+      "note": "Repo tooling and support scripts. Restores the ability to work; product behaviour changes belong to maker."
     }
   ],
   "generated_serialization": {

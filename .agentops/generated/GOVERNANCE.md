@@ -63,6 +63,7 @@ authority of its own and is regenerated deterministically from
 | `help-desk` | help-desk | `it-manager-iii` | intake, routing, contract-completeness, status-hygiene |
 | `maker` | maker | `it-manager-iii` | implementation-blocker, path-collision, lease-expiry, local-verification-failure |
 | `qa-independent` | qa-independent | `it-manager-iii` | verdict-withhold, fixture-or-plant-regression, exact-head-drift |
+| `it-support` | it-support | `it-manager-iii` | tooling-failure, environment-or-access-blocker, routing-outage |
 
 Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owner classes: owner-exclusive, safety, credential, irreversible, intent-conflict.
 
@@ -124,6 +125,14 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 - **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
 - **Approval ceiling:** qa-verdict
 
+### `it-support`
+
+- **Mission:** Restore the ability to work: repair local tooling, environment, routing and access blockers, and return exact evidence of the repair.
+- **May:** repair-local-tooling-and-environment, restore-routing-and-access, return-exact-support-evidence
+- **Must:** reproduce-a-blocker-before-repairing-it; return-exact-evidence-of-the-repair
+- **Must not:** push-pr-merge-deploy-or-release, change-product-behaviour-to-clear-a-blocker, override-an-independent-qa-verdict
+- **Approval ceiling:** May restore capability only. Any repair that would change what the work produces, or that needs a protected transition, is escalated to it-manager-iii rather than performed.
+
 ## Authority matrix
 
 | Action | Routine owner role | Scope | Protected | Required evidence |
@@ -176,6 +185,7 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `docs/hub/**` | maker | product-docs |
 | `docs/governance/**` | project-management-lead | governance-docs |
 | `game-design/docs/**` | help-desk | intake-docs |
+| `tools/**` | it-support | support-tooling |
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 
