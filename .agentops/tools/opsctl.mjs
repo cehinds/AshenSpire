@@ -299,7 +299,15 @@ export function semanticChecks(c) {
     // The ladder must keep saying it is not a capability ladder; 0006 forbids
     // selection by rank, and this is where that would quietly erode.
     if (!/never.*(model|effort)|not.*(model|effort)/i.test(at.rules.not_a_capability_ladder || '')) {
-      errors.push('hierarchy: authority tiers no longer state that a P-level never selects model or effort');
+      errors.push('hierarchy: authority tiers no longer state that a level never selects model or effort');
+    }
+    // P<n> is the priority namespace — promotion-gates and authority.json both
+    // gate on a 'P0/P1 WITHHOLD', and hierarchy declares 'incident-p0'. An
+    // authority tier wearing the same label makes a P0 incident readable as an
+    // owner authorization, which the recovered 2026-08-28 census shows is not
+    // hypothetical: it carries a row reading 'P0 IT Manager III'.
+    if (at.namespace === 'P' || at.levels.some((l) => /^P/.test(String(l.label)))) {
+      errors.push("hierarchy: authority tiers use the 'P' namespace, which denotes incident and defect priority; a P0 incident would read as an owner authorization");
     }
   }
   if (c.escalation && c.escalation.ticket_flow && c.roles) {
@@ -2620,6 +2628,7 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('tiers: reusing the priority namespace', (c) => { c.hierarchy.authority_tiers.namespace = 'P'; }, 'would read as an owner authorization');
   expectSemantic('tiers: an actor in no tier', (c) => { c.hierarchy.authority_tiers.levels = c.hierarchy.authority_tiers.levels.filter((l) => l.p !== 4); }, 'in no authority tier');
   expectSemantic('tiers: an actor in two tiers', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 2).actors.push('maker'); }, 'an actor holds one tier');
   expectSemantic('tiers: the owner demoted below P0', (c) => { c.hierarchy.authority_tiers.levels.find((l) => l.p === 1).actors.push('constantine'); }, 'appears below P0');
