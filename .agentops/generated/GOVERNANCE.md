@@ -61,6 +61,8 @@ authority of its own and is regenerated deterministically from
 | `project-management-lead` | project-management-lead | `it-manager-iii` | portfolio-sequencing-recommendation, dependency-and-capacity-visibility, completion-council |
 | `data-architecture-lead` | data-architecture-lead | `it-manager-iii` | data-contract-withhold, schema-lineage, migration-compatibility |
 | `help-desk` | help-desk | `it-manager-iii` | intake, routing, contract-completeness, status-hygiene |
+| `maker` | maker | `it-manager-iii` | implementation-blocker, path-collision, lease-expiry, local-verification-failure |
+| `qa-independent` | qa-independent | `it-manager-iii` | verdict-withhold, fixture-or-plant-regression, exact-head-drift |
 
 Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owner classes: owner-exclusive, safety, credential, irreversible, intent-conflict.
 
@@ -152,6 +154,7 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `dev` | it-manager-iii | pr-only |
 | `test` | it-manager-iii | gate-c-fast-forward-only |
 | `claude/*` | maker | isolated-continuation |
+| `recovery/*` | maker | isolated-continuation |
 
 ### Paths
 
@@ -162,6 +165,8 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/tools/**` | maker | agentops-tooling |
 | `.agentops/generated/**` | generator | governance |
 | `.agentops/work/**` | maker | per-ticket |
+| `.agentops/events/**` | maker | per-ticket |
+| `.agentops/leases/**` | it-manager-iii | governance |
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.

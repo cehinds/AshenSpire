@@ -26,6 +26,12 @@
       "owner_role": "maker",
       "mutation": "isolated-continuation",
       "note": "Isolated agent continuation branches; reversible local work."
+    },
+    {
+      "ref": "recovery/*",
+      "owner_role": "maker",
+      "mutation": "isolated-continuation",
+      "note": "Isolated continuation branches for seats recovered after a lost session; reversible local work, never pushed directly to dev or main."
     }
   ],
   "paths": [
@@ -58,6 +64,18 @@
       "owner_role": "maker",
       "serialized_lane": "per-ticket",
       "note": "One current work capsule per ticket; the ticket's writer lease owns it."
+    },
+    {
+      "glob": ".agentops/events/**",
+      "owner_role": "maker",
+      "serialized_lane": "per-ticket",
+      "note": "Append-only event chain per ticket; written behind the same per-ticket lane as the capsule it records."
+    },
+    {
+      "glob": ".agentops/leases/**",
+      "owner_role": "it-manager-iii",
+      "serialized_lane": "governance",
+      "note": "Writer leases are issued and revoked by the deputy; every lease records issuer it-manager-iii."
     },
     {
       "glob": "docs/reconstruction/**",

@@ -692,6 +692,24 @@ export function stableStringify(v) {
 // A capsule's seal is the sha256 over the capsule with current_hash blanked.
 // It is the compare-and-swap value: a stale expected-old-value or any tamper
 // changes the content and so fails to match the stored current_hash.
+// A ref is declared when it equals a git-ownership ref, or matches one written
+// as a `prefix/*` namespace. Nothing else is a sanctioned working ref.
+export function refDeclared(contracts, ref) {
+  const decls = (contracts['git-ownership'] && contracts['git-ownership'].refs) || [];
+  return decls.some((d) => {
+    if (d.ref === ref) return true;
+    if (d.ref.endsWith('/*')) return ref.startsWith(d.ref.slice(0, -1));
+    return false;
+  });
+}
+
+// Every role that actually holds work must resolve to a hierarchy node, or a
+// blocked seat has no escalation parent and its only outcome is silence.
+export function hierarchyRoles(contracts) {
+  const h = contracts.hierarchy || {};
+  return new Set((h.nodes || []).map((n) => n.role));
+}
+
 export function computeCapsuleHash(capsule) {
   const clone = { ...capsule, current_hash: '' };
   return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
@@ -759,6 +777,10 @@ export function loadRuntime(root = ROOT) {
 export function runtimeChecks(g, rt) {
   const errors = [];
   const roles = g.roles ? new Set(g.roles.roles.map((r) => r.role)) : new Set();
+  // A role that holds work but has no hierarchy node has no escalation parent:
+  // when it blocks, escalation routing has nowhere to send it and the only
+  // recorded outcome is silence. Declaring the role is not enough.
+  const hierRoles = hierarchyRoles(g);
   const roleMay = new Map(g.roles ? g.roles.roles.map((r) => [r.role, new Set(r.may)]) : []);
   const evIds = g.evidence ? new Set(g.evidence.evidence.map((e) => e.id)) : new Set();
   const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
@@ -822,7 +844,17 @@ export function runtimeChecks(g, rt) {
       if (lease.revoked) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' is revoked`);
       if (lease.ticket !== ticket) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' belongs to ticket '${lease.ticket}'`);
       if (lease.actor !== cap.owner_actor) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' does not match lease actor '${lease.actor}'`);
+      if (hierRoles.size && !hierRoles.has(cap.owner_actor)) {
+        errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' has no node in hierarchy.json, so a blocked seat has no escalation parent`);
+      }
       if (lease.ref !== cap.ref) errors.push(`capsule '${ticket}' ref '${cap.ref}' does not match lease ref '${lease.ref}'`);
+      // Capsule and lease agreeing proves nothing if both name a ref namespace
+      // no policy declares. Every working ref must fall under a declared
+      // git-ownership ref pattern, so `wake` cannot hand a seat a checkout
+      // instruction the control plane never sanctioned.
+      if (!refDeclared(g, cap.ref)) {
+        errors.push(`capsule '${ticket}' ref '${cap.ref}' matches no declared ref in git-ownership.refs`);
+      }
       for (const p of cap.affected_paths) {
         const covered = lease.path_globs.some((g) => globPrefix(p).startsWith(globPrefix(g)));
         if (!covered) errors.push(`capsule '${ticket}' affected path '${p}' is not covered by its writer lease '${lease.id}'`);
@@ -861,6 +893,16 @@ function currentHead(root) {
   catch { return null; }
 }
 
+// Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
+// work, so an absent ref is normal for an unstarted seat — but wake must say so
+// rather than printing a checkout instruction that silently cannot be followed.
+function refExists(root, ref) {
+  try {
+    execSync(`git rev-parse --verify --quiet ${JSON.stringify(ref)}`, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
 // Build the capsule text from already-loaded contracts + runtime. Pure and
 // deterministic in `frozen` mode (no live-HEAD lookup) — that mode is the basis
 // of the reconstruction goldens and the clean-clone drill.
@@ -885,7 +927,8 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null 
   L.push(`DONE-WHEN  : ${cap.done_when}`);
   L.push(`AUTHORITY  : may ${cap.authority.may.join(', ')} | must-not ${cap.authority.must_not.join(', ')} | expiry ${cap.authority.expiry}`);
   L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
-  L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}`);
+  const refNote = frozen ? '' : (refExists(ROOT, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
+  L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
   L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
   L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
@@ -1544,6 +1587,8 @@ export function runSelftest(root = ROOT) {
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
   expectRuntime('broken event chain', (rt) => { rt.events['AS-1001'][2].parent_event = 'AS-1001-0001'; }, 'breaks the chain');
   expectRuntime('affected path outside lease', (rt) => { rt.capsules['AS-1001'].affected_paths.push('src/**'); }, 'not covered by its writer lease');
+  expectRuntime('capsule ref outside any declared ref namespace', (rt) => { rt.capsules['AS-1001'].ref = 'wildcat/not-declared'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'wildcat/not-declared'; }, 'no declared ref');
+  expectRuntime('capsule owner role with no hierarchy node', (rt) => { rt.capsules['AS-1001'].owner_actor = 'generator'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).actor = 'generator'; }, 'no node in hierarchy');
   expectRuntime('capsule references missing lease', (rt) => { rt.capsules['AS-1001'].writer_lease = 'no-such-lease'; }, 'unknown writer_lease');
   expectRuntime('evidence loss: capsule deleted, lease/events orphaned', (rt) => { delete rt.capsules['AS-1001']; }, 'no work capsule');
 
