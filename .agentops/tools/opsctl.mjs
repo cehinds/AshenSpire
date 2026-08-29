@@ -2502,16 +2502,29 @@ const VIEW_PROBES = {
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} |`)],
   'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule],
   hierarchy: (x) => [...x.nodes.map((n) => n.owns_escalations.join(', ')), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => `**P${lv.p}** ${lv.label}`)],
-  'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => d.topic)],
+  'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` |`),
+    `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
+    `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
+    `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
   migration: (x) => [x.principle],
   'model-effort': (x) => [x.principle, ...x.tiers.map((t) => `| ${t.risk_and_station} |`)],
   'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} |`)],
-  'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary],
+  'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
+    `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
+    ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
   'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
   qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} |`)],
-  roles: (x) => x.roles.map((r) => r.mission),
+  roles: (x) => x.roles.map((r) => [
+    '### `' + r.role + '`',
+    '',
+    `- **Mission:** ${r.mission}`,
+    `- **May:** ${r.may.join(', ') || '\u2014'}`,
+    `- **Must:** ${r.must.join('; ') || '\u2014'}`,
+    `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
+    `- **Approval ceiling:** ${r.approval_ceiling}`,
+  ].join('\n')),
   teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => l.actor_id), ...x.team_leads.leads.map((l) => l.seat_name), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
   transitions: (x) => [x.principle, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} |`)],
 };
@@ -3181,12 +3194,19 @@ export function runSelftest(root = ROOT) {
     const undeletable = [];
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i];
-      if (!/^\| /.test(l) || /^\|---/.test(l) || /^\| *[A-Z#]/.test(l)) continue;
+      // Table rows AND bullet policy lines. Sweeping only `| ` rows left the
+      // Roles section — which renders as bullets — entirely unswept, so a
+      // role's `May`, `Must`, `Must not` or ceiling line could be dropped with
+      // the gate green. That is the same "I checked one shape and reported it
+      // as all shapes" error the section sweep was written to end.
+      const isRow = /^\| /.test(l) && !/^\|---/.test(l) && !/^\| *[A-Z#]/.test(l);
+      const isPolicyBullet = (/^- \*\*/.test(l) || /^  - /.test(l)) && !/:\*\*$/.test(l) && !/:$/.test(l);
+      if (!isRow && !isPolicyBullet) continue;
       rows++;
       const without = lines.slice(0, i).concat(lines.slice(i + 1)).join('\n');
       if (viewCoverageErrors(contracts, without).length === 0) undeletable.push(l.slice(0, 70));
     }
-    results.push({ label: 'deleting any rendered policy row fails the coverage gate', pass: undeletable.length === 0, errs: undeletable });
+    results.push({ label: 'deleting any rendered policy row or bullet fails the coverage gate', pass: undeletable.length === 0, errs: undeletable.slice(0, 8) });
     results.push({ label: 'the row sweep found rows to sweep', pass: rows >= 100, errs: [String(rows)] });
 
     // ...and a contract added with no probe at all must fail rather than skip.
