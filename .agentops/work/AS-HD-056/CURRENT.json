@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 1,
-  "current_hash": "sha256:e29ad6136dd2fadc8147bb3c55f84135621e9d92a1c066d68d8457c86127243b",
-  "parent_hash": null,
+  "revision": 2,
+  "current_hash": "sha256:309c4ba2b6777f6f55295fbf3a6c6589a593fcb542f556b7352ca92165b607ae",
+  "parent_hash": "sha256:e29ad6136dd2fadc8147bb3c55f84135621e9d92a1c066d68d8457c86127243b",
   "ticket": "AS-HD-056",
   "lifecycle_state": "assigned",
   "objective": "Establish whether the owner-facing Review & Approval Hub can be maintained, and specify a regenerable replacement projected from the control plane.",
@@ -21,7 +21,7 @@
   "evidence_pointers": [],
   "blocker": {
     "kind": "evidence-loss",
-    "wake": "it-manager-iii",
+    "escalation_class": "technical-blocker",
     "summary": "review-approval-hub/ is committed build output (1457 files) with no source on any branch: no package.json, no next.config, no app directory. It cannot be rebuilt or safely edited. Its content has already drifted from the control plane, which now records 8 tickets and 0 owner decisions pending."
   },
   "authority": {

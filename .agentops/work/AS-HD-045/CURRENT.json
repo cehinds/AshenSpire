@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 1,
-  "current_hash": "sha256:d71f15a28823dfc626fb390892e70d8c50c647fe89fab8e8aee2414b0f524adc",
-  "parent_hash": null,
+  "revision": 2,
+  "current_hash": "sha256:3497961387a71cd691ab46c63f3e9eee0296aeab42ab4f23e511d37310283c8a",
+  "parent_hash": "sha256:d71f15a28823dfc626fb390892e70d8c50c647fe89fab8e8aee2414b0f524adc",
   "ticket": "AS-HD-045",
   "lifecycle_state": "assigned",
   "objective": "Rule on the combat-data projection boundary: which values design may reuse without inventing a new data layer.",
@@ -21,7 +21,7 @@
   "evidence_pointers": [],
   "blocker": {
     "kind": "awaiting-evidence",
-    "wake": "it-manager-iii",
+    "escalation_class": "technical-blocker",
     "summary": "Conditional projection PASS is recorded, but production adoption stays WITHHELD until one coherent render epoch is proven. Paced-versus-live intent timing, defeated-frame removal and exact responsive geometry remain separate owner-gated questions."
   },
   "authority": {

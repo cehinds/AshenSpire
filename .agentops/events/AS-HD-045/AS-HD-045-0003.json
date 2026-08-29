@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-045-0003",
+  "ticket": "AS-HD-045",
+  "seq": 3,
+  "parent_event": "AS-HD-045-0002",
+  "kind": "state-change",
+  "actor": "it-manager-iii",
+  "at": "2026-08-29T17:01:03.831Z",
+  "summary": "Blocker migrated to a declared escalation_class; routing now comes from escalation.json rather than a wake target written into the capsule itself. Resealed as revision 2; parent_hash names sha256:d71f15a28823dfc626fb390892e70d8c50c647fe89fab8e8aee2414b0f524adc."
+}

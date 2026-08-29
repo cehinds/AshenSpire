@@ -825,6 +825,31 @@ export function runtimeChecks(g, rt) {
   // when it blocks, escalation routing has nowhere to send it and the only
   // recorded outcome is silence. Declaring the role is not enough.
   const hierRoles = hierarchyRoles(g);
+  // A blocker names an escalation CLASS, never a wake target. escalation.json
+  // owns who a class reaches, so a capsule cannot route itself to the Owner to
+  // jump the queue, nor away from the Owner to dodge a protected decision.
+  const escClasses = g.escalation ? new Set(g.escalation.classes.map((c) => c.id)) : new Set();
+  for (const t of Object.keys(rt.capsules)) {
+    const b = rt.capsules[t].blocker;
+    if (b && !escClasses.has(b.escalation_class)) {
+      errors.push(`capsule ${t}: blocker names escalation class '${b.escalation_class}', which escalation.json does not declare`);
+    }
+  }
+  // A seat whose own role may not move it out of its current state is stranded:
+  // it holds a lease and a capsule, and no permitted transition exists for it.
+  // Six of seven seat-holding roles sat like this — assigned forever, with
+  // nothing in validate that noticed. A dead seat must be a hard error.
+  if (g.transitions) {
+    for (const t of Object.keys(rt.capsules)) {
+      const cap = rt.capsules[t];
+      if (cap.blocker) continue;                      // blocked seats route by escalation, not transition
+      const out = g.transitions.transitions.filter((m) => m.from === cap.lifecycle_state && !m.protected);
+      if (!out.length) continue;                      // terminal or owner-only: not the seat's move to make
+      if (!out.some((m) => m.permitted_actor_roles.includes(cap.owner_actor))) {
+        errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
+      }
+    }
+  }
   for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
   // Entitlement must hold for every active lease, not only the one a capsule
   // happens to select: a second unrevoked lease on a protected ref is
@@ -1715,8 +1740,164 @@ export function runSelftest(root = ROOT) {
   expectMigration('migration: two work items claim one capsule', (c) => { c.migration.work_items[1].new_capsule = 'AS-1001'; c.migration.work_items[1].status = 'migrated'; }, 'claimed by two work items');
   expectMigration('migration: proposed item whose capsule already exists', (c) => { c.migration.work_items[2].new_capsule = 'AS-1001'; }, "'proposed' but capsule 'AS-1001' already exists");
 
+  // Stage 7 dispatch plants — the routing surface. A capsule must not be able
+  // to choose who it escalates to, and a seat must not be able to exist with no
+  // move it is permitted to make.
+  expectRuntime('blocker naming an undeclared escalation class', (rt) => { rt.capsules['AS-HD-056'].blocker.escalation_class = 'ghost-class'; }, 'escalation.json does not declare');
+  expectMigration('transition narrowed until a live seat is stranded', (c) => {
+    for (const m of c.transitions.transitions) if (m.from === 'assigned' && m.to === 'in-progress') m.permitted_actor_roles = ['maker'];
+  }, 'the seat is stranded');
+
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
+}
+
+
+// ---------------------------------------------------------------------------
+// Dispatch: which seats are due to be woken, and who reaches the Owner.
+//
+// Every answer is DERIVED from the contracts, never from a hand-maintained
+// list and never from the capsule's own say-so:
+//   - a blocked capsule routes by its declared escalation_class, and the class
+//     in escalation.json names the wake target. A capsule cannot nominate who
+//     it escalates to, so nothing can route itself to the Owner to jump a queue
+//     or route away from the Owner to dodge a protected decision.
+//   - an unblocked capsule is due for whoever transitions.json says may move it
+//     out of its current state. Terminal states have no outgoing move and wake
+//     nobody; a state whose every outgoing move is protected is the Owner's.
+// The workflow that consumes this stays dumb: it files issues, it decides
+// nothing.
+// ---------------------------------------------------------------------------
+export function computeDispatch(contracts, rt, { now = new Date().toISOString() } = {}) {
+  const esc = contracts.escalation;
+  const owner = contracts['owner-intent'].owner.actor_id;
+  const classById = new Map(esc.classes.map((c) => [c.id, c]));
+  const moves = contracts.transitions.transitions;
+  const entries = [];
+
+  const escalate = (cap, classId, why) => {
+    const cls = classById.get(classId);
+    // Unreachable via validate (a declared class is enforced there); belt and
+    // braces so a dispatch can never silently drop a blocked seat.
+    if (!cls) return { ticket: cap.ticket, kind: 'owner-decision', wake: owner, reason: `${why} (undeclared escalation class '${classId}')`, escalation_class: classId };
+    return {
+      ticket: cap.ticket,
+      kind: cls.wake === owner ? 'owner-decision' : 'seat-wake',
+      wake: cls.wake,
+      route: cls.route,
+      reason: why,
+      escalation_class: classId,
+      continuing_work_allowed: cls.continuing_work_allowed,
+    };
+  };
+
+  for (const ticket of Object.keys(rt.capsules).sort()) {
+    const cap = rt.capsules[ticket];
+    const lease = rt.leases.find((l) => l.id === cap.writer_lease);
+
+    if (cap.blocker) {
+      entries.push(escalate(cap, cap.blocker.escalation_class, cap.blocker.summary));
+      continue;
+    }
+
+    // A seat with no live lease cannot act, and the lease is not its own to
+    // reissue — that is an ownership question, so it escalates rather than
+    // waking a seat that would immediately stop.
+    const dead = !lease ? 'writer lease is missing'
+      : lease.revoked ? `writer lease ${lease.id} is revoked`
+      : (lease.expiry <= now) ? `writer lease ${lease.id} expired ${lease.expiry}`
+      : null;
+    if (dead) { entries.push(escalate(cap, 'technical-blocker', dead)); continue; }
+
+    const outgoing = moves.filter((m) => m.from === cap.lifecycle_state);
+    if (!outgoing.length) continue;                       // terminal: wakes nobody
+    const open = outgoing.filter((m) => !m.protected);
+    if (!open.length) {
+      entries.push({
+        ticket, kind: 'owner-decision', wake: owner,
+        reason: `every move out of '${cap.lifecycle_state}' is a protected transition`,
+        next_states: outgoing.map((m) => m.to),
+      });
+      continue;
+    }
+    const roles = [...new Set(open.flatMap((m) => m.permitted_actor_roles))];
+    entries.push({
+      ticket,
+      kind: 'seat-wake',
+      // The capsule's own actor only gets the wake when the contract agrees it
+      // may move this state; otherwise the permitted role does, whoever holds it.
+      wake: roles.includes(cap.owner_actor) ? cap.owner_actor : roles[0],
+      eligible_roles: roles,
+      reason: `'${cap.lifecycle_state}' is ready to move to ${open.map((m) => m.to).join(' or ')}`,
+      next_states: open.map((m) => m.to),
+    });
+  }
+  return entries;
+}
+
+
+// ---------------------------------------------------------------------------
+// Reseal: re-establish a capsule's compare-and-swap seal after its content
+// legitimately changed, WITHOUT losing the chain that proves what it succeeded.
+//
+// Hand-resealing is how the AS-HD-029 chain broke twice: the content was
+// updated and the file re-hashed, but `revision` stayed put and `parent_hash`
+// stayed null, so the successor link to the previous seal was simply gone. The
+// predecessor is therefore never taken from the working tree (which by then
+// already holds the new content) — it is read from the last COMMITTED version
+// of the same file, the one a clean clone would reconstruct.
+// ---------------------------------------------------------------------------
+export function committedCapsuleSeal(root, ticket) {
+  const rel = `.agentops/work/${ticket}/CURRENT.json`;
+  try {
+    const raw = execFileSync('git', ['show', `HEAD:${rel}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString();
+    const prev = JSON.parse(raw);
+    return { seal: prev.current_hash || null, revision: prev.revision || 0 };
+  } catch {
+    return { seal: null, revision: 0 };   // genesis: never committed before
+  }
+}
+
+export function runReseal(root, ticket, { reason, actor, now = new Date().toISOString() } = {}) {
+  const file = resolve(root, 'work', ticket, 'CURRENT.json');
+  if (!existsSync(file)) return { ok: false, errors: [`no capsule for '${ticket}' under .agentops/work/`] };
+  if (!reason) return { ok: false, errors: ['reseal requires --reason: an unexplained reseal is indistinguishable from tampering'] };
+
+  const cap = JSON.parse(readFileSync(file, 'utf8'));
+  const prior = committedCapsuleSeal(root, ticket);
+  const who = actor || cap.owner_actor;
+
+  // Nothing changed but the seal? Then there is nothing to record and no new
+  // revision to mint — resealing anyway would inflate the chain with a link
+  // that proves nothing.
+  const restored = { ...cap, current_hash: prior.seal || '' };
+  if (prior.seal && computeCapsuleHash(restored) === prior.seal && cap.revision === prior.revision) {
+    return { ok: true, unchanged: true, ticket, seal: prior.seal };
+  }
+
+  cap.revision = prior.revision + 1;
+  cap.parent_hash = prior.seal;
+  cap.current_hash = '';
+  cap.current_hash = computeCapsuleHash(cap);
+  writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
+
+  const dir = resolve(root, 'events', ticket);
+  mkdirSync(dir, { recursive: true });
+  const seq = readdirSync(dir).filter((f) => f.endsWith('.json')).length + 1;
+  const id = `${ticket}-${String(seq).padStart(4, '0')}`;
+  const ev = {
+    schema: 'agentops/event/v1',
+    id,
+    ticket,
+    seq,
+    parent_event: seq > 1 ? `${ticket}-${String(seq - 1).padStart(4, '0')}` : null,
+    kind: 'state-change',
+    actor: who,
+    at: now,
+    summary: `${reason} Resealed as revision ${cap.revision}; parent_hash names ${prior.seal || 'no predecessor (genesis)'}.`,
+  };
+  writeFileSync(resolve(dir, `${id}.json`), JSON.stringify(ev, null, 2) + '\n');
+  return { ok: true, ticket, revision: cap.revision, seal: cap.current_hash, parent: prior.seal, event: id };
 }
 
 // ---------------------------------------------------------------------------
@@ -1742,6 +1923,32 @@ function main(argv) {
     if (r.errors && r.errors.length) { console.error('WAKE blocked:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     process.stdout.write(r.text + '\n');
     process.stderr.write(`\n[wake] ~${r.tokens} tokens (startup target 1200 / hard 1500)\n`);
+    return 0;
+  }
+  if (cmd === 'reseal') {
+    let work = null, reason = null, actor = null;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--work') work = argv[++i];
+      else if (argv[i] === '--reason') reason = argv[++i];
+      else if (argv[i] === '--actor') actor = argv[++i];
+    }
+    if (!work) { console.error('reseal requires --work <ticket> --reason "<why>" [--actor <role>]'); return 2; }
+    const r = runReseal(ROOT, work, { reason, actor });
+    if (!r.ok) { console.error('RESEAL FAIL:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    if (r.unchanged) { console.log(`RESEAL: ${r.ticket} already matches its committed seal; nothing to record.`); return 0; }
+    console.log(`RESEAL OK: ${r.ticket} revision ${r.revision}\n  seal   ${r.seal}\n  parent ${r.parent || '(genesis)'}\n  event  ${r.event}`);
+    return 0;
+  }
+  if (cmd === 'dispatch') {
+    const json = flags.has('--json');
+    const { contracts, errors } = runValidate();
+    if (errors.length) { console.error('DISPATCH FAIL: state is not valid; refusing to wake anyone.'); errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    const entries = computeDispatch(contracts, loadRuntime());
+    if (json) { console.log(JSON.stringify(entries, null, 2)); return 0; }
+    if (!entries.length) { console.log('DISPATCH: nothing due.'); return 0; }
+    for (const e of entries) console.log(`${e.kind === 'owner-decision' ? 'OWNER ' : 'SEAT  '} ${e.ticket}  wake=${e.wake}  ${e.reason}`);
+    const owed = entries.filter((e) => e.kind === 'owner-decision').length;
+    console.log(`\nDISPATCH: ${entries.length} due (${owed} need the Owner, ${entries.length - owed} are seat work).`);
     return 0;
   }
   if (cmd === 'render') {

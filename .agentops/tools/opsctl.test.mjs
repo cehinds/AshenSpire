@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -182,7 +182,7 @@ function check(name, cond, detail = '') {
     // A decision that answers an owner-decision blocker must clear it, or the
     // capsule reports itself blocked forever after the answer arrived.
     const blocked = readCap();
-    blocked.blocker = { kind: 'owner-decision', wake: 'constantine', summary: 'awaiting the owner' };
+    blocked.blocker = { kind: 'owner-decision', escalation_class: 'owner-exclusive-now', summary: 'awaiting the owner' };
     blocked.current_hash = computeCapsuleHash(blocked);
     writeFileSync(capPath, JSON.stringify(blocked, null, 2) + '\n');
     const bh = computeCapsuleHash(loadRuntime(box).capsules['AS-1001']);
@@ -307,6 +307,52 @@ function check(name, cond, detail = '') {
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
+}
+
+// 2h. Dispatch: who is due and who reaches the Owner, derived from contracts.
+// The point of the executor is that policy lives in governance JSON, so these
+// assert the derivation — not a hardcoded roster.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const d = computeDispatch(contracts, rt);
+  check('dispatch returns an entry for every non-terminal capsule', d.length > 0, String(d.length));
+  check('every dispatch entry names a wake target', d.every((e) => !!e.wake), JSON.stringify(d.filter((e) => !e.wake)));
+  check('a blocked capsule routes by its escalation class, not its own say-so',
+    d.filter((e) => e.escalation_class).every((e) => {
+      const cls = contracts.escalation.classes.find((c) => c.id === e.escalation_class);
+      return cls && e.wake === cls.wake;
+    }));
+  // The bug that froze six of seven seat-holding roles: dispatch woke `maker`
+  // for every seat because no other role was permitted to leave 'assigned'.
+  const byTicket = Object.fromEntries(d.map((e) => [e.ticket, e]));
+  check('an it-support seat wakes it-support, not maker', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake === 'it-support', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake);
+  check('a qa seat wakes qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake === 'qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake);
+  check('every unblocked seat wakes its own capsule owner',
+    d.filter((e) => !e.escalation_class).every((e) => e.wake === rt.capsules[e.ticket].owner_actor),
+    JSON.stringify(d.filter((e) => !e.escalation_class && e.wake !== rt.capsules[e.ticket].owner_actor)));
+  // A dead lease is an ownership question, so it escalates rather than waking a
+  // seat that would stop the moment it read its own capsule.
+  const rtDead = loadRuntime();
+  const victim = rtDead.capsules['AS-HD-057'];
+  rtDead.leases.find((l) => l.id === victim.writer_lease).revoked = true;
+  const dead = computeDispatch(contracts, rtDead).find((e) => e.ticket === 'AS-HD-057');
+  check('a revoked lease escalates instead of waking the seat', !!dead && dead.escalation_class === 'technical-blocker' && /revoked/.test(dead.reason), JSON.stringify(dead));
+  // Terminal work wakes nobody — an executor that re-files finished tickets is
+  // noise that trains its readers to ignore it.
+  const rtDone = loadRuntime();
+  rtDone.capsules['AS-HD-057'].lifecycle_state = 'released';
+  check('a released capsule wakes nobody', !computeDispatch(contracts, rtDone).some((e) => e.ticket === 'AS-HD-057'));
+}
+
+// 2i. Reseal: the compare-and-swap chain survives a legitimate content change.
+{
+  const r = runReseal(ROOT, 'AS-1001', { reason: 'test', actor: 'maker' });
+  check('reseal refuses to mint a link when nothing changed', r.ok && r.unchanged === true, JSON.stringify(r));
+  const missing = runReseal(ROOT, 'AS-1001', { actor: 'maker' });
+  check('reseal refuses without a reason', !missing.ok && /--reason/.test(missing.errors.join(' ')));
+  const ghost = runReseal(ROOT, 'AS-0000', { reason: 'x' });
+  check('reseal refuses an unknown ticket', !ghost.ok);
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

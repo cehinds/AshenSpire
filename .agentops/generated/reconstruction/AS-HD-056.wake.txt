@@ -14,4 +14,4 @@ EVIDENCE   : —
 SOURCE     : f4a30c2d929a8429acd46fa02ca8a4798b6d2915
 FRESHNESS  : as-recorded (base f4a30c2d929a); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
-BLOCKER    : {"kind":"evidence-loss","wake":"it-manager-iii","summary":"review-approval-hub/ is committed build output (1457 files) with no source on any branch: no package.json, no next.config, no app directory. It cannot be rebuilt or safely edited. Its content has already drifted from the control plane, which now records 8 tickets and 0 owner decisions pending."}
+BLOCKER    : {"kind":"evidence-loss","escalation_class":"technical-blocker","summary":"review-approval-hub/ is committed build output (1457 files) with no source on any branch: no package.json, no next.config, no app directory. It cannot be rebuilt or safely edited. Its content has already drifted from the control plane, which now records 8 tickets and 0 owner decisions pending."}

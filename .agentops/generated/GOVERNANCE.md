@@ -232,8 +232,8 @@ Protected states: `pushed`, `pr-open`, `dev-integrated`, `hosted-verified`, `rel
 | From | To | Guard | Permitted actors | Protected |
 |---|---|---|---|---|
 | proposed | assigned | contract-ready + acknowledged | help-desk, it-manager-iii | no |
-| assigned | in-progress | writer-lease-held + exclusive-paths | maker | no |
-| in-progress | local | local-commit-on-isolated-branch | maker | no |
+| assigned | in-progress | writer-lease-held + exclusive-paths | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk | no |
+| in-progress | local | local-commit-on-isolated-branch | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk | no |
 | local | qa-review | frozen-exact-head | maker, it-manager-iii | no |
 | qa-review | accepted | independent-qa-pass at exact head | qa-independent | no |
 | accepted | pushed | independence-PASS + fresh-base | it-manager-iii | yes |
