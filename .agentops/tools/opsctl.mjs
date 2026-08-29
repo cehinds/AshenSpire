@@ -237,6 +237,9 @@ const CONTRACTS = [
   { name: 'hierarchy', file: 'governance/hierarchy.json', schema: 'schemas/hierarchy.schema.json' },
   { name: 'roles', file: 'governance/roles.json', schema: 'schemas/roles.schema.json' },
   { name: 'teams', file: 'governance/teams.json', schema: 'schemas/teams.schema.json' },
+  { name: 'promotion-gates', file: 'governance/promotion-gates.json', schema: 'schemas/promotion-gates.schema.json' },
+  { name: 'model-effort', file: 'governance/model-effort.json', schema: 'schemas/model-effort.schema.json' },
+  { name: 'delivery', file: 'governance/delivery.json', schema: 'schemas/delivery.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
   { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
   { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
@@ -272,6 +275,136 @@ export function loadContracts(root = ROOT) {
 export function semanticChecks(c) {
   const errors = [];
 
+  // --- canonical documents ------------------------------------------------
+  // Decision 0004 moved the art policy to one live path and said plainly:
+  // never recreate two live copies. A duplicate policy is worse than none,
+  // because both look authoritative. Checked against the working tree, and
+  // skipped in an .agentops-only clean room where docs/ does not exist.
+  if (c['information-access'] && c['information-access'].canonical_documents && existsSync(resolve(ROOT, '../docs'))) {
+    for (const doc of c['information-access'].canonical_documents) {
+      if (!existsSync(resolve(ROOT, '..', doc.path))) {
+        errors.push(`information-access: the canonical document for '${doc.topic}' is declared at '${doc.path}', which does not exist`);
+      }
+      for (const old of doc.superseded_paths) {
+        if (existsSync(resolve(ROOT, '..', old))) {
+          errors.push(`information-access: '${old}' still exists alongside the canonical '${doc.path}' for '${doc.topic}'; two live copies both look authoritative`);
+        }
+      }
+    }
+  }
+
+  // --- delivery and Pages -------------------------------------------------
+  // Decision 0005 governs delivery to dev, promotion readiness and the Pages
+  // source. The Pages half is the part with teeth: a source switch must record
+  // its rollback BEFORE it happens, so a failed deployment has somewhere to go
+  // back to. Encoded after a Pages deployment replaced a live site in this
+  // repository with no recorded prior state to restore.
+  if (c.delivery) {
+    const d = c.delivery;
+    if (c.roles) {
+      const roleSet = new Set(c.roles.roles.map((r) => r.role));
+      for (const [label, role] of [['dev_delivery', d.dev_delivery.actor_role], ['promotion_readiness', d.promotion_readiness.actor_role], ['pages.switch_requires', d.pages.switch_requires.authorizing_role]]) {
+        if (!roleSet.has(role)) errors.push(`delivery: ${label} names actor role '${role}', which roles.json does not declare`);
+      }
+    }
+    // Declaring a packet ready must grant nothing; that is the whole difference
+    // between "ready to be considered" and "release-ready".
+    if (d.promotion_readiness.grants.length) {
+      errors.push(`delivery: promotion_readiness declares grants (${d.promotion_readiness.grants.join(', ')}); declaring a packet ready grants no promotion authority`);
+    }
+    // The Pages source must be a ref the policy actually knows, and a protected
+    // one — an unprotected desired source is a site anyone can repoint.
+    if (c['git-ownership']) {
+      const ref = c['git-ownership'].refs.find((r) => r.ref === d.pages.desired_source);
+      if (!ref) errors.push(`delivery: the desired Pages source '${d.pages.desired_source}' is not a declared ref`);
+      else if (ref.mutation !== 'protected') errors.push(`delivery: the desired Pages source '${d.pages.desired_source}' is '${ref.mutation}', not protected`);
+    }
+    // A switch must escalate to the owner, and must record a rollback.
+    if (c.escalation) {
+      const cls = c.escalation.classes.find((x) => x.id === d.pages.switch_requires.escalation_class);
+      if (!cls) errors.push(`delivery: a Pages switch escalates as '${d.pages.switch_requires.escalation_class}', which escalation.json does not declare`);
+      else if (c['owner-intent'] && cls.wake !== c['owner-intent'].owner.actor_id) {
+        errors.push(`delivery: a Pages switch escalates as '${cls.id}', which wakes '${cls.wake}' rather than the owner`);
+      }
+    }
+    if (!d.pages.switch_packet_records.some((x) => /rollback/i.test(x))) {
+      errors.push('delivery: the Pages switch packet records no rollback; a failed deployment would have nowhere to return to');
+    }
+    if (!d.promotion_packet.required_fields.some((x) => /rollback/i.test(x))) {
+      errors.push('delivery: the promotion packet requires no rollback field');
+    }
+  }
+
+  // --- model and effort ---------------------------------------------------
+  // Decision 0006's load-bearing sentence is that selecting a model grants
+  // nothing and a stronger model does not outrank a weaker one. Encoded as a
+  // rule so a tier cannot quietly acquire authority by being the "big" one.
+  if (c['model-effort']) {
+    const me = c['model-effort'];
+    if (me.grants.length) errors.push(`model-effort: the contract declares grants (${me.grants.join(', ')}); model selection grants no authority`);
+    const seenTier = new Set();
+    for (const t of me.tiers) {
+      if (seenTier.has(t.id)) errors.push(`model-effort: tier '${t.id}' is declared twice`);
+      seenTier.add(t.id);
+      // A tier that permits max effort without demanding the exceptional reason
+      // turns the escape hatch into the default.
+      if (t.allowed_efforts.includes('max') && t.requires_exceptional_reason !== true) {
+        errors.push(`model-effort: tier '${t.id}' allows 'max' effort without requiring an exceptional reason`);
+      }
+    }
+    // Selection is by risk and station, never role rank: a tier naming a role
+    // would reintroduce exactly that.
+    if (c.roles) {
+      const roleSet = new Set(c.roles.roles.map((r) => r.role));
+      for (const t of me.tiers) {
+        if (roleSet.has(t.id)) errors.push(`model-effort: tier '${t.id}' is named after a role; selection follows risk and station, never role rank`);
+      }
+    }
+  }
+
+  // --- promotion gates ---------------------------------------------------
+  // Decision 0009 defines Gates A-F: who may act, what evidence each needs,
+  // and — the part that matters most — what each explicitly does NOT grant.
+  // It lived only as a decision record, so nothing stopped a transition guard
+  // paraphrasing a gate wrongly, or a gate quietly claiming release authority.
+  if (c['promotion-gates'] && c.roles && c.transitions) {
+    const pg = c['promotion-gates'];
+    const roleSet = new Set(c.roles.roles.map((r) => r.role));
+    const states = new Set(c.transitions.states);
+    const seenGate = new Set();
+    const ownerReserved = new Set(['main', 'release', 'tag', 'publication', 'Pages']);
+    for (const g of pg.gates) {
+      if (seenGate.has(g.id)) errors.push(`promotion-gates: gate '${g.id}' is declared twice`);
+      seenGate.add(g.id);
+      // An actor that is not a declared role cannot be held to the gate.
+      // 'owner' is a declared role in roles.json, so this covers E and F too.
+      if (!roleSet.has(g.actor_role)) errors.push(`promotion-gates: gate ${g.id} names actor role '${g.actor_role}', which roles.json does not declare`);
+      for (const { from, to } of g.guards_transitions || []) {
+        if (!states.has(from)) errors.push(`promotion-gates: gate ${g.id} guards a move from '${from}', which is not a declared lifecycle state`);
+        if (!states.has(to)) errors.push(`promotion-gates: gate ${g.id} guards a move to '${to}', which is not a declared lifecycle state`);
+        if (!c.transitions.transitions.some((m) => m.from === from && m.to === to)) {
+          errors.push(`promotion-gates: gate ${g.id} guards '${from}' -> '${to}', which transitions.json does not declare`);
+        }
+      }
+      // "Authority for one action implies none of the others." Only Gate F may
+      // touch the owner-reserved surfaces, and only per individual action.
+      for (const grant of g.grants || []) {
+        if (ownerReserved.has(grant) && g.id !== 'F') {
+          errors.push(`promotion-gates: gate ${g.id} grants '${grant}', which is owner-reserved and belongs to Gate F alone`);
+        }
+      }
+      for (const r of g.required_roles || []) if (!roleSet.has(r)) errors.push(`promotion-gates: gate ${g.id} requires role '${r}', which roles.json does not declare`);
+    }
+    // Every protected promotion move should be gated. An ungated protected move
+    // is one a seat could argue its way through with no named evidence.
+    const gated = new Set(pg.gates.flatMap((g) => (g.guards_transitions || []).map((t) => `${t.from}->${t.to}`)));
+    for (const m of c.transitions.transitions) {
+      if (m.protected && !gated.has(`${m.from}->${m.to}`)) {
+        errors.push(`promotion-gates: protected transition '${m.from}' -> '${m.to}' is not guarded by any declared gate`);
+      }
+    }
+  }
+
   // --- teams -----------------------------------------------------------
   // The charter is the authority on who stands and who is pooled. Encoding it
   // as prose let a capsule contradict it silently; these make that a hard error.
@@ -306,6 +439,16 @@ export function semanticChecks(c) {
           errors.push(`teams: '${e.id}' claims charter heading '${e.charter_heading}', which has no heading in the charter prose`);
         }
       }
+    }
+    // Every legacy dropdown name must land somewhere real. An alias pointing at
+    // nothing routes a ticket into silence, which is the failure the Help Desk
+    // exists to prevent.
+    const targets = new Set([...standingIds, ...poolIds]);
+    const seenLegacy = new Set();
+    for (const a of c.teams.legacy_aliases) {
+      if (seenLegacy.has(a.legacy)) errors.push(`teams: legacy alias '${a.legacy}' is declared twice`);
+      seenLegacy.add(a.legacy);
+      if (!targets.has(a.routes_to)) errors.push(`teams: legacy alias '${a.legacy}' routes to '${a.routes_to}', which is neither a standing role nor a capability pool`);
     }
     const ce = c.teams.charter_exception;
     for (const role of ce.requires_concurrence) {
@@ -356,10 +499,24 @@ export function semanticChecks(c) {
       const slash = cut.lastIndexOf('/');
       return slash === -1 ? '' : cut.slice(0, slash + 1);
     };
+    // Two globs overlap when one's matched set could contain the other's. The
+    // earlier form compared directory prefixes alone, and a root-level file has
+    // no directory — its prefix is '', which every string starts with, so any
+    // root-level path was reported as overlapping the whole tree. That made the
+    // one-writer rule unable to express a root-level owner at all, which is
+    // exactly what the generated build output needs.
+    const overlaps = (ga, gb) => {
+      const dirA = literalPrefix(ga), dirB = literalPrefix(gb);
+      const rootA = dirA === '', rootB = dirB === '';
+      // Root-level globs never reach into a subdirectory, and a subdirectory
+      // glob never reaches back up to the root.
+      if (rootA !== rootB) return false;
+      if (rootA && rootB) return globCovers(ga, gb) || globCovers(gb, ga);
+      return dirA.startsWith(dirB) || dirB.startsWith(dirA);
+    };
     for (let a = 0; a < paths.length; a++) {
       for (let b = a + 1; b < paths.length; b++) {
-        const pa = literalPrefix(paths[a].glob), pb = literalPrefix(paths[b].glob);
-        const nests = pa.startsWith(pb) || pb.startsWith(pa);
+        const nests = overlaps(paths[a].glob, paths[b].glob);
         if (nests && paths[a].owner_role !== paths[b].owner_role) {
           errors.push(`git-ownership: overlapping paths '${paths[a].glob}' and '${paths[b].glob}' have different writers ('${paths[a].owner_role}' vs '${paths[b].owner_role}')`);
         }
@@ -628,6 +785,22 @@ export function renderGovernance(c) {
   L.push('| Ref | Owner role | Mutation |');
   L.push('|---|---|---|');
   for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  if (c['promotion-gates']) {
+    const pg = c['promotion-gates'];
+    L.push('');
+    L.push('## Promotion gates');
+    L.push('');
+    L.push(pg.principle);
+    L.push('');
+    L.push('| Gate | Name | Who acts | Guards | Required evidence | Grants |');
+    L.push('|---|---|---|---|---|---|');
+    for (const g of pg.gates) {
+      const guards = (g.guards_transitions || []).map((t) => `\`${t.from}\` → \`${t.to}\``).join('<br>') || '—';
+      L.push(`| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${guards} | ${g.required_evidence.join(', ') || '—'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`);
+    }
+    L.push('');
+    L.push(`${pg.immutable_candidate}`);
+  }
   if (c.teams) {
     L.push('');
     L.push('## Teams');
@@ -829,6 +1002,23 @@ export function hierarchyRoles(contracts) {
 // could grant any role any glob and verify would stay green. A lease may
 // declare `undeclared_paths_ok: true` for a deliberate exception; that is an
 // explicit, reviewable choice rather than a silent gap.
+// Does a declared git-ownership path cover this glob? A declared root-level
+// path (buildordinal.json, *.html) has no directory prefix, and every string
+// starts with '' — so the prefix form let the first root-level declaration
+// claim ownership of every lease glob in the repository, silently disabling the
+// grant check entirely. Shared with the overlap detector so the two cannot
+// drift apart.
+export function globCovers(declGlob, glob) {
+  const dirD = globPrefix(declGlob), dirG = globPrefix(glob);
+  const rootD = dirD === '', rootG = dirG === '';
+  if (rootD !== rootG) return false;              // root never covers a subtree, nor the reverse
+  if (rootD && rootG) {
+    const rx = new RegExp('^' + declGlob.split('*').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*') + '$');
+    return rx.test(glob) || declGlob === glob;
+  }
+  return dirG.startsWith(dirD);
+}
+
 export function pathGrantErrors(contracts, lease) {
   const errors = [];
   // An exception covers only the globs it names. A lease carrying one is still
@@ -838,7 +1028,7 @@ export function pathGrantErrors(contracts, lease) {
   const decls = (contracts['git-ownership'] && contracts['git-ownership'].paths) || [];
   for (const g of lease.path_globs) {
     if (exempt.has(g)) continue;
-    const owner = decls.find((d) => globPrefix(g).startsWith(globPrefix(d.glob)));
+    const owner = decls.find((d) => globCovers(d.glob, g));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
     } else if (owner.owner_role !== lease.actor) {
@@ -948,8 +1138,34 @@ export function runtimeChecks(g, rt) {
   // stream, or source path merely because the path fits their specialty."
   // Enforced where it can actually be violated: a capsule or a lease naming a
   // pool as its holder would make it one.
+  if (g['model-effort']) {
+    const me = g['model-effort'];
+    for (const t of Object.keys(rt.capsules)) {
+      const mx = rt.capsules[t].model_effort;
+      if (mx == null) continue;
+      const tiers = me.tiers.filter((x) => x.allowed_efforts.includes(mx.effort));
+      if (!tiers.length) {
+        errors.push(`capsule ${t}: effort '${mx.effort}' matches no declared risk-and-station tier`);
+      } else if (tiers.every((x) => x.requires_exceptional_reason) && !mx.exceptional_reason) {
+        errors.push(`capsule ${t}: effort '${mx.effort}' is only allowed with a recorded exceptional reason`);
+      }
+    }
+  }
   if (g.teams) {
     const pools = new Set(g.teams.capability_pools.map((p) => p.id));
+    // A capsule may name the team it serves. Optional, because most work is
+    // path-scoped rather than team-scoped — but if it names one, that name must
+    // be a current standing role or pool, or a legacy alias that resolves to
+    // one. An unresolvable team is a ticket nobody owns.
+    const roster = new Set([...pools, ...g.teams.standing_roles.map((r) => r.id)]);
+    const aliases = new Map(g.teams.legacy_aliases.map((a) => [a.legacy, a.routes_to]));
+    for (const t of Object.keys(rt.capsules)) {
+      const team = rt.capsules[t].team;
+      if (team == null) continue;
+      if (!roster.has(team) && !aliases.has(team)) {
+        errors.push(`capsule ${t}: team '${team}' is neither a standing role, a capability pool, nor a declared legacy alias`);
+      }
+    }
     for (const t of Object.keys(rt.capsules)) {
       if (pools.has(rt.capsules[t].owner_actor)) {
         errors.push(`capsule ${t}: owner_actor '${rt.capsules[t].owner_actor}' is a capability pool, not a standing team; a pool cannot hold a seat or own a backlog`);
@@ -1154,6 +1370,17 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
   L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
+  // A seat at a gated state must know which gate stands in front of it, who
+  // may open it, and what evidence it needs — otherwise it discovers the wall
+  // by walking into it. Decision 0009 named them; this is where a seat reads it.
+  const pgc = contracts['promotion-gates'];
+  if (pgc) {
+    const ahead = pgc.gates.filter((g) => (g.guards_transitions || []).some((t) => t.from === cap.lifecycle_state));
+    for (const g of ahead) {
+      const to = (g.guards_transitions || []).filter((t) => t.from === cap.lifecycle_state).map((t) => t.to).join('/');
+      L.push(`GATE       : ${g.id} (${g.name}) stands before ${to} — ${g.actor_role} acts; evidence ${g.required_evidence.join(', ') || 'none declared'}`);
+    }
+  }
   L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
   const rep = contracts['information-access'].reporting;
   L.push(`REPORTING  : ${rep.style} Must: ${rep.must.join('; ')}. Never: ${rep.must_not.join('; ')}.`);
@@ -1717,6 +1944,17 @@ export function renderHubSite(contracts, rt) {
       L.push('<div class="wrap"><table><tr><th>Pool</th><th>Delivery capability</th><th>Stewardship between tickets</th></tr>');
       for (const p of tm.capability_pools) L.push(`<tr><td><code>${hubEsc(p.id)}</code></td><td>${hubEsc(p.delivery_capability)}</td><td>${hubEsc(p.stewardship)}</td></tr>`);
       L.push('</table></div></section>');
+      const pg2 = contracts['promotion-gates'];
+      if (pg2) {
+        L.push('<section><h2>Promotion gates</h2>');
+        L.push(`<p class="sub">${hubEsc(pg2.principle)}</p>`);
+        L.push('<div class="wrap"><table><tr><th>Gate</th><th>Name</th><th>Who acts</th><th>Guards</th><th>Evidence</th><th>Grants</th></tr>');
+        for (const g of pg2.gates) {
+          const guards = (g.guards_transitions || []).map((t) => `<code>${hubEsc(t.from)}</code> → <code>${hubEsc(t.to)}</code>`).join('<br>') || '—';
+          L.push(`<tr><td><strong>${hubEsc(g.id)}</strong></td><td>${hubEsc(g.name)}</td><td>${hubEsc(g.actor_role)}</td><td>${guards}</td><td>${g.required_evidence.map(hubEsc).join(', ') || '—'}</td><td>${g.grants.length ? g.grants.map(hubEsc).join(', ') : '<span class="none">nothing</span>'}</td></tr>`);
+        }
+        L.push(`</table></div><p class="sub">${hubEsc(pg2.immutable_candidate)}</p></section>`);
+      }
       const ce = tm.charter_exception;
       L.push('<section><h2>When the charter cannot resolve it</h2>');
       L.push(`<p>${hubEsc(ce.principle)}</p>`);
@@ -1837,6 +2075,81 @@ export function opsctlHeader(sourceText) {
   return lines.slice(0, end === -1 ? lines.length : end).join('\n');
 }
 
+
+// ---------------------------------------------------------------------------
+// The Help Desk intake form, generated from the roster.
+//
+// Its team dropdown was the only place in the repository the thirteen team
+// names existed (issue #392, D9), and it had already diverged from the charter:
+// it offered names the charter calls legacy task names, and omitted pools the
+// charter declares. Generating it means the form a person files a ticket into
+// and the contract that routes it cannot disagree.
+// ---------------------------------------------------------------------------
+export function renderHelpDeskTemplate(contracts) {
+  const tm = contracts.teams;
+  // Legacy names stay selectable: open tickets and muscle memory both use them,
+  // and the alias map is what turns one into a current owner.
+  const options = ['unsure / route it', ...tm.legacy_aliases.map((a) => a.legacy).sort()];
+  const L = [];
+  L.push('# GENERATED by .agentops/tools/opsctl.mjs render — do not edit by hand.');
+  L.push('# The team list is projected from .agentops/governance/teams.json so the');
+  L.push('# intake form and the roster that routes it cannot diverge.');
+  L.push('name: Help Desk ticket');
+  L.push('description: File work for the Help Desk queue — a request, a bug, a blocker, or a question.');
+  L.push('title: "[ticket] "');
+  L.push('labels: ["help-desk"]');
+  L.push('body:');
+  L.push('  - type: markdown');
+  L.push('    attributes:');
+  L.push('      value: |');
+  L.push('        Files a Help Desk ticket. This is **intake only** — it records and routes');
+  L.push('        the request; it does not authorize any protected transition. Decisions');
+  L.push('        that need owner authority go through the *Owner decision* form instead.');
+  L.push('');
+  L.push('  - type: dropdown');
+  L.push('    id: kind');
+  L.push('    attributes:');
+  L.push('      label: Kind');
+  L.push('      options:');
+  for (const k of ['request — new work', 'bug — something is wrong', 'blocker — work is stopped', 'question — needs an answer', 'evidence — recording a result']) L.push(`        - ${k}`);
+  L.push('    validations:');
+  L.push('      required: true');
+  L.push('');
+  L.push('  - type: dropdown');
+  L.push('    id: team');
+  L.push('    attributes:');
+  L.push('      label: Suggested team');
+  L.push('      description: Best guess is fine; Help Desk routes it.');
+  L.push('      options:');
+  for (const o of options) L.push(`        - ${o}`);
+  L.push('    validations:');
+  L.push('      required: true');
+  L.push('');
+  L.push('  - type: textarea');
+  L.push('    id: what');
+  L.push('    attributes:');
+  L.push('      label: What is needed');
+  L.push('      description: What should be true when this is done.');
+  L.push('    validations:');
+  L.push('      required: true');
+  L.push('');
+  L.push('  - type: textarea');
+  L.push('    id: evidence');
+  L.push('    attributes:');
+  L.push('      label: Evidence / where to look');
+  L.push('      description: Screenshots, exact paths, commits, or a URL. Optional.');
+  L.push('');
+  L.push('  - type: dropdown');
+  L.push('    id: urgency');
+  L.push('    attributes:');
+  L.push('      label: Urgency');
+  L.push('      options:');
+  for (const u of ['normal', 'blocking other work', 'needs owner attention']) L.push(`        - ${u}`);
+  L.push('    validations:');
+  L.push('      required: true');
+  return L.join('\n');
+}
+
 // ---------------------------------------------------------------------------
 // Runners.
 // ---------------------------------------------------------------------------
@@ -1844,6 +2157,7 @@ const GENERATED_VIEW = 'generated/GOVERNANCE.md';
 const RECON_DIR = 'generated/reconstruction';
 const HUD_VIEW = 'generated/hud/index.html';
 const MIGRATION_VIEW = 'generated/migration/PLAN.md';
+const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 
 // Every committed generated artifact, as {rel, text}. These are the sole
 // writes of `render` and the drift gate of `verify`. Frozen wake goldens make
@@ -1858,6 +2172,7 @@ function generatedArtifacts(contracts, rt) {
   }
   out.push({ rel: HUD_VIEW, text: renderHud(contracts, rt) + '\n' });
   out.push(...renderHubSite(contracts, rt));
+  if (contracts.teams) out.push({ rel: HELPDESK_VIEW, text: renderHelpDeskTemplate(contracts) + '\n' });
   if (contracts.migration) out.push({ rel: MIGRATION_VIEW, text: renderMigration(contracts, rt) + '\n' });
   return out;
 }
@@ -1889,6 +2204,7 @@ export function runValidate(root = ROOT) {
 const MIRRORS = [
   { from: HUD_VIEW, to: '../hud/index.html' },
   { from: `${HUB_DIR}/`, to: '../review-approval-hub/' },
+  { from: HELPDESK_VIEW, to: '../.github/ISSUE_TEMPLATE/help-desk-ticket.yml' },
 ];
 
 function mirrorTargets(root, arts) {
@@ -2113,6 +2429,8 @@ export function runSelftest(root = ROOT) {
   expectSemantic('dangling authority role', (c) => { c.authority.grants[0].routine_owner_role = 'ghost-role'; }, 'unknown role');
   expectSemantic('path traversal glob', (c) => { c['git-ownership'].paths.push({ glob: '../etc/**', owner_role: 'maker', serialized_lane: 'x' }); }, 'traversal');
   expectSemantic('overlapping writers', (c) => { c['git-ownership'].paths.push({ glob: '.agentops/governance/extra/**', owner_role: 'maker', serialized_lane: 'x' }); }, 'overlapping paths');
+  expectSemantic('overlapping root-level writers', (c) => { c['git-ownership'].paths.push({ glob: 'index.html', owner_role: 'it-support', serialized_lane: 'x' }); }, 'overlapping paths');
+  expectSemantic('a root glob colliding with a root file', (c) => { c['git-ownership'].paths.push({ glob: 'buildordinal.*', owner_role: 'help-desk', serialized_lane: 'x' }); }, 'overlapping paths');
   expectSemantic('amplifying deputy grant', (c) => { c['owner-intent'].deputy.excluded_actions.push(c['owner-intent'].deputy.included_actions[0]); }, 'amplifying grant');
   expectSemantic('hierarchy dangling parent', (c) => { c.hierarchy.nodes[1].escalation_parent = 'nobody'; }, 'unknown escalation_parent');
   expectSemantic('hierarchy two roots', (c) => { c.hierarchy.nodes[1].escalation_parent = null; }, 'exactly one root');
@@ -2210,6 +2528,23 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('canonical docs: a canonical path that does not exist', (c) => { c['information-access'].canonical_documents[0].path = 'docs/governance/RUNBOOKS/ghost.md'; }, 'which does not exist');
+  expectSemantic('canonical docs: a superseded copy still live', (c) => { c['information-access'].canonical_documents[0].superseded_paths = ['docs/governance/TEAM-CHARTERS.md']; }, 'both look authoritative');
+  expectSemantic('delivery: promotion readiness claiming a grant', (c) => { c.delivery.promotion_readiness.grants = ['release']; }, 'grants no promotion authority');
+  expectSemantic('delivery: a Pages source that is not protected', (c) => { c.delivery.pages.desired_source = 'dev'; }, "is 'pr-only', not protected");
+  expectSemantic('delivery: a Pages switch that skips the owner', (c) => { c.delivery.pages.switch_requires.escalation_class = 'technical-blocker'; }, 'rather than the owner');
+  expectSemantic('delivery: a Pages switch packet with no rollback', (c) => { c.delivery.pages.switch_packet_records = c.delivery.pages.switch_packet_records.filter((x) => !/rollback/i.test(x)); }, 'nowhere to return to');
+  expectSemantic('model-effort: the contract claiming a grant', (c) => { c['model-effort'].grants = ['integration']; }, 'model selection grants no authority');
+  expectSemantic('model-effort: max effort with no exceptional reason required', (c) => { delete c['model-effort'].tiers.find((t) => t.allowed_efforts.includes('max')).requires_exceptional_reason; }, "allows 'max' effort without requiring an exceptional reason");
+  expectSemantic('model-effort: a tier named after a role', (c) => { c['model-effort'].tiers[0].id = 'it-manager-iii'; }, 'never role rank');
+  expectRuntime('a capsule claiming max effort with no reason', (rt) => { rt.capsules['AS-1001'].model_effort = { model: 'x', effort: 'max', why: 'y', escalate_when: 'z' }; }, 'recorded exceptional reason');
+  expectRuntime('a capsule claiming an undeclared effort', (rt) => { rt.capsules['AS-1001'].model_effort = { model: 'x', effort: 'ludicrous', why: 'y', escalate_when: 'z' }; }, 'matches no declared risk-and-station tier');
+  expectSemantic('gates: a gate claiming owner-reserved authority', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'C').grants = ['release']; }, 'owner-reserved and belongs to Gate F alone');
+  expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
+  expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
+  expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
+  expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
+  expectRuntime('a capsule naming a team that is on no roster', (rt) => { rt.capsules['AS-HD-050'].team = 'audio'; }, 'nor a declared legacy alias');
   expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');
 
   // Stage 9 — the tool's own header (issue #392, D8). Enters through the same

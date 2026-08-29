@@ -165,6 +165,21 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `claude/*` | maker | isolated-continuation |
 | `recovery/*` | per-seat | isolated-continuation |
 
+## Promotion gates
+
+Promotion is a sequence of separately evidenced gates against one frozen head, not a single approval. Authority for one gate implies authority for none of the others, and any change to the candidate returns it to the first gate. A gate is passed by recorded evidence at an exact SHA, never by the fact that a job ran.
+
+| Gate | Name | Who acts | Guards | Required evidence | Grants |
+|---|---|---|---|---|---|
+| **A** | Exact candidate QA | `qa-independent` | `accepted` → `pushed` | test-run-receipt, generated-view-drift-check | nothing |
+| **B** | Dev integration and hosted verification | `it-manager-iii` | `pushed` → `pr-open`<br>`pr-open` → `dev-integrated` | hosted-evidence-url | nothing |
+| **C** | Exact fast-forward to test | `it-manager-iii` | `dev-integrated` → `hosted-verified` | hosted-evidence-url, rollback-procedure | nothing |
+| **D** | Five-role exact-test acceptance | `project-management-lead` | `hosted-verified` → `resolved` | acceptance-ledger | nothing |
+| **E** | Owner playtest | `owner` | — | playtest-receipt | nothing |
+| **F** | Separate main and release actions | `owner` | `resolved` → `released` | promotion-packet, rollback-procedure | nothing |
+
+Any code, content, configuration or artifact change creates a new candidate and restarts Gate A. A changed head invalidates every receipt recorded against the former SHA.
+
 ## Teams
 
 Standing coordination is scarce and named; delivery capability is pooled and temporary. A pool is a capability the project can draw on, never a department that owns a backlog, a decision stream, or a source path because the path fits its specialty. A pod is formed for one contract-ready ticket and dissolves; its chat and local workspace are never an authority source, so losing the conversation loses no work.
@@ -219,6 +234,10 @@ The charter decides by default. Where it genuinely cannot resolve a case, the tw
 | `docs/governance/**` | project-management-lead | governance-docs |
 | `game-design/docs/**` | help-desk | intake-docs |
 | `tools/**` | it-support | support-tooling |
+| `hud/**` | generator | generated-artifact |
+| `review-approval-hub/**` | generator | generated-artifact |
+| `buildordinal.json` | maker | generated-artifact |
+| `*.html` | maker | generated-artifact |
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 

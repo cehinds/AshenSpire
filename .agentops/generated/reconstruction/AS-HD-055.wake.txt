@@ -6,11 +6,11 @@ DONE-WHEN  : Every candidate presented for integration carries an independent ve
 AUTHORITY  : may author-exact-head-verdict, maintain-red-plants-and-fixtures | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
 FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
 REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-055
-BASE       : 676b9502cdaeeca1e3c2d5ca185f740b727d2838 tree recovered-from-hub-snapshot dirty=clean
+BASE       : 74e8a0a29d57d1632c9b59c92352769e676c6bdb tree recovered-from-hub-snapshot dirty=clean
 NEXT ACTION: Wait for an exact frozen head to verify; do not author a verdict for a moving target. Keep the plant corpus current as the validator changes.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
 REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : —
-SOURCE     : 676b9502cdaeeca1e3c2d5ca185f740b727d2838
-FRESHNESS  : as-recorded (base 676b9502cdae); verify live HEAD out-of-band
+SOURCE     : 74e8a0a29d57d1632c9b59c92352769e676c6bdb
+FRESHNESS  : as-recorded (base 74e8a0a29d57); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
