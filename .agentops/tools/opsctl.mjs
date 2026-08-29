@@ -210,7 +210,8 @@ const CONTRACTS = [
   { name: 'transitions', file: 'governance/transitions.json', schema: 'schemas/transitions.schema.json' },
   { name: 'information-access', file: 'governance/information-access.json', schema: 'schemas/information-access.schema.json' },
   { name: 'qa', file: 'governance/qa.json', schema: 'schemas/qa.schema.json' },
-  { name: 'evidence', file: 'governance/evidence.json', schema: 'schemas/evidence.schema.json' }
+  { name: 'evidence', file: 'governance/evidence.json', schema: 'schemas/evidence.schema.json' },
+  { name: 'owner-command', file: 'governance/owner-command.json', schema: 'schemas/owner-command.schema.json' }
 ];
 
 export function loadContracts(root = ROOT) {
@@ -426,6 +427,25 @@ export function semanticChecks(c) {
     for (const e of c.evidence.evidence) {
       if (!knownRoles.has(e.producer_role)) errors.push(`evidence: type '${e.id}' producer role '${e.producer_role}' is unknown`);
       if (!knownRoles.has(e.verifier_role)) errors.push(`evidence: type '${e.id}' verifier role '${e.verifier_role}' is unknown`);
+    }
+  }
+
+  // 13. Owner-command: enumerated actions authenticate declared roles; owner-exclusive
+  //     actions admit only the owner; the actor map reconciles with owner intent.
+  if (c['owner-command']) {
+    const oc = c['owner-command'];
+    const ids = new Set();
+    for (const a of oc.actions) {
+      if (ids.has(a.id)) errors.push(`owner-command: duplicate action id '${a.id}'`);
+      ids.add(a.id);
+      for (const r of a.authenticator_roles) if (!roles.has(r)) errors.push(`owner-command: action '${a.id}' names unknown authenticator role '${r}'`);
+      if ((a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
+        errors.push(`owner-command: action '${a.id}' must be owner-exclusive`);
+      }
+    }
+    if (c['owner-intent']) {
+      if (oc.authenticated_actors.owner !== c['owner-intent'].owner.actor_id) errors.push(`owner-command: authenticated owner '${oc.authenticated_actors.owner}' does not match owner-intent owner '${c['owner-intent'].owner.actor_id}'`);
+      if (oc.authenticated_actors.deputy !== c['owner-intent'].deputy.role) errors.push(`owner-command: authenticated deputy '${oc.authenticated_actors.deputy}' does not match owner-intent deputy role '${c['owner-intent'].deputy.role}'`);
     }
   }
 
@@ -850,11 +870,144 @@ export function runWake(root, actor, work, { frozen = false } = {}) {
   return buildCapsule(contracts, rt, work, { frozen, head: frozen ? null : currentHead(root) });
 }
 
+// ===========================================================================
+// Stage 5: authenticated owner-command path (dry-run) and the read-only Owner
+// HUD. The command processor accepts only enumerated, authenticated, allowlisted
+// actions with a compare-and-swap precondition; this stage ships the dry-run
+// (records what it WOULD do) and performs no repository mutation. The HUD is a
+// redacted, deterministic projection of validated state — never a write path.
+// ===========================================================================
+
+const REQUEST_SCHEMA_FILE = 'schemas/owner-command-request.schema.json';
+
+// Validate an owner-command request against the policy: enumerated action,
+// authenticated actor, required fields, and the compare-and-swap precondition.
+// Pure over already-loaded contracts + runtime so the harness can plant defects.
+export function validateCommand(contracts, rt, request) {
+  const errors = [];
+  const policy = contracts['owner-command'];
+  if (!policy) return { ok: false, errors: ['owner-command policy not loaded'], decision: null };
+  const roles = new Set(contracts.roles.roles.map((r) => r.role));
+  const action = policy.actions.find((a) => a.id === request.action);
+  if (!action) { errors.push(`action '${request.action}' is not in the owner-command allowlist`); return { ok: false, errors, decision: null }; }
+  if (!roles.has(request.actor)) errors.push(`actor role '${request.actor}' is not a declared role`);
+  if (!action.authenticator_roles.includes(request.actor)) errors.push(`actor '${request.actor}' is not authorized for action '${request.action}' (allowed: ${action.authenticator_roles.join(', ')})`);
+  for (const f of action.required_fields) {
+    const v = request[f];
+    if (v === undefined || v === null || (typeof v === 'string' && v === '')) errors.push(`command '${request.action}' is missing required field '${f}'`);
+  }
+  let cas = 'n/a';
+  if (action.requires_cas) {
+    const cap = rt.capsules[request.target];
+    if (!cap) errors.push(`command target '${request.target}' has no work capsule`);
+    else if (request.expected_current_hash && computeCapsuleHash(cap) !== request.expected_current_hash) {
+      errors.push(`stale command: expected_current_hash does not match the live state of '${request.target}' (compare-and-swap failed)`);
+    } else if (request.expected_current_hash) cas = 'OK';
+  }
+  const ok = errors.length === 0;
+  const decision = ok ? {
+    schema: 'agentops/decision-event/v1',
+    action: request.action, actor: request.actor, target: request.target,
+    protected: action.protected, requires_cas: action.requires_cas, cas_precondition: cas,
+    affects: action.affects,
+    result: 'DRY-RUN — would append this decision event and CAS-update only the affected state; no repository mutation performed'
+  } : null;
+  return { ok, errors, decision };
+}
+
+// Run a command in dry-run mode: schema-validate the request, then validate it
+// against the policy. Live execution is intentionally not enabled in this stage.
+export function runCommand(root, request, { dryRun = true } = {}) {
+  const { contracts, errors } = loadContracts(root);
+  if (errors.length) return { ok: false, errors, decision: null };
+  let reqSchema;
+  try { reqSchema = JSON.parse(readFileSync(resolve(root, REQUEST_SCHEMA_FILE), 'utf8')); }
+  catch (e) { return { ok: false, errors: [`request schema load: ${e.message}`], decision: null }; }
+  const schemaErrs = validateSchema(request, reqSchema, '$');
+  if (schemaErrs.length) return { ok: false, errors: schemaErrs.map((e) => `request schema: ${e}`), decision: null };
+  if (!dryRun) return { ok: false, errors: ['live execution is not enabled in this stage; only --dry-run is available'], decision: null };
+  const rt = loadRuntime(root);
+  return validateCommand(contracts, rt, request);
+}
+
+// Deterministic, redacted, theme-aware Owner HUD. A pure function of validated
+// JSON (no wall-clock, no secrets, no tokens): the deploying commit SHA is
+// injected at publish time by the Pages workflow, so the committed file is
+// drift-gateable. The HUD is read-only; decisions go through the owner-command
+// path, never through this page.
+export function renderHud(contracts, rt) {
+  const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const oi = contracts['owner-intent'];
+  const project = contracts.project;
+  const tickets = Object.keys(rt.capsules).sort();
+  const activeLeases = rt.leases.filter((l) => !l.revoked);
+  const protectedStates = new Set(contracts.transitions.protected_states);
+  const ownerActor = oi.owner.actor_id;
+
+  const needsYou = tickets.filter((t) => { const b = rt.capsules[t].blocker; return b && b.wake === ownerActor; });
+  const promotion = tickets.filter((t) => protectedStates.has(rt.capsules[t].lifecycle_state));
+  const ownerReserved = contracts['owner-command'].actions.filter((a) => a.protected && a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner').map((a) => a.id);
+
+  const L = [];
+  L.push('<!DOCTYPE html>');
+  L.push('<!-- GENERATED by .agentops/tools/opsctl.mjs render — do not edit by hand. Deterministic projection of validated repository state; the source commit is injected at deploy time. -->');
+  L.push('<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">');
+  L.push(`<title>${esc(project.project_name)} — Owner HUD</title>`);
+  L.push('<style>');
+  L.push(':root{--bg:#f7f7f8;--fg:#1b1d21;--card:#fff;--line:#e2e3e7;--muted:#5c6169;--accent:#6b4bd6;--warn:#b23b2e;--ok:#1c7d4d}');
+  L.push('@media(prefers-color-scheme:dark){:root{--bg:#15161a;--fg:#e9eaee;--card:#1e2026;--line:#2c2f37;--muted:#9aa0aa;--accent:#a48bff;--warn:#ff7a6b;--ok:#4bd694}}');
+  L.push('*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}');
+  L.push('header{padding:24px 20px;border-bottom:1px solid var(--line)}h1{margin:0 0 4px;font-size:20px}.sub{color:var(--muted);font-size:13px}');
+  L.push('main{max-width:1000px;margin:0 auto;padding:20px;display:grid;gap:16px}');
+  L.push('section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}');
+  L.push('table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}');
+  L.push('code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.pill{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px}');
+  L.push('.none{color:var(--muted);font-style:italic}.ok{color:var(--ok)}.warn{color:var(--warn)}footer{max-width:1000px;margin:0 auto;padding:12px 20px 32px;color:var(--muted);font-size:12px}.wrap{overflow-x:auto}');
+  L.push('</style></head><body>');
+  L.push('<header>');
+  L.push(`<h1>${esc(project.project_name)} — Owner HUD</h1>`);
+  L.push(`<div class="sub">Read-only projection of validated repository state · policy <code>${esc(oi.policy_version)}</code> · stage <code>${esc(project.installed_stage)}</code> · source commit <code>__SOURCE_COMMIT__</code></div>`);
+  L.push('</header><main>');
+
+  L.push('<section><h2>Needs you now</h2>');
+  if (needsYou.length === 0) L.push('<p class="none">No owner decisions are pending on the current committed state.</p>');
+  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Blocker</th></tr>'); for (const t of needsYou) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(JSON.stringify(rt.capsules[t].blocker))}</td></tr>`); L.push('</table></div>'); }
+  L.push(`<p class="sub">Owner-exclusive command actions: ${ownerReserved.map((a) => `<span class="pill">${esc(a)}</span>`).join(' ')}</p>`);
+  L.push('</section>');
+
+  L.push('<section><h2>Promotion candidates &amp; protected risks</h2>');
+  if (promotion.length === 0) L.push(`<p class="none">No ticket is at a protected state (${[...protectedStates].map(esc).join(', ')}) awaiting promotion.</p>`);
+  else { L.push('<div class="wrap"><table><tr><th>Ticket</th><th>State</th></tr>'); for (const t of promotion) L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(rt.capsules[t].lifecycle_state)}</td></tr>`); L.push('</table></div>'); }
+  L.push('</section>');
+
+  L.push('<section><h2>Writer leases &amp; collisions</h2><div class="wrap"><table><tr><th>Lease</th><th>Actor</th><th>Ticket</th><th>Ref</th><th>Expiry</th></tr>');
+  for (const l of activeLeases) L.push(`<tr><td><code>${esc(l.id)}</code></td><td>${esc(l.actor)}</td><td><code>${esc(l.ticket)}</code></td><td><code>${esc(l.ref)}</code></td><td>${esc(l.expiry)}</td></tr>`);
+  L.push('</table></div><p class="sub">One writer per overlapping path/ref; collisions are rejected by <code>opsctl verify</code>.</p></section>');
+
+  L.push('<section><h2>Traceability — ticket → actor → task → branch → commit → evidence</h2><div class="wrap"><table><tr><th>Ticket</th><th>Owner</th><th>State</th><th>Ref</th><th>Base</th><th>Evidence</th><th>Wake tokens</th></tr>');
+  for (const t of tickets) {
+    const cap = rt.capsules[t];
+    const w = buildCapsule(contracts, rt, t, { frozen: true });
+    L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(cap.owner_actor)}</td><td>${esc(cap.lifecycle_state)}</td><td><code>${esc(cap.ref)}</code></td><td><code>${esc(cap.base_oid.slice(0, 12))}</code></td><td>${cap.evidence_pointers.map(esc).join(', ') || '—'}</td><td>${w.tokens || '—'}</td></tr>`);
+  }
+  L.push('</table></div></section>');
+
+  L.push('<section><h2>Context efficiency</h2>');
+  const ia = contracts['information-access'];
+  L.push(`<p class="sub">Startup budget: ≤ ${ia.max_startup_items} reads, target ${ia.startup_token_target} / hard ${ia.startup_token_hard_limit} tokens. Wake capsules above are the token-bounded resume unit.</p>`);
+  L.push('</section>');
+
+  L.push('</main><footer>Generated deterministically from <code>.agentops/</code> by <code>opsctl render</code>. No tokens, secrets, or write paths are present. Decisions flow through the authenticated owner-command path, never this page.</footer>');
+  L.push('</body></html>');
+  return L.join('\n');
+}
+
 // ---------------------------------------------------------------------------
 // Runners.
 // ---------------------------------------------------------------------------
 const GENERATED_VIEW = 'generated/GOVERNANCE.md';
 const RECON_DIR = 'generated/reconstruction';
+const HUD_VIEW = 'generated/hud/index.html';
 
 // Every committed generated artifact, as {rel, text}. These are the sole
 // writes of `render` and the drift gate of `verify`. Frozen wake goldens make
@@ -867,6 +1020,7 @@ function generatedArtifacts(contracts, rt) {
     if (cap.errors && cap.errors.length) continue;
     out.push({ rel: `${RECON_DIR}/${ticket}.wake.txt`, text: cap.text + '\n' });
   }
+  out.push({ rel: HUD_VIEW, text: renderHud(contracts, rt) + '\n' });
   return out;
 }
 
@@ -937,46 +1091,57 @@ function materializeCommittedClone(root, dest) {
 }
 
 // The clean-clone / context-wipe reconstruction drill. Reconstructs ONLY from
-// committed Git state (a stand-in for a fresh clone with no chat, memory, or
-// device state), then proves reconstruction is (a) fully valid incl. view drift,
-// (b) byte-identical to the committed goldens, and (c) that every ticket declared
-// by any tracked artifact still has a live capsule (no silent evidence loss).
+// committed Git state and runs the CLONE'S OWN opsctl (code AND data both from
+// the committed snapshot), so the drill is fully self-contained and independent
+// of the working tree. It proves the committed clone (a) verifies via its own
+// tooling, (b) that every ticket declared by any tracked artifact still has a
+// live capsule (no silent evidence loss), and (c) that each ticket's frozen wake
+// reproduces the clone's own committed golden.
 export function runDrill(root = ROOT) {
   const steps = [];
   const record = (name, ok, detail = '') => steps.push({ name, ok, detail });
 
+  // The working tree itself must fully verify (current code + current data).
   const liveErrs = verifyErrors(root);
   record('in-place verify (contracts + runtime + generated views)', liveErrs.length === 0, liveErrs.slice(0, 3).join(' | '));
   if (liveErrs.length) return { ok: false, steps };
-
-  const rt = loadRuntime(root);
-  // Expected ticket set is built from EVERY tracked artifact — capsules, leases,
-  // event chains, and committed goldens — not just the surviving capsules, so a
-  // deleted capsule among several is caught rather than silently dropped.
-  const expected = new Set(Object.keys(rt.capsules));
-  for (const l of rt.leases) expected.add(l.ticket);
-  for (const t of Object.keys(rt.events)) expected.add(t);
-  const reconDir = resolve(root, RECON_DIR);
-  if (existsSync(reconDir)) for (const f of readdirSync(reconDir)) { const m = f.match(/^(.+)\.wake\.txt$/); if (m) expected.add(m[1]); }
-  const tickets = [...expected].sort();
-  record('at least one work item to reconstruct', tickets.length > 0, `${tickets.length} tickets`);
-  for (const t of tickets) record(`ticket ${t}: has a live work capsule (no evidence loss)`, !!rt.capsules[t], rt.capsules[t] ? '' : 'capsule missing — declared by lease/events/golden');
 
   const clone = resolve(tmpdir(), `agentops-drill-${process.pid}-${Date.now()}`);
   try {
     const { cloneAgentops, sourced } = materializeCommittedClone(root, clone);
     record(`clean-room source materialized from committed state (${sourced})`, existsSync(cloneAgentops));
-    const cloneErrs = verifyErrors(cloneAgentops);
-    record('clean-room clone re-verifies from committed files only', cloneErrs.length === 0, cloneErrs.slice(0, 3).join(' | '));
+    const cloneCli = resolve(cloneAgentops, 'tools/opsctl.mjs');
+    const repoDir = resolve(cloneAgentops, '..');
+    const runClone = (args) => execSync(`node ${JSON.stringify(cloneCli)} ${args}`, { cwd: repoDir, stdio: ['ignore', 'pipe', 'pipe'] }).toString();
 
-    for (const ticket of tickets) {
-      if (!rt.capsules[ticket]) continue; // already recorded as evidence loss above
-      const there = runWake(cloneAgentops, null, ticket, { frozen: true });
+    let cloneVerified = false;
+    try { runClone('verify'); cloneVerified = true; }
+    catch (e) { record('clean-room clone verifies via its own opsctl', false, String((e.stderr || '').toString() || e.message).trim().split('\n').slice(-3).join(' ')); }
+    if (cloneVerified) record('clean-room clone verifies via its own opsctl', true);
+
+    // Expected ticket set from EVERY tracked artifact in the clone — capsules,
+    // leases, event chains, goldens — so a deleted capsule is caught, not dropped.
+    const workDir = resolve(cloneAgentops, 'work');
+    const capsuleTickets = existsSync(workDir) ? readdirSync(workDir).filter((t) => existsSync(resolve(workDir, t, 'CURRENT.json'))).sort() : [];
+    const capsuleSet = new Set(capsuleTickets);
+    const expected = new Set(capsuleTickets);
+    const leaseDir = resolve(cloneAgentops, 'leases');
+    if (existsSync(leaseDir)) for (const f of readdirSync(leaseDir)) if (f.endsWith('.json')) { try { expected.add(strictParse(readFileSync(resolve(leaseDir, f), 'utf8')).ticket); } catch { /* schema-checked by clone verify */ } }
+    const evDir = resolve(cloneAgentops, 'events');
+    if (existsSync(evDir)) for (const t of readdirSync(evDir)) expected.add(t);
+    const reconDir = resolve(cloneAgentops, RECON_DIR);
+    if (existsSync(reconDir)) for (const f of readdirSync(reconDir)) { const m = f.match(/^(.+)\.wake\.txt$/); if (m) expected.add(m[1]); }
+    record('at least one work item to reconstruct', expected.size > 0, `${expected.size} tickets`);
+    for (const t of [...expected].sort()) record(`ticket ${t}: has a live work capsule (no evidence loss)`, capsuleSet.has(t), capsuleSet.has(t) ? '' : 'declared by lease/events/golden but capsule missing');
+
+    for (const t of capsuleTickets) {
+      let there = null;
+      try { there = runClone(`wake --work ${t} --frozen`); } catch { /* recorded as mismatch below */ }
       let golden = null;
-      try { golden = readFileSync(resolve(root, `${RECON_DIR}/${ticket}.wake.txt`), 'utf8'); } catch { /* missing */ }
-      const matches = golden !== null && there.text + '\n' === golden;
-      record(`reconstruct ${ticket}: committed clone reproduces the committed golden`, matches,
-        golden === null ? 'golden missing — run render' : (matches ? `${there.tokens} tokens` : 'reconstruction differs from golden'));
+      try { golden = readFileSync(resolve(reconDir, `${t}.wake.txt`), 'utf8'); } catch { /* missing */ }
+      const matches = there !== null && golden !== null && there === golden;
+      record(`reconstruct ${t}: clone wake reproduces its committed golden`, matches,
+        golden === null ? 'golden missing — run render' : (matches ? '' : 'reconstruction differs from golden'));
     }
   } catch (e) {
     record('clean-room reconstruction completed', false, String(e && e.message || e));
@@ -1070,6 +1235,24 @@ export function runSelftest(root = ROOT) {
   expectRuntime('capsule references missing lease', (rt) => { rt.capsules['AS-1001'].writer_lease = 'no-such-lease'; }, 'unknown writer_lease');
   expectRuntime('evidence loss: capsule deleted, lease/events orphaned', (rt) => { delete rt.capsules['AS-1001']; }, 'no work capsule');
 
+  // Stage 5 owner-command plants — run through the same validateCommand() the
+  // live dry-run uses. A valid control command must pass first.
+  const capHash = computeCapsuleHash(rt0.capsules['AS-1001']);
+  const baseReq = () => ({ schema: 'agentops/owner-command-request/v1', action: 'authorize-integration', actor: 'it-manager-iii', target: 'AS-1001', expected_current_hash: capHash, candidate_oid: '0'.repeat(40) });
+  if (!validateCommand(contracts, rt0, baseReq()).ok) return { ok: false, detail: ['baseline owner-command control did not pass'] };
+  const expectCommand = (label, mutate, needle) => {
+    const r = baseReq();
+    mutate(r);
+    const res = validateCommand(contracts, rt0, r);
+    const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+    results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+  };
+  expectCommand('owner-command: unknown action rejected', (r) => { r.action = 'nuke'; }, 'not in the owner-command allowlist');
+  expectCommand('owner-command: unauthorized actor rejected', (r) => { r.actor = 'maker'; }, 'not authorized');
+  expectCommand('owner-command: stale compare-and-swap rejected', (r) => { r.expected_current_hash = 'sha256:stale'; }, 'stale command');
+  expectCommand('owner-command: missing required field rejected', (r) => { delete r.candidate_oid; }, 'missing required field');
+  expectCommand('owner-command: owner-exclusive release by deputy rejected', (r) => { r.action = 'authorize-release'; }, 'not authorized');
+
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
 }
@@ -1125,13 +1308,29 @@ function main(argv) {
     console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss.');
     return 0;
   }
+  if (cmd === 'command') {
+    let file = null, json = null;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--file') file = argv[++i];
+      else if (argv[i] === '--request') json = argv[++i];
+    }
+    if (!flags.has('--dry-run')) { console.error('command requires --dry-run (live execution is not enabled in this stage)'); return 2; }
+    let request;
+    try { request = strictParse(json !== null ? json : readFileSync(resolve(process.cwd(), file), 'utf8')); }
+    catch (e) { console.error(`command: could not read request (${e.message}); pass --request '<json>' or --file <path>`); return 2; }
+    const res = runCommand(ROOT, request, { dryRun: true });
+    if (!res.ok) { console.error('COMMAND REJECTED (dry-run, no mutation):'); res.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    console.log('COMMAND ACCEPTED (dry-run, no mutation). Would append this decision event:');
+    console.log(JSON.stringify(res.decision, null, 2));
+    return 0;
+  }
   if (cmd === '--selftest' || cmd === 'selftest') {
     const s = runSelftest();
     if (!s.ok) { console.error('SELFTEST FAIL:'); s.detail.forEach((d) => console.error('  - ' + d)); return 1; }
     console.log(`SELFTEST OK: all ${s.results.length} negative plants correctly caught.`);
     return 0;
   }
-  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | wake --work <ticket> [--actor <role>] [--frozen] | drill | --selftest`);
+  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | wake --work <ticket> [--actor <role>] [--frozen] | drill | command --dry-run (--request <json> | --file <path>) | --selftest`);
   return 2;
 }
 

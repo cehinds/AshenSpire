@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand } from './opsctl.mjs';
 import { readFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -25,14 +25,14 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all thirteen contracts loaded', Object.keys(contracts).length === 13, Object.keys(contracts).join(','));
+  check('all fourteen contracts loaded', Object.keys(contracts).length === 14, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 29 plants', s.results.length >= 29, String(s.results.length));
+  check('selftest exercises >= 34 plants', s.results.length >= 34, String(s.results.length));
 }
 
 // 2b. Runtime: the seed ticket loads, its capsule is sealed, and the wake
@@ -116,6 +116,32 @@ function check(name, cond, detail = '') {
   const { contracts } = loadContracts();
   check('loadContracts returns owner-intent with owner id "constantine"',
     contracts['owner-intent'] && contracts['owner-intent'].owner.actor_id === 'constantine');
+}
+
+// 2d. Owner-command dry-run: valid command accepted with a decision event and no
+// mutation; arbitrary/unauthorized/live commands rejected.
+{
+  const rt = loadRuntime();
+  const hash = computeCapsuleHash(rt.capsules['AS-1001']);
+  const valid = { schema: 'agentops/owner-command-request/v1', action: 'authorize-integration', actor: 'it-manager-iii', target: 'AS-1001', expected_current_hash: hash, candidate_oid: 'abc123' };
+  const okRes = runCommand(ROOT, valid, { dryRun: true });
+  check('owner-command dry-run accepts a valid authenticated command', okRes.ok, (okRes.errors || []).join(' | '));
+  check('owner-command dry-run emits a DRY-RUN decision (no mutation)', !!okRes.decision && okRes.decision.result.includes('DRY-RUN'));
+  const extra = { ...valid, shell: 'rm -rf /' };
+  check('owner-command rejects arbitrary extra fields (no shell)', runCommand(ROOT, extra, { dryRun: true }).ok === false);
+  const releaseByDeputy = { schema: 'agentops/owner-command-request/v1', action: 'authorize-release', actor: 'it-manager-iii', target: 'AS-1001', expected_current_hash: hash, candidate_oid: 'x' };
+  check('owner-command rejects owner-exclusive release by deputy', runCommand(ROOT, releaseByDeputy, { dryRun: true }).ok === false);
+  check('owner-command refuses live execution in this stage', runCommand(ROOT, valid, { dryRun: false }).ok === false);
+}
+
+// 2e. Owner HUD: committed, redacted, deterministic, carries the source-commit
+// placeholder and no secret material.
+{
+  let hud = '';
+  try { hud = readFileSync(resolve(ROOT, 'generated/hud/index.html'), 'utf8'); } catch { /* missing */ }
+  check('HUD is generated and names the project', hud.includes('Owner HUD') && hud.includes('AshenSpire'));
+  check('HUD carries the source-commit placeholder (injected at deploy)', hud.includes('__SOURCE_COMMIT__'));
+  check('HUD carries no credential material', hud.length > 0 && !/(ghp_[A-Za-z0-9]|github_pat_|BEGIN [A-Z ]*PRIVATE KEY|Authorization:\s*Bearer)/.test(hud));
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

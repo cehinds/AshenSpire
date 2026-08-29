@@ -14,7 +14,7 @@
   "pages_owner_hud": "PLANNED",
   "owner_command_path": "WORKFLOW_FORMS",
   "control_plane_root": ".agentops",
-  "installed_stage": "reconstruction-drills",
+  "installed_stage": "owner-hud-and-command",
   "installed_contracts": [
     "governance/owner-intent.json",
     "governance/hierarchy.json",
@@ -27,7 +27,8 @@
     "governance/transitions.json",
     "governance/information-access.json",
     "governance/qa.json",
-    "governance/evidence.json"
+    "governance/evidence.json",
+    "governance/owner-command.json"
   ],
   "runtime_artifacts": {
     "work_capsule": "work/<ticket>/CURRENT.json (schema work-capsule/v1, sealed with a compare-and-swap current_hash)",
@@ -35,11 +36,12 @@
     "event": "events/<ticket>/<event-id>.json (schema event/v1, append-only chain)",
     "wake_compiler": "opsctl wake --actor <role> --work <ticket> [--frozen] (token-bounded disposable capsule)",
     "reconstruction_drill": "opsctl drill (clean-clone / context-wipe reconstruction, provider-neutral); spec in RECONSTRUCTION-DRILL.md; goldens in generated/reconstruction/",
+    "owner_command": "opsctl command --dry-run (--request <json> | --file <path>): enumerated, authenticated, allowlisted, compare-and-swap-checked; dry-run only (no live mutation this stage)",
+    "owner_hud": "generated/hud/index.html (read-only, redacted, deterministic); published by .github/workflows/pages.yml (workflow_dispatch only, inert until Pages is enabled)",
     "seed_ticket": "AS-1001"
   },
   "deferred_next_stages": [
-    "owner-command workflows (authenticated decision path)",
-    "pages owner HUD (read-only projection)",
+    "owner-command live executor (append decision event + CAS-update state, protected environment)",
     "migration tooling for existing work",
     "independent review then exact dev -> main promotion decision"
   ]

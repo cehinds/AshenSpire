@@ -35,6 +35,7 @@ extra hop.
 | Information-access / context-loading rules | `governance/information-access.json` |
 | QA independence and risk-selected gates | `governance/qa.json` |
 | Artifact/evidence responsibility | `governance/evidence.json` |
+| Owner-command allowlist (authenticated decisions) | `governance/owner-command.json` |
 
 Human-readable views under `generated/` are produced from these JSON files and
 carry no authority of their own.
@@ -63,6 +64,18 @@ provider-neutral) with the reconstruction drill — see
 node .agentops/tools/opsctl.mjs drill
 ```
 
+Owner decisions flow through the authenticated owner-command path — enumerated,
+allowlisted, and compare-and-swap-checked. This stage ships the dry-run (records
+what it would do; no repository mutation):
+
+```sh
+node .agentops/tools/opsctl.mjs command --dry-run --request '<owner-command-request json>'
+```
+
+The read-only Owner HUD is a redacted, deterministic projection at
+`generated/hud/index.html`, published by `.github/workflows/pages.yml`
+(workflow_dispatch only; inert until Pages is enabled).
+
 ## Validate before you trust
 
 ```sh
@@ -90,13 +103,12 @@ and overriding an independent QA verdict. See
 
 ## Installed stage
 
-`reconstruction-drills`. The governance kernel (owner intent, hierarchy, roles,
-authority, git-ownership), the operational contracts (RACI, delegation,
-escalation, transitions, information-access, QA, evidence), the runtime layer
-(work capsules, writer leases, append-only events, `opsctl wake`), and the
-clean-clone / context-wipe reconstruction drill (`opsctl drill` + committed
-frozen goldens + `RECONSTRUCTION-DRILL.md`) are installed and validated.
-Deferred to later stages (see `project.json → deferred_next_stages`): the
-authenticated owner-command workflows; the read-only Owner HUD on GitHub Pages;
-migration tooling for existing work; and the exact `dev` → `main` promotion
-decision.
+`owner-hud-and-command`. The governance kernel, the operational contracts, the
+runtime layer (`opsctl wake`), the reconstruction drill (`opsctl drill`), and
+now the authenticated owner-command path (`opsctl command --dry-run`, enumerated
++ allowlisted + compare-and-swap) plus the read-only Owner HUD
+(`generated/hud/index.html`, published by an inert `pages.yml`) are installed and
+validated. Deferred to later stages (see `project.json →
+deferred_next_stages`): the owner-command live executor (append decision event +
+CAS-update state); migration tooling for existing work; and the exact `dev` →
+`main` promotion decision.
