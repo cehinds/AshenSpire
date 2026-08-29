@@ -153,6 +153,23 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
     onSettingsChange, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave,
   };
 
+  // The body is shared, but the marker and scroll offset belong to one render.
+  // Clear both before EVERY dispatch; Settings alone reclaims its marker, while
+  // Controls keeps this shared body as its sole vertical scroll owner.
+  const dispatchPanel = (id) => {
+    body.removeAttribute('data-settings-host');
+    body.scrollTop = 0;
+    const panel = panelFor(id);
+    if (!panel) {
+      console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
+        + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
+        + ' the declaration, the panel is the handler, and one of them is missing.');
+      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
+      return;
+    }
+    panel(body, ctx);
+  };
+
   const saveButton = veil.querySelector('#ov-save');
   const quitButton = veil.querySelector('#ov-quit');
   if (!onSave && saveButton) saveButton.hidden = true;
@@ -175,15 +192,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.
-    const panel = panelFor(id);
-    if (!panel) {
-      console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
-        + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
-        + ' the declaration, the panel is the handler, and one of them is missing.');
-      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
-      return;
-    }
-    panel(body, ctx);
+    dispatchPanel(id);
   }
 
   veil.querySelectorAll('.ov-tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.member)));
@@ -218,7 +227,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
             ...quickControls.music,
             activate: async (...args) => {
               const result = await quickControls.music.activate(...args);
-              if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);
+              if (currentTab === 'settings' && result?.changed) dispatchPanel('settings');
               return result;
             },
           },

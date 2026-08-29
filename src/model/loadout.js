@@ -292,6 +292,8 @@ export function validateEquipment(registries) {
       if (!profile) problems.push(`${piece.id}: unknown ${role} profile '${profileId}'`);
       else if (profile.role !== role) problems.push(`${piece.id}: ${role}Profile '${profileId}' has wrong role '${profile.role}'`);
     }
+    try { WeaponCardPackageModel.fromPiece(registries, piece); }
+    catch (error) { problems.push(error.message); }
   }
 
   for (const piece of pieces) {
@@ -961,12 +963,181 @@ export function equipmentKitReceipt(registries, loadout, classId, attributes, eq
   return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
 }
 
+// ---------------------------------------------------------------------------
+// Weapon card packages
+// ---------------------------------------------------------------------------
+
+const WEAPON_CARD_PACKAGE_COMPATIBILITY = 'attack-v1';
+
+function attackProfileFor(registries, profileId, owner) {
+  const profile = profileById(registries, profileId);
+  if (!profile) throw new Error(`${owner}: missing attack profile '${profileId}'`);
+  if (profile.role !== 'attack' || profile.compatibility !== WEAPON_CARD_PACKAGE_COMPATIBILITY) {
+    throw new Error(`${owner}: attack profile '${profileId}' is not ${WEAPON_CARD_PACKAGE_COMPATIBILITY}`);
+  }
+  if (!profile.baseCardId || !registries.cards.has(profile.baseCardId)) {
+    throw new Error(`${owner}: attack profile '${profileId}' has no valid filler card`);
+  }
+  return profile;
+}
+
+/**
+ * The authored weapon-package seam. Existing `attackProfile` rows adapt to an
+ * empty priority list plus that profile as filler; explicit packages may add
+ * ordered one-off card refs without changing the number of attack instances.
+ */
+export const WeaponCardPackageModel = Object.freeze({
+  fromPiece(registries, piece) {
+    if (!piece) return null;
+    const explicit = piece.weaponCardPackage;
+    if (explicit == null && !piece.attackProfile) return null;
+    if (explicit != null && (!explicit || typeof explicit !== 'object' || Array.isArray(explicit))) {
+      throw new Error(`${piece.id}: weaponCardPackage must be an object`);
+    }
+    const source = explicit || {};
+    if (explicit && source.compatibility !== WEAPON_CARD_PACKAGE_COMPATIBILITY) {
+      throw new Error(`${piece.id}: weapon package compatibility must be ${WEAPON_CARD_PACKAGE_COMPATIBILITY}`);
+    }
+    const handsRequired = source.handsRequired ?? piece.handsRequired ?? 1;
+    if (![1, 2].includes(handsRequired)) throw new Error(`${piece.id}: handsRequired must be 1 or 2`);
+    const fillerAttackProfileId = explicit ? source.fillerAttackProfileId : piece.attackProfile;
+    if (!fillerAttackProfileId) throw new Error(`${piece.id}: weapon package is missing fillerAttackProfileId`);
+    const filler = attackProfileFor(registries, fillerAttackProfileId, piece.id);
+    const priorityAttackRefs = source.priorityAttackRefs == null ? [] : source.priorityAttackRefs;
+    if (!Array.isArray(priorityAttackRefs)) throw new Error(`${piece.id}: priorityAttackRefs must be an array`);
+    const seen = new Set();
+    const priorities = priorityAttackRefs.map((raw, index) => {
+      const ref = typeof raw === 'string' ? { cardId: raw } : raw;
+      if (!ref || typeof ref !== 'object' || Array.isArray(ref) || !ref.cardId) {
+        throw new Error(`${piece.id}: priorityAttackRefs[${index}] must name cardId`);
+      }
+      if (!registries.cards.has(ref.cardId)) throw new Error(`${piece.id}: priority attack card '${ref.cardId}' is unknown`);
+      const profileId = ref.profileId || filler.id;
+      attackProfileFor(registries, profileId, piece.id);
+      const key = `${ref.cardId}|${profileId}`;
+      if (seen.has(key)) throw new Error(`${piece.id}: duplicate priority attack ref '${key}'`);
+      seen.add(key);
+      return { cardId: ref.cardId, profileId };
+    });
+    return Object.freeze({
+      weaponId: piece.id,
+      handsRequired,
+      priorityAttackRefs: Object.freeze(priorities),
+      fillerAttackProfileId: filler.id,
+      compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
+    });
+  },
+});
+
+function handSource(registries, loadout, classId, hand) {
+  const slot = ((registries.equipment || {}).slots || []).find((row) => slotHand(row) === hand);
+  if (!slot) throw new Error(`No equipment slot declares hand '${hand}'`);
+  const piece = equippedIn(registries, loadout, classId, slot.id);
+  return { hand, slotId: slot.id, piece, package: WeaponCardPackageModel.fromPiece(registries, piece) };
+}
+
+function quotaRefs(registries, source, count) {
+  const filler = attackProfileFor(registries, source.package.fillerAttackProfileId, source.package.weaponId);
+  const refs = source.package.priorityAttackRefs.slice(0, count);
+  while (refs.length < count) refs.push({ cardId: filler.baseCardId, profileId: filler.id });
+  return refs.map((ref) => ({
+    sourceHand: source.hand,
+    weaponId: source.package.weaponId,
+    cardId: ref.cardId,
+    profileId: ref.profileId,
+  }));
+}
+
+/** Pure deterministic projection from active hand equipment to authored slots. */
+export function buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount = undefined } = {}) {
+  const configured = Number(((registries.balance || {}).equipment || {}).roleCopies?.attack);
+  const count = attackSlotCount === undefined ? configured : Number(attackSlotCount);
+  if (!Number.isInteger(count) || count < 0) throw new Error(`attackSlotCount must be a non-negative integer (got ${attackSlotCount})`);
+  const right = handSource(registries, loadout, classId, 'right');
+  const left = handSource(registries, loadout, classId, 'left');
+  if (right.piece && left.piece && right.piece.id === left.piece.id) {
+    throw new Error(`duplicate equipped armament '${right.piece.id}' has no distinct equipment-instance identity`);
+  }
+  const eligible = [right, left].filter((source) => source.package);
+  const twoHanded = eligible.find((source) => source.package.handsRequired === 2);
+  if (twoHanded && ((twoHanded.hand === 'right' ? left.piece : right.piece) || eligible.length > 1)) {
+    throw new Error(`${twoHanded.package.weaponId}: two-handed weapon conflicts with occupied offhand`);
+  }
+
+  let refs;
+  if (twoHanded) refs = quotaRefs(registries, twoHanded, count);
+  else if (eligible.length === 2) {
+    refs = [
+      ...quotaRefs(registries, right, Math.ceil(count / 2)),
+      ...quotaRefs(registries, left, Math.floor(count / 2)),
+    ];
+  } else if (eligible.length === 1) refs = quotaRefs(registries, eligible[0], count);
+  else {
+    const profileId = ((registries.balance || {}).equipment || {}).unarmedProfiles?.attack;
+    const profile = attackProfileFor(registries, profileId, 'zero-weapon plan');
+    refs = Array.from({ length: count }, () => ({ sourceHand: null, weaponId: null, cardId: profile.baseCardId, profileId: profile.id }));
+  }
+  const slots = refs.map((ref, index) => ({ equipmentAttackSlotId: `attack:${index}`, ...ref }));
+  const fingerprint = slots.map((slot) => [slot.equipmentAttackSlotId, slot.sourceHand || '-', slot.weaponId || '-', slot.cardId, slot.profileId].join(':')).join('|');
+  return Object.freeze({ attackSlotCount: count, fingerprint, slots: Object.freeze(slots.map(Object.freeze)) });
+}
+
+/** Rebind stable attack instances without replacing instances or touching metadata. */
+export function applyEquippedWeaponCardPlan(plan, cards, { allowSubset = false } = {}) {
+  if (!plan || !Array.isArray(plan.slots)) throw new Error('applyEquippedWeaponCardPlan requires an EquippedWeaponCardPlan');
+  const attacks = (cards || []).filter((card) => card.equipmentRole === 'attack');
+  if (!allowSubset && attacks.length !== plan.attackSlotCount) {
+    throw new Error(`attack instance count ${attacks.length} does not match authored ${plan.attackSlotCount}`);
+  }
+  const missingIds = attacks.filter((card) => !card.equipmentAttackSlotId);
+  if (missingIds.length) {
+    if (allowSubset || attacks.length !== plan.attackSlotCount) throw new Error('legacy attack slots can migrate only from the authoritative full deck');
+    attacks.forEach((card, index) => { card.equipmentAttackSlotId = `attack:${index}`; });
+  }
+  const byId = new Map(plan.slots.map((slot) => [slot.equipmentAttackSlotId, slot]));
+  const seen = new Set();
+  for (const card of attacks) {
+    if (seen.has(card.equipmentAttackSlotId)) throw new Error(`duplicate equipmentAttackSlotId '${card.equipmentAttackSlotId}'`);
+    seen.add(card.equipmentAttackSlotId);
+    const slot = byId.get(card.equipmentAttackSlotId);
+    if (!slot) throw new Error(`unknown equipmentAttackSlotId '${card.equipmentAttackSlotId}'`);
+    card.cardId = slot.cardId;
+    card.profileId = slot.profileId;
+    card.equipmentPlanFingerprint = plan.fingerprint;
+    if (slot.sourceHand) card.sourceHand = slot.sourceHand;
+    else delete card.sourceHand;
+    if (slot.weaponId) card.weaponId = slot.weaponId;
+    else delete card.weaponId;
+    if (slot.sourceEquipmentInstanceId) card.sourceEquipmentInstanceId = slot.sourceEquipmentInstanceId;
+    else delete card.sourceEquipmentInstanceId;
+  }
+  return attacks.length;
+}
+
+export const WeaponDeckCompositionService = Object.freeze({
+  buildEquippedWeaponCardPlan,
+  applyEquippedWeaponCardPlan,
+});
+
 /** The ten-card role distribution, as instance-ready refs. */
 export function startingDeckRefs(registries, loadout, classId) {
   const cls = registries.classes.get(classId);
   const copies = ((registries.balance || {}).equipment || {}).roleCopies || {};
   const refs = [];
   for (const row of equipmentKitPlan(registries, loadout, classId)) {
+    if (row.role === 'attack') {
+      const attackPlan = buildEquippedWeaponCardPlan(registries, loadout, classId);
+      refs.push(...attackPlan.slots.map((slot) => ({
+        cardId: slot.cardId,
+        equipmentRole: 'attack',
+        profileId: slot.profileId,
+        equipmentAttackSlotId: slot.equipmentAttackSlotId,
+        equipmentPlanFingerprint: attackPlan.fingerprint,
+        ...(slot.sourceHand ? { sourceHand: slot.sourceHand } : {}),
+        ...(slot.weaponId ? { weaponId: slot.weaponId } : {}),
+      })));
+      continue;
+    }
     for (let i = 0; i < (copies[row.role] || 0); i++) {
       refs.push({ cardId: row.profile.baseCardId, equipmentRole: row.role, profileId: row.profile.id });
     }
@@ -1067,6 +1238,37 @@ export function loadoutSignature(loadout) {
     .join('|');
 }
 
+function equipmentChangedPayload(reason, before, after) {
+  const changedPositions = [];
+  const slotIds = new Set([...Object.keys((before || {}).sets || {}), ...Object.keys((after || {}).sets || {})]);
+  for (const slotId of [...slotIds].sort()) {
+    const beforeIds = ((before || {}).sets || {})[slotId] || [];
+    const afterIds = ((after || {}).sets || {})[slotId] || [];
+    const count = Math.max(beforeIds.length, afterIds.length);
+    for (let setIndex = 0; setIndex < count; setIndex++) {
+      const beforeItemId = beforeIds[setIndex] || null;
+      const afterItemId = afterIds[setIndex] || null;
+      const beforeActive = (((before || {}).active || {})[slotId] || 0) === setIndex;
+      const afterActive = (((after || {}).active || {})[slotId] || 0) === setIndex;
+      if (beforeItemId !== afterItemId || beforeActive !== afterActive) {
+        changedPositions.push({ slotId, setIndex, beforeItemId, afterItemId, beforeActive, afterActive });
+      }
+    }
+  }
+  return {
+    reason,
+    beforeLoadoutSignature: loadoutSignature(before),
+    afterLoadoutSignature: loadoutSignature(after),
+    changedPositions,
+  };
+}
+
+function emitEquipmentChanged(ctx, reason, before, after) {
+  if (ctx && typeof ctx.onEquipmentChanged === 'function') {
+    ctx.onEquipmentChanged(equipmentChangedPayload(reason, before, after));
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Collecting mods
 // ---------------------------------------------------------------------------
@@ -1076,11 +1278,13 @@ export function loadoutSignature(loadout) {
  * The prefix is dropped because it has already done its job (choosing the
  * card); order is slot order, and the applier honours it.
  */
-export function cardMods(registries, loadout, classId) {
+export function cardMods(registries, loadout, classId, { attackSourceWeaponId = undefined } = {}) {
   const eq = registries.equipment || {};
   const fields = eq.modFields || {};
   const out = new Map();
   for (const piece of equippedPieces(registries, loadout, classId)) {
+    const packageModel = WeaponCardPackageModel.fromPiece(registries, piece);
+    if (attackSourceWeaponId !== undefined && packageModel && piece.id !== attackSourceWeaponId) continue;
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
@@ -1344,19 +1548,40 @@ export function applyCardMods(def, mods, opts = {}) {
  * Re-stamping is idempotent, so calling it after every swap is safe. Pass
  * `cards` to stamp a hand mid-combat; it defaults to the run deck.
  */
-export function stampDeck(registries, run, cards, { adoptEquipmentBonuses = true } = {}) {
-  reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
+export function stampDeck(registries, run, cards, {
+  adoptEquipmentBonuses = true,
+  reconcileEquipmentPools = true,
+} = {}) {
+  if (reconcileEquipmentPools) reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
+  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
+  for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
+    const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
+    const desired = attackPlan.slots.find((slot) => slot.equipmentAttackSlotId === inst.equipmentAttackSlotId);
+    const next = desired && run.equipmentProfileRuleSnapshot.profiles[desired.profileId];
+    if (prior && next && prior.compatibility !== next.compatibility) {
+      throw new Error(`Incompatible attack profile swap: ${inst.profileId} (${prior.compatibility}) -> ${desired.profileId} (${next.compatibility})`);
+    }
+  }
+  applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
-    const row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
+    let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
+    if (inst.equipmentRole === 'attack') {
+      const profile = profileById(registries, inst.profileId);
+      const piece = inst.weaponId
+        ? (registries.equipment.armaments || []).find((candidate) => candidate.id === inst.weaponId) || null
+        : null;
+      row = { role: 'attack', profile, piece };
+      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot);
+    }
     if (row && row.profile) {
       const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
       const nextCompatibility = run.equipmentProfileRuleSnapshot.profiles[row.profile.id].compatibility;
       if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
-      inst.cardId = row.profile.baseCardId;
+      if (inst.equipmentRole !== 'attack') inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };
     }
@@ -1380,7 +1605,9 @@ export function stampDeck(registries, run, cards, { adoptEquipmentBonuses = true
     else delete inst.damageSchool;
     if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
     else delete inst.exposureBuildupPerHit;
-    const mods = cardMods(registries, run.loadout, run.class);
+    const mods = cardMods(registries, run.loadout, run.class, {
+      attackSourceWeaponId: inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
+    });
     const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
       : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
@@ -1746,7 +1973,16 @@ export function cycleSet(registries, loadout, slotId, index, ctx) {
   }
   if (!canSwap(registries, slotId, { inCombat: ctx.inCombat }).ok) return false;
   if (index >= openedSets(registries, slot, { meta: ctx.meta || {}, loadout })) return false;
+  const before = structuredClone(loadout);
   loadout.active[slotId] = index;
+  try {
+    buildEquippedWeaponCardPlan(registries, loadout, ctx.classId || null);
+  } catch (error) {
+    loadout.active[slotId] = before.active[slotId];
+    console.error(`cycleSet('${slotId}', ${index}): ${error.message} — refusing.`);
+    return false;
+  }
+  emitEquipmentChanged(ctx, 'swapSet', before, loadout);
   return true;
 }
 
@@ -1942,7 +2178,16 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);
   if (!slot) return false;
-  if (!itemId) return applyEquipTransition(registries, loadout, slotId, setIndex, null);
+  const before = structuredClone(loadout);
+  const appearedElsewhere = itemId && Object.entries(loadout.sets || {}).some(([otherSlotId, values]) => (
+    values.some((value, index) => value === itemId && (otherSlotId !== slotId || index !== setIndex))
+  ));
+  const reason = !itemId ? 'unequip' : appearedElsewhere ? 'move' : 'equip';
+  if (!itemId) {
+    const changed = applyEquipTransition(registries, loadout, slotId, setIndex, null);
+    if (changed) emitEquipmentChanged(ctx, reason, before, loadout);
+    return changed;
+  }
   // Armour ids repeat across classes; the class gate is armourById's, and this
   // one only asks whether the piece may live in this slot at all.
   const piece = slot.kinds.includes('armor')
@@ -1959,5 +2204,17 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   }
   if (!owned.has(piece)) return false;
   if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
-  return applyEquipTransition(registries, loadout, slotId, setIndex, itemId);
+  const next = structuredClone(loadout);
+  if (!applyEquipTransition(registries, next, slotId, setIndex, itemId)) return false;
+  try {
+    buildEquippedWeaponCardPlan(registries, next, ctx.classId || null);
+  } catch (error) {
+    console.error(`equipPiece('${slotId}', '${itemId}'): ${error.message} — refusing.`);
+    return false;
+  }
+  loadout.sets = next.sets;
+  loadout.active = next.active;
+  loadout.storage = next.storage;
+  emitEquipmentChanged(ctx, reason, before, loadout);
+  return true;
 }

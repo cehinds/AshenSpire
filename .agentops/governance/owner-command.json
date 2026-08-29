@@ -1,0 +1,30 @@
+{
+  "schema": "agentops/owner-command/v1",
+  "policy_version": "1.0.0",
+  "principle": "The owner-command path accepts only enumerated actions from an authenticated actor. Every command is schema-validated against an allowlist, checks its expected_current_hash (compare-and-swap) against live state, records a dry-run summary, and would append a decision event and CAS-update only the affected state. No arbitrary shell or free-form field is ever accepted. A stale or unauthorized command fails safely and mutates nothing.",
+  "authenticated_actors": {
+    "owner": "constantine",
+    "deputy": "it-manager-iii"
+  },
+  "actions": [
+    {"id": "prioritize", "authenticator_roles": ["owner"], "requires_cas": false, "protected": false, "required_fields": ["target", "params"], "affects": "portfolio sequencing (recommendation input only)"},
+    {"id": "delegate", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": false, "protected": false, "required_fields": ["target", "params"], "affects": "delegation envelope assignment/rebind"},
+    {"id": "approve", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": true, "protected": false, "required_fields": ["target", "expected_current_hash", "candidate_oid"], "affects": "acceptance of an exact object"},
+    {"id": "reject", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": true, "protected": false, "required_fields": ["target", "expected_current_hash", "reason"], "affects": "rejection of an exact object"},
+    {"id": "defer", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": false, "protected": false, "required_fields": ["target", "reason"], "affects": "deferral (routing only)"},
+    {"id": "issue-lease", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": false, "protected": false, "required_fields": ["target", "params"], "affects": "writer lease issuance"},
+    {"id": "revoke-lease", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": true, "protected": false, "required_fields": ["target", "expected_current_hash"], "affects": "writer lease revocation"},
+    {"id": "request-revision", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": true, "protected": false, "required_fields": ["target", "expected_current_hash", "reason"], "affects": "revision request on an exact object"},
+    {"id": "authorize-integration", "authenticator_roles": ["owner", "it-manager-iii"], "requires_cas": true, "protected": true, "required_fields": ["target", "expected_current_hash", "candidate_oid"], "affects": "integration to dev of an exact reviewed head"},
+    {"id": "authorize-release", "authenticator_roles": ["owner"], "requires_cas": true, "protected": true, "required_fields": ["target", "expected_current_hash", "candidate_oid"], "affects": "release / main / publication of an exact object (owner-exclusive)"},
+    {"id": "record-owner-override", "authenticator_roles": ["owner"], "requires_cas": true, "protected": true, "required_fields": ["target", "expected_current_hash", "reason"], "affects": "OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive)"}
+  ],
+  "rules": {
+    "enumerated_only": "A command whose action is not in this allowlist is rejected.",
+    "authenticated_actor": "The command actor must map to a role in the action's authenticator_roles.",
+    "owner_exclusive": "authorize-release and record-owner-override authenticate the owner role only.",
+    "compare_and_swap": "When requires_cas is true, expected_current_hash must equal the live sealed hash of the target; a mismatch is a stale command and fails safely.",
+    "no_arbitrary_input": "The request schema forbids additional fields; there is no shell or free-form command field.",
+    "dry_run_first": "The processor records a dry-run summary before any mutation; this stage ships the dry-run only and performs no repository mutation."
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "schema": "agentops/owner-intent/v1",
+  "policy_version": "1.0.0",
+  "mission": "Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.",
+  "measurable_end_state": "A playable, hosted, released AshenSpire whose every delivery fact traces to an exact Git object, produced by disposable agents that recover from a clean clone with zero evidence loss and zero duplicate authority.",
+  "priority_order": [
+    "owner-safety-and-release-integrity",
+    "player-facing-correctness-and-accessibility",
+    "durable-evidence-and-recoverability",
+    "delivery-throughput",
+    "token-and-context-efficiency"
+  ],
+  "risk_tolerance": "STANDARD",
+  "non_negotiable_invariants": [
+    "Git history and validated machine state are authoritative; dashboards, chat, and model memory are projections only.",
+    "One writer per overlapping path or ref.",
+    "Reversible work proceeds by default; gates exist only for genuine protected boundaries.",
+    "No push, PR, merge, deploy, publication, or release without its own exact separate authority.",
+    "UNKNOWN never means approval.",
+    "An OWNER_OVERRIDE is recorded separately from the underlying evidence result and never fabricates a PASS or impersonates an independent reviewer."
+  ],
+  "default_autonomy": {
+    "reversible_local_work": "PROCEED",
+    "description": "Team Leads and agents perform reversible, collision-free local work (read-only inspection, scoped local implementation, isolated refs/worktrees, tests, builds, schema validation, fixtures, documentation, local commits on isolated branches) without routine approval waits."
+  },
+  "owner": {
+    "actor_id": "constantine",
+    "display_name": "Constantine",
+    "identifiers": ["constantineehinds@gmail.com", "cehinds"],
+    "reserved_authority": [
+      "main/release mutation",
+      "tags",
+      "publication",
+      "GitHub Pages source",
+      "final release readiness",
+      "exact-test playtest sign-off",
+      "product priority and exceptional directives",
+      "final override"
+    ]
+  },
+  "deputy": {
+    "actor_id": "it-manager-iii",
+    "role": "it-manager-iii",
+    "display_name": "IT Manager III, Integration & Delivery",
+    "former_name": "Main",
+    "grant_summary": "Near-owner operational authority to translate owner intent into execution within these explicit, machine-readable grants.",
+    "included_actions": [
+      "assign or rebind bounded reversible work",
+      "issue or revoke writer leases",
+      "create isolated refs and worktrees",
+      "resolve ordinary technical, routing, delegation, and integration decisions without additional approval loops",
+      "accept bounded technical risk with recorded evidence",
+      "integrate to dev through the normal reviewable PR process at its discretion",
+      "chair a temporary QA Coordination Pool while a collision holds",
+      "escalate genuine owner decisions"
+    ],
+    "excluded_actions": [
+      "amend its own grant",
+      "silently change owner intent",
+      "suppress an owner override",
+      "self-approve protected independent review",
+      "delegate broader authority than it holds",
+      "mutate main or release",
+      "change Pages source, tag, publish, or declare final release readiness",
+      "perform the exact-test playtest sign-off"
+    ],
+    "effective": "governed-by-source-commit",
+    "expiry": "until-superseded-by-a-later-owner-intent-record",
+    "supersession": "A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record.",
+    "non_amplifying_rule": "effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time"
+  },
+  "protected_decision_classes": [
+    "push or force-push",
+    "PR creation or merge",
+    "direct update to dev or main",
+    "destructive cleanup, reset, deletion, or history rewrite",
+    "publication, Pages deployment, or release",
+    "credential, privacy, or security boundary crossing",
+    "external send or messaging",
+    "override of an independent QA verdict"
+  ],
+  "override_rules": {
+    "recording": "An exact owner directive is recorded as OWNER_OVERRIDE, separate from the underlying evidence result, referencing the exact object and the evidence it overrides.",
+    "invalidation": "An override is invalidated when its referenced exact object identity (ref/head/tree/hash) changes; a changed object requires a fresh directive.",
+    "forbidden": [
+      "fabricate a PASS",
+      "impersonate an independent reviewer",
+      "bypass external credentials or platform controls",
+      "claim a technically impossible state"
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "agentops/evidence/v1",
+  "policy_version": "1.0.0",
+  "principle": "Evidence is a manifest or exact pointer, not another ledger. Each evidence type names its producer, the exact object it binds to, its verifier, its freshness rule, and the keys whose change invalidates it. A receipt is an event or evidence manifest; reads, polls, and repeated acknowledgements produce none.",
+  "evidence": [
+    {
+      "id": "test-run-receipt",
+      "producer_role": "maker",
+      "exact_object": "commit OID + tree",
+      "verifier_role": "qa-independent",
+      "freshness_rule": "valid only for the exact head it ran against",
+      "invalidation_keys": ["head_oid", "tree_oid"]
+    },
+    {
+      "id": "generated-view-drift-check",
+      "producer_role": "generator",
+      "exact_object": ".agentops/generated/* vs its JSON sources",
+      "verifier_role": "it-manager-iii",
+      "freshness_rule": "valid only while sources are unchanged",
+      "invalidation_keys": ["source_json_hash"]
+    },
+    {
+      "id": "security-scan-receipt",
+      "producer_role": "qa-independent",
+      "exact_object": "commit OID",
+      "verifier_role": "it-manager-iii",
+      "freshness_rule": "valid only for the scanned commit",
+      "invalidation_keys": ["head_oid"]
+    },
+    {
+      "id": "data-lineage-receipt",
+      "producer_role": "data-architecture-lead",
+      "exact_object": "schema/id/lineage manifest hash",
+      "verifier_role": "it-manager-iii",
+      "freshness_rule": "valid only for the manifested schema version",
+      "invalidation_keys": ["schema_version", "manifest_hash"]
+    },
+    {
+      "id": "hosted-verification-receipt",
+      "producer_role": "qa-independent",
+      "exact_object": "deployed commit SHA + hosted URL",
+      "verifier_role": "it-manager-iii",
+      "freshness_rule": "valid only for the exact hosted SHA",
+      "invalidation_keys": ["hosted_sha"]
+    }
+  ],
+  "rules": {
+    "producer_exists": "every evidence type names a producer_role that is a declared role or the generator writer.",
+    "bound_to_exact_object": "every evidence type binds to an exact object and lists invalidation keys."
+  }
+}

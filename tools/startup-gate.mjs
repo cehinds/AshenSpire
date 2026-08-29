@@ -122,35 +122,35 @@ if (args.includes('--selftest')) {
       },
       {
         name: 'load slot presses read a missing data attribute',
-        file: 'src/ui/screens/title.js',
+        file: 'src/ui/components/saveSlotSelector.js',
         find: '        onTap: () => activateSlot(slot),',
         replace: '        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant',
         expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
       },
       {
         name: 'second activation no longer opens the load review',
-        file: 'src/ui/screens/title.js',
+        file: 'src/ui/components/saveSlotSelector.js',
         find: '        loadReviewSlot = slot;',
         replace: '        loadReviewSlot = null; // startup-gate selftest plant',
         expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
       },
       {
         name: 'Escape closes the whole load flow instead of returning to saves',
-        file: 'src/ui/screens/title.js',
-        find: '        if (loadReviewSlot != null) closeLoadReview();',
-        replace: '        if (loadReviewSlot != null) closeModal(); // startup-gate selftest plant',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: '      if (loadReviewSlot != null) {',
+        replace: '      if (loadReviewSlot != null) { close(); // startup-gate selftest plant',
         expectRed: /RED A8\.LOAD-SLOT-REVIEW-ESCAPE/,
       },
       {
         name: 'completed save-slot hold selects instead of loading',
-        file: 'src/ui/screens/title.js',
-        find: '        onConfirm: () => { hideTooltip(); onContinue(slot); },',
-        replace: '        onConfirm: () => activateSlot(slot), // startup-gate selftest plant',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: "            requestLoad(slot, 'hold');",
+        replace: '            activateSlot(slot); // startup-gate selftest plant',
         expectRed: /RED A8\.LOAD-SLOT-HOLD/,
       },
       {
         name: 'quick-load hold captures keyboard and controller presses',
-        file: 'src/ui/screens/title.js',
+        file: 'src/ui/components/saveSlotSelector.js',
         find: '        pointerOnly: true,',
         replace: '        pointerOnly: false, // startup-gate selftest plant',
         expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
@@ -572,6 +572,45 @@ async function assertReturnBypass() {
   await p.close();
 }
 
+async function assertContextualTitleBack() {
+  const keyboard = await page({ query: '?shot=title' });
+  await keyboard.until(`!!document.querySelector('.title-screen')`, 'expanded title for keyboard Back');
+  const releaseEscape = await keyboard.key('Escape'); await releaseEscape();
+  await keyboard.until(`!!document.querySelector('.startup-gate')`, 'collapsed title after keyboard Back');
+  verdict(await keyboard.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`),
+    'A8.TITLE-BACK-COLLAPSE', 'Escape folds the expanded title back to the startup threshold');
+  await keyboard.close();
+
+  const modal = await page({ query: '?shot=title' });
+  await modal.until(`!!document.querySelector('[data-title-action="new"]')`, 'expanded title for modal precedence');
+  await modal.click('[data-title-action="new"]');
+  await modal.until(`!!document.querySelector('.title-menu-modal')`, 'title modal before Back');
+  const releaseModalEscape = await modal.key('Escape'); await releaseModalEscape();
+  verdict(await modal.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.title-screen') && !document.querySelector('.startup-gate')`),
+    'A8.TITLE-MODAL-PRECEDENCE', 'Escape closes the title modal without also folding the title');
+  await modal.close();
+
+  const pad = await page({ pad: true });
+  await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
+  await pad.until(`!!document.querySelector('.title-screen')`, 'expanded title for controller Back');
+  await pad.ev(`window.__startupPad.set(1,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(1,false)`); await wait(260);
+  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`),
+    'A8.TITLE-CANCEL-COLLAPSE', 'controller Cancel folds the expanded title back to the startup threshold');
+  await pad.close();
+
+  const quit = await page({ query: '?shot=map' });
+  await quit.until(`!!document.querySelector('.mapscreen')`, 'map before Save and Quit');
+  const releaseMenu = await quit.key('m'); await releaseMenu();
+  await quit.until(`!!document.querySelector('#ov-quit')`, 'run menu before Save and Quit');
+  await quit.click('#ov-quit');
+  await quit.until(`!!document.querySelector('.startup-gate')`, 'collapsed title after Save and Quit');
+  verdict(await quit.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen,.mapscreen')`),
+    'A8.QUIT-COLLAPSE', 'Save and Quit leaves the run at the folded title threshold');
+  await quit.close();
+}
+
 async function assertLoadSlotSelection() {
   const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
     const rect = (selector) => {
@@ -752,11 +791,13 @@ async function assertShape(shape, textSize) {
   const fact = await p.ev(`(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
     const boxes=critical.map(x=>{const b=x.getBoundingClientRect();return [x.className||x.dataset.place,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
+    const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
+    const centered=centerDeltas.every(([,delta])=>Math.abs(delta)<=1);
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
-    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
+    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centered, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
   const expectedFont = textSize === 'M' ? '10px' : '12px';
-  verdict(fact.font === expectedFont && !fact.overflow && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
   await p.close();
 }
 
@@ -780,6 +821,7 @@ async function main() {
   await assertGamepad(9);
   await assertInterruptedPresses();
   await assertReturnBypass();
+  await assertContextualTitleBack();
   await assertLoadSlotSelection();
   await assertCrisisPrecedence();
   await assertReducedMotion();

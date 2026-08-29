@@ -4,6 +4,7 @@
 
 import {
   equipmentKitReceipt,
+  buildEquippedWeaponCardPlan,
   equipmentRequirementReceipt,
   applyEquipTransition,
   equippedIn,
@@ -53,6 +54,27 @@ function rolesFor(registries, run) {
     run.attributes,
     run.equipmentProfileRuleSnapshot,
   ).map((row) => ({ ...row, copies: copies[row.role] }));
+}
+
+function attackPackageCounts(registries, run) {
+  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
+  const groups = new Map();
+  for (const slot of plan.slots) {
+    const key = `${slot.cardId}|${slot.profileId}`;
+    const profile = (registries.equipment.basicCardProfiles || []).find((row) => row.id === slot.profileId);
+    const row = groups.get(key) || {
+      key,
+      cardId: slot.cardId,
+      profileId: slot.profileId,
+      name: profile && profile.baseCardId === slot.cardId ? profile.displayName : registries.cards.get(slot.cardId).name,
+      count: 0,
+      sourceHands: [],
+    };
+    row.count += 1;
+    if (slot.sourceHand && !row.sourceHands.includes(slot.sourceHand)) row.sourceHands.push(slot.sourceHand);
+    groups.set(key, row);
+  }
+  return [...groups.values()];
 }
 
 function explicitEffects(registries, beforePiece, afterPiece) {
@@ -275,6 +297,9 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   if (transitioned) loadout.active[slot.id] = setIndex;
   const comparedRun = { ...run, loadout };
   const afterRoles = rolesFor(registries, comparedRun);
+  const beforeAttackPackages = attackPackageCounts(registries, run);
+  const afterAttackPackages = attackPackageCounts(registries, comparedRun);
+  const packageKeys = new Set([...beforeAttackPackages.map((row) => row.key), ...afterAttackPackages.map((row) => row.key)]);
   const beforeByRole = new Map(beforeRoles.map((row) => [row.role, row]));
   const beforeMods = runMods(registries, run.loadout, run.class);
   const afterMods = runMods(registries, loadout, run.class);
@@ -309,6 +334,19 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
       afterSchool: after.profile.damageSchool,
       afterTags: after.profile.tags || [],
     })),
+    attackPackageChanges: [...packageKeys].map((key) => {
+      const before = beforeAttackPackages.find((row) => row.key === key);
+      const after = afterAttackPackages.find((row) => row.key === key);
+      const row = after || before;
+      return {
+        cardId: row.cardId,
+        profileId: row.profileId,
+        name: row.name,
+        beforeCount: before ? before.count : 0,
+        afterCount: after ? after.count : 0,
+        sourceHands: after ? after.sourceHands : [],
+      };
+    }),
     addedEffects: explicitEffects(registries, beforePiece, piece),
     resourceChanges,
     poise: {

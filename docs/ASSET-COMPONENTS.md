@@ -58,11 +58,11 @@ single place that constructs it.
 | `armoury.inventoryItemClass` | Inventory item class with one folded/expanded action surface, delegated whole-card hold progress, and whole-card drag | `[data-card-class="inventoryItem"]` | `content/source/armouryUi.json` + `src/ui/components/holdconfirm.js` |
 | `armoury.itemReveal` | Model, description, tags, and available action | `.inventory-detail, .disc-reveal` | `src/ui/screens/equipment.js` + `src/ui/components/disclosure.js` |
 | `armoury.comparisonTooltipAnchor` | Focusable expanded-item anchor for delayed hover/focus comparison | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/tooltip.js` |
-| `armoury.equipmentComparison` | Full receipt in delayed tooltip or inline card mode | `[data-ui-component="equipment-comparison"]` | `content/source/armouryUi.json` + `src/ui/screens/equipment.js` |
+| `armoury.equipmentComparison` | Full before/after receipt with exact weapon-package counts and slot-bound upgrade changes | `[data-ui-component="equipment-comparison"]` | `content/source/armouryUi.json` + `src/ui/components/equipmentReceipts.js` + `src/ui/screens/equipment.js` |
 | `armoury.inventoryTrayResizeHandle` | Independent Inventory height handle when Inventory is mounted as a resizable supporting tray | `[data-component="armoury.inventoryTrayResizeHandle"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.cardsCard` | Folded equipment-card panel with list/grid toggle | `.armoury-strip` | `src/ui/screens/equipment.js` |
+| `armoury.cardsCard` | Folded equipment-card panel with exact package counts and list/grid toggle | `.armoury-strip` | `src/ui/screens/equipment.js` |
 | `armoury.cardList` | Configurable vertical list or grid | `.armoury-card-list` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.cardRow` | Folded equipment card row with count and cost | `.armoury-card-row` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.cardRow` | Folded equipment card/profile row with exact count and cost | `.armoury-card-row` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.cardDetail` | Expanded icon and detail panes | `.armoury-card-row-detail` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.cardViewToggle` | List/grid presentation toggle | `.armoury-card-view-toggle` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.cardsTrayResizeHandle` | Independent Cards tray height handle | `[data-component="armoury.cardsTrayResizeHandle"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |

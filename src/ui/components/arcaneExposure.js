@@ -53,7 +53,7 @@ function eventHtml(event, registries) {
   return '';
 }
 
-export function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
+export function renderArcaneExposure(registries, enemySnapshot, recentEvents = [], { tooltips = true } = {}) {
   const receipt = arcaneExposureReceipt(registries, enemySnapshot, recentEvents);
   if (!receipt) return null;
   const el = document.createElement('div');
@@ -63,7 +63,7 @@ export function renderArcaneExposure(registries, enemySnapshot, recentEvents = [
     el.setAttribute('aria-label', `${receipt.label} — ${receipt.badge}`);
     el.innerHTML = `<span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span>${esc(receipt.label)} — ${esc(receipt.badge)}</span>${eventHtml(receipt.event, registries)}`;
     markUiComponent(el, UI.arcaneExposureBar, 'immune');
-    attachTooltip(el, () => esc(receipt.tooltip));
+    if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
     return el;
   }
   el.className = `arcane-exposure-meter${receipt.locked ? ' locked' : ''}`;
@@ -74,6 +74,6 @@ export function renderArcaneExposure(registries, enemySnapshot, recentEvents = [
     + `<div class="arcane-exposure-track"><span style="width:${receipt.fillPercent}%"></span></div>`
     + (receipt.status ? `<div class="magic-vulnerable-receipt">${esc(receipt.status.label)} ${receipt.status.value}% · ${receipt.status.duration} turns</div>` : '')
     + eventHtml(receipt.event, registries);
-  attachTooltip(el, () => esc(receipt.tooltip));
+  if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
   return el;
 }

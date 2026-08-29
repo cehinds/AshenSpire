@@ -64,7 +64,7 @@ function observeCardFrames(wrap) {
  * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
  * wants Stagger's own text, which is content and not this file's to know).
  */
-export function resourceBars(plan, { surface, tooltipExtra } = {}) {
+export function resourceBars(plan, { surface, tooltipExtra, tooltips = true } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'resbars';
   wrap.dataset.surface = surface || 'main';
@@ -78,7 +78,7 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
     for (const group of groupByBand(plan)) {
       const line = document.createElement('div');
       line.className = 'resline';
-      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
+      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra, tooltips));
       wrap.appendChild(line);
     }
     // The full unit is the invisible reference track. The bordered card behind
@@ -87,7 +87,7 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => syncCardFrames(wrap));
     observeCardFrames(wrap);
   } else {
-    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
+    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra, tooltips));
   }
   return wrap;
 }
@@ -103,7 +103,7 @@ function groupByBand(plan) {
 }
 
 /** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
-function hybridUnit(bar, tooltipExtra) {
+function hybridUnit(bar, tooltipExtra, tooltips) {
   const unit = document.createElement('div');
   unit.className = 'resunit';
   unit.dataset.res = bar.id;
@@ -160,7 +160,7 @@ function hybridUnit(bar, tooltipExtra) {
   track.appendChild(troughEl(bar));
   unit.appendChild(track);
 
-  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
+  if (tooltips) attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
   return unit;
 }
 
@@ -179,7 +179,7 @@ function syncCardFrames(root) {
 }
 
 /** The under-model strip bar: trough with the label inside (unchanged shape). */
-function stripBar(bar, tooltipExtra) {
+function stripBar(bar, tooltipExtra, tooltips) {
   const el = troughEl(bar);
   const label = document.createElement('div');
   label.className = 'label';
@@ -188,7 +188,7 @@ function stripBar(bar, tooltipExtra) {
     `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
     `<span class="l-glyph">${esc(bar.glyph)}</span>`;
   el.appendChild(label);
-  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
+  if (tooltips) attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
   return el;
 }
 

@@ -118,6 +118,18 @@ const LAYOUTS = {
   'figure:0|slots:list': buildArmoury, // Rack keeps the shared shell
 };
 
+const ARMOURY_DESTINATIONS = Object.freeze({
+  cards: Object.freeze({ view: 'grid', region: 'cards' }),
+  equipment: Object.freeze({ view: 'rack', region: null }),
+  character: Object.freeze({ view: 'grid', region: null }),
+});
+
+/** Translate a semantic action destination inside the Armoury boundary. */
+export function armouryDestinationPlan(destination) {
+  if (typeof destination !== 'string' || !Object.hasOwn(ARMOURY_DESTINATIONS, destination)) return null;
+  return { ...ARMOURY_DESTINATIONS[destination] };
+}
+
 /** Every declared view id, in authored order. The one enumeration. */
 export function viewIds() {
   return (CFG().views || []).map((v) => (v && typeof v === 'object' ? v.id : v));
@@ -586,8 +598,13 @@ function inventoryReveal(registries, row, {
  *             route the change through the engine intent that charges for it
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
+  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquipmentChanged,
 }) {
+  const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
+  if (destination && !destinationPlan) {
+    console.error(`mountEquipment(): unknown action destination ${JSON.stringify(destination)}; refusing to open.`);
+    return null;
+  }
   closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
   // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
@@ -658,7 +675,7 @@ export function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  let view = destinationPlan?.view || ((stored && IDS.includes(stored)) ? stored : shapeDefault);
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
@@ -674,6 +691,7 @@ export function mountEquipment(host, {
     ? Object.fromEntries(armouryTraySession.folded) : null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
+  if (destinationPlan?.region) folded.set(destinationPlan.region, false);
   const clampTrayHeight = (value) => Math.min(
     layout.trays.maximumHeightRatio,
     Math.max(layout.trays.minimumHeightRatio, Number(value)),
@@ -803,6 +821,8 @@ export function mountEquipment(host, {
   const owned = () => ownership(registries, { meta, loadout: run.loadout });
   const ladderCtx = () => ({ meta, loadout: run.loadout });
   let draggingItemId = null;
+  let pendingEquipmentChanged = null;
+  const captureEquipmentChanged = (event) => { pendingEquipmentChanged = event; };
 
   /** Every piece the CONTENT has for this slot, owned or not. Does it exist? */
   function authoredFor(slot) {
@@ -835,7 +855,7 @@ export function mountEquipment(host, {
     const hadSelection = !!picking;
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
-      { inCombat, attributes: run.attributes }
+      { inCombat, attributes: run.attributes, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
     );
     if (!changed) {
       notice = `${actionLabel} was refused. The loadout was not changed.`;
@@ -897,7 +917,9 @@ export function mountEquipment(host, {
         if (refused) { notice = refused; draw(); }
         return;
       }
-      if (!cycleSet(registries, run.loadout, slot.id, position.index, { meta, inCombat })) return;
+      if (!cycleSet(registries, run.loadout, slot.id, position.index, {
+        meta, inCombat, classId: run.class, onEquipmentChanged: captureEquipmentChanged,
+      })) return;
       if (openPicker) openInventoryForSelection(slot.id, position.index);
       sfx.play('cardPlay');
       commit(openPicker ? foldSettings() : null);
@@ -1307,23 +1329,27 @@ export function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards armoury-card-list';
+    box.dataset.component = 'armoury.cardList';
     box.dataset.cardView = cardView;
     const gridColumns = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
       ? layout.responsive.phone.cardsGridColumns
       : layout.cards.gridColumns;
     box.style.setProperty('--armoury-card-grid-columns', String(gridColumns));
-    const surface = equipmentSurfaceReceipt(registries, run);
-    const shown = new Set();
+    const groups = new Map();
     for (const inst of run.deck || []) {
       // This tray is the equipment-card surface. Class/signature cards do not
       // belong here; they have no armament source to inspect or compare.
       if (!inst.equipmentRole) continue;
-      const key = inst.equipmentRole;
-      if (shown.has(key)) continue;
-      shown.add(key);
+      const key = inst.equipmentRole === 'attack'
+        ? `${inst.equipmentRole}|${inst.cardId}|${inst.profileId}`
+        : inst.equipmentRole;
+      const group = groups.get(key) || { inst, count: 0 };
+      group.count += 1;
+      groups.set(key, group);
+    }
+    for (const { inst, count: copyCount } of groups.values()) {
       const rendered = renderCard(registries, inst, {});
       const def = resolveCard(registries, inst);
-      const copyCount = inst.equipmentRole ? surface.roleCopies[inst.equipmentRole] : surface.signature.copies;
       const art = rendered.querySelector('.art')?.textContent || '❖';
       const type = rendered.querySelector('.ctype')?.textContent || def.type;
       const cost = rendered.querySelector('.cost')?.textContent || String(def.cost);
@@ -1336,6 +1362,7 @@ export function mountEquipment(host, {
       const row = document.createElement('details');
       row.className = 'armoury-card-row';
       row.dataset.cardRow = '1';
+      row.dataset.component = 'armoury.cardRow';
       const summary = document.createElement('summary');
       summary.className = 'armoury-card-row-summary';
       summary.innerHTML = '<span class="armoury-card-row-caret" aria-hidden="true">▸</span>'
@@ -1372,7 +1399,7 @@ export function mountEquipment(host, {
       row.append(summary, detail);
       box.appendChild(row);
     }
-    if (!shown.size) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment cards are active.</p>');
+    if (!groups.size) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment cards are active.</p>');
     return box;
   }
 
@@ -1649,6 +1676,16 @@ export function mountEquipment(host, {
     // Idempotent, and a no-op until the first talisman growth row is authored.
     syncFlaskGrowth(registries, run);
     if (onChange) onChange(run.loadout, settingChange || undefined);
+    if (pendingEquipmentChanged) {
+      if (onEquipmentChanged) onEquipmentChanged(pendingEquipmentChanged);
+      if (typeof CustomEvent === 'function') {
+        host.dispatchEvent(new CustomEvent('ashenspire:equipmentChanged', {
+          detail: pendingEquipmentChanged,
+          bubbles: true,
+        }));
+      }
+      pendingEquipmentChanged = null;
+    }
     draw();
   }
 
@@ -2060,6 +2097,17 @@ export function mountEquipment(host, {
   };
   document.addEventListener('keydown', onKey);
 
+  const focusArmouryDestination = () => {
+    if (!destinationPlan || !wrap.isConnected) return;
+    const target = destinationPlan.region
+      ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`)
+      : wrap.querySelector(`[data-surface="armouryView"] [data-member="${destinationPlan.view}"]`);
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  };
+
   draw();
+  if (destinationPlan) queueMicrotask(focusArmouryDestination);
   return { close, redraw: draw };
 }

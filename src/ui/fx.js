@@ -187,8 +187,8 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *           'under'  — under it, and only under it. When it does not fit, the
  *                      bound answers; that is the caller's declared preference,
  *                      not a failure to consider the alternatives.
- *   align   'start' | 'end' — which edge of the anchor the free axis lines up
- *                      with. Only 'under' reads it; 'beside' slides the free axis
+ *   align   'start' | 'center' | 'end' — where the anchor's free axis lines up
+ *                      for 'above' and 'under'; 'beside' slides the free axis
  *                      to stay on screen, which is what made three of its
  *                      candidates usable at all.
  *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
@@ -253,14 +253,21 @@ export function placeAnchored(el, anchor, {
     // axis as well is what made three candidates fail — the below/above ones were
     // rejected for horizontal overflow while the vertical room they existed to use
     // sat empty.
-    const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
+    const anchoredX = align === 'end'
+      ? a.left + a.width - b.width
+      : align === 'center'
+        ? a.left + (a.width - b.width) / 2
+        : a.left;
+    const slideX = Math.min(Math.max(pad, anchoredX), Math.max(pad, room.width - pad * 2 - b.width));
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
-    const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
-    const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
+    const under = { left: slideX, top: a.top + a.height + gap };
+    const above = { left: slideX, top: a.top - b.height - gap };
+    const aboveLeft = { left: a.left - b.width - gap, top: above.top };
+    const aboveRight = { left: a.left + a.width + gap, top: above.top };
     const right = { left: a.left + a.width + gap, top: slideY };
     const left = { left: a.left - b.width - gap, top: slideY };
     const candidates = intent === 'under' ? [under]
-      : intent === 'above' ? [above, under]
+      : intent === 'above' ? [above, aboveLeft, aboveRight, under]
         : intent === 'left' ? [left, right, under, above]
           : intent === 'right' ? [right, left, under, above] : [
       right,
@@ -270,14 +277,17 @@ export function placeAnchored(el, anchor, {
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {
-      const c = anchorLocalBox(layer, clear);
+      const clearBoxes = (Array.isArray(clear) ? clear : [clear])
+        .filter(Boolean)
+        .map((candidate) => anchorLocalBox(layer, candidate));
       // LEAST OVERLAP, NOT "MUST CLEAR". A veto would have no answer on the shape
       // where the group fills the room, and "no answer" resolves to the bound,
       // which lands ON the group — worse than the candidate that grazes it.
       let best = usable[0];
-      let bestArea = overlapArea(box(best), c);
+      const blockedArea = (candidate) => clearBoxes.reduce((sum, clearBox) => sum + overlapArea(box(candidate), clearBox), 0);
+      let bestArea = blockedArea(best);
       for (const p of usable.slice(1)) {
-        const area = overlapArea(box(p), c);
+        const area = blockedArea(p);
         if (area < bestArea) { best = p; bestArea = area; }
       }
       at0 = best;
