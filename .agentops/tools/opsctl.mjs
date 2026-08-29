@@ -846,8 +846,29 @@ export function semanticChecks(c, now = new Date().toISOString()) {
           // window is the right way round, so a 2020-2021 envelope satisfied it
           // and an expired grant kept reading as authoritative. Both bounds are
           // compared against the verification time instead.
-          if (env.effective > now) errors.push(`qa: standing envelope '${env.id}' is not yet effective (${env.effective} > ${now}); the self-certification grant is unbacked`);
-          if (env.expiry <= now) errors.push(`qa: standing envelope '${env.id}' expired at ${env.expiry}; the self-certification grant is unbacked and must be renewed before a lead may waive independence`);
+          // Comparing the strings is not comparing the instants. Lexical order
+          // put "9" after "2026-…", so an envelope of "0".."9" passed the schema
+          // (any non-empty string), passed ordering, and passed currency — a
+          // malformed grant reading as live authority to bypass independent QA.
+          // Parse first, and treat unparseable as unbacked rather than as valid.
+          // Date.parse is too forgiving to lean on: it accepts "9" happily, so
+          // the malformed case above was rejected only by the coincidence of
+          // landing in the past. The shape is required first, then parsed.
+          const ISO = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
+          const at = (label, v) => {
+            if (typeof v !== 'string' || !ISO.test(v) || Number.isNaN(Date.parse(v))) {
+              errors.push(`qa: standing envelope '${env.id}' has a malformed ${label} ${JSON.stringify(v)}; a grant whose window cannot be read backs nothing`);
+              return null;
+            }
+            return Date.parse(v);
+          };
+          const eff = at('effective', env.effective);
+          const exp = at('expiry', env.expiry);
+          const nowT = Date.parse(now);
+          if (eff !== null && exp !== null && !Number.isNaN(nowT)) {
+            if (eff > nowT) errors.push(`qa: standing envelope '${env.id}' is not yet effective (${env.effective} > ${now}); the self-certification grant is unbacked`);
+            if (exp <= nowT) errors.push(`qa: standing envelope '${env.id}' expired at ${env.expiry}; the self-certification grant is unbacked and must be renewed before a lead may waive independence`);
+          }
         }
       }
       // The record must keep both halves, or the waiver becomes invisible.
@@ -3090,6 +3111,16 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'self-cert: an expired standing grant, correctly ordered', pass: errs1.some((e) => e.includes('expired at')), errs: errs1 });
     const errs2 = semanticChecks(base(), '2020-01-01T00:00:00Z');
     results.push({ label: 'self-cert: a standing grant not yet effective', pass: errs2.some((e) => e.includes('not yet effective')), errs: errs2 });
+    // A window is only current if it can be read at all. Lexical comparison put
+    // "9" after "2026-...", so an envelope of "0".."9" satisfied the schema,
+    // the ordering check and the currency check at once.
+    for (const [label, eff, exp] of [['"0".."9"', '0', '9'], ['a non-date expiry', '2026-01-01T00:00:00Z', '99999']]) {
+      const c2 = base();
+      const e2 = c2.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification');
+      e2.effective = eff; e2.expiry = exp;
+      const errs3 = semanticChecks(c2);
+      results.push({ label: `self-cert: a standing grant with ${label} for a window`, pass: errs3.some((e) => e.includes('cannot be read backs nothing')), errs: errs3 });
+    }
   }
   expectSemantic('self-cert: an unauditable record', (c) => { c.qa.self_certification.records = ['something happened']; }, 'could not be audited');
 

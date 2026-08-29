@@ -15,9 +15,9 @@
 <dt>Done when</dt><dd>Every gate in the chain (fresh Application custody/PASS -&gt; CQM -&gt; Data -&gt; QA1 -&gt; QA2) has an issued lease naming its holder and its exact entry condition, and no two of them collide on an overlapping path or ref.</dd>
 <dt>Next action</dt><dd>Establish which gates already hold a lease and which do not. Issue or rebind only leases; the implementation behind each gate belongs to a maker seat and is outside this grant.</dd>
 <dt>Branch</dt><dd><code>recovery/as-hd-029</code></dd>
-<dt>Base</dt><dd><code>a77bd3f0a114</code></dd>
-<dt>Revision</dt><dd>23 · seal <code>sha256:d143c827ac8c5257…</code></dd>
-<dt>Succeeds</dt><dd><code>sha256:bc749d8df1a26013…</code></dd>
+<dt>Base</dt><dd><code>b54984b5a960</code></dd>
+<dt>Revision</dt><dd>24 · seal <code>sha256:bb0add9e81252a2c…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:d143c827ac8c5257…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
 <dt>May</dt><dd><span class="pill">resolve-technical-ambiguity</span> <span class="pill">assign-and-rebind-work</span> <span class="pill">issue-and-revoke-lease</span> <span class="pill">create-isolated-ref</span></dd>
@@ -55,6 +55,7 @@
 <li><code>AS-HD-029-0022</code> · state-change · it-manager-iii · 2026-08-29T22:34:11.384Z<br>Reseated from ddb10ad1f988 to live HEAD 3fd0f758c3b9; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 21; parent_hash names sha256:0cb88b08ba3b57c53b0cf1a057f56aa27b3cb487c5f35b95619632081d5963d8.</li>
 <li><code>AS-HD-029-0023</code> · state-change · it-manager-iii · 2026-08-29T22:40:34.417Z<br>Reseated from 3fd0f758c3b9 to live HEAD 4e6655454525; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 22; parent_hash names sha256:9ec296d51b070df0e693a119a1433939bd25108b6b68df5e5bc837bcc049badf.</li>
 <li><code>AS-HD-029-0024</code> · state-change · it-manager-iii · 2026-08-29T22:44:39.458Z<br>Reseated from 4e6655454525 to live HEAD a77bd3f0a114; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 23; parent_hash names sha256:bc749d8df1a2601303b30556a3e444e95ba1133ccb8a4ac0ba2e059c26e287a2.</li>
+<li><code>AS-HD-029-0025</code> · state-change · it-manager-iii · 2026-08-29T22:49:19.773Z<br>Reseated from a77bd3f0a114 to live HEAD b54984b5a960; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 24; parent_hash names sha256:d143c827ac8c5257be20282c7c38b08b9e8d510fa37120dddf6682eb8cc21115.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>
