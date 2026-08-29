@@ -2,8 +2,8 @@
 
 ## Comparison targets
 
-- Source visual truth — compact dark metric strip: `C:\Users\const\AppData\Local\Temp\codex-clipboard-2938f9bc-4ded-4fc6-b504-89c9dc1544ab.png` (`874 × 248`, 96 dpi).
-- Source visual truth — two-row folded blocker card: `C:\Users\const\AppData\Local\Temp\codex-clipboard-b5c9315c-016b-48f5-a507-0c01207c288a.png` (`761 × 201`, 96 dpi). Its stale “output absent” copy is behavioral/layout context only; immutable packet `99814105…0A43` controls current text.
+- Source visual truth — private clipboard reference, compact dark metric strip (`874 × 248`, 96 dpi); the local path is intentionally not published.
+- Source visual truth — private clipboard reference, two-row folded blocker card (`761 × 201`, 96 dpi); the local path is intentionally not published. Its stale “output absent” copy is behavioral/layout context only; immutable packet `99814105…0A43` controls current text.
 - Browser-rendered Context Rotation desktop: `design-qa-context-rotation-desktop.png` (`1425 × 891`, CSS viewport `1440 × 900`, device scale 1), SHA-256 `D6FF118CBC309EF7F91CC8DAFE7AE200ABCDAFD95534F52642979BB33BF07E1C`.
 - Browser-rendered Context Rotation mobile: `design-qa-context-rotation-mobile.png` (`375 × 844`, requested CSS viewport `390 × 844`, browser content width `375`, device scale 1), SHA-256 `1D33B7773FFF6EF728907061784EFE128032B18BDA0C04C2887A3339ACD9A191`.
 - Browser-rendered Art decision desktop: `design-qa-owner-decisions-desktop.png` (`1425 × 891`, CSS viewport `1440 × 900`, device scale 1), SHA-256 `40F17CC1F22216059A7EDFE56199DC9BE9ED660EDA96E7C481DDB318F6B219F6`.
@@ -59,3 +59,27 @@
 - Privacy boundary preserved: no prompts, full chat, secrets, personal data, or queue bodies are displayed.
 
 final result: static PASS / rendered desktop + mobile PASS / Pages PR pending
+
+## 28 Aug 2026 · 21:18 AKDT — Event 0002 follow-up
+
+- Live delivery reconciliation: Constantine merged PR #361 at `54365d5436dfb778a3dc87de9424c408eb6c56c3`; Pages then built `090159d6b46f98bf4452fa45b6a55606530695ab`. Both resolve to deployed Hub tree `604700d17b478d5e17c3de9307caa4e89cfd5102`. Hosted HTTP readback passed and still omitted Event 0002 before this local candidate.
+- Physical evidence advanced the #053 projection to Event 0002, SHA-256 `554673D98816090ABDA4927F7DC52DE174A65ACF533BFF47D30F6409C7E97572`. One sole publisher lease and first action entered are shown separately from the 52-seat denominator. Final corrected-manifest acceptance and explicit GO remain pending; remote refs `0/13`, pushes `0`, checkpointed `0`, cold-start validated `0`, rotated/wiped `0`, successor resumed `0`, evidence loss `0`, duplicate authority `0`, and destructive mutation `0`.
+- Bounded pointer refresh changed only two displayed rows: CQM r13 / node `0884AA14069272B99374E9F35CD8B74E5650CD7ED948EC0D618E13F9F8F5F179` / pointer `D6BB1BDD63237DCA77671A22FD9F6DD89EEE22C18C251F69B09DF5444715F8E9`; Help Desk r11 / node `FE970D7478F08214A69F824E60A9DF6416FE8E1049F62F367B28EA102DD35105` / pointer `AF451B52FD722830DF7BBDC5E317D5169B0320E0AB51D5416A63BCDAEFB7AFC4`.
+- Source identities: `app/page.tsx` SHA-256 `E968BE735CFD6E9E16BEAE00E98C42AC6051C2B120701B430B357BB3AB4A0B62`; dedicated #053 page SHA-256 `558E6253ECD949C8EFF71DEA9F6647BF9C8588671504E44AFB2CFBA3E90AE3FB`.
+- `npm run lint`: PASS. `npm run refresh:local`: PASS, `16/16` static routes. Published `index.html` SHA-256 `D4AF7C28237948B7D50D4CDCAD43E3DB5B303934B9F4B403A136E955AD95EB41`, 214,867 bytes; dedicated #053 HTML SHA-256 `74F30DE4F50A29F4A5B7B224096A220D124E320C08FD9F38961A7989F0E8FFC0`, 100,047 bytes; refresh sentinel SHA-256 `1624E4B50EE944F2FCD443B884510C971F219EFD8B47DA35E834375E490E6B40`.
+- In-app Browser desktop `1440×900`: PASS. Main Hub and dedicated #053 route had page identity, meaningful DOM, framework-overlay absence, console health, `13/13` team rows, and horizontal overflow `0`; the Context Rotation fold and Help Desk row opened successfully and exposed Event 0002 plus `/root/rotation_pointer_repair` with rotation credit 0.
+- In-app Browser mobile `390×844`: PASS. Dedicated #053 route had page width `375/375`, console errors/warnings `0`, Help Desk row open/close behavior, full publisher state, and no clipping or horizontal overflow.
+- Privacy boundary preserved: no prompts, full chat, secrets, personal data, or queue bodies are displayed.
+
+final result: local candidate PASS / rendered desktop + mobile PASS / independent exact-head QA and review pending / not merged or deployed
+
+## 28 Aug 2026 · 21:32 AKDT — Pages packaging verification
+
+- Synced the Event 0002 build into isolated branch `docs/AS-HD-20260826-053-event0002` from exact `origin/dev` base `090159d6b46f98bf4452fa45b6a55606530695ab`; repository scope is only `review-approval-hub/`.
+- Converted 7,327 generated copies of local-only evidence URLs across 210 text artifacts to `/AshenSpire/review-approval-hub/local-evidence-unavailable.html`; remaining local-file URI references are `0`. Exact hashes and bounded evidence labels remain displayed.
+- Exact packaged identities after that Pages-only conversion: `index.html` SHA-256 `236F540512ABB95E891393E6E0FE008C917D28265F9E305F271381623EC5C0DA`, 203,965 bytes; dedicated #053 HTML SHA-256 `8B31A70D585E81E1EC0EE03DC7A6E4658EB3854735BBABB7C5B19F2F92B3F797`, 95,879 bytes; sentinel remains `1624E4B50EE944F2FCD443B884510C971F219EFD8B47DA35E834375E490E6B40`.
+- The first broad URL-boundary pass failed exact-artifact browser QA with generated-script syntax errors. It was discarded before commit or push, restored from the clean build, and rerun with quote, backtick, backslash, angle-bracket, and whitespace boundaries. This is diagnostic history only; the defective artifact was not delivered.
+- Final isolated Pages artifact browser QA: desktop `1440x900` and mobile `390x844` PASS; dedicated #053 title and meaningful DOM present, `13/13` team rows, Help Desk disclosure click exposed the publisher lease and rotation credit `0`, widths `1425/1425` and `375/375`, no framework overlay, and current-port console errors/warnings `0`. Main Hub Context Rotation disclosure opened, showed Event 0002 and 13 nested team rows, and had width `1425/1425` with console errors/warnings `0`.
+- Repository gates: `node tests/run-node.mjs` PASS `114/114`; `node tools/linkcheck.mjs --selftest` PASS `5/5`; `node tools/linkcheck.mjs review-approval-hub` PASS `372/372` module graphs, `0` broken. This native link check is source-module evidence, not a browser or hosted-Pages claim.
+
+final result: Pages candidate PASS / exact packaged desktop + mobile PASS / PR review pending / not merged or deployed
