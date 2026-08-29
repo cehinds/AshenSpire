@@ -238,6 +238,7 @@ const CONTRACTS = [
   { name: 'roles', file: 'governance/roles.json', schema: 'schemas/roles.schema.json' },
   { name: 'teams', file: 'governance/teams.json', schema: 'schemas/teams.schema.json' },
   { name: 'promotion-gates', file: 'governance/promotion-gates.json', schema: 'schemas/promotion-gates.schema.json' },
+  { name: 'model-effort', file: 'governance/model-effort.json', schema: 'schemas/model-effort.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
   { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
   { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
@@ -272,6 +273,33 @@ export function loadContracts(root = ROOT) {
 // ---------------------------------------------------------------------------
 export function semanticChecks(c) {
   const errors = [];
+
+  // --- model and effort ---------------------------------------------------
+  // Decision 0006's load-bearing sentence is that selecting a model grants
+  // nothing and a stronger model does not outrank a weaker one. Encoded as a
+  // rule so a tier cannot quietly acquire authority by being the "big" one.
+  if (c['model-effort']) {
+    const me = c['model-effort'];
+    if (me.grants.length) errors.push(`model-effort: the contract declares grants (${me.grants.join(', ')}); model selection grants no authority`);
+    const seenTier = new Set();
+    for (const t of me.tiers) {
+      if (seenTier.has(t.id)) errors.push(`model-effort: tier '${t.id}' is declared twice`);
+      seenTier.add(t.id);
+      // A tier that permits max effort without demanding the exceptional reason
+      // turns the escape hatch into the default.
+      if (t.allowed_efforts.includes('max') && t.requires_exceptional_reason !== true) {
+        errors.push(`model-effort: tier '${t.id}' allows 'max' effort without requiring an exceptional reason`);
+      }
+    }
+    // Selection is by risk and station, never role rank: a tier naming a role
+    // would reintroduce exactly that.
+    if (c.roles) {
+      const roleSet = new Set(c.roles.roles.map((r) => r.role));
+      for (const t of me.tiers) {
+        if (roleSet.has(t.id)) errors.push(`model-effort: tier '${t.id}' is named after a role; selection follows risk and station, never role rank`);
+      }
+    }
+  }
 
   // --- promotion gates ---------------------------------------------------
   // Decision 0009 defines Gates A-F: who may act, what evidence each needs,
@@ -1018,6 +1046,19 @@ export function runtimeChecks(g, rt) {
   // stream, or source path merely because the path fits their specialty."
   // Enforced where it can actually be violated: a capsule or a lease naming a
   // pool as its holder would make it one.
+  if (g['model-effort']) {
+    const me = g['model-effort'];
+    for (const t of Object.keys(rt.capsules)) {
+      const mx = rt.capsules[t].model_effort;
+      if (mx == null) continue;
+      const tiers = me.tiers.filter((x) => x.allowed_efforts.includes(mx.effort));
+      if (!tiers.length) {
+        errors.push(`capsule ${t}: effort '${mx.effort}' matches no declared risk-and-station tier`);
+      } else if (tiers.every((x) => x.requires_exceptional_reason) && !mx.exceptional_reason) {
+        errors.push(`capsule ${t}: effort '${mx.effort}' is only allowed with a recorded exceptional reason`);
+      }
+    }
+  }
   if (g.teams) {
     const pools = new Set(g.teams.capability_pools.map((p) => p.id));
     // A capsule may name the team it serves. Optional, because most work is
@@ -2393,6 +2434,11 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('model-effort: the contract claiming a grant', (c) => { c['model-effort'].grants = ['integration']; }, 'model selection grants no authority');
+  expectSemantic('model-effort: max effort with no exceptional reason required', (c) => { delete c['model-effort'].tiers.find((t) => t.allowed_efforts.includes('max')).requires_exceptional_reason; }, "allows 'max' effort without requiring an exceptional reason");
+  expectSemantic('model-effort: a tier named after a role', (c) => { c['model-effort'].tiers[0].id = 'it-manager-iii'; }, 'never role rank');
+  expectRuntime('a capsule claiming max effort with no reason', (rt) => { rt.capsules['AS-1001'].model_effort = { model: 'x', effort: 'max', why: 'y', escalate_when: 'z' }; }, 'recorded exceptional reason');
+  expectRuntime('a capsule claiming an undeclared effort', (rt) => { rt.capsules['AS-1001'].model_effort = { model: 'x', effort: 'ludicrous', why: 'y', escalate_when: 'z' }; }, 'matches no declared risk-and-station tier');
   expectSemantic('gates: a gate claiming owner-reserved authority', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'C').grants = ['release']; }, 'owner-reserved and belongs to Gate F alone');
   expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
   expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');

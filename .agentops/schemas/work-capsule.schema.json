@@ -185,6 +185,41 @@
         "string",
         "null"
       ]
+    },
+    "model_effort": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "effort",
+        "why",
+        "escalate_when"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effort": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        },
+        "escalate_when": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exceptional_reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   }
 }

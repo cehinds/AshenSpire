@@ -26,7 +26,7 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all seventeen contracts loaded', Object.keys(contracts).length === 17, Object.keys(contracts).join(','));
+  check('all eighteen contracts loaded', Object.keys(contracts).length === 18, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
@@ -608,6 +608,35 @@ function check(name, cond, detail = '') {
   rtUngated.capsules['AS-1001'].lifecycle_state = 'assigned';
   check('an ungated state gets no gate line',
     !(buildCapsule(contracts, rtUngated, 'AS-1001', { frozen: true }).text || '').includes('GATE       :'));
+}
+
+// 2p. Adaptive model and effort selection (decision 0006). Its load-bearing
+// sentence — selecting a model grants nothing, and a stronger model does not
+// outrank a weaker one — was policy nobody could enforce.
+{
+  const { contracts } = loadContracts();
+  const me = contracts['model-effort'];
+  check('model-effort contract loads', !!me && me.schema === 'agentops/model-effort/v1');
+  check('the four risk-and-station tiers are declared', me.tiers.length === 4, String(me.tiers.length));
+  check('model selection grants nothing', me.grants.length === 0, me.grants.join(', '));
+  check('no tier is named after a role',
+    !me.tiers.some((t) => contracts.roles.roles.some((r) => r.role === t.id)));
+  // The escape hatch stays an escape hatch.
+  const maxTiers = me.tiers.filter((t) => t.allowed_efforts.includes('max'));
+  check('max effort exists and always demands an exceptional reason',
+    maxTiers.length > 0 && maxTiers.every((t) => t.requires_exceptional_reason === true));
+  check('the assignment record keeps all four fields',
+    ['model', 'effort', 'why', 'escalate_when'].every((f) => me.assignment_record.required_fields.includes(f)));
+  check('a reassignment records the pairing too', me.assignment_record.recorded_on.includes('reassignment'));
+  check('independence is not a model choice', /non-maker/.test(me.rules.independence_is_not_a_model));
+  // A capsule may declare its pairing; if it does, the effort must be one a
+  // declared tier allows.
+  const rt = loadRuntime();
+  const efforts = new Set(me.tiers.flatMap((t) => t.allowed_efforts));
+  const declared = Object.entries(rt.capsules).filter(([, c]) => c.model_effort);
+  check('every capsule that declares a pairing uses a declared effort',
+    declared.every(([, c]) => efforts.has(c.model_effort.effort)),
+    declared.map(([t, c]) => `${t}:${c.model_effort.effort}`).join(', ') || '(none declare one)');
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);
