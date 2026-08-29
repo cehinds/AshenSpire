@@ -108,7 +108,7 @@ function check(name, cond, detail = '') {
     // Coverage is only as good as the probes. Two contracts sharing a probe
     // value means one can mask the other; that is how `roles` first passed
     // while its whole section was deleted.
-    const weak = probeStrengthErrors(contracts);
+    const weak = probeStrengthErrors(contracts, expected);
     check('no two contracts share a view probe', weak.length === 0, weak.join(' | '));
 
     // No contract may opt out. An unprobed contract is the same silent gap.

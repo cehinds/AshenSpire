@@ -2495,25 +2495,25 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // escalation classes), and probeStrengthErrors below proves each one still fails
 // when its block is removed.
 const VIEW_PROBES = {
-  authority: (x) => x.grants.map((g) => g.action),
-  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => e.id)],
+  authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} |`),
+  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} |`)],
   delivery: (x) => [x.principle],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => cl.id), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => st.does)],
-  evidence: (x) => [x.principle],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => r.ref), ...x.paths.map((pp) => pp.glob), x.branch_hygiene.principle, x.collision_rule],
-  hierarchy: (x) => [...x.nodes.map((n) => n.owns_escalations.join(', ')), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => lv.label)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => st.does)],
+  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} |`)],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule],
+  hierarchy: (x) => [...x.nodes.map((n) => n.owns_escalations.join(', ')), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => `**P${lv.p}** ${lv.label}`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => d.topic)],
   migration: (x) => [x.principle],
-  'model-effort': (x) => [x.principle],
-  'owner-command': (x) => [x.principle],
-  'owner-intent': (x) => [x.mission, x.measurable_end_state, x.risk_tolerance, ...x.non_negotiable_invariants, x.owner.reserved_authority.join('; '), x.deputy.grant_summary, x.deputy.non_amplifying_rule],
-  project: (x) => [x.project_name, x.installed_stage],
+  'model-effort': (x) => [x.principle, ...x.tiers.map((t) => `| ${t.risk_and_station} |`)],
+  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} |`)],
+  'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary],
+  project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
   'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
-  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded],
-  raci: (x) => [x.principle],
+  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} |`)],
+  raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} |`)],
   roles: (x) => x.roles.map((r) => r.mission),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => l.actor_id), ...x.team_leads.leads.map((l) => l.seat_name), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
-  transitions: (x) => [x.principle, ...x.states],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => l.actor_id), ...x.team_leads.leads.map((l) => l.seat_name), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
+  transitions: (x) => [x.principle, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} |`)],
 };
 
 // A probe value shared by two contracts lets one mask the other: the masked
@@ -2615,10 +2615,10 @@ export function renderResultConsumerErrors(rawSource) {
 export function governanceGateErrors(contracts, arts) {
   const gov = arts.find((a) => a.rel === GENERATED_VIEW);
   if (!gov) return [`generated artifacts do not include '${GENERATED_VIEW}'; the human governance view is missing and nothing downstream can check it`];
-  return [...probeStrengthErrors(contracts), ...viewCoverageErrors(contracts, gov.text)];
+  return [...probeStrengthErrors(contracts, gov.text), ...viewCoverageErrors(contracts, gov.text)];
 }
 
-export function probeStrengthErrors(contracts) {
+export function probeStrengthErrors(contracts, viewText) {
   const errors = [];
   const seen = new Map();
   for (const name of Object.keys(contracts).sort()) {
@@ -2630,6 +2630,30 @@ export function probeStrengthErrors(contracts) {
       if (seen.has(n) && seen.get(n) !== name) {
         errors.push(`view probe ${JSON.stringify(n.slice(0, 60))} is claimed by both '${seen.get(n)}' and '${name}'; a shared probe lets one contract mask the other`);
       } else seen.set(n, name);
+    }
+  }
+  // Comparing the declared sets to each other was not enough: a probe value can
+  // also appear in another section's rendered prose without being that
+  // section's declared probe, and then deleting the row it came from changes
+  // nothing the gate can see. `record-triage-route-report-status` was an
+  // authority row and also a line in the Roles `may` list, so the row could be
+  // dropped with `verify` green. Probes are therefore checked against the
+  // rendered view too: a probe must identify one place in it.
+  if (typeof viewText === 'string' && viewText.length) {
+    const lines = viewText.split('\n');
+    const heads = [];
+    lines.forEach((l, i) => { if (/^#{2,3} /.test(l)) heads.push(i); });
+    const sectionOf = (idx) => {
+      let last = 'preamble';
+      for (const h of heads) { if (h <= idx) last = lines[h]; else break; }
+      return last;
+    };
+    for (const [needle, owner] of seen) {
+      const hit = new Set();
+      lines.forEach((l, i) => { if (l.includes(needle)) hit.add(sectionOf(i)); });
+      if (hit.size > 1) {
+        errors.push(`view probe ${JSON.stringify(needle.slice(0, 60))} for '${owner}' appears in ${hit.size} rendered sections (${[...hit].join(' / ')}); deleting any one of them leaves the probe satisfied`);
+      }
     }
   }
   return errors;
@@ -3119,7 +3143,7 @@ export function runSelftest(root = ROOT) {
   {
     const govText = renderGovernance(contracts);
     results.push({ label: 'generated governance view projects every contract', pass: viewCoverageErrors(contracts, govText).length === 0, errs: viewCoverageErrors(contracts, govText) });
-    results.push({ label: 'no two contracts share a view probe', pass: probeStrengthErrors(contracts).length === 0, errs: probeStrengthErrors(contracts) });
+    results.push({ label: 'no two contracts share a view probe', pass: probeStrengthErrors(contracts, govText).length === 0, errs: probeStrengthErrors(contracts, govText) });
 
     // Every rendered section, swept generically. A hardcoded section list was
     // the first attempt and it hid the same bug one level down: contracts that
@@ -3147,6 +3171,24 @@ export function runSelftest(root = ROOT) {
     }
     results.push({ label: 'the section sweep found sections to sweep', pass: swept >= 25, errs: [String(swept)] });
 
+    // Sections were swept; rows were not, and a section survives losing a row.
+    // 53 of 163 rendered rows could be deleted with the gate green, because
+    // most probes were bare ids that also appear in prose elsewhere. Probes are
+    // rendered-row shaped now, and this holds that. Table headers are excluded
+    // on the same ground as a body-less section: losing one is a formatting
+    // loss, not a policy loss.
+    let rows = 0;
+    const undeletable = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!/^\| /.test(l) || /^\|---/.test(l) || /^\| *[A-Z#]/.test(l)) continue;
+      rows++;
+      const without = lines.slice(0, i).concat(lines.slice(i + 1)).join('\n');
+      if (viewCoverageErrors(contracts, without).length === 0) undeletable.push(l.slice(0, 70));
+    }
+    results.push({ label: 'deleting any rendered policy row fails the coverage gate', pass: undeletable.length === 0, errs: undeletable });
+    results.push({ label: 'the row sweep found rows to sweep', pass: rows >= 100, errs: [String(rows)] });
+
     // ...and a contract added with no probe at all must fail rather than skip.
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };
     const ghost = viewCoverageErrors(withGhost, govText);
@@ -3158,9 +3200,17 @@ export function runSelftest(root = ROOT) {
     const without = governanceGateErrors(contracts, artsNow.filter((a) => a.rel !== GENERATED_VIEW));
     results.push({ label: 'a missing governance view fails rather than skipping the gate', pass: without.some((e) => e.includes('is missing and nothing downstream')), errs: without });
 
-    // ...and a probe shared between two contracts must be reported.
-    const shared = probeStrengthErrors({ ...contracts, project: { ...contracts.project, project_name: contracts.roles.roles[0].mission } });
+    // ...and a probe shared between two contracts must be reported. Probes are
+    // rendered-row shaped now, so the collision is planted on a principle,
+    // which two contracts can state identically.
+    const shared = probeStrengthErrors({ ...contracts, evidence: { ...contracts.evidence, principle: contracts.qa.principle } }, govText);
     results.push({ label: 'probe-strength check catches a shared probe value', pass: shared.some((e) => e.includes('lets one contract mask the other')), errs: shared });
+    // ...and a probe that is unique among the declared sets but still appears
+    // in two rendered sections is equally useless, which is how an authority
+    // row survived deletion: its action was also a line in the Roles `may` list.
+    const dupLine = govText.split('\n').find((l) => l.startsWith('Project: **'));
+    const crossSection = probeStrengthErrors(contracts, `${govText}\n## Elsewhere\n\n${dupLine}\n`);
+    results.push({ label: 'probe-strength check catches a probe spanning two rendered sections', pass: crossSection.some((e) => e.includes('rendered sections')), errs: crossSection });
   }
 
   const failed = results.filter((r) => !r.pass);
