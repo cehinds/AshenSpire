@@ -551,6 +551,50 @@ export function semanticChecks(c) {
     if (cls && ownerId && cls.wake !== ownerId) {
       errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which wakes '${cls.wake}' rather than the owner`);
     }
+
+    // Team leads. The owner made a lead able to waive QA independence for its
+    // own team's seats, which is the most load-bearing grant in this contract:
+    // every way it could be quietly widened is checked here rather than left to
+    // a reader of the prose.
+    if (c.teams.team_leads) {
+      const tl = c.teams.team_leads;
+      if (!declaredRoles.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is not a declared role`);
+      if (poolIds.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is also a capability pool, which must not be able to hold a seat`);
+      for (const team of tl.teams) {
+        if (!poolIds.has(team)) errors.push(`teams: team_leads names team '${team}', which is not a declared capability pool`);
+      }
+      // Every team gets a lead, or the ones left out have no approver and the
+      // roster silently means something narrower than it says.
+      for (const p of c.teams.capability_pools) {
+        if (!tl.teams.includes(p.id)) errors.push(`teams: capability pool '${p.id}' has no team lead; team_leads must name every team`);
+      }
+      // A tier declared here and a tier declared in the ladder must agree.
+      if (c.hierarchy && c.hierarchy.authority_tiers) {
+        const lv = c.hierarchy.authority_tiers.levels.find((l) => l.actors.includes(tl.role));
+        if (!lv) errors.push(`teams: team_leads.role '${tl.role}' is in no authority tier`);
+        else if (lv.p !== tl.authority_tier) errors.push(`teams: team_leads declares tier P${tl.authority_tier} but the ladder places '${tl.role}' at P${lv.p}`);
+      }
+      // The standing grant must be a real envelope that actually says this.
+      if (c.delegation) {
+        const env = c.delegation.envelopes.find((e) => e.id === tl.delegation_envelope);
+        if (!env) errors.push(`teams: team_leads names standing envelope '${tl.delegation_envelope}', which delegation.json does not declare`);
+        else {
+          if (env.delegator_role !== tl.standing_grant_from) errors.push(`teams: team_leads says the standing grant comes from '${tl.standing_grant_from}' but envelope '${env.id}' is delegated by '${env.delegator_role}'`);
+          if (env.delegatee_role !== tl.role) errors.push(`teams: standing envelope '${env.id}' grants '${env.delegatee_role}', not the team lead role '${tl.role}'`);
+          if (env.max_subdelegation_depth !== 0) errors.push(`teams: standing envelope '${env.id}' allows subdelegation; a lead must not pass the independence waiver on`);
+        }
+      }
+    }
+
+    // The naming convention shares its leading letter with the tier namespace,
+    // and a convention that stops saying so is how the two get conflated.
+    if (c.teams.naming_convention) {
+      const nc = c.teams.naming_convention;
+      if (!/^P\s*\|/.test(nc.persistent_lead)) errors.push(`teams: naming_convention.persistent_lead '${nc.persistent_lead}' does not begin with the P seat-kind marker`);
+      if (!/^A\s*\|/.test(nc.agent_seat)) errors.push(`teams: naming_convention.agent_seat '${nc.agent_seat}' does not begin with the A seat-kind marker`);
+      if (/^P[0-9]/.test(nc.persistent_lead)) errors.push('teams: naming_convention.persistent_lead uses a numbered P, which is the authority-tier namespace, not a seat kind');
+      if (!/P<n>|P[0-9]/.test(nc.not_the_tier_namespace)) errors.push('teams: naming_convention does not distinguish the bare seat-kind P from the numbered authority tier; the two namespaces would be read as one');
+    }
   }
 
   const roles = c.roles ? new Set(c.roles.roles.map((r) => r.role)) : new Set();
@@ -754,6 +798,49 @@ export function semanticChecks(c) {
       if (!riskIds.has(g.risk_class)) errors.push(`qa: gate '${g.id}' references unknown risk_class '${g.risk_class}'`);
       for (const ev of g.required_evidence) if (!evIds.has(ev)) errors.push(`qa: gate '${g.id}' required evidence '${ev}' has no owner in evidence.json`);
     }
+
+    // Self-certification lets a maker sign its own work when its team lead
+    // waives independence. That is the one place in this corpus where the
+    // maker/verifier separation is deliberately relaxed, so every way it could
+    // widen into a self-approval is checked, not described.
+    if (c.qa.self_certification) {
+      const sc = c.qa.self_certification;
+      if (!roles.has(sc.approver_role)) errors.push(`qa: self_certification approver role '${sc.approver_role}' is unknown`);
+      if (sc.approver_role === 'maker') errors.push("qa: self_certification lets the maker approve its own certification (approver_role 'maker')");
+      for (const g of c.qa.gates) {
+        if (sc.approver_role === g.verifier_role) errors.push(`qa: self_certification approver '${sc.approver_role}' is also the verifier of gate '${g.id}'; the approver of a waiver must not be the reviewer it waives`);
+      }
+      for (const rc of sc.permitted_risk_classes) {
+        if (!riskIds.has(rc)) errors.push(`qa: self_certification permits unknown risk class '${rc}'`);
+        // A class the owner reserved cannot be cleared by a delegated grant:
+        // the deputy has no high-risk waiver to delegate in the first place.
+        for (const g of c.qa.gates) {
+          if (g.risk_class === rc && g.waiver_authority_role === 'owner') {
+            errors.push(`qa: self_certification permits risk class '${rc}', but gate '${g.id}' reserves its waiver to the owner; a delegated grant cannot clear it`);
+          }
+        }
+      }
+      // The verdict must stay distinguishable from a real independent one.
+      const independentVerdicts = new Set(['pass', 'independent-pass', 'qa-pass', 'qa-independent']);
+      if (independentVerdicts.has(String(sc.verdict_kind).toLowerCase())) {
+        errors.push(`qa: self_certification verdict_kind '${sc.verdict_kind}' reads as an independent verdict; a waiver must never be recorded as one`);
+      }
+      // The standing grant has to exist and actually carry these actions.
+      if (c.delegation) {
+        const env = c.delegation.envelopes.find((e) => e.id === sc.delegation_envelope);
+        if (!env) errors.push(`qa: self_certification names standing envelope '${sc.delegation_envelope}', which delegation.json does not declare`);
+        else {
+          if (env.delegatee_role !== sc.approver_role) errors.push(`qa: standing envelope '${env.id}' grants '${env.delegatee_role}', not the approver role '${sc.approver_role}'`);
+          if (env.delegator_role !== sc.standing_authority_from) errors.push(`qa: self_certification says its standing authority comes from '${sc.standing_authority_from}' but envelope '${env.id}' is delegated by '${env.delegator_role}'`);
+          if (env.expiry <= env.effective) errors.push(`qa: standing envelope '${env.id}' is expired; the self-certification grant would be unbacked`);
+        }
+      }
+      // The record must keep both halves, or the waiver becomes invisible.
+      const joined = sc.records.join(' ').toLowerCase();
+      for (const need of ['seat', 'lead', 'head']) {
+        if (!joined.includes(need)) errors.push(`qa: self_certification records nothing naming the ${need}; the waiver could not be audited`);
+      }
+    }
   }
 
   // 12. Evidence: producer and verifier roles are declared (or the generator writer).
@@ -929,6 +1016,29 @@ export function renderGovernance(c) {
     L.push('### Charter exception');
     L.push('');
     L.push(`${c.teams.charter_exception.principle} Concurrence: ${c.teams.charter_exception.requires_concurrence.map((r) => '`' + r + '`').join(' + ')}; escalates as \`${c.teams.charter_exception.escalation_class}\`.`);
+    if (c.teams.team_leads) {
+      const tl = c.teams.team_leads;
+      L.push('');
+      L.push('### Team leads');
+      L.push('');
+      L.push(tl.principle);
+      L.push('');
+      L.push(`Role \`${tl.role}\` at **P${tl.authority_tier}**, one per team, standing grant from \`${tl.standing_grant_from}\` under envelope \`${tl.delegation_envelope}\`. Spins out ${tl.spins_out}.`);
+      L.push('');
+      L.push(`Teams with a lead: ${tl.teams.map((x) => '`' + x + '`').join(', ')}.`);
+    }
+    if (c.teams.naming_convention) {
+      const nc = c.teams.naming_convention;
+      L.push('');
+      L.push('### Seat naming');
+      L.push('');
+      L.push(nc.principle);
+      L.push('');
+      L.push(`- Persistent team lead: \`${nc.persistent_lead}\``);
+      L.push(`- Agent seat it spins out: \`${nc.agent_seat}\``);
+      L.push('');
+      L.push(`${nc.leading_letter_is_seat_kind} ${nc.not_the_tier_namespace}`);
+    }
   }
   L.push('');
 
@@ -1043,6 +1153,21 @@ export function renderGovernance(c) {
       L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
     }
     L.push('');
+    if (c.qa.self_certification) {
+      const sc = c.qa.self_certification;
+      L.push('### Self-certification (independence waived, never faked)');
+      L.push('');
+      L.push(sc.principle);
+      L.push('');
+      L.push(`Permitted risk classes: ${sc.permitted_risk_classes.map((x) => '`' + x + '`').join(', ')}. High risk is excluded because ${sc.high_risk_is_excluded_because}`);
+      L.push('');
+      L.push(`Approver: \`${sc.approver_role}\`, leading the certifying seat's own team and never the seat itself, under standing grant \`${sc.delegation_envelope}\` from \`${sc.standing_authority_from}\`. Recorded as \`${sc.verdict_kind}\`.`);
+      L.push('');
+      L.push(`Every self-certification records: ${sc.records.join(', ')}.`);
+      L.push('');
+      L.push(`Never: ${sc.never.join('; ')}.`);
+      L.push('');
+    }
   }
 
   if (c.hierarchy && c.hierarchy.authority_tiers) {
@@ -2424,10 +2549,10 @@ const VIEW_PROBES = {
   'owner-intent': (x) => [x.mission, x.measurable_end_state, x.risk_tolerance, ...x.non_negotiable_invariants, x.owner.reserved_authority.join('; '), x.deputy.grant_summary, x.deputy.non_amplifying_rule],
   project: (x) => [x.project_name, x.installed_stage],
   'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
-  qa: (x) => [x.principle],
+  qa: (x) => [x.principle, x.self_certification.principle, x.self_certification.high_risk_is_excluded_because],
   raci: (x) => [x.principle],
   roles: (x) => x.roles.map((r) => r.mission),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
   transitions: (x) => [x.principle, ...x.states],
 };
 
@@ -2908,6 +3033,25 @@ export function runSelftest(root = ROOT) {
   expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
   expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
   expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
+  // Stage 11 team-lead and self-certification plants. The owner granted a lead
+  // the power to waive QA independence for its own team; this is the one place
+  // the maker/verifier separation is deliberately relaxed, so each way it could
+  // widen into a plain self-approval is planted.
+  expectSemantic('team lead: role that is not declared', (c) => { c.teams.team_leads.role = 'ghost-lead'; }, 'is not a declared role');
+  expectSemantic('team lead: a capability pool made into the lead role', (c) => { c.teams.team_leads.role = 'qa-guild'; }, 'is also a capability pool');
+  expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.teams = c.teams.team_leads.teams.filter((t) => t !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
+  expectSemantic('team lead: a tier that disagrees with the ladder', (c) => { c.teams.team_leads.authority_tier = 1; }, 'but the ladder places');
+  expectSemantic('team lead: a standing grant that does not exist', (c) => { c.teams.team_leads.delegation_envelope = 'ghost-envelope'; }, 'which delegation.json does not declare');
+  expectSemantic('team lead: a grant that may be passed on', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').max_subdelegation_depth = 1; }, 'must not pass the independence waiver on');
+  expectSemantic('naming: a numbered P used as a seat kind', (c) => { c.teams.naming_convention.persistent_lead = 'P2 | <role> III | <team> | Ashenspire'; }, 'authority-tier namespace, not a seat kind');
+  expectSemantic('naming: the two P namespaces no longer distinguished', (c) => { c.teams.naming_convention.not_the_tier_namespace = 'use judgement'; }, 'would be read as one');
+  expectSemantic('self-cert: the maker approving itself', (c) => { c.qa.self_certification.approver_role = 'maker'; }, 'approve its own certification');
+  expectSemantic('self-cert: the approver is also the verifier it waives', (c) => { c.qa.self_certification.approver_role = 'qa-independent'; }, 'must not be the reviewer it waives');
+  expectSemantic('self-cert: reaching a risk class the owner reserved', (c) => { c.qa.self_certification.permitted_risk_classes.push('high'); }, 'reserves its waiver to the owner');
+  expectSemantic('self-cert: recorded as a real independent verdict', (c) => { c.qa.self_certification.verdict_kind = 'independent-pass'; }, 'reads as an independent verdict');
+  expectSemantic('self-cert: a standing grant naming a different role', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegatee_role = 'it-support'; }, 'not the approver role');
+  expectSemantic('self-cert: an unauditable record', (c) => { c.qa.self_certification.records = ['something happened']; }, 'could not be audited');
+
   expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
   expectRuntime('a capsule naming a team that is on no roster', (rt) => { rt.capsules['AS-HD-050'].team = 'audio'; }, 'nor a declared legacy alias');
   expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');

@@ -154,6 +154,26 @@
         "override-an-independent-qa-verdict"
       ],
       "approval_ceiling": "May restore capability only. Any repair that would change what the work produces, or that needs a protected transition, is escalated to it-manager-iii rather than performed."
+    },
+    {
+      "role": "team-lead",
+      "mission": "Hold one team persistently: spin out its agent seats, approve their self-certification inside the standing grant from the IT Manager III, and answer for the team's work.",
+      "may": [
+        "spin-out-agent-seat",
+        "approve-maker-self-certification",
+        "record-independence-waiver"
+      ],
+      "must": [
+        "name itself and the standing envelope on every self-certification it approves",
+        "be a different actor from the seat whose work it approves"
+      ],
+      "must_not": [
+        "approve-its-own-implementation",
+        "waive-independence-for-a-high-risk-object",
+        "push-pr-merge-deploy-or-release",
+        "amend-its-own-grant"
+      ],
+      "approval_ceiling": "Waives independence for low and standard risk only, and only for a seat on its own team. A high-risk object stays with the owner waiver; anything needing a protected transition is escalated to it-manager-iii rather than performed."
     }
   ]
 }

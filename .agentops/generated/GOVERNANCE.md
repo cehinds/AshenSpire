@@ -64,6 +64,7 @@ authority of its own and is regenerated deterministically from
 | `maker` | maker | `it-manager-iii` | implementation-blocker, path-collision, lease-expiry, local-verification-failure |
 | `qa-independent` | qa-independent | `it-manager-iii` | verdict-withhold, fixture-or-plant-regression, exact-head-drift |
 | `it-support` | it-support | `it-manager-iii` | tooling-failure, environment-or-access-blocker, routing-outage |
+| `team-lead` | team-lead | `it-manager-iii` | team-capacity, agent-seat-formation, independence-waiver-request |
 
 Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owner classes: owner-exclusive, safety, credential, irreversible, intent-conflict.
 
@@ -132,6 +133,14 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 - **Must:** reproduce-a-blocker-before-repairing-it; return-exact-evidence-of-the-repair
 - **Must not:** push-pr-merge-deploy-or-release, change-product-behaviour-to-clear-a-blocker, override-an-independent-qa-verdict
 - **Approval ceiling:** May restore capability only. Any repair that would change what the work produces, or that needs a protected transition, is escalated to it-manager-iii rather than performed.
+
+### `team-lead`
+
+- **Mission:** Hold one team persistently: spin out its agent seats, approve their self-certification inside the standing grant from the IT Manager III, and answer for the team's work.
+- **May:** spin-out-agent-seat, approve-maker-self-certification, record-independence-waiver
+- **Must:** name itself and the standing envelope on every self-certification it approves; be a different actor from the seat whose work it approves
+- **Must not:** approve-its-own-implementation, waive-independence-for-a-high-risk-object, push-pr-merge-deploy-or-release, amend-its-own-grant
+- **Approval ceiling:** Waives independence for low and standard risk only, and only for a seat on its own team. A high-risk object stays with the owner waiver; anything needing a protected transition is escalated to it-manager-iii rather than performed.
 
 ## Authority matrix
 
@@ -248,6 +257,23 @@ Not standing teams: they own no backlog, no decision stream and no source path, 
 
 The charter decides by default. Where it genuinely cannot resolve a case, the two coordinating roles may jointly carry it to the Owner — but only after exhausting what the charter already lets them settle between them. Concurrence is required so no single role can manufacture an owner decision to escape its own boundary. Concurrence: `it-manager-iii` + `project-management-lead`; escalates as `owner-exclusive-now`.
 
+### Team leads
+
+Every team has one persistent lead. The lead is standing; the pod it forms for a ticket is not. Leading a team confers no backlog and no source path — those still come from git-ownership and an assigned ticket.
+
+Role `team-lead` at **P2**, one per team, standing grant from `it-manager-iii` under envelope `itm-to-team-lead-self-certification`. Spins out agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant.
+
+Teams with a lead: `art-tech-art`, `feature-architecture`, `incident-defect`, `code-quality-modernization`, `game-systems`, `experience-design`, `experience-accessibility-review`, `qa-guild`, `platform-release`.
+
+### Seat naming
+
+A seat's name states what it is, which team it serves and the project, so a roster reads without opening anything.
+
+- Persistent team lead: `P | <role> III | <team> | Ashenspire`
+- Agent seat it spins out: `A | <role> | <team> | Ashenspire`
+
+The leading letter is the seat kind, never an authority code: a bare P is a persistent team lead, a bare A is an agent that lead spins out. P followed by a number is never a seat kind. P<n> is the authority tier in hierarchy.json, or an issue priority, and the subject decides which — exactly as the tier contract already says. A bare P and a P2 belong to different namespaces and must not be read as one.
+
 ## RACI (exactly one Accountable per item)
 
 Exactly one Accountable per deliverable or decision. Responsible executes; Accountable owns the outcome and the go/no-go; Consulted give bounded input; Informed receive the result. Accountable is never the sole Responsible for its own independent-QA acceptance.
@@ -270,6 +296,7 @@ Rule: `effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ acti
 | itm-to-maker-feature | — | it-manager-iii → maker | implement-locally, run-tests-and-builds, commit-on-isolated-branch | 1 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
 | maker-to-helper-disjoint | itm-to-maker-feature | maker → maker | run-tests-and-builds | 0 | 2026-01-01T00:00:00Z → 2026-06-30T23:59:59Z |
 | itm-to-qa-review | — | it-manager-iii → qa-independent | perform-independent-qa | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
+| itm-to-team-lead-self-certification | — | it-manager-iii → team-lead | approve-maker-self-certification, record-independence-waiver | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
 
 ## Escalation (time requests a decision, never authority)
 
@@ -357,6 +384,18 @@ QA is risk-selected and independent. The verifier of an exact object is never it
 | accept-high-risk-object | high | qa-independent | yes | owner | test-run-receipt, security-scan-receipt, hosted-verification-receipt |
 | data-contract-clearance | standard | data-architecture-lead | yes | it-manager-iii | data-lineage-receipt |
 
+### Self-certification (independence waived, never faked)
+
+A maker may sign its own exact-head evidence only when its own team lead records a waiver of independence beside it. The waiver never becomes an independent verdict: the maker's receipt and the lead's waiver are two separate records, and neither is written as a qa-independent PASS.
+
+Permitted risk classes: `low`, `standard`. High risk is excluded because the IT Manager III holds only the standard-risk QA waiver, so it cannot delegate a high-risk waiver it does not itself hold; a high-risk object stays with the owner waiver this contract already names.
+
+Approver: `team-lead`, leading the certifying seat's own team and never the seat itself, under standing grant `itm-to-team-lead-self-certification` from `it-manager-iii`. Recorded as `self-certified`.
+
+Every self-certification records: the certifying seat, the approving team lead, the standing envelope, the exact head, the suites actually run, why independence was waived.
+
+Never: recorded or rendered as a qa-independent verdict; used for a risk class this contract does not permit; approved by the seat that produced the work.
+
 ## Authority tiers
 
 A P-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection — decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a P3 verdict binds P0 and P1 alike and is cleared only by a recorded waiver from the role the QA contract names.
@@ -367,7 +406,7 @@ A P-level is decision authority and nothing else. It is not seniority, not capab
 |---|---|---|---|
 | **P0** Owner | `constantine` | main and release mutation; tags; release publication; Pages source and deployment; final release readiness; Gate E playtest; Gate F per-action approval; every owner-exclusive decision class | overrule an independent QA verdict without a recorded waiver named in qa.json |
 | **P1** Deputy — IT Manager III, Integration and Delivery | `it-manager-iii` | technical assignment and sequencing; path and maker ownership; integration and delivery to dev; Gate B and Gate C; incident and P0 command; standard-risk QA waiver; branch-rewrite permission; the wake target for every technical escalation | main, release, tag, publication or Pages; Gate E or Gate F; overruling an independent QA verdict |
-| **P2** Standing coordination | `project-management-lead`, `data-architecture-lead`, `help-desk` | intake, triage, routing and receipts; portfolio, dependency, WIP and capacity visibility; completion councils and Gate D convening; cross-domain data-contract review, including WITHHOLD | technical assignment or integration; delivery, promotion or release; board mutation |
+| **P2** Standing coordination | `project-management-lead`, `data-architecture-lead`, `help-desk`, `team-lead` | intake, triage, routing and receipts; portfolio, dependency, WIP and capacity visibility; completion councils and Gate D convening; cross-domain data-contract review, including WITHHOLD | technical assignment or integration; delivery, promotion or release; board mutation |
 | **P3** Independent verification | `qa-independent` | the exact-head verdict, which no tier may overrule; Gate A; WITHHOLD that blocks promotion at any level | implementing what it verifies; assigning work to itself |
 | **P4** Delivery seats | `maker`, `it-support` | implementation inside one writer lease; returning exact evidence | claiming an overlapping path or ref; push, PR, merge, deploy or release; changing product behaviour to clear a blocker |
 

@@ -36,9 +36,34 @@
       "waiver_authority_role": "it-manager-iii"
     }
   ],
+  "self_certification": {
+    "principle": "A maker may sign its own exact-head evidence only when its own team lead records a waiver of independence beside it. The waiver never becomes an independent verdict: the maker's receipt and the lead's waiver are two separate records, and neither is written as a qa-independent PASS.",
+    "permitted_risk_classes": ["low", "standard"],
+    "high_risk_is_excluded_because": "the IT Manager III holds only the standard-risk QA waiver, so it cannot delegate a high-risk waiver it does not itself hold; a high-risk object stays with the owner waiver this contract already names.",
+    "approver_role": "team-lead",
+    "approver_must_lead_the_certifying_seats_team": true,
+    "approver_must_differ_from_the_certifying_seat": true,
+    "standing_authority_from": "it-manager-iii",
+    "delegation_envelope": "itm-to-team-lead-self-certification",
+    "verdict_kind": "self-certified",
+    "records": [
+      "the certifying seat",
+      "the approving team lead",
+      "the standing envelope",
+      "the exact head",
+      "the suites actually run",
+      "why independence was waived"
+    ],
+    "never": [
+      "recorded or rendered as a qa-independent verdict",
+      "used for a risk class this contract does not permit",
+      "approved by the seat that produced the work"
+    ]
+  },
   "rules": {
     "independent_verifier": "verifier_role must be an independent reviewer role and never 'maker'.",
     "waiver_authority": "waiver_authority_role must be owner or it-manager-iii, never a maker or the verifier.",
-    "evidence_has_owner": "every required_evidence id must be a declared evidence type with a producer in evidence.json."
+    "evidence_has_owner": "every required_evidence id must be a declared evidence type with a producer in evidence.json.",
+    "self_certification_is_not_independence": "self_certification.verdict_kind must never name an independent verdict; its approver_role must be neither 'maker' nor any gate's verifier_role; and its permitted_risk_classes must exclude every class whose gate reserves waiver_authority_role to the owner."
   }
 }

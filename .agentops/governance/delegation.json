@@ -35,6 +35,17 @@
       "max_subdelegation_depth": 0,
       "effective": "2026-01-01T00:00:00Z",
       "expiry": "2026-12-31T23:59:59Z"
+    },
+    {
+      "id": "itm-to-team-lead-self-certification",
+      "parent_id": null,
+      "delegator_role": "it-manager-iii",
+      "delegatee_role": "team-lead",
+      "delegated_actions": ["approve-maker-self-certification", "record-independence-waiver"],
+      "scope_paths": [],
+      "max_subdelegation_depth": 0,
+      "effective": "2026-01-01T00:00:00Z",
+      "expiry": "2026-12-31T23:59:59Z"
     }
   ],
   "rules": {

@@ -90,6 +90,16 @@
         "environment-or-access-blocker",
         "routing-outage"
       ]
+    },
+    {
+      "actor_id": "team-lead",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity",
+        "agent-seat-formation",
+        "independence-waiver-request"
+      ]
     }
   ],
   "escalation_routing": {
@@ -156,7 +166,8 @@
         "actors": [
           "project-management-lead",
           "data-architecture-lead",
-          "help-desk"
+          "help-desk",
+          "team-lead"
         ],
         "holds": [
           "intake, triage, routing and receipts",
