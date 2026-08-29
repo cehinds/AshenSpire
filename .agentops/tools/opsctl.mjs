@@ -2436,6 +2436,33 @@ const VIEW_PROBES = {
 // other. That is exactly how `roles` first slipped through. Probe sets must
 // therefore be disjoint, and this is checked alongside coverage rather than
 // left to a reviewer to notice.
+// `runRender` reports two independent failures — `errors` (the view is wrong)
+// and `drift` (the committed copy is stale) — and every caller must read both.
+// Reading only `drift` is how the coverage gate stayed invisible in `verify`,
+// and then, after that was fixed, in `verifyErrors`, where the drill could
+// report a clean reconstruction of a tree `verify` rejects. Two call sites, the
+// same one-line omission, found weeks apart. This is a source-level check for
+// the class, in the same spirit as the subcommand-header check: it reads this
+// file and requires each call site to mention both fields.
+export function renderResultConsumerErrors(sourceText) {
+  const errors = [];
+  const lines = sourceText.split('\n');
+  lines.forEach((line, i) => {
+    const m = line.match(/(?:const|let)\s+(?:\{([^}]*)\}|(\w+))\s*=\s*runRender\(/);
+    if (!m) return;
+    if (m[1] !== undefined) {                       // destructured at the call site
+      const named = m[1].split(',').map((x) => x.trim().split(':')[0].trim());
+      if (!named.includes('errors')) errors.push(`line ${i + 1}: destructures runRender() without 'errors'; a view failure would be silently dropped`);
+      return;
+    }
+    const v = m[2];
+    const window = lines.slice(i, i + 10).join('\n');
+    if (!window.includes(`${v}.errors`)) errors.push(`line ${i + 1}: reads runRender() result '${v}' without checking '${v}.errors'; a view failure would be silently dropped`);
+  });
+  if (!errors.length && !/runRender\(/.test(sourceText)) errors.push('no runRender() call sites found; the consumer check is looking at the wrong source');
+  return errors;
+}
+
 export function probeStrengthErrors(contracts) {
   const errors = [];
   const seen = new Map();
@@ -2590,6 +2617,11 @@ function verifyErrors(root) {
   const v = runValidate(root);
   if (v.errors.length) return v.errors;
   const r = runRender(root, true);
+  // runRender reports two independent failures and the drill must see both. It
+  // read only `drift`, so a working tree failing the coverage gate could still
+  // be reported as reconstructing cleanly: the clean room is archived from HEAD,
+  // which is still valid, while `opsctl verify` fails on the same tree.
+  if (r.errors && r.errors.length) return r.errors;
   return r.drift ? [`stale generated artifacts: ${r.drifted.join(', ')}`] : [];
 }
 
@@ -2886,6 +2918,13 @@ export function runSelftest(root = ROOT) {
     const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
     const live = subcommandDocErrors(opsctlHeader(src), src);
     results.push({ label: 'opsctl header documents every dispatched subcommand', pass: live.length === 0, errs: live });
+
+    // Stage 9b — every runRender() consumer reads both failure modes.
+    const consumers = renderResultConsumerErrors(src);
+    results.push({ label: 'every runRender() call site checks .errors as well as .drift', pass: consumers.length === 0, errs: consumers });
+    const reverted = src.replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const caughtC = renderResultConsumerErrors(reverted);
+    results.push({ label: 'consumer check catches a call site that drops .errors', pass: caughtC.some((e) => e.includes('silently dropped')), errs: caughtC });
     const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   wake /.test(l)).join('\n');
     const caught = subcommandDocErrors(gutted, src);
     const hit = caught.some((e) => e.includes("'wake'"));

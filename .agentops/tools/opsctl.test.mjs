@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -132,6 +132,15 @@ function check(name, cond, detail = '') {
         if (viewCoverageErrors(contracts, blinded).length === 0) uncovered.push(lines[a]);
       }
       check('deleting any rendered section fails the coverage gate', uncovered.length === 0, uncovered.join(' | '));
+    }
+
+    // A gate is only as good as its callers. `verify` and the drill's own
+    // `verifyErrors` each dropped runRender()'s `errors` and read only `drift`,
+    // so a tree failing the coverage gate could still drill clean.
+    {
+      const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+      const consumers = renderResultConsumerErrors(src);
+      check('every runRender() call site checks .errors', consumers.length === 0, consumers.join(' | '));
     }
 
     // ...and the check itself must be able to fail, or it proves nothing.
