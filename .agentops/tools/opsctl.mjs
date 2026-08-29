@@ -957,8 +957,131 @@ export function validateCommand(contracts, rt, request) {
   return { ok, errors, decision };
 }
 
-// Run a command in dry-run mode: schema-validate the request, then validate it
-// against the policy. Live execution is intentionally not enabled in this stage.
+// Resolve the lifecycle transition an action would perform, if it declares one.
+// Returns { target, from } when a move is required, null when the action records
+// a decision without changing state, or { error } when the move is not a
+// declared, permitted transition. Legality comes from transitions.json alone:
+// the transition must exist from the capsule's current state, and must permit
+// the authenticating role — the owner role is additionally permitted on
+// protected transitions, per transitions.rules.protected_actor.
+export function resolveTransition(contracts, capsule, action, actorRole) {
+  if (!action.lifecycle_target) return null;
+  const target = action.lifecycle_target;
+  const tr = contracts.transitions;
+  if (!tr.states.includes(target)) return { error: `action '${action.id}' declares lifecycle_target '${target}', which is not a declared state` };
+  if (!capsule) return { error: `action '${action.id}' moves lifecycle state but the target has no work capsule` };
+  const from = capsule.lifecycle_state;
+  const move = tr.transitions.find((t) => t.from === from && t.to === target);
+  if (!move) return { error: `no declared transition '${from}' -> '${target}' for action '${action.id}'; the target is not at a state this decision can advance` };
+  const permitted = move.permitted_actor_roles.includes(actorRole) || (actorRole === 'owner' && (move.protected || tr.protected_states.includes(target)));
+  if (!permitted) return { error: `actor '${actorRole}' may not perform the transition '${from}' -> '${target}' (permitted: ${move.permitted_actor_roles.join(', ')})` };
+  return { target, from };
+}
+
+// Apply a validated command: append one event and re-seal the target capsule
+// under compare-and-swap. Append-only — it never rewrites an existing event or
+// touches another ticket. Callers must pass a request that validateCommand has
+// already accepted; this re-checks the CAS immediately before writing so a
+// concurrent change cannot be overwritten.
+export function applyCommand(root, contracts, rt, request, { now = new Date().toISOString() } = {}) {
+  const action = contracts['owner-command'].actions.find((a) => a.id === request.action);
+  const ticket = request.target;
+  const capsule = rt.capsules[ticket];
+  const written = [];
+
+  const move = resolveTransition(contracts, capsule, action, request.actor);
+  if (move && move.error) return { ok: false, errors: [move.error], written };
+
+  const chain = (rt.events[ticket] || []).slice().sort((a, b) => a.seq - b.seq);
+  const last = chain[chain.length - 1] || null;
+  const seq = last ? last.seq + 1 : 1;
+  const id = `${ticket}-${String(seq).padStart(4, '0')}`;
+  const summary = move
+    ? `Owner-command '${request.action}' by ${request.actor}: lifecycle ${move.from} -> ${move.target}.${request.candidate_oid ? ` Exact object ${request.candidate_oid}.` : ''}`
+    : `Owner-command '${request.action}' by ${request.actor} recorded${request.reason ? `: ${request.reason}` : ''}.`;
+  const event = {
+    schema: 'agentops/event/v1', id, ticket, seq,
+    parent_event: last ? last.id : null,
+    kind: 'owner-decision', actor: request.actor, at: now, summary
+  };
+
+  if (capsule) {
+    // Re-check the seal immediately before writing: a capsule that changed since
+    // validation must not be overwritten by a now-stale decision.
+    if (action.requires_cas && computeCapsuleHash(capsule) !== request.expected_current_hash) {
+      return { ok: false, errors: [`stale command at apply time: '${ticket}' changed after validation (compare-and-swap failed); nothing written`], written };
+    }
+    const next = JSON.parse(JSON.stringify(capsule));
+    next.parent_hash = capsule.current_hash;
+    next.revision = capsule.revision + 1;
+    if (move) next.lifecycle_state = move.target;
+    // The appended event is the decision's record; evidence_pointers carries
+    // declared evidence types only (evidence.json), never event ids.
+    delete next.current_hash;
+    next.current_hash = computeCapsuleHash(next);
+    const capPath = resolve(root, `work/${ticket}/CURRENT.json`);
+    writeFileSync(capPath, JSON.stringify(reorderCapsule(next), null, 2) + '\n');
+    written.push(`work/${ticket}/CURRENT.json`);
+  }
+
+  const evDir = resolve(root, `events/${ticket}`);
+  mkdirSync(evDir, { recursive: true });
+  const evPath = resolve(evDir, `${id}.json`);
+  if (existsSync(evPath)) return { ok: false, errors: [`event '${id}' already exists; refusing to overwrite an append-only record`], written };
+  writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
+  written.push(`events/${ticket}/${id}.json`);
+
+  return { ok: true, errors: [], written, event, transition: move || null };
+}
+
+// Keep the capsule's key order stable so an applied decision produces a minimal,
+// readable diff rather than reshuffling the whole file.
+function reorderCapsule(cap) {
+  const order = ['schema', 'revision', 'current_hash', 'parent_hash', 'ticket', 'lifecycle_state', 'objective', 'done_when', 'next_action', 'repo', 'ref', 'base_oid', 'tree', 'expected_dirty_state', 'owner_actor', 'writer_lease', 'affected_paths', 'evidence_pointers', 'blocker', 'authority', 'runtime_residue', 'rollback', 'invalidation_keys'];
+  const out = {};
+  for (const k of order) if (k in cap) out[k] = cap[k];
+  for (const k of Object.keys(cap)) if (!(k in out)) out[k] = cap[k];
+  return out;
+}
+
+// Parse a GitHub Issue Form body into an owner-command request. Issue forms
+// render as "### <Label>" followed by the value, and unfilled optional fields
+// render as "_No response_". This is a strict field-to-field mapping: it never
+// evaluates the body, accepts only the known labels, and drops everything else,
+// so free text an issue author writes cannot introduce a field. The resulting
+// request still goes through the full schema + allowlist + CAS validation.
+export function parseIssueCommand(body, { actor } = {}) {
+  const FIELDS = {
+    'action': 'action',
+    'target ticket': 'target',
+    'expected current hash': 'expected_current_hash',
+    'candidate oid': 'candidate_oid',
+    'reason': 'reason'
+  };
+  const errors = [];
+  const out = { schema: 'agentops/owner-command-request/v1' };
+  const text = String(body || '').replace(/\r\n/g, '\n');
+  const sections = text.split(/^###[ \t]+/m).slice(1);
+  for (const sec of sections) {
+    const nl = sec.indexOf('\n');
+    const label = (nl === -1 ? sec : sec.slice(0, nl)).trim().toLowerCase();
+    const key = FIELDS[label];
+    if (!key) continue; // unknown heading: ignored, never becomes a field
+    const value = (nl === -1 ? '' : sec.slice(nl + 1)).trim();
+    if (!value || value === '_No response_') continue;
+    // One line only; a multi-line paste cannot smuggle structure into a field.
+    out[key] = value.split('\n')[0].trim();
+  }
+  if (actor) out.actor = actor;
+  if (!out.action) errors.push('issue form is missing the Action field');
+  if (!out.target) errors.push('issue form is missing the Target ticket field');
+  if (!out.actor) errors.push('no actor role resolved for this request');
+  return { ok: errors.length === 0, errors, request: out };
+}
+
+// Run a command. Dry-run validates and reports what it would do without
+// touching the repository; --apply performs the same validation and then writes
+// the append-only decision event plus the compare-and-swap capsule re-seal.
 export function runCommand(root, request, { dryRun = true } = {}) {
   const { contracts, errors } = loadContracts(root);
   if (errors.length) return { ok: false, errors, decision: null };
@@ -967,9 +1090,22 @@ export function runCommand(root, request, { dryRun = true } = {}) {
   catch (e) { return { ok: false, errors: [`request schema load: ${e.message}`], decision: null }; }
   const schemaErrs = validateSchema(request, reqSchema, '$');
   if (schemaErrs.length) return { ok: false, errors: schemaErrs.map((e) => `request schema: ${e}`), decision: null };
-  if (!dryRun) return { ok: false, errors: ['live execution is not enabled in this stage; only --dry-run is available'], decision: null };
   const rt = loadRuntime(root);
-  return validateCommand(contracts, rt, request);
+  if (rt.errors.length) return { ok: false, errors: rt.errors.map((e) => `runtime: ${e}`), decision: null };
+  const res = validateCommand(contracts, rt, request);
+  if (!res.ok || dryRun) return res;
+
+  const applied = applyCommand(root, contracts, rt, request);
+  if (!applied.ok) return { ok: false, errors: applied.errors, decision: null };
+  return {
+    ok: true, errors: [], written: applied.written,
+    decision: {
+      ...res.decision,
+      result: applied.transition
+        ? `APPLIED — appended ${applied.event.id} and moved ${request.target} ${applied.transition.from} -> ${applied.transition.target} under compare-and-swap`
+        : `APPLIED — appended ${applied.event.id}; no lifecycle change is declared for this action`
+    }
+  };
 }
 
 // Deterministic, redacted, theme-aware Owner HUD. A pure function of validated
@@ -1033,6 +1169,28 @@ export function renderHud(contracts, rt) {
     L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(cap.owner_actor)}</td><td>${esc(cap.lifecycle_state)}</td><td><code>${esc(cap.ref)}</code></td><td><code>${esc(cap.base_oid.slice(0, 12))}</code></td><td>${cap.evidence_pointers.map(esc).join(', ') || '—'}</td><td>${w.tokens || '—'}</td></tr>`);
   }
   L.push('</table></div></section>');
+
+  // Act on it: each ticket gets a prefilled owner-decision link carrying its
+  // live compare-and-swap hash, so a decision is never filed against state the
+  // owner did not see. The page stays read-only — the link opens an issue form,
+  // and the workflow performs the enumerated, authenticated, CAS-checked write.
+  const issueBase = `${String(project.repository).replace(/\.git$/, '')}/issues/new`;
+  // Build the raw query; esc() performs the single HTML escape at output.
+  const q = (o) => Object.entries(o).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  L.push('<section><h2>Decide</h2>');
+  if (tickets.length === 0) L.push('<p class="none">No tickets are open.</p>');
+  else {
+    L.push('<div class="wrap"><table><tr><th>Ticket</th><th>State</th><th>Compare-and-swap hash</th><th>Decision</th></tr>');
+    for (const t of tickets) {
+      const cap = rt.capsules[t];
+      const hash = computeCapsuleHash(cap);
+      const link = `${issueBase}?${q({ template: 'owner-decision.yml', title: `[decision] ${t}`, target: t, hash })}`;
+      L.push(`<tr><td><code>${esc(t)}</code></td><td>${esc(cap.lifecycle_state)}</td><td><code>${esc(hash.slice(0, 23))}…</code></td><td><a href="${esc(link)}">File a decision →</a></td></tr>`);
+    }
+    L.push('</table></div>');
+  }
+  L.push(`<p class="sub">Decisions are enumerated and compare-and-swap-checked: a command filed against a hash that has since moved is rejected as stale, never applied to unseen state. Only the owner's own issues execute. <a href="${esc(issueBase)}?${q({ template: 'help-desk-ticket.yml' })}">File a Help Desk ticket →</a></p>`);
+  L.push('</section>');
 
   L.push('<section><h2>Context efficiency</h2>');
   const ia = contracts['information-access'];
@@ -1468,19 +1626,38 @@ function main(argv) {
     return 0;
   }
   if (cmd === 'command') {
-    let file = null, json = null;
+    let file = null, json = null, issueFile = null, actor = null;
     for (let i = 1; i < argv.length; i++) {
       if (argv[i] === '--file') file = argv[++i];
       else if (argv[i] === '--request') json = argv[++i];
+      else if (argv[i] === '--issue-file') issueFile = argv[++i];
+      else if (argv[i] === '--actor') actor = argv[++i];
     }
-    if (!flags.has('--dry-run')) { console.error('command requires --dry-run (live execution is not enabled in this stage)'); return 2; }
+    if (issueFile !== null) {
+      let bodyText;
+      try { bodyText = readFileSync(resolve(process.cwd(), issueFile), 'utf8'); }
+      catch (e) { console.error(`command: could not read issue body (${e.message})`); return 2; }
+      const parsed = parseIssueCommand(bodyText, { actor });
+      if (!parsed.ok) { console.error('COMMAND REJECTED (issue form could not be read):'); parsed.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+      json = JSON.stringify(parsed.request);
+    }
+    const apply = flags.has('--apply');
+    if (!apply && !flags.has('--dry-run')) { console.error('command requires --dry-run (validate only) or --apply (validate, then write the decision)'); return 2; }
+    if (apply && flags.has('--dry-run')) { console.error('command: pass either --dry-run or --apply, not both'); return 2; }
     let request;
     try { request = strictParse(json !== null ? json : readFileSync(resolve(process.cwd(), file), 'utf8')); }
     catch (e) { console.error(`command: could not read request (${e.message}); pass --request '<json>' or --file <path>`); return 2; }
-    const res = runCommand(ROOT, request, { dryRun: true });
-    if (!res.ok) { console.error('COMMAND REJECTED (dry-run, no mutation):'); res.errors.forEach((e) => console.error('  - ' + e)); return 1; }
-    console.log('COMMAND ACCEPTED (dry-run, no mutation). Would append this decision event:');
+    const res = runCommand(ROOT, request, { dryRun: !apply });
+    if (!res.ok) { console.error(`COMMAND REJECTED (${apply ? 'nothing written' : 'dry-run, no mutation'}):`); res.errors.forEach((e) => console.error('  - ' + e)); return 1; }
+    if (!apply) {
+      console.log('COMMAND ACCEPTED (dry-run, no mutation). Would append this decision event:');
+      console.log(JSON.stringify(res.decision, null, 2));
+      return 0;
+    }
+    console.log('COMMAND APPLIED. Wrote:');
+    (res.written || []).forEach((w) => console.log('  - ' + w));
     console.log(JSON.stringify(res.decision, null, 2));
+    console.log('\nRegenerate the drift-gated views before committing: node .agentops/tools/opsctl.mjs render');
     return 0;
   }
   if (cmd === 'migrate') {
@@ -1503,7 +1680,7 @@ function main(argv) {
     console.log(`SELFTEST OK: all ${s.results.length} negative plants correctly caught.`);
     return 0;
   }
-  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | wake --work <ticket> [--actor <role>] [--frozen] | drill | command --dry-run (--request <json> | --file <path>) | migrate [--plan] | --selftest`);
+  console.error(`Unknown command '${cmd}'. Use: validate | render [--check] | verify | wake --work <ticket> [--actor <role>] [--frozen] | drill | command (--dry-run | --apply) (--request <json> | --file <path>) | migrate [--plan] | --selftest`);
   return 2;
 }
 

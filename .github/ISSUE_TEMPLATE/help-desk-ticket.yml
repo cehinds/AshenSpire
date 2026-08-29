@@ -1,0 +1,72 @@
+name: Help Desk ticket
+description: File work for the Help Desk queue — a request, a bug, a blocker, or a question.
+title: "[ticket] "
+labels: ["help-desk"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Files a Help Desk ticket. This is **intake only** — it records and routes
+        the request; it does not authorize any protected transition. Decisions
+        that need owner authority go through the *Owner decision* form instead.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - request — new work
+        - bug — something is wrong
+        - blocker — work is stopped
+        - question — needs an answer
+        - evidence — recording a result
+    validations:
+      required: true
+
+  - type: dropdown
+    id: team
+    attributes:
+      label: Suggested team
+      description: Best guess is fine; Help Desk routes it.
+      options:
+        - unsure / route it
+        - application
+        - art
+        - code-quality-modernization
+        - data-architecture-systems
+        - game-design
+        - help-desk
+        - incident-it-support
+        - itm-integration-delivery
+        - project-management
+        - qa-experience
+        - qa-functional
+        - review-approval-hub
+        - writing
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is needed
+      description: What should be true when this is done.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / where to look
+      description: Screenshots, exact paths, commits, or a URL. Optional.
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      options:
+        - normal
+        - blocking other work
+        - needs owner attention
+    validations:
+      required: true

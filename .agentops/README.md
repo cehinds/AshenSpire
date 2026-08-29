@@ -29,7 +29,7 @@ Start at [`BOOTSTRAP.md`](BOOTSTRAP.md).
   events/<ticket>/*.json       append-only transition events
   RECONSTRUCTION-DRILL.md      provider-neutral clean-clone / context-wipe drill spec
   tools/
-    opsctl.mjs            validate | render [--check] | verify | wake [--frozen] | drill | command --dry-run | migrate [--plan] | --selftest
+    opsctl.mjs            validate | render [--check] | verify | wake [--frozen] | drill | command (--dry-run|--apply) | migrate [--plan] | --selftest
     opsctl.test.mjs       test suite (real corpus + 47 negative plants + reconstruction + owner-command + migration)
   generated/
     GOVERNANCE.md         generated human view (sole writer: opsctl render)

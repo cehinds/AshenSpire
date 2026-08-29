@@ -10,7 +10,7 @@
     "ticket": {"type": "string", "minLength": 1},
     "seq": {"type": "integer"},
     "parent_event": {"type": ["string", "null"]},
-    "kind": {"enum": ["genesis", "assigned", "lease-issued", "state-change", "evidence-recorded", "blocker", "lease-revoked", "resolved"]},
+    "kind": {"enum": ["genesis", "assigned", "lease-issued", "state-change", "evidence-recorded", "blocker", "lease-revoked", "resolved", "owner-decision"]},
     "actor": {"type": "string", "minLength": 1},
     "at": {"type": "string", "minLength": 1},
     "summary": {"type": "string", "minLength": 1},

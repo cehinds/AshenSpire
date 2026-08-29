@@ -1,0 +1,47 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 1,
+  "current_hash": "sha256:fa70d69eb37164e5101360d9320d06045956dcc1083e0837fae723b3dd520262",
+  "parent_hash": null,
+  "ticket": "AS-HD-050",
+  "lifecycle_state": "assigned",
+  "objective": "Close the Art motif row through pointer-last reconciliation (Art D2).",
+  "done_when": "The PM supersession, current register, independent Art reread and Art backlog r7 remain matched, and the Art pointer/continuity projection is refreshed pointer-last with history preserved.",
+  "next_action": "Await the owner authorization for one append-only successor; on mismatch route only the residual to Help Desk.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "recovery/as-hd-050",
+  "base_oid": "4a515339189c6f3ec003eef74e86dc38526f93fe",
+  "tree": "recovered-from-hub-snapshot",
+  "expected_dirty_state": "clean",
+  "owner_actor": "maker",
+  "writer_lease": "lease-AS-HD-050-maker",
+  "affected_paths": [
+    "docs/art/**"
+  ],
+  "evidence_pointers": [],
+  "blocker": {
+    "kind": "owner-decision",
+    "wake": "constantine",
+    "summary": "D2: authorize one append-only successor so the sole continuity writer can refresh the shared index and write the pointer last. Body records COMPLETE; only the pointer projection is stale."
+  },
+  "authority": {
+    "may": [
+      "implement-locally-on-exclusive-paths",
+      "run-tests-and-builds",
+      "commit-on-isolated-branch",
+      "record-blocker-and-continue-collision-free-work"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths"
+    ],
+    "expiry": "2026-10-31T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-HD-050 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}

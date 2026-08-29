@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-040-0002",
+  "ticket": "AS-HD-040",
+  "seq": 2,
+  "parent_event": "AS-HD-040-0001",
+  "kind": "assigned",
+  "actor": "it-manager-iii",
+  "at": "2026-08-29T00:05:00Z",
+  "summary": "Assigned to maker with writer lease lease-AS-HD-040-maker on assets/classes/**."
+}

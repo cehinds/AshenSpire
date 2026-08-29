@@ -66,20 +66,42 @@ node .agentops/tools/opsctl.mjs drill
 ```
 
 Owner decisions flow through the authenticated owner-command path — enumerated,
-allowlisted, and compare-and-swap-checked. This stage ships the dry-run (records
-what it would do; no repository mutation):
+allowlisted, and compare-and-swap-checked. `--dry-run` validates and reports
+what it would do without touching the repository; `--apply` performs the same
+validation and then writes:
 
 ```sh
 node .agentops/tools/opsctl.mjs command --dry-run --request '<owner-command-request json>'
+node .agentops/tools/opsctl.mjs command --apply   --request '<owner-command-request json>'
 ```
+
+Applying appends **one append-only decision event** and re-seals **only** the
+target capsule. It moves lifecycle state only where `owner-command.json`
+declares a `lifecycle_target` and `transitions.json` declares that exact
+transition from the capsule's current state for the authenticating role — an
+undeclared or unpermitted move is rejected and nothing is written. A stale
+`expected_current_hash` is refused rather than applied to unseen state, and the
+seal is re-checked immediately before the write.
+
+In the browser, the owner files decisions from the HUD's **Decide** table: each
+row links to the *Owner decision* issue form prefilled with the ticket and its
+live compare-and-swap hash. `.github/workflows/owner-command.yml` executes only
+issues the repository owner authored, resolves the actor role from the
+authenticated GitHub identity (never from the issue body), and reports the
+result back on the issue. Help Desk intake uses the *Help Desk ticket* form.
 
 The read-only Owner HUD is a redacted, deterministic projection at
 `generated/hud/index.html`. It is a plain static file: the repository
 publishes its own tree to GitHub Pages (Settings → Pages → Deploy from a
-branch → `dev`, root), so the HUD is served with the rest of the site and
-reachable at `/hud/` (a thin redirect to the generated file). There is no
-separate publish workflow — regenerating the file with `opsctl render` and
-pushing is all it takes.
+branch → `main`, root), so the HUD is served with the rest of the site and
+reachable at `/hud/` (a copy of the generated file). There is no separate
+publish workflow — regenerating the file with `opsctl render` and pushing is
+all it takes.
+
+Because Pages publishes `main`, the live site is the **released** state:
+regenerating the HUD on `dev` does not change it until an owner-authorized
+`dev` → `main` promotion. Publication stays a protected transition rather
+than a side effect of routine integration.
 
 ## Validate before you trust
 

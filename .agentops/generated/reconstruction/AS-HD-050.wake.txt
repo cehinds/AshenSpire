@@ -1,0 +1,16 @@
+=== AGENTOPS WAKE CAPSULE ===
+IDENTITY   : actor=maker role=maker ticket=AS-HD-050 lease=lease-AS-HD-050-maker (active until 2026-10-31T23:59:59Z)
+MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
+WORK       : Close the Art motif row through pointer-last reconciliation (Art D2).
+DONE-WHEN  : The PM supersession, current register, independent Art reread and Art backlog r7 remain matched, and the Art pointer/continuity projection is refreshed pointer-last with history preserved.
+AUTHORITY  : may implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
+FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
+REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-050
+BASE       : 4a515339189c6f3ec003eef74e86dc38526f93fe tree recovered-from-hub-snapshot dirty=clean
+NEXT ACTION: Await the owner authorization for one append-only successor; on mismatch route only the residual to Help Desk.
+STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+EVIDENCE   : —
+SOURCE     : 4a515339189c6f3ec003eef74e86dc38526f93fe
+FRESHNESS  : as-recorded (base 4a515339189c); verify live HEAD out-of-band
+INVALIDATION: base_oid, tree, writer_lease
+BLOCKER    : {"kind":"owner-decision","wake":"constantine","summary":"D2: authorize one append-only successor so the sole continuity writer can refresh the shared index and write the pointer last. Body records COMPLETE; only the pointer projection is stale."}
