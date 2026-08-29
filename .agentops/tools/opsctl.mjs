@@ -964,7 +964,9 @@ function refExists(root, ref) {
     // execFileSync, never execSync: the ref comes from capsule JSON, and a
     // shell would expand `$(...)` in it — waking a seat would then run
     // arbitrary commands. An argument array cannot be interpreted as syntax.
-    execFileSync('git', ['rev-parse', '--verify', '--quiet', ref], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    // Fully qualified as refs/heads/: an unqualified name is ambiguous and
+    // would report a same-named TAG as an existing working branch.
+    execFileSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${ref}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
     return true;
   } catch { return false; }
 }
@@ -982,7 +984,7 @@ export function refNameValid(ref) {
 // Build the capsule text from already-loaded contracts + runtime. Pure and
 // deterministic in `frozen` mode (no live-HEAD lookup) — that mode is the basis
 // of the reconstruction goldens and the clean-clone drill.
-export function buildCapsule(contracts, rt, work, { frozen = false, head = null } = {}) {
+export function buildCapsule(contracts, rt, work, { frozen = false, head = null, root = ROOT } = {}) {
   const cap = rt.capsules[work];
   if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
   const oi = contracts['owner-intent'];
@@ -1003,7 +1005,7 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null 
   L.push(`DONE-WHEN  : ${cap.done_when}`);
   L.push(`AUTHORITY  : may ${cap.authority.may.join(', ')} | must-not ${cap.authority.must_not.join(', ')} | expiry ${cap.authority.expiry}`);
   L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
-  const refNote = frozen ? '' : (refExists(ROOT, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
+  const refNote = frozen ? '' : (refExists(root, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
   L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
   L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
@@ -1030,7 +1032,7 @@ export function runWake(root, actor, work, { frozen = false } = {}) {
   const cap = rt.capsules[work];
   if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
   if (actor && actor !== cap.owner_actor) return { errors: [`actor '${actor}' does not own capsule '${work}' (owner is '${cap.owner_actor}')`] };
-  return buildCapsule(contracts, rt, work, { frozen, head: frozen ? null : currentHead(root) });
+  return buildCapsule(contracts, rt, work, { frozen, head: frozen ? null : currentHead(root), root });
 }
 
 // ===========================================================================
