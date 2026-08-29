@@ -32,7 +32,7 @@ function check(name, cond, detail = '') {
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 39 plants', s.results.length >= 39, String(s.results.length));
+  check('selftest exercises >= 47 plants', s.results.length >= 47, String(s.results.length));
 }
 
 // 2b. Runtime: the seed ticket loads, its capsule is sealed, and the wake
@@ -106,6 +106,11 @@ function check(name, cond, detail = '') {
   check('strictParse rejects duplicate keys', dup);
   let trail = false; try { strictParse('{} x'); } catch { trail = true; }
   check('strictParse rejects trailing content', trail);
+  let frac = false; try { strictParse('1.'); } catch { frac = true; }
+  check('strictParse rejects a fraction with no digits (1.)', frac);
+  let exp = false; try { strictParse('1e'); } catch { exp = true; }
+  check('strictParse rejects an exponent with no digits (1e)', exp);
+  check('strictParse still accepts a well-formed number', strictParse('-12.5e+3') === -12500);
   check('validateSchema flags type mismatch', validateSchema(5, { type: 'string' }).length === 1);
   check('validateSchema accepts integer for number', validateSchema(5, { type: 'number' }).length === 0);
   check('validateSchema honours pattern', validateSchema('1.2', { type: 'string', pattern: '^[0-9]+\\.[0-9]+\\.[0-9]+$' }).length === 1);
