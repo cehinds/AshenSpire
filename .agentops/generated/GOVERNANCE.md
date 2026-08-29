@@ -234,6 +234,10 @@ The charter decides by default. Where it genuinely cannot resolve a case, the tw
 | `docs/governance/**` | project-management-lead | governance-docs |
 | `game-design/docs/**` | help-desk | intake-docs |
 | `tools/**` | it-support | support-tooling |
+| `hud/**` | generator | generated-artifact |
+| `review-approval-hub/**` | generator | generated-artifact |
+| `buildordinal.json` | maker | generated-artifact |
+| `*.html` | maker | generated-artifact |
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 

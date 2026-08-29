@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -710,6 +710,34 @@ function check(name, cond, detail = '') {
     docs.some((d) => d.path === 'docs/governance/RUNBOOKS/art.md'));
   check('every canonical document cites the decision that placed it',
     docs.every((d) => d.decision.startsWith('docs/governance/DECISIONS/')));
+}
+
+// 2s. Path-glob coverage. A declared root-level path has no directory prefix,
+// and every string starts with '' — so the prefix form let the first root-level
+// declaration claim ownership of every lease glob in the repository, silently
+// disabling the grant check that D5 exists to enforce. Adding a writer for the
+// generated build output is what exposed it.
+{
+  // Root never covers a subtree, nor the reverse.
+  check('a root file does not cover a subtree', !globCovers('buildordinal.json', 'src/**'));
+  check('a root wildcard does not cover a subtree', !globCovers('*.html', 'src/**'));
+  check('a subtree does not cover a root file', !globCovers('src/**', 'buildordinal.json'));
+  // Root-level matching is by name, not by "starts with nothing".
+  check('a root wildcard covers a matching root file', globCovers('*.html', 'index.html'));
+  check('a root wildcard does not cover a different extension', !globCovers('*.html', 'buildordinal.json'));
+  check('an exact root file covers itself', globCovers('buildordinal.json', 'buildordinal.json'));
+  // Subtree matching still works the way the one-writer rule depends on.
+  check('a subtree covers a path inside it', globCovers('.agentops/**', '.agentops/work/**'));
+  check('a subtree does not cover its sibling', !globCovers('src/**', 'assets/**'));
+
+  // The live corpus: every generated output the tool writes must have a
+  // declared writer, or two seats could claim it and verify would stay green.
+  const { contracts } = loadContracts();
+  const decls = contracts['git-ownership'].paths;
+  for (const out of ['hud/**', 'review-approval-hub/**', 'buildordinal.json', '*.html']) {
+    check(`generated output '${out}' has a declared writer`, decls.some((d) => d.glob === out),
+      decls.map((d) => d.glob).join(', '));
+  }
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

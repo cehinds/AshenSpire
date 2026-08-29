@@ -137,6 +137,26 @@
       "owner_role": "it-support",
       "serialized_lane": "support-tooling",
       "note": "Repo tooling and support scripts. Restores the ability to work; product behaviour changes belong to maker."
+    },
+    {
+      "glob": "hud/**",
+      "owner_role": "generator",
+      "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "review-approval-hub/**",
+      "owner_role": "generator",
+      "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "buildordinal.json",
+      "owner_role": "maker",
+      "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "*.html",
+      "owner_role": "maker",
+      "serialized_lane": "generated-artifact"
     }
   ],
   "generated_serialization": {

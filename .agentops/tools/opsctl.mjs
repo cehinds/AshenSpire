@@ -499,10 +499,24 @@ export function semanticChecks(c) {
       const slash = cut.lastIndexOf('/');
       return slash === -1 ? '' : cut.slice(0, slash + 1);
     };
+    // Two globs overlap when one's matched set could contain the other's. The
+    // earlier form compared directory prefixes alone, and a root-level file has
+    // no directory — its prefix is '', which every string starts with, so any
+    // root-level path was reported as overlapping the whole tree. That made the
+    // one-writer rule unable to express a root-level owner at all, which is
+    // exactly what the generated build output needs.
+    const overlaps = (ga, gb) => {
+      const dirA = literalPrefix(ga), dirB = literalPrefix(gb);
+      const rootA = dirA === '', rootB = dirB === '';
+      // Root-level globs never reach into a subdirectory, and a subdirectory
+      // glob never reaches back up to the root.
+      if (rootA !== rootB) return false;
+      if (rootA && rootB) return globCovers(ga, gb) || globCovers(gb, ga);
+      return dirA.startsWith(dirB) || dirB.startsWith(dirA);
+    };
     for (let a = 0; a < paths.length; a++) {
       for (let b = a + 1; b < paths.length; b++) {
-        const pa = literalPrefix(paths[a].glob), pb = literalPrefix(paths[b].glob);
-        const nests = pa.startsWith(pb) || pb.startsWith(pa);
+        const nests = overlaps(paths[a].glob, paths[b].glob);
         if (nests && paths[a].owner_role !== paths[b].owner_role) {
           errors.push(`git-ownership: overlapping paths '${paths[a].glob}' and '${paths[b].glob}' have different writers ('${paths[a].owner_role}' vs '${paths[b].owner_role}')`);
         }
@@ -988,6 +1002,23 @@ export function hierarchyRoles(contracts) {
 // could grant any role any glob and verify would stay green. A lease may
 // declare `undeclared_paths_ok: true` for a deliberate exception; that is an
 // explicit, reviewable choice rather than a silent gap.
+// Does a declared git-ownership path cover this glob? A declared root-level
+// path (buildordinal.json, *.html) has no directory prefix, and every string
+// starts with '' — so the prefix form let the first root-level declaration
+// claim ownership of every lease glob in the repository, silently disabling the
+// grant check entirely. Shared with the overlap detector so the two cannot
+// drift apart.
+export function globCovers(declGlob, glob) {
+  const dirD = globPrefix(declGlob), dirG = globPrefix(glob);
+  const rootD = dirD === '', rootG = dirG === '';
+  if (rootD !== rootG) return false;              // root never covers a subtree, nor the reverse
+  if (rootD && rootG) {
+    const rx = new RegExp('^' + declGlob.split('*').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*') + '$');
+    return rx.test(glob) || declGlob === glob;
+  }
+  return dirG.startsWith(dirD);
+}
+
 export function pathGrantErrors(contracts, lease) {
   const errors = [];
   // An exception covers only the globs it names. A lease carrying one is still
@@ -997,7 +1028,7 @@ export function pathGrantErrors(contracts, lease) {
   const decls = (contracts['git-ownership'] && contracts['git-ownership'].paths) || [];
   for (const g of lease.path_globs) {
     if (exempt.has(g)) continue;
-    const owner = decls.find((d) => globPrefix(g).startsWith(globPrefix(d.glob)));
+    const owner = decls.find((d) => globCovers(d.glob, g));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
     } else if (owner.owner_role !== lease.actor) {
@@ -2398,6 +2429,8 @@ export function runSelftest(root = ROOT) {
   expectSemantic('dangling authority role', (c) => { c.authority.grants[0].routine_owner_role = 'ghost-role'; }, 'unknown role');
   expectSemantic('path traversal glob', (c) => { c['git-ownership'].paths.push({ glob: '../etc/**', owner_role: 'maker', serialized_lane: 'x' }); }, 'traversal');
   expectSemantic('overlapping writers', (c) => { c['git-ownership'].paths.push({ glob: '.agentops/governance/extra/**', owner_role: 'maker', serialized_lane: 'x' }); }, 'overlapping paths');
+  expectSemantic('overlapping root-level writers', (c) => { c['git-ownership'].paths.push({ glob: 'index.html', owner_role: 'it-support', serialized_lane: 'x' }); }, 'overlapping paths');
+  expectSemantic('a root glob colliding with a root file', (c) => { c['git-ownership'].paths.push({ glob: 'buildordinal.*', owner_role: 'help-desk', serialized_lane: 'x' }); }, 'overlapping paths');
   expectSemantic('amplifying deputy grant', (c) => { c['owner-intent'].deputy.excluded_actions.push(c['owner-intent'].deputy.included_actions[0]); }, 'amplifying grant');
   expectSemantic('hierarchy dangling parent', (c) => { c.hierarchy.nodes[1].escalation_parent = 'nobody'; }, 'unknown escalation_parent');
   expectSemantic('hierarchy two roots', (c) => { c.hierarchy.nodes[1].escalation_parent = null; }, 'exactly one root');
