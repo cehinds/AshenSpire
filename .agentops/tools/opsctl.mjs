@@ -824,10 +824,20 @@ export function semanticChecks(c, now = new Date().toISOString()) {
           }
         }
       }
-      // The verdict must stay distinguishable from a real independent one.
-      const independentVerdicts = new Set(['pass', 'independent-pass', 'qa-pass', 'qa-independent']);
-      if (independentVerdicts.has(String(sc.verdict_kind).toLowerCase())) {
-        errors.push(`qa: self_certification verdict_kind '${sc.verdict_kind}' reads as an independent verdict; a waiver must never be recorded as one`);
+      // Allowlist, not blacklist. Naming four forbidden spellings left every
+      // other independent-looking one available — 'qa-independent-pass' passed
+      // validation and would have been published in the view as the recorded
+      // verdict. One dedicated kind is the whole point of the field.
+      if (sc.verdict_kind !== 'self-certified') {
+        errors.push(`qa: self_certification verdict_kind '${sc.verdict_kind}' is not the dedicated kind 'self-certified'; a waiver must be recorded under its own name and never one that reads as an independent verdict`);
+      }
+      // The grant's source must be a role that actually holds waiver authority.
+      // Reconciling the three fields against each other only proved they agreed:
+      // setting all of them to 'maker' validated cleanly and let a maker mint
+      // the grant used to bypass its own review.
+      const waiverAuthorities = new Set(c.qa.gates.map((g) => g.waiver_authority_role));
+      if (!waiverAuthorities.has(sc.standing_authority_from)) {
+        errors.push(`qa: self_certification takes its standing authority from '${sc.standing_authority_from}', which holds no gate's waiver_authority_role (${[...waiverAuthorities].join(', ')}); a waiver cannot be minted by a role that has none to give`);
       }
       // The standing grant has to exist and actually carry these actions.
       if (c.delegation) {
@@ -860,7 +870,16 @@ export function semanticChecks(c, now = new Date().toISOString()) {
               errors.push(`qa: standing envelope '${env.id}' has a malformed ${label} ${JSON.stringify(v)}; a grant whose window cannot be read backs nothing`);
               return null;
             }
-            return Date.parse(v);
+            // The regex proves the shape, not the calendar. Node normalizes
+            // 2026-02-30 to March 2 without complaint, so a date that does not
+            // exist was passing both the pattern and the parse. Round-tripping
+            // is what actually rejects it.
+            const t = Date.parse(v);
+            if (new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z') !== v) {
+              errors.push(`qa: standing envelope '${env.id}' has a ${label} of ${JSON.stringify(v)}, which is not a real instant (it normalizes to ${new Date(t).toISOString()}); a grant whose window cannot be read backs nothing`);
+              return null;
+            }
+            return t;
           };
           const eff = at('effective', env.effective);
           const exp = at('expiry', env.expiry);
@@ -3098,7 +3117,17 @@ export function runSelftest(root = ROOT) {
   expectSemantic('self-cert: the maker approving itself', (c) => { c.qa.self_certification.approver_role = 'maker'; }, 'approve its own certification');
   expectSemantic('self-cert: the approver is also the verifier it waives', (c) => { c.qa.self_certification.approver_role = 'qa-independent'; }, 'must not be the reviewer it waives');
   expectSemantic('self-cert: reaching a risk class the owner reserved', (c) => { c.qa.self_certification.permitted_risk_classes.push('high'); }, 'reserves its waiver to the owner');
-  expectSemantic('self-cert: recorded as a real independent verdict', (c) => { c.qa.self_certification.verdict_kind = 'independent-pass'; }, 'reads as an independent verdict');
+  expectSemantic('self-cert: recorded as a real independent verdict', (c) => { c.qa.self_certification.verdict_kind = 'independent-pass'; }, "not the dedicated kind 'self-certified'");
+  // A blacklist of four spellings left every other one available.
+  expectSemantic('self-cert: an independent-looking verdict spelling outside the blacklist', (c) => { c.qa.self_certification.verdict_kind = 'qa-independent-pass'; }, "not the dedicated kind 'self-certified'");
+  // Three self-consistent fields proved only that they agreed with each other.
+  expectSemantic('self-cert: the maker minting the grant that clears its own review', (c) => {
+    c.qa.self_certification.standing_authority_from = 'maker';
+    c.teams.team_leads.standing_grant_from = 'maker';
+    c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegator_role = 'maker';
+  }, 'holds no gate');
+  // Shape is not calendar: Node normalizes 2026-02-30 to March 2 silently.
+  expectSemantic('self-cert: a standing grant dated to a day that does not exist', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').effective = '2026-02-30T00:00:00Z'; }, 'not a real instant');
   expectSemantic('self-cert: a standing grant naming a different role', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegatee_role = 'it-support'; }, 'not the approver role');
   expectSemantic('self-cert: a standing grant carrying the wrong actions', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegated_actions = ['run-tests-and-builds']; }, 'unrelated grant cannot authorize');
   // Both bounds against the clock, not merely against each other. An ordered
