@@ -981,6 +981,15 @@ function currentHead(root) {
   catch { return null; }
 }
 
+// Is HEAD on a branch, or detached? Reseating onto a detached HEAD would pin a
+// capsule to a commit no branch carries — see runReseat.
+function onBranch(root) {
+  try {
+    execFileSync('git', ['symbolic-ref', '--quiet', 'HEAD'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
 // Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
 // work, so an absent ref is normal for an unstarted seat — but wake must say so
 // rather than printing a checkout instruction that silently cannot be followed.
@@ -1926,6 +1935,14 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   }
   const head = currentHead(root);
   if (!head) return { ok: false, errors: ['no live HEAD to reseat onto'] };
+  // A detached HEAD is not a place a seat can be sent. CI checks a pull request
+  // out as a synthetic merge commit that no branch carries and nothing keeps;
+  // reseating there would pin every capsule to a SHA that disappears when the
+  // run ends, and a clean clone could never reconstruct the base. Caught in CI
+  // by exactly that mechanism.
+  if (!onBranch(root)) {
+    return { ok: false, errors: [`HEAD is detached at ${head.slice(0, 12)}; reseating would pin the capsule to a commit no branch carries`] };
+  }
   if (cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
 
   const from = cap.base_oid;

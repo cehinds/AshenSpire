@@ -356,19 +356,45 @@ function check(name, cond, detail = '') {
 }
 
 // 2j. Reseat: a stale base is why every woken seat stopped on arrival. Only
-// unstarted seats follow the branch; a seat with work standing on its base does
-// not get silently rebased.
+// unstarted seats follow the branch; a seat with work standing on its base is
+// never silently rebased; and a detached HEAD is refused outright.
+//
+// The positive path MUTATES capsules, so it runs against a throwaway copy in a
+// scratch git repo — never the real corpus. An earlier version of this test
+// reseated the live tree, which passed locally (HEAD already matched) and in CI
+// pinned every capsule to the synthetic PR merge commit.
 {
-  const onHead = runReseat(ROOT, 'AS-HD-057');
-  check('an unstarted seat already on HEAD reseats to a no-op', onHead.ok && onHead.unchanged === true, JSON.stringify(onHead));
   const started = runReseat(ROOT, 'AS-1001');
   check('an in-progress seat refuses to reseat', !started.ok && /not unstarted/.test(started.errors.join(' ')), JSON.stringify(started));
-  const ghost = runReseat(ROOT, 'AS-0000');
-  check('reseat refuses an unknown ticket', !ghost.ok);
-  // The whole point: after reseating, wake reports a usable base rather than
-  // telling the seat to stop before it starts.
-  const w = runWake(ROOT, 'it-support', 'AS-HD-057');
-  check('a reseated seat wakes with a current base, not STALE', !!w.text && /FRESHNESS  : current/.test(w.text), (w.text || '').split('\n').find((l) => l.startsWith('FRESHNESS')));
+  check('reseat refuses an unknown ticket', !runReseat(ROOT, 'AS-0000').ok);
+
+  const sandbox = resolve(tmpdir(), `agentops-reseat-${process.pid}-${Date.now()}`);
+  const agentops = resolve(sandbox, '.agentops');
+  const git = (...a) => execFileSync('git', a, { cwd: sandbox, stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    mkdirSync(sandbox, { recursive: true });
+    cpSync(ROOT, agentops, { recursive: true });
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.invalid');
+    git('config', 'user.name', 'test');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'base');
+
+    const before = JSON.parse(readFileSync(resolve(agentops, 'work/AS-HD-057/CURRENT.json'), 'utf8'));
+    const r = runReseat(agentops, 'AS-HD-057');
+    check('an unstarted seat reseats onto the branch HEAD', r.ok && !r.unchanged && r.base !== before.base_oid, JSON.stringify(r));
+    check('reseating bumps the revision and records an event', r.ok && r.revision === (before.revision || 0) + 1 && !!r.event, JSON.stringify(r));
+    const after = JSON.parse(readFileSync(resolve(agentops, 'work/AS-HD-057/CURRENT.json'), 'utf8'));
+    check('the reseated capsule links to the seal it succeeded', after.parent_hash === before.current_hash, `${after.parent_hash} vs ${before.current_hash}`);
+    check('reseating twice is a no-op', (() => { const again = runReseat(agentops, 'AS-HD-057'); return again.ok && again.unchanged === true; })());
+
+    // The CI shape: a pull request is checked out as a detached merge commit.
+    git('checkout', '-q', '--detach');
+    const det = runReseat(agentops, 'AS-HD-050');
+    check('reseat refuses a detached HEAD', !det.ok && /detached/.test(det.errors.join(' ')), JSON.stringify(det));
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);
