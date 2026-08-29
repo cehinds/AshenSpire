@@ -19,7 +19,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, cpSync
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -709,6 +709,7 @@ export function refDeclaration(contracts, ref) {
 export function refEntitlementErrors(contracts, label, ref, actor) {
   const d = refDeclaration(contracts, ref);
   if (!d) return [`${label} ref '${ref}' matches no declared ref in git-ownership.refs`];
+  if (!refNameValid(ref)) return [`${label} ref '${ref}' is not a valid git branch name; git could not create it`];
   // A seat works on an isolated continuation branch and nothing else.
   // Rejecting only `protected` left `dev` reachable: it is pr-only, but it is
   // owned by it-manager-iii, so an ITM3 seat could name it and pass — local
@@ -837,9 +838,11 @@ export function runtimeChecks(g, rt) {
     for (const l of rt.leases) {
       if (l.revoked) continue;
       const d = refDeclaration(g, l.ref);
-      if (!d || !d.per_seat) continue;
+      // Every isolated ref is one seat's branch, per_seat or not: two makers
+      // on one claude/* ref collide even with disjoint paths.
+      if (!d || d.mutation !== 'isolated-continuation') continue;
       if (byRef.has(l.ref)) {
-        errors.push(`per-seat ref '${l.ref}' is held by both '${byRef.get(l.ref)}' and '${l.id}'; an isolated ref belongs to exactly one seat`);
+        errors.push(`isolated ref '${l.ref}' is held by both '${byRef.get(l.ref)}' and '${l.id}'; an isolated ref belongs to exactly one seat`);
       } else byRef.set(l.ref, l.id);
     }
   }
@@ -958,7 +961,20 @@ function currentHead(root) {
 // rather than printing a checkout instruction that silently cannot be followed.
 function refExists(root, ref) {
   try {
-    execSync(`git rev-parse --verify --quiet ${JSON.stringify(ref)}`, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    // execFileSync, never execSync: the ref comes from capsule JSON, and a
+    // shell would expand `$(...)` in it — waking a seat would then run
+    // arbitrary commands. An argument array cannot be interpreted as syntax.
+    execFileSync('git', ['rev-parse', '--verify', '--quiet', ref], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
+// A ref that passes policy must still be a name git can actually create;
+// otherwise wake hands a seat a branch that cannot exist. Checked with git's
+// own rules, again without a shell.
+export function refNameValid(ref) {
+  try {
+    execFileSync('git', ['check-ref-format', '--branch', ref], { stdio: ['ignore', 'ignore', 'ignore'] });
     return true;
   } catch { return false; }
 }
@@ -1653,6 +1669,8 @@ export function runSelftest(root = ROOT) {
   expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
   expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
   expectRuntime('a second active lease on a protected ref', (rt) => { const base = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support'); rt.leases.push({ ...base, id: 'lease-AS-HD-057-shadow', ref: 'main' }); }, 'not an isolated-continuation branch');
+  expectRuntime('two seats holding the same isolated ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'claude/ashenspire-agentops-stage3-capsules'; }, 'belongs to exactly one seat');
+  expectRuntime('capsule ref that git cannot create', (rt) => { rt.capsules['AS-HD-040'].ref = 'recovery/foo..bar'; rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'recovery/foo..bar'; }, 'not a valid git branch name');
   expectRuntime('two seats holding the same per-seat ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support').ref = 'recovery/as-hd-029'; }, 'belongs to exactly one seat');
   expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'not an isolated-continuation branch');
   expectRuntime('capsule claiming the pr-only integration ref', (rt) => { rt.capsules['AS-HD-029'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-HD-029'].writer_lease).ref = 'dev'; }, 'not an isolated-continuation branch');
