@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 1,
-  "current_hash": "sha256:fa70d69eb37164e5101360d9320d06045956dcc1083e0837fae723b3dd520262",
-  "parent_hash": null,
+  "revision": 2,
+  "current_hash": "sha256:8d9834a21dce9ebc873c7cc6ec4e135a7ce5788730c5e71fa270a374942af87b",
+  "parent_hash": "sha256:fa70d69eb37164e5101360d9320d06045956dcc1083e0837fae723b3dd520262",
   "ticket": "AS-HD-050",
   "lifecycle_state": "assigned",
   "objective": "Close the Art motif row through pointer-last reconciliation (Art D2).",
