@@ -20,8 +20,11 @@
     "path_grant_exception": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["reason"],
-      "properties": {"reason": {"type": "string", "minLength": 1}}
+      "required": ["reason", "globs"],
+      "properties": {
+        "reason": {"type": "string", "minLength": 1},
+        "globs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1}
+      }
     }
   }
 }

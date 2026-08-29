@@ -718,9 +718,13 @@ export function hierarchyRoles(contracts) {
 // explicit, reviewable choice rather than a silent gap.
 export function pathGrantErrors(contracts, lease) {
   const errors = [];
-  if (lease.path_grant_exception) return errors;
+  // An exception covers only the globs it names. A lease carrying one is still
+  // fully validated for every other glob, so a grandfathered lease cannot be
+  // widened later under cover of its own exception.
+  const exempt = new Set(((lease.path_grant_exception || {}).globs) || []);
   const decls = (contracts['git-ownership'] && contracts['git-ownership'].paths) || [];
   for (const g of lease.path_globs) {
+    if (exempt.has(g)) continue;
     const owner = decls.find((d) => globPrefix(g).startsWith(globPrefix(d.glob)));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
@@ -1611,6 +1615,7 @@ export function runSelftest(root = ROOT) {
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
   expectRuntime('broken event chain', (rt) => { rt.events['AS-1001'][2].parent_event = 'AS-1001-0001'; }, 'breaks the chain');
   expectRuntime('affected path outside lease', (rt) => { rt.capsules['AS-1001'].affected_paths.push('src/**'); }, 'not covered by its writer lease');
+  expectRuntime('exempted lease cannot be widened with an unnamed glob', (rt) => { rt.leases.find((x) => x.id === 'lease-AS-1001-maker').path_globs.push('content/**'); }, 'git-ownership assigns that path to');
   expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
   expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
   expectRuntime('capsule ref outside any declared ref namespace', (rt) => { rt.capsules['AS-1001'].ref = 'wildcat/not-declared'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'wildcat/not-declared'; }, 'no declared ref');
