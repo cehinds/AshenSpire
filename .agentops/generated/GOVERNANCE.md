@@ -392,6 +392,8 @@ Permitted risk classes: `low`, `standard`. High risk is excluded because the IT 
 
 Approver: `team-lead`, leading the certifying seat's own team and never the seat itself, under standing grant `itm-to-team-lead-self-certification` from `it-manager-iii`. Recorded as `self-certified`.
 
+That grant must be live and must actually carry `approve-maker-self-certification` and `record-independence-waiver`: an envelope with the right roles but the wrong actions, or one outside its effective window, backs nothing.
+
 Every self-certification records: the certifying seat, the approving team lead, the standing envelope, the exact head, the suites actually run, why independence was waived.
 
 Never: recorded or rendered as a qa-independent verdict; used for a risk class this contract does not permit; approved by the seat that produced the work.

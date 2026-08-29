@@ -45,6 +45,7 @@
     "approver_must_differ_from_the_certifying_seat": true,
     "standing_authority_from": "it-manager-iii",
     "delegation_envelope": "itm-to-team-lead-self-certification",
+    "requires_envelope_actions": ["approve-maker-self-certification", "record-independence-waiver"],
     "verdict_kind": "self-certified",
     "records": [
       "the certifying seat",

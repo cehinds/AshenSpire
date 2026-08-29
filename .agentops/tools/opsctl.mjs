@@ -272,7 +272,11 @@ export function loadContracts(root = ROOT) {
 // Cross-contract semantic checks. Pure function over already-parsed contracts
 // so the test harness can plant defects without touching the filesystem.
 // ---------------------------------------------------------------------------
-export function semanticChecks(c) {
+// `now` is injectable so the expiry plants can prove both bounds without
+// waiting for a calendar. Validation being time-aware is deliberate: a standing
+// grant that has run out must stop backing the waiver on its own, not when
+// someone remembers. Render stays time-free, so determinism is unaffected.
+export function semanticChecks(c, now = new Date().toISOString()) {
   const errors = [];
 
   // --- authority tiers (P0-P4) and ticket flow ----------------------------
@@ -832,7 +836,18 @@ export function semanticChecks(c) {
         else {
           if (env.delegatee_role !== sc.approver_role) errors.push(`qa: standing envelope '${env.id}' grants '${env.delegatee_role}', not the approver role '${sc.approver_role}'`);
           if (env.delegator_role !== sc.standing_authority_from) errors.push(`qa: self_certification says its standing authority comes from '${sc.standing_authority_from}' but envelope '${env.id}' is delegated by '${env.delegator_role}'`);
-          if (env.expiry <= env.effective) errors.push(`qa: standing envelope '${env.id}' is expired; the self-certification grant would be unbacked`);
+          // Right roles, right dates, wrong grant: an envelope carrying some
+          // unrelated action would otherwise read as backing this waiver.
+          const granted = new Set(env.delegated_actions);
+          for (const need of sc.requires_envelope_actions) {
+            if (!granted.has(need)) errors.push(`qa: standing envelope '${env.id}' does not grant '${need}'; an unrelated grant cannot authorize bypassing independent QA`);
+          }
+          // Ordering is not currency. `expiry > effective` says only that the
+          // window is the right way round, so a 2020-2021 envelope satisfied it
+          // and an expired grant kept reading as authoritative. Both bounds are
+          // compared against the verification time instead.
+          if (env.effective > now) errors.push(`qa: standing envelope '${env.id}' is not yet effective (${env.effective} > ${now}); the self-certification grant is unbacked`);
+          if (env.expiry <= now) errors.push(`qa: standing envelope '${env.id}' expired at ${env.expiry}; the self-certification grant is unbacked and must be renewed before a lead may waive independence`);
         }
       }
       // The record must keep both halves, or the waiver becomes invisible.
@@ -1162,6 +1177,8 @@ export function renderGovernance(c) {
       L.push(`Permitted risk classes: ${sc.permitted_risk_classes.map((x) => '`' + x + '`').join(', ')}. High risk is excluded because ${sc.high_risk_is_excluded_because}`);
       L.push('');
       L.push(`Approver: \`${sc.approver_role}\`, leading the certifying seat's own team and never the seat itself, under standing grant \`${sc.delegation_envelope}\` from \`${sc.standing_authority_from}\`. Recorded as \`${sc.verdict_kind}\`.`);
+      L.push('');
+      L.push(`That grant must be live and must actually carry ${sc.requires_envelope_actions.map((a) => '\`' + a + '\`').join(' and ')}: an envelope with the right roles but the wrong actions, or one outside its effective window, backs nothing.`);
       L.push('');
       L.push(`Every self-certification records: ${sc.records.join(', ')}.`);
       L.push('');
@@ -2549,7 +2566,7 @@ const VIEW_PROBES = {
   'owner-intent': (x) => [x.mission, x.measurable_end_state, x.risk_tolerance, ...x.non_negotiable_invariants, x.owner.reserved_authority.join('; '), x.deputy.grant_summary, x.deputy.non_amplifying_rule],
   project: (x) => [x.project_name, x.installed_stage],
   'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
-  qa: (x) => [x.principle, x.self_certification.principle, x.self_certification.high_risk_is_excluded_because],
+  qa: (x) => [x.principle, x.self_certification.principle, x.self_certification.high_risk_is_excluded_because, ...x.self_certification.requires_envelope_actions],
   raci: (x) => [x.principle],
   roles: (x) => x.roles.map((r) => r.mission),
   teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
@@ -3062,6 +3079,18 @@ export function runSelftest(root = ROOT) {
   expectSemantic('self-cert: reaching a risk class the owner reserved', (c) => { c.qa.self_certification.permitted_risk_classes.push('high'); }, 'reserves its waiver to the owner');
   expectSemantic('self-cert: recorded as a real independent verdict', (c) => { c.qa.self_certification.verdict_kind = 'independent-pass'; }, 'reads as an independent verdict');
   expectSemantic('self-cert: a standing grant naming a different role', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegatee_role = 'it-support'; }, 'not the approver role');
+  expectSemantic('self-cert: a standing grant carrying the wrong actions', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegated_actions = ['run-tests-and-builds']; }, 'unrelated grant cannot authorize');
+  // Both bounds against the clock, not merely against each other. An ordered
+  // 2020-2021 window satisfied the old check while being long expired.
+  {
+    const c1 = base();
+    const e1 = c1.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification');
+    e1.effective = '2020-01-01T00:00:00Z'; e1.expiry = '2021-01-01T00:00:00Z';
+    const errs1 = semanticChecks(c1);
+    results.push({ label: 'self-cert: an expired standing grant, correctly ordered', pass: errs1.some((e) => e.includes('expired at')), errs: errs1 });
+    const errs2 = semanticChecks(base(), '2020-01-01T00:00:00Z');
+    results.push({ label: 'self-cert: a standing grant not yet effective', pass: errs2.some((e) => e.includes('not yet effective')), errs: errs2 });
+  }
   expectSemantic('self-cert: an unauditable record', (c) => { c.qa.self_certification.records = ['something happened']; }, 'could not be audited');
 
   expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
