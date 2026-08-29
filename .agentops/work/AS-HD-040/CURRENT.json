@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 1,
-  "current_hash": "sha256:c8be8c2a5e1a540d12340250d530fd7fa9ba5933b0da2fff8443d46d7f757b1f",
-  "parent_hash": null,
+  "revision": 2,
+  "current_hash": "sha256:cec3a903615c2f40360b2ea7af1f2b0b577c5ccb1c9d2bfa36f1e82bf57f310d",
+  "parent_hash": "sha256:c8be8c2a5e1a540d12340250d530fd7fa9ba5933b0da2fff8443d46d7f757b1f",
   "ticket": "AS-HD-040",
   "lifecycle_state": "assigned",
   "objective": "Close the component-card silhouette successor contract for the class facelift (Art D1).",
@@ -19,11 +19,7 @@
     "assets/classes/**"
   ],
   "evidence_pointers": [],
-  "blocker": {
-    "kind": "owner-decision",
-    "wake": "constantine",
-    "summary": "D1: choose proof-only upper-body successor, new full-body inputs, or continued hold. Frozen packet 99814105…0A43 preserved; no approval recorded."
-  },
+  "blocker": null,
   "authority": {
     "may": [
       "implement-locally-on-exclusive-paths",

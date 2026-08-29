@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-050-0004",
+  "ticket": "AS-HD-050",
+  "seq": 4,
+  "parent_event": "AS-HD-050-0003",
+  "kind": "state-change",
+  "actor": "it-manager-iii",
+  "at": "2026-08-29T08:40:00Z",
+  "summary": "Blocker cleared for the owner decision recorded in AS-HD-050-0003 (issue #387). The executor did not clear it at apply time; that defect is fixed by the resolves_blocker rule and this event records the correction. No new authority is claimed — AS-HD-050-0003 remains the decision of record."
+}

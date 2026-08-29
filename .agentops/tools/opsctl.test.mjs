@@ -178,6 +178,26 @@ function check(name, cond, detail = '') {
     check('applied corpus still validates', runValidate(box).errors.length === 0, runValidate(box).errors.join(' | '));
     check('applied corpus still wakes', !(runWake(box, 'maker', 'AS-1001').errors || []).length);
 
+    // A decision that answers an owner-decision blocker must clear it, or the
+    // capsule reports itself blocked forever after the answer arrived.
+    const blocked = readCap();
+    blocked.blocker = { kind: 'owner-decision', wake: 'constantine', summary: 'awaiting the owner' };
+    blocked.current_hash = computeCapsuleHash(blocked);
+    writeFileSync(capPath, JSON.stringify(blocked, null, 2) + '\n');
+    const bh = computeCapsuleHash(loadRuntime(box).capsules['AS-1001']);
+    const resolved = runCommand(box, { schema: 'agentops/owner-command-request/v1', action: 'approve', actor: 'owner', target: 'AS-1001', expected_current_hash: bh, candidate_oid: 'abc123', reason: 'answered.' }, { dryRun: false });
+    check('a resolving decision is applied', resolved.ok, (resolved.errors || []).join(' | '));
+    check('a resolving decision clears the blocker', readCap().blocker === null, JSON.stringify(readCap().blocker));
+    check('clearing the blocker keeps the capsule sealed and valid', readCap().current_hash === computeCapsuleHash(readCap()) && runValidate(box).errors.length === 0);
+
+    // A deferral must NOT clear a blocker: it postpones, it does not answer.
+    const reblocked = readCap();
+    reblocked.blocker = { kind: 'owner-decision', wake: 'constantine', summary: 'still awaiting' };
+    reblocked.current_hash = computeCapsuleHash(reblocked);
+    writeFileSync(capPath, JSON.stringify(reblocked, null, 2) + '\n');
+    runCommand(box, { schema: 'agentops/owner-command-request/v1', action: 'defer', actor: 'owner', target: 'AS-1001', reason: 'not yet' }, { dryRun: false });
+    check('a deferral does not clear the blocker', readCap().blocker !== null);
+
     // Replaying the identical command is now stale: the CAS has moved.
     check('apply rejects a replayed (stale) command', runCommand(box, req, { dryRun: false }).ok === false);
     // Owner-exclusive actions stay owner-exclusive under apply.
