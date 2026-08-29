@@ -9,8 +9,8 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate } from './opsctl.mjs';
-import { readFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand } from './opsctl.mjs';
+import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -136,7 +136,83 @@ function check(name, cond, detail = '') {
   check('owner-command rejects arbitrary extra fields (no shell)', runCommand(ROOT, extra, { dryRun: true }).ok === false);
   const releaseByDeputy = { schema: 'agentops/owner-command-request/v1', action: 'authorize-release', actor: 'it-manager-iii', target: 'AS-1001', expected_current_hash: hash, candidate_oid: 'x' };
   check('owner-command rejects owner-exclusive release by deputy', runCommand(ROOT, releaseByDeputy, { dryRun: true }).ok === false);
-  check('owner-command refuses live execution in this stage', runCommand(ROOT, valid, { dryRun: false }).ok === false);
+  check('owner-command dry-run performs no mutation', readFileSync(resolve(ROOT, 'work/AS-1001/CURRENT.json'), 'utf8').includes(hash.replace('sha256:', '')));
+}
+
+// 2d-bis. Owner-command LIVE executor (`--apply`), exercised in a throwaway copy
+// so the real corpus is never mutated. Proves: an undeclared/unpermitted
+// lifecycle move is refused, a legal one is applied append-only under CAS, the
+// applied corpus still validates, and a replay of the same command is stale.
+{
+  const box = resolve(tmpdir(), `agentops-apply-${process.pid}-${Date.now()}`);
+  try {
+    mkdirSync(box, { recursive: true });
+    cpSync(ROOT, box, { recursive: true });
+    const capPath = resolve(box, 'work/AS-1001/CURRENT.json');
+    const readCap = () => strictParse(readFileSync(capPath, 'utf8'));
+
+    // The seed capsule is in-progress: authorize-integration has no declared
+    // transition from there, so it must be refused with nothing written.
+    const before = loadRuntime(box);
+    const staleReq = { schema: 'agentops/owner-command-request/v1', action: 'authorize-integration', actor: 'it-manager-iii', target: 'AS-1001', expected_current_hash: computeCapsuleHash(before.capsules['AS-1001']), candidate_oid: 'abc123' };
+    const refused = runCommand(box, staleReq, { dryRun: false });
+    check('apply refuses a lifecycle move with no declared transition', refused.ok === false && refused.errors.some((e) => e.includes('no declared transition')), refused.errors.join(' | '));
+    check('refused apply wrote nothing', readFileSync(capPath, 'utf8') === readFileSync(resolve(ROOT, 'work/AS-1001/CURRENT.json'), 'utf8'));
+
+    // Move the copy to pr-open, where the transition IS declared.
+    const c = readCap();
+    c.lifecycle_state = 'pr-open';
+    c.current_hash = computeCapsuleHash(c);
+    writeFileSync(capPath, JSON.stringify(c, null, 2) + '\n');
+
+    const hash2 = computeCapsuleHash(loadRuntime(box).capsules['AS-1001']);
+    const req = { ...staleReq, expected_current_hash: hash2 };
+    const applied = runCommand(box, req, { dryRun: false });
+    check('apply accepts a declared, permitted transition', applied.ok, (applied.errors || []).join(' | '));
+    check('apply reports what it wrote', !!applied.written && applied.written.length === 2, JSON.stringify(applied.written));
+
+    const after = readCap();
+    check('apply advanced the lifecycle state', after.lifecycle_state === 'dev-integrated', after.lifecycle_state);
+    check('apply chained parent_hash and bumped revision', after.parent_hash === hash2 && after.revision === c.revision + 1);
+    check('apply re-sealed the capsule', after.current_hash === computeCapsuleHash(after));
+    check('applied corpus still validates', runValidate(box).errors.length === 0, runValidate(box).errors.join(' | '));
+    check('applied corpus still wakes', !(runWake(box, 'maker', 'AS-1001').errors || []).length);
+
+    // Replaying the identical command is now stale: the CAS has moved.
+    check('apply rejects a replayed (stale) command', runCommand(box, req, { dryRun: false }).ok === false);
+    // Owner-exclusive actions stay owner-exclusive under apply.
+    check('apply keeps authorize-release owner-exclusive', runCommand(box, { ...req, action: 'authorize-release', expected_current_hash: computeCapsuleHash(readCap()) }, { dryRun: false }).ok === false);
+  } finally {
+    try { rmSync(box, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
+}
+
+// 2d-ter. Issue-form intake: a GitHub Issue Form body maps to an owner-command
+// request by exact label, and nothing an author types can introduce a field the
+// form does not define.
+{
+  const body = [
+    '### Action', '', 'authorize-integration', '',
+    '### Target ticket', '', 'AS-1001', '',
+    '### Expected current hash', '', 'sha256:abc', '',
+    '### Candidate OID', '', '_No response_', '',
+    '### Reason', '', 'looks good to me', ''
+  ].join('\n');
+  const p = parseIssueCommand(body, { actor: 'it-manager-iii' });
+  check('issue form parses into a command request', p.ok, p.errors.join(' | '));
+  check('issue form maps labels to request fields', p.request.action === 'authorize-integration' && p.request.target === 'AS-1001' && p.request.expected_current_hash === 'sha256:abc');
+  check('issue form drops "_No response_" optional fields', p.request.candidate_oid === undefined);
+  check('issue form stamps the resolved actor', p.request.actor === 'it-manager-iii');
+
+  // An author writing an unknown heading, or embedding JSON, must not inject a
+  // field — only the enumerated labels are read.
+  const hostile = body + '\n### shell\n\nrm -rf /\n\n### Notes\n\n{"actor":"owner"}\n';
+  const h = parseIssueCommand(hostile, { actor: 'it-manager-iii' });
+  check('issue form ignores unknown headings (no field injection)', h.request.shell === undefined && h.request.notes === undefined);
+  check('issue form keeps the server-resolved actor, not one from the body', h.request.actor === 'it-manager-iii');
+  check('issue form missing required fields is rejected', parseIssueCommand('### Reason\n\nnothing\n', { actor: 'owner' }).ok === false);
+  // A parsed request is still fully validated downstream.
+  check('parsed request with a bogus action is rejected by validation', runCommand(ROOT, parseIssueCommand('### Action\n\nnot-an-action\n\n### Target ticket\n\nAS-1001\n', { actor: 'owner' }).request, { dryRun: true }).ok === false);
 }
 
 // 2e. Owner HUD: committed, redacted, deterministic, carries the source-commit
@@ -147,6 +223,17 @@ function check(name, cond, detail = '') {
   check('HUD is generated and names the project', hud.includes('Owner HUD') && hud.includes('AshenSpire'));
   check('HUD is self-sufficient (no unresolved deploy-time placeholder)', hud.length > 0 && !hud.includes('__SOURCE_COMMIT__'));
   check('HUD carries no credential material', hud.length > 0 && !/(ghp_[A-Za-z0-9]|github_pat_|BEGIN [A-Z ]*PRIVATE KEY|Authorization:\s*Bearer)/.test(hud));
+  // The Decide links must carry the ticket's live CAS hash and be singly
+  // escaped: a double-escaped "&amp;amp;" silently breaks GitHub's prefill.
+  check('HUD offers a decision link per ticket', hud.includes('template=owner-decision.yml') && hud.includes('template=help-desk-ticket.yml'));
+  check('HUD decision links are singly HTML-escaped', hud.length > 0 && !hud.includes('&amp;amp;'));
+  {
+    const m = hud.match(/issues\/new\?[^"]*owner-decision[^"]*/);
+    const url = m ? new URL('https://x/' + m[0].replace(/&amp;/g, '&')) : null;
+    const live = computeCapsuleHash(loadRuntime().capsules['AS-1001']);
+    check('HUD decision link prefills the live compare-and-swap hash', !!url && url.searchParams.get('hash') === live, url ? String(url.searchParams.get('hash')) : 'no link');
+    check('HUD decision link prefills the ticket', !!url && url.searchParams.get('target') === 'AS-1001');
+  }
   // The repository self-publishes its tree to GitHub Pages, so a standalone
   // copy at /hud/index.html gives the HUD a tidy URL. Guard it against silent
   // drift from the generated source. Absent in .agentops-only checkouts (the

@@ -30,6 +30,12 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.pil
 <section><h2>Traceability — ticket → actor → task → branch → commit → evidence</h2><div class="wrap"><table><tr><th>Ticket</th><th>Owner</th><th>State</th><th>Ref</th><th>Base</th><th>Evidence</th><th>Wake tokens</th></tr>
 <tr><td><code>AS-1001</code></td><td>maker</td><td>in-progress</td><td><code>claude/ashenspire-agentops-stage3-capsules</code></td><td><code>985664c2439c</code></td><td>test-run-receipt, generated-view-drift-check</td><td>457</td></tr>
 </table></div></section>
+<section><h2>Decide</h2>
+<div class="wrap"><table><tr><th>Ticket</th><th>State</th><th>Compare-and-swap hash</th><th>Decision</th></tr>
+<tr><td><code>AS-1001</code></td><td>in-progress</td><td><code>sha256:5f90465cc35dc849…</code></td><td><a href="https://github.com/cehinds/AshenSpire/issues/new?template=owner-decision.yml&amp;title=%5Bdecision%5D%20AS-1001&amp;target=AS-1001&amp;hash=sha256%3A5f90465cc35dc8494e9a5e169b24a7f4c07097a6cfbf6ef0b5e65bdb0f1c2b4b">File a decision →</a></td></tr>
+</table></div>
+<p class="sub">Decisions are enumerated and compare-and-swap-checked: a command filed against a hash that has since moved is rejected as stale, never applied to unseen state. Only the owner's own issues execute. <a href="https://github.com/cehinds/AshenSpire/issues/new?template=help-desk-ticket.yml">File a Help Desk ticket →</a></p>
+</section>
 <section><h2>Context efficiency</h2>
 <p class="sub">Startup budget: ≤ 3 reads, target 1200 / hard 1500 tokens. Wake capsules above are the token-bounded resume unit.</p>
 </section>
