@@ -1590,6 +1590,31 @@ export function runtimeChecks(g, rt) {
       }
     }
   }
+
+  // A recorded self-certification is where the waiver actually happens, and
+  // until now nothing checked one. The static roster proved that leads have
+  // team identities; this proves a given waiver used the right one. Without it
+  // a game-systems capsule could carry a waiver approved by the art lead and
+  // `verify` would still pass.
+  const sc = g.qa && g.qa.self_certification;
+  const leadRoster = g.teams && g.teams.team_leads && g.teams.team_leads.leads;
+  for (const t of Object.keys(rt.capsules).sort()) {
+    const cert = rt.capsules[t].self_certification;
+    if (!cert) continue;
+    if (!sc) { errors.push(`capsule ${t}: records a self-certification, but qa.json declares no self_certification policy`); continue; }
+    if (cert.verdict_kind !== sc.verdict_kind) errors.push(`capsule ${t}: self-certification verdict_kind '${cert.verdict_kind}' is not the declared '${sc.verdict_kind}'`);
+    if (cert.envelope !== sc.delegation_envelope) errors.push(`capsule ${t}: self-certification cites envelope '${cert.envelope}', not the standing grant '${sc.delegation_envelope}'`);
+    if (cert.certifying_seat === cert.approving_lead) errors.push(`capsule ${t}: self-certification is approved by the same actor that produced it ('${cert.approving_lead}')`);
+    if (rt.capsules[t].team && cert.team !== rt.capsules[t].team) {
+      errors.push(`capsule ${t}: self-certification names team '${cert.team}' but the capsule's team is '${rt.capsules[t].team}'`);
+    }
+    const lead = (leadRoster || []).find((l) => l.actor_id === cert.approving_lead);
+    if (!lead) errors.push(`capsule ${t}: self-certification approved by '${cert.approving_lead}', which is not a declared team lead`);
+    else if (lead.team !== cert.team) errors.push(`capsule ${t}: self-certification approved by '${cert.approving_lead}', who leads '${lead.team}', not the certifying seat's team '${cert.team}'`);
+    if (cert.exact_head !== rt.capsules[t].base_oid) {
+      errors.push(`capsule ${t}: self-certification is authored at ${cert.exact_head.slice(0, 12)} but the capsule stands on ${String(rt.capsules[t].base_oid).slice(0, 12)}; a changed candidate voids the waiver`);
+    }
+  }
   for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
   // Entitlement must hold for every active lease, not only the one a capsule
   // happens to select: a second unrevoked lease on a protected ref is
@@ -2641,7 +2666,7 @@ const VIEW_PROBES = {
   qa: (x) => [x.principle, x.self_certification.principle, x.self_certification.high_risk_is_excluded_because, ...x.self_certification.requires_envelope_actions],
   raci: (x) => [x.principle],
   roles: (x) => x.roles.map((r) => r.mission),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => pp.delivery_capability), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => l.actor_id), ...x.team_leads.leads.map((l) => l.seat_name), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
   transitions: (x) => [x.principle, ...x.states],
 };
 
@@ -2658,34 +2683,81 @@ const VIEW_PROBES = {
 // same one-line omission, found weeks apart. This is a source-level check for
 // the class, in the same spirit as the subcommand-header check: it reads this
 // file and requires each call site to mention both fields.
-export function renderResultConsumerErrors(sourceText) {
+// Blanks out comments and string/template literals, preserving length so byte
+// offsets and line numbers still line up. Source-level checks that skip this
+// match their own error messages: the first version of the call-shape sweep
+// reported seven "call sites" that were all its own text.
+export function blankNonCode(src) {
+  const out = src.split('');
+  let i = 0;
+  const blank = (from, to) => { for (let k = from; k < to && k < out.length; k++) if (out[k] !== '\n') out[k] = ' '; };
+  while (i < src.length) {
+    const c = src[i], d = src[i + 1];
+    if (c === '/' && d === '/') { let j = src.indexOf('\n', i); if (j < 0) j = src.length; blank(i, j); i = j; continue; }
+    if (c === '/' && d === '*') { let j = src.indexOf('*/', i + 2); j = j < 0 ? src.length : j + 2; blank(i, j); i = j; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      let j = i + 1;
+      while (j < src.length) {
+        if (src[j] === '\\') { j += 2; continue; }
+        if (src[j] === c) { j++; break; }
+        j++;
+      }
+      blank(i, j); i = j; continue;
+    }
+    i++;
+  }
+  return out.join('');
+}
+
+export function renderResultConsumerErrors(rawSource) {
   const errors = [];
+  // Comments and string literals are not call sites. Scanning them made this
+  // check report its own error messages as violations.
+  const sourceText = blankNonCode(rawSource);
   const lines = sourceText.split('\n');
-  lines.forEach((line, i) => {
-    const m = line.match(/(?:const|let)\s+(?:\{([^}]*)\}|(\w+))\s*=\s*runRender\(/);
-    if (!m) return;
-    // Both failure modes, in both call shapes. Checking only `errors` here was
-    // the same omission this function exists to catch, one level up: a caller
-    // could destructure `errors` alone and silently accept stale artifacts
-    // while this reported success.
-    const MODES = [
-      ['errors', 'a view failure'],
-      ['drift', 'a stale committed artifact'],
-    ];
+  const lineOf = (idx) => sourceText.slice(0, idx).split('\n').length;
+
+  // Both failure modes. Checking only `errors` was the same omission this
+  // function exists to catch, one level up.
+  const MODES = [
+    ['errors', 'a view failure'],
+    ['drift', 'a stale committed artifact'],
+  ];
+  // Scanning line by line missed `const r =` with the call on the next line, so
+  // ordinary multiline formatting silently exempted a caller — and because the
+  // one-line callers still matched, the "no call sites" guard stayed quiet too.
+  // The pattern spans newlines and the line number comes from the offset.
+  const DECL = /(?:const|let)\s+(?:\{([^}]*)\}|(\w+))\s*=\s*(?:\r?\n\s*)?runRender\s*\(/g;
+
+  const inspected = [];
+  for (const m of sourceText.matchAll(DECL)) {
+    inspected.push(m.index + m[0].length);
+    const i = lineOf(m.index) - 1;
     if (m[1] !== undefined) {                       // destructured at the call site
       const named = m[1].split(',').map((x) => x.trim().split(':')[0].trim());
       for (const [field, what] of MODES) {
         if (!named.includes(field)) errors.push(`line ${i + 1}: destructures runRender() without '${field}'; ${what} would be silently dropped`);
       }
-      return;
+      continue;
     }
     const v = m[2];
-    const window = lines.slice(i, i + 10).join('\n');
+    const window = lines.slice(i, i + 12).join('\n');
     for (const [field, what] of MODES) {
       if (!window.includes(`${v}.${field}`)) errors.push(`line ${i + 1}: reads runRender() result '${v}' without checking '${v}.${field}'; ${what} would be silently dropped`);
     }
-  });
-  if (!errors.length && !/runRender\(/.test(sourceText)) errors.push('no runRender() call sites found; the consumer check is looking at the wrong source');
+  }
+
+  // Every remaining call is a shape this check cannot reason about — a bare
+  // call, a return, a property assignment — and silence about it would be the
+  // same fail-open the check exists to close. The declaration itself is skipped.
+  for (const m of sourceText.matchAll(/runRender\s*\(/g)) {
+    const declHere = /function\s+$/.test(sourceText.slice(Math.max(0, m.index - 20), m.index));
+    if (declHere) continue;
+    const covered = inspected.some((end) => Math.abs(end - (m.index + m[0].length)) < 2);
+    if (!covered) errors.push(`line ${lineOf(m.index)}: runRender() is called in a shape this check cannot inspect; bind it to a name or a destructure so both failure modes can be verified`);
+  }
+
+  if (!/runRender\s*\(/.test(sourceText)) errors.push('no runRender() call sites found; the consumer check is looking at the wrong source');
   return errors;
 }
 
@@ -3154,6 +3226,30 @@ export function runSelftest(root = ROOT) {
   // widen into a plain self-approval is planted.
   expectSemantic('team lead: role that is not declared', (c) => { c.teams.team_leads.role = 'ghost-lead'; }, 'is not a declared role');
   expectSemantic('team lead: a capability pool made into the lead role', (c) => { c.teams.team_leads.role = 'qa-guild'; }, 'is also a capability pool');
+  // The recorded waiver is where the bypass actually happens. The static roster
+  // proved leads have team identities; these prove a given waiver used the right
+  // one — a game-systems capsule waived by the art lead used to pass.
+  {
+    const withCert = (over) => (rt) => {
+      const c = rt.capsules['AS-HD-050'];
+      c.team = 'game-systems';
+      c.self_certification = Object.assign({
+        certifying_seat: 'maker', approving_lead: 'lead-game-systems', team: 'game-systems',
+        envelope: 'itm-to-team-lead-self-certification', exact_head: c.base_oid,
+        suites_run: ['unit'], why_independence_was_waived: 'bounded reversible change', verdict_kind: 'self-certified',
+      }, over);
+    };
+    const control = baseRt(); withCert({})(control);
+    results.push({ label: 'a well-formed self-certification passes', pass: runtimeChecks(contracts, control).filter((e) => e.includes('self-certification')).length === 0, errs: runtimeChecks(contracts, control).filter((e) => e.includes('self-certification')) });
+    expectRuntime("a waiver approved by another team's lead", withCert({ approving_lead: 'lead-art-tech-art' }), "not the certifying seat's team");
+    expectRuntime('a waiver approved by the seat that produced the work', withCert({ certifying_seat: 'lead-game-systems' }), 'approved by the same actor that produced it');
+    expectRuntime('a waiver approved by an actor that leads nothing', withCert({ approving_lead: 'ghost-lead' }), 'not a declared team lead');
+    expectRuntime('a waiver authored against a different head', withCert({ exact_head: '0'.repeat(40) }), 'a changed candidate voids the waiver');
+    expectRuntime('a waiver citing some other envelope', withCert({ envelope: 'itm-to-qa-review' }), 'not the standing grant');
+    expectRuntime('a waiver recorded as an independent verdict kind', withCert({ verdict_kind: 'independent-pass' }), 'is not the declared');
+    expectRuntime('a waiver naming a team the capsule does not belong to', withCert({ team: 'qa-guild', approving_lead: 'lead-qa-guild' }), "but the capsule's team is");
+  }
+
   expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.leads = c.teams.team_leads.leads.filter((l) => l.team !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
   // Identity, not role. Every lead shares the 'team-lead' role, so without a
   // per-lead actor one team's lead satisfied the grant for another team's maker.
@@ -3230,7 +3326,22 @@ export function runSelftest(root = ROOT) {
     const caughtC = renderResultConsumerErrors(reverted);
     results.push({ label: 'consumer check catches a call site that drops .errors', pass: caughtC.some((e) => e.includes("checking 'r.errors'")), errs: caughtC });
     // Both failure modes, or the check only half does its job.
-    const noDrift = src.replace("const { errors, drift, drifted, wrote } = runRender(", "const { errors, drifted, wrote } = runRender(");
+    // Replace the LAST occurrence: the plant's own needle appears earlier in
+    // this file as a string literal, so a plain .replace() edited the plant
+    // rather than the call site. That went unnoticed while string literals were
+    // still being scanned as code, and became a silent no-op once they were not.
+    const needle = 'const { errors, drift, drifted, wrote } = runRender(';
+    const cut = src.lastIndexOf(needle);
+    const noDrift = src.slice(0, cut) + 'const { errors, drifted, wrote } = runRender(' + src.slice(cut + needle.length);
+    // A line-oriented scan missed ordinary multiline formatting entirely.
+    const multiline = src.replace('  const r = runRender(root, true);', '  const r =\n    runRender(root, true);').replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const caughtM = renderResultConsumerErrors(multiline);
+    results.push({ label: 'consumer check sees a call site split across lines', pass: caughtM.some((e) => e.includes("checking 'r.errors'")), errs: caughtM });
+    // ...and a call shape it cannot inspect must be reported, not passed over.
+    const caughtB = renderResultConsumerErrors(src + '\nfunction sneak() { runRender(ROOT, true); }\n');
+    results.push({ label: 'consumer check reports an uninspectable call shape', pass: caughtB.some((e) => e.includes('cannot inspect')), errs: caughtB });
+    // ...while its own error strings and comments are not call sites.
+    results.push({ label: 'consumer check does not match its own message text', pass: renderResultConsumerErrors(src).length === 0, errs: renderResultConsumerErrors(src) });
     const caughtD = renderResultConsumerErrors(noDrift);
     results.push({ label: 'consumer check catches a call site that drops .drift', pass: caughtD.some((e) => e.includes("without 'drift'")), errs: caughtD });
     const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   wake /.test(l)).join('\n');
