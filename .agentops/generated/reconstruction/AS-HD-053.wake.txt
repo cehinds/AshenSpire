@@ -14,4 +14,4 @@ EVIDENCE   : —
 SOURCE     : 4a515339189c6f3ec003eef74e86dc38526f93fe
 FRESHNESS  : as-recorded (base 4a515339189c); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
-BLOCKER    : {"kind":"evidence-loss","wake":"it-manager-iii","summary":"The authoritative per-team backlog lived in a physical-ledger workspace (teams/<team>/BACKLOG.json) that is not in this repository and did not survive the originating session. Only the Hub rendered snapshot remains as a source."}
+BLOCKER    : {"kind":"evidence-loss","escalation_class":"technical-blocker","summary":"The authoritative per-team backlog lived in a physical-ledger workspace (teams/<team>/BACKLOG.json) that is not in this repository and did not survive the originating session. Only the Hub rendered snapshot remains as a source."}

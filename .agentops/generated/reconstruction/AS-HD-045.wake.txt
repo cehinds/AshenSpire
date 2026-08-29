@@ -14,4 +14,4 @@ EVIDENCE   : —
 SOURCE     : f4a30c2d929a8429acd46fa02ca8a4798b6d2915
 FRESHNESS  : as-recorded (base f4a30c2d929a); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
-BLOCKER    : {"kind":"awaiting-evidence","wake":"it-manager-iii","summary":"Conditional projection PASS is recorded, but production adoption stays WITHHELD until one coherent render epoch is proven. Paced-versus-live intent timing, defeated-frame removal and exact responsive geometry remain separate owner-gated questions."}
+BLOCKER    : {"kind":"awaiting-evidence","escalation_class":"technical-blocker","summary":"Conditional projection PASS is recorded, but production adoption stays WITHHELD until one coherent render epoch is proven. Paced-versus-live intent timing, defeated-frame removal and exact responsive geometry remain separate owner-gated questions."}

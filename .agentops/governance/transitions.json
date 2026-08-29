@@ -16,19 +16,128 @@
     "resolved",
     "released"
   ],
-  "protected_states": ["pushed", "pr-open", "dev-integrated", "hosted-verified", "released"],
+  "protected_states": [
+    "pushed",
+    "pr-open",
+    "dev-integrated",
+    "hosted-verified",
+    "released"
+  ],
   "transitions": [
-    {"from": "proposed", "to": "assigned", "guard": "contract-ready + acknowledged", "permitted_actor_roles": ["help-desk", "it-manager-iii"], "protected": false},
-    {"from": "assigned", "to": "in-progress", "guard": "writer-lease-held + exclusive-paths", "permitted_actor_roles": ["maker"], "protected": false},
-    {"from": "in-progress", "to": "local", "guard": "local-commit-on-isolated-branch", "permitted_actor_roles": ["maker"], "protected": false},
-    {"from": "local", "to": "qa-review", "guard": "frozen-exact-head", "permitted_actor_roles": ["maker", "it-manager-iii"], "protected": false},
-    {"from": "qa-review", "to": "accepted", "guard": "independent-qa-pass at exact head", "permitted_actor_roles": ["qa-independent"], "protected": false},
-    {"from": "accepted", "to": "pushed", "guard": "independence-PASS + fresh-base", "permitted_actor_roles": ["it-manager-iii"], "protected": true},
-    {"from": "pushed", "to": "pr-open", "guard": "normal-reviewable-PR", "permitted_actor_roles": ["it-manager-iii"], "protected": true},
-    {"from": "pr-open", "to": "dev-integrated", "guard": "required-review + CI-green", "permitted_actor_roles": ["it-manager-iii"], "protected": true},
-    {"from": "dev-integrated", "to": "hosted-verified", "guard": "exact-SHA hosted evidence", "permitted_actor_roles": ["it-manager-iii"], "protected": true},
-    {"from": "hosted-verified", "to": "resolved", "guard": "five-role acceptance ledger", "permitted_actor_roles": ["it-manager-iii", "project-management-lead"], "protected": false},
-    {"from": "resolved", "to": "released", "guard": "Gate-F promotion packet + owner decision", "permitted_actor_roles": ["owner"], "protected": true}
+    {
+      "from": "proposed",
+      "to": "assigned",
+      "guard": "contract-ready + acknowledged",
+      "permitted_actor_roles": [
+        "help-desk",
+        "it-manager-iii"
+      ],
+      "protected": false
+    },
+    {
+      "from": "assigned",
+      "to": "in-progress",
+      "guard": "writer-lease-held + exclusive-paths",
+      "permitted_actor_roles": [
+        "maker",
+        "it-manager-iii",
+        "it-support",
+        "qa-independent",
+        "data-architecture-lead",
+        "project-management-lead",
+        "help-desk"
+      ],
+      "protected": false
+    },
+    {
+      "from": "in-progress",
+      "to": "local",
+      "guard": "local-commit-on-isolated-branch",
+      "permitted_actor_roles": [
+        "maker",
+        "it-manager-iii",
+        "it-support",
+        "qa-independent",
+        "data-architecture-lead",
+        "project-management-lead",
+        "help-desk"
+      ],
+      "protected": false
+    },
+    {
+      "from": "local",
+      "to": "qa-review",
+      "guard": "frozen-exact-head",
+      "permitted_actor_roles": [
+        "maker",
+        "it-manager-iii"
+      ],
+      "protected": false
+    },
+    {
+      "from": "qa-review",
+      "to": "accepted",
+      "guard": "independent-qa-pass at exact head",
+      "permitted_actor_roles": [
+        "qa-independent"
+      ],
+      "protected": false
+    },
+    {
+      "from": "accepted",
+      "to": "pushed",
+      "guard": "independence-PASS + fresh-base",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "pushed",
+      "to": "pr-open",
+      "guard": "normal-reviewable-PR",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "pr-open",
+      "to": "dev-integrated",
+      "guard": "required-review + CI-green",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "dev-integrated",
+      "to": "hosted-verified",
+      "guard": "exact-SHA hosted evidence",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "hosted-verified",
+      "to": "resolved",
+      "guard": "five-role acceptance ledger",
+      "permitted_actor_roles": [
+        "it-manager-iii",
+        "project-management-lead"
+      ],
+      "protected": false
+    },
+    {
+      "from": "resolved",
+      "to": "released",
+      "guard": "Gate-F promotion packet + owner decision",
+      "permitted_actor_roles": [
+        "owner"
+      ],
+      "protected": true
+    }
   ],
   "rules": {
     "known_states": "Every transition from/to must be a declared state.",

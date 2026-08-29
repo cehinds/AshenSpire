@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 1,
-  "current_hash": "sha256:23774275e1827ff57d4e678713a74f9837139ae897a757044911389b4b21b20f",
-  "parent_hash": null,
+  "revision": 2,
+  "current_hash": "sha256:ae7e97eb6bcfdc52453cd270020ffdc37efd2e546ff3f3f800d062656776861c",
+  "parent_hash": "sha256:23774275e1827ff57d4e678713a74f9837139ae897a757044911389b4b21b20f",
   "ticket": "AS-HD-053",
   "lifecycle_state": "assigned",
   "objective": "Rebuild durable team continuity so a seat survives a lost session (Context Rotation).",
@@ -21,7 +21,7 @@
   "evidence_pointers": [],
   "blocker": {
     "kind": "evidence-loss",
-    "wake": "it-manager-iii",
+    "escalation_class": "technical-blocker",
     "summary": "The authoritative per-team backlog lived in a physical-ledger workspace (teams/<team>/BACKLOG.json) that is not in this repository and did not survive the originating session. Only the Hub rendered snapshot remains as a source."
   },
   "authority": {
