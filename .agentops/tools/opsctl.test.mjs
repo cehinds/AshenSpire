@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -26,7 +26,7 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all fifteen contracts loaded', Object.keys(contracts).length === 15, Object.keys(contracts).join(','));
+  check('all sixteen contracts loaded', Object.keys(contracts).length === 16, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
@@ -404,6 +404,89 @@ function check(name, cond, detail = '') {
     check('reseat refuses a detached HEAD', !det.ok && /detached/.test(det.errors.join(' ')), JSON.stringify(det));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
+  }
+}
+
+// 2k. The Review & Approval Hub. It replaces a committed Next.js export whose
+// source existed nowhere: unbuildable, uneditable, and already drifted from the
+// control plane it claimed to show. Every page is now a projection, so the
+// drift gate that protects GOVERNANCE.md protects the site too.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const pages = renderHubSite(contracts, rt);
+  const rels = pages.map((p) => p.rel);
+  check('hub generates a page per ticket plus the four fixed pages',
+    rels.length === Object.keys(rt.capsules).length + 4, String(rels.length));
+  for (const fixed of ['index', 'decisions', 'seats', 'help-desk']) {
+    check(`hub has ${fixed}.html`, rels.includes(`generated/hub/${fixed}.html`));
+  }
+  const byRel = Object.fromEntries(pages.map((p) => [p.rel, p.text]));
+  // The old Hub drifted because it was a snapshot. These assert the pages read
+  // live state, not a frozen copy of it.
+  const home = byRel['generated/hub/index.html'];
+  check('hub overview lists every ticket', Object.keys(rt.capsules).every((t) => home.includes(t)));
+  check('hub overview names the seat that each ticket wakes',
+    computeDispatch(contracts, rt).every((e) => home.includes(e.wake)));
+  const ticketPage = byRel['generated/hub/tickets/AS-HD-057.html'];
+  check('a ticket page carries its live seal', ticketPage.includes(rt.capsules['AS-HD-057'].current_hash.slice(0, 23)));
+  check('a ticket page replays its event chain',
+    (rt.events['AS-HD-057'] || []).every((ev) => ticketPage.includes(ev.id)));
+  // A published page must not become an exfiltration route for repository state
+  // the owner did not choose to publish.
+  check('hub carries no credential material', !pages.some((p) => /ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY|Authorization:/i.test(p.text)));
+  check('hub escapes generated content', !pages.some((p) => /<script/i.test(p.text)));
+  // Absent in .agentops-only checkouts (the reconstruction clone), where this
+  // simply does not run — same rule as the HUD mirror.
+  let mirrored = null;
+  try { mirrored = readFileSync(resolve(ROOT, '../review-approval-hub/index.html'), 'utf8'); } catch { /* not present */ }
+  if (mirrored !== null) {
+    check('published review-approval-hub/ mirror is in sync with the generated hub',
+      mirrored === home,
+      'refresh review-approval-hub/ from .agentops/generated/hub/ after `opsctl render`');
+  }
+}
+
+// 2l. The team charter, now a contract. It lived as prose in
+// docs/governance/TEAM-CHARTERS.md, where nothing stopped a capsule
+// contradicting it. These assert the parts that were only ever assertions.
+{
+  const { contracts } = loadContracts();
+  const tm = contracts.teams;
+  check('teams contract loads', !!tm && tm.schema === 'agentops/teams/v1');
+  check('the four standing coordination roles are declared', tm.standing_roles.length === 4, String(tm.standing_roles.length));
+  check('every standing role is a real role with a hierarchy node',
+    tm.standing_roles.every((r) => contracts.roles.roles.some((x) => x.role === r.id) && contracts.hierarchy.nodes.some((n) => n.actor_id === r.id)));
+  check('the nine capability pools are declared', tm.capability_pools.length === 9, String(tm.capability_pools.length));
+  // The charter's load-bearing sentence.
+  check('a pool is not standing and owns no backlog or path',
+    tm.pool_rules.standing === false && tm.pool_rules.owns_backlog === false && tm.pool_rules.owns_source_paths === false);
+  check('no pool is also a declared role',
+    !tm.capability_pools.some((p) => contracts.roles.roles.some((x) => x.role === p.id)));
+  // The rule that would have made losing a session survivable.
+  check('a pod chat is never an authority source', tm.pods.chat_is_authority_source === false);
+  // The exception the owner authorised: two standing roles, jointly, after
+  // exhausting what the charter already lets them settle.
+  const ce = tm.charter_exception;
+  check('a charter exception needs two standing roles to concur',
+    ce.requires_concurrence.length >= 2 && ce.requires_concurrence.every((r) => tm.standing_roles.some((s) => s.id === r)));
+  check('a charter exception must exhaust charter-level resolution first', ce.exhaust_charter_first === true);
+  check('a charter exception reaches the owner',
+    contracts.escalation.classes.find((x) => x.id === ce.escalation_class).wake === contracts['owner-intent'].owner.actor_id);
+  // No live seat may be held by a pool.
+  const rt = loadRuntime();
+  const pools = new Set(tm.capability_pools.map((p) => p.id));
+  check('no live capsule is held by a capability pool', !Object.values(rt.capsules).some((c) => pools.has(c.owner_actor)));
+  check('no live lease is held by a capability pool', !rt.leases.some((l) => !l.revoked && pools.has(l.actor)));
+  // The contract must not silently diverge from the prose it was built from.
+  // Each entry names its own charter heading, so this is an exact check rather
+  // than a guess at how an id maps to a title.
+  let charter = null;
+  try { charter = readFileSync(resolve(ROOT, '../docs/governance/TEAM-CHARTERS.md'), 'utf8'); } catch { /* not present in an .agentops-only checkout */ }
+  if (charter !== null) {
+    const missing = [...tm.standing_roles, ...tm.capability_pools].filter((e) => !charter.includes(e.charter_heading));
+    check('every contract entry names a heading that exists in the charter prose',
+      missing.length === 0, missing.map((e) => e.charter_heading).join(' | '));
   }
 }
 

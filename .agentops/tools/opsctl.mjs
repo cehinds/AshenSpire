@@ -220,6 +220,7 @@ const CONTRACTS = [
   { name: 'owner-intent', file: 'governance/owner-intent.json', schema: 'schemas/owner-intent.schema.json' },
   { name: 'hierarchy', file: 'governance/hierarchy.json', schema: 'schemas/hierarchy.schema.json' },
   { name: 'roles', file: 'governance/roles.json', schema: 'schemas/roles.schema.json' },
+  { name: 'teams', file: 'governance/teams.json', schema: 'schemas/teams.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
   { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
   { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
@@ -254,6 +255,59 @@ export function loadContracts(root = ROOT) {
 // ---------------------------------------------------------------------------
 export function semanticChecks(c) {
   const errors = [];
+
+  // --- teams -----------------------------------------------------------
+  // The charter is the authority on who stands and who is pooled. Encoding it
+  // as prose let a capsule contradict it silently; these make that a hard error.
+  if (c.teams && c.roles && c.hierarchy) {
+    const declaredRoles = new Set(c.roles.roles.map((r) => r.role));
+    const hier = new Set(c.hierarchy.nodes.map((n) => n.actor_id));
+    const poolIds = new Set();
+    const standingIds = new Set();
+    for (const r of c.teams.standing_roles) {
+      if (standingIds.has(r.id)) errors.push(`teams: standing role '${r.id}' is declared twice`);
+      standingIds.add(r.id);
+      // A standing role that no role contract declares, or that has no
+      // hierarchy node, cannot actually receive or escalate anything.
+      if (!declaredRoles.has(r.id)) errors.push(`teams: standing role '${r.id}' is not a declared role`);
+      if (!hier.has(r.id)) errors.push(`teams: standing role '${r.id}' has no hierarchy node`);
+    }
+    for (const p of c.teams.capability_pools) {
+      if (poolIds.has(p.id)) errors.push(`teams: capability pool '${p.id}' is declared twice`);
+      poolIds.add(p.id);
+      // "Pools are not standing delivery teams." A pool that is also a declared
+      // role would become one the moment a capsule named it as an owner.
+      if (declaredRoles.has(p.id)) errors.push(`teams: capability pool '${p.id}' is also a declared role; a pool must not be able to hold a seat`);
+    }
+    // The contract is a projection of docs/governance/TEAM-CHARTERS.md. If an
+    // entry is renamed here and not there, the two have silently diverged and
+    // the prose stops being the thing this encodes.
+    let charterText = null;
+    try { charterText = readFileSync(resolve(ROOT, '../docs/governance/TEAM-CHARTERS.md'), 'utf8'); } catch { /* .agentops-only checkout */ }
+    if (charterText !== null) {
+      for (const e of [...c.teams.standing_roles, ...c.teams.capability_pools]) {
+        if (!charterText.includes(e.charter_heading)) {
+          errors.push(`teams: '${e.id}' claims charter heading '${e.charter_heading}', which has no heading in the charter prose`);
+        }
+      }
+    }
+    const ce = c.teams.charter_exception;
+    for (const role of ce.requires_concurrence) {
+      if (!declaredRoles.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a declared role`);
+      if (!standingIds.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a standing role; only standing roles may carry an exception to the owner`);
+    }
+    if (c.escalation && !c.escalation.classes.some((x) => x.id === ce.escalation_class)) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which escalation.json does not declare`);
+    }
+    // The exception must actually reach the Owner. A class that wakes anyone
+    // else would let the two roles "escalate" to themselves.
+    const ownerId = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    const cls = c.escalation && c.escalation.classes.find((x) => x.id === ce.escalation_class);
+    if (cls && ownerId && cls.wake !== ownerId) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which wakes '${cls.wake}' rather than the owner`);
+    }
+  }
+
   const roles = c.roles ? new Set(c.roles.roles.map((r) => r.role)) : new Set();
   const knownRoles = new Set([...roles, ...SYNTHETIC_ROLES]);
 
@@ -558,6 +612,30 @@ export function renderGovernance(c) {
   L.push('| Ref | Owner role | Mutation |');
   L.push('|---|---|---|');
   for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  if (c.teams) {
+    L.push('');
+    L.push('## Teams');
+    L.push('');
+    L.push(`${c.teams.principle}`);
+    L.push('');
+    L.push('### Standing coordination roles');
+    L.push('');
+    L.push('| Role | Standing responsibility | Boundary |');
+    L.push('|---|---|---|');
+    for (const r of c.teams.standing_roles) L.push(`| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`);
+    L.push('');
+    L.push('### Capability pools');
+    L.push('');
+    L.push('Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.');
+    L.push('');
+    L.push('| Pool | Delivery capability | Stewardship between tickets |');
+    L.push('|---|---|---|');
+    for (const p of c.teams.capability_pools) L.push(`| \`${p.id}\` | ${p.delivery_capability} | ${p.stewardship} |`);
+    L.push('');
+    L.push('### Charter exception');
+    L.push('');
+    L.push(`${c.teams.charter_exception.principle} Concurrence: ${c.teams.charter_exception.requires_concurrence.map((r) => '`' + r + '`').join(' + ')}; escalates as \`${c.teams.charter_exception.escalation_class}\`.`);
+  }
   L.push('');
   L.push('### Paths');
   L.push('');
@@ -847,6 +925,23 @@ export function runtimeChecks(g, rt) {
       if (!out.length) continue;                      // terminal or owner-only: not the seat's move to make
       if (!out.some((m) => m.permitted_actor_roles.includes(cap.owner_actor))) {
         errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
+      }
+    }
+  }
+  // "Pools are not standing delivery teams and do not own a backlog, decision
+  // stream, or source path merely because the path fits their specialty."
+  // Enforced where it can actually be violated: a capsule or a lease naming a
+  // pool as its holder would make it one.
+  if (g.teams) {
+    const pools = new Set(g.teams.capability_pools.map((p) => p.id));
+    for (const t of Object.keys(rt.capsules)) {
+      if (pools.has(rt.capsules[t].owner_actor)) {
+        errors.push(`capsule ${t}: owner_actor '${rt.capsules[t].owner_actor}' is a capability pool, not a standing team; a pool cannot hold a seat or own a backlog`);
+      }
+    }
+    for (const l of rt.leases) {
+      if (!l.revoked && pools.has(l.actor)) {
+        errors.push(`lease ${l.id}: actor '${l.actor}' is a capability pool, not a standing team; a pool cannot hold a writer lease`);
       }
     }
   }
@@ -1466,6 +1561,233 @@ export function runMigrate(root, { plan = false } = {}) {
   return { ok: true, errors: [], summary, missing, workItems: m.work_items, stubs };
 }
 
+
+// ---------------------------------------------------------------------------
+// The Review & Approval Hub — a multi-page static site generated from the same
+// validated state everything else reads.
+//
+// It replaces a committed Next.js export: 1457 build-output files with no
+// source on any branch, unbuildable, uneditable, and already drifted from the
+// control plane it claimed to show. Nothing here is built or fetched; every
+// page is a projection of contracts + capsules + leases + events, so `verify`
+// drift-gates the site exactly as it gates GOVERNANCE.md, and it cannot rot
+// away from the truth again without CI saying so.
+// ---------------------------------------------------------------------------
+const HUB_DIR = 'generated/hub';
+
+const hubEsc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+
+const HUB_CSS = [
+  ':root{--bg:#f7f7f8;--fg:#1b1d21;--card:#fff;--line:#e2e3e7;--muted:#5c6169;--accent:#6b4bd6;--warn:#b23b2e;--ok:#1c7d4d}',
+  '@media(prefers-color-scheme:dark){:root{--bg:#15161a;--fg:#e9eaee;--card:#1e2026;--line:#2c2f37;--muted:#9aa0aa;--accent:#a48bff;--warn:#ff7a6b;--ok:#4bd694}}',
+  '*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}',
+  'header{padding:20px;border-bottom:1px solid var(--line)}h1{margin:0 0 4px;font-size:20px}.sub{color:var(--muted);font-size:13px}',
+  'nav{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px}nav a{color:var(--accent);text-decoration:none}nav a:hover{text-decoration:underline}',
+  'main{max-width:1000px;margin:0 auto;padding:20px;display:grid;gap:16px}',
+  'section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}',
+  'h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}',
+  'table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}',
+  'code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}',
+  '.pill{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px}',
+  '.none{color:var(--muted);font-style:italic}.ok{color:var(--ok)}.warn{color:var(--warn)}.wrap{overflow-x:auto}',
+  'a{color:var(--accent)}dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px}dt{color:var(--muted)}dd{margin:0}',
+  'ol.chain{margin:0;padding-left:18px;font-size:13px}ol.chain li{margin-bottom:8px}',
+  'footer{max-width:1000px;margin:0 auto;padding:12px 20px 32px;color:var(--muted);font-size:12px}',
+].join('');
+
+// One shell so every page shares chrome and a reader never lands somewhere with
+// no way back. `up` is '' at the site root and '../' one level down.
+function hubPage(project, title, up, bodyHtml) {
+  return [
+    '<!DOCTYPE html>',
+    '<!-- GENERATED by .agentops/tools/opsctl.mjs render — do not edit by hand. Deterministic projection of validated repository state. -->',
+    '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+    `<title>${hubEsc(project.project_name)} — ${hubEsc(title)}</title>`,
+    `<style>${HUB_CSS}</style></head><body>`,
+    '<header>',
+    `<h1>${hubEsc(title)}</h1>`,
+    `<div class="sub">${hubEsc(project.project_name)} · Review &amp; Approval Hub · generated from committed state by <code>opsctl render</code></div>`,
+    `<nav><a href="${up}index.html">Overview</a><a href="${up}decisions.html">Decisions</a><a href="${up}help-desk.html">Help desk</a><a href="${up}seats.html">Seats &amp; teams</a></nav>`,
+    '</header><main>',
+    bodyHtml,
+    '</main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>',
+    '</body></html>',
+  ].join('\n');
+}
+
+export function renderHubSite(contracts, rt) {
+  const project = contracts.project;
+  const oi = contracts['owner-intent'];
+  const tickets = Object.keys(rt.capsules).sort();
+  const dispatch = computeDispatch(contracts, rt);
+  const byTicket = new Map(dispatch.map((e) => [e.ticket, e]));
+  const owner = oi.owner.actor_id;
+  const issueBase = `${String(project.repository).replace(/\.git$/, '')}/issues/new`;
+  const q = (o) => Object.entries(o).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  const ownerDue = dispatch.filter((e) => e.kind === 'owner-decision');
+  const out = [];
+
+  // --- Overview -------------------------------------------------------------
+  {
+    const L = [];
+    L.push('<section><h2>Needs you now</h2>');
+    if (!ownerDue.length) L.push(`<p class="none">Nothing is waiting on ${hubEsc(owner)}. ${dispatch.length} item(s) are moving as seat work.</p>`);
+    else {
+      L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Why it reached you</th></tr>');
+      for (const e of ownerDue) L.push(`<tr><td><a href="tickets/${hubEsc(e.ticket)}.html"><code>${hubEsc(e.ticket)}</code></a></td><td>${hubEsc(e.reason)}</td></tr>`);
+      L.push('</table></div>');
+    }
+    L.push('</section>');
+
+    L.push('<section><h2>Every ticket</h2><div class="wrap"><table><tr><th>Ticket</th><th>Seat</th><th>State</th><th>Due</th><th>Waking</th></tr>');
+    for (const t of tickets) {
+      const cap = rt.capsules[t];
+      const d = byTicket.get(t);
+      L.push(`<tr><td><a href="tickets/${hubEsc(t)}.html"><code>${hubEsc(t)}</code></a></td><td>${hubEsc(cap.owner_actor)}</td><td>${hubEsc(cap.lifecycle_state)}</td><td>${d ? (d.kind === 'owner-decision' ? '<span class="warn">owner</span>' : '<span class="ok">seat</span>') : '<span class="none">—</span>'}</td><td>${d ? hubEsc(d.wake) : '<span class="none">nobody</span>'}</td></tr>`);
+    }
+    L.push('</table></div><p class="sub">"Due" is derived by <code>opsctl dispatch</code> from the contracts: a blocked ticket routes by its declared escalation class, an unblocked one by whoever may move it out of its state.</p></section>');
+    out.push({ rel: `${HUB_DIR}/index.html`, text: hubPage(project, 'Overview', '', L.join('\n')) + '\n' });
+  }
+
+  // --- Decisions ------------------------------------------------------------
+  {
+    const L = [];
+    L.push('<section><h2>Waiting on the owner</h2>');
+    if (!ownerDue.length) L.push('<p class="none">No decision is pending on the current committed state.</p>');
+    else {
+      L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Reason</th></tr>');
+      for (const e of ownerDue) L.push(`<tr><td><a href="tickets/${hubEsc(e.ticket)}.html"><code>${hubEsc(e.ticket)}</code></a></td><td>${hubEsc(e.reason)}</td></tr>`);
+      L.push('</table></div>');
+    }
+    L.push('</section>');
+
+    L.push('<section><h2>File a decision</h2><div class="wrap"><table><tr><th>Ticket</th><th>State</th><th>Compare-and-swap hash</th><th></th></tr>');
+    for (const t of tickets) {
+      const cap = rt.capsules[t];
+      const hash = computeCapsuleHash(cap);
+      const link = `${issueBase}?${q({ template: 'owner-decision.yml', title: `[decision] ${t}`, target: t, hash })}`;
+      L.push(`<tr><td><code>${hubEsc(t)}</code></td><td>${hubEsc(cap.lifecycle_state)}</td><td><code>${hubEsc(hash.slice(0, 23))}…</code></td><td><a href="${hubEsc(link)}">File →</a></td></tr>`);
+    }
+    L.push('</table></div>');
+    L.push('<p class="sub">Each link carries the capsule’s live hash. A decision filed against a hash that has since moved is rejected as stale rather than applied to state you did not see, and only the owner’s own issues execute.</p></section>');
+
+    const reserved = contracts['owner-command'].actions.filter((a) => a.protected).map((a) => a.id);
+    L.push(`<section><h2>Protected — owner only</h2><p class="sub">${reserved.map((a) => `<span class="pill">${hubEsc(a)}</span>`).join(' ')}</p>`);
+    L.push(`<p class="sub">${oi.protected_decision_classes.map(hubEsc).join(' · ')}</p></section>`);
+    out.push({ rel: `${HUB_DIR}/decisions.html`, text: hubPage(project, 'Decisions', '', L.join('\n')) + '\n' });
+  }
+
+  // --- Seats ----------------------------------------------------------------
+  {
+    const L = [];
+    L.push('<section><h2>Seats and their writer leases</h2><div class="wrap"><table><tr><th>Lease</th><th>Seat</th><th>Ticket</th><th>Ref</th><th>Paths</th><th>Expiry</th></tr>');
+    for (const l of rt.leases.filter((x) => !x.revoked)) {
+      L.push(`<tr><td><code>${hubEsc(l.id)}</code></td><td>${hubEsc(l.actor)}</td><td><a href="tickets/${hubEsc(l.ticket)}.html"><code>${hubEsc(l.ticket)}</code></a></td><td><code>${hubEsc(l.ref)}</code></td><td>${l.path_globs.map((g) => `<code>${hubEsc(g)}</code>`).join(' ')}</td><td>${hubEsc(l.expiry)}</td></tr>`);
+    }
+    L.push('</table></div><p class="sub">One writer per overlapping path or ref. Collisions, undeclared refs and path grants a role was never given are rejected by <code>opsctl verify</code>.</p></section>');
+
+    L.push('<section><h2>Escalation routing</h2><div class="wrap"><table><tr><th>Class</th><th>Route</th><th>Wakes</th><th>Work continues</th></tr>');
+    for (const c of contracts.escalation.classes) {
+      L.push(`<tr><td><code>${hubEsc(c.id)}</code></td><td>${c.route.map(hubEsc).join(' → ')}</td><td>${hubEsc(c.wake)}</td><td>${c.continuing_work_allowed ? 'yes' : '<span class="warn">no</span>'}</td></tr>`);
+    }
+    L.push('</table></div><p class="sub">A ticket names a class, never a wake target, so nothing can route itself to the owner to jump the queue or away from the owner to dodge a protected decision.</p></section>');
+    if (contracts.teams) {
+      const tm = contracts.teams;
+      L.push('<section><h2>Standing coordination roles</h2><div class="wrap"><table><tr><th>Role</th><th>Standing responsibility</th><th>Boundary</th></tr>');
+      for (const r of tm.standing_roles) L.push(`<tr><td><code>${hubEsc(r.id)}</code></td><td>${hubEsc(r.responsibility)}</td><td>${hubEsc(r.boundary)}</td></tr>`);
+      L.push('</table></div></section>');
+      L.push('<section><h2>Capability pools</h2>');
+      L.push('<p class="sub">Not standing teams. They own no backlog, no decision stream and no source path, and validate rejects a capsule or lease that names one as its holder.</p>');
+      L.push('<div class="wrap"><table><tr><th>Pool</th><th>Delivery capability</th><th>Stewardship between tickets</th></tr>');
+      for (const p of tm.capability_pools) L.push(`<tr><td><code>${hubEsc(p.id)}</code></td><td>${hubEsc(p.delivery_capability)}</td><td>${hubEsc(p.stewardship)}</td></tr>`);
+      L.push('</table></div></section>');
+      const ce = tm.charter_exception;
+      L.push('<section><h2>When the charter cannot resolve it</h2>');
+      L.push(`<p>${hubEsc(ce.principle)}</p>`);
+      L.push(`<p class="sub">Concurrence required: ${ce.requires_concurrence.map((r) => `<span class="pill">${hubEsc(r)}</span>`).join(' ')} · escalates as <code>${hubEsc(ce.escalation_class)}</code> · records ${ce.records.map(hubEsc).join('; ')}.</p>`);
+      L.push(`<p class="sub">Pods dissolve after ${hubEsc(tm.pods.dissolves_after)}; one lead and at most ${tm.pods.max_helpers} helpers. A pod's chat is never an authority source.</p></section>`);
+    }
+    out.push({ rel: `${HUB_DIR}/seats.html`, text: hubPage(project, 'Seats and teams', '', L.join('\n')) + '\n' });
+  }
+
+  // --- Help desk ------------------------------------------------------------
+  {
+    const L = [];
+    L.push(`<section><h2>Raise something</h2><p><a href="${hubEsc(issueBase)}?${q({ template: 'help-desk-ticket.yml' })}">File a Help Desk ticket →</a></p>`);
+    L.push('<p class="sub">Help Desk is the intake route. A ticket that turns out to need a protected decision escalates to the owner through the routing on the Seats page rather than being answered here.</p></section>');
+    const blocked = tickets.filter((t) => rt.capsules[t].blocker);
+    L.push('<section><h2>Open blockers</h2>');
+    if (!blocked.length) L.push('<p class="none">Nothing is blocked.</p>');
+    else {
+      L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Kind</th><th>Escalation class</th><th>Summary</th></tr>');
+      for (const t of blocked) {
+        const b = rt.capsules[t].blocker;
+        L.push(`<tr><td><a href="tickets/${hubEsc(t)}.html"><code>${hubEsc(t)}</code></a></td><td>${hubEsc(b.kind)}</td><td><code>${hubEsc(b.escalation_class)}</code></td><td>${hubEsc(b.summary)}</td></tr>`);
+      }
+      L.push('</table></div>');
+    }
+    L.push('</section>');
+    out.push({ rel: `${HUB_DIR}/help-desk.html`, text: hubPage(project, 'Help desk', '', L.join('\n')) + '\n' });
+  }
+
+  // --- One page per ticket --------------------------------------------------
+  for (const t of tickets) {
+    const cap = rt.capsules[t];
+    const lease = rt.leases.find((l) => l.id === cap.writer_lease);
+    const d = byTicket.get(t);
+    const events = (rt.events && rt.events[t]) ? rt.events[t] : [];
+    const L = [];
+
+    L.push('<section><h2>Assignment</h2><dl>');
+    const row = (k, v) => L.push(`<dt>${hubEsc(k)}</dt><dd>${v}</dd>`);
+    row('Seat', hubEsc(cap.owner_actor));
+    row('State', hubEsc(cap.lifecycle_state));
+    row('Objective', hubEsc(cap.objective));
+    row('Done when', hubEsc(cap.done_when));
+    row('Next action', hubEsc(cap.next_action));
+    row('Branch', `<code>${hubEsc(cap.ref)}</code>`);
+    row('Base', `<code>${hubEsc(cap.base_oid.slice(0, 12))}</code>`);
+    row('Revision', `${cap.revision} · seal <code>${hubEsc(String(cap.current_hash).slice(0, 23))}…</code>`);
+    row('Succeeds', cap.parent_hash ? `<code>${hubEsc(cap.parent_hash.slice(0, 23))}…</code>` : '<span class="none">nothing (genesis)</span>');
+    L.push('</dl></section>');
+
+    L.push('<section><h2>Authority</h2><dl>');
+    row('May', cap.authority.may.map((a) => `<span class="pill">${hubEsc(a)}</span>`).join(' '));
+    row('Must not', cap.authority.must_not.map((a) => `<span class="pill">${hubEsc(a)}</span>`).join(' '));
+    row('Expires', hubEsc(cap.authority.expiry));
+    if (lease) {
+      row('Writer lease', `<code>${hubEsc(lease.id)}</code> issued by ${hubEsc(lease.issuer)}`);
+      row('Paths', lease.path_globs.map((g) => `<code>${hubEsc(g)}</code>`).join(' '));
+    }
+    L.push('</dl></section>');
+
+    L.push('<section><h2>Status</h2>');
+    if (cap.blocker) {
+      L.push(`<p class="warn">Blocked — ${hubEsc(cap.blocker.kind)}, escalating as <code>${hubEsc(cap.blocker.escalation_class)}</code>.</p><p>${hubEsc(cap.blocker.summary)}</p>`);
+    } else if (d) {
+      L.push(`<p class="ok">Due: ${hubEsc(d.reason)} — waking ${hubEsc(d.wake)}.</p>`);
+    } else {
+      L.push('<p class="none">Nothing due; this ticket wakes nobody.</p>');
+    }
+    L.push('</section>');
+
+    L.push('<section><h2>Event chain</h2>');
+    if (!events.length) L.push('<p class="none">No events recorded.</p>');
+    else {
+      L.push('<ol class="chain">');
+      for (const ev of [...events].sort((a, b) => a.seq - b.seq)) {
+        L.push(`<li><code>${hubEsc(ev.id)}</code> · ${hubEsc(ev.kind)} · ${hubEsc(ev.actor)} · ${hubEsc(ev.at)}<br>${hubEsc(ev.summary)}</li>`);
+      }
+      L.push('</ol>');
+    }
+    L.push('<p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>');
+
+    out.push({ rel: `${HUB_DIR}/tickets/${t}.html`, text: hubPage(project, t, '../', L.join('\n')) + '\n' });
+  }
+
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Runners.
 // ---------------------------------------------------------------------------
@@ -1486,6 +1808,7 @@ function generatedArtifacts(contracts, rt) {
     out.push({ rel: `${RECON_DIR}/${ticket}.wake.txt`, text: cap.text + '\n' });
   }
   out.push({ rel: HUD_VIEW, text: renderHud(contracts, rt) + '\n' });
+  out.push(...renderHubSite(contracts, rt));
   if (contracts.migration) out.push({ rel: MIGRATION_VIEW, text: renderMigration(contracts, rt) + '\n' });
   return out;
 }
@@ -1505,6 +1828,44 @@ export function runValidate(root = ROOT) {
   return { contracts, errors: all };
 }
 
+// Published mirrors. The repository serves its own tree, so the generated HUD
+// and Hub need a copy at a tidy URL outside .agentops/. Keeping these as a
+// hand-run `cp` drifted twice in one session, both times caught only by a test
+// telling a human to go and copy a file; render now writes them itself.
+//
+// They are deliberately NOT generatedArtifacts: those are resolved against
+// `root`, and the reconstruction drill reconstructs from a copy of .agentops
+// alone, where a path outside it cannot exist. A mirror is therefore written
+// only when its destination tree is actually present.
+const MIRRORS = [
+  { from: HUD_VIEW, to: '../hud/index.html' },
+  { from: `${HUB_DIR}/`, to: '../review-approval-hub/' },
+];
+
+function mirrorTargets(root, arts) {
+  const out = [];
+  for (const m of MIRRORS) {
+    const destRoot = resolve(root, m.to);
+    // The published tree itself must already exist. Testing its PARENT instead
+    // was wrong for a directory mirror: the parent is the repository root,
+    // which exists in the drill's .agentops-only clean room too, so verify
+    // there demanded a review-approval-hub/ that a clean room never has. Both
+    // published trees are committed, so a real checkout always has them; a
+    // clean room has neither and mirrors nothing.
+    const publishedTree = m.from.endsWith('/') ? destRoot : dirname(destRoot);
+    if (!existsSync(publishedTree)) continue;
+    if (m.from.endsWith('/')) {
+      for (const a of arts.filter((x) => x.rel.startsWith(m.from))) {
+        out.push({ rel: a.rel, target: resolve(destRoot, a.rel.slice(m.from.length)), text: a.text });
+      }
+    } else {
+      const a = arts.find((x) => x.rel === m.from);
+      if (a) out.push({ rel: a.rel, target: destRoot, text: a.text });
+    }
+  }
+  return out;
+}
+
 function runRender(root, check) {
   const { contracts, errors } = runValidate(root);
   if (errors.length) return { errors, drift: false };
@@ -1522,6 +1883,17 @@ function runRender(root, check) {
       mkdirSync(dirname(target), { recursive: true });
       writeFileSync(target, a.text);
       wrote.push(a.rel);
+    }
+  }
+  for (const m of mirrorTargets(root, arts)) {
+    if (check) {
+      let current = null;
+      try { current = readFileSync(m.target, 'utf8'); } catch { /* missing */ }
+      if (current !== m.text) drifted.push(`${m.rel} (published mirror)`);
+    } else {
+      mkdirSync(dirname(m.target), { recursive: true });
+      writeFileSync(m.target, m.text);
+      wrote.push(`${m.rel} -> mirror`);
     }
   }
   return { errors: [], drift: drifted.length > 0, drifted, wrote };
@@ -1763,6 +2135,15 @@ export function runSelftest(root = ROOT) {
   expectMigration('transition narrowed until a live seat is stranded', (c) => {
     for (const m of c.transitions.transitions) if (m.from === 'assigned' && m.to === 'in-progress') m.permitted_actor_roles = ['maker'];
   }, 'the seat is stranded');
+
+  // Stage 8 teams plants — the charter, now enforceable. Each reproduces a way
+  // the prose could be contradicted while everything else still validated.
+  expectSemantic('teams: standing role with no hierarchy node', (c) => { c.teams.standing_roles.push({ id: 'ghost-lead', responsibility: 'x', boundary: 'y' }); }, 'is not a declared role');
+  expectSemantic('teams: a pool that is also a role could hold a seat', (c) => { c.teams.capability_pools.push({ id: 'maker', delivery_capability: 'x', stewardship: 'y' }); }, 'must not be able to hold a seat');
+  expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
+  expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
+  expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');
 
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };
