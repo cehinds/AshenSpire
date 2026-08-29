@@ -237,6 +237,7 @@ const CONTRACTS = [
   { name: 'hierarchy', file: 'governance/hierarchy.json', schema: 'schemas/hierarchy.schema.json' },
   { name: 'roles', file: 'governance/roles.json', schema: 'schemas/roles.schema.json' },
   { name: 'teams', file: 'governance/teams.json', schema: 'schemas/teams.schema.json' },
+  { name: 'promotion-gates', file: 'governance/promotion-gates.json', schema: 'schemas/promotion-gates.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
   { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
   { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
@@ -271,6 +272,49 @@ export function loadContracts(root = ROOT) {
 // ---------------------------------------------------------------------------
 export function semanticChecks(c) {
   const errors = [];
+
+  // --- promotion gates ---------------------------------------------------
+  // Decision 0009 defines Gates A-F: who may act, what evidence each needs,
+  // and — the part that matters most — what each explicitly does NOT grant.
+  // It lived only as a decision record, so nothing stopped a transition guard
+  // paraphrasing a gate wrongly, or a gate quietly claiming release authority.
+  if (c['promotion-gates'] && c.roles && c.transitions) {
+    const pg = c['promotion-gates'];
+    const roleSet = new Set(c.roles.roles.map((r) => r.role));
+    const states = new Set(c.transitions.states);
+    const seenGate = new Set();
+    const ownerReserved = new Set(['main', 'release', 'tag', 'publication', 'Pages']);
+    for (const g of pg.gates) {
+      if (seenGate.has(g.id)) errors.push(`promotion-gates: gate '${g.id}' is declared twice`);
+      seenGate.add(g.id);
+      // An actor that is not a declared role cannot be held to the gate.
+      // 'owner' is a declared role in roles.json, so this covers E and F too.
+      if (!roleSet.has(g.actor_role)) errors.push(`promotion-gates: gate ${g.id} names actor role '${g.actor_role}', which roles.json does not declare`);
+      for (const { from, to } of g.guards_transitions || []) {
+        if (!states.has(from)) errors.push(`promotion-gates: gate ${g.id} guards a move from '${from}', which is not a declared lifecycle state`);
+        if (!states.has(to)) errors.push(`promotion-gates: gate ${g.id} guards a move to '${to}', which is not a declared lifecycle state`);
+        if (!c.transitions.transitions.some((m) => m.from === from && m.to === to)) {
+          errors.push(`promotion-gates: gate ${g.id} guards '${from}' -> '${to}', which transitions.json does not declare`);
+        }
+      }
+      // "Authority for one action implies none of the others." Only Gate F may
+      // touch the owner-reserved surfaces, and only per individual action.
+      for (const grant of g.grants || []) {
+        if (ownerReserved.has(grant) && g.id !== 'F') {
+          errors.push(`promotion-gates: gate ${g.id} grants '${grant}', which is owner-reserved and belongs to Gate F alone`);
+        }
+      }
+      for (const r of g.required_roles || []) if (!roleSet.has(r)) errors.push(`promotion-gates: gate ${g.id} requires role '${r}', which roles.json does not declare`);
+    }
+    // Every protected promotion move should be gated. An ungated protected move
+    // is one a seat could argue its way through with no named evidence.
+    const gated = new Set(pg.gates.flatMap((g) => (g.guards_transitions || []).map((t) => `${t.from}->${t.to}`)));
+    for (const m of c.transitions.transitions) {
+      if (m.protected && !gated.has(`${m.from}->${m.to}`)) {
+        errors.push(`promotion-gates: protected transition '${m.from}' -> '${m.to}' is not guarded by any declared gate`);
+      }
+    }
+  }
 
   // --- teams -----------------------------------------------------------
   // The charter is the authority on who stands and who is pooled. Encoding it
@@ -638,6 +682,22 @@ export function renderGovernance(c) {
   L.push('| Ref | Owner role | Mutation |');
   L.push('|---|---|---|');
   for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  if (c['promotion-gates']) {
+    const pg = c['promotion-gates'];
+    L.push('');
+    L.push('## Promotion gates');
+    L.push('');
+    L.push(pg.principle);
+    L.push('');
+    L.push('| Gate | Name | Who acts | Guards | Required evidence | Grants |');
+    L.push('|---|---|---|---|---|---|');
+    for (const g of pg.gates) {
+      const guards = (g.guards_transitions || []).map((t) => `\`${t.from}\` → \`${t.to}\``).join('<br>') || '—';
+      L.push(`| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${guards} | ${g.required_evidence.join(', ') || '—'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`);
+    }
+    L.push('');
+    L.push(`${pg.immutable_candidate}`);
+  }
   if (c.teams) {
     L.push('');
     L.push('## Teams');
@@ -1177,6 +1237,17 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
   L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
+  // A seat at a gated state must know which gate stands in front of it, who
+  // may open it, and what evidence it needs — otherwise it discovers the wall
+  // by walking into it. Decision 0009 named them; this is where a seat reads it.
+  const pgc = contracts['promotion-gates'];
+  if (pgc) {
+    const ahead = pgc.gates.filter((g) => (g.guards_transitions || []).some((t) => t.from === cap.lifecycle_state));
+    for (const g of ahead) {
+      const to = (g.guards_transitions || []).filter((t) => t.from === cap.lifecycle_state).map((t) => t.to).join('/');
+      L.push(`GATE       : ${g.id} (${g.name}) stands before ${to} — ${g.actor_role} acts; evidence ${g.required_evidence.join(', ') || 'none declared'}`);
+    }
+  }
   L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
   const rep = contracts['information-access'].reporting;
   L.push(`REPORTING  : ${rep.style} Must: ${rep.must.join('; ')}. Never: ${rep.must_not.join('; ')}.`);
@@ -1740,6 +1811,17 @@ export function renderHubSite(contracts, rt) {
       L.push('<div class="wrap"><table><tr><th>Pool</th><th>Delivery capability</th><th>Stewardship between tickets</th></tr>');
       for (const p of tm.capability_pools) L.push(`<tr><td><code>${hubEsc(p.id)}</code></td><td>${hubEsc(p.delivery_capability)}</td><td>${hubEsc(p.stewardship)}</td></tr>`);
       L.push('</table></div></section>');
+      const pg2 = contracts['promotion-gates'];
+      if (pg2) {
+        L.push('<section><h2>Promotion gates</h2>');
+        L.push(`<p class="sub">${hubEsc(pg2.principle)}</p>`);
+        L.push('<div class="wrap"><table><tr><th>Gate</th><th>Name</th><th>Who acts</th><th>Guards</th><th>Evidence</th><th>Grants</th></tr>');
+        for (const g of pg2.gates) {
+          const guards = (g.guards_transitions || []).map((t) => `<code>${hubEsc(t.from)}</code> → <code>${hubEsc(t.to)}</code>`).join('<br>') || '—';
+          L.push(`<tr><td><strong>${hubEsc(g.id)}</strong></td><td>${hubEsc(g.name)}</td><td>${hubEsc(g.actor_role)}</td><td>${guards}</td><td>${g.required_evidence.map(hubEsc).join(', ') || '—'}</td><td>${g.grants.length ? g.grants.map(hubEsc).join(', ') : '<span class="none">nothing</span>'}</td></tr>`);
+        }
+        L.push(`</table></div><p class="sub">${hubEsc(pg2.immutable_candidate)}</p></section>`);
+      }
       const ce = tm.charter_exception;
       L.push('<section><h2>When the charter cannot resolve it</h2>');
       L.push(`<p>${hubEsc(ce.principle)}</p>`);
@@ -2311,6 +2393,10 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('gates: a gate claiming owner-reserved authority', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'C').grants = ['release']; }, 'owner-reserved and belongs to Gate F alone');
+  expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
+  expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
+  expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
   expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
   expectRuntime('a capsule naming a team that is on no roster', (rt) => { rt.capsules['AS-HD-050'].team = 'audio'; }, 'nor a declared legacy alias');
   expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');

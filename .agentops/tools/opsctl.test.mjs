@@ -26,7 +26,7 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all sixteen contracts loaded', Object.keys(contracts).length === 16, Object.keys(contracts).join(','));
+  check('all seventeen contracts loaded', Object.keys(contracts).length === 17, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
@@ -558,6 +558,56 @@ function check(name, cond, detail = '') {
   check('every capsule that names a team names a resolvable one',
     named.every(([, c]) => roster.has(c.team) || aliases.has(c.team)),
     named.map(([t, c]) => `${t}:${c.team}`).join(', ') || '(none name a team)');
+}
+
+// 2o. Promotion Gates A-F (decision 0009), now a contract. They defined who may
+// act, what evidence each gate needs, and — the part that matters most — what
+// each explicitly does NOT grant. None of it was encoded, so a transition guard
+// could paraphrase a gate wrongly and nothing would notice.
+{
+  const { contracts } = loadContracts();
+  const pg = contracts['promotion-gates'];
+  check('promotion-gates contract loads', !!pg && pg.schema === 'agentops/promotion-gates/v1');
+  check('all six gates A-F are declared', pg.gates.map((g) => g.id).join('') === 'ABCDEF', pg.gates.map((g) => g.id).join(''));
+  const roles = new Set(contracts.roles.roles.map((r) => r.role));
+  check('every gate names a declared actor role', pg.gates.every((g) => roles.has(g.actor_role)),
+    pg.gates.filter((g) => !roles.has(g.actor_role)).map((g) => `${g.id}:${g.actor_role}`).join(', '));
+  // The invariant the decision repeats most: authority for one action implies
+  // none of the others.
+  const ownerReserved = ['main', 'release', 'tag', 'publication', 'Pages'];
+  check('no gate grants owner-reserved authority', pg.gates.every((g) => (g.grants || []).length === 0),
+    pg.gates.filter((g) => (g.grants || []).length).map((g) => g.id).join(', '));
+  check('Gate F is the only gate with per-action authority',
+    pg.gates.find((g) => g.id === 'F').authority_is_per_action === true
+      && !pg.gates.filter((g) => g.id !== 'F').some((g) => g.authority_is_per_action));
+  check('Gates E and F are the owner\'s', ['E', 'F'].every((id) => pg.gates.find((g) => g.id === id).actor_role === 'owner'));
+  check('Gate C records what it does not grant', (pg.gates.find((g) => g.id === 'C').explicitly_not_granted || []).includes('release'));
+  check('Gate B cannot be satisfied by a merge alone', (pg.gates.find((g) => g.id === 'B').not_satisfied_by || []).some((x) => /merge/.test(x)));
+  check('a correction returns to Gate A', pg.gates.find((g) => g.id === 'E').returns_to_gate_on_correction === 'A');
+  // Every protected promotion move is gated — the check that found `pushed ->
+  // pr-open` sitting protected and ungated.
+  const gated = new Set(pg.gates.flatMap((g) => (g.guards_transitions || []).map((t) => `${t.from}->${t.to}`)));
+  const ungated = contracts.transitions.transitions.filter((m) => m.protected && !gated.has(`${m.from}->${m.to}`));
+  check('every protected transition is guarded by a gate', ungated.length === 0, ungated.map((m) => `${m.from}->${m.to}`).join(', '));
+  // A seat standing at a gated state must be told which gate is in front of it.
+  const rt = loadRuntime();
+  // No live capsule has reached a gated state yet, so this drives one there in
+  // memory rather than leaving the line untested until the first promotion.
+  const gatedStates = [...new Set(pg.gates.flatMap((g) => (g.guards_transitions || []).map((t) => t.from)))];
+  for (const state of gatedStates) {
+    const rtAt = loadRuntime();
+    rtAt.capsules['AS-1001'].lifecycle_state = state;
+    const w = buildCapsule(contracts, rtAt, 'AS-1001', { frozen: true });
+    const line = (w.text || '').split('\n').find((l) => l.startsWith('GATE'));
+    const expected = pg.gates.find((g) => (g.guards_transitions || []).some((t) => t.from === state));
+    check(`wake names the gate standing before '${state}'`, !!line && line.includes(`: ${expected.id} (`), line || 'no GATE line');
+    check(`the '${state}' gate line names who may act`, !!line && line.includes(expected.actor_role), line || 'no GATE line');
+  }
+  // An ungated state must not gain a spurious gate line.
+  const rtUngated = loadRuntime();
+  rtUngated.capsules['AS-1001'].lifecycle_state = 'assigned';
+  check('an ungated state gets no gate line',
+    !(buildCapsule(contracts, rtUngated, 'AS-1001', { frozen: true }).text || '').includes('GATE       :'));
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);
