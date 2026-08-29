@@ -848,9 +848,21 @@ export function semanticChecks(c, now = new Date().toISOString()) {
           if (env.delegator_role !== sc.standing_authority_from) errors.push(`qa: self_certification says its standing authority comes from '${sc.standing_authority_from}' but envelope '${env.id}' is delegated by '${env.delegator_role}'`);
           // Right roles, right dates, wrong grant: an envelope carrying some
           // unrelated action would otherwise read as backing this waiver.
+          // Both halves of the waiver are pinned here rather than read from the
+          // contract. Taking the list from qa.json was the previous fix and it
+          // proved only that two mutable lists agreed: trimming both to drop
+          // `record-independence-waiver` validated cleanly, leaving a lead able
+          // to approve a self-certification with no authority to record the
+          // waiver that makes it auditable. A contract cannot be the sole source
+          // of the constraint it is being checked against.
+          const REQUIRED_WAIVER_ACTIONS = ['approve-maker-self-certification', 'record-independence-waiver'];
           const granted = new Set(env.delegated_actions);
-          for (const need of sc.requires_envelope_actions) {
-            if (!granted.has(need)) errors.push(`qa: standing envelope '${env.id}' does not grant '${need}'; an unrelated grant cannot authorize bypassing independent QA`);
+          for (const need of REQUIRED_WAIVER_ACTIONS) {
+            if (!granted.has(need)) errors.push(`qa: standing envelope '${env.id}' does not grant '${need}'; both halves of the waiver are required, and an unrelated grant cannot authorize bypassing independent QA`);
+            if (!sc.requires_envelope_actions.includes(need)) errors.push(`qa: self_certification.requires_envelope_actions omits '${need}'; the contract must keep demanding both halves of the waiver`);
+          }
+          for (const declared of sc.requires_envelope_actions) {
+            if (!granted.has(declared)) errors.push(`qa: standing envelope '${env.id}' does not grant '${declared}', which self_certification requires`);
           }
           // Ordering is not currency. `expiry > effective` says only that the
           // window is the right way round, so a 2020-2021 envelope satisfied it
@@ -3130,6 +3142,12 @@ export function runSelftest(root = ROOT) {
   expectSemantic('self-cert: a standing grant dated to a day that does not exist', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').effective = '2026-02-30T00:00:00Z'; }, 'not a real instant');
   expectSemantic('self-cert: a standing grant naming a different role', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegatee_role = 'it-support'; }, 'not the approver role');
   expectSemantic('self-cert: a standing grant carrying the wrong actions', (c) => { c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegated_actions = ['run-tests-and-builds']; }, 'unrelated grant cannot authorize');
+  // Reading the required actions from the contract proved only that two mutable
+  // lists agreed; trimming both together dropped half the waiver silently.
+  expectSemantic('self-cert: both action lists trimmed together to drop the waiver record', (c) => {
+    c.qa.self_certification.requires_envelope_actions = ['approve-maker-self-certification'];
+    c.delegation.envelopes.find((e) => e.id === 'itm-to-team-lead-self-certification').delegated_actions = ['approve-maker-self-certification'];
+  }, "requires_envelope_actions omits 'record-independence-waiver'");
   // Both bounds against the clock, not merely against each other. An ordered
   // 2020-2021 window satisfied the old check while being long expired.
   {
