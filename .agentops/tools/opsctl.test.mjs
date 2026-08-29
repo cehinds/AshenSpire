@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate } from './opsctl.mjs';
 import { readFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -25,14 +25,14 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all fourteen contracts loaded', Object.keys(contracts).length === 14, Object.keys(contracts).join(','));
+  check('all fifteen contracts loaded', Object.keys(contracts).length === 15, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 34 plants', s.results.length >= 34, String(s.results.length));
+  check('selftest exercises >= 39 plants', s.results.length >= 39, String(s.results.length));
 }
 
 // 2b. Runtime: the seed ticket loads, its capsule is sealed, and the wake
@@ -142,6 +142,17 @@ function check(name, cond, detail = '') {
   check('HUD is generated and names the project', hud.includes('Owner HUD') && hud.includes('AshenSpire'));
   check('HUD carries the source-commit placeholder (injected at deploy)', hud.includes('__SOURCE_COMMIT__'));
   check('HUD carries no credential material', hud.length > 0 && !/(ghp_[A-Za-z0-9]|github_pat_|BEGIN [A-Z ]*PRIVATE KEY|Authorization:\s*Bearer)/.test(hud));
+}
+
+// 2f. Migration tooling: read-only inventory validates, classifies legacy
+// sources, finds them present, and proposes genesis stubs without mutation.
+{
+  const inv = runMigrate(ROOT, { plan: false });
+  check('migrate inventory succeeds', inv.ok, (inv.errors || []).join(' | '));
+  check('migrate finds all declared legacy sources present', inv.ok && inv.missing.length === 0, (inv.missing || []).join(', '));
+  const planned = runMigrate(ROOT, { plan: true });
+  check('migrate --plan proposes >= 1 genesis stub', planned.ok && planned.stubs.length >= 1, String(planned.stubs && planned.stubs.length));
+  check('proposed genesis stub is schema-shaped (work-capsule/v1)', planned.ok && planned.stubs.every((st) => st.schema === 'agentops/work-capsule/v1'));
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

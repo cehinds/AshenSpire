@@ -36,6 +36,7 @@ extra hop.
 | QA independence and risk-selected gates | `governance/qa.json` |
 | Artifact/evidence responsibility | `governance/evidence.json` |
 | Owner-command allowlist (authenticated decisions) | `governance/owner-command.json` |
+| Legacy migration policy (read-only inventory) | `governance/migration.json` |
 
 Human-readable views under `generated/` are produced from these JSON files and
 carry no authority of their own.
@@ -103,12 +104,12 @@ and overriding an independent QA verdict. See
 
 ## Installed stage
 
-`owner-hud-and-command`. The governance kernel, the operational contracts, the
-runtime layer (`opsctl wake`), the reconstruction drill (`opsctl drill`), and
-now the authenticated owner-command path (`opsctl command --dry-run`, enumerated
-+ allowlisted + compare-and-swap) plus the read-only Owner HUD
-(`generated/hud/index.html`, published by an inert `pages.yml`) are installed and
-validated. Deferred to later stages (see `project.json →
-deferred_next_stages`): the owner-command live executor (append decision event +
-CAS-update state); migration tooling for existing work; and the exact `dev` →
-`main` promotion decision.
+`migration-tooling`. The governance kernel, the operational contracts, the
+runtime layer (`opsctl wake`), the reconstruction drill (`opsctl drill`), the
+authenticated owner-command path (`opsctl command --dry-run`), the read-only
+Owner HUD (`generated/hud/index.html`), and now the read-only legacy migration
+inventory (`opsctl migrate` + `governance/migration.json` +
+`generated/migration/PLAN.md`) are installed and validated. Deferred to later
+stages (see `project.json → deferred_next_stages`): the owner-command live
+executor; the migration cutover (real genesis capsules + legacy-entrypoint
+replacement, owner-gated); and the exact `dev` → `main` promotion decision.

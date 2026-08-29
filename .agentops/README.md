@@ -29,21 +29,23 @@ Start at [`BOOTSTRAP.md`](BOOTSTRAP.md).
   events/<ticket>/*.json       append-only transition events
   RECONSTRUCTION-DRILL.md      provider-neutral clean-clone / context-wipe drill spec
   tools/
-    opsctl.mjs            validate | render [--check] | verify | wake [--frozen] | drill | command --dry-run | --selftest
-    opsctl.test.mjs       test suite (real corpus + 34 negative plants + reconstruction + owner-command)
+    opsctl.mjs            validate | render [--check] | verify | wake [--frozen] | drill | command --dry-run | migrate [--plan] | --selftest
+    opsctl.test.mjs       test suite (real corpus + 39 negative plants + reconstruction + owner-command + migration)
   generated/
     GOVERNANCE.md         generated human view (sole writer: opsctl render)
     reconstruction/<ticket>.wake.txt   frozen wake goldens (drift-gated by verify)
     hud/index.html        read-only Owner HUD (redacted, deterministic; drift-gated)
+    migration/PLAN.md     legacy migration inventory/plan (drift-gated)
 ```
 
 The JSON is the source of truth; Markdown under `generated/` is a projection.
 Regenerate and drift-check with `node .agentops/tools/opsctl.mjs verify`.
 
-This is the `owner-hud-and-command` stage (the governance kernel, the
-operational contracts, the runtime capsule/lease/event layer with `opsctl
-wake`, the clean-clone reconstruction drill, and the authenticated
-owner-command dry-run path plus the read-only Owner HUD). The reusable installer
-specification and governance census this was built from live under
+This is the `migration-tooling` stage (the governance kernel, the operational
+contracts, the runtime capsule/lease/event layer with `opsctl wake`, the
+clean-clone reconstruction drill, the authenticated owner-command dry-run path,
+the read-only Owner HUD, and the read-only legacy migration inventory). The
+reusable installer specification and governance census this was built from live
+under
 [`docs/reconstruction/agentops/`](../docs/reconstruction/agentops/); that bundle
 is read-only installation authority, not runtime context.
