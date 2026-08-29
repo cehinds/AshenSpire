@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -404,6 +404,46 @@ function check(name, cond, detail = '') {
     check('reseat refuses a detached HEAD', !det.ok && /detached/.test(det.errors.join(' ')), JSON.stringify(det));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
+  }
+}
+
+// 2k. The Review & Approval Hub. It replaces a committed Next.js export whose
+// source existed nowhere: unbuildable, uneditable, and already drifted from the
+// control plane it claimed to show. Every page is now a projection, so the
+// drift gate that protects GOVERNANCE.md protects the site too.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const pages = renderHubSite(contracts, rt);
+  const rels = pages.map((p) => p.rel);
+  check('hub generates a page per ticket plus the four fixed pages',
+    rels.length === Object.keys(rt.capsules).length + 4, String(rels.length));
+  for (const fixed of ['index', 'decisions', 'seats', 'help-desk']) {
+    check(`hub has ${fixed}.html`, rels.includes(`generated/hub/${fixed}.html`));
+  }
+  const byRel = Object.fromEntries(pages.map((p) => [p.rel, p.text]));
+  // The old Hub drifted because it was a snapshot. These assert the pages read
+  // live state, not a frozen copy of it.
+  const home = byRel['generated/hub/index.html'];
+  check('hub overview lists every ticket', Object.keys(rt.capsules).every((t) => home.includes(t)));
+  check('hub overview names the seat that each ticket wakes',
+    computeDispatch(contracts, rt).every((e) => home.includes(e.wake)));
+  const ticketPage = byRel['generated/hub/tickets/AS-HD-057.html'];
+  check('a ticket page carries its live seal', ticketPage.includes(rt.capsules['AS-HD-057'].current_hash.slice(0, 23)));
+  check('a ticket page replays its event chain',
+    (rt.events['AS-HD-057'] || []).every((ev) => ticketPage.includes(ev.id)));
+  // A published page must not become an exfiltration route for repository state
+  // the owner did not choose to publish.
+  check('hub carries no credential material', !pages.some((p) => /ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY|Authorization:/i.test(p.text)));
+  check('hub escapes generated content', !pages.some((p) => /<script/i.test(p.text)));
+  // Absent in .agentops-only checkouts (the reconstruction clone), where this
+  // simply does not run — same rule as the HUD mirror.
+  let mirrored = null;
+  try { mirrored = readFileSync(resolve(ROOT, '../review-approval-hub/index.html'), 'utf8'); } catch { /* not present */ }
+  if (mirrored !== null) {
+    check('published review-approval-hub/ mirror is in sync with the generated hub',
+      mirrored === home,
+      'refresh review-approval-hub/ from .agentops/generated/hub/ after `opsctl render`');
   }
 }
 
