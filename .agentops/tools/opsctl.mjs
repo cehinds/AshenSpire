@@ -220,6 +220,7 @@ const CONTRACTS = [
   { name: 'owner-intent', file: 'governance/owner-intent.json', schema: 'schemas/owner-intent.schema.json' },
   { name: 'hierarchy', file: 'governance/hierarchy.json', schema: 'schemas/hierarchy.schema.json' },
   { name: 'roles', file: 'governance/roles.json', schema: 'schemas/roles.schema.json' },
+  { name: 'teams', file: 'governance/teams.json', schema: 'schemas/teams.schema.json' },
   { name: 'authority', file: 'governance/authority.json', schema: 'schemas/authority.schema.json' },
   { name: 'git-ownership', file: 'governance/git-ownership.json', schema: 'schemas/git-ownership.schema.json' },
   { name: 'raci', file: 'governance/raci.json', schema: 'schemas/raci.schema.json' },
@@ -254,6 +255,59 @@ export function loadContracts(root = ROOT) {
 // ---------------------------------------------------------------------------
 export function semanticChecks(c) {
   const errors = [];
+
+  // --- teams -----------------------------------------------------------
+  // The charter is the authority on who stands and who is pooled. Encoding it
+  // as prose let a capsule contradict it silently; these make that a hard error.
+  if (c.teams && c.roles && c.hierarchy) {
+    const declaredRoles = new Set(c.roles.roles.map((r) => r.role));
+    const hier = new Set(c.hierarchy.nodes.map((n) => n.actor_id));
+    const poolIds = new Set();
+    const standingIds = new Set();
+    for (const r of c.teams.standing_roles) {
+      if (standingIds.has(r.id)) errors.push(`teams: standing role '${r.id}' is declared twice`);
+      standingIds.add(r.id);
+      // A standing role that no role contract declares, or that has no
+      // hierarchy node, cannot actually receive or escalate anything.
+      if (!declaredRoles.has(r.id)) errors.push(`teams: standing role '${r.id}' is not a declared role`);
+      if (!hier.has(r.id)) errors.push(`teams: standing role '${r.id}' has no hierarchy node`);
+    }
+    for (const p of c.teams.capability_pools) {
+      if (poolIds.has(p.id)) errors.push(`teams: capability pool '${p.id}' is declared twice`);
+      poolIds.add(p.id);
+      // "Pools are not standing delivery teams." A pool that is also a declared
+      // role would become one the moment a capsule named it as an owner.
+      if (declaredRoles.has(p.id)) errors.push(`teams: capability pool '${p.id}' is also a declared role; a pool must not be able to hold a seat`);
+    }
+    // The contract is a projection of docs/governance/TEAM-CHARTERS.md. If an
+    // entry is renamed here and not there, the two have silently diverged and
+    // the prose stops being the thing this encodes.
+    let charterText = null;
+    try { charterText = readFileSync(resolve(ROOT, '../docs/governance/TEAM-CHARTERS.md'), 'utf8'); } catch { /* .agentops-only checkout */ }
+    if (charterText !== null) {
+      for (const e of [...c.teams.standing_roles, ...c.teams.capability_pools]) {
+        if (!charterText.includes(e.charter_heading)) {
+          errors.push(`teams: '${e.id}' claims charter heading '${e.charter_heading}', which has no heading in the charter prose`);
+        }
+      }
+    }
+    const ce = c.teams.charter_exception;
+    for (const role of ce.requires_concurrence) {
+      if (!declaredRoles.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a declared role`);
+      if (!standingIds.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a standing role; only standing roles may carry an exception to the owner`);
+    }
+    if (c.escalation && !c.escalation.classes.some((x) => x.id === ce.escalation_class)) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which escalation.json does not declare`);
+    }
+    // The exception must actually reach the Owner. A class that wakes anyone
+    // else would let the two roles "escalate" to themselves.
+    const ownerId = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    const cls = c.escalation && c.escalation.classes.find((x) => x.id === ce.escalation_class);
+    if (cls && ownerId && cls.wake !== ownerId) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which wakes '${cls.wake}' rather than the owner`);
+    }
+  }
+
   const roles = c.roles ? new Set(c.roles.roles.map((r) => r.role)) : new Set();
   const knownRoles = new Set([...roles, ...SYNTHETIC_ROLES]);
 
@@ -558,6 +612,30 @@ export function renderGovernance(c) {
   L.push('| Ref | Owner role | Mutation |');
   L.push('|---|---|---|');
   for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  if (c.teams) {
+    L.push('');
+    L.push('## Teams');
+    L.push('');
+    L.push(`${c.teams.principle}`);
+    L.push('');
+    L.push('### Standing coordination roles');
+    L.push('');
+    L.push('| Role | Standing responsibility | Boundary |');
+    L.push('|---|---|---|');
+    for (const r of c.teams.standing_roles) L.push(`| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`);
+    L.push('');
+    L.push('### Capability pools');
+    L.push('');
+    L.push('Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.');
+    L.push('');
+    L.push('| Pool | Delivery capability | Stewardship between tickets |');
+    L.push('|---|---|---|');
+    for (const p of c.teams.capability_pools) L.push(`| \`${p.id}\` | ${p.delivery_capability} | ${p.stewardship} |`);
+    L.push('');
+    L.push('### Charter exception');
+    L.push('');
+    L.push(`${c.teams.charter_exception.principle} Concurrence: ${c.teams.charter_exception.requires_concurrence.map((r) => '`' + r + '`').join(' + ')}; escalates as \`${c.teams.charter_exception.escalation_class}\`.`);
+  }
   L.push('');
   L.push('### Paths');
   L.push('');
@@ -847,6 +925,23 @@ export function runtimeChecks(g, rt) {
       if (!out.length) continue;                      // terminal or owner-only: not the seat's move to make
       if (!out.some((m) => m.permitted_actor_roles.includes(cap.owner_actor))) {
         errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
+      }
+    }
+  }
+  // "Pools are not standing delivery teams and do not own a backlog, decision
+  // stream, or source path merely because the path fits their specialty."
+  // Enforced where it can actually be violated: a capsule or a lease naming a
+  // pool as its holder would make it one.
+  if (g.teams) {
+    const pools = new Set(g.teams.capability_pools.map((p) => p.id));
+    for (const t of Object.keys(rt.capsules)) {
+      if (pools.has(rt.capsules[t].owner_actor)) {
+        errors.push(`capsule ${t}: owner_actor '${rt.capsules[t].owner_actor}' is a capability pool, not a standing team; a pool cannot hold a seat or own a backlog`);
+      }
+    }
+    for (const l of rt.leases) {
+      if (!l.revoked && pools.has(l.actor)) {
+        errors.push(`lease ${l.id}: actor '${l.actor}' is a capability pool, not a standing team; a pool cannot hold a writer lease`);
       }
     }
   }
@@ -1512,7 +1607,7 @@ function hubPage(project, title, up, bodyHtml) {
     '<header>',
     `<h1>${hubEsc(title)}</h1>`,
     `<div class="sub">${hubEsc(project.project_name)} · Review &amp; Approval Hub · generated from committed state by <code>opsctl render</code></div>`,
-    `<nav><a href="${up}index.html">Overview</a><a href="${up}decisions.html">Decisions</a><a href="${up}help-desk.html">Help desk</a><a href="${up}seats.html">Seats</a></nav>`,
+    `<nav><a href="${up}index.html">Overview</a><a href="${up}decisions.html">Decisions</a><a href="${up}help-desk.html">Help desk</a><a href="${up}seats.html">Seats &amp; teams</a></nav>`,
     '</header><main>',
     bodyHtml,
     '</main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>',
@@ -1596,7 +1691,23 @@ export function renderHubSite(contracts, rt) {
       L.push(`<tr><td><code>${hubEsc(c.id)}</code></td><td>${c.route.map(hubEsc).join(' → ')}</td><td>${hubEsc(c.wake)}</td><td>${c.continuing_work_allowed ? 'yes' : '<span class="warn">no</span>'}</td></tr>`);
     }
     L.push('</table></div><p class="sub">A ticket names a class, never a wake target, so nothing can route itself to the owner to jump the queue or away from the owner to dodge a protected decision.</p></section>');
-    out.push({ rel: `${HUB_DIR}/seats.html`, text: hubPage(project, 'Seats', '', L.join('\n')) + '\n' });
+    if (contracts.teams) {
+      const tm = contracts.teams;
+      L.push('<section><h2>Standing coordination roles</h2><div class="wrap"><table><tr><th>Role</th><th>Standing responsibility</th><th>Boundary</th></tr>');
+      for (const r of tm.standing_roles) L.push(`<tr><td><code>${hubEsc(r.id)}</code></td><td>${hubEsc(r.responsibility)}</td><td>${hubEsc(r.boundary)}</td></tr>`);
+      L.push('</table></div></section>');
+      L.push('<section><h2>Capability pools</h2>');
+      L.push('<p class="sub">Not standing teams. They own no backlog, no decision stream and no source path, and validate rejects a capsule or lease that names one as its holder.</p>');
+      L.push('<div class="wrap"><table><tr><th>Pool</th><th>Delivery capability</th><th>Stewardship between tickets</th></tr>');
+      for (const p of tm.capability_pools) L.push(`<tr><td><code>${hubEsc(p.id)}</code></td><td>${hubEsc(p.delivery_capability)}</td><td>${hubEsc(p.stewardship)}</td></tr>`);
+      L.push('</table></div></section>');
+      const ce = tm.charter_exception;
+      L.push('<section><h2>When the charter cannot resolve it</h2>');
+      L.push(`<p>${hubEsc(ce.principle)}</p>`);
+      L.push(`<p class="sub">Concurrence required: ${ce.requires_concurrence.map((r) => `<span class="pill">${hubEsc(r)}</span>`).join(' ')} · escalates as <code>${hubEsc(ce.escalation_class)}</code> · records ${ce.records.map(hubEsc).join('; ')}.</p>`);
+      L.push(`<p class="sub">Pods dissolve after ${hubEsc(tm.pods.dissolves_after)}; one lead and at most ${tm.pods.max_helpers} helpers. A pod's chat is never an authority source.</p></section>`);
+    }
+    out.push({ rel: `${HUB_DIR}/seats.html`, text: hubPage(project, 'Seats and teams', '', L.join('\n')) + '\n' });
   }
 
   // --- Help desk ------------------------------------------------------------
@@ -2024,6 +2135,15 @@ export function runSelftest(root = ROOT) {
   expectMigration('transition narrowed until a live seat is stranded', (c) => {
     for (const m of c.transitions.transitions) if (m.from === 'assigned' && m.to === 'in-progress') m.permitted_actor_roles = ['maker'];
   }, 'the seat is stranded');
+
+  // Stage 8 teams plants — the charter, now enforceable. Each reproduces a way
+  // the prose could be contradicted while everything else still validated.
+  expectSemantic('teams: standing role with no hierarchy node', (c) => { c.teams.standing_roles.push({ id: 'ghost-lead', responsibility: 'x', boundary: 'y' }); }, 'is not a declared role');
+  expectSemantic('teams: a pool that is also a role could hold a seat', (c) => { c.teams.capability_pools.push({ id: 'maker', delivery_capability: 'x', stewardship: 'y' }); }, 'must not be able to hold a seat');
+  expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
+  expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
+  expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');
 
   const failed = results.filter((r) => !r.pass);
   return { ok: failed.length === 0, results, detail: failed.map((r) => `PLANT NOT CAUGHT: ${r.label}${r.errs ? ' | got: ' + JSON.stringify(r.errs) : ''}`) };

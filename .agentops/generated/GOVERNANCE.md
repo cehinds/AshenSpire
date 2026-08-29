@@ -165,6 +165,39 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `claude/*` | maker | isolated-continuation |
 | `recovery/*` | per-seat | isolated-continuation |
 
+## Teams
+
+Standing coordination is scarce and named; delivery capability is pooled and temporary. A pool is a capability the project can draw on, never a department that owns a backlog, a decision stream, or a source path because the path fits its specialty. A pod is formed for one contract-ready ticket and dissolves; its chat and local workspace are never an authority source, so losing the conversation loses no work.
+
+### Standing coordination roles
+
+| Role | Standing responsibility | Boundary |
+|---|---|---|
+| `help-desk` | Intake, contract and status hygiene, routing, acknowledgements, receipts, and Project workflow projection. | No implementation, product, technical-decision, integration, board-mutation, or delivery authority. |
+| `project-management-lead` | Portfolio and milestone recommendations; dependency, blocker, WIP and capacity visibility; completion councils; handoffs; risk and decision log; promotion-readiness planning; stakeholder summaries. | Recommends and coordinates; does not decide technical assignment or integration, and gains no product, board, delivery, promotion, or release authority. |
+| `data-architecture-lead` | Schema, ID, alias and deprecation; source-generator-projection lineage; migration, version and compatibility; generated manifests; save, content and data quality; cross-domain data-contract review. | May WITHHOLD an unsafe contract; does not self-assign implementation or replace domain intent or IT Manager III authority. |
+| `it-manager-iii` | Mandatory technical relay; technical sequencing; path and maker ownership; architecture reconciliation; incident and P0 command; integration and delivery gates. | Decides technical assignment and integration within granted authority; Constantine retains main/release, Pages, tags, publication, playtest, and final release actions. |
+
+### Capability pools
+
+Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.
+
+| Pool | Delivery capability | Stewardship between tickets |
+|---|---|---|
+| `art-tech-art` | Visual direction, assets, optimization, manifests, previews, provenance and licensing. | Audit reuse, consistency, hard-coded art, missing credits, and runtime budgets; prepare isolated proposals and handoffs. |
+| `feature-architecture` | Features, architecture, models, components, services, tooling, and runtime integration. | Reconcile code and contracts, strengthen reusable boundaries, and draft bounded proposals without inventing product scope. |
+| `incident-defect` | Reproduction, containment, repair, regression evidence, and incident and P0 technical response. | Maintain known-bad plants and defect evidence; no unassigned repair. |
+| `code-quality-modernization` | Small risk-ranked code, architecture, test, documentation, configuration, repository and tooling-debt reduction. | Maintain the modernization register and read-only audits; no idle patching or product-behaviour change. |
+| `game-systems` | Mechanics, balance intent, unlock and behaviour and data contracts, acceptance conditions. | Identify SPEC and GDD conflicts, unreachable content, balance drift, and unclear player feedback. |
+| `experience-design` | UX, interaction intent, narrative, names, UI copy, tutorials, accessibility text, changelog and documentation clarity. | Reconcile wording and intent across GDD, SPEC, data and config, UI, help, and changelog. |
+| `experience-accessibility-review` | Temporary review of interaction, readability, accessibility, responsive behaviour, input modes, player-facing language, and experience evidence. | Form only for applicable tickets; preserve domain intent and independent QA verdict ownership. |
+| `qa-guild` | Independent functional, regression, experience, responsive, accessibility, input, persistence, artifact and hosted evidence. | Maintain playbooks, RED plants, known-bad cases, fixtures, viewports, and evidence indexes. |
+| `platform-release` | CI, generated-artifact lanes, environments, packaging, deployment, release staging and operational evidence. | Audit provenance and environment drift; never infer publication, deployment, promotion, or release authority. |
+
+### Charter exception
+
+The charter decides by default. Where it genuinely cannot resolve a case, the two coordinating roles may jointly carry it to the Owner — but only after exhausting what the charter already lets them settle between them. Concurrence is required so no single role can manufacture an owner decision to escape its own boundary. Concurrence: `it-manager-iii` + `project-management-lead`; escalates as `owner-exclusive-now`.
+
 ### Paths
 
 | Path glob | Owner role | Serialized lane |
