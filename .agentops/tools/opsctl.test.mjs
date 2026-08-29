@@ -10,7 +10,7 @@
 // drift from its JSON sources.
 
 import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate } from './opsctl.mjs';
-import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -679,6 +679,37 @@ function check(name, cond, detail = '') {
     d.pages.complete_only_when.length === 2);
   check('a failed deployment authorizes no different source',
     /no different source/i.test(d.pages.on_failure));
+}
+
+// 2r. The last two decision records with checkable content: 0002's legacy
+// lifecycle mapping and 0004's one-canonical-path rule.
+{
+  const { contracts } = loadContracts();
+  const t = contracts.transitions;
+  check('every legacy lifecycle value has a canonical treatment',
+    t.legacy_values.length >= 5 && t.legacy_values.every((v) => v.legacy && v.canonical_treatment),
+    String(t.legacy_values.length));
+  // The compatibility token the charter says still routes to IT Manager III.
+  check('READY FOR MAIN is carried as a legacy value', t.legacy_values.some((v) => v.legacy === 'READY FOR MAIN'));
+  // CLOSED was the ambiguous one: the decision insists it is resolved into a
+  // real terminal state rather than kept as a synonym.
+  check('CLOSED must be resolved rather than kept as a synonym',
+    /RESOLVED and CANCELLED/.test(t.legacy_values.find((v) => v.legacy === 'CLOSED').canonical_treatment));
+  check('old evidence is never rewritten', /never rewritten|do not rewrite/i.test(t.legacy_rule));
+
+  // 0004: one canonical live path, and never two.
+  const docs = contracts['information-access'].canonical_documents;
+  check('canonical documents are declared', docs.length >= 1);
+  check('every canonical document exists',
+    docs.every((d) => existsSync(resolve(ROOT, '..', d.path))),
+    docs.filter((d) => !existsSync(resolve(ROOT, '..', d.path))).map((d) => d.path).join(', '));
+  check('no superseded copy is still live',
+    docs.every((d) => d.superseded_paths.every((p) => !existsSync(resolve(ROOT, '..', p)))),
+    docs.flatMap((d) => d.superseded_paths.filter((p) => existsSync(resolve(ROOT, '..', p)))).join(', '));
+  check('the art policy sits at its post-0004 canonical path',
+    docs.some((d) => d.path === 'docs/governance/RUNBOOKS/art.md'));
+  check('every canonical document cites the decision that placed it',
+    docs.every((d) => d.decision.startsWith('docs/governance/DECISIONS/')));
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

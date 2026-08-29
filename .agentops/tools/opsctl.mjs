@@ -275,6 +275,24 @@ export function loadContracts(root = ROOT) {
 export function semanticChecks(c) {
   const errors = [];
 
+  // --- canonical documents ------------------------------------------------
+  // Decision 0004 moved the art policy to one live path and said plainly:
+  // never recreate two live copies. A duplicate policy is worse than none,
+  // because both look authoritative. Checked against the working tree, and
+  // skipped in an .agentops-only clean room where docs/ does not exist.
+  if (c['information-access'] && c['information-access'].canonical_documents && existsSync(resolve(ROOT, '../docs'))) {
+    for (const doc of c['information-access'].canonical_documents) {
+      if (!existsSync(resolve(ROOT, '..', doc.path))) {
+        errors.push(`information-access: the canonical document for '${doc.topic}' is declared at '${doc.path}', which does not exist`);
+      }
+      for (const old of doc.superseded_paths) {
+        if (existsSync(resolve(ROOT, '..', old))) {
+          errors.push(`information-access: '${old}' still exists alongside the canonical '${doc.path}' for '${doc.topic}'; two live copies both look authoritative`);
+        }
+      }
+    }
+  }
+
   // --- delivery and Pages -------------------------------------------------
   // Decision 0005 governs delivery to dev, promotion readiness and the Pages
   // source. The Pages half is the part with teeth: a source switch must record
@@ -2477,6 +2495,8 @@ export function runSelftest(root = ROOT) {
   expectSemantic('teams: charter exception escalating away from the owner', (c) => { c.teams.charter_exception.escalation_class = 'technical-blocker'; }, 'rather than the owner');
   expectSemantic('teams: charter exception naming a non-standing concurrer', (c) => { c.teams.charter_exception.requires_concurrence = ['it-manager-iii', 'maker']; }, 'is not a standing role');
   expectSemantic('teams: a pool renamed until it no longer matches the charter', (c) => { c.teams.capability_pools[0].charter_heading = 'Art Department'; }, 'no heading in the charter prose');
+  expectSemantic('canonical docs: a canonical path that does not exist', (c) => { c['information-access'].canonical_documents[0].path = 'docs/governance/RUNBOOKS/ghost.md'; }, 'which does not exist');
+  expectSemantic('canonical docs: a superseded copy still live', (c) => { c['information-access'].canonical_documents[0].superseded_paths = ['docs/governance/TEAM-CHARTERS.md']; }, 'both look authoritative');
   expectSemantic('delivery: promotion readiness claiming a grant', (c) => { c.delivery.promotion_readiness.grants = ['release']; }, 'grants no promotion authority');
   expectSemantic('delivery: a Pages source that is not protected', (c) => { c.delivery.pages.desired_source = 'dev'; }, "is 'pr-only', not protected");
   expectSemantic('delivery: a Pages switch that skips the owner', (c) => { c.delivery.pages.switch_requires.escalation_class = 'technical-blocker'; }, 'rather than the owner');
