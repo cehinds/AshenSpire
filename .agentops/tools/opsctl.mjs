@@ -709,7 +709,13 @@ export function refDeclaration(contracts, ref) {
 export function refEntitlementErrors(contracts, label, ref, actor) {
   const d = refDeclaration(contracts, ref);
   if (!d) return [`${label} ref '${ref}' matches no declared ref in git-ownership.refs`];
-  if (d.mutation === 'protected') return [`${label} ref '${ref}' is a protected ref and may never be a seat working ref`];
+  // A seat works on an isolated continuation branch and nothing else.
+  // Rejecting only `protected` left `dev` reachable: it is pr-only, but it is
+  // owned by it-manager-iii, so an ITM3 seat could name it and pass — local
+  // readiness would then point work straight at the integration ref.
+  if (d.mutation !== 'isolated-continuation') {
+    return [`${label} ref '${ref}' is '${d.mutation}', not an isolated-continuation branch; a seat may only work on an isolated ref`];
+  }
   if (d.per_seat) return [];
   if (d.owner_role !== actor) return [`${label} ref '${ref}' is owned by '${d.owner_role}', not '${actor}'`];
   return [];
@@ -1628,8 +1634,9 @@ export function runSelftest(root = ROOT) {
   expectRuntime('exempted lease cannot be widened with an unnamed glob', (rt) => { rt.leases.find((x) => x.id === 'lease-AS-1001-maker').path_globs.push('content/**'); }, 'git-ownership assigns that path to');
   expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
   expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
-  expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'protected ref and may never be a seat working ref');
-  expectRuntime('capsule claiming a ref owned by another role', (rt) => { rt.capsules['AS-1001'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'dev'; }, "is owned by 'it-manager-iii'");
+  expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'not an isolated-continuation branch');
+  expectRuntime('capsule claiming the pr-only integration ref', (rt) => { rt.capsules['AS-HD-029'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-HD-029'].writer_lease).ref = 'dev'; }, 'not an isolated-continuation branch');
+
   expectRuntime('capsule ref outside any declared ref namespace', (rt) => { rt.capsules['AS-1001'].ref = 'wildcat/not-declared'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'wildcat/not-declared'; }, 'no declared ref');
   expectRuntime('capsule owner role with no hierarchy node', (rt) => { rt.capsules['AS-1001'].owner_actor = 'generator'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).actor = 'generator'; }, 'no node in hierarchy');
   expectRuntime('capsule references missing lease', (rt) => { rt.capsules['AS-1001'].writer_lease = 'no-such-lease'; }, 'unknown writer_lease');
