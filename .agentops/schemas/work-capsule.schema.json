@@ -179,6 +179,12 @@
         "minLength": 1
       },
       "minItems": 1
+    },
+    "team": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

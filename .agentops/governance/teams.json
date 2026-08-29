@@ -122,5 +122,72 @@
       "why it does not resolve",
       "what each concurring role recommends"
     ]
-  }
+  },
+  "legacy_aliases": [
+    {
+      "legacy": "application",
+      "routes_to": "feature-architecture",
+      "note": "App Team is a legacy task name; feature and architecture work is pooled."
+    },
+    {
+      "legacy": "art",
+      "routes_to": "art-tech-art",
+      "note": "Direct rename."
+    },
+    {
+      "legacy": "code-quality-modernization",
+      "routes_to": "code-quality-modernization",
+      "note": "Unchanged."
+    },
+    {
+      "legacy": "data-architecture-systems",
+      "routes_to": "data-architecture-lead",
+      "note": "A standing role, not a pool."
+    },
+    {
+      "legacy": "game-design",
+      "routes_to": "game-systems",
+      "note": "Mechanics, balance and data contracts; design intent sits with Experience Design."
+    },
+    {
+      "legacy": "help-desk",
+      "routes_to": "help-desk",
+      "note": "A standing role, unchanged."
+    },
+    {
+      "legacy": "incident-it-support",
+      "routes_to": "incident-defect",
+      "note": "Incident and P0 response is pooled; IT Support3 was a task name."
+    },
+    {
+      "legacy": "itm-integration-delivery",
+      "routes_to": "it-manager-iii",
+      "note": "A standing role, formerly named Main."
+    },
+    {
+      "legacy": "project-management",
+      "routes_to": "project-management-lead",
+      "note": "A standing role, not a pool."
+    },
+    {
+      "legacy": "qa-experience",
+      "routes_to": "experience-accessibility-review",
+      "note": "Forms per applicable ticket; QA verdict ownership stays independent."
+    },
+    {
+      "legacy": "qa-functional",
+      "routes_to": "qa-guild",
+      "note": "Independent functional and regression evidence."
+    },
+    {
+      "legacy": "review-approval-hub",
+      "routes_to": "platform-release",
+      "note": "The Hub is now generated output under the generated-artifact lane; approval gates themselves live in transitions.json and authority.json, not a team."
+    },
+    {
+      "legacy": "writing",
+      "routes_to": "experience-design",
+      "note": "Narrative, copy and documentation clarity."
+    }
+  ]
 }
