@@ -275,11 +275,20 @@ function feedFixture(src) {
     '  : [...__FIXTURE]);');
 }
 
+// #228: a CRLF checkout (core.autocrlf=true) hands this harness \r\n line
+// endings, and four of the five plants anchor on \n — every one reported
+// "changed nothing" on such a checkout, so the corpus proved nothing there.
+// Fold to \n before transforming; the variant is a temp file this harness
+// writes itself, so LF is always safe to emit.
+function normalizeSource(src) {
+  return src.replace(/\r\n/g, '\n');
+}
+
 async function loadVariant(tmpDir, label, transforms) {
   const { readFileSync, writeFileSync } = await import('node:fs');
   const { join } = await import('node:path');
   const self = fileURLToPath(import.meta.url);
-  let src = readFileSync(self, 'utf8');
+  let src = normalizeSource(readFileSync(self, 'utf8'));
   for (const [name, fn] of transforms) {
     const next = fn(src);
     if (next === src) {
@@ -312,6 +321,26 @@ async function mutate() {
     bad += 1;
   } else {
     console.log('  OK      control: unmutated fixture-fed copy passes the corpus (the harness works)');
+  }
+
+  // Second positive control, the #228 plant: every transform must still bite a
+  // CRLF fold of this very source, through the same normalize the real path
+  // uses. Before normalizeSource existed, this printed four BADs on a Windows
+  // checkout; delete the normalize and this control is what goes red on Linux.
+  {
+    const { readFileSync } = await import('node:fs');
+    // Canonicalize before folding: on a checkout that is ALREADY CRLF a bare
+    // fold would produce \r\r\n and measure a line ending no checkout has.
+    const canon = normalizeSource(readFileSync(fileURLToPath(import.meta.url), 'utf8'));
+    const folded = normalizeSource(canon.replace(/\n/g, '\r\n'));
+    const dead = [['feedFixture', feedFixture], ...MUTATIONS.map((m) => [m.id, m.apply])]
+      .filter(([, fn]) => fn(folded) === folded).map(([name]) => name);
+    if (dead.length) {
+      console.log(`  BROKEN  crlf-control: ${dead.length} transform(s) no longer apply to a CRLF fold: ${dead.join(', ')}`);
+      bad += 1;
+    } else {
+      console.log('  OK      crlf-control: all transforms still apply to a CRLF fold of this source (#228)');
+    }
   }
 
   for (const m of MUTATIONS) {
