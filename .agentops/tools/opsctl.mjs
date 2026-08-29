@@ -118,14 +118,32 @@ export function strictParse(text) {
     }
   }
   function number() {
+    // RFC 8259 number grammar: [ "-" ] int [ frac ] [ exp ], where int is
+    // "0" or a non-zero digit followed by digits, and both frac and exp require
+    // at least one digit. Consuming an optional-digit run here would let `1.`,
+    // `1e`, or a lone `-` through — invalid JSON that a standard parser rejects,
+    // silently diverging the authoritative contract from what clean-clone
+    // reconstruction reads back.
     const start = i;
+    const digit = () => i < n && text[i] >= '0' && text[i] <= '9';
     if (text[i] === '-') i++;
-    while (i < n && text[i] >= '0' && text[i] <= '9') i++;
-    if (text[i] === '.') { i++; while (i < n && text[i] >= '0' && text[i] <= '9') i++; }
+    if (text[i] === '0') {
+      i++;
+    } else if (i < n && text[i] >= '1' && text[i] <= '9') {
+      while (digit()) i++;
+    } else {
+      err('invalid number: expected digit');
+    }
+    if (text[i] === '.') {
+      i++;
+      if (!digit()) err('invalid number: expected digit after decimal point');
+      while (digit()) i++;
+    }
     if (text[i] === 'e' || text[i] === 'E') {
       i++;
       if (text[i] === '+' || text[i] === '-') i++;
-      while (i < n && text[i] >= '0' && text[i] <= '9') i++;
+      if (!digit()) err('invalid number: expected digit in exponent');
+      while (digit()) i++;
     }
     return Number(text.slice(start, i));
   }
@@ -1293,6 +1311,16 @@ export function runSelftest(root = ROOT) {
   let trailCaught = false;
   try { strictParse('{"a":1} garbage'); } catch { trailCaught = true; }
   results.push({ label: 'parser rejects trailing content', pass: trailCaught });
+
+  // Parser: incomplete number forms that a standard JSON parser rejects. Each
+  // must throw — otherwise `1.`/`1e` slip through as `1`/`NaN` and `opsctl
+  // verify` would greenlight a contract that clean-clone reconstruction cannot
+  // read back with a conformant parser.
+  for (const bad of ['1.', '1e', '1e+', '1E-', '-', '01', '-.5', '1.2.3']) {
+    let caught = false;
+    try { strictParse(bad); } catch { caught = true; }
+    results.push({ label: `parser rejects incomplete number '${bad}'`, pass: caught });
+  }
 
   // Schema: unknown enum.
   {

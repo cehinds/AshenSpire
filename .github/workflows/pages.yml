@@ -7,6 +7,20 @@
 # → Source: GitHub Actions), then run this workflow. Until then it does nothing.
 #
 # SECURITY MODEL
+# - Publication is a protected transition (see owner-intent.json →
+#   protected_decision_classes: publication / Pages / deployment). Manual
+#   dispatch alone is NOT authority. This workflow gates the deploy on the
+#   dispatcher being the repository owner, so only the owner can publish:
+#     * `authorize` fails the run unless `github.actor == github.repository_owner`
+#       — the codified actor check (a foreman dispatch is rejected, not treated
+#       as consent); and
+#     * the `deploy` job runs inside the `github-pages` environment, so the owner
+#       can additionally require an environment reviewer (Settings →
+#       Environments → github-pages → Required reviewers) for owner-approved,
+#       protected-environment publication. Enabling that reviewer is the
+#       recommended second gate and is a repository setting, not workflow code.
+#   This mirrors the owner-command doctrine (authorize-release is owner-exclusive
+#   and compare-and-swap-checked): publication authenticates the owner alone.
 # - Least privilege: the top-level token is read-only; only the `deploy` job is
 #   granted `pages: write` + `id-token: write`, inside the protected
 #   `github-pages` environment.
@@ -33,7 +47,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Protected-transition gate: publication is owner-exclusive, so a manual
+  # dispatch by anyone other than the repository owner fails before any Pages
+  # permission is granted. build/deploy depend on this job.
+  authorize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Only the repository owner may publish the HUD
+        env:
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ "$ACTOR" != "$OWNER" ]; then
+            echo "::error::Pages publication is an owner-exclusive protected transition (owner-intent.json → protected_decision_classes)."
+            echo "Dispatcher '$ACTOR' is not the repository owner '$OWNER'; manual dispatch is not authority."
+            exit 1
+          fi
+          echo "Authorized: publication dispatched by the repository owner '$OWNER'."
+
   build:
+    needs: authorize
     runs-on: ubuntu-latest
     permissions:
       contents: read
