@@ -1,0 +1,43 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 1,
+  "current_hash": "sha256:1ea47a870bc8ded2718c1425afad217e4ae6b1d646a6d70ceb8c0683837ce7be",
+  "parent_hash": null,
+  "ticket": "AS-HD-029",
+  "lifecycle_state": "assigned",
+  "objective": "Clear the P0 NO_SAFE_ASSIGNMENT condition at Application for context adoption.",
+  "done_when": "One unchanged object passes the strict sequence fresh App custody/PASS -> CQM -> Data -> QA1 -> QA2 with gate credit recorded.",
+  "next_action": "Re-establish Application custody on one unchanged object; the latest R6 attempt is quarantined with gate credit 0.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "recovery/as-hd-029",
+  "base_oid": "4a515339189c6f3ec003eef74e86dc38526f93fe",
+  "tree": "recovered-from-hub-snapshot",
+  "expected_dirty_state": "clean",
+  "owner_actor": "it-manager-iii",
+  "writer_lease": "lease-AS-HD-029-it-manager-iii",
+  "affected_paths": [
+    "src/**"
+  ],
+  "evidence_pointers": [],
+  "blocker": null,
+  "authority": {
+    "may": [
+      "resolve-technical-ambiguity",
+      "assign-and-rebind-work",
+      "issue-and-revoke-lease",
+      "create-isolated-ref"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths"
+    ],
+    "expiry": "2026-10-31T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-HD-029 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}

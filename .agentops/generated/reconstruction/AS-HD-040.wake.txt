@@ -1,0 +1,16 @@
+=== AGENTOPS WAKE CAPSULE ===
+IDENTITY   : actor=maker role=maker ticket=AS-HD-040 lease=lease-AS-HD-040-maker (active until 2026-10-31T23:59:59Z)
+MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
+WORK       : Close the component-card silhouette successor contract for the class facelift (Art D1).
+DONE-WHEN  : One owner-selected successor path is recorded and the frozen four-crop desktop/mobile packet either satisfies the full-class-silhouette clause or is superseded by an approved successor.
+AUTHORITY  : may implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
+FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
+REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-040
+BASE       : 4a515339189c6f3ec003eef74e86dc38526f93fe tree recovered-from-hub-snapshot dirty=clean
+NEXT ACTION: Await the owner decision recorded on this ticket; do not generate new art until D1 selects proof-only upper-body successor or new full-body inputs.
+STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+EVIDENCE   : —
+SOURCE     : 4a515339189c6f3ec003eef74e86dc38526f93fe
+FRESHNESS  : as-recorded (base 4a515339189c); verify live HEAD out-of-band
+INVALIDATION: base_oid, tree, writer_lease
+BLOCKER    : {"kind":"owner-decision","wake":"constantine","summary":"D1: choose proof-only upper-body successor, new full-body inputs, or continued hold. Frozen packet 99814105…0A43 preserved; no approval recorded."}

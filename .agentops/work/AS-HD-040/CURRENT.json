@@ -1,0 +1,47 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 1,
+  "current_hash": "sha256:c8be8c2a5e1a540d12340250d530fd7fa9ba5933b0da2fff8443d46d7f757b1f",
+  "parent_hash": null,
+  "ticket": "AS-HD-040",
+  "lifecycle_state": "assigned",
+  "objective": "Close the component-card silhouette successor contract for the class facelift (Art D1).",
+  "done_when": "One owner-selected successor path is recorded and the frozen four-crop desktop/mobile packet either satisfies the full-class-silhouette clause or is superseded by an approved successor.",
+  "next_action": "Await the owner decision recorded on this ticket; do not generate new art until D1 selects proof-only upper-body successor or new full-body inputs.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "recovery/as-hd-040",
+  "base_oid": "4a515339189c6f3ec003eef74e86dc38526f93fe",
+  "tree": "recovered-from-hub-snapshot",
+  "expected_dirty_state": "clean",
+  "owner_actor": "maker",
+  "writer_lease": "lease-AS-HD-040-maker",
+  "affected_paths": [
+    "assets/classes/**"
+  ],
+  "evidence_pointers": [],
+  "blocker": {
+    "kind": "owner-decision",
+    "wake": "constantine",
+    "summary": "D1: choose proof-only upper-body successor, new full-body inputs, or continued hold. Frozen packet 99814105…0A43 preserved; no approval recorded."
+  },
+  "authority": {
+    "may": [
+      "implement-locally-on-exclusive-paths",
+      "run-tests-and-builds",
+      "commit-on-isolated-branch",
+      "record-blocker-and-continue-collision-free-work"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths"
+    ],
+    "expiry": "2026-10-31T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-HD-040 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}

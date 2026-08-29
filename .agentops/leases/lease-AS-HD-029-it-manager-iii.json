@@ -1,0 +1,21 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-HD-029-it-manager-iii",
+  "actor": "it-manager-iii",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-HD-029",
+  "ref": "recovery/as-hd-029",
+  "path_globs": [
+    "src/**"
+  ],
+  "base_oid": "4a515339189c6f3ec003eef74e86dc38526f93fe",
+  "actions": [
+    "resolve-technical-ambiguity",
+    "assign-and-rebind-work",
+    "issue-and-revoke-lease",
+    "create-isolated-ref"
+  ],
+  "issued": "2026-08-29T00:00:00Z",
+  "expiry": "2026-10-31T23:59:59Z",
+  "revoked": false
+}
