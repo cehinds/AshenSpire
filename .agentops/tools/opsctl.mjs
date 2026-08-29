@@ -1604,7 +1604,28 @@ export function runtimeChecks(g, rt) {
     if (!sc) { errors.push(`capsule ${t}: records a self-certification, but qa.json declares no self_certification policy`); continue; }
     if (cert.verdict_kind !== sc.verdict_kind) errors.push(`capsule ${t}: self-certification verdict_kind '${cert.verdict_kind}' is not the declared '${sc.verdict_kind}'`);
     if (cert.envelope !== sc.delegation_envelope) errors.push(`capsule ${t}: self-certification cites envelope '${cert.envelope}', not the standing grant '${sc.delegation_envelope}'`);
+    // `certifying_seat` was an unbound string, so a lead could approve its own
+    // output by writing 'maker' in that field. The capsule's owner_actor is the
+    // seat that actually holds the work, so the waiver is compared against that
+    // rather than against whatever it claims about itself.
+    const holder = rt.capsules[t].owner_actor;
+    if (cert.certifying_seat !== holder) errors.push(`capsule ${t}: self-certification names certifying seat '${cert.certifying_seat}', but the capsule is held by '${holder}'; the waiver must name the seat that owns the work`);
+    if (cert.approving_lead === holder) errors.push(`capsule ${t}: self-certification is approved by '${cert.approving_lead}', which is the seat holding the capsule; a lead cannot approve its own output`);
     if (cert.certifying_seat === cert.approving_lead) errors.push(`capsule ${t}: self-certification is approved by the same actor that produced it ('${cert.approving_lead}')`);
+    // Without a risk class on the candidate the low/standard allowlist was
+    // unenforceable at runtime: the same record satisfied a high-risk object,
+    // and `suites_run: ['unit']` satisfied any gate.
+    const rc = g.qa.risk_classes.find((r) => r.id === cert.risk_class);
+    if (!rc) errors.push(`capsule ${t}: self-certification declares risk class '${cert.risk_class}', which qa.json does not define`);
+    else {
+      if (!sc.permitted_risk_classes.includes(cert.risk_class)) {
+        errors.push(`capsule ${t}: self-certification claims risk class '${cert.risk_class}', which self_certification does not permit (${sc.permitted_risk_classes.join(', ')}); that class keeps its declared waiver authority`);
+      }
+      const ran = new Set(cert.suites_run);
+      for (const suite of rc.required_suites) {
+        if (!ran.has(suite)) errors.push(`capsule ${t}: self-certification for '${cert.risk_class}' work does not record the required '${suite}' suite; a waiver of independence does not waive the suites`);
+      }
+    }
     if (rt.capsules[t].team && cert.team !== rt.capsules[t].team) {
       errors.push(`capsule ${t}: self-certification names team '${cert.team}' but the capsule's team is '${rt.capsules[t].team}'`);
     }
@@ -3234,15 +3255,24 @@ export function runSelftest(root = ROOT) {
       const c = rt.capsules['AS-HD-050'];
       c.team = 'game-systems';
       c.self_certification = Object.assign({
-        certifying_seat: 'maker', approving_lead: 'lead-game-systems', team: 'game-systems',
-        envelope: 'itm-to-team-lead-self-certification', exact_head: c.base_oid,
-        suites_run: ['unit'], why_independence_was_waived: 'bounded reversible change', verdict_kind: 'self-certified',
+        certifying_seat: c.owner_actor, approving_lead: 'lead-game-systems', team: 'game-systems',
+        risk_class: 'standard', envelope: 'itm-to-team-lead-self-certification', exact_head: c.base_oid,
+        suites_run: ['unit', 'regression', 'deterministic-view'],
+        why_independence_was_waived: 'bounded reversible change', verdict_kind: 'self-certified',
       }, over);
     };
     const control = baseRt(); withCert({})(control);
     results.push({ label: 'a well-formed self-certification passes', pass: runtimeChecks(contracts, control).filter((e) => e.includes('self-certification')).length === 0, errs: runtimeChecks(contracts, control).filter((e) => e.includes('self-certification')) });
     expectRuntime("a waiver approved by another team's lead", withCert({ approving_lead: 'lead-art-tech-art' }), "not the certifying seat's team");
-    expectRuntime('a waiver approved by the seat that produced the work', withCert({ certifying_seat: 'lead-game-systems' }), 'approved by the same actor that produced it');
+    // `certifying_seat` was an unbound string, so a lead could approve its own
+    // work by naming some other seat in that field.
+    expectRuntime('a waiver naming a seat that does not hold the capsule', withCert({ certifying_seat: 'it-support' }), 'must name the seat that owns the work');
+    expectRuntime('a lead approving the capsule it holds', (rt) => { withCert({ approving_lead: 'lead-game-systems' })(rt); rt.capsules['AS-HD-050'].owner_actor = 'lead-game-systems'; rt.capsules['AS-HD-050'].self_certification.certifying_seat = 'lead-game-systems'; }, 'cannot approve its own output');
+    // Without a risk class the low/standard allowlist was unenforceable at
+    // runtime, and one 'unit' run satisfied every gate.
+    expectRuntime('a waiver over an owner-reserved risk class', withCert({ risk_class: 'high' }), 'does not permit');
+    expectRuntime('a waiver claiming a risk class qa.json never declared', withCert({ risk_class: 'trivial' }), 'which qa.json does not define');
+    expectRuntime('a waiver that skips the suites its risk class requires', withCert({ suites_run: ['unit'] }), 'does not waive the suites');
     expectRuntime('a waiver approved by an actor that leads nothing', withCert({ approving_lead: 'ghost-lead' }), 'not a declared team lead');
     expectRuntime('a waiver authored against a different head', withCert({ exact_head: '0'.repeat(40) }), 'a changed candidate voids the waiver');
     expectRuntime('a waiver citing some other envelope', withCert({ envelope: 'itm-to-qa-review' }), 'not the standing grant');

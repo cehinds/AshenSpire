@@ -228,6 +228,7 @@
         "certifying_seat",
         "approving_lead",
         "team",
+        "risk_class",
         "envelope",
         "exact_head",
         "suites_run",
@@ -269,6 +270,10 @@
         },
         "verdict_kind": {
           "const": "self-certified"
+        },
+        "risk_class": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }
