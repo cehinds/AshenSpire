@@ -13,4 +13,3 @@ EVIDENCE   : —
 SOURCE     : 4a515339189c6f3ec003eef74e86dc38526f93fe
 FRESHNESS  : as-recorded (base 4a515339189c); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
-BLOCKER    : {"kind":"owner-decision","wake":"constantine","summary":"D2: authorize one append-only successor so the sole continuity writer can refresh the shared index and write the pointer last. Body records COMPLETE; only the pointer projection is stale."}
