@@ -9,8 +9,9 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -274,6 +275,38 @@ function check(name, cond, detail = '') {
   const planned = runMigrate(ROOT, { plan: true });
   check('migrate --plan proposes >= 1 genesis stub', planned.ok && planned.stubs.length >= 1, String(planned.stubs && planned.stubs.length));
   check('proposed genesis stub is schema-shaped (work-capsule/v1)', planned.ok && planned.stubs.every((st) => st.schema === 'agentops/work-capsule/v1'));
+}
+
+// 2g. Ref existence is advisory but must not lie. It is answered against the
+// root the caller selected (not the module's own checkout, which would make a
+// clean-room clone report the host's branches), and only a real BRANCH counts —
+// an unqualified `git rev-parse` would resolve a same-named TAG and tell a seat
+// its working branch already exists.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const ref = rt.capsules['AS-1001'].ref;
+  const repo = resolve(tmpdir(), `agentops-reftest-${process.pid}-${Date.now()}`);
+  const git = (...a) => execFileSync('git', a, { cwd: repo, stdio: ['ignore', 'pipe', 'ignore'] });
+  const note = () => {
+    const c = buildCapsule(contracts, rt, 'AS-1001', { frozen: false, head: null, root: repo });
+    const line = (c.text || '').split('\n').find((l) => l.startsWith('REPO/REF'));
+    return line || '';
+  };
+  try {
+    mkdirSync(repo, { recursive: true });
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.invalid');
+    git('config', 'user.name', 'test');
+    git('commit', '-q', '--allow-empty', '-m', 'base');
+    check('ref existence uses the caller-selected root, not the module checkout', note().includes('NOT CREATED YET'), note());
+    git('tag', ref);
+    check('a same-named TAG is not mistaken for the working branch', note().includes('NOT CREATED YET'), note());
+    git('branch', ref);
+    check('a real branch at the selected root reports as existing', note().includes('(exists)'), note());
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
 }
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILED'}`);

@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-029-0004",
+  "ticket": "AS-HD-029",
+  "seq": 4,
+  "parent_event": "AS-HD-029-0003",
+  "kind": "state-change",
+  "actor": "it-manager-iii",
+  "at": "2026-08-29T11:36:00Z",
+  "summary": "Compare-and-swap chain repaired. The lease rebind and the objective realign each resealed this capsule while leaving revision at 1 and parent_hash null, so the successor link to seal sha256:1ea47a87 and then sha256:38f57a96 was lost. This capsule is now revision 3 with parent_hash set to the seal it succeeds. No content changed; only the chain that proves what it succeeded."
+}
