@@ -996,9 +996,14 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const last = chain[chain.length - 1] || null;
   const seq = last ? last.seq + 1 : 1;
   const id = `${ticket}-${String(seq).padStart(4, '0')}`;
-  const summary = move
-    ? `Owner-command '${request.action}' by ${request.actor}: lifecycle ${move.from} -> ${move.target}.${request.candidate_oid ? ` Exact object ${request.candidate_oid}.` : ''}`
-    : `Owner-command '${request.action}' by ${request.actor} recorded${request.reason ? `: ${request.reason}` : ''}.`;
+  const clearsBlocker = !!(action.resolves_blocker && capsule && capsule.blocker);
+  const reason = request.reason ? String(request.reason).replace(/\s*\.\s*$/, '') : '';
+  const summary = [
+    move
+      ? `Owner-command '${request.action}' by ${request.actor}: lifecycle ${move.from} -> ${move.target}.${request.candidate_oid ? ` Exact object ${request.candidate_oid}.` : ''}`
+      : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
+    clearsBlocker ? 'Blocker cleared: the decision it was waiting on is now recorded.' : ''
+  ].filter(Boolean).join(' ');
   const event = {
     schema: 'agentops/event/v1', id, ticket, seq,
     parent_event: last ? last.id : null,
@@ -1015,6 +1020,11 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     next.parent_hash = capsule.current_hash;
     next.revision = capsule.revision + 1;
     if (move) next.lifecycle_state = move.target;
+    // A decision the blocker was waiting on has now been recorded, so the
+    // blocker is cleared for actions that declare resolves_blocker. Without
+    // this the capsule would keep reporting itself blocked after the answer
+    // arrived, and the HUD would list a resolved decision forever.
+    if (action.resolves_blocker && next.blocker) next.blocker = null;
     // The appended event is the decision's record; evidence_pointers carries
     // declared evidence types only (evidence.json), never event ids.
     delete next.current_hash;
