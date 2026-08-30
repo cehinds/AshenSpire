@@ -591,7 +591,15 @@ export function semanticChecks(c, now = new Date().toISOString()) {
         // `P | <role> III | <team> | Ashenspire`, so compare that segment.
         const seg = l.seat_name.split('|').map((x) => x.trim());
         if (seg.length !== 4) errors.push(`teams: lead '${l.actor_id}' seat_name ${JSON.stringify(l.seat_name)} is not the four-segment 'P | <role> III | <team> | Ashenspire' form`);
-        else if (seg[2] !== l.team) errors.push(`teams: lead '${l.actor_id}' leads '${l.team}' but its seat_name's team segment says '${seg[2]}'`);
+        else {
+          // Validating only the team segment left the other three free:
+          // 'P | Definitely Not A Lead | art-tech-art | OtherProject' passed.
+          if (seg[0] !== 'P') errors.push(`teams: lead '${l.actor_id}' seat_name starts with '${seg[0]}', not the 'P' persistent-seat marker`);
+          if (!/\bIII$/.test(seg[1])) errors.push(`teams: lead '${l.actor_id}' seat_name role segment '${seg[1]}' does not end in the 'III' the convention requires`);
+          if (!/lead/i.test(seg[1])) errors.push(`teams: lead '${l.actor_id}' seat_name role segment '${seg[1]}' does not name a lead`);
+          if (seg[2] !== l.team) errors.push(`teams: lead '${l.actor_id}' leads '${l.team}' but its seat_name's team segment says '${seg[2]}'`);
+          if (seg[3] !== 'Ashenspire') errors.push(`teams: lead '${l.actor_id}' seat_name names project '${seg[3]}', not 'Ashenspire'`);
+        }
       }
       // Every team gets a lead, or the ones left out have no approver and the
       // roster silently means something narrower than it says.
@@ -3185,6 +3193,11 @@ export function runSelftest(root = ROOT) {
   }, "the roster must name the dedicated 'team-lead' role");
   // A substring match accepted a seat name whose team segment named another team.
   expectSemantic('team lead: a seat name whose team segment is a different team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | art-tech-art Lead III | qa-guild | Ashenspire'; }, "team segment says 'qa-guild'");
+  // Validating only the team segment left the other three free.
+  expectSemantic('team lead: a seat name for another project', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead III | art-tech-art | OtherProject'; }, "not 'Ashenspire'");
+  expectSemantic('team lead: a seat name whose role segment names no lead', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Definitely Not One III | art-tech-art | Ashenspire'; }, 'does not name a lead');
+  expectSemantic('team lead: a seat name missing the III level', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead | art-tech-art | Ashenspire'; }, "does not end in the 'III'");
+  expectSemantic('team lead: a seat name marked as an agent seat', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | Art Lead III | art-tech-art | Ashenspire'; }, "not the 'P' persistent-seat marker");
   expectSemantic('team lead: a seat name that is not four segments', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | art-tech-art | Ashenspire'; }, 'is not the four-segment');
   expectSemantic('team lead: a node carrying some other role', (c) => { c.hierarchy.nodes.find((n) => n.actor_id === 'lead-qa-guild').role = 'maker'; }, "not 'team-lead'; its runtime authority would be resolved from the wrong role");
   expectSemantic('team lead: a rostered lead with no node at all', (c) => { c.hierarchy.nodes = c.hierarchy.nodes.filter((n) => n.actor_id !== 'lead-qa-guild'); }, 'has no hierarchy node, so it cannot hold work');

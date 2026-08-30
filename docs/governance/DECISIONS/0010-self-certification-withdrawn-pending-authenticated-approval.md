@@ -70,3 +70,31 @@ wrote the mechanism, declared it checked at every round, and reported to the
 owner three times that high-risk work was protected by a bound that was not in
 fact enforced at runtime until very late. That record is part of why the
 mechanism is withdrawn rather than patched again.
+
+---
+
+## Addendum: this branch must not be squash-merged
+
+Recorded during review, after an automated reviewer twice reported that the work
+capsules' `base_oid` was unreachable from the commit it was reviewing.
+
+The reachability failure does not hold against the submitted history: each
+capsule's base is the immediate parent of the branch head and is an ancestor of
+both the branch and `refs/pull/423/merge`. The reviewer was testing against a
+**squash preview** — a synthetic single-parent child of the base branch tip —
+in which no branch commit can be an ancestor by construction.
+
+But the observation points at something real. A capsule records the exact commit
+its instructions were written against. If this branch is **squash-merged**, every
+one of those commits ceases to exist in the default history, and each capsule's
+`base_oid` becomes unreachable from `dev`: a clean clone could no longer
+reconstruct the state a seat was told to work from, which is the property the
+reconstruction drill exists to guarantee.
+
+**Therefore: merge this branch with a merge commit, never a squash.** That is
+already the repository's convention, and `git-ownership.branch_hygiene` prefers
+history-preserving updates for the same reason. This is the first time the
+consequence of the alternative has been written down.
+
+The general constraint, beyond this branch: any branch carrying work capsules
+must be integrated in a way that preserves the commits those capsules name.
