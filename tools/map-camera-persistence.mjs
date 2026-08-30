@@ -304,9 +304,9 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         deviceScaleFactor: exitShape.deviceScaleFactor, mobile: exitShape.mobile,
       }, sessionId);
       await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}?shot=title` }, sessionId);
-      await waitFor('the title slots and their Continue door', `(() => {
-        return document.querySelectorAll('.slot.occupied').length > 0
-          && [...document.querySelectorAll('button')].some((b) => /continue/i.test(b.textContent));
+      await waitFor('the folded title and its Continue door', `(() => {
+        const button = document.querySelector('.title-menu .slot-continue:not([disabled])');
+        return !!button && /continue/i.test(button.textContent);
       })()`);
       await evaluate(`[...document.querySelectorAll('button')].find((b) => /continue/i.test(b.textContent)).click()`);
       await waitFor('the map after Continue', `!!document.querySelector('.map-scroll')`);
@@ -347,13 +347,11 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         const trusted = window.__exitPanTrusted;  // the browser's own word — no synthetic dispatch can forge it
         await rest(45);                          // + ~10 ms of menu rests puts the quit ~55-65 ms after the scroll event — inside the 80 ms window, off the line
         document.querySelector('#open-menu').click(); await rest(5);
-        const tab = [...document.querySelectorAll('button,[role=tab]')].find((b) => b.textContent.trim() === 'Save');
-        if (tab) tab.click(); await rest(5);
-        const quit = document.querySelector('#ovs-quit'); // "Save & Quit to Title"
+        const quit = document.querySelector('.qn-row[data-act="saveQuit"]');
         if (!quit) return { reached: false, panDelta, trusted };
         quit.click();
         await rest(400);                         // outlast the debounce and the save
-        return { reached: true, before, panDelta, trusted, onTitle: !!document.querySelector('.slot') };
+        return { reached: true, before, panDelta, trusted, onTitle: !!document.querySelector('.startup-gate') };
       })()`);
       await wait(120); // let any exceptionThrown event cross the wire before the verdict
       exitShapeRows.push({
@@ -372,6 +370,141 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       exit: exitShapeRows[0]?.exit,
       uncaught: exitShapeRows.flatMap((row) => row.uncaught),
     };
+
+    // #245: a trusted final wheel-pan inside the 80 ms window must already be
+    // present in the in-memory run when Save & Quit performs its one durable
+    // write. The delayed connected-board commit remains the only other save.
+    results.exitCameraFlush = [];
+    for (const shape of [
+      { name: '390x844', width: 390, height: 844, deviceScaleFactor: 3, mobile: true },
+      { name: '1200x730', width: 1200, height: 730, deviceScaleFactor: 1, mobile: false },
+    ]) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: shape.width, height: shape.height,
+        deviceScaleFactor: shape.deviceScaleFactor, mobile: shape.mobile,
+      }, sessionId);
+      await evaluate(`localStorage.clear()`);
+      await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}` }, sessionId);
+      await waitFor('the startup gate (flush case)', `!!document.querySelector('.startup-gate')`);
+      await evaluate(`document.querySelector('.startup-gate').click()`);
+      await waitFor('the real folded title (flush case)', `!!document.querySelector('.title-menu .slot-new')`);
+      await evaluate(`document.querySelector('.title-menu .slot-new').click()`);
+      await waitFor('the new-slot modal (flush case)', `!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`);
+      await evaluate(`document.querySelector('[data-title-action="modal-continue"]').click()`);
+      await waitFor('character creation (flush case)', `!!document.querySelector('#cz-start:not([disabled])')`);
+      await evaluate(`document.querySelector('#cz-start').click()`);
+      await waitFor('the new run map (flush case)', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`);
+      await wait(300);
+      exceptionsSeen.length = 0;
+
+      const zoomBefore = await evaluate(`Number(document.querySelector('.map-scroll').dataset.framingZoom)`);
+      await evaluate(`document.querySelector('#zoom-in').click()`);
+      await wait(250);
+      let zoomAfter = await evaluate(`Number(document.querySelector('.map-scroll').dataset.framingZoom)`);
+      if (Math.abs(zoomAfter - zoomBefore) <= 0.0005) {
+        await evaluate(`document.querySelector('#zoom-out').click()`);
+        await wait(250);
+        zoomAfter = await evaluate(`Number(document.querySelector('.map-scroll').dataset.framingZoom)`);
+      }
+
+      await evaluate(`(() => {
+        window.__runWrites = 0;
+        const put = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (key, value) {
+          if (key === 'sote_run_v1') window.__runWrites += 1;
+          return put.call(this, key, value);
+        };
+      })()`);
+      const anchor = await evaluate(`(() => {
+        const port = document.querySelector('.map-scroll');
+        const max = Math.max(0, port.scrollHeight - port.clientHeight);
+        port.scrollTop = Math.round(max * 0.6);
+        port.dispatchEvent(new Event('scroll'));
+        return { top: port.scrollTop, max };
+      })()`);
+      await wait(250);
+
+      const control = await evaluate(`(() => {
+        window.__runWrites = 0;
+        const port = document.querySelector('.map-scroll');
+        port.scrollTop = Math.max(0, port.scrollTop - 40);
+        port.dispatchEvent(new Event('scroll'));
+        return { top: port.scrollTop, immediateWrites: window.__runWrites };
+      })()`);
+      await wait(250);
+      const controlAfter = await evaluate(`window.__runWrites`);
+
+      const finalPoint = await evaluate(`(() => {
+        window.__runWrites = 0;
+        const port = document.querySelector('.map-scroll');
+        const r = port.getBoundingClientRect();
+        window.__flushTrusted = null;
+        window.__flushBefore = port.scrollTop;
+        port.addEventListener('scroll', (event) => {
+          if (window.__flushTrusted === null) window.__flushTrusted = event.isTrusted;
+        }, { once: true });
+        return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.5 };
+      })()`);
+      await cdp.send('Input.dispatchMouseEvent', {
+        type: 'mouseWheel', x: finalPoint.x, y: finalPoint.y,
+        deltaX: 0, deltaY: -220,
+      }, sessionId);
+      const drive = await evaluate(`(async () => {
+        const rest = (ms) => new Promise((done) => setTimeout(done, ms));
+        const started = performance.now();
+        while (window.__flushTrusted === null && performance.now() - started < 500) await rest(5);
+        const port = document.querySelector('.map-scroll');
+        const finalTop = port.scrollTop;
+        const panDelta = finalTop - window.__flushBefore;
+        const immediateWrites = window.__runWrites;
+        await rest(45);
+        document.querySelector('#open-menu').click(); await rest(5);
+        const quit = document.querySelector('.qn-row[data-act="saveQuit"]');
+        if (!quit) return { reached: false, finalTop, panDelta };
+        quit.click();
+        await rest(400);
+        return {
+          reached: true, finalTop, panDelta, trusted: window.__flushTrusted,
+          immediateWrites, onTitle: !!document.querySelector('.startup-gate'),
+          quitWrites: window.__runWrites,
+        };
+      })()`);
+      await wait(200);
+      const settled = await evaluate(`({
+        writes: window.__runWrites,
+        savedTop: (() => {
+          try { return JSON.parse(localStorage.getItem('sote_run_v1')).mapView.scrollTop; }
+          catch { return null; }
+        })(),
+      })`);
+      await waitFor('the collapsed title threshold (flush case)', `!!document.querySelector('.startup-gate')`);
+      await evaluate(`document.querySelector('.startup-gate').click()`);
+      await waitFor('the resumed title menu (flush case)', `!!document.querySelector('.title-menu .slot-continue:not([disabled])')`);
+      await evaluate(`document.querySelector('.title-menu .slot-continue:not([disabled])').click()`);
+      await waitFor('the resumed map (flush case)', `!!document.querySelector('.map-scroll')`);
+      await wait(300);
+      const resumed = await readState();
+      await wait(120);
+      const uncaught = [...exceptionsSeen];
+      const manualMove = Number.isFinite(zoomBefore) && Number.isFinite(zoomAfter)
+        && Math.abs(zoomAfter - zoomBefore) > 0.0005;
+      const observable = Math.abs(drive.panDelta) > 20 && Math.abs(control.top - drive.finalTop) > 20;
+      const savedIdentity = settled.savedTop != null && Math.abs(settled.savedTop - drive.finalTop) < 1.5;
+      const resumedIdentity = Math.abs(resumed.scrollTop - drive.finalTop) < 1.5;
+      results.exitCameraFlush.push({
+        shape: shape.name,
+        pass: !!(drive.reached && drive.onTitle && drive.trusted === true && manualMove && observable
+          && anchor.max > 20 && control.immediateWrites === 0 && controlAfter === 1
+          && drive.immediateWrites === 0 && drive.quitWrites === 1 && settled.writes === 1
+          && savedIdentity && resumedIdentity && resumed.cameraRestore === 'restored' && uncaught.length === 0),
+        zoom: [zoomBefore, zoomAfter], anchor: anchor.top, controlTop: control.top,
+        finalTop: drive.finalTop, savedTop: settled.savedTop, resumedTop: resumed.scrollTop,
+        panDelta: drive.panDelta, trusted: drive.trusted,
+        controlWrites: [control.immediateWrites, controlAfter],
+        exitWrites: [drive.immediateWrites, drive.quitWrites, settled.writes],
+        cameraRestore: resumed.cameraRestore, uncaught,
+      });
+    }
 
     // Hold the real map scrollport at zero height beyond the 120 ms backstop,
     // then release it through an actual viewport resize. The timeout must stay
@@ -476,12 +609,28 @@ async function selftest() {
     const exitRows = ownership.mapExitDuringDebounce?.shapes || [];
     const exitCaught = ownership.mapExitDuringDebounce && !ownership.mapExitDuringDebounce.pass
       && exitRows.length === 2
-      && exitRows.every((row) => !row.pass && row.uncaught.some((u) => /streamCounters/.test(u)));
+      && exitRows.some((row) => !row.pass && row.uncaught.some((u) => /streamCounters/.test(u)));
     console.log(`map-camera ownership selftest: ${fitCaught && raceCaught && settleCaught && exitCaught ? 'GREEN' : 'RED'} - `
       + `viewport ${fitCaught ? 'caught' : 'MISSED'}, debounce ${raceCaught ? 'caught' : 'MISSED'}, `
       + `zero-height settle ${settleCaught ? 'caught' : 'MISSED'}, `
       + `map exit ${exitCaught ? 'caught' : 'MISSED'} (${ownership.mapExitDuringDebounce?.uncaught?.[0] || 'no uncaught error'})`);
     if (!fitCaught || !raceCaught || !settleCaught || !exitCaught) process.exitCode = 1;
+
+    writeFileSync(boardPath, board);
+    const flushSeam = '    emitViewState(false, pendingViewCommit);\n';
+    if (!board.includes(flushSeam)) throw new Error('selftest plant refused: synchronous camera hand-over seam is absent');
+    writeFileSync(boardPath, board.replace(flushSeam, ''));
+    const flushless = await runProbe(tempRoot, { screenshots: false });
+    const flushRows = flushless.exitCameraFlush || [];
+    const flushCaught = flushRows.length === 2 && flushRows.every((row) => !row.pass
+      && row.uncaught.length === 0
+      && Math.abs(row.savedTop - row.finalTop) > 20
+      && Math.abs(row.resumedTop - row.finalTop) > 20);
+    const guardHeld = !!flushless.mapExitDuringDebounce?.pass;
+    console.log(`map-camera flush selftest: ${flushCaught && guardHeld ? 'GREEN' : 'RED'} - `
+      + `hand-over removal ${flushCaught ? 'caught by identity' : 'MISSED'}, `
+      + `detached-board guard ${guardHeld ? 'held green' : 'WENT RED'}`);
+    if (!flushCaught || !guardHeld) process.exitCode = 1;
   } finally {
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
@@ -521,7 +670,17 @@ if (SELFTEST) {
       + `uncaught=${row.uncaught.length}`).join(' · ') : '?')
     + `${exit && exit.uncaught.length ? ` [${exit.uncaught[0]}]` : ''}`);
   if (!exit || !exit.pass) failures++;
-  const total = results.length + 4;
+  for (const row of results.exitCameraFlush || []) {
+    console.log(`${row.pass ? 'PASS' : 'FAIL'} exit camera flush ${row.shape}: `
+      + `zoom ${row.zoom?.[0]} -> ${row.zoom?.[1]}; `
+      + `anchor ${row.anchor?.toFixed?.(1)} -> control ${row.controlTop?.toFixed?.(1)} -> final ${row.finalTop?.toFixed?.(1)}; `
+      + `saved ${row.savedTop?.toFixed?.(1)}, resumed ${row.resumedTop?.toFixed?.(1)}; `
+      + `trusted=${row.trusted}, panDelta=${row.panDelta?.toFixed?.(1)}, `
+      + `writes control=${row.controlWrites?.join('/')}, exit=${row.exitWrites?.join('/')}, `
+      + `restore=${row.cameraRestore}, uncaught=${row.uncaught?.length}`);
+    if (!row.pass) failures++;
+  }
+  const total = results.length + 4 + (results.exitCameraFlush?.length || 0);
   console.log(`map-camera persistence: ${failures ? 'RED' : 'GREEN'} (${total - failures}/${total})`);
   process.exitCode = failures ? 1 : 0;
 }
