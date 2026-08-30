@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-029-0053",
+  "ticket": "AS-HD-029",
+  "seq": 53,
+  "parent_event": "AS-HD-029-0052",
+  "kind": "owner-decision",
+  "actor": "it-manager-iii",
+  "at": "2026-08-30T04:28:22.374Z",
+  "summary": "Owner-command 'delegate' by it-manager-iii recorded."
+}
