@@ -65,23 +65,27 @@ provider-neutral) with the reconstruction drill — see
 node .agentops/tools/opsctl.mjs drill
 ```
 
-When a terminal ticket releases an already-identified actor, the live-offer
-scheduler can immediately select that actor's highest-ranked safe ticket from
-the explicit Issue #269 priority list. It never creates or transfers a claim:
+When a terminal ticket releases an already-identified actor, the live
+scheduler selects that actor's highest-ranked safe ticket from the explicit
+Issue #269 priority list. In `LIVE_ASSIGNMENT` mode it then transfers the
+target ticket's existing claim to the actor's provider-neutral unique seat by
+compare-and-swap. It never creates a claim or a seat identity:
 
 ```sh
 node .agentops/tools/pipeline-pilot-live.mjs --actor <actor> --completed <terminal-ticket> --released-at <UTC>
 ```
 
-The output is a bounded wake offer or the distinct `NO_SAFE_ASSIGNMENT` /
-`IDLE_ALARM` state. AgentOps capsules and leases remain authoritative.
+The planner output is a bounded offer or the distinct `NO_SAFE_ASSIGNMENT` /
+`IDLE_ALARM` state. The continuous watcher converts a safe offer into one
+claim+lease+audit transaction using the Git-local runtime named by
+`--seat-runtime`; no capability is written to Git, output, or wake packets.
 For continuous local operation, run the repository-neutral watcher. It derives
 a stable event identity from the terminal capsule hash, persists bounded replay
 protection under `.git/agentops-pipeline/`, and rechecks pending rows until the
 300-second idle alarm is due:
 
 ```sh
-node .agentops/tools/pipeline-pilot-watch.mjs
+node .agentops/tools/pipeline-pilot-watch.mjs --seat-runtime <git-local-seat-runtime.json>
 ```
 
 The watcher refuses feature/stale/dirty checkouts: it must run from a tracked-
@@ -98,8 +102,9 @@ bounded to the latest 100 records.
 
 Unique seat identity and CAS claim-transfer design live at
 [`pipeline-pilot/SEAT_CLAIMS.md`](pipeline-pilot/SEAT_CLAIMS.md). Seat secrets
-never enter Git or wake packets; the current scheduler remains advisory until
-an IT Manager III-issued seat registry and claim are explicitly instantiated.
+never enter Git or wake packets. Missing runtime, registry, capability, claim,
+lease, currentness, or collision evidence fails the exact assignment without
+processing its terminal identity; the watcher can retry after repair.
 Stop that process to deactivate it. Removing its Git-local state resets only
 observability and replay history; it never changes AgentOps claims or history.
 On first start, existing terminal capsules are baselined without emitting
@@ -170,12 +175,13 @@ and overriding an independent QA verdict. See
 
 ## Installed stage
 
-`migration-tooling`. The governance kernel, the operational contracts, the
+`migration-tooling+pipeline-live-assignment`. The governance kernel, the operational contracts, the
 runtime layer (`opsctl wake`), the reconstruction drill (`opsctl drill`), the
 authenticated owner-command path (`opsctl command --dry-run`), the read-only
 Owner HUD (`generated/hud/index.html`), and now the read-only legacy migration
 inventory (`opsctl migrate` + `governance/migration.json` +
-`generated/migration/PLAN.md`) are installed and validated. Deferred to later
+`generated/migration/PLAN.md`), and the Issue #269 unique-seat claim assignment
+watcher are installed and validated. Deferred to later
 stages (see `project.json → deferred_next_stages`): the owner-command live
 executor; the migration cutover (real genesis capsules + legacy-entrypoint
 replacement, owner-gated); and the exact `dev` → `main` promotion decision.

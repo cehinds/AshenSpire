@@ -7,7 +7,13 @@ only its SHA-256 fingerprint in a separately issued trusted seat registry.
 GitHub identity, provider name, chat title, and role name are never seat
 identity. The transfer caller cannot supply or replace that fingerprint.
 
-A claim binds exactly one ticket, seat, writer lease, ref, and path set. Every
+A claim binds exactly one ticket, seat, writer lease, ref, and path set. The
+live denominator is held outside the checkout under the repository-wide
+Git-local scheduler state so assignment cannot dirty `dev`; the runtime config
+points to the canonical claims, leases, events, trusted registry, and per-seat
+capability files. The watcher derives that root from `git rev-parse
+--git-common-dir`; a CLI override may select a file only inside that exact
+repository runtime and cannot redirect authority to a sibling directory. Every
 mutation names the expected claim hash. A transfer succeeds only when IT
 Manager III authorizes it, the target seat proves its capability, the expected
 hash matches, the exact sealed lease is current and congruent, and no live
@@ -23,3 +29,12 @@ audit event. Rollback is another forward event restoring the prior body.
 Wake packets carry only `seat_id`, ticket, claim hash, lease ID, expiry,
 objective/next action, and bounded evidence pointers. They never carry the
 capability, full history, backlog, or unrelated claims.
+
+The watcher plans against tracked AgentOps capsules and role leases, then binds
+that offer to the exact unique-seat claim and lease before mutation. A safe
+offer becomes `ASSIGNED` only after the recoverable claim+lease+event journal
+commits. `ALREADY_ASSIGNED` is an idempotent no-op. A missing or contradictory
+runtime, bad capability, stale CAS, duplicate ticket, overlapping path/ref, or
+failed journal leaves the terminal identity unprocessed so the next clean
+cycle may retry. Stopping the watcher disables assignment; rollback is a new
+forward CAS transfer and audit event, never deletion or history rewrite.
