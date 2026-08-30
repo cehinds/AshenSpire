@@ -272,6 +272,37 @@ export function loadContracts(root = ROOT) {
 // Cross-contract semantic checks. Pure function over already-parsed contracts
 // so the test harness can plant defects without touching the filesystem.
 // ---------------------------------------------------------------------------
+// A shape-valid timestamp is not a real instant. The schema patterns accept
+// `2026-02-30T00:00:00Z` and `2026-01-01T25:00:00Z`, and `new Date()` silently
+// normalises both — to March 2 and to the next day — so a window can validate,
+// render, and mean a different moment than it says. Round-tripping the parsed
+// UTC fields back against the written ones is the only way to reject that.
+// Returns epoch ms, or null when the string does not denote the instant it
+// spells. Callers compare the numbers: '<=' on the strings is lexicographic and
+// only happens to work while every timestamp is the same fixed-width UTC shape.
+export function utcInstant(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$/.exec(String(s));
+  if (!m) return null;
+  const [, y, mo, d, h, mi, se] = m.map(Number);
+  const t = Date.UTC(y, mo - 1, d, h, mi, se);
+  const back = new Date(t);
+  const ok = back.getUTCFullYear() === y && back.getUTCMonth() === mo - 1 && back.getUTCDate() === d
+    && back.getUTCHours() === h && back.getUTCMinutes() === mi && back.getUTCSeconds() === se;
+  return ok ? t : null;
+}
+
+// This function used to take an injectable `now`, with a comment claiming
+// validation was time-aware. It was not: the only clock-relative rule went out
+// with the withdrawn self-certification block, and the parameter sat unused
+// behind a comment asserting a property nothing enforced — the same defect
+// class this file exists to catch, in this file. It is gone.
+//
+// Where the clock does belong is the wake surface, which already reports a
+// lease as expired against `now` when deciding whether a seat may act. A
+// contract window is different: making `verify` fail because a date passed
+// would turn CI red with no change to the corpus and nobody to blame, so the
+// checks below validate that a window is a REAL, ordered pair of instants and
+// leave the lapse to the surface that reads it.
 export function semanticChecks(c) {
   const errors = [];
 
@@ -292,6 +323,33 @@ export function semanticChecks(c) {
     }
     // An actor outside the ladder has authority nobody wrote down.
     for (const n of nodes) if (!placed.has(n)) errors.push(`hierarchy: '${n}' is a hierarchy node in no authority tier; its decision authority is undeclared`);
+
+    // The same hole one level up. The ladder places ACTORS, so a role with no
+    // standing actor sits outside it entirely: the nine seniority roles that
+    // arrived with the programmers, art and QA rosters hold `may`, `must_not`
+    // and an approval ceiling that nothing in the ladder constrains. Their own
+    // missions say what they are — "the maker archetype at entry level" — but
+    // prose is not a constraint. A role either has a standing actor in the
+    // hierarchy, or it declares the archetype it derives from, and then it
+    // carries exactly that archetype's authority.
+    const AUTHORITY_FIELDS = ['may', 'must', 'must_not', 'approval_ceiling'];
+    const byRole = new Map(c.roles.roles.map((r) => [r.role, r]));
+    const staffed = new Set(c.hierarchy.nodes.map((n) => n.role));
+    for (const r of c.roles.roles) {
+      if (!r.archetype) {
+        if (!staffed.has(r.role)) errors.push(`roles: '${r.role}' has no actor in the hierarchy and declares no archetype, so no authority tier governs what it may do`);
+        continue;
+      }
+      const a = byRole.get(r.archetype);
+      if (!a) { errors.push(`roles: '${r.role}' derives from archetype '${r.archetype}', which is not a declared role`); continue; }
+      if (a.archetype) { errors.push(`roles: '${r.role}' derives from '${r.archetype}', which is itself derived; an archetype chain lets authority drift a link at a time`); continue; }
+      if (!staffed.has(a.role)) { errors.push(`roles: '${r.role}' derives from '${a.role}', which has no actor in the hierarchy either, so neither is placed in a tier`); continue; }
+      for (const f of AUTHORITY_FIELDS) {
+        if (JSON.stringify(r[f]) !== JSON.stringify(a[f])) {
+          errors.push(`roles: '${r.role}' derives from '${a.role}' but its ${f} differs; a seniority level is assignment scope, never a wider authority ceiling`);
+        }
+      }
+    }
     const owner = c['owner-intent'] && c['owner-intent'].owner.actor_id;
     const p0 = at.levels.find((l) => l.p === 0);
     if (owner && p0 && !p0.actors.includes(owner)) errors.push(`hierarchy: P0 does not contain the owner '${owner}'`);
@@ -349,6 +407,23 @@ export function semanticChecks(c) {
     const bh = c['git-ownership'].branch_hygiene;
     if (c.roles && !c.roles.roles.some((r) => r.role === bh.permission_role)) {
       errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a declared role`);
+    }
+    // Any standing role satisfied this, so it could move to help-desk and still
+    // validate. The ladder already names who holds branch-rewrite permission;
+    // derive it from there instead of restating it.
+    if (c.hierarchy && c.hierarchy.authority_tiers) {
+      // Deriving from the tier text was itself two mutable declarations: move
+      // 'branch-rewrite permission' to P2 and permission_role to help-desk and
+      // they agree. Rewriting history is the deputy's, by decision.
+      const deputy = c['owner-intent'] && c['owner-intent'].deputy.actor_id;
+      if (deputy && bh.permission_role !== deputy) {
+        errors.push(`git-ownership: branch_hygiene permission_role is '${bh.permission_role}'; rewriting a branch that is not your own is the deputy's ('${deputy}'), and moving the tier text does not transfer it`);
+      }
+      const holder = c.hierarchy.authority_tiers.levels.find((l) => l.holds.some((h) => /branch-rewrite/i.test(h)));
+      if (!holder) errors.push('hierarchy: no authority tier claims branch-rewrite permission, so the ladder and git-ownership disagree about who holds it');
+      else if (deputy && !holder.actors.includes(deputy)) {
+        errors.push(`hierarchy: branch-rewrite permission sits at P${holder.p}, which does not include the deputy '${deputy}'`);
+      }
     }
     if (c.teams && !c.teams.standing_roles.some((r) => r.id === bh.permission_role)) {
       errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a standing role; a rewrite permission cannot rest with a pool or an absent role`);
@@ -465,6 +540,9 @@ export function semanticChecks(c) {
       // An actor that is not a declared role cannot be held to the gate.
       // 'owner' is a declared role in roles.json, so this covers E and F too.
       if (!roleSet.has(g.actor_role)) errors.push(`promotion-gates: gate ${g.id} names actor role '${g.actor_role}', which roles.json does not declare`);
+      // Widening transitions alongside this made it self-consistent: the gate
+      // and the lifecycle agreed that a maker could act, and nothing objected.
+      if (g.actor_role === 'maker') errors.push(`promotion-gates: gate ${g.id} names 'maker' as its actor; a gate is never passed by the seat whose work it gates`);
       for (const { from, to } of g.guards_transitions || []) {
         if (!states.has(from)) errors.push(`promotion-gates: gate ${g.id} guards a move from '${from}', which is not a declared lifecycle state`);
         if (!states.has(to)) errors.push(`promotion-gates: gate ${g.id} guards a move to '${to}', which is not a declared lifecycle state`);
@@ -536,6 +614,7 @@ export function semanticChecks(c) {
       seenLegacy.add(a.legacy);
       if (!targets.has(a.routes_to)) errors.push(`teams: legacy alias '${a.legacy}' routes to '${a.routes_to}', which is neither a standing role nor a capability pool`);
     }
+    if (!standingIds.has(c.teams.pods.formed_by)) errors.push(`teams: pods are formed by '${c.teams.pods.formed_by}', which is not a standing role; a delivery seat cannot convene its own pod`);
     const ce = c.teams.charter_exception;
     for (const role of ce.requires_concurrence) {
       if (!declaredRoles.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a declared role`);
@@ -548,8 +627,127 @@ export function semanticChecks(c) {
     // else would let the two roles "escalate" to themselves.
     const ownerId = c['owner-intent'] && c['owner-intent'].owner.actor_id;
     const cls = c.escalation && c.escalation.classes.find((x) => x.id === ce.escalation_class);
+    // Requiring only that the class wakes the owner let the class and its wake
+    // move together: point technical-blocker at the owner and the exception
+    // escalates through a class every seat can raise.
+    if (cls && cls.attempts_before_escalate !== 0) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which allows ${cls.attempts_before_escalate} attempt(s) first; an exception to the charter must reach the owner immediately`);
+    }
+    if (cls && cls.continuing_work_allowed) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which lets work continue; an unresolved charter exception must stop it`);
+    }
     if (cls && ownerId && cls.wake !== ownerId) {
       errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which wakes '${cls.wake}' rather than the owner`);
+    }
+
+    // Team leads. The owner made a lead able to waive QA independence for its
+    // own team's seats, which is the most load-bearing grant in this contract:
+    // every way it could be quietly widened is checked here rather than left to
+    // a reader of the prose.
+    if (c.teams.team_leads) {
+      const tl = c.teams.team_leads;
+      if (!declaredRoles.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is not a declared role`);
+      // Pinned, not merely reconciled. authority_tier and the ladder could be
+      // moved to P1 together and agree with each other, putting every team lead
+      // in the Deputy tier with its integration and assignment authority while
+      // the `team-lead` role grant stayed narrow. Two mutable fields certifying
+      // each other is the recurring defect of this branch; this is the fifth.
+      if (tl.authority_tier !== 2) errors.push(`teams: team_leads.authority_tier is P${tl.authority_tier}; leads are standing coordination and belong at P2, and moving the ladder with it does not make that true`);
+      // Binding each node to tl.role proved only that they agreed. tl.role was
+      // still free, so setting it and every node to 'app-dev-i' validated and
+      // gave every lead that role's implement/commit capabilities.
+      if (tl.role !== 'team-lead') errors.push(`teams: team_leads.role is '${tl.role}'; the roster must name the dedicated 'team-lead' role, or leads inherit whatever grant that role carries`);
+      if (poolIds.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is also a capability pool, which must not be able to hold a seat`);
+      // A lead is an actor, not a role. Every lead shares the 'team-lead' role,
+      // so a role-only check could not tell which team a lead owns and one
+      // team's lead satisfied the grant for another team's maker — defeating
+      // approver_must_lead_the_certifying_seats_team, which was a boolean the
+      // contract asserted and nothing could enforce. Identity is checked here.
+      const ledTeams = new Map();
+      const leadActors = new Map();
+      for (const l of tl.leads) {
+        if (!poolIds.has(l.team)) errors.push(`teams: team lead '${l.actor_id}' leads '${l.team}', which is not a declared capability pool`);
+        if (ledTeams.has(l.team)) errors.push(`teams: team '${l.team}' is led by both '${ledTeams.get(l.team)}' and '${l.actor_id}'; one_lead_per_team allows one`);
+        else ledTeams.set(l.team, l.actor_id);
+        if (leadActors.has(l.actor_id)) errors.push(`teams: lead actor '${l.actor_id}' is declared twice`);
+        else leadActors.set(l.actor_id, l.team);
+        // A shared actor id across two teams would reintroduce exactly the
+        // ambiguity the per-lead identity exists to remove.
+        if (declaredRoles.has(l.actor_id)) errors.push(`teams: lead actor '${l.actor_id}' collides with the role of the same name; a lead is an actor, not a role`);
+        if (c.teams.naming_convention && !l.seat_name.startsWith('P | ')) errors.push(`teams: lead '${l.actor_id}' has seat_name ${JSON.stringify(l.seat_name)}, which does not follow naming_convention.persistent_lead`);
+        // `includes` matched the team id anywhere in the string, so
+        // 'P | art-tech-art Lead III | qa-guild | Ashenspire' passed while
+        // declaring one team and labelling another. The format is
+        // `P | <role> III | <team> | Ashenspire`, so compare that segment.
+        const seg = l.seat_name.split('|').map((x) => x.trim());
+        if (seg.length !== 4) errors.push(`teams: lead '${l.actor_id}' seat_name ${JSON.stringify(l.seat_name)} is not the four-segment 'P | <role> III | <team> | Ashenspire' form`);
+        else {
+          // Derived from naming_convention.persistent_lead rather than hardcoded:
+        // the template and the roster checks were two separate statements of
+        // the same rule, so the template could drift to 'P | nonsense' while
+        // the roster still validated against the old shape.
+        const tpl = c.teams.naming_convention ? c.teams.naming_convention.persistent_lead.split('|').map((x) => x.trim()) : null;
+        if (tpl && tpl.length === seg.length) {
+          for (let i = 0; i < tpl.length; i++) {
+            const ph = tpl[i].match(/^(.*?)<([a-z]+)>(.*)$/);
+            if (!ph) {                                  // a fixed segment
+              if (seg[i] !== tpl[i]) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} is '${seg[i]}', but the convention fixes it as '${tpl[i]}'`);
+              continue;
+            }
+            const [, pre, name, post] = ph;
+            if (pre && !seg[i].startsWith(pre)) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} does not start with '${pre}' as the convention requires`);
+            if (post && !seg[i].endsWith(post)) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} '${seg[i]}' does not end with '${post}' as the convention requires`);
+            const value = seg[i].slice(pre.length, seg[i].length - post.length).trim();
+            if (!value) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} supplies no <${name}>`);
+            else if (name === 'team' && value !== l.team) errors.push(`teams: lead '${l.actor_id}' leads '${l.team}' but its seat_name's team segment says '${value}'`);
+            else if (name === 'role' && !/lead/i.test(value)) errors.push(`teams: lead '${l.actor_id}' seat_name role segment '${value}' does not name a lead`);
+          }
+        }
+        }
+      }
+      // Every team gets a lead, or the ones left out have no approver and the
+      // roster silently means something narrower than it says.
+      for (const p of c.teams.capability_pools) {
+        if (!ledTeams.has(p.id)) errors.push(`teams: capability pool '${p.id}' has no team lead; team_leads must name every team`);
+      }
+      // A tier declared here and a tier declared in the ladder must agree.
+      if (c.hierarchy && c.hierarchy.authority_tiers) {
+        for (const l of tl.leads) {
+          const lv = c.hierarchy.authority_tiers.levels.find((x) => x.actors.includes(l.actor_id));
+          if (!lv) errors.push(`teams: team lead '${l.actor_id}' is in no authority tier; its decision authority is undeclared`);
+          else if (lv.p !== tl.authority_tier) errors.push(`teams: team_leads declares tier P${tl.authority_tier} but the ladder places '${l.actor_id}' at P${lv.p}`);
+          // Checking only the tier left the node's ROLE free. A lead whose node
+          // said 'maker' would resolve to maker through actorRole() and be
+          // granted maker capabilities, while teams.json still called it a lead.
+          const node = c.hierarchy.nodes.find((n) => n.actor_id === l.actor_id);
+          if (!node) errors.push(`teams: team lead '${l.actor_id}' has no hierarchy node, so it cannot hold work`);
+          else if (node.role !== tl.role) errors.push(`teams: team lead '${l.actor_id}' has hierarchy role '${node.role}', not '${tl.role}'; its runtime authority would be resolved from the wrong role`);
+        }
+        if (c.hierarchy.authority_tiers.levels.some((x) => x.actors.includes(tl.role))) {
+          errors.push(`teams: the ladder places the shared role '${tl.role}' rather than each lead actor; that collapses every team into one slot and loses the identity the roster carries`);
+        }
+      }
+    }
+
+    // The naming convention shares its leading letter with the tier namespace,
+    // and a convention that stops saying so is how the two get conflated.
+    if (c.teams.naming_convention) {
+      const nc = c.teams.naming_convention;
+      if (!/^P\s*\|/.test(nc.persistent_lead)) errors.push(`teams: naming_convention.persistent_lead '${nc.persistent_lead}' does not begin with the P seat-kind marker`);
+      // Prefix-only checks accepted 'P | nonsense', leaving the convention
+      // describing a shape nothing in the roster actually has.
+      for (const [field, marker, needs] of [['persistent_lead', 'P', ['<role>', '<team>']], ['agent_seat', 'A', ['<role>', '<team>']]]) {
+        const parts = nc[field].split('|').map((x) => x.trim());
+        if (parts.length !== 4) errors.push(`teams: naming_convention.${field} '${nc[field]}' is not four '|'-separated segments`);
+        else {
+          if (parts[0] !== marker) errors.push(`teams: naming_convention.${field} starts with '${parts[0]}', not the '${marker}' seat-kind marker`);
+          if (parts[3] !== 'Ashenspire') errors.push(`teams: naming_convention.${field} names project '${parts[3]}', not 'Ashenspire'`);
+        }
+        for (const ph of needs) if (!nc[field].includes(ph)) errors.push(`teams: naming_convention.${field} declares no ${ph} placeholder, so it constrains nothing`);
+      }
+      if (!/^A\s*\|/.test(nc.agent_seat)) errors.push(`teams: naming_convention.agent_seat '${nc.agent_seat}' does not begin with the A seat-kind marker`);
+      if (/^P[0-9]/.test(nc.persistent_lead)) errors.push('teams: naming_convention.persistent_lead uses a numbered P, which is the authority-tier namespace, not a seat kind');
+      if (!/P<n>|P[0-9]/.test(nc.not_the_tier_namespace)) errors.push('teams: naming_convention does not distinguish the bare seat-kind P from the numbered authority tier; the two namespaces would be read as one');
     }
   }
 
@@ -653,6 +851,13 @@ export function semanticChecks(c) {
       if (!ids.has(oi.deputy.actor_id)) {
         errors.push(`owner-intent: deputy actor '${oi.deputy.actor_id}' is not present in the hierarchy`);
       }
+      // The deputy is a recorded decision, not a field that may move as long as
+      // a matching hierarchy node moves with it. This sat inside the branch
+      // above on its first attempt, so it only fired for a deputy that was
+      // already invalid — a pin that could never catch the case it was for.
+      if (oi.deputy.actor_id !== 'it-manager-iii') {
+        errors.push(`owner-intent: deputy is '${oi.deputy.actor_id}'; the deputy is the IT Manager III by decision, and a matching hierarchy node does not make another actor the deputy`);
+      }
     }
     if (c.roles) {
       const roleSet = new Set(c.roles.roles.map((r) => r.role));
@@ -689,7 +894,10 @@ export function semanticChecks(c) {
       if (!roles.has(e.delegator_role)) errors.push(`delegation: envelope '${e.id}' delegator role '${e.delegator_role}' is unknown`);
       if (!roles.has(e.delegatee_role)) errors.push(`delegation: envelope '${e.id}' delegatee role '${e.delegatee_role}' is unknown`);
       for (const p of e.scope_paths) if (p.split('/').includes('..')) errors.push(`delegation: envelope '${e.id}' scope path '${p}' contains a '..' traversal segment`);
-      if (e.expiry <= e.effective) errors.push(`delegation: envelope '${e.id}' expiry is at or before effective (already expired)`);
+      const eff = utcInstant(e.effective), exp = utcInstant(e.expiry);
+      if (eff === null) errors.push(`delegation: envelope '${e.id}' effective '${e.effective}' is not a real instant; it validates against the schema pattern but denotes a different moment than it spells`);
+      if (exp === null) errors.push(`delegation: envelope '${e.id}' expiry '${e.expiry}' is not a real instant; it validates against the schema pattern but denotes a different moment than it spells`);
+      if (eff !== null && exp !== null && exp <= eff) errors.push(`delegation: envelope '${e.id}' expiry is at or before effective (already expired)`);
       if (deputyRole && e.delegator_role === deputyRole) {
         for (const a of e.delegated_actions) if (excluded.has(a)) errors.push(`delegation: envelope '${e.id}' amplifies authority — deputy delegates Owner-excluded action '${a}'`);
       }
@@ -754,6 +962,7 @@ export function semanticChecks(c) {
       if (!riskIds.has(g.risk_class)) errors.push(`qa: gate '${g.id}' references unknown risk_class '${g.risk_class}'`);
       for (const ev of g.required_evidence) if (!evIds.has(ev)) errors.push(`qa: gate '${g.id}' required evidence '${ev}' has no owner in evidence.json`);
     }
+
   }
 
   // 12. Evidence: producer and verifier roles are declared (or the generator writer).
@@ -846,6 +1055,7 @@ export function renderGovernance(c) {
     L.push(`### \`${r.role}\``);
     L.push('');
     L.push(`- **Mission:** ${r.mission}`);
+    if (r.archetype) L.push(`- **Derives from:** \`${r.archetype}\` — a seniority level, carrying exactly that archetype's authority and no more.`);
     L.push(`- **May:** ${r.may.join(', ') || '—'}`);
     L.push(`- **Must:** ${r.must.join('; ') || '—'}`);
     L.push(`- **Must not:** ${r.must_not.join(', ') || '—'}`);
@@ -871,6 +1081,25 @@ export function renderGovernance(c) {
   L.push('| Ref | Owner role | Mutation |');
   L.push('|---|---|---|');
   for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  L.push('');
+  L.push('### Paths');
+  L.push('');
+  L.push('| Path glob | Owner role | Serialized lane |');
+  L.push('|---|---|---|');
+  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.owner_role} | ${p.serialized_lane} |`);
+  if (c['git-ownership'].branch_hygiene) {
+    const bh = c['git-ownership'].branch_hygiene;
+    L.push('');
+    L.push('### Branch hygiene');
+    L.push('');
+    L.push(bh.principle);
+    L.push('');
+    L.push(`Default: \`${bh.default_update_method}\`. Rewriting a branch that is not the acting role's own needs \`${bh.permission_role}\`; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
+  }
+  L.push('');
+  L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
+  L.push('');
+
   if (c['promotion-gates']) {
     const pg = c['promotion-gates'];
     L.push('');
@@ -886,6 +1115,15 @@ export function renderGovernance(c) {
     }
     L.push('');
     L.push(`${pg.immutable_candidate}`);
+    for (const g of pg.gates) {
+      const detail = gateDetailLines(g);
+      if (!detail.length) continue;
+      L.push('');
+      L.push(`#### Gate ${g.id} \u2014 ${g.name}`);
+      L.push('');
+      for (const line of detail) L.push(line);
+    }
+    L.push('');
   }
   if (c.teams) {
     L.push('');
@@ -910,16 +1148,36 @@ export function renderGovernance(c) {
     L.push('### Charter exception');
     L.push('');
     L.push(`${c.teams.charter_exception.principle} Concurrence: ${c.teams.charter_exception.requires_concurrence.map((r) => '`' + r + '`').join(' + ')}; escalates as \`${c.teams.charter_exception.escalation_class}\`.`);
+    if (c.teams.team_leads) {
+      const tl = c.teams.team_leads;
+      L.push('');
+      L.push('### Team leads');
+      L.push('');
+      L.push(tl.principle);
+      L.push('');
+      L.push(`Role \`${tl.role}\` at **P${tl.authority_tier}**, one per team. Spins out ${tl.spins_out}. Holds no waiver over independent QA (decision 0010).`);
+      L.push('');
+      L.push(tl.identity_rule);
+      L.push('');
+      L.push('| Team | Lead actor | Seat |');
+      L.push('|---|---|---|');
+      for (const l of tl.leads) L.push(`| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`);
+    }
+    if (c.teams.naming_convention) {
+      const nc = c.teams.naming_convention;
+      L.push('');
+      L.push('### Seat naming');
+      L.push('');
+      L.push(nc.principle);
+      L.push('');
+      L.push(`- Persistent team lead: \`${nc.persistent_lead}\``);
+      L.push(`- Agent seat it spins out: \`${nc.agent_seat}\``);
+      L.push('');
+      L.push(`${nc.leading_letter_is_seat_kind} ${nc.not_the_tier_namespace}`);
+    }
   }
   L.push('');
-  L.push('### Paths');
-  L.push('');
-  L.push('| Path glob | Owner role | Serialized lane |');
-  L.push('|---|---|---|');
-  for (const p of c['git-ownership'].paths) L.push(`| \`${p.glob}\` | ${p.owner_role} | ${p.serialized_lane} |`);
-  L.push('');
-  L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
-  L.push('');
+
 
   // ---- Stage 2 sections ----
   if (c.raci) {
@@ -940,10 +1198,10 @@ export function renderGovernance(c) {
     L.push('');
     L.push(`Rule: \`${c.delegation.non_amplification_rule}\``);
     L.push('');
-    L.push('| Envelope | Parent | Delegator → Delegatee | Actions | Max subdepth | Effective → Expiry |');
-    L.push('|---|---|---|---|---|---|');
+    L.push('| Envelope | Parent | Delegator → Delegatee | Actions | Scope paths | Max subdepth | Effective → Expiry |');
+    L.push('|---|---|---|---|---|---|---|');
     for (const e of c.delegation.envelopes) {
-      L.push(`| ${e.id} | ${e.parent_id || '—'} | ${e.delegator_role} → ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} → ${e.expiry} |`);
+      L.push(`| ${e.id} | ${e.parent_id || '—'} | ${e.delegator_role} → ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '`' + mdCell(g) + '`').join(', ') || '— (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} → ${e.expiry} |`);
     }
     L.push('');
   }
@@ -959,10 +1217,27 @@ export function renderGovernance(c) {
       L.push(`| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' → ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`);
     }
     L.push('');
+    if (c.escalation.ticket_flow) {
+      const tf = c.escalation.ticket_flow;
+      L.push('### Where a question goes');
+      L.push('');
+      L.push(tf.principle);
+      L.push('');
+      L.push('| # | Actor | Does |');
+      L.push('|---|---|---|');
+      for (const st of tf.steps) L.push(`| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`);
+      L.push('');
+      L.push(`Handoffs keep ${tf.handoff_events.map((e) => '`' + e + '`').join(', ')} distinct. ${tf.handoff_rule}`);
+      L.push('');
+      L.push(`**${tf.owner_is_last_resort}**`);
+      L.push('');
+    }
   }
 
   if (c.transitions) {
     L.push('## Lifecycle transitions and permitted actors');
+    L.push('');
+    L.push(c.transitions.principle);
     L.push('');
     L.push(`States: ${c.transitions.states.map((s) => '`' + s + '`').join(' → ')}`);
     L.push('');
@@ -987,6 +1262,16 @@ export function renderGovernance(c) {
     L.push(`- **Restricted:** ${ia.restricted.join('; ')}`);
     L.push(`- **Forbidden (never loaded):** ${ia.forbidden.join('; ')}`);
     L.push('');
+    if (ia.canonical_documents) {
+      L.push('');
+      L.push('### Canonical documents');
+      L.push('');
+      L.push('| Topic | Canonical path | Superseded | Decision |');
+      L.push('|---|---|---|---|');
+      for (const d of c['information-access'].canonical_documents) {
+        L.push(`| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((x) => '`' + x + '`').join(', ') || '—'} | \`${d.decision}\` |`);
+      }
+    }
   }
 
   if (c.qa) {
@@ -998,11 +1283,85 @@ export function renderGovernance(c) {
     L.push('|---|---|---|');
     for (const r of c.qa.risk_classes) L.push(`| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`);
     L.push('');
-    L.push('| Gate | Risk | Verifier | Independent of maker | Waiver authority | Required evidence |');
-    L.push('|---|---|---|---|---|---|');
+    L.push('| Gate | Risk | Verifier | Independent of maker | Required checks | Waiver authority | Required evidence |');
+    L.push('|---|---|---|---|---|---|---|');
     for (const g of c.qa.gates) {
-      L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
+      L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
     }
+    L.push('');
+    L.push('');
+  }
+
+  if (c.hierarchy && c.hierarchy.authority_tiers) {
+    const at = c.hierarchy.authority_tiers;
+    L.push('## Authority tiers');
+    L.push('');
+    L.push(at.principle);
+    L.push('');
+    if (at.disambiguation) {
+      L.push(`**P-codes mean two things.** ${at.disambiguation.rule} Authority subjects: ${at.disambiguation.authority_subjects.map((x) => '`' + x + '`').join(', ')}. Priority subjects: ${at.disambiguation.priority_subjects.map((x) => '`' + x + '`').join(', ')}.`);
+      L.push('');
+    }
+    L.push('| Tier | Who | Holds | Cannot |');
+    L.push('|---|---|---|---|');
+    for (const lv of at.levels) {
+      L.push(`| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '`' + a + '`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`);
+    }
+    L.push('');
+    L.push(Object.values(at.rules).join(' '));
+    L.push('');
+  }
+
+  if (c.delivery) {
+    const d = c.delivery;
+    L.push('## Delivery and the Pages source');
+    L.push('');
+    L.push(d.principle);
+    L.push('');
+    L.push(`Delivery to \`dev\` is held by \`${d.dev_delivery.actor_role}\`: a discretion, never a duty, and never a direct push. Every item below must be \`PASS\` at one exact head; \`FAIL\` and \`UNKNOWN\` both require \`WAIT\`.`);
+    L.push('');
+    for (const cond of d.dev_delivery.all_must_pass_at_one_exact_head) L.push(`- ${cond}`);
+    L.push('');
+    L.push(`Desired Pages source: \`${d.pages.desired_source}\`. A switch needs the \`${d.pages.switch_requires.authorizing_role}\`, a change window, and a candidate already on \`${d.pages.switch_requires.candidate_must_have_reached}\`. ${d.pages.on_failure}`);
+    L.push('');
+    L.push(`The promotion packet carries ${d.promotion_packet.required_fields.length} required fields; missing, contradictory, stale or unverified is \`UNKNOWN\`, and \`UNKNOWN\` blocks.`);
+    L.push('');
+  }
+
+  if (c['model-effort']) {
+    const me = c['model-effort'];
+    L.push('## Model and effort selection');
+    L.push('');
+    L.push(me.principle);
+    L.push('');
+    L.push(`Every assignment and reassignment records: \`${me.assignment_record.format}\``);
+    L.push('');
+    L.push('| Risk and station | Default model | Efforts | Typical work |');
+    L.push('|---|---|---|---|');
+    for (const t of me.tiers) {
+      L.push(`| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`);
+    }
+    L.push('');
+    L.push('');
+  }
+
+  if (c['owner-command']) {
+    L.push('## Owner commands');
+    L.push('');
+    L.push(c['owner-command'].principle);
+    L.push('');
+    L.push('| Action | Authenticator roles | CAS | Protected |');
+    L.push('|---|---|---|---|');
+    for (const a of c['owner-command'].actions) {
+      L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`);
+    }
+    L.push('');
+  }
+
+  if (c.migration) {
+    L.push('## Legacy migration');
+    L.push('');
+    L.push(c.migration.principle);
     L.push('');
   }
 
@@ -1017,6 +1376,25 @@ export function renderGovernance(c) {
       L.push(`| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`);
     }
     L.push('');
+  }
+
+
+  // Every contract's `rules` block is the set of invariants opsctl enforces, in
+  // the words the contract uses. Most of them rendered nowhere: 41 values across
+  // twelve contracts were machine-checked and humanly invisible, so the view a
+  // person reads to learn what the system guarantees did not state the
+  // guarantees. They are projected here, grouped by contract, and each value is
+  // a probe — dropping one fails the coverage gate.
+  const ruled = Object.keys(c).filter((k) => c[k] && typeof c[k] === 'object' && c[k].rules && !Array.isArray(c[k].rules)).sort();
+  if (ruled.length) {
+    L.push('## Enforced invariants');
+    L.push('');
+    for (const k of ruled) {
+      L.push(`**\`${k}\`**`);
+      L.push('');
+      for (const line of ruleLines(c[k])) L.push(line);
+      L.push('');
+    }
   }
 
   return L.join('\n');
@@ -1071,7 +1449,8 @@ export function refEntitlementErrors(contracts, label, ref, actor) {
     return [`${label} ref '${ref}' is '${d.mutation}', not an isolated-continuation branch; a seat may only work on an isolated ref`];
   }
   if (d.per_seat) return [];
-  if (d.owner_role !== actor) return [`${label} ref '${ref}' is owned by '${d.owner_role}', not '${actor}'`];
+  // Resolve: `actor` arrives as an actor id, `owner_role` is a role.
+  if (d.owner_role !== actorRole(contracts, actor)) return [`${label} ref '${ref}' is owned by '${d.owner_role}', not '${actor}'`];
   return [];
 }
 
@@ -1080,6 +1459,14 @@ export function refEntitlementErrors(contracts, label, ref, actor) {
 export function hierarchyRoles(contracts) {
   const h = contracts.hierarchy || {};
   return new Set((h.nodes || []).map((n) => n.role));
+}
+
+// Membership in the hierarchy is by ACTOR, not by role. hierarchyRoles was
+// being queried with an actor id, which happened to work only while the two
+// namespaces coincided.
+export function hierarchyActors(contracts) {
+  const h = contracts.hierarchy || {};
+  return new Set((h.nodes || []).map((n) => n.actor_id));
 }
 
 // D5: a lease may only grant path globs that git-ownership actually declares,
@@ -1117,7 +1504,7 @@ export function pathGrantErrors(contracts, lease) {
     const owner = decls.find((d) => globCovers(d.glob, g));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
-    } else if (owner.owner_role !== lease.actor) {
+    } else if (owner.owner_role !== actorRole(contracts, lease.actor)) {
       errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
     }
   }
@@ -1195,6 +1582,7 @@ export function runtimeChecks(g, rt) {
   // when it blocks, escalation routing has nowhere to send it and the only
   // recorded outcome is silence. Declaring the role is not enough.
   const hierRoles = hierarchyRoles(g);
+  const hierActors = hierarchyActors(g);
   // A blocker names an escalation CLASS, never a wake target. escalation.json
   // owns who a class reaches, so a capsule cannot route itself to the Owner to
   // jump the queue, nor away from the Owner to dodge a protected decision.
@@ -1215,8 +1603,9 @@ export function runtimeChecks(g, rt) {
       if (cap.blocker) continue;                      // blocked seats route by escalation, not transition
       const out = g.transitions.transitions.filter((m) => m.from === cap.lifecycle_state && !m.protected);
       if (!out.length) continue;                      // terminal or owner-only: not the seat's move to make
-      if (!out.some((m) => m.permitted_actor_roles.includes(cap.owner_actor))) {
-        errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
+      const actingRole = actorRole(g, cap.owner_actor);
+      if (!out.some((m) => m.permitted_actor_roles.includes(actingRole))) {
+        errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' (role '${actingRole}') is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
       }
     }
   }
@@ -1263,6 +1652,7 @@ export function runtimeChecks(g, rt) {
       }
     }
   }
+
   for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
   // Entitlement must hold for every active lease, not only the one a capsule
   // happens to select: a second unrevoked lease on a protected ref is
@@ -1290,9 +1680,12 @@ export function runtimeChecks(g, rt) {
 
   // Leases: role validity, time-bound, path safety.
   for (const l of rt.leases) {
-    if (!roles.has(l.actor)) errors.push(`lease '${l.id}' actor role '${l.actor}' is unknown`);
+    if (!roles.has(actorRole(g, l.actor))) errors.push(`lease '${l.id}' actor '${l.actor}' resolves to no declared role`);
     if (!roles.has(l.issuer)) errors.push(`lease '${l.id}' issuer role '${l.issuer}' is unknown`);
-    if (l.expiry <= l.issued) errors.push(`lease '${l.id}' expiry is at or before issued (already expired)`);
+    const li = utcInstant(l.issued), lx = utcInstant(l.expiry);
+    if (li === null) errors.push(`lease '${l.id}' issued '${l.issued}' is not a real instant`);
+    if (lx === null) errors.push(`lease '${l.id}' expiry '${l.expiry}' is not a real instant`);
+    if (li !== null && lx !== null && lx <= li) errors.push(`lease '${l.id}' expiry is at or before issued (already expired)`);
     for (const p of l.path_globs) if (p.split('/').includes('..')) errors.push(`lease '${l.id}' path glob '${p}' contains a '..' traversal segment`);
   }
   // One writer per overlapping path/ref: two active leases on the same ref with
@@ -1338,16 +1731,17 @@ export function runtimeChecks(g, rt) {
     if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
     if (cap.evidence_pointers.length > 8) errors.push(`capsule '${ticket}' has ${cap.evidence_pointers.length} evidence pointers, exceeding the max of 8`);
     for (const ep of cap.evidence_pointers) if (!evIds.has(ep)) errors.push(`capsule '${ticket}' evidence pointer '${ep}' is not a declared evidence type in evidence.json`);
-    const may = roleMay.get(cap.owner_actor);
-    if (!may) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' is not a declared role`);
-    else for (const a of cap.authority.may) if (!may.has(a)) errors.push(`capsule '${ticket}' authority amplification: may '${a}' is not permitted for role '${cap.owner_actor}'`);
+    const ownerRole = actorRole(g, cap.owner_actor);
+    const may = roleMay.get(ownerRole);
+    if (!may) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' resolves to no declared role`);
+    else for (const a of cap.authority.may) if (!may.has(a)) errors.push(`capsule '${ticket}' authority amplification: may '${a}' is not permitted for role '${ownerRole}'`);
     const lease = leaseById.get(cap.writer_lease);
     if (!lease) errors.push(`capsule '${ticket}' references unknown writer_lease '${cap.writer_lease}'`);
     else {
       if (lease.revoked) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' is revoked`);
       if (lease.ticket !== ticket) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' belongs to ticket '${lease.ticket}'`);
       if (lease.actor !== cap.owner_actor) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' does not match lease actor '${lease.actor}'`);
-      if (hierRoles.size && !hierRoles.has(cap.owner_actor)) {
+      if (hierActors.size && !hierActors.has(cap.owner_actor)) {
         errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' has no node in hierarchy.json, so a blocked seat has no escalation parent`);
       }
       if (lease.ref !== cap.ref) errors.push(`capsule '${ticket}' ref '${cap.ref}' does not match lease ref '${lease.ref}'`);
@@ -1446,7 +1840,7 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
 
   const L = [];
   L.push('=== AGENTOPS WAKE CAPSULE ===');
-  L.push(`IDENTITY   : actor=${cap.owner_actor} role=${cap.owner_actor} ticket=${cap.ticket} lease=${cap.writer_lease} (${leaseState})`);
+  L.push(`IDENTITY   : actor=${cap.owner_actor} role=${actorRole(contracts, cap.owner_actor)} ticket=${cap.ticket} lease=${cap.writer_lease} (${leaseState})`);
   L.push(`MISSION    : ${oi.mission}`);
   L.push(`WORK       : ${cap.objective}`);
   L.push(`DONE-WHEN  : ${cap.done_when}`);
@@ -2276,11 +2670,377 @@ const HUD_VIEW = 'generated/hud/index.html';
 const MIGRATION_VIEW = 'generated/migration/PLAN.md';
 const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 
+// A contract that never reaches the human view is policy nobody reads. `verify`
+// only proves the committed view matches what `render` emits — it cannot notice
+// that render emits nothing for a whole contract. Five contracts were in exactly
+// that state (delivery, model-effort, owner-command, transitions, migration),
+// three of them since well before the tiers work.
+//
+// A first cut probed each contract's `principle` and skipped the six that state
+// none. Codex was right that this proved nothing for those six: `renderGovernance`
+// could drop the Roles or Authority matrix block entirely and `verify` would still
+// pass. So every contract now names a probe, and every probe is drawn from the
+// contract's OWN data rather than from a heading — a heading is prose this file
+// could rename, while an actor id or a grant action cannot be renamed without
+// changing the contract it came from.
+//
+// A probe value must also be UNIQUE to its block. `roles` first probed role ids,
+// and dropping the whole Roles section did not fail: `owner`, `maker` and the
+// rest still appeared in the hierarchy and authority tables. Probes therefore
+// name text only their own section renders (a role's mission, a node's owned
+// escalation classes), and probeStrengthErrors below proves each one still fails
+// when its block is removed.
+const VIEW_PROBES = {
+  authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
+  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '\`' + mdCell(g) + '\`').join(', ') || '\u2014 (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
+  delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
+    `Desired Pages source: \`${x.pages.desired_source}\``,
+    `a candidate already on \`${x.pages.switch_requires.candidate_must_have_reached}\``,
+    `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
+  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, x.branch_hygiene.alternative_when_permission_is_absent, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
+  'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
+    `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
+    `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
+    `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
+  migration: (x) => [x.principle],
+  'model-effort': (x) => [x.principle, x.assignment_record.format, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
+  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`)],
+  'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), ...x.priority_order.map((pr, i) => `  ${i + 1}. ${pr}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
+    `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
+    ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
+  project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
+  'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => gateDetailLines(g).length ? [`#### Gate ${g.id} \u2014 ${g.name}`, '', ...gateDetailLines(g)].join('\n') : null).filter((y) => y !== null), ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
+  qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
+  raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
+  roles: (x) => x.roles.map((r) => [
+    '### `' + r.role + '`',
+    '',
+    `- **Mission:** ${r.mission}`,
+    r.archetype ? `- **Derives from:** \`${r.archetype}\` \u2014 a seniority level, carrying exactly that archetype's authority and no more.` : null,
+    `- **May:** ${r.may.join(', ') || '\u2014'}`,
+    `- **Must:** ${r.must.join('; ') || '\u2014'}`,
+    `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
+    `- **Approval ceiling:** ${r.approval_ceiling}`,
+  ].filter((l) => l !== null).join('\n')),
+  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
+};
+
+// Every contract's rules render in the Enforced invariants section, so every
+// probe carries its own rule lines. Doing it here rather than in twelve edited
+// probe entries means a rule added to a contract tomorrow is probed the same
+// day: it must appear in the view or the coverage gate fails.
+for (const [k, fn] of Object.entries(VIEW_PROBES)) {
+  VIEW_PROBES[k] = (x) => {
+    const rules = ruleLines(x);
+    // The per-contract heading is rendered only when that contract has rules,
+    // so it is probed only then. Static prose with no contract behind it is not
+    // added to this view: the projection disclaimer stays the single exemption
+    // the prose sweep allows.
+    return rules.length ? [...fn(x), `**\`${k}\`**`, ...rules] : fn(x);
+  };
+}
+
+// A probe value shared by two contracts lets one mask the other: the masked
+// contract's block can vanish while its values still appear, rendered by the
+// other. That is exactly how `roles` first slipped through. Probe sets must
+// therefore be disjoint, and this is checked alongside coverage rather than
+// left to a reviewer to notice.
+// `runRender` reports two independent failures — `errors` (the view is wrong)
+// and `drift` (the committed copy is stale) — and every caller must read both.
+// Reading only `drift` is how the coverage gate stayed invisible in `verify`,
+// and then, after that was fixed, in `verifyErrors`, where the drill could
+// report a clean reconstruction of a tree `verify` rejects. Two call sites, the
+// same one-line omission, found weeks apart. This is a source-level check for
+// the class, in the same spirit as the subcommand-header check: it reads this
+// file and requires each call site to mention both fields.
+// Blanks out comments and string/template literals, preserving length so byte
+// offsets and line numbers still line up. Source-level checks that skip this
+// match their own error messages: the first version of the call-shape sweep
+// reported seven "call sites" that were all its own text.
+// Known limitation: this does not parse regex literals, so a backtick inside
+// one (`/^\x60\x60\x60/`) would be read as a template-literal opener and blank the
+// rest of the file. That happened, silently disabling the consumer check until
+// a plant that should have failed did not. Regex literals in this file avoid
+// literal backticks, and countRenderCallSites below refuses to let the blanking
+// swallow the source unnoticed.
+export function blankNonCode(src) {
+  const out = src.split('');
+  let i = 0;
+  const blank = (from, to) => { for (let k = from; k < to && k < out.length; k++) if (out[k] !== '\n') out[k] = ' '; };
+  while (i < src.length) {
+    const c = src[i], d = src[i + 1];
+    if (c === '/' && d === '/') { let j = src.indexOf('\n', i); if (j < 0) j = src.length; blank(i, j); i = j; continue; }
+    if (c === '/' && d === '*') { let j = src.indexOf('*/', i + 2); j = j < 0 ? src.length : j + 2; blank(i, j); i = j; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      let j = i + 1;
+      while (j < src.length) {
+        if (src[j] === '\\') { j += 2; continue; }
+        if (src[j] === c) { j++; break; }
+        j++;
+      }
+      blank(i, j); i = j; continue;
+    }
+    i++;
+  }
+  return out.join('');
+}
+
+// A cheap canary on blankNonCode: if the blanking ever eats the file, every
+// call site disappears and this drops to zero rather than reporting success.
+export function countRenderCallSites(rawSource) {
+  return (blankNonCode(rawSource).match(/runRender\s*\(/g) || []).length;
+}
+
+export function renderResultConsumerErrors(rawSource) {
+  const errors = [];
+  // Comments and string literals are not call sites. Scanning them made this
+  // check report its own error messages as violations.
+  const sourceText = blankNonCode(rawSource);
+  const lines = sourceText.split('\n');
+  const lineOf = (idx) => sourceText.slice(0, idx).split('\n').length;
+
+  // Both failure modes. Checking only `errors` was the same omission this
+  // function exists to catch, one level up.
+  const MODES = [
+    ['errors', 'a view failure'],
+    ['drift', 'a stale committed artifact'],
+  ];
+  // Scanning line by line missed `const r =` with the call on the next line, so
+  // ordinary multiline formatting silently exempted a caller — and because the
+  // one-line callers still matched, the "no call sites" guard stayed quiet too.
+  // The pattern spans newlines and the line number comes from the offset.
+  const DECL = /(?:const|let)\s+(?:\{([^}]*)\}|(\w+))\s*=\s*(?:\r?\n\s*)?runRender\s*\(/g;
+
+  const inspected = [];
+  for (const m of sourceText.matchAll(DECL)) {
+    inspected.push(m.index + m[0].length);
+    const i = lineOf(m.index) - 1;
+    if (m[1] !== undefined) {                       // destructured at the call site
+      const named = m[1].split(',').map((x) => x.trim().split(':')[0].trim());
+      for (const [field, what] of MODES) {
+        if (!named.includes(field)) errors.push(`line ${i + 1}: destructures runRender() without '${field}'; ${what} would be silently dropped`);
+      }
+      continue;
+    }
+    const v = m[2];
+    const window = lines.slice(i, i + 12).join('\n');
+    for (const [field, what] of MODES) {
+      if (!window.includes(`${v}.${field}`)) errors.push(`line ${i + 1}: reads runRender() result '${v}' without checking '${v}.${field}'; ${what} would be silently dropped`);
+    }
+  }
+
+  // Every remaining call is a shape this check cannot reason about — a bare
+  // call, a return, a property assignment — and silence about it would be the
+  // same fail-open the check exists to close. The declaration itself is skipped.
+  for (const m of sourceText.matchAll(/runRender\s*\(/g)) {
+    const declHere = /function\s+$/.test(sourceText.slice(Math.max(0, m.index - 20), m.index));
+    if (declHere) continue;
+    const covered = inspected.some((end) => Math.abs(end - (m.index + m[0].length)) < 2);
+    if (!covered) errors.push(`line ${lineOf(m.index)}: runRender() is called in a shape this check cannot inspect; bind it to a name or a destructure so both failure modes can be verified`);
+  }
+
+  if (!/runRender\s*\(/.test(sourceText)) errors.push('no runRender() call sites found; the consumer check is looking at the wrong source');
+  return errors;
+}
+
+// The whole governance gate over a rendered artifact list, extracted so the
+// absent-view case can be exercised rather than asserted about. `if (gov)` used
+// to skip the gate entirely when generatedArtifacts stopped registering the
+// view, and the drift loop walks the same list so it could not report it
+// either — the human view could be abandoned with `verify` still green.
+export function governanceGateErrors(contracts, arts) {
+  const gov = arts.find((a) => a.rel === GENERATED_VIEW);
+  if (!gov) return [`generated artifacts do not include '${GENERATED_VIEW}'; the human governance view is missing and nothing downstream can check it`];
+  return [...tableShapeErrors(gov.text), ...probeStrengthErrors(contracts, gov.text), ...viewCoverageErrors(contracts, gov.text)];
+}
+
+// An actor is not its role. That held only while every actor_id happened to
+// equal a role name; team leads are the first actors where it does not, and the
+// conflation was independently present in four places — the stranded-seat
+// check, the capsule authority check, dispatch's wake selection, and the wake
+// capsule's own IDENTITY line, which printed `role=<actor id>`. One helper
+// instead of four fixes, so the fifth site cannot drift.
+export function actorRole(g, actorId) {
+  const node = g && g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === actorId);
+  return node ? node.role : actorId;
+}
+
+// The sweeps prove that nothing RENDERED can be deleted unnoticed. They cannot
+// see a contract field that renders nowhere at all — there is no line to delete
+// — and an audit found 105 such field paths across every generated view, in all
+// eighteen contracts. Two were reported (delegation scope_paths, qa
+// required_checks); the rest had never been looked for.
+//
+// Rendering all of them is a larger change than this branch should carry, so
+// the debt is measured instead of hidden: this returns the count, and a ratchet
+// in the selftest refuses to let it grow. The number may fall; it may not rise.
+export function unrenderedFieldPaths(contracts, renderedText) {
+  const SKIP = new Set(['schema', 'policy_version', 'source', 'charter_heading']);
+  const found = [];
+  const walk = (name, node, path) => {
+    if (node === null || node === undefined) return;
+    if (Array.isArray(node)) return node.forEach((v) => walk(name, v, path));
+    if (typeof node === 'object') {
+      for (const [k, v] of Object.entries(node)) if (!SKIP.has(k)) walk(name, v, path ? `${path}.${k}` : k);
+      return;
+    }
+    if (typeof node === 'boolean') return;
+    const value = String(node);
+    if (value.length < 3) return;                    // ids too short to be evidence
+    // A value that renders correctly through mdCell appears ESCAPED, so a raw
+    // substring test reported the nine lead seat names as unrendered precisely
+    // because they were rendered properly. Both forms count.
+    if (!renderedText.includes(value) && !renderedText.includes(mdCell(value))) found.push(`${name}.${path}`);
+  };
+  for (const [name, contract] of Object.entries(contracts)) walk(name, contract, '');
+  return [...new Set(found)].sort();
+}
+
+// Contract values go into Markdown tables, and a value containing `|` or a
+// newline silently becomes extra cells or extra rows. Fixed once for seat names
+// and reintroduced one commit later in delegation scope paths, so this is the
+// shared helper and tableShapeErrors below is the structural guard: a row whose
+// cell count differs from its header cannot be rendered unnoticed, whatever
+// field it came from.
+export function mdCell(value) {
+  return String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+}
+
+// One gate's detail block. The gates table carries id, name, actor, guarded
+// transitions, required evidence and grants; every OTHER field a gate declares
+// rendered nowhere — entry conditions, what invalidates the gate, what blocks
+// it, what does not satisfy it, what happens on fail or unknown, the roles it
+// conditionally requires. Nine field paths, all authority-bearing, all
+// invisible. Shared by the renderer and the probe, like ruleLines and mdCell,
+// so the two cannot drift. Fields the table already renders are deliberately
+// absent here: a probe satisfied in two sections proves nothing about either.
+const GATE_DETAIL = [
+  ['entry', 'Entry'],
+  ['required_roles', 'Required roles'],
+  ['conditional_roles', 'Conditional roles'],
+  ['blocks_on', 'Blocks on'],
+  ['not_satisfied_by', 'Not satisfied by'],
+  ['invalidated_by', 'Invalidated by'],
+  ['on_fail_or_unknown', 'On fail or unknown'],
+  ['returns_to_gate_on_correction', 'Returns to gate on correction'],
+  ['separate_actions', 'Separate actions'],
+  ['explicitly_not_granted', 'Explicitly not granted'],
+  ['authority_is_per_action', 'Authority is per action'],
+  ['note', 'Note'],
+];
+
+export function gateDetailLines(gate) {
+  const out = [];
+  for (const [key, label] of GATE_DETAIL) {
+    const v = gate[key];
+    if (v === undefined || v === null) continue;
+    if (key === 'conditional_roles') {
+      for (const cr of v) out.push(`- **${label}:** \`${cr.role}\` \u2014 ${cr.when}`);
+      continue;
+    }
+    const text = Array.isArray(v) ? v.map((y) => `\`${y}\``).join(', ') : typeof v === 'boolean' ? (v ? 'yes' : 'no') : String(v);
+    out.push(`- **${label}:** ${text}`);
+  }
+  return out;
+}
+
+// The rendered form of one contract's `rules` block. Shared by the renderer and
+// by the view probes for the same reason mdCell is: two copies of a rendered
+// string drift, and a probe that drifts stops proving anything.
+export function ruleLines(contract) {
+  const r = contract && contract.rules;
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return [];
+  return Object.entries(r).filter(([, v]) => typeof v === 'string').map(([n, v]) => `- \`${n}\` \u2014 ${v}`);
+}
+
+export function tableShapeErrors(viewText) {
+  const errors = [];
+  const lines = viewText.split('\n');
+  const cells = (l) => l.split(/(?<!\\)\|/).length;
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\|---/.test(lines[i])) continue;          // a separator anchors a table
+    const width = cells(lines[i]);
+    for (let j = i - 1; j >= 0 && /^\|/.test(lines[j]); j--) {
+      if (cells(lines[j]) !== width) errors.push(`generated view line ${j + 1}: header has ${cells(lines[j]) - 2} cells but the table declares ${width - 2}`);
+    }
+    for (let j = i + 1; j < lines.length && /^\|/.test(lines[j]); j++) {
+      if (cells(lines[j]) !== width) errors.push(`generated view line ${j + 1}: row has ${cells(lines[j]) - 2} cells, the table declares ${width - 2}; an unescaped '|' in a contract value splits the row`);
+    }
+  }
+  return errors;
+}
+
+export function probeStrengthErrors(contracts, viewText) {
+  const errors = [];
+  const seen = new Map();
+  for (const name of Object.keys(contracts).sort()) {
+    const probe = VIEW_PROBES[name];
+    if (!probe) continue;                       // viewCoverageErrors reports this
+    let needles = [];
+    try { needles = probe(contracts[name]).filter((n) => typeof n === 'string' && n.length); } catch { continue; }
+    for (const n of needles) {
+      if (seen.has(n) && seen.get(n) !== name) {
+        errors.push(`view probe ${JSON.stringify(n.slice(0, 60))} is claimed by both '${seen.get(n)}' and '${name}'; a shared probe lets one contract mask the other`);
+      } else seen.set(n, name);
+    }
+  }
+  // Comparing the declared sets to each other was not enough: a probe value can
+  // also appear in another section's rendered prose without being that
+  // section's declared probe, and then deleting the row it came from changes
+  // nothing the gate can see. `record-triage-route-report-status` was an
+  // authority row and also a line in the Roles `may` list, so the row could be
+  // dropped with `verify` green. Probes are therefore checked against the
+  // rendered view too: a probe must identify one place in it.
+  if (typeof viewText === 'string' && viewText.length) {
+    const lines = viewText.split('\n');
+    const heads = [];
+    lines.forEach((l, i) => { if (/^#{2,3} /.test(l)) heads.push(i); });
+    const sectionOf = (idx) => {
+      let last = 'preamble';
+      for (const h of heads) { if (h <= idx) last = lines[h]; else break; }
+      return last;
+    };
+    for (const [needle, owner] of seen) {
+      const hit = new Set();
+      lines.forEach((l, i) => { if (l.includes(needle)) hit.add(sectionOf(i)); });
+      if (hit.size > 1) {
+        errors.push(`view probe ${JSON.stringify(needle.slice(0, 60))} for '${owner}' appears in ${hit.size} rendered sections (${[...hit].join(' / ')}); deleting any one of them leaves the probe satisfied`);
+      }
+    }
+  }
+  return errors;
+}
+
+export function viewCoverageErrors(contracts, viewText) {
+  const errors = [];
+  for (const name of Object.keys(contracts).sort()) {
+    const probe = VIEW_PROBES[name];
+    // No opt-out. A new contract with no probe is the same silent gap this check
+    // exists to close, so its absence is itself the failure.
+    if (!probe) { errors.push(`contract '${name}' declares no view probe; add one to VIEW_PROBES so its projection is provable`); continue; }
+    let needles;
+    try { needles = probe(contracts[name]).filter((n) => typeof n === 'string' && n.length); }
+    catch (e) { errors.push(`view probe for '${name}' could not read the contract: ${e && e.message || e}`); continue; }
+    if (!needles.length) { errors.push(`view probe for '${name}' yielded nothing to look for`); continue; }
+    const missing = needles.filter((n) => !viewText.includes(n));
+    if (missing.length === needles.length) {
+      errors.push(`generated view omits the '${name}' contract entirely; none of its ${needles.length} probe value(s) appear`);
+    } else if (missing.length) {
+      errors.push(`generated view drops ${missing.length} of ${needles.length} '${name}' probe value(s), first: ${JSON.stringify(missing[0].slice(0, 80))}`);
+    }
+  }
+  return errors;
+}
+
 // Every committed generated artifact, as {rel, text}. These are the sole
 // writes of `render` and the drift gate of `verify`. Frozen wake goldens make
 // reconstruction output part of the committed, deterministic surface: any clean
 // clone on any provider must reproduce them byte-for-byte.
-function generatedArtifacts(contracts, rt) {
+export function generatedArtifacts(contracts, rt) {
   const out = [{ rel: GENERATED_VIEW, text: renderGovernance(contracts) + '\n' }];
   for (const ticket of Object.keys(rt.capsules).sort()) {
     const cap = buildCapsule(contracts, rt, ticket, { frozen: true });
@@ -2353,6 +3113,14 @@ function runRender(root, check) {
   if (errors.length) return { errors, drift: false };
   const rt = loadRuntime(root);
   const arts = generatedArtifacts(contracts, rt);
+  // A missing governance artifact must fail, not skip. `if (gov)` meant that if
+  // generatedArtifacts ever stopped registering the view, the coverage gate was
+  // silently bypassed and the drift loop could not report it either — it walks
+  // the same shortened list. The whole point of this gate is that the human view
+  // cannot quietly disappear, so its absence is the loudest case, not an
+  // optional one.
+  const missed = governanceGateErrors(contracts, arts);
+  if (missed.length) return { errors: missed, drift: false };
   const drifted = [];
   const wrote = [];
   for (const a of arts) {
@@ -2387,6 +3155,11 @@ function verifyErrors(root) {
   const v = runValidate(root);
   if (v.errors.length) return v.errors;
   const r = runRender(root, true);
+  // runRender reports two independent failures and the drill must see both. It
+  // read only `drift`, so a working tree failing the coverage gate could still
+  // be reported as reconstructing cleanly: the clean room is archived from HEAD,
+  // which is still valid, while `opsctl verify` fails on the same tree.
+  if (r.errors && r.errors.length) return r.errors;
   return r.drift ? [`stale generated artifacts: ${r.drifted.join(', ')}`] : [];
 }
 
@@ -2561,6 +3334,16 @@ export function runSelftest(root = ROOT) {
   expectSemantic('maker self-approval (QA verifier)', (c) => { c.qa.gates[0].verifier_role = 'maker'; }, 'self-approve');
   expectSemantic('forbidden information preload', (c) => { c['information-access'].startup.push('all-chat-transcripts'); }, 'forbidden preload');
   expectSemantic('expired delegation', (c) => { c.delegation.envelopes[0].expiry = '2020-01-01T00:00:00Z'; }, 'already expired');
+  // A shape-valid timestamp that is not a real instant. Both of these pass the
+  // schema pattern; `new Date()` normalises the first to March 2 and the second
+  // to the next day, so the window would validate and render while meaning a
+  // moment it does not spell.
+  expectSemantic('delegation window naming a day that does not exist', (c) => { c.delegation.envelopes[0].effective = '2026-02-30T00:00:00Z'; }, "is not a real instant");
+  expectSemantic('delegation window naming an hour that does not exist', (c) => { c.delegation.envelopes[0].expiry = '2026-12-31T25:00:00Z'; }, "is not a real instant");
+  // ...and the ordering check must not be fooled by them either: 2026-02-30
+  // normalises to March 2, which is AFTER the March 1 expiry it is compared
+  // against, so a lexicographic '<=' saw a valid window here.
+  expectSemantic('delegation window ordered only after normalisation', (c) => { const e = c.delegation.envelopes[0]; e.effective = '2026-02-30T00:00:00Z'; e.expiry = '2026-03-01T00:00:00Z'; }, "is not a real instant");
   expectSemantic('missing evidence ownership', (c) => { c.qa.gates[0].required_evidence.push('ghost-evidence'); }, 'no owner in evidence.json');
 
   // Stage 3 runtime plants — cloned from the real on-disk runtime corpus and run
@@ -2577,6 +3360,8 @@ export function runSelftest(root = ROOT) {
   };
   expectRuntime('overlapping active lease (two writers)', (rt) => { rt.leases.push({ ...rt.leases[0], id: 'lease-collide', actor: 'data-architecture-lead' }); }, 'lease collision');
   expectRuntime('expired lease', (rt) => { rt.leases[0].expiry = '2019-01-01T00:00:00Z'; }, 'already expired');
+  expectRuntime('lease window naming a day that does not exist', (rt) => { rt.leases[0].expiry = '2026-11-31T00:00:00Z'; }, "is not a real instant");
+  expectRuntime('lease issued at a minute that does not exist', (rt) => { rt.leases[0].issued = '2026-01-01T00:60:00Z'; }, "is not a real instant");
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
@@ -2634,6 +3419,26 @@ export function runSelftest(root = ROOT) {
   // to choose who it escalates to, and a seat must not be able to exist with no
   // move it is permitted to make.
   expectRuntime('blocker naming an undeclared escalation class', (rt) => { rt.capsules['AS-HD-056'].blocker.escalation_class = 'ghost-class'; }, 'escalation.json does not declare');
+  // ...and the wake surface fails closed on a lease whose expiry is not a real
+  // instant. runtimeChecks rejects one too, but dispatch takes the runtime as
+  // given: an expiry it cannot place in the future must stop the seat rather
+  // than wake it. The lexicographic '<=' it replaced quietly read such a value
+  // as live.
+  {
+    const rt = baseRt();
+    const live = Object.entries(rt.capsules).find(([, cp]) => cp.writer_lease && !cp.blocker);
+    let hit = false, got = [];
+    if (live) {
+      const lease = rt.leases.find((l) => l.id === live[1].writer_lease);
+      if (lease) {
+        lease.expiry = '2026-11-31T00:00:00Z';
+        const d = computeDispatch(contracts, rt, { now: '2026-01-01T00:00:00Z' });
+        got = d.map((x) => x.reason || JSON.stringify(x));
+        hit = got.some((w) => String(w).includes('is not a real instant'));
+      }
+    }
+    results.push({ label: 'dispatch fails closed on a lease expiry that is not a real instant', pass: hit, errs: hit ? [] : got.slice(0, 4) });
+  }
   expectMigration('transition narrowed until a live seat is stranded', (c) => {
     for (const m of c.transitions.transitions) if (m.from === 'assigned' && m.to === 'in-progress') m.permitted_actor_roles = ['maker'];
   }, 'the seat is stranded');
@@ -2673,6 +3478,125 @@ export function runSelftest(root = ROOT) {
   expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
   expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
   expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
+  // Team-lead roster. These checks lost their plants when the self-certification
+  // withdrawal removed the surrounding block; the checks survived, so the proof
+  // that each can fail is restored here.
+  expectSemantic('team lead: a role that is not declared', (c) => { c.teams.team_leads.role = 'ghost-lead'; }, 'is not a declared role');
+  expectSemantic('team lead: a capability pool made into the lead role', (c) => { c.teams.team_leads.role = 'qa-guild'; }, 'is also a capability pool');
+  expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.leads = c.teams.team_leads.leads.filter((l) => l.team !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
+  expectSemantic('team lead: two leads claiming one team', (c) => { c.teams.team_leads.leads[1].team = c.teams.team_leads.leads[0].team; }, 'one_lead_per_team allows one');
+  expectSemantic('team lead: one actor leading two teams', (c) => { c.teams.team_leads.leads[1].actor_id = c.teams.team_leads.leads[0].actor_id; }, 'is declared twice');
+  expectSemantic('team lead: a lead named after a role rather than an actor', (c) => { c.teams.team_leads.leads[0].actor_id = 'maker'; }, 'a lead is an actor, not a role');
+  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Some Lead III | qa-guild | Ashenspire'; }, "but its seat_name's team segment says");
+  expectSemantic('team lead: a seat name outside the naming convention', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | art helper | art-tech-art | Ashenspire'; }, 'does not follow naming_convention');
+  // Leads are placed in the ladder as actors; a shared-role entry would put
+  // nine teams in one slot and lose the identity the roster carries.
+  // Checking only the tier left the node's ROLE free: a lead whose node said
+  // 'maker' would resolve to maker through actorRole() and get maker
+  // capabilities while teams.json still called it a lead.
+  // Binding nodes to tl.role proved only that they agreed with each other.
+  expectSemantic('team lead: the roster renaming the lead role itself', (c) => {
+    c.teams.team_leads.role = 'app-dev-i';
+    for (const n of c.hierarchy.nodes) if (n.role === 'team-lead') n.role = 'app-dev-i';
+  }, "the roster must name the dedicated 'team-lead' role");
+  // A substring match accepted a seat name whose team segment named another team.
+  expectSemantic('team lead: a seat name whose team segment is a different team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | art-tech-art Lead III | qa-guild | Ashenspire'; }, "team segment says 'qa-guild'");
+  // Validating only the team segment left the other three free.
+  // Seat names are validated against the declared template, so both the
+  // template and the names it governs are planted.
+  expectSemantic('naming: a template that declares no segments', (c) => { c.teams.naming_convention.persistent_lead = 'P | nonsense'; }, 'is not four');
+  expectSemantic('naming: an agent-seat template with no placeholders', (c) => { c.teams.naming_convention.agent_seat = 'A | x | y | Ashenspire'; }, 'declares no <role>');
+  expectSemantic('naming: a template naming another project', (c) => { c.teams.naming_convention.persistent_lead = 'P | <role> III | <team> | OtherProject'; }, "not 'Ashenspire'");
+  expectSemantic('team lead: a seat name for another project', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead III | art-tech-art | Other'; }, 'fixes it as');
+  expectSemantic('team lead: a seat name missing the III level', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead | art-tech-art | Ashenspire'; }, 'does not end with');
+  expectSemantic('team lead: a seat name whose role names no lead', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Something III | art-tech-art | Ashenspire'; }, 'does not name a lead');
+  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead III | qa-guild | Ashenspire'; }, 'team segment says');
+  // Six pairs that certified each other. Each plant moves BOTH halves together,
+  // which is what a self-consistency check cannot see and a pin can.
+  expectSemantic('pin: leads and the ladder moved to P1 together', (c) => {
+    c.teams.team_leads.authority_tier = 1;
+    const l2 = c.hierarchy.authority_tiers.levels.find((l) => l.p === 2);
+    const l1 = c.hierarchy.authority_tiers.levels.find((l) => l.p === 1);
+    const ids = c.teams.team_leads.leads.map((l) => l.actor_id);
+    l2.actors = l2.actors.filter((a) => !ids.includes(a)); l1.actors.push(...ids);
+  }, 'belong at P2');
+  expectSemantic('pin: the charter exception routed through a class every seat can raise', (c) => {
+    c.teams.charter_exception.escalation_class = 'technical-blocker';
+    c.escalation.classes.find((x) => x.id === 'technical-blocker').wake = c['owner-intent'].owner.actor_id;
+  }, 'must reach the owner immediately');
+  // A role outside the ladder. The nine seniority roles have no standing actor,
+  // so nothing placed them in a tier until they declared an archetype; each way
+  // of loosening that declaration has to fail.
+  expectSemantic('roles: a role with no actor and no archetype is ungoverned', (c) => { delete c.roles.roles.find((r) => r.role === 'app-dev-i').archetype; }, 'no authority tier governs what it may do');
+  expectSemantic('roles: an archetype that is not a declared role', (c) => { c.roles.roles.find((r) => r.role === 'artist-ii').archetype = 'principal-engineer'; }, 'is not a declared role');
+  expectSemantic('roles: an archetype chain', (c) => { c.roles.roles.find((r) => r.role === 'app-dev-i').archetype = 'app-dev-iii'; }, 'an archetype chain lets authority drift a link at a time');
+  expectSemantic('roles: an archetype with no actor of its own', (c) => { c.roles.roles.find((r) => r.role === 'qa-technician-i').archetype = 'artist-iii'; c.roles.roles.find((r) => r.role === 'artist-iii').archetype = undefined; delete c.roles.roles.find((r) => r.role === 'artist-iii').archetype; }, 'has no actor in the hierarchy either');
+  expectSemantic('roles: a seniority level widening its approval ceiling', (c) => { c.roles.roles.find((r) => r.role === 'app-dev-iii').approval_ceiling = 'integration-to-dev'; }, 'never a wider authority ceiling');
+  expectSemantic('roles: a seniority level granting itself an extra action', (c) => { c.roles.roles.find((r) => r.role === 'app-dev-iii').may.push('push-pr-merge-deploy-or-release'); }, 'its may differs');
+  expectSemantic('roles: a seniority level dropping one of its must_nots', (c) => { const r = c.roles.roles.find((x) => x.role === 'qa-technician-iii'); r.must_not = r.must_not.filter((m) => m !== 'review-own-implementation'); }, 'its must_not differs');
+  expectSemantic('roles: a seniority level dropping one of its musts', (c) => { const r = c.roles.roles.find((x) => x.role === 'artist-i'); r.must = []; }, 'its must differs');
+  expectSemantic('pin: branch-rewrite permission moved off the deputy', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'help-desk'; }, 'moving the tier text does not transfer it');
+  // Deriving one mutable declaration from another is not a constraint: move the
+  // tier text to P2 as well and the two agree again, which is exactly what the
+  // previous version of this check permitted. Both halves are pinned to the
+  // recorded deputy identity now, so moving them together still fails.
+  const moveRewriteTierTo = (c, p) => {
+    for (const l of c.hierarchy.authority_tiers.levels) {
+      const at = l.holds.findIndex((h) => /branch-rewrite/i.test(h));
+      if (at >= 0) { const [text] = l.holds.splice(at, 1); c.hierarchy.authority_tiers.levels.find((x) => x.p === p).holds.push(text); return; }
+    }
+  };
+  expectSemantic('pin: tier text and permission_role moved together still fails', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'help-desk'; moveRewriteTierTo(c, 2); }, 'moving the tier text does not transfer it');
+  expectSemantic('pin: the ladder itself moved off the deputy', (c) => { moveRewriteTierTo(c, 2); }, 'does not include the deputy');
+  expectSemantic('pin: no tier claims branch-rewrite permission at all', (c) => { for (const l of c.hierarchy.authority_tiers.levels) l.holds = l.holds.filter((h) => !/branch-rewrite/i.test(h)); }, 'the ladder and git-ownership disagree about who holds it');
+  expectSemantic('pin: a promotion gate gated by the seat it gates', (c) => {
+    c['promotion-gates'].gates.find((x) => x.id === 'A').actor_role = 'maker';
+    for (const tr of c.transitions.transitions) if (!tr.protected) tr.permitted_actor_roles.push('maker');
+  }, 'never passed by the seat whose work it gates');
+  expectSemantic('pin: the deputy moved to another actor', (c) => { c['owner-intent'].deputy.actor_id = 'help-desk'; }, 'the deputy is the IT Manager III by decision');
+  expectSemantic('pin: a delivery seat convening its own pod', (c) => { c.teams.pods.formed_by = 'maker'; }, 'cannot convene its own pod');
+
+  expectSemantic('team lead: an actor in no authority tier', (c) => {
+    const lv = c.hierarchy.authority_tiers.levels.find((l) => l.p === 2);
+    lv.actors = lv.actors.filter((a) => a !== 'lead-qa-guild');
+  }, "team lead 'lead-qa-guild' is in no authority tier");
+  expectSemantic('team lead: the ladder placing the shared role instead of the actors', (c) => {
+    c.hierarchy.authority_tiers.levels.find((l) => l.p === 2).actors.push('team-lead');
+    c.hierarchy.nodes.push({ actor_id: 'team-lead', role: 'team-lead', escalation_parent: 'it-manager-iii', owns_escalations: ['x'] });
+  }, 'collapses every team into one slot');
+  // An actor is not its role: both of these read the id directly until leads
+  // got identities that differ from the role they hold.
+  // Dispatch compared the actor id against a list of roles, so a lead-owned
+  // ticket woke 'maker'. One helper now serves all four sites that had this.
+  {
+    const rtLead = baseRt();
+    rtLead.capsules['AS-HD-050'].owner_actor = 'lead-game-systems';
+    const d = computeDispatch(contracts, rtLead, { now: new Date().toISOString() }).find((x) => x.ticket === 'AS-HD-050');
+    results.push({ label: 'dispatch wakes the lead that owns the capsule, not a role that does not', pass: !!d && d.wake === 'lead-game-systems', errs: [d ? d.wake : '(no entry)'] });
+    const w = runWake(root, 'maker', 'AS-1001');
+    results.push({ label: "the wake capsule reports the actor's role, not its id again", pass: !!w.text && /role=maker/.test(w.text), errs: [] });
+  }
+
+  // The path and ref entitlement checks compared an actor id against an
+  // owner ROLE — the sixth and seventh sites of the same conflation.
+  {
+    const rtLead = baseRt();
+    const c = rtLead.capsules['AS-HD-050'];
+    c.owner_actor = 'lead-game-systems'; c.authority.may = ['spin-out-agent-seat']; c.affected_paths = [];
+    const l = rtLead.leases.find((x) => x.id === c.writer_lease);
+    l.actor = 'lead-game-systems'; l.path_globs = []; delete l.path_grant_exception;
+    const errs = runtimeChecks(contracts, rtLead).filter((e) => e.includes('lead-game-systems'));
+    results.push({ label: 'a lead can hold a path-free lease on its own ticket', pass: errs.length === 0, errs });
+  }
+  expectRuntime('a lease claiming a path its actor\'s role does not own', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-HD-050-maker');
+    l.actor = 'lead-game-systems'; delete l.path_grant_exception;
+  }, 'git-ownership assigns that path to');
+
+  expectRuntime('a seat whose actor resolves to no role at all', (rt) => { rt.capsules['AS-1001'].owner_actor = 'nobody-at-all'; }, 'resolves to no declared role');
+
+  expectSemantic('naming: a numbered P used as a seat kind', (c) => { c.teams.naming_convention.persistent_lead = 'P2 | <role> III | <team> | Ashenspire'; }, 'authority-tier namespace, not a seat kind');
+  expectSemantic('naming: the two P namespaces no longer distinguished', (c) => { c.teams.naming_convention.not_the_tier_namespace = 'use judgement'; }, 'would be read as one');
   expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
   expectRuntime('a capsule naming a team that is on no roster', (rt) => { rt.capsules['AS-HD-050'].team = 'audio'; }, 'nor a declared legacy alias');
   expectRuntime('a capability pool holding a seat', (rt) => { rt.capsules['AS-HD-040'].owner_actor = 'art-tech-art'; }, 'is a capability pool, not a standing team');
@@ -2683,10 +3607,231 @@ export function runSelftest(root = ROOT) {
     const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
     const live = subcommandDocErrors(opsctlHeader(src), src);
     results.push({ label: 'opsctl header documents every dispatched subcommand', pass: live.length === 0, errs: live });
+
+    // Stage 9b — every runRender() consumer reads both failure modes.
+    const consumers = renderResultConsumerErrors(src);
+    results.push({ label: 'every runRender() call site checks .errors as well as .drift', pass: consumers.length === 0, errs: consumers });
+    const reverted = src.replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const caughtC = renderResultConsumerErrors(reverted);
+    results.push({ label: 'consumer check catches a call site that drops .errors', pass: caughtC.some((e) => e.includes("checking 'r.errors'")), errs: caughtC });
+    // Both failure modes, or the check only half does its job.
+    // Replace the LAST occurrence: the plant's own needle appears earlier in
+    // this file as a string literal, so a plain .replace() edited the plant
+    // rather than the call site. That went unnoticed while string literals were
+    // still being scanned as code, and became a silent no-op once they were not.
+    const needle = 'const { errors, drift, drifted, wrote } = runRender(';
+    const cut = src.lastIndexOf(needle);
+    const noDrift = src.slice(0, cut) + 'const { errors, drifted, wrote } = runRender(' + src.slice(cut + needle.length);
+    // A line-oriented scan missed ordinary multiline formatting entirely.
+    const multiline = src.replace('  const r = runRender(root, true);', '  const r =\n    runRender(root, true);').replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const caughtM = renderResultConsumerErrors(multiline);
+    results.push({ label: 'consumer check sees a call site split across lines', pass: caughtM.some((e) => e.includes("checking 'r.errors'")), errs: caughtM });
+    // ...and a call shape it cannot inspect must be reported, not passed over.
+    const caughtB = renderResultConsumerErrors(src + '\nfunction sneak() { runRender(ROOT, true); }\n');
+    results.push({ label: 'consumer check reports an uninspectable call shape', pass: caughtB.some((e) => e.includes('cannot inspect')), errs: caughtB });
+    // ...while its own error strings and comments are not call sites.
+    results.push({ label: 'consumer check does not match its own message text', pass: renderResultConsumerErrors(src).length === 0, errs: renderResultConsumerErrors(src) });
+    // ...and the blanking must not have swallowed the source. A stray backtick
+    // in a regex literal did exactly that, and the checks it disabled all
+    // reported success.
+    const sites = countRenderCallSites(src);
+    results.push({ label: 'blanking leaves every runRender() call site visible', pass: sites >= 4, errs: [String(sites)] });
+    const caughtD = renderResultConsumerErrors(noDrift);
+    results.push({ label: 'consumer check catches a call site that drops .drift', pass: caughtD.some((e) => e.includes("without 'drift'")), errs: caughtD });
     const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   wake /.test(l)).join('\n');
     const caught = subcommandDocErrors(gutted, src);
     const hit = caught.some((e) => e.includes("'wake'"));
     results.push({ label: 'header check catches an undocumented subcommand', pass: hit, errs: hit ? [] : caught });
+  }
+
+  // Stage 10 — the human view's completeness. `verify` proves only that the
+  // committed view matches what `render` emits; it cannot notice that `render`
+  // emits nothing at all for a whole contract, and five were in exactly that
+  // state. Every contract must therefore reach the view, including the six that
+  // state no `principle` — an earlier cut exempted those, which Codex correctly
+  // called out as proving nothing for them. Each block is deleted in turn.
+  {
+    const govText = renderGovernance(contracts);
+    results.push({ label: 'generated governance view projects every contract', pass: viewCoverageErrors(contracts, govText).length === 0, errs: viewCoverageErrors(contracts, govText) });
+    results.push({ label: 'no two contracts share a view probe', pass: probeStrengthErrors(contracts, govText).length === 0, errs: probeStrengthErrors(contracts, govText) });
+
+    // Every rendered section, swept generically. A hardcoded section list was
+    // the first attempt and it hid the same bug one level down: contracts that
+    // render several blocks were probed by one value that lived in the earliest
+    // block, so `## Authority tiers`, `### Branch hygiene`, `### Paths`,
+    // `### Canonical documents`, `### Charter exception`, `### Where a question
+    // goes` and `## Owner and deputy` could all be deleted with `verify` still
+    // green (Codex named three; the sweep found seven). Enumerating headings
+    // from the rendered text instead means a section added later is covered the
+    // day it appears, with no list to remember to update.
+    const lines = govText.split('\n');
+    const heads = [];
+    lines.forEach((l, i) => { if (/^#{2,3} /.test(l)) heads.push(i); });
+    let swept = 0;
+    for (let k = 0; k < heads.length; k++) {
+      const a = heads[k];
+      const b = k + 1 < heads.length ? heads[k + 1] : lines.length;
+      // A heading with no body of its own carries no contract data, so its
+      // removal is a formatting loss rather than a policy loss.
+      if (!lines.slice(a + 1, b).some((x) => x.trim())) continue;
+      swept++;
+      const blinded = lines.slice(0, a).concat(lines.slice(b)).join('\n');
+      const errs = viewCoverageErrors(contracts, blinded);
+      results.push({ label: `coverage check catches the deletion of ${JSON.stringify(lines[a])}`, pass: errs.length > 0, errs: errs.length ? [] : ['deleted with no error reported'] });
+    }
+    results.push({ label: 'the section sweep found sections to sweep', pass: swept >= 25, errs: [String(swept)] });
+
+    // Sections were swept; rows were not, and a section survives losing a row.
+    // 53 of 163 rendered rows could be deleted with the gate green, because
+    // most probes were bare ids that also appear in prose elsewhere. Probes are
+    // rendered-row shaped now, and this holds that. Table headers are excluded
+    // on the same ground as a body-less section: losing one is a formatting
+    // loss, not a policy loss.
+    let rows = 0;
+    const undeletable = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      // Table rows AND bullet policy lines. Sweeping only `| ` rows left the
+      // Roles section — which renders as bullets — entirely unswept, so a
+      // role's `May`, `Must`, `Must not` or ceiling line could be dropped with
+      // the gate green. That is the same "I checked one shape and reported it
+      // as all shapes" error the section sweep was written to end.
+      const isRow = /^\| /.test(l) && !/^\|---/.test(l) && !/^\| *[A-Z#]/.test(l);
+      const isPolicyBullet = (/^- /.test(l) || /^  - /.test(l)) && !/:\*\*$/.test(l) && !/:$/.test(l);
+      if (!isRow && !isPolicyBullet) continue;
+      rows++;
+      const without = lines.slice(0, i).concat(lines.slice(i + 1)).join('\n');
+      if (viewCoverageErrors(contracts, without).length === 0) undeletable.push(l.slice(0, 70));
+    }
+    results.push({ label: 'deleting any rendered policy row or bullet fails the coverage gate', pass: undeletable.length === 0, errs: undeletable.slice(0, 8) });
+    results.push({ label: 'the row sweep found rows to sweep', pass: rows >= 100, errs: [String(rows)] });
+
+    // A row can survive losing a COLUMN. Probes that stopped at a prefix let 58
+    // rows across ten tables blank their last cell — including whether an
+    // authority grant is protected, what evidence authorizes it, and an
+    // envelope's actions and validity window. Every table probe is the whole
+    // rendered row now; this is what holds that, since my judgement of which
+    // columns "obviously" needed probing was wrong ten times.
+    let cells = 0;
+    const blankable = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!/^\| /.test(l) || /^\|---/.test(l) || /^\| *[A-Z#]/.test(l)) continue;
+      const parts = l.split('|');
+      if (parts.length < 5) continue;
+      cells++;
+      // Every cell, not just the last: blanking only the trailing one left the
+      // hierarchy rows' actor, role and escalation-parent cells untested.
+      for (let k = 1; k < parts.length - 1; k++) {
+        const cells = parts.slice();
+        cells[k] = ' OMITTED ';
+        const mutated = lines.slice(0, i).concat([cells.join('|')], lines.slice(i + 1)).join('\n');
+        if (viewCoverageErrors(contracts, mutated).length === 0) blankable.push(`${l.slice(0, 50)} [cell ${k}]`);
+      }
+    }
+    results.push({ label: 'blanking any cell of any table row fails the coverage gate', pass: blankable.length === 0, errs: blankable.slice(0, 8) });
+    results.push({ label: 'the column sweep found rows to sweep', pass: cells >= 80, errs: [String(cells)] });
+
+    // Prose paragraphs. Sections, bullets and table cells were each swept; the
+    // sentences between them were not, and 22 of them were unprobed — the
+    // handoff receipt rule, the routing SLA, the lifecycle state list, the
+    // branch-hygiene default, "a changed candidate restarts Gate A", and the
+    // rule that a P-level never selects a model. The three lines of the
+    // generated-projection disclaimer are static text with no contract behind
+    // them, so they are the only exemption.
+    const DISCLAIMER = 'This Markdown is a projection of validated JSON contracts';
+    const disclaimerAt = lines.findIndex((l) => l.startsWith(DISCLAIMER));
+    let prose = 0;
+    const unprobed = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!l.trim() || /^#{1,3} /.test(l) || /^\|/.test(l) || /^- /.test(l) || /^  - /.test(l) || /^\x60\x60\x60/.test(l) || /^<!--/.test(l)) continue;
+      if (disclaimerAt >= 0 && i >= disclaimerAt && i <= disclaimerAt + 2) continue;
+      prose++;
+      const without = lines.slice(0, i).concat(lines.slice(i + 1)).join('\n');
+      if (viewCoverageErrors(contracts, without).length === 0) unprobed.push(l.slice(0, 60));
+    }
+    results.push({ label: 'deleting any rendered prose line fails the coverage gate', pass: unprobed.length === 0, errs: unprobed.slice(0, 8) });
+    results.push({ label: 'the prose sweep found lines to sweep', pass: prose >= 20, errs: [String(prose)] });
+
+    // Unrendered contract fields. No deletion sweep can see these, so the count
+    // is ratcheted: it may fall, never rise. 105 when the audit was written;
+    // 65 once every contract's `rules` block was projected into the view; 55
+    // once each gate's detail block joined it and the audit stopped counting a
+    // correctly escaped value as unrendered.
+    const rtAll = loadRuntime(root);
+    const everything = generatedArtifacts(contracts, rtAll).map((a) => a.text).join('\n');
+    const unrendered = unrenderedFieldPaths(contracts, everything);
+    const RATCHET = 55;
+    results.push({ label: `unrendered contract fields do not grow past ${RATCHET}`, pass: unrendered.length <= RATCHET, errs: unrendered.slice(0, 10) });
+    results.push({ label: 'the unrendered-field audit is actually looking at contracts', pass: unrendered.length < 400, errs: [String(unrendered.length)] });
+
+    // ...and every contract's rules are projected and probed. 41 rule values
+    // across twelve contracts were machine-checked and humanly invisible until
+    // the Enforced invariants section; the probe augmentation means a rule
+    // added tomorrow is probed the same day, so both directions are planted:
+    // a rule whose text drifts from the view, and a rule the view never gained.
+    const drifted = { ...contracts, delegation: { ...contracts.delegation, rules: { ...contracts.delegation.rules, subset_of_parent: 'a child may delegate whatever it likes' } } };
+    const driftErrs = viewCoverageErrors(drifted, govText);
+    results.push({ label: 'a rule reworded in the contract but not the view fails coverage', pass: driftErrs.length > 0, errs: driftErrs });
+    const gained = { ...contracts, raci: { ...contracts.raci, rules: { ...contracts.raci.rules, brand_new_rule: 'a rule nobody projected' } } };
+    const gainedErrs = viewCoverageErrors(gained, govText);
+    results.push({ label: 'a rule added to a contract but absent from the view fails coverage', pass: gainedErrs.length > 0, errs: gainedErrs });
+
+    // ...and a gate's detail block. The gates table carries six columns; the
+    // other nine field paths a gate declares rendered nowhere, and they are the
+    // ones that say what invalidates the gate and what does not satisfy it.
+    // Two gates share an `invalidated_by` value, so a per-bullet probe was
+    // satisfied by the other gate's copy — the probe is the whole block.
+    const gateDrift = { ...contracts, 'promotion-gates': { ...contracts['promotion-gates'], gates: contracts['promotion-gates'].gates.map((g) => (g.id === 'B' ? { ...g, not_satisfied_by: ['a PR alone'] } : g)) } };
+    const gateErrs = viewCoverageErrors(gateDrift, govText);
+    results.push({ label: "a gate's not_satisfied_by narrowed in the contract but not the view fails coverage", pass: gateErrs.length > 0, errs: gateErrs });
+    const gateGain = { ...contracts, 'promotion-gates': { ...contracts['promotion-gates'], gates: contracts['promotion-gates'].gates.map((g) => (g.id === 'A' ? { ...g, blocks_on: ['a condition nobody projected'] } : g)) } };
+    const gainErrs = viewCoverageErrors(gateGain, govText);
+    results.push({ label: 'a gate condition added to the contract but absent from the view fails coverage', pass: gainErrs.length > 0, errs: gainErrs });
+
+    // ...and a contract added with no probe at all must fail rather than skip.
+    const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };
+    const ghost = viewCoverageErrors(withGhost, govText);
+    results.push({ label: 'a contract with no declared view probe is a failure, not a skip', pass: ghost.some((e) => e.includes('declares no view probe')), errs: ghost });
+    // ...and a missing governance artifact is the loudest case, not a skipped one.
+    const rtNow2 = loadRuntime(root);
+    const artsNow = generatedArtifacts(contracts, rtNow2);
+    results.push({ label: 'the governance gate passes on the real artifact list', pass: governanceGateErrors(contracts, artsNow).length === 0, errs: governanceGateErrors(contracts, artsNow) });
+    const without = governanceGateErrors(contracts, artsNow.filter((a) => a.rel !== GENERATED_VIEW));
+    results.push({ label: 'a missing governance view fails rather than skipping the gate', pass: without.some((e) => e.includes('is missing and nothing downstream')), errs: without });
+
+    // ...and a probe shared between two contracts must be reported. Probes are
+    // rendered-row shaped now, so the collision is planted on a principle,
+    // which two contracts can state identically.
+    const shared = probeStrengthErrors({ ...contracts, evidence: { ...contracts.evidence, principle: contracts.qa.principle } }, govText);
+    results.push({ label: 'probe-strength check catches a shared probe value', pass: shared.some((e) => e.includes('lets one contract mask the other')), errs: shared });
+    // ...and a probe that is unique among the declared sets but still appears
+    // in two rendered sections is equally useless, which is how an authority
+    // row survived deletion: its action was also a line in the Roles `may` list.
+    const dupLine = govText.split('\n').find((l) => l.startsWith('Project: **'));
+    const crossSection = probeStrengthErrors(contracts, `${govText}\n## Elsewhere\n\n${dupLine}\n`);
+    results.push({ label: 'probe-strength check catches a probe spanning two rendered sections', pass: crossSection.some((e) => e.includes('rendered sections')), errs: crossSection });
+
+    // ...and a contract value carrying a raw '|' must not be able to split a
+    // rendered row unnoticed. This is planted on owner_role, which is NOT
+    // wrapped in mdCell, precisely because the guard has to hold for the fields
+    // nobody remembered to escape — that is how the delegation scope paths
+    // shipped one commit after the same bug was fixed for seat names.
+    const piped = base();
+    piped['git-ownership'].paths[0].owner_role = 'maker | or whoever';
+    const split = tableShapeErrors(renderGovernance(piped));
+    results.push({ label: "an unescaped '|' in a contract value fails the table-shape gate", pass: split.some((e) => e.includes("unescaped '|'")), errs: split });
+    // ...and the escape has to actually work where it IS applied: the same
+    // pipe, in a field routed through mdCell, must render a well-shaped table.
+    const escaped = base();
+    escaped.delegation.envelopes[0].scope_paths.push('src/a|b/**');
+    const escapedText = renderGovernance(escaped);
+    results.push({ label: 'mdCell keeps a piped scope path inside one cell', pass: tableShapeErrors(escapedText).length === 0 && escapedText.includes('a\\|b'), errs: tableShapeErrors(escapedText) });
+    // ...and the table-shape gate is reachable from the gate the renderer runs,
+    // not merely exported.
+    const shapeGate = governanceGateErrors(piped, [{ rel: GENERATED_VIEW, text: renderGovernance(piped) }]);
+    results.push({ label: 'the governance gate runs the table-shape check', pass: shapeGate.some((e) => e.includes("unescaped '|'")), errs: shapeGate.slice(0, 3) });
   }
 
   const failed = results.filter((r) => !r.pass);
@@ -2744,9 +3889,16 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
     // A seat with no live lease cannot act, and the lease is not its own to
     // reissue — that is an ownership question, so it escalates rather than
     // waking a seat that would immediately stop.
+    // Numeric, and fail-closed: an expiry that does not denote a real instant
+    // cannot be shown to be in the future, so the seat does not act on it.
+    // '<=' on the strings was lexicographic and only worked while every
+    // timestamp happened to be the same fixed-width UTC shape.
+    const lx = lease ? utcInstant(lease.expiry) : null;
+    const nowMs = utcInstant(now) ?? Date.parse(now);
     const dead = !lease ? 'writer lease is missing'
       : lease.revoked ? `writer lease ${lease.id} is revoked`
-      : (lease.expiry <= now) ? `writer lease ${lease.id} expired ${lease.expiry}`
+      : lx === null ? `writer lease ${lease.id} records expiry '${lease.expiry}', which is not a real instant`
+      : (lx <= nowMs) ? `writer lease ${lease.id} expired ${lease.expiry}`
       : null;
     if (dead) { entries.push(escalate(cap, 'technical-blocker', dead)); continue; }
 
@@ -2767,7 +3919,10 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
       kind: 'seat-wake',
       // The capsule's own actor only gets the wake when the contract agrees it
       // may move this state; otherwise the permitted role does, whoever holds it.
-      wake: roles.includes(cap.owner_actor) ? cap.owner_actor : roles[0],
+      // Resolve the owner's ROLE to test permission, but wake the ACTOR: a
+      // lead-owned ticket used to wake 'maker' because the id was compared
+      // against a list of roles and never matched.
+      wake: roles.includes(actorRole(contracts, cap.owner_actor)) ? cap.owner_actor : roles[0],
       eligible_roles: roles,
       reason: `'${cap.lifecycle_state}' is ready to move to ${open.map((m) => m.to).join(' or ')}`,
       next_states: open.map((m) => m.to),
@@ -2986,6 +4141,10 @@ function main(argv) {
     const v = runValidate();
     if (v.errors.length) { console.error('VERIFY FAIL (validate):'); v.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     const r = runRender(ROOT, true);
+    // runRender reports two different failures. Reading only `drift` let a
+    // whole contract go unprojected in silence, which is what this check exists
+    // to prevent — so both are surfaced.
+    if (r.errors && r.errors.length) { console.error('VERIFY FAIL (generated view):'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     if (r.drift) { console.error('VERIFY FAIL: stale generated artifacts; run `node .agentops/tools/opsctl.mjs render`:'); r.drifted.forEach((d) => console.error('  - ' + d)); return 1; }
     console.log('VERIFY OK: contracts + runtime valid, consistent, and all generated views in sync.');
     return 0;

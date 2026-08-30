@@ -30,7 +30,7 @@ Start at [`BOOTSTRAP.md`](BOOTSTRAP.md).
   RECONSTRUCTION-DRILL.md      provider-neutral clean-clone / context-wipe drill spec
   tools/
     opsctl.mjs            validate | render [--check] | verify | wake [--frozen] | drill | command (--dry-run|--apply) | migrate [--plan] | --selftest
-    opsctl.test.mjs       test suite (real corpus + 47 negative plants + reconstruction + owner-command + migration)
+    opsctl.test.mjs       test suite (real corpus + negative plants (see --selftest) + reconstruction + owner-command + migration)
   generated/
     GOVERNANCE.md         generated human view (sole writer: opsctl render)
     reconstruction/<ticket>.wake.txt   frozen wake goldens (drift-gated by verify)

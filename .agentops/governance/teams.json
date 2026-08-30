@@ -189,5 +189,67 @@
       "routes_to": "experience-design",
       "note": "Narrative, copy and documentation clarity."
     }
-  ]
+  ],
+  "naming_convention": {
+    "principle": "A seat's name states what it is, which team it serves and the project, so a roster reads without opening anything.",
+    "persistent_lead": "P | <role> III | <team> | Ashenspire",
+    "agent_seat": "A | <role> | <team> | Ashenspire",
+    "leading_letter_is_seat_kind": "The leading letter is the seat kind, never an authority code: a bare P is a persistent team lead, a bare A is an agent that lead spins out.",
+    "not_the_tier_namespace": "P followed by a number is never a seat kind. P<n> is the authority tier in hierarchy.json, or an issue priority, and the subject decides which \u2014 exactly as the tier contract already says. A bare P and a P2 belong to different namespaces and must not be read as one."
+  },
+  "team_leads": {
+    "principle": "Every team has one persistent lead. The lead is standing; the pod it forms for a ticket is not. Leading a team confers no backlog, no source path and no waiver over independent QA \u2014 those come from git-ownership, an assigned ticket, and qa.json respectively.",
+    "role": "team-lead",
+    "authority_tier": 2,
+    "one_lead_per_team": true,
+    "spins_out": "agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant",
+    "identity_rule": "A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns. Each lead therefore carries its own actor_id and the one team it leads, and any record naming a lead names that actor rather than the shared role.",
+    "leads": [
+      {
+        "actor_id": "lead-art-tech-art",
+        "team": "art-tech-art",
+        "seat_name": "P | Art & Tech Art Lead III | art-tech-art | Ashenspire"
+      },
+      {
+        "actor_id": "lead-feature-architecture",
+        "team": "feature-architecture",
+        "seat_name": "P | Feature Architecture Lead III | feature-architecture | Ashenspire"
+      },
+      {
+        "actor_id": "lead-incident-defect",
+        "team": "incident-defect",
+        "seat_name": "P | Incident & Defect Lead III | incident-defect | Ashenspire"
+      },
+      {
+        "actor_id": "lead-code-quality-modernization",
+        "team": "code-quality-modernization",
+        "seat_name": "P | Code Quality Lead III | code-quality-modernization | Ashenspire"
+      },
+      {
+        "actor_id": "lead-game-systems",
+        "team": "game-systems",
+        "seat_name": "P | Game Systems Lead III | game-systems | Ashenspire"
+      },
+      {
+        "actor_id": "lead-experience-design",
+        "team": "experience-design",
+        "seat_name": "P | Experience Design Lead III | experience-design | Ashenspire"
+      },
+      {
+        "actor_id": "lead-experience-accessibility-review",
+        "team": "experience-accessibility-review",
+        "seat_name": "P | Accessibility Review Lead III | experience-accessibility-review | Ashenspire"
+      },
+      {
+        "actor_id": "lead-qa-guild",
+        "team": "qa-guild",
+        "seat_name": "P | QA Guild Lead III | qa-guild | Ashenspire"
+      },
+      {
+        "actor_id": "lead-platform-release",
+        "team": "platform-release",
+        "seat_name": "P | Platform & Release Lead III | platform-release | Ashenspire"
+      }
+    ]
+  }
 }

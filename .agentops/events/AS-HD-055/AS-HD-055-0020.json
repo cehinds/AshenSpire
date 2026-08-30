@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-055-0020",
+  "ticket": "AS-HD-055",
+  "seq": 20,
+  "parent_event": "AS-HD-055-0019",
+  "kind": "state-change",
+  "actor": "it-manager-iii",
+  "at": "2026-08-29T22:18:42.049Z",
+  "summary": "Second candidate change under review: Codex found the coverage gate still blind to nested sections. Per-contract probes were insufficient; the sweep is now generic over rendered sections. Gate A restarts again. Resealed as revision 17; parent_hash names sha256:2610b860de70254f1e08ce48e5b46736183609987cc8a2666f650a632a9c1340."
+}

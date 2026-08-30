@@ -3,16 +3,48 @@
   "policy_version": "1.0.0",
   "principle": "QA is risk-selected and independent. The verifier of an exact object is never its maker. Only applicable checks run; independent checks run in parallel unless data dependencies require order; every verdict binds to the exact object and a changed identity invalidates only dependent evidence. A waiver is a recorded owner/deputy decision, never a maker's.",
   "risk_classes": [
-    {"id": "low", "required_suites": ["unit"], "independent_qa": false},
-    {"id": "standard", "required_suites": ["unit", "regression", "deterministic-view"], "independent_qa": true},
-    {"id": "high", "required_suites": ["unit", "regression", "deterministic-view", "security", "accessibility", "playtest"], "independent_qa": true}
+    {
+      "id": "low",
+      "required_suites": [
+        "unit"
+      ],
+      "independent_qa": false
+    },
+    {
+      "id": "standard",
+      "required_suites": [
+        "unit",
+        "regression",
+        "deterministic-view"
+      ],
+      "independent_qa": true
+    },
+    {
+      "id": "high",
+      "required_suites": [
+        "unit",
+        "regression",
+        "deterministic-view",
+        "security",
+        "accessibility",
+        "playtest"
+      ],
+      "independent_qa": true
+    }
   ],
   "gates": [
     {
       "id": "accept-standard-object",
       "risk_class": "standard",
-      "required_checks": ["unit", "regression", "deterministic-view"],
-      "required_evidence": ["test-run-receipt", "generated-view-drift-check"],
+      "required_checks": [
+        "unit",
+        "regression",
+        "deterministic-view"
+      ],
+      "required_evidence": [
+        "test-run-receipt",
+        "generated-view-drift-check"
+      ],
       "verifier_role": "qa-independent",
       "independent_of_maker": true,
       "waiver_authority_role": "it-manager-iii"
@@ -20,8 +52,18 @@
     {
       "id": "accept-high-risk-object",
       "risk_class": "high",
-      "required_checks": ["unit", "regression", "deterministic-view", "security", "accessibility"],
-      "required_evidence": ["test-run-receipt", "security-scan-receipt", "hosted-verification-receipt"],
+      "required_checks": [
+        "unit",
+        "regression",
+        "deterministic-view",
+        "security",
+        "accessibility"
+      ],
+      "required_evidence": [
+        "test-run-receipt",
+        "security-scan-receipt",
+        "hosted-verification-receipt"
+      ],
       "verifier_role": "qa-independent",
       "independent_of_maker": true,
       "waiver_authority_role": "owner"
@@ -29,8 +71,13 @@
     {
       "id": "data-contract-clearance",
       "risk_class": "standard",
-      "required_checks": ["schema-lineage", "migration-compatibility"],
-      "required_evidence": ["data-lineage-receipt"],
+      "required_checks": [
+        "schema-lineage",
+        "migration-compatibility"
+      ],
+      "required_evidence": [
+        "data-lineage-receipt"
+      ],
       "verifier_role": "data-architecture-lead",
       "independent_of_maker": true,
       "waiver_authority_role": "it-manager-iii"
@@ -39,6 +86,7 @@
   "rules": {
     "independent_verifier": "verifier_role must be an independent reviewer role and never 'maker'.",
     "waiver_authority": "waiver_authority_role must be owner or it-manager-iii, never a maker or the verifier.",
-    "evidence_has_owner": "every required_evidence id must be a declared evidence type with a producer in evidence.json."
+    "evidence_has_owner": "every required_evidence id must be a declared evidence type with a producer in evidence.json.",
+    "independence_is_not_self_recorded": "A waiver of independence is never recorded by the party it constrains. Any future self-certification mechanism must be carried by a separately authenticated action from the approving role, not by a field the certifying seat writes into its own capsule and reseals."
   }
 }
