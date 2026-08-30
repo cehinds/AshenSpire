@@ -95,6 +95,11 @@ fast-forward also require a full `opsctl verify` before any baseline or scan.
 Replay keys cover every current terminal capsule and are pruned only when that
 terminal identity disappears; only the diagnostic observation history is
 bounded to the latest 100 records.
+
+Unique seat identity and CAS claim-transfer design live at
+[`pipeline-pilot/SEAT_CLAIMS.md`](pipeline-pilot/SEAT_CLAIMS.md). Seat secrets
+never enter Git or wake packets; the current scheduler remains advisory until
+an IT Manager III-issued seat registry and claim are explicitly instantiated.
 Stop that process to deactivate it. Removing its Git-local state resets only
 observability and replay history; it never changes AgentOps claims or history.
 On first start, existing terminal capsules are baselined without emitting
