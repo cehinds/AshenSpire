@@ -365,7 +365,7 @@ async function main() {
           await cdp.send('Page.navigate', { url }, sessionId);
           await waitFor(`document.querySelectorAll('.combat .hand .card').length===${hand}`, `${hand}-card combat`);
           await new Promise((pass) => setTimeout(pass, 240));
-          let exhaustBaseline = {};
+          let exhaustBaseline = null;
 
           for (const state of STATES) {
             if (state === 'armed') {
@@ -390,8 +390,12 @@ async function main() {
               await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
               await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
               await new Promise((pass) => setTimeout(pass, 80));
+              // Keyboard arming may scroll its focused card. Compare the two
+              // renders from one viewport origin so scroll anchoring cannot
+              // masquerade as all five persistent cells moving together.
+              await evaluate(`document.activeElement?.blur(); scrollTo(0,0); true`);
               const beforeExhaust = await settledReading('pre-Exhaust action-row');
-              exhaustBaseline = Object.fromEntries(beforeExhaust.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
+              exhaustBaseline = beforeExhaust;
               await evaluate(`(() => {
                 const combat=window.__combat;
                 const source=combat?.piles?.discard?.[0] || combat?.piles?.draw?.[0] || combat?.piles?.hand?.[0];
@@ -399,6 +403,7 @@ async function main() {
                 if (!combat.piles.exhaust.length) combat.piles.exhaust.push({...source,instanceId:'action-row-probe-exhaust'});
                 window.__renderCombatForShot();
                 document.documentElement.dataset.actionRowProbe='exhaust';
+                scrollTo(0,0);
                 return true;
               })()`);
             } else {
@@ -423,9 +428,15 @@ async function main() {
               'grid children do not escape through absolute positioning', JSON.stringify(now.controls.map((c)=>[c.selector,c.position])));
 
             if (state === 'exhaust') {
+              const baselineControls = Object.fromEntries(exhaustBaseline.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
               const moved = now.controls.filter((c)=>c.visible).filter((c)=>{
-                const was=exhaustBaseline[c.selector];
-                return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.5;
+                const was=baselineControls[c.selector];
+                return !was || Math.max(
+                  Math.abs(c.left-was.left),
+                  Math.abs(c.top-was.top),
+                  Math.abs(c.width-was.width),
+                  Math.abs(c.height-was.height),
+                )>0.5;
               }).map((c)=>c.selector);
               check(moved.length===0, 'showing the nested Exhaust summary preserves every standing action cell', JSON.stringify(moved));
               check(now.discard.summaryExists && now.discard.summaryVisible && /1 Exhaust/.test(now.discard.summaryText)
