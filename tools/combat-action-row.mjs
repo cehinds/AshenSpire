@@ -96,6 +96,13 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
     {
+      name: 'phone radial destinations overlap in the center cell',
+      file: 'styles/combat.css',
+      find: "  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }",
+      replace: "  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 2; }",
+      expectRed: /FAIL radial controls have zero pairwise hit-box intersections/,
+    },
+    {
       name: 'Energy placement leaks out of the solo action-row owner into co-op',
       file: 'styles/combat.css',
       find: '.combat-action-row > .energy-orb {',
@@ -453,6 +460,8 @@ async function main() {
               check(radial.count>=5 && JSON.stringify(radial.targetKinds)===JSON.stringify(['bottom','full','left','right','top'])
                 && radial.named,
               'the radial exposes all five named placement targets', JSON.stringify(radial));
+              check(radial.pairs.length===0,
+                'radial controls have zero pairwise hit-box intersections', JSON.stringify(radial.pairs));
               check(radial.hits.every(Boolean) && radial.onGlass && radial.minTap>=43.99,
                 'radial controls remain center-hittable, on glass, and at least 44px', JSON.stringify(radial));
             }
