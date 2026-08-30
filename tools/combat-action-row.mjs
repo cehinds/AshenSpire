@@ -2,10 +2,10 @@
 // tools/combat-action-row.mjs — #21's single-owner combat action-row gate.
 //
 // The real ?shot=combat door supplies the hand, settings, input wiring, and
-// rendered controls. This instrument measures the five action destinations as
-// one DOM/CSS grid: Energy, End Turn, Draw, Discard, and visible Exhaust. It
-// hit-tests 45 points per control, checks pairwise/card/pager separation, and
-// exercises rest, armed-card, and exhaust-visible states.
+// rendered controls. This instrument measures one five-cell DOM/CSS grid:
+// Armaments, Actions, End Turn, Draw, and Discard. Exhaust remains a nested
+// summary and a two-surface Discard picker, never a sixth rail cell. The same
+// run opens the real Armaments control and hit-tests its five radial positions.
 //
 // Usage:
 //   node tools/combat-action-row.mjs
@@ -42,7 +42,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the five controls lose their one semantic owner',
       file: 'src/ui/screens/combat.js',
-      find: '<div class="combat-action-row" role="group" aria-label="Combat actions">',
+      find: '<div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
       replace: '<div class="combat-action-split" role="group" aria-label="Combat actions">',
       expectRed: /combat-action-row: RED/,
     },
@@ -54,10 +54,10 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
     {
-      name: 'the narrow row stacks every trailing destination into End Turn',
+      name: 'the narrow five-cell row stacks every trailing destination into End Turn',
       file: 'styles/combat.css',
-      find: 'grid-template-areas: "energy end draw exhaust discard";',
-      replace: 'grid-template-areas: "energy end end end end";',
+      find: 'grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(7.5rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));\n    grid-template-areas: "armaments energy end draw discard";',
+      replace: 'grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(7.5rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));\n    grid-template-areas: "armaments end end end end";',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -75,6 +75,27 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
     {
+      name: 'Exhaust leaves the Discard cell and loses its nested summary',
+      file: 'src/ui/screens/combat.js',
+      find: 'ex.hidden = !combat.piles.exhaust.length;',
+      replace: 'ex.hidden = true;',
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'Discard no longer offers the Exhaust pile surface',
+      file: 'src/ui/screens/combat.js',
+      find: "[['Discard pile', combat.piles.discard], ['Exhaust pile', combat.piles.exhaust]]",
+      replace: "[['Discard pile', combat.piles.discard]]",
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'the Armaments radial loses its full destination',
+      file: 'src/ui/screens/combat.js',
+      find: "radialItems.push({ target: 'full', label: 'Full Armaments', detail: 'Open' });",
+      replace: '// planted: full Armaments destination removed',
+      expectRed: /combat-action-row: RED/,
+    },
+    {
       name: 'Energy placement leaks out of the solo action-row owner into co-op',
       file: 'styles/combat.css',
       find: '.combat-action-row > .energy-orb {',
@@ -89,7 +110,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
   ];
-  const coopPlants = sourcePlants.splice(5);
+  const coopPlants = sourcePlants.splice(-2);
   let code = await doorSelftest({
     tool: 'combat-action-row.mjs',
     args: ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '8'],
@@ -192,7 +213,7 @@ function connectCdp(wsUrl) {
 }
 
 const STATES = ['rest', 'armed', 'exhaust'];
-const CONTROL_SELECTORS = ['.energy-orb', '.end-turn', '.pile.draw', '.pile.discard', '.pile.exhaust'];
+const CONTROL_SELECTORS = ['.armaments-command', '.energy-orb', '.end-turn', '.pile.draw', '.pile.discard'];
 
 async function main() {
   const served = standalone ? null : await serve({ root: ROOT, port: 8321, open: false });
@@ -283,12 +304,22 @@ async function main() {
         ...pages.filter((item)=>intersects(control,item)).map(()=>[control.selector,'pager']),
       ]);
       const grid=owner?getComputedStyle(owner):null;
+      const discard=owner?.querySelector('.pile.discard');
+      const exhaustSummary=discard?.querySelector('.exhaust-summary');
       return {
         layout:document.documentElement.dataset.layout||null,
         composition:document.documentElement.dataset.composition||null,
         state:document.documentElement.dataset.actionRowProbe||'rest',
         owner:{exists:!!owner,display:grid?.display||null,columns:grid?.gridTemplateColumns||null},
         owned:!!owner&&selectors.every((selector)=>owner.contains(document.querySelector(selector))),
+        discard:{
+          exists:!!discard,
+          role:discard?.getAttribute('role')||discard?.tagName?.toLowerCase()||null,
+          aria:discard?.getAttribute('aria-label')||'',
+          summaryExists:!!exhaustSummary,
+          summaryVisible:visible(exhaustSummary),
+          summaryText:exhaustSummary?.textContent||'',
+        },
         controls,pairs,foreign,
         onGlass:shown.every((r)=>r.left>=-0.25&&r.top>=-0.25&&r.right<=innerWidth+0.25&&r.bottom<=innerHeight+0.25),
         minTap:shown.length?Math.min(...shown.map((r)=>Math.min(r.width,r.height))):0,
@@ -312,7 +343,7 @@ async function main() {
           await new Promise((pass) => setTimeout(pass, 240));
 
           const beforeExhaust = await reading();
-          const stable = Object.fromEntries(beforeExhaust.controls.filter((c)=>c.visible&&c.selector!=='.pile.exhaust').map((c)=>[c.selector,c]));
+          const stable = Object.fromEntries(beforeExhaust.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
 
           for (const state of STATES) {
             if (state === 'armed') {
@@ -338,8 +369,11 @@ async function main() {
               await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
               await new Promise((pass) => setTimeout(pass, 80));
               await evaluate(`(() => {
-                const pile=document.querySelector('.pile.exhaust');
-                pile.style.display=''; pile.querySelector('.n').textContent='1';
+                const combat=window.__combat;
+                const source=combat?.piles?.discard?.[0] || combat?.piles?.draw?.[0] || combat?.piles?.hand?.[0];
+                if (!combat || !source || typeof window.__renderCombatForShot!=='function') return false;
+                if (!combat.piles.exhaust.length) combat.piles.exhaust.push({...source,instanceId:'action-row-probe-exhaust'});
+                window.__renderCombatForShot();
                 document.documentElement.dataset.actionRowProbe='exhaust';
                 return true;
               })()`);
@@ -352,7 +386,9 @@ async function main() {
             const tag = `${shape.width}x${shape.height} Text ${text}, hand ${hand}, ${state}, ${standalone ? 'root' : 'source'}`;
             console.log(`\n  ${tag}`);
             check(now.owner.exists && now.owner.display === 'grid' && now.owned,
-              'one semantic grid owns Energy, End Turn, Draw, Discard, and Exhaust', JSON.stringify(now.owner));
+              'one semantic grid owns Armaments, Actions, End Turn, Draw, and Discard', JSON.stringify(now.owner));
+            check((now.owner.columns?.match(/px/g)||[]).length===5,
+              'the action rail resolves to exactly five grid tracks', JSON.stringify(now.owner));
             check(now.pairs.length === 0, 'action controls have zero pairwise hit-box intersections', JSON.stringify(now.pairs));
             check(now.foreign.length === 0, 'action controls intersect no card or pager', JSON.stringify(now.foreign));
             check(now.onGlass && now.minTap >= 43.99,
@@ -363,11 +399,62 @@ async function main() {
               'grid children do not escape through absolute positioning', JSON.stringify(now.controls.map((c)=>[c.selector,c.position])));
 
             if (state === 'exhaust') {
-              const moved = now.controls.filter((c)=>c.visible&&c.selector!=='.pile.exhaust').filter((c)=>{
+              const moved = now.controls.filter((c)=>c.visible).filter((c)=>{
                 const was=stable[c.selector];
                 return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.5;
               }).map((c)=>c.selector);
-              check(moved.length===0, 'showing Exhaust preserves every standing action cell', JSON.stringify(moved));
+              check(moved.length===0, 'showing the nested Exhaust summary preserves every standing action cell', JSON.stringify(moved));
+              check(now.discard.summaryExists && now.discard.summaryVisible && /1 Exhaust/.test(now.discard.summaryText)
+                && /Exhaust pile, 1/.test(now.discard.aria),
+              'Discard carries the visible Exhaust summary and accessible count', JSON.stringify(now.discard));
+
+              const opened = await click('.pile.discard');
+              if (opened) await new Promise((pass) => setTimeout(pass, 80));
+              const pileSurface = await evaluate(`(() => {
+                const modal=document.querySelector('.pile-surface-picker');
+                const buttons=[...(modal?.querySelectorAll('button')||[])];
+                const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
+                return {
+                  exists:!!modal,
+                  labels:buttons.map((button)=>button.textContent.trim()),
+                  focused:buttons.indexOf(document.activeElement),
+                  onGlass:buttons.every((button)=>{const r=rect(button);return r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25}),
+                  minTap:buttons.length?Math.min(...buttons.map((button)=>{const r=rect(button);return Math.min(r.width,r.height)})):0,
+                };
+              })()`);
+              check(opened && pileSurface.exists && pileSurface.labels.length===2
+                && pileSurface.labels.some((label)=>label.startsWith('Discard pile'))
+                && pileSurface.labels.some((label)=>label.startsWith('Exhaust pile')),
+              'Discard opens the two real pile surfaces', JSON.stringify(pileSurface));
+              check(pileSurface.focused===0 && pileSurface.onGlass && pileSurface.minTap>=43.99,
+                'the pile-surface picker focuses first and keeps 44px controls on glass', JSON.stringify(pileSurface));
+              await evaluate(`document.querySelector('.pile-surface-picker')?.closest('.modal-veil')?.remove(); true`);
+
+              const radialOpened = await click('.armaments-command');
+              if (radialOpened) await new Promise((pass) => setTimeout(pass, 80));
+              const radial = await evaluate(`(() => {
+                const root=document.querySelector('.armament-radial');
+                const anchor=document.querySelector('.armaments-command');
+                const buttons=[...(root?.querySelectorAll('.armament-radial-target')||[])];
+                const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
+                const intersects=(a,b)=>a.left<b.right-.25&&a.right>b.left+.25&&a.top<b.bottom-.25&&a.bottom>b.top+.25;
+                const rows=buttons.map((button)=>({target:button.dataset.radialTarget,label:button.getAttribute('aria-label')||'',...rect(button)}));
+                const pairs=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++)if(intersects(rows[i],rows[j]))pairs.push([i,j]);
+                const hits=buttons.map((button)=>{const r=rect(button),node=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);return !!(node&&(node===button||button.contains(node)))});
+                return {
+                  exists:!!root,hidden:root?.hidden??true,role:root?.getAttribute('role')||'',expanded:anchor?.getAttribute('aria-expanded')||'',
+                  count:rows.length,targetKinds:[...new Set(rows.map((row)=>row.target))].sort(),named:rows.every((row)=>!!row.label),pairs,hits,
+                  onGlass:rows.every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
+                  minTap:rows.length?Math.min(...rows.map((r)=>Math.min(r.width,r.height))):0,
+                };
+              })()`);
+              check(radialOpened && radial.exists && !radial.hidden && radial.role==='menu' && radial.expanded==='true',
+                'Armaments opens its real menu and reports expanded state', JSON.stringify(radial));
+              check(radial.count>=5 && JSON.stringify(radial.targetKinds)===JSON.stringify(['bottom','full','left','right','top'])
+                && radial.named,
+              'the radial exposes all five named placement targets', JSON.stringify(radial));
+              check(radial.hits.every(Boolean) && radial.onGlass && radial.minTap>=43.99,
+                'radial controls remain center-hittable, on glass, and at least 44px', JSON.stringify(radial));
             }
 
             const capture = shots && (only || ((shape.width===390&&shape.height===844&&text==='XL'&&hand===8&&state==='rest')
@@ -433,8 +520,8 @@ async function main() {
           check(coop.direct && coop.ownerAbsent, 'co-op controls remain direct children outside the solo owner', JSON.stringify({direct:coop.direct,ownerAbsent:coop.ownerAbsent}));
           check(coop.fullHand, 'co-op hand keeps the full available row width', JSON.stringify({area:coop.area.width,hand:coop.hand.width}));
           check(coop.pairClear && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairClear:coop.pairClear,cardsClear:coop.cardsClear}));
-          check(coop.onGlass && coop.hitCounts[0]>=37 && coop.hitCounts[1]===45,
-            'co-op Energy keeps its circular hit area and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,hits:coop.hitCounts}));
+          check(coop.onGlass && Math.min(coop.energy.width,coop.energy.height)>=43.99 && coop.hitCounts[1]===45,
+            'co-op Energy keeps visible 44px geometry and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,energy:coop.energy,hits:coop.hitCounts}));
           check(narrow
             ? coop.areas.includes('"hand hand"') && coop.areas.includes('"orb end"') && coop.energyPosition==='static' && coop.endPosition==='static' && coop.energyArea==='orb' && coop.endArea==='end'
             : coop.energyPosition==='absolute' && coop.endPosition==='absolute',
