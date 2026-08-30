@@ -592,13 +592,27 @@ export function semanticChecks(c, now = new Date().toISOString()) {
         const seg = l.seat_name.split('|').map((x) => x.trim());
         if (seg.length !== 4) errors.push(`teams: lead '${l.actor_id}' seat_name ${JSON.stringify(l.seat_name)} is not the four-segment 'P | <role> III | <team> | Ashenspire' form`);
         else {
-          // Validating only the team segment left the other three free:
-          // 'P | Definitely Not A Lead | art-tech-art | OtherProject' passed.
-          if (seg[0] !== 'P') errors.push(`teams: lead '${l.actor_id}' seat_name starts with '${seg[0]}', not the 'P' persistent-seat marker`);
-          if (!/\bIII$/.test(seg[1])) errors.push(`teams: lead '${l.actor_id}' seat_name role segment '${seg[1]}' does not end in the 'III' the convention requires`);
-          if (!/lead/i.test(seg[1])) errors.push(`teams: lead '${l.actor_id}' seat_name role segment '${seg[1]}' does not name a lead`);
-          if (seg[2] !== l.team) errors.push(`teams: lead '${l.actor_id}' leads '${l.team}' but its seat_name's team segment says '${seg[2]}'`);
-          if (seg[3] !== 'Ashenspire') errors.push(`teams: lead '${l.actor_id}' seat_name names project '${seg[3]}', not 'Ashenspire'`);
+          // Derived from naming_convention.persistent_lead rather than hardcoded:
+        // the template and the roster checks were two separate statements of
+        // the same rule, so the template could drift to 'P | nonsense' while
+        // the roster still validated against the old shape.
+        const tpl = c.teams.naming_convention ? c.teams.naming_convention.persistent_lead.split('|').map((x) => x.trim()) : null;
+        if (tpl && tpl.length === seg.length) {
+          for (let i = 0; i < tpl.length; i++) {
+            const ph = tpl[i].match(/^(.*?)<([a-z]+)>(.*)$/);
+            if (!ph) {                                  // a fixed segment
+              if (seg[i] !== tpl[i]) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} is '${seg[i]}', but the convention fixes it as '${tpl[i]}'`);
+              continue;
+            }
+            const [, pre, name, post] = ph;
+            if (pre && !seg[i].startsWith(pre)) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} does not start with '${pre}' as the convention requires`);
+            if (post && !seg[i].endsWith(post)) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} '${seg[i]}' does not end with '${post}' as the convention requires`);
+            const value = seg[i].slice(pre.length, seg[i].length - post.length).trim();
+            if (!value) errors.push(`teams: lead '${l.actor_id}' seat_name segment ${i + 1} supplies no <${name}>`);
+            else if (name === 'team' && value !== l.team) errors.push(`teams: lead '${l.actor_id}' leads '${l.team}' but its seat_name's team segment says '${value}'`);
+            else if (name === 'role' && !/lead/i.test(value)) errors.push(`teams: lead '${l.actor_id}' seat_name role segment '${value}' does not name a lead`);
+          }
+        }
         }
       }
       // Every team gets a lead, or the ones left out have no approver and the
@@ -630,6 +644,17 @@ export function semanticChecks(c, now = new Date().toISOString()) {
     if (c.teams.naming_convention) {
       const nc = c.teams.naming_convention;
       if (!/^P\s*\|/.test(nc.persistent_lead)) errors.push(`teams: naming_convention.persistent_lead '${nc.persistent_lead}' does not begin with the P seat-kind marker`);
+      // Prefix-only checks accepted 'P | nonsense', leaving the convention
+      // describing a shape nothing in the roster actually has.
+      for (const [field, marker, needs] of [['persistent_lead', 'P', ['<role>', '<team>']], ['agent_seat', 'A', ['<role>', '<team>']]]) {
+        const parts = nc[field].split('|').map((x) => x.trim());
+        if (parts.length !== 4) errors.push(`teams: naming_convention.${field} '${nc[field]}' is not four '|'-separated segments`);
+        else {
+          if (parts[0] !== marker) errors.push(`teams: naming_convention.${field} starts with '${parts[0]}', not the '${marker}' seat-kind marker`);
+          if (parts[3] !== 'Ashenspire') errors.push(`teams: naming_convention.${field} names project '${parts[3]}', not 'Ashenspire'`);
+        }
+        for (const ph of needs) if (!nc[field].includes(ph)) errors.push(`teams: naming_convention.${field} declares no ${ph} placeholder, so it constrains nothing`);
+      }
       if (!/^A\s*\|/.test(nc.agent_seat)) errors.push(`teams: naming_convention.agent_seat '${nc.agent_seat}' does not begin with the A seat-kind marker`);
       if (/^P[0-9]/.test(nc.persistent_lead)) errors.push('teams: naming_convention.persistent_lead uses a numbered P, which is the authority-tier namespace, not a seat kind');
       if (!/P<n>|P[0-9]/.test(nc.not_the_tier_namespace)) errors.push('teams: naming_convention does not distinguish the bare seat-kind P from the numbered authority tier; the two namespaces would be read as one');
@@ -1026,7 +1051,7 @@ export function renderGovernance(c) {
       L.push('');
       L.push('| Team | Lead actor | Seat |');
       L.push('|---|---|---|');
-      for (const l of tl.leads) L.push(`| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`);
+      for (const l of tl.leads) L.push(`| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name.replace(/\|/g, '\\|')} |`);
     }
     if (c.teams.naming_convention) {
       const nc = c.teams.naming_convention;
@@ -2569,7 +2594,7 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].join('\n')),
-  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name.replace(/\|/g, '\\|')} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
 
@@ -3194,13 +3219,15 @@ export function runSelftest(root = ROOT) {
   // A substring match accepted a seat name whose team segment named another team.
   expectSemantic('team lead: a seat name whose team segment is a different team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | art-tech-art Lead III | qa-guild | Ashenspire'; }, "team segment says 'qa-guild'");
   // Validating only the team segment left the other three free.
-  expectSemantic('team lead: a seat name for another project', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead III | art-tech-art | OtherProject'; }, "not 'Ashenspire'");
-  expectSemantic('team lead: a seat name whose role segment names no lead', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Definitely Not One III | art-tech-art | Ashenspire'; }, 'does not name a lead');
-  expectSemantic('team lead: a seat name missing the III level', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead | art-tech-art | Ashenspire'; }, "does not end in the 'III'");
-  expectSemantic('team lead: a seat name marked as an agent seat', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | Art Lead III | art-tech-art | Ashenspire'; }, "not the 'P' persistent-seat marker");
-  expectSemantic('team lead: a seat name that is not four segments', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | art-tech-art | Ashenspire'; }, 'is not the four-segment');
-  expectSemantic('team lead: a node carrying some other role', (c) => { c.hierarchy.nodes.find((n) => n.actor_id === 'lead-qa-guild').role = 'maker'; }, "not 'team-lead'; its runtime authority would be resolved from the wrong role");
-  expectSemantic('team lead: a rostered lead with no node at all', (c) => { c.hierarchy.nodes = c.hierarchy.nodes.filter((n) => n.actor_id !== 'lead-qa-guild'); }, 'has no hierarchy node, so it cannot hold work');
+  // Seat names are validated against the declared template, so both the
+  // template and the names it governs are planted.
+  expectSemantic('naming: a template that declares no segments', (c) => { c.teams.naming_convention.persistent_lead = 'P | nonsense'; }, 'is not four');
+  expectSemantic('naming: an agent-seat template with no placeholders', (c) => { c.teams.naming_convention.agent_seat = 'A | x | y | Ashenspire'; }, 'declares no <role>');
+  expectSemantic('naming: a template naming another project', (c) => { c.teams.naming_convention.persistent_lead = 'P | <role> III | <team> | OtherProject'; }, "not 'Ashenspire'");
+  expectSemantic('team lead: a seat name for another project', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead III | art-tech-art | Other'; }, 'fixes it as');
+  expectSemantic('team lead: a seat name missing the III level', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead | art-tech-art | Ashenspire'; }, 'does not end with');
+  expectSemantic('team lead: a seat name whose role names no lead', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Something III | art-tech-art | Ashenspire'; }, 'does not name a lead');
+  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead III | qa-guild | Ashenspire'; }, 'team segment says');
   expectSemantic('team lead: an actor in no authority tier', (c) => {
     const lv = c.hierarchy.authority_tiers.levels.find((l) => l.p === 2);
     lv.actors = lv.actors.filter((a) => a !== 'lead-qa-guild');

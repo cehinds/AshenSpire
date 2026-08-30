@@ -347,15 +347,15 @@ A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the r
 
 | Team | Lead actor | Seat |
 |---|---|---|
-| `art-tech-art` | `lead-art-tech-art` | P | Art & Tech Art Lead III | art-tech-art | Ashenspire |
-| `feature-architecture` | `lead-feature-architecture` | P | Feature Architecture Lead III | feature-architecture | Ashenspire |
-| `incident-defect` | `lead-incident-defect` | P | Incident & Defect Lead III | incident-defect | Ashenspire |
-| `code-quality-modernization` | `lead-code-quality-modernization` | P | Code Quality Lead III | code-quality-modernization | Ashenspire |
-| `game-systems` | `lead-game-systems` | P | Game Systems Lead III | game-systems | Ashenspire |
-| `experience-design` | `lead-experience-design` | P | Experience Design Lead III | experience-design | Ashenspire |
-| `experience-accessibility-review` | `lead-experience-accessibility-review` | P | Accessibility Review Lead III | experience-accessibility-review | Ashenspire |
-| `qa-guild` | `lead-qa-guild` | P | QA Guild Lead III | qa-guild | Ashenspire |
-| `platform-release` | `lead-platform-release` | P | Platform & Release Lead III | platform-release | Ashenspire |
+| `art-tech-art` | `lead-art-tech-art` | P \| Art & Tech Art Lead III \| art-tech-art \| Ashenspire |
+| `feature-architecture` | `lead-feature-architecture` | P \| Feature Architecture Lead III \| feature-architecture \| Ashenspire |
+| `incident-defect` | `lead-incident-defect` | P \| Incident & Defect Lead III \| incident-defect \| Ashenspire |
+| `code-quality-modernization` | `lead-code-quality-modernization` | P \| Code Quality Lead III \| code-quality-modernization \| Ashenspire |
+| `game-systems` | `lead-game-systems` | P \| Game Systems Lead III \| game-systems \| Ashenspire |
+| `experience-design` | `lead-experience-design` | P \| Experience Design Lead III \| experience-design \| Ashenspire |
+| `experience-accessibility-review` | `lead-experience-accessibility-review` | P \| Accessibility Review Lead III \| experience-accessibility-review \| Ashenspire |
+| `qa-guild` | `lead-qa-guild` | P \| QA Guild Lead III \| qa-guild \| Ashenspire |
+| `platform-release` | `lead-platform-release` | P \| Platform & Release Lead III \| platform-release \| Ashenspire |
 
 ### Seat naming
 
