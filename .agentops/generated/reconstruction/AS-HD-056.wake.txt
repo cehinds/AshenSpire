@@ -6,12 +6,12 @@ DONE-WHEN  : A specification exists for an owner-facing view generated determini
 AUTHORITY  : may implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths, edit-generated-build-output-without-source | expiry 2026-10-31T23:59:59Z
 FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
 REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-056
-BASE       : 0b47f2b15467dbadba062a86e9ff1a3a7b338c8e tree recovered-from-hub-snapshot dirty=clean
+BASE       : 7bcc9ed08d3a5cc3bc77238851309d27308a78e9 tree recovered-from-hub-snapshot dirty=clean
 NEXT ACTION: Audit the committed Hub output against live control-plane state, record exactly which sections are stale and which are unrecoverable, then specify the regenerable replacement. Do not edit review-approval-hub/** - it is build output with no source in this repository and would be clobbered by any rebuild.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
 REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : —
-SOURCE     : 0b47f2b15467dbadba062a86e9ff1a3a7b338c8e
-FRESHNESS  : as-recorded (base 0b47f2b15467); verify live HEAD out-of-band
+SOURCE     : 7bcc9ed08d3a5cc3bc77238851309d27308a78e9
+FRESHNESS  : as-recorded (base 7bcc9ed08d3a); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
 BLOCKER    : {"kind":"evidence-loss","escalation_class":"technical-blocker","summary":"review-approval-hub/ is committed build output (1457 files) with no source on any branch: no package.json, no next.config, no app directory. It cannot be rebuilt or safely edited. Its content has already drifted from the control plane, which now records 8 tickets and 0 owner decisions pending."}

@@ -44,6 +44,18 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // `generator` is the sole writer of .agentops/generated/** (opsctl render).
 const SYNTHETIC_ROLES = new Set(['generator']);
 
+// The actor a machine process writes under when it appends on its own account.
+// A process acting on a seat's behalf must never carry that seat's actor:
+// evidence.json binds a producer to an exact object, and an event signed
+// `maker` that no maker performed binds a producer who did not produce.
+// Ruling AS-HD-029-0052, point 3.
+export const TOOL_ACTOR = 'opsctl';
+// Events recorded before that ruling carry seat actors for tool-initiated
+// reseats. The ledger is append-only and history rewrite is protected, so they
+// stand permanently and AS-HD-029-0052 is their correction of record. The check
+// below therefore binds only events recorded from the ruling forward.
+export const TOOL_ACTOR_EFFECTIVE = '2026-08-30T02:14:08Z';
+
 // ---------------------------------------------------------------------------
 // Strict JSON parser: rejects duplicate keys within an object (native
 // JSON.parse silently keeps the last). Returns the parsed value or throws.
@@ -1035,6 +1047,18 @@ export function renderGovernance(c) {
   dep.included_actions.forEach((x) => L.push(`    - ${x}`));
   L.push('  - Excluded actions:');
   dep.excluded_actions.forEach((x) => L.push(`    - ${x}`));
+  // The grant's own window. It rendered nowhere, so the document said what the
+  // deputy may do without saying when the grant starts, when it ends, or what
+  // replaces it.
+  L.push(`  - Grant window: effective \`${dep.effective}\`, expiry \`${dep.expiry}\`. ${dep.supersession}`);
+  const auto = c['owner-intent'].default_autonomy;
+  L.push(`- **Default autonomy:** reversible local work is \`${auto.reversible_local_work}\`. ${auto.description}`);
+  const ovr = c['owner-intent'].override_rules;
+  L.push('- **Override rules:**');
+  L.push(`  - Recording: ${ovr.recording}`);
+  L.push(`  - Invalidation: ${ovr.invalidation}`);
+  L.push('  - An override may never:');
+  ovr.forbidden.forEach((x) => L.push(`    - ${x}`));
   L.push('');
 
   L.push('## Hierarchy and escalation');
@@ -1047,6 +1071,8 @@ export function renderGovernance(c) {
   const er = c.hierarchy.escalation_routing;
   L.push('');
   L.push(`Routing SLA: deputy custody at ${er.deputy_custody_at_minutes} min, owner-overdue at ${er.deputy_overdue_to_owner_at_minutes} min. Immediate-to-owner classes: ${er.immediate_owner_classes.join(', ')}.`);
+  L.push('');
+  L.push(er.note);
   L.push('');
 
   L.push('## Roles');
@@ -1094,9 +1120,11 @@ export function renderGovernance(c) {
     L.push('');
     L.push(bh.principle);
     L.push('');
-    L.push(`Default: \`${bh.default_update_method}\`. Rewriting a branch that is not the acting role's own needs \`${bh.permission_role}\`; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
+    L.push(`Default: \`${bh.default_update_method}\`. Rewriting needs \`${bh.permission_role}\` when ${bh.rewrite_requires_permission_when}; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
   }
   L.push('');
+    L.push(`Generated lane \`${c['git-ownership'].generated_serialization.lane}\`: ${c['git-ownership'].generated_serialization.rule}`);
+    L.push('');
   L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
   L.push('');
 
@@ -1139,7 +1167,7 @@ export function renderGovernance(c) {
     L.push('');
     L.push('### Capability pools');
     L.push('');
-    L.push('Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.');
+    L.push(`Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease. ${c.teams.pool_rules.note}`);
     L.push('');
     L.push('| Pool | Delivery capability | Stewardship between tickets |');
     L.push('|---|---|---|');
@@ -1175,6 +1203,19 @@ export function renderGovernance(c) {
       L.push('');
       L.push(`${nc.leading_letter_is_seat_kind} ${nc.not_the_tier_namespace}`);
     }
+    // What a seat may do with spare capacity is policy, not a footnote: it is
+    // the line between an idle seat auditing and an idle seat patching.
+    L.push('');
+    L.push('### Work in progress');
+    L.push('');
+    L.push(`Idle capacity: ${c.teams.wip_limits.idle_capacity}`);
+    L.push('');
+    L.push('### Legacy team names');
+    L.push('');
+    L.push('| Legacy name | Routes to | Why |');
+    L.push('|---|---|---|');
+    for (const a of c.teams.legacy_aliases) L.push(`| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`);
+    L.push('');
   }
   L.push('');
 
@@ -1217,6 +1258,11 @@ export function renderGovernance(c) {
       L.push(`| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' → ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`);
     }
     L.push('');
+    // The hazard each class exists to answer. It named the reason a route
+    // exists and rendered nowhere, so the table said where a thing goes without
+    // saying what it is for.
+    for (const cl of c.escalation.classes) L.push(`- \`${cl.id}\` — ${cl.hazard}`);
+    L.push('');
     if (c.escalation.ticket_flow) {
       const tf = c.escalation.ticket_flow;
       L.push('### Where a question goes');
@@ -1249,6 +1295,17 @@ export function renderGovernance(c) {
       L.push(`| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`);
     }
     L.push('');
+    // The legacy map. Old status values still appear in recovered evidence, and
+    // how each is read now decided whether that evidence is misread. It
+    // rendered nowhere.
+    if (c.transitions.legacy_values) {
+      L.push(c.transitions.legacy_rule);
+      L.push('');
+      L.push('| Legacy value | Canonical treatment |');
+      L.push('|---|---|');
+      for (const lv of c.transitions.legacy_values) L.push(`| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`);
+      L.push('');
+    }
   }
 
   if (c['information-access']) {
@@ -1301,6 +1358,10 @@ export function renderGovernance(c) {
     if (at.disambiguation) {
       L.push(`**P-codes mean two things.** ${at.disambiguation.rule} Authority subjects: ${at.disambiguation.authority_subjects.map((x) => '`' + x + '`').join(', ')}. Priority subjects: ${at.disambiguation.priority_subjects.map((x) => '`' + x + '`').join(', ')}.`);
       L.push('');
+      L.push(at.namespace_note);
+      L.push('');
+      L.push(at.disambiguation.known_ambiguous_artifact);
+      L.push('');
     }
     L.push('| Tier | Who | Holds | Cannot |');
     L.push('|---|---|---|---|');
@@ -1326,6 +1387,18 @@ export function renderGovernance(c) {
     L.push('');
     L.push(`The promotion packet carries ${d.promotion_packet.required_fields.length} required fields; missing, contradictory, stale or unverified is \`UNKNOWN\`, and \`UNKNOWN\` blocks.`);
     L.push('');
+    for (const f of d.promotion_packet.required_fields) L.push(`- ${f}`);
+    L.push('');
+    // What promotion readiness does and does not mean, and which actions stay
+    // the Owner's whatever a packet says. All three rendered nowhere.
+    L.push(`Promotion readiness means: ${d.promotion_readiness.means} It does not mean: ${d.promotion_readiness.does_not_mean} These stay owner-exclusive whatever the packet says: ${d.promotion_readiness.owner_exclusive_actions.join(', ')}.`);
+    L.push('');
+    L.push(`Delivery process: ${d.dev_delivery.process} ${d.dev_delivery.waiting_does_not_authorize}`);
+    L.push('');
+    L.push(`A Pages switch is complete only when ${d.pages.complete_only_when.join(' and ')}. The switch packet records:`);
+    L.push('');
+    for (const r of d.pages.switch_packet_records) L.push(`- ${r}`);
+    L.push('');
   }
 
   if (c['model-effort']) {
@@ -1342,6 +1415,9 @@ export function renderGovernance(c) {
       L.push(`| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`);
     }
     L.push('');
+    L.push(`Selection stability: ${me.stability} Substitution: ${me.substitution}`);
+    L.push('');
+    L.push(`Every assignment record carries: ${me.assignment_record.required_fields.join(', ')}.`);
     L.push('');
   }
 
@@ -1350,10 +1426,10 @@ export function renderGovernance(c) {
     L.push('');
     L.push(c['owner-command'].principle);
     L.push('');
-    L.push('| Action | Authenticator roles | CAS | Protected |');
-    L.push('|---|---|---|---|');
+    L.push('| Action | Authenticator roles | CAS | Protected | Required fields | Affects |');
+    L.push('|---|---|---|---|---|---|');
     for (const a of c['owner-command'].actions) {
-      L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`);
+      L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.required_fields.map((f) => '\`' + f + '\`').join(', ')} | ${mdCell(a.affects)} |`);
     }
     L.push('');
   }
@@ -1370,10 +1446,10 @@ export function renderGovernance(c) {
     L.push('');
     L.push(c.evidence.principle);
     L.push('');
-    L.push('| Evidence | Producer | Exact object | Verifier | Invalidation keys |');
-    L.push('|---|---|---|---|---|');
+    L.push('| Evidence | Producer | Exact object | Verifier | Invalidation keys | Freshness |');
+    L.push('|---|---|---|---|---|---|');
     for (const e of c.evidence.evidence) {
-      L.push(`| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`);
+      L.push(`| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`);
     }
     L.push('');
   }
@@ -1702,6 +1778,23 @@ export function runtimeChecks(g, rt) {
   }
 
   // Append-only event chains per ticket: one genesis, contiguous seq, unbroken parent chain.
+  // Ruling AS-HD-029-0052 point 3, enforced: a tool-initiated reseat must carry
+  // the process as its actor. An event signed `maker` that no maker performed
+  // binds a producer who did not produce, which is exactly what evidence.json
+  // forbids — and it is invisible, because the event validates in every other
+  // respect. Bound to events recorded from the ruling forward; the 423 that
+  // predate it stand permanently under an append-only ledger and are corrected
+  // by AS-HD-029-0052 itself, not by a rewrite.
+  for (const [ticket, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      if (!/^Reseated from /.test(ev.summary || '')) continue;
+      if (Date.parse(ev.at) < Date.parse(TOOL_ACTOR_EFFECTIVE)) continue;
+      if (ev.actor !== TOOL_ACTOR) {
+        errors.push(`event '${ev.id}' records a reseat under actor '${ev.actor}', but no seat performed it; a process appending on a seat's behalf names itself ('${TOOL_ACTOR}'), per ruling AS-HD-029-0052`);
+      }
+    }
+  }
+
   for (const [ticket, list] of Object.entries(rt.events)) {
     let prevId = null;
     list.forEach((ev, i) => {
@@ -2696,21 +2789,32 @@ const VIEW_PROBES = {
   delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
     `a candidate already on \`${x.pages.switch_requires.candidate_must_have_reached}\``,
-    `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
-  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, x.branch_hygiene.alternative_when_permission_is_absent, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
-  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
+    `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`,
+    ...x.promotion_packet.required_fields.map((f) => `- ${f}`),
+    `Promotion readiness means: ${x.promotion_readiness.means} It does not mean: ${x.promotion_readiness.does_not_mean} These stay owner-exclusive whatever the packet says: ${x.promotion_readiness.owner_exclusive_actions.join(', ')}.`,
+    `Delivery process: ${x.dev_delivery.process} ${x.dev_delivery.waiting_does_not_authorize}`,
+    `A Pages switch is complete only when ${x.pages.complete_only_when.join(' and ')}. The switch packet records:`,
+    ...x.pages.switch_packet_records.map((r) => `- ${r}`)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), ...x.classes.map((cl) => `- \`${cl.id}\` \u2014 ${cl.hazard}`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
+  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`)],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.note, x.authority_tiers.namespace_note, x.authority_tiers.disambiguation.known_ambiguous_artifact, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
   migration: (x) => [x.principle],
-  'model-effort': (x) => [x.principle, x.assignment_record.format, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
-  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`)],
+  'model-effort': (x) => [x.principle, x.assignment_record.format,
+    `Selection stability: ${x.stability} Substitution: ${x.substitution}`,
+    `Every assignment record carries: ${x.assignment_record.required_fields.join(', ')}.`, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
+  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.required_fields.map((f) => '\`' + f + '\`').join(', ')} | ${mdCell(a.affects)} |`)],
   'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), ...x.priority_order.map((pr, i) => `  ${i + 1}. ${pr}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
-    ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
+    ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`),
+    `  - Grant window: effective \`${x.deputy.effective}\`, expiry \`${x.deputy.expiry}\`. ${x.deputy.supersession}`,
+    `- **Default autonomy:** reversible local work is \`${x.default_autonomy.reversible_local_work}\`. ${x.default_autonomy.description}`,
+    `  - Recording: ${x.override_rules.recording}`, `  - Invalidation: ${x.override_rules.invalidation}`,
+    ...x.override_rules.forbidden.map((f) => `    - ${f}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
   'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => gateDetailLines(g).length ? [`#### Gate ${g.id} \u2014 ${g.name}`, '', ...gateDetailLines(g)].join('\n') : null).filter((y) => y !== null), ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
@@ -2725,8 +2829,8 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].filter((l) => l !== null).join('\n')),
-  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
-  transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
+  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`), x.legacy_rule, ...(x.legacy_values || []).map((lv) => `| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`)],
 };
 
 // Every contract's rules render in the Enforced invariants section, so every
@@ -3362,6 +3466,32 @@ export function runSelftest(root = ROOT) {
   expectRuntime('expired lease', (rt) => { rt.leases[0].expiry = '2019-01-01T00:00:00Z'; }, 'already expired');
   expectRuntime('lease window naming a day that does not exist', (rt) => { rt.leases[0].expiry = '2026-11-31T00:00:00Z'; }, "is not a real instant");
   expectRuntime('lease issued at a minute that does not exist', (rt) => { rt.leases[0].issued = '2026-01-01T00:60:00Z'; }, "is not a real instant");
+  // Ruling AS-HD-029-0052 point 3. Both directions: an event recorded after the
+  // ruling under a seat's actor must fail, and the 423 recorded before it must
+  // not — they are permanent under an append-only ledger and rewriting them is
+  // a protected transition.
+  expectRuntime('a reseat signed with a seat actor after the ruling', (rt) => {
+    const list = rt.events['AS-HD-040'];
+    const last = list[list.length - 1];
+    list.push({ ...last, id: 'AS-HD-040-9001', seq: last.seq + 1, parent_event: last.id, actor: 'maker', at: '2026-09-01T00:00:00Z', summary: 'Reseated from aaaaaaaaaaaa to live HEAD bbbbbbbbbbbb; the seat had not started.' });
+  }, 'no seat performed it');
+  {
+    const rt = baseRt();
+    const list = rt.events['AS-HD-040'];
+    const last = list[list.length - 1];
+    list.push({ ...last, id: 'AS-HD-040-9002', seq: last.seq + 1, parent_event: last.id, actor: TOOL_ACTOR, at: '2026-09-01T00:00:00Z', summary: 'Reseated from aaaaaaaaaaaa to live HEAD bbbbbbbbbbbb; the seat had not started.' });
+    const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('no seat performed it'));
+    results.push({ label: 'the same reseat signed by the process itself passes', pass: errs.length === 0, errs });
+  }
+  results.push({ label: 'the historical reseats predating the ruling are not retroactively failed', pass: runtimeChecks(contracts, baseRt()).filter((e) => e.includes('no seat performed it')).length === 0, errs: [] });
+  // ...and the default that caused it is gone at the source, not merely unused.
+  {
+    const self = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+    results.push({ label: 'reseat no longer defaults its actor to the seat', pass: !/actor:\s*actor \|\| cap\.owner_actor/.test(self), errs: [] });
+    const sweepName = 'runReseat' + 'All';
+    results.push({ label: 'the reseat sweep is gone, not merely undocumented', pass: !new RegExp('function ' + sweepName).test(self), errs: [] });
+  }
+
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
@@ -3756,13 +3886,22 @@ export function runSelftest(root = ROOT) {
 
     // Unrendered contract fields. No deletion sweep can see these, so the count
     // is ratcheted: it may fall, never rise. 105 when the audit was written;
-    // 65 once every contract's `rules` block was projected into the view; 55
-    // once each gate's detail block joined it and the audit stopped counting a
-    // correctly escaped value as unrendered.
+    // 21 now, after the rules blocks, the gate detail blocks, the owner override
+    // rules, the deputy's grant window, the promotion-packet fields, the
+    // escalation hazards, the evidence freshness rules and the legacy maps were
+    // all projected — and after the audit stopped counting a correctly escaped
+    // value as unrendered.
+    //
+    // What is left is deliberate, not deferred: `project.*` is tool scaffolding
+    // (engine stack, runtime artifact paths, provider names) rather than
+    // governance a reader needs, a handful of `note` fields are provenance for
+    // the contract author, and owner-intent.owner.identifiers carries a personal
+    // email address that should not be projected into more artifacts than
+    // already hold it.
     const rtAll = loadRuntime(root);
     const everything = generatedArtifacts(contracts, rtAll).map((a) => a.text).join('\n');
     const unrendered = unrenderedFieldPaths(contracts, everything);
-    const RATCHET = 55;
+    const RATCHET = 21;
     results.push({ label: `unrendered contract fields do not grow past ${RATCHET}`, pass: unrendered.length <= RATCHET, errs: unrendered.slice(0, 10) });
     results.push({ label: 'the unrendered-field audit is actually looking at contracts', pass: unrendered.length < 400, errs: [String(unrendered.length)] });
 
@@ -4036,7 +4175,7 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   cap.base_oid = head;
   writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
   const r = runReseal(root, ticket, {
-    actor: actor || cap.owner_actor,
+    actor: actor || TOOL_ACTOR,
     now,
     reason: `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
   });
@@ -4044,16 +4183,15 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
 }
 
-export function runReseatAll(root, { actor = null, now = new Date().toISOString() } = {}) {
-  const rt = loadRuntime(root);
-  const done = [], skipped = [];
-  for (const ticket of Object.keys(rt.capsules).sort()) {
-    const r = runReseat(root, ticket, { actor, now });
-    if (r.ok && !r.unchanged) done.push(r);
-    else skipped.push({ ticket, why: r.ok ? 'already on HEAD' : r.errors[0] });
-  }
-  return { done, skipped };
-}
+// `reseat --all` used to live here. It is gone, and the reason is on the record:
+// running it after every governance commit appended 423 no-op events across
+// nine seats in one session — 92.6% of the ledger on `dev` — each signed with
+// the seat's own actor although no seat acted. Ruling AS-HD-029-0052:
+// > A capsule in `assigned` with no prior work state-change does not need its
+// > base chased. Reseat is seat-initiated at start of work, never a post-commit
+// > sweep.
+// A seat that is about to start work reseats its own capsule, once. Nothing
+// sweeps.
 
 // ---------------------------------------------------------------------------
 // CLI.
@@ -4087,13 +4225,10 @@ function main(argv) {
       else if (argv[i] === '--actor') actor = argv[++i];
     }
     if (flags.has('--all')) {
-      const { done, skipped } = runReseatAll(ROOT, { actor });
-      done.forEach((r) => console.log(`RESEAT ${r.ticket} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`));
-      skipped.forEach((r) => console.log(`  skip ${r.ticket}: ${r.why}`));
-      console.log(`\nRESEAT: ${done.length} reseated, ${skipped.length} left alone.`);
-      return 0;
+      console.error('reseat --all is withdrawn: a post-commit sweep appends a no-op event per seat, signed with that seat\'s actor although no seat acted (ruling AS-HD-029-0052). Reseat one ticket, at the seat that is starting work.');
+      return 2;
     }
-    if (!work) { console.error('reseat requires --work <ticket> or --all'); return 2; }
+    if (!work) { console.error('reseat requires --work <ticket>'); return 2; }
     const r = runReseat(ROOT, work, { actor });
     if (!r.ok) { console.error('RESEAT FAIL:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     if (r.unchanged) { console.log(`RESEAT: ${r.ticket} is already on live HEAD.`); return 0; }
@@ -4156,7 +4291,7 @@ function main(argv) {
     if (d.stale && d.stale.length) {
       console.log('');
       for (const s of d.stale) console.log(`  STALE  ${s.ticket} (${s.state}) base ${s.base.slice(0, 12)} != HEAD ${d.head.slice(0, 12)}`);
-      console.log(`\nDRILL OK: reconstruction reproduces exact state with zero evidence loss — but ${d.stale.length} of ${d.total} capsule(s) are pinned behind live HEAD, and their own wake says re-seat before mutating. Not evidence loss; run \`opsctl reseat --all\`.`);
+      console.log(`\nDRILL OK: reconstruction reproduces exact state with zero evidence loss — but ${d.stale.length} of ${d.total} capsule(s) are pinned behind live HEAD, and their own wake says re-seat before mutating. Not evidence loss; each reseats its own capsule when it starts work.`);
     } else {
       console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss; every capsule is seated on live HEAD.');
     }
