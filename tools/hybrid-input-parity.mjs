@@ -14,6 +14,7 @@
 //   node tools/hybrid-input-parity.mjs --only 390x844
 //   node tools/hybrid-input-parity.mjs --screenshots
 //   node tools/hybrid-input-parity.mjs --standalone --screenshots
+//   node tools/hybrid-input-parity.mjs --self-target-only --only 320x640
 //   node tools/hybrid-input-parity.mjs --artifact-parity  # only after shared artifacts may move
 //   CHROME=/path/to/chrome node tools/hybrid-input-parity.mjs
 //
@@ -36,6 +37,7 @@ const only = argOf('--only');
 const screenshots = args.includes('--screenshots');
 const standalone = args.includes('--standalone');
 const artifactParity = args.includes('--artifact-parity');
+const selfTargetOnly = args.includes('--self-target-only');
 const evidenceDoor = standalone ? 'root standalone' : 'source';
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const canonicalLfBytes = (bytes) => {
@@ -156,6 +158,12 @@ if (args.includes('--selftest')) {
       replace: '    selfArm = null; // planted: blue self-confirm arm omitted',
       expectRed: /FAIL controller self card arms the player blue and moves real focus/,
     }, {
+      name: 'controller self target is removed from unified focus',
+      file: 'src/ui/screens/combat.js',
+      find: "      box.dataset.focusable = '';",
+      replace: '      /* planted: armed player omitted from unified focus */',
+      expectRed: /FAIL controller self card arms the player blue and moves real focus/,
+    }, {
       name: 'pager activation drops the remembered card cursor',
       file: 'src/ui/screens/combat.js',
       find: "    if (at < 0 && handPageCursor) at = cards.findIndex((card) => card.dataset.instanceId === handPageCursor);",
@@ -235,9 +243,12 @@ if (args.includes('--selftest')) {
     process.exit(2);
   }
   if (sourcePlants.length) {
+    const focusedSelfTargetPlant = wantedPlant && wantedPlant.includes('controller self');
     const sourceStatus = await doorSelftest({
       tool: 'hybrid-input-parity.mjs',
-      args: ['--only', '390x844'],
+      args: focusedSelfTargetPlant
+        ? ['--self-target-only', '--only', '390x844']
+        : ['--only', '390x844'],
       timeoutMs: 180000,
       extraCopy: ['AshenSpire.html'],
       plants: sourcePlants,
@@ -496,6 +507,27 @@ const STATE = `(() => {
   const plays = (combat && combat.eventLog || []).filter((event) => event.type === 'cardPlayed');
   const active = document.activeElement;
   const menu = document.querySelector('.flask-action-menu');
+  const targetReading = (node) => {
+    if (!node) return null;
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    const visible = style.display !== 'none' && style.visibility !== 'hidden'
+      && rect.width > 0 && rect.height > 0;
+    const x = Math.max(0, Math.min(innerWidth - 1, rect.left + rect.width / 2));
+    const y = Math.max(0, Math.min(innerHeight - 1, rect.top + rect.height / 2));
+    const hit = visible ? document.elementFromPoint(x, y) : null;
+    return {
+      role: node.getAttribute('role'),
+      name: node.getAttribute('aria-label') || '',
+      visible,
+      onGlass: rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight,
+      centerHit: !!hit && (node === hit || node.contains(hit)),
+      cursor: node === focus,
+      active: node === active,
+    };
+  };
+  const focusReading = targetReading(focus);
+  const playerTarget = targetReading(document.querySelector('.combatant.player.armed'));
   return {
     cards,
     plays: plays.length,
@@ -512,6 +544,9 @@ const STATE = `(() => {
     playerArmed: !!document.querySelector('.combatant.player.armed'),
     aimEnemy: [...document.querySelectorAll('.combatant.enemy.aiming')].map((node) => node.dataset.eid),
     aimPlayer: !!document.querySelector('.combatant.player.aiming'),
+    focusVisible: !!focusReading?.visible,
+    focusOnGlass: !!focusReading?.onGlass,
+    playerTarget,
     focus: focus ? {
       tag: focus.tagName, id: focus.id || null, classes: focus.className,
       instanceId: focus.dataset.instanceId || null, eid: focus.dataset.eid || null,
@@ -917,7 +952,54 @@ async function main() {
         return {viewport:{width:innerWidth,height:innerHeight},rects,minimumTap:controls.length?Math.min(...controls.map((row)=>Math.min(row.width,row.height))):null,onGlass,overlap};
       })()`);
 
+      const runControllerSelfTarget = async () => {
+        // A controller deliberately uses two confirms for a self card: first
+        // arm the visible player target, then commit it. Cancel must take the
+        // other branch without spending and restore the exact originating card.
+        await openCombat();
+        let self = await card('Shield Defend');
+        if (!self) throw new Error(`${shape}: Shield Defend fixture missing`);
+        let before = await state();
+        const selfReached = await focusCardWithPad(self.id);
+        check(selfReached, 'controller D-pad reaches the real self card', JSON.stringify((await state()).focus));
+        if (selfReached) await pad(0);
+        let armed = await state();
+        check(armed.playerArmed && armed.aimPlayer && !!(armed.focus && /player/.test(armed.focus.classes))
+          && armed.playerTarget?.role === 'button'
+          && /^Confirm Shield Defend on /.test(armed.playerTarget?.name || '')
+          && armed.playerTarget?.visible && armed.playerTarget?.onGlass && armed.playerTarget?.centerHit
+          && armed.playerTarget?.cursor && armed.playerTarget?.active,
+        'controller self card arms the player blue and moves real focus', JSON.stringify(armed));
+        await screenshot('controller-self');
+
+        await pad(1);
+        let after = await state();
+        check(gameplay(after) === gameplay(before) && cleanTargeting(after)
+          && after.focus?.instanceId === self.id && after.focusVisible && after.focusOnGlass,
+        'controller self Cancel spends nothing, clears targeting, and restores the exact card focus', JSON.stringify({ before, armed, after }));
+        await screenshot('controller-self-cancel-restored');
+
+        await openCombat();
+        self = await card('Shield Defend');
+        before = await state();
+        const selfConfirmReached = await focusCardWithPad(self.id);
+        if (selfConfirmReached) await pad(0);
+        armed = await state();
+        if (armed.playerArmed) await pad(0);
+        await wait(650);
+        after = await state();
+        check(oneCommit(before, after, self.id), 'controller self confirm commits exactly once', `${before.plays} -> ${after.plays}`);
+        check(selfOutcome(before, after), 'controller self outcome spends once, blocks once, and preserves enemy state', JSON.stringify({ before, after }));
+        check(cleanTargeting(after), 'controller self completion clears targeting state', JSON.stringify(after));
+      };
+
       console.log(`\n  ${shape} — ${evidenceDoor} real page input parity`);
+
+      if (selfTargetOnly) {
+        await runControllerSelfTarget();
+        await cdp.send('Target.closeTarget', { targetId });
+        continue;
+      }
 
       // Single-target mouse: trusted click arms; trusted enemy click commits.
       await openCombat();
@@ -1122,28 +1204,7 @@ async function main() {
       check(oneCommit(before, after, self.id), 'keyboard self card commits exactly once', `${before.plays} -> ${after.plays}`);
       check(selfOutcome(before, after), 'keyboard self outcome spends once, blocks once, and preserves enemy state', JSON.stringify({ before, after }));
 
-      await openCombat(); self = await card('Shield Defend'); before = await state();
-      const selfReached = await focusCardWithPad(self.id);
-      check(selfReached, 'controller D-pad reaches the real self card', JSON.stringify((await state()).focus));
-      if (selfReached) await pad(0); armed = await state();
-      check(armed.playerArmed && armed.aimPlayer && !!(armed.focus && /player/.test(armed.focus.classes)),
-        'controller self card arms the player blue and moves real focus', JSON.stringify(armed));
-      await screenshot('controller-self');
-
-      await pad(1); after = await state();
-      check(gameplay(after) === gameplay(before) && cleanTargeting(after)
-        && after.focus?.instanceId === self.id,
-      'controller self Cancel spends nothing, clears targeting, and restores the exact card focus', JSON.stringify({ before, armed, after }));
-      await screenshot('controller-self-cancel-restored');
-
-      await openCombat(); self = await card('Shield Defend'); before = await state();
-      const selfConfirmReached = await focusCardWithPad(self.id);
-      if (selfConfirmReached) await pad(0); armed = await state();
-      if (armed.playerArmed) await pad(0);
-      await wait(650); after = await state();
-      check(oneCommit(before, after, self.id), 'controller self confirm commits exactly once', `${before.plays} -> ${after.plays}`);
-      check(selfOutcome(before, after), 'controller self outcome spends once, blocks once, and preserves enemy state', JSON.stringify({ before, after }));
-      check(cleanTargeting(after), 'controller self completion clears targeting state', JSON.stringify(after));
+      await runControllerSelfTarget();
 
       // Contextual flask menus: opening and inspecting are inert, arrow/D-pad
       // navigation stays inside the menu, and Cancel returns DOM focus to the
@@ -1327,7 +1388,7 @@ async function main() {
       await cdp.send('Target.closeTarget', { targetId });
     }
     if (!measured) throw new Error(`--only ${only} matched no configured shape`);
-    if (screenshots) {
+    if (screenshots && !selfTargetOnly) {
       for (const [width, height] of SHAPES) {
         const shape = `${width}x${height}`;
         if (only && only !== shape) continue;
@@ -1395,19 +1456,21 @@ async function main() {
       }
       writeFileSync(join(ROOT, 'docs', 'preview', manifestName), manifestText);
     }
-    const dragArgs = [join(ROOT, 'tools', 'card-drag-targeting.mjs'), '--text', 'M'];
-    if (standalone) dragArgs.push('--dist');
-    if (only) dragArgs.push('--only', only);
-    const drag = spawnSync(process.execPath, dragArgs, {
-      cwd: ROOT,
-      encoding: 'utf8',
-      timeout: 600000,
-      windowsHide: true,
-    });
-    if (drag.stdout) process.stdout.write(`\n--- composed card-drag-targeting ---\n${drag.stdout}`);
-    if (drag.stderr) process.stderr.write(drag.stderr);
-    check(drag.status === 0, 'composed card-drag-targeting same-door gate remains GREEN',
-      drag.status === 0 ? 'exact pointer-drag acceptance composed' : `exit ${drag.status}; ${String(drag.error || '').trim()}`);
+    if (!selfTargetOnly) {
+      const dragArgs = [join(ROOT, 'tools', 'card-drag-targeting.mjs'), '--text', 'M'];
+      if (standalone) dragArgs.push('--dist');
+      if (only) dragArgs.push('--only', only);
+      const drag = spawnSync(process.execPath, dragArgs, {
+        cwd: ROOT,
+        encoding: 'utf8',
+        timeout: 600000,
+        windowsHide: true,
+      });
+      if (drag.stdout) process.stdout.write(`\n--- composed card-drag-targeting ---\n${drag.stdout}`);
+      if (drag.stderr) process.stderr.write(drag.stderr);
+      check(drag.status === 0, 'composed card-drag-targeting same-door gate remains GREEN',
+        drag.status === 0 ? 'exact pointer-drag acceptance composed' : `exit ${drag.status}; ${String(drag.error || '').trim()}`);
+    }
     console.log(`\n${findings ? `FAIL — ${findings} finding(s) in ${checks} checks` : `PASS — ${checks} parity checks across ${measured} viewport(s)`}`);
     process.exitCode = findings ? 1 : 0;
   } finally {
