@@ -75,7 +75,7 @@ export function atomicWriteJson(file, value) {
   fs.renameSync(temp, file);
 }
 
-export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, expectedEventTail = null, failAfterEvent = false, ...args }) {
+export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, expectedEventTail = null, failAfterJournal = false, failAfterEvent = false, ...args }) {
   fs.mkdirSync(path.dirname(lockFile), { recursive: true });
   let lock;
   try { lock = fs.openSync(lockFile, "wx"); } catch (error) { throw new Error(`claim transaction locked: ${error.code}`); }
@@ -83,6 +83,8 @@ export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, 
   try {
     if (fs.existsSync(journal)) {
       const pending = JSON.parse(fs.readFileSync(journal, "utf8"));
+      fs.mkdirSync(pending.eventDir, { recursive: true });
+      if (!fs.existsSync(pending.eventFile)) fs.writeFileSync(pending.eventFile, `${JSON.stringify(pending.result.event, null, 2)}\n`, { flag: "wx" });
       atomicWriteJson(pending.leaseFile, pending.result.lease);
       atomicWriteJson(pending.claimFile, pending.result.claim);
       fs.unlinkSync(journal);
@@ -93,9 +95,10 @@ export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, 
     const actualTail = eventFiles.length ? JSON.parse(fs.readFileSync(path.join(eventDir, eventFiles.at(-1)), "utf8")).event_hash : null;
     if (actualTail !== expectedEventTail) throw new Error("stale or forked event tail CAS");
     const result = transferClaim({ ...args, claim, lease, eventTail: actualTail });
-    atomicWriteJson(journal, { claimFile, leaseFile, result });
     fs.mkdirSync(eventDir, { recursive: true });
     const eventFile = path.join(eventDir, `${String(result.claim.revision).padStart(6, "0")}.json`);
+    atomicWriteJson(journal, { claimFile, leaseFile, eventDir, eventFile, result });
+    if (failAfterJournal) throw new Error("simulated crash after journal");
     fs.writeFileSync(eventFile, `${JSON.stringify(result.event, null, 2)}\n`, { flag: "wx" });
     if (failAfterEvent) throw new Error("simulated crash after event");
     atomicWriteJson(leaseFile, result.lease);
