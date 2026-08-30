@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 52,
-  "current_hash": "sha256:0f9c5a0c7fafb164469979decaa11778eee882745b2e005ff2f4982b02c87970",
-  "parent_hash": "sha256:12b3c1407d05c368d98dc29b525853dc4f9cea28ad9361b215160ab2100568b0",
+  "revision": 53,
+  "current_hash": "sha256:2404ed66832ea93fea67db463984dcc9de1f30e8d3d0db0249ed86d44fb42852",
+  "parent_hash": "sha256:0f9c5a0c7fafb164469979decaa11778eee882745b2e005ff2f4982b02c87970",
   "ticket": "AS-HD-029",
   "lifecycle_state": "assigned",
   "objective": "Sequence the P0 NO_SAFE_ASSIGNMENT chain at Application by issuing and rebinding the writer leases each gate needs.",
