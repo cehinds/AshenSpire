@@ -44,6 +44,18 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // `generator` is the sole writer of .agentops/generated/** (opsctl render).
 const SYNTHETIC_ROLES = new Set(['generator']);
 
+// The actor a machine process writes under when it appends on its own account.
+// A process acting on a seat's behalf must never carry that seat's actor:
+// evidence.json binds a producer to an exact object, and an event signed
+// `maker` that no maker performed binds a producer who did not produce.
+// Ruling AS-HD-029-0052, point 3.
+export const TOOL_ACTOR = 'opsctl';
+// Events recorded before that ruling carry seat actors for tool-initiated
+// reseats. The ledger is append-only and history rewrite is protected, so they
+// stand permanently and AS-HD-029-0052 is their correction of record. The check
+// below therefore binds only events recorded from the ruling forward.
+export const TOOL_ACTOR_EFFECTIVE = '2026-08-30T02:14:08Z';
+
 // ---------------------------------------------------------------------------
 // Strict JSON parser: rejects duplicate keys within an object (native
 // JSON.parse silently keeps the last). Returns the parsed value or throws.
@@ -1766,6 +1778,23 @@ export function runtimeChecks(g, rt) {
   }
 
   // Append-only event chains per ticket: one genesis, contiguous seq, unbroken parent chain.
+  // Ruling AS-HD-029-0052 point 3, enforced: a tool-initiated reseat must carry
+  // the process as its actor. An event signed `maker` that no maker performed
+  // binds a producer who did not produce, which is exactly what evidence.json
+  // forbids — and it is invisible, because the event validates in every other
+  // respect. Bound to events recorded from the ruling forward; the 423 that
+  // predate it stand permanently under an append-only ledger and are corrected
+  // by AS-HD-029-0052 itself, not by a rewrite.
+  for (const [ticket, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      if (!/^Reseated from /.test(ev.summary || '')) continue;
+      if (Date.parse(ev.at) < Date.parse(TOOL_ACTOR_EFFECTIVE)) continue;
+      if (ev.actor !== TOOL_ACTOR) {
+        errors.push(`event '${ev.id}' records a reseat under actor '${ev.actor}', but no seat performed it; a process appending on a seat's behalf names itself ('${TOOL_ACTOR}'), per ruling AS-HD-029-0052`);
+      }
+    }
+  }
+
   for (const [ticket, list] of Object.entries(rt.events)) {
     let prevId = null;
     list.forEach((ev, i) => {
@@ -3437,6 +3466,32 @@ export function runSelftest(root = ROOT) {
   expectRuntime('expired lease', (rt) => { rt.leases[0].expiry = '2019-01-01T00:00:00Z'; }, 'already expired');
   expectRuntime('lease window naming a day that does not exist', (rt) => { rt.leases[0].expiry = '2026-11-31T00:00:00Z'; }, "is not a real instant");
   expectRuntime('lease issued at a minute that does not exist', (rt) => { rt.leases[0].issued = '2026-01-01T00:60:00Z'; }, "is not a real instant");
+  // Ruling AS-HD-029-0052 point 3. Both directions: an event recorded after the
+  // ruling under a seat's actor must fail, and the 423 recorded before it must
+  // not — they are permanent under an append-only ledger and rewriting them is
+  // a protected transition.
+  expectRuntime('a reseat signed with a seat actor after the ruling', (rt) => {
+    const list = rt.events['AS-HD-040'];
+    const last = list[list.length - 1];
+    list.push({ ...last, id: 'AS-HD-040-9001', seq: last.seq + 1, parent_event: last.id, actor: 'maker', at: '2026-09-01T00:00:00Z', summary: 'Reseated from aaaaaaaaaaaa to live HEAD bbbbbbbbbbbb; the seat had not started.' });
+  }, 'no seat performed it');
+  {
+    const rt = baseRt();
+    const list = rt.events['AS-HD-040'];
+    const last = list[list.length - 1];
+    list.push({ ...last, id: 'AS-HD-040-9002', seq: last.seq + 1, parent_event: last.id, actor: TOOL_ACTOR, at: '2026-09-01T00:00:00Z', summary: 'Reseated from aaaaaaaaaaaa to live HEAD bbbbbbbbbbbb; the seat had not started.' });
+    const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('no seat performed it'));
+    results.push({ label: 'the same reseat signed by the process itself passes', pass: errs.length === 0, errs });
+  }
+  results.push({ label: 'the historical reseats predating the ruling are not retroactively failed', pass: runtimeChecks(contracts, baseRt()).filter((e) => e.includes('no seat performed it')).length === 0, errs: [] });
+  // ...and the default that caused it is gone at the source, not merely unused.
+  {
+    const self = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+    results.push({ label: 'reseat no longer defaults its actor to the seat', pass: !/actor:\s*actor \|\| cap\.owner_actor/.test(self), errs: [] });
+    const sweepName = 'runReseat' + 'All';
+    results.push({ label: 'the reseat sweep is gone, not merely undocumented', pass: !new RegExp('function ' + sweepName).test(self), errs: [] });
+  }
+
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
@@ -4120,7 +4175,7 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   cap.base_oid = head;
   writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
   const r = runReseal(root, ticket, {
-    actor: actor || cap.owner_actor,
+    actor: actor || TOOL_ACTOR,
     now,
     reason: `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
   });
@@ -4128,16 +4183,15 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
 }
 
-export function runReseatAll(root, { actor = null, now = new Date().toISOString() } = {}) {
-  const rt = loadRuntime(root);
-  const done = [], skipped = [];
-  for (const ticket of Object.keys(rt.capsules).sort()) {
-    const r = runReseat(root, ticket, { actor, now });
-    if (r.ok && !r.unchanged) done.push(r);
-    else skipped.push({ ticket, why: r.ok ? 'already on HEAD' : r.errors[0] });
-  }
-  return { done, skipped };
-}
+// `reseat --all` used to live here. It is gone, and the reason is on the record:
+// running it after every governance commit appended 423 no-op events across
+// nine seats in one session — 92.6% of the ledger on `dev` — each signed with
+// the seat's own actor although no seat acted. Ruling AS-HD-029-0052:
+// > A capsule in `assigned` with no prior work state-change does not need its
+// > base chased. Reseat is seat-initiated at start of work, never a post-commit
+// > sweep.
+// A seat that is about to start work reseats its own capsule, once. Nothing
+// sweeps.
 
 // ---------------------------------------------------------------------------
 // CLI.
@@ -4171,13 +4225,10 @@ function main(argv) {
       else if (argv[i] === '--actor') actor = argv[++i];
     }
     if (flags.has('--all')) {
-      const { done, skipped } = runReseatAll(ROOT, { actor });
-      done.forEach((r) => console.log(`RESEAT ${r.ticket} -> ${r.base.slice(0, 12)} (revision ${r.revision}, ${r.event})`));
-      skipped.forEach((r) => console.log(`  skip ${r.ticket}: ${r.why}`));
-      console.log(`\nRESEAT: ${done.length} reseated, ${skipped.length} left alone.`);
-      return 0;
+      console.error('reseat --all is withdrawn: a post-commit sweep appends a no-op event per seat, signed with that seat\'s actor although no seat acted (ruling AS-HD-029-0052). Reseat one ticket, at the seat that is starting work.');
+      return 2;
     }
-    if (!work) { console.error('reseat requires --work <ticket> or --all'); return 2; }
+    if (!work) { console.error('reseat requires --work <ticket>'); return 2; }
     const r = runReseat(ROOT, work, { actor });
     if (!r.ok) { console.error('RESEAT FAIL:'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     if (r.unchanged) { console.log(`RESEAT: ${r.ticket} is already on live HEAD.`); return 0; }
@@ -4240,7 +4291,7 @@ function main(argv) {
     if (d.stale && d.stale.length) {
       console.log('');
       for (const s of d.stale) console.log(`  STALE  ${s.ticket} (${s.state}) base ${s.base.slice(0, 12)} != HEAD ${d.head.slice(0, 12)}`);
-      console.log(`\nDRILL OK: reconstruction reproduces exact state with zero evidence loss — but ${d.stale.length} of ${d.total} capsule(s) are pinned behind live HEAD, and their own wake says re-seat before mutating. Not evidence loss; run \`opsctl reseat --all\`.`);
+      console.log(`\nDRILL OK: reconstruction reproduces exact state with zero evidence loss — but ${d.stale.length} of ${d.total} capsule(s) are pinned behind live HEAD, and their own wake says re-seat before mutating. Not evidence loss; each reseats its own capsule when it starts work.`);
     } else {
       console.log('\nDRILL OK: clean-clone / context-wipe reconstruction reproduces exact state with zero evidence loss; every capsule is seated on live HEAD.');
     }
