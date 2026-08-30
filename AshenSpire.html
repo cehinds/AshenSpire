@@ -28517,10 +28517,18 @@ function levelScalingReceipt(spec) {
     max = null,
   } = spec;
   if (typeof stat !== 'string' || !stat) throw new Error('level scaling stat: must be a non-empty string');
-  if (!Number.isFinite(base)) throw new Error('level scaling base: must be finite');
-  if (!isPositiveInt(baselineLevel)) throw new Error('level scaling baselineLevel: must be a positive integer');
-  if (!isPositiveInt(resolvedLevel)) throw new Error('level scaling resolvedLevel: must be a positive integer');
-  if (!Number.isFinite(perLevel)) throw new Error('level scaling perLevel: must be finite');
+  if (!Number.isFinite(base) || Math.abs(base) > Number.MAX_SAFE_INTEGER) {
+    throw new Error('level scaling base: must be finite and within the safe arithmetic range');
+  }
+  if (!Number.isSafeInteger(baselineLevel) || baselineLevel < 1) {
+    throw new Error('level scaling baselineLevel: must be a positive safe integer');
+  }
+  if (!Number.isSafeInteger(resolvedLevel) || resolvedLevel < 1) {
+    throw new Error('level scaling resolvedLevel: must be a positive safe integer');
+  }
+  if (!Number.isFinite(perLevel) || Math.abs(perLevel) > Number.MAX_SAFE_INTEGER) {
+    throw new Error('level scaling perLevel: must be finite and within the safe arithmetic range');
+  }
   if (!LEVEL_SCALING_ROUNDING.includes(rounding)) {
     throw new Error(`level scaling rounding: must be one of ${LEVEL_SCALING_ROUNDING.join(' | ')}`);
   }
@@ -28529,8 +28537,25 @@ function levelScalingReceipt(spec) {
   if (min != null && max != null && min > max) throw new Error(`level scaling cap: min ${min} must not exceed max ${max}`);
 
   const levelDelta = resolvedLevel - baselineLevel;
-  const unrounded = base + levelDelta * perLevel;
-  if (!Number.isFinite(unrounded)) throw new Error('level scaling result: must remain finite');
+  let unrounded;
+  if (Number.isSafeInteger(base) && Number.isSafeInteger(perLevel)) {
+    const exact = BigInt(base) + BigInt(levelDelta) * BigInt(perLevel);
+    const safeMin = BigInt(Number.MIN_SAFE_INTEGER);
+    const safeMax = BigInt(Number.MAX_SAFE_INTEGER);
+    if (exact < safeMin || exact > safeMax) {
+      throw new Error('level scaling result: exceeds the safe arithmetic range');
+    }
+    unrounded = Number(exact);
+  } else {
+    const scaledDelta = levelDelta * perLevel;
+    if (!Number.isFinite(scaledDelta) || Math.abs(scaledDelta) > Number.MAX_SAFE_INTEGER) {
+      throw new Error('level scaling intermediate: exceeds the safe arithmetic range');
+    }
+    unrounded = base + scaledDelta;
+    if (!Number.isFinite(unrounded) || Math.abs(unrounded) > Number.MAX_SAFE_INTEGER) {
+      throw new Error('level scaling result: must remain finite and within the safe arithmetic range');
+    }
+  }
   const rounded = Math[rounding](unrounded);
   if (!Number.isSafeInteger(rounded)) throw new Error('level scaling rounded result: exceeds the safe integer range');
   const result = clamp(rounded, min == null ? -Infinity : min, max == null ? Infinity : max);
@@ -42127,7 +42152,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a63b442b8f';
+const SOURCE = '46c8ba0e96';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42161,7 +42186,7 @@ const SOURCE = 'a63b442b8f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1686';
+const ORDINAL = '1687';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

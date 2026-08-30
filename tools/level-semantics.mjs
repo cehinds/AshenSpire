@@ -98,6 +98,18 @@ const cases = [
     assert(receipt.levelDelta === 3 && receipt.unrounded === 38.5, JSON.stringify(receipt));
     assert(receipt.rounded === 38 && receipt.result === 36 && receipt.clamped, JSON.stringify(receipt));
   }],
+  ['integer scaling remains exact when an unsafe product cancels to a safe result', () => {
+    const receipt = levelScalingReceipt({
+      stat: 'hp',
+      base: -Number.MAX_SAFE_INTEGER,
+      baselineLevel: 1,
+      resolvedLevel: 4,
+      perLevel: 3002399751580331,
+      rounding: 'round',
+    });
+    assert(receipt.levelDelta === 3 && receipt.unrounded === 2, JSON.stringify(receipt));
+    assert(receipt.rounded === 2 && receipt.result === 2, JSON.stringify(receipt));
+  }],
 ];
 
 let failures = 0;
@@ -134,7 +146,7 @@ if (process.argv.includes('--selftest')) {
     }), /spec\.maximum: unknown field/)],
     ['non-finite scaling results are refused', () => throws(() => levelScalingReceipt({
       stat: 'hp', base: Number.MAX_VALUE, baselineLevel: 1, resolvedLevel: 2, perLevel: Number.MAX_VALUE, rounding: 'floor',
-    }), /remain finite/)],
+    }), /finite|safe arithmetic range/)],
     ['content validation rejects an inverted enemy profile', () => {
       // The bundle deliberately contains script functions, so clone only the
       // authored population this plant mutates instead of pretending the whole
