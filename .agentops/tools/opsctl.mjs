@@ -594,6 +594,12 @@ export function semanticChecks(c, now = new Date().toISOString()) {
           const lv = c.hierarchy.authority_tiers.levels.find((x) => x.actors.includes(l.actor_id));
           if (!lv) errors.push(`teams: team lead '${l.actor_id}' is in no authority tier; its decision authority is undeclared`);
           else if (lv.p !== tl.authority_tier) errors.push(`teams: team_leads declares tier P${tl.authority_tier} but the ladder places '${l.actor_id}' at P${lv.p}`);
+          // Checking only the tier left the node's ROLE free. A lead whose node
+          // said 'maker' would resolve to maker through actorRole() and be
+          // granted maker capabilities, while teams.json still called it a lead.
+          const node = c.hierarchy.nodes.find((n) => n.actor_id === l.actor_id);
+          if (!node) errors.push(`teams: team lead '${l.actor_id}' has no hierarchy node, so it cannot hold work`);
+          else if (node.role !== tl.role) errors.push(`teams: team lead '${l.actor_id}' has hierarchy role '${node.role}', not '${tl.role}'; its runtime authority would be resolved from the wrong role`);
         }
         if (c.hierarchy.authority_tiers.levels.some((x) => x.actors.includes(tl.role))) {
           errors.push(`teams: the ladder places the shared role '${tl.role}' rather than each lead actor; that collapses every team into one slot and loses the identity the roster carries`);
@@ -2514,10 +2520,10 @@ const VIEW_PROBES = {
   authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => st.does)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${st.does} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
   'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule],
-  hierarchy: (x) => [...x.nodes.map((n) => n.owns_escalations.join(', ')), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
+  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
@@ -2529,7 +2535,7 @@ const VIEW_PROBES = {
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
-  'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` |`), ...x.gates.map((g) => `${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
+  'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
   roles: (x) => x.roles.map((r) => [
@@ -3143,6 +3149,11 @@ export function runSelftest(root = ROOT) {
   expectSemantic('team lead: a seat name outside the naming convention', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | art helper | art-tech-art | Ashenspire'; }, 'does not follow naming_convention');
   // Leads are placed in the ladder as actors; a shared-role entry would put
   // nine teams in one slot and lose the identity the roster carries.
+  // Checking only the tier left the node's ROLE free: a lead whose node said
+  // 'maker' would resolve to maker through actorRole() and get maker
+  // capabilities while teams.json still called it a lead.
+  expectSemantic('team lead: a node carrying some other role', (c) => { c.hierarchy.nodes.find((n) => n.actor_id === 'lead-qa-guild').role = 'maker'; }, "not 'team-lead'; its runtime authority would be resolved from the wrong role");
+  expectSemantic('team lead: a rostered lead with no node at all', (c) => { c.hierarchy.nodes = c.hierarchy.nodes.filter((n) => n.actor_id !== 'lead-qa-guild'); }, 'has no hierarchy node, so it cannot hold work');
   expectSemantic('team lead: an actor in no authority tier', (c) => {
     const lv = c.hierarchy.authority_tiers.levels.find((l) => l.p === 2);
     lv.actors = lv.actors.filter((a) => a !== 'lead-qa-guild');
@@ -3286,11 +3297,16 @@ export function runSelftest(root = ROOT) {
       const parts = l.split('|');
       if (parts.length < 5) continue;
       cells++;
-      const blanked = parts.slice(0, parts.length - 2).join('|') + '| OMITTED |';
-      const mutated = lines.slice(0, i).concat([blanked], lines.slice(i + 1)).join('\n');
-      if (viewCoverageErrors(contracts, mutated).length === 0) blankable.push(l.slice(0, 60));
+      // Every cell, not just the last: blanking only the trailing one left the
+      // hierarchy rows' actor, role and escalation-parent cells untested.
+      for (let k = 1; k < parts.length - 1; k++) {
+        const cells = parts.slice();
+        cells[k] = ' OMITTED ';
+        const mutated = lines.slice(0, i).concat([cells.join('|')], lines.slice(i + 1)).join('\n');
+        if (viewCoverageErrors(contracts, mutated).length === 0) blankable.push(`${l.slice(0, 50)} [cell ${k}]`);
+      }
     }
-    results.push({ label: "blanking any table row's last column fails the coverage gate", pass: blankable.length === 0, errs: blankable.slice(0, 8) });
+    results.push({ label: 'blanking any cell of any table row fails the coverage gate', pass: blankable.length === 0, errs: blankable.slice(0, 8) });
     results.push({ label: 'the column sweep found rows to sweep', pass: cells >= 80, errs: [String(cells)] });
 
     // ...and a contract added with no probe at all must fail rather than skip.
