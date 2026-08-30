@@ -56,8 +56,8 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the narrow five-cell row stacks every trailing destination into End Turn',
       file: 'styles/combat.css',
-      find: 'grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(7.5rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));\n    grid-template-areas: "armaments energy end draw discard";',
-      replace: 'grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(7.5rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));\n    grid-template-areas: "armaments end end end end";',
+      find: '    grid-template-areas: "armaments energy end draw discard";',
+      replace: '    grid-template-areas: "armaments end end end end";',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -278,7 +278,6 @@ async function main() {
       await new Promise((pass) => setTimeout(pass, 140));
       return true;
     };
-
     const reading = () => evaluate(`(() => {
       const visible = (node) => {
         if (!node) return false;
@@ -332,6 +331,24 @@ async function main() {
         minTap:shown.length?Math.min(...shown.map((r)=>Math.min(r.width,r.height))):0,
       };
     })()`);
+    const settledReading = async (label) => {
+      const deadline = Date.now() + 3000;
+      let previous = await reading();
+      let steady = 0;
+      while (Date.now() < deadline) {
+        await new Promise((pass) => setTimeout(pass, 100));
+        const next = await reading();
+        const before = Object.fromEntries(previous.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
+        const moved = next.controls.filter((c)=>c.visible).some((c)=>{
+          const was = before[c.selector];
+          return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.25;
+        });
+        steady = moved ? 0 : steady + 1;
+        previous = next;
+        if (steady >= 2) return next;
+      }
+      throw new Error(`timed out waiting for stable ${label} geometry`);
+    };
 
     for (const shape of shapes) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -348,9 +365,7 @@ async function main() {
           await cdp.send('Page.navigate', { url }, sessionId);
           await waitFor(`document.querySelectorAll('.combat .hand .card').length===${hand}`, `${hand}-card combat`);
           await new Promise((pass) => setTimeout(pass, 240));
-
-          const beforeExhaust = await reading();
-          const stable = Object.fromEntries(beforeExhaust.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
+          let exhaustBaseline = {};
 
           for (const state of STATES) {
             if (state === 'armed') {
@@ -375,6 +390,8 @@ async function main() {
               await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
               await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
               await new Promise((pass) => setTimeout(pass, 80));
+              const beforeExhaust = await settledReading('pre-Exhaust action-row');
+              exhaustBaseline = Object.fromEntries(beforeExhaust.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
               await evaluate(`(() => {
                 const combat=window.__combat;
                 const source=combat?.piles?.discard?.[0] || combat?.piles?.draw?.[0] || combat?.piles?.hand?.[0];
@@ -388,7 +405,7 @@ async function main() {
               await evaluate(`document.documentElement.dataset.actionRowProbe=${JSON.stringify(state)}; true`);
             }
             await new Promise((pass) => setTimeout(pass, 120));
-            const now = await reading();
+            const now = state === 'exhaust' ? await settledReading('post-Exhaust action-row') : await reading();
             soloRan++;
             const tag = `${shape.width}x${shape.height} Text ${text}, hand ${hand}, ${state}, ${standalone ? 'root' : 'source'}`;
             console.log(`\n  ${tag}`);
@@ -407,7 +424,7 @@ async function main() {
 
             if (state === 'exhaust') {
               const moved = now.controls.filter((c)=>c.visible).filter((c)=>{
-                const was=stable[c.selector];
+                const was=exhaustBaseline[c.selector];
                 return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.5;
               }).map((c)=>c.selector);
               check(moved.length===0, 'showing the nested Exhaust summary preserves every standing action cell', JSON.stringify(moved));
