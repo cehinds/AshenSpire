@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { atomicWriteJson, commitClaimTransfer, recoverExpiredClaim, sealClaim, sealLease, seatFingerprint, transferClaim, validateLease } from "./pipeline-seat-claims.mjs";
+import { spawnSync } from "node:child_process";
+import { acquireClaimLock, atomicWriteJson, commitClaimTransfer, recoverExpiredClaim, sealClaim, sealLease, seatFingerprint, transferClaim, validateLease } from "./pipeline-seat-claims.mjs";
 const a="seat:feature-architecture:11111111-1111-4111-8111-111111111111", b="seat:feature-architecture:22222222-2222-4222-8222-222222222222", secret="target-seat-secret-capability-2222222222222222";
 const registry={ [b]:{role:"maker",status:"active",capability_fingerprint:seatFingerprint(secret)} };
 const claim=sealClaim({schema:"agentops/seat-claim/v1",revision:1,parent_hash:null,ticket:"AS-HD-269",seat_id:a,lease_id:"lease-269",ref:"codex/issue-269",path_globs:["src/feature/**"],issued:"2026-08-30T10:00:00Z",expiry:"2026-08-30T11:00:00Z",status:"active"});
@@ -31,4 +32,18 @@ const other=sealClaim({...claim,ticket:"OTHER",lease_id:"lease-other",seat_id:"s
 assert.throws(()=>commitClaimTransfer({claimFile:ncf,leaseFile:nlf,eventDir:ned,lockFile:nlk,expectedEventTail:null,...args}),/collision/);
 atomicWriteJson(path.join(neg,"claims","other.json"),{...other,current_hash:"sha256:forged"}); assert.throws(()=>commitClaimTransfer({claimFile:ncf,leaseFile:nlf,eventDir:ned,lockFile:nlk,expectedEventTail:null,...args}),/seal mismatch/);
 atomicWriteJson(path.join(neg,"claims","other.json"),sealClaim({...claim,seat_id:"seat:feature-architecture:44444444-4444-4444-8444-444444444444",current_hash:undefined})); assert.throws(()=>commitClaimTransfer({claimFile:ncf,leaseFile:nlf,eventDir:ned,lockFile:nlk,expectedEventTail:null,...args}),/duplicate active claim/);
-console.log("PASS 31/31; authoritative-denominator=yes; omitted-collision-caught=yes; unsealed-claim-refused=yes; duplicate-ticket-refused=yes; trusted-registry-proof=yes; lease-currentness=yes; secrets-recorded0; CAS-replay-refused=yes; expiry-recovery=yes; event-tail-CAS=yes; pre-event-crash-recovery=yes; post-event-crash-recovery=yes; claim+lease+event-transaction=yes; Project-writes=0; protected-writes=0");
+const liveLock=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"seat-live-lock-")),"claim.lock"), held=acquireClaimLock(liveLock); assert.throws(()=>acquireClaimLock(liveLock),/live pid/); held.release();
+const crashFixture=new URL("./pipeline-seat-claims-crash-fixture.mjs",import.meta.url);
+function hardCrash(kind) {
+  const hard=fs.mkdtempSync(path.join(os.tmpdir(),`seat-hard-${kind}-`)), hcf=path.join(hard,"claims","claim.json"), hlf=path.join(hard,"leases","lease.json"), hed=path.join(hard,"events"), hlk=path.join(hard,"lock"), cfg=path.join(hard,"config.json");
+  atomicWriteJson(hcf,claim); atomicWriteJson(hlf,lease);
+  atomicWriteJson(cfg,{claimFile:hcf,leaseFile:hlf,eventDir:hed,lockFile:hlk,expectedEventTail:null,expectedHash:claim.current_hash,targetSeat:b,targetCapability:secret,seatRegistry:registry,issuerRole:"it-manager-iii",now:"2026-08-30T10:30:00Z",expiry:"2026-08-30T11:30:00Z",[kind]:true});
+  const child=spawnSync(process.execPath,[crashFixture.pathname.replace(/^\/(.:)/,"$1"),cfg],{windowsHide:true});
+  assert.equal(child.status,kind==="hardExitAfterJournal"?86:87); assert.equal(fs.existsSync(hlk),true); assert.equal(fs.existsSync(`${hlk}.journal.json`),true);
+  assert.throws(()=>commitClaimTransfer({claimFile:hcf,leaseFile:hlf,eventDir:hed,lockFile:hlk,expectedEventTail:null,...args}),/event tail CAS/);
+  assert.equal(JSON.parse(fs.readFileSync(hcf,"utf8")).seat_id,b); assert.equal(fs.readdirSync(hed).length,1); assert.equal(fs.existsSync(hlk),false); assert.equal(fs.existsSync(`${hlk}.journal.json`),false);
+}
+hardCrash("hardExitAfterJournal"); hardCrash("hardExitAfterEvent");
+const corrupt=fs.mkdtempSync(path.join(os.tmpdir(),"seat-corrupt-lock-")), corruptLock=path.join(corrupt,"lock"); fs.writeFileSync(corruptLock,"not-json\n"); assert.throws(()=>acquireClaimLock(corruptLock),/fail-closed/); assert.equal(fs.existsSync(corruptLock),true);
+const corruptJournal=fs.mkdtempSync(path.join(os.tmpdir(),"seat-corrupt-journal-")), jcf=path.join(corruptJournal,"claims","claim.json"), jlf=path.join(corruptJournal,"leases","lease.json"), jed=path.join(corruptJournal,"events"), jlk=path.join(corruptJournal,"lock"), jcfg=path.join(corruptJournal,"config.json"); atomicWriteJson(jcf,claim); atomicWriteJson(jlf,lease); atomicWriteJson(jcfg,{claimFile:jcf,leaseFile:jlf,eventDir:jed,lockFile:jlk,expectedEventTail:null,expectedHash:claim.current_hash,targetSeat:b,targetCapability:secret,seatRegistry:registry,issuerRole:"it-manager-iii",now:"2026-08-30T10:30:00Z",expiry:"2026-08-30T11:30:00Z",hardExitAfterJournal:true}); const dead=spawnSync(process.execPath,[crashFixture.pathname.replace(/^\/(.:)/,"$1"),jcfg],{windowsHide:true}); assert.equal(dead.status,86); fs.writeFileSync(`${jlk}.journal.json`,"{\"schema\":\"foreign\"}\n"); assert.throws(()=>commitClaimTransfer({claimFile:jcf,leaseFile:jlf,eventDir:jed,lockFile:jlk,expectedEventTail:null,...args}),/journal is corrupt or foreign/); assert.equal(fs.existsSync(`${jlk}.journal.json`),true);
+console.log("PASS 43/43; authoritative-denominator=yes; omitted-collision-caught=yes; unsealed-claim-refused=yes; duplicate-ticket-refused=yes; trusted-registry-proof=yes; lease-currentness=yes; secrets-recorded0; CAS-replay-refused=yes; expiry-recovery=yes; event-tail-CAS=yes; soft-crash-recovery=yes; hard-exit-after-journal-recovery=yes; hard-exit-after-event-recovery=yes; duplicate-event0; live-lock-not-stolen=yes; corrupt-lock-fail-closed=yes; corrupt-journal-preserved=yes; claim+lease+event-transaction=yes; Project-writes=0; protected-writes=0");

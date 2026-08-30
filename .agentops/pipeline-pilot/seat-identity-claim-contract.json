@@ -19,6 +19,8 @@
     "Events are append-only and hash chained; secrets and raw capability proofs are never recorded.",
     "Claim transfer changes no Project, protected ref, deployment, publication, or release state."
     ,"The live watcher may transfer only an existing canonical claim after a safe tracked AgentOps offer; it never creates claims or seat identities."
+    ,"Canonical runtime containment is physical: realpath and reparse checks reject symlink, junction, sibling, temporary, and UNC escapes."
+    ,"The transaction lock records owner identity; only a provably dead owner may be taken over, after which a validated pending journal recovers forward exactly once."
   ],
   "rollback": "Reapply the prior claim body through a new CAS transition and audit event; never rewrite or delete history."
 }

@@ -23,6 +23,28 @@ function inside(root, candidate) {
   return resolved === exact || resolved.startsWith(`${exact}${path.sep}`);
 }
 
+function samePath(left, right) {
+  const a = path.resolve(left), b = path.resolve(right);
+  return process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+function assertNoReparsePath(root, candidate, label) {
+  const exactRoot = path.resolve(root), exactCandidate = path.resolve(candidate);
+  if (!inside(exactRoot, exactCandidate)) throw new Error(`${label} escaped this repository's canonical Git-local runtime`);
+  if (!fs.existsSync(exactRoot)) throw new Error("canonical Git-local seat runtime is unavailable");
+  const realRoot = fs.realpathSync.native(exactRoot);
+  if (!samePath(realRoot, exactRoot) || fs.lstatSync(exactRoot).isSymbolicLink()) throw new Error("canonical Git-local seat runtime is reparse-backed");
+  const relative = path.relative(exactRoot, exactCandidate);
+  let cursor = exactRoot;
+  for (const part of relative.split(path.sep).filter(Boolean)) {
+    cursor = path.join(cursor, part);
+    if (!fs.existsSync(cursor)) break;
+    if (fs.lstatSync(cursor).isSymbolicLink()) throw new Error(`${label} uses a symlink or junction`);
+    const real = fs.realpathSync.native(cursor);
+    if (!inside(realRoot, real)) throw new Error(`${label} resolves outside the canonical Git-local runtime`);
+  }
+}
+
 export function resolveCanonicalSeatRuntime(root) {
   const repoRoot = path.dirname(path.resolve(root));
   const common = execFileSync("git", ["-C", repoRoot, "rev-parse", "--git-common-dir"], { encoding: "utf8", windowsHide: true }).trim();
@@ -59,10 +81,10 @@ function actualEventTail(eventDir) {
 export function assignLiveClaim(root, { offer, now, runtimeConfigFile, canonicalRuntimeRoot = null }) {
   if (offer?.status !== "OFFERED" || !offer.selected?.ticket || !offer.released_actor) throw new Error("assignment requires one safe live offer");
   const canonicalRoot = path.resolve(canonicalRuntimeRoot || resolveCanonicalSeatRuntime(root));
-  if (!inside(canonicalRoot, runtimeConfigFile)) throw new Error("seat runtime must be inside this repository's canonical Git-local runtime");
+  assertNoReparsePath(canonicalRoot, runtimeConfigFile, "seat runtime");
   const config = validateSeatRuntime(readJson(runtimeConfigFile, "seat runtime"), runtimeConfigFile);
   for (const candidate of [config.registry_file, config.claims_dir, config.leases_dir, config.events_dir, config.lock_file, ...Object.values(config.seats).map((seat) => seat.capability_file)]) {
-    if (!inside(canonicalRoot, candidate)) throw new Error("seat runtime dependency escaped this repository's canonical Git-local runtime");
+    assertNoReparsePath(canonicalRoot, candidate, "seat runtime dependency");
   }
   const seat = config.seats[offer.released_actor];
   if (!seat?.seat_id) throw new Error(`no unique seat registered for actor ${offer.released_actor}`);

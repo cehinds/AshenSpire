@@ -78,16 +78,69 @@ export function atomicWriteJson(file, value) {
   fs.renameSync(temp, file);
 }
 
-export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, expectedEventTail = null, failAfterJournal = false, failAfterEvent = false, ...args }) {
+function lockOwner() {
+  return { schema: "agentops/claim-lock/v1", pid: process.pid, process_started_at: new Date(Date.now() - process.uptime() * 1000).toISOString(), nonce: crypto.randomBytes(16).toString("hex"), acquired_at: new Date().toISOString() };
+}
+
+function validateLockOwner(owner) {
+  if (owner?.schema !== "agentops/claim-lock/v1" || !Number.isInteger(owner.pid) || owner.pid < 1 || !Number.isFinite(Date.parse(owner.process_started_at)) || !/^[a-f0-9]{32}$/.test(owner.nonce || "") || !Number.isFinite(Date.parse(owner.acquired_at))) throw new Error("claim transaction lock owner is corrupt or foreign");
+  return owner;
+}
+
+function pidAlive(pid) {
+  try { process.kill(pid, 0); return true; } catch (error) {
+    if (error.code === "ESRCH") return false;
+    if (error.code === "EPERM") return true;
+    throw error;
+  }
+}
+
+export function acquireClaimLock(lockFile) {
   fs.mkdirSync(path.dirname(lockFile), { recursive: true });
-  let lock;
-  try { lock = fs.openSync(lockFile, "wx"); } catch (error) { throw new Error(`claim transaction locked: ${error.code}`); }
+  const owner = lockOwner();
+  let staleFile = null;
+  try {
+    fs.writeFileSync(lockFile, `${JSON.stringify(owner)}\n`, { flag: "wx" });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+    let stale;
+    try { stale = validateLockOwner(JSON.parse(fs.readFileSync(lockFile, "utf8"))); } catch (invalid) { throw new Error(`claim transaction locked fail-closed: ${invalid.message}`); }
+    if (pidAlive(stale.pid)) throw new Error(`claim transaction locked by live pid ${stale.pid}`);
+    staleFile = `${lockFile}.stale-${stale.nonce}.json`;
+    try { fs.renameSync(lockFile, staleFile); } catch (race) { throw new Error(`claim transaction stale-lock takeover lost: ${race.code}`); }
+    try { fs.writeFileSync(lockFile, `${JSON.stringify(owner)}\n`, { flag: "wx" }); } catch (race) { throw new Error(`claim transaction takeover collision: ${race.code}`); }
+    try { fs.unlinkSync(staleFile); } catch { /* stale owner metadata is harmless after the new lock is held */ }
+  }
+  return {
+    owner,
+    release() {
+      if (!fs.existsSync(lockFile)) return;
+      const current = validateLockOwner(JSON.parse(fs.readFileSync(lockFile, "utf8")));
+      if (current.nonce !== owner.nonce || current.pid !== owner.pid) throw new Error("claim transaction lock ownership changed before release");
+      fs.unlinkSync(lockFile);
+    },
+  };
+}
+
+function validateJournal(pending, expected) {
+  if (pending?.schema !== "agentops/claim-transaction-journal/v1" || !pending.result?.claim || !pending.result?.lease || !pending.result?.event) throw new Error("claim transaction journal is corrupt or foreign");
+  for (const key of ["claimFile", "leaseFile", "eventDir"]) if (path.resolve(pending[key] || "") !== path.resolve(expected[key])) throw new Error("claim transaction journal target mismatch");
+  if (path.dirname(path.resolve(pending.eventFile || "")) !== path.resolve(expected.eventDir)) throw new Error("claim transaction journal event target mismatch");
+  validateClaim(pending.result.claim);
+  validateLease(pending.result.lease, pending.result.claim, pending.result.lease.issued, true);
+  if (!/^sha256:[a-f0-9]{64}$/.test(pending.result.event.event_hash || "") || pending.result.event.claim_hash !== pending.result.claim.current_hash || pending.result.event.lease_hash !== pending.result.lease.current_hash) throw new Error("claim transaction journal result is inconsistent");
+  return pending;
+}
+
+export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, expectedEventTail = null, failAfterJournal = false, failAfterEvent = false, hardExitAfterJournal = false, hardExitAfterEvent = false, ...args }) {
+  const lock = acquireClaimLock(lockFile);
   const journal = `${lockFile}.journal.json`;
   try {
     if (fs.existsSync(journal)) {
-      const pending = JSON.parse(fs.readFileSync(journal, "utf8"));
+      const pending = validateJournal(JSON.parse(fs.readFileSync(journal, "utf8")), { claimFile, leaseFile, eventDir });
       fs.mkdirSync(pending.eventDir, { recursive: true });
       if (!fs.existsSync(pending.eventFile)) fs.writeFileSync(pending.eventFile, `${JSON.stringify(pending.result.event, null, 2)}\n`, { flag: "wx" });
+      else if (JSON.stringify(JSON.parse(fs.readFileSync(pending.eventFile, "utf8"))) !== JSON.stringify(pending.result.event)) throw new Error("claim transaction journal event conflicts with durable event");
       atomicWriteJson(pending.leaseFile, pending.result.lease);
       atomicWriteJson(pending.claimFile, pending.result.claim);
       fs.unlinkSync(journal);
@@ -105,13 +158,15 @@ export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, 
     const result = transferClaim({ ...args, claim, lease, activeClaims, eventTail: actualTail });
     fs.mkdirSync(eventDir, { recursive: true });
     const eventFile = path.join(eventDir, `${String(result.claim.revision).padStart(6, "0")}.json`);
-    atomicWriteJson(journal, { claimFile, leaseFile, eventDir, eventFile, result });
+    atomicWriteJson(journal, { schema: "agentops/claim-transaction-journal/v1", lock_owner: lock.owner, claimFile, leaseFile, eventDir, eventFile, result });
+    if (hardExitAfterJournal) process.exit(86);
     if (failAfterJournal) throw new Error("simulated crash after journal");
     fs.writeFileSync(eventFile, `${JSON.stringify(result.event, null, 2)}\n`, { flag: "wx" });
+    if (hardExitAfterEvent) process.exit(87);
     if (failAfterEvent) throw new Error("simulated crash after event");
     atomicWriteJson(leaseFile, result.lease);
     atomicWriteJson(claimFile, result.claim);
     fs.unlinkSync(journal);
     return result;
-  } finally { fs.closeSync(lock); fs.unlinkSync(lockFile); }
+  } finally { lock.release(); }
 }
