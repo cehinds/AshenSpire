@@ -1048,7 +1048,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    The offset and its reservation are now the same token, so they cannot drift,
    and `short-wide`'s deeper drop below overrides ONE value instead of leaving a
    6.4rem hang against a 5.2rem reservation that was never written down. */
-.combat { --action-row-drop: 5.2rem; }
+/* The row's tallest cell and the deepest fanned card need a real separation
+   band. These measured reservations keep that band intact in the portrait
+   884x1326 matrix and in the compressed short-wide composition below. */
+.combat { --action-row-drop: 6.4rem; }
 .hand-area {
   height: 23rem; flex-shrink: 0; position: relative;
   display: flex; align-items: flex-end; justify-content: center;
@@ -1488,7 +1491,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .hand .card.selected {
   transform: translateY(-12px) scale(1.1) !important;
 }
-:root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
+:root[data-composition='short-wide'] .combat { --action-row-drop: 11.2rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
 :root[data-composition='short-wide'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
