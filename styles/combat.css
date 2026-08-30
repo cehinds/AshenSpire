@@ -1142,39 +1142,22 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .combat-action-row {
   position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
   display: grid;
-  grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
-  grid-template-areas: "energy draw hints end exhaust discard";
+  grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(8rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));
+  grid-template-areas: "armaments energy end draw discard";
   align-items: end; gap: 0.8rem;
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
-/* #295 — THE STRIP TAKES THE GUTTER THIS GRID ALREADY DECLARED. It was `.`; it
-   is now `hints`, and no track changed width. The overlap it fixes was never a
-   near miss that got worse: END TURN's column is `minmax(15rem, auto)`, so it
-   widens with its own label, while the strip was centred on the VIEWPORT by a
-   sibling rule. Two homes for "the middle of the bottom band", agreeing only by
-   luck at the shipped text size. One home now.
-
-   `padding-block: 0` IS THE HALF THAT KEEPS H1 GREEN, AND IT DELETES A RULE
-   RATHER THAN TUNING ONE. `.hint-bar`'s `0.4rem` block padding is the padding of
-   a FLOATING PILL — the thing this element stopped being the moment it became a
-   grid cell. Left in, the strip is the tallest item in a bottom-anchored row
-   (53.2 px against 50.4 at Text S), so the row grows UPWARD into the hand and a
-   card lands on the strip by 0.69 px — measured, and the exact cost Sunna
-   recorded as open on falk/295-hintstrip-layout-sunna @ 33ebb8b. Taken out, the
-   strip is its chips' own height, the row's height is unchanged at every text
-   size, and H1's clearance goes back to what it was before this act
-   (5.70 / 6.34 / 7.61 px). The chips keep `--tap-floor`; nothing pressable
-   shrank. Inline padding is untouched — it is the pill's horizontal breathing
-   room and the grid does not supply it.
-
-   NARROW IS NOT REACHED BY ANY OF THIS: `:root[data-layout='narrow'] .hint-bar`
-   is `display: none` (styles/ui.css, #29 slice 0) and narrow re-declares this
-   grid's areas without a `hints` track, so an unplaced item there would have
-   created an implicit track — it cannot, because it renders no box. */
-.combat-action-row > .hint-bar.hint-combat {
-  grid-area: hints; justify-self: center; align-self: end;
-  margin: 0; max-width: 100%; padding-block: 0;
+.armaments-command {
+  grid-area: armaments; min-height: var(--tap-floor); border: 1px solid var(--gold);
+  background: var(--panel); color: var(--parchment); border-radius: 8px;
+  font-size: 0.78rem; letter-spacing: 0.08em; font-weight: 800;
+}
+/* The five-cell rail carries its own direct controls and key labels. The older
+   contextual combat strip would either become a sixth track or cover the rail,
+   so it is retired on this screen; map and other contextual strips are intact. */
+.hand-area > .hint-bar.hint-combat {
+  display: none;
 }
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
@@ -1199,7 +1182,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .combat-action-row > .end-turn { grid-area: end; position: static; right: auto; bottom: auto; }
 .end-turn .et-key {
-  font-family: var(--font-body); font-size: 1rem; margin-left: 0.7rem; vertical-align: 1px;
+  display: block; width: max-content; margin: 0.2rem auto 0; font-family: var(--font-body); font-size: 0.82rem;
   padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
@@ -1216,11 +1199,48 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .pile.discard { right: 1.6rem; }
 .pile.exhaust { right: 8.2rem; opacity: 0.85; }
 .combat-action-row > .pile {
-  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  position: static; inset: auto; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
 }
 .combat-action-row > .pile.draw { grid-area: draw; }
 .combat-action-row > .pile.discard { grid-area: discard; }
-.combat-action-row > .pile.exhaust { grid-area: exhaust; }
+.combat-action-row > .pile.discard { position: static; inset: auto; }
+.exhaust-summary { color: var(--muted); font-size: .65rem; letter-spacing: .05em; }
+
+:root[data-armaments-presentation='radial'] .hud-charge-flasks,
+:root[data-armaments-presentation='radial'] .hud-potions { display: none !important; }
+
+.armament-radial {
+  position: fixed; z-index: 360; left: 1.6rem; bottom: calc(var(--action-row-drop) + 1rem);
+  width: min(24rem, 46vw); aspect-ratio: 1.35; pointer-events: auto;
+}
+.armament-radial-target {
+  position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: 10px;
+  background: rgba(18,15,12,.96); color: var(--parchment); display: grid; place-items: center;
+  font-size: .78rem; font-weight: 800; line-height: 1.05;
+}
+.armament-radial-target small { color: var(--muted); font-size: .68rem; }
+.armament-radial-target[data-radial-target='top'] { top: 0; left: 50%; transform: translateX(-105%); }
+.armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { transform: translateX(5%); }
+.armament-radial-target[data-radial-target='left'] { left: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='right'] { right: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='full'] { left: 50%; top: 48%; transform: translate(-50%,-50%); }
+.armament-radial-target[data-radial-target='bottom'] { bottom: 0; left: 50%; transform: translateX(-50%); }
+.armament-radial-picker {
+  position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
+  z-index: 2; display: flex; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
+  border-radius: 9px; background: rgba(18,15,12,.98);
+}
+.armament-radial-picker button,
+.pile-surface-picker button { min-width: var(--tap-floor); min-height: var(--tap-floor); }
+.pile-surface-picker { display: grid; gap: .6rem; }
+
+@media (max-width: 600px) {
+  .armament-radial { width: min(70vw, 19rem); bottom: calc(var(--action-row-drop) + .4rem); }
+  .armament-radial[data-placement='left'] { left: max(.4rem, env(safe-area-inset-left)); right: auto; }
+  .armament-radial[data-placement='center'] { left: 50%; right: auto; transform: translateX(-50%); }
+  .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, env(safe-area-inset-right)); }
+}
 
 /* ---------- targeting arrow ---------- */
 #target-arrow { position: fixed; z-index: 400; pointer-events: none; }
@@ -1690,15 +1710,15 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
   :root[data-layout='narrow'] .combat-action-row {
     grid-area: actions; position: static; inset: auto; width: 100%;
-    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));
-    grid-template-areas: "energy end draw exhaust discard";
+    grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(7.5rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));
+    grid-template-areas: "armaments energy end draw discard";
     align-items: center; gap: 0.4rem;
   }
   :root[data-layout='narrow'] .combat-action-row > .energy-orb {
     width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
   }
   :root[data-layout='narrow'] .combat-action-row > .end-turn {
-    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    min-height: 6rem; font-size: 1.15rem; padding: 0.6rem;
     margin: 0; min-width: 0;
   }
 
