@@ -9,7 +9,7 @@
     "secret_storage": "Git-local or external secret store; never committed, logged, or placed in a wake packet"
   },
   "issuer_role": "it-manager-iii",
-  "claim_store": ".agentops/claims/<ticket>.json",
+  "claim_store": "<git-common-dir>/agentops-pipeline/runtime/claims/<ticket>.json",
   "rules": [
     "Every mutation requires expected current_hash compare-and-swap.",
     "The exact sealed lease and current append-only event tail are CAS inputs to one recoverable journal transaction.",
@@ -18,6 +18,7 @@
     "Expiry releases no path by itself; IT Manager III performs an audited recover transition.",
     "Events are append-only and hash chained; secrets and raw capability proofs are never recorded.",
     "Claim transfer changes no Project, protected ref, deployment, publication, or release state."
+    ,"The live watcher may transfer only an existing canonical claim after a safe tracked AgentOps offer; it never creates claims or seat identities."
   ],
   "rollback": "Reapply the prior claim body through a new CAS transition and audit event; never rewrite or delete history."
 }

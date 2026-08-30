@@ -38,7 +38,8 @@ function overlaps(left, right) {
 
 export function validateLease(lease, claim, now, allowExpired = false) {
   if (lease?.schema !== "agentops/seat-lease/v1" || sealLease(lease).current_hash !== lease.current_hash) throw new Error("invalid or unsealed current lease");
-  if (lease.id !== claim.lease_id || lease.ticket !== claim.ticket || lease.ref !== claim.ref || lease.revoked || (!allowExpired && Date.parse(lease.expiry) <= Date.parse(now)) || JSON.stringify(lease.path_globs) !== JSON.stringify(claim.path_globs)) throw new Error("lease is stale, revoked, expired, or does not bind the claim");
+  if (!Number.isInteger(lease.revision) || lease.revision < 1 || !lease.actor || lease.issuer !== "it-manager-iii" || !Number.isFinite(Date.parse(lease.issued)) || !Number.isFinite(Date.parse(lease.expiry))) throw new Error("lease identity and currentness are incomplete");
+  if (lease.id !== claim.lease_id || lease.ticket !== claim.ticket || lease.seat_id !== claim.seat_id || lease.ref !== claim.ref || lease.expiry !== claim.expiry || lease.revoked || (!allowExpired && Date.parse(lease.expiry) <= Date.parse(now)) || JSON.stringify(lease.path_globs) !== JSON.stringify(claim.path_globs)) throw new Error("lease is stale, revoked, expired, or does not bind the claim");
   return lease;
 }
 

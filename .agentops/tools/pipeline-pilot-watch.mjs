@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runLiveOffer } from "./pipeline-pilot-live.mjs";
+import { assignLiveClaim } from "./pipeline-seat-assignment.mjs";
 
 const agentopsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const terminalStates = new Set(["resolved", "released"]);
@@ -100,7 +101,16 @@ export function scanTerminalCapsules(root) {
   }).sort((a, b) => a.event.localeCompare(b.event));
 }
 
-export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOString(), limit = 100, offer = runLiveOffer, initialize = false, sourceHead = null, allowSourceAdvance = false }) {
+function assignmentAttempt(root, result, options) {
+  if (result.status !== "OFFERED" || !options.assign) return result;
+  try {
+    return { ...result, assignment: options.assign(root, { offer: result, now: options.now, runtimeConfigFile: options.runtimeConfigFile }) };
+  } catch (error) {
+    return { ...result, status: "NO_SAFE_ASSIGNMENT", assignment: { status: "FAILED", reason: String(error.message || error).slice(0, 240) } };
+  }
+}
+
+export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOString(), limit = 100, offer = runLiveOffer, assign = null, runtimeConfigFile = null, idleAlarmSeconds = 300, initialize = false, sourceHead = null, allowSourceAdvance = false }) {
   const firstRun = !fs.existsSync(stateFile);
   const state = readState(stateFile);
   if (sourceHead && state.source_head && state.source_head !== sourceHead && !allowSourceAdvance) throw new Error(`non-fast-forward authoritative source drift: ${state.source_head} -> ${sourceHead}`);
@@ -110,23 +120,34 @@ export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOSt
   const output = [];
   const processed = new Set(state.processed.filter((event) => currentTerminalEvents.has(event)));
   const pending = new Map(state.pending.filter((row) => currentTerminalEvents.has(row.event)).map((row) => [row.event, row]));
+  const retryRows = [...pending.values()];
   if (firstRun && initialize) {
     for (const { event } of terminals) processed.add(event);
     state.initialized_at = now;
   }
   for (const { event, capsule } of terminals) {
     if (processed.has(event) || pending.has(event)) continue;
-    const result = offer(root, { releasedActor: capsule.owner_actor, completedTicket: capsule.ticket, releasedAt: now, now });
+    const result = assignmentAttempt(root, offer(root, { releasedActor: capsule.owner_actor, completedTicket: capsule.ticket, releasedAt: now, now }), { assign, now, runtimeConfigFile });
     output.push({ event, observed_at: now, result });
-    if (result.status === "NO_SAFE_ASSIGNMENT") pending.set(event, { event, ticket: capsule.ticket, actor: capsule.owner_actor, released_at: now });
-    else processed.add(event);
+    if (result.status === "NO_SAFE_ASSIGNMENT") pending.set(event, { event, ticket: capsule.ticket, actor: capsule.owner_actor, released_at: now, alarm_emitted: false });
+    else if (result.status !== "OFFERED" || !assign || ["ASSIGNED", "ALREADY_ASSIGNED"].includes(result.assignment?.status)) processed.add(event);
   }
-  for (const row of [...pending.values()]) {
-    const result = offer(root, { releasedActor: row.actor, completedTicket: row.ticket, releasedAt: row.released_at, now });
-    if (result.status === "NO_SAFE_ASSIGNMENT") continue;
+  for (const row of retryRows) {
+    let result = assignmentAttempt(root, offer(root, { releasedActor: row.actor, completedTicket: row.ticket, releasedAt: row.released_at, now }), { assign, now, runtimeConfigFile });
+    if (result.status === "NO_SAFE_ASSIGNMENT") {
+      const alarmDue = (Date.parse(now) - Date.parse(row.released_at)) / 1000 >= idleAlarmSeconds;
+      if (alarmDue && !row.alarm_emitted) {
+        result = { ...result, status: "IDLE_ALARM" };
+        row.alarm_emitted = true;
+        output.push({ event: row.event, observed_at: now, result });
+      }
+      continue;
+    }
     output.push({ event: row.event, observed_at: now, result });
-    processed.add(row.event);
-    pending.delete(row.event);
+    if (result.status !== "OFFERED" || !assign || ["ASSIGNED", "ALREADY_ASSIGNED"].includes(result.assignment?.status)) {
+      processed.add(row.event);
+      pending.delete(row.event);
+    }
   }
   state.processed = [...processed];
   state.pending = [...pending.values()];
@@ -141,6 +162,7 @@ async function main(argv = process.argv.slice(2)) {
   const repoRoot = path.dirname(agentopsRoot);
   const activation = JSON.parse(fs.readFileSync(path.join(agentopsRoot, "pipeline-pilot", "activation.json"), "utf8"));
   const stateFile = path.resolve(value("--state", resolveGitStateFile(repoRoot)));
+  const runtimeConfigFile = path.resolve(value("--seat-runtime", path.join(path.dirname(stateFile), "seat-runtime.json")));
   const pollMs = Number(value("--poll-ms", "5000"));
   if (!Number.isInteger(pollMs) || pollMs < 100) throw new Error("poll-ms must be an integer >= 100");
   const releaseLock = acquireWatcherLock(path.join(path.dirname(stateFile), "watcher.lock"));
@@ -150,7 +172,7 @@ async function main(argv = process.argv.slice(2)) {
       const prior = readState(stateFile).source_head;
       if (!prior || prior !== source.head) validateSourceIntegrity(agentopsRoot);
       const allowSourceAdvance = Boolean(prior && prior !== source.head && isFastForward(repoRoot, prior, source.head));
-      const result = cycle({ stateFile, initialize: true, sourceHead: source.head, allowSourceAdvance });
+      const result = cycle({ stateFile, initialize: true, sourceHead: source.head, allowSourceAdvance, assign: activation.mode === "LIVE_ASSIGNMENT" ? assignLiveClaim : null, runtimeConfigFile, idleAlarmSeconds: activation.idle_alarm_seconds });
       if (result.status !== "QUIET") console.log(JSON.stringify(result));
       if (argv.includes("--once")) break;
       await new Promise((resolve) => setTimeout(resolve, pollMs));

@@ -14,7 +14,7 @@ function overlap(left, right) {
 
 export function validateActivation(config) {
   if (config?.schema !== "agentops/pipeline-activation/v1") throw new Error("invalid pipeline activation schema");
-  if (typeof config.enabled !== "boolean" || config.mode !== "LIVE_OFFER") throw new Error("pipeline activation must declare LIVE_OFFER mode");
+  if (typeof config.enabled !== "boolean" || !["LIVE_OFFER", "LIVE_ASSIGNMENT"].includes(config.mode)) throw new Error("pipeline activation must declare LIVE_OFFER or LIVE_ASSIGNMENT mode");
   if (!/^[A-Za-z0-9._/-]+$/.test(config.authoritative_ref || "")) throw new Error("authoritative_ref must be a safe branch name");
   if (!Number.isInteger(config.tracking_issue) || config.tracking_issue < 1) throw new Error("tracking_issue must be a positive integer");
   if (!Number.isFinite(config.idle_alarm_seconds) || config.idle_alarm_seconds < 0) throw new Error("idle_alarm_seconds must be non-negative");
@@ -71,7 +71,7 @@ export function planLiveOffer({ contracts, runtime, config, releasedActor, compl
         tracking_issue: config.tracking_issue,
         completed_ticket: completedTicket,
         released_actor: releasedActor,
-        selected: { ticket: row.ticket, rank: row.rank, lease: lease.id, ref: lease.ref, next_action: cap.next_action },
+        selected: { ticket: row.ticket, rank: row.rank, lease: lease.id, ref: lease.ref, path_globs: [...lease.path_globs], next_action: cap.next_action },
         rejected,
         metrics: { offers: 1, idle_alarms: 0, duplicate_assignments: 0, elapsed_seconds: (nowMs - releasedMs) / 1000 },
         authority: config.authority,

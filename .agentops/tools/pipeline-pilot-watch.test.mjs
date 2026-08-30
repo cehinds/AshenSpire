@@ -76,6 +76,28 @@ assert.equal(calls, 1);
 assert.equal(cycle({ root, stateFile, now: "2026-08-30T10:00:01Z", offer: offered }).status, "QUIET");
 assert.equal(calls, 1);
 
+const assignmentRoot = path.join(temp, "assignment-agentops");
+const assignmentState = path.join(temp, ".git", "agentops-pipeline", "assignment.json");
+fs.mkdirSync(path.join(assignmentRoot, "work", "ASSIGN-1"), { recursive: true });
+fs.writeFileSync(path.join(assignmentRoot, "work", "ASSIGN-1", "CURRENT.json"), JSON.stringify({ ticket: "ASSIGN-1", lifecycle_state: "resolved", owner_actor: "maker", current_hash: "sha256:assign" }));
+let assignments = 0;
+const assignmentOffer = (_root, args) => ({ status: "OFFERED", completed_ticket: args.completedTicket, released_actor: args.releasedActor });
+const assignment = (_root, { offer }) => { assignments++; return { status: "ASSIGNED", ticket: offer.completed_ticket }; };
+const assignedCycle = cycle({ root: assignmentRoot, stateFile: assignmentState, now: "2026-08-30T10:00:02Z", offer: assignmentOffer, assign: assignment, runtimeConfigFile: "fixture-runtime.json" });
+assert.equal(assignedCycle.events[0].result.assignment.status, "ASSIGNED");
+assert.equal(assignments, 1);
+assert.equal(cycle({ root: assignmentRoot, stateFile: assignmentState, now: "2026-08-30T10:00:03Z", offer: assignmentOffer, assign: assignment }).events.length, 0);
+assert.equal(assignments, 1);
+const failedAssignmentState = path.join(temp, ".git", "agentops-pipeline", "assignment-failed.json");
+const failedAssignment = () => { throw new Error("claim CAS failed"); };
+const failedCycle = cycle({ root: assignmentRoot, stateFile: failedAssignmentState, now: "2026-08-30T10:00:04Z", offer: assignmentOffer, assign: failedAssignment });
+assert.equal(failedCycle.events[0].result.assignment.status, "FAILED");
+assert.equal(readState(failedAssignmentState).pending.length, 1);
+const failedAlarm = cycle({ root: assignmentRoot, stateFile: failedAssignmentState, now: "2026-08-30T10:05:04Z", offer: assignmentOffer, assign: failedAssignment });
+assert.equal(failedAlarm.events[0].result.status, "IDLE_ALARM");
+assert.equal(readState(failedAssignmentState).pending.length, 1);
+assert.equal(cycle({ root: assignmentRoot, stateFile: failedAssignmentState, now: "2026-08-30T10:05:05Z", offer: assignmentOffer, assign: failedAssignment }).events.length, 0);
+
 capsule.current_hash = "sha256:bbb";
 fs.writeFileSync(path.join(root, "work", "AS-1", "CURRENT.json"), JSON.stringify(capsule));
 assert.equal(cycle({ root, stateFile, now: "2026-08-30T10:01:00Z", offer: offered }).events.length, 1);
@@ -120,7 +142,7 @@ const release = acquireWatcherLock(lockFile);
 assert.throws(() => acquireWatcherLock(lockFile), /already active/);
 release();
 assert.equal(fs.existsSync(lockFile), false);
-console.log("PASS 40/40; source-integrity-verify=yes; terminal-denominator=120; second-scan-replay0; changed-hash-once=yes; removed-terminal-pruned=yes; observations-bounded=100; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; immediate-offer=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; AgentOps-writes=0");
+console.log("PASS 50/50; source-integrity-verify=yes; terminal-denominator=120; second-scan-replay0; changed-hash-once=yes; removed-terminal-pruned=yes; observations-bounded=100; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; immediate-assignment=yes; assignment-replay0; failed-CAS-pending=yes; failed-CAS-alarm=yes; alarm-once=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; AgentOps-writes=0");
 
 function rootFromImportMeta(url) {
   return new URL(".", url).pathname.replace(/^\/(.:)/, "$1");

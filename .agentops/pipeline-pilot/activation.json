@@ -1,7 +1,7 @@
 {
   "schema": "agentops/pipeline-activation/v1",
   "enabled": true,
-  "mode": "LIVE_OFFER",
+  "mode": "LIVE_ASSIGNMENT",
   "authoritative_ref": "dev",
   "tracking_issue": 269,
   "idle_alarm_seconds": 300,
@@ -13,8 +13,8 @@
     { "ticket": "AS-HD-056", "rank": "T2", "dependencies": [] }
   ],
   "authority": {
-    "may": ["observe-current-agentops", "offer-existing-claimed-work", "emit-idle-alarm"],
-    "must_not": ["create-or-transfer-claim", "rewrite-lease", "mutate-project", "perform-protected-transition"]
+    "may": ["observe-current-agentops", "transfer-existing-claim-by-cas", "renew-existing-seat-lease", "append-claim-audit-event", "emit-idle-alarm"],
+    "must_not": ["create-claim", "create-seat-identity", "mutate-project", "perform-protected-transition"]
   },
-  "rollback": "Set enabled=false or revert the integration commit; AgentOps capsules, leases, events, and history remain authoritative and unchanged."
+  "rollback": "Stop the watcher or set enabled=false. Restore prior ownership only through a forward CAS transfer and audit event; never delete or rewrite claim history."
 }
