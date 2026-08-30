@@ -41,6 +41,12 @@ export function validateAuthoritativeCheckout(repoRoot, authoritativeRef = "dev"
   return { branch, head, remote };
 }
 
+export function validateSourceIntegrity(root) {
+  const tool = path.join(root, "tools", "opsctl.mjs");
+  execFileSync(process.execPath, [tool, "verify"], { cwd: path.dirname(root), windowsHide: true, stdio: "pipe" });
+  return true;
+}
+
 export function terminalIdentity(capsule) {
   if (!capsule || !terminalStates.has(capsule.lifecycle_state) || !capsule.ticket || !capsule.owner_actor || !capsule.current_hash) return null;
   const source = [capsule.ticket, capsule.current_hash, capsule.lifecycle_state, capsule.owner_actor].join("\n");
@@ -142,6 +148,7 @@ async function main(argv = process.argv.slice(2)) {
     do {
       const source = validateAuthoritativeCheckout(repoRoot, activation.authoritative_ref, true);
       const prior = readState(stateFile).source_head;
+      if (!prior || prior !== source.head) validateSourceIntegrity(agentopsRoot);
       const allowSourceAdvance = Boolean(prior && prior !== source.head && isFastForward(repoRoot, prior, source.head));
       const result = cycle({ stateFile, initialize: true, sourceHead: source.head, allowSourceAdvance });
       if (result.status !== "QUIET") console.log(JSON.stringify(result));

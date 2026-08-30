@@ -90,7 +90,8 @@ Its repo-wide state records that HEAD and fails closed if the source moves
 during a run except for a verified fast-forward. A fast-forward preserves
 processed identities, pending alarms, and observations before rescanning; a
 history rewrite fails closed. Remote fetch failure also fails closed rather
-than scanning stale state.
+than scanning stale state. Initial startup and every accepted source
+fast-forward also require a full `opsctl verify` before any baseline or scan.
 Replay keys cover every current terminal capsule and are pruned only when that
 terminal identity disappears; only the diagnostic observation history is
 bounded to the latest 100 records.
