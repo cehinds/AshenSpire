@@ -1417,8 +1417,7 @@ export function runtimeChecks(g, rt) {
       if (cap.blocker) continue;                      // blocked seats route by escalation, not transition
       const out = g.transitions.transitions.filter((m) => m.from === cap.lifecycle_state && !m.protected);
       if (!out.length) continue;                      // terminal or owner-only: not the seat's move to make
-      const node = g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === cap.owner_actor);
-      const actingRole = node ? node.role : cap.owner_actor;
+      const actingRole = actorRole(g, cap.owner_actor);
       if (!out.some((m) => m.permitted_actor_roles.includes(actingRole))) {
         errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' (role '${actingRole}') is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
       }
@@ -1543,8 +1542,7 @@ export function runtimeChecks(g, rt) {
     if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
     if (cap.evidence_pointers.length > 8) errors.push(`capsule '${ticket}' has ${cap.evidence_pointers.length} evidence pointers, exceeding the max of 8`);
     for (const ep of cap.evidence_pointers) if (!evIds.has(ep)) errors.push(`capsule '${ticket}' evidence pointer '${ep}' is not a declared evidence type in evidence.json`);
-    const ownerNode = g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === cap.owner_actor);
-    const ownerRole = ownerNode ? ownerNode.role : cap.owner_actor;
+    const ownerRole = actorRole(g, cap.owner_actor);
     const may = roleMay.get(ownerRole);
     if (!may) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' resolves to no declared role`);
     else for (const a of cap.authority.may) if (!may.has(a)) errors.push(`capsule '${ticket}' authority amplification: may '${a}' is not permitted for role '${ownerRole}'`);
@@ -1653,7 +1651,7 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
 
   const L = [];
   L.push('=== AGENTOPS WAKE CAPSULE ===');
-  L.push(`IDENTITY   : actor=${cap.owner_actor} role=${cap.owner_actor} ticket=${cap.ticket} lease=${cap.writer_lease} (${leaseState})`);
+  L.push(`IDENTITY   : actor=${cap.owner_actor} role=${actorRole(contracts, cap.owner_actor)} ticket=${cap.ticket} lease=${cap.writer_lease} (${leaseState})`);
   L.push(`MISSION    : ${oi.mission}`);
   L.push(`WORK       : ${cap.objective}`);
   L.push(`DONE-WHEN  : ${cap.done_when}`);
@@ -2505,7 +2503,7 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // when its block is removed.
 const VIEW_PROBES = {
   authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} |`),
-  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} |`)],
+  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle],
   escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => st.does)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} |`)],
@@ -2638,6 +2636,17 @@ export function governanceGateErrors(contracts, arts) {
   const gov = arts.find((a) => a.rel === GENERATED_VIEW);
   if (!gov) return [`generated artifacts do not include '${GENERATED_VIEW}'; the human governance view is missing and nothing downstream can check it`];
   return [...probeStrengthErrors(contracts, gov.text), ...viewCoverageErrors(contracts, gov.text)];
+}
+
+// An actor is not its role. That held only while every actor_id happened to
+// equal a role name; team leads are the first actors where it does not, and the
+// conflation was independently present in four places — the stranded-seat
+// check, the capsule authority check, dispatch's wake selection, and the wake
+// capsule's own IDENTITY line, which printed `role=<actor id>`. One helper
+// instead of four fixes, so the fifth site cannot drift.
+export function actorRole(g, actorId) {
+  const node = g && g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === actorId);
+  return node ? node.role : actorId;
 }
 
 export function probeStrengthErrors(contracts, viewText) {
@@ -3135,6 +3144,17 @@ export function runSelftest(root = ROOT) {
   }, 'collapses every team into one slot');
   // An actor is not its role: both of these read the id directly until leads
   // got identities that differ from the role they hold.
+  // Dispatch compared the actor id against a list of roles, so a lead-owned
+  // ticket woke 'maker'. One helper now serves all four sites that had this.
+  {
+    const rtLead = baseRt();
+    rtLead.capsules['AS-HD-050'].owner_actor = 'lead-game-systems';
+    const d = computeDispatch(contracts, rtLead, { now: new Date().toISOString() }).find((x) => x.ticket === 'AS-HD-050');
+    results.push({ label: 'dispatch wakes the lead that owns the capsule, not a role that does not', pass: !!d && d.wake === 'lead-game-systems', errs: [d ? d.wake : '(no entry)'] });
+    const w = runWake(root, 'maker', 'AS-1001');
+    results.push({ label: "the wake capsule reports the actor's role, not its id again", pass: !!w.text && /role=maker/.test(w.text), errs: [] });
+  }
+
   expectRuntime('a seat whose actor resolves to no role at all', (rt) => { rt.capsules['AS-1001'].owner_actor = 'nobody-at-all'; }, 'resolves to no declared role');
 
   expectSemantic('naming: a numbered P used as a seat kind', (c) => { c.teams.naming_convention.persistent_lead = 'P2 | <role> III | <team> | Ashenspire'; }, 'authority-tier namespace, not a seat kind');
@@ -3345,7 +3365,10 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
       kind: 'seat-wake',
       // The capsule's own actor only gets the wake when the contract agrees it
       // may move this state; otherwise the permitted role does, whoever holds it.
-      wake: roles.includes(cap.owner_actor) ? cap.owner_actor : roles[0],
+      // Resolve the owner's ROLE to test permission, but wake the ACTOR: a
+      // lead-owned ticket used to wake 'maker' because the id was compared
+      // against a list of roles and never matched.
+      wake: roles.includes(actorRole(contracts, cap.owner_actor)) ? cap.owner_actor : roles[0],
       eligible_roles: roles,
       reason: `'${cap.lifecycle_state}' is ready to move to ${open.map((m) => m.to).join(' or ')}`,
       next_states: open.map((m) => m.to),
