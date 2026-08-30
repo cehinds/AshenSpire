@@ -1115,6 +1115,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // a reachable node before this debounce fires; reading it in the callback
     // would mislabel the detached board's old camera as belonging to that node.
     pendingViewCommit = viewSnapshot();
+    // Keep the in-memory run camera current synchronously. Save & Quit may
+    // arrive before this debounce fires; the non-committing handoff updates
+    // the run without adding a durable write. The timer remains the sole
+    // settled-board commit.
+    emitViewState(false, pendingViewCommit);
     viewCommitTimer = setTimeout(() => {
       viewCommitTimer = null;
       const snapshot = pendingViewCommit;
