@@ -64,7 +64,15 @@ authority of its own and is regenerated deterministically from
 | `maker` | maker | `it-manager-iii` | implementation-blocker, path-collision, lease-expiry, local-verification-failure |
 | `qa-independent` | qa-independent | `it-manager-iii` | verdict-withhold, fixture-or-plant-regression, exact-head-drift |
 | `it-support` | it-support | `it-manager-iii` | tooling-failure, environment-or-access-blocker, routing-outage |
-| `team-lead` | team-lead | `it-manager-iii` | team-capacity, agent-seat-formation, independence-waiver-request |
+| `lead-art-tech-art` | team-lead | `it-manager-iii` | team-capacity-art-tech-art, agent-seat-formation-art-tech-art |
+| `lead-feature-architecture` | team-lead | `it-manager-iii` | team-capacity-feature-architecture, agent-seat-formation-feature-architecture |
+| `lead-incident-defect` | team-lead | `it-manager-iii` | team-capacity-incident-defect, agent-seat-formation-incident-defect |
+| `lead-code-quality-modernization` | team-lead | `it-manager-iii` | team-capacity-code-quality-modernization, agent-seat-formation-code-quality-modernization |
+| `lead-game-systems` | team-lead | `it-manager-iii` | team-capacity-game-systems, agent-seat-formation-game-systems |
+| `lead-experience-design` | team-lead | `it-manager-iii` | team-capacity-experience-design, agent-seat-formation-experience-design |
+| `lead-experience-accessibility-review` | team-lead | `it-manager-iii` | team-capacity-experience-accessibility-review, agent-seat-formation-experience-accessibility-review |
+| `lead-qa-guild` | team-lead | `it-manager-iii` | team-capacity-qa-guild, agent-seat-formation-qa-guild |
+| `lead-platform-release` | team-lead | `it-manager-iii` | team-capacity-platform-release, agent-seat-formation-platform-release |
 
 Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owner classes: owner-exclusive, safety, credential, irreversible, intent-conflict.
 
@@ -424,9 +432,9 @@ Protected states: `pushed`, `pr-open`, `dev-integrated`, `hosted-verified`, `rel
 | From | To | Guard | Permitted actors | Protected |
 |---|---|---|---|---|
 | proposed | assigned | contract-ready + acknowledged | help-desk, it-manager-iii | no |
-| assigned | in-progress | writer-lease-held + exclusive-paths | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk | no |
-| in-progress | local | local-commit-on-isolated-branch | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk | no |
-| local | qa-review | frozen-exact-head | maker, it-manager-iii | no |
+| assigned | in-progress | writer-lease-held + exclusive-paths | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk, team-lead | no |
+| in-progress | local | local-commit-on-isolated-branch | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk, team-lead | no |
+| local | qa-review | frozen-exact-head | maker, it-manager-iii, team-lead | no |
 | qa-review | accepted | independent-qa-pass at exact head | qa-independent | no |
 | accepted | pushed | independence-PASS + fresh-base | it-manager-iii | yes |
 | pushed | pr-open | normal-reviewable-PR | it-manager-iii | yes |
@@ -479,7 +487,7 @@ A P-level is decision authority and nothing else. It is not seniority, not capab
 |---|---|---|---|
 | **P0** Owner | `constantine` | main and release mutation; tags; release publication; Pages source and deployment; final release readiness; Gate E playtest; Gate F per-action approval; every owner-exclusive decision class | overrule an independent QA verdict without a recorded waiver named in qa.json |
 | **P1** Deputy — IT Manager III, Integration and Delivery | `it-manager-iii` | technical assignment and sequencing; path and maker ownership; integration and delivery to dev; Gate B and Gate C; incident and P0 command; standard-risk QA waiver; branch-rewrite permission; the wake target for every technical escalation | main, release, tag, publication or Pages; Gate E or Gate F; overruling an independent QA verdict |
-| **P2** Standing coordination | `project-management-lead`, `data-architecture-lead`, `help-desk`, `team-lead` | intake, triage, routing and receipts; portfolio, dependency, WIP and capacity visibility; completion councils and Gate D convening; cross-domain data-contract review, including WITHHOLD | technical assignment or integration; delivery, promotion or release; board mutation |
+| **P2** Standing coordination | `project-management-lead`, `data-architecture-lead`, `help-desk`, `lead-art-tech-art`, `lead-feature-architecture`, `lead-incident-defect`, `lead-code-quality-modernization`, `lead-game-systems`, `lead-experience-design`, `lead-experience-accessibility-review`, `lead-qa-guild`, `lead-platform-release` | intake, triage, routing and receipts; portfolio, dependency, WIP and capacity visibility; completion councils and Gate D convening; cross-domain data-contract review, including WITHHOLD | technical assignment or integration; delivery, promotion or release; board mutation |
 | **P3** Independent verification | `qa-independent` | the exact-head verdict, which no tier may overrule; Gate A; WITHHOLD that blocks promotion at any level | implementing what it verifies; assigning work to itself |
 | **P4** Delivery seats | `maker`, `it-support` | implementation inside one writer lease; returning exact evidence | claiming an overlapping path or ref; push, PR, merge, deploy or release; changing product behaviour to clear a blocker |
 

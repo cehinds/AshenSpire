@@ -92,13 +92,84 @@
       ]
     },
     {
-      "actor_id": "team-lead",
+      "actor_id": "lead-art-tech-art",
       "role": "team-lead",
       "escalation_parent": "it-manager-iii",
       "owns_escalations": [
-        "team-capacity",
-        "agent-seat-formation",
-        "independence-waiver-request"
+        "team-capacity-art-tech-art",
+        "agent-seat-formation-art-tech-art"
+      ]
+    },
+    {
+      "actor_id": "lead-feature-architecture",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-feature-architecture",
+        "agent-seat-formation-feature-architecture"
+      ]
+    },
+    {
+      "actor_id": "lead-incident-defect",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-incident-defect",
+        "agent-seat-formation-incident-defect"
+      ]
+    },
+    {
+      "actor_id": "lead-code-quality-modernization",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-code-quality-modernization",
+        "agent-seat-formation-code-quality-modernization"
+      ]
+    },
+    {
+      "actor_id": "lead-game-systems",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-game-systems",
+        "agent-seat-formation-game-systems"
+      ]
+    },
+    {
+      "actor_id": "lead-experience-design",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-experience-design",
+        "agent-seat-formation-experience-design"
+      ]
+    },
+    {
+      "actor_id": "lead-experience-accessibility-review",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-experience-accessibility-review",
+        "agent-seat-formation-experience-accessibility-review"
+      ]
+    },
+    {
+      "actor_id": "lead-qa-guild",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-qa-guild",
+        "agent-seat-formation-qa-guild"
+      ]
+    },
+    {
+      "actor_id": "lead-platform-release",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-platform-release",
+        "agent-seat-formation-platform-release"
       ]
     }
   ],
@@ -167,7 +238,15 @@
           "project-management-lead",
           "data-architecture-lead",
           "help-desk",
-          "team-lead"
+          "lead-art-tech-art",
+          "lead-feature-architecture",
+          "lead-incident-defect",
+          "lead-code-quality-modernization",
+          "lead-game-systems",
+          "lead-experience-design",
+          "lead-experience-accessibility-review",
+          "lead-qa-guild",
+          "lead-platform-release"
         ],
         "holds": [
           "intake, triage, routing and receipts",

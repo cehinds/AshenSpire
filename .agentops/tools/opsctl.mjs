@@ -590,9 +590,14 @@ export function semanticChecks(c, now = new Date().toISOString()) {
       }
       // A tier declared here and a tier declared in the ladder must agree.
       if (c.hierarchy && c.hierarchy.authority_tiers) {
-        const lv = c.hierarchy.authority_tiers.levels.find((l) => l.actors.includes(tl.role));
-        if (!lv) errors.push(`teams: team_leads.role '${tl.role}' is in no authority tier`);
-        else if (lv.p !== tl.authority_tier) errors.push(`teams: team_leads declares tier P${tl.authority_tier} but the ladder places '${tl.role}' at P${lv.p}`);
+        for (const l of tl.leads) {
+          const lv = c.hierarchy.authority_tiers.levels.find((x) => x.actors.includes(l.actor_id));
+          if (!lv) errors.push(`teams: team lead '${l.actor_id}' is in no authority tier; its decision authority is undeclared`);
+          else if (lv.p !== tl.authority_tier) errors.push(`teams: team_leads declares tier P${tl.authority_tier} but the ladder places '${l.actor_id}' at P${lv.p}`);
+        }
+        if (c.hierarchy.authority_tiers.levels.some((x) => x.actors.includes(tl.role))) {
+          errors.push(`teams: the ladder places the shared role '${tl.role}' rather than each lead actor; that collapses every team into one slot and loses the identity the roster carries`);
+        }
       }
     }
 
@@ -1412,8 +1417,10 @@ export function runtimeChecks(g, rt) {
       if (cap.blocker) continue;                      // blocked seats route by escalation, not transition
       const out = g.transitions.transitions.filter((m) => m.from === cap.lifecycle_state && !m.protected);
       if (!out.length) continue;                      // terminal or owner-only: not the seat's move to make
-      if (!out.some((m) => m.permitted_actor_roles.includes(cap.owner_actor))) {
-        errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
+      const node = g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === cap.owner_actor);
+      const actingRole = node ? node.role : cap.owner_actor;
+      if (!out.some((m) => m.permitted_actor_roles.includes(actingRole))) {
+        errors.push(`capsule ${t}: owner_actor '${cap.owner_actor}' (role '${actingRole}') is permitted no move out of '${cap.lifecycle_state}'; the seat is stranded`);
       }
     }
   }
@@ -1536,9 +1543,11 @@ export function runtimeChecks(g, rt) {
     if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
     if (cap.evidence_pointers.length > 8) errors.push(`capsule '${ticket}' has ${cap.evidence_pointers.length} evidence pointers, exceeding the max of 8`);
     for (const ep of cap.evidence_pointers) if (!evIds.has(ep)) errors.push(`capsule '${ticket}' evidence pointer '${ep}' is not a declared evidence type in evidence.json`);
-    const may = roleMay.get(cap.owner_actor);
-    if (!may) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' is not a declared role`);
-    else for (const a of cap.authority.may) if (!may.has(a)) errors.push(`capsule '${ticket}' authority amplification: may '${a}' is not permitted for role '${cap.owner_actor}'`);
+    const ownerNode = g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === cap.owner_actor);
+    const ownerRole = ownerNode ? ownerNode.role : cap.owner_actor;
+    const may = roleMay.get(ownerRole);
+    if (!may) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' resolves to no declared role`);
+    else for (const a of cap.authority.may) if (!may.has(a)) errors.push(`capsule '${ticket}' authority amplification: may '${a}' is not permitted for role '${ownerRole}'`);
     const lease = leaseById.get(cap.writer_lease);
     if (!lease) errors.push(`capsule '${ticket}' references unknown writer_lease '${cap.writer_lease}'`);
     else {
@@ -2525,8 +2534,8 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].join('\n')),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => l.actor_id), ...x.team_leads.leads.map((l) => l.seat_name), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
-  transitions: (x) => [x.principle, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} |`)],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
+  transitions: (x) => [x.principle, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
 
 // A probe value shared by two contracts lets one mask the other: the masked
@@ -3103,6 +3112,31 @@ export function runSelftest(root = ROOT) {
   expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
   expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
   expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
+  // Team-lead roster. These checks lost their plants when the self-certification
+  // withdrawal removed the surrounding block; the checks survived, so the proof
+  // that each can fail is restored here.
+  expectSemantic('team lead: a role that is not declared', (c) => { c.teams.team_leads.role = 'ghost-lead'; }, 'is not a declared role');
+  expectSemantic('team lead: a capability pool made into the lead role', (c) => { c.teams.team_leads.role = 'qa-guild'; }, 'is also a capability pool');
+  expectSemantic('team lead: a team with no lead', (c) => { c.teams.team_leads.leads = c.teams.team_leads.leads.filter((l) => l.team !== 'game-systems'); }, "capability pool 'game-systems' has no team lead");
+  expectSemantic('team lead: two leads claiming one team', (c) => { c.teams.team_leads.leads[1].team = c.teams.team_leads.leads[0].team; }, 'one_lead_per_team allows one');
+  expectSemantic('team lead: one actor leading two teams', (c) => { c.teams.team_leads.leads[1].actor_id = c.teams.team_leads.leads[0].actor_id; }, 'is declared twice');
+  expectSemantic('team lead: a lead named after a role rather than an actor', (c) => { c.teams.team_leads.leads[0].actor_id = 'maker'; }, 'a lead is an actor, not a role');
+  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Some Lead III | qa-guild | Ashenspire'; }, 'does not name its own team');
+  expectSemantic('team lead: a seat name outside the naming convention', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | art helper | art-tech-art | Ashenspire'; }, 'does not follow naming_convention');
+  // Leads are placed in the ladder as actors; a shared-role entry would put
+  // nine teams in one slot and lose the identity the roster carries.
+  expectSemantic('team lead: an actor in no authority tier', (c) => {
+    const lv = c.hierarchy.authority_tiers.levels.find((l) => l.p === 2);
+    lv.actors = lv.actors.filter((a) => a !== 'lead-qa-guild');
+  }, "team lead 'lead-qa-guild' is in no authority tier");
+  expectSemantic('team lead: the ladder placing the shared role instead of the actors', (c) => {
+    c.hierarchy.authority_tiers.levels.find((l) => l.p === 2).actors.push('team-lead');
+    c.hierarchy.nodes.push({ actor_id: 'team-lead', role: 'team-lead', escalation_parent: 'it-manager-iii', owns_escalations: ['x'] });
+  }, 'collapses every team into one slot');
+  // An actor is not its role: both of these read the id directly until leads
+  // got identities that differ from the role they hold.
+  expectRuntime('a seat whose actor resolves to no role at all', (rt) => { rt.capsules['AS-1001'].owner_actor = 'nobody-at-all'; }, 'resolves to no declared role');
+
   expectSemantic('naming: a numbered P used as a seat kind', (c) => { c.teams.naming_convention.persistent_lead = 'P2 | <role> III | <team> | Ashenspire'; }, 'authority-tier namespace, not a seat kind');
   expectSemantic('naming: the two P namespaces no longer distinguished', (c) => { c.teams.naming_convention.not_the_tier_namespace = 'use judgement'; }, 'would be read as one');
   expectSemantic('teams: a legacy alias routing nowhere', (c) => { c.teams.legacy_aliases[0].routes_to = 'ghost-pool'; }, 'neither a standing role nor a capability pool');
