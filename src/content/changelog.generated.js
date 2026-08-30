@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-361",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The Review & Approval Hub refreshes its owner decisions and adds Context Rotation",
+    "detail": "The owner-facing hub promotes the two bounded Art decisions into cards that need Constantine without approving either, adds the #053 Context Rotation dashboard and its 13-team / 52-seat report, and separates registration and cold-start acceptance from execution, rotation, and successor-resume proof. Local-only evidence URLs now resolve to the explicit unavailable page instead of leaking author-local file paths. Evidence and hub only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.",
+    "build": "0.4.0.1454",
+    "pullRequest": 361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/361"
+  },
+  {
     "id": "pr-350",
     "date": "2026-08-26",
     "group": "2026-08-26",

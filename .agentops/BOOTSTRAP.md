@@ -24,13 +24,129 @@ extra hop.
 | Truth | Lives in |
 |---|---|
 | Owner intent, deputy grant | `governance/owner-intent.json` |
-| Hierarchy and escalation | `governance/hierarchy.json` |
+| Hierarchy and escalation ownership | `governance/hierarchy.json` |
 | Roles (may / must / must-not) | `governance/roles.json` |
 | Per-action authority | `governance/authority.json` |
 | Git path/ref ownership, one-writer | `governance/git-ownership.json` |
+| RACI (one Accountable per item) | `governance/raci.json` |
+| Delegation envelopes, subdelegation limits | `governance/delegation.json` |
+| Escalation timers and routing | `governance/escalation.json` |
+| Lifecycle transitions and permitted actors | `governance/transitions.json` |
+| Information-access / context-loading rules | `governance/information-access.json` |
+| QA independence and risk-selected gates | `governance/qa.json` |
+| Artifact/evidence responsibility | `governance/evidence.json` |
+| Owner-command allowlist (authenticated decisions) | `governance/owner-command.json` |
+| Legacy migration policy (read-only inventory) | `governance/migration.json` |
 
 Human-readable views under `generated/` are produced from these JSON files and
 carry no authority of their own.
+
+## Runtime state (per active ticket)
+
+| Artifact | Lives in |
+|---|---|
+| Work capsule (compact current state, sealed with a CAS `current_hash`) | `work/<ticket>/CURRENT.json` |
+| Writer lease (one writer per overlapping path/ref) | `leases/<lease-id>.json` |
+| Append-only event (transition receipt) | `events/<ticket>/<event-id>.json` |
+
+Resume an actor onto a ticket with the token-bounded wake compiler — it reads
+only what that action needs and prints one disposable capsule (never committed):
+
+```sh
+node .agentops/tools/opsctl.mjs wake --actor <role> --work <ticket>
+# e.g. wake --actor maker --work AS-1001
+```
+
+Prove a clean clone reconstructs exact work state (zero evidence loss,
+provider-neutral) with the reconstruction drill — see
+[`RECONSTRUCTION-DRILL.md`](RECONSTRUCTION-DRILL.md):
+
+```sh
+node .agentops/tools/opsctl.mjs drill
+```
+
+When a terminal ticket releases an already-identified actor, the live
+scheduler selects that actor's highest-ranked safe ticket from the explicit
+Issue #269 priority list. In `LIVE_ASSIGNMENT` mode it then transfers the
+target ticket's existing claim to the actor's provider-neutral unique seat by
+compare-and-swap. It never creates a claim or a seat identity:
+
+```sh
+node .agentops/tools/pipeline-pilot-live.mjs --actor <actor> --completed <terminal-ticket> --released-at <UTC>
+```
+
+The planner output is a bounded offer or the distinct `NO_SAFE_ASSIGNMENT` /
+`IDLE_ALARM` state. The continuous watcher converts a safe offer into one
+claim+lease+audit transaction using the Git-local runtime named by
+`--seat-runtime`; no capability is written to Git, output, or wake packets.
+For continuous local operation, run the repository-neutral watcher. It derives
+a stable event identity from the terminal capsule hash, persists bounded replay
+protection under `.git/agentops-pipeline/`, and rechecks pending rows until the
+300-second idle alarm is due:
+
+```sh
+node .agentops/tools/pipeline-pilot-watch.mjs --seat-runtime <git-local-seat-runtime.json>
+```
+
+The watcher refuses feature/stale/dirty checkouts: it must run from a tracked-
+clean `dev` checkout whose HEAD exactly matches freshly fetched `origin/dev`.
+Its repo-wide state records that HEAD and fails closed if the source moves
+during a run except for a verified fast-forward. A fast-forward preserves
+processed identities, pending alarms, and observations before rescanning; a
+history rewrite fails closed. Remote fetch failure also fails closed rather
+than scanning stale state. Initial startup and every accepted source
+fast-forward also require a full `opsctl verify` before any baseline or scan.
+Replay keys cover every current terminal capsule and are pruned only when that
+terminal identity disappears; only the diagnostic observation history is
+bounded to the latest 100 records.
+
+Unique seat identity and CAS claim-transfer design live at
+[`pipeline-pilot/SEAT_CLAIMS.md`](pipeline-pilot/SEAT_CLAIMS.md). Seat secrets
+never enter Git or wake packets. Missing runtime, registry, capability, claim,
+lease, currentness, or collision evidence fails the exact assignment without
+processing its terminal identity; the watcher can retry after repair.
+Stop that process to deactivate it. Removing its Git-local state resets only
+observability and replay history; it never changes AgentOps claims or history.
+On first start, existing terminal capsules are baselined without emitting
+historical offers; only a new terminal capsule hash triggers a cycle.
+
+Owner decisions flow through the authenticated owner-command path — enumerated,
+allowlisted, and compare-and-swap-checked. `--dry-run` validates and reports
+what it would do without touching the repository; `--apply` performs the same
+validation and then writes:
+
+```sh
+node .agentops/tools/opsctl.mjs command --dry-run --request '<owner-command-request json>'
+node .agentops/tools/opsctl.mjs command --apply   --request '<owner-command-request json>'
+```
+
+Applying appends **one append-only decision event** and re-seals **only** the
+target capsule. It moves lifecycle state only where `owner-command.json`
+declares a `lifecycle_target` and `transitions.json` declares that exact
+transition from the capsule's current state for the authenticating role — an
+undeclared or unpermitted move is rejected and nothing is written. A stale
+`expected_current_hash` is refused rather than applied to unseen state, and the
+seal is re-checked immediately before the write.
+
+In the browser, the owner files decisions from the HUD's **Decide** table: each
+row links to the *Owner decision* issue form prefilled with the ticket and its
+live compare-and-swap hash. `.github/workflows/owner-command.yml` executes only
+issues the repository owner authored, resolves the actor role from the
+authenticated GitHub identity (never from the issue body), and reports the
+result back on the issue. Help Desk intake uses the *Help Desk ticket* form.
+
+The read-only Owner HUD is a redacted, deterministic projection at
+`generated/hud/index.html`. It is a plain static file: the repository
+publishes its own tree to GitHub Pages (Settings → Pages → Deploy from a
+branch → `main`, root), so the HUD is served with the rest of the site and
+reachable at `/hud/` (a copy of the generated file). There is no separate
+publish workflow — regenerating the file with `opsctl render` and pushing is
+all it takes.
+
+Because Pages publishes `main`, the live site is the **released** state:
+regenerating the HUD on `dev` does not change it until an owner-authorized
+`dev` → `main` promotion. Publication stays a protected transition rather
+than a side effect of routine integration.
 
 ## Validate before you trust
 
@@ -59,8 +175,13 @@ and overriding an independent QA verdict. See
 
 ## Installed stage
 
-`governance-kernel`. Deferred to later stages (see `project.json →
-deferred_next_stages`): RACI, delegation, escalation, transition, information-
-access, and QA contracts; the `opsctl wake` token/context compiler; the work /
-event / evidence / lease capsules; the owner-command workflows; and the
-read-only Owner HUD on GitHub Pages.
+`migration-tooling+pipeline-live-assignment`. The governance kernel, the operational contracts, the
+runtime layer (`opsctl wake`), the reconstruction drill (`opsctl drill`), the
+authenticated owner-command path (`opsctl command --dry-run`), the read-only
+Owner HUD (`generated/hud/index.html`), and now the read-only legacy migration
+inventory (`opsctl migrate` + `governance/migration.json` +
+`generated/migration/PLAN.md`), and the Issue #269 unique-seat claim assignment
+watcher are installed and validated. Deferred to later
+stages (see `project.json → deferred_next_stages`): the owner-command live
+executor; the migration cutover (real genesis capsules + legacy-entrypoint
+replacement, owner-gated); and the exact `dev` → `main` promotion decision.

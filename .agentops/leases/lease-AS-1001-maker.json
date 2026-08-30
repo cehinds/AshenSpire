@@ -1,0 +1,29 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-1001-maker",
+  "actor": "maker",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-1001",
+  "ref": "claude/ashenspire-agentops-stage3-capsules",
+  "path_globs": [
+    ".agentops/schemas/**",
+    ".agentops/tools/**",
+    ".agentops/work/**",
+    ".agentops/events/**"
+  ],
+  "base_oid": "985664c2439c373a4d38604b8a53e223c8b8da61",
+  "actions": [
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch"
+  ],
+  "issued": "2026-08-28T00:00:00Z",
+  "expiry": "2026-09-30T23:59:59Z",
+  "revoked": false,
+  "path_grant_exception": {
+    "reason": "Seed capsule that authored the control plane itself, issued before .agentops/schemas/** was assigned to it-manager-iii. Retained as historical evidence; no new lease may grant schemas to maker.",
+    "globs": [
+      ".agentops/schemas/**"
+    ]
+  }
+}

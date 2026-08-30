@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-050-0003",
+  "ticket": "AS-HD-050",
+  "seq": 3,
+  "parent_event": "AS-HD-050-0002",
+  "kind": "owner-decision",
+  "actor": "owner",
+  "at": "2026-08-29T08:31:22.507Z",
+  "summary": "Owner-command 'approve' by owner recorded: D2 authorized by the owner: proceed with one append-only successor. The sole continuity writer preserves history, validates the exact tuple, refreshes the shared index, and writes the pointer LAST; on mismatch only the residual routes to Help Desk. Reopens no motif policy or production decision — the PM supersession, current register, independent Art reread and Art backlog r7 already match and the body records COMPLETE; only the pointer/continuity projection was stale.."
+}

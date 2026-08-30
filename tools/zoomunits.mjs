@@ -82,8 +82,8 @@
 // fixtures and its wiring in tests/run-node.mjs when EITHER holds:
 //   (a) `zoom:` is gone from styles/base.css and `--ui-zoom` from src/ — the two
 //       spaces have collapsed into one and there is nothing left to convert; or
-//   (b) `--selftest` reports known-bad recall below 2/2 OR known-good cleared
-//       below 3/3, and it cannot be restored by fixing the check. A detector whose
+//   (b) `--selftest` reports known-bad recall below 3/3 OR known-good cleared
+//       below 4/4, and it cannot be restored by fixing the check. A detector whose
 //       own corpus escapes it is decoration; delete the check, not the fixtures.
 //       Both numbers move with the SELFTEST table below — if you add a fixture,
 //       update this line in the same commit or the condition stops being
@@ -130,10 +130,14 @@ const ZOOM_READ = /getPropertyValue\s*\(\s*['"`]--ui-zoom['"`]\s*\)/;
 const DECL = /(?:^|[;{}\s])(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([^;]*)/g;
 const ASSIGN = /(?:^|[;{}\s])([A-Za-z_$][\w$]*)\s*=\s*([^;]*)/g;
 // A LOCAL px geometry write. `%` and bare numbers are not visual pixels.
-// `(.*)` not `(.+)`: the value is allowed to be empty here, because it may begin
+// `([^;]*)` not `([^;]+)`: the value is allowed to be empty here, because it may begin
 // on the NEXT line. Requiring a character after `=` is what made the first cut of
 // this check miss pre-fix tutorial.js:54-55.
-const WRITE = /([A-Za-z_$][\w$.()'"\[\]]*)\.style\.(left|top|width|height)\s*=\s*(.*)$/;
+// Global and bounded to one statement so every write on a source line is graded.
+// The previous end-anchored `(.*)$` made the first write consume every later
+// write on that line; a converted first value could therefore hide an
+// unconverted second value before the scanner ever evaluated it.
+const WRITE = /([A-Za-z_$][\w$.()'"\[\]]*)\.style\.(left|top|width|height)\s*=\s*([^;]*)(?:;|$)/g;
 
 /**
  * Strip // and /* *\/ comments, keeping template literals (the write's value
@@ -212,33 +216,34 @@ export function scan(src) {
   const findings = [];
   let writes = 0;
   lines.forEach((line, idx) => {
-    const m = WRITE.exec(line.trim());
-    if (!m) return;
-    const [, target, prop, rawValue] = m;
-    let value = rawValue.replace(/;\s*$/, '');
-    for (let j = idx + 1; !/;/.test(rawValue) && j < lines.length && j <= idx + 6; j++) {
-      value += ` ${lines[j].trim()}`;
-      if (/;/.test(lines[j])) break;
+    for (const m of line.trim().matchAll(WRITE)) {
+      const [, target, prop, rawValue] = m;
+      let value = rawValue;
+      const terminatedHere = /;\s*$/.test(m[0]);
+      for (let j = idx + 1; !terminatedHere && j < lines.length && j <= idx + 6; j++) {
+        value += ` ${lines[j].trim()}`;
+        if (/;/.test(lines[j])) break;
+      }
+      value = value.replace(/;.*$/, '');
+      if (!/px/.test(value)) continue; // % or a unitless ratio cannot carry the error
+      writes++;
+
+      const divided = [...zoomVars].some((z) => new RegExp(`/\\s*\\(?\\s*${z}\\b`).test(value));
+      if (divided) continue;
+
+      const direct = anySource(value);
+      const via = [...visual].filter((v) => referencesBinding(value, v));
+      if (!direct && !via.length) continue;
+
+      findings.push({
+        line: idx + 1,
+        text: line.trim(),
+        write: `${target}.style.${prop}`,
+        why: direct
+          ? 'a visual-pixel API is read directly into the value'
+          : `the value reads ${via.join(', ')}, bound from a visual-pixel API`,
+      });
     }
-    value = value.replace(/;.*$/, '');
-    if (!/px/.test(value)) return; // % or a unitless ratio cannot carry the error
-    writes++;
-
-    const divided = [...zoomVars].some((z) => new RegExp(`/\\s*\\(?\\s*${z}\\b`).test(value));
-    if (divided) return;
-
-    const direct = anySource(value);
-    const via = [...visual].filter((v) => referencesBinding(value, v));
-    if (!direct && !via.length) return;
-
-    findings.push({
-      line: idx + 1,
-      text: line.trim(),
-      write: `${target}.style.${prop}`,
-      why: direct
-        ? 'a visual-pixel API is read directly into the value'
-        : `the value reads ${via.join(', ')}, bound from a visual-pixel API`,
-    });
   });
 
   return { findings, stats: { writes, local: local.size, visual: visual.size } };
@@ -272,10 +277,9 @@ function boundary(scanned, skipped, mode = {}) {
   console.log('BOUNDARY: not looked at — style.transform / style.cssText / setProperty, CSS');
   console.log('          written by a stylesheet rather than inline, values crossing a');
   console.log(`          function boundary as an argument, and ${skipped} non-JS file(s).`);
-  console.log('BOUNDARY: one finding per line, first match wins. A line holding a converted');
-  console.log('          write followed by an unconverted one reads clean — and with no');
-  console.log('          finding there is no entry, so rule (3) below never sees it. That');
-  console.log('          bypasses this guard upstream of itself (Bjorn, carded, pre-existing).');
+  console.log('BOUNDARY: every semicolon-delimited inline geometry write is graded, including');
+  console.log('          multiple writes on one source line. Writes assembled indirectly');
+  console.log('          across a function boundary remain outside this scanner.');
   console.log(`BOUNDARY: read ${scanned} .js/.mjs file(s). A path not given is a path not checked.`);
   // Bjorn: a boundary line is the one piece of prose that may never be wrong — and
   // under --raw this block asserted three rules were enforced in a run where zero of
@@ -413,6 +417,7 @@ function admissibility(entries) {
 const SELFTEST = [
   ['tests/fixtures/zoomunits/bad_tutorial_40c5b21.js', 'flag', 6],
   ['tests/fixtures/zoomunits/bad_taint_through_let.js', 'flag', 2],
+  ['tests/fixtures/zoomunits/bad_mixed_writes_same_line.js', 'flag', 2],
   ['tests/fixtures/zoomunits/good_tutorial_3a0def9.js', 'clear', 0],
   ['tests/fixtures/zoomunits/good_divided_by_zoom.js', 'clear', 0],
   ['tests/fixtures/zoomunits/good_no_px_write.js', 'clear', 0],
@@ -469,7 +474,7 @@ function selftest() {
   // holds zero non-JS files, so a measured 0 and the hardcoded 0 it replaced are the
   // same three characters on this tree, and the defect would have been invisible
   // again the day someone reintroduced it. This directory is the mixed corpus that
-  // already exists for this tool — five .js and exactly one non-JS
+  // already exists for this tool — seven .js and exactly one non-JS
   // (two-spaces-probe.html) — so the number has to move with reality to stay right.
   // Asserted on the RENDERED LINE, not on the counter, because the original defect
   // was at the CALL SITE — `boundary(files.length, 0)` — and a fixture that would
@@ -487,10 +492,10 @@ function selftest() {
   }
   const covRead = /read (\d+) \.js\/\.mjs file/.exec(covLines.join('\n'));
   const covSkip = /and (\d+) non-JS file\(s\)/.exec(covLines.join('\n'));
-  const covOk = !!covRead && covRead[1] === '6' && !!covSkip && covSkip[1] === '1';
+  const covOk = !!covRead && covRead[1] === '7' && !!covSkip && covSkip[1] === '1';
   console.log(
     `  ${covOk ? 'OK  ' : 'MISS'}  boundary line over tests/fixtures/zoomunits → ` +
-      `"read ${covRead ? covRead[1] : '?'} .js/.mjs" and "${covSkip ? covSkip[1] : '?'} non-JS" (expected 6 and 1)`
+      `"read ${covRead ? covRead[1] : '?'} .js/.mjs" and "${covSkip ? covSkip[1] : '?'} non-JS" (expected 7 and 1)`
   );
 
   const corpusPass = badHit === bad && goodHit === good;

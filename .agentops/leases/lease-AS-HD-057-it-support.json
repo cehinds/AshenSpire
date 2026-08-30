@@ -1,0 +1,20 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-HD-057-it-support",
+  "actor": "it-support",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-HD-057",
+  "ref": "recovery/as-hd-057",
+  "path_globs": [
+    "tools/**"
+  ],
+  "base_oid": "284fd6e2dcf0f99b9f4bcb7d2ce87e7eaff56b4d",
+  "actions": [
+    "repair-local-tooling-and-environment",
+    "restore-routing-and-access",
+    "return-exact-support-evidence"
+  ],
+  "issued": "2026-08-29T09:35:00Z",
+  "expiry": "2026-10-31T23:59:59Z",
+  "revoked": false
+}

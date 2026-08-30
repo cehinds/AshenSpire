@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-045-0006",
+  "ticket": "AS-HD-045",
+  "seq": 6,
+  "parent_event": "AS-HD-045-0005",
+  "kind": "state-change",
+  "actor": "data-architecture-lead",
+  "at": "2026-08-29T17:41:05.340Z",
+  "summary": "Reseated from db06b9abe79a to live HEAD 676b9502cdae; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 5; parent_hash names sha256:1e7d43e25fba4f1ca8201558dfdeb30f80a6df17f4d8cf3f7de7979e9ea5a42c."
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 51,
+  "current_hash": "sha256:17393a35fa693bd4beecc0b1e03301f06fcca2678b3954811abe6ef16ead0bca",
+  "parent_hash": "sha256:54900eccbc83507955b1815122161a33040638b4b1d17140ff0d61252954ed50",
+  "ticket": "AS-HD-056",
+  "lifecycle_state": "assigned",
+  "objective": "Establish whether the owner-facing Review & Approval Hub can be maintained, and specify a regenerable replacement projected from the control plane.",
+  "done_when": "A specification exists for an owner-facing view generated deterministically from validated .agentops state (as the Owner HUD already is), covering which Hub sections carry real signal, which depend on evidence that no longer exists, and what the migration costs.",
+  "next_action": "Audit the committed Hub output against live control-plane state, record exactly which sections are stale and which are unrecoverable, then specify the regenerable replacement. Do not edit review-approval-hub/** - it is build output with no source in this repository and would be clobbered by any rebuild.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "recovery/as-hd-056",
+  "base_oid": "7bcc9ed08d3a5cc3bc77238851309d27308a78e9",
+  "tree": "recovered-from-hub-snapshot",
+  "expected_dirty_state": "clean",
+  "owner_actor": "maker",
+  "writer_lease": "lease-AS-HD-056-maker",
+  "affected_paths": [
+    "docs/hub/**"
+  ],
+  "evidence_pointers": [],
+  "blocker": {
+    "kind": "evidence-loss",
+    "escalation_class": "technical-blocker",
+    "summary": "review-approval-hub/ is committed build output (1457 files) with no source on any branch: no package.json, no next.config, no app directory. It cannot be rebuilt or safely edited. Its content has already drifted from the control plane, which now records 8 tickets and 0 owner decisions pending."
+  },
+  "authority": {
+    "may": [
+      "implement-locally-on-exclusive-paths",
+      "run-tests-and-builds",
+      "commit-on-isolated-branch",
+      "record-blocker-and-continue-collision-free-work"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths",
+      "edit-generated-build-output-without-source"
+    ],
+    "expiry": "2026-10-31T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-HD-056 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}

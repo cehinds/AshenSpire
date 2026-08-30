@@ -1,0 +1,19 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-HD-055-qa-independent",
+  "actor": "qa-independent",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-HD-055",
+  "ref": "recovery/as-hd-055",
+  "path_globs": [
+    "tests/**"
+  ],
+  "base_oid": "f4a30c2d929a8429acd46fa02ca8a4798b6d2915",
+  "actions": [
+    "author-exact-head-verdict",
+    "maintain-red-plants-and-fixtures"
+  ],
+  "issued": "2026-08-29T09:00:00Z",
+  "expiry": "2026-10-31T23:59:59Z",
+  "revoked": false
+}

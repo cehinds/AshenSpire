@@ -3,7 +3,7 @@
 
 # AgentOps governance (generated view)
 
-Project: **AshenSpire** — policy version `1.0.0` — installed stage: `governance-kernel`
+Project: **AshenSpire** — policy version `1.0.0` — installed stage: `migration-tooling+pipeline-live-assignment`
 
 This Markdown is a projection of validated JSON contracts. It carries no
 authority of its own and is regenerated deterministically from
@@ -31,7 +31,7 @@ authority of its own and is regenerated deterministically from
 ## Owner and deputy
 
 - **Owner:** Constantine (`constantine`) — reserves: main/release mutation; tags; publication; GitHub Pages source; final release readiness; exact-test playtest sign-off; product priority and exceptional directives; final override.
-- **Deputy:** IT Manager III, Integration & Delivery (`it-manager-iii`, role `it-manager-iii`). Near-owner operational authority to translate owner intent into execution within these explicit, machine-readable grants.
+- **Deputy:** IT Manager III, Integration & Delivery (`it-manager-iii`, role `it-manager-iii`). Near-owner operational authority to translate owner intent into execution within these explicit, machine-readable grants. Extended 2026-08-29 by owner direction: the deputy may amend its own grant within the non-reserved envelope. Owner reserved authority is unchanged and remains unreachable by self-amendment.
   - Non-amplifying rule: `effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time`
   - Included actions:
     - assign or rebind bounded reversible work
@@ -42,8 +42,9 @@ authority of its own and is regenerated deterministically from
     - integrate to dev through the normal reviewable PR process at its discretion
     - chair a temporary QA Coordination Pool while a collision holds
     - escalate genuine owner decisions
+    - amend its own grant within the non-reserved envelope, provided each amendment is a separate commit that cites this owner grant and never reaches owner.reserved_authority
   - Excluded actions:
-    - amend its own grant
+    - amend its own grant to reach any authority listed in owner.reserved_authority
     - silently change owner intent
     - suppress an owner override
     - self-approve protected independent review
@@ -51,6 +52,16 @@ authority of its own and is regenerated deterministically from
     - mutate main or release
     - change Pages source, tag, publish, or declare final release readiness
     - perform the exact-test playtest sign-off
+  - Grant window: effective `governed-by-source-commit`, expiry `until-superseded-by-a-later-owner-intent-record`. A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record. The self-amendment extension was granted by the owner on 2026-08-29 and is revoked by any later owner-intent commit that removes it.
+- **Default autonomy:** reversible local work is `PROCEED`. Team Leads and agents perform reversible, collision-free local work (read-only inspection, scoped local implementation, isolated refs/worktrees, tests, builds, schema validation, fixtures, documentation, local commits on isolated branches) without routine approval waits.
+- **Override rules:**
+  - Recording: An exact owner directive is recorded as OWNER_OVERRIDE, separate from the underlying evidence result, referencing the exact object and the evidence it overrides.
+  - Invalidation: An override is invalidated when its referenced exact object identity (ref/head/tree/hash) changes; a changed object requires a fresh directive.
+  - An override may never:
+    - fabricate a PASS
+    - impersonate an independent reviewer
+    - bypass external credentials or platform controls
+    - claim a technically impossible state
 
 ## Hierarchy and escalation
 
@@ -61,8 +72,22 @@ authority of its own and is regenerated deterministically from
 | `project-management-lead` | project-management-lead | `it-manager-iii` | portfolio-sequencing-recommendation, dependency-and-capacity-visibility, completion-council |
 | `data-architecture-lead` | data-architecture-lead | `it-manager-iii` | data-contract-withhold, schema-lineage, migration-compatibility |
 | `help-desk` | help-desk | `it-manager-iii` | intake, routing, contract-completeness, status-hygiene |
+| `maker` | maker | `it-manager-iii` | implementation-blocker, path-collision, lease-expiry, local-verification-failure |
+| `qa-independent` | qa-independent | `it-manager-iii` | verdict-withhold, fixture-or-plant-regression, exact-head-drift |
+| `it-support` | it-support | `it-manager-iii` | tooling-failure, environment-or-access-blocker, routing-outage |
+| `lead-art-tech-art` | team-lead | `it-manager-iii` | team-capacity-art-tech-art, agent-seat-formation-art-tech-art |
+| `lead-feature-architecture` | team-lead | `it-manager-iii` | team-capacity-feature-architecture, agent-seat-formation-feature-architecture |
+| `lead-incident-defect` | team-lead | `it-manager-iii` | team-capacity-incident-defect, agent-seat-formation-incident-defect |
+| `lead-code-quality-modernization` | team-lead | `it-manager-iii` | team-capacity-code-quality-modernization, agent-seat-formation-code-quality-modernization |
+| `lead-game-systems` | team-lead | `it-manager-iii` | team-capacity-game-systems, agent-seat-formation-game-systems |
+| `lead-experience-design` | team-lead | `it-manager-iii` | team-capacity-experience-design, agent-seat-formation-experience-design |
+| `lead-experience-accessibility-review` | team-lead | `it-manager-iii` | team-capacity-experience-accessibility-review, agent-seat-formation-experience-accessibility-review |
+| `lead-qa-guild` | team-lead | `it-manager-iii` | team-capacity-qa-guild, agent-seat-formation-qa-guild |
+| `lead-platform-release` | team-lead | `it-manager-iii` | team-capacity-platform-release, agent-seat-formation-platform-release |
 
 Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owner classes: owner-exclusive, safety, credential, irreversible, intent-conflict.
+
+Elapsed time changes routing only, never truth, evidence, or authority. FYIs remain dashboard-only and are not escalations.
 
 ## Roles
 
@@ -79,7 +104,7 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 - **Mission:** Mandatory technical relay and deputy: own exceptions, technical scope and architecture reconciliation, sequencing, path/maker ownership, integration and delivery gates, and incident/P0 command.
 - **May:** resolve-technical-ambiguity, assign-and-rebind-work, issue-and-revoke-lease, create-isolated-ref, integrate-to-dev-via-pr, accept-bounded-technical-risk, fast-forward-test-under-gate-c
 - **Must:** record a decision packet answer; obtain data-architecture clearance or exact exception authority before overriding a WITHHOLD
-- **Must not:** amend its own grant, mutate main or release, change Pages source, self-approve protected independent review, perform owner-exclusive playtest sign-off
+- **Must not:** amend its own grant to reach any authority listed in owner-intent owner.reserved_authority, mutate main or release, change Pages source, self-approve protected independent review, perform owner-exclusive playtest sign-off
 - **Approval ceiling:** integration-to-dev
 
 ### `project-management-lead`
@@ -122,6 +147,103 @@ Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owne
 - **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
 - **Approval ceiling:** qa-verdict
 
+### `it-support`
+
+- **Mission:** Restore the ability to work: repair local tooling, environment, routing and access blockers, and return exact evidence of the repair.
+- **May:** repair-local-tooling-and-environment, restore-routing-and-access, return-exact-support-evidence
+- **Must:** reproduce-a-blocker-before-repairing-it; return-exact-evidence-of-the-repair
+- **Must not:** push-pr-merge-deploy-or-release, change-product-behaviour-to-clear-a-blocker, override-an-independent-qa-verdict
+- **Approval ceiling:** May restore capability only. Any repair that would change what the work produces, or that needs a protected transition, is escalated to it-manager-iii rather than performed.
+
+### `app-dev-i`
+
+- **Mission:** App Dev I (programmers team) — junior application developer; the maker archetype at entry level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `maker` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `app-dev-ii`
+
+- **Mission:** App Dev II (programmers team) — standard application developer; the maker archetype at mid level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `maker` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `app-dev-iii`
+
+- **Mission:** App Dev III (programmers team) — senior application developer; the maker archetype at senior level, eligible to lead a pod. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling (integration and protected transitions remain it-manager-iii's).
+- **Derives from:** `maker` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `artist-i`
+
+- **Mission:** Designer / Artist I (art team) — junior; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `maker` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `artist-ii`
+
+- **Mission:** Designer / Artist II (art team) — standard; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `maker` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `artist-iii`
+
+- **Mission:** Designer / Artist III (art team) — senior, eligible to lead a pod; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `maker` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** implement-locally-on-exclusive-paths, run-tests-and-builds, commit-on-isolated-branch, record-blocker-and-continue-collision-free-work
+- **Must:** hold a valid writer lease for each owned path; acknowledge an assignment before it becomes active
+- **Must not:** claim-overlapping-active-paths, push-pr-merge-deploy-or-release, change-scope-or-shared-paths-with-an-open-decision
+- **Approval ceiling:** local-commit-on-isolated-branch
+
+### `qa-technician-i`
+
+- **Mission:** QA Technician I (QA team) — junior; the qa-independent archetype at entry level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `qa-independent` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** author-exact-head-verdict, maintain-red-plants-and-fixtures
+- **Must:** review the exact frozen head named by the ticket; be a non-maker for the reviewed object
+- **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
+- **Approval ceiling:** qa-verdict
+
+### `qa-technician-ii`
+
+- **Mission:** QA Technician II (QA team) — standard; the qa-independent archetype at mid level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `qa-independent` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** author-exact-head-verdict, maintain-red-plants-and-fixtures
+- **Must:** review the exact frozen head named by the ticket; be a non-maker for the reviewed object
+- **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
+- **Approval ceiling:** qa-verdict
+
+### `qa-technician-iii`
+
+- **Mission:** QA Technician III (QA team) — senior, eligible to lead a QA pod; the qa-independent archetype at senior level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.
+- **Derives from:** `qa-independent` — a seniority level, carrying exactly that archetype's authority and no more.
+- **May:** author-exact-head-verdict, maintain-red-plants-and-fixtures
+- **Must:** review the exact frozen head named by the ticket; be a non-maker for the reviewed object
+- **Must not:** review-own-implementation, have-a-verdict-overruled-by-a-coordination-pool
+- **Approval ceiling:** qa-verdict
+
+### `team-lead`
+
+- **Mission:** Hold one team persistently: spin out and staff its agent seats, keep its roster and capacity current, and answer for the team's work.
+- **May:** spin-out-agent-seat
+- **Must:** name itself on every seat it spins out; keep its team's roster and capacity current
+- **Must not:** approve-its-own-implementation, waive-independent-qa, push-pr-merge-deploy-or-release, amend-its-own-grant
+- **Approval ceiling:** Forms and staffs its own team. Holds no waiver over independent QA: decision 0010 withdrew that mechanism pending an authenticated approval path.
+
 ## Authority matrix
 
 | Action | Routine owner role | Scope | Protected | Required evidence |
@@ -152,6 +274,7 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `dev` | it-manager-iii | pr-only |
 | `test` | it-manager-iii | gate-c-fast-forward-only |
 | `claude/*` | maker | isolated-continuation |
+| `recovery/*` | per-seat | isolated-continuation |
 
 ### Paths
 
@@ -162,7 +285,499 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/tools/**` | maker | agentops-tooling |
 | `.agentops/generated/**` | generator | governance |
 | `.agentops/work/**` | maker | per-ticket |
+| `.agentops/events/**` | maker | per-ticket |
+| `.agentops/leases/**` | it-manager-iii | governance |
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
+| `src/**` | maker | product-source |
+| `assets/**` | maker | product-assets |
+| `content/**` | data-architecture-lead | product-content |
+| `tests/**` | qa-independent | qa-fixtures |
+| `docs/art/**` | maker | product-docs |
+| `docs/hub/**` | maker | product-docs |
+| `docs/governance/**` | project-management-lead | governance-docs |
+| `game-design/docs/**` | help-desk | intake-docs |
+| `.github/workflows/**` | app-dev-iii | ci |
+| `.github/ISSUE_TEMPLATE/**` | help-desk | intake-docs |
+| `tools/**` | it-support | support-tooling |
+| `hud/**` | generator | generated-artifact |
+| `review-approval-hub/**` | generator | generated-artifact |
+| `buildordinal.json` | maker | generated-artifact |
+| `*.html` | maker | generated-artifact |
+
+### Branch hygiene
+
+A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard — so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.
+
+Default: `rebase`. Rewriting needs `it-manager-iii` when the branch is not the acting role's own; absent that, merge the base branch in, which leaves every existing checkout valid. Records: the branch, the prior head, the new head, the role that authorized the rewrite, why the rebase was preferred to a merge. Never: rewriting a protected or pr-only ref; discarding a commit that carries evidence without recording where that evidence now lives.
+
+Generated lane `governance`: A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift.
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
+
+
+## Promotion gates
+
+Promotion is a sequence of separately evidenced gates against one frozen head, not a single approval. Authority for one gate implies authority for none of the others, and any change to the candidate returns it to the first gate. A gate is passed by recorded evidence at an exact SHA, never by the fact that a job ran.
+
+| Gate | Name | Who acts | Guards | Required evidence | Grants |
+|---|---|---|---|---|---|
+| **A** | Exact candidate QA | `qa-independent` | `accepted` → `pushed` | test-run-receipt, generated-view-drift-check | nothing |
+| **B** | Dev integration and hosted verification | `it-manager-iii` | `pushed` → `pr-open`<br>`pr-open` → `dev-integrated` | hosted-evidence-url | nothing |
+| **C** | Exact fast-forward to test | `it-manager-iii` | `dev-integrated` → `hosted-verified` | hosted-evidence-url, rollback-procedure | nothing |
+| **D** | Five-role exact-test acceptance | `project-management-lead` | `hosted-verified` → `resolved` | acceptance-ledger | nothing |
+| **E** | Owner playtest | `owner` | — | playtest-receipt | nothing |
+| **F** | Separate main and release actions | `owner` | `resolved` → `released` | promotion-packet, rollback-procedure | nothing |
+
+Any code, content, configuration or artifact change creates a new candidate and restarts Gate A. A changed head invalidates every receipt recorded against the former SHA.
+
+#### Gate A — Exact candidate QA
+
+- **Entry:** One candidate head is frozen and the required independent QA and repository gates pass at that exact head.
+- **Invalidated by:** `any code, content, configuration or artifact change`
+
+#### Gate B — Dev integration and hosted verification
+
+- **Entry:** The Gate-A head is integrated to dev through the normal reviewable PR process, and the intended hosted development artifact and player flow are verified against the exact resulting dev SHA.
+- **Not satisfied by:** `a PR alone`, `a merge alone`, `a deployment job alone`, `a successful local test alone`
+- **Invalidated by:** `a new dev SHA`
+
+#### Gate C — Exact fast-forward to test
+
+- **Entry:** Gates A and B pass and remain fresh; the proposed test target is exactly the hosted-verified dev SHA; current test is an ancestor of it, so the mutation is a true fast-forward; the exact test head, rollback target and procedure, branch protections and mutation evidence are recorded; and there is no P0/P1 WITHHOLD, unresolved required reviewer, stale evidence, or scope/artifact mismatch.
+- **Invalidated by:** `a new dev SHA`, `a P0 or P1 WITHHOLD`, `stale evidence`
+- **On fail or unknown:** The IT Manager III records WAIT and requests the exact additional authority or correction.
+- **Explicitly not granted:** `main`, `release`, `tag`, `publication`, `Pages`, `product`, `board`
+
+#### Gate D — Five-role exact-test acceptance
+
+- **Entry:** At the unchanged exact test SHA, separate recommendations are recorded from all five required roles. Each names the exact test SHA, evidence, verdict, known defects and conditions.
+- **Required roles:** `qa-independent`, `qa-independent`, `maker`, `it-manager-iii`, `project-management-lead`
+- **Conditional roles:** `data-architecture-lead` — schema, IDs, aliases, lineage, migration, generated manifests, save/content or data quality are affected
+- **Conditional roles:** `experience-accessibility-review` — player-facing experience is affected
+- **Conditional roles:** `delivery-systems-review` — build, artifact, dependency/tooling, deployment, hosted or rollback surfaces are affected
+- **Blocks on:** `a P0 or P1 WITHHOLD`
+- **Invalidated by:** `a changed test head`
+- **Note:** Council coordination never combines or replaces independent verdicts. An accepted P2 remains open and must name its disclosure, owner, target milestone, risk and exact accepting authority. Other known defects stay recorded and are not converted to resolved by promotion.
+
+#### Gate E — Owner playtest
+
+- **Entry:** After Gate D passes, the Owner playtests the unchanged exact test SHA.
+- **Invalidated by:** `a changed test head`
+- **Returns to gate on correction:** A
+- **Note:** The receipt records build and artifact identity, flows, result, known accepted defects and any requested correction.
+
+#### Gate F — Separate main and release actions
+
+- **Entry:** After Gate E, a fresh exact-SHA promotion packet is submitted. The Owner separately approves and performs each requested mutation.
+- **Separate actions:** `main mutation`, `release mutation`, `tag`, `release publication`, `Pages source or deployment`, `final release-readiness decision`
+- **Authority is per action:** yes
+- **Note:** Authority for one action implies none of the others. Each action records its source and target SHA, artifact/hash/build/source, required review, rollback, result, and hosted evidence when applicable.
+
+
+## Teams
+
+Standing coordination is scarce and named; delivery capability is pooled and temporary. A pool is a capability the project can draw on, never a department that owns a backlog, a decision stream, or a source path because the path fits its specialty. A pod is formed for one contract-ready ticket and dissolves; its chat and local workspace are never an authority source, so losing the conversation loses no work.
+
+### Standing coordination roles
+
+| Role | Standing responsibility | Boundary |
+|---|---|---|
+| `help-desk` | Intake, contract and status hygiene, routing, acknowledgements, receipts, and Project workflow projection. | No implementation, product, technical-decision, integration, board-mutation, or delivery authority. |
+| `project-management-lead` | Portfolio and milestone recommendations; dependency, blocker, WIP and capacity visibility; completion councils; handoffs; risk and decision log; promotion-readiness planning; stakeholder summaries. | Recommends and coordinates; does not decide technical assignment or integration, and gains no product, board, delivery, promotion, or release authority. |
+| `data-architecture-lead` | Schema, ID, alias and deprecation; source-generator-projection lineage; migration, version and compatibility; generated manifests; save, content and data quality; cross-domain data-contract review. | May WITHHOLD an unsafe contract; does not self-assign implementation or replace domain intent or IT Manager III authority. |
+| `it-manager-iii` | Mandatory technical relay; technical sequencing; path and maker ownership; architecture reconciliation; incident and P0 command; integration and delivery gates. | Decides technical assignment and integration within granted authority; Constantine retains main/release, Pages, tags, publication, playtest, and final release actions. |
+
+### Capability pools
+
+Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease. A pool is drawn into a temporary pod for a ticket. Legacy task names such as App Team2, IT Support2 and IT Support3 are tasks, not standing organizations. No standing Audio, Localization, Telemetry, Security or Community department exists absent a later product-scope decision.
+
+| Pool | Delivery capability | Stewardship between tickets |
+|---|---|---|
+| `art-tech-art` | Visual direction, assets, optimization, manifests, previews, provenance and licensing. | Audit reuse, consistency, hard-coded art, missing credits, and runtime budgets; prepare isolated proposals and handoffs. |
+| `feature-architecture` | Features, architecture, models, components, services, tooling, and runtime integration. | Reconcile code and contracts, strengthen reusable boundaries, and draft bounded proposals without inventing product scope. |
+| `incident-defect` | Reproduction, containment, repair, regression evidence, and incident and P0 technical response. | Maintain known-bad plants and defect evidence; no unassigned repair. |
+| `code-quality-modernization` | Small risk-ranked code, architecture, test, documentation, configuration, repository and tooling-debt reduction. | Maintain the modernization register and read-only audits; no idle patching or product-behaviour change. |
+| `game-systems` | Mechanics, balance intent, unlock and behaviour and data contracts, acceptance conditions. | Identify SPEC and GDD conflicts, unreachable content, balance drift, and unclear player feedback. |
+| `experience-design` | UX, interaction intent, narrative, names, UI copy, tutorials, accessibility text, changelog and documentation clarity. | Reconcile wording and intent across GDD, SPEC, data and config, UI, help, and changelog. |
+| `experience-accessibility-review` | Temporary review of interaction, readability, accessibility, responsive behaviour, input modes, player-facing language, and experience evidence. | Form only for applicable tickets; preserve domain intent and independent QA verdict ownership. |
+| `qa-guild` | Independent functional, regression, experience, responsive, accessibility, input, persistence, artifact and hosted evidence. | Maintain playbooks, RED plants, known-bad cases, fixtures, viewports, and evidence indexes. |
+| `platform-release` | CI, generated-artifact lanes, environments, packaging, deployment, release staging and operational evidence. | Audit provenance and environment drift; never infer publication, deployment, promotion, or release authority. |
+
+### Charter exception
+
+The charter decides by default. Where it genuinely cannot resolve a case, the two coordinating roles may jointly carry it to the Owner — but only after exhausting what the charter already lets them settle between them. Concurrence is required so no single role can manufacture an owner decision to escape its own boundary. Concurrence: `it-manager-iii` + `project-management-lead`; escalates as `owner-exclusive-now`.
+
+### Team leads
+
+Every team has one persistent lead. The lead is standing; the pod it forms for a ticket is not. Leading a team confers no backlog, no source path and no waiver over independent QA — those come from git-ownership, an assigned ticket, and qa.json respectively.
+
+Role `team-lead` at **P2**, one per team. Spins out agent seats named by naming_convention.agent_seat, each holding at most the lead's own grant. Holds no waiver over independent QA (decision 0010).
+
+A lead is an actor, not a role. Every lead shares the 'team-lead' role, so the role alone cannot say which team a lead owns. Each lead therefore carries its own actor_id and the one team it leads, and any record naming a lead names that actor rather than the shared role.
+
+| Team | Lead actor | Seat |
+|---|---|---|
+| `art-tech-art` | `lead-art-tech-art` | P \| Art & Tech Art Lead III \| art-tech-art \| Ashenspire |
+| `feature-architecture` | `lead-feature-architecture` | P \| Feature Architecture Lead III \| feature-architecture \| Ashenspire |
+| `incident-defect` | `lead-incident-defect` | P \| Incident & Defect Lead III \| incident-defect \| Ashenspire |
+| `code-quality-modernization` | `lead-code-quality-modernization` | P \| Code Quality Lead III \| code-quality-modernization \| Ashenspire |
+| `game-systems` | `lead-game-systems` | P \| Game Systems Lead III \| game-systems \| Ashenspire |
+| `experience-design` | `lead-experience-design` | P \| Experience Design Lead III \| experience-design \| Ashenspire |
+| `experience-accessibility-review` | `lead-experience-accessibility-review` | P \| Accessibility Review Lead III \| experience-accessibility-review \| Ashenspire |
+| `qa-guild` | `lead-qa-guild` | P \| QA Guild Lead III \| qa-guild \| Ashenspire |
+| `platform-release` | `lead-platform-release` | P \| Platform & Release Lead III \| platform-release \| Ashenspire |
+
+### Seat naming
+
+A seat's name states what it is, which team it serves and the project, so a roster reads without opening anything.
+
+- Persistent team lead: `P | <role> III | <team> | Ashenspire`
+- Agent seat it spins out: `A | <role> | <team> | Ashenspire`
+
+The leading letter is the seat kind, never an authority code: a bare P is a persistent team lead, a bare A is an agent that lead spins out. P followed by a number is never a seat kind. P<n> is the authority tier in hierarchy.json, or an issue priority, and the subject decides which — exactly as the tier contract already says. A bare P and a P2 belong to different namespaces and must not be read as one.
+
+### Work in progress
+
+Idle capacity: Read-only audits, modernization-register refreshes, documentation reconciliation, tooling and quality observations, or stale-context identification, returned through Help Desk as evidence or a proposal. No patch unless separately assigned.
+
+### Legacy team names
+
+| Legacy name | Routes to | Why |
+|---|---|---|
+| `application` | `feature-architecture` | App Team is a legacy task name; feature and architecture work is pooled. |
+| `art` | `art-tech-art` | Direct rename. |
+| `code-quality-modernization` | `code-quality-modernization` | Unchanged. |
+| `data-architecture-systems` | `data-architecture-lead` | A standing role, not a pool. |
+| `game-design` | `game-systems` | Mechanics, balance and data contracts; design intent sits with Experience Design. |
+| `help-desk` | `help-desk` | A standing role, unchanged. |
+| `incident-it-support` | `incident-defect` | Incident and P0 response is pooled; IT Support3 was a task name. |
+| `itm-integration-delivery` | `it-manager-iii` | A standing role, formerly named Main. |
+| `project-management` | `project-management-lead` | A standing role, not a pool. |
+| `qa-experience` | `experience-accessibility-review` | Forms per applicable ticket; QA verdict ownership stays independent. |
+| `qa-functional` | `qa-guild` | Independent functional and regression evidence. |
+| `review-approval-hub` | `platform-release` | The Hub is now generated output under the generated-artifact lane; approval gates themselves live in transitions.json and authority.json, not a team. |
+| `writing` | `experience-design` | Narrative, copy and documentation clarity. |
+
+
+## RACI (exactly one Accountable per item)
+
+Exactly one Accountable per deliverable or decision. Responsible executes; Accountable owns the outcome and the go/no-go; Consulted give bounded input; Informed receive the result. Accountable is never the sole Responsible for its own independent-QA acceptance.
+
+| Item | Kind | Responsible | Accountable | Consulted | Informed |
+|---|---|---|---|---|---|
+| feature-implementation | deliverable | maker | it-manager-iii | data-architecture-lead | help-desk, project-management-lead |
+| independent-qa-acceptance | decision | qa-independent | qa-independent | it-manager-iii | help-desk, project-management-lead |
+| dev-integration | decision | it-manager-iii | it-manager-iii | data-architecture-lead, qa-independent | help-desk, project-management-lead |
+| data-contract-review | decision | data-architecture-lead | data-architecture-lead | it-manager-iii | help-desk |
+| portfolio-sequencing | decision | project-management-lead | it-manager-iii | project-management-lead, data-architecture-lead | help-desk |
+| release-and-publication | decision | owner | owner | it-manager-iii, qa-independent | project-management-lead, help-desk |
+
+## Delegation envelopes (non-amplifying)
+
+Rule: `effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time. A delegatee never receives an action the delegator lacks, never an action the Owner intent excludes from the deputy, and never a longer life or deeper subdelegation than its parent envelope.`
+
+| Envelope | Parent | Delegator → Delegatee | Actions | Scope paths | Max subdepth | Effective → Expiry |
+|---|---|---|---|---|---|---|
+| itm-to-maker-feature | — | it-manager-iii → maker | implement-locally, run-tests-and-builds, commit-on-isolated-branch | `src/**`, `.agentops/tools/**` | 1 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
+| maker-to-helper-disjoint | itm-to-maker-feature | maker → maker | run-tests-and-builds | `tests/**` | 0 | 2026-01-01T00:00:00Z → 2026-06-30T23:59:59Z |
+| itm-to-qa-review | — | it-manager-iii → qa-independent | perform-independent-qa | — (no path scope) | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
+
+## Escalation (time requests a decision, never authority)
+
+Elapsed time changes routing only, never truth, evidence, or authority. A time-based escalation requests a decision from a higher owner; it never silently enlarges the escalating actor's authority. No blocker remains inert or ownerless past its SLA.
+
+| Class | Attempts | SLA (min) | Route | Wake | Authority effect | Continues work |
+|---|---|---|---|---|---|---|
+| technical-blocker | 1 | 5 | help-desk → it-manager-iii | it-manager-iii | request-decision | yes |
+| data-contract-withhold | 1 | 5 | data-architecture-lead → it-manager-iii | it-manager-iii | request-decision | yes |
+| deputy-overdue | 1 | 10 | it-manager-iii → constantine | constantine | request-decision | yes |
+| owner-exclusive-now | 0 | 0 | constantine | constantine | request-decision | no |
+
+- `technical-blocker` — An unresolved technical ambiguity, ownership contest, or integration question stalls reversible work.
+- `data-contract-withhold` — A cross-domain data contract is unsafe and the Data Architecture lead has withheld it.
+- `deputy-overdue` — The deputy has held custody of a blocker past its resolution window without entered work.
+- `owner-exclusive-now` — An owner-exclusive, safety, credential, irreversible, or intent-conflict decision is required.
+
+### Where a question goes
+
+Every question has a first responder that is not the Owner. Intake goes to Help Desk, technical judgement to the IT Manager III, and only an owner-exclusive class reaches P0. An agent that cannot decide files a ticket rather than asking the Owner.
+
+| # | Actor | Does |
+|---|---|---|
+| 1 | `help-desk` | Records, triages and completes the ticket contract. |
+| 2 | `project-management-lead` | Supplies portfolio, milestone, dependency, WIP, capacity, handoff and risk recommendations. The Data Architecture and Systems Lead reviews applicable cross-domain data contracts and may record WITHHOLD when unsafe. |
+| 3 | `it-manager-iii` | Decides technical exceptions, scope and architecture choices, sequencing, path and maker ownership, blockers, integration and new authority routing. Help Desk assigns a pod only after the decision is recorded at CONTRACT READY, and the lead acknowledges before ownership is active. |
+| 4 | `it-manager-iii` | Records MODEL \| EFFORT \| WHY \| ESCALATE WHEN on every assignment and reassignment, risk-and-station based, never rank based. |
+| 5 | `maker` | Implements one ticket from a fresh base in the named isolated lane and returns TICKET\|STATUS\|OUTCOME / PATH\|BASE\|HEAD\|CLEAN / EVIDENCE / BLOCK / NEXT / MODEL\|EFFORT\|WHY\|ESCALATE WHEN / AUTH receipts. |
+| 6 | `qa-independent` | Verifies the frozen candidate. Functional QA then Experience QA when applicable, at the same head. A changed candidate reopens verification. |
+| 7 | `project-management-lead` | Convenes the completion council at READY FOR MAIN. No lead silently self-assigns a shared path. |
+| 8 | `it-manager-iii` | Records the itemized independence result and chooses WAIT or normal-PR delivery to dev. PASS permits discretion, never a duty. FAIL or UNKNOWN requires WAIT with its rationale and retry trigger. |
+| 9 | `help-desk` | Records each resulting fact without collapsing integration, hosting, resolution, promotion-packet readiness or release. |
+| 10 | `project-management-lead` | Repeats the completion council at RESOLVED so overlaps and authority stay visible without creating an assignment. |
+
+Handoffs keep `SENT`, `RECEIVED`, `ACKNOWLEDGED` distinct. Cross-family handoffs keep the three events distinct. A failed transport proves neither receipt nor acceptance, and must never create a duplicate assignment.
+
+**An agent routes an undecidable question to the IT Manager III as a ticket. The Owner is reached only through an owner-exclusive escalation class, never because an agent preferred to ask.**
+
+## Lifecycle transitions and permitted actors
+
+Lifecycle and delivery facts are distinct and advance only through permitted actors past their guards. A failed guard stops only its own transition; unrelated reversible work continues. Protected transitions (integration, deployment, release, and irreversible or security boundaries) admit only Owner or deputy actors, never a maker or QA reviewer acting alone.
+
+States: `proposed` → `assigned` → `in-progress` → `local` → `qa-review` → `accepted` → `pushed` → `pr-open` → `dev-integrated` → `hosted-verified` → `resolved` → `released`
+
+Protected states: `pushed`, `pr-open`, `dev-integrated`, `hosted-verified`, `released`
+
+| From | To | Guard | Permitted actors | Protected |
+|---|---|---|---|---|
+| proposed | assigned | contract-ready + acknowledged | help-desk, it-manager-iii | no |
+| assigned | in-progress | writer-lease-held + exclusive-paths | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk, team-lead | no |
+| in-progress | local | local-commit-on-isolated-branch | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk, team-lead | no |
+| local | qa-review | frozen-exact-head | maker, it-manager-iii, team-lead | no |
+| qa-review | accepted | independent-qa-pass at exact head | qa-independent | no |
+| accepted | pushed | independence-PASS + fresh-base | it-manager-iii | yes |
+| pushed | pr-open | normal-reviewable-PR | it-manager-iii | yes |
+| pr-open | dev-integrated | required-review + CI-green | it-manager-iii | yes |
+| dev-integrated | hosted-verified | exact-SHA hosted evidence | it-manager-iii | yes |
+| hosted-verified | resolved | five-role acceptance ledger | it-manager-iii, project-management-lead | no |
+| resolved | released | Gate-F promotion packet + owner decision | owner | yes |
+
+Historical entries keep their original text and gain a mapped canonical event. Old evidence is never rewritten to make it appear the new lifecycle already existed.
+
+| Legacy value | Canonical treatment |
+|---|---|
+| `READY FOR QA` | Transition through CANDIDATE FROZEN, then FUNCTIONAL QA. |
+| `WAITING ON MAIN` | WAITING ON DECISION with decision_owner IT Manager III; Main is retained only as the legacy value. |
+| `WAITING ON CONSTANTINE` | WAITING ON DECISION with decision_owner Constantine, routed through the IT Manager III. |
+| `CLOSED` | Decide explicitly between RESOLVED and CANCELLED; do not preserve as an ambiguous terminal synonym. |
+| `RELEASED` | Record as a separate release fact, never a workflow replacement. |
+| `READY FOR MAIN` | Compatibility token that routes to the IT Manager III role. |
+
+## Information access and context loading
+
+Minimal sufficient context. A cold-start agent loads only what the current action needs: a bounded startup set, then on-demand retrieval by exact ID/path/hash. Restricted classes require explicit authority; forbidden classes are never loaded into model context at all.
+
+- **Startup** (≤ 3, target 1200 / hard 1500 tokens): `.agentops/BOOTSTRAP.md`, `.agentops/project.json`, `the-single-contract-the-current-action-touches`
+- **On demand:** an exact governance contract under .agentops/governance/; the current work capsule for the active ticket; an exact evidence pointer by id/path/hash; one extra hop from an exact reference
+- **Restricted:** credential, token, or secret material; owner private decision context; another writer's in-flight uncommitted workspace
+- **Forbidden (never loaded):** full-git-history; full-backlog-or-portfolio; all-chat-transcripts; raw-tool-logs; whole-diffs-or-screenshot-sets; unrelated-source-trees; the-reconstruction-installer-bundle-at-startup
+
+
+### Canonical documents
+
+| Topic | Canonical path | Superseded | Decision |
+|---|---|---|---|
+| art policy | `docs/governance/RUNBOOKS/art.md` | `docs/ART-DESIGN-INTEGRATION-POLICY.md` | `docs/governance/DECISIONS/0004-art-policy-adoption.md` |
+| team charters | `docs/governance/TEAM-CHARTERS.md` | — | `docs/governance/DECISIONS/0007-standing-coordination-roles-and-completion-council.md` |
+## QA independence and risk-selected gates
+
+QA is risk-selected and independent. The verifier of an exact object is never its maker. Only applicable checks run; independent checks run in parallel unless data dependencies require order; every verdict binds to the exact object and a changed identity invalidates only dependent evidence. A waiver is a recorded owner/deputy decision, never a maker's.
+
+| Risk class | Required suites | Independent QA |
+|---|---|---|
+| low | unit | no |
+| standard | unit, regression, deterministic-view | yes |
+| high | unit, regression, deterministic-view, security, accessibility, playtest | yes |
+
+| Gate | Risk | Verifier | Independent of maker | Required checks | Waiver authority | Required evidence |
+|---|---|---|---|---|---|---|
+| accept-standard-object | standard | qa-independent | yes | unit, regression, deterministic-view | it-manager-iii | test-run-receipt, generated-view-drift-check |
+| accept-high-risk-object | high | qa-independent | yes | unit, regression, deterministic-view, security, accessibility | owner | test-run-receipt, security-scan-receipt, hosted-verification-receipt |
+| data-contract-clearance | standard | data-architecture-lead | yes | schema-lineage, migration-compatibility | it-manager-iii | data-lineage-receipt |
+
+
+## Authority tiers
+
+A P-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection — decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a P3 verdict binds P0 and P1 alike and is cleared only by a recorded waiver from the role the QA contract names.
+
+**P-codes mean two things.** The subject decides the meaning. A P-code attached to a team or an actor is authority; a P-code attached to an issue, ticket, directive or defect is priority. Authority subjects: `team`, `actor`, `role`, `seat`, `lead`. Priority subjects: `issue`, `ticket`, `directive`, `defect`, `blocker`, `incident`, `WITHHOLD`.
+
+P<n> carries two meanings in this project, separated by SUBJECT, per the owner: on a team or an actor it is AUTHORITY (this ladder); on an issue, ticket or directive it is PRIORITY (P0 most urgent). 'P1 Help Desk lead' is an authority statement; 'P1 WITHHOLD' and 'incident-p0' are priority. Nothing infers one from the other, and neither reading is ever applied to a subject of the other kind.
+
+The recovered 2026-08-28 census carries rows such as 'P0 IT Manager III', where a priority code and an actor name sit adjacent in rendered output. Those rows are historical PRIORITY rows and predate this rule. They are evidence, not authority statements, and docs/reconstruction/team-evidence/ labels each one accordingly.
+
+| Tier | Who | Holds | Cannot |
+|---|---|---|---|
+| **P0** Owner | `constantine` | main and release mutation; tags; release publication; Pages source and deployment; final release readiness; Gate E playtest; Gate F per-action approval; every owner-exclusive decision class | overrule an independent QA verdict without a recorded waiver named in qa.json |
+| **P1** Deputy — IT Manager III, Integration and Delivery | `it-manager-iii` | technical assignment and sequencing; path and maker ownership; integration and delivery to dev; Gate B and Gate C; incident and P0 command; standard-risk QA waiver; branch-rewrite permission; the wake target for every technical escalation | main, release, tag, publication or Pages; Gate E or Gate F; overruling an independent QA verdict |
+| **P2** Standing coordination | `project-management-lead`, `data-architecture-lead`, `help-desk`, `lead-art-tech-art`, `lead-feature-architecture`, `lead-incident-defect`, `lead-code-quality-modernization`, `lead-game-systems`, `lead-experience-design`, `lead-experience-accessibility-review`, `lead-qa-guild`, `lead-platform-release` | intake, triage, routing and receipts; portfolio, dependency, WIP and capacity visibility; completion councils and Gate D convening; cross-domain data-contract review, including WITHHOLD | technical assignment or integration; delivery, promotion or release; board mutation |
+| **P3** Independent verification | `qa-independent` | the exact-head verdict, which no tier may overrule; Gate A; WITHHOLD that blocks promotion at any level | implementing what it verifies; assigning work to itself |
+| **P4** Delivery seats | `maker`, `it-support` | implementation inside one writer lease; returning exact evidence | claiming an overlapping path or ref; push, PR, merge, deploy or release; changing product behaviour to clear a blocker |
+
+A P-level never selects a model or an effort; decision 0006's risk-and-station matrix does that, and a tier named after a role is rejected. Holding a tier grants only the actions that tier enumerates. Authority for one action implies authority for none of the others. A P3 verdict binds every tier including P0. It is cleared only by the waiver authority qa.json names for that risk class, recorded with its reason. A tier is not a routing table. Escalation follows escalation_parent and the classes in escalation.json; only owner-exclusive classes reach P0. P<n> is shared with incident and defect priority. The subject disambiguates: a code on a team or actor is authority, a code on an issue, ticket or directive is priority. The contract must keep saying so.
+
+## Delivery and the Pages source
+
+Delivery to dev is a standing discretion, not a duty, and it runs through the normal reviewable process — never a direct push. Promotion readiness is a claim that a packet is ready to be considered, never a claim that the product is releasable. Missing, contradictory, stale or unverified is UNKNOWN, and UNKNOWN blocks.
+
+Delivery to `dev` is held by `it-manager-iii`: a discretion, never a duty, and never a direct push. Every item below must be `PASS` at one exact head; `FAIL` and `UNKNOWN` both require `WAIT`.
+
+- dependencies and required decisions are resolved
+- the work is independent of unfinished delivery and has no shared source, test, documentation, generated-artifact, browser or Pages-lane collision
+- the named maker has completed the approved scope
+- the candidate is an immutable exact head
+- required independent Functional QA, Experience QA when applicable, and repository gates are complete at that head
+- fresh canonical dev, candidate head, pull-request head, mergeability and required CI have been checked
+- scope and acceptance have not changed since candidate freeze
+- exact evidence and delivery facts are recorded in the ticket
+
+Desired Pages source: `main`. A switch needs the `owner`, a change window, and a candidate already on `main`. The recorded rollback is triggered. A failed deployment or hosted check authorizes no different source, artifact or release action.
+
+The promotion packet carries 10 required fields; missing, contradictory, stale or unverified is `UNKNOWN`, and `UNKNOWN` blocks.
+
+- ticket and decision IDs, requested action, decision owner, and exact new authority requested
+- evidence timestamp and fresh exact dev, test, release and main heads
+- candidate base/head, pull request, reviewed head, merge commit when present, mergeability, required review and CI results
+- dependency result, claimed paths and serialized lanes, collision search, and the itemized independence checklist result
+- approved scope and acceptance, maker completion receipt, independent reviewers, QA stages, gates, and unresolved findings or exceptions
+- exact artifact path, SHA-256, build/version, source receipt, generation provenance, and byte-identity result
+- strong playtest matrix, environment, player flows, result and evidence
+- current and desired Pages source, deployment run/commit, hosted URL, deployed artifact/hash/source, and hosted smoke/playtest result
+- rollback target, prior Pages source or branch state, exact procedure, trigger, recovery consequence, responsible actor and required authority
+- the WAIT or delivery recommendation, rationale, smallest next action, and the exact owner action requested
+
+Promotion readiness means: The candidate and evidence packet are ready to be considered. It does not mean: That the product is release-ready. These stay owner-exclusive whatever the packet says: test mutation, release mutation, main mutation, release-branch merge, tag, release publication, final release readiness.
+
+Delivery process: Push the immutable topic head, open or update its pull request, complete current review and checks, and merge through the pull request. idle implementation,a speculative replacement patch
+
+A Pages switch is complete only when deployment passes and hosted verification passes. The switch packet records:
+
+- the exact main commit, artifact path, SHA-256, build and source receipt
+- the intended Pages source and the prior source required for rollback
+- the successful Pages deployment and its exact run and commit evidence
+- hosted live smoke and strong playtest results against the deployed URL
+- the rollback command or configuration change, trigger, responsible actor, and authority to restore the prior Pages source
+
+## Model and effort selection
+
+Model and reasoning effort are selected for the assignment's risk and station, never for a person's title, seniority, pool or authority. The smallest capable pairing supported by the current execution venue is the right one. A stronger model does not outrank a weaker one, and selecting one grants nothing.
+
+Every assignment and reassignment records: `MODEL <model> | EFFORT <effort> | WHY <risk-and-station reason> | ESCALATE WHEN <observable trigger>`
+
+| Risk and station | Default model | Efforts | Typical work |
+|---|---|---|---|
+| Low-risk routine coordination | `gpt-5.6-luna` | low, medium | Intake normalization, status projection, known-format evidence indexing, and bounded read-only checks. |
+| Bounded delivery or verification under known contracts | `gpt-5.6-terra` | medium, high | Small implementation, documentation, focused testing, and ordinary independent QA. |
+| High-risk or cross-system reasoning | `gpt-5.6-sol` | high, xhigh | Architecture, governance, schema and save compatibility, security, incident and P0 analysis, integration, and promotion-readiness analysis. |
+| Exceptional unresolved multi-system risk | `any capable available model` | max (needs a recorded exceptional reason) | Only when the packet records the exceptional reason that lesser effort is inadequate. |
+
+Selection stability: The selected pairing is fixed for the active turn. Changing model or effort requires an escalation receipt recording the trigger, partial evidence, new pairing, reason, ownership and path continuity, and authority. The new assignment does not erase the prior receipt. Substitution: Availability is checked at assignment time. If a named default is unavailable, the assigning authority records the supported substitute and why it is capable. That is a reassignment and requires a complete packet.
+
+Every assignment record carries: model, effort, why, escalate_when.
+
+## Owner commands
+
+The owner-command path accepts only enumerated actions from an authenticated actor. Every command is schema-validated against an allowlist, checks its expected_current_hash (compare-and-swap) against live state, records a dry-run summary, and would append a decision event and CAS-update only the affected state. No arbitrary shell or free-form field is ever accepted. A stale or unauthorized command fails safely and mutates nothing.
+
+| Action | Authenticator roles | CAS | Protected | Required fields | Affects |
+|---|---|---|---|---|---|
+| prioritize | owner | no | no | `target`, `params` | portfolio sequencing (recommendation input only) |
+| delegate | owner, it-manager-iii | no | no | `target`, `params` | delegation envelope assignment/rebind |
+| approve | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `candidate_oid` | acceptance of an exact object |
+| reject | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | rejection of an exact object |
+| defer | owner, it-manager-iii | no | no | `target`, `reason` | deferral (routing only) |
+| issue-lease | owner, it-manager-iii | no | no | `target`, `params` | writer lease issuance |
+| revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
+| request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
+| authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
+| authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
+| record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
+
+## Legacy migration
+
+Migration is read-only over legacy evidence. It inventories the old coordination artifacts, selects at most one authoritative current record per work item, classifies the rest as evidence, generated view, superseded, or unknown, and proposes genesis work capsules that REFERENCE old evidence without rewriting it. No legacy artifact is deleted, overwritten, or reset; the destructive cutover and legacy-entrypoint replacement are owner-gated and out of scope here.
+
+## Evidence responsibility
+
+Evidence is a manifest or exact pointer, not another ledger. Each evidence type names its producer, the exact object it binds to, its verifier, its freshness rule, and the keys whose change invalidates it. A receipt is an event or evidence manifest; reads, polls, and repeated acknowledgements produce none.
+
+| Evidence | Producer | Exact object | Verifier | Invalidation keys | Freshness |
+|---|---|---|---|---|---|
+| test-run-receipt | maker | commit OID + tree | qa-independent | head_oid, tree_oid | valid only for the exact head it ran against |
+| generated-view-drift-check | generator | .agentops/generated/* vs its JSON sources | it-manager-iii | source_json_hash | valid only while sources are unchanged |
+| security-scan-receipt | qa-independent | commit OID | it-manager-iii | head_oid | valid only for the scanned commit |
+| data-lineage-receipt | data-architecture-lead | schema/id/lineage manifest hash | it-manager-iii | schema_version, manifest_hash | valid only for the manifested schema version |
+| hosted-verification-receipt | qa-independent | deployed commit SHA + hosted URL | it-manager-iii | hosted_sha | valid only for the exact hosted SHA |
+
+## Enforced invariants
+
+**`delegation`**
+
+- `subset_of_parent` — A child envelope's delegated_actions must be a subset of its parent envelope's delegated_actions.
+- `depth_decreases` — A child envelope's max_subdelegation_depth must be strictly less than its parent's.
+- `deputy_cannot_delegate_excluded` — The deputy (it-manager-iii) must not delegate any action listed in owner-intent.deputy.excluded_actions.
+- `time_bound` — Every envelope has effective and expiry; expiry must be strictly after effective.
+
+**`delivery`**
+
+- `unknown_blocks` — Missing, contradictory, stale or unverified fields are UNKNOWN, and UNKNOWN blocks the associated delivery or promotion action.
+- `no_direct_push_to_dev` — Delivery discretion never authorizes a direct push to dev; it runs through the reviewable pull-request process.
+- `readiness_is_not_release` — Declaring a packet ready for owner review grants no promotion authority and is not a release-readiness claim.
+- `rollback_is_recorded_before_the_switch` — A Pages source switch records its rollback target, procedure, trigger, responsible actor and authority before it happens, so a failed deployment has somewhere to go back to.
+
+**`escalation`**
+
+- `acyclic_route` — Each route is an ordered list of actor_ids with no repeats; it must terminate at the Owner or a role that itself routes to the Owner.
+- `authority_effect_fixed` — authority_effect must be request-decision for every class; escalation never grants authority.
+
+**`evidence`**
+
+- `producer_exists` — every evidence type names a producer_role that is a declared role or the generator writer.
+- `bound_to_exact_object` — every evidence type binds to an exact object and lists invalidation keys.
+
+**`information-access`**
+
+- `startup_bounded` — startup has at most max_startup_items entries.
+- `no_forbidden_preload` — No forbidden class may appear in startup or on_demand.
+- `retrieval_order` — Retrieve by exact ID/path/hash first, keyword second, semantic fallback last; never recursively read all linked material; default maximum is one extra hop.
+
+**`migration`**
+
+- `read_only` — Every legacy_source disposition preserves or references the artifact; deletion, overwrite, and reset are never dispositions.
+- `one_authoritative_per_capsule` — No two work items may claim the same new_capsule.
+- `migrated_has_capsule` — A work item with status 'migrated' names an existing work capsule.
+- `proposed_is_a_stub` — A work item with status 'proposed' names a capsule that does not yet exist.
+- `legacy_ref_resolves` — A work item's legacy_ref is null or a declared legacy_source id.
+
+**`model-effort`**
+
+- `no_authority_from_model` — Model selection grants no product, path, board, integration, delivery, publication or release authority. A stronger model does not outrank a weaker one.
+- `independence_is_not_a_model` — QA independence comes from a non-maker reviewer, an immutable exact head, and independently produced evidence. Using a different model is neither required nor sufficient.
+- `not_by_rank` — Selection follows the risk-and-station matrix, never role rank.
+- `smallest_capable` — Use the smallest capable pairing the current execution venue supports.
+
+**`owner-command`**
+
+- `enumerated_only` — A command whose action is not in this allowlist is rejected.
+- `authenticated_actor` — The command actor must map to a role in the action's authenticator_roles.
+- `owner_exclusive` — authorize-release and record-owner-override authenticate the owner role only.
+- `compare_and_swap` — When requires_cas is true, expected_current_hash must equal the live sealed hash of the target; a mismatch is a stale command and fails safely.
+- `no_arbitrary_input` — The request schema forbids additional fields; there is no shell or free-form command field.
+- `dry_run_first` — The processor records a dry-run summary before any mutation; --apply performs the mutation only after the same validation passes.
+- `declared_lifecycle_target` — An action may declare lifecycle_target. Applying it moves the target capsule to that state only if transitions.json declares that exact transition from the capsule's current state and permits the authenticating role (the owner role is permitted on protected transitions). An undeclared or unpermitted transition is rejected and nothing is written.
+- `blocker_resolution` — An action may declare resolves_blocker. Applying it clears the target capsule's blocker, because the decision the blocker was waiting on has been recorded. A deferral or a routing-only action never clears one.
+- `append_only_apply` — Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket.
+
+**`promotion-gates`**
+
+- `one_frozen_head` — Every gate is evidenced against one exact SHA. A changed head invalidates the receipts recorded against the former one.
+- `no_implied_authority` — Passing a gate grants only what that gate declares. No gate grants main, release, tag, publication or Pages authority except Gate F, and there only per individual action.
+- `owner_gates_are_owner_exclusive` — Gates E and F are the Owner's alone and cannot be delegated, waived or satisfied by a deputy.
+
+**`qa`**
+
+- `independent_verifier` — verifier_role must be an independent reviewer role and never 'maker'.
+- `waiver_authority` — waiver_authority_role must be owner or it-manager-iii, never a maker or the verifier.
+- `evidence_has_owner` — every required_evidence id must be a declared evidence type with a producer in evidence.json.
+- `independence_is_not_self_recorded` — A waiver of independence is never recorded by the party it constrains. Any future self-certification mechanism must be carried by a separately authenticated action from the approving role, not by a field the certifying seat writes into its own capsule and reseals.
+
+**`raci`**
+
+- `single_accountable` — Each item lists exactly one Accountable role.
+- `no_maker_self_acceptance` — The Accountable for an independent-QA acceptance decision must not also be the Responsible maker of the object under review.
+
+**`transitions`**
+
+- `known_states` — Every transition from/to must be a declared state.
+- `protected_actor` — A transition into a protected_state, or any transition marked protected, must not permit maker or qa-independent as an actor; only owner or it-manager-iii (and only owner for release).
+- `failed_guard_scope` — A failed guard blocks only its own transition.
 
