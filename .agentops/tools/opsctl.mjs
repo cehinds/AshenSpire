@@ -354,6 +354,16 @@ export function semanticChecks(c, now = new Date().toISOString()) {
     if (c.roles && !c.roles.roles.some((r) => r.role === bh.permission_role)) {
       errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a declared role`);
     }
+    // Any standing role satisfied this, so it could move to help-desk and still
+    // validate. The ladder already names who holds branch-rewrite permission;
+    // derive it from there instead of restating it.
+    if (c.hierarchy && c.hierarchy.authority_tiers) {
+      const holder = c.hierarchy.authority_tiers.levels.find((l) => l.holds.some((h) => /branch-rewrite/i.test(h)));
+      if (!holder) errors.push('hierarchy: no authority tier claims branch-rewrite permission, so git-ownership has nothing to derive it from');
+      else if (!holder.actors.includes(bh.permission_role)) {
+        errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not in the tier that holds branch-rewrite permission (${holder.actors.join(', ')})`);
+      }
+    }
     if (c.teams && !c.teams.standing_roles.some((r) => r.id === bh.permission_role)) {
       errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not a standing role; a rewrite permission cannot rest with a pool or an absent role`);
     }
@@ -469,6 +479,9 @@ export function semanticChecks(c, now = new Date().toISOString()) {
       // An actor that is not a declared role cannot be held to the gate.
       // 'owner' is a declared role in roles.json, so this covers E and F too.
       if (!roleSet.has(g.actor_role)) errors.push(`promotion-gates: gate ${g.id} names actor role '${g.actor_role}', which roles.json does not declare`);
+      // Widening transitions alongside this made it self-consistent: the gate
+      // and the lifecycle agreed that a maker could act, and nothing objected.
+      if (g.actor_role === 'maker') errors.push(`promotion-gates: gate ${g.id} names 'maker' as its actor; a gate is never passed by the seat whose work it gates`);
       for (const { from, to } of g.guards_transitions || []) {
         if (!states.has(from)) errors.push(`promotion-gates: gate ${g.id} guards a move from '${from}', which is not a declared lifecycle state`);
         if (!states.has(to)) errors.push(`promotion-gates: gate ${g.id} guards a move to '${to}', which is not a declared lifecycle state`);
@@ -540,6 +553,7 @@ export function semanticChecks(c, now = new Date().toISOString()) {
       seenLegacy.add(a.legacy);
       if (!targets.has(a.routes_to)) errors.push(`teams: legacy alias '${a.legacy}' routes to '${a.routes_to}', which is neither a standing role nor a capability pool`);
     }
+    if (!standingIds.has(c.teams.pods.formed_by)) errors.push(`teams: pods are formed by '${c.teams.pods.formed_by}', which is not a standing role; a delivery seat cannot convene its own pod`);
     const ce = c.teams.charter_exception;
     for (const role of ce.requires_concurrence) {
       if (!declaredRoles.has(role)) errors.push(`teams: charter_exception requires concurrence from '${role}', which is not a declared role`);
@@ -552,6 +566,15 @@ export function semanticChecks(c, now = new Date().toISOString()) {
     // else would let the two roles "escalate" to themselves.
     const ownerId = c['owner-intent'] && c['owner-intent'].owner.actor_id;
     const cls = c.escalation && c.escalation.classes.find((x) => x.id === ce.escalation_class);
+    // Requiring only that the class wakes the owner let the class and its wake
+    // move together: point technical-blocker at the owner and the exception
+    // escalates through a class every seat can raise.
+    if (cls && cls.attempts_before_escalate !== 0) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which allows ${cls.attempts_before_escalate} attempt(s) first; an exception to the charter must reach the owner immediately`);
+    }
+    if (cls && cls.continuing_work_allowed) {
+      errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which lets work continue; an unresolved charter exception must stop it`);
+    }
     if (cls && ownerId && cls.wake !== ownerId) {
       errors.push(`teams: charter_exception escalates as '${ce.escalation_class}', which wakes '${cls.wake}' rather than the owner`);
     }
@@ -563,6 +586,12 @@ export function semanticChecks(c, now = new Date().toISOString()) {
     if (c.teams.team_leads) {
       const tl = c.teams.team_leads;
       if (!declaredRoles.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is not a declared role`);
+      // Pinned, not merely reconciled. authority_tier and the ladder could be
+      // moved to P1 together and agree with each other, putting every team lead
+      // in the Deputy tier with its integration and assignment authority while
+      // the `team-lead` role grant stayed narrow. Two mutable fields certifying
+      // each other is the recurring defect of this branch; this is the fifth.
+      if (tl.authority_tier !== 2) errors.push(`teams: team_leads.authority_tier is P${tl.authority_tier}; leads are standing coordination and belong at P2, and moving the ladder with it does not make that true`);
       // Binding each node to tl.role proved only that they agreed. tl.role was
       // still free, so setting it and every node to 'app-dev-i' validated and
       // gave every lead that role's implement/commit capabilities.
@@ -760,6 +789,13 @@ export function semanticChecks(c, now = new Date().toISOString()) {
       }
       if (!ids.has(oi.deputy.actor_id)) {
         errors.push(`owner-intent: deputy actor '${oi.deputy.actor_id}' is not present in the hierarchy`);
+      }
+      // The deputy is a recorded decision, not a field that may move as long as
+      // a matching hierarchy node moves with it. This sat inside the branch
+      // above on its first attempt, so it only fired for a deputy that was
+      // already invalid — a pin that could never catch the case it was for.
+      if (oi.deputy.actor_id !== 'it-manager-iii') {
+        errors.push(`owner-intent: deputy is '${oi.deputy.actor_id}'; the deputy is the IT Manager III by decision, and a matching hierarchy node does not make another actor the deputy`);
       }
     }
     if (c.roles) {
@@ -3228,6 +3264,27 @@ export function runSelftest(root = ROOT) {
   expectSemantic('team lead: a seat name missing the III level', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead | art-tech-art | Ashenspire'; }, 'does not end with');
   expectSemantic('team lead: a seat name whose role names no lead', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Something III | art-tech-art | Ashenspire'; }, 'does not name a lead');
   expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Art Lead III | qa-guild | Ashenspire'; }, 'team segment says');
+  // Six pairs that certified each other. Each plant moves BOTH halves together,
+  // which is what a self-consistency check cannot see and a pin can.
+  expectSemantic('pin: leads and the ladder moved to P1 together', (c) => {
+    c.teams.team_leads.authority_tier = 1;
+    const l2 = c.hierarchy.authority_tiers.levels.find((l) => l.p === 2);
+    const l1 = c.hierarchy.authority_tiers.levels.find((l) => l.p === 1);
+    const ids = c.teams.team_leads.leads.map((l) => l.actor_id);
+    l2.actors = l2.actors.filter((a) => !ids.includes(a)); l1.actors.push(...ids);
+  }, 'belong at P2');
+  expectSemantic('pin: the charter exception routed through a class every seat can raise', (c) => {
+    c.teams.charter_exception.escalation_class = 'technical-blocker';
+    c.escalation.classes.find((x) => x.id === 'technical-blocker').wake = c['owner-intent'].owner.actor_id;
+  }, 'must reach the owner immediately');
+  expectSemantic('pin: branch-rewrite permission moved off the tier that holds it', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'help-desk'; }, 'is not in the tier that holds branch-rewrite permission');
+  expectSemantic('pin: a promotion gate gated by the seat it gates', (c) => {
+    c['promotion-gates'].gates.find((x) => x.id === 'A').actor_role = 'maker';
+    for (const tr of c.transitions.transitions) if (!tr.protected) tr.permitted_actor_roles.push('maker');
+  }, 'never passed by the seat whose work it gates');
+  expectSemantic('pin: the deputy moved to another actor', (c) => { c['owner-intent'].deputy.actor_id = 'help-desk'; }, 'the deputy is the IT Manager III by decision');
+  expectSemantic('pin: a delivery seat convening its own pod', (c) => { c.teams.pods.formed_by = 'maker'; }, 'cannot convene its own pod');
+
   expectSemantic('team lead: an actor in no authority tier', (c) => {
     const lv = c.hierarchy.authority_tiers.levels.find((l) => l.p === 2);
     lv.actors = lv.actors.filter((a) => a !== 'lead-qa-guild');
