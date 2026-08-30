@@ -409,8 +409,8 @@ Every question has a first responder that is not the Owner. Intake goes to Help 
 | 1 | `help-desk` | Records, triages and completes the ticket contract. |
 | 2 | `project-management-lead` | Supplies portfolio, milestone, dependency, WIP, capacity, handoff and risk recommendations. The Data Architecture and Systems Lead reviews applicable cross-domain data contracts and may record WITHHOLD when unsafe. |
 | 3 | `it-manager-iii` | Decides technical exceptions, scope and architecture choices, sequencing, path and maker ownership, blockers, integration and new authority routing. Help Desk assigns a pod only after the decision is recorded at CONTRACT READY, and the lead acknowledges before ownership is active. |
-| 4 | `it-manager-iii` | Records MODEL | EFFORT | WHY | ESCALATE WHEN on every assignment and reassignment, risk-and-station based, never rank based. |
-| 5 | `maker` | Implements one ticket from a fresh base in the named isolated lane and returns TICKET|STATUS|OUTCOME / PATH|BASE|HEAD|CLEAN / EVIDENCE / BLOCK / NEXT / MODEL|EFFORT|WHY|ESCALATE WHEN / AUTH receipts. |
+| 4 | `it-manager-iii` | Records MODEL \| EFFORT \| WHY \| ESCALATE WHEN on every assignment and reassignment, risk-and-station based, never rank based. |
+| 5 | `maker` | Implements one ticket from a fresh base in the named isolated lane and returns TICKET\|STATUS\|OUTCOME / PATH\|BASE\|HEAD\|CLEAN / EVIDENCE / BLOCK / NEXT / MODEL\|EFFORT\|WHY\|ESCALATE WHEN / AUTH receipts. |
 | 6 | `qa-independent` | Verifies the frozen candidate. Functional QA then Experience QA when applicable, at the same head. A changed candidate reopens verification. |
 | 7 | `project-management-lead` | Convenes the completion council at READY FOR MAIN. No lead silently self-assigns a shared path. |
 | 8 | `it-manager-iii` | Records the itemized independence result and chooses WAIT or normal-PR delivery to dev. PASS permits discretion, never a duty. FAIL or UNKNOWN requires WAIT with its rationale and retry trigger. |

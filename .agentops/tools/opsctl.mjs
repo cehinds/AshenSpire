@@ -358,10 +358,17 @@ export function semanticChecks(c, now = new Date().toISOString()) {
     // validate. The ladder already names who holds branch-rewrite permission;
     // derive it from there instead of restating it.
     if (c.hierarchy && c.hierarchy.authority_tiers) {
+      // Deriving from the tier text was itself two mutable declarations: move
+      // 'branch-rewrite permission' to P2 and permission_role to help-desk and
+      // they agree. Rewriting history is the deputy's, by decision.
+      const deputy = c['owner-intent'] && c['owner-intent'].deputy.actor_id;
+      if (deputy && bh.permission_role !== deputy) {
+        errors.push(`git-ownership: branch_hygiene permission_role is '${bh.permission_role}'; rewriting a branch that is not your own is the deputy's ('${deputy}'), and moving the tier text does not transfer it`);
+      }
       const holder = c.hierarchy.authority_tiers.levels.find((l) => l.holds.some((h) => /branch-rewrite/i.test(h)));
-      if (!holder) errors.push('hierarchy: no authority tier claims branch-rewrite permission, so git-ownership has nothing to derive it from');
-      else if (!holder.actors.includes(bh.permission_role)) {
-        errors.push(`git-ownership: branch_hygiene permission_role '${bh.permission_role}' is not in the tier that holds branch-rewrite permission (${holder.actors.join(', ')})`);
+      if (!holder) errors.push('hierarchy: no authority tier claims branch-rewrite permission, so the ladder and git-ownership disagree about who holds it');
+      else if (deputy && !holder.actors.includes(deputy)) {
+        errors.push(`hierarchy: branch-rewrite permission sits at P${holder.p}, which does not include the deputy '${deputy}'`);
       }
     }
     if (c.teams && !c.teams.standing_roles.some((r) => r.id === bh.permission_role)) {
@@ -1021,7 +1028,7 @@ export function renderGovernance(c) {
   L.push('');
   L.push('| Path glob | Owner role | Serialized lane |');
   L.push('|---|---|---|');
-  for (const p of c['git-ownership'].paths) L.push(`| \`${p.glob}\` | ${p.owner_role} | ${p.serialized_lane} |`);
+  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.owner_role} | ${p.serialized_lane} |`);
   if (c['git-ownership'].branch_hygiene) {
     const bh = c['git-ownership'].branch_hygiene;
     L.push('');
@@ -1087,7 +1094,7 @@ export function renderGovernance(c) {
       L.push('');
       L.push('| Team | Lead actor | Seat |');
       L.push('|---|---|---|');
-      for (const l of tl.leads) L.push(`| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name.replace(/\|/g, '\\|')} |`);
+      for (const l of tl.leads) L.push(`| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`);
     }
     if (c.teams.naming_convention) {
       const nc = c.teams.naming_convention;
@@ -1127,7 +1134,7 @@ export function renderGovernance(c) {
     L.push('| Envelope | Parent | Delegator → Delegatee | Actions | Scope paths | Max subdepth | Effective → Expiry |');
     L.push('|---|---|---|---|---|---|---|');
     for (const e of c.delegation.envelopes) {
-      L.push(`| ${e.id} | ${e.parent_id || '—'} | ${e.delegator_role} → ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '`' + g + '`').join(', ') || '— (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} → ${e.expiry} |`);
+      L.push(`| ${e.id} | ${e.parent_id || '—'} | ${e.delegator_role} → ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '`' + mdCell(g) + '`').join(', ') || '— (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} → ${e.expiry} |`);
     }
     L.push('');
   }
@@ -1151,7 +1158,7 @@ export function renderGovernance(c) {
       L.push('');
       L.push('| # | Actor | Does |');
       L.push('|---|---|---|');
-      for (const st of tf.steps) L.push(`| ${st.n} | \`${st.actor}\` | ${st.does} |`);
+      for (const st of tf.steps) L.push(`| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`);
       L.push('');
       L.push(`Handoffs keep ${tf.handoff_events.map((e) => '`' + e + '`').join(', ')} distinct. ${tf.handoff_rule}`);
       L.push('');
@@ -2598,14 +2605,14 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // when its block is removed.
 const VIEW_PROBES = {
   authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
-  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '\`' + g + '\`').join(', ') || '\u2014 (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
+  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '\`' + mdCell(g) + '\`').join(', ') || '\u2014 (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
     `a candidate already on \`${x.pages.switch_requires.candidate_must_have_reached}\``,
     `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${st.does} |`)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, x.branch_hygiene.alternative_when_permission_is_absent, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, x.branch_hygiene.alternative_when_permission_is_absent, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
   hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
@@ -2630,7 +2637,7 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].join('\n')),
-  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name.replace(/\|/g, '\\|')} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
 
@@ -2745,7 +2752,7 @@ export function renderResultConsumerErrors(rawSource) {
 export function governanceGateErrors(contracts, arts) {
   const gov = arts.find((a) => a.rel === GENERATED_VIEW);
   if (!gov) return [`generated artifacts do not include '${GENERATED_VIEW}'; the human governance view is missing and nothing downstream can check it`];
-  return [...probeStrengthErrors(contracts, gov.text), ...viewCoverageErrors(contracts, gov.text)];
+  return [...tableShapeErrors(gov.text), ...probeStrengthErrors(contracts, gov.text), ...viewCoverageErrors(contracts, gov.text)];
 }
 
 // An actor is not its role. That held only while every actor_id happened to
@@ -2785,6 +2792,33 @@ export function unrenderedFieldPaths(contracts, renderedText) {
   };
   for (const [name, contract] of Object.entries(contracts)) walk(name, contract, '');
   return [...new Set(found)].sort();
+}
+
+// Contract values go into Markdown tables, and a value containing `|` or a
+// newline silently becomes extra cells or extra rows. Fixed once for seat names
+// and reintroduced one commit later in delegation scope paths, so this is the
+// shared helper and tableShapeErrors below is the structural guard: a row whose
+// cell count differs from its header cannot be rendered unnoticed, whatever
+// field it came from.
+export function mdCell(value) {
+  return String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+}
+
+export function tableShapeErrors(viewText) {
+  const errors = [];
+  const lines = viewText.split('\n');
+  const cells = (l) => l.split(/(?<!\\)\|/).length;
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\|---/.test(lines[i])) continue;          // a separator anchors a table
+    const width = cells(lines[i]);
+    for (let j = i - 1; j >= 0 && /^\|/.test(lines[j]); j--) {
+      if (cells(lines[j]) !== width) errors.push(`generated view line ${j + 1}: header has ${cells(lines[j]) - 2} cells but the table declares ${width - 2}`);
+    }
+    for (let j = i + 1; j < lines.length && /^\|/.test(lines[j]); j++) {
+      if (cells(lines[j]) !== width) errors.push(`generated view line ${j + 1}: row has ${cells(lines[j]) - 2} cells, the table declares ${width - 2}; an unescaped '|' in a contract value splits the row`);
+    }
+  }
+  return errors;
 }
 
 export function probeStrengthErrors(contracts, viewText) {
@@ -3305,7 +3339,20 @@ export function runSelftest(root = ROOT) {
     c.teams.charter_exception.escalation_class = 'technical-blocker';
     c.escalation.classes.find((x) => x.id === 'technical-blocker').wake = c['owner-intent'].owner.actor_id;
   }, 'must reach the owner immediately');
-  expectSemantic('pin: branch-rewrite permission moved off the tier that holds it', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'help-desk'; }, 'is not in the tier that holds branch-rewrite permission');
+  expectSemantic('pin: branch-rewrite permission moved off the deputy', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'help-desk'; }, 'moving the tier text does not transfer it');
+  // Deriving one mutable declaration from another is not a constraint: move the
+  // tier text to P2 as well and the two agree again, which is exactly what the
+  // previous version of this check permitted. Both halves are pinned to the
+  // recorded deputy identity now, so moving them together still fails.
+  const moveRewriteTierTo = (c, p) => {
+    for (const l of c.hierarchy.authority_tiers.levels) {
+      const at = l.holds.findIndex((h) => /branch-rewrite/i.test(h));
+      if (at >= 0) { const [text] = l.holds.splice(at, 1); c.hierarchy.authority_tiers.levels.find((x) => x.p === p).holds.push(text); return; }
+    }
+  };
+  expectSemantic('pin: tier text and permission_role moved together still fails', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'help-desk'; moveRewriteTierTo(c, 2); }, 'moving the tier text does not transfer it');
+  expectSemantic('pin: the ladder itself moved off the deputy', (c) => { moveRewriteTierTo(c, 2); }, 'does not include the deputy');
+  expectSemantic('pin: no tier claims branch-rewrite permission at all', (c) => { for (const l of c.hierarchy.authority_tiers.levels) l.holds = l.holds.filter((h) => !/branch-rewrite/i.test(h)); }, 'the ladder and git-ownership disagree about who holds it');
   expectSemantic('pin: a promotion gate gated by the seat it gates', (c) => {
     c['promotion-gates'].gates.find((x) => x.id === 'A').actor_role = 'maker';
     for (const tr of c.transitions.transitions) if (!tr.protected) tr.permitted_actor_roles.push('maker');
@@ -3542,6 +3589,26 @@ export function runSelftest(root = ROOT) {
     const dupLine = govText.split('\n').find((l) => l.startsWith('Project: **'));
     const crossSection = probeStrengthErrors(contracts, `${govText}\n## Elsewhere\n\n${dupLine}\n`);
     results.push({ label: 'probe-strength check catches a probe spanning two rendered sections', pass: crossSection.some((e) => e.includes('rendered sections')), errs: crossSection });
+
+    // ...and a contract value carrying a raw '|' must not be able to split a
+    // rendered row unnoticed. This is planted on owner_role, which is NOT
+    // wrapped in mdCell, precisely because the guard has to hold for the fields
+    // nobody remembered to escape — that is how the delegation scope paths
+    // shipped one commit after the same bug was fixed for seat names.
+    const piped = base();
+    piped['git-ownership'].paths[0].owner_role = 'maker | or whoever';
+    const split = tableShapeErrors(renderGovernance(piped));
+    results.push({ label: "an unescaped '|' in a contract value fails the table-shape gate", pass: split.some((e) => e.includes("unescaped '|'")), errs: split });
+    // ...and the escape has to actually work where it IS applied: the same
+    // pipe, in a field routed through mdCell, must render a well-shaped table.
+    const escaped = base();
+    escaped.delegation.envelopes[0].scope_paths.push('src/a|b/**');
+    const escapedText = renderGovernance(escaped);
+    results.push({ label: 'mdCell keeps a piped scope path inside one cell', pass: tableShapeErrors(escapedText).length === 0 && escapedText.includes('a\\|b'), errs: tableShapeErrors(escapedText) });
+    // ...and the table-shape gate is reachable from the gate the renderer runs,
+    // not merely exported.
+    const shapeGate = governanceGateErrors(piped, [{ rel: GENERATED_VIEW, text: renderGovernance(piped) }]);
+    results.push({ label: 'the governance gate runs the table-shape check', pass: shapeGate.some((e) => e.includes("unescaped '|'")), errs: shapeGate.slice(0, 3) });
   }
 
   const failed = results.filter((r) => !r.pass);
