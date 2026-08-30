@@ -15,7 +15,7 @@
   "required_before_pr": "confirm live dev still matches final_live_dev_oid, rerun the complete pilot and AgentOps suites, then deliver without expanding scope",
   "opsctl_verify": "PASS",
   "source_sha256": {
-    ".agentops/BOOTSTRAP.md": "51B94648654B683A0684D74DA2F2B81A4F865D52406B33FC702B88560776DB7B",
+    ".agentops/BOOTSTRAP.md": "D36C054A7ADF86CD1E99C61C407BE5038B690BA86EA7D3D10763AA7F9B7D0037",
     ".agentops/project.json": "FDD1C462A55F3D4CCD680A9FFEA6A0DE4CBB732B940806B598D2FD5D49731F32",
     ".agentops/governance/transitions.json": "8160975A5D876879400F635ED2167676C14022DB79F2B13C728F6C569F7BB992",
     ".agentops/governance/authority.json": "1DBA4E3D16E0A62AFFC95726633CC43D1CAC10150FD930AFEE84321CE27A6ED9",
