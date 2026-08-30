@@ -31,7 +31,7 @@ authority of its own and is regenerated deterministically from
 ## Owner and deputy
 
 - **Owner:** Constantine (`constantine`) — reserves: main/release mutation; tags; publication; GitHub Pages source; final release readiness; exact-test playtest sign-off; product priority and exceptional directives; final override.
-- **Deputy:** IT Manager III, Integration & Delivery (`it-manager-iii`, role `it-manager-iii`). Near-owner operational authority to translate owner intent into execution within these explicit, machine-readable grants.
+- **Deputy:** IT Manager III, Integration & Delivery (`it-manager-iii`, role `it-manager-iii`). Near-owner operational authority to translate owner intent into execution within these explicit, machine-readable grants. Extended 2026-08-29 by owner direction: the deputy may amend its own grant within the non-reserved envelope. Owner reserved authority is unchanged and remains unreachable by self-amendment.
   - Non-amplifying rule: `effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time`
   - Included actions:
     - assign or rebind bounded reversible work
@@ -42,8 +42,9 @@ authority of its own and is regenerated deterministically from
     - integrate to dev through the normal reviewable PR process at its discretion
     - chair a temporary QA Coordination Pool while a collision holds
     - escalate genuine owner decisions
+    - amend its own grant within the non-reserved envelope, provided each amendment is a separate commit that cites this owner grant and never reaches owner.reserved_authority
   - Excluded actions:
-    - amend its own grant
+    - amend its own grant to reach any authority listed in owner.reserved_authority
     - silently change owner intent
     - suppress an owner override
     - self-approve protected independent review
@@ -51,7 +52,7 @@ authority of its own and is regenerated deterministically from
     - mutate main or release
     - change Pages source, tag, publish, or declare final release readiness
     - perform the exact-test playtest sign-off
-  - Grant window: effective `governed-by-source-commit`, expiry `until-superseded-by-a-later-owner-intent-record`. A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record.
+  - Grant window: effective `governed-by-source-commit`, expiry `until-superseded-by-a-later-owner-intent-record`. A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record. The self-amendment extension was granted by the owner on 2026-08-29 and is revoked by any later owner-intent commit that removes it.
 - **Default autonomy:** reversible local work is `PROCEED`. Team Leads and agents perform reversible, collision-free local work (read-only inspection, scoped local implementation, isolated refs/worktrees, tests, builds, schema validation, fixtures, documentation, local commits on isolated branches) without routine approval waits.
 - **Override rules:**
   - Recording: An exact owner directive is recorded as OWNER_OVERRIDE, separate from the underlying evidence result, referencing the exact object and the evidence it overrides.
@@ -103,7 +104,7 @@ Elapsed time changes routing only, never truth, evidence, or authority. FYIs rem
 - **Mission:** Mandatory technical relay and deputy: own exceptions, technical scope and architecture reconciliation, sequencing, path/maker ownership, integration and delivery gates, and incident/P0 command.
 - **May:** resolve-technical-ambiguity, assign-and-rebind-work, issue-and-revoke-lease, create-isolated-ref, integrate-to-dev-via-pr, accept-bounded-technical-risk, fast-forward-test-under-gate-c
 - **Must:** record a decision packet answer; obtain data-architecture clearance or exact exception authority before overriding a WITHHOLD
-- **Must not:** amend its own grant, mutate main or release, change Pages source, self-approve protected independent review, perform owner-exclusive playtest sign-off
+- **Must not:** amend its own grant to reach any authority listed in owner-intent owner.reserved_authority, mutate main or release, change Pages source, self-approve protected independent review, perform owner-exclusive playtest sign-off
 - **Approval ceiling:** integration-to-dev
 
 ### `project-management-lead`
@@ -295,6 +296,8 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `docs/hub/**` | maker | product-docs |
 | `docs/governance/**` | project-management-lead | governance-docs |
 | `game-design/docs/**` | help-desk | intake-docs |
+| `.github/workflows/**` | app-dev-iii | ci |
+| `.github/ISSUE_TEMPLATE/**` | help-desk | intake-docs |
 | `tools/**` | it-support | support-tooling |
 | `hud/**` | generator | generated-artifact |
 | `review-approval-hub/**` | generator | generated-artifact |
