@@ -42,7 +42,7 @@ export function validateLease(lease, claim, now, allowExpired = false) {
   return lease;
 }
 
-export function transferClaim({ claim, lease, expectedHash, targetSeat, targetCapability, seatRegistry, issuerRole, now, expiry, activeClaims = [], eventTail = null, kind = "claim-transferred" }) {
+export function transferClaim({ claim, lease, expectedHash, targetSeat, targetCapability, seatRegistry, issuerRole, now, expiry, activeClaims, eventTail = null, kind = "claim-transferred" }) {
   validateClaim(claim);
   validateLease(lease, claim, now, kind === "expired-claim-recovered");
   if (expectedHash !== claim.current_hash) throw new Error("stale or replayed claim CAS");
@@ -53,8 +53,10 @@ export function transferClaim({ claim, lease, expectedHash, targetSeat, targetCa
   if (!registered || registered.status !== "active" || registered.role !== lease.actor || seatFingerprint(targetCapability) !== registered.capability_fingerprint) throw new Error("target seat proof failed against trusted registry");
   const nowMs = Date.parse(now), expiryMs = Date.parse(expiry);
   if (!Number.isFinite(nowMs) || !Number.isFinite(expiryMs) || expiryMs <= nowMs) throw new Error("invalid transfer window");
+  if (!Array.isArray(activeClaims)) throw new Error("authoritative active-claim denominator is required");
   for (const other of activeClaims) {
-    if (other.ticket === claim.ticket) continue;
+    validateClaim(other);
+    if (other.ticket === claim.ticket) throw new Error("duplicate active claim for ticket");
     if (other.ref === claim.ref || overlaps(other.path_globs, claim.path_globs)) throw new Error("duplicate writer path or ref collision");
   }
   const next = sealClaim({ ...claim, revision: claim.revision + 1, parent_hash: claim.current_hash, seat_id: targetSeat, issued: now, expiry, status: "active" });
@@ -91,10 +93,15 @@ export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, 
     }
     const claim = JSON.parse(fs.readFileSync(claimFile, "utf8"));
     const lease = JSON.parse(fs.readFileSync(leaseFile, "utf8"));
+    const claimFiles = fs.readdirSync(path.dirname(claimFile), { withFileTypes: true }).filter((entry) => entry.isFile() && entry.name.endsWith(".json") && !entry.name.endsWith("journal.json")).map((entry) => path.join(path.dirname(claimFile), entry.name));
+    const liveClaims = claimFiles.map((file) => validateClaim(JSON.parse(fs.readFileSync(file, "utf8"))));
+    const matching = liveClaims.filter((candidate) => candidate.ticket === claim.ticket && candidate.current_hash === claim.current_hash);
+    if (matching.length !== 1) throw new Error("authoritative claim store lacks exactly one current ticket/hash");
+    const activeClaims = liveClaims.filter((candidate) => candidate.current_hash !== claim.current_hash);
     const eventFiles = fs.existsSync(eventDir) ? fs.readdirSync(eventDir).filter((name) => name.endsWith(".json")).sort() : [];
     const actualTail = eventFiles.length ? JSON.parse(fs.readFileSync(path.join(eventDir, eventFiles.at(-1)), "utf8")).event_hash : null;
     if (actualTail !== expectedEventTail) throw new Error("stale or forked event tail CAS");
-    const result = transferClaim({ ...args, claim, lease, eventTail: actualTail });
+    const result = transferClaim({ ...args, claim, lease, activeClaims, eventTail: actualTail });
     fs.mkdirSync(eventDir, { recursive: true });
     const eventFile = path.join(eventDir, `${String(result.claim.revision).padStart(6, "0")}.json`);
     atomicWriteJson(journal, { claimFile, leaseFile, eventDir, eventFile, result });
