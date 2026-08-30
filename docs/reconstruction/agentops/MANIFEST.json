@@ -1,7 +1,7 @@
 {
   "schema": "reconstruction-agentops-manifest/v1",
-  "validated_at": "2026-08-28T18:45:00Z",
-  "source_currentness": "validated-census; candidate-only continuity document excluded",
+  "validated_at": "2026-08-30T21:46:51Z",
+  "source_currentness": "validated-census; Constantine scheduler directive added; candidate-only continuity document excluded",
   "documents": [
     {"destination":"core/SPEC.md","source_label":"AshenSpire origin/dev census","sha256":"F768F719E9654BF1AE83677BE42955F4AC6DA1EFFE421B8EE4B3ECDCCF78CC58"},
     {"destination":"game-design/GDD.md","source_label":"AshenSpire origin/dev census","sha256":"E648A863636A0E5E25910C4C7E8313EB37CB9AF051CDDA0E9D6179E8C5AD6B12"},
@@ -21,6 +21,7 @@
     {"destination":"recovery/ITM-CUTOVER-BOOTSTRAP.md","source_label":"physical continuity census","sha256":"41D1789037FC60F676830FDFD7C752FCDA41EC9EDC738077ECF179C8A23FB6CD"},
     {"destination":"recovery/CONTINUITY-README.md","source_label":"coordination reset census","sha256":"6D4347A1BB3A4D7A38AEF5D47862A8EA0054581401BD5A86BD2C2486F11CAB5A"},
     {"destination":"REUSABLE-INSTALLER-MEGA-PROMPT.md","source_label":"approved owner prompt","sha256":"D2EA11313FD7B865316F567C5B54B97259CAA057709813A1AEB96AFD79858A45"},
+    {"destination":"LOCAL-SCHEDULER-INSTALL-DIRECTIVE.md","source_label":"Constantine optimized scheduler directive","sha256":"C29CBB1081C177300EDFAF8A8335A1624651024D7295D750A448E981DACA9418"},
     {"destination":"governance/README.md","source_label":"ITM integration governance census","sha256":"652D933EAF81DF1A509B3D24345BE64294150B09F8584C16DC0DB81CC95FAE7D"},
     {"destination":"governance/TICKET-SCHEMA.md","source_label":"ITM integration governance census","sha256":"CA89967BE55B7E58AC76C099B913542B7A6AA169E38C0F26742385E3673F775C"},
     {"destination":"incident/defect.md","source_label":"incident support document census","sha256":"C77C4CDF086006828FC2042E33A911A7AEB356E5918467C75C1D923A860076C1"}
