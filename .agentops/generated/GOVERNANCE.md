@@ -284,6 +284,8 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `docs/hub/**` | maker | product-docs |
 | `docs/governance/**` | project-management-lead | governance-docs |
 | `game-design/docs/**` | help-desk | intake-docs |
+| `.github/workflows/**` | app-dev-iii | ci |
+| `.github/ISSUE_TEMPLATE/**` | help-desk | intake-docs |
 | `tools/**` | it-support | support-tooling |
 | `hud/**` | generator | generated-artifact |
 | `review-approval-hub/**` | generator | generated-artifact |
