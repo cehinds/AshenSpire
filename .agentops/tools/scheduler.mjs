@@ -17,6 +17,7 @@ export const EVENT_TYPES = new Set([
 ]);
 export const ACTIVE_STATES = new Set(['CLAIMED', 'RUNNING', 'CANDIDATE_READY', 'QA', 'PR_READY', 'PR_OPEN']);
 export const TERMINAL_STATES = new Set(['DONE', 'SUPERSEDED', 'CANCELLED']);
+const SEAT_ID = /^seat:[a-z0-9-]+:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function stableStringify(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -111,6 +112,7 @@ function applyEvent(snapshot, event) {
   switch (event.event_type) {
     case 'CLAIM_ACQUIRED':
       if (!['READY', 'WAITING_DEPENDENCY', 'REPAIR_REQUIRED'].includes(item.state)) throw new Error(`cannot claim ${item.state}`);
+      if (!SEAT_ID.test(event.actor)) throw new Error('claim requires an issued UUID-backed seat identity');
       if (!/^[0-9a-f]{40}$/.test(p.base_commit ?? '')) throw new Error('claim requires an exact base commit');
       if (!/^codex\/[A-Za-z0-9._\/-]+$/.test(p.branch ?? '')) throw new Error('claim requires a unique codex/ branch');
       if (Number.isNaN(Date.parse(p.lease_expiry)) || Date.parse(p.lease_expiry) <= Date.parse(event.created_at)) throw new Error('claim requires a future lease expiry');
@@ -174,6 +176,7 @@ function applyEvent(snapshot, event) {
       break;
     case 'RECOVERY_BOUND':
       if (!['READY', 'WAITING_DEPENDENCY', 'REPAIR_REQUIRED'].includes(item.state)) throw new Error(`cannot recover ${item.state}`);
+      if (!SEAT_ID.test(event.actor)) throw new Error('recovery requires an issued UUID-backed seat identity');
       if (!/^[0-9a-f]{40}$/.test(p.base_commit ?? '') || Number.isNaN(Date.parse(p.lease_expiry))) throw new Error('recovery requires exact base and lease expiry');
       item.state = 'CLAIMED'; item.assigned_actor = event.actor; item.lease_id = event.lease_id; item.lease_epoch = event.lease_epoch; item.lease_expiry = p.lease_expiry; item.branch = p.branch ?? item.branch; item.base_commit = p.base_commit ?? item.base_commit;
       break;
@@ -472,7 +475,7 @@ export function configuredWorkers(root = REPOSITORY_ROOT, config = readConfig(pa
   const workers = fs.existsSync(file) ? readJsonFile(file).workers : config.workers;
   if (!Array.isArray(workers)) throw new Error('workers must be an array');
   for (const worker of workers) {
-    if (!/^seat:[a-z0-9-]+:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(worker.actor ?? '')) throw new Error(`unissued or invalid seat identity ${worker.actor ?? '<missing>'}`);
+    if (!SEAT_ID.test(worker.actor ?? '')) throw new Error(`unissued or invalid seat identity ${worker.actor ?? '<missing>'}`);
     if (!Array.isArray(worker.capabilities) || worker.capabilities.length === 0) throw new Error(`seat ${worker.actor} has no capabilities`);
   }
   if (workers.length > config.worker_slots) throw new Error('registered workers exceed worker_slots');
