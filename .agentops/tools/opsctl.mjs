@@ -272,11 +272,38 @@ export function loadContracts(root = ROOT) {
 // Cross-contract semantic checks. Pure function over already-parsed contracts
 // so the test harness can plant defects without touching the filesystem.
 // ---------------------------------------------------------------------------
-// `now` is injectable so the expiry plants can prove both bounds without
-// waiting for a calendar. Validation being time-aware is deliberate: a standing
-// grant that has run out must stop backing the waiver on its own, not when
-// someone remembers. Render stays time-free, so determinism is unaffected.
-export function semanticChecks(c, now = new Date().toISOString()) {
+// A shape-valid timestamp is not a real instant. The schema patterns accept
+// `2026-02-30T00:00:00Z` and `2026-01-01T25:00:00Z`, and `new Date()` silently
+// normalises both — to March 2 and to the next day — so a window can validate,
+// render, and mean a different moment than it says. Round-tripping the parsed
+// UTC fields back against the written ones is the only way to reject that.
+// Returns epoch ms, or null when the string does not denote the instant it
+// spells. Callers compare the numbers: '<=' on the strings is lexicographic and
+// only happens to work while every timestamp is the same fixed-width UTC shape.
+export function utcInstant(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$/.exec(String(s));
+  if (!m) return null;
+  const [, y, mo, d, h, mi, se] = m.map(Number);
+  const t = Date.UTC(y, mo - 1, d, h, mi, se);
+  const back = new Date(t);
+  const ok = back.getUTCFullYear() === y && back.getUTCMonth() === mo - 1 && back.getUTCDate() === d
+    && back.getUTCHours() === h && back.getUTCMinutes() === mi && back.getUTCSeconds() === se;
+  return ok ? t : null;
+}
+
+// This function used to take an injectable `now`, with a comment claiming
+// validation was time-aware. It was not: the only clock-relative rule went out
+// with the withdrawn self-certification block, and the parameter sat unused
+// behind a comment asserting a property nothing enforced — the same defect
+// class this file exists to catch, in this file. It is gone.
+//
+// Where the clock does belong is the wake surface, which already reports a
+// lease as expired against `now` when deciding whether a seat may act. A
+// contract window is different: making `verify` fail because a date passed
+// would turn CI red with no change to the corpus and nobody to blame, so the
+// checks below validate that a window is a REAL, ordered pair of instants and
+// leave the lapse to the surface that reads it.
+export function semanticChecks(c) {
   const errors = [];
 
   // --- authority tiers (P0-P4) and ticket flow ----------------------------
@@ -867,7 +894,10 @@ export function semanticChecks(c, now = new Date().toISOString()) {
       if (!roles.has(e.delegator_role)) errors.push(`delegation: envelope '${e.id}' delegator role '${e.delegator_role}' is unknown`);
       if (!roles.has(e.delegatee_role)) errors.push(`delegation: envelope '${e.id}' delegatee role '${e.delegatee_role}' is unknown`);
       for (const p of e.scope_paths) if (p.split('/').includes('..')) errors.push(`delegation: envelope '${e.id}' scope path '${p}' contains a '..' traversal segment`);
-      if (e.expiry <= e.effective) errors.push(`delegation: envelope '${e.id}' expiry is at or before effective (already expired)`);
+      const eff = utcInstant(e.effective), exp = utcInstant(e.expiry);
+      if (eff === null) errors.push(`delegation: envelope '${e.id}' effective '${e.effective}' is not a real instant; it validates against the schema pattern but denotes a different moment than it spells`);
+      if (exp === null) errors.push(`delegation: envelope '${e.id}' expiry '${e.expiry}' is not a real instant; it validates against the schema pattern but denotes a different moment than it spells`);
+      if (eff !== null && exp !== null && exp <= eff) errors.push(`delegation: envelope '${e.id}' expiry is at or before effective (already expired)`);
       if (deputyRole && e.delegator_role === deputyRole) {
         for (const a of e.delegated_actions) if (excluded.has(a)) errors.push(`delegation: envelope '${e.id}' amplifies authority — deputy delegates Owner-excluded action '${a}'`);
       }
@@ -1626,7 +1656,10 @@ export function runtimeChecks(g, rt) {
   for (const l of rt.leases) {
     if (!roles.has(actorRole(g, l.actor))) errors.push(`lease '${l.id}' actor '${l.actor}' resolves to no declared role`);
     if (!roles.has(l.issuer)) errors.push(`lease '${l.id}' issuer role '${l.issuer}' is unknown`);
-    if (l.expiry <= l.issued) errors.push(`lease '${l.id}' expiry is at or before issued (already expired)`);
+    const li = utcInstant(l.issued), lx = utcInstant(l.expiry);
+    if (li === null) errors.push(`lease '${l.id}' issued '${l.issued}' is not a real instant`);
+    if (lx === null) errors.push(`lease '${l.id}' expiry '${l.expiry}' is not a real instant`);
+    if (li !== null && lx !== null && lx <= li) errors.push(`lease '${l.id}' expiry is at or before issued (already expired)`);
     for (const p of l.path_globs) if (p.split('/').includes('..')) errors.push(`lease '${l.id}' path glob '${p}' contains a '..' traversal segment`);
   }
   // One writer per overlapping path/ref: two active leases on the same ref with
@@ -3210,6 +3243,16 @@ export function runSelftest(root = ROOT) {
   expectSemantic('maker self-approval (QA verifier)', (c) => { c.qa.gates[0].verifier_role = 'maker'; }, 'self-approve');
   expectSemantic('forbidden information preload', (c) => { c['information-access'].startup.push('all-chat-transcripts'); }, 'forbidden preload');
   expectSemantic('expired delegation', (c) => { c.delegation.envelopes[0].expiry = '2020-01-01T00:00:00Z'; }, 'already expired');
+  // A shape-valid timestamp that is not a real instant. Both of these pass the
+  // schema pattern; `new Date()` normalises the first to March 2 and the second
+  // to the next day, so the window would validate and render while meaning a
+  // moment it does not spell.
+  expectSemantic('delegation window naming a day that does not exist', (c) => { c.delegation.envelopes[0].effective = '2026-02-30T00:00:00Z'; }, "is not a real instant");
+  expectSemantic('delegation window naming an hour that does not exist', (c) => { c.delegation.envelopes[0].expiry = '2026-12-31T25:00:00Z'; }, "is not a real instant");
+  // ...and the ordering check must not be fooled by them either: 2026-02-30
+  // normalises to March 2, which is AFTER the March 1 expiry it is compared
+  // against, so a lexicographic '<=' saw a valid window here.
+  expectSemantic('delegation window ordered only after normalisation', (c) => { const e = c.delegation.envelopes[0]; e.effective = '2026-02-30T00:00:00Z'; e.expiry = '2026-03-01T00:00:00Z'; }, "is not a real instant");
   expectSemantic('missing evidence ownership', (c) => { c.qa.gates[0].required_evidence.push('ghost-evidence'); }, 'no owner in evidence.json');
 
   // Stage 3 runtime plants — cloned from the real on-disk runtime corpus and run
@@ -3226,6 +3269,8 @@ export function runSelftest(root = ROOT) {
   };
   expectRuntime('overlapping active lease (two writers)', (rt) => { rt.leases.push({ ...rt.leases[0], id: 'lease-collide', actor: 'data-architecture-lead' }); }, 'lease collision');
   expectRuntime('expired lease', (rt) => { rt.leases[0].expiry = '2019-01-01T00:00:00Z'; }, 'already expired');
+  expectRuntime('lease window naming a day that does not exist', (rt) => { rt.leases[0].expiry = '2026-11-31T00:00:00Z'; }, "is not a real instant");
+  expectRuntime('lease issued at a minute that does not exist', (rt) => { rt.leases[0].issued = '2026-01-01T00:60:00Z'; }, "is not a real instant");
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
@@ -3283,6 +3328,26 @@ export function runSelftest(root = ROOT) {
   // to choose who it escalates to, and a seat must not be able to exist with no
   // move it is permitted to make.
   expectRuntime('blocker naming an undeclared escalation class', (rt) => { rt.capsules['AS-HD-056'].blocker.escalation_class = 'ghost-class'; }, 'escalation.json does not declare');
+  // ...and the wake surface fails closed on a lease whose expiry is not a real
+  // instant. runtimeChecks rejects one too, but dispatch takes the runtime as
+  // given: an expiry it cannot place in the future must stop the seat rather
+  // than wake it. The lexicographic '<=' it replaced quietly read such a value
+  // as live.
+  {
+    const rt = baseRt();
+    const live = Object.entries(rt.capsules).find(([, cp]) => cp.writer_lease && !cp.blocker);
+    let hit = false, got = [];
+    if (live) {
+      const lease = rt.leases.find((l) => l.id === live[1].writer_lease);
+      if (lease) {
+        lease.expiry = '2026-11-31T00:00:00Z';
+        const d = computeDispatch(contracts, rt, { now: '2026-01-01T00:00:00Z' });
+        got = d.map((x) => x.reason || JSON.stringify(x));
+        hit = got.some((w) => String(w).includes('is not a real instant'));
+      }
+    }
+    results.push({ label: 'dispatch fails closed on a lease expiry that is not a real instant', pass: hit, errs: hit ? [] : got.slice(0, 4) });
+  }
   expectMigration('transition narrowed until a live seat is stranded', (c) => {
     for (const m of c.transitions.transitions) if (m.from === 'assigned' && m.to === 'in-progress') m.permitted_actor_roles = ['maker'];
   }, 'the seat is stranded');
@@ -3706,9 +3771,16 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
     // A seat with no live lease cannot act, and the lease is not its own to
     // reissue — that is an ownership question, so it escalates rather than
     // waking a seat that would immediately stop.
+    // Numeric, and fail-closed: an expiry that does not denote a real instant
+    // cannot be shown to be in the future, so the seat does not act on it.
+    // '<=' on the strings was lexicographic and only worked while every
+    // timestamp happened to be the same fixed-width UTC shape.
+    const lx = lease ? utcInstant(lease.expiry) : null;
+    const nowMs = utcInstant(now) ?? Date.parse(now);
     const dead = !lease ? 'writer lease is missing'
       : lease.revoked ? `writer lease ${lease.id} is revoked`
-      : (lease.expiry <= now) ? `writer lease ${lease.id} expired ${lease.expiry}`
+      : lx === null ? `writer lease ${lease.id} records expiry '${lease.expiry}', which is not a real instant`
+      : (lx <= nowMs) ? `writer lease ${lease.id} expired ${lease.expiry}`
       : null;
     if (dead) { entries.push(escalate(cap, 'technical-blocker', dead)); continue; }
 
