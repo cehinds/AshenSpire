@@ -609,7 +609,7 @@ async function selftest() {
     const exitRows = ownership.mapExitDuringDebounce?.shapes || [];
     const exitCaught = ownership.mapExitDuringDebounce && !ownership.mapExitDuringDebounce.pass
       && exitRows.length === 2
-      && exitRows.some((row) => !row.pass && row.uncaught.some((u) => /streamCounters/.test(u)));
+      && exitRows.every((row) => !row.pass && row.uncaught.some((u) => /streamCounters/.test(u)));
     console.log(`map-camera ownership selftest: ${fitCaught && raceCaught && settleCaught && exitCaught ? 'GREEN' : 'RED'} - `
       + `viewport ${fitCaught ? 'caught' : 'MISSED'}, debounce ${raceCaught ? 'caught' : 'MISSED'}, `
       + `zero-height settle ${settleCaught ? 'caught' : 'MISSED'}, `
