@@ -28384,6 +28384,48 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function gcdBigInt(a, b) {
+  let left = a < 0n ? -a : a;
+  let right = b < 0n ? -b : b;
+  while (right) [left, right] = [right, left % right];
+  return left || 1n;
+}
+
+function decimalFraction(value) {
+  const [mantissa, exponentText = '0'] = Math.abs(value).toString().toLowerCase().split('e');
+  const [whole, fraction = ''] = mantissa.split('.');
+  const exponent = Number(exponentText);
+  let numerator = BigInt(`${whole}${fraction}` || '0');
+  let denominator = 10n ** BigInt(fraction.length);
+  if (exponent > 0) numerator *= 10n ** BigInt(exponent);
+  if (exponent < 0) denominator *= 10n ** BigInt(-exponent);
+  if (value < 0) numerator = -numerator;
+  const divisor = gcdBigInt(numerator, denominator);
+  return { numerator: numerator / divisor, denominator: denominator / divisor };
+}
+
+function floorFraction(numerator, denominator) {
+  let quotient = numerator / denominator;
+  if (numerator < 0n && numerator % denominator) quotient -= 1n;
+  return quotient;
+}
+
+function roundFraction(numerator, denominator, rounding) {
+  if (rounding === 'floor') return floorFraction(numerator, denominator);
+  if (rounding === 'ceil') return -floorFraction(-numerator, denominator);
+  return floorFraction(2n * numerator + denominator, 2n * denominator);
+}
+
+function exactNumberFromFraction(numerator, denominator) {
+  const value = Number(numerator) / Number(denominator);
+  if (!Number.isFinite(value)) throw new Error('level scaling result: must remain finite');
+  const represented = decimalFraction(value);
+  if (represented.numerator * denominator !== numerator * represented.denominator) {
+    throw new Error('level scaling result: cannot represent the exact authored value');
+  }
+  return value;
+}
+
 function assertContext(context) {
   if (!isObject(context)) throw new Error('enemy level context: must be an object');
   for (const key of Object.keys(context)) {
@@ -28537,27 +28579,17 @@ function levelScalingReceipt(spec) {
   if (min != null && max != null && min > max) throw new Error(`level scaling cap: min ${min} must not exceed max ${max}`);
 
   const levelDelta = resolvedLevel - baselineLevel;
-  let unrounded;
-  if (Number.isSafeInteger(base) && Number.isSafeInteger(perLevel)) {
-    const exact = BigInt(base) + BigInt(levelDelta) * BigInt(perLevel);
-    const safeMin = BigInt(Number.MIN_SAFE_INTEGER);
-    const safeMax = BigInt(Number.MAX_SAFE_INTEGER);
-    if (exact < safeMin || exact > safeMax) {
-      throw new Error('level scaling result: exceeds the safe arithmetic range');
-    }
-    unrounded = Number(exact);
-  } else {
-    const scaledDelta = levelDelta * perLevel;
-    if (!Number.isFinite(scaledDelta) || Math.abs(scaledDelta) > Number.MAX_SAFE_INTEGER) {
-      throw new Error('level scaling intermediate: exceeds the safe arithmetic range');
-    }
-    unrounded = base + scaledDelta;
-    if (!Number.isFinite(unrounded) || Math.abs(unrounded) > Number.MAX_SAFE_INTEGER) {
-      throw new Error('level scaling result: must remain finite and within the safe arithmetic range');
-    }
+  const baseFraction = decimalFraction(base);
+  const perLevelFraction = decimalFraction(perLevel);
+  const exactNumerator = baseFraction.numerator * perLevelFraction.denominator
+    + BigInt(levelDelta) * perLevelFraction.numerator * baseFraction.denominator;
+  const exactDenominator = baseFraction.denominator * perLevelFraction.denominator;
+  const unrounded = exactNumberFromFraction(exactNumerator, exactDenominator);
+  const roundedExact = roundFraction(exactNumerator, exactDenominator, rounding);
+  if (roundedExact < BigInt(Number.MIN_SAFE_INTEGER) || roundedExact > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('level scaling rounded result: exceeds the safe integer range');
   }
-  const rounded = Math[rounding](unrounded);
-  if (!Number.isSafeInteger(rounded)) throw new Error('level scaling rounded result: exceeds the safe integer range');
+  const rounded = Number(roundedExact);
   const result = clamp(rounded, min == null ? -Infinity : min, max == null ? Infinity : max);
   return {
     stat,
@@ -42152,7 +42184,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '46c8ba0e96';
+const SOURCE = 'b258350c3d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42186,7 +42218,7 @@ const SOURCE = '46c8ba0e96';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1687';
+const ORDINAL = '1688';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

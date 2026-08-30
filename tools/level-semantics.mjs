@@ -110,6 +110,14 @@ const cases = [
     assert(receipt.levelDelta === 3 && receipt.unrounded === 2, JSON.stringify(receipt));
     assert(receipt.rounded === 2 && receipt.result === 2, JSON.stringify(receipt));
   }],
+  ['fractional scaling rounds the authored decimal rather than a binary approximation', () => {
+    const receipt = levelScalingReceipt({
+      stat: 'damage', base: 0, baselineLevel: 1, resolvedLevel: 46,
+      perLevel: 0.7, rounding: 'round',
+    });
+    assert(receipt.levelDelta === 45 && receipt.unrounded === 31.5, JSON.stringify(receipt));
+    assert(receipt.rounded === 32 && receipt.result === 32, JSON.stringify(receipt));
+  }],
 ];
 
 let failures = 0;
