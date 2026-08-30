@@ -1,0 +1,19 @@
+{
+  "schema": "task-pipeline-node/v1",
+  "id": "EXAMPLE-IMPLEMENT",
+  "ticket": "EXAMPLE-001",
+  "objective": "Replace this example with one bounded outcome.",
+  "stage": "ready",
+  "risk_route": "reversible-change",
+  "required_capability": "implementation",
+  "dependencies": [],
+  "base_ref": "origin/dev",
+  "base_oid": null,
+  "owner": "ticket-lead",
+  "writer": null,
+  "resource_locks": [],
+  "first_action": "Validate the base ref and acceptance criteria.",
+  "done_when": "Focused tests pass and the evidence pointer is recorded.",
+  "evidence": [],
+  "blocker": null
+}

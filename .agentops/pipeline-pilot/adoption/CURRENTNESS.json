@@ -1,0 +1,25 @@
+{
+  "schema": "agentops/pipeline-adoption-currentness/v1",
+  "baseline_dev_oid": "03b8e771b712a098c04b694bfb172a9892be598f",
+  "rebased_dev_oid": "aba1f66cae4f066d560271ee4313155fe4581243",
+  "final_live_dev_oid": "aba1f66cae4f066d560271ee4313155fe4581243",
+  "local_head_matches": true,
+  "remote_tracking_matches": true,
+  "live_ls_remote_matches": true,
+  "historical_live_base_drift_detected": true,
+  "rebase_count": 2,
+  "live_base_drift_detected": false,
+  "candidate_state": "PR_READY_LOCAL_NOT_DELIVERED",
+  "required_before_pr": "confirm live dev still matches rebased_dev_oid, confirm an exact issue/authority if required, then commit and deliver without expanding scope",
+  "opsctl_verify": "PASS",
+  "source_sha256": {
+    ".agentops/BOOTSTRAP.md": "073BCC522BCE33039A817E11995DA104F6A76BBC47E31CBBB393A2EAAA20B9CB",
+    ".agentops/project.json": "EEF4BBFE4F1B4B121E753813DFA76480CA2DF43089F1D94ED2E786D213F662E9",
+    ".agentops/governance/transitions.json": "8160975A5D876879400F635ED2167676C14022DB79F2B13C728F6C569F7BB992",
+    ".agentops/governance/authority.json": "1DBA4E3D16E0A62AFFC95726633CC43D1CAC10150FD930AFEE84321CE27A6ED9",
+    ".agentops/governance/git-ownership.json": "3471C16124F5C1F3332434105B5502736162C5B632582EEE0F4993198AC12466",
+    ".agentops/governance/qa.json": "FEEBB90F5E3980221787F852F5AE5B360661A66B8FE34B4E19707293234F033D",
+    ".agentops/tools/opsctl.mjs": "AF82EEA60AFB8780B0CF6229407DC6631585B3C0349B5A4093216B058B333376"
+  },
+  "authority": "read-only architecture baseline; not adoption or cutover"
+}
