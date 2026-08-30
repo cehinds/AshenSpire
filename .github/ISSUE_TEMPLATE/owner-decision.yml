@@ -17,6 +17,16 @@ body:
         [Owner HUD](https://cehinds.github.io/AshenSpire/hud/).
 
   - type: dropdown
+    id: owner_command_form
+    attributes:
+      label: Owner-command form
+      description: Version marker checked by the workflow before any command is parsed.
+      options:
+        - owner-decision/v1
+    validations:
+      required: true
+
+  - type: dropdown
     id: action
     attributes:
       label: Action
