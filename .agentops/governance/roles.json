@@ -158,6 +158,7 @@
     {
       "role": "app-dev-i",
       "mission": "App Dev I (programmers team) — junior application developer; the maker archetype at entry level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
       "may": [
         "implement-locally-on-exclusive-paths",
         "run-tests-and-builds",
@@ -178,6 +179,7 @@
     {
       "role": "app-dev-ii",
       "mission": "App Dev II (programmers team) — standard application developer; the maker archetype at mid level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
       "may": [
         "implement-locally-on-exclusive-paths",
         "run-tests-and-builds",
@@ -198,6 +200,7 @@
     {
       "role": "app-dev-iii",
       "mission": "App Dev III (programmers team) — senior application developer; the maker archetype at senior level, eligible to lead a pod. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling (integration and protected transitions remain it-manager-iii's).",
+      "archetype": "maker",
       "may": [
         "implement-locally-on-exclusive-paths",
         "run-tests-and-builds",
@@ -218,6 +221,7 @@
     {
       "role": "artist-i",
       "mission": "Designer / Artist I (art team) — junior; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
       "may": [
         "implement-locally-on-exclusive-paths",
         "run-tests-and-builds",
@@ -238,6 +242,7 @@
     {
       "role": "artist-ii",
       "mission": "Designer / Artist II (art team) — standard; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
       "may": [
         "implement-locally-on-exclusive-paths",
         "run-tests-and-builds",
@@ -258,6 +263,7 @@
     {
       "role": "artist-iii",
       "mission": "Designer / Artist III (art team) — senior, eligible to lead a pod; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
       "may": [
         "implement-locally-on-exclusive-paths",
         "run-tests-and-builds",
@@ -278,6 +284,7 @@
     {
       "role": "qa-technician-i",
       "mission": "QA Technician I (QA team) — junior; the qa-independent archetype at entry level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "qa-independent",
       "may": [
         "author-exact-head-verdict",
         "maintain-red-plants-and-fixtures"
@@ -295,6 +302,7 @@
     {
       "role": "qa-technician-ii",
       "mission": "QA Technician II (QA team) — standard; the qa-independent archetype at mid level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "qa-independent",
       "may": [
         "author-exact-head-verdict",
         "maintain-red-plants-and-fixtures"
@@ -312,6 +320,7 @@
     {
       "role": "qa-technician-iii",
       "mission": "QA Technician III (QA team) — senior, eligible to lead a QA pod; the qa-independent archetype at senior level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "qa-independent",
       "may": [
         "author-exact-head-verdict",
         "maintain-red-plants-and-fixtures"
@@ -325,6 +334,24 @@
         "have-a-verdict-overruled-by-a-coordination-pool"
       ],
       "approval_ceiling": "qa-verdict"
+    },
+    {
+      "role": "team-lead",
+      "mission": "Hold one team persistently: spin out and staff its agent seats, keep its roster and capacity current, and answer for the team's work.",
+      "may": [
+        "spin-out-agent-seat"
+      ],
+      "must": [
+        "name itself on every seat it spins out",
+        "keep its team's roster and capacity current"
+      ],
+      "must_not": [
+        "approve-its-own-implementation",
+        "waive-independent-qa",
+        "push-pr-merge-deploy-or-release",
+        "amend-its-own-grant"
+      ],
+      "approval_ceiling": "Forms and staffs its own team. Holds no waiver over independent QA: decision 0010 withdrew that mechanism pending an authenticated approval path."
     }
   ]
 }

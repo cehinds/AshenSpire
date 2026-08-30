@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -98,6 +98,55 @@ function check(name, cond, detail = '') {
     try { actual = readFileSync(resolve(ROOT, 'generated/GOVERNANCE.md'), 'utf8'); } catch { /* missing */ }
     check('committed generated view is not drifted', actual === expected,
       actual === '' ? 'view missing' : 'view differs from render output');
+
+    // Drift only proves the committed file matches what render emits. It says
+    // nothing about a contract render emits nothing for — which is how five
+    // contracts stayed out of the human view while `verify` reported OK.
+    const missed = viewCoverageErrors(contracts, expected);
+    check('every contract reaches the generated view', missed.length === 0, missed.join(' | '));
+
+    // Coverage is only as good as the probes. Two contracts sharing a probe
+    // value means one can mask the other; that is how `roles` first passed
+    // while its whole section was deleted.
+    const weak = probeStrengthErrors(contracts, expected);
+    check('no two contracts share a view probe', weak.length === 0, weak.join(' | '));
+
+    // No contract may opt out. An unprobed contract is the same silent gap.
+    const unprobed = viewCoverageErrors({ ...contracts, 'ghost-contract': { principle: 'x' } }, expected);
+    check('an unprobed contract fails rather than skipping',
+      unprobed.some((e) => e.includes('declares no view probe')), unprobed.join(' | '));
+
+    // Per-contract coverage is not enough: a contract that renders several
+    // blocks can be probed by one value living in the earliest of them, leaving
+    // the rest deletable. Sweep every rendered section that carries a body.
+    {
+      const lines = expected.split('\n');
+      const heads = [];
+      lines.forEach((l, i) => { if (/^#{2,3} /.test(l)) heads.push(i); });
+      const uncovered = [];
+      for (let k = 0; k < heads.length; k++) {
+        const a = heads[k];
+        const b = k + 1 < heads.length ? heads[k + 1] : lines.length;
+        if (!lines.slice(a + 1, b).some((x) => x.trim())) continue;
+        const blinded = lines.slice(0, a).concat(lines.slice(b)).join('\n');
+        if (viewCoverageErrors(contracts, blinded).length === 0) uncovered.push(lines[a]);
+      }
+      check('deleting any rendered section fails the coverage gate', uncovered.length === 0, uncovered.join(' | '));
+    }
+
+    // A gate is only as good as its callers. `verify` and the drill's own
+    // `verifyErrors` each dropped runRender()'s `errors` and read only `drift`,
+    // so a tree failing the coverage gate could still drill clean.
+    {
+      const src = readFileSync(resolve(ROOT, 'tools/opsctl.mjs'), 'utf8');
+      const consumers = renderResultConsumerErrors(src);
+      check('every runRender() call site checks .errors', consumers.length === 0, consumers.join(' | '));
+    }
+
+    // ...and the check itself must be able to fail, or it proves nothing.
+    const blinded = expected.split('\n').filter((l) => !l.includes(contracts.migration.principle)).join('\n');
+    check('coverage check fails when a contract is unprojected',
+      viewCoverageErrors(contracts, blinded).some((e) => e.includes("'migration'")));
   }
 }
 

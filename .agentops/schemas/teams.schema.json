@@ -14,7 +14,9 @@
     "pods",
     "wip_limits",
     "charter_exception",
-    "legacy_aliases"
+    "legacy_aliases",
+    "naming_convention",
+    "team_leads"
   ],
   "properties": {
     "schema": {
@@ -228,6 +230,103 @@
           "items": {
             "type": "string",
             "minLength": 1
+          }
+        }
+      }
+    },
+    "naming_convention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principle",
+        "persistent_lead",
+        "agent_seat",
+        "leading_letter_is_seat_kind",
+        "not_the_tier_namespace"
+      ],
+      "properties": {
+        "principle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "persistent_lead": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agent_seat": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leading_letter_is_seat_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "not_the_tier_namespace": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "team_leads": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principle",
+        "role",
+        "authority_tier",
+        "one_lead_per_team",
+        "spins_out",
+        "identity_rule",
+        "leads"
+      ],
+      "properties": {
+        "principle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority_tier": {
+          "type": "number"
+        },
+        "one_lead_per_team": {
+          "const": true
+        },
+        "spins_out": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leads": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "actor_id",
+              "team",
+              "seat_name"
+            ],
+            "properties": {
+              "actor_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "team": {
+                "type": "string",
+                "minLength": 1
+              },
+              "seat_name": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
         }
       }

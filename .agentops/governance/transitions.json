@@ -45,7 +45,8 @@
         "qa-independent",
         "data-architecture-lead",
         "project-management-lead",
-        "help-desk"
+        "help-desk",
+        "team-lead"
       ],
       "protected": false
     },
@@ -60,7 +61,8 @@
         "qa-independent",
         "data-architecture-lead",
         "project-management-lead",
-        "help-desk"
+        "help-desk",
+        "team-lead"
       ],
       "protected": false
     },
@@ -70,7 +72,8 @@
       "guard": "frozen-exact-head",
       "permitted_actor_roles": [
         "maker",
-        "it-manager-iii"
+        "it-manager-iii",
+        "team-lead"
       ],
       "protected": false
     },
