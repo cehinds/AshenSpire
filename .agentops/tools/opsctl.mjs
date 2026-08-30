@@ -1035,6 +1035,18 @@ export function renderGovernance(c) {
   dep.included_actions.forEach((x) => L.push(`    - ${x}`));
   L.push('  - Excluded actions:');
   dep.excluded_actions.forEach((x) => L.push(`    - ${x}`));
+  // The grant's own window. It rendered nowhere, so the document said what the
+  // deputy may do without saying when the grant starts, when it ends, or what
+  // replaces it.
+  L.push(`  - Grant window: effective \`${dep.effective}\`, expiry \`${dep.expiry}\`. ${dep.supersession}`);
+  const auto = c['owner-intent'].default_autonomy;
+  L.push(`- **Default autonomy:** reversible local work is \`${auto.reversible_local_work}\`. ${auto.description}`);
+  const ovr = c['owner-intent'].override_rules;
+  L.push('- **Override rules:**');
+  L.push(`  - Recording: ${ovr.recording}`);
+  L.push(`  - Invalidation: ${ovr.invalidation}`);
+  L.push('  - An override may never:');
+  ovr.forbidden.forEach((x) => L.push(`    - ${x}`));
   L.push('');
 
   L.push('## Hierarchy and escalation');
@@ -1326,6 +1338,18 @@ export function renderGovernance(c) {
     L.push('');
     L.push(`The promotion packet carries ${d.promotion_packet.required_fields.length} required fields; missing, contradictory, stale or unverified is \`UNKNOWN\`, and \`UNKNOWN\` blocks.`);
     L.push('');
+    for (const f of d.promotion_packet.required_fields) L.push(`- ${f}`);
+    L.push('');
+    // What promotion readiness does and does not mean, and which actions stay
+    // the Owner's whatever a packet says. All three rendered nowhere.
+    L.push(`Promotion readiness means: ${d.promotion_readiness.means} It does not mean: ${d.promotion_readiness.does_not_mean} These stay owner-exclusive whatever the packet says: ${d.promotion_readiness.owner_exclusive_actions.join(', ')}.`);
+    L.push('');
+    L.push(`Delivery process: ${d.dev_delivery.process} ${d.dev_delivery.waiting_does_not_authorize}`);
+    L.push('');
+    L.push(`A Pages switch is complete only when ${d.pages.complete_only_when.join(' and ')}. The switch packet records:`);
+    L.push('');
+    for (const r of d.pages.switch_packet_records) L.push(`- ${r}`);
+    L.push('');
   }
 
   if (c['model-effort']) {
@@ -1342,6 +1366,9 @@ export function renderGovernance(c) {
       L.push(`| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`);
     }
     L.push('');
+    L.push(`Selection stability: ${me.stability} Substitution: ${me.substitution}`);
+    L.push('');
+    L.push(`Every assignment record carries: ${me.assignment_record.required_fields.join(', ')}.`);
     L.push('');
   }
 
@@ -2696,7 +2723,12 @@ const VIEW_PROBES = {
   delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
     `a candidate already on \`${x.pages.switch_requires.candidate_must_have_reached}\``,
-    `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`],
+    `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`,
+    ...x.promotion_packet.required_fields.map((f) => `- ${f}`),
+    `Promotion readiness means: ${x.promotion_readiness.means} It does not mean: ${x.promotion_readiness.does_not_mean} These stay owner-exclusive whatever the packet says: ${x.promotion_readiness.owner_exclusive_actions.join(', ')}.`,
+    `Delivery process: ${x.dev_delivery.process} ${x.dev_delivery.waiting_does_not_authorize}`,
+    `A Pages switch is complete only when ${x.pages.complete_only_when.join(' and ')}. The switch packet records:`,
+    ...x.pages.switch_packet_records.map((r) => `- ${r}`)],
   escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
   'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, x.branch_hygiene.alternative_when_permission_is_absent, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
@@ -2706,11 +2738,17 @@ const VIEW_PROBES = {
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
   migration: (x) => [x.principle],
-  'model-effort': (x) => [x.principle, x.assignment_record.format, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
+  'model-effort': (x) => [x.principle, x.assignment_record.format,
+    `Selection stability: ${x.stability} Substitution: ${x.substitution}`,
+    `Every assignment record carries: ${x.assignment_record.required_fields.join(', ')}.`, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
   'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`)],
   'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), ...x.priority_order.map((pr, i) => `  ${i + 1}. ${pr}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
-    ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
+    ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`),
+    `  - Grant window: effective \`${x.deputy.effective}\`, expiry \`${x.deputy.expiry}\`. ${x.deputy.supersession}`,
+    `- **Default autonomy:** reversible local work is \`${x.default_autonomy.reversible_local_work}\`. ${x.default_autonomy.description}`,
+    `  - Recording: ${x.override_rules.recording}`, `  - Invalidation: ${x.override_rules.invalidation}`,
+    ...x.override_rules.forbidden.map((f) => `    - ${f}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
   'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => gateDetailLines(g).length ? [`#### Gate ${g.id} \u2014 ${g.name}`, '', ...gateDetailLines(g)].join('\n') : null).filter((y) => y !== null), ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],

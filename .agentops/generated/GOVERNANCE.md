@@ -51,6 +51,16 @@ authority of its own and is regenerated deterministically from
     - mutate main or release
     - change Pages source, tag, publish, or declare final release readiness
     - perform the exact-test playtest sign-off
+  - Grant window: effective `governed-by-source-commit`, expiry `until-superseded-by-a-later-owner-intent-record`. A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record.
+- **Default autonomy:** reversible local work is `PROCEED`. Team Leads and agents perform reversible, collision-free local work (read-only inspection, scoped local implementation, isolated refs/worktrees, tests, builds, schema validation, fixtures, documentation, local commits on isolated branches) without routine approval waits.
+- **Override rules:**
+  - Recording: An exact owner directive is recorded as OWNER_OVERRIDE, separate from the underlying evidence result, referencing the exact object and the evidence it overrides.
+  - Invalidation: An override is invalidated when its referenced exact object identity (ref/head/tree/hash) changes; a changed object requires a fresh directive.
+  - An override may never:
+    - fabricate a PASS
+    - impersonate an independent reviewer
+    - bypass external credentials or platform controls
+    - claim a technically impossible state
 
 ## Hierarchy and escalation
 
@@ -564,6 +574,29 @@ Desired Pages source: `main`. A switch needs the `owner`, a change window, and a
 
 The promotion packet carries 10 required fields; missing, contradictory, stale or unverified is `UNKNOWN`, and `UNKNOWN` blocks.
 
+- ticket and decision IDs, requested action, decision owner, and exact new authority requested
+- evidence timestamp and fresh exact dev, test, release and main heads
+- candidate base/head, pull request, reviewed head, merge commit when present, mergeability, required review and CI results
+- dependency result, claimed paths and serialized lanes, collision search, and the itemized independence checklist result
+- approved scope and acceptance, maker completion receipt, independent reviewers, QA stages, gates, and unresolved findings or exceptions
+- exact artifact path, SHA-256, build/version, source receipt, generation provenance, and byte-identity result
+- strong playtest matrix, environment, player flows, result and evidence
+- current and desired Pages source, deployment run/commit, hosted URL, deployed artifact/hash/source, and hosted smoke/playtest result
+- rollback target, prior Pages source or branch state, exact procedure, trigger, recovery consequence, responsible actor and required authority
+- the WAIT or delivery recommendation, rationale, smallest next action, and the exact owner action requested
+
+Promotion readiness means: The candidate and evidence packet are ready to be considered. It does not mean: That the product is release-ready. These stay owner-exclusive whatever the packet says: test mutation, release mutation, main mutation, release-branch merge, tag, release publication, final release readiness.
+
+Delivery process: Push the immutable topic head, open or update its pull request, complete current review and checks, and merge through the pull request. idle implementation,a speculative replacement patch
+
+A Pages switch is complete only when deployment passes and hosted verification passes. The switch packet records:
+
+- the exact main commit, artifact path, SHA-256, build and source receipt
+- the intended Pages source and the prior source required for rollback
+- the successful Pages deployment and its exact run and commit evidence
+- hosted live smoke and strong playtest results against the deployed URL
+- the rollback command or configuration change, trigger, responsible actor, and authority to restore the prior Pages source
+
 ## Model and effort selection
 
 Model and reasoning effort are selected for the assignment's risk and station, never for a person's title, seniority, pool or authority. The smallest capable pairing supported by the current execution venue is the right one. A stronger model does not outrank a weaker one, and selecting one grants nothing.
@@ -577,6 +610,9 @@ Every assignment and reassignment records: `MODEL <model> | EFFORT <effort> | WH
 | High-risk or cross-system reasoning | `gpt-5.6-sol` | high, xhigh | Architecture, governance, schema and save compatibility, security, incident and P0 analysis, integration, and promotion-readiness analysis. |
 | Exceptional unresolved multi-system risk | `any capable available model` | max (needs a recorded exceptional reason) | Only when the packet records the exceptional reason that lesser effort is inadequate. |
 
+Selection stability: The selected pairing is fixed for the active turn. Changing model or effort requires an escalation receipt recording the trigger, partial evidence, new pairing, reason, ownership and path continuity, and authority. The new assignment does not erase the prior receipt. Substitution: Availability is checked at assignment time. If a named default is unavailable, the assigning authority records the supported substitute and why it is capable. That is a reassignment and requires a complete packet.
+
+Every assignment record carries: model, effort, why, escalate_when.
 
 ## Owner commands
 
