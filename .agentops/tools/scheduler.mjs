@@ -588,7 +588,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   let state = readPortableState(root); const machine = localMachine(root);
   if (command === 'bootstrap') {
     if (state.oid) { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP NOOP: scheduler state already exists.'); return 0; }
-    state.machineLease = null; const oid = persistPortableState(root, state, { push: args.push === true, message: 'agentops scheduler bootstrap' });
+    state.machineLease = { machine_id: null, lease_epoch: 0, acquired_at: null, expires_at: null, expected_state_ref_oid: null }; const oid = persistPortableState(root, state, { push: args.push === true, message: 'agentops scheduler bootstrap' });
     emit(command, { state_ref_oid: oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP PASS: portable scheduler state initialized.'); return 0;
   }
   if (command === 'status') { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash, material_events: state.events.length, machine_lease: state.machineLease, live_worker_capacity: config.workers.length, configured_worker_slots: config.worker_slots, counts: stateCounts(state.snapshot) }, `STATUS: ${state.events.length} events; ${Object.values(state.snapshot.work_items).length} work items; ${config.workers.length}/${config.worker_slots} live workers.`); return 0; }
@@ -601,7 +601,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     emit(command, { machine_id: machine.machine_id, lease_epoch: epoch, state_ref_oid: oid }, 'ACQUIRE PASS: this machine owns dispatch custody.'); return 0;
   }
   if (command === 'release-machine') {
-    ensureCustody(state, machine); state.machineLease = null; const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler custody release ${machine.machine_id}` });
+    ensureCustody(state, machine); const now = new Date().toISOString(); state.machineLease = { machine_id: null, lease_epoch: state.machineLease.lease_epoch, acquired_at: state.machineLease.acquired_at, released_at: now, expires_at: now, expected_state_ref_oid: state.oid }; const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler custody release ${machine.machine_id}` });
     emit(command, { state_ref_oid: oid }, 'RELEASE PASS: machine custody released.'); return 0;
   }
   if (command === 'sync') {
