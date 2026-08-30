@@ -137,11 +137,13 @@ function applyEvent(snapshot, event) {
       break;
     case 'CANDIDATE_READY':
       if (!['RUNNING', 'REPAIR_REQUIRED'].includes(item.state)) throw new Error(`cannot candidate ${item.state}`);
+      if (!/^[0-9a-f]{40}$/.test(p.candidate_commit ?? '')) throw new Error('candidate requires an exact commit');
       item.state = 'CANDIDATE_READY'; item.candidate_commit = p.candidate_commit; item.evidence_pointers = p.evidence_pointers ?? item.evidence_pointers; item.next_action = 'Bind independent QA to this exact candidate.';
       break;
     case 'QA_RESULT':
       if (!['CANDIDATE_READY', 'QA'].includes(item.state)) throw new Error(`cannot QA ${item.state}`);
       if (p.candidate_commit !== item.candidate_commit) throw new Error('QA candidate does not match exact current head');
+      if (!['PASS', 'FAIL'].includes(p.result)) throw new Error('QA result must be PASS or FAIL');
       item.state = p.result === 'PASS' ? 'PR_READY' : 'REPAIR_REQUIRED';
       item.next_action = p.result === 'PASS' ? 'Deliver an issue-closing PR to dev.' : (p.next_action ?? 'Repair the exact failed candidate.');
       item.evidence_pointers = [...new Set([...item.evidence_pointers, ...(p.evidence_pointers ?? [])])];
@@ -152,10 +154,11 @@ function applyEvent(snapshot, event) {
       break;
     case 'MERGED_DEV':
       if (item.state !== 'PR_OPEN') throw new Error(`cannot merge from ${item.state}`);
+      if (!/^[0-9a-f]{40}$/.test(p.merge_commit ?? '')) throw new Error('dev merge requires an exact merge commit');
       item.state = 'MERGED_DEV'; item.next_action = 'Verify issue closure, release resources, and complete.'; item.evidence_pointers = [...new Set([...item.evidence_pointers, p.merge_commit].filter(Boolean))];
       break;
     case 'COMPLETED':
-      if (!['MERGED_DEV', 'RUNNING'].includes(item.state)) throw new Error(`cannot complete from ${item.state}`);
+      if (item.state !== 'MERGED_DEV') throw new Error(`cannot complete from ${item.state}`);
       item.state = 'DONE'; item.next_action = null;
       break;
     case 'BLOCKED':
@@ -230,6 +233,14 @@ export function claimsConflict(left, right) {
   return (left.claimed_paths ?? []).some((a) => (right.claimed_paths ?? []).some((b) => pathsOverlap(a, b)));
 }
 
+function holdsExclusiveClaim(item) {
+  if (TERMINAL_STATES.has(item.state)) return false;
+  if (item.state === 'READY') return false;
+  return ACTIVE_STATES.has(item.state)
+    || (item.claimed_paths ?? []).length > 0
+    || (item.claimed_resources ?? []).length > 0;
+}
+
 export function resolveCanonicalIssue(snapshot, issueId) {
   const item = snapshot.work_items[String(issueId)] ?? null;
   return item ? { duplicate: true, canonical_issue_id: item.issue_id, updated_event: item.updated_event } : { duplicate: false, canonical_issue_id: String(issueId) };
@@ -240,7 +251,7 @@ function priorityValue(value) {
   return match ? Number(match[1]) : 99;
 }
 
-export function planAssignments(snapshot, config, now = new Date().toISOString()) {
+export function planAssignments(snapshot, config, now = new Date().toISOString(), currentBaseCommit = null) {
   const items = Object.values(snapshot.work_items);
   const active = items.filter((item) => ACTIVE_STATES.has(item.state));
   const activeActors = new Set(active.map((item) => item.assigned_actor).filter(Boolean));
@@ -250,19 +261,26 @@ export function planAssignments(snapshot, config, now = new Date().toISOString()
   const done = new Set(items.filter((item) => item.state === 'DONE').map((item) => item.issue_id));
   const ready = items.filter((item) => item.state === 'READY' && item.dependencies.every((dependency) => done.has(String(dependency))))
     .sort((a, b) => priorityValue(a.priority) - priorityValue(b.priority) || a.updated_event.localeCompare(b.updated_event) || a.issue_id.localeCompare(b.issue_id));
-  const seats = config.workers.filter((seat) => !activeActors.has(seat.actor));
+  const seats = config.workers.filter((seat) => !activeActors.has(seat.actor) && seat.capabilities.includes('implementation'));
   const planned = [];
-  const locks = [...active];
+  const locks = items.filter(holdsExclusiveClaim);
   for (const seat of seats) {
-    if (implementationPaused && !seat.capabilities.includes('review')) continue;
+    if (implementationPaused) continue;
     const candidate = ready.find((item) => !planned.some((p) => p.issue_id === item.issue_id) && !locks.some((lock) => claimsConflict(item, lock)));
     if (!candidate) continue;
     const epoch = (candidate.lease_epoch ?? 0) + 1;
     const expiry = new Date(Date.parse(now) + config.lease_duration_seconds * 1000).toISOString();
-    planned.push({ issue_id: candidate.issue_id, actor: seat.actor, lease_id: `lease:${candidate.issue_id}:${epoch}`, lease_epoch: epoch, lease_expiry: expiry });
+    planned.push({ issue_id: candidate.issue_id, actor: seat.actor, lease_id: `lease:${candidate.issue_id}:${epoch}`, lease_epoch: epoch, lease_expiry: expiry, base_commit: currentBaseCommit ?? candidate.base_commit });
     locks.push(candidate);
   }
   return { assignments: planned, no_safe_assignment: seats.length > 0 && planned.length === 0, implementation_paused: implementationPaused, qa_backlog: qaBacklog, pr_backlog: prBacklog };
+}
+
+function currentDevelopmentBase(root, config) {
+  runGit(root, ['fetch', 'origin', `+refs/heads/${config.development_branch}:refs/remotes/origin/${config.development_branch}`]);
+  const oid = refOid(root, `refs/remotes/origin/${config.development_branch}`, false);
+  if (!/^[0-9a-f]{40}$/.test(oid ?? '')) throw new Error('current development base is unavailable');
+  return oid;
 }
 
 export function compileWake(item, config, repository = 'https://github.com/cehinds/AshenSpire.git') {
@@ -417,6 +435,9 @@ function showJson(root, ref, name) {
 export function readPortableState(root = REPOSITORY_ROOT, ref = 'refs/heads/agentops/scheduler-state') {
   const oid = refOid(root, ref) ?? refOid(root, 'refs/remotes/origin/agentops/scheduler-state');
   if (!oid) return { oid: null, events: [], snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' };
+  const treeNames = runGit(root, ['ls-tree', '-r', '--name-only', oid]).stdout.split(/\r?\n/).filter(Boolean);
+  const unexpected = treeNames.filter((name) => !['snapshot.json', 'machine-lease.json', 'STATE_VERSION'].includes(name) && !/^journal\/[0-9]{8}-[A-Za-z0-9._-]+\.json$/.test(name));
+  if (unexpected.length) throw new Error(`scheduler state contains forbidden paths: ${unexpected.join(',')}`);
   const namesResult = runGit(root, ['ls-tree', '-r', '--name-only', oid, '--', 'journal']);
   const events = namesResult.stdout ? namesResult.stdout.split(/\r?\n/).filter(Boolean).map((name) => showJson(root, oid, name)) : [];
   const snapshot = showJson(root, oid, 'snapshot.json') ?? reduceEvents(events);
@@ -447,7 +468,14 @@ function writePortableCommit(root, state, oldOid, message) {
     const tree = runGit(root, ['write-tree'], { env }).stdout;
     const args = ['commit-tree', tree, '-m', message]; if (oldOid) args.push('-p', oldOid);
     return runGit(root, args, { env: { ...env, GIT_AUTHOR_NAME: 'AshenSpire Scheduler', GIT_AUTHOR_EMAIL: 'scheduler@local.invalid', GIT_COMMITTER_NAME: 'AshenSpire Scheduler', GIT_COMMITTER_EMAIL: 'scheduler@local.invalid' } }).stdout;
-  } finally { fs.rmSync(index, { force: true }); }
+  } finally {
+    try { fs.rmSync(index, { force: true }); }
+    catch (error) {
+      // Windows can retain the temporary index handle briefly after Git exits.
+      // A stale uniquely named index is harmless; stopping the scheduler is not.
+      if (!['EBUSY', 'EPERM', 'EACCES'].includes(error.code)) throw error;
+    }
+  }
 }
 
 export function persistPortableState(root, state, { push = false, expectedOid = state.oid, message = 'agentops scheduler state' } = {}) {
@@ -575,6 +603,7 @@ export function verifyScheduler(root = REPOSITORY_ROOT) {
   if (config.wake_hard_limit_tokens > 1500) problems.push('wake hard limit exceeds 1500');
   const state = readPortableState(root);
   const rebuilt = reduceEvents(state.events);
+  if (rebuilt.errors.length) problems.push(`event replay contains ${rebuilt.errors.length} error(s)`);
   if (state.oid && rebuilt.snapshot_hash !== state.snapshot.snapshot_hash) problems.push('snapshot does not match deterministic replay');
   if (state.stateVersion !== '1') problems.push('unsupported STATE_VERSION');
   return { ok: problems.length === 0, problems, config, state, rebuilt };
@@ -646,20 +675,22 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
       { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
       { event_type: 'COMPLETED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid }, payload: {}, created_at: createdAt, idempotency_key: `completed:${item.issue_id}:${result.merged.mergeCommit.oid}` }
     ]);
-    const plan = planAssignments(state.snapshot, config, createdAt);
+    const baseCommit = currentDevelopmentBase(root, config);
+    const plan = planAssignments(state.snapshot, config, createdAt, baseCommit);
     for (const assignment of plan.assignments) {
       const refillItem = state.snapshot.work_items[assignment.issue_id];
-      state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: refillItem.issue_id, actor: assignment.actor, machine_id: machine.machine_id, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch, exact_object: { base_commit: refillItem.base_commit }, payload: { branch: refillItem.branch, base_commit: refillItem.base_commit, lease_expiry: assignment.lease_expiry, claimed_paths: refillItem.claimed_paths, claimed_resources: refillItem.claimed_resources, next_action: refillItem.next_action }, created_at: createdAt, idempotency_key: `auto-claim:${refillItem.issue_id}:${assignment.lease_epoch}` }]);
+      state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: refillItem.issue_id, actor: assignment.actor, machine_id: machine.machine_id, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch, exact_object: { base_commit: assignment.base_commit }, payload: { branch: refillItem.branch, base_commit: assignment.base_commit, lease_expiry: assignment.lease_expiry, claimed_paths: refillItem.claimed_paths, claimed_resources: refillItem.claimed_resources, next_action: refillItem.next_action }, created_at: createdAt, idempotency_key: `auto-claim:${refillItem.issue_id}:${assignment.lease_epoch}` }]);
     }
     const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}` });
     emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
   }
   const input = transitionInput(command, args, state, machine); state = appendEvents(state, [input]);
   const triggers = new Set(['candidate', 'qa', 'block', 'release', 'expire', 'complete', 'merged-dev']);
-  const plan = triggers.has(command) ? planAssignments(state.snapshot, config, input.created_at) : { assignments: [], no_safe_assignment: false };
+  const baseCommit = triggers.has(command) ? currentDevelopmentBase(root, config) : null;
+  const plan = triggers.has(command) ? planAssignments(state.snapshot, config, input.created_at, baseCommit) : { assignments: [], no_safe_assignment: false };
   for (const assignment of plan.assignments) {
     const item = state.snapshot.work_items[assignment.issue_id];
-    state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: item.issue_id, actor: assignment.actor, machine_id: machine.machine_id, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch, exact_object: { base_commit: item.base_commit }, payload: { branch: item.branch, base_commit: item.base_commit, lease_expiry: assignment.lease_expiry, claimed_paths: item.claimed_paths, claimed_resources: item.claimed_resources, next_action: item.next_action }, created_at: input.created_at, idempotency_key: `auto-claim:${item.issue_id}:${assignment.lease_epoch}` }]);
+    state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: item.issue_id, actor: assignment.actor, machine_id: machine.machine_id, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch, exact_object: { base_commit: assignment.base_commit }, payload: { branch: item.branch, base_commit: assignment.base_commit, lease_expiry: assignment.lease_expiry, claimed_paths: item.claimed_paths, claimed_resources: item.claimed_resources, next_action: item.next_action }, created_at: input.created_at, idempotency_key: `auto-claim:${item.issue_id}:${assignment.lease_epoch}` }]);
   }
   let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}` });
   state.oid = oid;
