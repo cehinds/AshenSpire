@@ -1289,7 +1289,8 @@ export function refEntitlementErrors(contracts, label, ref, actor) {
     return [`${label} ref '${ref}' is '${d.mutation}', not an isolated-continuation branch; a seat may only work on an isolated ref`];
   }
   if (d.per_seat) return [];
-  if (d.owner_role !== actor) return [`${label} ref '${ref}' is owned by '${d.owner_role}', not '${actor}'`];
+  // Resolve: `actor` arrives as an actor id, `owner_role` is a role.
+  if (d.owner_role !== actorRole(contracts, actor)) return [`${label} ref '${ref}' is owned by '${d.owner_role}', not '${actor}'`];
   return [];
 }
 
@@ -1343,7 +1344,7 @@ export function pathGrantErrors(contracts, lease) {
     const owner = decls.find((d) => globCovers(d.glob, g));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
-    } else if (owner.owner_role !== lease.actor) {
+    } else if (owner.owner_role !== actorRole(contracts, lease.actor)) {
       errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
     }
   }
@@ -3195,6 +3196,22 @@ export function runSelftest(root = ROOT) {
     const w = runWake(root, 'maker', 'AS-1001');
     results.push({ label: "the wake capsule reports the actor's role, not its id again", pass: !!w.text && /role=maker/.test(w.text), errs: [] });
   }
+
+  // The path and ref entitlement checks compared an actor id against an
+  // owner ROLE — the sixth and seventh sites of the same conflation.
+  {
+    const rtLead = baseRt();
+    const c = rtLead.capsules['AS-HD-050'];
+    c.owner_actor = 'lead-game-systems'; c.authority.may = ['spin-out-agent-seat']; c.affected_paths = [];
+    const l = rtLead.leases.find((x) => x.id === c.writer_lease);
+    l.actor = 'lead-game-systems'; l.path_globs = []; delete l.path_grant_exception;
+    const errs = runtimeChecks(contracts, rtLead).filter((e) => e.includes('lead-game-systems'));
+    results.push({ label: 'a lead can hold a path-free lease on its own ticket', pass: errs.length === 0, errs });
+  }
+  expectRuntime('a lease claiming a path its actor\'s role does not own', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-HD-050-maker');
+    l.actor = 'lead-game-systems'; delete l.path_grant_exception;
+  }, 'git-ownership assigns that path to');
 
   expectRuntime('a seat whose actor resolves to no role at all', (rt) => { rt.capsules['AS-1001'].owner_actor = 'nobody-at-all'; }, 'resolves to no declared role');
 
