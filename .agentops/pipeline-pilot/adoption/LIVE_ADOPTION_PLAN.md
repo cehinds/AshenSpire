@@ -12,10 +12,11 @@ identities and the resolved historical drift are recorded in
 `CURRENTNESS.json`; stale-base readiness is never inferred.
 
 The exact tracking issue is [#269](https://github.com/cehinds/AshenSpire/issues/269).
-This shadow candidate addresses automatic refill and double-assignment safety,
-but does not claim to supply authenticated worker identity, authoritative
-claims, or Project mutation credentials. Those remain required before live C5
-assignment can replace the existing human-controlled path.
+This candidate addresses immediate local refill observation and
+double-processing safety through a terminal-hash watcher, but does not claim to
+supply authenticated worker identity, authoritative claims, a default-branch
+GitHub trigger, or Project mutation credentials. Those remain required before
+live C5 assignment can replace the existing human-controlled path.
 
 ## Authority model
 

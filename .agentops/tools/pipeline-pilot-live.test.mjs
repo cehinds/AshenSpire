@@ -8,12 +8,6 @@ const { contracts, errors } = loadContracts(root);
 assert.deepEqual(errors, []);
 const runtime = loadRuntime(root);
 const config = validateActivation(JSON.parse(fs.readFileSync(new URL("../pipeline-pilot/activation.json", import.meta.url), "utf8")));
-const workflow = fs.readFileSync(new URL("../../.github/workflows/pipeline-refill.yml", import.meta.url), "utf8");
-assert.match(workflow, /repository_dispatch:\s*\n\s*types: \[agentops-ticket-completed\]/);
-assert.match(workflow, /permissions:\s*\n\s*contents: read/);
-assert.match(workflow, /pipeline-refill-\$\{\{ steps\.event\.outputs\.event_id \}\}/);
-assert.match(workflow, /Offer immediate safe refill[\s\S]*pipeline-pilot-live\.mjs/);
-assert.match(workflow, /sleep 300[\s\S]*expected IDLE_ALARM after threshold/);
 const terminal = structuredClone(runtime.capsules["AS-1001"]);
 terminal.lifecycle_state = "resolved";
 terminal.owner_actor = "maker";
@@ -54,4 +48,4 @@ assert.equal(planLiveOffer({ contracts: noAuthority, runtime, config, releasedAc
 assert.throws(() => planLiveOffer({ contracts, runtime, config, releasedActor: "maker", completedTicket: "AS-HD-040", releasedAt: "2026-08-30T08:00:00Z", now: "2026-08-30T08:00:01Z" }), /terminal capsule/);
 assert.throws(() => planLiveOffer({ contracts, runtime, config: { ...config, priority: [...config.priority, config.priority[0]] }, releasedActor: "maker", completedTicket: "AS-1001", releasedAt: "2026-08-30T08:00:00Z", now: "2026-08-30T08:00:01Z" }), /unique/);
 
-console.log("PASS 22/22; completion-hook=repository_dispatch; event-dedupe=cache+concurrency; immediate-refill=1s; selected=AS-HD-040; one-claim-writer=yes; blockers-safe=yes; resource-lock-safe=yes; dependency-safe=yes; collision-safe=yes; authority-safe=yes; no-safe-distinct=yes; idle-alarm=300s; duplicate-assignments=0; AgentOps-writes=0");
+console.log("PASS 17/17; planner=operator-or-local-watcher-invoked; immediate-refill=1s; selected=AS-HD-040; one-claim-writer=yes; blockers-safe=yes; resource-lock-safe=yes; dependency-safe=yes; collision-safe=yes; authority-safe=yes; no-safe-distinct=yes; idle-alarm=300s; duplicate-assignments=0; AgentOps-writes=0");
