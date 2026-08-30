@@ -10,9 +10,9 @@ const agentopsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const terminalStates = new Set(["resolved", "released"]);
 
 export function resolveGitStateFile(repoRoot) {
-  const resolved = execFileSync("git", ["-C", repoRoot, "rev-parse", "--git-path", "agentops-pipeline/state.json"], { encoding: "utf8", windowsHide: true }).trim();
-  if (!resolved) throw new Error("git returned an empty scheduler state path");
-  return path.resolve(repoRoot, resolved);
+  const common = execFileSync("git", ["-C", repoRoot, "rev-parse", "--git-common-dir"], { encoding: "utf8", windowsHide: true }).trim();
+  if (!common) throw new Error("git returned an empty common directory");
+  return path.join(path.resolve(repoRoot, common), "agentops-pipeline", "state.json");
 }
 
 export function terminalIdentity(capsule) {

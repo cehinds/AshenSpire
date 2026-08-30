@@ -16,18 +16,25 @@ fs.writeFileSync(path.join(root, "work", "AS-1", "CURRENT.json"), JSON.stringify
 assert.match(terminalIdentity(capsule), /^sha256:[a-f0-9]{64}$/);
 assert.equal(terminalIdentity({ ...capsule, lifecycle_state: "assigned" }), null);
 const actualState = resolveGitStateFile(actualRepo);
-assert.match(actualState.replaceAll("\\", "/"), /agentops-pipeline\/state\.json$/);
+assert.match(actualState.replaceAll("\\", "/"), /\.git\/agentops-pipeline\/state\.json$/);
 execFileSync(process.execPath, [watcherFile, "--once"], { cwd: actualRepo, windowsHide: true });
 assert.equal(fs.existsSync(actualState), true);
 const gitFixture = path.join(temp, "git-fixture");
 const linkedFixture = path.join(temp, "git-fixture-linked");
+const secondLinkedFixture = path.join(temp, "git-fixture-linked-second");
 fs.mkdirSync(gitFixture);
 execFileSync("git", ["init", "-q"], { cwd: gitFixture, windowsHide: true });
 fs.writeFileSync(path.join(gitFixture, "seed.txt"), "seed\n");
 execFileSync("git", ["add", "seed.txt"], { cwd: gitFixture, windowsHide: true });
 execFileSync("git", ["-c", "user.name=AgentOps Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "seed"], { cwd: gitFixture, windowsHide: true });
 execFileSync("git", ["worktree", "add", "-q", linkedFixture, "-b", "linked-test"], { cwd: gitFixture, windowsHide: true });
-assert.match(resolveGitStateFile(linkedFixture).replaceAll("\\", "/"), /\.git\/worktrees\/[^/]+\/agentops-pipeline\/state\.json$/);
+execFileSync("git", ["worktree", "add", "-q", secondLinkedFixture, "-b", "linked-test-second"], { cwd: gitFixture, windowsHide: true });
+assert.equal(resolveGitStateFile(linkedFixture), resolveGitStateFile(secondLinkedFixture));
+assert.match(resolveGitStateFile(linkedFixture).replaceAll("\\", "/"), /\.git\/agentops-pipeline\/state\.json$/);
+const sharedLock = path.join(path.dirname(resolveGitStateFile(linkedFixture)), "watcher.lock");
+const releaseShared = acquireWatcherLock(sharedLock);
+assert.throws(() => acquireWatcherLock(path.join(path.dirname(resolveGitStateFile(secondLinkedFixture)), "watcher.lock")), /already active/);
+releaseShared();
 
 const baselineState = path.join(temp, ".git", "agentops-pipeline", "baseline.json");
 let baselineCalls = 0;
@@ -68,7 +75,7 @@ const release = acquireWatcherLock(lockFile);
 assert.throws(() => acquireWatcherLock(lockFile), /already active/);
 release();
 assert.equal(fs.existsSync(lockFile), false);
-console.log("PASS 22/22; real-linked-worktree=yes; watcher-once-baseline=yes; linked-worktree-git-path=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; replay0; new-hash-new-event=yes; immediate-offer=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; bounded-state=100; AgentOps-writes=0");
+console.log("PASS 25/25; second-linked-watcher-refused=yes; repo-wide-common-state=yes; two-linked-worktrees-one-identity=yes; watcher-once-baseline=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; replay0; new-hash-new-event=yes; immediate-offer=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; bounded-state=100; AgentOps-writes=0");
 
 function rootFromImportMeta(url) {
   return new URL(".", url).pathname.replace(/^\/(.:)/, "$1");
