@@ -5,11 +5,13 @@
 - Proposed title: `feat(agentops): pilot task-driven pipeline shadow scheduler`
 - Head: `codex/task-pipeline-pilot`
 - Base: `dev`
-- Rebased base: `aba1f66cae4f066d560271ee4313155fe4581243`
+- Rebased base: `191d563cb07bcda15f43d9b89ededf0402f2d7c5`
+- Tracking issue: [#269 — automatically assign whoever finishes](https://github.com/cehinds/AshenSpire/issues/269)
 - State: `PR_READY_LOCAL_NOT_DELIVERED`
 
-No exact GitHub issue was bound in this lane, and no delivery authority was
-inferred. Nothing has been committed, pushed, or opened remotely.
+This candidate advances #269 only as a non-authoritative shadow scheduler. It
+does not close #269: durable identity, authoritative claims, and Project-write
+credentials remain outside this PR. Nothing has been pushed or opened remotely.
 
 ## Proposed PR body
 
@@ -24,6 +26,8 @@ inferred. Nothing has been committed, pushed, or opened remotely.
   Codex/Claude startup pointers;
 - add a read-only AgentOps compatibility adapter and one-ticket adoption plan;
   AgentOps remains authoritative and protected actions remain unavailable.
+
+Advances #269 without closing it.
 
 ### Verification
 

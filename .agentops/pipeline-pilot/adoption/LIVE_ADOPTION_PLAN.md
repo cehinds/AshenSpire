@@ -5,10 +5,17 @@
 This candidate began against `dev` at
 `03b8e771b712a098c04b694bfb172a9892be598f`, detected live movement, then was
 rebased cleanly through two observed advances onto exact live `origin/dev` at
-`aba1f66cae4f066d560271ee4313155fe4581243`. The final local HEAD,
+`aba1f66cae4f066d560271ee4313155fe4581243`, then rebased once more for delivery
+onto `191d563cb07bcda15f43d9b89ededf0402f2d7c5`. The final local HEAD,
 remote-tracking ref, and `git ls-remote` identity match. Exact current source
 identities and the resolved historical drift are recorded in
 `CURRENTNESS.json`; stale-base readiness is never inferred.
+
+The exact tracking issue is [#269](https://github.com/cehinds/AshenSpire/issues/269).
+This shadow candidate addresses automatic refill and double-assignment safety,
+but does not claim to supply authenticated worker identity, authoritative
+claims, or Project mutation credentials. Those remain required before live C5
+assignment can replace the existing human-controlled path.
 
 ## Authority model
 
