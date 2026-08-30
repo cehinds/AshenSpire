@@ -1,0 +1,43 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 50,
+  "current_hash": "sha256:90bdc464c865c3782489baa21810d0dbfb61667946805d1aadc5e2d4c40c0ca1",
+  "parent_hash": "sha256:28fd91d0e1b4a38c93bbccd2bc86baaae7360e5b49300d95249259f5e5c628e7",
+  "ticket": "AS-HD-057",
+  "lifecycle_state": "assigned",
+  "objective": "Keep the repository workable: repair tooling, environment, routing and access blockers, and return exact evidence of each repair.",
+  "done_when": "Every reported blocker is either reproduced and repaired with exact evidence, or escalated with the reason it cannot be repaired without changing what the work produces.",
+  "next_action": "Take the open tooling defects from the AS-HD-053 continuity audit (issue #392) that fall inside tools/**: reproduce each before repairing it, and escalate any that would need .agentops/tools/**, which AS-1001 holds.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "recovery/as-hd-057",
+  "base_oid": "7bcc9ed08d3a5cc3bc77238851309d27308a78e9",
+  "tree": "recovered-from-hub-snapshot",
+  "expected_dirty_state": "clean",
+  "owner_actor": "it-support",
+  "writer_lease": "lease-AS-HD-057-it-support",
+  "affected_paths": [
+    "tools/**"
+  ],
+  "evidence_pointers": [],
+  "blocker": null,
+  "authority": {
+    "may": [
+      "repair-local-tooling-and-environment",
+      "restore-routing-and-access",
+      "return-exact-support-evidence"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths",
+      "change-product-behaviour-to-clear-a-blocker"
+    ],
+    "expiry": "2026-10-31T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-HD-057 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}

@@ -1,20 +1,33 @@
 // src/ui/audio.js — procedural WebAudio engine (SPEC §7.4 audio).
 //
-// Hybrid design (per product decision): every sound and music bed is SYNTHESIZED
-// in code today (zero assets, zero licensing), but each id also has a slot in a
-// manifest so a real .ogg/.mp3 can replace it later with no call-site change —
-// if `MANIFEST[id]` names a URL that loads, the sample plays instead of the synth.
+// Hybrid design (per product decision): every sound and music bed has a
+// synthesized fallback (zero required assets, zero licensing). SFX ids first
+// try assets/sfx/<id>.ogg, with SFX_MANIFEST reserved for explicit path/format
+// overrides. The triggering cue is always immediate: synth plays while an
+// unknown sample warms, and only a known-good cached sample replaces later cues.
 //
 // Wiring: `initAudio()` returns an engine; main.js sets `sfx.sink = engine.sfx`
 // and calls `engine.music(context)` as screens mount. The AudioContext starts
 // suspended (autoplay policy) and resumes on the first user gesture.
 
 import { balance } from '../content/balance.js';
-import { SFX_MANIFEST, MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
+import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
+import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
+import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
+import { assetUrl } from './assetmap.js';
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
 export const AUDIO_DEFAULTS = balance.ui.audio;
+
+/** Resolve the sparse music-only preference without deriving it from volume. */
+export function resolveMusicEnabled(settings = {}) {
+  return typeof settings.musicEnabled === 'boolean'
+    ? settings.musicEnabled
+    : typeof settings.muteMusic === 'boolean'
+      ? settings.muteMusic !== true
+    : AUDIO_DEFAULTS.musicEnabled !== false;
+}
 
 // Contexts that can be backed by external audio files. A manifest maps each to
 // a list of file paths (see configureMusic); missing/failed loads fall back to
@@ -41,6 +54,7 @@ export function initAudio(settings = {}) {
     musicVol: clampVol(settings.musicVolume, AUDIO_DEFAULTS.musicVolume),
     sfxVol: clampVol(settings.sfxVolume, AUDIO_DEFAULTS.sfxVolume),
     muted: settings.muteAudio === true,
+    musicEnabled: resolveMusicEnabled(settings),
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch
     timer: null,
@@ -50,6 +64,8 @@ export function initAudio(settings = {}) {
     tracks: {}, // context → [track urls] from the folder manifest
     mediaEl: null, // currently-playing external <audio>, if any
     mediaSources: new WeakMap(), // <audio> → MediaElementSource (one per element)
+    bedGains: [], // the live per-context level stage(s) — see bedGain()
+    retireTimers: new Set(), // pending stage releases — see retireStages()
   };
   applyGains();
 
@@ -61,22 +77,73 @@ export function initAudio(settings = {}) {
   }
 
   // The context begins suspended; the first gesture resumes it.
+  //
+  // THE LIST USED TO BE ['pointerdown', 'keydown'] AND THAT IS A TOUCH BUG.
+  // Measured, headless Chromium, 390x844, CDP touch, `navigator.userActivation`
+  // sampled inside each listener on a fresh load:
+  //
+  //   touch:  pointerdown false · touchstart false · pointerup TRUE · touchend TRUE
+  //   mouse:  pointerdown TRUE
+  //
+  // Chromium grants user activation for a TOUCH at the lift, not at the press —
+  // deliberately, so that a scroll or a long-press is not an activation. A
+  // resume() called with no activation returns a promise that simply does not
+  // settle. So on a phone the whole of the first press-and-hold ran against a
+  // SUSPENDED context: measured on the shipped event screen, peak amplitude
+  // 0.000 across 209 sampled frames of a completed hold, while the same hold
+  // driven by a mouse resumed at the press. The one platform named as the
+  // priority is the one where it failed, and it failed only on the first
+  // gesture of a page — which is why nobody found it by playing.
+  //
+  // Adding the lift events does NOT make the page's very first hold audible;
+  // nothing can, because the browser will not start a context during a gesture
+  // it has not yet counted. What it fixes is everything after: any tap that
+  // ends anywhere now starts the audio, so the window in which the game is
+  // silently mute is one gesture wide instead of open-ended. In real play the
+  // title screen is tapped before any hold exists, so that window is normally
+  // already closed — `?shot=` boots are where it is not.
   function resume() {
     if (ctx.state === 'suspended') ctx.resume();
   }
-  ['pointerdown', 'keydown'].forEach((ev) =>
+  ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach((ev) =>
     addEventListener(ev, resume, { once: false, capture: true })
   );
 
   // ---- SFX -----------------------------------------------------------------
+  // Both tables are plain object literals, so a bare [id] read inherits
+  // Object.prototype: sfx('toString') found a function, and iterating it as a
+  // recipe THREW where the old switch's default beeped (Vira's gate finding
+  // on #46). Own-property reads only — an inherited key is a missing entry.
+  const own = (table, id) => (Object.prototype.hasOwnProperty.call(table, id) ? table[id] : undefined);
+
   function sfx(id) {
     if (state.muted || state.sfxVol <= 0) return;
     resume();
-    if (SFX_MANIFEST[id]) {
-      playSample(SFX_MANIFEST[id], sfxBus);
-      return;
-    }
+    // A CUE THAT ARRIVES AFTER THE THING IT REPORTS IS A LIE, SO IT IS DROPPED.
+    //
+    // A suspended context does not advance its clock, so anything scheduled at
+    // `now()` sits there and fires the instant the context starts. Measured on
+    // the shipped event screen, 390x844, fresh load, CDP touch: the whole of a
+    // press-and-hold ran suspended (a touch is not an activation until the
+    // lift), and all four sounds of the beat — three ticks spread over 600 ms
+    // and an arrival — came out AS ONE 0.1687 PEAK AFTER THE FINGER LIFTED.
+    // Not lost. Piled up, in the wrong order, describing a gesture that was
+    // already over. A player would read that as the game reacting to their
+    // RELEASE, which is the opposite of what happened.
+    //
+    // Silence is the honest answer for the one gesture the browser has not yet
+    // counted. This costs the very first cue of a session on desktop too (the
+    // resume promise has not settled inside the same listener that called it)
+    // and that is the right price: one missing tick beats a phrase that lies
+    // about when it happened.
+    //
+    // MUSIC IS DELIBERATELY NOT DROPPED — a bed that starts a beat late is a
+    // bed, not a report about an event, and music() keeps its own path.
+    if (ctx.state !== 'running') return;
+    const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
+    if (playCachedSample(sample, sfxBus)) return;
     synthSfx(id);
+    warmSample(sample);
   }
 
   const now = () => ctx.currentTime;
@@ -118,64 +185,40 @@ export function initAudio(settings = {}) {
     src.stop(start + dur + 0.02);
   }
 
-  // One recipe per feedback hook. Kept short and characterful (dark fantasy).
+  // The recipes are content (src/content/sfx.js, #46) — one entry per feedback
+  // hook, validated with the bundle. This engine speaks exactly two words,
+  // tone and noise; a recipe is a list of layers in that vocabulary, and an id
+  // with no entry plays the table's own `default` — audible, never silent.
+  // Ids the fallback has already named once — the warning is for whoever is
+  // building, not a per-frame spam channel (`hit` fires dozens of times a
+  // combat, and a warning nobody can read is the same silence in a new coat).
+  const warnedFallback = new Set();
+
   function synthSfx(id) {
-    switch (id) {
-      case 'cardPlay':
-        tone({ type: 'triangle', freq: 520, to: 380, dur: 0.12, peak: 0.35 });
-        break;
-      case 'hit':
-        noise({ dur: 0.16, peak: 0.5, hp: 300, lp: 4200 });
-        tone({ type: 'square', freq: 150, to: 60, dur: 0.14, peak: 0.35 });
-        break;
-      case 'block':
-        tone({ type: 'sine', freq: 320, to: 520, dur: 0.14, peak: 0.4 });
-        noise({ dur: 0.08, peak: 0.2, hp: 2000 });
-        break;
-      case 'bleedBurst':
-        tone({ type: 'sawtooth', freq: 220, to: 70, dur: 0.5, peak: 0.5 });
-        noise({ dur: 0.4, peak: 0.35, hp: 200, lp: 2600 });
-        break;
-      case 'stagger':
-        tone({ type: 'square', freq: 90, to: 40, dur: 0.35, peak: 0.5 });
-        noise({ dur: 0.22, peak: 0.4, hp: 120, lp: 1800 });
-        break;
-      case 'enemyDeath':
-        tone({ type: 'sawtooth', freq: 240, to: 30, dur: 0.6, peak: 0.45 });
-        break;
-      case 'heal':
-        tone({ type: 'sine', freq: 480, to: 720, dur: 0.4, peak: 0.35 });
-        tone({ type: 'sine', freq: 720, to: 960, dur: 0.4, peak: 0.2, t0: 0.06 });
-        break;
-      case 'stance':
-        tone({ type: 'triangle', freq: 300, to: 600, dur: 0.3, peak: 0.4 });
-        break;
-      case 'relic':
-        tone({ type: 'sine', freq: 880, to: 1320, dur: 0.25, peak: 0.3 });
-        break;
-      case 'flask':
-        tone({ type: 'sine', freq: 640, to: 400, dur: 0.18, peak: 0.3 });
-        break;
-      case 'shrine':
-        tone({ type: 'sine', freq: 392, to: 588, dur: 0.6, peak: 0.3 });
-        break;
-      case 'buy':
-        tone({ type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 });
-        break;
-      case 'nodeTravel':
-        tone({ type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 });
-        break;
-      case 'uiClick':
-        tone({ type: 'square', freq: 420, to: 420, dur: 0.04, peak: 0.18 });
-        break;
-      case 'victory':
-        [392, 494, 587, 784].forEach((f, i) => tone({ type: 'triangle', freq: f, dur: 0.5, peak: 0.32, t0: i * 0.12 }));
-        break;
-      case 'youDied':
-        tone({ type: 'sawtooth', freq: 160, to: 40, dur: 1.2, peak: 0.5 });
-        break;
-      default:
-        tone({ type: 'sine', freq: 440, to: 440, dur: 0.05, peak: 0.15 });
+    const { recipe, fellBack } = resolveRecipe(id);
+    if (fellBack && !warnedFallback.has(id)) {
+      // THE FALLBACK NAMES ITSELF (Sunna's finding at #66): music() has warned
+      // by name and pointed at its own file since word 3, while synthSfx —
+      // eleven lines away — degraded in total silence. That asymmetry is how
+      // three composed ids played the 440 Hz blip through a whole release
+      // candidate with nobody's console saying a word.
+      warnedFallback.add(id);
+      // Name the family ONLY when the id actually has one — for a plain id,
+      // split('_')[0] is the id itself and the advice read "author 'x', or a
+      // family row named 'x'", which is one row wearing two names (Sunna's
+      // nit at #66).
+      const cut = String(id).indexOf('_');
+      const family = cut > 0 ? String(id).slice(0, cut) : null;
+      console.warn(
+        `[audio] sfx('${id}'): no recipe answers this id — playing the default blip. ` +
+          `Author a row named '${id}'` +
+          (family ? `, or a family row named '${family}' that covers every '${family}_*' id` : '') +
+          `, in src/content/sfx.js.`
+      );
+    }
+    for (const { kind, ...params } of recipe) {
+      if (kind === 'noise') noise(params);
+      else tone(params);
     }
   }
 
@@ -213,11 +256,132 @@ export function initAudio(settings = {}) {
       }
     }
     state.nodes = [];
+    retireStages(fade);
+  }
+
+  /**
+   * retireStages(fade) — RELEASE THE OUTGOING LEVEL STAGE *AFTER* ITS FADE, NOT
+   * DURING IT (#296).
+   *
+   * The defect this exists to stop, measured rather than reasoned about: the
+   * ramps above are SCHEDULED — they run for `fade` seconds after this function
+   * returns — while `bedGain()` used to disconnect the previous stage
+   * SYNCHRONOUSLY on the next playback. A ramp whose downstream path to the bus
+   * has already been cut is inaudible, so every context change (map -> combat,
+   * combat -> rest) stopped dead instead of fading. Six ramps against zero of
+   * one stage still connected, driven on the real engine.
+   *
+   * ONE NODE, TWO PROPERTIES, AND THEY ARE NOT THE SAME DESIGN. `bedGain`'s job
+   * is ROUTING — where `bed.gain` is read, once, for both doors. Its LIFETIME is
+   * a separate question and it belongs here, in the function that owns the fade
+   * length, because that is the only place that knows when the sound is finally
+   * over. Splitting them is the whole fix; keeping the disposal next to the
+   * creation is what hid the bug.
+   *
+   * The timer is tracked so a stage cannot leak: every retirement either fires
+   * or is cleared, and `--selftest`'s second plant is the one that watches for
+   * an accumulating node nobody released.
+   */
+  function retireStages(fade) {
+    const retiring = state.bedGains;
+    state.bedGains = [];
+    if (!retiring.length) return;
+    const t = now();
+    for (const g of retiring) {
+      // THE MARGIN IS A FUNCTION OF WHAT THE STAGE CARRIES, NOT OF `fade`.
+      //
+      // The first version of this computed `fade * 1000 + 120` and its comment
+      // claimed the stage "outlives BOTH, by the same margin the voices get."
+      // That was true of the voices I had enumerated and false of the ones I
+      // had not: `stopMusic` fades only what is in `state.nodes`, which is the
+      // DRONE alone — a melodic note runs 1.9s, its harmony 1.7s, a thump
+      // 0.36s, and none of them is registered anywhere. A context change one
+      // tick after a note began cut that note's tail at 0.72s. Densest in fast
+      // combat and boss beds, which is exactly where it would be heard.
+      //
+      // So every voice now stamps the stage with when it will actually be done
+      // (`keepAlive`), and the stage outlives the LATER of its own fade and
+      // that stamp. `fade` describes the drones; `endsAt` describes everything.
+      const until = Math.max(g.endsAt || 0, t + fade + 0.05);
+      const ms = Math.max(0, (until - t) * 1000) + 120;
+      const timer = setTimeout(() => {
+        state.retireTimers.delete(timer);
+        try { g.disconnect(); } catch (e) { /* already gone */ }
+      }, ms);
+      state.retireTimers.add(timer);
+    }
+  }
+
+  /**
+   * keepAlive(stage, until) — a voice declaring when it is genuinely finished.
+   *
+   * Every source that connects through a stage stamps the latest absolute time
+   * it will still be making sound. This is the ONE number retirement reads, and
+   * it exists because the two #296 review findings were the same defect at two
+   * altitudes: a margin derived from `fade` knows nothing about an envelope
+   * nobody registered, and knows nothing about a stage superseded without a
+   * context change at all. Both fall out of "a stage outlives what it carries."
+   */
+  function keepAlive(stage, until) {
+    if (!stage) return;
+    stage.endsAt = Math.max(stage.endsAt || 0, until);
   }
 
   const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-  function drone(freq, gain) {
+  /**
+   * bedGain(bed) → THE ONE PLACE `bed.gain` IS READ (#48).
+   *
+   * A context's mix level used to be applied by whoever happened to be making
+   * sound: the synth multiplied it into four separate voice literals, and the
+   * external-track path — the one that matters the moment real music files
+   * arrive — never read it at all, connecting straight to the bus at unity. So
+   * a shrine track played as loud as a boss track, and the number somebody
+   * chose on purpose was silently discarded (Vega, #48).
+   *
+   * Two readers and no home is the defect; ONE STAGE EVERY SOURCE PASSES
+   * THROUGH is the fix. The voices below hand this node their own raw peaks
+   * (0.12, 0.16, …) and an external `<audio>` connects to it unchanged, so
+   * `bed.gain` is applied exactly once, in one place, to both doors. The
+   * synth's shipped levels do not move: `0.16 * gain` into unity and `0.16`
+   * into a stage at `gain` are the same product, which is what
+   * tools/music-bed-gain-probe.mjs measures per bed rather than asserts.
+   *
+   * A bed with no gain field plays at unity rather than silently at zero — a
+   * missing number is an authoring mistake, and silence is the one failure
+   * nobody notices (Law 1 clause 5).
+   */
+  function bedGain(bed) {
+    // THIS FUNCTION ROUTES; IT DOES NOT DISPOSE. It used to do both, and the
+    // disposal half was wrong: it disconnected the previous stage synchronously
+    // while that stage's voices were still fading, so the fade could not reach
+    // the output. The release now lives in `retireStages`, called by
+    // `stopMusic`, which is the only function that knows how long the sound has
+    // left. See the comment there (#296).
+    //
+    // THE COMMENT THAT USED TO SIT HERE NAMED THE HAZARD AND THEN TALKED ITSELF
+    // OUT OF IT — "its voices were stopped ... rather than mid-fade, where
+    // disconnecting would cut the tail the fade exists to produce." The voices
+    // were NOT stopped: `stopMusic` schedules their stop 0.65s out. Kept in the
+    // record because a confident sentence standing where a check belongs is the
+    // defect that produced this bug.
+    // A NEW STAGE SUPERSEDES THE OLD ONE, AND SUPERSEDING IS A RETIREMENT.
+    // Retirement used to happen only in `stopMusic`, so the path that makes a
+    // stage WITHOUT a context change — an external track ending and the
+    // playlist advancing to the next one — created a stage per track and
+    // released none: an idle title screen, or a manifest of short tracks, grew
+    // the graph without bound. Retiring here (at each stage's own `endsAt`,
+    // never synchronously) closes that without a second mechanism.
+    retireStages(0);
+    const g = ctx.createGain();
+    g.gain.value = bed && typeof bed.gain === 'number' ? bed.gain : 1;
+    g.endsAt = now();
+    g.connect(musicBus);
+    state.bedGains.push(g);
+    return g;
+  }
+
+  function drone(freq, gain, out) {
     const o = ctx.createOscillator();
     const o2 = ctx.createOscillator();
     const g = ctx.createGain();
@@ -238,33 +402,66 @@ export function initAudio(settings = {}) {
     lfo.connect(lfoG).connect(lp.frequency);
     o.connect(lp);
     o2.connect(lp);
-    lp.connect(g).connect(musicBus);
+    lp.connect(g).connect(out);
+    keepAlive(out, now() + 1.5); // the drone's own ramp-in; stopMusic extends it
     o.start();
     o2.start();
     lfo.start();
     state.nodes.push({ osc: o, gain: g }, { osc: o2, gain: g }, { osc: lfo, gain: g });
   }
 
+  // Returns a disposition so a headless probe can tell WHY nothing (or
+  // something) is playing: 'bed' | 'external' | 'silence' (deliberate quiet,
+  // the word a human typed in BEDS) | 'unknown' (a context with no bed — the
+  // bug shape, warned loud) | 'muted' | 'unchanged'. Callers may ignore it.
   function music(context) {
-    if (state.context === context) return;
+    if (state.context === context && state.musicEnabled) return 'unchanged';
     state.context = context;
     stopMusic();
-    const bed = BEDS[context];
-    if (!bed || state.muted) return;
+    const bed = own(BEDS, context);
+    if (bed === undefined) {
+      // Silence-by-bug, and it says so: a context nobody wrote a bed for is a
+      // mistake, never a decision (Law 1 clause 5). Deliberate quiet is the
+      // word — `<context>: 'silence'` in content/music.js BEDS.
+      console.warn(`[audio] music('${context}'): no bed with this name in content/music.js BEDS — playing nothing. Deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'.`);
+      return 'unknown';
+    }
+    if (!state.musicEnabled) return 'disabled';
+    if (state.muted) return 'muted';
     resume();
-    // Prefer an external track for this context if the folder provided any;
-    // fall back to a procedural variant on missing/unplayable files.
+    // Prefer an external track for this context if the folder provided any —
+    // including over a shipped 'silence': the folder manifest is also a word a
+    // human typed on purpose, and the more specific intent wins.
     const ext = state.tracks[context];
     if (ext && ext.length) {
-      playExternal(context, ext);
-      return;
+      playExternal(context, ext, bed);
+      return 'external';
     }
+    if (bed === MUSIC_SILENCE_WORD) return MUSIC_SILENCE_WORD;
     playProcedural(context, bed);
+    return 'bed';
+  }
+
+  // A failed external track falls back to what the SHIPPED table says — a bed
+  // plays, the silence word stays quiet. Without this guard the word itself
+  // would have been handed to playProcedural as if it were a bed object.
+  function proceduralFallback(context) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.
+    const bed = own(BEDS, context);
+    if (bed && bed !== MUSIC_SILENCE_WORD) playProcedural(context, bed);
   }
 
   // Stream a random track from the context's list; when it ends, play another
-  // (fresh random pick → variety). Any load/decode error → procedural bed.
-  function playExternal(context, urls) {
+  // (fresh random pick → variety). Any load/decode error → the shipped bed
+  // (or shipped silence) via proceduralFallback.
+  //
+  // THE TRACK PASSES THROUGH THE SAME LEVEL STAGE THE SYNTH DOES (#48): it is
+  // the shipped table that says a shrine is quieter than a boss, and a file on
+  // disk is not a reason for that sentence to stop being true. The bed is
+  // handed in rather than looked up again — the caller already resolved it,
+  // and resolving it twice is how two readers of one number get born.
+  function playExternal(context, urls, bed) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return;
     const url = pickRandom(urls);
     let el;
     try {
@@ -273,19 +470,19 @@ export function initAudio(settings = {}) {
       el.preload = 'auto';
       if (!state.mediaSources.has(el)) {
         const src = ctx.createMediaElementSource(el);
-        src.connect(musicBus);
+        src.connect(bedGain(bed));
         state.mediaSources.set(el, src);
       }
     } catch (e) {
-      return playProcedural(context, BEDS[context]);
+      return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
-      if (state.context === context) playExternal(context, urls);
+      if (state.musicEnabled && !state.muted && state.context === context) playExternal(context, urls, bed);
     });
     el.addEventListener('error', () => {
-      if (state.context === context) {
+      if (state.musicEnabled && !state.muted && state.context === context) {
         state.mediaEl = null;
-        playProcedural(context, BEDS[context]);
+        proceduralFallback(context);
       }
     });
     const p = el.play();
@@ -294,8 +491,12 @@ export function initAudio(settings = {}) {
   }
 
   function playProcedural(context, bed) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.
     const variant = pickRandom(bed.variants);
-    if (bed.drone) drone(variant.root / 2, 0.12 * bed.gain);
+    // Every voice below carries its own RAW peak and meets the bed's level at
+    // one shared stage — see bedGain().
+    const out = bedGain(bed);
+    if (bed.drone) drone(variant.root / 2, 0.12, out);
     const scale = SCALES[variant.scale];
     const lift = variant.lift || 3;
     let step = 0;
@@ -309,9 +510,10 @@ export function initAudio(settings = {}) {
       o.frequency.value = freq;
       const t = now();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.16 * bed.gain, t + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.08);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
-      o.connect(g).connect(musicBus);
+      o.connect(g).connect(out);
+      keepAlive(out, t + 1.9);
       o.start(t);
       o.stop(t + 1.9);
       // Every few notes, lay a soft harmony a perfect fifth above — adds body
@@ -322,9 +524,10 @@ export function initAudio(settings = {}) {
         h.type = 'sine';
         h.frequency.value = freq * 1.4983; // ~perfect fifth
         hg.gain.setValueAtTime(0.0001, t);
-        hg.gain.exponentialRampToValueAtTime(0.07 * bed.gain, t + 0.12);
+        hg.gain.exponentialRampToValueAtTime(0.07, t + 0.12);
         hg.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
-        h.connect(hg).connect(musicBus);
+        h.connect(hg).connect(out);
+        keepAlive(out, t + 1.7);
         h.start(t);
         h.stop(t + 1.7);
       }
@@ -345,9 +548,10 @@ export function initAudio(settings = {}) {
         o.frequency.setValueAtTime(variant.root / 2, t);
         o.frequency.exponentialRampToValueAtTime(variant.root / 3, t + 0.18);
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.22 * bed.gain, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
-        o.connect(g).connect(musicBus);
+        o.connect(g).connect(out);
+        keepAlive(out, t + 0.36);
         o.start(t);
         o.stop(t + 0.36);
       };
@@ -386,44 +590,64 @@ export function initAudio(settings = {}) {
       }
     }
     // Re-trigger the current context so the new source is used immediately.
-    if (state.context && !state.muted) {
+    if (state.context && state.musicEnabled && !state.muted) {
       const c = state.context;
       state.context = null;
       music(c);
     }
   }
 
-  // ---- samples (manifest override path) ------------------------------------
-  async function loadSample(url) {
-    if (state.sampleCache.has(url)) return state.sampleCache.get(url);
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('missing');
-      const buf = await ctx.decodeAudioData(await res.arrayBuffer());
-      state.sampleCache.set(url, buf);
-      return buf;
-    } catch (e) {
-      state.sampleCache.set(url, null); // remember the miss; fall back to synth
-      return null;
-    }
+  // ---- samples (filename convention + manifest overrides) -----------------
+  function warmSample(url) {
+    if (state.sampleCache.has(url)) return;
+    // A cache entry exists before fetch begins, so repeated cues share the warm
+    // without waiting for it. Their synth remains synchronous; this work never
+    // replays the event that started it.
+    const entry = { status: 'loading', buffer: null };
+    state.sampleCache.set(url, entry);
+    (async () => {
+      let res;
+      try {
+        res = await fetch(url);
+      } catch (error) {
+        entry.status = 'unavailable';
+        return;
+      }
+      if (!res.ok) {
+        entry.status = 'unavailable';
+        return;
+      }
+      try {
+        entry.buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+        entry.status = 'ready';
+      } catch (error) {
+        console.warn(`[audio] SFX sample '${url}' failed to decode — using synth fallback.`, error);
+        entry.status = 'unavailable';
+      }
+    })();
   }
-  async function playSample(url, bus) {
-    const buf = await loadSample(url);
-    if (!buf) return;
+  function playCachedSample(url, bus) {
+    const entry = state.sampleCache.get(url);
+    if (!entry || entry.status !== 'ready') return false;
     const src = ctx.createBufferSource();
-    src.buffer = buf;
+    src.buffer = entry.buffer;
     src.connect(bus);
     src.start();
+    return true;
   }
 
   // ---- settings applied live ----------------------------------------------
-  function setVolumes({ musicVolume, sfxVolume, muteAudio } = {}) {
+  function setVolumes({ musicEnabled, musicVolume, sfxVolume, muteAudio } = {}) {
+    const wasMusicEnabled = state.musicEnabled;
+    if (musicEnabled != null) state.musicEnabled = typeof musicEnabled === 'boolean'
+      ? musicEnabled
+      : AUDIO_DEFAULTS.musicEnabled !== false;
     if (musicVolume != null) state.musicVol = clampVol(musicVolume, state.musicVol);
     if (sfxVolume != null) state.sfxVol = clampVol(sfxVolume, state.sfxVol);
     if (muteAudio != null) state.muted = !!muteAudio;
     applyGains();
-    if (state.muted) stopMusic(0.3);
-    else if (state.context) {
+    if (state.muted || !state.musicEnabled) stopMusic(0.3);
+    else if (state.context && (!wasMusicEnabled || musicVolume != null || muteAudio != null)) {
       const c = state.context;
       state.context = null;
       music(c);

@@ -1,17 +1,25 @@
-// src/content/music.js — the procedural score, as data (SPEC §3.1(4)).
+// src/content/music.js — the procedural score, as data (SPEC §3.1(4), §7.4).
 //
 // The synth engine (src/ui/audio.js) knows how to PLAY a bed; what the beds
 // are is content. Adding a mood or a new screen's music is a data edit here,
 // with no change to the engine — same rule the cards and enemies follow.
 //
-// Sample manifests sit here too: naming a file for an id makes the engine play
-// that sample instead of synthesizing, and a missing/failed load falls back to
-// the synth, so this stays safe to point at art that doesn't exist yet.
+// THE SILENCE WORD: a context that should be deliberately quiet is spelled
+// with the exact word 'silence' as its whole value — `credits: 'silence'` —
+// never null, never a missing key, never [] or a zero gain. Those are
+// mistakes and the validator rejects each by name (model/validate.js; the
+// word's one home is MUSIC_SILENCE_WORD in model/schemas.js). A quiet screen
+// must be a decision someone typed, because untyped quiet is how a broken
+// audio path hides. A user music folder naming tracks for a silence context
+// still plays them — the more specific typed intent wins.
+//
+// The music sample manifest sits here too: naming a file for a context makes
+// the engine play that sample instead of synthesizing, and a missing/failed
+// load falls back to the synth, so this stays safe to point at art that
+// doesn't exist yet. (The SFX manifest + recipes live in content/sfx.js —
+// one home per medium.)
 
 // A real build can point these at files; missing/failed loads fall back to synth.
-export const SFX_MANIFEST = {
-  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
-};
 export const MUSIC_MANIFEST = {
   // combat: 'assets/music/combat.ogg',
 };

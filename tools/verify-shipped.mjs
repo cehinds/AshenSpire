@@ -11,7 +11,7 @@
 //
 // Two defects in one line. It reads `mapEntries`, a variable in its own process,
 // about the build it is in the middle of writing — so it is structurally
-// incapable of seeing dist/, which is what README.md:25 hands to a player. And it
+// incapable of seeing the player-facing copies, which the README hands to a player. And it
 // is a console.log: bundle.mjs exits 0 either way, so nothing is gated on it.
 // At 40c5b21 the guard was green on every run while dist/AshenSpire.html had
 // `indexOf('ASSET_MAP')` === -1 — it had never run that bundler at all.
@@ -26,32 +26,39 @@
 //   node tools/verify-shipped.mjs --selftest  run the known-bad corpus
 //
 // WHAT IT DOES NOT CHECK, and this is the point of the chain:
-//   dist carries art  +  dist === build  →  the player's file is this source.
+//   root + dist carry art  +  both === build  →  the player's files are this source.
 // Check B alone would pass on two identically art-less files, so A is what makes
 // the chain terminate in a true claim rather than in agreement. Agreement is not
 // synchronization (SOP 5).
 //
-// REMOVAL CONDITION (SOP 1's corollary): deleted — not amended — the day dist/
-// holds no tracked artifact, i.e. when the standalone ships as a release asset
-// and README.md links the release (see dist/README.md, *Why this is tracked*).
-// With nothing tracked in dist/ there is nothing for this to verify and the
-// checks become theatre. Also deleted if bundle.mjs stops inlining art into a
+// REMOVAL CONDITION (SOP 1's corollary): deleted — not amended — the day neither
+// player-facing alias is tracked, i.e. when the standalone ships as a release
+// asset and README.md links the release (see dist/README.md, *Why this is
+// tracked*). With no tracked player-facing alias there is nothing for this to
+// verify and the checks become theatre. Also deleted if bundle.mjs stops inlining art into a
 // single file, because then check A is asserting a property the build no longer
 // claims. NOT removed for having passed a long time: --selftest is what keeps it
 // honest, and a --selftest that stops failing on the corpus is itself the alarm.
 
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
+// tool measured a two-merge-stale bundle and printed OK once already. One home:
+// tools/artifact-provenance.mjs. Facts only; it never fails a run.
+import { printArtifactProvenance } from './artifact-provenance.mjs';
+printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
+printArtifactProvenance(resolve(ROOT, 'AshenSpire.html'), ROOT);
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 
 const BUILD = 'build/AshenSpire.html';
 const DIST_DIR = 'dist';
-const SHIPPED = 'dist/AshenSpire.html'; // the path README.md:25 gives a player
+const SHIPPED = 'dist/AshenSpire.html'; // canonical dist twin of the root alias
+const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gives a player
 
 // The stale artifact as committed at 40c5b21: 712667 bytes, no ASSET_MAP token,
 // three inlined images instead of 101. Kept as a corpus entry by blob id rather
@@ -196,7 +203,33 @@ function boundary(lines) {
 if (SELFTEST) {
   console.log('verify-shipped --selftest: every case below must land on its expected verdict.\n');
   const bad = [];
+
+  // THE ZERO-CHECK PLANT (#12), and it enters by the SAME DOOR the real tool
+  // does: a COPY of this file's own bytes with the recorder neutered, written
+  // beside it so its imports resolve, executed as a child process. Nothing is
+  // handed to an inner function; the thing proven is the exit path.
+  {
+    const meFile = fileURLToPath(import.meta.url);
+    const plantPath = resolve(dirname(meFile), `.verify-shipped-zero-plant-${process.pid}.mjs`);
+    const src = readFileSync(meFile, 'utf8')
+      .replace('function record(r) {\n  results.push(r);', 'function record(r) {\n  return;')
+      .replace("const SELFTEST = args.includes('--selftest');", 'const SELFTEST = false;');
+    let out = { status: null, stdout: '', stderr: '' };
+    try {
+      writeFileSync(plantPath, src);
+      const r = spawnSync(process.execPath, [plantPath], { encoding: 'utf8' });
+      out = { status: r.status, stdout: r.stdout || '', stderr: r.stderr || '' };
+    } finally {
+      try { unlinkSync(plantPath); } catch { /* already gone */ }
+    }
+    const caught = out.status === 1 && /REFUSED — ran 0 check/.test(out.stderr + out.stdout);
+    console.log(`  ${caught ? 'OK  ' : 'BAD '} plant: recorder neutered → zero checks must REFUSE, not print OK` +
+      (caught ? '' : `  (got exit ${out.status})`));
+    if (!caught) bad.push('zero-check plant');
+  }
+  let ran = 0;
   const expect = (label, r, wantOk, wantCode) => {
+    ran += 1;
     const ok = r.ok === wantOk && r.code === wantCode;
     console.log(`  ${ok ? 'OK  ' : 'BAD '} ${label} → ${r.ok ? 'pass' : 'fail'} [${r.code}]` +
       (ok ? '' : `  (expected ${wantOk ? 'pass' : 'fail'} [${wantCode}])`));
@@ -308,7 +341,11 @@ if (SELFTEST) {
     for (const b of bad) console.error('    · ' + b);
     process.exit(1);
   }
-  console.log('\nverify-shipped --selftest: OK — every known-bad case failed for its named reason.');
+  // #12's contract: EXACTLY ONE terminated verdict line carrying a COUNT. The
+  // old line said "every known-bad case failed for its named reason" — true,
+  // and countless, so a corpus that quietly shrank to zero read the same.
+  // The zero-check plant above is counted with them (hence ran + 1).
+  console.log(`\nverify-shipped --selftest: OK — ${ran + 1} checks passed.`);
   process.exit(0);
 }
 
@@ -330,11 +367,20 @@ record(checkCarriesArt(BUILD, buildBytes));
 
 const shippedPath = resolve(ROOT, SHIPPED);
 if (!existsSync(shippedPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist, but README.md:25 links it.` });
+  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist, but README.md links it as the canonical dist twin.` });
 } else {
   const shippedBytes = readFileSync(shippedPath);
   record(checkCarriesArt(SHIPPED, shippedBytes));
   record(checkShippedIsBuilt(SHIPPED, shippedBytes, buildBytes));
+}
+
+const rootCurrentPath = resolve(ROOT, ROOT_CURRENT);
+if (!existsSync(rootCurrentPath)) {
+  record({ ok: false, code: 'MISSING', detail: `${ROOT_CURRENT} does not exist, but README.md links it as the current build.` });
+} else {
+  const rootCurrentBytes = readFileSync(rootCurrentPath);
+  record(checkCarriesArt(ROOT_CURRENT, rootCurrentBytes));
+  record(checkShippedIsBuilt(ROOT_CURRENT, rootCurrentBytes, buildBytes));
 }
 
 // C from git, not the filesystem: an ignored file sitting in dist/ after a
@@ -373,7 +419,24 @@ boundary([
 const failed = results.filter((r) => !r.ok);
 if (failed.length) {
   console.error(`\nverify-shipped: FAILED ${failed.length} of ${results.length}.`);
-  console.error('  Fix: node tools/launch.mjs --build-only   (rebuilds build/ AND refreshes dist/)');
+  console.error('  Fix: node tools/launch.mjs --build-only   (rebuilds build/ and refreshes the root + dist current-build aliases)');
+  process.exit(1);
+}
+// #12'S SECOND LIVE INSTANCE, CLOSED AT THE TOOL AS WELL AS AT THE DOOR.
+// This line printed `OK — 0 checks passed.` and exited 0 when the recorder was
+// neutered — observed, not reasoned (the plant in --selftest re-runs it). The
+// CI door (tools/verdict.mjs) now refuses that green for every tool at once;
+// this floor is here because a person running this tool BY HAND is not standing
+// at that door, and the tool that owns a claim should be able to state it.
+//
+// THE FLOOR IS BELOW THE POPULATION AND NEVER TRACKS IT: today this tool
+// records 6 checks. A floor that follows the count upward is a number retyped
+// to match whatever happened, which is the defect one file over (verify's own
+// ASSET_MAP note says the same thing about its own floor).
+const MIN_CHECKS = 4;
+if (results.length < MIN_CHECKS) {
+  console.error(`\nverify-shipped: REFUSED — ran ${results.length} check(s), floor is ${MIN_CHECKS}.`);
+  console.error('  A tool that checked nothing and a tool that found nothing are the same green (#12).');
   process.exit(1);
 }
 console.log(`\nverify-shipped: OK — ${results.length} checks passed.`);

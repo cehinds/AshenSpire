@@ -1,0 +1,21 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-HD-040-maker",
+  "actor": "maker",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-HD-040",
+  "ref": "recovery/as-hd-040",
+  "path_globs": [
+    "assets/classes/**"
+  ],
+  "base_oid": "4a515339189c6f3ec003eef74e86dc38526f93fe",
+  "actions": [
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch",
+    "record-blocker-and-continue-collision-free-work"
+  ],
+  "issued": "2026-08-29T00:00:00Z",
+  "expiry": "2026-10-31T23:59:59Z",
+  "revoked": false
+}

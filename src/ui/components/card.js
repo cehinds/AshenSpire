@@ -6,8 +6,10 @@
 
 import { resolveCard } from '../../model/registries.js';
 import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
+import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { balance } from '../../content/balance.js';
+import { flasks } from '../../content/flasks.js';
 import { tagsFor } from '../../content/tags.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
@@ -37,12 +39,27 @@ export function staticTokens(def) {
  * still renders as `{token}` here — braces and all — because a visible brace is
  * a bug report and a bare key is a sentence that looks fine and lies.
  */
-export function relicText(def) {
+export function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
-  return def.textTemplate.replace(tokenRe(), (m, tok) => (
+  const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
+  // A growth row (balance.flaskGrowth) is a grant the player must be able to
+  // read on the relic that carries it — but its amount has ONE home, the row,
+  // so the sentence is DERIVED here rather than hand-typed into textTemplate
+  // (Law 1 clause 2; the derivation and its boundary live at
+  // flaskGrowthClause, model/flaskgrowth.js; corpus tools/flaskgrowth.mjs).
+  // THE CLAUSE READS THE REGISTRIES IT IS HANDED — the same object the seam
+  // (syncFlaskGrowth) derives from — so the day any mode forks balance
+  // per-run, the tooltip describes the row the seam actually applies, not the
+  // shipped one. Every run-facing call site passes its registries (source
+  // contract in the corpus). The static fallback is for surfaces with no
+  // registries in hand, where the one shipped bundle is the only truth there is.
+  const bal = (registries && registries.balance) || balance;
+  const defs = (registries && registries.flasks && registries.flasks.all()) || flasks;
+  const grown = flaskGrowthClause(bal, defs, def.id);
+  return grown ? `${base} ${grown}` : base;
 }
 
 function fillTemplate(def, tokens, baseTokens) {
@@ -69,7 +86,8 @@ function fillTemplate(def, tokens, baseTokens) {
  *   ref  — { cardId, upgraded, instanceId? }
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
- *            small?      (scale for reward/pile grids) }
+ *            small?      (scale for reward/pile grids),
+ *            tooltip?    (false suppresses the shared hover/focus tooltip) }
  */
 export function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
@@ -93,13 +111,17 @@ export function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
-  const tags = tagsFor(def.id);
+  const tags = def.cardTags && def.cardTags.length
+    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
+    : tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
+  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
 
   el.innerHTML =
     `<div class="cost">${esc(cost)}</div>` +
+    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
@@ -112,8 +134,21 @@ export function renderCard(registries, ref, opts = {}) {
       : '') +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
-  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
-  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+  // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
+  // number in the status row's own tint — "these cards just lit up" instead
+  // of set-intersection math. Non-matching cards get nothing (absence = no
+  // bonus; never a "+0%" badge).
+  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
+  if (boost) {
+    el.classList.add('tag-boost');
+    el.style.setProperty('--boost-tint', boost.boostTint);
+  }
+
+  // opts.tooltipFn overrides the default tooltip. A parent that already owns a
+  // persistent detail region may suppress the transient tooltip entirely.
+  if (opts.tooltip !== false) {
+    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+  }
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
   }
@@ -126,20 +161,32 @@ export function renderCard(registries, ref, opts = {}) {
  * same up/down coloring cards use in play). All numbers come from the defs.
  */
 export function upgradePreviewHtml(registries, ref) {
-  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
-  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const base = resolveCard(registries, { ...ref, upgraded: false });
+  const upg = resolveCard(registries, { ...ref, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  const baseText = fillTemplate(base, baseTokens, null);
+  const upgradedText = fillTemplate(upg, upgTokens, baseTokens);
+  // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
+  // are keyed to (ui.css). Without it the preview drew the number it had just
+  // computed as changed in the same colour and weight as the word beside it.
+  // `.ctext` carries the marks only; the card face's block layout stays on
+  // `.card .ctext` and does not follow the text into the tooltip.
   let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
-  html += `<div style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
-  html += `<div style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  html += `<div class="ctext" style="color:var(--muted)">${baseText}</div>`;
+  html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  if (baseText === upgradedText && upg.cost === base.cost) {
+    html += '<div class="tt-kw">Your current armament keeps the displayed values the same. The card still gains its permanent upgrade.</div>';
+  }
   return html;
 }
 
 function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)}</div>`;
-  html += `<div>${fillTemplate(def, tokens, null)}</div>`;
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}</div>`;
+  // Card text here too — same function, same marks, same class. The in-play
+  // card tooltip had the identical defect; it is one fix, not two.
+  html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {

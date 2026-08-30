@@ -7,6 +7,61 @@
 
 import { balance } from '../content/balance.js';
 
+// ---- status tooltip tokens (#61) --------------------------------------------
+// Status tooltips carry {tokens} bound to the row's OWN knobs, so the prose
+// can never restate a number the table holds (Law 1 clause 2 — a literal in
+// tooltip prose is a copy nothing syncs). One substitution home; a token that
+// resolves to nothing stays visible as its literal '{...}' — a loud defect,
+// not a silent blank.
+export function statusTooltipText(def) {
+  let t = def.tooltip || '';
+  const sub = (token, v) => {
+    if (v != null) t = t.split(`{${token}}`).join(String(v));
+  };
+  if (def.proc) {
+    sub('proc.threshold', def.proc.threshold);
+    sub('proc.burstPercent', def.proc.burstPercent);
+    sub('proc.burstMin', def.proc.burstMin);
+    sub('proc.burstMax', def.proc.burstMax);
+    sub('proc.poiseDamage', def.proc.poiseDamage);
+  }
+  if (def.resists) sub('resists.percent', def.resists.percent);
+  if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * 100));
+  if (def.decay && typeof def.decay === 'object') sub('decay.duration', def.decay.duration);
+  return t;
+}
+
+// One typed instance presentation for both combat clients. A registered
+// percent payload is not a generic stack count; its duration is a separate
+// clock and must be named separately.
+export function statusInstancePresentation(def, inst) {
+  const rawValue = inst && inst.meter ? inst.meter.value : (inst && inst.stacks) || 0;
+  const valueToken = def.instancePresentation?.valueToken || 'stacks';
+  const durationText = inst && Number.isFinite(inst.duration)
+    ? `${inst.duration} ${inst.duration === 1 ? 'turn' : 'turns'}` : '';
+  const valueText = valueToken === 'percent' ? `${rawValue}%` : String(rawValue);
+  const label = valueToken === 'percent'
+    ? `${def.name} ${valueText}${durationText ? ` · ${durationText}` : ''}`
+    : `${def.name} ×${rawValue}`;
+  return {
+    valueToken,
+    valueText,
+    durationText,
+    label,
+    tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
+    semantic: { statusId: def.id, valueToken, ariaLabel: label },
+  };
+}
+
+/** Pure attribute map shared by both combat clients. */
+export function statusInstanceSemanticAttrs(presentation) {
+  return {
+    'data-status-id': presentation.semantic.statusId,
+    'data-status-value-token': presentation.semantic.valueToken,
+    'aria-label': presentation.semantic.ariaLabel,
+  };
+}
+
 // ---- map node types ---------------------------------------------------------
 export const NODE_TYPES = {
   monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
@@ -66,9 +121,14 @@ export const ACT_NAMES = {
   3: 'ACT III — THE ASHEN CROWN',
 };
 // Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
+// The cycling arithmetic is `actPlate` (below, with the per-act art it now also
+// serves) and the count is the NUMBER OF NAMES WRITTEN, asked rather than typed —
+// this line held a literal `3` beside a table of three, which is one fact in two
+// places and would have gone wrong the day a fourth act was named.
+export const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
 export function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
+  const base = ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / ACT_NAME_COUNT);
   return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
 }
 
@@ -121,8 +181,76 @@ export function intentTooltip(iv, { victim = 'you' } = {}) {
 // act cycles back through the three plates rather than rendering art-less.
 export const BACKDROP_ACTS = balance.ui.backdropActs;
 export function backdropClass(actNumber) {
+  return `backdrop act-${actPlate(actNumber, BACKDROP_ACTS)}`;
+}
+
+// ---- map parchment (the fog's undiscovered ground) --------------------------
+//
+// THREE AUTHORED LOOKS, ONE PER ACT, BOUND BY NAME — Law 1 clause 4, and the
+// backdrop plates directly above are the precedent this copies rather than
+// invents. `assets/map/parchment_act1.webp`, `_act2`, `_act3`; no registration
+// list anywhere, so Freja drops a file in and the act wears it.
+//
+// GENERATED PARCHMENT WAS REFUSED, and on Law 0 rather than on budget: art
+// derived from the graph COUPLES THE FLAVOUR LAYER TO `mapgen`, and Constantine
+// now turns `floors` and `columns` himself — so a knob he reaches for to shorten
+// a run would silently change the art. A tunable that moves a thing its turner
+// was not thinking about is exactly clause 5's silent-plausible-derivation.
+//
+// ~~UNTIL THE ART EXISTS THE GROUND IS A DERIVED PLACEHOLDER and the screen says
+// so rather than this comment~~ — STRUCK 2026-08-08 by Sunna. It did not say so.
+// The three files NEVER EXISTED, the `<image>` resolved to nothing exactly as
+// this paragraph promised, and what a player got under fog was a flat wash: no
+// paper, no grain, no border, on a screen that is 95% ground. A missing thing
+// that renders as "fine, just flat" is invisible, and this one was invisible for
+// as long as the hook has existed.
+//
+// THE PLATES NOW EXIST AND ARE GENERATED, on Constantine's standing constraint
+// ("no billing, keep everything free"): `tools/parchment.mjs` writes three
+// feTurbulence sheets — blotch, fibre, grain — about two kilobytes each, from
+// the plate INDEX and nothing else. The refusal above is untouched and still
+// binds: the only input is the index, never the graph, so no knob he turns to
+// shorten a run can move the paper.
+//
+// THE PER-ACT TONE IS STILL CSS'S AND THE PLATES CARRY NO COLOUR — one home for
+// that datum (`--fog-parchment`), one reader that paints it, one grey texture
+// laid over it. FREJA STILL OWNS THE ACTUAL LOOK: these are the same three
+// filenames, so authored art replaces them by overwriting, and nothing else in
+// the tree moves.
+export const PARCHMENT_ACTS = balance.ui.parchmentActs;
+/**
+ * THE PLATE'S FILE TYPE, one home and one token.
+ *
+ * `.svg` because the plate has to EXIST and that is the medium this repo can
+ * generate for free (`tools/parchment.mjs`). It is a const rather than a
+ * literal in the template below because the day authored `.webp` plates land,
+ * the whole of that change should be this line plus three files — and because a
+ * literal here would be a second copy of a fact `tools/parchment.mjs`,
+ * `tools/bundle.mjs`'s MIME table and the act-plate test all depend on.
+ */
+export const PARCHMENT_EXT = '.svg';
+export function parchmentAsset(actNumber) {
+  return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}${PARCHMENT_EXT}`;
+}
+export function parchmentClass(actNumber) {
+  return `parch-${actPlate(actNumber, PARCHMENT_ACTS)}`;
+}
+
+/**
+ * actPlate(actNumber, plates) → 1..plates — WHICH OF N AUTHORED PLATES AN ACT
+ * WEARS, once, for every set of per-act art.
+ *
+ * Endless Spire runs past act 3, so every per-act art set has to answer "what
+ * does act 7 look like" and every one of them answers it the same way: cycle.
+ * This was written out twice (backdrops here, `actTitle` above) before the
+ * parchment would have made it three — and three copies of a modulo is how act 7
+ * comes to show plate 1 and be called ACT I · CYCLE 3 while a fourth set shows
+ * plate 3, with nothing in the tree able to notice.
+ */
+export function actPlate(actNumber, plates) {
   const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
-  return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;
+  const p = Number.isInteger(plates) && plates > 0 ? plates : 1;
+  return ((n - 1) % p) + 1;
 }
 
 // ---- the in-run menu: ONE table, two widgets --------------------------------
@@ -137,88 +265,96 @@ export function backdropClass(actNumber) {
 // that knows which tab is current. The day a row knows something selectTab does
 // not, this is a second menu rather than a quick way into the one we have.
 //
-//   act: 'tab'     → open the overlay at `tab` (openOverlay/selectTab)
-//        'armoury' | 'legend' | 'draw' | 'discard'  → the screen's own handler
-//        'save' | 'quit' | 'close'                  → the orchestrator's
+// The act vocabulary is MENU_ACTS, below — one home, not a list in this comment
+// as well. `act: 'tab'` is the one act that carries a second field: the tab it
+// opens, which is a member of MENU_TABS and joined to it by surfaces.js.
 //
-// TWO READINGS OF "CONTEXT-SPECIFIC", AND THE TABLE SERVES BOTH.
-// Constantine: "all buttons should be context-specific." Marina's dissent: the
-// ends are fixed, the middle is contextual, because a row whose meaning moves
-// between screens is a trap for a player who navigates by muscle memory. They
-// disagree in a way only play settles, so both orders come out of this one
-// table and a setting picks:
-//
-//   fixed ends (Marina)  — group by `band`: head, body, tail. Array order within
-//                          a band. Second row is Deck on every screen.
-//   all contextual (his) — rows marked `local` (they exist only on this screen)
-//                          come first, then the rest; `tail` still last, because
-//                          he fixed Save · Save & Quit as the last two by hand.
-//
-// The map row set is IDENTICAL under both — which is the honest shape of the
-// argument: it only bites where a screen has destinations of its own, and combat
-// is the screen that does.
+// The production order is identical in all three contexts. Four stable bands
+// separate navigation, comfort, Armoury destinations, and run lifecycle so
+// placement never changes under muscle memory.
 export const MENU_TABS = [
-  { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
-  { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
-  { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
-  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
   { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
 ];
 
-const TAIL = [
-  { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
-  { act: 'quit', icon: '⏻', label: 'Save & Quit to Title', band: 'tail', tone: 'danger',
-    tip: 'Save, then back to the title. Continue picks the climb up again.' },
+const QUICK_MENU_ROWS = [
+  { act: 'tab', tab: 'settings', band: 'navigation' },
+  { act: 'tab', tab: 'controls', band: 'navigation' },
+  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'comfort', control: 'switch',
+    tip: 'Use the browser fullscreen owner; its live state is shared with Settings.' },
+  { act: 'music', icon: '♫', label: 'Music', band: 'comfort', control: 'switch',
+    tip: 'Turn music on or off without changing its volume, sound effects, or global mute.' },
+  { act: 'inventory', icon: '▦', label: 'Inventory', band: 'armoury',
+    tip: 'Open carried weapons, armour, and items.' },
+  { act: 'character', icon: '♟', label: 'Character', band: 'armoury',
+    tip: 'Open the compact character and vitality view.' },
+  { act: 'load', icon: '↥', label: 'Load', band: 'run', tone: 'danger',
+    tip: 'Replace unsaved progress with the active slot after confirmation.' },
+  { act: 'save', icon: '💾', label: 'Save', band: 'run',
+    tip: 'Write the exact committed combat turn to this slot and stay here.' },
+  { act: 'saveQuit', icon: '↯', label: 'Save and Quit', band: 'run',
+    tip: 'Write the exact committed combat turn, then return to the title.' },
+  { act: 'quit', icon: '⏻', label: 'Quit Without Saving', band: 'run', tone: 'danger',
+    tip: 'Discard changes since the last save and return to the title after confirmation.' },
 ];
 
 export const MENU = {
-  map: [
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
-      tip: 'Weapons and armour — swap between fights for free.' },
-    { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
-      tip: 'What each mark on the act map means.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    ...TAIL,
-  ],
+  map: QUICK_MENU_ROWS,
   // Draw and discard are real destinations that exist ONLY here (combat.js's
   // pile modals) — the demonstration that context-specific means something.
-  combat: [
-    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
-      tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
-    { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
-    { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
-      tip: 'What is still to come, shuffled for viewing.' },
-    { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
-      tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'relics', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    ...TAIL,
-  ],
+  combat: QUICK_MENU_ROWS,
   // The menu already open: the dropdown mirrors the strip behind it, current tab
   // marked. Controls earns a row here (it is a tab) and not on map/combat, where
   // it is one click away once you land.
-  overlay: [
-    { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
-      tip: 'Back to the screen behind this one.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
+  overlay: QUICK_MENU_ROWS,
 };
 
-const BANDS = ['head', 'body', 'tail'];
+const BANDS = ['navigation', 'comfort', 'armoury', 'run'];
+
+// The acts a MENU row may name — the vocabulary, beside the table it governs.
+// It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
+// MEMBERS; eight members later it was the second copy that file exists to
+// prevent (Vira, gate of 5c49fed).
+//
+// WHAT THIS CATCHES AND WHAT IT DOES NOT, because a hand-kept list should say
+// so out loud. A launcher row is dropped when the CONTEXT does not offer its act
+// (the map has no draw pile — correct, by design), so two different situations
+// wear the same silence:
+//
+//   TYPO      — `act: 'jorunal'`, not a word at all → not in this list → the
+//               boot check names it. Caught, and this list is why.
+//   ORPHAN    — a word in this list that NO context implements anywhere. Delete
+//               `legend:` from the actions bag in src/ui/screens/map.js — its
+//               only implementation — and the Map legend row silently vanishes
+//               with every check green. NOT CAUGHT HERE, and it cannot be: the
+//               actions bags are built inside a click handler, closed over live
+//               run state, so no source-level join can see them.
+//
+// The orphan edge is answered on the RENDERED PAGE instead, which is where the
+// implemented acts actually exist: quicknav marks its panel
+// `data-surface="menuAct"` and each row `data-member="<act>"`, so an instrument
+// that opens the three contexts can subtract what was drawn from what is
+// declared here. That instrument is Bjorn's lens and is not written yet — this
+// comment is the statement of the gap, not a claim it is closed.
+export const MENU_ACTS = ['tab', 'fullscreen', 'music', 'inventory', 'character', 'load', 'save', 'saveQuit', 'quit'];
 
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
   return MENU_TABS.find((t) => t.id === id) || null;
+}
+
+/**
+ * menuTabRefs() → every tab id a MENU row NAVIGATES TO, across all contexts.
+ *
+ * The other half of a `{ act: 'tab', tab: … }` row. `menuRows()` resolves it to
+ * blank icon/label/tip when it names nothing, and quicknav keeps the row because
+ * the ACT is implemented — so the typo has to be caught by joining the tab, and
+ * this is the enumeration that lets surfaces.js do it.
+ */
+export function menuTabRefs() {
+  return [...new Set(Object.values(MENU).flat()
+    .filter((r) => r.act === 'tab' && typeof r.tab === 'string' && r.tab)
+    .map((r) => r.tab))];
 }
 
 /**
@@ -244,18 +380,12 @@ export function menuTabs({ hasSave = true, counts = {} } = {}) {
  */
 export function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, current = null } = {}) {
   const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'tail'));
-  const ordered = fixedEnds
-    ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
-    : [
-        ...src.filter((r) => r.local && r.band !== 'tail'),
-        ...src.filter((r) => !r.local && r.band !== 'tail'),
-        ...src.filter((r) => r.band === 'tail'),
-      ];
+  const ordered = BANDS.flatMap((b) => src.filter((r) => r.band === b));
   let prevBand = null;
   return ordered.map((r) => {
     const t = r.act === 'tab' ? tabDef(r.tab) : null;
     const countKey = r.count || (t && t.count);
-    const sep = fixedEnds && prevBand !== null && r.band !== prevBand;
+    const sep = prevBand !== null && r.band !== prevBand;
     prevBand = r.band;
     return {
       act: r.act,
@@ -266,6 +396,7 @@ export function menuRows(context, { fixedEnds = true, hasSave = true, counts = {
       tone: r.tone || '',
       badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
       on: !!(current && r.act === 'tab' && r.tab === current),
+      control: r.control || '',
       sep,
     };
   });
@@ -305,4 +436,40 @@ export function padName(btn) {
   if (btn == null) return '—';
   const b = PAD_BUTTONS[btn];
   return b ? b.name : `Btn ${btn}`;
+}
+
+// ---- why a piece is not yours, in the player's words ------------------------
+// `ownership().why()` (src/model/loadout.js) names the GATE and declares the
+// closed set of them as OWNERSHIP_GATES; the sentence is UI copy and lives here.
+// It was a literal inside equipment.js's `gate()`, which was fine while one
+// screen existed and becomes a copy nothing syncs the moment a second one asks
+// the same question (Law 1 clause 2, pointed at prose).
+//
+// DECLARED AND HANDLED: the suite asserts these keys are exactly OWNERSHIP_GATES
+// — a route the model can return with no sentence here renders an empty reason,
+// which is the quiet graceful failure rather than the loud one.
+//
+// A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
+// that is the whole point of the hint column. This is what is said when the
+// table has nothing to say.
+export const LOCK_COPY = Object.freeze({
+  unearned: 'Not yet earned.',
+  unfound: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.',
+});
+
+// ---- what a kind of armament is called in the plural ------------------------
+// The Compendium's section headings. A LABEL is a word, not a derivation:
+// 'staff' → 'STAVES' is not a rule any pluraliser gets right, and inventing one
+// is how a screen ends up saying STAFFS. So the irregulars are listed and
+// everything else derives, WITH A WARNING — a new kind gets a plausible heading
+// rather than a broken screen, and says so in the console so the plausible one
+// is not mistaken for an authored one (Law 0 clause 5: a generated thing that is
+// wrong but reasonable is the invisible failure).
+const ARMAMENT_KIND_LABELS = { weapon: 'WEAPONS', shield: 'SHIELDS', staff: 'STAVES' };
+export function armamentKindLabel(kind) {
+  const known = ARMAMENT_KIND_LABELS[kind];
+  if (known) return known;
+  console.warn(`[content] armament kind ${JSON.stringify(kind)} has no heading in`
+    + ' src/ui/uiContent.js ARMAMENT_KIND_LABELS — showing a derived one.');
+  return `${String(kind || '').toUpperCase()}S`;
 }

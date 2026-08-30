@@ -13,7 +13,8 @@ export const outfits = [
     "tags": "guard",
     "mods": "",
     "unlock": "",
-    "blurb": "The armour you were buried in."
+    "blurb": "The armour you were buried in.",
+    "poiseThreshold": 8
   },
   {
     "id": "vigil",
@@ -29,7 +30,8 @@ export const outfits = [
     ],
     "mods": "defend.block=+2",
     "unlock": "beatStitchedKing",
-    "blurb": "Blackened at the court that broke."
+    "blurb": "Blackened at the court that broke.",
+    "poiseThreshold": 7
   },
   {
     "id": "oathsworn",
@@ -48,7 +50,8 @@ export const outfits = [
       "self.strength=+1"
     ],
     "unlock": "winAsReaver",
-    "blurb": "Kept bright by an oath unbroken."
+    "blurb": "Kept bright by an oath unbroken.",
+    "poiseThreshold": 9
   },
   {
     "id": "warden",
@@ -67,7 +70,8 @@ export const outfits = [
       "strike.damage=-1"
     ],
     "unlock": "reachAshenCrown",
-    "blurb": "Issued, not chosen."
+    "blurb": "Issued, not chosen.",
+    "poiseThreshold": 10
   },
   {
     "id": "default",
@@ -80,7 +84,8 @@ export const outfits = [
     "tags": "starstone",
     "mods": "",
     "unlock": "",
-    "blurb": "Dyed with the dark between stars."
+    "blurb": "Dyed with the dark between stars.",
+    "poiseThreshold": 3
   },
   {
     "id": "eclipse",
@@ -96,7 +101,8 @@ export const outfits = [
     ],
     "mods": "power.potency=+1",
     "unlock": "winAsStarseer",
-    "blurb": "Worn only when the moon is eaten."
+    "blurb": "Worn only when the moon is eaten.",
+    "poiseThreshold": 4
   },
   {
     "id": "starlit",
@@ -115,7 +121,8 @@ export const outfits = [
       "strike.damage=-1"
     ],
     "unlock": "beatFellWarden",
-    "blurb": "It catches light that is not there."
+    "blurb": "It catches light that is not there.",
+    "poiseThreshold": 3
   },
   {
     "id": "astral",
@@ -134,7 +141,8 @@ export const outfits = [
       "defend.block=-1"
     ],
     "unlock": "winTwice",
-    "blurb": "Cut for someone taller than you."
+    "blurb": "Cut for someone taller than you.",
+    "poiseThreshold": 4
   },
   {
     "id": "default",
@@ -147,7 +155,8 @@ export const outfits = [
     "tags": "ritual",
     "mods": "",
     "unlock": "",
-    "blurb": "Plain cloth, plainly kept."
+    "blurb": "Plain cloth, plainly kept.",
+    "poiseThreshold": 5
   },
   {
     "id": "ossuary",
@@ -163,7 +172,8 @@ export const outfits = [
     ],
     "mods": "strike.blight=+1",
     "unlock": "beatBlightedValkyrie",
-    "blurb": "Threaded through with quiet bone."
+    "blurb": "Threaded through with quiet bone.",
+    "poiseThreshold": 6
   },
   {
     "id": "emberhabit",
@@ -182,7 +192,8 @@ export const outfits = [
       "self.regen=+1"
     ],
     "unlock": "beatKingAsHerald",
-    "blurb": "Warm long after the fire is out."
+    "blurb": "Warm long after the fire is out.",
+    "poiseThreshold": 4
   },
   {
     "id": "pilgrim",
@@ -201,6 +212,75 @@ export const outfits = [
       "self.maxHp=+4"
     ],
     "unlock": "reachStitchedCourt",
-    "blurb": "Road dust worked into the weave."
+    "blurb": "Road dust worked into the weave.",
+    "poiseThreshold": 5
+  },
+  {
+    "id": "default",
+    "classId": "rogue",
+    "name": "Gutter Leathers",
+    "plate": "303A35",
+    "plateLt": "52665D",
+    "leather": "3C2E25",
+    "under": "1D211F",
+    "tags": "flourish",
+    "mods": "",
+    "unlock": "",
+    "blurb": "Quiet leather for a loud profession.",
+    "poiseThreshold": 3
+  },
+  {
+    "id": "nightveil",
+    "classId": "rogue",
+    "name": "Nightveil Coat",
+    "plate": "20272A",
+    "plateLt": "3B4B4A",
+    "leather": "211F25",
+    "under": 151719,
+    "tags": [
+      "flourish",
+      "ash"
+    ],
+    "mods": "defend.block=+2",
+    "unlock": "rogueBeatWarden",
+    "blurb": "Dark cloth that swallows the outline.",
+    "poiseThreshold": 3
+  },
+  {
+    "id": "duelist",
+    "classId": "rogue",
+    "name": "Duelist Jerkin",
+    "plate": "46515A",
+    "plateLt": "78909A",
+    "leather": "43362C",
+    "under": "25282A",
+    "tags": [
+      "flourish",
+      "pierce"
+    ],
+    "mods": [
+      "strike.hits=+1",
+      "strike.damage=-1"
+    ],
+    "unlock": "winAsRogue",
+    "blurb": "Cut close so nothing catches the blade.",
+    "poiseThreshold": 3
+  },
+  {
+    "id": "shadow",
+    "classId": "rogue",
+    "name": "Shadow Mantle",
+    "plate": 292136,
+    "plateLt": 534066,
+    "leather": "2A2430",
+    "under": "17131F",
+    "tags": [
+      "flourish",
+      "venom"
+    ],
+    "mods": "self.strength=+1",
+    "unlock": "rogueReachCrown",
+    "blurb": "The hem remembers every alley.",
+    "poiseThreshold": 4
   }
 ];

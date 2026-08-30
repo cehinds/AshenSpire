@@ -111,5 +111,75 @@ export const unlocks = [
     "param": 2,
     "reveal": "listed",
     "hint": "Reach the Stitched Court."
+  },
+  {
+    "id": "rack2Right",
+    "kind": "slot",
+    "ref": "rightHand",
+    "name": "Second Rack Slot",
+    "condition": "reachAct",
+    "param": 2,
+    "reveal": "listed",
+    "hint": "Reach the Stitched Court."
+  },
+  {
+    "id": "rack3Right",
+    "kind": "slot",
+    "ref": "rightHand",
+    "name": "Third Rack Slot",
+    "condition": "winRuns",
+    "param": 1,
+    "reveal": "listed",
+    "hint": "Win a run."
+  },
+  {
+    "id": "rack2Left",
+    "kind": "slot",
+    "ref": "leftHand",
+    "name": "Second Off-hand Slot",
+    "condition": "reachAct",
+    "param": 3,
+    "reveal": "listed",
+    "hint": "Reach the Ashen Crown."
+  },
+  {
+    "id": "rack3Left",
+    "kind": "slot",
+    "ref": "leftHand",
+    "name": "Third Off-hand Slot",
+    "condition": "winRuns",
+    "param": 2,
+    "reveal": "listed",
+    "hint": "Win two runs."
+  },
+  {
+    "id": "winAsRogue",
+    "kind": "outfit",
+    "ref": "duelist",
+    "name": "Duelist Jerkin",
+    "condition": "winAsClass",
+    "param": "rogue",
+    "reveal": "listed",
+    "hint": "Win a run as the Rogue."
+  },
+  {
+    "id": "rogueBeatWarden",
+    "kind": "outfit",
+    "ref": "nightveil",
+    "name": "Nightveil Coat",
+    "condition": "beatBoss",
+    "param": "fellWarden",
+    "reveal": "listed",
+    "hint": "Defeat the Fell Warden."
+  },
+  {
+    "id": "rogueReachCrown",
+    "kind": "outfit",
+    "ref": "shadow",
+    "name": "Shadow Mantle",
+    "condition": "reachAct",
+    "param": 3,
+    "reveal": "listed",
+    "hint": "Reach the Ashen Crown."
   }
 ];

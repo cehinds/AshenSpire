@@ -1,0 +1,30 @@
+{
+  "$schema": "agentops-mini-schema/v1",
+  "title": "lease",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "actor", "issuer", "ticket", "ref", "path_globs", "base_oid", "actions", "issued", "expiry", "revoked"],
+  "properties": {
+    "schema": {"const": "agentops/lease/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "issuer": {"type": "string", "minLength": 1},
+    "ticket": {"type": "string", "minLength": 1},
+    "ref": {"type": "string", "minLength": 1},
+    "path_globs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "base_oid": {"type": "string", "minLength": 1},
+    "actions": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "issued": {"type": "string", "minLength": 1},
+    "expiry": {"type": "string", "minLength": 1},
+    "revoked": {"type": "boolean"},
+    "path_grant_exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "globs"],
+      "properties": {
+        "reason": {"type": "string", "minLength": 1},
+        "globs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1}
+      }
+    }
+  }
+}

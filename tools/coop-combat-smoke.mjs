@@ -8,6 +8,7 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
+import { createRunState } from '../src/model/state.js';
 import {
   createCoopCombat, coopHpMult, playCard, endTurn, useFlask, leaveCombat, joinCombat, coopOutcome,
 } from '../src/engine/coopCombat.js';
@@ -17,13 +18,15 @@ const fails = [];
 const ok = (cond, msg) => { console.log(`  ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); };
 
 function deckOf(classId) {
-  const d = REG.classes.get(classId).startingDeck;
-  return d.map((cardId, i) => ({ instanceId: `${classId[0]}${i}`, cardId, upgraded: false }));
+  const run = createRunState({ seed: 1, classId, registries: REG });
+  return run.deck.map((card, i) => ({ ...card, instanceId: `${classId[0]}${i}` }));
 }
 function players() {
+  const starseer = createRunState({ seed: 1, classId: 'starseer', registries: REG });
+  const reaver = createRunState({ seed: 1, classId: 'reaver', registries: REG });
   return [
-    { id: 'p1', name: 'Wren', classId: 'starseer', maxHp: 72, hp: 72, deck: deckOf('starseer'), relicIds: [], flasks: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', maxHp: 84, hp: 84, deck: deckOf('reaver'), relicIds: [], flasks: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', maxHp: 72, hp: 72, energyMax: starseer.energyMax, drawPerTurn: starseer.drawPerTurn, deck: deckOf('starseer'), relicIds: [], flasks: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', maxHp: 84, hp: 84, energyMax: reaver.energyMax, drawPerTurn: reaver.drawPerTurn, deck: deckOf('reaver'), relicIds: [], flasks: [] },
   ];
 }
 
@@ -37,7 +40,7 @@ function botTurn(C, playerId) {
     const card = hand.find((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
       if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy;
+      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
     });
     const tgt = C.enemies.find((e) => e.alive);
     try {

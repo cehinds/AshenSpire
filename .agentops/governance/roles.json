@@ -1,0 +1,357 @@
+{
+  "schema": "agentops/roles/v1",
+  "policy_version": "1.0.0",
+  "roles": [
+    {
+      "role": "owner",
+      "mission": "Define intent, priorities, risk tolerance, exceptional directives, and final overrides; retain release and publication authority.",
+      "may": [
+        "direct",
+        "override",
+        "set-product-priority",
+        "release",
+        "publish",
+        "approve-protected-transition"
+      ],
+      "must": [
+        "record an override separately from the evidence it overrides"
+      ],
+      "must_not": [
+        "fabricate a PASS",
+        "impersonate an independent reviewer",
+        "claim a technically impossible state"
+      ],
+      "approval_ceiling": "unbounded"
+    },
+    {
+      "role": "it-manager-iii",
+      "mission": "Mandatory technical relay and deputy: own exceptions, technical scope and architecture reconciliation, sequencing, path/maker ownership, integration and delivery gates, and incident/P0 command.",
+      "may": [
+        "resolve-technical-ambiguity",
+        "assign-and-rebind-work",
+        "issue-and-revoke-lease",
+        "create-isolated-ref",
+        "integrate-to-dev-via-pr",
+        "accept-bounded-technical-risk",
+        "fast-forward-test-under-gate-c"
+      ],
+      "must": [
+        "record a decision packet answer",
+        "obtain data-architecture clearance or exact exception authority before overriding a WITHHOLD"
+      ],
+      "must_not": [
+        "amend its own grant to reach any authority listed in owner-intent owner.reserved_authority",
+        "mutate main or release",
+        "change Pages source",
+        "self-approve protected independent review",
+        "perform owner-exclusive playtest sign-off"
+      ],
+      "approval_ceiling": "integration-to-dev"
+    },
+    {
+      "role": "project-management-lead",
+      "mission": "Own portfolio and milestone recommendations, dependency/blocker/WIP/capacity visibility, completion councils, handoffs, risk/decision-log stewardship, and stakeholder summaries.",
+      "may": [
+        "recommend-sequencing",
+        "expose-dependencies-wip-capacity",
+        "convene-completion-council",
+        "summarize-stakeholders"
+      ],
+      "must": [
+        "base recommendations on current ticket/Project evidence"
+      ],
+      "must_not": [
+        "decide-technical-assignment",
+        "mutate-integration",
+        "gain-product-board-delivery-promotion-or-release-authority"
+      ],
+      "approval_ceiling": "recommendation-only"
+    },
+    {
+      "role": "data-architecture-lead",
+      "mission": "Own schema/ID/alias/deprecation, source-generator-projection lineage, migration/version/compatibility, generated manifests, and cross-domain data-contract review.",
+      "may": [
+        "review-cross-domain-data-contract",
+        "withhold-unsafe-data-contract"
+      ],
+      "must": [
+        "cite exact invariant, schema/ID/lineage/version/compatibility evidence, affected paths, and smallest safe correction when withholding"
+      ],
+      "must_not": [
+        "self-assign-implementation",
+        "replace-domain-intent",
+        "replace-it-manager-iii-authority"
+      ],
+      "approval_ceiling": "data-contract-withhold"
+    },
+    {
+      "role": "help-desk",
+      "mission": "Own routine intake, contract completeness, routing, acknowledgement, lifecycle receipts, and status hygiene.",
+      "may": [
+        "record-triage-route-report-status",
+        "form-pod-for-contract-ready-ticket"
+      ],
+      "must": [
+        "require a complete ticket and truthful Project readback before routing"
+      ],
+      "must_not": [
+        "become-implementation-product-integration-publication-or-release-authority"
+      ],
+      "approval_ceiling": "status-and-routing"
+    },
+    {
+      "role": "maker",
+      "mission": "Perform bounded reversible local implementation within an assigned, contract-ready ticket on exclusive paths.",
+      "may": [
+        "implement-locally-on-exclusive-paths",
+        "run-tests-and-builds",
+        "commit-on-isolated-branch",
+        "record-blocker-and-continue-collision-free-work"
+      ],
+      "must": [
+        "hold a valid writer lease for each owned path",
+        "acknowledge an assignment before it becomes active"
+      ],
+      "must_not": [
+        "claim-overlapping-active-paths",
+        "push-pr-merge-deploy-or-release",
+        "change-scope-or-shared-paths-with-an-open-decision"
+      ],
+      "approval_ceiling": "local-commit-on-isolated-branch"
+    },
+    {
+      "role": "qa-independent",
+      "mission": "Perform independent QA against a frozen exact head and the applicable gate contract; author the sole exact-head verdict.",
+      "may": [
+        "author-exact-head-verdict",
+        "maintain-red-plants-and-fixtures"
+      ],
+      "must": [
+        "review the exact frozen head named by the ticket",
+        "be a non-maker for the reviewed object"
+      ],
+      "must_not": [
+        "review-own-implementation",
+        "have-a-verdict-overruled-by-a-coordination-pool"
+      ],
+      "approval_ceiling": "qa-verdict"
+    },
+    {
+      "role": "it-support",
+      "mission": "Restore the ability to work: repair local tooling, environment, routing and access blockers, and return exact evidence of the repair.",
+      "may": [
+        "repair-local-tooling-and-environment",
+        "restore-routing-and-access",
+        "return-exact-support-evidence"
+      ],
+      "must": [
+        "reproduce-a-blocker-before-repairing-it",
+        "return-exact-evidence-of-the-repair"
+      ],
+      "must_not": [
+        "push-pr-merge-deploy-or-release",
+        "change-product-behaviour-to-clear-a-blocker",
+        "override-an-independent-qa-verdict"
+      ],
+      "approval_ceiling": "May restore capability only. Any repair that would change what the work produces, or that needs a protected transition, is escalated to it-manager-iii rather than performed."
+    },
+    {
+      "role": "app-dev-i",
+      "mission": "App Dev I (programmers team) — junior application developer; the maker archetype at entry level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
+      "may": [
+        "implement-locally-on-exclusive-paths",
+        "run-tests-and-builds",
+        "commit-on-isolated-branch",
+        "record-blocker-and-continue-collision-free-work"
+      ],
+      "must": [
+        "hold a valid writer lease for each owned path",
+        "acknowledge an assignment before it becomes active"
+      ],
+      "must_not": [
+        "claim-overlapping-active-paths",
+        "push-pr-merge-deploy-or-release",
+        "change-scope-or-shared-paths-with-an-open-decision"
+      ],
+      "approval_ceiling": "local-commit-on-isolated-branch"
+    },
+    {
+      "role": "app-dev-ii",
+      "mission": "App Dev II (programmers team) — standard application developer; the maker archetype at mid level. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
+      "may": [
+        "implement-locally-on-exclusive-paths",
+        "run-tests-and-builds",
+        "commit-on-isolated-branch",
+        "record-blocker-and-continue-collision-free-work"
+      ],
+      "must": [
+        "hold a valid writer lease for each owned path",
+        "acknowledge an assignment before it becomes active"
+      ],
+      "must_not": [
+        "claim-overlapping-active-paths",
+        "push-pr-merge-deploy-or-release",
+        "change-scope-or-shared-paths-with-an-open-decision"
+      ],
+      "approval_ceiling": "local-commit-on-isolated-branch"
+    },
+    {
+      "role": "app-dev-iii",
+      "mission": "App Dev III (programmers team) — senior application developer; the maker archetype at senior level, eligible to lead a pod. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive code paths; level denotes seniority and assignment scope, not a wider authority ceiling (integration and protected transitions remain it-manager-iii's).",
+      "archetype": "maker",
+      "may": [
+        "implement-locally-on-exclusive-paths",
+        "run-tests-and-builds",
+        "commit-on-isolated-branch",
+        "record-blocker-and-continue-collision-free-work"
+      ],
+      "must": [
+        "hold a valid writer lease for each owned path",
+        "acknowledge an assignment before it becomes active"
+      ],
+      "must_not": [
+        "claim-overlapping-active-paths",
+        "push-pr-merge-deploy-or-release",
+        "change-scope-or-shared-paths-with-an-open-decision"
+      ],
+      "approval_ceiling": "local-commit-on-isolated-branch"
+    },
+    {
+      "role": "artist-i",
+      "mission": "Designer / Artist I (art team) — junior; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
+      "may": [
+        "implement-locally-on-exclusive-paths",
+        "run-tests-and-builds",
+        "commit-on-isolated-branch",
+        "record-blocker-and-continue-collision-free-work"
+      ],
+      "must": [
+        "hold a valid writer lease for each owned path",
+        "acknowledge an assignment before it becomes active"
+      ],
+      "must_not": [
+        "claim-overlapping-active-paths",
+        "push-pr-merge-deploy-or-release",
+        "change-scope-or-shared-paths-with-an-open-decision"
+      ],
+      "approval_ceiling": "local-commit-on-isolated-branch"
+    },
+    {
+      "role": "artist-ii",
+      "mission": "Designer / Artist II (art team) — standard; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
+      "may": [
+        "implement-locally-on-exclusive-paths",
+        "run-tests-and-builds",
+        "commit-on-isolated-branch",
+        "record-blocker-and-continue-collision-free-work"
+      ],
+      "must": [
+        "hold a valid writer lease for each owned path",
+        "acknowledge an assignment before it becomes active"
+      ],
+      "must_not": [
+        "claim-overlapping-active-paths",
+        "push-pr-merge-deploy-or-release",
+        "change-scope-or-shared-paths-with-an-open-decision"
+      ],
+      "approval_ceiling": "local-commit-on-isolated-branch"
+    },
+    {
+      "role": "artist-iii",
+      "mission": "Designer / Artist III (art team) — senior, eligible to lead a pod; the maker archetype for art and design assets. Performs bounded reversible local implementation within an assigned, contract-ready ticket on exclusive asset paths; level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "maker",
+      "may": [
+        "implement-locally-on-exclusive-paths",
+        "run-tests-and-builds",
+        "commit-on-isolated-branch",
+        "record-blocker-and-continue-collision-free-work"
+      ],
+      "must": [
+        "hold a valid writer lease for each owned path",
+        "acknowledge an assignment before it becomes active"
+      ],
+      "must_not": [
+        "claim-overlapping-active-paths",
+        "push-pr-merge-deploy-or-release",
+        "change-scope-or-shared-paths-with-an-open-decision"
+      ],
+      "approval_ceiling": "local-commit-on-isolated-branch"
+    },
+    {
+      "role": "qa-technician-i",
+      "mission": "QA Technician I (QA team) — junior; the qa-independent archetype at entry level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "qa-independent",
+      "may": [
+        "author-exact-head-verdict",
+        "maintain-red-plants-and-fixtures"
+      ],
+      "must": [
+        "review the exact frozen head named by the ticket",
+        "be a non-maker for the reviewed object"
+      ],
+      "must_not": [
+        "review-own-implementation",
+        "have-a-verdict-overruled-by-a-coordination-pool"
+      ],
+      "approval_ceiling": "qa-verdict"
+    },
+    {
+      "role": "qa-technician-ii",
+      "mission": "QA Technician II (QA team) — standard; the qa-independent archetype at mid level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "qa-independent",
+      "may": [
+        "author-exact-head-verdict",
+        "maintain-red-plants-and-fixtures"
+      ],
+      "must": [
+        "review the exact frozen head named by the ticket",
+        "be a non-maker for the reviewed object"
+      ],
+      "must_not": [
+        "review-own-implementation",
+        "have-a-verdict-overruled-by-a-coordination-pool"
+      ],
+      "approval_ceiling": "qa-verdict"
+    },
+    {
+      "role": "qa-technician-iii",
+      "mission": "QA Technician III (QA team) — senior, eligible to lead a QA pod; the qa-independent archetype at senior level. Performs independent QA against a frozen exact head and the applicable gate contract; must be a non-maker for the reviewed object. Level denotes seniority and assignment scope, not a wider authority ceiling.",
+      "archetype": "qa-independent",
+      "may": [
+        "author-exact-head-verdict",
+        "maintain-red-plants-and-fixtures"
+      ],
+      "must": [
+        "review the exact frozen head named by the ticket",
+        "be a non-maker for the reviewed object"
+      ],
+      "must_not": [
+        "review-own-implementation",
+        "have-a-verdict-overruled-by-a-coordination-pool"
+      ],
+      "approval_ceiling": "qa-verdict"
+    },
+    {
+      "role": "team-lead",
+      "mission": "Hold one team persistently: spin out and staff its agent seats, keep its roster and capacity current, and answer for the team's work.",
+      "may": [
+        "spin-out-agent-seat"
+      ],
+      "must": [
+        "name itself on every seat it spins out",
+        "keep its team's roster and capacity current"
+      ],
+      "must_not": [
+        "approve-its-own-implementation",
+        "waive-independent-qa",
+        "push-pr-merge-deploy-or-release",
+        "amend-its-own-grant"
+      ],
+      "approval_ceiling": "Forms and staffs its own team. Holds no waiver over independent QA: decision 0010 withdrew that mechanism pending an authenticated approval path."
+    }
+  ]
+}

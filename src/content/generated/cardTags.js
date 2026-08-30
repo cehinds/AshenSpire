@@ -78,5 +78,47 @@ export const cardTags = [
     "color": "C9A227",
     "glyph": "◆",
     "blurb": "Slow, committed, and hard to stop."
+  },
+  {
+    "id": "basic",
+    "label": "Basic",
+    "color": "7A6F5A",
+    "glyph": "○",
+    "blurb": "Everybody's — on the shelf without being found."
+  },
+  {
+    "id": "pierce",
+    "label": "Pierce",
+    "color": "9FC3E8",
+    "glyph": "†",
+    "blurb": "A precise physical form; presentation only."
+  },
+  {
+    "id": "ranged",
+    "label": "Ranged",
+    "color": "7FA8C9",
+    "glyph": "➶",
+    "blurb": "Authored ranged presentation; no position system."
+  },
+  {
+    "id": "precision",
+    "label": "Precision",
+    "color": "C9A227",
+    "glyph": "◎",
+    "blurb": "Deliberate aim and finesse; presentation only."
+  },
+  {
+    "id": "guile",
+    "label": "Guile",
+    "color": "647B73",
+    "glyph": "◇",
+    "blurb": "Preparation, misdirection, and stolen openings."
+  },
+  {
+    "id": "venom",
+    "label": "Venom",
+    "color": "7FAF63",
+    "glyph": "☠",
+    "blurb": "Poisons that punish enemies over time."
   }
 ];

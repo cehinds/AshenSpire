@@ -1,0 +1,17 @@
+=== AGENTOPS WAKE CAPSULE ===
+IDENTITY   : actor=data-architecture-lead role=data-architecture-lead ticket=AS-HD-045 lease=lease-AS-HD-045-data-architecture-lead (active until 2026-10-31T23:59:59Z)
+MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
+WORK       : Rule on the combat-data projection boundary: which values design may reuse without inventing a new data layer.
+DONE-WHEN  : The projection boundary is recorded with the exact fields it covers, the timing questions it does not settle, and an explicit withhold on anything requiring a new schema, save format, network service or runtime service.
+AUTHORITY  : may review-cross-domain-data-contract, withhold-unsafe-data-contract | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
+FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
+REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-045
+BASE       : 7bcc9ed08d3a5cc3bc77238851309d27308a78e9 tree recovered-from-hub-snapshot dirty=clean
+NEXT ACTION: Await the exact field-by-field read timing from Application, then re-read and record the boundary; withhold production adoption until one coherent render epoch is proven.
+STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
+EVIDENCE   : —
+SOURCE     : 7bcc9ed08d3a5cc3bc77238851309d27308a78e9
+FRESHNESS  : as-recorded (base 7bcc9ed08d3a); verify live HEAD out-of-band
+INVALIDATION: base_oid, tree, writer_lease
+BLOCKER    : {"kind":"awaiting-evidence","escalation_class":"technical-blocker","summary":"Conditional projection PASS is recorded, but production adoption stays WITHHELD until one coherent render epoch is proven. Paced-versus-live intent timing, defeated-frame removal and exact responsive geometry remain separate owner-gated questions."}

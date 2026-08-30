@@ -10,6 +10,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve, join, extname, normalize } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
+import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -78,7 +79,58 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false }
         return;
       }
       if (s.isDirectory()) filePath = join(filePath, 'index.html');
-      const body = await readFile(filePath);
+      let body = await readFile(filePath);
+      // THE BUILD STAMP ON THE PATH CONSTANTINE ACTUALLY PLAYS.
+      //
+      // run.bat / run.sh build the bundle and then serve THE SOURCE TREE, so
+      // the screen he looks at is this server's output, not build/. If only
+      // tools/bundle.mjs stamped the version, every screen he ever sees would
+      // read `UNSTAMPED` and the whole feature would exist for a file he does
+      // not open. So the digest is derived here too — same function, one home
+      // (tools/buildversion.mjs), never a second copy of the arithmetic.
+      //
+      // It is derived PER REQUEST rather than once at boot: the dev server
+      // stays up while the tree is edited, and a stamp that froze at boot would
+      // name a source that is no longer there. That is the same "agreement that
+      // drifts" this whole mechanism exists against, one process in.
+      //
+      // A FAILURE HERE IS VISIBLE, NOT SILENT. If the markers are gone the page
+      // gets the unstamped module and the player reads `0.4.0+UNSTAMPED` on
+      // three screens — loud, and honest about knowing nothing.
+      //
+      // AND THIS PATH NEVER BUMPS THE ORDINAL — it only READS it. A dev server
+      // stays up across edits and re-derives per request; if it bumped, every
+      // reload of an edited tree would burn a build number and rewrite a
+      // committed file underneath whoever is working. So the ordinal is passed
+      // on only when the recorded digest still matches the tree in front of us.
+      // When it does not, nothing is passed and the page keeps `UNBUMPED`: the
+      // version drops its tail rather than wearing an older build's number,
+      // because a missing component is honest and a stale one that sorts is a
+      // lie with a sort order. The digest beside it still names this exact tree.
+      if (rel.split(/[\\/]/).join('/') === VERSION_MODULE) {
+        try {
+          const digest = sourceDigest(rootResolved).digest;
+          // The ordinal and the date move together or not at all: both are
+          // facts of the build that wrote buildordinal.json, so a tree that has
+          // drifted from that record has neither, and half of a stale pair is
+          // worse than none of it.
+          let ordinal = null;
+          let built = null;
+          try {
+            const rec = readOrdinal(rootResolved);
+            if (rec.digest === digest) { ordinal = padOrdinal(rec.ordinal); built = rec.built; }
+          } catch { /* no ordinal home: the page says UNBUMPED/UNDATED, which is true */ }
+          // AND THIS PATH SAYS SO. Constantine plays the source tree through
+          // this server; the bundle is a different artifact with different
+          // bugs, and until now a screenshot could not tell them apart.
+          body = Buffer.from(stampSource(body.toString('utf8'), digest, {
+            ordinal, built, runPath: RUN_PATH_SERVE,
+          }), 'utf8');
+        } catch (err) {
+          console.error(`serve: could not stamp ${VERSION_MODULE} — ${err.message}`);
+          console.error('       the page will read UNSTAMPED, which is what it now knows.');
+        }
+      }
       const type = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream';
       res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
       res.end(body);

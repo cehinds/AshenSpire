@@ -21,6 +21,7 @@ import { join } from 'node:path';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession, restoreSession } from './session.mjs';
+import { SEED_MAX_LEN, seedProblem } from '../src/engine/rng.js';
 
 const REG = createRegistries(contentBundle);
 
@@ -159,10 +160,10 @@ export function attachLan(server, { port, root }) {
   function roster() {
     const out = [];
     for (const pl of session.clients.values()) {
-      out.push({ id: pl.id, name: pl.name, classId: pl.classId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost });
+      out.push({ id: pl.id, name: pl.name, classId: pl.classId, startingKitId: pl.startingKitId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost });
       // Local (couch) players ride their owner's connection and are always ready.
       (pl.locals || []).forEach((lp, i) => out.push({
-        id: `${pl.id}L${i + 1}`, name: lp.name, classId: lp.classId, tint: lp.tint,
+        id: `${pl.id}L${i + 1}`, name: lp.name, classId: lp.classId, startingKitId: lp.startingKitId, tint: lp.tint,
         spriteStyle: lp.spriteStyle, ready: true, isHost: false, isLocal: true, ownerId: pl.id,
       }));
     }
@@ -198,9 +199,9 @@ export function attachLan(server, { port, root }) {
     const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, tint: cl.tint, spriteStyle: cl.spriteStyle });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle });
       (cl.locals || []).forEach((lp, i) => game.addMember({
-        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, tint: lp.tint, spriteStyle: lp.spriteStyle,
+        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, tint: lp.tint, spriteStyle: lp.spriteStyle,
       }));
     }
     game.start();
@@ -226,7 +227,7 @@ export function attachLan(server, { port, root }) {
       case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
       case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId); break;
       case 'endTurn': g.combatEndTurn(id); break;
-      case 'useFlask': g.combatFlask(id, msg.slot, msg.targetId); break;
+      case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
       case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
       case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
@@ -244,6 +245,8 @@ export function attachLan(server, { port, root }) {
       case 'hello':
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);
         pl.classId = msg.classId || null;
+        pl.startingKitId = msg.startingKitId || null;
+        pl.discoveredArmaments = Array.isArray(msg.discoveredArmaments) ? [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))] : [];
         pl.tint = msg.tint || 'gold';
         pl.spriteStyle = msg.spriteStyle || 'rendered';
         pl.isHost = !!(hosting && msg.hostKey === hosting.hostKey);
@@ -259,6 +262,8 @@ export function attachLan(server, { port, root }) {
         break;
       case 'pick':
         if (msg.classId) pl.classId = msg.classId;
+        if (msg.startingKitId !== undefined) pl.startingKitId = msg.startingKitId || null;
+        if (Array.isArray(msg.discoveredArmaments)) pl.discoveredArmaments = [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))];
         if (msg.tint) pl.tint = msg.tint;
         if (msg.spriteStyle) pl.spriteStyle = msg.spriteStyle;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
@@ -272,6 +277,8 @@ export function attachLan(server, { port, root }) {
         const sane = (Array.isArray(msg.locals) ? msg.locals : []).slice(0, 3).map((lp) => ({
           name: String((lp && lp.name) || 'Forsaken').slice(0, 18),
           classId: (lp && lp.classId) || null,
+          startingKitId: (lp && lp.startingKitId) || null,
+          discoveredArmaments: Array.isArray(lp && lp.discoveredArmaments) ? [...new Set(lp.discoveredArmaments.filter((id) => typeof id === 'string'))] : [],
           tint: (lp && lp.tint) || 'gold',
           spriteStyle: (lp && lp.spriteStyle) || 'rendered',
         }));
@@ -279,11 +286,27 @@ export function attachLan(server, { port, root }) {
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
       }
-      case 'seed':
+      case 'seed': {
         if (!pl.isHost) return;
-        session.seedString = String(msg.seedString || '').slice(0, 10);
+        // THE WIRE BOUNDARY. The slice used to be the only thing checked here,
+        // and `10` was a fourth copy of the field's `maxlength` — it now reads
+        // the one home in engine/rng.js, like the fields do.
+        //
+        // A seed the run cannot be generated from is NOT STORED and NOT
+        // BROADCAST: the roster must never show the party a seed their climb
+        // will not use. The host's own field refuses before this, so arriving
+        // here means a client that does not (an older build, another tool), and
+        // that client learns nothing on its own screen — stated, not hidden.
+        const asked = String(msg.seedString || '').slice(0, SEED_MAX_LEN);
+        const why = seedProblem(asked);
+        if (why) {
+          console.error(`[lan] refused seed ${JSON.stringify(asked)} — ${why}`);
+          return;
+        }
+        session.seedString = asked;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
+      }
       case 'endless':
         if (!pl.isHost) return;
         session.endless = !!msg.on;
@@ -291,7 +314,10 @@ export function attachLan(server, { port, root }) {
         break;
       case 'start':
         if (!pl.isHost) return;
-        startGame();
+        try { startGame(); }
+        catch (error) {
+          sock.write(wsEncode(JSON.stringify({ t: 'startRefused', reason: error && error.message ? error.message : 'invalid starting kit' })));
+        }
         break;
       case 'resume':
         if (!pl.isHost) return;
@@ -357,7 +383,13 @@ export function attachLan(server, { port, root }) {
           continue;
         }
         if (f.opcode !== 1) continue;
-        try { onLobbyMessage(sock, pl, JSON.parse(f.payload.toString('utf8'))); } catch { /* bad msg */ }
+        // This catch used to be `catch { /* bad msg */ }` — silent, and it
+        // swallowed EVERY throw from the whole lobby, not just a malformed
+        // frame: the host presses START, the handler throws, nothing happens
+        // and nothing is said, forever. A guard that fails loud upstream is
+        // worthless behind a catch that eats it, so the reason is printed.
+        try { onLobbyMessage(sock, pl, JSON.parse(f.payload.toString('utf8'))); }
+        catch (e) { console.error('[lan] lobby message failed:', (e && e.message) || e); }
       }
     });
     const drop = () => {

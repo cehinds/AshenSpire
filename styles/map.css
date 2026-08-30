@@ -6,9 +6,80 @@
    than an overlay (EldenSpire#28; see .map-zoom). Restoring it re-arms nothing
    by itself, but it is the anchor the next overlay would reach for, so the
    absence is the note. */
+/* The box the scrollport and its overlay share. It exists so the vignette has
+   something to be bounded BY (Law 2 — every positioned element names its
+   container): `inset: 0` against this, never against the viewport, so there is
+   no shape at which it covers a control that is not the map. `min-height: 0` is
+   the flex-item clamp the scrollport needs to be allowed to shrink — without it
+   a tall canvas pushes the zoom bar off the bottom. */
+.mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
+
+/* Map-only Act orientation. It is a sibling after the shared HUD, never part
+   of that component, and leaves a protected right gutter for HUD utilities. */
+.mapscreen > .act-route-strip {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: grid;
+  width: 80%;
+  margin-inline: auto;
+  gap: 3px;
+  padding: 5px 12px 6px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-raise);
+  pointer-events: none;
+  user-select: none;
+  cursor: default;
+}
+.mapscreen > .act-route-strip strong {
+  text-align: center; color: var(--gold); font-family: Georgia, serif;
+  font-size: 11px; line-height: 1.1; letter-spacing: 2px;
+}
+.mapscreen > .act-route-strip .map-orientation-progress {
+  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+  align-items: center; gap: 8px;
+}
+.mapscreen > .act-route-strip .map-orientation-progress small {
+  color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
+}
+.mapscreen > .act-route-strip .map-orientation-progress [data-role="boss"] { color: var(--ember); }
+.mapscreen > .act-route-strip .map-orientation-rail {
+  height: 1px; position: relative; background: var(--map-structure);
+}
+.mapscreen > .act-route-strip .map-orientation-rail::after {
+  content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+  border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+  transform: translateY(-50%) rotate(45deg);
+}
+@media (max-width: 700px) {
+  .mapscreen > .act-route-strip {
+    /* Percentage is intentional: body is zoomed, so viewport units render at
+       80% × UI zoom. 80% of the Map surface stays 80% on glass. */
+    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
+    margin-left: auto;
+    margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+  }
+}
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
+  /* The browser owns a finger or pen on the one axis the map can scroll.
+     Mouse drag remains an explicit camera gesture in mapboard.js. */
+  touch-action: pan-y pinch-zoom;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+/* THE UNLIT GROUND IS A LANTERN, NOT A FIELD. Fog-only, decorative, and inert:
+   it takes no pointer events, so it cannot repeat #28's untappable nodes, and
+   tools/mapreach.mjs is what proves that. In px because a vignette must NOT
+   track text size (Law 2 rule 3, Law 4 clause 3) — it is not a box that holds
+   text, it is light. */
+.mapscreen.map-fog .map-vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(ellipse 78% 58% at 50% 46%, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.72) 100%);
+}
+/* The reduced-motion class already means "less spectacle"; a heavy vignette is
+   spectacle for anyone who finds the screen busy, so it lightens rather than
+   disappears — the paper still needs an edge. */
+.reduced-motion .mapscreen.map-fog .map-vignette {
+  background: radial-gradient(ellipse 85% 68% at 50% 46%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.45) 100%);
 }
 .mapscreen .map-scroll.grabbing { cursor: grabbing; }
 .mapscreen .map-scroll::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
@@ -58,15 +129,34 @@
   position: static; transform: none; align-self: center;
   margin: 0 auto 0.6rem; max-width: 96%;
 }
+/* THE MAP'S OWN CONTROLS WERE THE SMALLEST TAP TARGETS IN THE GAME, and they
+   were sized in the wrong unit besides. Measured at 390x844, --ui-zoom 0.90,
+   Text M: the + / (.) / - buttons render 27 DEVICE px tall against the 44 px
+   floor `--tap-floor` sets — 61% of it — and at 320x640 (--ui-zoom 0.74) they
+   are 22.2. Named twice on the family thread and taken by nobody; it is mine
+   both times, because a tap floor is legibility and Law 4 is my law.
+   TWO DEFECTS, ONE LINE. `width/height: 3.4rem` (3rem on a phone) is a BOX
+   sized as a multiple of the TEXT unit, which Law 4 clause 4 names exactly:
+   proportional scaling wearing a content-fit costume. It shrank at Text S and
+   ballooned at XL while answering the wrong control the whole time — the UI
+   size dial is what should move a button, and --tap-floor already carries
+   --ui-zoom inside it.
+   So: an ergonomic FLOOR that does not answer Text size, and a glyph that
+   still does (clause 5 — the +/- are typographic marks inside their box). The
+   box can only grow from here, never clip and never balloon. The bar sits
+   BELOW the map since #28, so the ~17 px it gains on a phone comes out of
+   chrome, not out of a node's hiding place. */
 .map-zoom .zbtn {
-  width: 3.4rem; height: 3.4rem; border-radius: 8px; font-size: 1.8rem; line-height: 1;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  width: auto; height: auto; padding: 0 0.4rem;
+  border-radius: 8px; font-size: 1.8rem; line-height: 1;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .map-zoom .zbtn:hover { border-color: var(--gold); color: var(--gold); }
 
 .map-node { cursor: default; }
-.map-node circle { fill: var(--panel); stroke: var(--line-soft); stroke-width: 2; }
+.map-node circle { fill: var(--panel); stroke: var(--map-structure); stroke-width: 2; }
 .map-node text { fill: #8a7a5a; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
 .map-node.elite circle { stroke: var(--blood); }
 .map-node.elite text { fill: var(--ember); }
@@ -74,10 +164,30 @@
 .map-node.shrine text, .map-node.treasure text { fill: var(--gold); }
 .map-node.merchant text { fill: var(--grace); }
 .map-node.visited circle { stroke: var(--gold); }
+/* WALKED NODES FADE, AND THE AMOUNT IS THE PLAYER'S — Constantine, D17 message
+   4 (2026-08-08): "previous nodes shoudl be faded, maybe 50% saturation or
+   higher (settings for customization)". The knob is Settings → Display →
+   Walked nodes (`walkedFade`); main.js applyDisplaySettings writes the chosen
+   value onto the root as data-walked-fade, and this ladder is its only reader.
+   `half` is the shipping default because it is the number in his sentence.
+   ON THE GROUP, not the circle: opacity+saturate on <g> takes the icon and the
+   ring down together, and `:not(.current)` because the node under the player's
+   feet also wears .visited and must never fade. Measured at 86564e6 before
+   this rule existed: visited stroke was full-saturation gold at opacity 1 —
+   the trail OUTSHONE the choice. Off restores exactly that look. */
+:root[data-walked-fade='subtle'] .map-node.visited:not(.current) { opacity: 0.85; filter: saturate(0.75); }
+:root[data-walked-fade='half'] .map-node.visited:not(.current) { opacity: 0.6; filter: saturate(0.5); }
+:root[data-walked-fade='strong'] .map-node.visited:not(.current) { opacity: 0.4; filter: saturate(0.25); }
 .map-node.current circle {
   stroke: var(--parchment); stroke-width: 3;
+  /* FILLED, not just ringed — D17 message 4: "the current node should be white
+     and colored in". Measured at 86564e6: fill was var(--panel), a dark disc
+     with a white ring. The icon flips to the panel tone so it stays legible
+     on the light disc. */
+  fill: var(--parchment);
   animation: nodePulse 1.5s ease-in-out infinite alternate;
 }
+.map-node.current text { fill: var(--panel); }
 @keyframes nodePulse { from { stroke-width: 3; } to { stroke-width: 5.5; } }
 .map-node.reachable { cursor: pointer; }
 .map-node.reachable > circle:not(.node-halo) {
@@ -85,7 +195,16 @@
   animation: reachStroke 1.4s ease-in-out infinite alternate;
 }
 @keyframes reachStroke { from { stroke-opacity: 0.7; } to { stroke-opacity: 1; } }
-/* rhythmic pulsing halo — the strong "go here next" cue */
+/* rhythmic pulsing halo — the strong "go here next" cue.
+
+   `--halo-peak` IS THE WIDEST THIS RING EVER PAINTS, and it is a custom property
+   because the camera has to know it. The entrance frame pads its box by the
+   halo's painted reach so the ring is not sliced by the screen edge, and it was
+   wrong by exactly this factor on its first draft: I padded for scale 1 and
+   tools/mapreach.mjs went red at 3 cells, because a node's rect is what it
+   PAINTS and this one paints 35% wider than its own radius eight times a
+   second. One home, two readers (the keyframe below, and mountMap). */
+.mapscreen { --halo-peak: 1.35; }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;
@@ -93,7 +212,7 @@
 }
 @keyframes haloPulse {
   0% { stroke-opacity: 0.55; transform: scale(0.9); }
-  50% { stroke-opacity: 0; transform: scale(1.35); }
+  50% { stroke-opacity: 0; transform: scale(var(--halo-peak)); }
   100% { stroke-opacity: 0.55; transform: scale(0.9); }
 }
 .map-node.reachable:hover circle:not(.node-halo) { fill: #2e2517; stroke: var(--gold); }
@@ -105,39 +224,118 @@
 .reduced-motion .map-node.current circle { animation: none; }
 .map-node.revealed circle { stroke-dasharray: 5 3; }
 
-.map-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
+.map-edge { stroke: var(--map-structure); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
-/* ---------- horizontal map header (matches the combat top bar) ---------- */
-/* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
-   the map-specific stats, wrapping, and the legend popover. Items are flex so
-   they reflow as customization toggles hide/show them. */
-.map-header {
-  height: auto; min-height: 5.2rem; flex-wrap: wrap; row-gap: 0.6rem; position: relative;
-}
-.map-header .hpbar { width: 15rem; }
-.map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
-.map-header .cinders { color: var(--gold); }
-.map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
-.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
-.map-header .mh-actions { margin-left: auto; display: flex; gap: 0.8rem; }
+/* ---- the shrine lane (Settings → Display · Shrine path glow) ---------------
+   "as new paths open, the path to the nearest shrine should have a glowing
+   effect" — Constantine, 2026-08-16. WHICH nodes is decided in
+   model/mapknowledge.js and clipped to what the fog already draws
+   (ui/components/mapboard.js); this block is only what that set looks like.
 
-/* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
-   a divider, then relic chips; wraps to more rows as they accumulate. */
-.map-substrip {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.4rem;
-  padding: 0.4rem 1.4rem; background: var(--panel); border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
+   IT MUST NOT READ AS `reachable`, which is the one thing this could break. The
+   halo and the gold stroke already mean "you may step here", and a second gold
+   cue on nodes you cannot click would make the strongest signal on the screen
+   ambiguous. So the lane is a GLOW AROUND the node rather than a stroke on it —
+   a different channel from every existing cue — and the reachable ring still
+   paints on top of any node wearing both. This is a placeholder that stays out
+   of the way of the cues that already work: the look is Freja's to author and
+   whether it reads is Sunna's to judge. Neither has seen it.
+
+   NO NEW UNIT AND NO STRAY px. The stroke width below is in the SVG's own user
+   space, the one space every other line on this board is drawn in (Law 2).
+   Nothing here is text and nothing here is a box, so Law 4 has no subject. */
+.map-edge.shrine-lane {
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-opacity: 0.9;
+  animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
 }
-.map-substrip[hidden] { display: none; }
-.map-substrip .mh-flasks { display: flex; gap: 0.5rem; font-size: 1.5rem; line-height: 1; }
-.map-substrip .mh-flask { cursor: default; }
-.map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 1.6rem; background: var(--line); margin: 0 0.4rem; }
-.map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.map-substrip .relic {
-  width: 2.2rem; height: 2.2rem; border-radius: 5px; background: var(--bg-raise);
-  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+.map-node.shrine-lane > circle:not(.node-halo) {
+  animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
 }
+@keyframes shrineLanePulse {
+  from { filter: drop-shadow(0 0 2px var(--gold)); }
+  to { filter: drop-shadow(0 0 7px var(--gold)); }
+}
+/* Same contract as every other pulse on this board: the cue survives, the
+   motion does not. A player on Reduced motion still sees the lane. */
+.reduced-motion .map-edge.shrine-lane,
+.reduced-motion .map-node.shrine-lane > circle:not(.node-halo) {
+  animation: none;
+  filter: drop-shadow(0 0 5px var(--gold));
+}
+
+/* ---------------------------- fog of war (Settings → Display · Map reveal) ---
+   Everything here is inert unless .mapscreen carries .map-fog, so `path` mode is
+   byte-for-byte the screen that shipped.
+
+   NOTHING IN THIS BLOCK HIDES A NODE. A node the fog covers is never appended to
+   the DOM at all (src/ui/screens/map.js) — a `display:none` fog is one devtools
+   toggle away from being no fog, and the point of the mode is that the player
+   does not know what is out there.
+
+   THE GROUND IS A PLACEHOLDER, AND THIS IS WHERE THAT IS SAID.
+   Constantine asked for "vague map art similar to Elden Ring's undiscovered
+   map." What is below is NOT that: it is a flat parchment wash, one tone per
+   act, standing in until FREJA authors the three plates
+   (assets/map/parchment_act1..3.webp — the <image> above this layer binds them
+   by name, and resolves to nothing while they are absent). Generated art was
+   refused on Law 0: derived from the graph, it would move the day `floors` or
+   `columns` is turned to shorten a run.
+   `px` and not `rem` throughout: these are SVG-space geometry inside a canvas
+   that is scaled by the zoom ladder, not text (Law 2 rule 3, Law 4 clause 3). */
+.map-fog-ground rect {
+  fill: var(--fog-parchment, #17130d);
+}
+/* THE PLATE IS TEXTURE, NOT COLOUR — it is generated grey (tools/parchment.mjs)
+   and `soft-light` is what makes that a promise rather than a hope: a 50% grey
+   pixel changes nothing, so the per-act tone above stays the ONE home for the
+   colour and the plate can only add grain, fibre and blotch on top of it. Swap
+   the blend for `normal` and the sheet would paint its own grey over his act
+   tone — which is precisely what my first draft did, photographed: the map read
+   as flat concrete. */
+.map-fog-ground image { opacity: 1; mix-blend-mode: soft-light; }
+/* Three acts, three washes. Deliberately close to each other and to the panel
+   colour — the ground is meant to read as "nothing legible here", not as a
+   feature competing with the nodes drawn on top of it. */
+.map-scroll.parch-1 { --fog-parchment: #17130d; }
+.map-scroll.parch-2 { --fog-parchment: #14140f; }
+.map-scroll.parch-3 { --fog-parchment: #191009; }
+
+/* The lit region gets its warmth from the nodes themselves; the fog gets a
+   slight lift so the parchment reads as material rather than as absence. */
+.mapscreen.map-fog .map-scroll { background: var(--fog-parchment, #17130d); }
+
+/* A `placed` node — "something is here, you do not know what."
+
+   SCOPED TO FOG, AND THAT IS THE POINT. Unscoped, this rule put a dashed ring on
+   every unresolved `?` on the SHIPPED map — measured in a screenshot, not
+   reasoned about — which broke the one promise the toggle makes: nobody who does
+   not opt in sees a pixel move. It also collided with `.revealed`'s dash (5 3),
+   so the map would have carried two dash patterns meaning two different things
+   with nothing saying which was which. The rung is derived in both modes; only
+   fog paints it differently. */
+.mapscreen.map-fog .map-node.k-placed circle { stroke-dasharray: 3 4; stroke-opacity: 0.8; }
+
+/* Under fog the trail behind you is the strongest thing on the board after the
+   split in front of you: it is the only record of where the act has taken you,
+   and there is no full map to fall back on. */
+.mapscreen.map-fog .map-node.visited circle { stroke-opacity: 1; }
+.mapscreen.map-fog .map-edge.traveled { stroke-width: 3.5; }
+/* An untraveled edge inside the light is a step you are choosing, not structure
+   you are reading past — the fog map has far fewer of them, so they carry more. */
+.mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
+
+/* ---------- map header — the shared three-row HUD shell --------------------- */
+/* `hudShellHtml` owns the same row structure on map and combat. This file only
+   adds map-specific progress tone, legend placement and Display toggles. */
+.map-header {
+  height: auto; min-height: 5.2rem; position: relative;
+}
+.map-header .hud-act,
+.map-header .hud-floor { color: var(--muted); letter-spacing: 0.04em; }
+.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
 .map-legend-pop {
   position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
@@ -150,16 +348,12 @@
 /* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
 body.map-compact .map-header { min-height: 4.2rem; gap: 1rem; padding: 0 1rem; }
 body.map-compact .map-header .nm { display: none; }
-body.map-compact .map-header .hpbar { width: 12rem; height: 1.2rem; }
-body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
-body.map-compact .map-substrip { padding: 0.2rem 1rem; }
-body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }
+/* (compact drops the name; the bar track re-derives itself from the narrower
+   row with no rule of its own — the 12rem `.hpbar` override that used to sit
+   here was the second typed track and went with the first.) */
+body.map-compact .map-header .hud-run-meta { font-size: 1.1rem; }
 body.hide-header-seed .map-header .mh-seed { display: none; }
-/* Relics toggle hides the relic chips (and divider) in the sub-strip; when there
-   are also no flasks, the whole strip collapses so there's no empty bar. */
-body.hide-header-relics .map-substrip .mh-relics,
-body.hide-header-relics .map-substrip .mh-div { display: none; }
-body.hide-header-relics .map-substrip.no-flasks { display: none; }
+body.hide-header-relics .map-header .hud-relics { display: none; }
 
 /* PROTOTYPE -> shipped (EldenSpire#23): the act map at a portrait phone's
    width. The narrow design baseline gives the app 433 local px instead of 629,
@@ -179,8 +373,24 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    because .map-zoom is no longer an overlay at any layout. What is left below
    is the only thing this shape actually needed: smaller buttons on a phone. */
   :root[data-layout='narrow'] .map-zoom { gap: 0.8rem; padding: 0.5rem 0.8rem; }
-  :root[data-layout='narrow'] .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
+  /* The phone override kept its smaller GLYPH and lost its smaller BOX: 3rem
+     was below the floor at every text size, and "smaller buttons on a phone"
+     is the one place a floor exists to refuse. */
+  :root[data-layout='narrow'] .map-zoom .zbtn { font-size: 1.6rem; }
   /* Same as the combat bar: the seed is dev information, it is what wraps the
      header on a phone, and it stays reachable at overlay.js:163 (Stats, from
      the menu button in this bar) and gameover.js:17. */
   :root[data-layout='narrow'] .map-header .mh-seed { display: none; }
+
+/* THE DELIVERED TAP SIZE, when the floor is not met (#107). It sits in the
+   bottom stack with the hint bar and the zoom bar — in the flow, never floating,
+   for the reason map.js's header gives about .map-zoom — and it is `hidden`
+   whenever the promise holds, so it costs no height on the shape it was solved
+   for. Law 4: this is TEXT, so it is the text unit and nothing else here is. */
+.mapscreen .map-tapnote,
+.mapscreen .map-clipnote {
+  margin: 0; text-align: center; color: var(--gold);
+  font-size: 1.1rem; line-height: 1.4; padding: 0.2rem 1rem;
+}
+.mapscreen .map-tapnote[hidden],
+.mapscreen .map-clipnote[hidden] { display: none; }

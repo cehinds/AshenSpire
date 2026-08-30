@@ -6,29 +6,98 @@
   --panel: #241d15;
   --line: #3a3226;
   --line-soft: #4a4034;
+  /* Map STRUCTURE — the roads and plain rings a player reads to plan a run
+     (#45, Sunna's ruling: 3:1 on each glyph's identifying boundary against each
+     adjacent rendered colour). --line-soft's atmospheric value measures 1.93
+     (edge vs field) / 1.72 (ring vs its own fill) from rendered pixels — below
+     every defensible floor — but its 27 other consumers are text-adjacent soft
+     lines that keep the atmospheric look ("atmospheric elsewhere"). So the map
+     graph rides its own token: #7a6b54 clears both adjacencies with margin
+     (rendered 3.78 vs field, 3.36 worst adjacency) while staying the visibly
+     dimmer sibling of high contrast's 4.19 — two settings, two looks.
+     Evidence: tools/contrast-audit.mjs --profile hi-contrast-off;
+     docs/proposal-45-atmospheric-map-structure.md (R2). */
+  --map-structure: #7a6b54;
   --parchment: #e8dcc0;
   --muted: #7a6f5a;
   --gold: #c9a227;
   --accent-rgb: 201, 162, 39; /* --gold as rgb, for glow/halo alpha (swapped by accent theme) */
   --blood: #8a1a1a;
+  /* The HP resource fill — the approved hybrid's owner pixel (2026-08-13,
+     claude-family falk-family hybrid-confirmation, F1-resource-health.png),
+     minted as its OWN token so the accent themes keep owning the palette
+     (cb-safe swaps it below). Before this token the hp row wore var(--blood)
+     and the conflict was recorded, not resolved: token vs owner hex. Now both
+     hold — the value is the owner's, the swap is the theme's. --blood keeps
+     its 16 other consumers (map rings, danger buttons, enemy hpbars) and is
+     NOT this token. */
+  --res-hp: #a43c35;
   --rot: #b5541c;
   --frost: #7fa8c9;
   --grace: #9fc3e8;
   --ember: #c9502e;
   --green: #7fd97f;
+  /* THE KEYWORD TINT CARD TEXT USES, and it is a token because it is a fact
+     about a WORD, not about a container. It had no token, so the one palette
+     that wanted a different answer had nowhere to put it and put it in a
+     SELECTOR instead (`body.cb-safe .card .ctext .st-bleed`, deleted below).
+     When the five mark rules re-keyed `.card .ctext` → `.ctext` so the Smith
+     preview could wear them too, every token-based rule came through for free
+     and that one hardcoded hex stayed behind on the old container — so under
+     Colorblind-friendly the SAME WORD read reddish-purple on a card face and
+     vermillion in the preview. The hex was the reason it could not follow.
+     Derived from --ember, not restated: in the default palette Bleed wears the
+     ember hue TODAY, and that is a derivation, not a copy — one home for the
+     value. Colorblind-friendly overrides it once, below, which is the only
+     place the two diverge.
+     OPEN, AND FREJA'S, NOT MINE: whether the DEFAULT palette should diverge
+     too. It does not today — a Bleed keyword and a number the upgrade made
+     WORSE both render rgb(201,80,46) on every screen, one hue doing two jobs
+     on one line. Colorblind-friendly already answers that question `yes`. */
+  --bleed: var(--ember);
   /* THE TAP-TARGET FLOOR, and it has one home because it is one fact.
-     Sunna's ruling under Law 4 (#37): "a floor of 44 device px measured after
+     Sunna's ruling under Law 4 (#37): "a floor of N device px measured after
      zoom; a floor is not a ceiling." The whole app is scaled by `zoom:
      var(--ui-zoom)` on <body>, so a length L below body renders at L x zoom
-     device px — dividing by the zoom here is what makes 44 mean 44 ON GLASS
-     rather than 44 in a coordinate space the finger has never heard of. It is
+     device px — dividing by the zoom here is what makes N mean N ON GLASS
+     rather than N in a coordinate space the finger has never heard of. It is
      the same conversion the rest of the app does through fx.js, expressed as a
      unit so a rule can just use it.
      px, DELIBERATELY, and this is exactly the case Law 2 admits: a finger does
      not get bigger when a player raises Text size. Law 4 is the other half of
      the same sentence — text scaling must stop scaling non-text UI — so a
-     control that held text at 4.4rem was wrong in two directions at once. */
-  --tap-floor: calc(44px / var(--ui-zoom, 1));
+     control that held text at 4.4rem was wrong in two directions at once.
+
+     `--tap-target` IS THE CONSTANT, AND IT IS NOT WRITTEN HERE. It is the
+     player's Minimum tap size (Settings → Accessibility, default 44), written
+     onto <html> by applyTapSize() in src/main.js exactly where applyUiScale()
+     already writes `--ui-zoom`. This calc keeps its shape; only the number
+     moved out of it, to `balance.ui.tapSize` — the one place a number a player
+     can tune is allowed to live (Law 1 clause 2).
+
+     AND THERE IS NO `, 44px` FALLBACK IN THIS LINE, deliberately. A literal
+     here would agree with balance.ui.tapSize.def today and be synchronised by
+     nothing — the second copy this house exists to catch, planted in the very
+     line whose job is to hold one home. If `--tap-target` is ever unwritten
+     the floor vanishes and every floored control drops to 21–31 device px,
+     which is loud on the screen and is what `node tools/tapsize.mjs` measures.
+     A quietly-correct-looking 44 is the failure Law 0 clause 5 names; a
+     missing floor is not quiet. */
+  --tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));
+  /* THE FLOOR, FROZEN AT THE DEFAULT — for the one control that is exempt from
+     the floor it sets. Marina's ruling: Minimum tap size is the only control in
+     the game whose resizing happens WHILE IT IS BEING PRESSED, so its own four
+     chips hold still at the default and everything else on the screen still
+     resizes under the player's eye. Measured cause: at the 44 step the pressed
+     chip landed 61.44 device px from the finger, because the whole group
+     re-lays-out — wider than a fingertip, and no `scrollTop` answers a
+     horizontal reflow.
+     Same single datum: applyTapSize() writes `--tap-floor-default-target` from
+     balance.ui.tapSize.def, the same `def` the row's own default reads — not a
+     second copy of 44, the same 44 asked a second question. Divided by the zoom
+     for the reason --tap-floor is: an exempt control a small phone shrinks
+     anyway is an exemption in name only. */
+  --tap-floor-default: calc(var(--tap-floor-default-target) / var(--ui-zoom, 1));
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
@@ -39,26 +108,34 @@ body.hi-contrast {
   --muted: #a89571;
   --line: #6a5b43;
   --line-soft: #85714f;
+  --map-structure: #85714f; /* unchanged shipped value — hi-contrast map keeps its exact look */
 }
 body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-keepsake p { color: #cdbf9e; }
 
-/* Accessibility: text size is set on the root element (main.js applyDisplaySettings
-   → html font-size %). Because all type + component dimensions are rem, one root
-   value rescales the whole UI proportionally — S/M/L/XL. Compounds with --ui-zoom
-   (which additionally scales the px-kept hairlines/radii). */
+/* Accessibility: Text size is set on the root element (main.js
+   applyDisplaySettings → html font-size %) and owns readable text metrics only.
+   Non-text geometry uses px or a UI-size-owned token; a box that contains text
+   gets a fixed floor and grows intrinsically. Text size and --ui-zoom are two
+   independent controls. */
 
 /* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
    stay distinguishable under deuteranopia/protanopia — danger→vermillion,
    heal→bluish-green, frost→sky, blight→orange, bleed→reddish-purple). */
 body.cb-safe {
   --blood: #d55e00;
+  --res-hp: #d55e00; /* the hp fill keeps tracking the danger hue (Okabe-Ito vermillion) */
   --ember: #d55e00;
   --green: #009e73;
   --frost: #56b4e9;
   --grace: #56b4e9;
   --rot: #e69f00;
+  /* Okabe-Ito reddish-purple — the SAME VALUE this palette already shipped,
+     moved out of a selector and into the token block where a palette decision
+     belongs. It now reaches card text wherever card text is drawn, which is
+     the whole change: the card face is byte-identical and the Smith/coop
+     upgrade preview stops calling a keyword by the danger hue. */
+  --bleed: #cc79a7;
 }
-body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
 
 /* Accessibility: readable headings swap the decorative serif for the UI sans. */
 body.readable-ui { --font-display: var(--font-body); }
@@ -69,10 +146,33 @@ body.readable-ui { --font-display: var(--font-body); }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* Root sizing anchor: 62.5% makes 1rem = 10px, so every rem in the stylesheets
-   maps to px÷10 at rest. The text-size setting overrides this % on <html> to
-   grow/shrink all rem-based type + dimensions at once (main.js). */
+/* Root text anchor: 62.5% makes 1rem = 10px at Text M. The Text-size setting
+   overrides this value for type and line metrics; component geometry must not
+   derive from this calibration. */
 html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
+/* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
+   both edges x3. The straight line from the leftmost card to the far-right
+   enemy runs at 38 deg, under the ~45-47 deg boundary where Chromium claims a
+   drag as horizontal scroll. The hand rests at scrollLeft 0, so the claimed
+   scroll has nothing to move and CHAINS TO THE VIEWPORT — and Chrome's
+   overscroll navigation goes BACK, out of combat, mid-fight. `pan-x` on the
+   cards is what routes the shallow aim into the horizontal machinery: the
+   known-bad survived the same swipe 3/3, the first cut of the fix survived 0/3.
+
+   THE RULE MUST SIT AT THE ROOT AND SHE MEASURED WHY: `overscroll-behavior-x:
+   contain` on .hand does NOT close it — at scrollLeft 0 the hand cannot scroll
+   rightward, so it is never the scroll target; the viewport is. Here, it closes
+   3/3 with hand scrolling intact (150->200).
+
+   BOTH AXES, DELIBERATELY, and the halves have different evidence: -x is
+   measured (her backnav.mjs, both edges). -y is the SAME mechanism pointed the
+   other way — pull-to-refresh reloading a live run off any vertical overscroll —
+   declared here because this app is a fullscreen game with overflow:hidden at
+   the root and NO surface where a browser navigation or refresh gesture is ever
+   the player's intent; there is nothing for `none` to take away. Headless
+   Chromium cannot raise pull-to-refresh, so the -y half ships as a declaration
+   with this named boundary, not as a measured green. */
+html, body { overscroll-behavior: none; }
 /* PROTOTYPE (EldenSpire#23, track B) — 100dvh, and ONLY here.
    `dvh` was pitched as a sweep. It is wrong everywhere except this one line,
    and the reason is the one that has bitten this file all week. Measured under
@@ -117,12 +217,9 @@ body {
    written by main.js's resolveLayout() in the same call that chooses --ui-zoom.
    The stylesheets measure nothing.
 
-   THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
-   STANDS: at 390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES
-   (it sees the unzoomed 390) while a container query on #app does not (the app
-   has 629 local px). A media breakpoint here is a length evaluated in the
-   unzoomed room — EldenSpire#15 wearing a different hat, and that is why the
-   answer was never a media query.
+   The threshold is evaluated in the unzoomed viewport room. It intentionally
+   remains independent of the height-aware --ui-zoom so browser chrome and the
+   on-screen keyboard cannot flip the composition while a player is reading it.
 
    The answer turned out not to be a container query either. Asking the question
    in CSS at all made two deciders out of one decision — the zoom judging

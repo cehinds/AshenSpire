@@ -18,7 +18,7 @@ const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharg
 export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '💎',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -102,18 +102,22 @@ export const starseerCards = [
     upgrade: { effects: [{ op: 'draw', amount: 3 }, GAIN_CHARGE] },
   },
   {
+    // FROST, not Weak (#127-adjacent, Rune 2026-08-08). The Frost row's own
+    // proc LEAVES Weak — so a frost card that also applied Weak directly paid
+    // the same debuff twice and made the build-up pointless. The card seeds the
+    // build-up; the proc pays the Weak. Numbers PROVISIONAL, like the row's.
     id: 'frostVeil', name: 'Frost Veil', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🌫',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Apply {weak} Weak.',
+    textTemplate: 'Gain {block} Block. Apply {frost} Frost.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
         GAIN_CHARGE,
       ],
     },
@@ -187,20 +191,27 @@ export const starseerCards = [
     },
   },
   {
+    // THE CARD NAMED FROST NOVA NOW APPLIES FROST (Rune, 2026-08-08). It
+    // applied `weak` + `vulnerable` and nothing in the game applied `frost` at
+    // all — a complete threshold-proc row (threshold, burst, Frost-Exposed, a
+    // resist row and its own SFX row) that no player could reach. Weak and
+    // Vulnerable are what the Frost PROC leaves behind; this is the card that
+    // fills the meter, and it is the Starseer's because frostExposed raises
+    // `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
     id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '❄',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Apply {weak} Weak. Starstone: apply {vulnerable} Vulnerable.',
+    textTemplate: 'Deal {damage} damage. Apply {frost} Frost. Starstone: apply {frost.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-        { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 5 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4, if: CHARGED },
         GAIN_CHARGE,
       ],
     },

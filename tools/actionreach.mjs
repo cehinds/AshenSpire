@@ -47,10 +47,9 @@
 // count is content and moves without anyone touching CSS. The defect returns on
 // a data edit, and this is the only thing that would notice.
 //
-// TEXT SIZE IS NOT DECORATION. The row is sized in rem so it grows with the
-// setting (Law 2), which means the setting can push the content out — so S/M/L/XL
-// are applied exactly as main.js applies them (a root font-size %, the values
-// from balance.ui.textSize) rather than assumed harmless.
+// TEXT SIZE IS NOT DECORATION. Text and line metrics grow, so content can still
+// push outward even though the control floor no longer derives from rem. Every
+// S/M/L/XL value is read from balance.ui.textSize rather than typed here.
 //
 // Usage
 //   node tools/actionreach.mjs                 source tree via tools/serve.mjs
@@ -93,13 +92,60 @@
 // question is the second copy this house exists to catch.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
+import { balance } from '../src/content/balance.js';
+
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// rendered arrival screen, served from this tree and measured in a real
+// browser before and after a scroll. The right door — but its only known-bad
+// was "the first-shipped grid", a tree nobody can check out now, so under SOP
+// 2's drift clause the observation was `unknown`, which is what Vira's audit
+// (2026-08-14) rated it: OBSERVED-ONCE. `--selftest` plants the ORIGINAL
+// defect back as CSS bytes in a copy of the tree — the actions bar returned to
+// the scroll flow, which is literally the shape that put BEGIN THE CLIMB 374
+// device px below the fold — and re-runs this whole tool against the copy.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'actionreach.mjs',
+    args: ['--only', '390x844'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // The pre-fix shape: `.cz-actions` bounded by flow instead of pinned,
+        // and `.cz-scroll` no longer the scrollport — which is exactly the
+        // arrangement ui.css:817 describes as the thing that was fixed.
+        name: 'the action bar rejoins the scroll flow (BEGIN THE CLIMB back below the fold)',
+        file: 'styles/ui.css',
+        append: '.cz-scroll { overflow-y: visible; flex: 0 0 auto; }\n.cz-actions { margin-top: 0; flex-shrink: 1; }',
+        expectRed: /not whole on arrival \(top [0-9.]+ in a \d+px viewport\)/,
+      },
+      {
+        // Clause 4, EldenSpire#31's property. Kept as a plant rather than the
+        // "it MOVED" clause-3 one I tried first: `position: absolute` on the
+        // bar does not actually move it here (no positioned scroll ancestor),
+        // so that plant went green — a NOT-CAUGHT that was mine, not the
+        // tool's, and re-aiming quietly would have hidden that.
+        name: 'the arrival screen sends its controls off the side (clause 4, #31)',
+        file: 'styles/ui.css',
+        append: '.cz-actions button { position: relative; left: -3000px; }',
+        expectRed: /control\(s\) horizontally absent/,
+      },
+    ],
+  }));
+}
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
+// tool measured a two-merge-stale bundle and printed OK once already. One home:
+// tools/artifact-provenance.mjs. Facts only; it never fails a run.
+import { printArtifactProvenance } from './artifact-provenance.mjs';
+printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 const BROWSERS = [
   process.env.CHROME,
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -170,10 +216,8 @@ const SHAPES = [
   [480, 900], [512, 900], [560, 900], [580, 900], [600, 900],
   [844, 390], [1200, 730], [1366, 768], [1920, 1080],
 ];
-// balance.ui.textSize. Read from the bundle would be better; typed here is a
-// second copy and it is called out rather than hidden — it is the ONE value in
-// this file that can drift, and clause 2 of Law 1 says so out loud.
-const TEXT = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
+// One home: actionreach imports the exact setting map the product applies.
+const TEXT = balance.ui.textSize;
 
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
@@ -274,21 +318,9 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
-  });
-}
 
 async function main() {
   if (!browserPath) { console.error('actionreach: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'actionreach-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -300,7 +332,13 @@ async function main() {
   }
   console.log(`actionreach — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'actionreach-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -356,7 +394,7 @@ async function main() {
   if (cells === 0) {
     console.error(`\nactionreach: nothing was measured${only ? ` (--only ${only} matched no shape)` : ''}. That is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map(([w, h]) => `${w}x${h}`).join(', ')}`);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
 
@@ -389,14 +427,13 @@ async function main() {
   against the pre-fix build, which was never measured in that mode either.
   "No worse than before" was a comparison of two unmeasured things.
 
-  4.4rem IS 44 LOCAL PX, NOT 44 DEVICE PX. btnH above is device px: at
-  --ui-zoom 0.9 the row measures 39.59 and only clears 44 at Text size L. The
-  gap is real and is Sunna's open card from 2026-07-31, not something a green
-  here closes.`);
+  TAP FLOOR IS NOT A TEXT METRIC. btnH above is device px after --ui-zoom;
+  Text size may grow the row when content needs it, but cannot change the
+  ergonomic floor. Minimum tap size and UI size own that number.`);
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) of ${cells} cell(s)` : `PASS — ${cells}/${cells} cells: the action is whole on arrival, does not move, and no option set orphans a row`}`);
   for (const f of fails) console.log(`    - ${f}`);
-  cdp.close(); child.kill(); if (server) server.close();
+  cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }
 

@@ -10,22 +10,103 @@
 // over a real combat board, and, per step, checks the buttons are on-screen and
 // actually hit-testable, then advances with REAL mouse clicks at their screen
 // coordinates (never el.click(), which would bypass the geometry under test).
-// It also checks the two escapes that must not depend on geometry at all:
-// Escape ends the tutorial, and the veil does not swallow board input.
+// It also checks the ordered Escape contract that must not depend on geometry:
+// an armed attack owns the first Escape (targeting cancels while the tutorial
+// stands), an adjacent menu owns its Escape, and only a later unarmed Escape
+// finishes and persists the tutorial.
 //
 // Zero dependencies: CDP over Node's built-in WebSocket, tools/serve.mjs
 // in-process (same pattern as tools/coop-shoot.mjs).
 //
 //   node tools/tutorial-reach.mjs
+//   node tools/tutorial-reach.mjs --root
+//   node tools/tutorial-reach.mjs --screenshot docs/preview/tutorial-escape-target-cancel.png
 //   CHROME=/path/to/chrome node tools/tutorial-reach.mjs
 //   node tools/tutorial-reach.mjs --browser /path/to/chrome --only 1920x1080
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { launchBrowser } from './browser.mjs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+// The orientation gate's one number, read from its single home. See THE FIRST
+// VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
+import { balance } from '../src/content/balance.js';
+
+// Derived here, above --selftest, because BOTH readers need it and two reads of
+// one number is the defect this derivation exists to remove.
+const GATE_BELOW_H = balance?.ui?.uiScale?.gateBelowH;
+if (typeof GATE_BELOW_H !== 'number' || !Number.isFinite(GATE_BELOW_H)) {
+  // Absent is not a pass. A missing constant here would silently produce a NaN
+  // viewport and the browser would pick a size of its own, so this fails loudly
+  // rather than measuring something nobody chose.
+  console.error('tutorial-reach: balance.ui.uiScale.gateBelowH is absent or not finite.');
+  console.error('  The first viewport is derived from it and there is nothing to derive from.');
+  console.error('  UNKNOWN BLOCKS — this is not a pass and not a soft red.');
+  process.exit(2);
+}
+// The smallest viewport this tool drives, as `--only` spells it (`${w}x${h}`).
+const SMALLEST_VP = { w: 800, h: GATE_BELOW_H };
+const SMALLEST_VP_NAME = `${SMALLEST_VP.w}x${SMALLEST_VP.h}`;
+
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// rendered coach mark driven by REAL mouse clicks at real screen coordinates
+// — never el.click(), which would bypass the geometry under test. That door
+// is the strongest thing in this file. What it had no re-runnable known-bad
+// for was the property it exists to protect: that the veil's two buttons stay
+// hit-testable, because they are the ONLY thing that writes `seenTutorial`,
+// so an unreachable button is an un-dismissable veil that returns on reload.
+// Vira's audit (2026-08-14) rated this NO-KNOWN-BAD. `--selftest` plants that
+// exact lockout as CSS bytes in a copy of the real tree and re-runs this whole
+// tool against it — same serve.mjs, same browser, same real clicks.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'tutorial-reach.mjs',
+    // DERIVED, not typed — this named the viewport as a literal '800x450' until
+    // 2026-08-16. When the gate moved 432 -> 465 the first viewport moved with
+    // it and this string did not, so `--only` would have matched NO viewport and
+    // the plants would have been re-run against an empty sweep. doorplant would
+    // have called that a failure rather than a pass (it requires a non-zero exit
+    // AND a matching line), so it fails loudly — but a known-bad harness aimed at
+    // a viewport that no longer exists is checking nothing, and "it fails loudly"
+    // is not the same as "it is checking the thing". One home, both readers.
+    args: ['--only', SMALLEST_VP_NAME],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // The discriminating #17 regression: restoring the old selected-card
+        // conjunct leaves attack targeting green but makes targeted flasks lose
+        // their first Escape to the tutorial capture listener.
+        name: 'tutorial target guard narrows to selected cards and misses targeted flasks',
+        file: 'src/ui/components/tutorial.js',
+        find: "    if (root.querySelector('.enemy-row .enemy.targetable')) return;",
+        replace: "    if (root.querySelector('.hand .card.selected') && root.querySelector('.enemy-row .enemy.targetable')) return;",
+        expectRed: /✗ .*targeted-flask Escape cancels targeting and leaves the tutorial standing/,
+      },
+      {
+        // THE LOCKOUT ITSELF: the button row pushed off the bottom of the
+        // viewport, which is the state the header says makes the veil
+        // un-dismissable AND persistent across a reload.
+        name: 'the coach mark buttons are pushed off the bottom of the viewport (the un-dismissable veil)',
+        file: 'styles/ui.css',
+        append: '.tut-bubble .tut-row { position: relative; top: 4000px; }',
+        expectRed: /(FAIL|off-screen|not hit-testable|unreachable|✗)/i,
+      },
+      {
+        // The other way the same lockout arrives: something else answers the
+        // hit-test at the button's own coordinates, so a REAL click lands on
+        // the veil instead of the control. el.click() would not notice.
+        name: 'a transparent layer covers the buttons — a real click lands on the veil',
+        file: 'styles/ui.css',
+        append: '.tut-veil::after, .tut-bubble::after { content: ""; position: fixed; inset: 0; z-index: 99999; }',
+        expectRed: /(FAIL|not hit-testable|covered|unreachable|✗)/i,
+      },
+    ],
+  }));
+}
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BROWSERS = [
@@ -40,11 +121,39 @@ const BROWSERS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean);
 
-// Both edges are viewport edges here: --ui-zoom is min(w/1200, h/730) clamped
-// to [0.62, 1.70] (balance.js uiScale), so the two ends of the dial are the two
-// ends of this list. The middle four are the sizes Sunna measured.
+// Both edges are viewport edges here: --ui-zoom is min(w/designW, h/designH)
+// clamped to [min, max] (balance.js uiScale), so the two ends of the dial are
+// the two ends of this list. The middle four are the sizes Sunna measured.
+//
+// ---- THE FIRST VIEWPORT IS DERIVED, NOT TYPED -------------------------------
+//
+// It read `{ w: 800, h: 450 }` until 2026-08-16, when the orientation gate's one
+// number moved 432 -> 465 (balance.ui.uiScale.gateBelowH, re-derived against the
+// wall). 450 fell FIFTEEN PX BELOW the gate, the upright veil correctly covered
+// the board, and this tool went exit 1 with three failures — naming the culprit
+// itself, `elementFromPoint -> modal-veil upright-veil`. The tool was right and
+// the viewport was stale.
+//
+// A HAND-TYPED 465 HERE WOULD BE THE SAME DEFECT ONE FILE OVER. The whole
+// subject of that change was a number anchored in two places; "fixing" it by
+// typing the new value into a second file re-creates the thing on the day it
+// was collapsed. So the height is READ from the number's one home, and it moves
+// when the gate moves, forever.
+//
+// SAME DOOR AS uprightgate --ladder, deliberately: import src/content/balance.js
+// in Node — same bytes, different loader. Whether the shipped bundle carries
+// those bytes is tools/verify-shipped.mjs's subject, not this file's.
+//
+// WHAT THIS COSTS, AND IT IS A REAL LOSS, STATED RATHER THAN DISCOVERED: at
+// width 800 the MIN clamp is NO LONGER REACHABLE above the gate. 800x465 zooms
+// to 0.64, not the 0.62 floor — that floor now needs w <= designW*min = 744,
+// and whether this list should carry such a viewport is a coverage decision
+// about what we ship, not a merge-time edit. Filed with this act, not taken.
 const VIEWPORTS = [
-  { w: 800, h: 450 },   // zoom 0.62 — the MIN clamp
+  // The smallest screen we ship: the lowest height the upright gate ADMITS, at
+  // the width every wall in the derivation was measured at (800). Derived and
+  // named once, above --selftest, because that harness reads it too.
+  SMALLEST_VP,
   { w: 1024, h: 640 },  // zoom 0.85 — below the design baseline
   { w: 1200, h: 730 },  // zoom 1.00 — the design baseline, the case that always worked
   { w: 1280, h: 800 },  // zoom 1.07
@@ -58,6 +167,8 @@ const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const only = argOf('--only');
+const rootArtifact = args.includes('--root');
+const screenshotPath = argOf('--screenshot');
 
 const fails = [];
 const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); };
@@ -90,27 +201,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, userDataDir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, [
-      '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
-      '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
-      '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--no-first-run', 'about:blank',
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const onData = (d) => {
-      err += d;
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
-      if (m) res({ child, wsUrl: m[1] });
-    };
-    child.stderr.on('data', onData);
-    child.stdout.on('data', onData);
-    child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint. Output:\n${err.slice(-500)}`)), 12000);
-  });
-}
 
 // Page-side probe: where are the tutorial's two exits, and can they be hit?
 // `inside` = every corner within the viewport; `hit` = elementFromPoint at the
@@ -168,9 +258,15 @@ const SPOT_ON_TARGET = `(() => {
 
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found — pass --browser PATH or set $CHROME');
-  const profile = mkdtempSync(join(tmpdir(), 'tutreach-'));
   const { server, port } = await serve({ root: ROOT, port: 8240, open: false });
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  const base = `http://localhost:${port}/${rootArtifact ? 'AshenSpire.html' : ''}`;
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'tutreach-', browser: browserPath,
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl);
   await cdp.ready;
 
@@ -200,11 +296,80 @@ async function main() {
     // before it lands reads the slide, not the placement. Settle past it.
     await wait(340);
   };
+  const holdAt = async (x, y, ms = 750) => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }, S);
+    await wait(ms);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
+    await wait(340);
+  };
   const pressKey = async (key, code, keyCode) => {
     for (const type of ['keyDown', 'keyUp']) {
       await cdp.send('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
     }
     await wait(150);
+  };
+  const clickSel = async (sel, label) => {
+    const pt = await evalIn(`(() => {
+      const e = document.querySelector(${JSON.stringify(sel)});
+      if (!e) return null;
+      const before = e.getBoundingClientRect();
+      const off = before.bottom > innerHeight || before.top < 0;
+      if (off) e.scrollIntoView({ block: 'center' });
+      const r = e.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, scrolled: off, top: Math.round(before.top) };
+    })()`);
+    if (!pt) throw new Error(`no element for ${label} (${sel})`);
+    if (pt.scrolled) console.log(`    note: ${label} laid out at top ${pt.top} — scrolled into view to click it`);
+    await clickAt(pt.x, pt.y);
+  };
+  const advanceToPlayCards = async () => {
+    for (let guard = 0; guard < 4; guard++) {
+      const title = await evalIn(`(document.querySelector('.tut-title') || {}).textContent || ''`);
+      if (title === 'Play cards') return true;
+      if (!title) return false;
+      await clickSel('.tut-next', `tutorial Next from ${title}`);
+    }
+    return false;
+  };
+  const armAttackTarget = async () => {
+    for (let guard = 0; guard < 8; guard++) {
+      const pt = await evalIn(`(() => {
+        const c = document.querySelector('.hand .card.type-attack:not(.unaffordable)');
+        if (!c) return null;
+        const r = c.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId };
+      })()`);
+      if (!pt) return { armed: false, card: null };
+      await clickAt(pt.x, pt.y);
+      const state = await evalIn(`({
+        armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
+        card: (document.querySelector('.hand .card.selected') || {}).dataset?.cardId || null,
+      })`);
+      if (state.armed) return state;
+    }
+    return { armed: false, card: null };
+  };
+  const armTargetedFlask = async () => {
+    // Select by the product-owned identity rather than an inventory position:
+    // the shot fixture carries Crimson then Blight, while the durable standalone
+    // cell intentionally seeds only Blight. Slot 1 would test one and miss the
+    // other even though both render the same authored flask.
+    await clickSel('.flask-identity[aria-label="Blight Coating"]', 'Blight Coating flask');
+    await until(`!!document.querySelector('.flask-action-menu [data-flask-action="use"]')`, 'Blight Coating Use action');
+    const pt = await evalIn(`(() => {
+      const b = document.querySelector('.flask-action-menu [data-flask-action="use"]');
+      if (!b) return null;
+      const r = b.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, beat: b.dataset.beat };
+    })()`);
+    if (!pt) return { armed: false, selectedCard: false, beat: null };
+    if (pt.beat === 'hold') await holdAt(pt.x, pt.y);
+    else await clickAt(pt.x, pt.y);
+    const state = await evalIn(`({
+      armed: !!document.querySelector('.enemy-row .enemy.targetable'),
+      selectedCard: !!document.querySelector('.hand .card.selected'),
+    })`);
+    return { ...state, beat: pt.beat };
   };
 
   // A fresh combat board at this viewport, with the tutorial mounted over it.
@@ -212,7 +377,7 @@ async function main() {
   // hand — same entry point combat.js uses, no stubbing of the thing under test.
   async function boardWithTutorial(vp) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: 1, mobile: false }, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/?shot=combat` }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
     await wait(700); // auto-zoom re-flexes on a 150ms debounce, plus a boot re-apply
     return evalIn(`(async () => {
@@ -223,7 +388,7 @@ async function main() {
     })()`);
   }
 
-  for (const vp of VIEWPORTS) {
+  if (!rootArtifact) for (const vp of VIEWPORTS) {
     const name = `${vp.w}x${vp.h}`;
     if (only && only !== name) continue;
     console.log(`\n  ${name}`);
@@ -264,6 +429,54 @@ async function main() {
     const escaped = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
     ok(escaped.done === 1 && !escaped.veil, `${name}: Escape finishes the tutorial (onDone fired, veil removed)`);
 
+    // #17: step 3 tells the player to arm an attack. In that state Escape is
+    // cancel-targeting first, never "finish tutorial". The capture listener
+    // must yield the event so combat's existing handler owns that one press.
+    await boardWithTutorial(vp);
+    ok(await advanceToPlayCards(), `${name}: reached tutorial step 3 (Play cards)`);
+    const armed = await armAttackTarget();
+    ok(armed.armed, `${name}: armed a real attack target (${armed.card || 'none'})`);
+    await pressKey('Escape', 'Escape', 27);
+    const cancelled = await evalIn(`({
+      done: window.__tutDone,
+      veil: !!document.querySelector('.tut-veil'),
+      selected: !!document.querySelector('.hand .card.selected'),
+      targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+    })`);
+    ok(
+      cancelled.done === 0 && cancelled.veil && !cancelled.selected && !cancelled.targetable,
+      `${name}: armed Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(cancelled)}`
+    );
+    await pressKey('Escape', 'Escape', 27);
+    const later = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
+    ok(later.done === 1 && !later.veil, `${name}: a later unarmed Escape finishes the tutorial exactly once`);
+
+    // A targeted flask arms the same enemy-targeting state without selecting a
+    // hand card. This is the discriminating sibling of the attack-card case:
+    // Escape must yield because the enemy is targetable, not because a selected
+    // card happens to be present.
+    await boardWithTutorial(vp);
+    ok(await advanceToPlayCards(), `${name}: reached tutorial step 3 for targeted flask`);
+    const armedFlask = await armTargetedFlask();
+    ok(
+      armedFlask.armed && !armedFlask.selectedCard,
+      `${name}: armed Blight Coating with targetable enemy and no selected card — ${JSON.stringify(armedFlask)}`
+    );
+    await pressKey('Escape', 'Escape', 27);
+    const flaskCancelled = await evalIn(`({
+      done: window.__tutDone,
+      veil: !!document.querySelector('.tut-veil'),
+      selected: !!document.querySelector('.hand .card.selected'),
+      targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+    })`);
+    ok(
+      flaskCancelled.done === 0 && flaskCancelled.veil && !flaskCancelled.selected && !flaskCancelled.targetable,
+      `${name}: targeted-flask Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(flaskCancelled)}`
+    );
+    await pressKey('Escape', 'Escape', 27);
+    const afterFlask = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
+    ok(afterFlask.done === 1 && !afterFlask.veil, `${name}: later unarmed Escape after flask cancel finishes exactly once`);
+
     // 3) The full walk, step by step, with real clicks at real coordinates.
     await boardWithTutorial(vp);
     let guard = 0;
@@ -293,7 +506,7 @@ async function main() {
   // others: delete the save, change UI size before continuing). It has to stop
   // being an escape and start being ordinary: --ui-zoom re-flexes on resize, so
   // every callout's coordinate space changes underneath it.
-  if (!only) {
+  if (!only && !rootArtifact) {
     console.log('\n  resize mid-tutorial: 2560x1440 → 1280x800');
     await boardWithTutorial({ w: 2560, h: 1440 });
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }, S);
@@ -318,12 +531,12 @@ async function main() {
   // save), so there is nothing to read back afterwards. That gate is correct and
   // this check goes the long way round instead of weakening it.
   if (!only) {
-    console.log('\n  first-run path at 1920x1080: title → BEGIN → first fight → Escape → RELOAD');
+    console.log(`\n  first-run ${rootArtifact ? 'root artifact' : 'source'} path at 1920x1080: title → BEGIN → first fight → attack Escape → targeted-flask Escape → menu Escape → unarmed Escape → RELOAD`);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await cdp.send('Page.navigate', { url: base }, S);
     await until(`!!document.querySelector('.slot-new')`, 'the title screen');
     await evalIn(`(() => { localStorage.clear(); return 1; })()`);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await cdp.send('Page.navigate', { url: base }, S);
     await until(`!!document.querySelector('.slot-new')`, 'the title screen, storage cleared');
     ok(
       await evalIn(`localStorage.getItem('sote_meta_v1') === null`),
@@ -347,20 +560,6 @@ async function main() {
     // guarded by tools/actionreach.mjs, which exists because this workaround was
     // the wrong response to a measurement. clickSel stays general: map nodes
     // live on a pannable canvas and legitimately need it.
-    const clickSel = async (sel, label) => {
-      const pt = await evalIn(`(() => {
-        const e = document.querySelector(${JSON.stringify(sel)});
-        if (!e) return null;
-        const before = e.getBoundingClientRect();
-        const off = before.bottom > innerHeight || before.top < 0;
-        if (off) e.scrollIntoView({ block: 'center' });
-        const r = e.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, scrolled: off, top: Math.round(before.top) };
-      })()`);
-      if (!pt) throw new Error(`no element for ${label} (${sel})`);
-      if (pt.scrolled) console.log(`    note: ${label} laid out at top ${pt.top} in a ${1080}px viewport — scrolled into view to click it`);
-      await clickAt(pt.x, pt.y);
-    };
     await clickSel('.slot-new', 'BEGIN A CLIMB');
     await until(`!!document.querySelector('#cz-start')`, 'the customize screen');
     // Fix the seed so the first floor reliably offers a fight (the same seed the
@@ -372,6 +571,26 @@ async function main() {
     await wait(500);
     const haveFight = await evalIn(`!!document.querySelector('.map-node.monster.reachable')`);
     ok(haveFight, 'first-run: the first floor offers a fight to walk into');
+
+    // A brand-new run intentionally carries no utility flask. Seed one valid
+    // saved-run row, then reload through CONTINUE so the standalone cell reaches
+    // Blight Coating through the real save loader and combat constructor rather
+    // than mutating the rendered combat object. The profile stays first-run:
+    // seenTutorial is still absent/false and the coach marks must mount itself.
+    const seededFlask = await evalIn(`(() => {
+      const key = 'sote_run_v1';
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const saved = JSON.parse(raw);
+      saved.flasks = [{ flaskId: 'blightCoating' }];
+      localStorage.setItem(key, JSON.stringify(saved));
+      return JSON.parse(localStorage.getItem(key)).flasks?.[0]?.flaskId === 'blightCoating';
+    })()`);
+    ok(seededFlask, 'first-run: valid Blight Coating row entered through the durable run save');
+    await cdp.send('Page.navigate', { url: base }, S);
+    await until(`!!document.querySelector('.slot-continue')`, 'the title screen with the flask-seeded run');
+    await clickSel('.slot-continue', 'CONTINUE the flask-seeded run');
+    await until(`!!document.querySelector('.map-node.monster.reachable')`, 'the resumed map with a reachable fight');
     await clickSel('.map-node.monster.reachable', 'a monster node');
     let mounted = true;
     try {
@@ -381,18 +600,86 @@ async function main() {
     if (mounted) {
       const p = await evalIn(PROBE);
       ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, `first-run: both buttons reachable at ui-zoom ${p.zoom} on the shipped defaults`);
+      ok(await advanceToPlayCards(), 'first-run: reached tutorial step 3 (Play cards)');
+      const armed = await armAttackTarget();
+      ok(armed.armed, `first-run: armed a real attack target (${armed.card || 'none'})`);
       await pressKey('Escape', 'Escape', 27);
-      const after = await evalIn(`({
+      const afterCancel = await evalIn(`({
+        veil: !!document.querySelector('.tut-veil'),
+        selected: !!document.querySelector('.hand .card.selected'),
+        targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+        meta: localStorage.getItem('sote_meta_v1'),
+      })`);
+      ok(
+        afterCancel.veil && !afterCancel.selected && !afterCancel.targetable,
+        `first-run: armed Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(afterCancel)}`
+      );
+      ok(
+        !afterCancel.meta || JSON.parse(afterCancel.meta).settings.seenTutorial !== true,
+        'first-run: armed Escape leaves durable seenTutorial false'
+      );
+
+      // Exercise the targeted-flask sibling through the first-run path too.
+      // This block runs against both source and --root, so a regenerated
+      // standalone cannot silently retain the old selected-card conjunct while
+      // the source-only viewport matrix stays green.
+      const armedFlask = await armTargetedFlask();
+      ok(
+        armedFlask.armed && !armedFlask.selectedCard,
+        `first-run: armed Blight Coating with a targetable enemy and no selected card — ${JSON.stringify(armedFlask)}`
+      );
+      await pressKey('Escape', 'Escape', 27);
+      const afterFlaskCancel = await evalIn(`({
+        veil: !!document.querySelector('.tut-veil'),
+        selected: !!document.querySelector('.hand .card.selected'),
+        targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+        meta: localStorage.getItem('sote_meta_v1'),
+      })`);
+      ok(
+        afterFlaskCancel.veil && !afterFlaskCancel.selected && !afterFlaskCancel.targetable,
+        `first-run: targeted-flask Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(afterFlaskCancel)}`
+      );
+      ok(
+        !afterFlaskCancel.meta || JSON.parse(afterFlaskCancel.meta).settings.seenTutorial !== true,
+        'first-run: targeted-flask Escape leaves durable seenTutorial false'
+      );
+
+      if (screenshotPath) {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 }, S);
+        await wait(220);
+        const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, S);
+        writeFileSync(resolve(screenshotPath), Buffer.from(shot.data, 'base64'));
+        console.log(`    screenshot ${resolve(screenshotPath)}`);
+      }
+
+      // Adjacent ownership remains ordered: the menu veil owns its Escape, the
+      // tutorial remains, and only the following unarmed Escape may finish it.
+      await clickSel('#combat-menu', 'combat menu');
+      await until(`!!document.querySelector('.modal-veil')`, 'the adjacent menu overlay');
+      await pressKey('Escape', 'Escape', 27);
+      const afterMenu = await evalIn(`({
+        menu: !!document.querySelector('.modal-veil'),
+        tutorial: !!document.querySelector('.tut-veil'),
+        meta: localStorage.getItem('sote_meta_v1'),
+      })`);
+      ok(!afterMenu.menu && afterMenu.tutorial, 'first-run: menu Escape closes only the adjacent overlay and leaves the tutorial standing');
+      ok(
+        !afterMenu.meta || JSON.parse(afterMenu.meta).settings.seenTutorial !== true,
+        'first-run: menu Escape leaves durable seenTutorial false'
+      );
+
+      await pressKey('Escape', 'Escape', 27);
+      const finished = await evalIn(`({
         veil: !!document.querySelector('.tut-veil'),
         meta: localStorage.getItem('sote_meta_v1'),
       })`);
-      ok(!after.veil, 'first-run: Escape removed the tutorial');
+      ok(!finished.veil, 'first-run: a later unarmed Escape removes the tutorial');
       ok(
-        !!after.meta && JSON.parse(after.meta).settings.seenTutorial === true,
-        'first-run: …and wrote seenTutorial to DURABLE storage (the write the buttons used to be the only source of)'
+        !!finished.meta && JSON.parse(finished.meta).settings.seenTutorial === true,
+        'first-run: the later unarmed Escape writes seenTutorial to durable storage'
       );
       // The claim Sunna's repro actually turns on: "Reload does not clear it."
-      await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+      await cdp.send('Page.navigate', { url: base }, S);
       await until(`!!document.querySelector('.slot-continue')`, 'the title screen with a saved run');
       await clickSel('.slot-continue', 'CONTINUE');
       await until(`!!document.querySelector('.combat')`, 'the fight, resumed');
@@ -405,11 +692,11 @@ async function main() {
   }
 
   cdp.close();
-  child.kill();
+  await dropBrowser();
   server.close();
 
   console.log(`\n  ${fails.length ? `${fails.length} FAILED` : 'all checks passed'}`);
-  console.log('  boundary: real Chromium headless at deviceScaleFactor 1, UI size = Auto, text size M,');
+  console.log(`  boundary: real Chromium headless against the ${rootArtifact ? 'root standalone artifact' : 'source server'} at deviceScaleFactor 1, UI size = Auto, text size M,`);
   console.log('  English strings, one class (reaver/SHOWCASE), solo play. Not checked: text size');
   console.log('  L/XL, the fixed UI-size overrides S..XL, touch or gamepad input, co-op boards,');
   console.log('  or any browser but Chromium. Silence from this tool is not coverage of those.');

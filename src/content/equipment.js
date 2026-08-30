@@ -1,12 +1,13 @@
 // src/content/equipment.js — armaments, armour, slots, and the mod vocabulary.
 //
-// Five spreadsheets feed this file and nothing else does:
+// Authored CSV/JSON content feeds this file and nothing else does:
 //
 //   content/source/weapons.csv       every armament (weapon / shield / staff)
 //   content/source/outfits.csv       every armour set (an outfit IS a set)
 //   content/source/equipSlots.csv    what you can wear, and when you may swap
 //   content/source/equipMods.csv     what a mod string is allowed to say
 //   content/source/equipTargets.csv  which card each mod prefix rewrites
+//   content/source/armouryUi.json     Armoury-only presentation choices
 //
 // This module only NORMALISES them — the CSV compiler coerces a single value
 // to a string and a pipe-separated one to an array, so every list-shaped
@@ -19,6 +20,13 @@ import { outfits } from './generated/outfits.js';
 import { equipSlots } from './generated/equipSlots.js';
 import { equipMods } from './generated/equipMods.js';
 import { equipTargets } from './generated/equipTargets.js';
+import { basicCardProfiles } from './generated/basicCardProfiles.js';
+import { cardExposure } from './generated/cardExposure.js';
+import { startingKits } from './generated/startingKits.js';
+import { equipmentRequirements } from './generated/equipmentRequirements.js';
+import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
+import { cardTagging } from './generated/cardTagging.js';
+import { armouryUi } from './generated/armouryUi.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -27,7 +35,16 @@ function list(v) {
 }
 
 function normPiece(row) {
-  return { ...row, tags: list(row.tags), mods: list(row.mods) };
+  const attributes = Object.fromEntries(equipmentRequirements
+    .filter((requirement) => requirement.itemId === row.id)
+    .map((requirement) => [requirement.attributeId, requirement.minimum]));
+  return {
+    ...row,
+    artKey: row.artKey || row.id,
+    tags: list(row.tags),
+    mods: list(row.mods),
+    ...(Object.keys(attributes).length ? { requirements: { attributes } } : {}),
+  };
 }
 
 /** Every armament: weapons, shields and staves, in authoring order. */
@@ -91,3 +108,28 @@ export function cardForTarget(target, classId) {
 
 /** Every mod prefix that resolves to a card (for validation and tests). */
 export const CARD_TARGETS = [...new Set(equipTargets.map((t) => t.target))];
+
+/** Equipment-bound core card profiles, authored once and selected by role. */
+export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
+  ...row,
+  tags: list(row.tags),
+  mods: list(row.mods),
+}));
+
+/** Explicit damage carriers; school and buildup are never inferred from tags. */
+export const CARD_EXPOSURE = cardExposure.map((row) => ({ ...row }));
+
+/** Class-listed starting kits; hand ids stay explicit so validation can name them. */
+export const STARTING_KITS = startingKits.map((row) => ({ ...row }));
+
+/** Raw item/stat minima retained so validation can detect duplicate authored rows. */
+export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...row }));
+
+/** Registered exceptional card→weapon bonds; ordinary fit is class/tag based. */
+export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({ ...row }));
+
+/** Raw authored card tag ids, carried into registries for compatibility checks. */
+export const CARD_EQUIPMENT_TAGGING = cardTagging.map((row) => ({ ...row, tags: list(row.tags) }));
+
+/** Armoury-only presentation choices authored in JSON. */
+export const ARMOURY_UI = { ...armouryUi };

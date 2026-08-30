@@ -1,5 +1,5 @@
 // tools/menufit.mjs — the two surfaces a player manages a RUN from: the Armoury
-// (equip slots) and the in-run ☰ overlay (deck, relics, stats). Does either fit
+// (equip slots) and the in-run ☰ overlay (deck, stats, settings). Does either fit
 // the phone it is opened on?
 //
 // WHY THIS EXISTS. Constantine, from his own device: "it's hard to manage equip
@@ -67,13 +67,58 @@
 // press (then clauses 1 and 4 are its job), or the day neither surface exists.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// two rendered surfaces — the Armoury and the ☰ overlay — opened by real
+// clicks in a real browser against the real tree. The right door, and its
+// known-bad was real too: `dist/AshenSpire.html` as committed at d027a9a. But
+// that is a ref-pinned observation, and under SOP 2's drift clause it rotted
+// to `unknown` the moment the tree moved — Vira's audit (2026-08-14) rated
+// this OBSERVED-ONCE. `--selftest` re-observes the SAME two defects without
+// the old bundle: the `height: 74vh` Law-2 violation put back as CSS bytes,
+// and the narrow Armoury layout removed so equip cells clip again.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'menufit.mjs',
+    args: ['--only', '390x844'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // THE ORIGINAL, to the property: `height: 74vh` under `body { zoom }`
+        // gives 74% x --ui-zoom, so the smallest phone got the smallest menu.
+        // The fix was 74vh -> 74%; this puts the vh back.
+        name: 'the overlay is sized in vh again (74% x zoom, not 74% — Law 2)',
+        file: 'styles/ui.css',
+        find: '.overlay-modal { width: 76rem; max-width: 96%; height: 74%;',
+        replace: '.overlay-modal { width: 76rem; max-width: 96%; height: 74vh;',
+        expectRed: /OVERLAY GETS [0-9.]+% of the app box where its author wrote 74%/,
+      },
+      {
+        // The other half of the original: the Armoury had never had a phone
+        // layout, so cells ran off a 390-wide screen with no sideways scroll.
+        // Forcing the rack wide reproduces the clip at the same door.
+        name: 'the Armoury loses its phone layout — equip cells run off a 390 px screen',
+        file: 'styles/ui.css',
+        append: ':root[data-layout="narrow"] .armoury-body { min-width: 900px; overflow-x: hidden; }',
+        expectRed: /(ARMOURY OPENS CLIPPED|clips \d+ cell\(s\))/,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
+// tool measured a two-merge-stale bundle and printed OK once already. One home:
+// tools/artifact-provenance.mjs. Facts only; it never fails a run.
+import { printArtifactProvenance } from './artifact-provenance.mjs';
+printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 const BROWSERS = [
   process.env.CHROME,
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -92,7 +137,34 @@ const SHAPES = [
 // balance.ui.textSize. Typed here is a second copy and it is the ONE value in
 // this file that can drift (Law 1 clause 2), so it is called out, not hidden.
 const TEXT = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
-const TAP_FLOOR = 44; // device px, AFTER --ui-zoom. Sunna's ruling, card #37.
+// THE FLOOR IS NOT A CONSTANT HERE ANY MORE, AND IT MAY NOT BECOME ONE.
+// `const TAP_FLOOR = 44` stood here until Constantine turned the floor into a
+// control (Settings -> Accessibility -> Minimum tap size, 44/36/30/24). Sten
+// made it a RED rather than a named-not-fixed, discharged only by this tool
+// reading the floor from the game's own home — never by editing the 44 to some
+// other constant, which would be the identical defect one value later.
+//
+// So it is read off the PAGE THIS TOOL JUST MEASURED, which is the strictest
+// available reading of "the game's own home": not a copy of the number, not
+// even a second read of the data that produces it, but the floor actually in
+// force in the shape under test. A probe element sized by `var(--tap-floor)`
+// and measured — never `getPropertyValue('--tap-floor')`, which returns the
+// literal `calc(...)` token and parses to NaN.
+//
+// The floor travels with each reading, so this file holds no tap number at all
+// and a run at a non-default Minimum tap size reports against the floor that
+// run actually had. `node tools/tapsize.mjs` is the tool that sweeps the whole
+// dial; this one enforces whatever the dial is set to.
+// The probe itself lives inline in OVERLAY below, beside the rects it is
+// compared against, so the floor and the heights come off the same frame.
+
+// Every distinct floor this run actually measured. Printed rather than assumed:
+// if two shapes disagree the report says so instead of picking one, and an empty
+// set means nothing was measured and the sentence says THAT.
+const floorsSeen = new Set();
+const floorSentence = () => (floorsSeen.size === 0 ? 'UNMEASURED (no cell reported one)'
+  : floorsSeen.size === 1 ? [...floorsSeen][0]
+  : `VARYING (${[...floorsSeen].sort((a, b) => a - b).join(', ')}) across this run's cells`);
 
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
@@ -124,7 +196,12 @@ const CELLS = `(() => { const n=(v)=>+(+v).toFixed(2);
     if (r.top>=port.top-0.5 && r.bottom<=port.bottom+0.5 && r.left>=-0.5 && r.right<=innerWidth+0.5) noScroll++;
   }
   return { clipped, worst: clipped? n(worst): 100, eg: out.slice(0,2), total, noScroll,
-    view: (document.querySelector('.armoury')||{className:''}).className.replace(/.*view-(\\w+).*/,'$1') }; })()`;
+    view: (document.querySelector('.armoury')||{dataset:{}}).dataset.view || '?' }; })()`;
+// data-view on .armoury, not a view-<id> class. The class was the id spelled
+// into the stylesheet, which is what #78 removed — the layout is now said by
+// [data-figure]/[data-slots] and the id names only which row is on. NOTE the old
+// regex had no failure case: with no match String.replace returns the subject, so
+// this tool printed opens='armoury' and read the element's class as a view name.
 
 const OVERLAY = `(() => { const n=(v)=>+(+v).toFixed(2);
   const veil=document.querySelector('.modal-veil'); if(!veil) return {error:'no overlay'};
@@ -134,15 +211,24 @@ const OVERLAY = `(() => { const n=(v)=>+(+v).toFixed(2);
   // The author wrote 74% of the app box. Measured in ONE space: both rects are
   // post-zoom device px, so the ratio is zoom-free and comparable across shapes.
   const share=n(pr.height/ar.height*100);
+  // The floor this run is actually held to, measured in the page rather than
+  // injected from Node — see the block above for why there is no constant.
+  const probe=document.createElement('div');
+  probe.style.cssText='position:absolute;left:-9999px;top:0;width:1px;padding:0;border:0;height:var(--tap-floor)';
+  document.body.appendChild(probe); const floor=n(probe.getBoundingClientRect().height); probe.remove();
   let absent=0, tiny=[];
   for (const e of veil.querySelectorAll('.ov-tab')) {
     const r=e.getBoundingClientRect(); if(r.width===0&&r.height===0) continue;
     if (r.right<=0||r.left>=innerWidth) absent++;
-    if (r.height < ${TAP_FLOOR}) tiny.push(((e.textContent||'').trim().slice(0,10))+' '+n(r.height)); }
+    // 0.51 of slack: the floor and the rect are both device px off the same
+    // frame, and a sub-pixel rounding difference is not a control a finger
+    // misses. A floor of 0 means the property never resolved, which is a
+    // different failure and is reported as one below.
+    if (floor > 0 && r.height < floor - 0.51) tiny.push(((e.textContent||'').trim().slice(0,10))+' '+n(r.height)); }
   const rows=[]; for (const t of veil.querySelectorAll('.ov-tab')) {
     const q=t.getBoundingClientRect(); const rr=rows.find(z=>Math.abs(z.t-q.top)<=1);
     if(rr) rr.n++; else rows.push({t:q.top,n:1}); }
-  return { share, panelH:n(pr.height), appH:n(ar.height), absent,
+  return { share, panelH:n(pr.height), appH:n(ar.height), absent, floor,
     tabRows: rows.length, tinyTabs: tiny.length, tinyEg: tiny.slice(0,2) }; })()`;
 
 function connectCdp(wsUrl) {
@@ -156,20 +242,9 @@ function connectCdp(wsUrl) {
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
 }
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
-  });
-}
 
 async function main() {
   if (!browserPath) { console.error('menufit: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'menufit-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -181,7 +256,13 @@ async function main() {
   }
   console.log(`menufit — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'menufit-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -277,11 +358,17 @@ async function main() {
         // The author wrote 74%. 1.5 points of tolerance for border/rounding.
         if (Math.abs(ov.share - 74) > 1.5) bad.push(`OVERLAY GETS ${ov.share}% of the app box where its author wrote 74% (panel ${ov.panelH} of ${ov.appH})`);
         if (ov.absent) bad.push(`${ov.absent} overlay tab(s) horizontally absent`);
-        if (ov.tinyTabs) bad.push(`${ov.tinyTabs} tab(s) under the ${TAP_FLOOR} device-px floor, e.g. ${ov.tinyEg.join(', ')}`);
+        // A floor that did not resolve is its own finding, and it is the one
+        // this file used to be structurally unable to have: with a constant
+        // typed here, a missing `--tap-target` would have been measured against
+        // 44 and reported as fine.
+        if (!ov.floor) bad.push('--tap-floor did not resolve on this page — the tap floor is UNKNOWN, and every tab height below is measured against nothing');
+        else if (ov.tinyTabs) bad.push(`${ov.tinyTabs} tab(s) under the ${ov.floor} device-px floor in force here, e.g. ${ov.tinyEg.join(', ')}`);
+        floorsSeen.add(ov.floor);
       }
       const viewSummary = Object.entries(perView).map(([n2, r]) => `${n2}:${r.noScroll}/${r.total}`).join(' ');
       console.log(`    ${k.padEnd(3)} ${String(layout).padEnd(7)} opens='${String(opened.view).padEnd(6)}' clipped=${String(opened.clipped).padEnd(2)} noScroll=${opened.noScroll}/${opened.total} ` +
-        `[${viewSummary}]  overlay ${String(ov.share ?? '?').padStart(5)}% tabRows=${ov.tabRows ?? '?'} tiny=${ov.tinyTabs ?? '?'}` +
+        `[${viewSummary}]  overlay ${String(ov.share ?? '?').padStart(5)}% tabRows=${ov.tabRows ?? '?'} floor=${ov.floor ?? '?'} tiny=${ov.tinyTabs ?? '?'}` +
         (bad.length ? '\n         <-- ' + bad.join('\n         <-- ') : ''));
       for (const b of bad) fails.push(`${shape} text=${k}: ${b}`);
     }
@@ -292,7 +379,7 @@ async function main() {
   if (cells === 0) {
     console.error(`\nmenufit: nothing was measured${only ? ` (--only ${only} matched no shape)` : ''}. That is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map(([w, h]) => `${w}x${h}`).join(', ')}`);
-    cdp.close(); child.kill(); if (server) server.close(); process.exit(2);
+    cdp.close(); await dropBrowser(); if (server) server.close(); process.exit(2);
   }
 
   console.log(`\n  BOUNDARY — Linux headless Chromium only; emulation is not a phone and clicks
@@ -306,14 +393,14 @@ async function main() {
       rather than left to be discovered.
   (c) LEGIBILITY. It measures whether a control is on screen and how big it is.
       Whether the phone view is a GOOD view is Sunna's call and no number here.
-  (d) The ${TAP_FLOOR} device-px floor is ENFORCED only on the overlay tab strip —
+  (d) The ${floorSentence()} device-px floor is ENFORCED only on the overlay tab strip —
       the surface this work touches. Every other control is measured and reported
       but cannot fail this tool. Widening that is Marina's decision (Law 4, #37),
       deliberately not taken by a tool author mid-fix.`);
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) of ${cells} cell(s)` : `PASS — ${cells}/${cells} cells: both surfaces fit, no equip cell clipped, the overlay keeps its written share`}`);
   for (const f of fails) console.log(`    - ${f}`);
-  cdp.close(); child.kill(); if (server) server.close();
+  cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }
 

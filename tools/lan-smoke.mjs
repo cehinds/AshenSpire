@@ -59,14 +59,14 @@ try {
   await host.ready;
   const hWelcome = await host.next((m) => m.t === 'welcome', 'host welcome');
   ok(!!hWelcome.id, 'host receives welcome + player id');
-  host.send({ t: 'hello', name: 'Wren', classId: 'starseer', hostKey: hostRes.hostKey });
+  host.send({ t: 'hello', name: 'Wren', classId: 'starseer', startingKitId: 'starseerStarstone', discoveredArmaments: ['starstoneStaff'], hostKey: hostRes.hostKey });
   const hRoster = await host.next((m) => m.t === 'roster', 'host roster');
   ok(hRoster.players.length === 1 && hRoster.players[0].isHost, 'host flagged isHost in roster');
 
   const guest = client(`ws://localhost:${port}/lan`);
   await guest.ready;
   const gWelcome = await guest.next((m) => m.t === 'welcome', 'guest welcome');
-  guest.send({ t: 'hello', name: 'Fenn', classId: 'reaver' });
+  guest.send({ t: 'hello', name: 'Fenn', classId: 'reaver', startingKitId: 'reaverGreatsword', discoveredArmaments: ['greatsword'] });
   const gRoster = await guest.next((m) => m.t === 'roster' && m.players.length === 2, 'guest 2-roster');
   ok(gRoster.players.length === 2, 'roster grows to 2 when guest joins');
   ok(gRoster.players.some((p) => p.name === 'Fenn' && !p.isHost), 'guest present and not host');
@@ -81,7 +81,7 @@ try {
   ok(seeded.seedString === 'GOLDBOUGH', 'host seed propagates to guest');
 
   // Couch party: the host adds a LOCAL seat riding its own connection.
-  host.send({ t: 'locals', locals: [{ name: 'Torrent', classId: 'herald', tint: 'rot' }] });
+  host.send({ t: 'locals', locals: [{ name: 'Torrent', classId: 'herald', startingKitId: 'heraldEmberlight', discoveredArmaments: ['emberlightSceptre'], tint: 'rot' }] });
   const withLocal = await guest.next((m) => m.t === 'roster' && m.players.length === 3, 'roster with local');
   const localRow = withLocal.players.find((p) => p.isLocal);
   ok(!!localRow && localRow.name === 'Torrent' && localRow.ready, 'local seat appears in the roster, always ready');
@@ -98,6 +98,10 @@ try {
   const state0 = await guest.next((m) => m.t === 'state', 'first state snapshot');
   ok(state0.snapshot && state0.snapshot.scene.kind === 'map', 'first snapshot is the shared map');
   ok(state0.snapshot.party.length === 3, 'snapshot party includes the local seat');
+  ok(state0.snapshot.party.some((p) => p.name === 'Wren' && p.startingKitId === 'starseerStarstone')
+    && state0.snapshot.party.some((p) => p.name === 'Fenn' && p.startingKitId === 'reaverGreatsword')
+    && state0.snapshot.party.some((p) => p.name === 'Torrent' && p.startingKitId === 'heraldEmberlight'),
+  'LAN start preserves starting-kit identity for main, guest, and local seats');
   const firstNode = state0.snapshot.reachableIds[0];
 
   // Fork voting: the host's lone vote holds the party; the guest's matching

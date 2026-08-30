@@ -1,0 +1,126 @@
+{
+  "schema": "agentops/escalation/v1",
+  "policy_version": "1.0.0",
+  "principle": "Elapsed time changes routing only, never truth, evidence, or authority. A time-based escalation requests a decision from a higher owner; it never silently enlarges the escalating actor's authority. No blocker remains inert or ownerless past its SLA.",
+  "default_sla_minutes": 5,
+  "classes": [
+    {
+      "id": "technical-blocker",
+      "hazard": "An unresolved technical ambiguity, ownership contest, or integration question stalls reversible work.",
+      "attempts_before_escalate": 1,
+      "sla_minutes": 5,
+      "route": [
+        "help-desk",
+        "it-manager-iii"
+      ],
+      "wake": "it-manager-iii",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": true
+    },
+    {
+      "id": "data-contract-withhold",
+      "hazard": "A cross-domain data contract is unsafe and the Data Architecture lead has withheld it.",
+      "attempts_before_escalate": 1,
+      "sla_minutes": 5,
+      "route": [
+        "data-architecture-lead",
+        "it-manager-iii"
+      ],
+      "wake": "it-manager-iii",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": true
+    },
+    {
+      "id": "deputy-overdue",
+      "hazard": "The deputy has held custody of a blocker past its resolution window without entered work.",
+      "attempts_before_escalate": 1,
+      "sla_minutes": 10,
+      "route": [
+        "it-manager-iii",
+        "constantine"
+      ],
+      "wake": "constantine",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": true
+    },
+    {
+      "id": "owner-exclusive-now",
+      "hazard": "An owner-exclusive, safety, credential, irreversible, or intent-conflict decision is required.",
+      "attempts_before_escalate": 0,
+      "sla_minutes": 0,
+      "route": [
+        "constantine"
+      ],
+      "wake": "constantine",
+      "authority_effect": "request-decision",
+      "continuing_work_allowed": false
+    }
+  ],
+  "rules": {
+    "acyclic_route": "Each route is an ordered list of actor_ids with no repeats; it must terminate at the Owner or a role that itself routes to the Owner.",
+    "authority_effect_fixed": "authority_effect must be request-decision for every class; escalation never grants authority."
+  },
+  "ticket_flow": {
+    "principle": "Every question has a first responder that is not the Owner. Intake goes to Help Desk, technical judgement to the IT Manager III, and only an owner-exclusive class reaches P0. An agent that cannot decide files a ticket rather than asking the Owner.",
+    "source": "docs/governance/WORKFLOW.md",
+    "steps": [
+      {
+        "n": 1,
+        "actor": "help-desk",
+        "does": "Records, triages and completes the ticket contract."
+      },
+      {
+        "n": 2,
+        "actor": "project-management-lead",
+        "does": "Supplies portfolio, milestone, dependency, WIP, capacity, handoff and risk recommendations. The Data Architecture and Systems Lead reviews applicable cross-domain data contracts and may record WITHHOLD when unsafe."
+      },
+      {
+        "n": 3,
+        "actor": "it-manager-iii",
+        "does": "Decides technical exceptions, scope and architecture choices, sequencing, path and maker ownership, blockers, integration and new authority routing. Help Desk assigns a pod only after the decision is recorded at CONTRACT READY, and the lead acknowledges before ownership is active."
+      },
+      {
+        "n": 4,
+        "actor": "it-manager-iii",
+        "does": "Records MODEL | EFFORT | WHY | ESCALATE WHEN on every assignment and reassignment, risk-and-station based, never rank based."
+      },
+      {
+        "n": 5,
+        "actor": "maker",
+        "does": "Implements one ticket from a fresh base in the named isolated lane and returns TICKET|STATUS|OUTCOME / PATH|BASE|HEAD|CLEAN / EVIDENCE / BLOCK / NEXT / MODEL|EFFORT|WHY|ESCALATE WHEN / AUTH receipts."
+      },
+      {
+        "n": 6,
+        "actor": "qa-independent",
+        "does": "Verifies the frozen candidate. Functional QA then Experience QA when applicable, at the same head. A changed candidate reopens verification."
+      },
+      {
+        "n": 7,
+        "actor": "project-management-lead",
+        "does": "Convenes the completion council at READY FOR MAIN. No lead silently self-assigns a shared path."
+      },
+      {
+        "n": 8,
+        "actor": "it-manager-iii",
+        "does": "Records the itemized independence result and chooses WAIT or normal-PR delivery to dev. PASS permits discretion, never a duty. FAIL or UNKNOWN requires WAIT with its rationale and retry trigger."
+      },
+      {
+        "n": 9,
+        "actor": "help-desk",
+        "does": "Records each resulting fact without collapsing integration, hosting, resolution, promotion-packet readiness or release."
+      },
+      {
+        "n": 10,
+        "actor": "project-management-lead",
+        "does": "Repeats the completion council at RESOLVED so overlaps and authority stay visible without creating an assignment."
+      }
+    ],
+    "handoff_events": [
+      "SENT",
+      "RECEIVED",
+      "ACKNOWLEDGED"
+    ],
+    "handoff_rule": "Cross-family handoffs keep the three events distinct. A failed transport proves neither receipt nor acceptance, and must never create a duplicate assignment.",
+    "owner_is_last_resort": "An agent routes an undecidable question to the IT Manager III as a ticket. The Owner is reached only through an owner-exclusive escalation class, never because an agent preferred to ask."
+  }
+}

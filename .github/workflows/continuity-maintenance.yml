@@ -1,0 +1,58 @@
+name: continuity maintenance
+
+on:
+  schedule:
+    - cron: '17 13 * * *'
+    - cron: '47 13 * * 0'
+  workflow_dispatch:
+    inputs:
+      maintenance:
+        description: Report to generate
+        required: true
+        default: audit
+        type: choice
+        options:
+          - audit
+          - audit-and-pruning-proposal
+
+concurrency:
+  group: continuity-maintenance-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Repository continuity audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fetch branch objects without pruning or changing working branches
+        run: git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Prove the continuity validator can fail
+        run: node tools/continuity.mjs --selftest
+
+      - name: Audit schema, objects, governance hashes, budgets, and remote currentness
+        run: node tools/continuity.mjs --audit --json-out "$RUNNER_TEMP/continuity-audit.json"
+
+      - name: Sunday or requested dry-run pruning proposal
+        if: github.event.schedule == '47 13 * * 0' || inputs.maintenance == 'audit-and-pruning-proposal'
+        run: node tools/continuity.mjs --prune-proposal --json-out "$RUNNER_TEMP/continuity-pruning-proposal.json"
+
+      - name: Retain reports as optional forensic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: continuity-maintenance-${{ github.run_id }}
+          path: ${{ runner.temp }}/continuity-*.json
+          if-no-files-found: warn
+          retention-days: 14

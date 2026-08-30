@@ -1,0 +1,17 @@
+{
+  "$schema": "agentops-mini-schema/v1",
+  "title": "owner-command-request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "action", "actor", "target"],
+  "properties": {
+    "schema": {"const": "agentops/owner-command-request/v1"},
+    "action": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "target": {"type": "string", "minLength": 1},
+    "expected_current_hash": {"type": "string", "minLength": 1},
+    "candidate_oid": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "params": {"type": "object"}
+  }
+}

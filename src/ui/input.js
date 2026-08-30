@@ -10,10 +10,37 @@
 //      listen for, so the existing keyboard handlers work with a controller
 //      too. Which pad BUTTON drives each action is rebindable (Controls tab).
 //
+//   3. THE ACTIVATION PRESS (S7, 2026-08-17). Confirm is published as a press
+//      with TWO ends — `gppress` / `gprelease` on the focused element — instead
+//      of one synthetic click, so a control that has a press-and-hold has it on
+//      all three inputs rather than on the mouse alone. Full reasoning at the
+//      press-door block below; the gesture side is `armPress` in ui/gesture.js.
+//
 // The number keys (1–9) and letter hotkeys stay owned by the screens; this
 // module adds navigation + controller parity on top without touching them.
+//
+//   3b. THE PRESS IS NOT ONLY THE CURSOR'S (S7 WIDE, 2026-08-17). Constantine:
+//       "if hold is toggled, then it should be the same, in all instances. for
+//       ending turn, using flask, event choice, shrine rest." Layer 3 above
+//       serves the button that presses the FOCUSED control — and End Turn has
+//       no focused control: `.end-turn` matches CHROME below, so the cursor
+//       skips it by design and Confirm can never arrive on it. Its keyboard
+//       door is `e` and its pad door is button 2, both `kind: 'key'`, and both
+//       reached the button as a SYNTHETIC CLICK that walked straight past the
+//       hold. So a `kind: 'key'` action whose control has armed a beat now
+//       opens the same two-ended press the cursor does — see the action-control
+//       registry below.
+//
+// BOUNDARY, and it is narrower than "every key holds": only a key bound to an
+// ACTION ROW here, whose control has ARMED A BEAT, and only while the dial is
+// on. The 1–9 / Q quick-play keys are not action rows and are untouched; the
+// flask keys `f`/`g`/`h` are rows, but what they press is the flask MENU, which
+// commits nothing and owes no beat — the beat is on the menu's Use row, which
+// the cursor reaches normally. Both are silence by derivation, not by a list.
 
 import { padGlyph } from './uiContent.js';
+import { topVeil } from './components/veil.js';
+import { PRESS_EVENT, RELEASE_EVENT } from './gesture.js';
 
 const FOCUS_SELECTOR = [
   'button:not([disabled])',
@@ -40,32 +67,65 @@ const FOCUS_SELECTOR = [
 // (rebindable) keys / the Menu overlay instead of by wandering into them
 // (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
 // a modal/overlay is open, where its own contents ARE the scope.
-const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
+//
+// `.hint-bar` JOINED THIS LIST the day its chips became real buttons (2026-08-17).
+// It is the purest case in the list rather than an exception to it: every chip in
+// that bar exists to SAY which dedicated key reaches a thing, so a focus cursor
+// wandering onto "D Deck" in order to press it, when `d` presses it, is five new
+// stops in the ring for no new reach. The keyboard and the pad already had these
+// five actions; what they never had was a THUMB, and that is what the buttons are
+// for.
+//
+// ⚠ AND IT INHERITS THE HOLE I MEASURED ON `.end-turn` SIX HOURS AGO: a control
+// in CHROME has no focus-cursor story at all, so Enter and pad-Confirm can never
+// arrive on a chip. Here that costs nothing, and it is stated rather than assumed
+// — a chip's whole subject is a binding those two inputs already carry. The day a
+// chip is the ONLY door to something, it has to leave this list.
+const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb, .hint-bar';
 
 // Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
 // button (defBtn), and both are rebindable (Controls tab). Delivery:
-//   'cursor' — handled here (activates the focus cursor).
+//   'cursor' — handled here: it acts on the FOCUSED control, which makes it the
+//              one kind with a press to publish (see the press door below).
+//              Its keyboard key is fixed (`key`, not `defKey`) and its pad
+//              button is rebindable; both are read at press time.
 //   'key'    — the canonical binding is the keyboard key; screens match it via
 //              matchAction(ev, id). A pad press dispatches that same key, so the
 //              screens' own handlers run for controller + keyboard alike.
-// The deck/relics/stats actions jump the in-run overlay straight to that tab
-// (StS2-style dedicated zone keys) instead of only the generic Menu.
+// Deck, Relics, and Stats keep their stable action ids and bindings while their
+// `destination` names only the semantic place the player asked for. Raw
+// Armoury views, trays, selectors, and focus stay in equipment.js.
 export const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
-  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', keyHint: 'Enter', defBtn: 0 },
+  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', key: 'Enter', keyHint: 'Enter', defBtn: 0 },
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Relics', short: 'Relics', kind: 'key', defKey: 'r', defBtn: 4 },
-  { id: 'stats', label: 'Open Stats', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5 },
+  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
+  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
+  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
   { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
   { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
+
+const ACTION_DESTINATIONS = new Set(['cards', 'equipment', 'character']);
+
+/** One exact semantic destination or null. Duplicate, dangling, and unknown
+ * registry rows fail closed rather than silently opening a generic Armoury. */
+export function actionDestination(id) {
+  const rows = ACTIONS.filter((action) => action.id === id && action.destination);
+  if (rows.length !== 1 || !ACTION_DESTINATIONS.has(rows[0].destination)) return null;
+  return rows[0].destination;
+}
+
+// Confirm's keyboard key, read off its own row rather than typed here. It is
+// FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
+// why it is `key` and not `defKey` — the same shape `cancel` already uses.
+const CONFIRM_KEY = ACTIONS.find((a) => a.id === 'confirm').key;
 
 /** Compact label for the hint bar. The full `label` reads as a settings row
  *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
@@ -80,7 +140,7 @@ export function actionShort(id) {
 // A tabbed surface registers its own set here while it is open; the pad poller
 // and the keyboard handler below give buttons 4/5 and `[`/`]` to that set in
 // preference to whatever they are globally bound to. That preference is the
-// whole clause: EldenSpire's defaults already SPEND LB/RB on Relics and Stats
+// whole clause: the defaults already SPEND LB/RB on Armoury and Stats
 // (ACTIONS above, defBtn 4 and 5), so without contextual precedence the two
 // bindings race and the winner is whoever notices first.
 //
@@ -98,6 +158,32 @@ let tabRing = null; // { prev(), next() } | null
 /** setTabRing(ring | null) — a tabbed surface claims the bumpers while open. */
 export function setTabRing(ring) {
   tabRing = ring && typeof ring.next === 'function' && typeof ring.prev === 'function' ? ring : null;
+}
+
+/**
+ * hasTabRing() → is a tab set already holding the bumpers?
+ *
+ * LAW 3 CLAUSE 6, FOR TWO TAB SETS AND ONE PAIR OF BUMPERS. Settings now has
+ * its own tab strip, and Settings is ALSO one tab of the in-run overlay — so on
+ * that door two strips are on screen at once and RB has to mean one thing.
+ *
+ * THE ANSWER IS THE OUTER STRIP, and it is a legibility call, not a technical
+ * one. A player who learns "RB moves the menu tabs" on the Deck tab must not
+ * find that the same button means something else two tabs later; a global
+ * button whose meaning changes with where you are standing is the defect clause
+ * 6 exists to prevent. The inner strip is reached by the focus cursor and by
+ * touch — which is clause 6's own corollary, one level down.
+ *
+ * It is DERIVED, not declared: a strip claims the bumpers only if nothing holds
+ * them. openOverlay claims before it renders any panel, so the overlay's
+ * Settings tab finds them taken and the title-screen modal finds them free. No
+ * caller passes a flag, and nobody has to remember which door they are on.
+ *
+ * NOT A STACK, deliberately. Push/pop would hand the bumpers to the innermost
+ * strip, which is the behaviour this rejects.
+ */
+export function hasTabRing() {
+  return !!tabRing;
 }
 
 const TAB_PREV_BTN = 4; // LB, standard mapping
@@ -176,6 +262,16 @@ export function matchAction(ev, id) {
   return (ev.key || '').toLowerCase() === k.toLowerCase();
 }
 
+/** Resolve the one destination-bearing action matched by this live binding.
+ * Pads and hint chips synthesize that same current key, so every input source
+ * converges here without a second destination table. */
+export function actionDestinationForEvent(ev) {
+  const matches = ACTIONS.filter((action) => action.destination && matchAction(ev, action.id));
+  if (matches.length !== 1) return null;
+  const destination = actionDestination(matches[0].id);
+  return destination ? Object.freeze({ actionId: matches[0].id, destination }) : null;
+}
+
 // Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
 /** Label for the gamepad button currently bound to an action (hint bar).
  *  Glyphs come from the shared PAD_BUTTONS table (uiContent.js) so the hint bar
@@ -208,6 +304,50 @@ export function keyLabel(id) {
   return k.length === 1 ? k.toUpperCase() : k;
 }
 
+/**
+ * actionLabel(id) — THE SYMBOL TO PUT IN FRONT OF A PLAYER, RIGHT NOW.
+ *
+ * ONE HOME FOR "which device is answering", and it had two before: the hint bar
+ * carried `pad ? padLabel(id) || keyLabel(id) : keyLabel(id)` inline and every
+ * other surface in the tree typed the letter. His words are
+ * *"auto map to the current controls configured AND the active device controller
+ * type"* — two derivations, and this function is the second one. The first is
+ * `keyLabel`/`padLabel` reading the live binding maps.
+ *
+ * ⚠ THE BOUNDARY, AND IT IS THE HONEST WORD FOR IT: this answers CONNECTED, not
+ * ACTIVE. `hasGamepad()` is true from the moment a pad is plugged in, so a player
+ * with a pad resting on the desk and both hands on the keyboard reads pad glyphs.
+ * The tree HAS the material for last-used — `doAction` already takes a `source`
+ * and the poller sets `engaged` — and I have not spent it, because switching on
+ * last-used also flips `body.pad-mode`, which hides the cards' quick-play badges,
+ * and a badge that appears and disappears as a player alternates hands is a
+ * legibility call belonging to the seat that owns those badges. `unknown`, named
+ * here rather than in a report nobody reads at the line.
+ */
+export function actionLabel(id) {
+  return (hasGamepad() && padLabel(id)) || keyLabel(id);
+}
+
+/**
+ * actionHint(id) — "Menu (M)", derived, for a `title=` or any prose prompt.
+ *
+ * ⚠ WHY THIS EXISTS AT ALL: three places in this tree had typed the letter.
+ * `screens/combat.js` and `screens/map.js` both shipped `title="Menu (M)"`, and
+ * `components/tutorial.js` shipped *"Done? End Turn (or press E)."* All three are
+ * LAW 1 CLAUSE 7 BREACHES OF THE SHARPEST KIND — a second copy of a binding, in
+ * prose, where the first rebind orphans it and nothing says so. A tooltip that
+ * tells a player to press M when M no longer opens the menu is not stale
+ * decoration; it is the game lying about its own controls, and the player has no
+ * way to tell which of the two is wrong.
+ *
+ * Anything that renders one of these into an attribute should also carry
+ * `data-action-hint="<id>"`, so `refreshHintBars()` can re-derive it in place when
+ * a pad arrives or a binding changes without waiting for the screen to re-render.
+ */
+export function actionHint(id) {
+  return `${actionShort(id)} (${actionLabel(id)})`;
+}
+
 // ---- focus cursor -----------------------------------------------------------
 
 function visible(el) {
@@ -218,17 +358,23 @@ function visible(el) {
   return cs.visibility !== 'hidden' && cs.display !== 'none';
 }
 
-// The active focus scope: the topmost open modal/overlay if any, else the app.
+// The active focus scope: the topmost open veil if any, else the app.
+//
+// The selector and the "which one is topmost" rule used to live here, inline —
+// which made this function the SECOND home of a question overlay.js also
+// answered, in different words and about one veil only. Both now ask
+// components/veil.js; read the header there for what counts as a veil, why
+// `.tut-veil` deliberately does not, and why topmost is paint order rather
+// than DOM order.
 function scopeRoot() {
-  const modals = document.querySelectorAll('.modal-veil');
-  return modals.length ? modals[modals.length - 1] : document.getElementById('app') || document.body;
+  return topVeil() || document.getElementById('app') || document.body;
 }
 
 function focusables() {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
   return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
-    (el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))
+    (el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 
@@ -259,6 +405,18 @@ function findByKey(k) {
 
 function setFocus(el, remember = true) {
   const prev = current();
+  // The cursor moved out from under a live press (an arrow key while Confirm is
+  // held, a re-render restoring focus elsewhere). That is a CANCEL, the same
+  // verdict trackGesture gives a pointer the browser took away: whatever was
+  // filling stops, and no activation follows.
+  //
+  // `pressEl === prev` IS LOAD-BEARING SINCE S7 WENT WIDE. A press on a NAMED
+  // target (End Turn, which the cursor cannot reach) is not standing on the
+  // focused element, so a focus move is not the cursor stepping off it — and
+  // the old unconditional test would have cancelled a held `e` the moment
+  // anything else moved the cursor, which is a hold that silently stops
+  // filling. Only the press under the element LOSING focus is cancelled.
+  if (pressEl && pressEl === prev && pressEl !== el) pressEnd(true);
   if (prev && prev !== el) {
     prev.classList.remove('gp-focus');
     // Focus-mode tooltips: tooltip.js listens for these so controller players
@@ -267,6 +425,12 @@ function setFocus(el, remember = true) {
   }
   if (el) {
     el.classList.add('gp-focus');
+    // ARIA menus and button-like custom controls own both the visual cursor and
+    // DOM focus.  Keeping the two aligned lets the browser deliver native
+    // keyboard activation keys (notably Space) to a role=button reached with
+    // Arrow/D-pad navigation, while Enter/A still uses the unified press path.
+    if (el.closest && (el.closest('[role="menu"]') || el.matches?.('[role="button"]')) && document.activeElement !== el
+      && typeof el.focus === 'function') el.focus();
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
     if (remember) focusKey = keyOf(el);
@@ -282,11 +446,25 @@ export function focusFirst(selector) {
   return !!el;
 }
 
+/** Publish one already-known control through the unified keyboard/pad cursor. */
+export function focusElement(el) {
+  // Some contract probes intentionally mount the component against a minimal
+  // DOM stub with no document-wide selector engine. DOM focus still exercises
+  // their component boundary; the unified cursor exists only in a real page.
+  if (!el || typeof document === 'undefined' || typeof document.querySelectorAll !== 'function'
+    || !focusables().includes(el)) return false;
+  setFocus(el);
+  return true;
+}
+
 function ensureFocus() {
   let el = current();
   if (el && visible(el)) return el;
   const list = focusables();
-  el = list[0] || null;
+  // Preserve the established playfield-first entry point. Flask slots are a
+  // deliberate chrome exception reached by moving upward, not the first stop
+  // merely because the top bar appears first in DOM order.
+  el = list.find((item) => !(item.closest && item.closest(CHROME))) || list[0] || null;
   setFocus(el);
   return el;
 }
@@ -341,8 +519,7 @@ function moveFocus(dir) {
   if (best) setFocus(best);
 }
 
-function activate() {
-  const el = ensureFocus();
+function activateEl(el) {
   if (!el) return;
   if (el.matches('input[type="range"]')) return; // adjusted with left/right instead
   if (el.matches('input[type="text"]')) {
@@ -352,6 +529,181 @@ function activate() {
   // dispatchEvent (not .click()) so SVG map nodes — which lack HTMLElement.click
   // — activate the same as HTML buttons/cards.
   el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+}
+
+function activate() {
+  activateEl(ensureFocus());
+}
+
+// ---- the activation press: the same gesture on all three inputs (S7) --------
+//
+// Constantine, 2026-08-17: "if press to hold is active for certain things for
+// mouse or game pad, it shoudl apply to everything including keyboard as well
+// for those same buttons."
+//
+// A mouse hands a control TWO moments — down and up — and every press-and-hold
+// in this game is built in the span between them. Keyboard and pad handed it
+// ONE: `activate()` fired a synthetic click on keydown and that was the whole
+// press. So a hold was a mouse feature by construction, not by anyone's choice,
+// and a player who cannot use a pointer could not perform one at all.
+//
+// WHICH BUTTON, DERIVED RATHER THAN LISTED. The press is the CONFIRM action and
+// nothing else: `ACTIONS`' `confirm` row is `kind: 'cursor'`, which is this
+// file's own word for "this button acts on the focused control" — i.e. exactly
+// the button whose pointer twin is a press ON that control. Its keyboard key is
+// read off the row (`key: 'Enter'`) and its pad button off `bindings.confirm`
+// AT PRESS TIME, so a rebind carries the hold with it and there is no second
+// copy of the mapping to keep in step. The other rows are `kind: 'key'`: they
+// dispatch a key the SCREENS interpret, they do not press the thing under the
+// cursor, and a hold on them is that screen's question, not this one's.
+//
+// WHO DECIDES WHETHER A PRESS IS A GESTURE — the control, not this module. The
+// two events are CANCELABLE and that is the whole protocol:
+//   gppress    preventDefault => "I took this press; hold my activation."
+//              Nobody listening, or nobody claiming, and the click fires here
+//              and now — byte for byte the pre-door behaviour.
+//   gprelease  preventDefault => "the gesture completed; do NOT activate."
+//              Otherwise the release IS the tap, which is what an early pointer
+//              release has always been.
+// This module therefore knows nothing about holds, durations, or which controls
+// have one, and it can never drift from the set that does.
+let pressEl = null;
+// The action id that opened a live KEY press on a named target, so its own key
+// closes it. Remembered rather than re-derived, for one reason worth the
+// variable: A REBIND CAN LAND BETWEEN THE DOWN AND THE UP. Asking `matchAction`
+// again at keyup would then match nothing, and the press would be left filling
+// forever on a control whose key no longer exists.
+let keyPressAction = null;
+// A mounted screen may own a rebound key before the global press/hold layer.
+// The claim is intentionally a predicate over the real KeyboardEvent: input
+// does not consume it, because the later screen handler still has to answer;
+// it only refuses to arm an earlier, colliding action such as End Turn.
+let screenKeyClaim = null;
+export function setScreenKeyClaim(claim = null) {
+  screenKeyClaim = typeof claim === 'function' ? claim : null;
+  const owned = screenKeyClaim;
+  return () => { if (screenKeyClaim === owned) screenKeyClaim = null; };
+}
+
+// A cold-boot surface may temporarily own the physical press before the focus
+// cursor and screen hotkeys see it. The callback receives a normalized,
+// immutable record and returns true only when it consumed that phase. This is
+// deliberately one slot, not a stack: two first-input owners would recreate
+// the double-activation race the gate exists to prevent.
+let inputGate = null;
+export function setInputGate(gate = null) {
+  inputGate = typeof gate === 'function' ? gate : null;
+  const owned = inputGate;
+  return () => { if (inputGate === owned) inputGate = null; };
+}
+
+function gateInput(input) {
+  return !!inputGate && inputGate(Object.freeze({ ...input })) === true;
+}
+
+function cancelInputGate(family = '') {
+  if (inputGate) inputGate(Object.freeze({ family, kind: 'cancel', phase: 'cancel' }));
+}
+
+// ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
+//
+// A REGISTRATION, NEVER A LIST. `components/holdconfirm.js` registers every
+// control it arms under its action id, in the same act that arms it; this
+// module answers only for ids that are ALSO a `kind: 'key'` row in ACTIONS
+// above. So the set of "keys that hold" is the INTERSECTION OF TWO TABLES
+// nobody has to keep in step — and it is empty for every key that presses
+// nothing, which is most of them.
+const actionControls = new Map();
+
+/** The armed control for an action id. `holdconfirm.js` calls this. */
+export function setActionControl(id, el) {
+  if (el) actionControls.set(id, el);
+  else actionControls.delete(id);
+}
+
+/** Release, but only if this element is still the registered one — a screen
+ *  that re-mounts arms the new control before the old disarmer runs, and an
+ *  unconditional delete there would unregister the LIVE one. */
+export function releaseActionControl(id, el) {
+  if (actionControls.get(id) === el) actionControls.delete(id);
+}
+
+/**
+ * The control this action id should PRESS rather than click, or null.
+ *
+ * THREE CONDITIONS, AND EACH IS READ AT PRESS TIME FROM SOMETHING ELSE'S HOME
+ * rather than remembered here:
+ *   1. the control is still on the page — a screen change is a disarm this
+ *      module never has to be told about;
+ *   2. `data-hold-ms` > 0 — reading the value the machinery already published ON
+ *      THE CONTROL, so the dial is not re-derived here.
+ *
+ *      ⚠ AND THIS CLAUSE IS A REDUNDANT GUARD, NOT THE SWITCH — I called it the
+ *      switch and I was wrong, and the plant aimed at it is what said so. THE
+ *      SWITCH IS `armHold`'s `ms0 > 0`: with the dial off, `begin` declines the
+ *      press, `pressBegin` activates immediately, and one key press commits
+ *      exactly as before. MEASURED — remove this line and holdconfirm.mjs runs
+ *      111 checks and STAYS GREEN, including all four `OFF, one press does…`
+ *      cells. Nothing that ships can tell the two apart.
+ *
+ *      SO WHY IT STAYS. Without it, a dial-off key press reaches the control as
+ *      `activateEl`'s dispatched click instead of the SCREEN's own handler, and
+ *      those differ on exactly one thing: a `disabled` button. Combat's End Turn
+ *      is never disabled (measured — no `.disabled` write in combat.js), but
+ *      co-op's is (`et.disabled = !canEnd`), and NO `?shot=` STATE OPENS A
+ *      CO-OP BOARD. So the difference is real, unreachable by any instrument
+ *      here, and both commits are re-guarded at `onConfirm` anyway.
+ *      **`unknown`, not green** — kept because it makes the off position the
+ *      old path by construction rather than by an argument about re-guards,
+ *      and named here because a line nobody has watched matter is the same
+ *      shape as a check nobody has watched fail. It has NO plant, deliberately:
+ *      a corpus entry that cannot go red is decoration, and Q4 was deleted
+ *      rather than kept green. Whoever finds a door onto co-op should aim one
+ *      here first;
+ *   3. the control is inside the ACTIVE FOCUS SCOPE. This is the veil rule, and
+ *      it is derived from `scopeRoot()` rather than restated: with the draw
+ *      pile or any other veil standing, `.end-turn` is not in scope, this
+ *      module declines the key, and the event reaches the screen's own handler
+ *      which refuses it exactly as it does today. Delete this line and `e`
+ *      ends the turn under an open pile — the defect veil-owns-input.mjs
+ *      exists for, one input over.
+ */
+function pressTarget(id) {
+  const el = actionControls.get(id);
+  if (!el || !el.isConnected) return null;
+  if (!(Number(el.dataset.holdMs) > 0)) return null;
+  const root = scopeRoot();
+  if (!root || !root.contains(el)) return null;
+  return el;
+}
+
+function pressBegin(source, target = null) {
+  if (pressEl) return; // one press at a time
+  // A named target is a control the CURSOR CANNOT REACH (End Turn is in
+  // CHROME); pressing it must not move or invent a focus cursor, so
+  // `ensureFocus` is deliberately not consulted on that path.
+  const el = target || ensureFocus();
+  if (!el) return;
+  const claimed = !el.dispatchEvent(new CustomEvent(PRESS_EVENT, { cancelable: true, detail: { source } }));
+  if (!claimed) { activateEl(el); return; }
+  pressEl = el;
+}
+
+function pressEnd(cancelled = false) {
+  const el = pressEl;
+  // CLEARED EVEN WHEN THERE IS NO LIVE PRESS. A blur, a pad unplug or a focus
+  // move ends the press through the `cancelled` door and never sees the keyup;
+  // leaving the id set would make the guard in onKeydown refuse every later
+  // press for the rest of the session — a hold that stops working and says
+  // nothing, which is the failure mode this whole file is careful about.
+  keyPressAction = null;
+  if (!el) return;
+  pressEl = null;
+  const consumed = !el.dispatchEvent(new CustomEvent(RELEASE_EVENT, { cancelable: true, detail: { cancelled } }));
+  // A control that left the DOM mid-press is not activated on its way out. The
+  // pointer path gets this free (no pointerup arrives at a detached element, so
+  // no click follows); the synthetic path has to say it.
+  if (!consumed && !cancelled && el.isConnected) activateEl(el);
 }
 
 // Left/right on a focused slider nudges its value (keyboard + pad parity).
@@ -370,22 +722,73 @@ function synthKey(key) {
   dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
 }
 
-function doAction(id) {
+function doAction(id, source = 'key') {
   const a = ACTIONS.find((x) => x.id === id);
   if (!a) return;
-  if (a.kind === 'cursor') activate();
+  // 'cursor' means "act on the focused control", so it is the one kind that has
+  // a press to publish. See the press-door block above.
+  if (a.kind === 'cursor') { pressBegin(source); return; }
+  // A 'key' action whose control has a live beat is ALSO a press (S7 wide) —
+  // this is the pad's half of End Turn's hold, and it costs one branch because
+  // the poller already routes every pad button through here.
+  const held = pressTarget(id);
+  if (held) { pressBegin(source, held); return; }
   // Dispatch the CURRENTLY bound key so a pad press stays in sync with keyboard
   // rebinds (screens match by binding via matchAction). Fixed-key actions
   // (cancel) fall back to a.key.
-  else synthKey(keyBindings[id] || a.defKey || a.key);
+  synthKey(keyBindings[id] || a.defKey || a.key);
+}
+
+/**
+ * beginActionPress(id) / endActionPress(cancelled) — A TAP IS AN INPUT.
+ *
+ * Constantine, 2026-08-17: *"all the buttons on those tool tips should also work
+ * and auto map to the current controls configured and the active device
+ * controller type."* The hint bar had been an ADVERTISEMENT — `pointer-events:
+ * none`, `aria-hidden`, five spans naming five keys — so on a touchscreen it
+ * described controls the device does not have and answered to nothing.
+ *
+ * THIS IS `doAction`, NOT A FOURTH DELIVERY PATH, and that is the whole design.
+ * A chip is a THUMB arriving at a binding the keyboard and the pad already reach,
+ * so it enters by the door the pad poller enters by and inherits every rule that
+ * lives behind it, free and un-restated:
+ *   - the CURRENT binding is dispatched, so a rebind moves the chip with the key;
+ *   - `pressTarget` gives the chip a HOLD wherever the action owes one — press
+ *     and hold the End Turn chip and `.end-turn` itself fills under the words,
+ *     short-press and it aborts, exactly as `e` does (S7, six hours old);
+ *   - `scopeRoot()` means a chip is refused while a veil stands, for the same
+ *     reason the key is;
+ *   - the dial at `off` collapses both to one press.
+ * A second implementation here would be a second chance to disagree with all of
+ * that, which is the defect this house is named for.
+ *
+ * ⚠ IT DOES NOT SET `engaged`, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
+ * `engaged` means "this player drives with a keyboard or a pad", and screens use
+ * it to decide whether to plant a focus ring nobody asked for. A thumb on a chip
+ * is the opposite of that evidence. A mouse-only player pressing a chip must not
+ * inherit a focus cursor.
+ *
+ * `cancelled` exists for a pointer the browser takes away mid-press (a scroll, a
+ * drag out of the chip): the same verdict a cancelled hold gets everywhere else
+ * — nothing commits.
+ */
+export function beginActionPress(id) {
+  if (!enabled) return;
+  doAction(id, 'pointer');
+}
+export function endActionPress(cancelled = false) {
+  pressEnd(cancelled);
 }
 
 // ---- keyboard navigation ----------------------------------------------------
 
 // Controls tab: capture the next keypress to rebind a keyboard action.
+// The stable service id lets receipts and browser gates name this ownership
+// boundary without turning its private state into a second public API.
+export const REBIND_CAPTURE_SERVICE_ID = 'rebind-capture-service';
 let keyCapture = null;
-export function captureNextKey(cb) {
-  keyCapture = cb;
+export function captureNextKey(onCommit, { onCancel = null } = {}) {
+  keyCapture = { onCommit, onCancel };
 }
 export function cancelKeyCapture() {
   keyCapture = null;
@@ -397,10 +800,23 @@ function onKeydown(ev) {
     const k = ev.key;
     if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
     ev.preventDefault();
-    ev.stopPropagation();
-    const cb = keyCapture;
+    // This listener and the overlay Escape listener both live on window in the
+    // capture phase. stopPropagation() does not stop a later listener on the
+    // SAME target, so an armed Escape used to bind Escape and then close the
+    // Controls overlay. Capture owns the whole keydown until it settles.
+    ev.stopImmediatePropagation();
+    const capture = keyCapture;
     keyCapture = null;
-    cb(k);
+    if (k === 'Escape') {
+      capture.onCancel?.();
+      return;
+    }
+    capture.onCommit(k);
+    return;
+  }
+  if (gateInput({ family: 'keyboard', kind: 'key', phase: 'down', key: ev.key, repeat: ev.repeat === true })) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
     return;
   }
   if (!enabled) return;
@@ -408,7 +824,7 @@ function onKeydown(ev) {
   const typing = tag === 'INPUT' || tag === 'TEXTAREA';
   const cur = current();
 
-  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'Enter')) {
+  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === CONFIRM_KEY)) {
     engaged = true;
   }
   // Tab cycling, keyboard side. Ahead of everything else for the same reason
@@ -419,6 +835,15 @@ function onKeydown(ev) {
     ev.preventDefault();
     if (ev.key === TAB_NEXT_KEY) tabRing.next();
     else tabRing.prev();
+    return;
+  }
+  // A mounted ARIA menu owns its arrow keys. Let its bubbling handler move DOM
+  // focus once; the unified cursor is synchronized by focusElement/setFocus.
+  // Without this boundary the capture handler and the menu each step, so a
+  // two-row menu wraps straight back to where it started.
+  if (!typing && document.activeElement?.closest?.('[role="menu"]')
+    && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+    engaged = true;
     return;
   }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
@@ -432,18 +857,107 @@ function onKeydown(ev) {
     moveFocus({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[ev.key]);
     return;
   }
-  if (!typing && ev.key === 'Enter') {
+  if (!typing && ev.key === CONFIRM_KEY) {
+    // Autorepeat is ONE press being held, not a stream of presses.
+    //
+    // AND THIS LINE FIXES A DEFECT THAT WAS ALREADY SHIPPED, which is worth the
+    // three lines: a held key is not one keydown, it is the first plus an OS
+    // repeat stream, and every repeat used to run `activate()` again. MEASURED
+    // on ?shot=compendium 1200x730, one focused `.cp-cell`, ONE Enter held for
+    // 600 ms with 17 OS repeats: b968e28 fired that control **18 times**, this
+    // tree fires it **once**. Harmless on the compendium; not harmless on a
+    // control that spends something.
+    // BOUNDARY: that pair is a scratch probe — a receipt, not coverage. No
+    // shipped check watches the repeat count on a gesture-less control;
+    // tools/inspecthold.mjs drives the hold with real repeats but only ever
+    // samples the hand, where the press door already collapses them.
+    if (ev.repeat) { ev.preventDefault(); return; }
     const el = current();
     if (el) {
       ev.preventDefault();
-      activate();
+      pressBegin('key');
+      return;
     }
+  }
+
+  // A screen-owned rebound wins before this layer can arm a colliding live
+  // beat. Do not prevent/stop: the mounted screen's later capture handler owns
+  // the event and will consume it after performing its one action.
+  if (!typing && screenKeyClaim?.(ev)) {
+    if (keyPressAction) {
+      keyPressAction = null;
+      pressEnd(true);
+    }
+    return;
+  }
+
+  // ---- a SCREEN HOTKEY that presses a control with a live beat (S7 wide) ----
+  //
+  // Last, deliberately: navigation, the tab ring and Confirm all get the key
+  // first, and anything this does not claim falls through to the screens' own
+  // handlers untouched. `matchAction` is the SAME question the screens ask, so
+  // a rebind moves the hold with the key and there is no second mapping.
+  //
+  // WHY IT MUST STOP PROPAGATION when it claims: the screen's handler would
+  // otherwise ALSO run and `.end-turn`.click() the button — a synthetic click
+  // that commits immediately, which is the whole defect. Claiming and not
+  // stopping would end the turn AND start a hold.
+  //
+  // AUTOREPEAT FIRST, AND IT IS NOT A TIDY-UP — IT IS THE HOLD. A held key is
+  // the first keydown plus an OS stream at ~30 Hz, and every one of those
+  // repeats is THIS press continuing. Fall through on them and the screen's own
+  // handler answers the second keydown, 33 ms in: combat clicks `.end-turn`, a
+  // synthetic click commits, and the turn ends a third of the way into a hold
+  // that visibly keeps filling. MEASURED — tools/holdconfirm.mjs caught exactly
+  // that: `endTurn: ON, a short key press does NOT end the turn — 1 -> 2`, on a
+  // tree whose every other cell was already green, because a probe that taps
+  // without repeats never reaches this line.
+  if (!typing && keyPressAction && matchAction(ev, keyPressAction)) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    return;
+  }
+  if (!typing && !keyPressAction) {
+    for (const a of ACTIONS) {
+      if (a.kind === 'cursor' || !matchAction(ev, a.id)) continue;
+      const held = pressTarget(a.id);
+      if (!held) break; // no beat on this control — the screens own this key
+      // A repeat with no live press is a key held down from BEFORE this control
+      // was armed (a screen change under a held finger). It is not the start of
+      // a press — there will be no matching keyup for a press that never began
+      // — so it is refused rather than armed.
+      if (ev.repeat) break;
+      ev.preventDefault();
+      ev.stopPropagation();
+      engaged = true;
+      keyPressAction = a.id;
+      pressBegin('key', held);
+      return;
+    }
+  }
+}
+
+// The other half of the Confirm key, and the reason a keyboard can hold at all.
+// Deliberately NOT gated on `enabled`: a press that is already live must end
+// however the world changes, or the control is left filling forever.
+//
+function onKeyup(ev) {
+  if (gateInput({ family: 'keyboard', kind: 'key', phase: 'up', key: ev.key, repeat: false })) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    return;
+  }
+  if (ev.key === CONFIRM_KEY) { pressEnd(); return; }
+  if (keyPressAction && matchAction(ev, keyPressAction)) {
+    keyPressAction = null;
+    pressEnd();
   }
 }
 
 // ---- gamepad polling (started only while a pad is present) -------------------
 
 let rebindCapture = null; // callback awaiting the next pad button (Controls UI)
+let padPressBtn = null; // the button index that opened the live pad press
 
 /** Wait for the next gamepad button press; resolves with its index. */
 export function captureNextButton(cb) {
@@ -460,13 +974,28 @@ function pollPads() {
   for (const pad of pads) {
     if (!pad) continue;
     any = true;
-    const prev = padPrev[pad.index] || [];
     const pressed = pad.buttons.map((b) => b.pressed || b.value > 0.5);
+    if (!Object.hasOwn(padPrev, pad.index)) {
+      padPrev[pad.index] = pressed;
+      continue;
+    }
+    const prev = padPrev[pad.index];
 
     for (let i = 0; i < pressed.length; i++) {
+      // THE RELEASE, which this poller never used to look at. A pad had only
+      // rising edges, so a pad button was a tap and could never be a hold —
+      // the same gap the keyboard had, one input over (S7).
+      if (!pressed[i] && prev[i]) {
+        const releasedAction = actionForButton(i);
+        if (gateInput({ family: 'controller', kind: 'button', phase: 'up', button: i, padIndex: pad.index, action: releasedAction?.id || '' })) continue;
+        if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
+        continue;
+      }
       const rising = pressed[i] && !prev[i];
       if (!rising) continue;
       engaged = true;
+      const gatedAction = actionForButton(i);
+      if (gateInput({ family: 'controller', kind: 'button', phase: 'down', button: i, padIndex: pad.index, action: gatedAction?.id || '' })) continue;
       if (rebindCapture) {
         const cb = rebindCapture;
         rebindCapture = null;
@@ -475,10 +1004,16 @@ function pollPads() {
       }
       // CONTEXTUAL PRECEDENCE (Law 3 clause 2), and the order is the rule:
       // an open tab set takes LB/RB BEFORE actionForButton() can hand them to
-      // Relics/Stats. Without this line the defaults win and the law is prose.
+      // Armoury/Stats. Without this line the defaults win and the law is prose.
       if (tabRingButton(i)) continue;
       const a = actionForButton(i);
-      if (a) doAction(a.id);
+      // Remember WHICH button opened the press so its own release closes it —
+      // never whichever button happens to come up next.
+      // `if (pressEl)` and no longer `a.kind === 'cursor'`: a 'key' action whose
+      // control has a live beat opens a press too (S7 wide), and its own button
+      // must be the one that closes it. pressBegin refuses while a press is
+      // live, so a set pressEl here was set by THIS call.
+      if (a) { doAction(a.id, 'pad'); if (pressEl) padPressBtn = i; }
       // D-pad (12–15) navigates regardless of rebinds.
       else if (i === 12) moveFocus('up');
       else if (i === 13) moveFocus('down');
@@ -491,6 +1026,7 @@ function pollPads() {
     const ax = pad.axes[0] || 0;
     const ay = pad.axes[1] || 0;
     if (!rebindCapture && (Math.abs(ax) > DEADZONE || Math.abs(ay) > DEADZONE)) {
+      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });
       if (lastNav <= 0) {
         lastNav = Math.round(REPEAT_MS / POLL_MS);
         if (Math.abs(ax) > Math.abs(ay)) moveFocus(ax > 0 ? 'right' : 'left');
@@ -498,7 +1034,11 @@ function pollPads() {
       }
     }
   }
-  if (!any) stopPolling(); // no pads → idle until one reconnects
+  // A pad unplugged mid-press sends no release. Cancel, don't strand.
+  if (!any) {
+    if (padPressBtn != null) { padPressBtn = null; pressEnd(true); }
+    stopPolling(); // no pads → idle until one reconnects
+  }
 }
 
 function startPolling() {
@@ -520,6 +1060,13 @@ export function initInput({ getSettings } = {}) {
   setBindings(s.bindings || {});
   setKeyBindings(s.keyBindings || {});
   addEventListener('keydown', onKeydown, true);
+  addEventListener('keyup', onKeyup, true);
+  // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
+  // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
+  addEventListener('blur', () => {
+    cancelInputGate();
+    pressEnd(true);
+  });
 
   // Focus memory: after a re-render drops the cursor, restore it to the same
   // logical element (by key) if it still exists — so navigation doesn't snap
@@ -544,7 +1091,17 @@ export function initInput({ getSettings } = {}) {
     document.body.classList.add('has-gamepad');
     startPolling();
   });
-  addEventListener('gamepaddisconnected', () => {
+  addEventListener('gamepaddisconnected', (event) => {
+    cancelInputGate('controller');
+    // A reconnect is a new observation epoch. Forget the disconnected pad's
+    // last sample so a button already held on reconnect is seeded instead of
+    // being invented as a fresh rising edge.
+    const disconnectedIndex = event.gamepad?.index;
+    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];
+    else {
+      const connected = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+      for (const index of Object.keys(padPrev)) if (!connected[Number(index)]) delete padPrev[index];
+    }
     if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
       document.body.classList.remove('has-gamepad');
     }

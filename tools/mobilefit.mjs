@@ -22,9 +22,28 @@
 //      (a) is Sunna's card verbatim. (b) is the thing (a) is a proxy FOR, and it
 //      survives a design baseline that changes. A fix that satisfies (a) by
 //      redefining designW and still bleeds is caught by (b), and only by (b).
-//   3. #23's second, independent mechanism: page-level scroll travel. Reported,
-//      never asserted — whether a phone SHOULD scroll the board is a design call
-//      and not this tool's to make.
+//   3. #23's second, independent mechanism: page-level scroll travel, PAGE-LEVEL
+//      AND NOTHING ELSE. It is still reported below and it is still not this
+//      tool's assertion — but read the next paragraph before citing it.
+//
+// WHAT THIS TOOL'S HORIZONTAL NUMBER IS NOT. `docOverflowX` is
+// `documentElement.scrollWidth - clientWidth`, and this app is `overflow:
+// hidden` at the root, so it is ZERO BY CONSTRUCTION — measured across 14
+// surfaces x 5 shapes at cd3da94, the document never once appeared as a
+// scroller. The `clipped()` walk below then deliberately skips any element with
+// a scrolling ancestor, and the bleed set is `.combat *`. So a green here is
+// SILENCE about whether a scroller three elements down moves sideways, not
+// coverage of it — the act map scrolls 401px across at 390x844 on the same tree
+// where every number in this file is green. That axis has its own home and its
+// own law: tools/axisfit.mjs, per SCROLL CONTAINER, over every ?shot= surface.
+// This file keeps bleed; that one keeps travel; neither restates the other.
+//
+// The sentence that used to sit at item 3 — "whether a phone SHOULD scroll the
+// board is a design call and not this tool's to make" — is DELETED, not
+// amended. Constantine made the design call on 2026-08-08 and the family wrote
+// it down as Law 5 (commons/laws.md, canonical, not restated here). An excuse
+// that outlives its defect is how a suite goes green over a bug, and this file
+// already deleted one knownOpen entry for exactly that reason.
 //
 // WHY LOCAL PX APPEAR NEXT TO VISUAL PX EVERYWHERE BELOW
 //   The app is zoomed by `body { zoom: var(--ui-zoom) }`. Hit-testing and
@@ -54,6 +73,7 @@
 //   It hit-tests reachability only; it never judges legibility.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -61,6 +81,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
+// tool measured a two-merge-stale bundle and printed OK once already. One home:
+// tools/artifact-provenance.mjs. Facts only; it never fails a run.
+import { printArtifactProvenance } from './artifact-provenance.mjs';
+printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 const BROWSERS = [
   process.env.CHROME,
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -88,6 +113,7 @@ const MATRIX_SHAPES = [
   { w: 412, h: 915, d: 2.6, mobile: true, tag: 'portrait' },
   { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait' },
   { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape' },
+  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome' },
 ];
 const MATRIX = MATRIX_SHAPES.flatMap((v) =>
   ['s', 'm', 'l', 'xl'].map((size) => ({ ...v, tag: `${v.tag}-${size}`, cell: true, known: {}, settings: { uiScale: size } })));
@@ -101,12 +127,11 @@ const SHAPES = [
   { w: 915, h: 412, d: 2.6, mobile: true, tag: 'landscape', known: {} },
   // Landscape as a phone actually reports it while the browser chrome is
   // showing. 844x390 is the DEVICE; innerHeight is smaller whenever the address
-  // bar is up, and "landscape already works" is a claim about the shape a player
-  // is actually in. ~46px is Chrome-on-Android's landscape bar; the number is a
-  // stand-in, so this row is a SENSITIVITY reading, not a device.
-  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {},
-    knownOpen: { what: 'landscape degrades as the browser chrome takes height',
-                 why: 'END TURN 43/45 (2 points under .pile.discard), .energy-orb 36/45, .hand-area 17.27px past the bottom edge. Present on dev at bf18a2e and unchanged by the portrait work — this is the WIDE layout, which this branch does not touch. Unfiled: Sunna to confirm, Marina to sequence.' } },
+  // bar is up. ~46px is Chrome-on-Android's landscape bar, so the number is a
+  // sensitivity reading rather than a device claim. #27 closed the old
+  // knownOpen here with the derived short-wide composition; it is now a normal
+  // blocking row and also joins every fixed-size matrix cell above.
+  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {} },
   // TABLET PORTRAIT — Vira's corpus, EldenSpire#24. Every portrait shape above
   // is <=412px wide and there was NO portrait shape between 520 and 1200px, so
   // the whole band where the zoom picks the narrow baseline and the layout
@@ -209,27 +234,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, userDataDir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, [
-      '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
-      '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
-      '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files',
-      '--no-first-run', 'about:blank',
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const onData = (d) => {
-      err += d;
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
-      if (m) res({ child, wsUrl: m[1] });
-    };
-    child.stderr.on('data', onData);
-    child.stdout.on('data', onData);
-    child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-500)}`)), 12000);
-  });
-}
 
 // ------------------------------------------------------------- page probes
 //
@@ -282,9 +286,11 @@ const FIT = `(() => {
   // was no attribute at all to catch the disagreement.
   const attr = de.getAttribute('data-layout');
   const nmax = ui && ui.narrowMax ? ui.narrowMax : null;
-  const impliedNarrow = nmax == null ? null : (innerWidth / z) <= nmax + 0.001;
+  // #39: composition mode is owned by viewport width. Zoom remains height-aware,
+  // so comparing local width here would reintroduce the transient height flip.
+  const impliedNarrow = nmax == null ? null : innerWidth <= nmax + 0.001;
   const property = {
-    attr, impliedNarrow, rendered: narrowActive, localW: innerWidth / z, nmax,
+    attr, impliedNarrow, rendered: narrowActive, localW: innerWidth / z, viewportW: innerWidth, nmax,
     agree: attr != null && impliedNarrow != null
       && (attr === 'narrow') === impliedNarrow
       && (attr === 'narrow') === narrowActive,
@@ -398,7 +404,6 @@ const TURN = `(() => { const c = window.__combat; return c ? { turn: c.turn, ene
 // ---------------------------------------------------------------------- main
 async function main() {
   if (!browserPath) { console.error('mobilefit: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'mobilefit-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -411,7 +416,13 @@ async function main() {
   if (shotsDir) mkdirSync(resolve(shotsDir), { recursive: true });
   console.log(`mobilefit — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'mobilefit-', browser: browserPath,
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl);
   await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -488,7 +499,7 @@ async function main() {
     console.log(`    narrow layout active: ${fit.narrowActive ? 'YES (.hand-area is a grid)' : 'no (wide layout)'}`);
     if (fit.property && fit.property.attr != null) {
       const P = fit.property;
-      ok(P.agree, `${name}: #24 PROPERTY — baseline and layout agree: data-layout=${P.attr} · arithmetic ${n2(P.localW)} <= ${P.nmax} is ${P.impliedNarrow} · rendered ${P.rendered ? 'narrow' : 'wide'}`);
+      ok(P.agree, `${name}: #24/#39 PROPERTY — width-owned layout agrees: data-layout=${P.attr} · viewport ${n2(P.viewportW)} <= ${P.nmax} is ${P.impliedNarrow} · rendered ${P.rendered ? 'narrow' : 'wide'}`);
     } else {
       ok(false, `${name}: #24 PROPERTY — <html data-layout> is absent, so nothing ties the zoom's baseline to the rendered layout`);
     }
@@ -504,10 +515,13 @@ async function main() {
         const shown = fit.literal.all.map((c) => `${c.name} ${c.w} -> ${n2(c.lhs)}${c.fits ? ' FITS' : ''}`).join(' · ');
         ok(fit.literal.holds, `${name}: #23 (a) LITERAL — the applied zoom ${fit.z} fits a baseline the app is drawn for: ${shown} <= innerWidth ${fit.literal.rhs}`);
       }
-      ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the document horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)})`);
+      // KEPT, AND NAMED FOR WHAT IT IS. This assertion is about the DOCUMENT.
+      // It cannot fail while the root is overflow:hidden, so passing it is not
+      // evidence about any scroller inside the app — tools/axisfit.mjs owns that.
+      ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the DOCUMENT horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)}; says nothing about a scroll container inside it — axisfit.mjs)`);
       ok(fit.bleed.length === 0, `${name}: #23 (b) OBSERVATIONAL — no required element crosses a viewport edge${fit.bleed.length ? ` (${fit.bleed.map((b) => `${b.sel} by ${n2(b.worst)}px`).join(', ')})` : ''}`);
     }
-    console.log(`    page scroll travel: ${n2(fit.pageScrollY)}px vertical, ${n2(fit.docOverflowX)}px horizontal · worst horizontal bleed on the board: ${n2(fit.worstBleed)}px (${fit.worstBleedSel})`);
+    console.log(`    page scroll travel: ${n2(fit.pageScrollY)}px vertical, ${n2(fit.docOverflowX)}px horizontal (DOCUMENT ONLY — zero by construction here; per-container travel is tools/axisfit.mjs) · worst horizontal bleed on the board: ${n2(fit.worstBleed)}px (${fit.worstBleedSel})`);
 
     const grids = {};
     for (const sel of CONTROLS) {
@@ -571,7 +585,7 @@ async function main() {
   if (only && !matchedOnly) {
     console.error(`\nmobilefit: --only ${only} matched no shape. Nothing was tested, so this is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}${v.settings ? '-' + Object.values(v.settings).join('-') : ''}`).join(', ')}`);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
   // EldenSpire#26's removal condition is a COUNT, so the tool prints the count
@@ -606,7 +620,7 @@ async function main() {
   for (const f of fails) console.log(`    - ${f}`);
 
   cdp.close();
-  child.kill();
+  await dropBrowser();
   if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }

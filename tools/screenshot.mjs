@@ -1,13 +1,14 @@
 // tools/screenshot.mjs — capture real screenshots of the game into docs/preview/.
 //
 // Serves the project on a local port, then drives headless Chrome/Edge through
-// the app's ?shot= states (see main.js): title, map (a fresh seeded run), and
+// the app's ?shot= states (see main.js): startup, title, map (a fresh seeded run), and
 // combat (first fight of that run). No dependencies beyond a local Chrome/Edge.
 //
-//   node tools/screenshot.mjs            → docs/preview/{title,map,combat}.png
+//   node tools/screenshot.mjs            → docs/preview/{startup,title,map,combat,...}.png
 //   node tools/screenshot.mjs --out DIR  → capture into DIR instead
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,7 +27,8 @@ const BROWSERS = [
 ];
 
 const SHOTS = [
-  { name: 'title', query: '' },
+  { name: 'startup', query: '?shot=startup' },
+  { name: 'title', query: '?shot=title' },
   { name: 'map', query: '?shot=map' },
   { name: 'combat', query: '?shot=combat' },
   { name: 'fx', query: '?shot=fx' }, // combat FX posed frozen mid-animation
@@ -62,23 +64,27 @@ const { server, port } = await serve({ root: ROOT, port: 8123, open: false });
 // IMPORTANT: async spawn, not spawnSync — the page is served by THIS process,
 // so a synchronous spawn would block the event loop and deadlock Chrome's
 // requests against our own server.
-function capture(shot) {
+// ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+// Chrome's own TMPDIR inside it, and removes it whatever happens. This function
+// launches ONE BROWSER PER SHOT and passed no `--user-data-dir`, so every shot
+// stranded a `/tmp/.org.chromium.Chromium.*` — the single densest source of the
+// 2208 measured on this box. `awaitEndpoint` is off: one-shot `--screenshot=`
+// never prints a DevTools endpoint, it writes a file and exits.
+async function capture(shot) {
   const out = resolve(outDir, `${shot.name}.png`);
+  const { child, close: dropBrowser } = await launchBrowser({
+    prefix: 'shot-', browser, headless: '--headless=new', awaitEndpoint: false,
+    args: ['--window-size=1440,860', '--virtual-time-budget=8000', `--screenshot=${out}`],
+    urlArg: `http://localhost:${port}/${shot.query}`,
+  });
   return new Promise((done) => {
-    const child = spawn(browser, [
-      '--headless=new',
-      '--disable-gpu',
-      '--window-size=1440,860',
-      '--virtual-time-budget=8000',
-      `--screenshot=${out}`,
-      `http://localhost:${port}/${shot.query}`,
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     child.stdout.on('data', (d) => (output += d));
     child.stderr.on('data', (d) => (output += d));
-    const killer = setTimeout(() => child.kill(), 30000);
+    const killer = setTimeout(() => { dropBrowser(); }, 30000);
     child.on('close', () => {
       clearTimeout(killer);
+      dropBrowser();
       // Chrome can exit 0 even when the write fails — trust its own report.
       const ok = /bytes written to file/.test(output) && existsSync(out);
       console.log(`  ${ok ? '✓' : '✗'} ${shot.name} → ${out}`);
@@ -87,6 +93,7 @@ function capture(shot) {
     });
     child.on('error', (e) => {
       clearTimeout(killer);
+      dropBrowser();
       console.error(`  ✗ ${shot.name}: ${e.message}`);
       done(false);
     });

@@ -6,6 +6,8 @@
 #
 #   bash tools/palette-check.sh              run, print evidence, gate
 #   bash tools/palette-check.sh --plates DIR also write the fixture PNGs there
+#   bash tools/palette-check.sh --selftest   re-run the three-exit-code proof below,
+#                                            by planting in a real copy of this tree
 #
 # It runs three instruments, in increasing cost, and keeps a BROKEN INSTRUMENT and a
 # REAL FINDING ABOUT THE ART on separate exit codes — conflating them is how a content
@@ -64,7 +66,21 @@
 #   exit code, this script has stopped doing its only job and goes. Do not repair
 #   it by adding a flag.
 #
-# THAT TEST IS RUN, NOT ASSERTED. I ran it 2026-07-27 in a throwaway `git archive`
+# THAT TEST IS RUN, NOT ASSERTED — AND SINCE 2026-08-15 IT IS RE-RUN BY `--selftest`
+# RATHER THAN REMEMBERED. What follows is the original observation, and it was a
+# ONE-OFF: a hand procedure in a throwaway tree, recorded in this comment and
+# never runnable again. Under SOP 2's drift clause a ref-pinned observation is
+# `unknown (drifted)` at every later ref, so by the time Vira's doors audit ran
+# (2026-08-14) this file's evidence had rotted — and the audit filed it under
+# HARNESS/exempt, which is a second thing to correct: this script's whole output
+# is an exit code with a five-way contract. It asserts, therefore it is a check,
+# therefore the instrument rule binds it. Both corrections are mine; the file is
+# mine. `--selftest` plants the same three states in a real copy of the tree and
+# requires the same three exit codes, so the paragraph below is now a description
+# of something a reader can watch happen instead of something they must believe.
+#
+# THE ORIGINAL OBSERVATION, kept because it is the record of why the split exists:
+# I ran it 2026-07-27 in a throwaway `git archive`
 # extraction of HEAD with these three files copied in, and observed THREE DISTINCT
 # exit codes — so the split is measured, not a claim in a comment:
 #
@@ -85,6 +101,92 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROBE="$DIR/palette-probe.html"
 PLATE_DIR=""
 [ "${1:-}" = "--plates" ] && { PLATE_DIR="${2:?--plates needs a directory}"; mkdir -p "$PLATE_DIR"; }
+
+# ── --selftest — THE THREE-EXIT-CODE PROOF, RE-RUN INSTEAD OF REMEMBERED ──────
+#
+# The known-bads are real edits to the real files, in a COPY OF THIS WHOLE TREE
+# — not a fixture, not a stub. Each arm runs the UNMODIFIED palette-check.sh from
+# that copy, so every stage the real run performs runs: python's selfcheck maths,
+# Chromium rendering the shipped .webp plates through a canvas, the evidence
+# block parsed out of the DOM, the determinism re-run, and the source audit over
+# the real outfits.csv. The copy exists so the working tree is never edited; the
+# plants themselves are exactly the ones a careless commit would make.
+#
+# WHY A COPY AND NOT AN in-place PLANT+RESTORE: this script's stage 2 shells out
+# to a browser and its stage 3 to python, and a plant that has to be restored
+# after a browser crash is a plant that can leave the repo broken. A copy cannot.
+if [ "${1:-}" = "--selftest" ]; then
+  ROOT="$(cd "$DIR/.." && pwd)"
+  WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+  echo "palette-check --selftest — the exit-code split, re-measured by planting in a real tree copy."
+  echo "  source tree $ROOT"
+  echo "  work        $WORK"
+  echo
+  cp -r "$ROOT/tools" "$WORK/tools"
+  mkdir -p "$WORK/content" "$WORK/assets"
+  cp -r "$ROOT/content/source" "$WORK/content/source"
+  cp -r "$ROOT/assets/equipment" "$WORK/assets/equipment"
+
+  BAD=0
+  arm() { # arm <name> <expected-exit> <why>
+    local name="$1" want="$2" why="$3"
+    local out rc
+    out="$(bash "$WORK/tools/palette-check.sh" 2>&1)"; rc=$?
+    if [ "$rc" -eq "$want" ]; then
+      echo "  $name: exit $rc as required — $why"
+      echo "$out" | grep -E 'REFUTED_IDS|CHECKS [0-9]+|SOURCE AUDIT|closest on' | head -3 | sed 's/^/      /'
+    else
+      BAD=$((BAD+1))
+      echo "  $name: WANTED exit $want, GOT $rc — $why"
+      echo "$out" | tail -5 | sed 's/^/      /'
+    fi
+  }
+
+  # ARM 1 — INSTRUMENT BROKEN, ART UNTOUCHED. D10 is the probe's positive
+  # control: two flat, well-saturated, genuinely different colours must read as
+  # different. Inverting its predicate (satHue > 90 -> > 900) makes the control
+  # refuse a case it was built to accept. A broken instrument must never be
+  # allowed to emit a verdict about the art, so the run must STOP at stage 2.
+  sed -i 's/satHue > 90 \&\& satShift < 0.5)/satHue > 900 \&\& satShift < 0.5)/' "$WORK/tools/palette-probe.html"
+  arm "instrument (exit 1)" 1 "D10's positive control inverted in palette-probe.html; the run must stop before judging the art"
+  cp "$ROOT/tools/palette-probe.html" "$WORK/tools/palette-probe.html"
+
+  # ARM 2 — INSTRUMENTS CLEAN, THE ART COLLIDES. This is the UNMODIFIED tree, and
+  # nothing is planted: reaver default|warden really are painted alike today. The
+  # known-bad for this arm is the shipped content itself.
+  arm "art (exit 4)" 4 "the tree as it stands — reaver default|warden closest on 3 of 4 materials, unplanted"
+
+  # ARM 3 — BOTH CLEAN. Warden repainted away from default, in the real CSV, by
+  # the real authoring door. This is the arm that matters most: it proves exit 4
+  # is a FINDING about these palettes and not a permanent red everyone learns to
+  # ignore. If this one cannot reach 0, the exit-code split has stopped meaning
+  # anything and this script's own removal condition has fired.
+  sed -i 's/^warden,reaver,Warden Mail,3F4C5A,64798E,3A3226,24272A,/warden,reaver,Warden Mail,5B3F7A,8A64B0,4A3A5E,2E2436,/' "$WORK/content/source/outfits.csv"
+  arm "repaint (exit 0)" 0 "warden's four authored hexes moved to a violet in outfits.csv; instruments and art both clean"
+
+  echo
+  cat <<'DOORBLOCK'
+DOOR: every plant above is an edit to a REAL FILE in a real copy of this tree, and each arm runs the
+      UNMODIFIED tools/palette-check.sh from that copy. The known-bad travels python's selfcheck, the
+      browser rendering the shipped .webp plates through a canvas, the DOM evidence block, the
+      determinism re-run and the source audit over the real outfits.csv. Nothing is handed to a
+      function and no verdict here is computed by the selftest.
+NOT PASSED: exit 2 (no evidence block) and exit 3 (determinism lost) have NO plant — they are declared
+      states with no known-bad, so they remain `unknown`, not green. Exit 127 (no browser) likewise.
+      This proves the 1 / 4 / 0 split, which is the split the removal condition is about.
+BOUNDARY: one Linux box, one Chromium, the authored hex and the shipped plates as they stand. Silent
+      on whether any pair READS as two suits at in-game size — that still needs an eye, as stage 3 says.
+DOORBLOCK
+  if [ "$BAD" -eq 0 ]; then
+    echo
+    echo "SELFTEST: 3/3 arms produced their required exit code — the 1/4/0 split is measured, not remembered."
+    exit 0
+  fi
+  echo
+  echo "SELFTEST: $BAD arm(s) wrong. If exit 1 and exit 4 have become the same number, this script has"
+  echo "stopped doing its only job and its removal condition has fired. Do not repair it by adding a flag."
+  exit 1
+fi
 
 echo "=== 1/3  pure maths (no Blender, no browser) ==="
 if ! python3 "$DIR/palette-audit.py" --selfcheck; then

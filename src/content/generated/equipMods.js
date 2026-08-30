@@ -102,6 +102,28 @@ export const equipMods = [
     "blurb": "Burn the card applies."
   },
   {
+    "field": "frost",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "frost",
+    "label": "Frost",
+    "clause": "Apply {frost} Frost.",
+    "blurb": "Frost build-up the card applies."
+  },
+  {
+    "field": "insanity",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "insanity",
+    "label": "Insanity",
+    "clause": "Apply {insanity} Insanity.",
+    "blurb": "Insanity build-up the card applies."
+  },
+  {
     "field": "strength",
     "scope": "run",
     "apply": "startStatus",
@@ -144,5 +166,38 @@ export const equipMods = [
     "label": "Max HP",
     "clause": "",
     "blurb": "Added to your maximum HP for the run."
+  },
+  {
+    "field": "maxMana",
+    "scope": "run",
+    "apply": "maxMana",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Max Mana",
+    "clause": "",
+    "blurb": "Added to your maximum Mana for the run."
+  },
+  {
+    "field": "maxStamina",
+    "scope": "run",
+    "apply": "maxStamina",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Max Stamina",
+    "clause": "",
+    "blurb": "Added to your maximum Stamina for the run."
+  },
+  {
+    "field": "swapCost",
+    "scope": "run",
+    "apply": "swapCost",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Swap cost",
+    "clause": "",
+    "blurb": "Changed cost to switch armament sets mid-fight."
   }
 ];

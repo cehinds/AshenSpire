@@ -1,0 +1,177 @@
+{
+  "schema": "agentops/transitions/v1",
+  "policy_version": "1.0.0",
+  "principle": "Lifecycle and delivery facts are distinct and advance only through permitted actors past their guards. A failed guard stops only its own transition; unrelated reversible work continues. Protected transitions (integration, deployment, release, and irreversible or security boundaries) admit only Owner or deputy actors, never a maker or QA reviewer acting alone.",
+  "states": [
+    "proposed",
+    "assigned",
+    "in-progress",
+    "local",
+    "qa-review",
+    "accepted",
+    "pushed",
+    "pr-open",
+    "dev-integrated",
+    "hosted-verified",
+    "resolved",
+    "released"
+  ],
+  "protected_states": [
+    "pushed",
+    "pr-open",
+    "dev-integrated",
+    "hosted-verified",
+    "released"
+  ],
+  "transitions": [
+    {
+      "from": "proposed",
+      "to": "assigned",
+      "guard": "contract-ready + acknowledged",
+      "permitted_actor_roles": [
+        "help-desk",
+        "it-manager-iii"
+      ],
+      "protected": false
+    },
+    {
+      "from": "assigned",
+      "to": "in-progress",
+      "guard": "writer-lease-held + exclusive-paths",
+      "permitted_actor_roles": [
+        "maker",
+        "it-manager-iii",
+        "it-support",
+        "qa-independent",
+        "data-architecture-lead",
+        "project-management-lead",
+        "help-desk",
+        "team-lead"
+      ],
+      "protected": false
+    },
+    {
+      "from": "in-progress",
+      "to": "local",
+      "guard": "local-commit-on-isolated-branch",
+      "permitted_actor_roles": [
+        "maker",
+        "it-manager-iii",
+        "it-support",
+        "qa-independent",
+        "data-architecture-lead",
+        "project-management-lead",
+        "help-desk",
+        "team-lead"
+      ],
+      "protected": false
+    },
+    {
+      "from": "local",
+      "to": "qa-review",
+      "guard": "frozen-exact-head",
+      "permitted_actor_roles": [
+        "maker",
+        "it-manager-iii",
+        "team-lead"
+      ],
+      "protected": false
+    },
+    {
+      "from": "qa-review",
+      "to": "accepted",
+      "guard": "independent-qa-pass at exact head",
+      "permitted_actor_roles": [
+        "qa-independent"
+      ],
+      "protected": false
+    },
+    {
+      "from": "accepted",
+      "to": "pushed",
+      "guard": "independence-PASS + fresh-base",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "pushed",
+      "to": "pr-open",
+      "guard": "normal-reviewable-PR",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "pr-open",
+      "to": "dev-integrated",
+      "guard": "required-review + CI-green",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "dev-integrated",
+      "to": "hosted-verified",
+      "guard": "exact-SHA hosted evidence",
+      "permitted_actor_roles": [
+        "it-manager-iii"
+      ],
+      "protected": true
+    },
+    {
+      "from": "hosted-verified",
+      "to": "resolved",
+      "guard": "five-role acceptance ledger",
+      "permitted_actor_roles": [
+        "it-manager-iii",
+        "project-management-lead"
+      ],
+      "protected": false
+    },
+    {
+      "from": "resolved",
+      "to": "released",
+      "guard": "Gate-F promotion packet + owner decision",
+      "permitted_actor_roles": [
+        "owner"
+      ],
+      "protected": true
+    }
+  ],
+  "rules": {
+    "known_states": "Every transition from/to must be a declared state.",
+    "protected_actor": "A transition into a protected_state, or any transition marked protected, must not permit maker or qa-independent as an actor; only owner or it-manager-iii (and only owner for release).",
+    "failed_guard_scope": "A failed guard blocks only its own transition."
+  },
+  "legacy_values": [
+    {
+      "legacy": "READY FOR QA",
+      "canonical_treatment": "Transition through CANDIDATE FROZEN, then FUNCTIONAL QA."
+    },
+    {
+      "legacy": "WAITING ON MAIN",
+      "canonical_treatment": "WAITING ON DECISION with decision_owner IT Manager III; Main is retained only as the legacy value."
+    },
+    {
+      "legacy": "WAITING ON CONSTANTINE",
+      "canonical_treatment": "WAITING ON DECISION with decision_owner Constantine, routed through the IT Manager III."
+    },
+    {
+      "legacy": "CLOSED",
+      "canonical_treatment": "Decide explicitly between RESOLVED and CANCELLED; do not preserve as an ambiguous terminal synonym."
+    },
+    {
+      "legacy": "RELEASED",
+      "canonical_treatment": "Record as a separate release fact, never a workflow replacement."
+    },
+    {
+      "legacy": "READY FOR MAIN",
+      "canonical_treatment": "Compatibility token that routes to the IT Manager III role."
+    }
+  ],
+  "legacy_rule": "Historical entries keep their original text and gain a mapped canonical event. Old evidence is never rewritten to make it appear the new lifecycle already existed."
+}

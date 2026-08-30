@@ -13,6 +13,7 @@ export const act2Enemies = [
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '♞',
     moves: {
       thrust: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
@@ -30,6 +31,7 @@ export const act2Enemies = [
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚕',
     moves: {
       scalpel: { intent: 'attack', damage: 7, weight: 40 },
@@ -53,6 +55,7 @@ export const act2Enemies = [
     name: 'Stitched Hound',
     hp: [24, 28],
     poiseMax: 8,
+    tags: ['undead', 'beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐩',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
@@ -70,6 +73,7 @@ export const act2Enemies = [
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪆',
     moves: {
       dart: { intent: 'attack', damage: 4, hits: 2, weight: 50 },
@@ -86,11 +90,23 @@ export const act2Enemies = [
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
-      slam: { intent: 'attack', damage: 10, weight: 40 },
-      fortify: { intent: 'block', block: 12, weight: 35, maxConsecutive: 1 },
-      crush: { intent: 'attack', damage: 14, weight: 25, maxConsecutive: 1 },
+      slam: { intent: 'attack', damage: 10, weight: 30 },
+      fortify: { intent: 'block', block: 12, weight: 25, maxConsecutive: 1 },
+      crush: { intent: 'attack', damage: 14, weight: 20, maxConsecutive: 1 },
+      // The player-side door into Frost (Rune, 2026-08-08). This act's own
+      // header already states the design — "the first enemies that turn YOUR
+      // mechanics against you (Bleed and Blight applied to the player)" — and
+      // Frost was the one build-up with no enemy behind it. Living Armor is
+      // already tinted var(--frost) and is `construct`, which is NOT in Frost's
+      // resistance tags, so it can seed the meter without shrugging it off
+      // itself. Numbers PROVISIONAL, like the row's.
+      rimeCrush: {
+        intent: 'attack', damage: 8, weight: 25, maxConsecutive: 1,
+        effects: [{ op: 'applyStatus', target: 'player', status: 'frost', stacks: 3 }],
+      },
     },
   },
 
@@ -102,6 +118,7 @@ export const act2Enemies = [
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🤺',
     firstMove: 'enGarde',
     moves: {
@@ -123,6 +140,7 @@ export const act2Enemies = [
     name: 'The Stitched King',
     hp: [195, 195],
     poiseMax: 34,
+    tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👑',
     firstMove: 'courtlyDecree',
     moves: {

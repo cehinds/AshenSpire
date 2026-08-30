@@ -1,0 +1,72 @@
+name: dev preview
+
+# GitHub Pages serves exactly one source per repository, and this repository's
+# is `main` (decision 0005; switching it is owner-exclusive and needs a recorded
+# rollback). So `dev` has no hosted URL, and Gate B's hosted verification cannot
+# complete for a dev delivery.
+#
+# This is the workable substitute: every push to `dev`, and every PR targeting
+# it, builds nothing — the Hub and HUD are already generated and committed — and
+# attaches the owner-facing surfaces as a downloadable artifact, alongside a
+# verification that they are in sync with the control plane at that exact SHA.
+#
+# It is deliberately NOT a deployment. It publishes nothing, touches no ref, and
+# claims no Pages authority. Gate B still records hosted verification as UNKNOWN
+# for a dev SHA; this makes the artifact inspectable in the meantime.
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: dev-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # An artifact of a drifted view would be worse than none: it would look
+      # authoritative while disagreeing with the state it reports on.
+      - name: Verify the surfaces match the control plane at this SHA
+        run: node .agentops/tools/opsctl.mjs verify
+
+      - name: Collect the owner-facing surfaces
+        run: |
+          set -euo pipefail
+          mkdir -p preview
+          cp -r review-approval-hub preview/review-approval-hub
+          cp -r hud preview/hud
+          cp AshenSpire.html preview/AshenSpire.html
+          cp index.html preview/index.html
+          {
+            echo "AshenSpire dev preview"
+            echo "commit:   ${GITHUB_SHA}"
+            echo "ref:      ${GITHUB_REF}"
+            echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo "Open review-approval-hub/index.html or hud/index.html locally."
+            echo
+            echo "This is an inspection artifact, not a deployment. Pages serves main;"
+            echo "dev has no hosted URL, so Gate B hosted verification stays UNKNOWN"
+            echo "for this SHA. See docs/governance/DECISIONS/0005-dev-delivery-promotion-and-pages.md"
+          } > preview/README.txt
+          echo "collected $(find preview -type f | wc -l) files"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dev-preview-${{ github.sha }}
+          path: preview/
+          retention-days: 14

@@ -5,33 +5,44 @@ export const equipSlots = [
   {
     "id": "rightHand",
     "label": "Right Hand",
+    "positionLabel": "Right Hand Slot {n}",
+    "positionCode": "RH{n}",
     "kinds": [
       "weapon",
+      "shield",
       "staff"
     ],
+    "hand": "right",
     "sets": 3,
     "swap": "combat",
     "storage": true,
     "order": 1,
-    "blurb": "Your main armament. Rewrites Strike."
+    "blurb": "Your active right-hand armament. Rewrites Strike."
   },
   {
     "id": "leftHand",
     "label": "Left Hand",
+    "positionLabel": "Left Hand Slot {n}",
+    "positionCode": "LH{n}",
     "kinds": [
+      "weapon",
       "shield",
-      "weapon"
+      "staff"
     ],
+    "hand": "left",
     "sets": 3,
     "swap": "combat",
     "storage": true,
     "order": 2,
-    "blurb": "Off-hand. Rewrites Defend."
+    "blurb": "Your active left-hand armament. Rewrites Defend."
   },
   {
     "id": "armor",
     "label": "Armour",
+    "positionLabel": "Armour Slot {n}",
+    "positionCode": "BODY",
     "kinds": "armor",
+    "hand": "",
     "sets": 1,
     "swap": "outOfCombat",
     "storage": false,
@@ -41,7 +52,10 @@ export const equipSlots = [
   {
     "id": "talisman",
     "label": "Talisman",
+    "positionLabel": "Talisman Slot {n}",
+    "positionCode": "TAL{n}",
     "kinds": "talisman",
+    "hand": "",
     "sets": 3,
     "swap": "outOfCombat",
     "storage": false,

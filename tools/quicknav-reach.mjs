@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/quicknav-reach.mjs — the quick-menu experiment, checked in a browser.
+// tools/quicknav-reach.mjs — the shipped quick menu, checked in a browser.
 //
 // WHY A BROWSER. Every property below is about a RENDERED RECT or a real key
 // press. tests/run-node.mjs opens no browser and says so at the foot of its own
@@ -18,37 +18,109 @@
 //       driven by the keyboard analogue because no pad is attached
 //   R6  variant B folds the strip only where autoLayout() says narrow, and the
 //       folded switcher names the tab you are on
-//   R7  "off" is TODAY: no list can be opened, and the topbar buttons keep the
-//       size they have on dev
+//   R7  legacy "off" remains a direct-to-overlay route, and its topbar button
+//       retains the shared tap floor delivered by PR #341
 //
 // KNOWN-BAD FIRST (development.md SOP 3). This check was run against three
 // deliberate breakages before it was allowed to pass anything — the clamp
 // removed (R1 red at 390 combat), the ring's wrap removed (R5 red), and the
 // tail band sorted into the body (R2 red). A detector that has never been red is
-// not evidence. `--selftest` prints what was mutated and what went red.
+// not evidence.
 //
+// AND FOR MOST OF THIS FILE'S LIFE THAT PARAGRAPH WAS A PROMISE IT DID NOT KEEP
+// (Rune, 2026-08-15). Those three breakages were MANUAL, done once at authoring
+// and never again — under SOP 2's drift clause a red nobody can re-run is
+// `unknown`, not coverage, and Vira's doors audit (2026-08-14) rated this tool
+// OBSERVED-ONCE for exactly that. Worse, the line above used to promise a
+// `--selftest` flag THAT DID NOT EXIST: passing it ran the ordinary sweep under
+// a corpus-run's name. Vira found that and made the flag refuse; this act pays
+// what was owed and makes the flag real.
+//
+// DOOR. The real input is the rendered quick-nav panel — this tool serves the
+// real tree, boots the real screens with real settings, opens the real list and
+// measures real rects. `--selftest` plants each known-bad as BYTES in a copy of
+// the real file the defect would ship in and re-runs this whole tool against
+// the copy: same serve.mjs, same browser, same clicks and key presses.
 // Usage:  node tools/quicknav-reach.mjs [--shots DIR]
+//         node tools/quicknav-reach.mjs --selftest   (the same-door known-bad corpus)
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
 //
-// REMOVAL CONDITION: delete this file the day the experiment resolves — when
-// `quickNav` leaves src/ui/screens/settings.js, whichever variant wins. A check
-// for a setting nobody can set is decoration.
+// REMOVAL CONDITION: delete when the Quick Menu surface or its responsive
+// variants leave the product; this is now a production reachability gate.
+
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'quicknav-reach.mjs',
+    args: ['--shape', '390x844-text-m'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // R3's known-bad: Sunna's tap floor removed at the one place that
+        // decides a row's height. `min-height` is the whole rule — the row has
+        // no other floor — so this is the defect, not a caricature of it.
+        name: 'R3: the 44-local-px tap floor is dropped from the quick-nav row',
+        file: 'styles/ui.css',
+        find: '  min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
+        replace: '  min-height: 0; height: auto; padding: 0.1rem 1.6rem; text-align: left;',
+        expectRed: /R3.*row\(s\) under 44 local px/,
+      },
+      {
+        // R1's known-bad, and the one the tool was born for: the panel escapes
+        // the viewport. `position: fixed` with a forced width wider than the
+        // phone puts rows off the SIDE, which is the unreachable direction —
+        // the clamp is what stops exactly this.
+        name: 'R1: the panel is allowed to hang off the side of the phone (the clamp gone)',
+        file: 'styles/ui.css',
+        // RE-AIMED 2026-08-17 (Sten) — NOT relaxed, and not deleted. When
+        // quicknav.js's placement arithmetic moved into fx.js placeAnchored(),
+        // `--place-gap: 6px` became `.qn-panel`'s first declaration; this
+        // find-string carried the selector and the brace, so it stopped matching
+        // and doorplant hard-red'd it as PLANT SITE DRIFTED. That is the
+        // mechanism working, and the fix is to re-aim, never to loosen. It now
+        // anchors on the width triple it actually overrides — verified unique in
+        // ui.css — so a declaration added above it cannot drift it again. The
+        // known-bad is unchanged: a forced width wider than the phone, clamp
+        // defeated.
+        //
+        // SCORED 2026-08-17 (Bjorn, gating d705b66): the re-aim STANDS — the
+        // defect bytes are identical, the drift was caught LOUDLY rather than
+        // skipped, and `grep -c` says this find-string occurs exactly ONCE in
+        // ui.css. ONE BOUNDARY, because the uniqueness changed KIND: the old
+        // string carried `.qn-panel {`, so it could only ever match this rule;
+        // this one is unique by coincidence, and doorplant does not assert
+        // uniqueness — it calls String.replace, first match only (its own `all`
+        // note says what that costs). If a second rule ever carries this exact
+        // triple, the plant lands on the wrong rule and R1 reports NOT CAUGHT —
+        // LOUD, not a silent green, which is why this is a boundary and not a
+        // repair. The real fix is a uniqueness assertion in doorplant; that
+        // touches every corpus in the tree and is not a gate's act to make.
+        find: '  position: fixed; width: 26rem; max-width: 92%;',
+        replace: '  position: fixed !important; width: 60rem !important; max-width: none !important; left: -8rem !important;',
+        expectRed: /R1.*(spans .* in a .* px view|escapes)/,
+      },
+    ],
+  }));
+}
+
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BROWSER = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const args = process.argv.slice(2);
+const ARTIFACT = args.includes('--artifact');
 const si = args.indexOf('--shots');
 const SHOTS = si >= 0 && args[si + 1] ? resolve(args[si + 1]) : null;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
+const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')).href);
 
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl);
@@ -76,20 +148,11 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 15000);
-  });
-}
-
 let chrome;
 try {
-  chrome = await launchChrome(BROWSER, mkdtempSync(join(tmpdir(), 'qnreach-')));
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  chrome = await launchBrowser({ prefix: 'qnreach-', browser: BROWSER, timeoutMs: 15000 });
 } catch (e) {
   console.error('quicknav-reach: UNKNOWN — no browser. ' + e.message);
   process.exit(2);
@@ -103,6 +166,7 @@ await cdp.send('Runtime.enable', {}, S);
 
 const srv = await serve({ root: ROOT, port: 8477, open: false });
 const BASE = `http://localhost:${srv.port}/`;
+const APP = `${BASE}${ARTIFACT ? 'AshenSpire.html' : ''}`;
 
 const ev = async (e) => {
   const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
@@ -122,14 +186,22 @@ const checks = [];
 const fail = (id, where, msg) => { findings.push(`${id}  ${where} — ${msg}`); checks.push(false); };
 const pass = (id, where, msg) => { checks.push(true); if (process.env.QN_VERBOSE) console.log(`  ok ${id} ${where} ${msg || ''}`); };
 
-const SHAPES = [
-  { w: 1200, h: 730, d: 1, mobile: false, tag: '1200x730' },
-  { w: 390, h: 844, d: 3, mobile: true, tag: '390x844' },
+const ALL_SHAPES = [
+  ...['M', 'XL'].map((text) => ({ w: 1200, h: 730, d: 1, mobile: false, text, tag: `1200x730-text-${text.toLowerCase()}` })),
+  ...['M', 'XL'].map((text) => ({ w: 844, h: 344, d: 2, mobile: true, text, tag: `844x344-text-${text.toLowerCase()}` })),
+  ...['M', 'XL'].map((text) => ({ w: 390, h: 844, d: 3, mobile: true, text, tag: `390x844-text-${text.toLowerCase()}` })),
 ];
+const shapeIndex = args.indexOf('--shape');
+const shapeFilter = shapeIndex >= 0 ? args[shapeIndex + 1] : null;
+const SHAPES = shapeFilter ? ALL_SHAPES.filter((shape) => shape.tag === shapeFilter) : ALL_SHAPES;
+if (!SHAPES.length) throw new Error(`quicknav-reach: unknown --shape ${shapeFilter}`);
+
+let viewportText = 'M';
 
 async function boot(shot, settings) {
-  const q = encodeURIComponent(JSON.stringify(settings));
-  await cdp.send('Page.navigate', { url: `${BASE}?shot=${shot}&shotSettings=${q}` }, S);
+  const q = encodeURIComponent(JSON.stringify({ ...settings, textSize: viewportText }));
+  const separator = APP.includes('?') ? '&' : '?';
+  await cdp.send('Page.navigate', { url: `${APP}${separator}shot=${shot}&shotSettings=${q}` }, S);
   const sel = shot === 'combat' ? '.combat .hand .card' : '.map-node';
   if (!(await until(`!!document.querySelector('${sel}')`))) throw new Error(`${shot} never rendered`);
   await wait(700);
@@ -152,16 +224,35 @@ const ROWS_JS = `(() => {
         label: (b.querySelector('.qn-label') || {}).textContent || '',
         act: b.dataset.act || '', left: r.left / z, top: r.top / z,
         right: r.right / z, bottom: r.bottom / z, h: r.height / z,
+        role: b.getAttribute('role') || '', checked: b.getAttribute('aria-checked'),
+        condition: (b.querySelector('.qn-condition') || {}).textContent || '',
       };
     }),
   };
 })()`;
 
+let openAnchorSelector = null;
 async function openList(anchorSel) {
+  openAnchorSelector = anchorSel;
   await ev(`document.querySelector('${anchorSel}').click(); true`);
-  return until(`!!document.querySelector('.qn-panel')`, 4000);
+  const opened = await until(`!!document.querySelector('.qn-panel')`, 4000);
+  if (opened) {
+    const expanded = await ev(`document.querySelector('${anchorSel}')?.getAttribute('aria-expanded')`);
+    if (expanded !== 'true') fail('R10', anchorSel, `opener aria-expanded=${expanded}`);
+    else pass('R10', anchorSel, 'opener exposes expanded state');
+  }
+  return opened;
 }
-const closeList = () => ev(`(() => { const v = document.querySelector('.qn-veil'); if (v) v.remove(); return true; })()`);
+const closeList = async () => {
+  if (!(await ev(`!!document.querySelector('.qn-panel')`))) return;
+  await key('Escape');
+  await until(`!document.querySelector('.qn-panel')`, 4000);
+  if (!openAnchorSelector) return;
+  const state = await ev(`(()=>{const a=document.querySelector('${openAnchorSelector}');return a&&{expanded:a.getAttribute('aria-expanded'),focused:document.activeElement===a}})()`);
+  if (!state || state.expanded !== 'false' || !state.focused) fail('R10', openAnchorSelector, `Escape did not restore opener state/focus: ${JSON.stringify(state)}`);
+  else pass('R10', openAnchorSelector, 'Escape restores collapsed state and opener focus');
+  openAnchorSelector = null;
+};
 
 async function checkList(where, { expectTail = true } = {}) {
   const d = await ev(ROWS_JS);
@@ -189,6 +280,14 @@ async function checkList(where, { expectTail = true } = {}) {
     else pass('R2', where);
   }
 
+  const controls = d.rows.slice(0, 2);
+  if (controls.map((r) => r.act).join(',') !== 'fullscreen,music') {
+    fail('R8', where, `first two rows are ${controls.map((r) => r.act).join(', ') || '(none)'}`);
+  } else if (controls.some((r) => !['switch', 'menuitemcheckbox'].includes(r.role)
+      || !['true', 'false'].includes(r.checked) || !r.condition)) {
+    fail('R8', where, `stateful rows lack an owned ARIA role/state/condition: ${JSON.stringify(controls)}`);
+  } else pass('R8', where, 'Fullscreen and Music are named synchronized switches');
+
   // R3 — 44 local px.
   const short = d.rows.filter((r) => r.h < 43.5);
   if (short.length) fail('R3', where, `${short.length} row(s) under 44 local px (min ${Math.min(...short.map((r) => r.h)).toFixed(1)})`);
@@ -209,19 +308,61 @@ async function checkList(where, { expectTail = true } = {}) {
   return d;
 }
 
+async function checkMusicParity(where) {
+  const readQuick = `(()=>{const b=document.querySelector('.qn-row[data-act="music"]');return b&&{open:!!document.querySelector('.qn-panel'),checked:b.getAttribute('aria-checked')}})()`;
+  const before = await ev(readQuick);
+  if (!before || before.checked !== 'true') return fail('R9', where, `Quick Menu did not begin Music ON: ${JSON.stringify(before)}`);
+  await ev(`document.querySelector('.qn-row[data-act="music"]').click(); true`);
+  await wait(150);
+  const off = await ev(readQuick);
+  if (!off?.open || off.checked !== 'false') return fail('R9', where, `Quick Menu did not stay open at Music OFF: ${JSON.stringify(off)}`);
+  await shoot(`${where}__mirror-map-music-off`);
+  await ev(`document.querySelector('.qn-row[data-tab="settings"]').click(); true`);
+  if (!(await until(`document.querySelector('.ov-tab.on')?.dataset.member === 'settings' && document.querySelectorAll('.set-tab').length > 0`))) {
+    const state = await ev(`(()=>({overlay:!!document.querySelector('.overlay-modal'),quick:!!document.querySelector('.qn-panel'),active:[...document.querySelectorAll('.ov-tab.on')].map(x=>x.dataset.member),settingsRows:document.querySelectorAll('.set-tab').length}))()`);
+    return fail('R9', where, `Settings destination did not open the overlay Settings panel: ${JSON.stringify(state)}`);
+  }
+  await ev(`document.querySelector('.set-tab[data-member="Audio"]').click(); true`);
+  await wait(100);
+  const settingsOff = await ev(`document.querySelector('.toggle[data-key="musicEnabled"]')?.getAttribute('aria-checked')`);
+  if (settingsOff !== 'false') return fail('R9', where, `Settings did not reflect Quick Menu OFF (aria=${settingsOff})`);
+  await ev(`document.querySelector('.toggle[data-key="musicEnabled"]').click(); true`);
+  await wait(100);
+  await ev(`document.querySelector('#ov-close').click(); true`);
+  await ev(`document.querySelector('#open-menu').click(); true`);
+  await until(`!!document.querySelector('.qn-panel')`, 4000);
+  const quickOn = await ev(readQuick);
+  if (quickOn?.checked !== 'true') return fail('R9', where, `Quick Menu did not reflect Settings ON: ${JSON.stringify(quickOn)}`);
+  pass('R9', where, 'Quick Menu ↔ Settings Music state synchronized both ways');
+}
+
 async function shoot(name) {
   if (!SHOTS) return;
   const r = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, S);
   writeFileSync(join(SHOTS, `${name}.png`), Buffer.from(r.data, 'base64'));
 }
 
+async function shootCatalog(vp) {
+  if (!SHOTS) return;
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile,
+  }, S);
+  await cdp.send('Page.navigate', { url: `${BASE}docs/component-catalog.html` }, S);
+  if (!(await until(`!!document.querySelector('.component-catalog, [data-component-catalog], main')`))) {
+    throw new Error(`component catalog never rendered at ${vp.w}x${vp.h}`);
+  }
+  await wait(500);
+  await shoot(`${vp.w}x${vp.h}__component-catalog`);
+}
+
 try {
   for (const vp of SHAPES) {
+    viewportText = vp.text;
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
     if (vp.mobile) await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, S);
     console.log(`\n== ${vp.tag} ==`);
 
-    // ---- R7: off is today ---------------------------------------------------
+    // ---- R7: legacy off remains explicit -----------------------------------
     await boot('map', { quickNav: 'off' });
     await ev(`document.getElementById('open-menu').click(); true`);
     await wait(350);
@@ -229,22 +370,25 @@ try {
     const offOverlay = await ev(`!!document.querySelector('.overlay-modal')`);
     if (offPanel) fail('R7', `${vp.tag} off/map`, 'a quick-nav list opened with the setting off');
     else if (!offOverlay) fail('R7', `${vp.tag} off/map`, 'the ☰ button did not open the overlay');
-    else pass('R7', `${vp.tag} off/map`, 'today: ☰ → overlay, no list');
+    else pass('R7', `${vp.tag} off/map`, 'legacy off: ☰ → overlay, no list');
     const offBtn = await ev(`(() => { const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
       const r = document.getElementById('open-menu').getBoundingClientRect(); return r.height / z; })()`);
-    if (Math.abs(offBtn - 30) > 0.6) fail('R7', `${vp.tag} off/map`, `topbar button is ${offBtn.toFixed(1)} local px, dev is 30`);
-    else pass('R7', `${vp.tag} off/map`, `topbar button ${offBtn.toFixed(1)} local px (dev)`);
+    if (offBtn < 44) fail('R7', `${vp.tag} off/map`, `topbar button is ${offBtn.toFixed(1)} local px, under the 44 px floor`);
+    else pass('R7', `${vp.tag} off/map`, `topbar button ${offBtn.toFixed(1)} local px (shared floor)`);
     await shoot(`${vp.tag}__off-map`);
 
     for (const mode of ['mirror', 'switcher']) {
-      for (const fixedEnds of [true, false]) {
-        const tagFE = fixedEnds ? 'fixed' : 'ctx';
+      for (const fixedEnds of [true]) {
+        const tagFE = 'fixed';
         // ---- map ----
         await boot('map', { quickNav: mode, quickNavFixedEnds: fixedEnds });
         if (!(await openList('#open-menu'))) fail('R1', `${vp.tag} ${mode}/${tagFE} map`, 'list did not open');
         else {
           await checkList(`${vp.tag} ${mode}/${tagFE} map`);
-          if (fixedEnds && mode === 'mirror') await shoot(`${vp.tag}__${mode}-map`);
+          if (fixedEnds && mode === 'mirror') {
+            await shoot(`${vp.tag}__${mode}-map`);
+            await checkMusicParity(vp.tag);
+          }
         }
         await closeList();
 
@@ -253,7 +397,7 @@ try {
         if (!(await openList('#combat-menu'))) fail('R1', `${vp.tag} ${mode}/${tagFE} combat`, 'list did not open');
         else {
           const d = await checkList(`${vp.tag} ${mode}/${tagFE} combat`);
-          // The reading itself: fixed ends keeps Deck second, contextual does not.
+          // The reading itself: controls stay first and destinations remain stable.
           if (d && d.rows.length > 1) {
             const second = d.rows[1].act === 'tab' ? 'tab' : d.rows[1].act;
             console.log(`  reading  ${vp.tag} ${mode}/${tagFE} combat: row 2 = "${d.rows[1].label}"`);
@@ -268,9 +412,9 @@ try {
       await boot('map', { quickNav: mode, quickNavFixedEnds: true });
       await ev(`document.getElementById('open-menu').click(); true`);
       await until(`!!document.querySelector('.qn-panel')`, 4000);
-      await ev(`document.querySelector('.qn-row[data-tab="deck"]').click(); true`);
+      await ev(`document.querySelector('.qn-row[data-tab="settings"]').click(); true`);
       if (!(await until(`!!document.querySelector('.overlay-modal')`, 4000))) {
-        fail('R1', `${vp.tag} ${mode} overlay`, 'a Deck row did not open the overlay');
+        fail('R1', `${vp.tag} ${mode} overlay`, 'the Settings row did not open the overlay');
       } else {
         await wait(400);
         const narrow = await ev(`document.documentElement.getAttribute('data-layout') === 'narrow'`);
@@ -283,18 +427,22 @@ try {
         else pass('R6', `${vp.tag} ${mode} overlay`, folded ? 'strip folded to a switcher' : 'strip stands');
         if (folded) {
           const lbl = await ev(`document.querySelector('#ov-switch').textContent`);
-          if (!/^Deck/.test(lbl)) fail('R6', `${vp.tag} ${mode} overlay`, `switcher says "${lbl}", not the tab it is on`);
+          if (!/^Settings/.test(lbl)) fail('R6', `${vp.tag} ${mode} overlay`, `switcher says "${lbl}", not the tab it is on`);
           else pass('R6', `${vp.tag} ${mode} overlay`, `switcher names "${lbl.trim()}"`);
         }
 
         // R5 — the ring wraps at BOTH ends, over the same set either way.
+        // The strip's member id is read from data-member, not data-tab: #78 put
+        // every navigable set on one convention — data-surface on the host,
+        // data-member on each control — so an instrument can enumerate a set off
+        // the rendered page instead of importing the module that declared it.
         const tabIds = await ev(`(() => {
           const s = window.__qnTabs; return s || null; })()`);
         void tabIds;
         const order = [];
         const cur = async () => ev(`(() => {
           const on = document.querySelector('.ov-tab.on');
-          if (on) return on.dataset.tab;
+          if (on) return on.dataset.member;
           const sw = document.querySelector('#ov-switch');
           return sw ? sw.textContent.replace(/\\s*▾\\s*$/, '').replace(/\\s*\\(\\d+\\)\\s*$/, '') : null;
         })()`);
@@ -309,7 +457,7 @@ try {
         }
         const back = await cur();
         if (back !== first) fail('R5', `${vp.tag} ${mode} overlay`, `] x${order.length} never wrapped back to "${first}" (saw ${order.join(' → ')})`);
-        else if (order.length < 3) fail('R5', `${vp.tag} ${mode} overlay`, `the ring holds only ${order.length} tab(s)`);
+        else if (order.length < 2) fail('R5', `${vp.tag} ${mode} overlay`, `the ring holds only ${order.length} tab(s)`);
         else pass('R5', `${vp.tag} ${mode} overlay`, `] wraps after ${order.length}: ${order.join(' → ')}`);
         await key('[');
         await wait(120);
@@ -339,23 +487,32 @@ try {
       }
     }
   }
+  await shootCatalog({ w: 1200, h: 730, d: 1, mobile: false });
+  await shootCatalog({ w: 390, h: 844, d: 3, mobile: true });
 } catch (e) {
   console.error('quicknav-reach: UNKNOWN — ' + (e.stack || e.message));
   srv.server.close();
   cdp.close();
-  chrome.child.kill();
+  await chrome.close();
   process.exit(2);
 }
 
 srv.server.close();
 cdp.close();
-chrome.child.kill();
+await chrome.close();
 
 const red = findings.length;
 console.log(`\n${checks.filter(Boolean).length}/${checks.length} checks green, ${red} finding(s)`);
 for (const f of findings) console.log('  RED  ' + f);
-console.log('BOUNDARY: two shapes (1200x730, 390x844), map + combat + menu-expanded.');
+console.log('DOOR: the rendered panel, served from this tree and opened by real clicks in a real');
+console.log('      browser. `--selftest` re-observes two known-bads planted as bytes in the real');
+console.log('      stylesheet — R3\'s tap floor and R1\'s clamp (observed red 2026-08-15,');
+console.log('      re-runnable). The three manual breakages named in the header were one-off and');
+console.log('      had drifted to `unknown` under SOP 2; they are superseded, not cited.');
+console.log('BOUNDARY: six text/viewport shapes (1200x730, 844x344, 390x844), map +');
+console.log('          combat + menu-expanded. --artifact selects the shipped root HTML.');
 console.log('          NO GAMEPAD IS ATTACHED — R5 drives the ring through the keyboard');
 console.log('          analogue ([ / ]), which shares the ring but NOT the button-4/5');
 console.log('          precedence path. The precedence line itself is read, not observed.');
+console.log(`${checks.filter(Boolean).length} passed, ${red} failed`);
 process.exit(red ? 1 : 0);

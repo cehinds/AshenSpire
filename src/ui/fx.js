@@ -6,6 +6,7 @@
 
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 
 const STEP_MS = 80;
 
@@ -121,17 +122,261 @@ export function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
   };
 }
 
-/** Spawn a floating number over an anchor element. */
-function floatNum(layer, anchor, text, cls) {
+// ---------------------------------------------------------------------------
+// ANCHORED PLACEMENT — one home for "put this element next to that one".
+//
+// WHY IT IS HERE AND NOT IN A NEW FILE. anchorLocalBox / viewportLocalBox /
+// clampBox above are already the placement home: measure in one space, bound in
+// that space. What they never held is the layer on top — WHICH SIDE, and how far
+// off. That was written out twice: tooltip.js place() and quicknav.js position().
+// Same shape both times (measure anchor, measure self, offset, clamp), different
+// answers, and neither could be fixed without editing the other.
+//
+// THE INTENT IS NAMED BY THE CALLER, NEVER GUESSED HERE. "Beside it" and "under
+// it" are DIFFERENT ANSWERS to different questions, and a function that picks
+// between them from the geometry is a function that will pick wrong on the shape
+// nobody photographed. A tooltip must not cover what it explains, so it takes any
+// side that fits; a dropdown hangs off its button, so it takes one.
+//
+// THE GAP HAS ONE HOME AND IT IS THE STYLESHEET (Law 0 clause 4). A distance
+// between two boxes is a length, lengths live in CSS, and the number a harness
+// measures must be the number the code used. `--place-gap` on the PLACED element
+// is that one home: `#tooltip { --place-gap: 14px }` replaces `const pad = 14`,
+// and an instrument reads the same declaration through getComputedStyle that this
+// function does. It is deliberately an unregistered custom property, so it
+// computes to its own token and does NOT track --ui-zoom or the text-size dial —
+// which is exactly what the two literals it replaces did (Law 2 rule 3: px where
+// a value must not answer to text size, and a hairline gap is not read text).
+//
+// A MISSING DECLARATION RESOLVES TO 0, NOT TO A PLAUSIBLE DEFAULT. Law 0 clause
+// 5: a generated thing that is wrong but reasonable is invisible. A panel welded
+// to its anchor is a defect anyone sees in one screenshot; a panel 14 px off a
+// stylesheet that says 6 is a defect nobody ever sees.
+// ---------------------------------------------------------------------------
+
+/** The one property name, so the stylesheet, the code and any instrument agree. */
+export const PLACE_GAP_PROP = '--place-gap';
+
+/** The gap `el` declares, in the local px this module writes in. 0 if undeclared. */
+export function placeGap(el) {
+  const n = parseFloat(getComputedStyle(el).getPropertyValue(PLACE_GAP_PROP));
+  return Number.isFinite(n) ? n : 0;
+}
+
+const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left))
+  * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+
+/**
+ * placeAnchored(el, anchor, { intent, ... }) → { left, top, width, height }
+ *
+ * Writes `el`'s style.left/top in the local space of `layer` and returns the box
+ * it resolved, so a caller that needs to do more with it (a max-height off the
+ * remaining room) has the number rather than re-deriving it.
+ *
+ *   intent  'beside' — any of right / left / below / above, first that fits.
+ *                      A ZERO-EXTENT anchor (a tap has no element) degenerates to
+ *                      the offset-from-the-point rule, per-axis flip and all —
+ *                      arithmetic, not a second branch at the call site.
+ *           'left'   — toward the centre from a right-edge anchor, falling
+ *                      through right / below / above only when it cannot fit.
+ *           'right'  — toward the centre from a left-edge anchor, with the
+ *                      mirrored fallback order.
+ *           'above'  — above it when possible, otherwise under it. This is the
+ *                      card/tray instruction intent: keep the explanation out
+ *                      of the component being held or resized.
+ *           'under'  — under it, and only under it. When it does not fit, the
+ *                      bound answers; that is the caller's declared preference,
+ *                      not a failure to consider the alternatives.
+ *   align   'start' | 'center' | 'end' — where the anchor's free axis lines up
+ *                      for 'above' and 'under'; 'beside' slides the free axis
+ *                      to stay on screen, which is what made three of its
+ *                      candidates usable at all.
+ *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
+ *           named at the call site. Of the candidates that fit, the one that
+ *           overlaps this least wins; ties fall to the declared order, so a
+ *           caller that passes nothing gets exactly `first that fits`. It is a
+ *           PREFERENCE and never a veto: when no candidate can clear the group,
+ *           the answer is the one the caller would have got without it.
+ *   layer   the containing block, VIEWPORT_ORIGIN by default (a `fixed` element).
+ *   view    that container's box, in its own local space.
+ *   pad     the screen margin, one home for both the fit test and the bound.
+ *   keep    passed to clampBox. Infinity — a placed panel is read.
+ */
+export function placeAnchored(el, anchor, {
+  intent,
+  align = 'start',
+  clear = null,
+  layer = VIEWPORT_ORIGIN,
+  view = null,
+  pad = 4,
+  keep = Infinity,
+} = {}) {
+  if (!['beside', 'left', 'right', 'above', 'under'].includes(intent)) {
+    throw new Error(`placeAnchored: intent must be 'beside', 'left', 'right', 'above', or 'under', got ${JSON.stringify(intent)}`);
+  }
+  const room = view || viewportLocalBox();
+  const gap = placeGap(el);
+  // MEASURE ITS NATURAL BOX, NOT THE ONE ITS LAST POSITION SQUEEZED IT INTO.
+  // A `fixed`/`absolute` element with a max-width and no width is laid out in the
+  // space between style.left and the far edge: parked at 384 in a 433-wide room it
+  // gets 49 px, wraps tall and narrow, and THAT is the box the next placement is
+  // computed from — the same tooltip measured 280x220 or 171x384 depending only on
+  // what you hovered before it. Zeroing first costs one layout and makes the
+  // measurement a property of the CONTENT. Found in tooltip.js; it was never a
+  // tooltip fact.
+  el.style.left = '0px';
+  el.style.top = '0px';
+  const b = anchorLocalBox(layer, el);
+  const a = anchorLocalBox(layer, anchor);
+  const box = (p) => ({ left: p.left, top: p.top, width: b.width, height: b.height });
+  // 4 low, 8 high — one home now (`pad` and `pad * 2`), the two literals tooltip.js
+  // carried. The same `pad` goes to clampBox below, so the fit test and the bound
+  // cannot disagree about where the screen ends.
+  const fits = (p) => p.left >= pad && p.top >= pad
+    && p.left + b.width <= room.width - pad * 2 && p.top + b.height <= room.height - pad * 2;
+
+  let at0;
+  if (intent === 'beside' && !(a.width || a.height)) {
+    // A POINT has no sides to be outside of, so "outside the anchor" degenerates
+    // to the offset-from-the-pointer rule — which is what a tap wants anyway.
+    // These four lines are tooltip.js's ORIGINAL arithmetic, unchanged, including
+    // the independent per-axis flip: this path is not being retuned, and keeping
+    // it verbatim is how that is checkable rather than asserted.
+    let left = a.left + gap;
+    let top = a.top + gap;
+    if (left + b.width > room.width - pad * 2) left = a.left - b.width - gap;
+    if (top + b.height > room.height - pad * 2) top = a.top - b.height - gap;
+    at0 = { left, top };
+  } else {
+    // ONLY THE SEPARATING AXIS IS PINNED. A tooltip below a control has to be
+    // below it; it does not have to be left-aligned with it, and pinning the free
+    // axis as well is what made three candidates fail — the below/above ones were
+    // rejected for horizontal overflow while the vertical room they existed to use
+    // sat empty.
+    const anchoredX = align === 'end'
+      ? a.left + a.width - b.width
+      : align === 'center'
+        ? a.left + (a.width - b.width) / 2
+        : a.left;
+    const slideX = Math.min(Math.max(pad, anchoredX), Math.max(pad, room.width - pad * 2 - b.width));
+    const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
+    const under = { left: slideX, top: a.top + a.height + gap };
+    const above = { left: slideX, top: a.top - b.height - gap };
+    const aboveLeft = { left: a.left - b.width - gap, top: above.top };
+    const aboveRight = { left: a.left + a.width + gap, top: above.top };
+    const right = { left: a.left + a.width + gap, top: slideY };
+    const left = { left: a.left - b.width - gap, top: slideY };
+    const candidates = intent === 'under' ? [under]
+      : intent === 'above' ? [above, aboveLeft, aboveRight, under]
+        : intent === 'left' ? [left, right, under, above]
+          : intent === 'right' ? [right, left, under, above] : [
+      right,
+      left,
+      { left: slideX, top: a.top + a.height + gap },  // below it
+      above,
+    ];
+    const usable = candidates.filter(fits);
+    if (clear && usable.length > 1) {
+      const clearBoxes = (Array.isArray(clear) ? clear : [clear])
+        .filter(Boolean)
+        .map((candidate) => anchorLocalBox(layer, candidate));
+      // LEAST OVERLAP, NOT "MUST CLEAR". A veto would have no answer on the shape
+      // where the group fills the room, and "no answer" resolves to the bound,
+      // which lands ON the group — worse than the candidate that grazes it.
+      let best = usable[0];
+      const blockedArea = (candidate) => clearBoxes.reduce((sum, clearBox) => sum + overlapArea(box(candidate), clearBox), 0);
+      let bestArea = blockedArea(best);
+      for (const p of usable.slice(1)) {
+        const area = blockedArea(p);
+        if (area < bestArea) { best = p; bestArea = area; }
+      }
+      at0 = best;
+    } else {
+      at0 = usable[0] || candidates[0];
+    }
+  }
+  // …and then bound it regardless, so a wrong answer above is a misplaced panel
+  // and never an absent one. When no side fits, this is what puts it back on
+  // screen — ON the control, which is the right trade: unreadable beats
+  // misplaced, absent beats neither.
+  const at = clampBox(box(at0), room, { pad, keep });
+  el.style.left = `${at.left}px`;
+  el.style.top = `${at.top}px`;
+  return { left: at.left, top: at.top, width: b.width, height: b.height };
+}
+
+/**
+ * Spawn a floating number over an anchor element.
+ *
+ * EXPORTED so an instrument can drive the SHIPPED function with the exact
+ * strings that were measured clipping, rather than a copy of it that would
+ * agree with itself (#69).
+ */
+export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (!layer || !anchor) return;
+  const x = Number.isFinite(placement.x) ? placement.x : 0;
+  const y = Number.isFinite(placement.y) ? placement.y : 0;
+  const jitter = placement.jitter !== false;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
+  const feedbackComponent = /\bblk\b/.test(cls)
+    ? UI.guardedDamageIndicator
+    : (/\bdmg\b/.test(cls) ? UI.healthDamageIndicator : UI.damageFeedback);
+  markUiComponent(el, feedbackComponent);
+  el.dataset.uiParentComponent = UI.damageFeedback;
   el.textContent = text;
-  el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
-  el.style.top = `${b.top + b.height * 0.25}px`;
+  if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
+  // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
+  // `.float-num { translate: -50% 0 }` takes off its own half-width — so the
+  // width is the browser's to know and nobody's to maintain. It used to be
+  // `- 14`, a hardcoded half-width that the CSS owned and nothing checked, so
+  // every float sat off-centre by (realHalfWidth - 14): measured -6px for "-7",
+  // +31px for "BLOCKED", and worst for multi-codepoint text, which is exactly
+  // where a guess lies hardest. At 390 that pushed "BLOCKED" to right=412 —
+  // 22px off-screen, in a layer with no scrollport, so unreachable.
+  //
+  // `translate` is the standalone property on purpose: num-pop animates
+  // `transform`, and a `transform: translateX(-50%)` here would be overwritten
+  // by the first keyframe. The two compose.
+  const centre = b.left + b.width / 2 + x + (jitter ? Math.random() * 26 - 13 : 0);
+  const top = b.top + b.height * 0.25 + y;
+  el.style.left = `${centre}px`;
+  el.style.top = `${top}px`;
   layer.appendChild(el);
+  // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
+  // layout rather than guessed from the string. offsetWidth is the untransformed
+  // box, so the running pop animation cannot skew it. Keep it inside the layer
+  // through the one home for that arithmetic (clampBox), then hand `left` back
+  // as a centre, which is what the CSS expects.
+  const half = el.offsetWidth / 2;
+  const view = anchorLocalBox(layer, layer);
+  const at = clampBox(
+    { left: centre - half, top, width: el.offsetWidth, height: el.offsetHeight },
+    view,
+    { pad: 6 }
+  );
+  el.style.left = `${at.left + half}px`;
   setTimeout(() => el.remove(), 600);
+  return el;
+}
+
+/**
+ * One semantic split for every attack hit, shared by solo and co-op.
+ * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
+ * Guard consumption is unsigned. Guard gain remains the separate +N channel.
+ */
+export function guardHitFloatParts(event) {
+  const amount = Math.max(0, Number(event && event.amount) || 0);
+  const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
+  const residual = amount - blocked;
+  return {
+    amount,
+    blocked,
+    residual,
+    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
+    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
+  };
 }
 
 // Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
@@ -408,21 +653,24 @@ export function playTimeline(events, ctx, done) {
 function visualFor(e, beatKind) {
   switch (e.type) {
     case 'damageDealt':
-      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
-      // no flinch, no shake, no slash.
-      if (e.amount === 0 && e.blocked > 0) {
-        return (ctx) => {
-          sfx.play('block');
-          const anchor = ctx.anchorFor(e.targetId);
-          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
-        };
-      }
+      // One event owns both visible channels: unsigned guard consumed, then
+      // only the HP residual as damage. Paired results sit side-by-side without
+      // relying on random jitter, so phone and desktop read the same grammar.
       return (ctx) => {
-        sfx.play('hit');
+        const parts = guardHitFloatParts(e);
         const anchor = ctx.anchorFor(e.targetId);
-        const heavy = e.amount >= 15;
-        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
+        const paired = !!(parts.guard && parts.damage);
+        if (parts.guard) {
+          sfx.play('block');
+          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
+            { x: paired ? -26 : 0, jitter: false });
+        }
+        if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
+        sfx.play('hit');
+        const heavy = parts.residual >= 15;
+        floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
+          { x: paired ? 26 : 0, jitter: !paired });
         // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
@@ -440,6 +688,14 @@ function visualFor(e, beatKind) {
           }
         : null;
     case 'hpLost':
+      // #61 M2a: a proc burst's number is ITS OWN float, in the row's tint,
+      // with the row's glyph — separate from and after the hit that tipped it.
+      if (typeof e.cause === 'string' && e.cause.startsWith('proc:')) {
+        return (ctx) => {
+          const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
+        };
+      }
       return e.cause === 'effect'
         ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
         : null; // attack damage already shown by damageDealt
@@ -450,13 +706,39 @@ function visualFor(e, beatKind) {
             floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
           }
         : null;
+    // #61 M2: the proc moment, three beats — banner + per-status SFX row here,
+    // the visible drain on the meter bar, then the tinted number (the proc:
+    // hpLost above, next on the queue's own cadence). The old bleed-only
+    // meterFilled banner generalized: any threshold row procs through this one
+    // grammar, tint and name from its own data (M4).
+    case 'procBurst':
+      return (ctx) => {
+        const info = ctx.statusInfo && ctx.statusInfo(e.status);
+        // Per-status SFX row by name — an unauthored id degrades to the sfx
+        // table's own default (audible, never silent), until the audio seat
+        // authors procBurst_<status> rows.
+        sfx.play(`procBurst_${e.status}`);
+        banner(ctx.layer, `${((info && info.name) || e.status).toUpperCase()} BURST`, 'blood');
+        // M2b: the drain is SEEN — the live bar transitions to empty before
+        // the re-render replaces it.
+        const anchor = ctx.anchorFor(e.targetId);
+        const card = anchor && anchor.closest ? anchor.closest('[data-eid]') : null;
+        const bar = card && card.querySelector(`.procbar[data-status="${e.status}"] .fill`);
+        if (bar) {
+          bar.style.transition = 'width 250ms ease-out';
+          bar.style.width = '0%';
+        }
+      };
+    // #61 M3: refusal has feedback — points blocked by an active resistance
+    // answer with a gray tick, so a bleed card into resistance never reads as
+    // the game eating the card.
+    case 'procResisted':
+      return (ctx) => {
+        const info = ctx.statusInfo && ctx.statusInfo(e.status);
+        floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+      };
     case 'meterFilled':
-      return e.status === 'bleed'
-        ? (ctx) => {
-            sfx.play('bleedBurst');
-            banner(ctx.layer, 'BLEED BURST', 'blood');
-          }
-        : null;
+      return null; // poise fills speak through enemyStaggered below
     case 'enemyStaggered':
       return (ctx) => {
         sfx.play('stagger');

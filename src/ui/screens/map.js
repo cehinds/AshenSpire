@@ -1,174 +1,272 @@
-// src/ui/screens/map.js — the act map (SPEC §7.1, mockup: map-screen.svg)
+// src/ui/screens/map.js — the act map SCREEN (SPEC §7.1, mockup: map-screen.svg)
 //
-// Full act visible; only edge-connected nodes from the current position are
-// clickable; traveled path in gold. With the Sealstone Key passive, '?'
-// nodes render their pre-rolled resolution (dashed ring marks a reveal).
+// THE BOARD IS NOT HERE ANY MORE. Geometry, edges, nodes, fog, the camera, the
+// zoom ladder and the delivered-tap-size note live in ONE renderer,
+// `ui/components/mapboard.js`, because there were two of them: this file and a
+// second, independent one inside `ui/screens/coop.js` with its own `ROW_H = 46`
+// and its own `r = boss ? 20 : 15`. Read that file's header for the ruling —
+// the co-op map is the SAME MAP with a second player on it, so what varies is
+// the VIEWER and never the act.
+//
+// WHAT IS STILL THIS FILE'S: the chrome a solo run needs and a co-op client does
+// not — the hero header, the relic and flask strip, the legend, the quick-nav,
+// the hint bar, and this screen's own keyboard handler.
+//
+// TWO MODES, and the toggle is Settings → Display · Map reveal:
+//
+//   path  the game as it shipped — the whole act drawn, only edge-connected
+//         nodes from the current position clickable, traveled path in gold.
+//   fog   the doors, the boss, the trail behind you and the split in front of
+//         you. Everything else is unlit parchment.
+//
+// WHAT IS DRAWN IS NOT WHAT IS CLICKABLE. `reachable` governs CLICKS; fog governs
+// DRAWING, and it asks a different question of a different set — the ladder in
+// model/mapknowledge.js. The Sealstone Key is not a case this screen checks for:
+// it is the operator that lifts a node from `placed` to `known`.
 
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
-import { overlayIsOpen } from '../components/overlay.js';
-import { matchAction, isEngaged, focusFirst } from '../input.js';
+import { veilIsOpen } from '../components/veil.js';
+import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, actionHint } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
-import { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
+import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
+import { mountMapBoard } from '../components/mapboard.js';
+import { flaskActionPlan } from '../../model/flaskActions.js';
+import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
+import { resolveMapMode } from '../../model/mapknowledge.js';
+import { hudShellHtml } from '../components/hudmeta.js';
+import { actRouteStripHtml } from '../components/actRouteStrip.js';
+import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
+import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
+import { wireHudModeGrip } from '../components/hudModeGrip.js';
+import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { resourceBars } from '../components/resbars.js';
+import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 
-const COL_X = 95;
-const ROW_H = 46;
+/**
+ * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
+ * one listener that was left out of it.
+ *
+ * The handler below removes itself when `.mapscreen` is gone. That is correct
+ * for map → combat → map and WRONG for map → map: the second mount puts a
+ * `.mapscreen` back, so the first handler's guard passes forever and both run.
+ * `+` steps the zoom twice, and the stale one drives a detached `<svg>`.
+ *
+ * It was latent before tonight (nothing re-mounted the map in place) and it is a
+ * live path now: flipping Map reveal in Settings redraws the map underneath the
+ * still-open overlay, which is the entire point of putting the toggle there. So
+ * the mount owns the teardown rather than the handler guessing at it.
+ */
+let liveMapKeys = null;
+// AND THE BOARD IT DROVE. The board holds a ResizeObserver and a timeout that
+// re-centre a scrollport this mount is about to replace; leaving them running is
+// the same leak the handler above was written for, one object over.
+let liveMapBoard = null;
+let liveMapViewportRelease = null;
 
-// Map zoom levels (%) selectable in-view and defaulted from settings.
-const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
-function defaultZoom(meta) {
-  const pct = Number(((meta && meta.settings) || {}).mapZoom);
-  const z = pct ? pct / 100 : 1.15;
-  // Snap to the nearest step so +/- stays on the ladder.
-  return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
-}
-
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
-  const map = run.mapGraph;
-  const nodes = Object.values(map.nodes);
-  const maxFloor = Math.max(...nodes.map((n) => n.floor));
-  const width = 7 * COL_X + 60;
-  const height = (maxFloor + 1) * ROW_H + 30;
-  const x = (col) => 60 + col * COL_X;
-  const y = (floor) => height - floor * ROW_H;
-  let zoom = defaultZoom(meta);
-
-  const reachable = new Set(run.mapNodeId ? map.nodes[run.mapNodeId].next : map.startIds);
-  const traveled = new Set(run.path || []);
-  const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
-
-  // ---- edges (a traveled edge = consecutive pair in run.path) ----
-  let edgeSvg = '';
-  const path = run.path || [];
-  for (const n of nodes) {
-    for (const toId of n.next) {
-      const to = map.nodes[toId];
-      const ia = path.indexOf(n.id);
-      const isTraveled = ia >= 0 && path[ia + 1] === toId;
-      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
-    }
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+  // Before anything is drawn: the previous mount's keyboard handler, if this is
+  // a re-mount. See `liveMapKeys` above.
+  if (liveMapKeys) {
+    removeEventListener('keydown', liveMapKeys);
+    liveMapKeys = null;
   }
+  if (liveMapBoard) {
+    liveMapBoard.teardown();
+    liveMapBoard = null;
+  }
+  liveMapViewportRelease?.();
+  liveMapViewportRelease = null;
+  const map = run.mapGraph;
+  // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
+  // screen still computes. Geometry, drawing and the camera are the board's
+  // (ui/components/mapboard.js).
+  const reachable = new Set(run.mapNodeId ? map.nodes[run.mapNodeId].next : map.startIds);
+  const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
+  const mode = resolveMapMode(meta);
+  const fog = mode === 'fog';
 
   const cz = run.customization || {};
-  const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
-  const hasRelics = run.relics.length > 0;
-  const hasFlasks = run.flasks.length > 0;
+  const atEntrance = !run.mapNodeId;
+  const legendHtml = `<div class="map-legend-pop" hidden>
+    ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+  </div>`;
 
   app.innerHTML = `
-    <div class="mapscreen">
-      <header class="topbar map-header">
-        <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
-        <div class="who">
-          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
-          <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
-        </div>
-        <span class="mh-stat cinders">⛁ ${run.cinders}</span>
-        <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
-        <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-        <div class="mh-actions">
-          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
-          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
-          <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
-        </div>
-        <div class="map-legend-pop" hidden>
-          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
-        </div>
-      </header>
-      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
-        <div class="mh-flasks"></div>
-        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
-        <div class="relics mh-relics"></div>
-      </div>
-      <div class="map-scroll">
-        <div class="map-canvas">
-          <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(run.actNumber)}</text>
-            ${edgeSvg}
-            <g id="map-nodes"></g>
-          </svg>
-        </div>
-      </div>
-      <!-- OUTSIDE .map-scroll, and that is the whole fix (EldenSpire#28).
-           These three buttons used to be the last child of the scrollport,
-           absolutely positioned over it, so they covered a piece of the
-           pannable canvas. WHICH piece is a coincidence of shape x map zoom x
-           pan offset x seed, and at 412x915 the coincidence was two map nodes a
-           player could see and could not tap. A sibling of .map-scroll is laid
-           out in the flow beside it, so the scrollport is smaller by exactly
-           the bar and there is no offset left for a node to be trapped at.
-           (No backticks in here: this block is inside a template literal, and
-           the first draft of it closed the string and took the screen down.) -->
-      <!-- The hint bar is ABOVE the zoom bar here, and the order is the fix for
-           a defect the first draft of this change introduced. .hint-bar is
-           position: fixed to the bottom of the VIEWPORT and centred, so once the
-           zoom buttons stopped floating and took the bottom of the map, the two
-           claimed the same band: at 390x844 and 412x915 the hint pill sat on top
-           of the − and the ⊙ and made them unreadable. It is pointer-events:
-           none, so nothing was unpressable and the reach sweep was right to stay
-           green — this was only ever visible to an eye. Both are in the flow
-           here (see .mapscreen .hint-bar in map.css), so the map's bottom chrome
-           is one stack with no reserved height anywhere. -->
-      ${hintBarHtml('map')}
-      <div class="map-zoom">
-        <button class="zbtn" id="zoom-out" title="Zoom out">−</button>
-        <button class="zbtn" id="zoom-reset" title="Reset / center">⊙</button>
-        <button class="zbtn" id="zoom-in" title="Zoom in">+</button>
-      </div>
+    <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
+      <!-- ONE HUD SHELL: this is the same component combat mounts. -->
+      ${hudShellHtml(runHudViewModel({
+        place: 'map',
+        headerClass: 'map-header',
+        cinders: run.cinders,
+        act: run.actNumber,
+        actTotal: run.actNumber > 3 ? null : 3,
+        floor: run.floor,
+        floorTotal: map.floors,
+        seed: run.seedString,
+        identity: {
+          name: heroName,
+          classLabel: className.toUpperCase(),
+          glyph: cz.glyph || classGlyph(run.class),
+          tint: tintCss(cz.tint),
+          context: actTitle(run.actNumber),
+        },
+        controls: {
+          armouryId: 'open-armoury',
+          menuId: 'open-menu',
+          menuHint: actionHint('menu'),
+        },
+        quickSettings: {
+          presentation: registries.balance.ui.hudQuickSettings,
+          settings: meta.settings || {},
+        },
+        overlayHtml: legendHtml,
+      }))}
+      ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
     </div>`;
+  wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+  wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
 
-  const g = app.querySelector('#map-nodes');
-  for (const n of nodes) {
-    const isReachable = reachable.has(n.id);
-    let shownType = n.type;
-    let revealed = false;
-    if (n.type === 'event' && reveal && n.resolved) {
-      shownType = n.resolved.kind === 'event' ? 'event' : n.resolved.kind;
-      revealed = n.resolved.kind !== 'event';
-    }
-    const cls = [
-      'map-node',
-      shownType,
-      traveled.has(n.id) || n.id === run.mapNodeId ? 'visited' : '',
-      n.id === run.mapNodeId ? 'current' : '',
-      isReachable ? 'reachable' : '',
-      revealed ? 'revealed' : '',
-    ].filter(Boolean).join(' ');
-    const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    el.setAttribute('class', cls);
-    const r = n.type === 'boss' ? 20 : 15;
-    // Reachable nodes get a rhythmic pulsing halo so the next choices read at
-    // a glance; the halo is inert when reduced-motion is set (CSS handles it).
-    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>`;
-    if (isReachable) el.addEventListener('click', () => onPick(n.id));
-    attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
-    g.appendChild(el);
+  // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
+  //
+  // E9 / #254, his words: "I'd like the hud to look the same both combat and
+  // map". ONE renderer for both — ui/components/resbars.js — fed by the one
+  // plan builder, model/resources.js `resourceBarPlan(…, 'main', …)`, which is
+  // the identical call combat.js:435 and coop.js:460 make. So:
+  //
+  //   · WHICH rows appear is content/resources.js's business, not this
+  //     screen's. HP, then Mana, then Stamina — the map does
+  //     not get its own list and cannot drift from combat's.
+  //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
+  //     reference table (HUD_REFERENCE_MAX, his 200/20/20), so each pool's length
+  //     means the same thing on both screens.
+  //   · The `run` IS the view and the entity here, exactly as it is in
+  //     tools/hybridstats.mjs — the readers take current/max off it and a row
+  //     whose reader returns null is ABSENT, never a lying 0/0 trough. Poise is
+  //     model-surface-only on the combat character card, so it never enters
+  //     this shared main-surface plan on either screen.
+  //   · the shared component writes the exact max/reference percentage; there
+  //     is no screen-specific floor or post-layout correction.
+  const resHost = app.querySelector('.map-header .resbars-host');
+  if (resHost) {
+    const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
+    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
   }
 
-  const strip = app.querySelector('.mh-relics');
+  // ---- THE BOARD -------------------------------------------------------
+  //
+  // ONE RENDERER, and this is the whole of the map on this screen. Everything
+  // it draws — the SVG, the edges, the fog ground, every node, the camera, the
+  // zoom bar and the delivered-tap-size note — is the same code the co-op
+  // client mounts. Read ui/components/mapboard.js's header for why.
+  //
+  // The hint bar goes in as `chromeHtml` so it lands BETWEEN the scrollport and
+  // the zoom bar, and the order is a fix rather than a preference: `.hint-bar`
+  // is fixed to the bottom of the VIEWPORT, so once the zoom buttons stopped
+  // floating and took the bottom of the map, the two claimed the same band and
+  // the hint pill sat on top of the − and the ⊙ (map.css, `.mapscreen
+  // .hint-bar`). It was never unpressable, so the reach sweep was right to stay
+  // green — this was only ever visible to an eye.
+  const board = mountMapBoard(app.querySelector('.mapscreen'), {
+    act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
+    showLegendControl: true,
+    viewer: {
+      meta, reachable, mode, reveal,
+      current: run.mapNodeId || null,
+      path: run.path || [],
+      viewState: run.mapView,
+      onViewStateChange: (viewState, { commit } = {}) => {
+        run.mapView = viewState;
+        if (commit && onSave) onSave();
+      },
+      onPick,
+      tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
+    },
+    chromeHtml: hintBarHtml('map'),
+  });
+
+  const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
     el.className = 'relic';
+    markUiComponent(el, UI.relicSlot);
     el.textContent = def.icon || '◆';
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
   }
 
-  const flaskWrap = app.querySelector('.mh-flasks');
+  const chargeWrap = app.querySelector('.hud-charge-flasks');
+  for (const kind of CHARGE_FLASK_KINDS) {
+    const def = chargeFlaskDefinition(registries, kind);
+    if (!def) continue;
+    const current = run.flaskCharges ? run.flaskCharges[`${kind}Current`] : 0;
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'relic flask-slot flask-charge';
+    el.dataset.flaskKind = kind;
+    markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
+    el.setAttribute('aria-disabled', String(current <= 0));
+    el.appendChild(flaskPresentation(def, { showName: false }));
+    const count = document.createElement('b');
+    count.className = 'flask-charge-count';
+    count.textContent = String(current);
+    el.appendChild(count);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
+    el.addEventListener('click', () => {
+      const plan = flaskActionPlan({
+        context: 'run',
+        canUse: false,
+        useReason: 'Healing and mana flasks can only be used in combat',
+        canDrop: false,
+        dropReason: 'Charge flasks stay with the run',
+      });
+      mountFlaskActionMenu(el, { def, plan, onCancel: () => {}, onAction: () => {} });
+    });
+    chargeWrap.appendChild(el);
+  }
+
+  const flaskWrap = app.querySelector('.hud-potions');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
-    const el = document.createElement('span');
-    el.className = 'mh-flask';
-    el.textContent = def.icon || '🧪';
+    const el = document.createElement('button');
+    el.type = 'button';
+    // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
+    // unified-cursor exception in input.js. Keep utility flasks reachable by
+    // keyboard/gamepad Confirm as well as pointer click.
+    el.className = 'mh-flask flask-slot';
+    markUiComponent(el, UI.potionControl);
+    el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
+    el.addEventListener('click', () => {
+      const plan = flaskActionPlan({
+        context: 'run',
+        canUse: false,
+        useReason: 'Flasks can only be used in combat',
+        canDrop: true,
+      });
+      mountFlaskActionMenu(el, {
+        def,
+        plan,
+        onCancel: () => {},
+        onAction: (actionId) => {
+          if (actionId !== 'drop') return;
+          const at = run.flasks.indexOf(f);
+          if (at >= 0) run.flasks.splice(at, 1);
+          el.remove();
+          flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
+        },
+      });
+    });
     flaskWrap.appendChild(el);
   }
+  flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
 
   const armouryBtn = app.querySelector('#open-armoury');
   if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
@@ -204,17 +302,19 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const menuBtn = app.querySelector('#open-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('deck');
+      if (quickNavMode() === 'off') return onMenu('settings');
       e.stopPropagation();
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
         hasSave: !!(onSave || onQuit),
+        controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
-          legend: () => toggleLegend(),
+          ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
+          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
         },
       });
     });
@@ -230,145 +330,68 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-      ? 'Deck, relics, stats, settings and saving.'
+      ? 'Armoury, settings, controls and saving.'
       : 'Everywhere you can go from here.')}`);
 
-  // ---- zoom + centering (SPEC §7.1 map UX) ----
-  const scroll = app.querySelector('.map-scroll');
-  const svgEl = app.querySelector('.map-scroll svg');
-
-  // The svg scales by setting its pixel width/height (viewBox unchanged), so
-  // the scroll container grows and native scrollbars appear.
-  function applyZoom(center) {
-    svgEl.style.width = `${width * zoom}px`;
-    svgEl.style.height = `${height * zoom}px`;
-    if (center) centerOnCurrent();
-  }
-
-  // Scroll so the current node sits in the middle of the viewport. At run
-  // start there is no current node yet, so frame the reachable start nodes
-  // (their centroid) — the requested default framing.
-  function centerOnCurrent() {
-    let fx;
-    let fy;
-    if (run.mapNodeId && map.nodes[run.mapNodeId]) {
-      const f = map.nodes[run.mapNodeId];
-      fx = x(f.col);
-      fy = y(f.floor);
-    } else {
-      const rs = nodes.filter((n) => reachable.has(n.id));
-      if (!rs.length) return;
-      fx = rs.reduce((a, n) => a + x(n.col), 0) / rs.length;
-      fy = rs.reduce((a, n) => a + y(n.floor), 0) / rs.length;
-    }
-    scroll.scrollTop = Math.max(0, fy * zoom - scroll.clientHeight / 2);
-    scroll.scrollLeft = Math.max(0, fx * zoom - scroll.clientWidth / 2);
-  }
-
-  function setZoom(next, keepCenter = true) {
-    zoom = Math.min(ZOOM_STEPS[ZOOM_STEPS.length - 1], Math.max(ZOOM_STEPS[0], next));
-    applyZoom(keepCenter);
-  }
-  const stepZoom = (dir) => {
-    const i = ZOOM_STEPS.findIndex((z) => Math.abs(z - zoom) < 0.001);
-    const ni = Math.min(ZOOM_STEPS.length - 1, Math.max(0, (i < 0 ? 1 : i) + dir));
-    setZoom(ZOOM_STEPS[ni]);
-  };
-  app.querySelector('#zoom-in').addEventListener('click', () => stepZoom(1));
-  app.querySelector('#zoom-out').addEventListener('click', () => stepZoom(-1));
-  app.querySelector('#zoom-reset').addEventListener('click', () => centerOnCurrent());
-
-  // Ctrl/⌘ + wheel zooms toward the pointer-ish center; plain wheel scrolls.
-  scroll.addEventListener(
-    'wheel',
-    (ev) => {
-      if (!(ev.ctrlKey || ev.metaKey)) return;
-      ev.preventDefault();
-      stepZoom(ev.deltaY < 0 ? 1 : -1);
-    },
-    { passive: false }
-  );
-
-  // Drag-to-pan (in addition to scrollbars).
-  let panning = false;
-  let sx = 0;
-  let sy = 0;
-  let sl = 0;
-  let st = 0;
-  scroll.addEventListener('pointerdown', (ev) => {
-    // The `.map-zoom` half of this guard went with the overlay (EldenSpire#28).
-    // This listener is on .map-scroll and the buttons are no longer inside it,
-    // so a press on one cannot reach here to be excluded. Left in, it would be
-    // a line that reads like protection and can never run — and the next reader
-    // would take it as evidence the buttons are still in the scrollport.
-    if (ev.target.closest('.map-node.reachable')) return;
-    panning = true;
-    sx = ev.clientX;
-    sy = ev.clientY;
-    sl = scroll.scrollLeft;
-    st = scroll.scrollTop;
-    scroll.classList.add('grabbing');
-  });
-  addEventListener('pointermove', (ev) => {
-    if (!panning) return;
-    scroll.scrollLeft = sl - (ev.clientX - sx);
-    scroll.scrollTop = st - (ev.clientY - sy);
-  });
-  addEventListener('pointerup', () => {
-    panning = false;
-    scroll.classList.remove('grabbing');
-  });
-
-  // Keyboard: M opens the menu overlay; + / − / 0 zoom; the overlay owns Esc
-  // while open. Removed when the screen is torn down (app.innerHTML replaced).
+  // Keyboard: M opens the menu overlay; + / − / 0 zoom; a standing veil owns
+  // the keys while it is up. Removed when the screen is torn down (app.innerHTML
+  // replaced). This guard read `overlayIsOpen()` — one veil of six — so zoom and
+  // the menu keys stayed live under the settings modal and the quick-nav list.
+  // Not the hand-losing one, and the same defect: components/veil.js.
   const mapKeys = (ev) => {
+    // Still a backstop for map → anywhere-else, where nothing calls mountMap
+    // again to do the tidying. The re-mount case is owned at the top of this
+    // function; this branch can no longer be reached by a second map.
     if (!app.querySelector('.mapscreen')) {
       removeEventListener('keydown', mapKeys);
+      if (liveMapKeys === mapKeys) liveMapKeys = null;
       return;
     }
-    if (overlayIsOpen()) return;
+    if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
-      if (onMenu) onMenu('deck');
-    } else if (matchAction(ev, 'relics')) {
-      if (onMenu) onMenu('relics');
-    } else if (matchAction(ev, 'stats')) {
-      if (onMenu) onMenu('stats');
+    const armouryAction = actionDestinationForEvent(ev);
+    if (matchAction(ev, 'menu')) {
+      if (onMenu) onMenu('settings');
+    } else if (armouryAction) {
+      if (onArmoury) onArmoury(armouryAction);
     } else if (ev.key === '+' || ev.key === '=') {
-      stepZoom(1);
+      board.stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {
-      stepZoom(-1);
+      board.stepZoom(-1);
     } else if (ev.key === '0') {
-      centerOnCurrent();
+      board.resetFraming();
     }
   };
   addEventListener('keydown', mapKeys);
+  liveMapKeys = mapKeys;
 
-  applyZoom(false);
-  // Auto-center the camera on the current node. The flex container may report
-  // height 0 until layout settles (the header/sub-strip above it size first), so
-  // center on the first non-zero size via a ResizeObserver, with a timeout
-  // backstop. Smart default: land the cursor on a reachable next node (only once
-  // the player is using keyboard/gamepad, so mouse players get no stray ring).
-  function centerAndFocus() {
-    centerOnCurrent();
-    if (isEngaged()) focusFirst('.map-node.reachable');
-  }
-  if (scroll.clientHeight > 0) {
-    centerAndFocus();
-  } else if (typeof ResizeObserver !== 'undefined') {
-    const ro = new ResizeObserver(() => {
-      if (scroll.clientHeight > 0) {
-        centerAndFocus();
-        ro.disconnect();
-      }
+  // The camera settles on the board's own ResizeObserver + backstop; the focus
+  // cursor lands once it has (only when the player is using keyboard/gamepad, so
+  // mouse players get no stray ring).
+  board.recenter(() => { if (isEngaged()) focusFirst('.map-node.reachable'); });
+  let frameA = 0;
+  let frameB = 0;
+  const recenterAfterSettle = () => {
+    cancelAnimationFrame(frameA);
+    cancelAnimationFrame(frameB);
+    frameA = requestAnimationFrame(() => {
+      frameB = requestAnimationFrame(() => {
+        if (app.querySelector('.mapscreen')) board.recenter();
+      });
     });
-    ro.observe(scroll);
-  }
-  // Backstop in case the observer never fires (e.g. instant layout): re-center
-  // shortly after mount. Cheap and idempotent.
-  setTimeout(centerAndFocus, 120);
+  };
+  const viewport = window.visualViewport;
+  for (const type of ['resize', 'ashenspire:hud-mode-change']) window.addEventListener(type, recenterAfterSettle);
+  for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(type, recenterAfterSettle);
+  viewport?.addEventListener('resize', recenterAfterSettle);
+  liveMapViewportRelease = () => {
+    cancelAnimationFrame(frameA); cancelAnimationFrame(frameB);
+    for (const type of ['resize', 'ashenspire:hud-mode-change']) window.removeEventListener(type, recenterAfterSettle);
+    for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.removeEventListener(type, recenterAfterSettle);
+    viewport?.removeEventListener('resize', recenterAfterSettle);
+  };
+  liveMapBoard = board;
 }
 
 function nodeTooltip(type, node, revealed) {

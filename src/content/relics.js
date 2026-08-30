@@ -17,6 +17,11 @@ export const relics = [
     id: 'forsakenMedallion',
     name: 'Forsaken Medallion',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'hp', amount: 10 },
+      ],
+    },
     icon: '🏅',
     triggers: [
       {
@@ -26,7 +31,7 @@ export const relics = [
         do: [{ op: 'poiseDamage', amount: 4 }],
       },
     ],
-    textTemplate: 'Your first attack each combat also deals {poiseDamage} Poise damage.',
+    textTemplate: 'Max HP +{hpFlat}. Your first attack each combat also deals {poiseDamage} Poise damage.',
     flavor: 'Its face is worn smooth, but it still remembers being gold.',
   },
 
@@ -37,12 +42,41 @@ export const relics = [
     id: 'starstoneShard',
     name: 'Starstone Shard',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'mana', amount: 1 },
+        { tag: 'damage.school.flat', school: 'magic', amount: 1 },
+      ],
+    },
     icon: '💠',
     triggers: [
-      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } }] },
+      {
+        on: 'combatStart',
+        do: [
+          { op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } },
+          { op: 'restoreMana', amount: 1 },
+        ],
+      },
     ],
-    textTemplate: 'Begin each combat with Starstone Charge (your first spell counts as a combo).',
+    textTemplate: 'Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
     flavor: 'A chip of someone else’s genius. It still hums.',
+  },
+  {
+    id: 'cutpursesCoin',
+    name: "Cutpurse's Coin",
+    rarity: 'starter',
+    passives: { modifiers: [] },
+    icon: '🪙',
+    triggers: [
+      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'prepared', stacks: { f: 'add', args: [1] } }] },
+      {
+        on: 'damageDealt', once: true,
+        if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
+        do: [{ op: 'applyStatus', status: 'venom', stacks: 2 }],
+      },
+    ],
+    textTemplate: 'Begin each combat Prepared. Your first attack each combat applies {venom} Venom.',
+    flavor: 'One face buys silence. The other buys speed.',
   },
   {
     // SPEC §5.1's overheal-to-block needs overflow math no trigger can see;
@@ -51,6 +85,7 @@ export const relics = [
     id: 'goldFigurine',
     name: 'Gold Figurine',
     rarity: 'starter',
+    passives: { modifiers: [] },
     icon: '🗿',
     triggers: [
       {
@@ -155,6 +190,9 @@ export const relics = [
     name: 'Cured Hide',
     rarity: 'common',
     icon: '🛡',
+    // Character-sheet receipt only. This does not create a player poise meter
+    // or change stagger behavior; the projection says so explicitly.
+    passives: { poiseThresholdAdd: 2 },
     triggers: [
       {
         on: 'hpLost',
@@ -163,7 +201,7 @@ export const relics = [
         do: [{ op: 'block', target: 'owner', amount: 5 }],
       },
     ],
-    textTemplate: 'The first time you lose HP each combat, gain {block} Block.',
+    textTemplate: 'The first time you lose HP each combat, gain {block} Block. Poise threshold +2 (no current consumer).',
     flavor: 'The beast learned its lesson too late to keep it.',
   },
   {

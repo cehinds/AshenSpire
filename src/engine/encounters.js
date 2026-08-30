@@ -4,13 +4,16 @@
 // Procedural systems: seeded algorithms whose every knob comes from content
 // (balance.js, encounters/*.js). Pure functions of (registries, rng, args) —
 // run mutation is limited to explicitly documented counters (flask pity,
-// removal price). Stream usage: encounters → 'enemyAI', card rewards →
+// removal price) plus `applyGraceRefill`, which is the one function here that
+// puts something IN the run — flasks, at a grace, from a pure plan it does not
+// itself compute. Stream usage: encounters → 'enemyAI', card rewards →
 // 'cardRewards', relics → 'relicRewards', flasks → 'flaskRewards',
 // unknown nodes + events → 'events', shop stock → 'shop', cinders → 'misc'.
 //
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
+import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -101,7 +104,7 @@ export function rollFlaskDrop(registries, rng, run) {
   const hit = rng.float('flaskRewards') * 100 < run.flaskChancePct;
   if (hit) {
     run.flaskChancePct = Math.max(0, run.flaskChancePct - bal.flaskDropStepPct);
-    const pool = registries.flasks.ids();
+    const pool = utilityFlaskIds(registries);
     return pool.length ? rng.pick('flaskRewards', pool) : null;
   }
   run.flaskChancePct = Math.min(100, run.flaskChancePct + bal.flaskDropStepPct);
@@ -164,7 +167,15 @@ export function rollArmamentDrop(registries, rng, { source, found = [], carried 
       break;
     }
   }
-  return rng.pick('armaments', pool.filter((a) => a.rarity === rarity).map((a) => a.id));
+  const candidates = pool.filter((a) => a.rarity === rarity && Number(a.dropWeight) > 0);
+  if (!candidates.length) return null;
+  const pieceTotal = candidates.reduce((sum, piece) => sum + piece.dropWeight, 0);
+  let pieceRoll = rng.float('armaments') * pieceTotal;
+  for (const piece of candidates) {
+    pieceRoll -= piece.dropWeight;
+    if (pieceRoll < 0) return piece.id;
+  }
+  return candidates[candidates.length - 1].id;
 }
 
 // ---------------------------------------------------------------------------
@@ -196,7 +207,7 @@ export function buildShopStock(registries, rng, run) {
     relics.push({ id, cost: rng.int('shop', ...bal.relicCost[registries.relics.get(id).rarity]) });
   }
 
-  const flaskIds = registries.flasks.ids();
+  const flaskIds = utilityFlaskIds(registries);
   const flasks = [];
   for (let i = 0; i < bal.flaskStock && flaskIds.length; i++) {
     const id = rng.pick('shop', flaskIds);
@@ -233,11 +244,17 @@ function rollShopCards(registries, rng, classId, count) {
 /**
  * resolveUnknownNode(registries, rng, { seenEvents }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
- * Odds from balance.unknownNode; events avoid repeats within a run while
- * unseen ones remain. Stream 'events' (SPEC §5.6).
+ * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
+ * describe (they used to be `balance.unknownNode`, a flat global that could not
+ * differ per act while the map did). `act` is required: guessing act 1 would be
+ * a default nobody authored, which is the fallback this rework exists to remove.
+ * Events avoid repeats within a run while unseen ones remain. Stream 'events'
+ * (SPEC §5.6).
  */
-export function resolveUnknownNode(registries, rng, { seenEvents = [] } = {}) {
-  const odds = registries.balance.unknownNode;
+export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
+  const cfg = registries.mapConfig(act);
+  const odds = cfg && cfg.unknownWeights;
+  if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
   const total = Object.values(odds).reduce((a, b) => a + b, 0);
   let r = rng.float('events') * total;
   let kind = 'event';
@@ -253,6 +270,33 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [] } = {}) {
   if (!pool.length) pool = registries.events.ids();
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back
   return { kind: 'event', eventId: rng.pick('events', pool) };
+}
+
+/**
+ * applyGraceRefill(registries, run, { counts }) → the plan it just applied.
+ *
+ * THE ONE MUTATION, and it is listed in this file's header beside flask pity
+ * and the removal price. Everything that decides WHAT to hand over is pure and
+ * lives in model/gracerefill.js, so a screen, a settings row and a sim can each
+ * ask what a grace would do without one of them having to do it.
+ *
+ * AUTOMATIC, NOT A CHOICE. Constantine: "flasks should refill automatically at
+ * graces". The caller fires this on ARRIVAL at the shrine, before Rest or Smith
+ * is offered — resting is one of the two things you can then spend the stop on,
+ * and the flasks are not the price of either.
+ *
+ * IDEMPOTENT BY CONSTRUCTION, which is what makes a re-entry safe: the plan is
+ * a TOP-UP to `count`, so calling it twice at one shrine grants nothing the
+ * second time. A resumed save that re-mounts the shrine cannot double-pour.
+ */
+export function applyGraceRefill(registries, run, opts = {}) {
+  if (run.flaskCharges) {
+    refillFlaskCharges(run.flaskCharges);
+    return { chargePools: structuredClone(run.flaskCharges), grants: [], total: 0, shortfalls: [] };
+  }
+  const plan = graceRefillPlan(registries, run, opts);
+  for (const flaskId of plan.grants) run.flasks.push({ flaskId });
+  return plan;
 }
 
 /** Shrine rest heal (SPEC shrine.healPct × shrineHealMult passives, floored). */

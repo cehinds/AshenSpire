@@ -1,0 +1,20 @@
+swap-row-reads --selftest — each known-bad planted as BYTES in a copy of the REAL tree,
+the two CSV rows authored into the same copy, and the real content-build run in between.
+Scored against an UNPLANTED CONTROL, because this tree is already red and exit 1 is free.
+
+  CONTROL  exit 1 · 390x844/flat reports 2 rows, 2 note-lines
+  CONTROL findings already present: 14
+
+  CAUGHT  the comparison stops wrapping — one long note bleeds the column sideways (LAW 5)
+      planted:yes control:clean exit 1
+  CAUGHT  the summary loses its tap floor (LAW 4)
+      planted:yes control:clean exit 1
+  CAUGHT  the note stops being rendered at all — the declined +2 goes silent again
+      rows 2, note-lines 0 (control 2)
+  CAUGHT  every slot prices, not only the combat-swappable ones — two rows becomes four
+      rows 4 (control 2, expected 4)
+
+  4/4 CAUGHT.
+  BOUNDARY: four defects on one surface, each scored against an unplanted control.
+  Silent about every defect nobody thought to plant, and about the two findings the
+  control already carries — those are OBSERVED on the real tree and need no plant.

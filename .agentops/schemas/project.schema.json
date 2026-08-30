@@ -1,0 +1,28 @@
+{
+  "$schema": "agentops-mini-schema/v1",
+  "title": "project",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "policy_version", "project_name", "repository", "default_branch", "development_branch", "control_plane_root", "installed_stage", "installed_contracts"],
+  "properties": {
+    "schema": {"const": "agentops/project/v1"},
+    "policy_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "project_name": {"type": "string", "minLength": 1},
+    "repository": {"type": "string", "minLength": 1},
+    "default_branch": {"type": "string", "minLength": 1},
+    "development_branch": {"type": "string", "minLength": 1},
+    "engine_stack": {"type": "string"},
+    "providers": {"type": "string"},
+    "risk_profile": {"enum": ["LOW", "STANDARD", "HIGH"]},
+    "startup_token_target": {"type": "integer"},
+    "startup_token_hard_limit": {"type": "integer"},
+    "blocker_routing_sla_minutes": {"type": "integer"},
+    "pages_owner_hud": {"enum": ["ENABLED", "DISABLED", "PLANNED"]},
+    "owner_command_path": {"enum": ["WORKFLOW_FORMS", "GITHUB_APP"]},
+    "control_plane_root": {"type": "string", "minLength": 1},
+    "installed_stage": {"type": "string", "minLength": 1},
+    "installed_contracts": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "runtime_artifacts": {"type": "object"},
+    "deferred_next_stages": {"type": "array", "items": {"type": "string"}}
+  }
+}

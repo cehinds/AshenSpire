@@ -48,7 +48,10 @@ export const ASCENSION_ORDER = [
 ];
 export const MAX_ASCENSION = ASCENSION_ORDER.length;
 
-export const ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS];
+// (`ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood here with no reader in
+// src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted
+// rather than documented: nothing re-typed it, so there is nothing to collapse
+// into, and the day a screen needs both groups it can spell the spread itself.)
 
 // True when a run carries any non-default rule (so it is flagged + excluded
 // from win-rate telemetry).
@@ -56,6 +59,10 @@ export function isCustomRun(custom) {
   if (!custom) return false;
   if (custom.ascension > 0) return true;
   if (custom.deckMode && custom.deckMode !== 'standard') return true;
+  // A run whose map was capped or re-weighted is not the game the win rate is
+  // about. Missing this line would have let a deliberately-shortened debug run
+  // count as a win against the real climb — the whole point of the flag.
+  if (custom.mapShape && Object.keys(custom.mapShape).length) return true;
   return !!(custom.mods && Object.values(custom.mods).some(Boolean));
 }
 

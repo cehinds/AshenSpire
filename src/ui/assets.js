@@ -12,10 +12,10 @@ import { assetUrl } from './assetmap.js';
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
 // board reads best when sprites fill it, and the whole UI is zoomed to fit the
 // window (main.js applyUiScale), so larger base sizes mean a bolder board rather
-// than overflow. Values are px-magnitude; emitted as rem (÷10, since :root is
-// 62.5% → 1rem = 10px) so sprites track the text-size setting. Shadows stay px.
+// than overflow. These are non-text geometry and remain px when Text size
+// changes; UI size still scales the containing application.
 const SIZE_TIERS = balance.ui.spriteTiers;
-const rem = (px) => `${px / 10}rem`;
+const px = (value) => `${value}px`;
 
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
@@ -30,13 +30,13 @@ export function enemySprite(enemyDef) {
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
-    el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};border-radius:10px;` +
+    el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
-      `justify-content:center;font-size:${rem(tier.font)};position:relative;` +
+      `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};position:relative;` +
+  el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;` +
     'display:flex;align-items:flex-end;justify-content:center;';
   const img = document.createElement('img');
   img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
@@ -78,7 +78,13 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
   const safe = String(sigil).replace(/[<>&"]/g, '');
   return (
     `<circle cx="${cx}" cy="${cy}" r="8" fill="#14100c" stroke="${t}" stroke-width="1.5"/>` +
-    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>`
+    // The whole figure is mirrored (styles/ui.css, "the figure faces the viewer").
+    // The circle is symmetric and does not care; the GLYPH is text, and mirrored
+    // text reads as a rendering fault rather than as a character facing you.
+    // Reflected about its own centre, so it lands exactly where it already was.
+    `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
+    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
+    `</g>`
   );
 }
 
@@ -115,6 +121,18 @@ const CLASS_SVG = {
       ${sigilMedallion(55, 66, t, sigil, 4.5)}
       <circle cx="29" cy="52" r="1.7" fill="${t}"/>
       <circle cx="40" cy="96" r="1.5" fill="${t}"/>
+    </svg>`,
+  // Rogue — light leathers, lowered hood, paired short blades.
+  rogue: (t, sigil) => `
+    <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
+      <ellipse cx="55" cy="133" rx="25" ry="5" fill="rgba(0,0,0,.45)"/>
+      <path d="M38 58 L31 130 L79 130 L72 58 Q55 51 38 58Z" fill="#202725"/>
+      <path d="M39 58 Q55 52 71 58 L67 82 L43 82Z" fill="#35433f"/>
+      <path d="M42 42 Q55 20 68 42 L66 59 Q55 66 44 59Z" fill="#1b211f" stroke="${t}" stroke-width="1.3"/>
+      <path d="M45 48 Q55 43 65 48" fill="none" stroke="${t}" stroke-width="1.2"/>
+      <path d="M31 72 L48 112" stroke="#c0b7a7" stroke-width="4"/><path d="M79 72 L62 112" stroke="#c0b7a7" stroke-width="4"/>
+      <path d="M27 68 L36 76 M83 68 L74 76" stroke="${t}" stroke-width="3"/>
+      ${sigilMedallion(55, 78, t, sigil, 4)}
     </svg>`,
   // Herald — hooded pilgrim, halo, prayer beads at the waist.
   herald: (t, sigil) => `
@@ -161,15 +179,14 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:15rem;height:19rem;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
   const fallbackToSvg = () => {
     el.innerHTML = build(tint, sigil);
     const svg = el.querySelector('svg');
     if (svg) {
-      // The class SVGs hardcode a 110×140 viewBox; fill the rem-sized container
-      // (viewBox keeps ratio) so the figure reads as boldly as the enemies and
-      // tracks the text-size setting.
+      // The class SVGs hardcode a 110×140 viewBox; fill the fixed-geometry
+      // container (viewBox keeps ratio) so Text size cannot resize the figure.
       svg.setAttribute('width', '100%');
       svg.setAttribute('height', '100%');
     }
@@ -190,10 +207,14 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   if (sigil) {
     const med = document.createElement('span');
     med.textContent = sigil;
+    // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
+    // "the figure faces the viewer"). That mirror is right for the ART and wrong
+    // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
+    // The medallion is centred on the chest, so flipping it back moves nothing.
     med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
-      `width:2.2rem;height:2.2rem;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
-      'display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#e8dcc0;';
+      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
+      `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
+      'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
   }
   return el;
@@ -204,42 +225,46 @@ export function classSprite(classId, tint, sigil, tintId, style) {
  * class has one), else the chosen sigil glyph in a tinted panel.
  */
 /**
- * equippedFigure({ classId, armourId, rightId, leftId }) → element | null.
+ * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror })
+ * → element | null.
  *
  * The figure as LAYERS: a bare-handed body in the armour set's palette, with
  * each held armament stacked over it. All of them are rendered on one shared
  * camera and canvas (tools/equipment-blender.py), which is what lets them be
- * absolutely positioned on top of each other and simply line up.
+ * absolutely positioned on top of each other and simply line up. The art is
+ * currently authored at type-default sockets; the mirror flags are the
+ * temporary per-slot correction until those layers are re-rendered neutral.
  *
  * Layering is why this is affordable at all: 12 armour sets × 24 armaments ×
  * 24 off-hands pre-rendered is six figures' worth of combinations, while one
  * PNG per piece is 36 files. Any layer that fails to load just removes itself,
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
-export function equippedFigure({ classId, armourId, rightId, leftId }) {
+export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
   el.style.cssText = 'position:relative;width:100%;height:100%;';
-  const layer = (src, z) => {
+  const layer = (src, z, mirror = false) => {
     const img = document.createElement('img');
     img.src = src;
     img.alt = '';
     img.style.cssText =
-      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};`;
+      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};` +
+      (mirror ? 'transform:scaleX(-1);' : '');
     img.addEventListener('error', () => img.remove());
     el.appendChild(img);
   };
   layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
-  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2);
-  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3);
+  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2, leftMirror);
+  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3, rightMirror);
   return el;
 }
 
 /**
  * playerSprite(customization, classId, equip?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId }) it composites the layered
+ * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
  * equipment figure; without it, the single rendered class PNG as before.
  */
 export function playerSprite(customization = {}, classId, equip = null) {
@@ -248,7 +273,7 @@ export function playerSprite(customization = {}, classId, equip = null) {
   if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
     const el = document.createElement('div');
     el.className = 'class-sprite';
-    el.style.cssText = 'width:15rem;height:19rem;position:relative;';
+    el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
     el.appendChild(equippedFigure({ classId, ...equip }));
     return el;
   }
@@ -257,8 +282,8 @@ export function playerSprite(customization = {}, classId, equip = null) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:15rem;height:19rem;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
-    'display:flex;align-items:center;justify-content:center;font-size:7rem;position:relative;' +
+    `width:150px;height:190px;flex:0 0 auto;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';
   return el;

@@ -52,13 +52,110 @@
 // legibility, and cannot see a control that only appears mid-interaction.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// RENDERED PAGE: this tool serves the real tree, boots each ?shot= state in a
+// real browser, and hit-tests real rects with elementFromPoint. That is the
+// right door and always was. What it lacked was a re-runnable known-bad: its
+// only observation was "this branch before the two fixes" — a ref nobody can
+// check out now, which under SOP 2's drift clause is `unknown`, not coverage.
+// Vira's audit (2026-08-14) rated it OBSERVED-ONCE for exactly that.
+// `--selftest` puts the ORIGINAL defect back as CSS BYTES in a copy of the
+// tree — the map's zoom stack floating over the canvas again, which is the
+// literal shape of the covered map node — and re-runs this whole tool against
+// the copy: same serve.mjs, same browser, same hit-test.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  const selftestCode = await doorSelftest({
+    tool: 'screenreach.mjs',
+    args: ['--only', '390x650'],
+    timeoutMs: 600000,
+    plants: [
+      {
+        // #28 moved the bar BELOW the map, so re-floating it is not one
+        // property any more: `position: fixed` over the map's own bottom band
+        // is the same geometry the pre-#28 tree shipped — a floating stack
+        // answering the hit-test in a node's place.
+        name: 'the zoom stack floats over the map canvas again (the #21-shaped covered node)',
+        file: 'styles/map.css',
+        // It floats over the TOP band, where the map's own controls actually
+        // sit at this shape — the bottom band is a pannable canvas whose nodes
+        // are mostly SCROLLED OUT, which this tool correctly does not count, so
+        // a bottom-floating plant reproduces nothing. Measured, not assumed:
+        // bottom => 0 COVERED, top => 3 COVERED.
+        append: '.map-zoom { position: fixed; left: 0; right: 0; top: 0; height: 14vh; z-index: 60; }',
+        // `map` by name, because the boss screen legitimately reports 10
+        // COVERED by design (its splash) — a bare `N COVERED` regex matches
+        // that expected line and would have called a green run a catch.
+        expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
+      },
+      {
+        name: 'a full-bleed veil is laid over every screen — nothing can answer its own hit-test',
+        file: 'styles/ui.css',
+        append: '.screen::after { content: ""; position: fixed; inset: 0; z-index: 9000; background: transparent; }',
+        expectRed: /^\s*title\s.*[1-9]\d* COVERED/m,
+      },
+      {
+        name: 'Shrine cards lose the shared body wrapper and split into narrow sibling columns',
+        file: 'src/ui/screens/rest.js',
+        find: '<div class="cp-body">',
+        replace: '<div>',
+        all: true,
+        expectRed: /Shrine choice cards missing their shared \.cp-body composition/,
+      },
+      {
+        name: 'controls inside collapsed disclosures are counted as visible targets',
+        file: 'tools/screenreach.mjs',
+        find: "\n      && !e.closest('details:not([open])')",
+        replace: '',
+        expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
+      },
+      {
+        name: 'Settings cleanup watches the shared connected panel instead of its own render',
+        file: 'src/ui/screens/settings.js',
+        find: 'if (lifecycleSentinel.isConnected) return;',
+        replace: 'if (container.isConnected) return;',
+        expectRed: /Settings revisit leaked listeners/,
+      },
+      {
+        name: 'the fullscreen switch loses its accessible name',
+        file: 'src/ui/screens/settings.js',
+        find: ' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : \'\'}',
+        replace: ' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
+        expectRed: /fullscreen switch lacks an accessible name or description/,
+      },
+      {
+        name: 'the fullscreen lifecycle listener calls a synchronizer outside its scope',
+        file: 'src/ui/screens/settings.js',
+        find: 'const onFullscreenChange = () => syncFullscreen();',
+        replace: 'const onFullscreenChange = () => missingFullscreenSynchronizer();',
+        expectRed: /fullscreen lifecycle event threw/,
+      },
+      {
+        name: 'the preserved R shortcut returns to the removed Relics tab',
+        file: 'src/ui/screens/map.js',
+        find: "if (onArmoury) onArmoury();",
+        replace: "if (onMenu) onMenu('relics');",
+        expectRed: /equipment shortcut did not open Armoury/,
+      },
+    ],
+  });
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 8 checks passed');
+  process.exit(selftestCode);
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
+// tool measured a two-merge-stale bundle and printed OK once already. One home:
+// tools/artifact-provenance.mjs. Facts only; it never fails a run.
+import { printArtifactProvenance } from './artifact-provenance.mjs';
+printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 const BROWSERS = [
   process.env.CHROME,
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -68,14 +165,68 @@ const BROWSERS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean);
 
+const SETTINGS_CYCLE = `(async () => {
+  const types = ['resize', 'fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror'];
+  const live = new Map(types.map((type) => [type, new Set()]));
+  const wrap = (target) => {
+    const add = target.addEventListener.bind(target);
+    const remove = target.removeEventListener.bind(target);
+    target.addEventListener = (type, listener, options) => {
+      if (live.has(type)) live.get(type).add(listener);
+      return add(type, listener, options);
+    };
+    target.removeEventListener = (type, listener, options) => {
+      if (live.has(type)) live.get(type).delete(listener);
+      return remove(type, listener, options);
+    };
+  };
+  wrap(window); wrap(document);
+  const lifecycleErrors = [];
+  const recordLifecycleError = (event) => lifecycleErrors.push(event.message || String(event.error || 'unknown error'));
+  window.addEventListener('error', recordLifecycleError);
+  const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
+  document.querySelector('#open-menu')?.click(); await pause();
+  if (document.querySelector('.qn-panel')) {
+    document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')?.click();
+    await pause();
+  }
+  const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
+  tab('controls')?.click(); await pause();
+  const baseline = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
+  tab('settings')?.click();
+  await pause();
+  const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
+  const described = fullscreen?.getAttribute('aria-describedby');
+  window.__fullscreenA11y = !!(fullscreen?.getAttribute('aria-label')
+    && described && document.getElementById(described));
+  document.dispatchEvent(new Event('fullscreenchange'));
+  document.dispatchEvent(new Event('fullscreenerror'));
+  await pause();
+  window.__fullscreenLifecycleErrors = lifecycleErrors;
+  window.removeEventListener('error', recordLifecycleError);
+  tab('controls')?.click(); await pause();
+  tab('settings')?.click(); await pause();
+  tab('controls')?.click(); await pause();
+  window.__settingsListenerBalance = Object.fromEntries([...live]
+    .map(([type, listeners]) => [type, listeners.size - (baseline[type] || 0)]));
+  document.querySelector('#ov-close')?.click(); await pause();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })); await pause();
+  window.__armouryShortcutOpened = !!document.querySelector('.armoury-overlay');
+  return true;
+})()`;
+
 // Every screen that can be reached without playing the game. `boss` holds a
 // splash deliberately covering the board, so its controls ARE covered by
 // design and it is listed with `overlay: true` rather than left out — a screen
 // missing from a sweep is invisible, and a screen present with a reason is not.
 const SCREENS = [
-  { name: 'title', q: '', ready: `!!document.querySelector('#app button')` },
+  { name: 'startup', q: '?shot=startup', ready: `!!document.querySelector('.startup-gate')` },
+  { name: 'title', q: '?shot=title', ready: `!!document.querySelector('#app button')` },
   { name: 'map', q: '?shot=map', ready: `!!document.querySelector('.map-node')` },
+  { name: 'menu-cycle', q: '?shot=map', ready: `!!document.querySelector('.map-node')`, setup: SETTINGS_CYCLE,
+    overlay: 'the Armoury opened by the preserved equipment shortcut covers the map on purpose' },
   { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.combat .hand .card')` },
+  { name: 'combat-xl', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length` },
   { name: 'death', q: '?shot=death', ready: `!!document.querySelector('#app button')` },
   // EldenSpire#29 slice 1. Added the day the state existed. This file's own
   // boundary has said since it was written that customize/shop/rest/rewards
@@ -84,11 +235,30 @@ const SCREENS = [
   // over. One of the four is now swept; the boundary still names the other three.
   { name: 'customize', q: '?shot=customize', ready: `!!document.querySelector('.cz-portrait')` },
   { name: 'boss', q: '?shot=boss', ready: `!!document.querySelector('.boss-intro')`, overlay: 'the boss splash covers the board on purpose and is dismissed on a timer' },
+  // The Compendium (Freja). Twenty-four buttons in a scrolling grid on a phone
+  // is what this sweep is FOR, and a new screen that skips it is the eight
+  // screens Rune's census counts as owned by no instrument. It is added in the
+  // act that creates the screen for the same reason customize was added late
+  // and cost a week.
+  { name: 'compendium', q: '?shot=compendium', ready: `!!document.querySelector('.cp-cell')` },
+  // THE SHRINE AND THE MERCHANT. The boundary below said for weeks that REST
+  // has no `?shot=` state — and it HAS had one since the Smith grid was fixed;
+  // the sentence went stale the moment somebody added the state and did not add
+  // the row. A boundary that lies about its own scope is worse than none (this
+  // file's own words, about this file). Both screens now carry a second-beat
+  // control apiece (Rest holds, the Smith confirms, the brazier confirms), and
+  // a confirm panel that pushes a CANCEL button off a 360 px screen is exactly
+  // the class this sweep exists to catch.
+  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt')` },
+  { name: 'shop', q: '?shot=shop', ready: `!!document.querySelector('#leave-shop')` },
 ];
 
 const SHAPES = [
   { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop' }, // NON-REGRESSION EDGE
   { w: 390, h: 844, d: 3, mobile: true, tag: 'portrait' },
+  // Safari's visible game viewport after browser chrome is materially shorter
+  // than the device screen; this is the iPhone edge that exposed HUD overlap.
+  { w: 390, h: 650, d: 3, mobile: true, tag: 'safari-like' },
   { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait' },
   { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape' },
 ];
@@ -129,7 +299,8 @@ const PROBE = `(() => {
   const covered = [], scrolledOut = [];
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
-    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden';
+    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
+      && !e.closest('details:not([open])');
   });
   for (const c of all) {
     const r = c.getBoundingClientRect();
@@ -183,8 +354,41 @@ const PROBE = `(() => {
     }
     covered.push(name(c) + '  <-  ' + name(hit));
   }
+  const visual = [];
+  // The shared class-pick narrow composition expects one cp-body text
+  // column beside its glyph. Shrine cards used the component class without the
+  // component body, so every direct child became a new flex column: no literal
+  // viewport overflow, but the flask name, stepper and Level-up buttons were
+  // squeezed into unusable ribbons. Assert the component boundary, not a magic
+  // width that happens to fit today's copy.
+  if (document.querySelector('#flask-reallocate')) {
+    const bare = [...document.querySelectorAll('.screen > .class-row > .class-pick')]
+      .filter((card) => !card.matches('details.shrine-fold')
+        && !card.querySelector(':scope > .cp-body'));
+    if (bare.length) visual.push('Shrine choice cards missing their shared .cp-body composition: ' + bare.length);
+  }
+  // A tall enemy can be centred through the flexible battlefield boundary.
+  // Its complete receipt still has to remain between the two interaction bands;
+  // checking only the intent would miss meters or statuses painting under hand.
+  if (document.querySelector('.combat')) {
+    const hud = document.querySelector('.combat-hud')?.getBoundingClientRect();
+    const hand = document.querySelector('.hand-area')?.getBoundingClientRect();
+    for (const frame of document.querySelectorAll('.enemy-row .combatant')) {
+      const r = frame.getBoundingClientRect();
+      const label = frame.querySelector('.nm')?.textContent?.trim() || frame.dataset.eid || 'enemy';
+      if (hud && r.top < hud.bottom - 0.5) visual.push(label + ' frame paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
+      if (hand && r.bottom > hand.top + 0.5) visual.push(label + ' frame paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
+    }
+  }
+  if (window.__settingsListenerBalance) {
+    const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);
+    if (leaks.length) visual.push('Settings revisit leaked listeners: ' + leaks.map(([type, count]) => type + '=' + count).join(', '));
+    if (!window.__fullscreenA11y) visual.push('fullscreen switch lacks an accessible name or description');
+    if (window.__fullscreenLifecycleErrors?.length) visual.push('fullscreen lifecycle event threw: ' + window.__fullscreenLifecycleErrors[0]);
+    if (!window.__armouryShortcutOpened) visual.push('equipment shortcut did not open Armoury');
+  }
   return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length,
-           covered, scrolledOut: scrolledOut.length };
+           covered, scrolledOut: scrolledOut.length, visual };
 })()`;
 
 function connectCdp(wsUrl) {
@@ -210,21 +414,9 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
-  });
-}
 
 async function main() {
   if (!browserPath) { console.error('screenreach: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'screenreach-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -236,7 +428,13 @@ async function main() {
   }
   console.log(`screenreach — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'screenreach-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -263,11 +461,14 @@ async function main() {
       while (Date.now() - t0 < 12000) { if (await evalIn(sc.ready).catch(() => false)) { up = true; break; } await wait(150); }
       if (!up) { console.log(`    ${sc.name.padEnd(8)} DID NOT MOUNT — never a pass`); fails.push(`${shape} ${sc.name}: screen would not mount`); continue; }
       await wait(900); // auto-zoom re-flexes on a 150ms debounce plus a boot re-apply
+      if (sc.setup) await evalIn(sc.setup);
       const r = await evalIn(PROBE);
       const tail = sc.overlay ? `  (overlay screen: ${sc.overlay})` : '';
       console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED${tail}`);
       for (const c of r.covered) console.log(`               ✗ ${c}`);
       if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered[0]}`);
+      for (const finding of r.visual) console.log(`               ✗ ${finding}`);
+      if (r.visual.length) fails.push(`${shape} ${sc.name}: ${r.visual[0]}`);
     }
   }
 
@@ -280,29 +481,35 @@ async function main() {
   if (shapesRun === 0) {
     console.error(`\nscreenreach: --only ${only} matched no shape. Nothing was tested, so this is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}`).join(', ')}`);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
 
+  // The list of swept screens is DERIVED from SCREENS rather than retyped. It
+  // was a hand-written sentence, and a boundary that has to be edited by hand
+  // when the list grows is a second copy of the list — it had already stopped
+  // naming customize in its first clause while sweeping it in the next. A
+  // boundary that lies about its own scope is worse than none.
   console.log(`\n  BOUNDARY — Linux headless Chromium only; emulation is not a phone. Only the
-  screens with a ?shot= state are reached: title, map, combat, boss, death.
-  CUSTOMIZE now has one (#29 slice 1) and is swept. SHOP, REST, REWARDS and
-  every overlay still have NO ?shot= and are covered here or anywhere by
-  nothing.
+  screens with a ?shot= state plus the declared menu-cycle setup are reached:
+  ${SCREENS.map((s) => s.name).join(', ')}.
+  REWARDS and the DRAFT still have no direct state or declared setup here. Neither is a second-beat surface today
+  (rewardPick and draftPick are declared 'none' in src/model/secondbeat.js), so
+  what is unmeasured there is their reach, not a confirm step.
   Reachability at rest only: nothing is pressed, legibility is not judged, and a
   control that appears only mid-interaction cannot be seen.
 
   AND THE SHAPE LIST IS NOT THE OTHER TOOL'S. This runs 1200x730, 390x844,
-  360x640, 844x390; tools/mobilefit.mjs runs nine, and neither list is a
-  superset. A defect can live in the gap, and one does: Sunna swept nine widths
+  Safari-like 390x650, 360x640 and 844x390; tools/mobilefit.mjs runs nine, and
+  neither list is a superset. A defect can live in the gap, and one does: Sunna swept nine widths
   by hand and found a covered map node at 412x915 — a shape THIS TOOL DOES NOT
   TEST — that dev does not have. Closing the gap is a card, not a silent edit,
   because adding that shape turns this red on a finding she carried without
   blocking.`);
 
-  console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : 'PASS — no covered controls'}`);
+  console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : `screenreach: OK — ${shapesRun * SCREENS.length} checks passed`}`);
   for (const f of fails) console.log(`    - ${f}`);
-  cdp.close(); child.kill(); if (server) server.close();
+  cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }
 

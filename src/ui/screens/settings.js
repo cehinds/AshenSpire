@@ -7,75 +7,234 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { openDebugLog } from '../debuglog.js';
-import { AUDIO_DEFAULTS } from '../audio.js';
+import { esc, attachTooltip } from '../components/tooltip.js';
+import { setTabRing, hasTabRing } from '../input.js';
+import { renderAboutSection, renderChangelogSection } from './about.js';
+import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
+import { derivedStatRules } from '../../content/derivedStats.js';
+import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
+import {
+  MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
+} from '../../model/mapknowledge.js';
+import { flasks } from '../../content/flasks.js';
+import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 
 const UI_DEFAULTS = balance.ui;
+const EQ_DEFAULTS = balance.equipment;
+const LEVEL_DEFAULTS = balance.levelUp || {};
+// THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
+// value the engine actually resolves rows against, so the row that turns it
+// reads it from there and a copy cannot drift.
+const DERIVED_DEFAULTS = derivedStatRules.defaults;
+
+// ---- the grace-refill rows: DERIVED, one per row of the table --------------
+//
+// Constantine asked for the flask refill to be "configurable in teh debug
+// settings and be data driven" in one breath, and this is the only shape that
+// is both at once. These rows are not authored. `balance.graceRefill` is walked
+// and each row becomes one Advanced chip strip, so a third refilled kind is a
+// row in content and NOTHING here — which is the Law 0 falsifier for this
+// feature, and `tools/gracerefill.mjs --selftest` runs it.
+//
+// THE LADDER IS DERIVED TOO: 0 … balance.flaskSlots, from graceRefillLadder.
+// Raising the carry cap lengthens every strip with no edit here, and 0 is a
+// real position — his own debug switch for turning the whole thing off.
+//
+// FIVE CHIPS AT flaskSlots: 3. Marina measured four chips at 92.1 px tall on
+// 390x844 and seven at 301.2 px with the last chip off-viewport; five is inside
+// that, and tools/axisfit.mjs is what says so rather than this comment.
+//
+// KEY SHAPE `graceRefill.<kind>`: one key per kind, so a stored override
+// survives a table reorder. `settingOn` is not involved — these are choices.
+const GRACE_REFILL_KEY = (kind) => `graceRefill.${kind}`;
+
+// What a kind is CALLED to a human. A kind with no entry here falls back to the
+// id, so a new kind gets a working row before anyone writes it prose — the row
+// appears ugly rather than not at all.
+const KIND_LABELS = { hp: 'HP', mana: 'Mana', utility: 'Utility' };
+const kindLabel = (k) => KIND_LABELS[k] || k;
+
+function graceRefillRows() {
+  const cap = flaskSlotCap(balance);
+  return graceRefillTable(balance).map((row) => ({
+    cat: 'Advanced',
+    advancedGroup: 'Tuning',
+    key: GRACE_REFILL_KEY(row.kind),
+    type: 'choice',
+    def: String(row.count),
+    choices: graceRefillLadder(balance),
+    label: `Grace refill — ${kindLabel(row.kind)} flasks`,
+    applied: graceRefillAppliedHtml,
+    graceRefillKind: row.kind,
+    // SHORT, and Marina's own measurement is why: a long note beside a chip
+    // strip squeezes the text column to a ribbon (she took one row from 92.1 px
+    // to 216.9 px proving it). What the row DOES is one clause; what it
+    // RESOLVES TO is the applied line below, which changes with the value and
+    // therefore earns its space.
+    note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
+  }));
+}
 
 const ROWS = [
-  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
+  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
+    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
+  // Fullscreen and Music are persistent quick controls on Title, Map, and
+  // Combat. Settings does not duplicate them with a second stateful surface.
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
     choices: ['slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
     note: 'How deliberately actions play out — one actor at a time, or instant.' },
-  { cat: 'Display', key: 'mapZoom', type: 'choice', def: '115',
-    choices: ['100', '115', '130', '150'], label: 'Map zoom %',
-    note: 'Default zoom when the act map opens. In-map + / − buttons override per view.' },
+  // `choices` and `def` are DERIVED. The four numbers here used to be typed, and
+  // they were a second copy of the zoom ladder that had already drifted: the
+  // ladder has six steps and this row offered four of them, so 175% and 200%
+  // were reachable with the in-map + button and unreachable as a default.
+  //
+  // `def` IS MAP_ZOOM_DEFAULT AND NOT A LITERAL. It reads '115' today because
+  // Sunna held #107 on that token; the map screen reads the same const, so the
+  // default cannot be flipped in one place and stay in the other.
+  //
+  // THE NOTE PROMISES PLAINLY AGAIN, AND ONLY BECAUSE THE PROMISE IS NOW TRUE.
+  //
+  // It said this sentence for one night while 8 of 12 seeds broke it at the
+  // entrance row — the first map of every run — which is a settings note the
+  // game could not keep, and Sunna held #107 partly on that. I had already
+  // bounded it ("gets as close as it can and you pan for the rest"). Then
+  // Constantine shipped one map entrance, and the honest move is to re-measure
+  // the sentence rather than keep a hedge that has stopped being true:
+  //
+  //   node tools/mapfit.mjs --dist --zoom Fit   ->  0 of 120 framings hide a
+  //   next step; 390x844 and 1200x730, 12 seeds, entrance + four mid-climb rows.
+  //
+  // A hedge nobody needs teaches a player the game is unsure of itself. The
+  // BOUNDARY still exists and still belongs to a maintainer, not to this string:
+  // 120 measured cells is not every seed, so the map keeps reporting a frame it
+  // could not fit (`.map-scroll[data-framing]`, and the warning it logs).
+  { cat: 'Display', key: 'mapZoom', type: 'choice', def: MAP_ZOOM_DEFAULT,
+    choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: 'Map zoom',
+    note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage fixes the zoom instead; + / − and ⊙ still work in the map.' },
+  // THE FOG A/B, and it sits HERE rather than in Custom Climb — Marina's ruling,
+  // reversed from Custom Climb on the argument that Settings is the only surface
+  // reachable WHILE YOU ARE LOOKING AT THE THING YOU ARE JUDGING. Fog cannot be
+  // A/B'd mid-run: once you have seen the map you cannot unsee it. So the
+  // comparison is Custom Climb's existing seed field plus this row — same seed,
+  // same act, two readings — and Custom Climb grows nothing new.
+  //
+  // DEFAULT IS `fog` since 2026-08-08 — his word, and the one token is in
+  // model/mapknowledge.js so this row cannot disagree with the resolver.
+  //
+  // AND THE TRAIL SENTENCE IS NOT TYPED HERE ANY MORE. It read "Fog never closes
+  // behind you — somewhere you have seen stays seen" — the WIDE reading, written
+  // beside code running the narrow one, and measured false on 144 of 156 screens
+  // (Bjorn). Constantine has since answered the fork question the wide way, so
+  // the sentence is true; it moved to `FOG_TRAIL_CLAUSE`, beside the function
+  // that makes it true, because a promise typed on the screen it is displayed on
+  // is a promise nothing can check. Sunna's ruling, and it could not wait: fog
+  // is the default, so this is the first thing a new player reads about the mode
+  // they are already in.
+  //
+  // `choices` and `def` are the ladder's own, never a second list (the row three
+  // above learned this the hard way — it carried four of the zoom ladder's six
+  // steps for a night).
+  { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
+    choices: MAP_MODES, label: 'Map reveal',
+    note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
+  // HIS OWN PARENTHESIS, AS ONE ROW — "as new paths open, the path to the
+  // nearest shrine should have a glowing effect. (make this toggleable in the
+  // settings)". He scoped the switch himself in the same sentence that asked
+  // for the effect, so the row exists whatever anyone thinks the glow needs.
+  // `def` is the resolver's own const (model/mapknowledge.js) rather than a
+  // second `true` typed here — the row three above learned that lesson with the
+  // zoom ladder.
+  { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
+    note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
+  // How strongly the nodes already walked fade behind you — his clause, with
+  // his number as the default and the customization he asked for as the row
+  // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
+  // higher (settings for customization)"). The ladder itself is CSS
+  // (styles/map.css, keyed on data-walked-fade); this row only picks the rung.
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'walkedFade', type: 'choice', def: 'half',
+    choices: ['off', 'subtle', 'half', 'strong'], label: 'Walked nodes',
+    note: 'How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: true,
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
     note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
-  { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
     note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
-  { cat: 'Display', key: 'cardMotifStrength', type: 'choice', def: 'normal',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal',
     choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
     note: 'How strongly the class colour tints a card.' },
   { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
-  { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
-  { cat: 'Display', key: 'controlHints', def: true, label: 'Control hints',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: 'Control hints',
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
-  { cat: 'Display', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
-  { cat: 'Display', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
     note: 'Show your relic icons in the map header bar.' },
-  { cat: 'Display', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
     note: 'Show the run seed in the map header bar.' },
-  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen (also toggles with F11 in most browsers).' },
-
-  // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
-  // being PLAYED rather than looked at: today, and two readings of "the ☰ button
-  // should offer everywhere you can go from here".
+  // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
   //
-  // DEFAULT IS OFF, and off is today exactly — nobody who does not opt in sees a
-  // pixel move. It ships in the build rather than hiding behind a URL flag
-  // because the question it asks is a PHONE question (the menu's tab strip wraps
-  // to two rows at 390 px, measured), and a dev flag is not reachable on a phone.
+  //   "rotating to horizontal should work again. I hate that it tells me to
+  //    rerotate to verticle. revert that back, or make that a configurable
+  //    setting."
   //
-  // The note carries the way back, and so does the list itself: it names the
-  // variant and points here every time it opens. An experiment that outlives the
-  // memory of switching it on has stopped being an experiment and become a bug
-  // report.
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'off',
-    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu (test)',
-    note: 'A test — OFF is the game as it shipped. MIRROR: the ☰ button opens a list of everywhere you can go from this screen, and the menu keeps its row of tabs. SWITCHER: the same list, but on a narrow screen the menu\'s tab row folds into one button naming the tab you are on. The list says which one you picked, every time it opens.' },
-  { cat: 'Display', key: 'quickNavFixedEnds', def: true, label: 'Quick menu · fixed ends',
-    note: 'Only does anything while Quick menu is on. ON keeps rows in the same places on every screen — this screen\'s own tools at the top, Save and Save & Quit always last, everything else between. OFF orders the whole list by what the screen is, so a row can sit somewhere else in combat than it does on the map.' },
+  // HE OFFERED BOTH AND MARINA RULED THE SETTING: a revert deletes whatever the
+  // gate was protecting, a row keeps it reachable. So this is one row in a table
+  // of about forty, and it is deliberately NOT the Settings layout act (E3).
+  //
+  // ⚠ THE DEFAULT IS `true` AND THAT IS MY CALL, NOT HIS, SO IT IS LABELLED AS
+  // MINE — with the measurement that decided it, because his sentence points the
+  // other way and a reader is owed the reason I did not simply follow it.
+  // `node tools/uprightgate.mjs`, 844x390, this tree:
+  //
+  //     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
+  //     .hand-area 32.05% on screen · .energy-orb 0% on screen, unreachable
+  //
+  // **TURNING THIS OFF DOES NOT DELIVER "rotating to horizontal should work
+  // again."** It replaces a legible refusal with an illegible wall: the board
+  // draws, and the button that ends the turn is off screen inside a container
+  // that scrolls programmatically and never by hand. Defaulting it off would
+  // hand him a screen he cannot play and call it his ask. **Landscape SUPPORT is
+  // a third composition and it is still owed** (upright.js's header sets out why
+  // it is not one change) — this row is the switch he asked for and the honest
+  // half of the answer, not the whole of it.
+  //
+  // HIS ONE WORD FLIPS IT AND COSTS NOTHING: `def: true` -> `def: false`, one
+  // token, no other line in the tree. The default is the only part of this row I
+  // am holding for him.
+  //
+  // DISPLAY, NOT ADVANCED, and that is the departure from where Hold to confirm
+  // and the levelling dials went. Those are tuning knobs he asked to "try"; this
+  // one is found by a player who has just been refused, mid-annoyance, on a phone
+  // — and the gate's own copy now points at it by name. A switch you need because
+  // something is in your way does not live in the debugging surface.
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: true, label: 'Short-screen warning',
+    note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
-  { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
-    note: 'Silence music and sound effects.' },
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
+    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
+    note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
+
+  { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
+    resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
+  { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
+    note: 'Turn music and sound effects on. Music also has a quick toggle beside the HUD.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
-    note: 'Ambient score for the title, map, and battles. Defaults to 0 (muted) while testing — raise it to hear the score.' },
+    note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects',
-    note: 'Hits, blocks, bleed bursts, UI.' },
-  { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',
+    note: 'Hits, blocks, status bursts, cards, and pickups.' },
+  { cat: 'Advanced', advancedGroup: 'Debug', key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
     placeholder: 'e.g. music/ or https://…',
     note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
 
@@ -87,24 +246,318 @@ const ROWS = [
   // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
   { cat: 'Accessibility', key: 'highContrast', def: true, label: 'High contrast',
     note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
-  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
-    choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
-    note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
+  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
+    choices: ['Auto', 'S', 'L', 'XL'], label: 'Text size',
+    note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },
+  // Constantine, twice: "just make the tabs about 20% smaller or the size
+  // configurable or scalable with UI or both", then "actually, I think it
+  // should be able to go smaller than 44px." Range 24–44 is Marina's call, and
+  // it is told to him as a choice we made rather than a limit he ran into: we
+  // let it go below 44 as asked and stopped at 24, WCAG 2.2 AA's minimum. His
+  // no is free.
+  //
+  // NUMBERS, NOT S/M/L/XL. Text size is S/M/L/XL and UI size is S/M/L/XL, both
+  // within a few rows of this one. A third four-letter ladder doing a third job
+  // is Law 4's defect — two controls with one job, the weaker reading as broken
+  // — with better manners. These are the numbers he typed.
+  //
+  // ACCESSIBILITY, NOT DISPLAY: it sits with Text size, High contrast and
+  // Reduced motion because it is an ergonomic floor, not a look.
+  //
+  // DEFAULT 44 = TODAY, TO THE PIXEL. Nobody who never opens this sees anything
+  // move — the same principle `quickNav: def 'off'` already carries above.
+  // `choices` and `def` are DERIVED from balance.ui.tapSize; the four numbers
+  // are not written here, or the closed set would have two homes.
+  //
+  // `resizesWhilePressed` — THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
+  // Marina's ruling, on the narrowest reason available so it cannot spread:
+  // this is the only control in the game whose resizing happens WHILE IT IS
+  // BEING PRESSED. Measured cause: at the 44 step the pressed chip landed 61.44
+  // device px from the finger because the whole group re-lays-out, which is
+  // wider than a fingertip and which no `scrollTop` can answer.
+  // Declared as a CHARACTERISTIC rather than handled by name, so the stylesheet
+  // keys on the property and not on `tapFloor` (Law 1 clause 3, one layer up).
+  { cat: 'Accessibility', key: 'tapFloor', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
+    choices: UI_DEFAULTS.tapSize.sizes.map(String), label: 'Minimum tap size',
+    applied: tapCostHtml, resizesWhilePressed: true,
+    note: 'How small a button, tab, or option is allowed to get. 44 is the size a fingertip reliably hits; smaller fits more on screen.' },
   { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
     note: 'Shift danger/heal/blight/frost colors to a more distinguishable palette.' },
   { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
-  { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
+  { cat: 'Advanced', advancedGroup: 'Debug', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
+  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
+  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
+  // settingOn so the default's polarity has one home, here. ONE ROW, appended
+  // on purpose while another seat serializes this file for E3 — named in the
+  // E2 claim (#247) so the touch is on the record, not smuggled.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shopSell', def: true, label: 'Merchant buys back',
+    note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
+  // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
+  // debugging settings as enum drop down". Advanced is the debugging surface,
+  // which is where he put it and where it stays.
+  //
+  // IT IS A CHIP ROW AND NOT A `<select>`, AND THAT IS AN ANSWER, NOT A
+  // SHORTCUT. This game has no dropdown anywhere; `.choice-group` IS its enum
+  // control. A native `<select>` would be the only one in the build, and it
+  // would arrive outside everything this row gets for free: `--tap-floor` has
+  // no relationship to a UA-drawn select, the accent theme and the
+  // high-contrast profile do not reach inside one, it renders as three
+  // different surfaces (iOS wheel / Android sheet / desktop popup) and none of
+  // the three can be photographed or measured by any instrument in this repo —
+  // `tools/tapsize.mjs` and `tools/settingsreach.mjs` both count `.choice`, so
+  // they would read this row as ABSENT, which is silence, which is `unknown`.
+  // Four chips is also the shape I measured safe tonight: Combat pacing is four
+  // and renders 92.1 px tall at 390x844, where the seven-chip Map zoom row runs
+  // to 301.2 px and puts its last chip off the viewport.
+  //   IF HE MEANT THE NATIVE WIDGET SPECIFICALLY, that is one word and I will
+  // swap it — but adding the game's only `<select>` on a guess, on the one page
+  // no instrument here can see, is not a thing to do quietly.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.holdConfirm. Adding a fifth
+  // speed is a row there and nothing here.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
+    choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: 'Hold to confirm',
+    // SHORT ON PURPOSE, and I measured why. My own ruling on the Map zoom row
+    // tonight was that a long note plus a chip strip squeezes the text column
+    // to a ribbon; the first draft of THIS note ran three sentences and took
+    // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
+    // else to on a Thursday holds on my own row on the same Thursday.
+    note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
+  // ALWAYS pressable and a setting decides what it means — auto-collect ON
+  // takes everything, picking at random where there is a choice; OFF gives
+  // only what was chosen, no nagging." The meanings live in
+  // model/rewardplan.js resolveContinue (test 61); this row only picks the
+  // word. ADVANCED for the Hold-to-confirm precedent one row up: a knob about
+  // what an interaction MEANS, tried by playing.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.rewardCollect — a third
+  // mode is a row there and nothing here. THE ROW ARRIVED LATE, ON A RULING:
+  // it shipped one PR behind the dial because this file was under E3's live
+  // claim at authoring; Saga's #290 review ruled it owed the moment Marina
+  // released that claim ("manual has a reader and no writer a player can
+  // reach").
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
+    choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
+    note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
+  // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
+  // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
+  // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
+  // TRY EACH."* He asked to feel three prices, so the row is the way to feel
+  // them; the rules themselves are rows in balance.equipment.swapCostRules.
+  //
+  // ADVANCED, because Advanced is this game's debugging surface and that is
+  // where the last knob he asked to "try" went (Hold to confirm, same
+  // category). It is a tuning question he wants to answer by playing, not a
+  // preference the game should be asking a first-time player.
+  //
+  // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
+  // carried four of a six-step ladder for a night because someone typed the
+  // list; a fourth rule row is a row in balance.js and nothing here.
+  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
+    choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: 'Weapon swap cost',
+    // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
+    // a long note squeezes the text column beside a chip strip. Three chips,
+    // three clauses.
+    note: 'What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.' },
+  // ---- HIS TWO LEVELLING DIALS (2026-08-17) --------------------------------
+  //
+  //   "leave the level up value configurable. also, let's make the increment of
+  //    5 points for reasonable change be confurable as well. that way I can
+  //    test each."
+  //
+  // ADVANCED, AND THE PRECEDENT IS HIS OWN SENTENCE TWO ROWS UP: *"alternatively,
+  // or by a setting, different weapon categories have weapon swap costs. THAT
+  // WAY I CAN TRY EACH."* That ask was ruled into an Advanced row for a reason
+  // that applies here word for word — a tuning question he wants to answer by
+  // playing, not a preference to put in front of a first-time player. Advanced
+  // is this game's debugging surface, his word, and the third knob he has asked
+  // to "test" now sits beside the other two.
+  //
+  // A ROW, NOT A FILE HE EDITS AND REBUILDS. "That way I can test each" is the
+  // requirement and not a footnote: a content edit plus `node tools/launch.mjs
+  // --build-only` between every comparison is a friction that ends an
+  // experiment after two turns of the dial.
+  //
+  // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
+  // ladders are `balance.levelUp`, the level value's default is that table's own
+  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
+  // `derivedStatRules.defaults` — its one home, one import away, so this row
+  // cannot drift from the rule it turns.
+  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
+    min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
+    label: 'Level-up value', applied: numberAppliedHtml,
+    note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
+  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
+    label: 'Stat points per tier', applied: numberAppliedHtml,
+    // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
+    // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
+    // progress — which is correct, and which means turning this dial and loading
+    // an existing save shows NOTHING. It is written on the row because the
+    // alternative is him concluding the dial is broken. The middle sentence is
+    // the finding that caused the ask: at 5, one level moves no number at all.
+    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
+  // Advanced is the debugging surface — his word, and where Hold to confirm
+  // already lives. These rows are generated from balance.graceRefill; see the
+  // block above the ROWS array.
+  ...graceRefillRows(),
 ];
 
-const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
+// ---- categories: a heading is DERIVED from what is under it (#78) ----------
+//
+// This used to be a hand-written list of six names, and `renderSettings` looked
+// up `ROWS.filter(r => r.cat === cat)`. A name in that list with no rows and no
+// section rendered a LONE HEADING — the author did the data-driven thing and got
+// a promise with nothing behind it, in silence.
+//
+// So the list is no longer authored. A category EXISTS because something is
+// filed under it: a `cat:` on a row, or a section below. What stays authored is
+// the ORDER, which is a design decision and not derivable — and a name in the
+// order that nothing files under is a defect that fails by name at boot
+// (assertSurfaces, src/ui/surfaces.js), not a heading over nothing.
+//
+// Adding a settings row under a brand-new category needs NO edit here: the
+// heading appears, after the ordered ones, in the order its first row appears.
+//
+// SECTIONS are categories whose contents are code rather than rows.
+// Profile is a title-screen route; Settings no longer duplicates that drawer.
+// About carries the AI-use acknowledgement, rendered from its one home in
+// src/content/aiDisclosure.js — the same text the store page shows (#69).
+//
+// `tip` IS THE ONE THING A SECTION HAS TO WRITE, and it is the honest edge of
+// clause 7 on this screen. A category made of rows derives its tooltip from the
+// rows filed under it — the author writes nothing. A section has no rows to
+// read, so its one sentence is authored here, where its code already is. That
+// is Law 0 clause 2 exactly: a section is a WORD, not a row, and a word costs
+// an edit. Say it out loud rather than pretend the whole screen is free.
+const SECTIONS = {
+  Changelog: { mount: 'set-changelog-mount', needs: null,
+    tip: 'Newest player-visible changes first.' },
+  About: { mount: 'set-about-mount', needs: null,
+    tip: 'Version, credits, and how AI was used to make this game.' },
+};
+
+const ADVANCED_GROUPS = Object.freeze([
+  { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
+  { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
+  { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
+  { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
+]);
+
+/** The key the chosen category rides in. `meta.settings` is a free bag. */
+const CAT_KEY = 'settingsCategory';
+const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
+
+export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
+
+const CATEGORY_LABELS = {
+  Display: 'Game',
+  Accessibility: 'Accessibility',
+};
+
+function categoryLabel(cat) {
+  return CATEGORY_LABELS[cat] || cat;
+}
+
+/**
+ * categoryHandler(cat) → what will render under that heading, or null.
+ *
+ * Null is the whole point: it is the difference between a heading with contents
+ * and a heading with a promise. assertSurfaces() turns null into a named boot
+ * failure; nothing here guesses.
+ */
+export function categoryHandler(cat) {
+  if (SECTIONS[cat]) return SECTIONS[cat];
+  const rows = ROWS.filter((r) => r.cat === cat);
+  return rows.length ? { rows } : null;
+}
+
+/**
+ * filedCategories() → every category something is actually FILED under: a row's
+ * `cat`, or a SECTIONS key. The DERIVED half of this set.
+ *
+ * Exported because it is one of the set's two homes and surfaces.js now asks
+ * each home for its own members rather than asking the set for a union (Vira,
+ * re-gate of #78: a guard proven over one home must be re-proven when the set
+ * gains a second — with one union, `CATEGORY_ORDER = []` left six categories,
+ * a green verdict, and the only authored fact about this screen silently gone).
+ * It is a read of the rows, not a copy of them: `settingsCategories()` below is
+ * derived from it, so the two cannot drift.
+ */
+export function filedCategories() {
+  return [...new Set([...ROWS.map((r) => r.cat), ...Object.keys(SECTIONS)])];
+}
+
+/** Every category that exists, in the order it is drawn. Derived, one home. */
+export function settingsCategories() {
+  const found = filedCategories();
+  // An authored name nothing files under is KEPT in place, not dropped: dropping
+  // it is the silence again. It renders its own defect and assertSurfaces names
+  // it. Anything filed under a name the order does not mention goes last.
+  return [...CATEGORY_ORDER, ...found.filter((c) => !CATEGORY_ORDER.includes(c))];
+}
+
+/**
+ * categoryTip(cat) → the sentence a tab says on hover AND on the pad's focus
+ * cursor (Law 3 clause 4). DERIVED for a category of rows, authored for a
+ * section.
+ *
+ * It answers the question the tabs create. Six names hide five sixths of the
+ * screen, and the player's question stops being "what is under this heading"
+ * and becomes "WHICH TAB HOLDS THE THING I CAME FOR". Counting the rows and
+ * naming the first few of them answers exactly that, and it costs an author
+ * nothing — the labels are already written, once, on the rows.
+ *
+ * Three labels, then an ellipsis: enough to recognise, short enough to finish.
+ */
+export function categoryTip(cat) {
+  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  const h = categoryHandler(cat);
+  if (!h) return `Nothing is filed under "${cat}".`;
+  if (h.mount) return h.tip || `The ${cat} section.`;
+  const labels = h.rows.map((r) => r.label);
+  const n = labels.length;
+  const shown = labels.slice(0, 3).join(', ');
+  return `${n} setting${n === 1 ? '' : 's'} — ${shown}${n > 3 ? '…' : ''}`;
+}
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
+  if (row.resolve) return row.resolve(settings);
   return row.def ? settings[row.key] !== false : settings[row.key] === true;
+}
+
+export function musicEnabledCondition(settings = {}) {
+  if (!resolveMusicEnabled(settings)) return 'Music off · sound effects unchanged.';
+  if (settings.muteAudio === true) return 'Music on · all audio muted.';
+  const volume = typeof settings.musicVolume === 'number'
+    ? settings.musicVolume
+    : AUDIO_DEFAULTS.musicVolume;
+  return `Music on · volume ${volume}%.`;
+}
+
+function rowNote(settings, row) {
+  return typeof row.note === 'function' ? row.note(settings) : row.note;
+}
+
+function refreshConditionNotes(container, settings) {
+  container.querySelectorAll('[data-setting-condition]').forEach((node) => {
+    const row = ROWS.find((candidate) => candidate.key === node.dataset.settingCondition);
+    if (row) node.textContent = rowNote(settings, row);
+  });
+}
+
+// Save data keeps legacy negative keys such as `muteAudio`; controls should
+// still describe the positive effect players are choosing. Invert only here.
+function controlOn(settings, row) {
+  const storedOn = valueOf(settings, row);
+  return row.positiveWhen === false ? !storedOn : storedOn;
 }
 
 /**
@@ -136,18 +589,80 @@ export function settingOn(settings, key) {
   return valueOf(settings || {}, row);
 }
 
-function rowHtml(settings, r) {
+export function settingsRowHtml(settings, r, doc = globalThis.document) {
+  const note = rowNote(settings, r);
+  const condition = typeof r.note === 'function'
+    ? ` data-setting-condition="${r.key}" aria-live="polite"`
+    : '';
+  const status = r.type === 'action'
+    ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"`
+    : condition;
+  const help = `<details class="set-help"><summary>Details</summary><p class="set-note"${status}>${note}</p></details>`;
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
+      </div>`;
+  }
+  // ---- 'number': A FIELD HE TYPES INTO, WITH A SLIDER BOUND TO IT ----------
+  //
+  // Constantine, 2026-08-17: "i don't want a dial for hte level up, I want to be
+  // able to enter the value myself and maybe a slider with it that is synced
+  // with the value."
+  //
+  // ⚠ WHY THIS IS A NEW TYPE AND NOT `type: 'range'`, WHICH IS THE OBVIOUS
+  // REUSE AND IS WRONG TWICE OVER:
+  //
+  //   1. `range` IS A VOLUME SLIDER. Its markup hardcodes min="0" max="100"
+  //      step="5" — a level value of 0 is legal in it, 1 is not reachable, and
+  //      the domain belongs to the row here, not to the control.
+  //   2. THOSE ARE THE EXACT LINES AURORA'S #181 EDITS. Reusing `range` would
+  //      have meant editing the one branch another house has a reviewed diff in,
+  //      to add the attributes it needs — turning a collision Marina published as
+  //      VOID at the code level into a real one, in the same act.
+  //
+  // So this branch is a sibling, it never enters the `range` branch, and it
+  // touches neither `.set-range` nor its handler. **Marina's published
+  // conclusion still holds; her stated REASON for it (a boolean row cannot
+  // reach that code path) is no longer the reason, and that is hers to correct
+  // rather than mine to quietly inherit.**
+  //
+  // PART A ONLY, AND PART B'S ABSENCE IS A RULING. His word was "MAYBE a slider
+  // with it that is synced with the value" — a maybe. Marina held the slider
+  // behind Aurora's #181 rather than spend their thirteen reviewed lines on our
+  // not-yet-existing ones, and Part B IS the rebase-behind she published to them.
+  //
+  // I MEASURED THE COLLISION SHE DEFERRED IT ON AND IT IS NOT THERE: this row is
+  // `type: 'number'`, so it never enters the `range` branch below and never
+  // touches `.set-range` or its handler, which are precisely and only what #181
+  // edits. THE DEFERRAL IS HONOURED ANYWAY — she published an order to another
+  // house, and correcting her own sentence is hers, not something I overtake by
+  // shipping. The measurement is the relay; the order is the order.
+  //
+  // `min`/`max`/`step` are the ROW's, so the domain lives in content and this
+  // markup states no number of its own — which is also why Part B cannot drift
+  // from the field: neither control is the value, the resolved number is.
+  if (r.type === 'number') {
+    const val = resolveNumberRow(settings, r);
+    return `<div class="set-row">
+        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
+        <div class="num-wrap">
+          <input type="number" class="set-num" data-key="${r.key}" value="${val}"
+                 min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
+                 aria-label="${r.label}">
+          <!-- PART B, THE SYNCED SLIDER, IS NOT HERE. See the note above this
+               branch: it is one range input plus three lines in the handler, and
+               it waits on Aurora's 181 by Marina's order. NO BACKTICKS IN THIS
+               BLOCK - it sits inside a template literal, and I closed the string
+               with a pair of them once already tonight. -->
+        </div>
       </div>`;
   }
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <div class="range-wrap">
           <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
           <span class="range-val" data-for="${r.key}">${val}</span>
@@ -156,7 +671,7 @@ function rowHtml(settings, r) {
   }
   if (r.type === 'button') {
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <button class="subtle" data-btn="${r.key}">${r.btn || 'Open'}</button>
       </div>`;
   }
@@ -166,18 +681,306 @@ function rowHtml(settings, r) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${r.applied ? appliedHtml(settings) : ''}</div>
-        <div class="choice-group">${opts}</div>
+        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
+        <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
       </div>`;
   }
-  // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
-  const on = r.type === 'action' ? isFullscreen() : valueOf(settings, r);
-  return `<div class="set-row">
-      <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
-      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ' data-action="1"' : ''} role="switch" aria-checked="${on}">
+  if (r.type === 'action' && !fullscreenCapability(doc).supported) {
+    const unsupportedHelp = `<details class="set-help"><summary>Details</summary><p class="set-note">${note}</p></details>`;
+    return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
+      <div><b>${r.label}</b>${unsupportedHelp}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
+      <button class="toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true">
         <span class="knob"></span>
       </button>
     </div>`;
+  }
+  const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
+  return `<div class="set-row">
+      <div><b>${r.label}</b>${help}</div>
+      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}">
+        <span class="knob"></span>
+      </button>
+    </div>`;
+}
+
+// ---- the line under a row that says what the choice actually means ---------
+//
+// `applied:` USED TO BE `true` AND MEANT ONE FUNCTION. One row had it, and
+// `rowHtml` called `appliedHtml` by name — a flag whose only legal value stood
+// for a function the flag could not name. The second row that wants a line
+// under it (Minimum tap size) would have made that an `if` per key, which is
+// exactly the shape Law 1 clause 3 forbids one layer down: `if (key === …)`
+// deciding behaviour that the row could have declared.
+//
+// So the field HOLDS THE FUNCTION. That is Law 0 clause 2 said honestly — a
+// row that wants a derived line under it is data, and the derivation is a word,
+// authored in code, joined here by the row that asks for it. It is the same
+// declaration/handler join `src/ui/surfaces.js` makes for navigable sets, at
+// one row's scale.
+//
+// THE SLOT IS ALWAYS RENDERED, even when the line is empty. A function may
+// legitimately say nothing (Minimum tap size is SILENT at 44 — Sunna: "a state
+// that needs no words needs silence"), and a slot that only exists while it has
+// something to say is a slot `refreshApplied` cannot find the moment it starts
+// having something to say. Empty div, no padding, no margin: zero height, no
+// stylesheet change.
+function appliedSlot(settings, r) {
+  if (!r.applied) return '';
+  return `<div class="set-applied-slot" data-applied="${r.key}">${r.applied(settings, r) || ''}</div>`;
+}
+
+/**
+ * resolveGraceRefill(settings) → { counts, bad: [{ key, kind, stored, used }] }
+ *
+ * THE ONE HOME FOR "how many flasks does a grace give", asked by the shrine
+ * (main.js showRest), by the co-op session, and by the row below that prints
+ * it. The authored numbers are `balance.graceRefill`; this only ever layers a
+ * stored override on top, and the override has to be a position on the row's
+ * own ladder.
+ *
+ * `bad` IS THE POINT, exactly as it is for resolveTapSize: a sparse store is
+ * normal and absence means "use the authored count" with nothing to report. A
+ * key that is PRESENT and not on the ladder is bad data — a hand-edited save, a
+ * restored profile from a tree with a smaller carry cap — and it still has to
+ * resolve to something, so it resolves to the authored count and SAYS SO. A
+ * refill that quietly ignores the number on the screen is the failure this
+ * whole feature is supposed to be the opposite of.
+ */
+export function resolveGraceRefill(settings) {
+  const s = settings || {};
+  const counts = {};
+  const bad = [];
+  for (const r of ROWS) {
+    if (!r.graceRefillKind) continue;
+    const def = Number(r.def);
+    const stored = s[r.key];
+    if (stored === undefined || stored === null || stored === '') {
+      counts[r.graceRefillKind] = def;
+      continue;
+    }
+    const v = String(stored);
+    if (r.choices.includes(v)) {
+      counts[r.graceRefillKind] = Number(v);
+    } else {
+      counts[r.graceRefillKind] = def;
+      bad.push({ key: r.key, kind: r.graceRefillKind, stored: v, used: def });
+    }
+  }
+  return { counts, bad };
+}
+
+// THE LINE UNDER A GRACE-REFILL ROW. It exists to make two states impossible to
+// miss and one impossible to fake:
+//
+//   NOT BINDING — the kind has no flask entry, so whatever number is showing,
+//   this restores nothing. Freja's pattern, and the reason it is not silence:
+//   a chip strip reading 3 over a refill that gives 0 is a knob whose value is
+//   ignored, which Law 0 clause 5 calls the dangerous failure.
+//
+//   the rejected stored value — same sentence resolveTapSize's row prints.
+//
+//   0 says "off" in words, because a lone 0 chip is ambiguous between "off"
+//   and "not set".
+//
+// It names the flask a kind resolves to, at the value chosen, so the derivation
+// is visible on the screen the choice is made on rather than inferable from
+// content/flasks.js.
+function graceRefillAppliedHtml(settings, r) {
+  const { counts, bad } = resolveGraceRefill(settings);
+  const kind = r.graceRefillKind;
+  const n = counts[kind];
+  const rejected = bad.find((b) => b.kind === kind);
+  const lead = rejected
+    ? `<b>${esc(rejected.stored)}</b> is not one of these — using ${rejected.used}. `
+    : '';
+  // Asked of the content array rather than the registry: this module is UI and
+  // is never handed registries. The RULE is `firstFlaskOfKind`, one home,
+  // shared with the plan and with boot validation.
+  const entry = firstFlaskOfKind(flasks, kind);
+  if (!entry) {
+    return `${lead}<b>NOT BINDING</b> — nothing declares kind “${esc(kind)}”, so a grace restores none. `
+      + `Declared so it works the day something does.`;
+  }
+  if (n === 0) return `${lead}Off — a grace tops up no ${esc(kindLabel(kind))} flasks.`;
+  return `${lead}A grace tops you up to ${n} × ${esc(entry.name)}.`;
+}
+
+/**
+ * resolveTapSize(settings) → { px, stored, bad }
+ *
+ * THE ONE HOME FOR "what tap floor is in force", asked by the settings row and
+ * by applyTapSize() in src/main.js. The closed set and the default are read off
+ * the row, which reads them off `balance.ui.tapSize` — so the four numbers are
+ * written once, in content, and nothing here restates them.
+ *
+ * `bad` IS THE POINT, and it is Law 1 clause 5. A sparse store is normal — an
+ * untouched key is simply absent, and absent resolves to the default with
+ * nothing to report. A key that is PRESENT and not in the closed set is bad
+ * data: a hand-edited save, an older build's value, a restored profile from a
+ * tree where the set was different. It still has to render something, so it
+ * renders the default — but it must not do that SILENTLY, which is the failure
+ * that gets called "the setting doesn't stick". `bad` is what lets both callers
+ * say so: main.js writes it into the command log by name, and the row prints
+ * the rejected value where the choice is made.
+ */
+/**
+ * resolveLevelUpValue(settings) → how many stat points one level grants.
+ * resolveStatTierSize(settings) → how many points buy one tier.
+ *
+ * HIS TWO DIALS, resolved the way every other row in this file is: a stored
+ * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
+ * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
+ * the same reason. A hand-edited profile or an older build's value must behave
+ * exactly like an absent one, because the alternative is a run created under a
+ * number nothing in the game admits to.
+ *
+ * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
+ * from content, so neither of these functions contains a number.
+ */
+/**
+ * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
+ *
+ * THE ONE GATE. Every road into a `number` setting runs through here: the markup
+ * that renders it, the handler that commits it, the resolver the game reads it
+ * with, and a hand-edited profile arriving from disk. So the model can only ever
+ * receive an integer inside the row's own domain, whatever is stored — which is
+ * the property `tests/engine.test.js` 60d asserts over a table of rubbish.
+ *
+ * A TYPED FIELD IS A DOOR A LADDER NEVER OPENED, and every one of these answers
+ * had no reason to exist an hour ago:
+ *
+ *   ''  ·  null  ·  undefined      the DEFAULT. An empty field is not a zero.
+ *   'lots'  ·  NaN  ·  Infinity    the DEFAULT. Unreadable is unset — the same
+ *                                  rule `savedZoom` and `resolveMapMode` use.
+ *   0  ·  -3                       CLAMPED UP to `min`. A level that grants
+ *                                  nothing is a purchase that does nothing, and
+ *                                  a negative one would take points away.
+ *   1e9                            CLAMPED DOWN to `max`.
+ *   2.7                            FLOORED. `validateRunShape` requires integer
+ *                                  attributes, so a fractional grant would break
+ *                                  the run's shape three files downstream. It
+ *                                  never gets to leave this function.
+ *   '  7  '                        7. Trimmed, because a field lets him type it.
+ *
+ * FLOOR, NOT ROUND, and it is the tree's own rule rather than my preference:
+ * `derivedStatRules.defaults.rounding` is 'floor' and Constantine settled it in
+ * his own words on the HP formula — "CON 14 gives +2, not +3".
+ */
+export function resolveNumberRow(settings, row) {
+  if (!row) throw new Error('resolveNumberRow: no row');
+  const def = Number(row.def);
+  const raw = (settings || {})[row.key];
+  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
+  if (raw === '' || raw === null || raw === undefined || !Number.isFinite(n)) return def;
+  return Math.min(row.max, Math.max(row.min, Math.floor(n)));
+}
+
+/**
+ * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
+ * than its value. Exported so a test asserts against the row the screen actually
+ * renders instead of a second copy of its bounds.
+ */
+export function settingsRow(key) {
+  const row = ROWS.find((r) => r.key === key);
+  if (!row) throw new Error(`settingsRow: no settings row named '${key}'`);
+  return row;
+}
+
+export function resolveLevelUpValue(settings) {
+  return resolveNumberRow(settings, ROWS.find((r) => r.key === 'levelUpValue'));
+}
+
+/**
+ * The `applied` line for ANY `number` row — SILENT WHEN THE PROMISE IS KEPT,
+ * which is Sunna's rule and is why this is not just a readout: "a line that says
+ * the same thing every time you open the screen is not a warning, it is
+ * decoration with a worried face."
+ *
+ * It speaks only when what he typed is NOT what the game will use, which is the
+ * one case a typed field creates and a ladder never could.
+ */
+function numberAppliedHtml(settings, row) {
+  const stored = (settings || {})[row.key];
+  if (stored === undefined || stored === null || stored === '') return '';
+  const used = resolveNumberRow(settings, row);
+  if (String(stored).trim() === String(used)) return '';
+  return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
+}
+
+export function resolveStatTierSize(settings) {
+  return resolveNumberRow(settings, settingsRow('statTierSize'));
+}
+
+/**
+ * derivedStatDialOptions(settings) → the `derivedStatOptions` a NEW run is born
+ * with, or `{}` when the dial is at its shipping value.
+ *
+ * THIS IS THE WHOLE WIRING OF THE TIER DIAL AND IT INVENTS NOTHING. The engine
+ * already takes layered overrides — `modeModifiers`, `runModifiers`,
+ * `explicitOverride` — and a layer's `defaults` is assigned onto EVERY rule
+ * (`resolveDerivedStatRules`), which is precisely "one tier size for all the
+ * derived stats, and a row may still say otherwise". The shape he asked about
+ * already existed; this hands it a number.
+ *
+ * `{}` AT THE DEFAULT IS DELIBERATE: a run at the shipping value is born with
+ * no override layer at all, so its snapshot is byte-identical to one created
+ * before this dial existed. Turning the dial and turning it back leaves no
+ * residue in a save.
+ */
+export function derivedStatDialOptions(settings) {
+  const size = resolveStatTierSize(settings);
+  if (size === Number(DERIVED_DEFAULTS.pointsPerTier)) return {};
+  return { explicitOverride: { defaults: { pointsPerTier: size } } };
+}
+
+export function resolveTapSize(settings) {
+  const row = ROWS.find((r) => r.key === 'tapFloor');
+  const def = Number(row.def);
+  const stored = (settings || {}).tapFloor;
+  if (stored === undefined || stored === null || stored === '') {
+    return { px: def, stored: null, bad: false };
+  }
+  const s = String(stored);
+  if (row.choices.includes(s)) return { px: Number(s), stored: s, bad: false };
+  return { px: def, stored: s, bad: true };
+}
+
+// THE COST LINE. Sunna's ruling, and it is her own rule from the day before
+// aimed at her own proposal: "a line that says the same thing every time you
+// open the screen is not a warning, it is decoration with a worried face." So
+// the NOTE is constant and carries no percentages, and THIS line appears only
+// below the largest size, and changes with the value chosen.
+//
+// THE PERCENTAGES ARE NOT WRITTEN HERE. `balance.ui.tapSize.missRate` carries
+// one entry per size that has research behind it — 44 and 24, the two points
+// WCAG gives us — and this function prints a number only where an entry exists.
+// 36 and 30 get the sentence and no statistic, because interpolating between
+// two measured points would be fabricating one, and a fabricated number in a
+// player-facing line is the worst place this house could put one.
+//
+// The leading "NN px —" is the one thing I added to Sunna's wording: the
+// dispatch asks the line to NAME THE VALUE CHOSEN, and without it 36 and 30
+// render the identical sentence — a line that does not change when the setting
+// does, which is the test she set for it. Her sentence is untouched underneath.
+function tapCostHtml(settings) {
+  const { px, stored, bad } = resolveTapSize(settings);
+  const sizes = UI_DEFAULTS.tapSize.sizes;
+  const max = Math.max(...sizes);
+  // Bad data is loud HERE too, not only in the log: the player who typed 32
+  // into a save file is the one person who needs to be told 32 is not a size.
+  const badLine = bad
+    ? `<p class="set-applied limited">Stored value ${esc(String(stored))} is not one of `
+      + `${esc(sizes.join(', '))} — using ${px}.</p>`
+    : '';
+  if (px >= max) return badLine;
+  const rate = UI_DEFAULTS.tapSize.missRate;
+  const here = rate[px];
+  const there = rate[max];
+  const tail = here && there
+    ? `: about ${here} misses here, against ${there} at ${max}`
+    : '';
+  return `${badLine}<p class="set-applied">${px} px — below the size a fingertip`
+    + ` reliably hits${tail}.</p>`;
 }
 
 // EldenSpire#26 — SHOW THE VALUE ACTUALLY APPLIED.
@@ -219,7 +1022,11 @@ function appliedHtml(settings) {
   // under-served, and is told nothing. A five-word pointer to a sibling control
   // cannot be wrong; a condition deciding when she deserves to see it can, and
   // this week has been a week of conditions that were. Wording is Sunna's.
-  return `<p class="set-applied${limited ? ' limited' : ''}" data-applied="uiScale">`
+  // `data-applied` lives on the SLOT now (appliedSlot, above), not on this
+  // paragraph — one row, one slot, one key, whether or not the line has
+  // anything to say this frame. A selector of `[data-applied="uiScale"]` still
+  // resolves; it lands on the wrapper instead of the paragraph inside it.
+  return `<p class="set-applied${limited ? ' limited' : ''}">`
     + (limited
       ? `Showing ${shown} — the largest that fits your screen (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
       : `Showing ${shown}`)
@@ -229,44 +1036,271 @@ function appliedHtml(settings) {
 
 // Re-read after the orchestrator has applied the change, and on resize, because
 // Auto's applied value moves with the window while the chosen setting does not.
+//
+// EVERY SLOT ON THE PANEL, not a named one. It used to replace the uiScale
+// paragraph by selector, which meant the second row with a derived line under
+// it would need this function to learn its key. It reads the slots the panel
+// actually drew and asks each row's own function — so a third row costs nothing
+// here, and a line that is EMPTY this frame (Minimum tap size at 44) still has
+// a slot to come back into. Refilling rather than replacing is what makes the
+// empty case work at all.
 function refreshApplied(container, settings) {
-  const el = container.querySelector('[data-applied="uiScale"]');
-  if (!el) return;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = appliedHtml(settings);
-  const next = tmp.firstElementChild;
-  if (next) el.replaceWith(next);
+  container.querySelectorAll('[data-applied]').forEach((slot) => {
+    const row = ROWS.find((r) => r.key === slot.dataset.applied);
+    if (!row || !row.applied) return;
+    slot.innerHTML = row.applied(settings, row) || '';
+  });
 }
 
-function isFullscreen() {
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
-}
-
-function toggleFullscreen() {
-  const el = document.documentElement;
-  if (isFullscreen()) {
-    (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
-  } else {
-    (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+/**
+ * anchorPressed(container, btn, wasAt) — keep the pressed control where the
+ * finger left it.
+ *
+ * SUNNA'S FLOOR, and it is a property this build has to satisfy rather than a
+ * nicety: *a control that changes layout must still be under the finger that
+ * changed it.* Minimum tap size is the case that produced the rule — its own
+ * chips are floored by the value it sets, and so is every floored control above
+ * it, so choosing a smaller size lifts the whole row up the page and the finger
+ * ends on empty background. Measured before this existed: pressing 36 moved the
+ * chip 36.4 device px, and 3 of 4 transitions left the chip behind.
+ *
+ * THE MECHANISM IS HERS: give the difference back through the scrolling pane's
+ * `scrollTop`, so nothing about the layout is faked and no element is moved.
+ *
+ * THE BOUNDARY IS HERS TOO AND SHE STATED IT UNPROMPTED: at `scrollTop 0` with
+ * SHRINKING content there is nothing to give back — you cannot scroll above the
+ * top of a pane. That is not a bug in this function, it is the arithmetic, and
+ * it is exactly where the 44 and 36 steps land when the panel is already at the
+ * top. This function reports nothing; `underfinger.mjs` measures which
+ * transitions it rescues and which fall in that hole, and the residual is handed
+ * back rather than papered over.
+ *
+ * Applied to EVERY choice row, not to this one by name. A row that changes no
+ * layout produces a delta of zero and pays nothing — cheaper than a list of
+ * which keys move the page, and a list is a second copy of a fact the layout
+ * already knows.
+ */
+function anchorPressed(container, btn, wasAt) {
+  if (typeof document === 'undefined' || !btn.isConnected) return;
+  const delta = btn.getBoundingClientRect().top - wasAt;
+  if (!delta) return;
+  // The nearest ancestor that can actually scroll. Asked of the live boxes, not
+  // assumed to be `.set-panel`: both doors mount this container differently and
+  // the modal scrolls at a different level than the in-run overlay.
+  for (let el = btn.parentElement; el; el = el.parentElement) {
+    const canScroll = el.scrollHeight > el.clientHeight + 1;
+    if (canScroll) {
+      const before = el.scrollTop;
+      el.scrollTop = before + delta;
+      // It moved as far as it could, which may be zero. Whatever is left is the
+      // hole Sunna named, and it belongs to the measurement, not to a retry.
+      if (el.scrollTop !== before) return;
+    }
+    if (el === container) break;
   }
+}
+
+export function fullscreenCapability(doc = globalThis.document) {
+  const root = doc && doc.documentElement;
+  const request = root && (root.requestFullscreen || root.webkitRequestFullscreen);
+  const exit = doc && (doc.exitFullscreen || doc.webkitExitFullscreen);
+  const enabled = doc && (doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled);
+  return {
+    supported: !!(root && request && exit && enabled !== false),
+    root,
+    enter: request,
+    request,
+    exit,
+  };
+}
+
+export function isFullscreen(doc = globalThis.document) {
+  return !!(doc && (doc.fullscreenElement || doc.webkitFullscreenElement));
+}
+
+export async function toggleFullscreen(doc = globalThis.document) {
+  const capability = fullscreenCapability(doc);
+  if (!capability.supported) return { ok: false, reason: 'unsupported' };
+  try {
+    if (isFullscreen(doc)) await capability.exit.call(doc);
+    else await capability.request.call(doc.documentElement);
+    return { ok: true, active: isFullscreen(doc), reason: '' };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: 'refused',
+      message: 'The browser refused fullscreen. Try again from its own page menu.',
+      error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
+    };
+  }
+}
+
+/** The categories that will actually DRAW, given whether a save manager exists.
+ *  A section that needs `saves` and has none renders nothing, so it must not
+ *  get a tab either — a tab onto an empty panel is the lone heading with a
+ *  bigger promise. This is the one place `saves` narrows the set. */
+function shownCategories(saves) {
+  return settingsCategories().filter((cat) => {
+    const h = categoryHandler(cat);
+    return !(h && h.needs === 'saves' && !saves);
+  });
+}
+
+/** The body of one category, as HTML. */
+function categoryHtml(cat, settings, saves) {
+  const h = categoryHandler(cat);
+  if (!h) {
+    // The lone heading, made loud — now a lone TAB, which is louder still: it
+    // is on screen from the moment Settings opens instead of 2000px down. It
+    // cannot reach a player (the boot assert fails first), so this is what a
+    // developer sees on the way.
+    return `<p class="set-note">Nothing is filed under "${esc(cat)}".`
+      + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
+      + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
+  }
+  const heading = `<header class="set-section-head"><p>Settings</p><h2>${esc(categoryLabel(cat))}</h2>`
+    + `<span>${esc(categoryTip(cat))}</span></header>`;
+  if (cat === 'Advanced') {
+    const stored = settings[ADVANCED_CAT_KEY];
+    const active = ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+    const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
+      + ` type="button" role="tab" aria-selected="${group.id === active}"`
+      + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
+    const groups = ADVANCED_GROUPS.map((group) => {
+      const hidden = group.id === active ? '' : ' hidden';
+      if (group.id === 'Changelog') {
+        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
+          + '><div class="set-changelog-mount"></div></section>';
+      }
+      const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
+      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
+        + `><p class="set-note set-advanced-tip">${esc(group.tip)}</p>`
+        + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
+    }).join('');
+    return `${heading}<div class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</div>${groups}`;
+  }
+  if (h.mount) return `${heading}<div class="${h.mount}"></div>`;
+  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
 /**
  * renderSettings(container, { settings, onChange, grouped })
  * Fills `container` with the settings controls and wires change events.
- * grouped=true adds category headers.
+ * grouped=true draws the category TAB STRIP and one category at a time.
+ *
+ * SIX SECTIONS USED TO BE SIX HEADINGS DOWN ONE SCROLLING COLUMN. One name was
+ * on screen when Settings opened, at every shape and every text size measured;
+ * AUDIO sat 1848px below DISPLAY at 390/Text M, and the last section was five
+ * thumb-drags away — eight at Text XL, and six at 1200x730, so it was never
+ * only a phone. A gold, letter-spaced, uppercase heading promises a taxonomy;
+ * hiding five sixths of it is the promise broken in silence.
+ *
+ * BOTH EDGES, because a tab strip can break this in the other direction:
+ *   - six sections must not become six screens a player has to HUNT — so the
+ *     whole strip is on screen at once and wraps rather than scrolling
+ *     sideways. All six names are readable before the first tap.
+ *   - a section that scrolls internally must STILL SCROLL — the panel keeps
+ *     the container's overflow, so Display's sixteen rows are all reachable.
+ *
+ * NOTHING NEW IS AUTHORED to add a seventh. `settingsCategories()` already
+ * derives the set from what is filed; a tab, its tooltip, its bumper stop and
+ * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
   let html = '';
+  let cats = [];
+  let current = null;
   if (grouped) {
-    for (const cat of CATEGORIES) {
-      const rows = ROWS.filter((r) => r.cat === cat);
-      html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
+    cats = shownCategories(saves);
+    // A stored category that no longer exists must not blank the screen. Fail
+    // SAFE and visibly: fall back to the first tab, which is where a player who
+    // never chose one lands anyway.
+    const stored = settings[CAT_KEY];
+    current = cats.includes(stored) ? stored : cats[0] || null;
+    if (!cats.length) {
+      // Nothing is filed anywhere. assertSurfaces fails the boot before a
+      // player can meet this, so it is a developer's message, not a player's.
+      html = '<p class="set-note">No settings categories exist —'
+        + ' nothing is filed under any name in src/ui/screens/settings.js.</p>';
+    } else {
+      // `data-member` on each TAB is the house convention for a navigable set
+      // (#78): the host names the set, each member names itself, so an
+      // instrument reads this off the rendered page instead of importing three
+      // modules. It moved from the heading to the tab because the tab is now
+      // what a player navigates — the heading is gone, since the selected tab
+      // IS the heading and printing the name twice costs a phone a line it
+      // does not have.
+      //
+      // role=tab / tablist / tabpanel / aria-selected are the FIRST in this
+      // repo. Before tonight a screen reader had no tabs on any surface here,
+      // including the overlay's six — that half is still open and is not mine
+      // to fix in this file.
+      const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
+        + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
+        + ` aria-controls="set-panel" data-member="${esc(cat)}"><span class="set-tab-face">${esc(categoryLabel(cat))}</span></button>`).join('');
+      html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
+        + ` data-surface="settingsCategory">${tabs}</div>`
+        + `<div class="set-panel" id="set-panel" role="tabpanel"`
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div>`;
     }
   } else {
-    html = ROWS.map((r) => rowHtml(settings, r)).join('');
+    html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+  container.setAttribute('data-settings-host', '');
+  // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
+  // belongs to this render, so clearing Settings for Deck disconnects it and
+  // releases listeners even while the shared container remains on the page.
+  const lifecycleSentinel = document.createComment('settings-render-lifecycle');
+  container.appendChild(lifecycleSentinel);
+
+  const syncFullscreen = (message = '') => {
+    const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
+    if (!btn) return;
+    const capability = fullscreenCapability();
+    const on = isFullscreen();
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', String(on));
+    btn.disabled = !capability.supported;
+    btn.setAttribute('aria-disabled', String(!capability.supported));
+    const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
+    if (status) {
+      status.textContent = message || (capability.supported
+        ? 'Fill the screen when this browser allows it.'
+        : 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.');
+    }
+  };
+
+  // ---- everything below wires ONE PANEL'S controls -------------------------
+  // It used to run once over the whole column, because the whole column was on
+  // screen. With one category at a time it has to run again after every tab
+  // switch — the old nodes go with the innerHTML that replaced them, so nothing
+  // accumulates. The one listener that is NOT per-panel (the resize handler for
+  // the applied-zoom readout) is installed once per open, below.
+  const wire = () => {
+  // The acknowledgement needs no manager and no settings — it always renders.
+  const aboutMount = container.querySelector('.set-about-mount');
+  if (aboutMount) renderAboutSection(aboutMount);
+  const changelogMount = container.querySelector('.set-changelog-mount');
+  if (changelogMount) renderChangelogSection(changelogMount);
+
+  container.querySelectorAll('.set-subtab').forEach((button) => {
+    button.addEventListener('click', () => {
+      const group = button.dataset.advancedGroup;
+      settings[ADVANCED_CAT_KEY] = group;
+      onChange({ [ADVANCED_CAT_KEY]: group });
+      container.querySelectorAll('.set-subtab').forEach((candidate) => {
+        const selected = candidate.dataset.advancedGroup === group;
+        candidate.classList.toggle('on', selected);
+        candidate.setAttribute('aria-selected', String(selected));
+      });
+      container.querySelectorAll('.set-advanced-group').forEach((panel) => {
+        panel.hidden = panel.dataset.advancedPanel !== group;
+      });
+      const panel = container.querySelector('.set-panel');
+      if (panel) panel.scrollTop = 0;
+    });
+  });
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -277,6 +1311,43 @@ export function renderSettings(container, { settings, onChange, grouped = true }
     };
     input.addEventListener('change', commit);
     input.addEventListener('blur', commit);
+  });
+
+  // 'number' rows: the typed field and its slider are ONE value.
+  //
+  // THE FIELD COMMITS ON change/blur, NOT ON EVERY KEYSTROKE, and that is the
+  // whole reason a typed field is usable here: clamping mid-type would fight
+  // him. Typing "12" passes through "1", and a per-keystroke clamp would rewrite
+  // it under his fingers. The slider commits on `input`, because dragging IS the
+  // gesture.
+  //
+  // EVERY COMMIT GOES THROUGH `resolveNumberRow`, so what reaches the profile is
+  // always an integer inside the row's own domain — and it WRITES BACK what it
+  // resolved, so a clamp or a rejection is visible in the field instead of being
+  // swallowed (Law 0 clause 5).
+  container.querySelectorAll('.num-wrap').forEach((wrap) => {
+    const field = wrap.querySelector('.set-num');
+    const key = field.dataset.key;
+    const row = ROWS.find((r) => r.key === key);
+    // ONE COMMIT PATH, WRITTEN FOR TWO CONTROLS BEFORE THE SECOND ONE EXISTS.
+    // `mirror` walks every input in the wrap, so Part B's slider is three lines
+    // — a tag in the markup above — and cannot fall out of sync with the field,
+    // because neither control is the value: the resolved number is.
+    const mirror = (val) => {
+      for (const input of wrap.querySelectorAll('input')) input.value = String(val);
+    };
+    const commit = (raw) => {
+      const val = resolveNumberRow({ [key]: raw }, row);
+      mirror(val);
+      settings[key] = val;
+      onChange({ [key]: val });
+    };
+    // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
+    // clamp on every keypress would rewrite the value under his fingers.
+    field.addEventListener('change', () => commit(field.value));
+    field.addEventListener('blur', () => commit(field.value));
+    // Part B's slider commits on `input`, because dragging IS the gesture:
+    //   slider.addEventListener('input', () => commit(slider.value));
   });
 
   container.querySelectorAll('.set-range').forEach((slider) => {
@@ -295,50 +1366,169 @@ export function renderSettings(container, { settings, onChange, grouped = true }
 
   container.querySelectorAll('.choice').forEach((btn) => {
     btn.addEventListener('click', () => {
+      // SUNNA'S FLOOR: a control that changes layout must still be under the
+      // finger that changed it. Read where the pressed chip is BEFORE the change
+      // lands, so the anchor below has something to aim at.
+      const wasAt = btn.getBoundingClientRect().top;
       btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.
-      if (btn.dataset.key === 'uiScale') refreshApplied(container, settings);
+      //
+      // Unconditional, over every slot on the panel. The old `if (key ===
+      // 'uiScale')` was the row's identity written a second time in the wiring,
+      // and the second row with a derived line under it would have been a
+      // second clause. There are at most two slots on a panel; asking both is
+      // cheaper than remembering which one moved.
+      refreshApplied(container, settings);
+      // ANCHOR LAST, and the order is load-bearing — it cost me a measurement.
+      // I anchored straight after onChange first, and the 44 step still lost the
+      // finger by 16.25 device px: the cost line above had not gone silent yet,
+      // so the anchor aimed at a layout that was one paragraph taller than the
+      // one the player ends up looking at. Everything that moves the page in
+      // response to this press has to have moved before the correction is read.
+      anchorPressed(container, btn, wasAt);
     });
   });
 
-  // Auto's applied value moves with the window even though the setting does not.
-  if (container.querySelector('[data-applied="uiScale"]')) {
-    const onResize = () => refreshApplied(container, settings);
-    window.addEventListener('resize', onResize);
-    // The settings container is rebuilt on every open, so the listener is
-    // dropped with it rather than accumulating one per visit.
-    const obs = new MutationObserver(() => {
-      if (!container.isConnected) { window.removeEventListener('resize', onResize); obs.disconnect(); }
-    });
-    obs.observe(document.body, { childList: true, subtree: true });
-  }
-
   container.querySelectorAll('.toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
-        toggleFullscreen();
-        // Reflect the new state shortly after the API resolves.
-        setTimeout(() => {
-          const on = isFullscreen();
-          btn.classList.toggle('on', on);
-          btn.setAttribute('aria-checked', String(on));
-        }, 60);
+        const result = await toggleFullscreen();
+        syncFullscreen(result.ok || result.reason === 'unsupported'
+          ? ''
+          : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
         return;
       }
       const now = !btn.classList.contains('on');
       btn.classList.toggle('on', now);
       btn.setAttribute('aria-checked', String(now));
-      settings[btn.dataset.key] = now;
-      onChange({ [btn.dataset.key]: now });
+      const row = ROWS.find((candidate) => candidate.key === btn.dataset.key);
+      const stored = row && row.positiveWhen === false ? !now : now;
+      settings[btn.dataset.key] = stored;
+      onChange({ [btn.dataset.key]: stored });
+      refreshConditionNotes(container, settings);
     });
   });
+  }; // ---- end wire() ---------------------------------------------------
+
+  wire();
+
+  // Declared before the observer that reads it: the early return below skips
+  // the claim, and a `let` read before its declaration is a crash, not a false.
+  let claimedRing = false;
+
+  // Auto's applied value moves with the window even though the setting does not.
+  // ONE listener per open, not one per tab switch: the readout lives on a row
+  // inside Display, so a player who visits Display four times would otherwise
+  // collect four handlers that all write the same number.
+  const onResize = () => refreshApplied(container, settings);
+  window.addEventListener('resize', onResize);
+  const onFullscreenChange = () => syncFullscreen();
+  const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+  document.addEventListener('fullscreenerror', onFullscreenError);
+  document.addEventListener('webkitfullscreenerror', onFullscreenError);
+  // The settings container is rebuilt on every open, so the listener is dropped
+  // with it rather than accumulating one per visit. Same observer releases the
+  // bumpers if this strip took them.
+  const obs = new MutationObserver(() => {
+    if (lifecycleSentinel.isConnected) return;
+    window.removeEventListener('resize', onResize);
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    document.removeEventListener('fullscreenerror', onFullscreenError);
+    document.removeEventListener('webkitfullscreenerror', onFullscreenError);
+    if (claimedRing) setTabRing(null);
+    obs.disconnect();
+  });
+  if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (!grouped || !cats.length) return;
+
+  // ---- the strip: selection, tooltips, and the ring ------------------------
+
+  function selectCategory(cat) {
+    if (!cats.includes(cat) || cat === current) return;
+    current = cat;
+    settings[CAT_KEY] = cat;
+    // Persisted through the same free bag every other setting rides in
+    // (`meta.settings`) — no save-schema change. IN COMBAT IT DOES NOT PERSIST
+    // and cannot: that mount passes a synthetic meta with no onChange, so the
+    // choice is per-mount there. Stated, not hidden — and not new: the armoury
+    // view has always been per-mount at that same call site.
+    onChange({ [CAT_KEY]: cat });
+    container.querySelectorAll('.set-tab').forEach((b) => {
+      const on = b.dataset.member === cat;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    const panel = container.querySelector('.set-panel');
+    if (!panel) return;
+    panel.innerHTML = categoryHtml(cat, settings, saves);
+    panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
+    // A tab switch is a new screenful. Start it at the top, or the player lands
+    // mid-way down a section they have never seen.
+    panel.scrollTop = 0;
+    if (panel.parentElement) panel.parentElement.scrollTop = 0;
+    wire();
+  }
+
+  container.querySelectorAll('.set-tab').forEach((b) => {
+    b.addEventListener('click', () => selectCategory(b.dataset.member));
+    // Law 3 clause 4: hover AND the pad/keyboard focus cursor. `title=` alone
+    // does not satisfy it — touch and gamepad players never see one.
+    attachTooltip(b, () => `<b>${esc(categoryLabel(b.dataset.member))}</b><br>${esc(categoryTip(b.dataset.member))}`);
+  });
+
+  // Law 3 clauses 1 + 1a: RB → next, LB → previous, wrap at BOTH ends, over the
+  // same set in the same order. The ring is the `cats` array — one order, and
+  // the widget is not consulted.
+  //
+  // CLAIMED ONLY IF FREE. See hasTabRing() in input.js for the ruling: on the
+  // in-run overlay this strip sits INSIDE another tab set, and the bumpers stay
+  // with the outer one so RB never changes meaning between two tabs of the same
+  // menu. Nothing is passed in; the answer is derived from whether a ring is
+  // already held.
+  if (!hasTabRing()) {
+    claimedRing = true;
+    const step = (d) => {
+      const i = cats.indexOf(current);
+      const at = i < 0 ? 0 : i;
+      selectCategory(cats[(at + d + cats.length) % cats.length]);
+    };
+    setTabRing({ prev: () => step(-1), next: () => step(1) });
+  }
 }
 
-export function openSettings({ meta, onChange }) {
+/**
+ * showSettingsNotice(msg) — say something in the open Settings modal. Exists so
+ * a refused write can answer instead of being a silent no-op (#67); no-op when
+ * Settings is not open.
+ */
+export function showSettingsNotice(msg) {
+  // BOTH doors. This used to look only for the modal's own body, so on the
+  // in-run overlay it would have been a silent no-op — the very defect it
+  // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
+  // whatever container it filled, so the notice lands wherever Settings is.
+  const host = document.querySelector('[data-settings-host]');
+  if (!host) return;
+  let el = host.querySelector('.set-notice');
+  if (!el) {
+    el = document.createElement('p');
+    el.className = 'set-notice';
+    el.setAttribute('role', 'status');
+    host.prepend(el);
+  }
+  el.textContent = msg;
+}
+
+export function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
@@ -349,7 +1539,7 @@ export function openSettings({ meta, onChange }) {
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange });
+  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
   const close = () => veil.remove();
   veil.addEventListener('click', (e) => {

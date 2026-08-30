@@ -19,8 +19,10 @@ import * as S from './statuses.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
-import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
-import { canSwap, cycleSet, stampDeck } from '../model/loadout.js';
+import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
+import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
+import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { chargeFlaskId } from '../model/gracerefill.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -41,28 +43,73 @@ const QUEUE_GUARD = 10000;
  * first player turn starts (energy set, 5 drawn, playerTurnStart triggers).
  * Setup events are in combat.eventLog.
  */
-export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [] }) {
+export function createCombat({
+  registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  // WHICH SWAP-COST RULE THIS FIGHT IS UNDER (A8). Resolved once here rather
+  // than per swap, for the reason `hpMult` is: a fight's rules must not change
+  // under the player halfway through it. Omitted resolves to the shipping
+  // default, so every existing caller — and every test — keeps the price it
+  // already had, and `resolveSwapCostRule(registries, meta)` is the one place
+  // his Settings choice is read.
+  swapCostRule = null,
+}) {
   const bal = registries.balance || {};
+  // Run creation owns derived Mana. Older headless fixtures without a Mana
+  // pool get a harmless zero pool; class data is never a fallback authority.
+  const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
+  const equipmentProfileRuleSnapshot = player.equipmentProfileRuleSnapshot
+    ? structuredClone(player.equipmentProfileRuleSnapshot)
+    : createEquipmentProfileRuleSnapshot(registries);
+  // THE PLAYER'S POISE VESSEL — his layout twice over ("poise (very skinny
+  // bar) under the health bar", D10.4; "should also effect player too", D17
+  // q5). The MAX is real: the equipment/relic stagger-threshold receipt,
+  // derived from the loadout this fight brings. The VALUE has no writer —
+  // dealPoiseDamage refuses non-enemies — so the vessel ships real-but-empty;
+  // the mechanics that will move it are dealt elsewhere and are NOT smuggled
+  // in with this stamp. An explicit player.poiseMax is the override seam
+  // (Law 0 clause 3: an override is data; it is also ?shotMaxPoise's door).
+  // A fixture with no loadout gets no vessel — absent, never a lying 0/0 —
+  // the same graceful shape the Mana pool takes above.
+  const poiseMax = Number.isInteger(player.poiseMax)
+    ? player.poiseMax
+    : (player.loadout
+      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId }).value
+      : 0);
   const combat = {
     registries,
+    equipmentProfileRuleSnapshot,
+    equipmentPoolDeficits: player.equipmentPoolDeficits
+      ? { ...player.equipmentPoolDeficits }
+      : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
+    equipmentChanged: false,
     rng,
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
     handMax: bal.handMax != null ? bal.handMax : 10,
-    drawPerTurn: bal.draw != null ? bal.draw : 5,
+    drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
       maxHp: player.maxHp,
       hp: player.hp,
+      maxMana,
+      mana: player.mana != null ? player.mana : maxMana,
+      maxStamina: player.maxStamina,
+      stamina: player.stamina,
       relicIds: player.relicIds || [],
       flasks: player.flasks || [],
-      energyMax: bal.energy != null ? bal.energy : 3,
+      flaskCharges: player.flaskCharges || null,
+      energyMax: player.energyMax,
+      drawPerTurn: player.drawPerTurn,
+      poiseMax,
+      damageBySchoolAdd: player.damageBySchoolAdd || {},
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
     // still swapped when the fight ends.
     loadout: player.loadout || null,
+    attributes: player.attributes ? { ...player.attributes } : null,
+    swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
     queue: [],
@@ -84,7 +131,11 @@ export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, en
     let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
     if (hpMult !== 1) hp = Math.max(1, Math.round(hp * hpMult));
     combat.enemies.push(
-      createEnemyCombatEntity({ instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax })
+      createEnemyCombatEntity({
+        instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+        arcaneExposure: def.arcaneExposure,
+        damageResistanceBySchool: def.damageResistanceBySchool,
+      })
     );
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
@@ -94,9 +145,18 @@ export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, en
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
+    ...(c.acquiredAt !== undefined ? { acquiredAt: structuredClone(c.acquiredAt) } : {}),
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
+    ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
+    ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.equipmentAttackSlotId ? { equipmentAttackSlotId: c.equipmentAttackSlotId } : {}),
+    ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
+    ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
+    ...(c.weaponId ? { weaponId: c.weaponId } : {}),
+    ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -474,25 +534,91 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (!allowed.ok) throw new Error(allowed.reason);
 
   const p = combat.player;
+  // THE PRICE IS DERIVED, NOT READ (A8). `cfg.swapCost` is one rung of a chain
+  // now — the default — and which rungs are live is `combat.swapCostRule`, a row
+  // of `balance.equipment.swapCostRules` resolved once at createCombat from his
+  // Settings choice. The whole derivation comes back so the throw can name the
+  // real number and the event can carry it; the relic half is summed here
+  // because relic passives are this file's vocabulary (see `effectiveCost`
+  // below, same shape) and model/loadout.js must not import back into
+  // model/registries.js.
+  const price = swapCostFor(combat.registries, {
+    rule: combat.swapCostRule,
+    loadout: combat.loadout,
+    classId: p.classId,
+    slotId,
+    setIndex,
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+  });
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
-  } else if (p.energy < cfg.swapCost) {
-    throw new Error(`Swapping costs ${cfg.swapCost} Energy`);
+  } else if (p.energy < price.cost) {
+    throw new Error(`Swapping costs ${price.cost} Energy`);
   }
 
-  if (!cycleSet(combat.loadout, slotId, setIndex)) throw new Error(`No set ${setIndex} on '${slotId}'`);
+  // THE LADDER BINDS HERE TOO (#90, Vira's gate), and combat has no profile —
+  // `createCombat` is handed registries, rng, player and enemies, and nothing
+  // that knows which rungs have been earned. So the bound here is
+  // `openedSets(meta: {})`, which is "one, plus whatever this loadout is already
+  // holding": in a fight you cycle between the sets you BROUGHT, and what you
+  // brought is in the loadout.
+  //
+  // THIS MAKES THE ENGINE AGREE WITH THE SCREEN RATHER THAN NARROWING IT. The
+  // in-combat armoury mount already passes a synthetic `meta` (equipment.js), so
+  // the panel already draws only that many cells — the engine was the half that
+  // still accepted any index. The limit is the SAME one already stated there for
+  // `equipView` and the fold, not a new one: an earned-but-EMPTY set is not
+  // reachable mid-fight. Making it reachable means giving combat the profile,
+  // which is a different card and not one to open inside a gate.
+  // AND `inCombat` IS NOW REQUIRED THERE TOO (#104, Vira). The `canSwap` above
+  // is kept — it supplies the REASON this throws with, before the price is
+  // charged — but it is no longer the only thing enforcing the seal: the
+  // mutation asks the same function. Two questions, one home, no second copy.
+  const activeBefore = combat.loadout.active[slotId];
+  const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
+  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, {
+    meta: {},
+    inCombat: true,
+    classId: p.classId,
+    onEquipmentChanged: (event) => combat.emit('equipmentChanged', event),
+  })) {
+    throw new Error(`No set ${setIndex} on '${slotId}'`);
+  }
+  const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  if (activeBefore !== combat.loadout.active[slotId]) {
+    combat.equipmentChanged = true;
+    const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
+    for (const maxField of EQUIPMENT_POOL_FIELDS) {
+      const currentField = currentFor[maxField];
+      const floor = maxField === 'maxHp' ? 1 : 0;
+      const nextMax = Math.max(floor, p[maxField] + poolAfter[maxField] - poolBefore[maxField]);
+      combat.equipmentPoolDeficits[currentField] = moveEquipmentPool(
+        p, maxField, nextMax, combat.equipmentPoolDeficits[currentField],
+      );
+    }
+  }
 
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
-  else p.energy -= cfg.swapCost;
+  else p.energy -= price.cost;
 
-  // The new numbers reach the draw and discard piles always; the hand only if
-  // the config says a swap re-arms what you are already holding.
-  const piles = [combat.piles.draw, combat.piles.discard];
-  if (cfg.restampHand) piles.push(combat.piles.hand);
-  const run = { deck: [], loadout: combat.loadout, class: p.classId };
+  // Stable generated attack slots rebind wherever combat currently holds them.
+  // The intent resolves before this mutation, so no in-flight card changes
+  // underneath its own effects.
+  const piles = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust];
+  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
-  combat.emit('armamentSwapped', { slotId, setIndex });
+  // The vessel keeps telling the truth across the ONE mid-fight door equipment
+  // moves through: re-derive the stagger threshold from the loadout this swap
+  // just changed. Max only — stampPlayerPoiseMax preserves the accumulated
+  // value (0 today; nothing writes it), so the future writer's build-up will
+  // survive a swap unchanged. This deliberately re-derives over any explicit
+  // poiseMax override: after a real swap, the receipt is the truth again.
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId }).value);
+
+  // The event carries what it COST and under which rule — a price nobody can
+  // read back is a price nobody can check, and "try each" is a comparison.
+  combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
   if (cfg.swapEndsTurn) doEndTurn(combat);
 }
 
@@ -524,7 +650,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
+  const manaCost = def.manaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
+  if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
 
   let target = null;
   if (targetId != null) {
@@ -538,6 +666,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // Pay cost (X-cost consumes ALL energy — SPEC §4.3).
   p.energy -= cost;
   if (cost > 0 || isX) combat.emit('energySpent', { amount: cost });
+  p.mana -= manaCost;
+  if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
 
   // Remove from hand; bump counters (used by predicates + formulas).
   combat.piles.hand.splice(idx, 1);
@@ -545,6 +675,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
     energySpent: cost,
+    manaSpent: manaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -553,7 +684,12 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     p.counters.attacksPlayedThisCombat += 1;
     meta.attackOrdinal = p.counters.attacksPlayedThisCombat;
   }
-  const cardRef = { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type };
+  const cardRef = {
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+    type: def.type, tags: def.cardTags,
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+  };
 
   // Enqueue the card's own effects first, then announce the play — triggers
   // reacting to cardPlayed enqueue after the card's effects (FIFO).
@@ -568,6 +704,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat,
     energySpent: cost,
+    manaSpent: manaCost,
   });
   drainQueue(combat);
 
@@ -594,10 +731,13 @@ function doEndTurn(combat) {
   startPlayerTurn(combat);
 }
 
-function doUseFlask(combat, { slot, targetId }) {
+function doUseFlask(combat, { slot, chargeKind, targetId }) {
   if (combat.phase !== 'player') throw new Error('Flasks can only be used on the player turn');
   const p = combat.player;
-  const flask = p.flasks[slot];
+  const chargeId = chargeFlaskId(combat.registries, chargeKind);
+  const currentKey = chargeKind && `${chargeKind}Current`;
+  if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
+  const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];
   if (!flask) throw new Error(`No flask in slot ${slot}`);
   const def = combat.registries.flasks.get(flask.flaskId);
   let target = null;
@@ -607,7 +747,8 @@ function doUseFlask(combat, { slot, targetId }) {
   } else if (def.targeted) {
     target = combat.enemies.find((e) => e.alive) || null;
   }
-  p.flasks.splice(slot, 1);
+  if (chargeId) p.flaskCharges[currentKey] -= 1;
+  else p.flasks.splice(slot, 1);
   combat.emit('flaskUsed', { flaskId: flask.flaskId, slot, targetId: target ? target.id : null });
   // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
   const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult');
@@ -659,6 +800,12 @@ export function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
+    card: {
+      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+      type: def.type, tags: def.cardTags,
+      damageSchool: inst.damageSchool ?? def.damageSchool,
+      exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+    },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
@@ -674,13 +821,28 @@ export function previewCard(combat, cardInstanceId, targetId) {
     const primary = firstResolvedTarget(combat, action, eff);
     switch (eff.op) {
       case 'damage': {
+        const attackTags = A.attackTagsFor(action, eff);
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, action.card);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags, action.card);
+        }
+        // #61 M5: when the aimed target's tag-scoped vulnerability matches
+        // this hit's tags, name the matched row's tint so the hand can accent
+        // the boosted number. Engine states the fact; display reads it.
+        if (attackTags.length && primary && primary.kind === 'enemy') {
+          for (const [sid, inst] of Object.entries(primary.statuses || {})) {
+            if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
+            const sdef = combat.registries.statuses.get(sid);
+            const tv = sdef && sdef.taggedVulnerability;
+            if (tv && tv.tags.some((t) => attackTags.includes(t))) {
+              entry.boostTint = sdef.tint || null;
+              break;
+            }
+          }
         }
         break;
       }
@@ -697,6 +859,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       case 'loseHp':
       case 'draw':
       case 'gainEnergy':
+      case 'restoreMana':
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
@@ -729,6 +892,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     type: def.type,
     cost: shownCost,
     costIsX: isX,
+    manaCost: def.manaCost || 0,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,

@@ -1,0 +1,43 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 51,
+  "current_hash": "sha256:8891e716b0c693ca428bf545edfc4a50b189341a27253bc40f6b2c4bfd6679d7",
+  "parent_hash": "sha256:344d8815c8259343267beb7eeabfd4ce863a8623a9c76b29dadabcbc6dd9fd58",
+  "ticket": "AS-HD-050",
+  "lifecycle_state": "assigned",
+  "objective": "Close the Art motif row through pointer-last reconciliation (Art D2).",
+  "done_when": "The PM supersession, current register, independent Art reread and Art backlog r7 remain matched, and the Art pointer/continuity projection is refreshed pointer-last with history preserved.",
+  "next_action": "Await the owner authorization for one append-only successor; on mismatch route only the residual to Help Desk.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "recovery/as-hd-050",
+  "base_oid": "7bcc9ed08d3a5cc3bc77238851309d27308a78e9",
+  "tree": "recovered-from-hub-snapshot",
+  "expected_dirty_state": "clean",
+  "owner_actor": "maker",
+  "writer_lease": "lease-AS-HD-050-maker",
+  "affected_paths": [
+    "docs/art/**"
+  ],
+  "evidence_pointers": [],
+  "blocker": null,
+  "authority": {
+    "may": [
+      "implement-locally-on-exclusive-paths",
+      "run-tests-and-builds",
+      "commit-on-isolated-branch",
+      "record-blocker-and-continue-collision-free-work"
+    ],
+    "must_not": [
+      "push-pr-merge-deploy-or-release",
+      "claim-overlapping-active-paths"
+    ],
+    "expiry": "2026-10-31T23:59:59Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "git checkout -- .agentops/work/AS-HD-050 ; discard the isolated branch (all changes are reversible local work).",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease"
+  ]
+}
