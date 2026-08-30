@@ -16,10 +16,15 @@ assert.match(terminalIdentity(capsule), /^sha256:[a-f0-9]{64}$/);
 assert.equal(terminalIdentity({ ...capsule, lifecycle_state: "assigned" }), null);
 const actualState = resolveGitStateFile(actualRepo);
 assert.match(actualState.replaceAll("\\", "/"), /\.git\/agentops-pipeline\/state\.json$/);
-let renameAttempts = 0, waits = 0;
-replaceStateFile("temp", "state", () => { renameAttempts += 1; if (renameAttempts < 3) throw Object.assign(new Error("transient lock"), { code: "EPERM" }); }, () => { waits += 1; }, 3);
-assert.equal(renameAttempts, 3); assert.equal(waits, 2);
-assert.throws(() => replaceStateFile("temp", "state", () => { throw Object.assign(new Error("bad path"), { code: "EINVAL" }); }, () => { throw new Error("must not wait"); }), /bad path/);
+for (const code of ["EPERM", "EACCES", "EBUSY"]) {
+  const replaceRoot=fs.mkdtempSync(path.join(os.tmpdir(),`watch-replace-${code.toLowerCase()}-`)), sourceFile=path.join(replaceRoot,"state.unique.tmp"), destination=path.join(replaceRoot,"state.json"); fs.writeFileSync(sourceFile,"new-state\n"); fs.writeFileSync(destination,"old-state\n");
+  let renameAttempts=0, waits=0;
+  replaceStateFile(sourceFile,destination,(from,to)=>{renameAttempts+=1;if(renameAttempts<3)throw Object.assign(new Error("transient lock"),{code});fs.writeFileSync(to,fs.readFileSync(from));fs.unlinkSync(from);},()=>{waits+=1;},20);
+  assert.equal(renameAttempts,3); assert.equal(waits,2); assert.equal(fs.readFileSync(destination,"utf8"),"new-state\n"); assert.equal(fs.existsSync(sourceFile),false);
+}
+const exhaustedRoot=fs.mkdtempSync(path.join(os.tmpdir(),"watch-replace-exhausted-")), exhaustedTemp=path.join(exhaustedRoot,"state.12345.11111111-1111-4111-8111-111111111111.tmp"), exhaustedDestination=path.join(exhaustedRoot,"state.json"); fs.writeFileSync(exhaustedTemp,"candidate-state\n"); fs.writeFileSync(exhaustedDestination,"durable-state\n"); let exhaustedAttempts=0, exhaustedWaits=0;
+assert.throws(()=>replaceStateFile(exhaustedTemp,exhaustedDestination,()=>{exhaustedAttempts+=1;throw Object.assign(new Error("persistent lock"),{code:"EPERM"});},()=>{exhaustedWaits+=1;},20),/persistent lock/); assert.equal(exhaustedAttempts,20); assert.equal(exhaustedWaits,19); assert.equal(fs.readFileSync(exhaustedDestination,"utf8"),"durable-state\n"); assert.equal(fs.readFileSync(exhaustedTemp,"utf8"),"candidate-state\n"); assert.match(path.basename(exhaustedTemp),/^state\.12345\.[0-9a-f-]{36}\.tmp$/);
+let nonretryAttempts=0, nonretryWaits=0; assert.throws(() => replaceStateFile("temp","state",()=>{nonretryAttempts+=1;throw Object.assign(new Error("bad path"),{code:"EINVAL"});},()=>{nonretryWaits+=1;}),/bad path/); assert.equal(nonretryAttempts,1); assert.equal(nonretryWaits,0);
 assert.equal(validateSourceIntegrity(path.join(actualRepo, ".agentops")), true);
 const gitFixture = path.join(temp, "git-fixture");
 const linkedFixture = path.join(temp, "git-fixture-linked");
@@ -146,7 +151,7 @@ const release = acquireWatcherLock(lockFile);
 assert.throws(() => acquireWatcherLock(lockFile), /already active/);
 release();
 assert.equal(fs.existsSync(lockFile), false);
-console.log("PASS 53/53; transient-state-replace-retry=yes; nonretryable-replace-fail-fast=yes; unique-temp-identity=yes; source-integrity-verify=yes; terminal-denominator=120; second-scan-replay0; changed-hash-once=yes; removed-terminal-pruned=yes; observations-bounded=100; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; immediate-assignment=yes; assignment-replay0; failed-CAS-pending=yes; failed-CAS-alarm=yes; alarm-once=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; AgentOps-writes=0");
+console.log("PASS 71/71; transient-codes3-retry=yes; exhaustion-attempts20-waits19=yes; prior-state-preserved=yes; temp-residue-preserved=yes; nonretryable-replace-fail-fast=yes; unique-temp-identity=yes; source-integrity-verify=yes; terminal-denominator=120; second-scan-replay0; changed-hash-once=yes; removed-terminal-pruned=yes; observations-bounded=100; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; immediate-assignment=yes; assignment-replay0; failed-CAS-pending=yes; failed-CAS-alarm=yes; alarm-once=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; AgentOps-writes=0");
 
 function rootFromImportMeta(url) {
   return new URL(".", url).pathname.replace(/^\/(.:)/, "$1");
