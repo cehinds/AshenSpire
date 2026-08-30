@@ -15,6 +15,22 @@ export function resolveGitStateFile(repoRoot) {
   return path.join(path.resolve(repoRoot, common), "agentops-pipeline", "state.json");
 }
 
+function git(repoRoot, args) {
+  return execFileSync("git", ["-C", repoRoot, ...args], { encoding: "utf8", windowsHide: true }).trim();
+}
+
+export function validateAuthoritativeCheckout(repoRoot, authoritativeRef = "dev", fetchRemote = false) {
+  if (fetchRemote) execFileSync("git", ["-C", repoRoot, "fetch", "--quiet", "origin", authoritativeRef], { windowsHide: true });
+  const branch = git(repoRoot, ["symbolic-ref", "--quiet", "--short", "HEAD"]);
+  const head = git(repoRoot, ["rev-parse", "HEAD"]);
+  const remote = git(repoRoot, ["rev-parse", `refs/remotes/origin/${authoritativeRef}`]);
+  const dirty = git(repoRoot, ["status", "--porcelain", "--untracked-files=no"]);
+  if (branch !== authoritativeRef) throw new Error(`scheduler requires authoritative branch ${authoritativeRef}; found ${branch}`);
+  if (head !== remote) throw new Error(`scheduler checkout is not current with origin/${authoritativeRef}`);
+  if (dirty) throw new Error("scheduler authoritative checkout has tracked changes");
+  return { branch, head, remote };
+}
+
 export function terminalIdentity(capsule) {
   if (!capsule || !terminalStates.has(capsule.lifecycle_state) || !capsule.ticket || !capsule.owner_actor || !capsule.current_hash) return null;
   const source = [capsule.ticket, capsule.current_hash, capsule.lifecycle_state, capsule.owner_actor].join("\n");
@@ -68,9 +84,11 @@ export function scanTerminalCapsules(root) {
   }).sort((a, b) => a.event.localeCompare(b.event));
 }
 
-export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOString(), limit = 100, offer = runLiveOffer, initialize = false }) {
+export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOString(), limit = 100, offer = runLiveOffer, initialize = false, sourceHead = null }) {
   const firstRun = !fs.existsSync(stateFile);
   const state = readState(stateFile);
+  if (sourceHead && state.source_head && state.source_head !== sourceHead) throw new Error(`authoritative source drift: ${state.source_head} -> ${sourceHead}`);
+  if (sourceHead) state.source_head = sourceHead;
   const output = [];
   const processed = new Set(state.processed);
   const pending = new Map(state.pending.map((row) => [row.event, row]));
@@ -104,13 +122,15 @@ export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOSt
 async function main(argv = process.argv.slice(2)) {
   const value = (flag, fallback) => { const i = argv.indexOf(flag); return i < 0 ? fallback : argv[i + 1]; };
   const repoRoot = path.dirname(agentopsRoot);
+  const activation = JSON.parse(fs.readFileSync(path.join(agentopsRoot, "pipeline-pilot", "activation.json"), "utf8"));
   const stateFile = path.resolve(value("--state", resolveGitStateFile(repoRoot)));
-  const pollMs = Number(value("--poll-ms", "1000"));
+  const pollMs = Number(value("--poll-ms", "5000"));
   if (!Number.isInteger(pollMs) || pollMs < 100) throw new Error("poll-ms must be an integer >= 100");
   const releaseLock = acquireWatcherLock(path.join(path.dirname(stateFile), "watcher.lock"));
   try {
     do {
-      const result = cycle({ stateFile, initialize: true });
+      const source = validateAuthoritativeCheckout(repoRoot, activation.authoritative_ref, true);
+      const result = cycle({ stateFile, initialize: true, sourceHead: source.head });
       if (result.status !== "QUIET") console.log(JSON.stringify(result));
       if (argv.includes("--once")) break;
       await new Promise((resolve) => setTimeout(resolve, pollMs));

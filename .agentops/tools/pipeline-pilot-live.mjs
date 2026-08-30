@@ -15,6 +15,7 @@ function overlap(left, right) {
 export function validateActivation(config) {
   if (config?.schema !== "agentops/pipeline-activation/v1") throw new Error("invalid pipeline activation schema");
   if (typeof config.enabled !== "boolean" || config.mode !== "LIVE_OFFER") throw new Error("pipeline activation must declare LIVE_OFFER mode");
+  if (!/^[A-Za-z0-9._/-]+$/.test(config.authoritative_ref || "")) throw new Error("authoritative_ref must be a safe branch name");
   if (!Number.isInteger(config.tracking_issue) || config.tracking_issue < 1) throw new Error("tracking_issue must be a positive integer");
   if (!Number.isFinite(config.idle_alarm_seconds) || config.idle_alarm_seconds < 0) throw new Error("idle_alarm_seconds must be non-negative");
   if (!Array.isArray(config.priority) || new Set(config.priority.map((row) => row.ticket)).size !== config.priority.length) throw new Error("priority must contain unique ticket rows");

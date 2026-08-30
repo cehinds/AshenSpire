@@ -43,6 +43,6 @@ assert.equal(observation.projection_drift, 0);
 assert.equal(observation.source_current_hash, capsule.current_hash);
 assert.ok(JSON.stringify(observation).length < 2000);
 assert.equal(currentness.live_base_drift_detected, false);
-assert.equal(currentness.candidate_state, "PR_READY_LIVE_OFFER_NOT_DELIVERED");
+assert.equal(currentness.candidate_state, "PR_OPEN_LOCAL_WATCHER_INTEGRATION");
 
 console.log(`PASS 25/25; AgentOps-authoritative=yes; shadow-stage=${active.node.state}; ready-base=null; ready-locks=0; released-writer=null; wake=${packet.length}; observation=${JSON.stringify(observation).length}; protected-attempts=0; reverse-writes=false; live-drift-detected=${currentness.live_base_drift_detected}; candidate=${currentness.candidate_state}`);
