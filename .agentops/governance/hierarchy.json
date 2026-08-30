@@ -6,38 +6,324 @@
       "actor_id": "constantine",
       "role": "owner",
       "escalation_parent": null,
-      "owns_escalations": ["owner-exclusive", "release", "publication", "intent-conflict", "safety", "final-override"]
+      "owns_escalations": [
+        "owner-exclusive",
+        "release",
+        "publication",
+        "intent-conflict",
+        "safety",
+        "final-override"
+      ]
     },
     {
       "actor_id": "it-manager-iii",
       "role": "it-manager-iii",
       "escalation_parent": "constantine",
-      "owns_escalations": ["technical-scope", "ownership-contest", "integration", "sequencing", "incident-p0", "unresolved-technical-blocker", "exception"]
+      "owns_escalations": [
+        "technical-scope",
+        "ownership-contest",
+        "integration",
+        "sequencing",
+        "incident-p0",
+        "unresolved-technical-blocker",
+        "exception"
+      ]
     },
     {
       "actor_id": "project-management-lead",
       "role": "project-management-lead",
       "escalation_parent": "it-manager-iii",
-      "owns_escalations": ["portfolio-sequencing-recommendation", "dependency-and-capacity-visibility", "completion-council"]
+      "owns_escalations": [
+        "portfolio-sequencing-recommendation",
+        "dependency-and-capacity-visibility",
+        "completion-council"
+      ]
     },
     {
       "actor_id": "data-architecture-lead",
       "role": "data-architecture-lead",
       "escalation_parent": "it-manager-iii",
-      "owns_escalations": ["data-contract-withhold", "schema-lineage", "migration-compatibility"]
+      "owns_escalations": [
+        "data-contract-withhold",
+        "schema-lineage",
+        "migration-compatibility"
+      ]
     },
     {
       "actor_id": "help-desk",
       "role": "help-desk",
       "escalation_parent": "it-manager-iii",
-      "owns_escalations": ["intake", "routing", "contract-completeness", "status-hygiene"]
+      "owns_escalations": [
+        "intake",
+        "routing",
+        "contract-completeness",
+        "status-hygiene"
+      ]
+    },
+    {
+      "actor_id": "maker",
+      "role": "maker",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "implementation-blocker",
+        "path-collision",
+        "lease-expiry",
+        "local-verification-failure"
+      ]
+    },
+    {
+      "actor_id": "qa-independent",
+      "role": "qa-independent",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "verdict-withhold",
+        "fixture-or-plant-regression",
+        "exact-head-drift"
+      ]
+    },
+    {
+      "actor_id": "it-support",
+      "role": "it-support",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "tooling-failure",
+        "environment-or-access-blocker",
+        "routing-outage"
+      ]
+    },
+    {
+      "actor_id": "lead-art-tech-art",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-art-tech-art",
+        "agent-seat-formation-art-tech-art"
+      ]
+    },
+    {
+      "actor_id": "lead-feature-architecture",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-feature-architecture",
+        "agent-seat-formation-feature-architecture"
+      ]
+    },
+    {
+      "actor_id": "lead-incident-defect",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-incident-defect",
+        "agent-seat-formation-incident-defect"
+      ]
+    },
+    {
+      "actor_id": "lead-code-quality-modernization",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-code-quality-modernization",
+        "agent-seat-formation-code-quality-modernization"
+      ]
+    },
+    {
+      "actor_id": "lead-game-systems",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-game-systems",
+        "agent-seat-formation-game-systems"
+      ]
+    },
+    {
+      "actor_id": "lead-experience-design",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-experience-design",
+        "agent-seat-formation-experience-design"
+      ]
+    },
+    {
+      "actor_id": "lead-experience-accessibility-review",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-experience-accessibility-review",
+        "agent-seat-formation-experience-accessibility-review"
+      ]
+    },
+    {
+      "actor_id": "lead-qa-guild",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-qa-guild",
+        "agent-seat-formation-qa-guild"
+      ]
+    },
+    {
+      "actor_id": "lead-platform-release",
+      "role": "team-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": [
+        "team-capacity-platform-release",
+        "agent-seat-formation-platform-release"
+      ]
     }
   ],
   "escalation_routing": {
     "default_sla_minutes": 5,
     "deputy_custody_at_minutes": 5,
     "deputy_overdue_to_owner_at_minutes": 10,
-    "immediate_owner_classes": ["owner-exclusive", "safety", "credential", "irreversible", "intent-conflict"],
+    "immediate_owner_classes": [
+      "owner-exclusive",
+      "safety",
+      "credential",
+      "irreversible",
+      "intent-conflict"
+    ],
     "note": "Elapsed time changes routing only, never truth, evidence, or authority. FYIs remain dashboard-only and are not escalations."
+  },
+  "authority_tiers": {
+    "principle": "A P-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection \u2014 decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a P3 verdict binds P0 and P1 alike and is cleared only by a recorded waiver from the role the QA contract names.",
+    "levels": [
+      {
+        "p": 0,
+        "label": "Owner",
+        "actors": [
+          "constantine"
+        ],
+        "holds": [
+          "main and release mutation",
+          "tags",
+          "release publication",
+          "Pages source and deployment",
+          "final release readiness",
+          "Gate E playtest",
+          "Gate F per-action approval",
+          "every owner-exclusive decision class"
+        ],
+        "cannot": [
+          "overrule an independent QA verdict without a recorded waiver named in qa.json"
+        ]
+      },
+      {
+        "p": 1,
+        "label": "Deputy \u2014 IT Manager III, Integration and Delivery",
+        "actors": [
+          "it-manager-iii"
+        ],
+        "holds": [
+          "technical assignment and sequencing",
+          "path and maker ownership",
+          "integration and delivery to dev",
+          "Gate B and Gate C",
+          "incident and P0 command",
+          "standard-risk QA waiver",
+          "branch-rewrite permission",
+          "the wake target for every technical escalation"
+        ],
+        "cannot": [
+          "main, release, tag, publication or Pages",
+          "Gate E or Gate F",
+          "overruling an independent QA verdict"
+        ]
+      },
+      {
+        "p": 2,
+        "label": "Standing coordination",
+        "actors": [
+          "project-management-lead",
+          "data-architecture-lead",
+          "help-desk",
+          "lead-art-tech-art",
+          "lead-feature-architecture",
+          "lead-incident-defect",
+          "lead-code-quality-modernization",
+          "lead-game-systems",
+          "lead-experience-design",
+          "lead-experience-accessibility-review",
+          "lead-qa-guild",
+          "lead-platform-release"
+        ],
+        "holds": [
+          "intake, triage, routing and receipts",
+          "portfolio, dependency, WIP and capacity visibility",
+          "completion councils and Gate D convening",
+          "cross-domain data-contract review, including WITHHOLD"
+        ],
+        "cannot": [
+          "technical assignment or integration",
+          "delivery, promotion or release",
+          "board mutation"
+        ]
+      },
+      {
+        "p": 3,
+        "label": "Independent verification",
+        "actors": [
+          "qa-independent"
+        ],
+        "holds": [
+          "the exact-head verdict, which no tier may overrule",
+          "Gate A",
+          "WITHHOLD that blocks promotion at any level"
+        ],
+        "cannot": [
+          "implementing what it verifies",
+          "assigning work to itself"
+        ],
+        "note": "Ranked below P2 in decision authority and above every tier in verdict finality. That is deliberate: independence comes from a non-maker reviewer at an immutable head, not from position."
+      },
+      {
+        "p": 4,
+        "label": "Delivery seats",
+        "actors": [
+          "maker",
+          "it-support"
+        ],
+        "holds": [
+          "implementation inside one writer lease",
+          "returning exact evidence"
+        ],
+        "cannot": [
+          "claiming an overlapping path or ref",
+          "push, PR, merge, deploy or release",
+          "changing product behaviour to clear a blocker"
+        ]
+      }
+    ],
+    "rules": {
+      "not_a_capability_ladder": "A P-level never selects a model or an effort; decision 0006's risk-and-station matrix does that, and a tier named after a role is rejected.",
+      "authority_is_per_action": "Holding a tier grants only the actions that tier enumerates. Authority for one action implies authority for none of the others.",
+      "independence_binds_upward": "A P3 verdict binds every tier including P0. It is cleared only by the waiver authority qa.json names for that risk class, recorded with its reason.",
+      "escalation_follows_the_tree": "A tier is not a routing table. Escalation follows escalation_parent and the classes in escalation.json; only owner-exclusive classes reach P0.",
+      "namespace_is_reserved": "P<n> is shared with incident and defect priority. The subject disambiguates: a code on a team or actor is authority, a code on an issue, ticket or directive is priority. The contract must keep saying so."
+    },
+    "namespace": "P",
+    "namespace_note": "P<n> carries two meanings in this project, separated by SUBJECT, per the owner: on a team or an actor it is AUTHORITY (this ladder); on an issue, ticket or directive it is PRIORITY (P0 most urgent). 'P1 Help Desk lead' is an authority statement; 'P1 WITHHOLD' and 'incident-p0' are priority. Nothing infers one from the other, and neither reading is ever applied to a subject of the other kind.",
+    "disambiguation": {
+      "rule": "The subject decides the meaning. A P-code attached to a team or an actor is authority; a P-code attached to an issue, ticket, directive or defect is priority.",
+      "authority_subjects": [
+        "team",
+        "actor",
+        "role",
+        "seat",
+        "lead"
+      ],
+      "priority_subjects": [
+        "issue",
+        "ticket",
+        "directive",
+        "defect",
+        "blocker",
+        "incident",
+        "WITHHOLD"
+      ],
+      "never": "Read a priority code as authority, or an authority code as priority, because the two share a letter.",
+      "known_ambiguous_artifact": "The recovered 2026-08-28 census carries rows such as 'P0 IT Manager III', where a priority code and an actor name sit adjacent in rendered output. Those rows are historical PRIORITY rows and predate this rule. They are evidence, not authority statements, and docs/reconstruction/team-evidence/ labels each one accordingly."
+    }
   }
 }

@@ -9,6 +9,7 @@ REPO/REF   : https://github.com/cehinds/AshenSpire.git @ claude/ashenspire-agent
 BASE       : 985664c2439c373a4d38604b8a53e223c8b8da61 tree seed-illustrative-tree dirty=clean
 NEXT ACTION: Run node .agentops/tools/opsctl.mjs verify and opsctl wake --actor maker --work AS-1001, then open the draft PR.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
+REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : test-run-receipt, generated-view-drift-check
 SOURCE     : 985664c2439c373a4d38604b8a53e223c8b8da61
 FRESHNESS  : as-recorded (base 985664c2439c); verify live HEAD out-of-band

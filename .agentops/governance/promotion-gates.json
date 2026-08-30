@@ -1,0 +1,181 @@
+{
+  "schema": "agentops/promotion-gates/v1",
+  "policy_version": "1.0.0",
+  "principle": "Promotion is a sequence of separately evidenced gates against one frozen head, not a single approval. Authority for one gate implies authority for none of the others, and any change to the candidate returns it to the first gate. A gate is passed by recorded evidence at an exact SHA, never by the fact that a job ran.",
+  "source": "docs/governance/DECISIONS/0009-promotion-gates-a-through-f.md",
+  "immutable_candidate": "Any code, content, configuration or artifact change creates a new candidate and restarts Gate A. A changed head invalidates every receipt recorded against the former SHA.",
+  "gates": [
+    {
+      "id": "A",
+      "name": "Exact candidate QA",
+      "actor_role": "qa-independent",
+      "guards_transitions": [
+        {
+          "from": "accepted",
+          "to": "pushed"
+        }
+      ],
+      "entry": "One candidate head is frozen and the required independent QA and repository gates pass at that exact head.",
+      "required_evidence": [
+        "test-run-receipt",
+        "generated-view-drift-check"
+      ],
+      "grants": [],
+      "invalidated_by": [
+        "any code, content, configuration or artifact change"
+      ]
+    },
+    {
+      "id": "B",
+      "name": "Dev integration and hosted verification",
+      "actor_role": "it-manager-iii",
+      "guards_transitions": [
+        {
+          "from": "pushed",
+          "to": "pr-open"
+        },
+        {
+          "from": "pr-open",
+          "to": "dev-integrated"
+        }
+      ],
+      "entry": "The Gate-A head is integrated to dev through the normal reviewable PR process, and the intended hosted development artifact and player flow are verified against the exact resulting dev SHA.",
+      "required_evidence": [
+        "hosted-evidence-url"
+      ],
+      "grants": [],
+      "not_satisfied_by": [
+        "a PR alone",
+        "a merge alone",
+        "a deployment job alone",
+        "a successful local test alone"
+      ],
+      "invalidated_by": [
+        "a new dev SHA"
+      ]
+    },
+    {
+      "id": "C",
+      "name": "Exact fast-forward to test",
+      "actor_role": "it-manager-iii",
+      "guards_transitions": [
+        {
+          "from": "dev-integrated",
+          "to": "hosted-verified"
+        }
+      ],
+      "entry": "Gates A and B pass and remain fresh; the proposed test target is exactly the hosted-verified dev SHA; current test is an ancestor of it, so the mutation is a true fast-forward; the exact test head, rollback target and procedure, branch protections and mutation evidence are recorded; and there is no P0/P1 WITHHOLD, unresolved required reviewer, stale evidence, or scope/artifact mismatch.",
+      "required_evidence": [
+        "hosted-evidence-url",
+        "rollback-procedure"
+      ],
+      "grants": [],
+      "explicitly_not_granted": [
+        "main",
+        "release",
+        "tag",
+        "publication",
+        "Pages",
+        "product",
+        "board"
+      ],
+      "invalidated_by": [
+        "a new dev SHA",
+        "a P0 or P1 WITHHOLD",
+        "stale evidence"
+      ],
+      "on_fail_or_unknown": "The IT Manager III records WAIT and requests the exact additional authority or correction."
+    },
+    {
+      "id": "D",
+      "name": "Five-role exact-test acceptance",
+      "actor_role": "project-management-lead",
+      "guards_transitions": [
+        {
+          "from": "hosted-verified",
+          "to": "resolved"
+        }
+      ],
+      "entry": "At the unchanged exact test SHA, separate recommendations are recorded from all five required roles. Each names the exact test SHA, evidence, verdict, known defects and conditions.",
+      "required_evidence": [
+        "acceptance-ledger"
+      ],
+      "grants": [],
+      "required_roles": [
+        "qa-independent",
+        "qa-independent",
+        "maker",
+        "it-manager-iii",
+        "project-management-lead"
+      ],
+      "conditional_roles": [
+        {
+          "role": "data-architecture-lead",
+          "when": "schema, IDs, aliases, lineage, migration, generated manifests, save/content or data quality are affected"
+        },
+        {
+          "role": "experience-accessibility-review",
+          "when": "player-facing experience is affected"
+        },
+        {
+          "role": "delivery-systems-review",
+          "when": "build, artifact, dependency/tooling, deployment, hosted or rollback surfaces are affected"
+        }
+      ],
+      "blocks_on": [
+        "a P0 or P1 WITHHOLD"
+      ],
+      "invalidated_by": [
+        "a changed test head"
+      ],
+      "note": "Council coordination never combines or replaces independent verdicts. An accepted P2 remains open and must name its disclosure, owner, target milestone, risk and exact accepting authority. Other known defects stay recorded and are not converted to resolved by promotion."
+    },
+    {
+      "id": "E",
+      "name": "Owner playtest",
+      "actor_role": "owner",
+      "entry": "After Gate D passes, the Owner playtests the unchanged exact test SHA.",
+      "required_evidence": [
+        "playtest-receipt"
+      ],
+      "grants": [],
+      "note": "The receipt records build and artifact identity, flows, result, known accepted defects and any requested correction.",
+      "invalidated_by": [
+        "a changed test head"
+      ],
+      "returns_to_gate_on_correction": "A"
+    },
+    {
+      "id": "F",
+      "name": "Separate main and release actions",
+      "actor_role": "owner",
+      "guards_transitions": [
+        {
+          "from": "resolved",
+          "to": "released"
+        }
+      ],
+      "entry": "After Gate E, a fresh exact-SHA promotion packet is submitted. The Owner separately approves and performs each requested mutation.",
+      "required_evidence": [
+        "promotion-packet",
+        "rollback-procedure"
+      ],
+      "grants": [],
+      "separate_actions": [
+        "main mutation",
+        "release mutation",
+        "tag",
+        "release publication",
+        "Pages source or deployment",
+        "final release-readiness decision"
+      ],
+      "authority_is_per_action": true,
+      "note": "Authority for one action implies none of the others. Each action records its source and target SHA, artifact/hash/build/source, required review, rollback, result, and hosted evidence when applicable."
+    }
+  ],
+  "rules": {
+    "one_frozen_head": "Every gate is evidenced against one exact SHA. A changed head invalidates the receipts recorded against the former one.",
+    "no_implied_authority": "Passing a gate grants only what that gate declares. No gate grants main, release, tag, publication or Pages authority except Gate F, and there only per individual action.",
+    "owner_gates_are_owner_exclusive": "Gates E and F are the Owner's alone and cannot be delegated, waived or satisfied by a deputy."
+  }
+}

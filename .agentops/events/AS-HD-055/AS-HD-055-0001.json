@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-055-0001",
+  "ticket": "AS-HD-055",
+  "seq": 1,
+  "parent_event": null,
+  "kind": "genesis",
+  "actor": "help-desk",
+  "at": "2026-08-29T09:00:00Z",
+  "summary": "Genesis: core-staff seat for the qa-independent role, seeded from the Review Hub rendered snapshot after the originating session was lost."
+}

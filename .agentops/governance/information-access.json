@@ -30,9 +30,40 @@
     "unrelated-source-trees",
     "the-reconstruction-installer-bundle-at-startup"
   ],
+  "reporting": {
+    "style": "Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration.",
+    "must": [
+      "lead with the verdict or result",
+      "quote check output verbatim, and name the exact command that produced it",
+      "state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding",
+      "reference tickets, paths and hashes exactly"
+    ],
+    "must_not": [
+      "restate the brief or narrate steps already taken",
+      "pad with preamble, summary of the summary, or speculative next steps",
+      "claim a check passed that was not run",
+      "invent findings or backlog content to appear productive"
+    ]
+  },
   "rules": {
     "startup_bounded": "startup has at most max_startup_items entries.",
     "no_forbidden_preload": "No forbidden class may appear in startup or on_demand.",
     "retrieval_order": "Retrieve by exact ID/path/hash first, keyword second, semantic fallback last; never recursively read all linked material; default maximum is one extra hop."
-  }
+  },
+  "canonical_documents": [
+    {
+      "topic": "art policy",
+      "path": "docs/governance/RUNBOOKS/art.md",
+      "superseded_paths": [
+        "docs/ART-DESIGN-INTEGRATION-POLICY.md"
+      ],
+      "decision": "docs/governance/DECISIONS/0004-art-policy-adoption.md"
+    },
+    {
+      "topic": "team charters",
+      "path": "docs/governance/TEAM-CHARTERS.md",
+      "superseded_paths": [],
+      "decision": "docs/governance/DECISIONS/0007-standing-coordination-roles-and-completion-council.md"
+    }
+  ]
 }

@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-045-0002",
+  "ticket": "AS-HD-045",
+  "seq": 2,
+  "parent_event": "AS-HD-045-0001",
+  "kind": "assigned",
+  "actor": "it-manager-iii",
+  "at": "2026-08-29T09:05:00Z",
+  "summary": "Assigned to data-architecture-lead with writer lease lease-AS-HD-045-data-architecture-lead on content/**."
+}

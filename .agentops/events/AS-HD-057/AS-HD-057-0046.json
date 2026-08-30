@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-057-0046",
+  "ticket": "AS-HD-057",
+  "seq": 46,
+  "parent_event": "AS-HD-057-0045",
+  "kind": "state-change",
+  "actor": "it-support",
+  "at": "2026-08-30T01:23:18.960Z",
+  "summary": "Reseated from a3dca79f72a9 to live HEAD 5dd47d487812; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 45; parent_hash names sha256:4d4c57a40e24ebb79ed92c018118c415e8898028792087f9b5427635273b928e."
+}

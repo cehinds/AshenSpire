@@ -74,6 +74,20 @@ export const balance = {
 
   shrine: { healPct: 35 },
 
+  // ---- canonical hidden level semantics (#237) ---------------------------
+  //
+  // Player level begins at one authored value and advances once per shrine
+  // purchase (`run.levelUps`). `run.levelPoints` is deliberately absent from
+  // this rule: it records how many attribute points those purchases granted,
+  // and the configurable points-per-level dial means it is not a level count.
+  //
+  // Enemy bounds and act/floor target bands are authored by #238. The pure
+  // resolver in model/levels.js accepts those rows without activating them in
+  // encounter creation, saves, co-op, or the UI.
+  levels: {
+    playerStartingLevel: 1,
+  },
+
   // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
   //
   // His words, and the whole feature is in them:

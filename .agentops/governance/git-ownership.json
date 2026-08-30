@@ -26,6 +26,13 @@
       "owner_role": "maker",
       "mutation": "isolated-continuation",
       "note": "Isolated agent continuation branches; reversible local work."
+    },
+    {
+      "ref": "recovery/*",
+      "owner_role": "per-seat",
+      "mutation": "isolated-continuation",
+      "note": "Isolated continuation branch per recovered seat. Ownership follows the ticket's writer lease, so any role may hold its own recovery ref; it is never a shared or protected ref.",
+      "per_seat": true
     }
   ],
   "paths": [
@@ -60,15 +67,132 @@
       "note": "One current work capsule per ticket; the ticket's writer lease owns it."
     },
     {
+      "glob": ".agentops/events/**",
+      "owner_role": "maker",
+      "serialized_lane": "per-ticket",
+      "note": "Append-only event chain per ticket; written behind the same per-ticket lane as the capsule it records."
+    },
+    {
+      "glob": ".agentops/leases/**",
+      "owner_role": "it-manager-iii",
+      "serialized_lane": "governance",
+      "note": "Writer leases are issued and revoked by the deputy; every lease records issuer it-manager-iii."
+    },
+    {
       "glob": "docs/reconstruction/**",
       "owner_role": "it-manager-iii",
       "serialized_lane": "reconstruction",
       "note": "Reconstruction bundle is read-only authority for installation; changes are protected."
+    },
+    {
+      "glob": "src/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-source",
+      "note": "Game source. Implementation only; sequencing and gating belong to it-manager-iii and are not path writes."
+    },
+    {
+      "glob": "assets/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-assets",
+      "note": "Produced art and asset packages staged by the authoring seat."
+    },
+    {
+      "glob": "content/**",
+      "owner_role": "data-architecture-lead",
+      "serialized_lane": "product-content",
+      "note": "Structured game content; the data contract owner withholds unsafe shapes."
+    },
+    {
+      "glob": "tests/**",
+      "owner_role": "qa-independent",
+      "serialized_lane": "qa-fixtures",
+      "note": "Fixtures and red plants belong to the independent verifier, not to the seat under test."
+    },
+    {
+      "glob": "docs/art/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-docs",
+      "note": "Art contracts and motif records authored alongside the assets they describe."
+    },
+    {
+      "glob": "docs/hub/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-docs",
+      "note": "Owner-facing view specifications."
+    },
+    {
+      "glob": "docs/governance/**",
+      "owner_role": "project-management-lead",
+      "serialized_lane": "governance-docs",
+      "note": "Census, classification and sequencing records; distinct from the machine-readable contracts."
+    },
+    {
+      "glob": "game-design/docs/**",
+      "owner_role": "help-desk",
+      "serialized_lane": "intake-docs",
+      "note": "Intake and routing records surfaced to design."
+    },
+    {
+      "glob": ".github/workflows/**",
+      "owner_role": "app-dev-iii",
+      "serialized_lane": "ci",
+      "note": "CI and automation. Declared 2026-08-30 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet owner-command.yml executes owner authority from here. A change to owner-command.yml additionally requires it-manager-iii review, because that file is the authority gate rather than ordinary CI."
+    },
+    {
+      "glob": ".github/ISSUE_TEMPLATE/**",
+      "owner_role": "help-desk",
+      "serialized_lane": "intake-docs",
+      "note": "Intake forms. Help Desk owns intake, and owner-decision.yml applies the owner-command label that the execution gate selects on."
+    },
+    {
+      "glob": "tools/**",
+      "owner_role": "it-support",
+      "serialized_lane": "support-tooling",
+      "note": "Repo tooling and support scripts. Restores the ability to work; product behaviour changes belong to maker."
+    },
+    {
+      "glob": "hud/**",
+      "owner_role": "generator",
+      "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "review-approval-hub/**",
+      "owner_role": "generator",
+      "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "buildordinal.json",
+      "owner_role": "maker",
+      "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "*.html",
+      "owner_role": "maker",
+      "serialized_lane": "generated-artifact"
     }
   ],
   "generated_serialization": {
     "lane": "governance",
     "rule": "A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift."
   },
-  "collision_rule": "Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues."
+  "collision_rule": "Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.",
+  "branch_hygiene": {
+    "principle": "A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard \u2014 so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.",
+    "default_update_method": "rebase",
+    "alternative_when_permission_is_absent": "merge the base branch in, which leaves every existing checkout valid",
+    "rewrite_requires_permission_when": "the branch is not the acting role's own",
+    "permission_role": "it-manager-iii",
+    "force_push_follows_the_same_rule": true,
+    "records": [
+      "the branch",
+      "the prior head",
+      "the new head",
+      "the role that authorized the rewrite",
+      "why the rebase was preferred to a merge"
+    ],
+    "never": [
+      "rewriting a protected or pr-only ref",
+      "discarding a commit that carries evidence without recording where that evidence now lives"
+    ]
+  }
 }

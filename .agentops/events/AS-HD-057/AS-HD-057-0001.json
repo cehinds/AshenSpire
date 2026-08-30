@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-057-0001",
+  "ticket": "AS-HD-057",
+  "seq": 1,
+  "parent_event": null,
+  "kind": "genesis",
+  "actor": "help-desk",
+  "at": "2026-08-29T09:35:00Z",
+  "summary": "Genesis: IT Support seat, opened with the it-support role which the contracts did not previously declare."
+}

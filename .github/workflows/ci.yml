@@ -410,6 +410,22 @@ jobs:
         # will be slower and that number is not a promise about one.
         run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest
 
+      - name: About changelog projects CHANGELOG.md through the real Settings route
+        # #310: about-changelog validated the ordinal column and the About
+        # projection but was in no workflow, so nothing ran it. Default mode parses
+        # CHANGELOG.md, proves the generated projection has not drifted, and drives
+        # the real Settings -> Changelog route in a browser. Lives here, not in the
+        # headless `test` job, because the projection check needs a real browser.
+        run: node tools/verdict.mjs -- node tools/about-changelog.mjs
+
+      - name: ...and that gate can fail — parser, model, and #310 ordinal plants
+        # Inverted expectation. The #310 half plants four ordinal-column defects,
+        # each of which must be CAUGHT — a version-shaped non-ordinal, an ordinal
+        # running backward across date groups, out-of-order date groups, and a
+        # receipt citing a build that does not exist yet — plus an inverted control
+        # proving the legitimate shapes the shipped file already uses still parse.
+        run: node tools/verdict.mjs -- node tools/about-changelog.mjs --selftest
+
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 
