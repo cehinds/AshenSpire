@@ -563,6 +563,10 @@ export function semanticChecks(c, now = new Date().toISOString()) {
     if (c.teams.team_leads) {
       const tl = c.teams.team_leads;
       if (!declaredRoles.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is not a declared role`);
+      // Binding each node to tl.role proved only that they agreed. tl.role was
+      // still free, so setting it and every node to 'app-dev-i' validated and
+      // gave every lead that role's implement/commit capabilities.
+      if (tl.role !== 'team-lead') errors.push(`teams: team_leads.role is '${tl.role}'; the roster must name the dedicated 'team-lead' role, or leads inherit whatever grant that role carries`);
       if (poolIds.has(tl.role)) errors.push(`teams: team_leads.role '${tl.role}' is also a capability pool, which must not be able to hold a seat`);
       // A lead is an actor, not a role. Every lead shares the 'team-lead' role,
       // so a role-only check could not tell which team a lead owns and one
@@ -581,7 +585,13 @@ export function semanticChecks(c, now = new Date().toISOString()) {
         // ambiguity the per-lead identity exists to remove.
         if (declaredRoles.has(l.actor_id)) errors.push(`teams: lead actor '${l.actor_id}' collides with the role of the same name; a lead is an actor, not a role`);
         if (c.teams.naming_convention && !l.seat_name.startsWith('P | ')) errors.push(`teams: lead '${l.actor_id}' has seat_name ${JSON.stringify(l.seat_name)}, which does not follow naming_convention.persistent_lead`);
-        if (!l.seat_name.includes(l.team)) errors.push(`teams: lead '${l.actor_id}' has a seat_name that does not name its own team '${l.team}'`);
+        // `includes` matched the team id anywhere in the string, so
+        // 'P | art-tech-art Lead III | qa-guild | Ashenspire' passed while
+        // declaring one team and labelling another. The format is
+        // `P | <role> III | <team> | Ashenspire`, so compare that segment.
+        const seg = l.seat_name.split('|').map((x) => x.trim());
+        if (seg.length !== 4) errors.push(`teams: lead '${l.actor_id}' seat_name ${JSON.stringify(l.seat_name)} is not the four-segment 'P | <role> III | <team> | Ashenspire' form`);
+        else if (seg[2] !== l.team) errors.push(`teams: lead '${l.actor_id}' leads '${l.team}' but its seat_name's team segment says '${seg[2]}'`);
       }
       // Every team gets a lead, or the ones left out have no approver and the
       // roster silently means something narrower than it says.
@@ -2519,7 +2529,10 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 const VIEW_PROBES = {
   authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
-  delivery: (x) => [x.principle],
+  delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`),
+    `Desired Pages source: \`${x.pages.desired_source}\``,
+    `a candidate already on \`${x.pages.switch_requires.candidate_must_have_reached}\``,
+    `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`],
   escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${st.does} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
   'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule],
@@ -2547,7 +2560,7 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].join('\n')),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
   transitions: (x) => [x.principle, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
 
@@ -3145,13 +3158,21 @@ export function runSelftest(root = ROOT) {
   expectSemantic('team lead: two leads claiming one team', (c) => { c.teams.team_leads.leads[1].team = c.teams.team_leads.leads[0].team; }, 'one_lead_per_team allows one');
   expectSemantic('team lead: one actor leading two teams', (c) => { c.teams.team_leads.leads[1].actor_id = c.teams.team_leads.leads[0].actor_id; }, 'is declared twice');
   expectSemantic('team lead: a lead named after a role rather than an actor', (c) => { c.teams.team_leads.leads[0].actor_id = 'maker'; }, 'a lead is an actor, not a role');
-  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Some Lead III | qa-guild | Ashenspire'; }, 'does not name its own team');
+  expectSemantic('team lead: a seat name for the wrong team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | Some Lead III | qa-guild | Ashenspire'; }, "but its seat_name's team segment says");
   expectSemantic('team lead: a seat name outside the naming convention', (c) => { c.teams.team_leads.leads[0].seat_name = 'A | art helper | art-tech-art | Ashenspire'; }, 'does not follow naming_convention');
   // Leads are placed in the ladder as actors; a shared-role entry would put
   // nine teams in one slot and lose the identity the roster carries.
   // Checking only the tier left the node's ROLE free: a lead whose node said
   // 'maker' would resolve to maker through actorRole() and get maker
   // capabilities while teams.json still called it a lead.
+  // Binding nodes to tl.role proved only that they agreed with each other.
+  expectSemantic('team lead: the roster renaming the lead role itself', (c) => {
+    c.teams.team_leads.role = 'app-dev-i';
+    for (const n of c.hierarchy.nodes) if (n.role === 'team-lead') n.role = 'app-dev-i';
+  }, "the roster must name the dedicated 'team-lead' role");
+  // A substring match accepted a seat name whose team segment named another team.
+  expectSemantic('team lead: a seat name whose team segment is a different team', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | art-tech-art Lead III | qa-guild | Ashenspire'; }, "team segment says 'qa-guild'");
+  expectSemantic('team lead: a seat name that is not four segments', (c) => { c.teams.team_leads.leads[0].seat_name = 'P | art-tech-art | Ashenspire'; }, 'is not the four-segment');
   expectSemantic('team lead: a node carrying some other role', (c) => { c.hierarchy.nodes.find((n) => n.actor_id === 'lead-qa-guild').role = 'maker'; }, "not 'team-lead'; its runtime authority would be resolved from the wrong role");
   expectSemantic('team lead: a rostered lead with no node at all', (c) => { c.hierarchy.nodes = c.hierarchy.nodes.filter((n) => n.actor_id !== 'lead-qa-guild'); }, 'has no hierarchy node, so it cannot hold work');
   expectSemantic('team lead: an actor in no authority tier', (c) => {
@@ -3274,7 +3295,7 @@ export function runSelftest(root = ROOT) {
       // the gate green. That is the same "I checked one shape and reported it
       // as all shapes" error the section sweep was written to end.
       const isRow = /^\| /.test(l) && !/^\|---/.test(l) && !/^\| *[A-Z#]/.test(l);
-      const isPolicyBullet = (/^- \*\*/.test(l) || /^  - /.test(l)) && !/:\*\*$/.test(l) && !/:$/.test(l);
+      const isPolicyBullet = (/^- /.test(l) || /^  - /.test(l)) && !/:\*\*$/.test(l) && !/:$/.test(l);
       if (!isRow && !isPolicyBullet) continue;
       rows++;
       const without = lines.slice(0, i).concat(lines.slice(i + 1)).join('\n');
