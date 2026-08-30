@@ -1238,6 +1238,23 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .pile-surface-picker button { min-width: var(--tap-floor); min-height: var(--tap-floor); }
 .pile-surface-picker { display: grid; gap: .6rem; }
 
+/* Short-wide has desktop width but phone-like vertical pressure. Its six
+   destinations use the same collision-free semantic map as phones instead of
+   squeezing an absolute radial into the shallow space above the rail. */
+:root[data-composition='short-wide'] .armament-radial {
+  width: min(54vw, 28rem); aspect-ratio: auto;
+  bottom: calc(var(--action-row-drop) + .4rem);
+  display: grid; grid-template-columns: repeat(3, minmax(var(--tap-floor), 1fr));
+  gap: .35rem; padding: .35rem;
+}
+:root[data-composition='short-wide'] .armament-radial-target { position: static; min-width: 0; transform: none !important; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] { grid-row: 1; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+
 @media (max-width: 600px) {
   /* Six real destinations cannot form a non-overlapping radial inside the
      phone's narrow glass. Keep the semantic placement map, but arrange its
