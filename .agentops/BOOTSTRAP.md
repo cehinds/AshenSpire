@@ -1,8 +1,14 @@
 # AshenSpire AgentOps bootstrap
 
-Git history, validated `.agentops/` contracts, and `agentops/scheduler-state`
-are authoritative. Chat, dashboards, issue views, receipts, and generated pages
-are projections only. Never use them as a second queue or ownership source.
+Git history and the validated `.agentops/` contracts are authoritative. Chat,
+dashboards, issue views, receipts, and generated pages are projections only.
+Never use them as a second queue or ownership source.
+
+The canonical scheduler implementation is installed as a cutover candidate.
+Until the required real-ticket pilot passes and one explicit cutover records
+otherwise, the existing AgentOps capsules, leases, events, and
+`pipeline-pilot-watch.mjs` remain the sole live assignment engine.
+`agentops/scheduler-state` is not live coordination truth before that cutover.
 
 ## Cold start
 
@@ -12,6 +18,14 @@ reconstruction bundle, or unrelated source trees.
 
 ```powershell
 git fetch origin dev release main
+node .agentops/tools/scheduler.mjs verify
+node .agentops/tools/scheduler.mjs simulate
+```
+
+After the pilot and explicit cutover, the live cold start additionally fetches
+the portable state, verifies it, reads status, and acquires machine custody:
+
+```powershell
 git fetch origin agentops/scheduler-state
 node .agentops/tools/scheduler.mjs verify
 node .agentops/tools/scheduler.mjs status
@@ -20,8 +34,9 @@ node .agentops/tools/scheduler.mjs acquire-machine --push
 
 `verify` validates the schemas and deterministically replays `journal/` into
 `snapshot.json`. `status` names exact work and custody. Machine identity and
-watcher locks live only under `.git/agentops-scheduler/`. Portable state lives
-only on `agentops/scheduler-state`, whose tree is limited to:
+watcher locks live only under `.git/agentops-scheduler/`. After cutover,
+portable state lives only on `agentops/scheduler-state`, whose tree is limited
+to:
 
 ```text
 journal/
@@ -71,13 +86,18 @@ Never infer approval from history, chat, a green check, or an earlier promotion.
 scheduler bootstrap | verify | status | sync
 scheduler acquire-machine | release-machine
 scheduler enqueue | claim | entered | candidate | qa | block | release | recover
+scheduler deliver | merge-dev | complete | expire | supersede | cancel
 scheduler watch | simulate
 ```
 
-Run them as `node .agentops/tools/scheduler.mjs <command>`. `watch` stays silent
-when no material state changed. The older `pipeline-pilot-watch.mjs` remains a
-preserved compatibility adapter until the real-ticket pilot passes and one
-explicit cutover disables it; never run both dispatch loops.
+Run them as `node .agentops/tools/scheduler.mjs <command>`. Before cutover,
+only `verify`, `status`, and `simulate` are live-safe; use a disposable local
+state ref for any command drill. After cutover, an authorized issuer writes the
+provider-neutral seats to `.git/agentops-scheduler/workers.json`; seat identity
+and capability material is never committed. `watch` stays silent when no
+material state changed. The older `pipeline-pilot-watch.mjs` remains the live
+engine until the real-ticket pilot passes and one explicit cutover disables
+it; never run both dispatch loops.
 
 For non-scheduler governance work, load only the single contract named by the
 action. `opsctl.mjs verify`, `--selftest`, `drill`, `wake`, `command`, `render`,
