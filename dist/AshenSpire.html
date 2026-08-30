@@ -42249,7 +42249,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e8fc43509e';
+const SOURCE = '937df53ca2';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42283,7 +42283,7 @@ const SOURCE = 'e8fc43509e';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1690';
+const ORDINAL = '1701';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -52497,7 +52497,13 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
     focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' || ev.key === 'Backspace') { ev.preventDefault(); close({ cancelled: true, restoreFocus: true }); }
+    if (ev.key === 'Escape' || ev.key === 'Backspace') {
+      ev.preventDefault();
+      // The child owns Cancel. Do not let the same physical key continue to
+      // the parent radial after focus has been restored into it.
+      ev.stopPropagation();
+      close({ cancelled: true, restoreFocus: true });
+    }
     else if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') { ev.preventDefault(); move(1); }
     else if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') { ev.preventDefault(); move(-1); }
     else if (ev.key === 'Home') {
@@ -57207,7 +57213,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         openCombatFlaskMenu(button, def, { slot });
-        armamentRadial.close();
       });
       picker.appendChild(button);
     });
@@ -57786,7 +57791,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         ariaLabel: `${def.name}, ${current} remaining`, hotkeySlot: kind === 'hp' ? 0 : 1,
         activate: (anchor) => {
           openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current });
-          armamentRadial.close();
         },
       });
     }
@@ -59933,19 +59937,24 @@ function mountArmamentRadial(anchor, {
   anchor.addEventListener('pointerleave', cancelHold);
 
   const onDocumentPointer = (event) => {
-    if (!open || root.contains(event.target) || anchor.contains(event.target)) return;
+    // Contextual action menus opened by a radial shortcut temporarily own
+    // pointer input. They are siblings of the radial in the combat surface,
+    // so containment alone cannot identify them as a child interaction.
+    if (!open || root.contains(event.target) || anchor.contains(event.target)
+      || event.target.closest?.('.flask-action-menu')) return;
     close();
   };
   const onKey = (event) => {
     if (!open) return;
+    // A radial destination may open and focus a child menu. Once focus has
+    // crossed that boundary, the child owns every key, including Cancel, and
+    // restores focus to its still-visible originating radial target.
+    if (!root.contains(document.activeElement)) return;
     if (event.key === 'Escape' || event.key === 'Backspace') {
       event.preventDefault();
       close({ restoreFocus: true });
       return;
     }
-    // A radial destination may open and focus a child menu. Once focus has
-    // crossed that boundary, the child owns spatial navigation until it closes.
-    if (!root.contains(document.activeElement)) return;
     const list = buttons();
     if (!list.length || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();

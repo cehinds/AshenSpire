@@ -127,19 +127,24 @@ export function mountArmamentRadial(anchor, {
   anchor.addEventListener('pointerleave', cancelHold);
 
   const onDocumentPointer = (event) => {
-    if (!open || root.contains(event.target) || anchor.contains(event.target)) return;
+    // Contextual action menus opened by a radial shortcut temporarily own
+    // pointer input. They are siblings of the radial in the combat surface,
+    // so containment alone cannot identify them as a child interaction.
+    if (!open || root.contains(event.target) || anchor.contains(event.target)
+      || event.target.closest?.('.flask-action-menu')) return;
     close();
   };
   const onKey = (event) => {
     if (!open) return;
+    // A radial destination may open and focus a child menu. Once focus has
+    // crossed that boundary, the child owns every key, including Cancel, and
+    // restores focus to its still-visible originating radial target.
+    if (!root.contains(document.activeElement)) return;
     if (event.key === 'Escape' || event.key === 'Backspace') {
       event.preventDefault();
       close({ restoreFocus: true });
       return;
     }
-    // A radial destination may open and focus a child menu. Once focus has
-    // crossed that boundary, the child owns spatial navigation until it closes.
-    if (!root.contains(document.activeElement)) return;
     const list = buttons();
     if (!list.length || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();

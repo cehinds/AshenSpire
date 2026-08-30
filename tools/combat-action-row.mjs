@@ -605,8 +605,37 @@ async function main() {
                   if(!menu) return {exists:false}; const r=menu.getBoundingClientRect();
                   return {exists:true,radialHidden:root?.hidden===true,onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,inspect:!!menu.querySelector('[data-flask-action="inspect"]')};
                 })()`);
-                check(hotkeyMenu.exists && hotkeyMenu.radialHidden && hotkeyMenu.onGlass && hotkeyMenu.inspect,
-                  'Flask 1 routes through a visible radial anchor before opening actions', JSON.stringify(hotkeyMenu));
+                check(hotkeyMenu.exists && !hotkeyMenu.radialHidden && hotkeyMenu.onGlass && hotkeyMenu.inspect,
+                  'Flask 1 keeps its radial anchor visible while actions own input', JSON.stringify(hotkeyMenu));
+                await click('[data-flask-action="inspect"]');
+                const inspectedMenu = await evaluate(`(() => {
+                  const menu=document.querySelector('.flask-action-menu');if(!menu)return {exists:false};
+                  const r=menu.getBoundingClientRect();return {exists:true,onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,
+                    awayFromCorner:r.left>4||r.top>4};
+                })()`);
+                check(inspectedMenu.exists && inspectedMenu.onGlass && inspectedMenu.awayFromCorner,
+                  'radial flask Inspect re-places against its still-visible anchor', JSON.stringify(inspectedMenu));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+                const childCancelFocus = await evaluate(`(() => {
+                  const focused=document.activeElement,root=document.querySelector('.armament-radial');
+                  const r=focused?.getBoundingClientRect?.();return {radialOpen:root?.hidden===false,
+                    radialTarget:focused?.matches?.('.armament-radial-target')===true,
+                    visible:!!r&&r.width>0&&r.height>0};
+                })()`);
+                check(childCancelFocus.radialOpen && childCancelFocus.radialTarget && childCancelFocus.visible,
+                  'closing radial flask actions restores visible focus inside the still-open radial', JSON.stringify(childCancelFocus));
+                await click('.armament-radial-target[data-flask-hotkey-slot="0"]');
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Backspace', code: 'Backspace' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Backspace', code: 'Backspace' }, sessionId);
+                const childBackFocus = await evaluate(`(() => {
+                  const focused=document.activeElement,root=document.querySelector('.armament-radial');
+                  const r=focused?.getBoundingClientRect?.();return {radialOpen:root?.hidden===false,
+                    radialTarget:focused?.matches?.('.armament-radial-target')===true,
+                    visible:!!r&&r.width>0&&r.height>0};
+                })()`);
+                check(childBackFocus.radialOpen && childBackFocus.radialTarget && childBackFocus.visible,
+                  'Backspace also restores visible focus inside the still-open radial', JSON.stringify(childBackFocus));
                 await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
                 await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
 
@@ -615,12 +644,14 @@ async function main() {
                 const hpEnabled = await evaluate(`!document.querySelector('.armament-radial-target[data-flask-hotkey-slot="0"]')?.disabled`);
                 await click('.armament-radial-target[data-flask-hotkey-slot="0"]');
                 const depletedPlan = await evaluate(`(() => ({
-                  radialHidden:document.querySelector('.armament-radial')?.hidden===true,
+                  radialOpen:document.querySelector('.armament-radial')?.hidden===false,
                   useDisabled:document.querySelector('[data-flask-action="use"]')?.getAttribute('aria-disabled')==='true',
                   inspectEnabled:document.querySelector('[data-flask-action="inspect"]')?.getAttribute('aria-disabled')==='false',
                 }))()`);
-                check(hpEnabled && depletedPlan.radialHidden && depletedPlan.useDisabled && depletedPlan.inspectEnabled,
+                check(hpEnabled && depletedPlan.radialOpen && depletedPlan.useDisabled && depletedPlan.inspectEnabled,
                   'depleted radial flasks remain openable for Inspect while Use stays disabled', JSON.stringify(depletedPlan));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
                 await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
                 await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
 

@@ -182,7 +182,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         openCombatFlaskMenu(button, def, { slot });
-        armamentRadial.close();
       });
       picker.appendChild(button);
     });
@@ -761,7 +760,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         ariaLabel: `${def.name}, ${current} remaining`, hotkeySlot: kind === 'hp' ? 0 : 1,
         activate: (anchor) => {
           openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current });
-          armamentRadial.close();
         },
       });
     }
