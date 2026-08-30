@@ -712,7 +712,7 @@ export function simulate(config = readConfig()) {
     claimed_paths: index === 3 ? ['src/shared'] : index === 4 ? ['src/shared/file.js'] : [`src/sim-${index + 1}`],
     claimed_resources: index === 7 ? ['generated-outputs'] : [], acceptance_commands: ['node .agentops/tools/scheduler.test.mjs']
   }));
-  for (const spec of specs) state = appendEvents(state, [{ event_type: 'INTAKE_RECORDED', issue_id: spec.issue_id, actor: 'simulation', exact_object: { issue: spec.issue_id }, payload: spec, created_at: now, idempotency_key: `sim-intake:${spec.issue_id}` }]);
+  for (const spec of specs) state = appendEvents(state, [{ event_id: `sim-intake-${spec.issue_id}`, event_type: 'INTAKE_RECORDED', issue_id: spec.issue_id, actor: 'simulation', exact_object: { issue: spec.issue_id }, payload: spec, created_at: now, idempotency_key: `sim-intake:${spec.issue_id}` }]);
   const plan = planAssignments(state.snapshot, config, now);
   const conflictRejected = claimsConflict(state.snapshot.work_items['SIM-04'], state.snapshot.work_items['SIM-05']);
   const protectedStop = protectedTransitionAllowed(config, 'main').allowed === false;

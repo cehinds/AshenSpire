@@ -214,7 +214,7 @@ test('26 quiet no-change watcher cycle', () => {
 });
 
 test('pipeline saturation acceptance fixture', () => {
-  const result = simulate(config); assert.equal(result.tickets, 12); assert.equal(result.concurrent, true); assert.equal(result.conflict_rejected, true); assert.equal(result.protected_stop, true);
+  const result = simulate(config); const replay = simulate(config); assert.equal(result.tickets, 12); assert.equal(result.concurrent, true); assert.equal(result.conflict_rejected, true); assert.equal(result.protected_stop, true); assert.equal(result.deterministic_hash, replay.deterministic_hash);
 });
 
 test('canonical serialization is key-order independent', () => {
