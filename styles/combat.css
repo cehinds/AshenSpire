@@ -1209,12 +1209,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .combat-action-row > .pile.discard { position: static; inset: auto; }
 .exhaust-summary { color: var(--muted); font-size: .65rem; letter-spacing: .05em; }
 
-:root[data-armaments-presentation='radial'] .hud-charge-flasks,
-:root[data-armaments-presentation='radial'] .hud-potions { display: none !important; }
+:root[data-armaments-presentation='radial'] .combat .hud-charge-flasks,
+:root[data-armaments-presentation='radial'] .combat .hud-potions { display: none !important; }
 
 .armament-radial {
   position: fixed; z-index: 360; left: 1.6rem; bottom: calc(var(--action-row-drop) + 1rem);
-  width: min(24rem, 46vw); aspect-ratio: 1.35; pointer-events: auto;
+  width: min(32rem, calc(100vw - 3.2rem)); aspect-ratio: 1.35; pointer-events: auto;
 }
 .armament-radial-target {
   position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
@@ -1231,11 +1231,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .armament-radial-target[data-radial-target='bottom'] { bottom: 0; left: 50%; transform: translateX(-50%); }
 .armament-radial-picker {
   position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
-  z-index: 2; display: flex; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
+  z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
   border-radius: 9px; background: rgba(18,15,12,.98);
+  inline-size: max-content; max-inline-size: calc(100vw - 1rem); max-block-size: min(45vh, 18rem); overflow: auto;
 }
 .armament-radial-picker button,
 .pile-surface-picker button { min-width: var(--tap-floor); min-height: var(--tap-floor); }
+.armament-radial-picker button { max-inline-size: 100%; padding-inline: .7rem; overflow-wrap: anywhere; }
 .pile-surface-picker { display: grid; gap: .6rem; }
 
 /* Short-wide has desktop width but phone-like vertical pressure. Its six
@@ -1273,6 +1275,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
   .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
   .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+  .armament-radial-picker {
+    position: fixed; left: .5rem; right: .5rem;
+    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);
+    transform: none; inline-size: auto;
+  }
   .armament-radial[data-placement='left'] { left: max(.4rem, env(safe-area-inset-left)); right: auto; }
   .armament-radial[data-placement='center'] { left: 50%; right: auto; transform: translateX(-50%); }
   .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, env(safe-area-inset-right)); }

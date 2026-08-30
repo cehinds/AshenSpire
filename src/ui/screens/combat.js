@@ -22,7 +22,7 @@ import { friendlyTargetMode } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
-import { figureSpec } from '../../model/loadout.js';
+import { equippedIn, figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -182,6 +182,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         openCombatFlaskMenu(button, def, { slot });
+        armamentRadial.close();
       });
       picker.appendChild(button);
     });
@@ -757,17 +758,26 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
       radialItems.push({
         target: 'top', label: kind === 'hp' ? 'HP Flask' : 'MP Flask', detail: String(current),
-        ariaLabel: `${def.name}, ${current} remaining`, disabled: current <= 0,
-        activate: (anchor) => openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current }),
+        ariaLabel: `${def.name}, ${current} remaining`, hotkeySlot: kind === 'hp' ? 0 : 1,
+        activate: (anchor) => {
+          openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current });
+          armamentRadial.close();
+        },
       });
     }
-    const hands = figureSpec(registries, run.loadout, run.class);
-    radialItems.push({ target: 'left', label: 'Left', detail: hands.leftId || 'Empty', activate: () => openCombatArmoury({ destination: 'equipment' }) });
+    const leftPiece = equippedIn(registries, run.loadout, run.class, 'leftHand');
+    const rightPiece = equippedIn(registries, run.loadout, run.class, 'rightHand');
+    const openHandArmoury = () => {
+      armamentRadial.close();
+      openCombatArmoury({ destination: 'equipment' });
+    };
+    radialItems.push({ target: 'left', label: 'Left', detail: leftPiece?.name || 'Empty', activate: openHandArmoury });
     radialItems.push({ target: 'full', label: 'Full Armaments', detail: 'Open' });
-    radialItems.push({ target: 'right', label: 'Right', detail: hands.rightId || 'Empty', activate: () => openCombatArmoury({ destination: 'equipment' }) });
+    radialItems.push({ target: 'right', label: 'Right', detail: rightPiece?.name || 'Empty', activate: openHandArmoury });
     if (p.flasks.length) radialItems.push({
       target: 'bottom', label: 'Potions', detail: String(p.flasks.length),
       ariaLabel: `Other potions, ${p.flasks.length}`,
+      hotkeySlot: 2,
       activate: () => openUtilityPotionPicker(p.flasks),
     });
     armamentRadial.setItems(radialItems);
@@ -1430,11 +1440,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
 
-    // Flask keys activate the numbered visible HUD control; they never auto-use.
+    // Flask keys activate the corresponding visible control; they never
+    // auto-use. Radial mode first reveals its real positioned shortcut so the
+    // shared action menu never measures a display:none HUD anchor.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
+        let slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
+        if (combatEl.dataset.armamentsPresentation === 'radial') {
+          armamentRadial.open();
+          slotEl = armamentRadial.root.querySelector(`[data-flask-hotkey-slot="${slot}"]`);
+        }
         if (slotEl) slotEl.click();
         return;
       }
@@ -1681,19 +1697,35 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const heading = document.createElement('h2');
     heading.textContent = 'Choose pile';
     modal.appendChild(heading);
+    const opener = $('.pile.discard');
+    const closePicker = ({ restoreFocus = false } = {}) => {
+      window.removeEventListener('keydown', onPickerCancel);
+      veil.remove();
+      if (restoreFocus && opener.isConnected) {
+        opener.focus();
+        focusElement(opener);
+      }
+    };
+    const onPickerCancel = (event) => {
+      if (event.key !== 'Escape' && event.key !== 'Backspace') return;
+      event.preventDefault();
+      event.stopPropagation();
+      closePicker({ restoreFocus: true });
+    };
     for (const [label, cards] of [['Discard pile', combat.piles.discard], ['Exhaust pile', combat.piles.exhaust]]) {
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = `${label} (${cards.length})`;
       button.addEventListener('click', () => {
-        veil.remove();
+        closePicker();
         openPileModal(registries, label, cards);
       });
       modal.appendChild(button);
     }
     veil.appendChild(modal);
-    veil.addEventListener('click', (event) => { if (event.target === veil) veil.remove(); });
+    veil.addEventListener('click', (event) => { if (event.target === veil) closePicker(); });
     document.body.appendChild(veil);
+    window.addEventListener('keydown', onPickerCancel);
     const first = modal.querySelector('button');
     first?.focus();
     if (first) focusElement(first);
@@ -1703,6 +1735,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   $('.pile.discard').addEventListener('click', showDiscard);
   for (const [pile, open] of [[ $('.pile.draw'), showDraw ], [ $('.pile.discard'), showDiscard ]]) {
     pile.addEventListener('keydown', (event) => {
+      if (event.target !== pile) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       open();

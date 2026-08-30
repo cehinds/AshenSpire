@@ -42,6 +42,7 @@ import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttribut
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { characterCreationProblems } from './characterCreation.js';
+import { enemyLevelProfileProblems, levelConfigProblems } from './levels.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -586,6 +587,13 @@ export function validateContent(bundle) {
 
   if (b.balance != null && (typeof b.balance !== 'object' || Array.isArray(b.balance))) {
     err('balance', 'balance must be a plain object of constants');
+  }
+  for (const problem of levelConfigProblems(b.balance)) err(problem.path, problem.msg);
+  for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
+    if (!enemy || enemy.levelProfile == null) continue;
+    for (const problem of enemyLevelProfileProblems(enemy.levelProfile, `enemies.${enemy.id || '?'}.levelProfile`)) {
+      err(problem.path, problem.msg);
+    }
   }
   // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS
   // WRONG, so it is the last thing that may fail quiet. Vira's finding: it

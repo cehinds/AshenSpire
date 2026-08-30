@@ -17,7 +17,7 @@
 //
 // Exit 0 = every measured cell held; 1 = product finding; 2 = no cell/browser.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
@@ -96,6 +96,48 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
     {
+      name: 'radial mode hides map flask controls outside combat',
+      file: 'styles/combat.css',
+      find: ":root[data-armaments-presentation='radial'] .combat .hud-charge-flasks,",
+      replace: ":root[data-armaments-presentation='radial'] .hud-charge-flasks,",
+      expectRed: /FAIL (radial flask hiding is scoped to combat|radial mode leaves map flask controls visible and focusable)/,
+    },
+    {
+      name: 'hand labels regress to sprite identities',
+      file: 'src/ui/screens/combat.js',
+      find: "detail: leftPiece?.name || 'Empty'",
+      replace: "detail: figureSpec(registries, run.loadout, run.class).leftId || 'Empty'",
+      expectRed: /FAIL radial hand labels use equipped player-facing names/,
+    },
+    {
+      name: 'the pile-surface chooser loses its Escape lifecycle',
+      file: 'src/ui/screens/combat.js',
+      find: "window.addEventListener('keydown', onPickerCancel);",
+      replace: '// planted: pile chooser has no keyboard Cancel owner',
+      expectRed: /FAIL (the pile-surface chooser owns Escape and restores Discard focus|Escape closes the pile-surface chooser and restores Discard focus)/,
+    },
+    {
+      name: 'fixed-mode held presses are swallowed',
+      file: 'src/ui/components/armamentRadial.js',
+      find: 'openedByHold = openMenu();',
+      replace: 'openedByHold = true; openMenu();',
+      expectRed: /FAIL (fixed mode suppresses a click only after a radial really opened|fixed mode held presses still open Armoury)/,
+    },
+    {
+      name: 'off-anchor pointer gestures keep their hold timer',
+      file: 'src/ui/components/armamentRadial.js',
+      find: "anchor.addEventListener('pointerleave', cancelHold);",
+      replace: '// planted: leaving the anchor does not cancel hold',
+      expectRed: /FAIL (pointer leave cancels the Armaments hold timer|pointer leave cancels a pending Armaments hold)/,
+    },
+    {
+      name: 'utility picker can exceed the phone viewport',
+      file: 'styles/combat.css',
+      find: "    position: fixed; left: .5rem; right: .5rem;\n    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);\n    transform: none; inline-size: auto;",
+      replace: "    position: absolute; left: 50%; right: auto;\n    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);\n    transform: translateX(-50%); inline-size: max-content;",
+      expectRed: /FAIL utility picker is clamped to the phone viewport/,
+    },
+    {
       name: 'phone radial destinations overlap in the center cell',
       file: 'styles/combat.css',
       find: "  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }",
@@ -118,6 +160,13 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     },
   ];
   const coopPlants = sourcePlants.splice(-2);
+  const widePlants = [{
+    name: 'wide radial contracts back onto player-facing hand names',
+    file: 'styles/combat.css',
+    find: 'width: min(32rem, calc(100vw - 3.2rem)); aspect-ratio: 1.35;',
+    replace: 'width: min(24rem, 46vw); aspect-ratio: 1.35;',
+    expectRed: /FAIL radial controls have zero pairwise hit-box intersections/,
+  }];
   let code = await doorSelftest({
     tool: 'combat-action-row.mjs',
     args: ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '8'],
@@ -130,6 +179,13 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     args: ['--coop-only'],
     timeoutMs: 600000,
     plants: coopPlants,
+  });
+  if (code) process.exit(code);
+  code = await doorSelftest({
+    tool: 'combat-action-row.mjs',
+    args: ['--solo-only', '--only', '1200x730', '--text', 'XL', '--hand', '8'],
+    timeoutMs: 600000,
+    plants: widePlants,
   });
   if (code) process.exit(code);
   if (args.includes('--selftest-source')) process.exit(0);
@@ -146,6 +202,14 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     timeoutMs: 600000,
     extraCopy: ['AshenSpire.html'],
     plants: artifactPlants(sourcePlants),
+  });
+  if (code) process.exit(code);
+  code = await doorSelftest({
+    tool: 'combat-action-row.mjs',
+    args: ['--standalone', '--solo-only', '--only', '1200x730', '--text', 'XL', '--hand', '8'],
+    timeoutMs: 600000,
+    extraCopy: ['AshenSpire.html'],
+    plants: artifactPlants(widePlants),
   });
   if (code) process.exit(code);
   process.exit(await doorSelftest({
@@ -240,6 +304,26 @@ async function main() {
     console.log(`    ${value ? 'PASS' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
     if (!value) failures++;
   };
+  if (!standalone) {
+    const combatSource = readFileSync(resolve(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+    const radialSource = readFileSync(resolve(ROOT, 'src/ui/components/armamentRadial.js'), 'utf8');
+    const combatCss = readFileSync(resolve(ROOT, 'styles/combat.css'), 'utf8');
+    check(combatCss.includes(":root[data-armaments-presentation='radial'] .combat .hud-charge-flasks,")
+      && !combatCss.includes(":root[data-armaments-presentation='radial'] .hud-charge-flasks,"),
+    'radial flask hiding is scoped to combat');
+    check(combatSource.includes("detail: leftPiece?.name || 'Empty'")
+      && combatSource.includes("detail: rightPiece?.name || 'Empty'"),
+    'radial hand labels use equipped player-facing names');
+    check(combatSource.includes("window.addEventListener('keydown', onPickerCancel);")
+      && combatSource.includes("closePicker({ restoreFocus: true });"),
+    'the pile-surface chooser owns Escape and restores Discard focus');
+    check(radialSource.includes('openedByHold = openMenu();'),
+      'fixed mode suppresses a click only after a radial really opened');
+    check(radialSource.includes("anchor.addEventListener('pointerleave', cancelHold);"),
+      'pointer leave cancels the Armaments hold timer');
+    check(combatCss.includes('max-inline-size: calc(100vw - 1rem);') && combatCss.includes('flex-wrap: wrap;'),
+      'utility picker is clamped to the phone viewport');
+  }
 
   try {
     const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -463,7 +547,11 @@ async function main() {
               'Discard opens the two real pile surfaces', JSON.stringify(pileSurface));
               check(pileSurface.focused===0 && pileSurface.onGlass && pileSurface.minTap>=43.99,
                 'the pile-surface picker focuses first and keeps 44px controls on glass', JSON.stringify(pileSurface));
-              await evaluate(`document.querySelector('.pile-surface-picker')?.closest('.modal-veil')?.remove(); true`);
+              await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+              await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+              await new Promise((pass) => setTimeout(pass, 80));
+              const pileCancelled = await evaluate(`!document.querySelector('.pile-surface-picker') && document.activeElement?.matches('.pile.discard')`);
+              check(pileCancelled, 'Escape closes the pile-surface chooser and restores Discard focus');
 
               const radialOpened = await click('.armaments-command');
               if (radialOpened) await new Promise((pass) => setTimeout(pass, 80));
@@ -473,12 +561,13 @@ async function main() {
                 const buttons=[...(root?.querySelectorAll('.armament-radial-target')||[])];
                 const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
                 const intersects=(a,b)=>a.left<b.right-.25&&a.right>b.left+.25&&a.top<b.bottom-.25&&a.bottom>b.top+.25;
-                const rows=buttons.map((button)=>({target:button.dataset.radialTarget,label:button.getAttribute('aria-label')||'',...rect(button)}));
+                const rows=buttons.map((button)=>({target:button.dataset.radialTarget,label:button.getAttribute('aria-label')||'',detail:button.querySelector('small')?.textContent||'',...rect(button)}));
                 const pairs=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++)if(intersects(rows[i],rows[j]))pairs.push([i,j]);
                 const hits=buttons.map((button)=>{const r=rect(button),node=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);return !!(node&&(node===button||button.contains(node)))});
                 return {
                   exists:!!root,hidden:root?.hidden??true,role:root?.getAttribute('role')||'',expanded:anchor?.getAttribute('aria-expanded')||'',
-                  count:rows.length,targetKinds:[...new Set(rows.map((row)=>row.target))].sort(),named:rows.every((row)=>!!row.label),pairs,hits,
+                  count:rows.length,targetKinds:[...new Set(rows.map((row)=>row.target))].sort(),named:rows.every((row)=>!!row.label),
+                  handDetails:rows.filter((row)=>row.target==='left'||row.target==='right').map((row)=>row.detail),pairs,hits,
                   onGlass:rows.every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
                   minTap:rows.length?Math.min(...rows.map((r)=>Math.min(r.width,r.height))):0,
                 };
@@ -488,10 +577,110 @@ async function main() {
               check(radial.count>=5 && JSON.stringify(radial.targetKinds)===JSON.stringify(['bottom','full','left','right','top'])
                 && radial.named,
               'the radial exposes all five named placement targets', JSON.stringify(radial));
+              check(radial.handDetails.length===2 && radial.handDetails.every((detail)=>/^[A-Z]/.test(detail)),
+                'radial hand labels use equipped player-facing names', JSON.stringify(radial.handDetails));
               check(radial.pairs.length===0,
                 'radial controls have zero pairwise hit-box intersections', JSON.stringify(radial.pairs));
               check(radial.hits.every(Boolean) && radial.onGlass && radial.minTap>=43.99,
                 'radial controls remain center-hittable, on glass, and at least 44px', JSON.stringify(radial));
+
+              const behaviorCell = (shape.width===320 && shape.height===640 && text==='M' && hand===1)
+                || (shapes.length===1 && texts.length===1 && hands.length===1);
+              if (behaviorCell) {
+                const mapFlasksVisible = await evaluate(`(() => {
+                  const map=document.createElement('div');map.className='mapscreen';
+                  map.innerHTML='<div class="hud-charge-flasks"><button>HP</button><button>MP</button></div><div class="hud-potions"><button>Utility</button></div>';
+                  document.body.appendChild(map);const controls=[...map.querySelectorAll('button')];
+                  const visible=controls.every((button)=>{const r=button.getBoundingClientRect();return getComputedStyle(button.parentElement).display!=='none'&&r.width>0&&r.height>0&&!button.disabled;});
+                  map.remove();return visible;
+                })()`);
+                check(mapFlasksVisible, 'radial mode leaves map flask controls visible and focusable');
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'f', code: 'KeyF' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'f', code: 'KeyF' }, sessionId);
+                await new Promise((pass) => setTimeout(pass, 100));
+                const hotkeyMenu = await evaluate(`(() => {
+                  const menu=document.querySelector('.flask-action-menu'), root=document.querySelector('.armament-radial');
+                  if(!menu) return {exists:false}; const r=menu.getBoundingClientRect();
+                  return {exists:true,radialHidden:root?.hidden===true,onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,inspect:!!menu.querySelector('[data-flask-action="inspect"]')};
+                })()`);
+                check(hotkeyMenu.exists && hotkeyMenu.radialHidden && hotkeyMenu.onGlass && hotkeyMenu.inspect,
+                  'Flask 1 routes through a visible radial anchor before opening actions', JSON.stringify(hotkeyMenu));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                await evaluate(`(() => { window.__combat.player.flaskCharges.hpCurrent=0; window.__renderCombatForShot(); return true; })()`);
+                await click('.armaments-command');
+                const hpEnabled = await evaluate(`!document.querySelector('.armament-radial-target[data-flask-hotkey-slot="0"]')?.disabled`);
+                await click('.armament-radial-target[data-flask-hotkey-slot="0"]');
+                const depletedPlan = await evaluate(`(() => ({
+                  radialHidden:document.querySelector('.armament-radial')?.hidden===true,
+                  useDisabled:document.querySelector('[data-flask-action="use"]')?.getAttribute('aria-disabled')==='true',
+                  inspectEnabled:document.querySelector('[data-flask-action="inspect"]')?.getAttribute('aria-disabled')==='false',
+                }))()`);
+                check(hpEnabled && depletedPlan.radialHidden && depletedPlan.useDisabled && depletedPlan.inspectEnabled,
+                  'depleted radial flasks remain openable for Inspect while Use stays disabled', JSON.stringify(depletedPlan));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                await click('.armaments-command');
+                await click('.armament-radial-target[data-radial-target="left"]');
+                const armouryTransition = await evaluate(`({armoury:!!document.querySelector('.armoury-overlay'),radialHidden:document.querySelector('.armament-radial')?.hidden===true})`);
+                check(armouryTransition.armoury && armouryTransition.radialHidden,
+                  'hand targets close the radial before opening Armoury', JSON.stringify(armouryTransition));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                if (shape.width <= 900) {
+                  const hasUtility = await evaluate(`(() => {
+                    const list=window.__combat.player.flasks;if(!list.length)return false;
+                    const one=list[0];window.__combat.player.flasks=[one,{...one},{...one}];window.__renderCombatForShot();return true;
+                  })()`);
+                  if (hasUtility) {
+                    await click('.armaments-command');
+                    await click('.armament-radial-target[data-radial-target="bottom"]');
+                    const pickerFit = await evaluate(`(() => {
+                      const picker=document.querySelector('.armament-radial-picker');if(!picker)return {exists:false};
+                      const r=picker.getBoundingClientRect(),buttons=[...picker.querySelectorAll('button')];
+                      return {exists:true,count:buttons.length,onGlass:r.left>=-.25&&r.right<=innerWidth+.25,scrollBound:picker.scrollWidth<=picker.clientWidth+1};
+                    })()`);
+                    check(pickerFit.exists && pickerFit.count===3 && pickerFit.onGlass && pickerFit.scrollBound,
+                      'utility picker is clamped to the phone viewport', JSON.stringify(pickerFit));
+                    await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+                  }
+                }
+
+                const fixedHold = await evaluate(`(async () => {
+                  document.documentElement.dataset.armamentsPresentation='fixed';
+                  await new Promise((pass)=>setTimeout(pass,40));
+                  const anchor=document.querySelector('.armaments-command');
+                  anchor.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));
+                  await new Promise((pass)=>setTimeout(pass,390));
+                  anchor.dispatchEvent(new PointerEvent('pointerup',{bubbles:true}));
+                  anchor.click();
+                  await new Promise((pass)=>setTimeout(pass,40));
+                  return {armoury:!!document.querySelector('.armoury-overlay'),mode:anchor.dataset.armamentsMode};
+                })()`);
+                check(fixedHold.armoury && fixedHold.mode==='fixed',
+                  'fixed mode held presses still open Armoury', JSON.stringify(fixedHold));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                const cancelledHold = await evaluate(`(async () => {
+                  document.documentElement.dataset.armamentsPresentation='radial';
+                  await new Promise((pass)=>setTimeout(pass,40));
+                  const anchor=document.querySelector('.armaments-command'),root=document.querySelector('.armament-radial');
+                  anchor.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));
+                  anchor.dispatchEvent(new PointerEvent('pointerleave',{bubbles:true}));
+                  await new Promise((pass)=>setTimeout(pass,390));
+                  anchor.dispatchEvent(new PointerEvent('pointerup',{bubbles:true}));
+                  return {hidden:root.hidden,expanded:anchor.getAttribute('aria-expanded')};
+                })()`);
+                check(cancelledHold.hidden && cancelledHold.expanded==='false',
+                  'pointer leave cancels a pending Armaments hold', JSON.stringify(cancelledHold));
+              }
             }
 
             const capture = shots && (only || ((shape.width===390&&shape.height===844&&text==='XL'&&hand===8&&state==='rest')

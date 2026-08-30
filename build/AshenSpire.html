@@ -6622,12 +6622,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .combat-action-row > .pile.discard { position: static; inset: auto; }
 .exhaust-summary { color: var(--muted); font-size: .65rem; letter-spacing: .05em; }
 
-:root[data-armaments-presentation='radial'] .hud-charge-flasks,
-:root[data-armaments-presentation='radial'] .hud-potions { display: none !important; }
+:root[data-armaments-presentation='radial'] .combat .hud-charge-flasks,
+:root[data-armaments-presentation='radial'] .combat .hud-potions { display: none !important; }
 
 .armament-radial {
   position: fixed; z-index: 360; left: 1.6rem; bottom: calc(var(--action-row-drop) + 1rem);
-  width: min(24rem, 46vw); aspect-ratio: 1.35; pointer-events: auto;
+  width: min(32rem, calc(100vw - 3.2rem)); aspect-ratio: 1.35; pointer-events: auto;
 }
 .armament-radial-target {
   position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
@@ -6644,11 +6644,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .armament-radial-target[data-radial-target='bottom'] { bottom: 0; left: 50%; transform: translateX(-50%); }
 .armament-radial-picker {
   position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
-  z-index: 2; display: flex; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
+  z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
   border-radius: 9px; background: rgba(18,15,12,.98);
+  inline-size: max-content; max-inline-size: calc(100vw - 1rem); max-block-size: min(45vh, 18rem); overflow: auto;
 }
 .armament-radial-picker button,
 .pile-surface-picker button { min-width: var(--tap-floor); min-height: var(--tap-floor); }
+.armament-radial-picker button { max-inline-size: 100%; padding-inline: .7rem; overflow-wrap: anywhere; }
 .pile-surface-picker { display: grid; gap: .6rem; }
 
 /* Short-wide has desktop width but phone-like vertical pressure. Its six
@@ -6686,6 +6688,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
   .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
   .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+  .armament-radial-picker {
+    position: fixed; left: .5rem; right: .5rem;
+    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);
+    transform: none; inline-size: auto;
+  }
   .armament-radial[data-placement='left'] { left: max(.4rem, env(safe-area-inset-left)); right: auto; }
   .armament-radial[data-placement='center'] { left: 50%; right: auto; transform: translateX(-50%); }
   .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, env(safe-area-inset-right)); }
@@ -10295,6 +10302,20 @@ const balance = {
   },
 
   shrine: { healPct: 35 },
+
+  // ---- canonical hidden level semantics (#237) ---------------------------
+  //
+  // Player level begins at one authored value and advances once per shrine
+  // purchase (`run.levelUps`). `run.levelPoints` is deliberately absent from
+  // this rule: it records how many attribute points those purchases granted,
+  // and the configurable points-per-level dial means it is not a level count.
+  //
+  // Enemy bounds and act/floor target bands are authored by #238. The pure
+  // resolver in model/levels.js accepts those rows without activating them in
+  // encounter creation, saves, co-op, or the UI.
+  levels: {
+    playerStartingLevel: 1,
+  },
 
   // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
   //
@@ -20670,6 +20691,7 @@ const { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttribute
 const { startingKitProblems } = require("src/model/startingKits.js");
 const { armouryUiProblems } = require("src/model/equipmentUi.js");
 const { characterCreationProblems } = require("src/model/characterCreation.js");
+const { enemyLevelProfileProblems, levelConfigProblems } = require("src/model/levels.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -21214,6 +21236,13 @@ function validateContent(bundle) {
 
   if (b.balance != null && (typeof b.balance !== 'object' || Array.isArray(b.balance))) {
     err('balance', 'balance must be a plain object of constants');
+  }
+  for (const problem of levelConfigProblems(b.balance)) err(problem.path, problem.msg);
+  for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
+    if (!enemy || enemy.levelProfile == null) continue;
+    for (const problem of enemyLevelProfileProblems(enemy.levelProfile, `enemies.${enemy.id || '?'}.levelProfile`)) {
+      err(problem.path, problem.msg);
+    }
   }
   // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS
   // WRONG, so it is the last thing that may fail quiet. Vira's finding: it
@@ -24970,6 +24999,14 @@ const enemyPhaseSchema = obj({
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
 });
 
+// #237 reserves the strict authored constraint shape before #238 populates it.
+// Bounds are optional during this inert phase; once present, validate.js also
+// enforces positive integers and min <= max through model/levels.js.
+const enemyLevelProfileSchema = obj({
+  min: int,
+  max: int,
+});
+
 // SFX layer schemas (#46), keyed by `kind` — validate.js discriminates on the
 // kind first so an error lands on the field, not on "matched no variant".
 // Field semantics are documented where the data lives (content/sfx.js);
@@ -25241,6 +25278,7 @@ const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
+    levelProfile: opt(enemyLevelProfileSchema),
     tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
@@ -28325,6 +28363,317 @@ function equipmentPositionCardState({ slot, index, modelState, item, activeIndex
 
 
 Object.assign(module.exports, { normalizeArmouryLayout, trayPresentationState, inventorySelectionAction, orderArmourySlots, equipmentPositionCardState });
+
+},
+"src/model/levels.js": function (module, exports, require) {
+// src/model/levels.js — canonical hidden player/enemy level semantics (#237)
+//
+// Pure and inert: no UI, save, encounter, combat, or co-op activation. #238
+// authors enemy constraints and act/floor target bands; #241 decides when the
+// resulting receipts become persisted runtime state.
+//
+// Headless: no document/window/localStorage/timers.
+
+const ENCOUNTER_LEVEL_SEAM = 'encounter-level-planning/v1';
+const LEVEL_SCALING_ROUNDING = Object.freeze(['floor', 'round', 'ceil']);
+
+const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const isPositiveInt = (value) => Number.isSafeInteger(value) && value > 0;
+
+function bandProblems(band, path) {
+  const problems = [];
+  if (!isObject(band)) return [{ path, msg: 'must be an object { min, max }' }];
+  for (const key of Object.keys(band)) {
+    if (!['min', 'max'].includes(key)) problems.push({ path: `${path}.${key}`, msg: 'unknown field' });
+  }
+  if (!isPositiveInt(band.min)) problems.push({ path: `${path}.min`, msg: 'must be a positive integer' });
+  if (!isPositiveInt(band.max)) problems.push({ path: `${path}.max`, msg: 'must be a positive integer' });
+  if (isPositiveInt(band.min) && isPositiveInt(band.max) && band.min > band.max) {
+    problems.push({ path, msg: `min ${band.min} must not exceed max ${band.max}` });
+  }
+  return problems;
+}
+
+function levelConfigProblems(balance) {
+  const levels = balance && balance.levels;
+  if (!isObject(levels)) return [{ path: 'balance.levels', msg: 'must be an object with playerStartingLevel' }];
+  const problems = [];
+  for (const key of Object.keys(levels)) {
+    if (key !== 'playerStartingLevel') problems.push({ path: `balance.levels.${key}`, msg: 'unknown field' });
+  }
+  if (!isPositiveInt(levels.playerStartingLevel)) {
+    problems.push({ path: 'balance.levels.playerStartingLevel', msg: 'must be a positive integer' });
+  }
+  return problems;
+}
+
+function enemyLevelProfileProblems(profile, path = 'levelProfile') {
+  return bandProblems(profile, path);
+}
+
+function requireClean(problems) {
+  if (!problems.length) return;
+  const first = problems[0];
+  throw new Error(`${first.path}: ${first.msg}`);
+}
+
+/**
+ * playerLevel(registries, run) -> hidden whole-number player level.
+ *
+ * Missing `levelUps` is the legacy-save shape and means zero purchases. A
+ * present malformed count fails loudly. `levelPoints` never participates.
+ */
+function playerLevel(registries, run) {
+  requireClean(levelConfigProblems(registries && registries.balance));
+  const starting = registries.balance.levels.playerStartingLevel;
+  const purchases = run && run.levelUps;
+  if (purchases == null) return starting;
+  if (!Number.isSafeInteger(purchases) || purchases < 0) {
+    throw new Error(`run.levelUps: must be a non-negative integer, got ${JSON.stringify(purchases)}`);
+  }
+  const result = starting + purchases;
+  if (!Number.isSafeInteger(result)) throw new Error('player level: exceeds the safe integer range');
+  return result;
+}
+
+function hashString(value) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function gcdBigInt(a, b) {
+  let left = a < 0n ? -a : a;
+  let right = b < 0n ? -b : b;
+  while (right) [left, right] = [right, left % right];
+  return left || 1n;
+}
+
+function decimalFraction(value) {
+  const [mantissa, exponentText = '0'] = Math.abs(value).toString().toLowerCase().split('e');
+  const [whole, fraction = ''] = mantissa.split('.');
+  const exponent = Number(exponentText);
+  let numerator = BigInt(`${whole}${fraction}` || '0');
+  let denominator = 10n ** BigInt(fraction.length);
+  if (exponent > 0) numerator *= 10n ** BigInt(exponent);
+  if (exponent < 0) denominator *= 10n ** BigInt(-exponent);
+  if (value < 0) numerator = -numerator;
+  const divisor = gcdBigInt(numerator, denominator);
+  return { numerator: numerator / divisor, denominator: denominator / divisor };
+}
+
+function floorFraction(numerator, denominator) {
+  let quotient = numerator / denominator;
+  if (numerator < 0n && numerator % denominator) quotient -= 1n;
+  return quotient;
+}
+
+function roundFraction(numerator, denominator, rounding) {
+  if (rounding === 'floor') return floorFraction(numerator, denominator);
+  if (rounding === 'ceil') return -floorFraction(-numerator, denominator);
+  return floorFraction(2n * numerator + denominator, 2n * denominator);
+}
+
+function exactNumberFromFraction(numerator, denominator) {
+  const value = Number(numerator) / Number(denominator);
+  if (!Number.isFinite(value)) throw new Error('level scaling result: must remain finite');
+  const represented = decimalFraction(value);
+  if (represented.numerator * denominator !== numerator * represented.denominator) {
+    throw new Error('level scaling result: cannot represent the exact authored value');
+  }
+  return value;
+}
+
+function assertContext(context) {
+  if (!isObject(context)) throw new Error('enemy level context: must be an object');
+  for (const key of Object.keys(context)) {
+    if (!['seed', 'contextKey', 'act', 'floor', 'targetBand', 'modifiers'].includes(key)) {
+      throw new Error(`enemy level context.${key}: unknown field`);
+    }
+  }
+  if (!Number.isSafeInteger(context.seed) || context.seed < 0 || context.seed > 0xffffffff) {
+    throw new Error(`enemy level context.seed: must be a uint32, got ${JSON.stringify(context.seed)}`);
+  }
+  if (typeof context.contextKey !== 'string' || !context.contextKey.trim()) {
+    throw new Error('enemy level context.contextKey: must be a non-empty stable encounter/slot key');
+  }
+  if (!isPositiveInt(context.act)) throw new Error('enemy level context.act: must be a positive integer');
+  if (!Number.isSafeInteger(context.floor) || context.floor < 0) {
+    throw new Error('enemy level context.floor: must be a non-negative integer');
+  }
+  requireClean(bandProblems(context.targetBand, 'enemy level context.targetBand'));
+  const modifiers = context.modifiers == null ? [] : context.modifiers;
+  if (!Array.isArray(modifiers)) throw new Error('enemy level context.modifiers: must be an array');
+  modifiers.forEach((modifier, index) => {
+    if (!isObject(modifier)) throw new Error(`enemy level context.modifiers[${index}]: must be an object { id, delta }`);
+    if (typeof modifier.id !== 'string' || !modifier.id) {
+      throw new Error(`enemy level context.modifiers[${index}].id: must be a non-empty string`);
+    }
+    if (!Number.isSafeInteger(modifier.delta)) {
+      throw new Error(`enemy level context.modifiers[${index}].delta: must be an integer`);
+    }
+    for (const key of Object.keys(modifier)) {
+      if (!['id', 'delta'].includes(key)) throw new Error(`enemy level context.modifiers[${index}].${key}: unknown field`);
+    }
+  });
+  return modifiers;
+}
+
+/**
+ * resolveEnemyLevel(profile, context) -> deterministic planning receipt.
+ *
+ * `profile` is the enemy's authored { min, max } constraint. `targetBand` is
+ * the act/floor planning band supplied by later content. A stable hash of the
+ * run seed plus the explicit encounter/slot key chooses inside their overlap.
+ * This dedicated, stateless seam consumes no `enemyAI` or other run RNG draw.
+ * Integer modifiers apply afterward and the authored profile is the final
+ * clamp, so no caller can push an instance outside its declared bounds.
+ */
+function resolveEnemyLevel(profile, context) {
+  requireClean(enemyLevelProfileProblems(profile, 'enemy level profile'));
+  const modifiers = assertContext(context);
+
+  const sourceBand = { min: profile.min, max: profile.max };
+  const targetBand = { min: context.targetBand.min, max: context.targetBand.max };
+  const overlapMin = Math.max(sourceBand.min, targetBand.min);
+  const overlapMax = Math.min(sourceBand.max, targetBand.max);
+  const planningKey = JSON.stringify([
+    ENCOUNTER_LEVEL_SEAM,
+    context.seed >>> 0,
+    context.contextKey,
+    context.act,
+    context.floor,
+    sourceBand.min,
+    sourceBand.max,
+    targetBand.min,
+    targetBand.max,
+  ]);
+  const keyHash = hashString(planningKey);
+
+  let rolledLevel;
+  if (overlapMin <= overlapMax) {
+    rolledLevel = overlapMin + (keyHash % (overlapMax - overlapMin + 1));
+  } else {
+    const targetMidpoint = Math.round((targetBand.min + targetBand.max) / 2);
+    rolledLevel = clamp(targetMidpoint, sourceBand.min, sourceBand.max);
+  }
+
+  const exactModifierTotal = modifiers.reduce((sum, modifier) => sum + BigInt(modifier.delta), 0n);
+  if (exactModifierTotal < BigInt(Number.MIN_SAFE_INTEGER)
+    || exactModifierTotal > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('enemy level modifier total: exceeds the safe integer range');
+  }
+  const modifierTotal = Number(exactModifierTotal);
+  const unclamped = rolledLevel + modifierTotal;
+  if (!Number.isSafeInteger(unclamped)) throw new Error('enemy level result: exceeds the safe integer range');
+  const result = clamp(unclamped, sourceBand.min, sourceBand.max);
+
+  return {
+    seam: ENCOUNTER_LEVEL_SEAM,
+    sourceBand,
+    actFloorTarget: {
+      act: context.act,
+      floor: context.floor,
+      band: targetBand,
+    },
+    planning: {
+      seed: context.seed >>> 0,
+      contextKey: context.contextKey,
+      keyHash,
+      overlap: overlapMin <= overlapMax ? { min: overlapMin, max: overlapMax } : null,
+    },
+    modifiers: modifiers.map(({ id, delta }) => ({ id, delta })),
+    rolledLevel,
+    modifierTotal,
+    unclamped,
+    clamped: result !== unclamped,
+    result,
+  };
+}
+
+/**
+ * levelScalingReceipt(spec) -> one exact, pure stat-scaling receipt.
+ *
+ * #237 owns the arithmetic vocabulary, not any live enemy values. #238 authors
+ * the per-stat base level, coefficient, rounding, and optional caps. Keeping
+ * rounding explicit prevents HP, damage, block, and poise from silently using
+ * whichever Math function a later caller happened to choose.
+ */
+function levelScalingReceipt(spec) {
+  if (!isObject(spec)) throw new Error('level scaling spec: must be an object');
+  for (const key of Object.keys(spec)) {
+    if (!['stat', 'base', 'baselineLevel', 'resolvedLevel', 'perLevel', 'rounding', 'min', 'max'].includes(key)) {
+      throw new Error(`level scaling spec.${key}: unknown field`);
+    }
+  }
+  const {
+    stat,
+    base,
+    baselineLevel,
+    resolvedLevel,
+    perLevel,
+    rounding,
+    min = null,
+    max = null,
+  } = spec;
+  if (typeof stat !== 'string' || !stat) throw new Error('level scaling stat: must be a non-empty string');
+  if (!Number.isFinite(base) || Math.abs(base) > Number.MAX_SAFE_INTEGER) {
+    throw new Error('level scaling base: must be finite and within the safe arithmetic range');
+  }
+  if (!Number.isSafeInteger(baselineLevel) || baselineLevel < 1) {
+    throw new Error('level scaling baselineLevel: must be a positive safe integer');
+  }
+  if (!Number.isSafeInteger(resolvedLevel) || resolvedLevel < 1) {
+    throw new Error('level scaling resolvedLevel: must be a positive safe integer');
+  }
+  if (!Number.isFinite(perLevel) || Math.abs(perLevel) > Number.MAX_SAFE_INTEGER) {
+    throw new Error('level scaling perLevel: must be finite and within the safe arithmetic range');
+  }
+  if (!LEVEL_SCALING_ROUNDING.includes(rounding)) {
+    throw new Error(`level scaling rounding: must be one of ${LEVEL_SCALING_ROUNDING.join(' | ')}`);
+  }
+  if (min != null && !Number.isSafeInteger(min)) throw new Error('level scaling min: must be a safe integer when present');
+  if (max != null && !Number.isSafeInteger(max)) throw new Error('level scaling max: must be a safe integer when present');
+  if (min != null && max != null && min > max) throw new Error(`level scaling cap: min ${min} must not exceed max ${max}`);
+
+  const levelDelta = resolvedLevel - baselineLevel;
+  const baseFraction = decimalFraction(base);
+  const perLevelFraction = decimalFraction(perLevel);
+  const exactNumerator = baseFraction.numerator * perLevelFraction.denominator
+    + BigInt(levelDelta) * perLevelFraction.numerator * baseFraction.denominator;
+  const exactDenominator = baseFraction.denominator * perLevelFraction.denominator;
+  const unrounded = exactNumberFromFraction(exactNumerator, exactDenominator);
+  const roundedExact = roundFraction(exactNumerator, exactDenominator, rounding);
+  if (roundedExact < BigInt(Number.MIN_SAFE_INTEGER) || roundedExact > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('level scaling rounded result: exceeds the safe integer range');
+  }
+  const rounded = Number(roundedExact);
+  const result = clamp(rounded, min == null ? -Infinity : min, max == null ? Infinity : max);
+  return {
+    stat,
+    base,
+    baselineLevel,
+    resolvedLevel,
+    levelDelta,
+    perLevel,
+    rounding,
+    unrounded,
+    rounded,
+    cap: { min, max },
+    clamped: result !== rounded,
+    result,
+  };
+}
+
+
+Object.assign(module.exports, { ENCOUNTER_LEVEL_SEAM, LEVEL_SCALING_ROUNDING, levelConfigProblems, enemyLevelProfileProblems, playerLevel, resolveEnemyLevel, levelScalingReceipt });
 
 },
 "src/model/registries.js": function (module, exports, require) {
@@ -41900,7 +42249,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd325e6366d';
+const SOURCE = 'e8fc43509e';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41934,7 +42283,7 @@ const SOURCE = 'd325e6366d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1687';
+const ORDINAL = '1690';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -56698,7 +57047,7 @@ const { friendlyTargetMode } = require("src/model/friendlyTargets.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
-const { figureSpec } = require("src/model/loadout.js");
+const { equippedIn, figureSpec } = require("src/model/loadout.js");
 const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
@@ -56858,6 +57207,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         openCombatFlaskMenu(button, def, { slot });
+        armamentRadial.close();
       });
       picker.appendChild(button);
     });
@@ -57433,17 +57783,26 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
       radialItems.push({
         target: 'top', label: kind === 'hp' ? 'HP Flask' : 'MP Flask', detail: String(current),
-        ariaLabel: `${def.name}, ${current} remaining`, disabled: current <= 0,
-        activate: (anchor) => openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current }),
+        ariaLabel: `${def.name}, ${current} remaining`, hotkeySlot: kind === 'hp' ? 0 : 1,
+        activate: (anchor) => {
+          openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current });
+          armamentRadial.close();
+        },
       });
     }
-    const hands = figureSpec(registries, run.loadout, run.class);
-    radialItems.push({ target: 'left', label: 'Left', detail: hands.leftId || 'Empty', activate: () => openCombatArmoury({ destination: 'equipment' }) });
+    const leftPiece = equippedIn(registries, run.loadout, run.class, 'leftHand');
+    const rightPiece = equippedIn(registries, run.loadout, run.class, 'rightHand');
+    const openHandArmoury = () => {
+      armamentRadial.close();
+      openCombatArmoury({ destination: 'equipment' });
+    };
+    radialItems.push({ target: 'left', label: 'Left', detail: leftPiece?.name || 'Empty', activate: openHandArmoury });
     radialItems.push({ target: 'full', label: 'Full Armaments', detail: 'Open' });
-    radialItems.push({ target: 'right', label: 'Right', detail: hands.rightId || 'Empty', activate: () => openCombatArmoury({ destination: 'equipment' }) });
+    radialItems.push({ target: 'right', label: 'Right', detail: rightPiece?.name || 'Empty', activate: openHandArmoury });
     if (p.flasks.length) radialItems.push({
       target: 'bottom', label: 'Potions', detail: String(p.flasks.length),
       ariaLabel: `Other potions, ${p.flasks.length}`,
+      hotkeySlot: 2,
       activate: () => openUtilityPotionPicker(p.flasks),
     });
     armamentRadial.setItems(radialItems);
@@ -58106,11 +58465,17 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       return;
     }
 
-    // Flask keys activate the numbered visible HUD control; they never auto-use.
+    // Flask keys activate the corresponding visible control; they never
+    // auto-use. Radial mode first reveals its real positioned shortcut so the
+    // shared action menu never measures a display:none HUD anchor.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
+        let slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
+        if (combatEl.dataset.armamentsPresentation === 'radial') {
+          armamentRadial.open();
+          slotEl = armamentRadial.root.querySelector(`[data-flask-hotkey-slot="${slot}"]`);
+        }
         if (slotEl) slotEl.click();
         return;
       }
@@ -58357,19 +58722,35 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const heading = document.createElement('h2');
     heading.textContent = 'Choose pile';
     modal.appendChild(heading);
+    const opener = $('.pile.discard');
+    const closePicker = ({ restoreFocus = false } = {}) => {
+      window.removeEventListener('keydown', onPickerCancel);
+      veil.remove();
+      if (restoreFocus && opener.isConnected) {
+        opener.focus();
+        focusElement(opener);
+      }
+    };
+    const onPickerCancel = (event) => {
+      if (event.key !== 'Escape' && event.key !== 'Backspace') return;
+      event.preventDefault();
+      event.stopPropagation();
+      closePicker({ restoreFocus: true });
+    };
     for (const [label, cards] of [['Discard pile', combat.piles.discard], ['Exhaust pile', combat.piles.exhaust]]) {
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = `${label} (${cards.length})`;
       button.addEventListener('click', () => {
-        veil.remove();
+        closePicker();
         openPileModal(registries, label, cards);
       });
       modal.appendChild(button);
     }
     veil.appendChild(modal);
-    veil.addEventListener('click', (event) => { if (event.target === veil) veil.remove(); });
+    veil.addEventListener('click', (event) => { if (event.target === veil) closePicker(); });
     document.body.appendChild(veil);
+    window.addEventListener('keydown', onPickerCancel);
     const first = modal.querySelector('button');
     first?.focus();
     if (first) focusElement(first);
@@ -58379,6 +58760,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   $('.pile.discard').addEventListener('click', showDiscard);
   for (const [pile, open] of [[ $('.pile.draw'), showDraw ], [ $('.pile.discard'), showDiscard ]]) {
     pile.addEventListener('keydown', (event) => {
+      if (event.target !== pile) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       open();
@@ -59478,7 +59860,7 @@ function mountArmamentRadial(anchor, {
     }
   };
   const openMenu = () => {
-    if (currentMode !== 'radial') return;
+    if (currentMode !== 'radial') return false;
     open = true;
     sync();
     // Native click/keyboard activation is still completing here. Moving the
@@ -59491,6 +59873,7 @@ function mountArmamentRadial(anchor, {
       first?.focus();
       if (first) focusElement(first);
     }, 0);
+    return true;
   };
   const toggle = () => (open ? close({ restoreFocus: true }) : openMenu());
 
@@ -59501,6 +59884,7 @@ function mountArmamentRadial(anchor, {
       button.type = 'button';
       button.className = 'armament-radial-target';
       button.dataset.radialTarget = item.target;
+      if (item.hotkeySlot != null) button.dataset.flaskHotkeySlot = String(item.hotkeySlot);
       button.dataset.focusable = 'true';
       button.disabled = item.disabled === true;
       button.setAttribute('role', 'menuitem');
@@ -59538,14 +59922,15 @@ function mountArmamentRadial(anchor, {
   });
   anchor.addEventListener('pointerdown', () => {
     clearTimeout(holdTimer);
+    openedByHold = false;
     holdTimer = setTimeout(() => {
-      openedByHold = true;
-      openMenu();
+      openedByHold = openMenu();
     }, 360);
   });
   const cancelHold = () => clearTimeout(holdTimer);
   anchor.addEventListener('pointerup', cancelHold);
   anchor.addEventListener('pointercancel', cancelHold);
+  anchor.addEventListener('pointerleave', cancelHold);
 
   const onDocumentPointer = (event) => {
     if (!open || root.contains(event.target) || anchor.contains(event.target)) return;
@@ -59558,6 +59943,9 @@ function mountArmamentRadial(anchor, {
       close({ restoreFocus: true });
       return;
     }
+    // A radial destination may open and focus a child menu. Once focus has
+    // crossed that boundary, the child owns spatial navigation until it closes.
+    if (!root.contains(document.activeElement)) return;
     const list = buttons();
     if (!list.length || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
@@ -59586,6 +59974,7 @@ function mountArmamentRadial(anchor, {
     anchor,
     root,
     close,
+    open: openMenu,
     setItems(nextItems) {
       items = Array.isArray(nextItems) ? nextItems : [];
       draw();

@@ -54,7 +54,7 @@ export function mountArmamentRadial(anchor, {
     }
   };
   const openMenu = () => {
-    if (currentMode !== 'radial') return;
+    if (currentMode !== 'radial') return false;
     open = true;
     sync();
     // Native click/keyboard activation is still completing here. Moving the
@@ -67,6 +67,7 @@ export function mountArmamentRadial(anchor, {
       first?.focus();
       if (first) focusElement(first);
     }, 0);
+    return true;
   };
   const toggle = () => (open ? close({ restoreFocus: true }) : openMenu());
 
@@ -77,6 +78,7 @@ export function mountArmamentRadial(anchor, {
       button.type = 'button';
       button.className = 'armament-radial-target';
       button.dataset.radialTarget = item.target;
+      if (item.hotkeySlot != null) button.dataset.flaskHotkeySlot = String(item.hotkeySlot);
       button.dataset.focusable = 'true';
       button.disabled = item.disabled === true;
       button.setAttribute('role', 'menuitem');
@@ -114,14 +116,15 @@ export function mountArmamentRadial(anchor, {
   });
   anchor.addEventListener('pointerdown', () => {
     clearTimeout(holdTimer);
+    openedByHold = false;
     holdTimer = setTimeout(() => {
-      openedByHold = true;
-      openMenu();
+      openedByHold = openMenu();
     }, 360);
   });
   const cancelHold = () => clearTimeout(holdTimer);
   anchor.addEventListener('pointerup', cancelHold);
   anchor.addEventListener('pointercancel', cancelHold);
+  anchor.addEventListener('pointerleave', cancelHold);
 
   const onDocumentPointer = (event) => {
     if (!open || root.contains(event.target) || anchor.contains(event.target)) return;
@@ -134,6 +137,9 @@ export function mountArmamentRadial(anchor, {
       close({ restoreFocus: true });
       return;
     }
+    // A radial destination may open and focus a child menu. Once focus has
+    // crossed that boundary, the child owns spatial navigation until it closes.
+    if (!root.contains(document.activeElement)) return;
     const list = buttons();
     if (!list.length || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
@@ -162,6 +168,7 @@ export function mountArmamentRadial(anchor, {
     anchor,
     root,
     close,
+    open: openMenu,
     setItems(nextItems) {
       items = Array.isArray(nextItems) ? nextItems : [];
       draw();
