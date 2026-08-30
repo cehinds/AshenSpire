@@ -2530,26 +2530,26 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 const VIEW_PROBES = {
   authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
-  delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`),
+  delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
     `a candidate already on \`${x.pages.switch_requires.candidate_must_have_reached}\``,
     `The promotion packet carries ${x.promotion_packet.required_fields.length} required fields`],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${st.does} |`)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${st.does} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule],
-  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, x.branch_hygiene.alternative_when_permission_is_absent, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
   migration: (x) => [x.principle],
-  'model-effort': (x) => [x.principle, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
+  'model-effort': (x) => [x.principle, x.assignment_record.format, ...Object.values(x.rules), ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
   'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`)],
-  'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
+  'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), ...x.priority_order.map((pr, i) => `  ${i + 1}. ${pr}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
-  'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
+  'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
   roles: (x) => x.roles.map((r) => [
@@ -2561,8 +2561,8 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].join('\n')),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
-  transitions: (x) => [x.principle, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
+  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
 
 // A probe value shared by two contracts lets one mask the other: the masked
@@ -2582,6 +2582,12 @@ const VIEW_PROBES = {
 // offsets and line numbers still line up. Source-level checks that skip this
 // match their own error messages: the first version of the call-shape sweep
 // reported seven "call sites" that were all its own text.
+// Known limitation: this does not parse regex literals, so a backtick inside
+// one (`/^\x60\x60\x60/`) would be read as a template-literal opener and blank the
+// rest of the file. That happened, silently disabling the consumer check until
+// a plant that should have failed did not. Regex literals in this file avoid
+// literal backticks, and countRenderCallSites below refuses to let the blanking
+// swallow the source unnoticed.
 export function blankNonCode(src) {
   const out = src.split('');
   let i = 0;
@@ -2602,6 +2608,12 @@ export function blankNonCode(src) {
     i++;
   }
   return out.join('');
+}
+
+// A cheap canary on blankNonCode: if the blanking ever eats the file, every
+// call site disappears and this drops to zero rather than reporting success.
+export function countRenderCallSites(rawSource) {
+  return (blankNonCode(rawSource).match(/runRender\s*\(/g) || []).length;
 }
 
 export function renderResultConsumerErrors(rawSource) {
@@ -3251,6 +3263,11 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'consumer check reports an uninspectable call shape', pass: caughtB.some((e) => e.includes('cannot inspect')), errs: caughtB });
     // ...while its own error strings and comments are not call sites.
     results.push({ label: 'consumer check does not match its own message text', pass: renderResultConsumerErrors(src).length === 0, errs: renderResultConsumerErrors(src) });
+    // ...and the blanking must not have swallowed the source. A stray backtick
+    // in a regex literal did exactly that, and the checks it disabled all
+    // reported success.
+    const sites = countRenderCallSites(src);
+    results.push({ label: 'blanking leaves every runRender() call site visible', pass: sites >= 4, errs: [String(sites)] });
     const caughtD = renderResultConsumerErrors(noDrift);
     results.push({ label: 'consumer check catches a call site that drops .drift', pass: caughtD.some((e) => e.includes("without 'drift'")), errs: caughtD });
     const gutted = opsctlHeader(src).split('\n').filter((l) => !/^\/\/   wake /.test(l)).join('\n');
@@ -3346,6 +3363,28 @@ export function runSelftest(root = ROOT) {
     }
     results.push({ label: 'blanking any cell of any table row fails the coverage gate', pass: blankable.length === 0, errs: blankable.slice(0, 8) });
     results.push({ label: 'the column sweep found rows to sweep', pass: cells >= 80, errs: [String(cells)] });
+
+    // Prose paragraphs. Sections, bullets and table cells were each swept; the
+    // sentences between them were not, and 22 of them were unprobed — the
+    // handoff receipt rule, the routing SLA, the lifecycle state list, the
+    // branch-hygiene default, "a changed candidate restarts Gate A", and the
+    // rule that a P-level never selects a model. The three lines of the
+    // generated-projection disclaimer are static text with no contract behind
+    // them, so they are the only exemption.
+    const DISCLAIMER = 'This Markdown is a projection of validated JSON contracts';
+    const disclaimerAt = lines.findIndex((l) => l.startsWith(DISCLAIMER));
+    let prose = 0;
+    const unprobed = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!l.trim() || /^#{1,3} /.test(l) || /^\|/.test(l) || /^- /.test(l) || /^  - /.test(l) || /^\x60\x60\x60/.test(l) || /^<!--/.test(l)) continue;
+      if (disclaimerAt >= 0 && i >= disclaimerAt && i <= disclaimerAt + 2) continue;
+      prose++;
+      const without = lines.slice(0, i).concat(lines.slice(i + 1)).join('\n');
+      if (viewCoverageErrors(contracts, without).length === 0) unprobed.push(l.slice(0, 60));
+    }
+    results.push({ label: 'deleting any rendered prose line fails the coverage gate', pass: unprobed.length === 0, errs: unprobed.slice(0, 8) });
+    results.push({ label: 'the prose sweep found lines to sweep', pass: prose >= 20, errs: [String(prose)] });
 
     // ...and a contract added with no probe at all must fail rather than skip.
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };
