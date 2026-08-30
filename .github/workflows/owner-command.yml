@@ -6,9 +6,10 @@
 # re-seal only the target capsule -> commit to `dev` and report back on the issue.
 #
 # SECURITY MODEL
-# - Owner-only: the job runs only when the issue's author_association is OWNER,
-#   so a command filed by anyone else is never executed. Comments cannot trigger
-#   it, and an issue edited by a non-owner cannot re-run it as someone else.
+# - Owner-only: the job runs only when the issue was opened by the configured
+#   human owner account. Edits are deliberately non-executable: an edited issue
+#   must never replay an already-applied command or become a new command merely
+#   because its author remains an owner.
 # - The actor role is resolved HERE, from the authenticated GitHub identity —
 #   never read from the issue body. Nothing an author types can escalate a role.
 # - Enumerated only: opsctl rejects any action outside owner-command.json, any
@@ -26,7 +27,7 @@ name: owner-command
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
 
 permissions:
   contents: read
@@ -37,10 +38,13 @@ concurrency:
 
 jobs:
   execute:
-    # Owner-authored "Owner decision" issues only. Both conditions matter: the
-    # label selects the form, author_association proves who filed it.
+    # Owner-authored "Owner decision" issues only. Association is necessary but
+    # not sufficient: bind the authenticated GitHub login to the configured
+    # human owner, preventing a shared agent identity from being treated as the owner.
     if: >-
       github.event.issue.author_association == 'OWNER' &&
+      github.event.issue.user.login == 'cehinds' &&
+      github.event.sender.login == 'cehinds' &&
       contains(github.event.issue.labels.*.name, 'owner-command')
     runs-on: ubuntu-latest
     permissions:
