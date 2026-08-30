@@ -1,0 +1,118 @@
+name: AgentOps completion refill
+
+on:
+  repository_dispatch:
+    types: [agentops-ticket-completed]
+  workflow_dispatch:
+    inputs:
+      event_id:
+        description: Unique completion event id
+        required: true
+        type: string
+      actor:
+        description: Existing AgentOps actor released by the terminal ticket
+        required: true
+        type: string
+      completed_ticket:
+        description: Terminal AgentOps ticket
+        required: true
+        type: string
+      released_at:
+        description: Completion time in UTC (YYYY-MM-DDTHH:MM:SSZ)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-refill-${{ github.event.client_payload.event_id || inputs.event_id }}
+  cancel-in-progress: false
+
+jobs:
+  refill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate completion event
+        id: event
+        env:
+          EVENT_ID: ${{ github.event.client_payload.event_id || inputs.event_id }}
+          ACTOR: ${{ github.event.client_payload.actor || inputs.actor }}
+          COMPLETED: ${{ github.event.client_payload.completed_ticket || inputs.completed_ticket }}
+          RELEASED_AT: ${{ github.event.client_payload.released_at || inputs.released_at }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const values = {
+            event_id: process.env.EVENT_ID,
+            actor: process.env.ACTOR,
+            completed: process.env.COMPLETED,
+            released_at: process.env.RELEASED_AT,
+          };
+          if (!/^[A-Za-z0-9._-]{1,120}$/.test(values.event_id || '')) throw new Error('unsafe or missing event_id');
+          if (!/^[A-Za-z0-9._-]{1,120}$/.test(values.actor || '')) throw new Error('unsafe or missing actor');
+          if (!/^[A-Za-z0-9._-]{1,120}$/.test(values.completed || '')) throw new Error('unsafe or missing completed_ticket');
+          if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(values.released_at || '')) throw new Error('released_at must be UTC seconds');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, Object.entries(values).map(([key, value]) => `${key}=${value}\n`).join(''));
+          NODE
+
+      - name: Restore completion-event marker
+        id: marker
+        uses: actions/cache/restore@v4
+        with:
+          path: .pipeline-refill-marker
+          key: pipeline-refill-${{ steps.event.outputs.event_id }}
+
+      - name: Refuse duplicate completion event
+        if: steps.marker.outputs.cache-hit == 'true'
+        run: |
+          echo "Duplicate completion event; the first run owns the offer/alarm." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify AgentOps before refill
+        if: steps.marker.outputs.cache-hit != 'true'
+        run: node .agentops/tools/opsctl.mjs verify
+
+      - name: Offer immediate safe refill
+        if: steps.marker.outputs.cache-hit != 'true'
+        id: immediate
+        env:
+          ACTOR: ${{ steps.event.outputs.actor }}
+          COMPLETED: ${{ steps.event.outputs.completed }}
+          RELEASED_AT: ${{ steps.event.outputs.released_at }}
+        run: |
+          node .agentops/tools/pipeline-pilot-live.mjs \
+            --actor "$ACTOR" --completed "$COMPLETED" --released-at "$RELEASED_AT" > /tmp/refill-immediate.json
+          cat /tmp/refill-immediate.json >> "$GITHUB_STEP_SUMMARY"
+          node -e "const r=require('/tmp/refill-immediate.json'); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'status='+r.status+'\n')"
+
+      - name: Emit idle alarm after threshold
+        if: steps.marker.outputs.cache-hit != 'true' && steps.immediate.outputs.status == 'NO_SAFE_ASSIGNMENT'
+        env:
+          ACTOR: ${{ steps.event.outputs.actor }}
+          COMPLETED: ${{ steps.event.outputs.completed }}
+          RELEASED_AT: ${{ steps.event.outputs.released_at }}
+        run: |
+          sleep 300
+          node .agentops/tools/pipeline-pilot-live.mjs \
+            --actor "$ACTOR" --completed "$COMPLETED" --released-at "$RELEASED_AT" > /tmp/refill-alarm.json
+          node -e "const r=require('/tmp/refill-alarm.json'); if(r.status!=='IDLE_ALARM') throw new Error('expected IDLE_ALARM after threshold')"
+          cat /tmp/refill-alarm.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save completion-event marker
+        if: steps.marker.outputs.cache-hit != 'true'
+        run: mkdir -p .pipeline-refill-marker && printf '%s\n' '${{ steps.event.outputs.event_id }}' > .pipeline-refill-marker/event
+
+      - name: Persist completion-event marker
+        if: steps.marker.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .pipeline-refill-marker
+          key: pipeline-refill-${{ steps.event.outputs.event_id }}

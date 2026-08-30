@@ -37,7 +37,7 @@ Advances #269 without closing it.
 - `node .agentops/tools/pipeline-pilot.test.mjs` — PASS 51/51.
 - `node .agentops/tools/pipeline-pilot-install.test.mjs` — PASS 16/16.
 - `node .agentops/tools/pipeline-pilot-agentops-adapter.test.mjs` — PASS 25/25.
-- `node .agentops/tools/pipeline-pilot-live.test.mjs` — PASS 17/17.
+- `node .agentops/tools/pipeline-pilot-live.test.mjs` — PASS 22/22.
 - `node .agentops/tools/opsctl.mjs verify` — PASS.
 - `node --check` for every new tool and test — PASS.
 - `git diff --check` over the complete pilot scope — PASS.
@@ -55,6 +55,7 @@ deployment, publication, or release.
 
 Add:
 
+- `.github/workflows/pipeline-refill.yml`
 - `.agentops/pipeline-pilot/PIPELINE_KERNEL.md`
 - `.agentops/pipeline-pilot/activation.json`
 - `.agentops/pipeline-pilot/risk-routes.json`

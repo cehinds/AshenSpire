@@ -75,6 +75,9 @@ node .agentops/tools/pipeline-pilot-live.mjs --actor <actor> --completed <termin
 
 The output is a bounded wake offer or the distinct `NO_SAFE_ASSIGNMENT` /
 `IDLE_ALARM` state. AgentOps capsules and leases remain authoritative.
+The `AgentOps completion refill` workflow invokes this command immediately for
+the deduplicated `agentops-ticket-completed` repository event and emits the
+idle alarm at 300 seconds when no safe row appears.
 
 Owner decisions flow through the authenticated owner-command path — enumerated,
 allowlisted, and compare-and-swap-checked. `--dry-run` validates and reports
