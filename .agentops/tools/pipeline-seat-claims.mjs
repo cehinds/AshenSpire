@@ -152,8 +152,9 @@ export function acquireClaimLock(lockFile, identityLookup = processStartIdentity
 function validateJournal(pending, expected, previousEventHash, staleOwner = null) {
   if (pending?.schema !== "agentops/claim-transaction-journal/v1" || !pending.result?.claim || !pending.result?.lease || !pending.result?.event) throw new Error("claim transaction journal is corrupt or foreign");
   for (const key of ["claimFile", "leaseFile", "eventDir"]) if (path.resolve(pending[key] || "") !== path.resolve(expected[key])) throw new Error("claim transaction journal target mismatch");
-  if (path.dirname(path.resolve(pending.eventFile || "")) !== path.resolve(expected.eventDir)) throw new Error("claim transaction journal event target mismatch");
   validateClaim(pending.result.claim);
+  const canonicalEventFile = path.join(expected.eventDir, `${String(pending.result.claim.revision).padStart(6, "0")}.json`);
+  if (pending.eventFile !== canonicalEventFile || path.resolve(pending.eventFile) !== path.resolve(canonicalEventFile)) throw new Error("claim transaction journal event target mismatch");
   validateLease(pending.result.lease, pending.result.claim, pending.result.lease.issued, true);
   const journalOwner = validateLockOwner(pending.lock_owner);
   if (staleOwner && (journalOwner.pid !== staleOwner.pid || journalOwner.nonce !== staleOwner.nonce || journalOwner.process_identity !== staleOwner.process_identity)) throw new Error("claim transaction journal does not bind the recovered stale owner");
