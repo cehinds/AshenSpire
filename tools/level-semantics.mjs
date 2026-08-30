@@ -64,6 +64,18 @@ const cases = [
     const receipt = resolveEnemyLevel({ min: 3, max: 9 }, { ...context, modifiers: [{ id: 'boss', delta: 99 }] });
     assert(receipt.result === 9 && receipt.modifierTotal === 99 && receipt.clamped, JSON.stringify(receipt));
   }],
+  ['modifier accumulation remains exact when safe deltas cross the safe-integer boundary and cancel', () => {
+    const receipt = resolveEnemyLevel({ min: 1, max: 9 }, {
+      ...context,
+      targetBand: { min: 1, max: 1 },
+      modifiers: [
+        { id: 'positive-boundary', delta: Number.MAX_SAFE_INTEGER },
+        { id: 'cross-boundary', delta: 2 },
+        { id: 'cancel-boundary', delta: -Number.MAX_SAFE_INTEGER },
+      ],
+    });
+    assert(receipt.modifierTotal === 2 && receipt.unclamped === 3 && receipt.result === 3, JSON.stringify(receipt));
+  }],
   ['the receipt carries source band, act/floor target, modifiers, result, and dedicated seam', () => {
     const receipt = resolveEnemyLevel({ min: 3, max: 9 }, context);
     assert(receipt.seam === ENCOUNTER_LEVEL_SEAM, receipt.seam);
@@ -114,6 +126,12 @@ if (process.argv.includes('--selftest')) {
     ['inverted scaling caps are refused', () => throws(() => levelScalingReceipt({
       stat: 'poise', base: 10, baselineLevel: 1, resolvedLevel: 2, perLevel: 1, rounding: 'round', min: 20, max: 10,
     }), /must not exceed/)],
+    ['fractional scaling caps cannot undo integer rounding', () => throws(() => levelScalingReceipt({
+      stat: 'hp', base: 0, baselineLevel: 1, resolvedLevel: 1, perLevel: 0, rounding: 'floor', min: 0.5,
+    }), /min: must be a safe integer/)],
+    ['unknown scaling-spec keys are refused', () => throws(() => levelScalingReceipt({
+      stat: 'damage', base: 5, baselineLevel: 1, resolvedLevel: 2, perLevel: 1, rounding: 'floor', maximum: 9,
+    }), /spec\.maximum: unknown field/)],
     ['non-finite scaling results are refused', () => throws(() => levelScalingReceipt({
       stat: 'hp', base: Number.MAX_VALUE, baselineLevel: 1, resolvedLevel: 2, perLevel: Number.MAX_VALUE, rounding: 'floor',
     }), /remain finite/)],

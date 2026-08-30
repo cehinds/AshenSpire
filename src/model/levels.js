@@ -155,8 +155,12 @@ export function resolveEnemyLevel(profile, context) {
     rolledLevel = clamp(targetMidpoint, sourceBand.min, sourceBand.max);
   }
 
-  const modifierTotal = modifiers.reduce((sum, modifier) => sum + modifier.delta, 0);
-  if (!Number.isSafeInteger(modifierTotal)) throw new Error('enemy level modifier total: exceeds the safe integer range');
+  const exactModifierTotal = modifiers.reduce((sum, modifier) => sum + BigInt(modifier.delta), 0n);
+  if (exactModifierTotal < BigInt(Number.MIN_SAFE_INTEGER)
+    || exactModifierTotal > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('enemy level modifier total: exceeds the safe integer range');
+  }
+  const modifierTotal = Number(exactModifierTotal);
   const unclamped = rolledLevel + modifierTotal;
   if (!Number.isSafeInteger(unclamped)) throw new Error('enemy level result: exceeds the safe integer range');
   const result = clamp(unclamped, sourceBand.min, sourceBand.max);
@@ -192,16 +196,23 @@ export function resolveEnemyLevel(profile, context) {
  * rounding explicit prevents HP, damage, block, and poise from silently using
  * whichever Math function a later caller happened to choose.
  */
-export function levelScalingReceipt({
-  stat,
-  base,
-  baselineLevel,
-  resolvedLevel,
-  perLevel,
-  rounding,
-  min = null,
-  max = null,
-}) {
+export function levelScalingReceipt(spec) {
+  if (!isObject(spec)) throw new Error('level scaling spec: must be an object');
+  for (const key of Object.keys(spec)) {
+    if (!['stat', 'base', 'baselineLevel', 'resolvedLevel', 'perLevel', 'rounding', 'min', 'max'].includes(key)) {
+      throw new Error(`level scaling spec.${key}: unknown field`);
+    }
+  }
+  const {
+    stat,
+    base,
+    baselineLevel,
+    resolvedLevel,
+    perLevel,
+    rounding,
+    min = null,
+    max = null,
+  } = spec;
   if (typeof stat !== 'string' || !stat) throw new Error('level scaling stat: must be a non-empty string');
   if (!Number.isFinite(base)) throw new Error('level scaling base: must be finite');
   if (!isPositiveInt(baselineLevel)) throw new Error('level scaling baselineLevel: must be a positive integer');
@@ -210,8 +221,8 @@ export function levelScalingReceipt({
   if (!LEVEL_SCALING_ROUNDING.includes(rounding)) {
     throw new Error(`level scaling rounding: must be one of ${LEVEL_SCALING_ROUNDING.join(' | ')}`);
   }
-  if (min != null && !Number.isFinite(min)) throw new Error('level scaling min: must be finite when present');
-  if (max != null && !Number.isFinite(max)) throw new Error('level scaling max: must be finite when present');
+  if (min != null && !Number.isSafeInteger(min)) throw new Error('level scaling min: must be a safe integer when present');
+  if (max != null && !Number.isSafeInteger(max)) throw new Error('level scaling max: must be a safe integer when present');
   if (min != null && max != null && min > max) throw new Error(`level scaling cap: min ${min} must not exceed max ${max}`);
 
   const levelDelta = resolvedLevel - baselineLevel;
