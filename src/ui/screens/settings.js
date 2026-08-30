@@ -226,6 +226,13 @@ const ROWS = [
     choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
 
+  { cat: 'Display', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+    choices: ['radial', 'fixed'], label: 'Combat Armaments',
+    note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
+  { cat: 'Display', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+    choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
+    note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
+
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
@@ -540,6 +547,16 @@ export function musicEnabledCondition(settings = {}) {
     ? settings.musicVolume
     : AUDIO_DEFAULTS.musicVolume;
   return `Music on · volume ${volume}%.`;
+}
+
+export function resolveArmamentsPresentation(settings = {}) {
+  return ['radial', 'fixed'].includes(settings.armamentsPresentation)
+    ? settings.armamentsPresentation : 'radial';
+}
+
+export function resolveArmamentsPhonePlacement(settings = {}) {
+  return ['left', 'center', 'right'].includes(settings.armamentsPhonePlacement)
+    ? settings.armamentsPhonePlacement : 'left';
 }
 
 function rowNote(settings, row) {

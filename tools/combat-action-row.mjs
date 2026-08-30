@@ -2,10 +2,10 @@
 // tools/combat-action-row.mjs — #21's single-owner combat action-row gate.
 //
 // The real ?shot=combat door supplies the hand, settings, input wiring, and
-// rendered controls. This instrument measures the five action destinations as
-// one DOM/CSS grid: Energy, End Turn, Draw, Discard, and visible Exhaust. It
-// hit-tests 45 points per control, checks pairwise/card/pager separation, and
-// exercises rest, armed-card, and exhaust-visible states.
+// rendered controls. This instrument measures one five-cell DOM/CSS grid:
+// Armaments, Actions, End Turn, Draw, and Discard. Exhaust remains a nested
+// summary and a two-surface Discard picker, never a sixth rail cell. The same
+// run opens the real Armaments control and hit-tests its five radial positions.
 //
 // Usage:
 //   node tools/combat-action-row.mjs
@@ -17,7 +17,7 @@
 //
 // Exit 0 = every measured cell held; 1 = product finding; 2 = no cell/browser.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
@@ -42,7 +42,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the five controls lose their one semantic owner',
       file: 'src/ui/screens/combat.js',
-      find: '<div class="combat-action-row" role="group" aria-label="Combat actions">',
+      find: '<div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
       replace: '<div class="combat-action-split" role="group" aria-label="Combat actions">',
       expectRed: /combat-action-row: RED/,
     },
@@ -54,10 +54,10 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
     {
-      name: 'the narrow row stacks every trailing destination into End Turn',
+      name: 'the narrow five-cell row stacks every trailing destination into End Turn',
       file: 'styles/combat.css',
-      find: 'grid-template-areas: "energy end draw exhaust discard";',
-      replace: 'grid-template-areas: "energy end end end end";',
+      find: '    grid-template-areas: "armaments energy end draw discard";',
+      replace: '    grid-template-areas: "armaments end end end end";',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -75,6 +75,76 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
     {
+      name: 'Exhaust leaves the Discard cell and loses its nested summary',
+      file: 'src/ui/screens/combat.js',
+      find: 'ex.hidden = !combat.piles.exhaust.length;',
+      replace: 'ex.hidden = true;',
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'Discard no longer offers the Exhaust pile surface',
+      file: 'src/ui/screens/combat.js',
+      find: "[['Discard pile', combat.piles.discard], ['Exhaust pile', combat.piles.exhaust]]",
+      replace: "[['Discard pile', combat.piles.discard]]",
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'the Armaments radial loses its full destination',
+      file: 'src/ui/screens/combat.js',
+      find: "radialItems.push({ target: 'full', label: 'Full Armaments', detail: 'Open' });",
+      replace: '// planted: full Armaments destination removed',
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'radial mode hides map flask controls outside combat',
+      file: 'styles/combat.css',
+      find: ":root[data-armaments-presentation='radial'] .combat .hud-charge-flasks,",
+      replace: ":root[data-armaments-presentation='radial'] .hud-charge-flasks,",
+      expectRed: /FAIL (radial flask hiding is scoped to combat|radial mode leaves map flask controls visible and focusable)/,
+    },
+    {
+      name: 'hand labels regress to sprite identities',
+      file: 'src/ui/screens/combat.js',
+      find: "detail: leftPiece?.name || 'Empty'",
+      replace: "detail: figureSpec(registries, run.loadout, run.class).leftId || 'Empty'",
+      expectRed: /FAIL radial hand labels use equipped player-facing names/,
+    },
+    {
+      name: 'the pile-surface chooser loses its Escape lifecycle',
+      file: 'src/ui/screens/combat.js',
+      find: "window.addEventListener('keydown', onPickerCancel);",
+      replace: '// planted: pile chooser has no keyboard Cancel owner',
+      expectRed: /FAIL (the pile-surface chooser owns Escape and restores Discard focus|Escape closes the pile-surface chooser and restores Discard focus)/,
+    },
+    {
+      name: 'fixed-mode held presses are swallowed',
+      file: 'src/ui/components/armamentRadial.js',
+      find: 'openedByHold = openMenu();',
+      replace: 'openedByHold = true; openMenu();',
+      expectRed: /FAIL (fixed mode suppresses a click only after a radial really opened|fixed mode held presses still open Armoury)/,
+    },
+    {
+      name: 'off-anchor pointer gestures keep their hold timer',
+      file: 'src/ui/components/armamentRadial.js',
+      find: "anchor.addEventListener('pointerleave', cancelHold);",
+      replace: '// planted: leaving the anchor does not cancel hold',
+      expectRed: /FAIL (pointer leave cancels the Armaments hold timer|pointer leave cancels a pending Armaments hold)/,
+    },
+    {
+      name: 'utility picker can exceed the phone viewport',
+      file: 'styles/combat.css',
+      find: "    position: fixed; left: .5rem; right: .5rem;\n    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);\n    transform: none; inline-size: auto;",
+      replace: "    position: absolute; left: 50%; right: auto;\n    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);\n    transform: translateX(-50%); inline-size: max-content;",
+      expectRed: /FAIL utility picker is clamped to the phone viewport/,
+    },
+    {
+      name: 'phone radial destinations overlap in the center cell',
+      file: 'styles/combat.css',
+      find: "  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }",
+      replace: "  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 2; }",
+      expectRed: /FAIL radial controls have zero pairwise hit-box intersections/,
+    },
+    {
       name: 'Energy placement leaks out of the solo action-row owner into co-op',
       file: 'styles/combat.css',
       find: '.combat-action-row > .energy-orb {',
@@ -89,7 +159,14 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
   ];
-  const coopPlants = sourcePlants.splice(5);
+  const coopPlants = sourcePlants.splice(-2);
+  const widePlants = [{
+    name: 'wide radial contracts back onto player-facing hand names',
+    file: 'styles/combat.css',
+    find: 'width: min(32rem, calc(100vw - 3.2rem)); aspect-ratio: 1.35;',
+    replace: 'width: min(24rem, 46vw); aspect-ratio: 1.35;',
+    expectRed: /FAIL radial controls have zero pairwise hit-box intersections/,
+  }];
   let code = await doorSelftest({
     tool: 'combat-action-row.mjs',
     args: ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '8'],
@@ -102,6 +179,13 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     args: ['--coop-only'],
     timeoutMs: 600000,
     plants: coopPlants,
+  });
+  if (code) process.exit(code);
+  code = await doorSelftest({
+    tool: 'combat-action-row.mjs',
+    args: ['--solo-only', '--only', '1200x730', '--text', 'XL', '--hand', '8'],
+    timeoutMs: 600000,
+    plants: widePlants,
   });
   if (code) process.exit(code);
   if (args.includes('--selftest-source')) process.exit(0);
@@ -118,6 +202,14 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     timeoutMs: 600000,
     extraCopy: ['AshenSpire.html'],
     plants: artifactPlants(sourcePlants),
+  });
+  if (code) process.exit(code);
+  code = await doorSelftest({
+    tool: 'combat-action-row.mjs',
+    args: ['--standalone', '--solo-only', '--only', '1200x730', '--text', 'XL', '--hand', '8'],
+    timeoutMs: 600000,
+    extraCopy: ['AshenSpire.html'],
+    plants: artifactPlants(widePlants),
   });
   if (code) process.exit(code);
   process.exit(await doorSelftest({
@@ -192,7 +284,7 @@ function connectCdp(wsUrl) {
 }
 
 const STATES = ['rest', 'armed', 'exhaust'];
-const CONTROL_SELECTORS = ['.energy-orb', '.end-turn', '.pile.draw', '.pile.discard', '.pile.exhaust'];
+const CONTROL_SELECTORS = ['.armaments-command', '.energy-orb', '.end-turn', '.pile.draw', '.pile.discard'];
 
 async function main() {
   const served = standalone ? null : await serve({ root: ROOT, port: 8321, open: false });
@@ -212,6 +304,26 @@ async function main() {
     console.log(`    ${value ? 'PASS' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
     if (!value) failures++;
   };
+  if (!standalone) {
+    const combatSource = readFileSync(resolve(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+    const radialSource = readFileSync(resolve(ROOT, 'src/ui/components/armamentRadial.js'), 'utf8');
+    const combatCss = readFileSync(resolve(ROOT, 'styles/combat.css'), 'utf8');
+    check(combatCss.includes(":root[data-armaments-presentation='radial'] .combat .hud-charge-flasks,")
+      && !combatCss.includes(":root[data-armaments-presentation='radial'] .hud-charge-flasks,"),
+    'radial flask hiding is scoped to combat');
+    check(combatSource.includes("detail: leftPiece?.name || 'Empty'")
+      && combatSource.includes("detail: rightPiece?.name || 'Empty'"),
+    'radial hand labels use equipped player-facing names');
+    check(combatSource.includes("window.addEventListener('keydown', onPickerCancel);")
+      && combatSource.includes("closePicker({ restoreFocus: true });"),
+    'the pile-surface chooser owns Escape and restores Discard focus');
+    check(radialSource.includes('openedByHold = openMenu();'),
+      'fixed mode suppresses a click only after a radial really opened');
+    check(radialSource.includes("anchor.addEventListener('pointerleave', cancelHold);"),
+      'pointer leave cancels the Armaments hold timer');
+    check(combatCss.includes('max-inline-size: calc(100vw - 1rem);') && combatCss.includes('flex-wrap: wrap;'),
+      'utility picker is clamped to the phone viewport');
+  }
 
   try {
     const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -250,7 +362,6 @@ async function main() {
       await new Promise((pass) => setTimeout(pass, 140));
       return true;
     };
-
     const reading = () => evaluate(`(() => {
       const visible = (node) => {
         if (!node) return false;
@@ -283,17 +394,45 @@ async function main() {
         ...pages.filter((item)=>intersects(control,item)).map(()=>[control.selector,'pager']),
       ]);
       const grid=owner?getComputedStyle(owner):null;
+      const discard=owner?.querySelector('.pile.discard');
+      const exhaustSummary=discard?.querySelector('.exhaust-summary');
       return {
         layout:document.documentElement.dataset.layout||null,
         composition:document.documentElement.dataset.composition||null,
         state:document.documentElement.dataset.actionRowProbe||'rest',
         owner:{exists:!!owner,display:grid?.display||null,columns:grid?.gridTemplateColumns||null},
         owned:!!owner&&selectors.every((selector)=>owner.contains(document.querySelector(selector))),
+        discard:{
+          exists:!!discard,
+          role:discard?.getAttribute('role')||discard?.tagName?.toLowerCase()||null,
+          aria:discard?.getAttribute('aria-label')||'',
+          summaryExists:!!exhaustSummary,
+          summaryVisible:visible(exhaustSummary),
+          summaryText:exhaustSummary?.textContent||'',
+        },
         controls,pairs,foreign,
         onGlass:shown.every((r)=>r.left>=-0.25&&r.top>=-0.25&&r.right<=innerWidth+0.25&&r.bottom<=innerHeight+0.25),
         minTap:shown.length?Math.min(...shown.map((r)=>Math.min(r.width,r.height))):0,
       };
     })()`);
+    const settledReading = async (label) => {
+      const deadline = Date.now() + 3000;
+      let previous = await reading();
+      let steady = 0;
+      while (Date.now() < deadline) {
+        await new Promise((pass) => setTimeout(pass, 100));
+        const next = await reading();
+        const before = Object.fromEntries(previous.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
+        const moved = next.controls.filter((c)=>c.visible).some((c)=>{
+          const was = before[c.selector];
+          return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.25;
+        });
+        steady = moved ? 0 : steady + 1;
+        previous = next;
+        if (steady >= 2) return next;
+      }
+      throw new Error(`timed out waiting for stable ${label} geometry`);
+    };
 
     for (const shape of shapes) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -310,9 +449,7 @@ async function main() {
           await cdp.send('Page.navigate', { url }, sessionId);
           await waitFor(`document.querySelectorAll('.combat .hand .card').length===${hand}`, `${hand}-card combat`);
           await new Promise((pass) => setTimeout(pass, 240));
-
-          const beforeExhaust = await reading();
-          const stable = Object.fromEntries(beforeExhaust.controls.filter((c)=>c.visible&&c.selector!=='.pile.exhaust').map((c)=>[c.selector,c]));
+          let exhaustBaseline = null;
 
           for (const state of STATES) {
             if (state === 'armed') {
@@ -337,22 +474,34 @@ async function main() {
               await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
               await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
               await new Promise((pass) => setTimeout(pass, 80));
+              // Keyboard arming may scroll its focused card. Compare the two
+              // renders from one viewport origin so scroll anchoring cannot
+              // masquerade as all five persistent cells moving together.
+              await evaluate(`document.activeElement?.blur(); scrollTo(0,0); true`);
+              const beforeExhaust = await settledReading('pre-Exhaust action-row');
+              exhaustBaseline = beforeExhaust;
               await evaluate(`(() => {
-                const pile=document.querySelector('.pile.exhaust');
-                pile.style.display=''; pile.querySelector('.n').textContent='1';
+                const combat=window.__combat;
+                const source=combat?.piles?.discard?.[0] || combat?.piles?.draw?.[0] || combat?.piles?.hand?.[0];
+                if (!combat || !source || typeof window.__renderCombatForShot!=='function') return false;
+                if (!combat.piles.exhaust.length) combat.piles.exhaust.push({...source,instanceId:'action-row-probe-exhaust'});
+                window.__renderCombatForShot();
                 document.documentElement.dataset.actionRowProbe='exhaust';
+                scrollTo(0,0);
                 return true;
               })()`);
             } else {
               await evaluate(`document.documentElement.dataset.actionRowProbe=${JSON.stringify(state)}; true`);
             }
             await new Promise((pass) => setTimeout(pass, 120));
-            const now = await reading();
+            const now = state === 'exhaust' ? await settledReading('post-Exhaust action-row') : await reading();
             soloRan++;
             const tag = `${shape.width}x${shape.height} Text ${text}, hand ${hand}, ${state}, ${standalone ? 'root' : 'source'}`;
             console.log(`\n  ${tag}`);
             check(now.owner.exists && now.owner.display === 'grid' && now.owned,
-              'one semantic grid owns Energy, End Turn, Draw, Discard, and Exhaust', JSON.stringify(now.owner));
+              'one semantic grid owns Armaments, Actions, End Turn, Draw, and Discard', JSON.stringify(now.owner));
+            check((now.owner.columns?.match(/px/g)||[]).length===5,
+              'the action rail resolves to exactly five grid tracks', JSON.stringify(now.owner));
             check(now.pairs.length === 0, 'action controls have zero pairwise hit-box intersections', JSON.stringify(now.pairs));
             check(now.foreign.length === 0, 'action controls intersect no card or pager', JSON.stringify(now.foreign));
             check(now.onGlass && now.minTap >= 43.99,
@@ -363,11 +512,206 @@ async function main() {
               'grid children do not escape through absolute positioning', JSON.stringify(now.controls.map((c)=>[c.selector,c.position])));
 
             if (state === 'exhaust') {
-              const moved = now.controls.filter((c)=>c.visible&&c.selector!=='.pile.exhaust').filter((c)=>{
-                const was=stable[c.selector];
-                return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.5;
+              const baselineControls = Object.fromEntries(exhaustBaseline.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
+              const moved = now.controls.filter((c)=>c.visible).filter((c)=>{
+                const was=baselineControls[c.selector];
+                return !was || Math.max(
+                  Math.abs(c.left-was.left),
+                  Math.abs(c.top-was.top),
+                  Math.abs(c.width-was.width),
+                  Math.abs(c.height-was.height),
+                )>0.5;
               }).map((c)=>c.selector);
-              check(moved.length===0, 'showing Exhaust preserves every standing action cell', JSON.stringify(moved));
+              check(moved.length===0, 'showing the nested Exhaust summary preserves every standing action cell', JSON.stringify(moved));
+              check(now.discard.summaryExists && now.discard.summaryVisible && /1 Exhaust/.test(now.discard.summaryText)
+                && /Exhaust pile, 1/.test(now.discard.aria),
+              'Discard carries the visible Exhaust summary and accessible count', JSON.stringify(now.discard));
+
+              const opened = await click('.pile.discard');
+              if (opened) await new Promise((pass) => setTimeout(pass, 80));
+              const pileSurface = await evaluate(`(() => {
+                const modal=document.querySelector('.pile-surface-picker');
+                const buttons=[...(modal?.querySelectorAll('button')||[])];
+                const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
+                return {
+                  exists:!!modal,
+                  labels:buttons.map((button)=>button.textContent.trim()),
+                  focused:buttons.indexOf(document.activeElement),
+                  onGlass:buttons.every((button)=>{const r=rect(button);return r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25}),
+                  minTap:buttons.length?Math.min(...buttons.map((button)=>{const r=rect(button);return Math.min(r.width,r.height)})):0,
+                };
+              })()`);
+              check(opened && pileSurface.exists && pileSurface.labels.length===2
+                && pileSurface.labels.some((label)=>label.startsWith('Discard pile'))
+                && pileSurface.labels.some((label)=>label.startsWith('Exhaust pile')),
+              'Discard opens the two real pile surfaces', JSON.stringify(pileSurface));
+              check(pileSurface.focused===0 && pileSurface.onGlass && pileSurface.minTap>=43.99,
+                'the pile-surface picker focuses first and keeps 44px controls on glass', JSON.stringify(pileSurface));
+              await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+              await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+              await new Promise((pass) => setTimeout(pass, 80));
+              const pileCancelled = await evaluate(`!document.querySelector('.pile-surface-picker') && document.activeElement?.matches('.pile.discard')`);
+              check(pileCancelled, 'Escape closes the pile-surface chooser and restores Discard focus');
+
+              const radialOpened = await click('.armaments-command');
+              if (radialOpened) await new Promise((pass) => setTimeout(pass, 80));
+              const radial = await evaluate(`(() => {
+                const root=document.querySelector('.armament-radial');
+                const anchor=document.querySelector('.armaments-command');
+                const buttons=[...(root?.querySelectorAll('.armament-radial-target')||[])];
+                const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
+                const intersects=(a,b)=>a.left<b.right-.25&&a.right>b.left+.25&&a.top<b.bottom-.25&&a.bottom>b.top+.25;
+                const rows=buttons.map((button)=>({target:button.dataset.radialTarget,label:button.getAttribute('aria-label')||'',detail:button.querySelector('small')?.textContent||'',...rect(button)}));
+                const pairs=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++)if(intersects(rows[i],rows[j]))pairs.push([i,j]);
+                const hits=buttons.map((button)=>{const r=rect(button),node=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);return !!(node&&(node===button||button.contains(node)))});
+                return {
+                  exists:!!root,hidden:root?.hidden??true,role:root?.getAttribute('role')||'',expanded:anchor?.getAttribute('aria-expanded')||'',
+                  count:rows.length,targetKinds:[...new Set(rows.map((row)=>row.target))].sort(),named:rows.every((row)=>!!row.label),
+                  handDetails:rows.filter((row)=>row.target==='left'||row.target==='right').map((row)=>row.detail),pairs,hits,
+                  onGlass:rows.every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
+                  minTap:rows.length?Math.min(...rows.map((r)=>Math.min(r.width,r.height))):0,
+                };
+              })()`);
+              check(radialOpened && radial.exists && !radial.hidden && radial.role==='menu' && radial.expanded==='true',
+                'Armaments opens its real menu and reports expanded state', JSON.stringify(radial));
+              check(radial.count>=5 && JSON.stringify(radial.targetKinds)===JSON.stringify(['bottom','full','left','right','top'])
+                && radial.named,
+              'the radial exposes all five named placement targets', JSON.stringify(radial));
+              check(radial.handDetails.length===2 && radial.handDetails.every((detail)=>/^[A-Z]/.test(detail)),
+                'radial hand labels use equipped player-facing names', JSON.stringify(radial.handDetails));
+              check(radial.pairs.length===0,
+                'radial controls have zero pairwise hit-box intersections', JSON.stringify(radial.pairs));
+              check(radial.hits.every(Boolean) && radial.onGlass && radial.minTap>=43.99,
+                'radial controls remain center-hittable, on glass, and at least 44px', JSON.stringify(radial));
+
+              const behaviorCell = (shape.width===320 && shape.height===640 && text==='M' && hand===1)
+                || (shapes.length===1 && texts.length===1 && hands.length===1);
+              if (behaviorCell) {
+                const mapFlasksVisible = await evaluate(`(() => {
+                  const map=document.createElement('div');map.className='mapscreen';
+                  map.innerHTML='<div class="hud-charge-flasks"><button>HP</button><button>MP</button></div><div class="hud-potions"><button>Utility</button></div>';
+                  document.body.appendChild(map);const controls=[...map.querySelectorAll('button')];
+                  const visible=controls.every((button)=>{const r=button.getBoundingClientRect();return getComputedStyle(button.parentElement).display!=='none'&&r.width>0&&r.height>0&&!button.disabled;});
+                  map.remove();return visible;
+                })()`);
+                check(mapFlasksVisible, 'radial mode leaves map flask controls visible and focusable');
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'f', code: 'KeyF' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'f', code: 'KeyF' }, sessionId);
+                await new Promise((pass) => setTimeout(pass, 100));
+                const hotkeyMenu = await evaluate(`(() => {
+                  const menu=document.querySelector('.flask-action-menu'), root=document.querySelector('.armament-radial');
+                  if(!menu) return {exists:false}; const r=menu.getBoundingClientRect();
+                  return {exists:true,radialHidden:root?.hidden===true,onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,inspect:!!menu.querySelector('[data-flask-action="inspect"]')};
+                })()`);
+                check(hotkeyMenu.exists && !hotkeyMenu.radialHidden && hotkeyMenu.onGlass && hotkeyMenu.inspect,
+                  'Flask 1 keeps its radial anchor visible while actions own input', JSON.stringify(hotkeyMenu));
+                await click('[data-flask-action="inspect"]');
+                const inspectedMenu = await evaluate(`(() => {
+                  const menu=document.querySelector('.flask-action-menu');if(!menu)return {exists:false};
+                  const r=menu.getBoundingClientRect();return {exists:true,onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,
+                    awayFromCorner:r.left>4||r.top>4};
+                })()`);
+                check(inspectedMenu.exists && inspectedMenu.onGlass && inspectedMenu.awayFromCorner,
+                  'radial flask Inspect re-places against its still-visible anchor', JSON.stringify(inspectedMenu));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+                const childCancelFocus = await evaluate(`(() => {
+                  const focused=document.activeElement,root=document.querySelector('.armament-radial');
+                  const r=focused?.getBoundingClientRect?.();return {radialOpen:root?.hidden===false,
+                    radialTarget:focused?.matches?.('.armament-radial-target')===true,
+                    visible:!!r&&r.width>0&&r.height>0};
+                })()`);
+                check(childCancelFocus.radialOpen && childCancelFocus.radialTarget && childCancelFocus.visible,
+                  'closing radial flask actions restores visible focus inside the still-open radial', JSON.stringify(childCancelFocus));
+                await click('.armament-radial-target[data-flask-hotkey-slot="0"]');
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Backspace', code: 'Backspace' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Backspace', code: 'Backspace' }, sessionId);
+                const childBackFocus = await evaluate(`(() => {
+                  const focused=document.activeElement,root=document.querySelector('.armament-radial');
+                  const r=focused?.getBoundingClientRect?.();return {radialOpen:root?.hidden===false,
+                    radialTarget:focused?.matches?.('.armament-radial-target')===true,
+                    visible:!!r&&r.width>0&&r.height>0};
+                })()`);
+                check(childBackFocus.radialOpen && childBackFocus.radialTarget && childBackFocus.visible,
+                  'Backspace also restores visible focus inside the still-open radial', JSON.stringify(childBackFocus));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                await evaluate(`(() => { window.__combat.player.flaskCharges.hpCurrent=0; window.__renderCombatForShot(); return true; })()`);
+                await click('.armaments-command');
+                const hpEnabled = await evaluate(`!document.querySelector('.armament-radial-target[data-flask-hotkey-slot="0"]')?.disabled`);
+                await click('.armament-radial-target[data-flask-hotkey-slot="0"]');
+                const depletedPlan = await evaluate(`(() => ({
+                  radialOpen:document.querySelector('.armament-radial')?.hidden===false,
+                  useDisabled:document.querySelector('[data-flask-action="use"]')?.getAttribute('aria-disabled')==='true',
+                  inspectEnabled:document.querySelector('[data-flask-action="inspect"]')?.getAttribute('aria-disabled')==='false',
+                }))()`);
+                check(hpEnabled && depletedPlan.radialOpen && depletedPlan.useDisabled && depletedPlan.inspectEnabled,
+                  'depleted radial flasks remain openable for Inspect while Use stays disabled', JSON.stringify(depletedPlan));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                await click('.armaments-command');
+                await click('.armament-radial-target[data-radial-target="left"]');
+                const armouryTransition = await evaluate(`({armoury:!!document.querySelector('.armoury-overlay'),radialHidden:document.querySelector('.armament-radial')?.hidden===true})`);
+                check(armouryTransition.armoury && armouryTransition.radialHidden,
+                  'hand targets close the radial before opening Armoury', JSON.stringify(armouryTransition));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                if (shape.width <= 900) {
+                  const hasUtility = await evaluate(`(() => {
+                    const list=window.__combat.player.flasks;if(!list.length)return false;
+                    const one=list[0];window.__combat.player.flasks=[one,{...one},{...one}];window.__renderCombatForShot();return true;
+                  })()`);
+                  if (hasUtility) {
+                    await click('.armaments-command');
+                    await click('.armament-radial-target[data-radial-target="bottom"]');
+                    const pickerFit = await evaluate(`(() => {
+                      const picker=document.querySelector('.armament-radial-picker');if(!picker)return {exists:false};
+                      const r=picker.getBoundingClientRect(),buttons=[...picker.querySelectorAll('button')];
+                      return {exists:true,count:buttons.length,onGlass:r.left>=-.25&&r.right<=innerWidth+.25,scrollBound:picker.scrollWidth<=picker.clientWidth+1};
+                    })()`);
+                    check(pickerFit.exists && pickerFit.count===3 && pickerFit.onGlass && pickerFit.scrollBound,
+                      'utility picker is clamped to the phone viewport', JSON.stringify(pickerFit));
+                    await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+                  }
+                }
+
+                const fixedHold = await evaluate(`(async () => {
+                  document.documentElement.dataset.armamentsPresentation='fixed';
+                  await new Promise((pass)=>setTimeout(pass,40));
+                  const anchor=document.querySelector('.armaments-command');
+                  anchor.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));
+                  await new Promise((pass)=>setTimeout(pass,390));
+                  anchor.dispatchEvent(new PointerEvent('pointerup',{bubbles:true}));
+                  anchor.click();
+                  await new Promise((pass)=>setTimeout(pass,40));
+                  return {armoury:!!document.querySelector('.armoury-overlay'),mode:anchor.dataset.armamentsMode};
+                })()`);
+                check(fixedHold.armoury && fixedHold.mode==='fixed',
+                  'fixed mode held presses still open Armoury', JSON.stringify(fixedHold));
+                await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
+                await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
+
+                const cancelledHold = await evaluate(`(async () => {
+                  document.documentElement.dataset.armamentsPresentation='radial';
+                  await new Promise((pass)=>setTimeout(pass,40));
+                  const anchor=document.querySelector('.armaments-command'),root=document.querySelector('.armament-radial');
+                  anchor.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));
+                  anchor.dispatchEvent(new PointerEvent('pointerleave',{bubbles:true}));
+                  await new Promise((pass)=>setTimeout(pass,390));
+                  anchor.dispatchEvent(new PointerEvent('pointerup',{bubbles:true}));
+                  return {hidden:root.hidden,expanded:anchor.getAttribute('aria-expanded')};
+                })()`);
+                check(cancelledHold.hidden && cancelledHold.expanded==='false',
+                  'pointer leave cancels a pending Armaments hold', JSON.stringify(cancelledHold));
+              }
             }
 
             const capture = shots && (only || ((shape.width===390&&shape.height===844&&text==='XL'&&hand===8&&state==='rest')
@@ -433,8 +777,8 @@ async function main() {
           check(coop.direct && coop.ownerAbsent, 'co-op controls remain direct children outside the solo owner', JSON.stringify({direct:coop.direct,ownerAbsent:coop.ownerAbsent}));
           check(coop.fullHand, 'co-op hand keeps the full available row width', JSON.stringify({area:coop.area.width,hand:coop.hand.width}));
           check(coop.pairClear && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairClear:coop.pairClear,cardsClear:coop.cardsClear}));
-          check(coop.onGlass && coop.hitCounts[0]>=37 && coop.hitCounts[1]===45,
-            'co-op Energy keeps its circular hit area and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,hits:coop.hitCounts}));
+          check(coop.onGlass && Math.min(coop.energy.width,coop.energy.height)>=43.99 && coop.hitCounts[1]===45,
+            'co-op Energy keeps visible 44px geometry and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,energy:coop.energy,hits:coop.hitCounts}));
           check(narrow
             ? coop.areas.includes('"hand hand"') && coop.areas.includes('"orb end"') && coop.energyPosition==='static' && coop.endPosition==='static' && coop.energyArea==='orb' && coop.endArea==='end'
             : coop.energyPosition==='absolute' && coop.endPosition==='absolute',

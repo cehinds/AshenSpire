@@ -22,7 +22,7 @@ import { friendlyTargetMode } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
-import { figureSpec } from '../../model/loadout.js';
+import { equippedIn, figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -41,6 +41,8 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
+import { mountArmamentRadial } from '../components/armamentRadial.js';
+import { resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './settings.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -100,29 +102,18 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           <button class="hand-page hand-next" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
         </div>
-        <!-- One grid owns every persistent combat action destination. Keeping
-             the optional Exhaust cell in that same grid means revealing it
-             cannot shift, cover, or steal a standing control's hit box. -->
+        <!-- One semantic five-cell rail. Exhaust remains nested in the Discard
+             cell, so revealing it never creates a sixth sizing track. -->
         <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          <div class="energy-orb"></div>
+          <button class="armaments-command" type="button" aria-label="Armaments shortcuts"><span>ARMAMENTS</span></button>
+          <div class="energy-orb" role="status" aria-label="Actions remaining"></div>
           <button class="end-turn">END TURN</button>
-          <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
-          <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
-          <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
-          <!-- THE HINT STRIP IS A SIXTH DESTINATION IN THIS GRID, AND IT IS HERE
-               FOR THE REASON THE COMMENT ABOVE ALREADY GIVES. The chips became
-               real buttons (components/hints.js, Sten 15d4bca), so "every
-               persistent combat action destination" now includes them — and the
-               grid's guarantee that revealing a cell "cannot shift, cover, or
-               steal a standing control's hit box" is exactly the guarantee the
-               strip was missing. It sat outside as a centred sibling row, so at
-               Text XL and under a wide rebind it grew into END TURN: #295,
-               3368.8 px2 / 2700.3 px2, regression from f2acfc9 (#21). The empty
-               gutter column this grid already declared was the space meant for it.
-               Grid areas cannot overlap, so the clearance is now structural and
-               stops being a number anybody re-tunes when a label changes. -->
-          ${hintBarHtml('combat')}
+          <div class="pile draw" role="button" tabindex="0"><span class="n"></span><small>DRAW</small></div>
+          <button class="pile discard" type="button"><span class="n"></span><small>DISCARD</small><span class="exhaust-summary" hidden></span></button>
         </div>
+        <!-- Context hints remain a separate auxiliary strip. Keeping them outside
+             the command rail preserves exactly five semantic rail cells. -->
+        ${hintBarHtml('combat')}
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
@@ -165,6 +156,55 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   const HAND_PAGE_THRESHOLD = 7;
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
+  const armamentSettings = () => ({
+    ...(meta.settings || {}),
+    armamentsPresentation: document.documentElement.dataset.armamentsPresentation,
+    armamentsPhonePlacement: document.documentElement.dataset.armamentsPhonePlacement,
+  });
+  const armamentRadial = mountArmamentRadial($('.armaments-command'), {
+    mode: resolveArmamentsPresentation(armamentSettings()),
+    placement: resolveArmamentsPhonePlacement(armamentSettings()),
+    onFullArmaments: () => openCombatArmoury({ destination: 'equipment' }),
+  });
+  function openUtilityPotionPicker(flasks) {
+    armamentRadial.root.querySelector('.armament-radial-picker')?.remove();
+    const picker = document.createElement('div');
+    picker.className = 'armament-radial-picker';
+    picker.setAttribute('role', 'menu');
+    picker.setAttribute('aria-label', 'Other potions');
+    flasks.forEach((flask, slot) => {
+      const def = registries.flasks.get(flask.flaskId);
+      if (!def) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = def.name;
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openCombatFlaskMenu(button, def, { slot });
+      });
+      picker.appendChild(button);
+    });
+    armamentRadial.root.appendChild(picker);
+    const first = picker.querySelector('button');
+    first?.focus();
+    if (first) focusElement(first);
+  }
+  const syncArmamentSettings = () => {
+    const settings = armamentSettings();
+    const mode = resolveArmamentsPresentation(settings);
+    const placement = resolveArmamentsPhonePlacement(settings);
+    armamentRadial.update({ mode, placement });
+    combatEl.dataset.armamentsPresentation = mode;
+  };
+  let armamentSettingsObserver = null;
+  if (typeof MutationObserver !== 'undefined') {
+    armamentSettingsObserver = new MutationObserver(syncArmamentSettings);
+    armamentSettingsObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-armaments-presentation', 'data-armaments-phone-placement'],
+    });
+  }
 
   // A blank press dismisses only the floating explanation. The edge inspector
   // is a separately owned Folding Tray and remains until its label is folded.
@@ -711,6 +751,35 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       potions.appendChild(el);
     });
     potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
+    const radialItems = [];
+    for (const kind of CHARGE_FLASK_KINDS) {
+      const def = chargeFlaskDefinition(registries, kind);
+      const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
+      radialItems.push({
+        target: 'top', label: kind === 'hp' ? 'HP Flask' : 'MP Flask', detail: String(current),
+        ariaLabel: `${def.name}, ${current} remaining`, hotkeySlot: kind === 'hp' ? 0 : 1,
+        activate: (anchor) => {
+          openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current });
+        },
+      });
+    }
+    const leftPiece = equippedIn(registries, run.loadout, run.class, 'leftHand');
+    const rightPiece = equippedIn(registries, run.loadout, run.class, 'rightHand');
+    const openHandArmoury = () => {
+      armamentRadial.close();
+      openCombatArmoury({ destination: 'equipment' });
+    };
+    radialItems.push({ target: 'left', label: 'Left', detail: leftPiece?.name || 'Empty', activate: openHandArmoury });
+    radialItems.push({ target: 'full', label: 'Full Armaments', detail: 'Open' });
+    radialItems.push({ target: 'right', label: 'Right', detail: rightPiece?.name || 'Empty', activate: openHandArmoury });
+    if (p.flasks.length) radialItems.push({
+      target: 'bottom', label: 'Potions', detail: String(p.flasks.length),
+      ariaLabel: `Other potions, ${p.flasks.length}`,
+      hotkeySlot: 2,
+      activate: () => openUtilityPotionPicker(p.flasks),
+    });
+    armamentRadial.setItems(radialItems);
+    syncArmamentSettings();
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -1063,7 +1132,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function renderControls() {
-    $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    const energy = $('.energy-orb');
+    energy.textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    energy.setAttribute('aria-label', `Actions ${combat.player.energy} of ${combat.player.energyMax}`);
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
@@ -1076,9 +1147,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .n').textContent = combat.piles.draw.length;
     $('.pile.discard .n').textContent = combat.piles.discard.length;
-    const ex = $('.pile.exhaust');
-    ex.style.display = combat.piles.exhaust.length ? '' : 'none';
-    ex.querySelector('.n').textContent = combat.piles.exhaust.length;
+    const ex = $('.exhaust-summary');
+    ex.hidden = !combat.piles.exhaust.length;
+    ex.textContent = combat.piles.exhaust.length ? `${combat.piles.exhaust.length} Exhaust` : '';
+    $('.pile.discard').setAttribute('aria-label', combat.piles.exhaust.length
+      ? `Discard pile, ${combat.piles.discard.length}; Exhaust pile, ${combat.piles.exhaust.length}`
+      : `Discard pile, ${combat.piles.discard.length}`);
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -1364,11 +1438,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
 
-    // Flask keys activate the numbered visible HUD control; they never auto-use.
+    // Flask keys activate the corresponding visible control; they never
+    // auto-use. Radial mode first reveals its real positioned shortcut so the
+    // shared action menu never measures a display:none HUD anchor.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
+        let slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
+        if (combatEl.dataset.armamentsPresentation === 'radial') {
+          armamentRadial.open();
+          slotEl = armamentRadial.root.querySelector(`[data-flask-hotkey-slot="${slot}"]`);
+        }
         if (slotEl) slotEl.click();
         return;
       }
@@ -1606,10 +1686,59 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   endTurnBeat.refresh();
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
-  const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  const showDiscard = () => {
+    if (!combat.piles.exhaust.length) return openPileModal(registries, 'Discard pile', combat.piles.discard);
+    const veil = document.createElement('div');
+    veil.className = 'modal-veil';
+    const modal = document.createElement('div');
+    modal.className = 'modal pile-surface-picker';
+    const heading = document.createElement('h2');
+    heading.textContent = 'Choose pile';
+    modal.appendChild(heading);
+    const opener = $('.pile.discard');
+    const closePicker = ({ restoreFocus = false } = {}) => {
+      window.removeEventListener('keydown', onPickerCancel);
+      veil.remove();
+      if (restoreFocus && opener.isConnected) {
+        opener.focus();
+        focusElement(opener);
+      }
+    };
+    const onPickerCancel = (event) => {
+      if (event.key !== 'Escape' && event.key !== 'Backspace') return;
+      event.preventDefault();
+      event.stopPropagation();
+      closePicker({ restoreFocus: true });
+    };
+    for (const [label, cards] of [['Discard pile', combat.piles.discard], ['Exhaust pile', combat.piles.exhaust]]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${label} (${cards.length})`;
+      button.addEventListener('click', () => {
+        closePicker();
+        openPileModal(registries, label, cards);
+      });
+      modal.appendChild(button);
+    }
+    veil.appendChild(modal);
+    veil.addEventListener('click', (event) => { if (event.target === veil) closePicker(); });
+    document.body.appendChild(veil);
+    window.addEventListener('keydown', onPickerCancel);
+    const first = modal.querySelector('button');
+    first?.focus();
+    if (first) focusElement(first);
+    return veil;
+  };
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
-  $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+  for (const [pile, open] of [[ $('.pile.draw'), showDraw ], [ $('.pile.discard'), showDiscard ]]) {
+    pile.addEventListener('keydown', (event) => {
+      if (event.target !== pile) return;
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
+    });
+  }
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
@@ -1692,6 +1821,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const pagerVeilObserver = new MutationObserver(() => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         pagerVeilObserver.disconnect();
+        armamentSettingsObserver?.disconnect();
         delete combatEl.dataset.handPagerOwner;
         return;
       }
