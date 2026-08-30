@@ -15,9 +15,9 @@
 <dt>Done when</dt><dd>A specification exists for an owner-facing view generated deterministically from validated .agentops state (as the Owner HUD already is), covering which Hub sections carry real signal, which depend on evidence that no longer exists, and what the migration costs.</dd>
 <dt>Next action</dt><dd>Audit the committed Hub output against live control-plane state, record exactly which sections are stale and which are unrecoverable, then specify the regenerable replacement. Do not edit review-approval-hub/** - it is build output with no source in this repository and would be clobbered by any rebuild.</dd>
 <dt>Branch</dt><dd><code>recovery/as-hd-056</code></dd>
-<dt>Base</dt><dd><code>a3dca79f72a9</code></dd>
-<dt>Revision</dt><dd>45 · seal <code>sha256:75cb2aa89d8586b5…</code></dd>
-<dt>Succeeds</dt><dd><code>sha256:6856924295dd8e81…</code></dd>
+<dt>Base</dt><dd><code>5dd47d487812</code></dd>
+<dt>Revision</dt><dd>46 · seal <code>sha256:51ed5b03dd2ca389…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:75cb2aa89d8586b5…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
 <dt>May</dt><dd><span class="pill">implement-locally-on-exclusive-paths</span> <span class="pill">run-tests-and-builds</span> <span class="pill">commit-on-isolated-branch</span> <span class="pill">record-blocker-and-continue-collision-free-work</span></dd>
@@ -77,6 +77,7 @@
 <li><code>AS-HD-056-0044</code> · state-change · maker · 2026-08-30T01:01:50.381Z<br>Reseated from 2c07adb1a560 to live HEAD 3468363e1dad; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 43; parent_hash names sha256:edb13c731fb84ae576c4b86676cb80d4eb7834352102cf6a4e7f2a53ea565214.</li>
 <li><code>AS-HD-056-0045</code> · state-change · maker · 2026-08-30T01:09:18.958Z<br>Reseated from 3468363e1dad to live HEAD 78d8eac2ec7a; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 44; parent_hash names sha256:ff6e5b71df4be43767f8723b038c608208f47f124162094a07c1e7f7355683e1.</li>
 <li><code>AS-HD-056-0046</code> · state-change · maker · 2026-08-30T01:18:20.798Z<br>Reseated from 78d8eac2ec7a to live HEAD a3dca79f72a9; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 45; parent_hash names sha256:6856924295dd8e81eee84dd5a2cbb0cd6fee0b1a63553fa198c4f61082377834.</li>
+<li><code>AS-HD-056-0047</code> · state-change · maker · 2026-08-30T01:23:18.960Z<br>Reseated from a3dca79f72a9 to live HEAD 5dd47d487812; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 46; parent_hash names sha256:75cb2aa89d8586b533b23b3e65b78319045b4a44664478a2226a3056b00af803.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>
