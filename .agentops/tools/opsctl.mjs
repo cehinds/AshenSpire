@@ -296,6 +296,33 @@ export function semanticChecks(c, now = new Date().toISOString()) {
     }
     // An actor outside the ladder has authority nobody wrote down.
     for (const n of nodes) if (!placed.has(n)) errors.push(`hierarchy: '${n}' is a hierarchy node in no authority tier; its decision authority is undeclared`);
+
+    // The same hole one level up. The ladder places ACTORS, so a role with no
+    // standing actor sits outside it entirely: the nine seniority roles that
+    // arrived with the programmers, art and QA rosters hold `may`, `must_not`
+    // and an approval ceiling that nothing in the ladder constrains. Their own
+    // missions say what they are — "the maker archetype at entry level" — but
+    // prose is not a constraint. A role either has a standing actor in the
+    // hierarchy, or it declares the archetype it derives from, and then it
+    // carries exactly that archetype's authority.
+    const AUTHORITY_FIELDS = ['may', 'must', 'must_not', 'approval_ceiling'];
+    const byRole = new Map(c.roles.roles.map((r) => [r.role, r]));
+    const staffed = new Set(c.hierarchy.nodes.map((n) => n.role));
+    for (const r of c.roles.roles) {
+      if (!r.archetype) {
+        if (!staffed.has(r.role)) errors.push(`roles: '${r.role}' has no actor in the hierarchy and declares no archetype, so no authority tier governs what it may do`);
+        continue;
+      }
+      const a = byRole.get(r.archetype);
+      if (!a) { errors.push(`roles: '${r.role}' derives from archetype '${r.archetype}', which is not a declared role`); continue; }
+      if (a.archetype) { errors.push(`roles: '${r.role}' derives from '${r.archetype}', which is itself derived; an archetype chain lets authority drift a link at a time`); continue; }
+      if (!staffed.has(a.role)) { errors.push(`roles: '${r.role}' derives from '${a.role}', which has no actor in the hierarchy either, so neither is placed in a tier`); continue; }
+      for (const f of AUTHORITY_FIELDS) {
+        if (JSON.stringify(r[f]) !== JSON.stringify(a[f])) {
+          errors.push(`roles: '${r.role}' derives from '${a.role}' but its ${f} differs; a seniority level is assignment scope, never a wider authority ceiling`);
+        }
+      }
+    }
     const owner = c['owner-intent'] && c['owner-intent'].owner.actor_id;
     const p0 = at.levels.find((l) => l.p === 0);
     if (owner && p0 && !p0.actors.includes(owner)) errors.push(`hierarchy: P0 does not contain the owner '${owner}'`);
@@ -998,6 +1025,7 @@ export function renderGovernance(c) {
     L.push(`### \`${r.role}\``);
     L.push('');
     L.push(`- **Mission:** ${r.mission}`);
+    if (r.archetype) L.push(`- **Derives from:** \`${r.archetype}\` — a seniority level, carrying exactly that archetype's authority and no more.`);
     L.push(`- **May:** ${r.may.join(', ') || '—'}`);
     L.push(`- **Must:** ${r.must.join('; ') || '—'}`);
     L.push(`- **Must not:** ${r.must_not.join(', ') || '—'}`);
@@ -2632,11 +2660,12 @@ const VIEW_PROBES = {
     '### `' + r.role + '`',
     '',
     `- **Mission:** ${r.mission}`,
+    r.archetype ? `- **Derives from:** \`${r.archetype}\` \u2014 a seniority level, carrying exactly that archetype's authority and no more.` : null,
     `- **May:** ${r.may.join(', ') || '\u2014'}`,
     `- **Must:** ${r.must.join('; ') || '\u2014'}`,
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
-  ].join('\n')),
+  ].filter((l) => l !== null).join('\n')),
   teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
@@ -3339,6 +3368,17 @@ export function runSelftest(root = ROOT) {
     c.teams.charter_exception.escalation_class = 'technical-blocker';
     c.escalation.classes.find((x) => x.id === 'technical-blocker').wake = c['owner-intent'].owner.actor_id;
   }, 'must reach the owner immediately');
+  // A role outside the ladder. The nine seniority roles have no standing actor,
+  // so nothing placed them in a tier until they declared an archetype; each way
+  // of loosening that declaration has to fail.
+  expectSemantic('roles: a role with no actor and no archetype is ungoverned', (c) => { delete c.roles.roles.find((r) => r.role === 'app-dev-i').archetype; }, 'no authority tier governs what it may do');
+  expectSemantic('roles: an archetype that is not a declared role', (c) => { c.roles.roles.find((r) => r.role === 'artist-ii').archetype = 'principal-engineer'; }, 'is not a declared role');
+  expectSemantic('roles: an archetype chain', (c) => { c.roles.roles.find((r) => r.role === 'app-dev-i').archetype = 'app-dev-iii'; }, 'an archetype chain lets authority drift a link at a time');
+  expectSemantic('roles: an archetype with no actor of its own', (c) => { c.roles.roles.find((r) => r.role === 'qa-technician-i').archetype = 'artist-iii'; c.roles.roles.find((r) => r.role === 'artist-iii').archetype = undefined; delete c.roles.roles.find((r) => r.role === 'artist-iii').archetype; }, 'has no actor in the hierarchy either');
+  expectSemantic('roles: a seniority level widening its approval ceiling', (c) => { c.roles.roles.find((r) => r.role === 'app-dev-iii').approval_ceiling = 'integration-to-dev'; }, 'never a wider authority ceiling');
+  expectSemantic('roles: a seniority level granting itself an extra action', (c) => { c.roles.roles.find((r) => r.role === 'app-dev-iii').may.push('push-pr-merge-deploy-or-release'); }, 'its may differs');
+  expectSemantic('roles: a seniority level dropping one of its must_nots', (c) => { const r = c.roles.roles.find((x) => x.role === 'qa-technician-iii'); r.must_not = r.must_not.filter((m) => m !== 'review-own-implementation'); }, 'its must_not differs');
+  expectSemantic('roles: a seniority level dropping one of its musts', (c) => { const r = c.roles.roles.find((x) => x.role === 'artist-i'); r.must = []; }, 'its must differs');
   expectSemantic('pin: branch-rewrite permission moved off the deputy', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'help-desk'; }, 'moving the tier text does not transfer it');
   // Deriving one mutable declaration from another is not a constraint: move the
   // tier text to P2 as well and the two agree again, which is exactly what the
