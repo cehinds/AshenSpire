@@ -1284,6 +1284,14 @@ export function hierarchyRoles(contracts) {
   return new Set((h.nodes || []).map((n) => n.role));
 }
 
+// Membership in the hierarchy is by ACTOR, not by role. hierarchyRoles was
+// being queried with an actor id, which happened to work only while the two
+// namespaces coincided.
+export function hierarchyActors(contracts) {
+  const h = contracts.hierarchy || {};
+  return new Set((h.nodes || []).map((n) => n.actor_id));
+}
+
 // D5: a lease may only grant path globs that git-ownership actually declares,
 // and only to the role that owns them. Without this, "one writer per
 // overlapping path" is unenforced for every path outside .agentops/ — a lease
@@ -1397,6 +1405,7 @@ export function runtimeChecks(g, rt) {
   // when it blocks, escalation routing has nowhere to send it and the only
   // recorded outcome is silence. Declaring the role is not enough.
   const hierRoles = hierarchyRoles(g);
+  const hierActors = hierarchyActors(g);
   // A blocker names an escalation CLASS, never a wake target. escalation.json
   // owns who a class reaches, so a capsule cannot route itself to the Owner to
   // jump the queue, nor away from the Owner to dodge a protected decision.
@@ -1494,7 +1503,7 @@ export function runtimeChecks(g, rt) {
 
   // Leases: role validity, time-bound, path safety.
   for (const l of rt.leases) {
-    if (!roles.has(l.actor)) errors.push(`lease '${l.id}' actor role '${l.actor}' is unknown`);
+    if (!roles.has(actorRole(g, l.actor))) errors.push(`lease '${l.id}' actor '${l.actor}' resolves to no declared role`);
     if (!roles.has(l.issuer)) errors.push(`lease '${l.id}' issuer role '${l.issuer}' is unknown`);
     if (l.expiry <= l.issued) errors.push(`lease '${l.id}' expiry is at or before issued (already expired)`);
     for (const p of l.path_globs) if (p.split('/').includes('..')) errors.push(`lease '${l.id}' path glob '${p}' contains a '..' traversal segment`);
@@ -1552,7 +1561,7 @@ export function runtimeChecks(g, rt) {
       if (lease.revoked) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' is revoked`);
       if (lease.ticket !== ticket) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' belongs to ticket '${lease.ticket}'`);
       if (lease.actor !== cap.owner_actor) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' does not match lease actor '${lease.actor}'`);
-      if (hierRoles.size && !hierRoles.has(cap.owner_actor)) {
+      if (hierActors.size && !hierActors.has(cap.owner_actor)) {
         errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' has no node in hierarchy.json, so a blocked seat has no escalation parent`);
       }
       if (lease.ref !== cap.ref) errors.push(`capsule '${ticket}' ref '${cap.ref}' does not match lease ref '${lease.ref}'`);
@@ -2502,27 +2511,27 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // escalation classes), and probeStrengthErrors below proves each one still fails
 // when its block is removed.
 const VIEW_PROBES = {
-  authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} |`),
+  authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => st.does)],
-  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} |`)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.steps.map((st) => st.does)],
+  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
   'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${pp.glob}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule],
-  hierarchy: (x) => [...x.nodes.map((n) => n.owns_escalations.join(', ')), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => `**P${lv.p}** ${lv.label}`)],
-  'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` |`),
+  hierarchy: (x) => [...x.nodes.map((n) => n.owns_escalations.join(', ')), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
+  'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
   migration: (x) => [x.principle],
-  'model-effort': (x) => [x.principle, ...x.tiers.map((t) => `| ${t.risk_and_station} |`)],
-  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} |`)],
+  'model-effort': (x) => [x.principle, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
+  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`)],
   'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
-  'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => g.name)],
-  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} |`)],
-  raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} |`)],
+  'promotion-gates': (x) => [x.principle, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` |`), ...x.gates.map((g) => `${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
+  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
+  raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
   roles: (x) => x.roles.map((r) => [
     '### `' + r.role + '`',
     '',
@@ -2532,7 +2541,7 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].join('\n')),
-  teams: (x) => [x.principle, ...x.standing_roles.map((r) => r.responsibility), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
+  teams: (x) => [x.principle, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${l.seat_name} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace],
   transitions: (x) => [x.principle, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
 
@@ -3262,6 +3271,27 @@ export function runSelftest(root = ROOT) {
     }
     results.push({ label: 'deleting any rendered policy row or bullet fails the coverage gate', pass: undeletable.length === 0, errs: undeletable.slice(0, 8) });
     results.push({ label: 'the row sweep found rows to sweep', pass: rows >= 100, errs: [String(rows)] });
+
+    // A row can survive losing a COLUMN. Probes that stopped at a prefix let 58
+    // rows across ten tables blank their last cell — including whether an
+    // authority grant is protected, what evidence authorizes it, and an
+    // envelope's actions and validity window. Every table probe is the whole
+    // rendered row now; this is what holds that, since my judgement of which
+    // columns "obviously" needed probing was wrong ten times.
+    let cells = 0;
+    const blankable = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!/^\| /.test(l) || /^\|---/.test(l) || /^\| *[A-Z#]/.test(l)) continue;
+      const parts = l.split('|');
+      if (parts.length < 5) continue;
+      cells++;
+      const blanked = parts.slice(0, parts.length - 2).join('|') + '| OMITTED |';
+      const mutated = lines.slice(0, i).concat([blanked], lines.slice(i + 1)).join('\n');
+      if (viewCoverageErrors(contracts, mutated).length === 0) blankable.push(l.slice(0, 60));
+    }
+    results.push({ label: "blanking any table row's last column fails the coverage gate", pass: blankable.length === 0, errs: blankable.slice(0, 8) });
+    results.push({ label: 'the column sweep found rows to sweep', pass: cells >= 80, errs: [String(cells)] });
 
     // ...and a contract added with no probe at all must fail rather than skip.
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };
