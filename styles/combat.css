@@ -1255,11 +1255,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
 :root[data-composition='short-wide'] .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
   /* Six real destinations cannot form a non-overlapping radial inside the
-     phone's narrow glass. Keep the semantic placement map, but arrange its
-     phone presentation as three compact rows: top pair, left/full/right, and
-     bottom. Wider layouts retain the spatial radial above. */
+     narrower phone/tablet glass. Keep the semantic placement map, but arrange
+     its responsive presentation as three compact rows: top pair,
+     left/full/right, and bottom. Wider layouts retain the spatial radial. */
   .armament-radial {
     width: min(92vw, 28rem); aspect-ratio: auto;
     bottom: calc(var(--action-row-drop) + .4rem);

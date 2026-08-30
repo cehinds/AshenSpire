@@ -6461,7 +6461,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    The offset and its reservation are now the same token, so they cannot drift,
    and `short-wide`'s deeper drop below overrides ONE value instead of leaving a
    6.4rem hang against a 5.2rem reservation that was never written down. */
-.combat { --action-row-drop: 5.2rem; }
+/* The row's tallest cell and the deepest fanned card need a real separation
+   band. These measured reservations keep that band intact in the portrait
+   884x1326 matrix and in the compressed short-wide composition below. */
+.combat { --action-row-drop: 6.4rem; }
 .hand-area {
   height: 23rem; flex-shrink: 0; position: relative;
   display: flex; align-items: flex-end; justify-content: center;
@@ -6555,39 +6558,22 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .combat-action-row {
   position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
   display: grid;
-  grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
-  grid-template-areas: "energy draw hints end exhaust discard";
+  grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(8rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));
+  grid-template-areas: "armaments energy end draw discard";
   align-items: end; gap: 0.8rem;
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
-/* #295 — THE STRIP TAKES THE GUTTER THIS GRID ALREADY DECLARED. It was `.`; it
-   is now `hints`, and no track changed width. The overlap it fixes was never a
-   near miss that got worse: END TURN's column is `minmax(15rem, auto)`, so it
-   widens with its own label, while the strip was centred on the VIEWPORT by a
-   sibling rule. Two homes for "the middle of the bottom band", agreeing only by
-   luck at the shipped text size. One home now.
-
-   `padding-block: 0` IS THE HALF THAT KEEPS H1 GREEN, AND IT DELETES A RULE
-   RATHER THAN TUNING ONE. `.hint-bar`'s `0.4rem` block padding is the padding of
-   a FLOATING PILL — the thing this element stopped being the moment it became a
-   grid cell. Left in, the strip is the tallest item in a bottom-anchored row
-   (53.2 px against 50.4 at Text S), so the row grows UPWARD into the hand and a
-   card lands on the strip by 0.69 px — measured, and the exact cost Sunna
-   recorded as open on falk/295-hintstrip-layout-sunna @ 33ebb8b. Taken out, the
-   strip is its chips' own height, the row's height is unchanged at every text
-   size, and H1's clearance goes back to what it was before this act
-   (5.70 / 6.34 / 7.61 px). The chips keep `--tap-floor`; nothing pressable
-   shrank. Inline padding is untouched — it is the pill's horizontal breathing
-   room and the grid does not supply it.
-
-   NARROW IS NOT REACHED BY ANY OF THIS: `:root[data-layout='narrow'] .hint-bar`
-   is `display: none` (styles/ui.css, #29 slice 0) and narrow re-declares this
-   grid's areas without a `hints` track, so an unplaced item there would have
-   created an implicit track — it cannot, because it renders no box. */
-.combat-action-row > .hint-bar.hint-combat {
-  grid-area: hints; justify-self: center; align-self: end;
-  margin: 0; max-width: 100%; padding-block: 0;
+.armaments-command {
+  grid-area: armaments; min-height: var(--tap-floor); border: 1px solid var(--gold);
+  background: var(--panel); color: var(--parchment); border-radius: 8px;
+  font-size: 0.78rem; letter-spacing: 0.08em; font-weight: 800;
+}
+/* The five-cell rail carries its own direct controls and key labels. The older
+   contextual combat strip would either become a sixth track or cover the rail,
+   so it is retired on this screen; map and other contextual strips are intact. */
+.hand-area > .hint-bar.hint-combat {
+  display: none;
 }
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
@@ -6612,7 +6598,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .combat-action-row > .end-turn { grid-area: end; position: static; right: auto; bottom: auto; }
 .end-turn .et-key {
-  font-family: var(--font-body); font-size: 1rem; margin-left: 0.7rem; vertical-align: 1px;
+  display: block; width: max-content; margin: 0.2rem auto 0; font-family: var(--font-body); font-size: 0.82rem;
   padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
@@ -6629,11 +6615,81 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .pile.discard { right: 1.6rem; }
 .pile.exhaust { right: 8.2rem; opacity: 0.85; }
 .combat-action-row > .pile {
-  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  position: static; inset: auto; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
 }
 .combat-action-row > .pile.draw { grid-area: draw; }
 .combat-action-row > .pile.discard { grid-area: discard; }
-.combat-action-row > .pile.exhaust { grid-area: exhaust; }
+.combat-action-row > .pile.discard { position: static; inset: auto; }
+.exhaust-summary { color: var(--muted); font-size: .65rem; letter-spacing: .05em; }
+
+:root[data-armaments-presentation='radial'] .hud-charge-flasks,
+:root[data-armaments-presentation='radial'] .hud-potions { display: none !important; }
+
+.armament-radial {
+  position: fixed; z-index: 360; left: 1.6rem; bottom: calc(var(--action-row-drop) + 1rem);
+  width: min(24rem, 46vw); aspect-ratio: 1.35; pointer-events: auto;
+}
+.armament-radial-target {
+  position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: 10px;
+  background: rgba(18,15,12,.96); color: var(--parchment); display: grid; place-items: center;
+  font-size: .78rem; font-weight: 800; line-height: 1.05;
+}
+.armament-radial-target small { color: var(--muted); font-size: .68rem; }
+.armament-radial-target[data-radial-target='top'] { top: 0; left: 50%; transform: translateX(-105%); }
+.armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { transform: translateX(5%); }
+.armament-radial-target[data-radial-target='left'] { left: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='right'] { right: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='full'] { left: 50%; top: 48%; transform: translate(-50%,-50%); }
+.armament-radial-target[data-radial-target='bottom'] { bottom: 0; left: 50%; transform: translateX(-50%); }
+.armament-radial-picker {
+  position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
+  z-index: 2; display: flex; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
+  border-radius: 9px; background: rgba(18,15,12,.98);
+}
+.armament-radial-picker button,
+.pile-surface-picker button { min-width: var(--tap-floor); min-height: var(--tap-floor); }
+.pile-surface-picker { display: grid; gap: .6rem; }
+
+/* Short-wide has desktop width but phone-like vertical pressure. Its six
+   destinations use the same collision-free semantic map as phones instead of
+   squeezing an absolute radial into the shallow space above the rail. */
+:root[data-composition='short-wide'] .armament-radial {
+  width: min(54vw, 28rem); aspect-ratio: auto;
+  bottom: calc(var(--action-row-drop) + .4rem);
+  display: grid; grid-template-columns: repeat(3, minmax(var(--tap-floor), 1fr));
+  gap: .35rem; padding: .35rem;
+}
+:root[data-composition='short-wide'] .armament-radial-target { position: static; min-width: 0; transform: none !important; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] { grid-row: 1; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+
+@media (max-width: 900px) {
+  /* Six real destinations cannot form a non-overlapping radial inside the
+     narrower phone/tablet glass. Keep the semantic placement map, but arrange
+     its responsive presentation as three compact rows: top pair,
+     left/full/right, and bottom. Wider layouts retain the spatial radial. */
+  .armament-radial {
+    width: min(92vw, 28rem); aspect-ratio: auto;
+    bottom: calc(var(--action-row-drop) + .4rem);
+    display: grid; grid-template-columns: repeat(3, minmax(var(--tap-floor), 1fr));
+    gap: .35rem; padding: .35rem;
+  }
+  .armament-radial-target { position: static; min-width: 0; transform: none !important; }
+  .armament-radial-target[data-radial-target='top'] { grid-row: 1; grid-column: 1; }
+  .armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { grid-column: 3; }
+  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }
+  .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
+  .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
+  .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+  .armament-radial[data-placement='left'] { left: max(.4rem, env(safe-area-inset-left)); right: auto; }
+  .armament-radial[data-placement='center'] { left: 50%; right: auto; transform: translateX(-50%); }
+  .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, env(safe-area-inset-right)); }
+}
 
 /* ---------- targeting arrow ---------- */
 #target-arrow { position: fixed; z-index: 400; pointer-events: none; }
@@ -6881,7 +6937,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .hand .card.selected {
   transform: translateY(-12px) scale(1.1) !important;
 }
-:root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
+:root[data-composition='short-wide'] .combat { --action-row-drop: 11.2rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
 :root[data-composition='short-wide'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
@@ -7103,15 +7159,15 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
   :root[data-layout='narrow'] .combat-action-row {
     grid-area: actions; position: static; inset: auto; width: 100%;
-    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));
-    grid-template-areas: "energy end draw exhaust discard";
+    grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(7.5rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));
+    grid-template-areas: "armaments energy end draw discard";
     align-items: center; gap: 0.4rem;
   }
   :root[data-layout='narrow'] .combat-action-row > .energy-orb {
     width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
   }
   :root[data-layout='narrow'] .combat-action-row > .end-turn {
-    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    min-height: 6rem; font-size: 1.15rem; padding: 0.6rem;
     margin: 0; min-width: 0;
   }
 
@@ -7593,7 +7649,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { mountCompendium } = require("src/ui/screens/compendium.js");
-const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } = require("src/ui/screens/settings.js");
 const { mountEquipment, resetArmouryTraySession } = require("src/ui/screens/equipment.js");
 const { openOverlay, closeOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -8154,6 +8210,8 @@ function applyDisplaySettings(settings) {
     console.warn(msg);
   }
   document.documentElement.dataset.handLayout = handLayout;
+  document.documentElement.dataset.armamentsPresentation = resolveArmamentsPresentation(settings);
+  document.documentElement.dataset.armamentsPhonePlacement = resolveArmamentsPhonePlacement(settings);
   const strengths = UI.cardMotifStrength;
   const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
   document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
@@ -41842,7 +41900,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b528329672';
+const SOURCE = 'd325e6366d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41876,7 +41934,7 @@ const SOURCE = 'b528329672';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1454';
+const ORDINAL = '1687';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41903,7 +41961,7 @@ const ORDINAL = '1454';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-28';
+const BUILT = '2026-08-30';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -42410,6 +42468,13 @@ const ROWS = [
     choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
 
+  { cat: 'Display', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+    choices: ['radial', 'fixed'], label: 'Combat Armaments',
+    note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
+  { cat: 'Display', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+    choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
+    note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
+
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
@@ -42724,6 +42789,16 @@ function musicEnabledCondition(settings = {}) {
     ? settings.musicVolume
     : AUDIO_DEFAULTS.musicVolume;
   return `Music on · volume ${volume}%.`;
+}
+
+function resolveArmamentsPresentation(settings = {}) {
+  return ['radial', 'fixed'].includes(settings.armamentsPresentation)
+    ? settings.armamentsPresentation : 'radial';
+}
+
+function resolveArmamentsPhonePlacement(settings = {}) {
+  return ['left', 'center', 'right'].includes(settings.armamentsPhonePlacement)
+    ? settings.armamentsPhonePlacement : 'left';
 }
 
 function rowNote(settings, row) {
@@ -43733,7 +43808,7 @@ function openSettings({ meta, onChange, saves = null }) {
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, musicEnabledCondition, settingOn, settingsRowHtml, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement, settingOn, settingsRowHtml, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/about.js": function (module, exports, require) {
@@ -44083,6 +44158,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-361",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The Review & Approval Hub refreshes its owner decisions and adds Context Rotation",
+    "detail": "The owner-facing hub promotes the two bounded Art decisions into cards that need Constantine without approving either, adds the #053 Context Rotation dashboard and its 13-team / 52-seat report, and separates registration and cold-start acceptance from execution, rotation, and successor-resume proof. Local-only evidence URLs now resolve to the explicit unavailable page instead of leaking author-local file paths. Evidence and hub only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.",
+    "build": "0.4.0.1454",
+    "pullRequest": 361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/361"
+  },
   {
     "id": "pr-350",
     "date": "2026-08-26",
@@ -55800,6 +55885,11 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendCont
     // a reachable node before this debounce fires; reading it in the callback
     // would mislabel the detached board's old camera as belonging to that node.
     pendingViewCommit = viewSnapshot();
+    // Keep the in-memory run camera current synchronously. Save & Quit may
+    // arrive before this debounce fires; the non-committing handoff updates
+    // the run without adding a durable write. The timer remains the sole
+    // settled-board commit.
+    emitViewState(false, pendingViewCommit);
     viewCommitTimer = setTimeout(() => {
       viewCommitTimer = null;
       const snapshot = pendingViewCommit;
@@ -56627,6 +56717,8 @@ const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
 const { battlefieldStageModel } = require("src/ui/models/BattlefieldStageModel.js");
 const { wireBattlefieldStage } = require("src/ui/components/battlefieldStage.js");
 const { tooltipPlacementModel } = require("src/ui/models/TooltipPlacementModel.js");
+const { mountArmamentRadial } = require("src/ui/components/armamentRadial.js");
+const { resolveArmamentsPresentation, resolveArmamentsPhonePlacement } = require("src/ui/screens/settings.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -56686,29 +56778,18 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           <button class="hand-page hand-next" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
         </div>
-        <!-- One grid owns every persistent combat action destination. Keeping
-             the optional Exhaust cell in that same grid means revealing it
-             cannot shift, cover, or steal a standing control's hit box. -->
+        <!-- One semantic five-cell rail. Exhaust remains nested in the Discard
+             cell, so revealing it never creates a sixth sizing track. -->
         <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          <div class="energy-orb"></div>
+          <button class="armaments-command" type="button" aria-label="Armaments shortcuts"><span>ARMAMENTS</span></button>
+          <div class="energy-orb" role="status" aria-label="Actions remaining"></div>
           <button class="end-turn">END TURN</button>
-          <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
-          <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
-          <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
-          <!-- THE HINT STRIP IS A SIXTH DESTINATION IN THIS GRID, AND IT IS HERE
-               FOR THE REASON THE COMMENT ABOVE ALREADY GIVES. The chips became
-               real buttons (components/hints.js, Sten 15d4bca), so "every
-               persistent combat action destination" now includes them — and the
-               grid's guarantee that revealing a cell "cannot shift, cover, or
-               steal a standing control's hit box" is exactly the guarantee the
-               strip was missing. It sat outside as a centred sibling row, so at
-               Text XL and under a wide rebind it grew into END TURN: #295,
-               3368.8 px2 / 2700.3 px2, regression from f2acfc9 (#21). The empty
-               gutter column this grid already declared was the space meant for it.
-               Grid areas cannot overlap, so the clearance is now structural and
-               stops being a number anybody re-tunes when a label changes. -->
-          ${hintBarHtml('combat')}
+          <div class="pile draw" role="button" tabindex="0"><span class="n"></span><small>DRAW</small></div>
+          <button class="pile discard" type="button"><span class="n"></span><small>DISCARD</small><span class="exhaust-summary" hidden></span></button>
         </div>
+        <!-- Context hints remain a separate auxiliary strip. Keeping them outside
+             the command rail preserves exactly five semantic rail cells. -->
+        ${hintBarHtml('combat')}
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
@@ -56751,6 +56832,55 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   const HAND_PAGE_THRESHOLD = 7;
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
+  const armamentSettings = () => ({
+    ...(meta.settings || {}),
+    armamentsPresentation: document.documentElement.dataset.armamentsPresentation,
+    armamentsPhonePlacement: document.documentElement.dataset.armamentsPhonePlacement,
+  });
+  const armamentRadial = mountArmamentRadial($('.armaments-command'), {
+    mode: resolveArmamentsPresentation(armamentSettings()),
+    placement: resolveArmamentsPhonePlacement(armamentSettings()),
+    onFullArmaments: () => openCombatArmoury({ destination: 'equipment' }),
+  });
+  function openUtilityPotionPicker(flasks) {
+    armamentRadial.root.querySelector('.armament-radial-picker')?.remove();
+    const picker = document.createElement('div');
+    picker.className = 'armament-radial-picker';
+    picker.setAttribute('role', 'menu');
+    picker.setAttribute('aria-label', 'Other potions');
+    flasks.forEach((flask, slot) => {
+      const def = registries.flasks.get(flask.flaskId);
+      if (!def) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = def.name;
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openCombatFlaskMenu(button, def, { slot });
+      });
+      picker.appendChild(button);
+    });
+    armamentRadial.root.appendChild(picker);
+    const first = picker.querySelector('button');
+    first?.focus();
+    if (first) focusElement(first);
+  }
+  const syncArmamentSettings = () => {
+    const settings = armamentSettings();
+    const mode = resolveArmamentsPresentation(settings);
+    const placement = resolveArmamentsPhonePlacement(settings);
+    armamentRadial.update({ mode, placement });
+    combatEl.dataset.armamentsPresentation = mode;
+  };
+  let armamentSettingsObserver = null;
+  if (typeof MutationObserver !== 'undefined') {
+    armamentSettingsObserver = new MutationObserver(syncArmamentSettings);
+    armamentSettingsObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-armaments-presentation', 'data-armaments-phone-placement'],
+    });
+  }
 
   // A blank press dismisses only the floating explanation. The edge inspector
   // is a separately owned Folding Tray and remains until its label is folded.
@@ -57297,6 +57427,27 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       potions.appendChild(el);
     });
     potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
+    const radialItems = [];
+    for (const kind of CHARGE_FLASK_KINDS) {
+      const def = chargeFlaskDefinition(registries, kind);
+      const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
+      radialItems.push({
+        target: 'top', label: kind === 'hp' ? 'HP Flask' : 'MP Flask', detail: String(current),
+        ariaLabel: `${def.name}, ${current} remaining`, disabled: current <= 0,
+        activate: (anchor) => openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current }),
+      });
+    }
+    const hands = figureSpec(registries, run.loadout, run.class);
+    radialItems.push({ target: 'left', label: 'Left', detail: hands.leftId || 'Empty', activate: () => openCombatArmoury({ destination: 'equipment' }) });
+    radialItems.push({ target: 'full', label: 'Full Armaments', detail: 'Open' });
+    radialItems.push({ target: 'right', label: 'Right', detail: hands.rightId || 'Empty', activate: () => openCombatArmoury({ destination: 'equipment' }) });
+    if (p.flasks.length) radialItems.push({
+      target: 'bottom', label: 'Potions', detail: String(p.flasks.length),
+      ariaLabel: `Other potions, ${p.flasks.length}`,
+      activate: () => openUtilityPotionPicker(p.flasks),
+    });
+    armamentRadial.setItems(radialItems);
+    syncArmamentSettings();
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -57649,7 +57800,9 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   }
 
   function renderControls() {
-    $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    const energy = $('.energy-orb');
+    energy.textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    energy.setAttribute('aria-label', `Actions ${combat.player.energy} of ${combat.player.energyMax}`);
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
@@ -57662,9 +57815,12 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .n').textContent = combat.piles.draw.length;
     $('.pile.discard .n').textContent = combat.piles.discard.length;
-    const ex = $('.pile.exhaust');
-    ex.style.display = combat.piles.exhaust.length ? '' : 'none';
-    ex.querySelector('.n').textContent = combat.piles.exhaust.length;
+    const ex = $('.exhaust-summary');
+    ex.hidden = !combat.piles.exhaust.length;
+    ex.textContent = combat.piles.exhaust.length ? `${combat.piles.exhaust.length} Exhaust` : '';
+    $('.pile.discard').setAttribute('aria-label', combat.piles.exhaust.length
+      ? `Discard pile, ${combat.piles.discard.length}; Exhaust pile, ${combat.piles.exhaust.length}`
+      : `Discard pile, ${combat.piles.discard.length}`);
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -58192,10 +58348,42 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   endTurnBeat.refresh();
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
-  const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  const showDiscard = () => {
+    if (!combat.piles.exhaust.length) return openPileModal(registries, 'Discard pile', combat.piles.discard);
+    const veil = document.createElement('div');
+    veil.className = 'modal-veil';
+    const modal = document.createElement('div');
+    modal.className = 'modal pile-surface-picker';
+    const heading = document.createElement('h2');
+    heading.textContent = 'Choose pile';
+    modal.appendChild(heading);
+    for (const [label, cards] of [['Discard pile', combat.piles.discard], ['Exhaust pile', combat.piles.exhaust]]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${label} (${cards.length})`;
+      button.addEventListener('click', () => {
+        veil.remove();
+        openPileModal(registries, label, cards);
+      });
+      modal.appendChild(button);
+    }
+    veil.appendChild(modal);
+    veil.addEventListener('click', (event) => { if (event.target === veil) veil.remove(); });
+    document.body.appendChild(veil);
+    const first = modal.querySelector('button');
+    first?.focus();
+    if (first) focusElement(first);
+    return veil;
+  };
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
-  $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+  for (const [pile, open] of [[ $('.pile.draw'), showDraw ], [ $('.pile.discard'), showDiscard ]]) {
+    pile.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
+    });
+  }
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
@@ -58278,6 +58466,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const pagerVeilObserver = new MutationObserver(() => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         pagerVeilObserver.disconnect();
+        armamentSettingsObserver?.disconnect();
         delete combatEl.dataset.handPagerOwner;
         return;
       }
@@ -59230,6 +59419,191 @@ function wireBattlefieldStage(field, model) {
 
 
 Object.assign(module.exports, { wireBattlefieldStage });
+
+},
+"src/ui/components/armamentRadial.js": function (module, exports, require) {
+const { focusElement } = require("src/ui/input.js");
+
+let activeRadial = null;
+
+function closeArmamentRadial({ restoreFocus = false } = {}) {
+  if (!activeRadial) return false;
+  activeRadial.close({ restoreFocus });
+  return true;
+}
+
+/**
+ * One lifecycle owner for the combat Armaments shortcuts. Callers supply
+ * existing actions; this component only presents, focuses, and dismisses them.
+ */
+function mountArmamentRadial(anchor, {
+  mode = 'radial', placement = 'left', onFullArmaments = null,
+} = {}) {
+  if (!anchor) throw new Error('mountArmamentRadial requires an anchor');
+  closeArmamentRadial();
+
+  const root = document.createElement('div');
+  root.className = 'armament-radial';
+  root.hidden = true;
+  root.setAttribute('role', 'menu');
+  root.setAttribute('aria-label', 'Armaments shortcuts');
+  anchor.closest('.combat')?.appendChild(root);
+
+  let currentMode = mode;
+  let currentPlacement = placement;
+  let open = false;
+  let holdTimer = null;
+  let focusTimer = null;
+  let openedByHold = false;
+  let items = [];
+  let observer = null;
+
+  const buttons = () => [...root.querySelectorAll('button:not([disabled])')];
+  const sync = () => {
+    const radial = currentMode === 'radial';
+    anchor.dataset.armamentsMode = currentMode;
+    anchor.setAttribute('aria-haspopup', radial ? 'menu' : 'dialog');
+    anchor.setAttribute('aria-expanded', String(radial && open));
+    root.dataset.placement = currentPlacement;
+    root.hidden = !(radial && open);
+  };
+  const close = ({ restoreFocus = false } = {}) => {
+    if (!open && root.hidden) return;
+    clearTimeout(focusTimer);
+    open = false;
+    sync();
+    if (restoreFocus && anchor.isConnected) {
+      anchor.focus();
+      focusElement(anchor);
+    }
+  };
+  const openMenu = () => {
+    if (currentMode !== 'radial') return;
+    open = true;
+    sync();
+    // Native click/keyboard activation is still completing here. Moving the
+    // unified cursor synchronously can make that same gesture activate the
+    // first radial target. Defer entry until the opener's gesture is finished.
+    clearTimeout(focusTimer);
+    focusTimer = setTimeout(() => {
+      if (!open) return;
+      const first = buttons()[0];
+      first?.focus();
+      if (first) focusElement(first);
+    }, 0);
+  };
+  const toggle = () => (open ? close({ restoreFocus: true }) : openMenu());
+
+  const draw = () => {
+    root.innerHTML = '';
+    for (const item of items) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'armament-radial-target';
+      button.dataset.radialTarget = item.target;
+      button.dataset.focusable = 'true';
+      button.disabled = item.disabled === true;
+      button.setAttribute('role', 'menuitem');
+      button.setAttribute('aria-label', item.ariaLabel || item.label);
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      button.appendChild(label);
+      if (item.detail) {
+        const detail = document.createElement('small');
+        detail.textContent = item.detail;
+        button.appendChild(detail);
+      }
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (item.target === 'full') {
+          close();
+          onFullArmaments?.();
+          return;
+        }
+        item.activate?.(button);
+      });
+      root.appendChild(button);
+    }
+  };
+
+  anchor.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (openedByHold) {
+      openedByHold = false;
+      return;
+    }
+    if (currentMode === 'fixed') onFullArmaments?.();
+    else toggle();
+  });
+  anchor.addEventListener('pointerdown', () => {
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      openedByHold = true;
+      openMenu();
+    }, 360);
+  });
+  const cancelHold = () => clearTimeout(holdTimer);
+  anchor.addEventListener('pointerup', cancelHold);
+  anchor.addEventListener('pointercancel', cancelHold);
+
+  const onDocumentPointer = (event) => {
+    if (!open || root.contains(event.target) || anchor.contains(event.target)) return;
+    close();
+  };
+  const onKey = (event) => {
+    if (!open) return;
+    if (event.key === 'Escape' || event.key === 'Backspace') {
+      event.preventDefault();
+      close({ restoreFocus: true });
+      return;
+    }
+    const list = buttons();
+    if (!list.length || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const at = Math.max(0, list.indexOf(document.activeElement));
+    const next = event.key === 'Home' ? list[0]
+      : event.key === 'End' ? list.at(-1)
+        : list[(at + (event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1) + list.length) % list.length];
+    next?.focus();
+    if (next) focusElement(next);
+  };
+  document.addEventListener('pointerdown', onDocumentPointer, true);
+  window.addEventListener('keydown', onKey);
+  if (typeof MutationObserver !== 'undefined') {
+    observer = new MutationObserver(() => {
+      if (anchor.isConnected && root.isConnected) return;
+      document.removeEventListener('pointerdown', onDocumentPointer, true);
+      window.removeEventListener('keydown', onKey);
+      clearTimeout(focusTimer);
+      observer?.disconnect();
+      if (activeRadial?.root === root) activeRadial = null;
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  const api = {
+    anchor,
+    root,
+    close,
+    setItems(nextItems) {
+      items = Array.isArray(nextItems) ? nextItems : [];
+      draw();
+    },
+    update(next = {}) {
+      if (next.mode) currentMode = next.mode;
+      if (next.placement) currentPlacement = next.placement;
+      if (currentMode !== 'radial') open = false;
+      sync();
+    },
+  };
+  activeRadial = api;
+  sync();
+  return api;
+}
+
+
+Object.assign(module.exports, { closeArmamentRadial, mountArmamentRadial });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
