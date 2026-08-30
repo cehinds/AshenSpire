@@ -313,6 +313,50 @@ Promotion is a sequence of separately evidenced gates against one frozen head, n
 
 Any code, content, configuration or artifact change creates a new candidate and restarts Gate A. A changed head invalidates every receipt recorded against the former SHA.
 
+#### Gate A — Exact candidate QA
+
+- **Entry:** One candidate head is frozen and the required independent QA and repository gates pass at that exact head.
+- **Invalidated by:** `any code, content, configuration or artifact change`
+
+#### Gate B — Dev integration and hosted verification
+
+- **Entry:** The Gate-A head is integrated to dev through the normal reviewable PR process, and the intended hosted development artifact and player flow are verified against the exact resulting dev SHA.
+- **Not satisfied by:** `a PR alone`, `a merge alone`, `a deployment job alone`, `a successful local test alone`
+- **Invalidated by:** `a new dev SHA`
+
+#### Gate C — Exact fast-forward to test
+
+- **Entry:** Gates A and B pass and remain fresh; the proposed test target is exactly the hosted-verified dev SHA; current test is an ancestor of it, so the mutation is a true fast-forward; the exact test head, rollback target and procedure, branch protections and mutation evidence are recorded; and there is no P0/P1 WITHHOLD, unresolved required reviewer, stale evidence, or scope/artifact mismatch.
+- **Invalidated by:** `a new dev SHA`, `a P0 or P1 WITHHOLD`, `stale evidence`
+- **On fail or unknown:** The IT Manager III records WAIT and requests the exact additional authority or correction.
+- **Explicitly not granted:** `main`, `release`, `tag`, `publication`, `Pages`, `product`, `board`
+
+#### Gate D — Five-role exact-test acceptance
+
+- **Entry:** At the unchanged exact test SHA, separate recommendations are recorded from all five required roles. Each names the exact test SHA, evidence, verdict, known defects and conditions.
+- **Required roles:** `qa-independent`, `qa-independent`, `maker`, `it-manager-iii`, `project-management-lead`
+- **Conditional roles:** `data-architecture-lead` — schema, IDs, aliases, lineage, migration, generated manifests, save/content or data quality are affected
+- **Conditional roles:** `experience-accessibility-review` — player-facing experience is affected
+- **Conditional roles:** `delivery-systems-review` — build, artifact, dependency/tooling, deployment, hosted or rollback surfaces are affected
+- **Blocks on:** `a P0 or P1 WITHHOLD`
+- **Invalidated by:** `a changed test head`
+- **Note:** Council coordination never combines or replaces independent verdicts. An accepted P2 remains open and must name its disclosure, owner, target milestone, risk and exact accepting authority. Other known defects stay recorded and are not converted to resolved by promotion.
+
+#### Gate E — Owner playtest
+
+- **Entry:** After Gate D passes, the Owner playtests the unchanged exact test SHA.
+- **Invalidated by:** `a changed test head`
+- **Returns to gate on correction:** A
+- **Note:** The receipt records build and artifact identity, flows, result, known accepted defects and any requested correction.
+
+#### Gate F — Separate main and release actions
+
+- **Entry:** After Gate E, a fresh exact-SHA promotion packet is submitted. The Owner separately approves and performs each requested mutation.
+- **Separate actions:** `main mutation`, `release mutation`, `tag`, `release publication`, `Pages source or deployment`, `final release-readiness decision`
+- **Authority is per action:** yes
+- **Note:** Authority for one action implies none of the others. Each action records its source and target SHA, artifact/hash/build/source, required review, rollback, result, and hosted evidence when applicable.
+
+
 ## Teams
 
 Standing coordination is scarce and named; delivery capability is pooled and temporary. A pool is a capability the project can draw on, never a department that owns a backlog, a decision stream, or a source path because the path fits its specialty. A pod is formed for one contract-ready ticket and dissolves; its chat and local workspace are never an authority source, so losing the conversation loses no work.

@@ -1115,6 +1115,15 @@ export function renderGovernance(c) {
     }
     L.push('');
     L.push(`${pg.immutable_candidate}`);
+    for (const g of pg.gates) {
+      const detail = gateDetailLines(g);
+      if (!detail.length) continue;
+      L.push('');
+      L.push(`#### Gate ${g.id} \u2014 ${g.name}`);
+      L.push('');
+      for (const line of detail) L.push(line);
+    }
+    L.push('');
   }
   if (c.teams) {
     L.push('');
@@ -2703,7 +2712,7 @@ const VIEW_PROBES = {
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
-  'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
+  'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => gateDetailLines(g).length ? [`#### Gate ${g.id} \u2014 ${g.name}`, '', ...gateDetailLines(g)].join('\n') : null).filter((y) => y !== null), ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
   roles: (x) => x.roles.map((r) => [
@@ -2882,7 +2891,10 @@ export function unrenderedFieldPaths(contracts, renderedText) {
     if (typeof node === 'boolean') return;
     const value = String(node);
     if (value.length < 3) return;                    // ids too short to be evidence
-    if (!renderedText.includes(value)) found.push(`${name}.${path}`);
+    // A value that renders correctly through mdCell appears ESCAPED, so a raw
+    // substring test reported the nine lead seat names as unrendered precisely
+    // because they were rendered properly. Both forms count.
+    if (!renderedText.includes(value) && !renderedText.includes(mdCell(value))) found.push(`${name}.${path}`);
   };
   for (const [name, contract] of Object.entries(contracts)) walk(name, contract, '');
   return [...new Set(found)].sort();
@@ -2894,6 +2906,48 @@ export function unrenderedFieldPaths(contracts, renderedText) {
 // shared helper and tableShapeErrors below is the structural guard: a row whose
 // cell count differs from its header cannot be rendered unnoticed, whatever
 // field it came from.
+export function mdCell(value) {
+  return String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+}
+
+// One gate's detail block. The gates table carries id, name, actor, guarded
+// transitions, required evidence and grants; every OTHER field a gate declares
+// rendered nowhere — entry conditions, what invalidates the gate, what blocks
+// it, what does not satisfy it, what happens on fail or unknown, the roles it
+// conditionally requires. Nine field paths, all authority-bearing, all
+// invisible. Shared by the renderer and the probe, like ruleLines and mdCell,
+// so the two cannot drift. Fields the table already renders are deliberately
+// absent here: a probe satisfied in two sections proves nothing about either.
+const GATE_DETAIL = [
+  ['entry', 'Entry'],
+  ['required_roles', 'Required roles'],
+  ['conditional_roles', 'Conditional roles'],
+  ['blocks_on', 'Blocks on'],
+  ['not_satisfied_by', 'Not satisfied by'],
+  ['invalidated_by', 'Invalidated by'],
+  ['on_fail_or_unknown', 'On fail or unknown'],
+  ['returns_to_gate_on_correction', 'Returns to gate on correction'],
+  ['separate_actions', 'Separate actions'],
+  ['explicitly_not_granted', 'Explicitly not granted'],
+  ['authority_is_per_action', 'Authority is per action'],
+  ['note', 'Note'],
+];
+
+export function gateDetailLines(gate) {
+  const out = [];
+  for (const [key, label] of GATE_DETAIL) {
+    const v = gate[key];
+    if (v === undefined || v === null) continue;
+    if (key === 'conditional_roles') {
+      for (const cr of v) out.push(`- **${label}:** \`${cr.role}\` \u2014 ${cr.when}`);
+      continue;
+    }
+    const text = Array.isArray(v) ? v.map((y) => `\`${y}\``).join(', ') : typeof v === 'boolean' ? (v ? 'yes' : 'no') : String(v);
+    out.push(`- **${label}:** ${text}`);
+  }
+  return out;
+}
+
 // The rendered form of one contract's `rules` block. Shared by the renderer and
 // by the view probes for the same reason mdCell is: two copies of a rendered
 // string drift, and a probe that drifts stops proving anything.
@@ -2901,10 +2955,6 @@ export function ruleLines(contract) {
   const r = contract && contract.rules;
   if (!r || typeof r !== 'object' || Array.isArray(r)) return [];
   return Object.entries(r).filter(([, v]) => typeof v === 'string').map(([n, v]) => `- \`${n}\` \u2014 ${v}`);
-}
-
-export function mdCell(value) {
-  return String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 }
 
 export function tableShapeErrors(viewText) {
@@ -3706,11 +3756,13 @@ export function runSelftest(root = ROOT) {
 
     // Unrendered contract fields. No deletion sweep can see these, so the count
     // is ratcheted: it may fall, never rise. 105 when the audit was written;
-    // 65 once every contract's `rules` block was projected into the view.
+    // 65 once every contract's `rules` block was projected into the view; 55
+    // once each gate's detail block joined it and the audit stopped counting a
+    // correctly escaped value as unrendered.
     const rtAll = loadRuntime(root);
     const everything = generatedArtifacts(contracts, rtAll).map((a) => a.text).join('\n');
     const unrendered = unrenderedFieldPaths(contracts, everything);
-    const RATCHET = 65;
+    const RATCHET = 55;
     results.push({ label: `unrendered contract fields do not grow past ${RATCHET}`, pass: unrendered.length <= RATCHET, errs: unrendered.slice(0, 10) });
     results.push({ label: 'the unrendered-field audit is actually looking at contracts', pass: unrendered.length < 400, errs: [String(unrendered.length)] });
 
@@ -3725,6 +3777,18 @@ export function runSelftest(root = ROOT) {
     const gained = { ...contracts, raci: { ...contracts.raci, rules: { ...contracts.raci.rules, brand_new_rule: 'a rule nobody projected' } } };
     const gainedErrs = viewCoverageErrors(gained, govText);
     results.push({ label: 'a rule added to a contract but absent from the view fails coverage', pass: gainedErrs.length > 0, errs: gainedErrs });
+
+    // ...and a gate's detail block. The gates table carries six columns; the
+    // other nine field paths a gate declares rendered nowhere, and they are the
+    // ones that say what invalidates the gate and what does not satisfy it.
+    // Two gates share an `invalidated_by` value, so a per-bullet probe was
+    // satisfied by the other gate's copy — the probe is the whole block.
+    const gateDrift = { ...contracts, 'promotion-gates': { ...contracts['promotion-gates'], gates: contracts['promotion-gates'].gates.map((g) => (g.id === 'B' ? { ...g, not_satisfied_by: ['a PR alone'] } : g)) } };
+    const gateErrs = viewCoverageErrors(gateDrift, govText);
+    results.push({ label: "a gate's not_satisfied_by narrowed in the contract but not the view fails coverage", pass: gateErrs.length > 0, errs: gateErrs });
+    const gateGain = { ...contracts, 'promotion-gates': { ...contracts['promotion-gates'], gates: contracts['promotion-gates'].gates.map((g) => (g.id === 'A' ? { ...g, blocks_on: ['a condition nobody projected'] } : g)) } };
+    const gainErrs = viewCoverageErrors(gateGain, govText);
+    results.push({ label: 'a gate condition added to the contract but absent from the view fails coverage', pass: gainErrs.length > 0, errs: gainErrs });
 
     // ...and a contract added with no probe at all must fail rather than skip.
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };
