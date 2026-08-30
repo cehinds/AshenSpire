@@ -13,7 +13,10 @@ Git-local scheduler state so assignment cannot dirty `dev`; the runtime config
 points to the canonical claims, leases, events, trusted registry, and per-seat
 capability files. The watcher derives that root from `git rev-parse
 --git-common-dir`; a CLI override may select a file only inside that exact
-repository runtime and cannot redirect authority to a sibling directory. Every
+repository runtime and cannot redirect authority to a sibling directory.
+Containment is physical, not lexical: the runtime root and every existing
+dependency ancestor are resolved with `realpath` and rejected if symlink-,
+junction-, or other reparse-backed. Every
 mutation names the expected claim hash. A transfer succeeds only when IT
 Manager III authorizes it, the target seat proves its capability, the expected
 hash matches, the exact sealed lease is current and congruent, and no live
@@ -38,3 +41,13 @@ runtime, bad capability, stale CAS, duplicate ticket, overlapping path/ref, or
 failed journal leaves the terminal identity unprocessed so the next clean
 cycle may retry. Stopping the watcher disables assignment; rollback is a new
 forward CAS transfer and audit event, never deletion or history rewrite.
+
+The claim transaction lock records a schema, PID, OS process-start identity,
+process-start timestamp, nonce, and acquisition time. A matching live process
+instance is never displaced; a reused PID with a different start identity is
+stale. Unverifiable live identity fails closed. A dead or replaced owner may be
+taken over atomically; the successor recomputes the journal event hash,
+validates every semantic cross-link and prior event tail, and then completes it
+before any new CAS attempt. Corrupt or foreign lock/journal data fails closed
+and is preserved. Hard termination after either journal or event write recovers
+forward exactly once without duplicating the audit event.

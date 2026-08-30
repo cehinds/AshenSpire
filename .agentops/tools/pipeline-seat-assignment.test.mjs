@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { assignLiveClaim } from "./pipeline-seat-assignment.mjs";
+import { assignLiveClaim, resolveCanonicalSeatRuntime } from "./pipeline-seat-assignment.mjs";
 import { atomicWriteJson, sealClaim, sealLease, seatFingerprint } from "./pipeline-seat-claims.mjs";
 import { cycle, readState } from "./pipeline-pilot-watch.mjs";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "seat-live-assignment-"));
+const actualAgentops = path.resolve(new URL("../", import.meta.url).pathname.replace(/^\/(.:)/, "$1"));
+assert.match(resolveCanonicalSeatRuntime(actualAgentops).replaceAll("\\", "/"), /AshenSpire\/.git\/agentops-pipeline\/runtime$/);
 const runtime = path.join(root, "runtime");
 const targetSeat = "seat:application:22222222-2222-4222-8222-222222222222";
 const holdingSeat = "seat:application:11111111-1111-4111-8111-111111111111";
@@ -34,6 +36,8 @@ assert.throws(() => assignLiveClaim(root, { offer: { ...offer, selected: { ...of
 assert.throws(() => assignLiveClaim(root, { offer: { ...offer, released_actor: "help-desk" }, now: "2026-08-30T10:32:00Z", runtimeConfigFile: configFile, canonicalRuntimeRoot: runtime }), /no unique seat/);
 atomicWriteJson(path.join(runtime, "seat-runtime-escape.json"), { ...JSON.parse(fs.readFileSync(configFile, "utf8")), registry_file: "../registry.json" });
 assert.throws(() => assignLiveClaim(root, { offer, now: "2026-08-30T10:32:00Z", runtimeConfigFile: path.join(runtime, "seat-runtime-escape.json"), canonicalRuntimeRoot: runtime }), /must stay inside/);
+atomicWriteJson(path.join(runtime, "seat-runtime-unc.json"), { ...JSON.parse(fs.readFileSync(configFile, "utf8")), registry_file: "\\\\server\\share\\registry.json" });
+assert.throws(() => assignLiveClaim(root, { offer, now: "2026-08-30T10:32:00Z", runtimeConfigFile: path.join(runtime, "seat-runtime-unc.json"), canonicalRuntimeRoot: runtime }), /must stay inside/);
 const registry = JSON.parse(fs.readFileSync(path.join(runtime, "registry.json"), "utf8"));
 atomicWriteJson(path.join(runtime, "registry.json"), { ...registry, seats: { [targetSeat]: { ...registry.seats[targetSeat], path_globs: ["docs/**"] } } });
 assert.throws(() => assignLiveClaim(root, { offer, now: "2026-08-30T10:32:00Z", runtimeConfigFile: configFile, canonicalRuntimeRoot: runtime }), /path eligibility/);
@@ -51,4 +55,19 @@ const refused = cycle({ root: agentops, stateFile: watcherState, now: "2026-08-3
 assert.equal(refused.events[0].result.assignment.status, "FAILED");
 assert.equal(readState(watcherState).processed.length, 0);
 assert.equal(readState(watcherState).pending.length, 1);
-console.log("PASS 17/17; immediate-assignment=yes; canonical-claim-CAS=yes; unique-seat=yes; trusted-proof=yes; path-eligibility=yes; replay-transfer0; audit-event1; secret-output0; offer-binding=yes; missing-seat-refused=yes; runtime-path-escape-refused=yes; sibling-runtime-refused=yes; refused-terminal-unprocessed=yes; bad-proof-refused=yes; Project-writes=0; protected-writes=0");
+const outside = path.join(root, "outside-runtime");
+fs.mkdirSync(outside);
+atomicWriteJson(path.join(outside, "registry.json"), registry);
+fs.symlinkSync(outside, path.join(runtime, "junction"), "junction");
+atomicWriteJson(path.join(runtime, "seat-runtime-junction.json"), { ...JSON.parse(fs.readFileSync(configFile, "utf8")), registry_file: "junction/registry.json" });
+assert.throws(() => assignLiveClaim(root, { offer, now: "2026-08-30T10:34:00Z", runtimeConfigFile: path.join(runtime, "seat-runtime-junction.json"), canonicalRuntimeRoot: runtime }), /symlink or junction|resolves outside/);
+let directSymlinkChecked = false;
+try {
+  fs.symlinkSync(path.join(outside, "registry.json"), path.join(runtime, "registry-link.json"), "file");
+  atomicWriteJson(path.join(runtime, "seat-runtime-file-link.json"), { ...JSON.parse(fs.readFileSync(configFile, "utf8")), registry_file: "registry-link.json" });
+  assert.throws(() => assignLiveClaim(root, { offer, now: "2026-08-30T10:34:00Z", runtimeConfigFile: path.join(runtime, "seat-runtime-file-link.json"), canonicalRuntimeRoot: runtime }), /symlink or junction|resolves outside/);
+  directSymlinkChecked = true;
+} catch (error) {
+  if (!["EPERM", "EACCES"].includes(error.code)) throw error;
+}
+console.log(`PASS 21/21; linked-worktree-common-runtime=yes; immediate-assignment=yes; canonical-claim-CAS=yes; unique-seat=yes; trusted-proof=yes; path-eligibility=yes; replay-transfer0; audit-event1; secret-output0; offer-binding=yes; missing-seat-refused=yes; runtime-path-escape-refused=yes; UNC-runtime-refused=yes; sibling-runtime-refused=yes; refused-terminal-unprocessed=yes; junction-escape-refused=yes; direct-file-link=${directSymlinkChecked ? "refused" : "unsupported"}; bad-proof-refused=yes; Project-writes=0; protected-writes=0`);
