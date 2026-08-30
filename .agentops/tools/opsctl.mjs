@@ -1060,6 +1060,8 @@ export function renderGovernance(c) {
   L.push('');
   L.push(`Routing SLA: deputy custody at ${er.deputy_custody_at_minutes} min, owner-overdue at ${er.deputy_overdue_to_owner_at_minutes} min. Immediate-to-owner classes: ${er.immediate_owner_classes.join(', ')}.`);
   L.push('');
+  L.push(er.note);
+  L.push('');
 
   L.push('## Roles');
   L.push('');
@@ -1106,9 +1108,11 @@ export function renderGovernance(c) {
     L.push('');
     L.push(bh.principle);
     L.push('');
-    L.push(`Default: \`${bh.default_update_method}\`. Rewriting a branch that is not the acting role's own needs \`${bh.permission_role}\`; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
+    L.push(`Default: \`${bh.default_update_method}\`. Rewriting needs \`${bh.permission_role}\` when ${bh.rewrite_requires_permission_when}; absent that, ${bh.alternative_when_permission_is_absent}. Records: ${bh.records.join(', ')}. Never: ${bh.never.join('; ')}.`);
   }
   L.push('');
+    L.push(`Generated lane \`${c['git-ownership'].generated_serialization.lane}\`: ${c['git-ownership'].generated_serialization.rule}`);
+    L.push('');
   L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
   L.push('');
 
@@ -1151,7 +1155,7 @@ export function renderGovernance(c) {
     L.push('');
     L.push('### Capability pools');
     L.push('');
-    L.push('Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.');
+    L.push(`Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease. ${c.teams.pool_rules.note}`);
     L.push('');
     L.push('| Pool | Delivery capability | Stewardship between tickets |');
     L.push('|---|---|---|');
@@ -1187,6 +1191,19 @@ export function renderGovernance(c) {
       L.push('');
       L.push(`${nc.leading_letter_is_seat_kind} ${nc.not_the_tier_namespace}`);
     }
+    // What a seat may do with spare capacity is policy, not a footnote: it is
+    // the line between an idle seat auditing and an idle seat patching.
+    L.push('');
+    L.push('### Work in progress');
+    L.push('');
+    L.push(`Idle capacity: ${c.teams.wip_limits.idle_capacity}`);
+    L.push('');
+    L.push('### Legacy team names');
+    L.push('');
+    L.push('| Legacy name | Routes to | Why |');
+    L.push('|---|---|---|');
+    for (const a of c.teams.legacy_aliases) L.push(`| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`);
+    L.push('');
   }
   L.push('');
 
@@ -1229,6 +1246,11 @@ export function renderGovernance(c) {
       L.push(`| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' → ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`);
     }
     L.push('');
+    // The hazard each class exists to answer. It named the reason a route
+    // exists and rendered nowhere, so the table said where a thing goes without
+    // saying what it is for.
+    for (const cl of c.escalation.classes) L.push(`- \`${cl.id}\` — ${cl.hazard}`);
+    L.push('');
     if (c.escalation.ticket_flow) {
       const tf = c.escalation.ticket_flow;
       L.push('### Where a question goes');
@@ -1261,6 +1283,17 @@ export function renderGovernance(c) {
       L.push(`| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`);
     }
     L.push('');
+    // The legacy map. Old status values still appear in recovered evidence, and
+    // how each is read now decided whether that evidence is misread. It
+    // rendered nowhere.
+    if (c.transitions.legacy_values) {
+      L.push(c.transitions.legacy_rule);
+      L.push('');
+      L.push('| Legacy value | Canonical treatment |');
+      L.push('|---|---|');
+      for (const lv of c.transitions.legacy_values) L.push(`| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`);
+      L.push('');
+    }
   }
 
   if (c['information-access']) {
@@ -1312,6 +1345,10 @@ export function renderGovernance(c) {
     L.push('');
     if (at.disambiguation) {
       L.push(`**P-codes mean two things.** ${at.disambiguation.rule} Authority subjects: ${at.disambiguation.authority_subjects.map((x) => '`' + x + '`').join(', ')}. Priority subjects: ${at.disambiguation.priority_subjects.map((x) => '`' + x + '`').join(', ')}.`);
+      L.push('');
+      L.push(at.namespace_note);
+      L.push('');
+      L.push(at.disambiguation.known_ambiguous_artifact);
       L.push('');
     }
     L.push('| Tier | Who | Holds | Cannot |');
@@ -1377,10 +1414,10 @@ export function renderGovernance(c) {
     L.push('');
     L.push(c['owner-command'].principle);
     L.push('');
-    L.push('| Action | Authenticator roles | CAS | Protected |');
-    L.push('|---|---|---|---|');
+    L.push('| Action | Authenticator roles | CAS | Protected | Required fields | Affects |');
+    L.push('|---|---|---|---|---|---|');
     for (const a of c['owner-command'].actions) {
-      L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`);
+      L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.required_fields.map((f) => '\`' + f + '\`').join(', ')} | ${mdCell(a.affects)} |`);
     }
     L.push('');
   }
@@ -1397,10 +1434,10 @@ export function renderGovernance(c) {
     L.push('');
     L.push(c.evidence.principle);
     L.push('');
-    L.push('| Evidence | Producer | Exact object | Verifier | Invalidation keys |');
-    L.push('|---|---|---|---|---|');
+    L.push('| Evidence | Producer | Exact object | Verifier | Invalidation keys | Freshness |');
+    L.push('|---|---|---|---|---|---|');
     for (const e of c.evidence.evidence) {
-      L.push(`| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`);
+      L.push(`| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`);
     }
     L.push('');
   }
@@ -2729,10 +2766,10 @@ const VIEW_PROBES = {
     `Delivery process: ${x.dev_delivery.process} ${x.dev_delivery.waiting_does_not_authorize}`,
     `A Pages switch is complete only when ${x.pages.complete_only_when.join(' and ')}. The switch packet records:`,
     ...x.pages.switch_packet_records.map((r) => `- ${r}`)],
-  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
-  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, x.branch_hygiene.alternative_when_permission_is_absent, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
-  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
+  escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), ...x.classes.map((cl) => `- \`${cl.id}\` \u2014 ${cl.hazard}`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
+  evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`)],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.note, x.authority_tiers.namespace_note, x.authority_tiers.disambiguation.known_ambiguous_artifact, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
@@ -2741,7 +2778,7 @@ const VIEW_PROBES = {
   'model-effort': (x) => [x.principle, x.assignment_record.format,
     `Selection stability: ${x.stability} Substitution: ${x.substitution}`,
     `Every assignment record carries: ${x.assignment_record.required_fields.join(', ')}.`, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
-  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`)],
+  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.required_fields.map((f) => '\`' + f + '\`').join(', ')} | ${mdCell(a.affects)} |`)],
   'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), ...x.priority_order.map((pr, i) => `  ${i + 1}. ${pr}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`),
@@ -2763,8 +2800,8 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].filter((l) => l !== null).join('\n')),
-  teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
-  transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
+  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`), x.legacy_rule, ...(x.legacy_values || []).map((lv) => `| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`)],
 };
 
 // Every contract's rules render in the Enforced invariants section, so every
@@ -3794,13 +3831,22 @@ export function runSelftest(root = ROOT) {
 
     // Unrendered contract fields. No deletion sweep can see these, so the count
     // is ratcheted: it may fall, never rise. 105 when the audit was written;
-    // 65 once every contract's `rules` block was projected into the view; 55
-    // once each gate's detail block joined it and the audit stopped counting a
-    // correctly escaped value as unrendered.
+    // 21 now, after the rules blocks, the gate detail blocks, the owner override
+    // rules, the deputy's grant window, the promotion-packet fields, the
+    // escalation hazards, the evidence freshness rules and the legacy maps were
+    // all projected — and after the audit stopped counting a correctly escaped
+    // value as unrendered.
+    //
+    // What is left is deliberate, not deferred: `project.*` is tool scaffolding
+    // (engine stack, runtime artifact paths, provider names) rather than
+    // governance a reader needs, a handful of `note` fields are provenance for
+    // the contract author, and owner-intent.owner.identifiers carries a personal
+    // email address that should not be projected into more artifacts than
+    // already hold it.
     const rtAll = loadRuntime(root);
     const everything = generatedArtifacts(contracts, rtAll).map((a) => a.text).join('\n');
     const unrendered = unrenderedFieldPaths(contracts, everything);
-    const RATCHET = 55;
+    const RATCHET = 21;
     results.push({ label: `unrendered contract fields do not grow past ${RATCHET}`, pass: unrendered.length <= RATCHET, errs: unrendered.slice(0, 10) });
     results.push({ label: 'the unrendered-field audit is actually looking at contracts', pass: unrendered.length < 400, errs: [String(unrendered.length)] });
 
