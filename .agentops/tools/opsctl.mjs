@@ -1124,10 +1124,10 @@ export function renderGovernance(c) {
     L.push('');
     L.push(`Rule: \`${c.delegation.non_amplification_rule}\``);
     L.push('');
-    L.push('| Envelope | Parent | Delegator → Delegatee | Actions | Max subdepth | Effective → Expiry |');
-    L.push('|---|---|---|---|---|---|');
+    L.push('| Envelope | Parent | Delegator → Delegatee | Actions | Scope paths | Max subdepth | Effective → Expiry |');
+    L.push('|---|---|---|---|---|---|---|');
     for (const e of c.delegation.envelopes) {
-      L.push(`| ${e.id} | ${e.parent_id || '—'} | ${e.delegator_role} → ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} → ${e.expiry} |`);
+      L.push(`| ${e.id} | ${e.parent_id || '—'} | ${e.delegator_role} → ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '`' + g + '`').join(', ') || '— (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} → ${e.expiry} |`);
     }
     L.push('');
   }
@@ -1209,10 +1209,10 @@ export function renderGovernance(c) {
     L.push('|---|---|---|');
     for (const r of c.qa.risk_classes) L.push(`| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`);
     L.push('');
-    L.push('| Gate | Risk | Verifier | Independent of maker | Waiver authority | Required evidence |');
-    L.push('|---|---|---|---|---|---|');
+    L.push('| Gate | Risk | Verifier | Independent of maker | Required checks | Waiver authority | Required evidence |');
+    L.push('|---|---|---|---|---|---|---|');
     for (const g of c.qa.gates) {
-      L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
+      L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
     }
     L.push('');
     L.push(c.qa.rules.independence_is_not_self_recorded);
@@ -2598,7 +2598,7 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // when its block is removed.
 const VIEW_PROBES = {
   authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
-  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
+  delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '\`' + g + '\`').join(', ') || '\u2014 (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
     `a candidate already on \`${x.pages.switch_requires.candidate_must_have_reached}\``,
@@ -2619,7 +2619,7 @@ const VIEW_PROBES = {
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
   'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
-  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
+  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
   roles: (x) => x.roles.map((r) => [
     '### `' + r.role + '`',
@@ -2757,6 +2757,34 @@ export function governanceGateErrors(contracts, arts) {
 export function actorRole(g, actorId) {
   const node = g && g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === actorId);
   return node ? node.role : actorId;
+}
+
+// The sweeps prove that nothing RENDERED can be deleted unnoticed. They cannot
+// see a contract field that renders nowhere at all — there is no line to delete
+// — and an audit found 105 such field paths across every generated view, in all
+// eighteen contracts. Two were reported (delegation scope_paths, qa
+// required_checks); the rest had never been looked for.
+//
+// Rendering all of them is a larger change than this branch should carry, so
+// the debt is measured instead of hidden: this returns the count, and a ratchet
+// in the selftest refuses to let it grow. The number may fall; it may not rise.
+export function unrenderedFieldPaths(contracts, renderedText) {
+  const SKIP = new Set(['schema', 'policy_version', 'source', 'charter_heading']);
+  const found = [];
+  const walk = (name, node, path) => {
+    if (node === null || node === undefined) return;
+    if (Array.isArray(node)) return node.forEach((v) => walk(name, v, path));
+    if (typeof node === 'object') {
+      for (const [k, v] of Object.entries(node)) if (!SKIP.has(k)) walk(name, v, path ? `${path}.${k}` : k);
+      return;
+    }
+    if (typeof node === 'boolean') return;
+    const value = String(node);
+    if (value.length < 3) return;                    // ids too short to be evidence
+    if (!renderedText.includes(value)) found.push(`${name}.${path}`);
+  };
+  for (const [name, contract] of Object.entries(contracts)) walk(name, contract, '');
+  return [...new Set(found)].sort();
 }
 
 export function probeStrengthErrors(contracts, viewText) {
@@ -3482,6 +3510,15 @@ export function runSelftest(root = ROOT) {
     }
     results.push({ label: 'deleting any rendered prose line fails the coverage gate', pass: unprobed.length === 0, errs: unprobed.slice(0, 8) });
     results.push({ label: 'the prose sweep found lines to sweep', pass: prose >= 20, errs: [String(prose)] });
+
+    // Unrendered contract fields. No deletion sweep can see these, so the count
+    // is ratcheted: it may fall, never rise. 105 at the time this was written.
+    const rtAll = loadRuntime(root);
+    const everything = generatedArtifacts(contracts, rtAll).map((a) => a.text).join('\n');
+    const unrendered = unrenderedFieldPaths(contracts, everything);
+    const RATCHET = 105;
+    results.push({ label: `unrendered contract fields do not grow past ${RATCHET}`, pass: unrendered.length <= RATCHET, errs: unrendered.slice(0, 10) });
+    results.push({ label: 'the unrendered-field audit is actually looking at contracts', pass: unrendered.length < 400, errs: [String(unrendered.length)] });
 
     // ...and a contract added with no probe at all must fail rather than skip.
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };

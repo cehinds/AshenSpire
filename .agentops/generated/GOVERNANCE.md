@@ -383,11 +383,11 @@ Exactly one Accountable per deliverable or decision. Responsible executes; Accou
 
 Rule: `effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time. A delegatee never receives an action the delegator lacks, never an action the Owner intent excludes from the deputy, and never a longer life or deeper subdelegation than its parent envelope.`
 
-| Envelope | Parent | Delegator → Delegatee | Actions | Max subdepth | Effective → Expiry |
-|---|---|---|---|---|---|
-| itm-to-maker-feature | — | it-manager-iii → maker | implement-locally, run-tests-and-builds, commit-on-isolated-branch | 1 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
-| maker-to-helper-disjoint | itm-to-maker-feature | maker → maker | run-tests-and-builds | 0 | 2026-01-01T00:00:00Z → 2026-06-30T23:59:59Z |
-| itm-to-qa-review | — | it-manager-iii → qa-independent | perform-independent-qa | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
+| Envelope | Parent | Delegator → Delegatee | Actions | Scope paths | Max subdepth | Effective → Expiry |
+|---|---|---|---|---|---|---|
+| itm-to-maker-feature | — | it-manager-iii → maker | implement-locally, run-tests-and-builds, commit-on-isolated-branch | `src/**`, `.agentops/tools/**` | 1 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
+| maker-to-helper-disjoint | itm-to-maker-feature | maker → maker | run-tests-and-builds | `tests/**` | 0 | 2026-01-01T00:00:00Z → 2026-06-30T23:59:59Z |
+| itm-to-qa-review | — | it-manager-iii → qa-independent | perform-independent-qa | — (no path scope) | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
 
 ## Escalation (time requests a decision, never authority)
 
@@ -469,11 +469,11 @@ QA is risk-selected and independent. The verifier of an exact object is never it
 | standard | unit, regression, deterministic-view | yes |
 | high | unit, regression, deterministic-view, security, accessibility, playtest | yes |
 
-| Gate | Risk | Verifier | Independent of maker | Waiver authority | Required evidence |
-|---|---|---|---|---|---|
-| accept-standard-object | standard | qa-independent | yes | it-manager-iii | test-run-receipt, generated-view-drift-check |
-| accept-high-risk-object | high | qa-independent | yes | owner | test-run-receipt, security-scan-receipt, hosted-verification-receipt |
-| data-contract-clearance | standard | data-architecture-lead | yes | it-manager-iii | data-lineage-receipt |
+| Gate | Risk | Verifier | Independent of maker | Required checks | Waiver authority | Required evidence |
+|---|---|---|---|---|---|---|
+| accept-standard-object | standard | qa-independent | yes | unit, regression, deterministic-view | it-manager-iii | test-run-receipt, generated-view-drift-check |
+| accept-high-risk-object | high | qa-independent | yes | unit, regression, deterministic-view, security, accessibility | owner | test-run-receipt, security-scan-receipt, hosted-verification-receipt |
+| data-contract-clearance | standard | data-architecture-lead | yes | schema-lineage, migration-compatibility | it-manager-iii | data-lineage-receipt |
 
 A waiver of independence is never recorded by the party it constrains. Any future self-certification mechanism must be carried by a separately authenticated action from the approving role, not by a field the certifying seat writes into its own capsule and reseals.
 
