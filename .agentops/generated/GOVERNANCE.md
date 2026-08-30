@@ -51,6 +51,16 @@ authority of its own and is regenerated deterministically from
     - mutate main or release
     - change Pages source, tag, publish, or declare final release readiness
     - perform the exact-test playtest sign-off
+  - Grant window: effective `governed-by-source-commit`, expiry `until-superseded-by-a-later-owner-intent-record`. A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record.
+- **Default autonomy:** reversible local work is `PROCEED`. Team Leads and agents perform reversible, collision-free local work (read-only inspection, scoped local implementation, isolated refs/worktrees, tests, builds, schema validation, fixtures, documentation, local commits on isolated branches) without routine approval waits.
+- **Override rules:**
+  - Recording: An exact owner directive is recorded as OWNER_OVERRIDE, separate from the underlying evidence result, referencing the exact object and the evidence it overrides.
+  - Invalidation: An override is invalidated when its referenced exact object identity (ref/head/tree/hash) changes; a changed object requires a fresh directive.
+  - An override may never:
+    - fabricate a PASS
+    - impersonate an independent reviewer
+    - bypass external credentials or platform controls
+    - claim a technically impossible state
 
 ## Hierarchy and escalation
 
@@ -75,6 +85,8 @@ authority of its own and is regenerated deterministically from
 | `lead-platform-release` | team-lead | `it-manager-iii` | team-capacity-platform-release, agent-seat-formation-platform-release |
 
 Routing SLA: deputy custody at 5 min, owner-overdue at 10 min. Immediate-to-owner classes: owner-exclusive, safety, credential, irreversible, intent-conflict.
+
+Elapsed time changes routing only, never truth, evidence, or authority. FYIs remain dashboard-only and are not escalations.
 
 ## Roles
 
@@ -293,7 +305,9 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 
 A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard — so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.
 
-Default: `rebase`. Rewriting a branch that is not the acting role's own needs `it-manager-iii`; absent that, merge the base branch in, which leaves every existing checkout valid. Records: the branch, the prior head, the new head, the role that authorized the rewrite, why the rebase was preferred to a merge. Never: rewriting a protected or pr-only ref; discarding a commit that carries evidence without recording where that evidence now lives.
+Default: `rebase`. Rewriting needs `it-manager-iii` when the branch is not the acting role's own; absent that, merge the base branch in, which leaves every existing checkout valid. Records: the branch, the prior head, the new head, the role that authorized the rewrite, why the rebase was preferred to a merge. Never: rewriting a protected or pr-only ref; discarding a commit that carries evidence without recording where that evidence now lives.
+
+Generated lane `governance`: A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift.
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 
@@ -372,7 +386,7 @@ Standing coordination is scarce and named; delivery capability is pooled and tem
 
 ### Capability pools
 
-Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease.
+Not standing teams: they own no backlog, no decision stream and no source path, and none may hold a seat or a writer lease. A pool is drawn into a temporary pod for a ticket. Legacy task names such as App Team2, IT Support2 and IT Support3 are tasks, not standing organizations. No standing Audio, Localization, Telemetry, Security or Community department exists absent a later product-scope decision.
 
 | Pool | Delivery capability | Stewardship between tickets |
 |---|---|---|
@@ -419,6 +433,29 @@ A seat's name states what it is, which team it serves and the project, so a rost
 
 The leading letter is the seat kind, never an authority code: a bare P is a persistent team lead, a bare A is an agent that lead spins out. P followed by a number is never a seat kind. P<n> is the authority tier in hierarchy.json, or an issue priority, and the subject decides which — exactly as the tier contract already says. A bare P and a P2 belong to different namespaces and must not be read as one.
 
+### Work in progress
+
+Idle capacity: Read-only audits, modernization-register refreshes, documentation reconciliation, tooling and quality observations, or stale-context identification, returned through Help Desk as evidence or a proposal. No patch unless separately assigned.
+
+### Legacy team names
+
+| Legacy name | Routes to | Why |
+|---|---|---|
+| `application` | `feature-architecture` | App Team is a legacy task name; feature and architecture work is pooled. |
+| `art` | `art-tech-art` | Direct rename. |
+| `code-quality-modernization` | `code-quality-modernization` | Unchanged. |
+| `data-architecture-systems` | `data-architecture-lead` | A standing role, not a pool. |
+| `game-design` | `game-systems` | Mechanics, balance and data contracts; design intent sits with Experience Design. |
+| `help-desk` | `help-desk` | A standing role, unchanged. |
+| `incident-it-support` | `incident-defect` | Incident and P0 response is pooled; IT Support3 was a task name. |
+| `itm-integration-delivery` | `it-manager-iii` | A standing role, formerly named Main. |
+| `project-management` | `project-management-lead` | A standing role, not a pool. |
+| `qa-experience` | `experience-accessibility-review` | Forms per applicable ticket; QA verdict ownership stays independent. |
+| `qa-functional` | `qa-guild` | Independent functional and regression evidence. |
+| `review-approval-hub` | `platform-release` | The Hub is now generated output under the generated-artifact lane; approval gates themselves live in transitions.json and authority.json, not a team. |
+| `writing` | `experience-design` | Narrative, copy and documentation clarity. |
+
+
 ## RACI (exactly one Accountable per item)
 
 Exactly one Accountable per deliverable or decision. Responsible executes; Accountable owns the outcome and the go/no-go; Consulted give bounded input; Informed receive the result. Accountable is never the sole Responsible for its own independent-QA acceptance.
@@ -452,6 +489,11 @@ Elapsed time changes routing only, never truth, evidence, or authority. A time-b
 | data-contract-withhold | 1 | 5 | data-architecture-lead → it-manager-iii | it-manager-iii | request-decision | yes |
 | deputy-overdue | 1 | 10 | it-manager-iii → constantine | constantine | request-decision | yes |
 | owner-exclusive-now | 0 | 0 | constantine | constantine | request-decision | no |
+
+- `technical-blocker` — An unresolved technical ambiguity, ownership contest, or integration question stalls reversible work.
+- `data-contract-withhold` — A cross-domain data contract is unsafe and the Data Architecture lead has withheld it.
+- `deputy-overdue` — The deputy has held custody of a blocker past its resolution window without entered work.
+- `owner-exclusive-now` — An owner-exclusive, safety, credential, irreversible, or intent-conflict decision is required.
 
 ### Where a question goes
 
@@ -496,6 +538,17 @@ Protected states: `pushed`, `pr-open`, `dev-integrated`, `hosted-verified`, `rel
 | hosted-verified | resolved | five-role acceptance ledger | it-manager-iii, project-management-lead | no |
 | resolved | released | Gate-F promotion packet + owner decision | owner | yes |
 
+Historical entries keep their original text and gain a mapped canonical event. Old evidence is never rewritten to make it appear the new lifecycle already existed.
+
+| Legacy value | Canonical treatment |
+|---|---|
+| `READY FOR QA` | Transition through CANDIDATE FROZEN, then FUNCTIONAL QA. |
+| `WAITING ON MAIN` | WAITING ON DECISION with decision_owner IT Manager III; Main is retained only as the legacy value. |
+| `WAITING ON CONSTANTINE` | WAITING ON DECISION with decision_owner Constantine, routed through the IT Manager III. |
+| `CLOSED` | Decide explicitly between RESOLVED and CANCELLED; do not preserve as an ambiguous terminal synonym. |
+| `RELEASED` | Record as a separate release fact, never a workflow replacement. |
+| `READY FOR MAIN` | Compatibility token that routes to the IT Manager III role. |
+
 ## Information access and context loading
 
 Minimal sufficient context. A cold-start agent loads only what the current action needs: a bounded startup set, then on-demand retrieval by exact ID/path/hash. Restricted classes require explicit authority; forbidden classes are never loaded into model context at all.
@@ -535,6 +588,10 @@ A P-level is decision authority and nothing else. It is not seniority, not capab
 
 **P-codes mean two things.** The subject decides the meaning. A P-code attached to a team or an actor is authority; a P-code attached to an issue, ticket, directive or defect is priority. Authority subjects: `team`, `actor`, `role`, `seat`, `lead`. Priority subjects: `issue`, `ticket`, `directive`, `defect`, `blocker`, `incident`, `WITHHOLD`.
 
+P<n> carries two meanings in this project, separated by SUBJECT, per the owner: on a team or an actor it is AUTHORITY (this ladder); on an issue, ticket or directive it is PRIORITY (P0 most urgent). 'P1 Help Desk lead' is an authority statement; 'P1 WITHHOLD' and 'incident-p0' are priority. Nothing infers one from the other, and neither reading is ever applied to a subject of the other kind.
+
+The recovered 2026-08-28 census carries rows such as 'P0 IT Manager III', where a priority code and an actor name sit adjacent in rendered output. Those rows are historical PRIORITY rows and predate this rule. They are evidence, not authority statements, and docs/reconstruction/team-evidence/ labels each one accordingly.
+
 | Tier | Who | Holds | Cannot |
 |---|---|---|---|
 | **P0** Owner | `constantine` | main and release mutation; tags; release publication; Pages source and deployment; final release readiness; Gate E playtest; Gate F per-action approval; every owner-exclusive decision class | overrule an independent QA verdict without a recorded waiver named in qa.json |
@@ -564,6 +621,29 @@ Desired Pages source: `main`. A switch needs the `owner`, a change window, and a
 
 The promotion packet carries 10 required fields; missing, contradictory, stale or unverified is `UNKNOWN`, and `UNKNOWN` blocks.
 
+- ticket and decision IDs, requested action, decision owner, and exact new authority requested
+- evidence timestamp and fresh exact dev, test, release and main heads
+- candidate base/head, pull request, reviewed head, merge commit when present, mergeability, required review and CI results
+- dependency result, claimed paths and serialized lanes, collision search, and the itemized independence checklist result
+- approved scope and acceptance, maker completion receipt, independent reviewers, QA stages, gates, and unresolved findings or exceptions
+- exact artifact path, SHA-256, build/version, source receipt, generation provenance, and byte-identity result
+- strong playtest matrix, environment, player flows, result and evidence
+- current and desired Pages source, deployment run/commit, hosted URL, deployed artifact/hash/source, and hosted smoke/playtest result
+- rollback target, prior Pages source or branch state, exact procedure, trigger, recovery consequence, responsible actor and required authority
+- the WAIT or delivery recommendation, rationale, smallest next action, and the exact owner action requested
+
+Promotion readiness means: The candidate and evidence packet are ready to be considered. It does not mean: That the product is release-ready. These stay owner-exclusive whatever the packet says: test mutation, release mutation, main mutation, release-branch merge, tag, release publication, final release readiness.
+
+Delivery process: Push the immutable topic head, open or update its pull request, complete current review and checks, and merge through the pull request. idle implementation,a speculative replacement patch
+
+A Pages switch is complete only when deployment passes and hosted verification passes. The switch packet records:
+
+- the exact main commit, artifact path, SHA-256, build and source receipt
+- the intended Pages source and the prior source required for rollback
+- the successful Pages deployment and its exact run and commit evidence
+- hosted live smoke and strong playtest results against the deployed URL
+- the rollback command or configuration change, trigger, responsible actor, and authority to restore the prior Pages source
+
 ## Model and effort selection
 
 Model and reasoning effort are selected for the assignment's risk and station, never for a person's title, seniority, pool or authority. The smallest capable pairing supported by the current execution venue is the right one. A stronger model does not outrank a weaker one, and selecting one grants nothing.
@@ -577,24 +657,27 @@ Every assignment and reassignment records: `MODEL <model> | EFFORT <effort> | WH
 | High-risk or cross-system reasoning | `gpt-5.6-sol` | high, xhigh | Architecture, governance, schema and save compatibility, security, incident and P0 analysis, integration, and promotion-readiness analysis. |
 | Exceptional unresolved multi-system risk | `any capable available model` | max (needs a recorded exceptional reason) | Only when the packet records the exceptional reason that lesser effort is inadequate. |
 
+Selection stability: The selected pairing is fixed for the active turn. Changing model or effort requires an escalation receipt recording the trigger, partial evidence, new pairing, reason, ownership and path continuity, and authority. The new assignment does not erase the prior receipt. Substitution: Availability is checked at assignment time. If a named default is unavailable, the assigning authority records the supported substitute and why it is capable. That is a reassignment and requires a complete packet.
+
+Every assignment record carries: model, effort, why, escalate_when.
 
 ## Owner commands
 
 The owner-command path accepts only enumerated actions from an authenticated actor. Every command is schema-validated against an allowlist, checks its expected_current_hash (compare-and-swap) against live state, records a dry-run summary, and would append a decision event and CAS-update only the affected state. No arbitrary shell or free-form field is ever accepted. A stale or unauthorized command fails safely and mutates nothing.
 
-| Action | Authenticator roles | CAS | Protected |
-|---|---|---|---|
-| prioritize | owner | no | no |
-| delegate | owner, it-manager-iii | no | no |
-| approve | owner, it-manager-iii | yes | no |
-| reject | owner, it-manager-iii | yes | no |
-| defer | owner, it-manager-iii | no | no |
-| issue-lease | owner, it-manager-iii | no | no |
-| revoke-lease | owner, it-manager-iii | yes | no |
-| request-revision | owner, it-manager-iii | yes | no |
-| authorize-integration | owner, it-manager-iii | yes | yes |
-| authorize-release | owner | yes | yes |
-| record-owner-override | owner | yes | yes |
+| Action | Authenticator roles | CAS | Protected | Required fields | Affects |
+|---|---|---|---|---|---|
+| prioritize | owner | no | no | `target`, `params` | portfolio sequencing (recommendation input only) |
+| delegate | owner, it-manager-iii | no | no | `target`, `params` | delegation envelope assignment/rebind |
+| approve | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `candidate_oid` | acceptance of an exact object |
+| reject | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | rejection of an exact object |
+| defer | owner, it-manager-iii | no | no | `target`, `reason` | deferral (routing only) |
+| issue-lease | owner, it-manager-iii | no | no | `target`, `params` | writer lease issuance |
+| revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
+| request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
+| authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
+| authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
+| record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
 
 ## Legacy migration
 
@@ -604,13 +687,13 @@ Migration is read-only over legacy evidence. It inventories the old coordination
 
 Evidence is a manifest or exact pointer, not another ledger. Each evidence type names its producer, the exact object it binds to, its verifier, its freshness rule, and the keys whose change invalidates it. A receipt is an event or evidence manifest; reads, polls, and repeated acknowledgements produce none.
 
-| Evidence | Producer | Exact object | Verifier | Invalidation keys |
-|---|---|---|---|---|
-| test-run-receipt | maker | commit OID + tree | qa-independent | head_oid, tree_oid |
-| generated-view-drift-check | generator | .agentops/generated/* vs its JSON sources | it-manager-iii | source_json_hash |
-| security-scan-receipt | qa-independent | commit OID | it-manager-iii | head_oid |
-| data-lineage-receipt | data-architecture-lead | schema/id/lineage manifest hash | it-manager-iii | schema_version, manifest_hash |
-| hosted-verification-receipt | qa-independent | deployed commit SHA + hosted URL | it-manager-iii | hosted_sha |
+| Evidence | Producer | Exact object | Verifier | Invalidation keys | Freshness |
+|---|---|---|---|---|---|
+| test-run-receipt | maker | commit OID + tree | qa-independent | head_oid, tree_oid | valid only for the exact head it ran against |
+| generated-view-drift-check | generator | .agentops/generated/* vs its JSON sources | it-manager-iii | source_json_hash | valid only while sources are unchanged |
+| security-scan-receipt | qa-independent | commit OID | it-manager-iii | head_oid | valid only for the scanned commit |
+| data-lineage-receipt | data-architecture-lead | schema/id/lineage manifest hash | it-manager-iii | schema_version, manifest_hash | valid only for the manifested schema version |
+| hosted-verification-receipt | qa-independent | deployed commit SHA + hosted URL | it-manager-iii | hosted_sha | valid only for the exact hosted SHA |
 
 ## Enforced invariants
 
