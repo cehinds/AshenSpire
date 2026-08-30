@@ -19,6 +19,16 @@ function git(repoRoot, args) {
   return execFileSync("git", ["-C", repoRoot, ...args], { encoding: "utf8", windowsHide: true }).trim();
 }
 
+export function isFastForward(repoRoot, oldHead, newHead) {
+  try {
+    execFileSync("git", ["-C", repoRoot, "merge-base", "--is-ancestor", oldHead, newHead], { windowsHide: true, stdio: "ignore" });
+    return true;
+  } catch (error) {
+    if (error.status === 1) return false;
+    throw error;
+  }
+}
+
 export function validateAuthoritativeCheckout(repoRoot, authoritativeRef = "dev", fetchRemote = false) {
   if (fetchRemote) execFileSync("git", ["-C", repoRoot, "fetch", "--quiet", "origin", authoritativeRef], { windowsHide: true });
   const branch = git(repoRoot, ["symbolic-ref", "--quiet", "--short", "HEAD"]);
@@ -84,10 +94,10 @@ export function scanTerminalCapsules(root) {
   }).sort((a, b) => a.event.localeCompare(b.event));
 }
 
-export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOString(), limit = 100, offer = runLiveOffer, initialize = false, sourceHead = null }) {
+export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOString(), limit = 100, offer = runLiveOffer, initialize = false, sourceHead = null, allowSourceAdvance = false }) {
   const firstRun = !fs.existsSync(stateFile);
   const state = readState(stateFile);
-  if (sourceHead && state.source_head && state.source_head !== sourceHead) throw new Error(`authoritative source drift: ${state.source_head} -> ${sourceHead}`);
+  if (sourceHead && state.source_head && state.source_head !== sourceHead && !allowSourceAdvance) throw new Error(`non-fast-forward authoritative source drift: ${state.source_head} -> ${sourceHead}`);
   if (sourceHead) state.source_head = sourceHead;
   const output = [];
   const processed = new Set(state.processed);
@@ -130,7 +140,9 @@ async function main(argv = process.argv.slice(2)) {
   try {
     do {
       const source = validateAuthoritativeCheckout(repoRoot, activation.authoritative_ref, true);
-      const result = cycle({ stateFile, initialize: true, sourceHead: source.head });
+      const prior = readState(stateFile).source_head;
+      const allowSourceAdvance = Boolean(prior && prior !== source.head && isFastForward(repoRoot, prior, source.head));
+      const result = cycle({ stateFile, initialize: true, sourceHead: source.head, allowSourceAdvance });
       if (result.status !== "QUIET") console.log(JSON.stringify(result));
       if (argv.includes("--once")) break;
       await new Promise((resolve) => setTimeout(resolve, pollMs));

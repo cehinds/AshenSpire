@@ -87,8 +87,10 @@ node .agentops/tools/pipeline-pilot-watch.mjs
 The watcher refuses feature/stale/dirty checkouts: it must run from a tracked-
 clean `dev` checkout whose HEAD exactly matches freshly fetched `origin/dev`.
 Its repo-wide state records that HEAD and fails closed if the source moves
-during a run. Remote fetch failure also fails closed rather than scanning stale
-state.
+during a run except for a verified fast-forward. A fast-forward preserves
+processed identities, pending alarms, and observations before rescanning; a
+history rewrite fails closed. Remote fetch failure also fails closed rather
+than scanning stale state.
 Stop that process to deactivate it. Removing its Git-local state resets only
 observability and replay history; it never changes AgentOps claims or history.
 On first start, existing terminal capsules are baselined without emitting
