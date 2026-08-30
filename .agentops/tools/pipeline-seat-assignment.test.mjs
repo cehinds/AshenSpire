@@ -8,7 +8,7 @@ import { cycle, readState } from "./pipeline-pilot-watch.mjs";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "seat-live-assignment-"));
 const actualAgentops = path.resolve(new URL("../", import.meta.url).pathname.replace(/^\/(.:)/, "$1"));
-assert.match(resolveCanonicalSeatRuntime(actualAgentops).replaceAll("\\", "/"), /AshenSpire\/.git\/agentops-pipeline\/runtime$/);
+assert.match(resolveCanonicalSeatRuntime(actualAgentops).replaceAll("\\", "/"), /\.git\/agentops-pipeline\/runtime$/);
 const runtime = path.join(root, "runtime");
 const targetSeat = "seat:application:22222222-2222-4222-8222-222222222222";
 const holdingSeat = "seat:application:11111111-1111-4111-8111-111111111111";
