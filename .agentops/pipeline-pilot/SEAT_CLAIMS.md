@@ -11,7 +11,9 @@ A claim binds exactly one ticket, seat, writer lease, ref, and path set. The
 live denominator is held outside the checkout under the repository-wide
 Git-local scheduler state so assignment cannot dirty `dev`; the runtime config
 points to the canonical claims, leases, events, trusted registry, and per-seat
-capability files. Every
+capability files. The watcher derives that root from `git rev-parse
+--git-common-dir`; a CLI override may select a file only inside that exact
+repository runtime and cannot redirect authority to a sibling directory. Every
 mutation names the expected claim hash. A transfer succeeds only when IT
 Manager III authorizes it, the target seat proves its capability, the expected
 hash matches, the exact sealed lease is current and congruent, and no live

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { commitClaimTransfer, seatFingerprint, validateClaim, validateLease } from "./pipeline-seat-claims.mjs";
 import { globCovers } from "./opsctl.mjs";
 
@@ -14,6 +15,19 @@ function resolveFrom(base, value, label) {
   const resolved = path.resolve(base, value);
   if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) throw new Error(`${label} must stay inside the Git-local seat runtime`);
   return resolved;
+}
+
+function inside(root, candidate) {
+  const exact = path.resolve(root);
+  const resolved = path.resolve(candidate);
+  return resolved === exact || resolved.startsWith(`${exact}${path.sep}`);
+}
+
+export function resolveCanonicalSeatRuntime(root) {
+  const repoRoot = path.dirname(path.resolve(root));
+  const common = execFileSync("git", ["-C", repoRoot, "rev-parse", "--git-common-dir"], { encoding: "utf8", windowsHide: true }).trim();
+  if (!common) throw new Error("git returned an empty common directory for seat runtime");
+  return path.join(path.resolve(repoRoot, common), "agentops-pipeline", "runtime");
 }
 
 export function validateSeatRuntime(config, configFile) {
@@ -42,9 +56,14 @@ function actualEventTail(eventDir) {
   return files.length ? readJson(path.join(eventDir, files.at(-1)), "event tail").event_hash : null;
 }
 
-export function assignLiveClaim(root, { offer, now, runtimeConfigFile }) {
+export function assignLiveClaim(root, { offer, now, runtimeConfigFile, canonicalRuntimeRoot = null }) {
   if (offer?.status !== "OFFERED" || !offer.selected?.ticket || !offer.released_actor) throw new Error("assignment requires one safe live offer");
+  const canonicalRoot = path.resolve(canonicalRuntimeRoot || resolveCanonicalSeatRuntime(root));
+  if (!inside(canonicalRoot, runtimeConfigFile)) throw new Error("seat runtime must be inside this repository's canonical Git-local runtime");
   const config = validateSeatRuntime(readJson(runtimeConfigFile, "seat runtime"), runtimeConfigFile);
+  for (const candidate of [config.registry_file, config.claims_dir, config.leases_dir, config.events_dir, config.lock_file, ...Object.values(config.seats).map((seat) => seat.capability_file)]) {
+    if (!inside(canonicalRoot, candidate)) throw new Error("seat runtime dependency escaped this repository's canonical Git-local runtime");
+  }
   const seat = config.seats[offer.released_actor];
   if (!seat?.seat_id) throw new Error(`no unique seat registered for actor ${offer.released_actor}`);
   const registry = readJson(config.registry_file, "trusted seat registry");
