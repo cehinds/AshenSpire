@@ -211,6 +211,17 @@ if (args.includes('--selftest')) {
     replace: lines('styles/ui.css', '.combat .topbar.combat-hud {', '  position: relative;', '  z-index: 0; /* planted: battlefield may cover HUD controls */', '}'),
     expectRed: /FAIL every captured interaction state keeps measured control centres hittable/,
   }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
+  const focusedEvidencePlants = [{
+    name: 'focused screenshot capture overwrites manifest-bound evidence',
+    file: TOOL_PATH,
+    find: lines(TOOL_PATH,
+      "        const focused = selfTargetOnly ? '-focused' : '';",
+      '        const stem = standalone'),
+    replace: lines(TOOL_PATH,
+      "        const focused = ''; // planted: focused capture reuses manifest-bound filenames",
+      '        const stem = standalone'),
+    expectRed: /FAIL focused screenshot filename uses an isolated evidence namespace/,
+  }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
   const packagingPlants = [{
     name: 'standalone evidence capture serializes the full inlined BODY text',
     file: 'tools/hybrid-input-parity.mjs',
@@ -237,7 +248,7 @@ if (args.includes('--selftest')) {
     replace: "  return Buffer.from(text, 'utf8'); // planted: checkout EOL leaks into identity",
     expectRed: /canonical LF normalization is checkout-EOL invariant/,
   }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
-  if (wantedPlant && sourcePlants.length === 0 && geometryPlants.length === 0
+  if (wantedPlant && sourcePlants.length === 0 && geometryPlants.length === 0 && focusedEvidencePlants.length === 0
     && packagingPlants.length === 0 && artifactPlants.length === 0 && provenancePlants.length === 0) {
     console.error(`unknown --plant filter: ${wantedPlant}`);
     process.exit(2);
@@ -264,6 +275,17 @@ if (args.includes('--selftest')) {
       plants: geometryPlants,
     });
     if (geometryStatus) process.exit(geometryStatus);
+  }
+  if (focusedEvidencePlants.length) {
+    const focusedEvidenceStatus = await doorSelftest({
+      tool: 'hybrid-input-parity.mjs',
+      args: ['--self-target-only', '--only', '390x844', '--screenshots'],
+      timeoutMs: 180000,
+      extraCopy: ['docs', 'AshenSpire.html'],
+      includePng: true,
+      plants: focusedEvidencePlants,
+    });
+    if (focusedEvidenceStatus) process.exit(focusedEvidenceStatus);
   }
   if (packagingPlants.length) {
     const packagingStatus = await doorSelftest({
@@ -654,6 +676,21 @@ const EVIDENCE_READING = `(() => {
 const cleanTargeting = (state) => state.selected.length === 0 && state.targetable.length === 0
   && !state.playerArmed && state.aimEnemy.length === 0 && !state.aimPlayer;
 
+function manifestBoundEvidenceSnapshot() {
+  const snapshot = {};
+  for (const name of ['hybrid-input-parity-manifest.json', 'hybrid-input-parity-root-manifest.json']) {
+    const manifestPath = join(ROOT, 'docs', 'preview', name);
+    if (!existsSync(manifestPath)) continue;
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    for (const row of [...(manifest.contactSheets || []), ...(manifest.evidence || [])]) {
+      if (!row.filename || Object.hasOwn(snapshot, row.filename)) continue;
+      const imagePath = join(ROOT, 'docs', 'preview', row.filename);
+      snapshot[row.filename] = existsSync(imagePath) ? sha256(readFileSync(imagePath)) : null;
+    }
+  }
+  return snapshot;
+}
+
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found; pass --browser or set CHROME');
   const served = await serve({ root: ROOT, port: 8299, open: false });
@@ -663,6 +700,7 @@ async function main() {
   let findings = 0; let checks = 0; let measured = 0;
   const evidence = [];
   const contactSheets = [];
+  const manifestBoundBefore = selfTargetOnly && screenshots ? manifestBoundEvidenceSnapshot() : null;
   const concise = args.includes('--concise');
   const check = (value, label, detail = '') => {
     checks++;
@@ -879,8 +917,19 @@ async function main() {
       const screenshot = async (suffix) => {
         if (!screenshots) return;
         const dir = join(ROOT, 'docs', 'preview'); mkdirSync(dir, { recursive: true });
-        const stem = standalone ? `hybrid-input-parity-root-${shape}` : `hybrid-input-parity-${shape}`;
+        const focused = selfTargetOnly ? '-focused' : '';
+        const stem = standalone
+          ? `hybrid-input-parity-root${focused}-${shape}`
+          : `hybrid-input-parity${focused}-${shape}`;
         const filename = `${stem}-${suffix}.png`;
+        if (selfTargetOnly && !filename.includes('-focused-')) {
+          check(false, 'focused screenshot filename uses an isolated evidence namespace', filename);
+          return;
+        }
+        if (selfTargetOnly && Object.hasOwn(manifestBoundBefore || {}, filename)) {
+          check(false, 'focused screenshot filename is outside manifest-bound evidence', filename);
+          return;
+        }
         const path = join(dir, filename);
         const image = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
         writeFileSync(path, Buffer.from(image.data, 'base64'));
@@ -1388,6 +1437,14 @@ async function main() {
       await cdp.send('Target.closeTarget', { targetId });
     }
     if (!measured) throw new Error(`--only ${only} matched no configured shape`);
+    if (manifestBoundBefore) {
+      const changed = Object.entries(manifestBoundBefore).filter(([filename, before]) => {
+        const imagePath = join(ROOT, 'docs', 'preview', filename);
+        const after = existsSync(imagePath) ? sha256(readFileSync(imagePath)) : null;
+        return after !== before;
+      }).map(([filename]) => filename);
+      check(changed.length === 0, 'focused screenshots preserve manifest-bound evidence files', JSON.stringify(changed));
+    }
     if (screenshots && !selfTargetOnly) {
       for (const [width, height] of SHAPES) {
         const shape = `${width}x${height}`;

@@ -1547,20 +1547,39 @@ export function showSettingsNotice(msg) {
 
 export function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
+  const opener = document.activeElement;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
-    <div class="modal settings-modal">
-      <h2>Settings</h2>
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <h2 id="settings-modal-title">Settings</h2>
       <div class="set-body"></div>
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
   renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
-  const close = () => veil.remove();
+  const modal = veil.querySelector('.settings-modal');
+  const onKeydown = (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+    const topModal = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+    if (topModal !== modal) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  };
+  const close = () => {
+    if (!veil.isConnected) return;
+    document.removeEventListener('keydown', onKeydown, true);
+    veil.remove();
+    if (opener?.isConnected && typeof opener.focus === 'function') {
+      opener.focus({ preventScroll: true });
+    }
+  };
   veil.addEventListener('click', (e) => {
     if (e.target === veil) close();
   });
   veil.querySelector('#set-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKeydown, true);
+  veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }

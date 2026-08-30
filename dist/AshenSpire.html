@@ -6556,22 +6556,21 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 
 .combat-action-row {
+  --action-edge-size: max(var(--tap-floor), clamp(4.8rem, 6vw, 5.6rem));
+  --action-pile-size: max(var(--tap-floor), clamp(4.6rem, 5.5vw, 5.2rem));
+  --action-end-size: max(var(--tap-floor), clamp(11rem, 16vw, 15rem));
+  --action-cluster-gap: calc(4px / var(--ui-zoom, 1));
   position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
   display: grid;
-  grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(8rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));
-  grid-template-areas: "armaments energy end draw discard";
-  align-items: end; gap: 0.8rem;
+  grid-template-columns: var(--action-edge-size) minmax(0, 1fr) var(--action-pile-size) var(--action-end-size) var(--action-pile-size) minmax(0, 1fr) var(--action-edge-size);
+  grid-template-areas: "energy . draw end discard . exhaust";
+  align-items: end; column-gap: var(--action-cluster-gap);
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
-.armaments-command {
-  grid-area: armaments; min-height: var(--tap-floor); border: 1px solid var(--gold);
-  background: var(--panel); color: var(--parchment); border-radius: 8px;
-  font-size: 0.78rem; letter-spacing: 0.08em; font-weight: 800;
-}
-/* The five-cell rail carries its own direct controls and key labels. The older
-   contextual combat strip would either become a sixth track or cover the rail,
-   so it is retired on this screen; map and other contextual strips are intact. */
+/* The action row carries its own direct controls and key labels. The older
+   contextual combat strip would cover the bottom rail, so it remains retired
+   on this screen; map and other contextual strips are intact. */
 .hand-area > .hint-bar.hint-combat {
   display: none;
 }
@@ -6583,7 +6582,8 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .combat-action-row > .energy-orb {
   grid-area: energy; position: relative; left: auto; bottom: auto; isolation: isolate;
-  width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor));
+  width: var(--action-edge-size); max-width: 100%; height: var(--action-edge-size);
+  font-size: clamp(1.45rem, 2.2vw, 1.9rem);
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
 .combat-action-row > .energy-orb::before {
@@ -6596,7 +6596,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   min-height: var(--tap-floor); background: #120f0c;
   border: 1px solid var(--gold); border-radius: 8px;
 }
-.combat-action-row > .end-turn { grid-area: end; position: static; right: auto; bottom: auto; }
+.combat-action-row > .end-turn {
+  grid-area: end; position: static; right: auto; bottom: auto;
+  box-sizing: border-box; width: var(--action-end-size); max-width: 100%; min-width: 0;
+  font-size: clamp(1.15rem, 2vw, 1.7rem);
+  padding-inline: clamp(0.7rem, 1.5vw, 2rem);
+}
 .end-turn .et-key {
   display: block; width: max-content; margin: 0.2rem auto 0; font-family: var(--font-body); font-size: 0.82rem;
   padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
@@ -6615,15 +6620,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .pile.discard { right: 1.6rem; }
 .pile.exhaust { right: 8.2rem; opacity: 0.85; }
 .combat-action-row > .pile {
-  position: static; inset: auto; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  box-sizing: border-box; position: static; inset: auto;
+  width: var(--action-pile-size); max-width: 100%; height: max(4rem, var(--tap-floor));
+  min-width: 0; min-height: var(--tap-floor); padding-inline: 0.35rem;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
 }
 .combat-action-row > .pile.draw { grid-area: draw; }
 .combat-action-row > .pile.discard { grid-area: discard; }
-.combat-action-row > .pile.discard { position: static; inset: auto; }
-.exhaust-summary { color: var(--muted); font-size: .65rem; letter-spacing: .05em; }
-
-:root[data-armaments-presentation='radial'] .combat .hud-charge-flasks,
-:root[data-armaments-presentation='radial'] .combat .hud-potions { display: none !important; }
+.combat-action-row > .pile.exhaust {
+  grid-area: exhaust; width: var(--action-edge-size);
+}
+.combat-action-row > .pile.exhaust small {
+  font-size: clamp(0.66rem, 1.8vw, 0.82rem); letter-spacing: 0.04em;
+}
 
 .armament-radial {
   position: fixed; z-index: 360; left: 1.6rem; bottom: calc(var(--action-row-drop) + 1rem);
@@ -7165,21 +7174,27 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      margin. Both halves are dropped together, in one place. */
   :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
   :root[data-layout='narrow'] .combat-action-row {
+    --action-edge-size: max(var(--tap-floor), clamp(4.6rem, 13vw, 5.6rem));
+    --action-pile-size: max(var(--tap-floor), clamp(4rem, 11.5vw, 4.8rem));
+    --action-end-size: max(var(--tap-floor), clamp(11rem, 30vw, 13rem));
     grid-area: actions; position: static; inset: auto; width: 100%;
-    grid-template-columns: repeat(2, minmax(var(--tap-floor), 1fr)) minmax(7.5rem, 1.15fr) repeat(2, minmax(var(--tap-floor), 1fr));
-    grid-template-areas: "armaments energy end draw discard";
-    align-items: center; gap: 0.4rem;
+    grid-template-columns: var(--action-edge-size) minmax(0, 1fr) var(--action-pile-size) var(--action-end-size) var(--action-pile-size) minmax(0, 1fr) var(--action-edge-size);
+    grid-template-areas: "energy . draw end discard . exhaust";
+    align-items: center; column-gap: var(--action-cluster-gap);
   }
   :root[data-layout='narrow'] .combat-action-row > .energy-orb {
-    width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
+    width: var(--action-edge-size); max-width: 100%; height: var(--action-edge-size);
   }
   :root[data-layout='narrow'] .combat-action-row > .end-turn {
-    min-height: 6rem; font-size: 1.15rem; padding: 0.6rem;
+    min-height: var(--action-edge-size); padding-block: 0.6rem;
     margin: 0; min-width: 0;
   }
 
   :root[data-layout='narrow'] .combat-action-row > .pile {
-    width: 100%; height: max(4.2rem, var(--tap-floor)); font-size: 1.1rem;
+    width: var(--action-pile-size); max-width: 100%; height: max(4.2rem, var(--tap-floor));
+  }
+  :root[data-layout='narrow'] .combat-action-row > .pile.exhaust {
+    width: var(--action-edge-size);
   }
 
   /* Co-op still renders Energy, the shared hand, and End Turn as direct
@@ -42249,7 +42264,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'ae88a10296';
+const SOURCE = 'e1b494b667';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42283,7 +42298,7 @@ const SOURCE = 'ae88a10296';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1704';
+const ORDINAL = '1708';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -44138,22 +44153,41 @@ function showSettingsNotice(msg) {
 
 function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
+  const opener = document.activeElement;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
-    <div class="modal settings-modal">
-      <h2>Settings</h2>
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <h2 id="settings-modal-title">Settings</h2>
       <div class="set-body"></div>
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
   renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
-  const close = () => veil.remove();
+  const modal = veil.querySelector('.settings-modal');
+  const onKeydown = (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+    const topModal = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+    if (topModal !== modal) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  };
+  const close = () => {
+    if (!veil.isConnected) return;
+    document.removeEventListener('keydown', onKeydown, true);
+    veil.remove();
+    if (opener?.isConnected && typeof opener.focus === 'function') {
+      opener.focus({ preventScroll: true });
+    }
+  };
   veil.addEventListener('click', (e) => {
     if (e.target === veil) close();
   });
   veil.querySelector('#set-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKeydown, true);
+  veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }
 
 
@@ -57053,7 +57087,7 @@ const { friendlyTargetMode } = require("src/model/friendlyTargets.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
-const { equippedIn, figureSpec } = require("src/model/loadout.js");
+const { figureSpec } = require("src/model/loadout.js");
 const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
@@ -57072,8 +57106,6 @@ const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
 const { battlefieldStageModel } = require("src/ui/models/BattlefieldStageModel.js");
 const { wireBattlefieldStage } = require("src/ui/components/battlefieldStage.js");
 const { tooltipPlacementModel } = require("src/ui/models/TooltipPlacementModel.js");
-const { mountArmamentRadial } = require("src/ui/components/armamentRadial.js");
-const { resolveArmamentsPresentation, resolveArmamentsPhonePlacement } = require("src/ui/screens/settings.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -57133,17 +57165,18 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           <button class="hand-page hand-next" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
         </div>
-        <!-- One semantic five-cell rail. Exhaust remains nested in the Discard
-             cell, so revealing it never creates a sixth sizing track. -->
+        <!-- One grid owns every persistent combat action destination. Actions
+             and Exhaust pin the two safe-area edges while Draw, End Turn and
+             Discard form one tight, symmetric centre cluster. Exhaust stays
+             present at zero so no control appears late or shifts the row. -->
         <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          <button class="armaments-command" type="button" aria-label="Armaments shortcuts"><span>ARMAMENTS</span></button>
           <div class="energy-orb" role="status" aria-label="Actions remaining"></div>
-          <button class="end-turn">END TURN</button>
-          <div class="pile draw" role="button" tabindex="0"><span class="n"></span><small>DRAW</small></div>
-          <button class="pile discard" type="button"><span class="n"></span><small>DISCARD</small><span class="exhaust-summary" hidden></span></button>
+          <button class="pile draw" type="button"><span class="n"></span><small>DRAW</small></button>
+          <button class="end-turn" type="button">END TURN</button>
+          <button class="pile discard" type="button"><span class="n"></span><small>DISCARD</small></button>
+          <button class="pile exhaust" type="button"><span class="n"></span><small>EXHAUSTED</small></button>
         </div>
-        <!-- Context hints remain a separate auxiliary strip. Keeping them outside
-             the command rail preserves exactly five semantic rail cells. -->
+        <!-- Context hints remain a separate auxiliary strip. -->
         ${hintBarHtml('combat')}
       </div>
       <div class="fx-layer"></div>
@@ -57187,55 +57220,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   const HAND_PAGE_THRESHOLD = 7;
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
-  const armamentSettings = () => ({
-    ...(meta.settings || {}),
-    armamentsPresentation: document.documentElement.dataset.armamentsPresentation,
-    armamentsPhonePlacement: document.documentElement.dataset.armamentsPhonePlacement,
-  });
-  const armamentRadial = mountArmamentRadial($('.armaments-command'), {
-    mode: resolveArmamentsPresentation(armamentSettings()),
-    placement: resolveArmamentsPhonePlacement(armamentSettings()),
-    onFullArmaments: () => openCombatArmoury({ destination: 'equipment' }),
-  });
-  function openUtilityPotionPicker(flasks) {
-    armamentRadial.root.querySelector('.armament-radial-picker')?.remove();
-    const picker = document.createElement('div');
-    picker.className = 'armament-radial-picker';
-    picker.setAttribute('role', 'menu');
-    picker.setAttribute('aria-label', 'Other potions');
-    flasks.forEach((flask, slot) => {
-      const def = registries.flasks.get(flask.flaskId);
-      if (!def) return;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.setAttribute('role', 'menuitem');
-      button.textContent = def.name;
-      button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        openCombatFlaskMenu(button, def, { slot });
-      });
-      picker.appendChild(button);
-    });
-    armamentRadial.root.appendChild(picker);
-    const first = picker.querySelector('button');
-    first?.focus();
-    if (first) focusElement(first);
-  }
-  const syncArmamentSettings = () => {
-    const settings = armamentSettings();
-    const mode = resolveArmamentsPresentation(settings);
-    const placement = resolveArmamentsPhonePlacement(settings);
-    armamentRadial.update({ mode, placement });
-    combatEl.dataset.armamentsPresentation = mode;
-  };
-  let armamentSettingsObserver = null;
-  if (typeof MutationObserver !== 'undefined') {
-    armamentSettingsObserver = new MutationObserver(syncArmamentSettings);
-    armamentSettingsObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-armaments-presentation', 'data-armaments-phone-placement'],
-    });
-  }
 
   // A blank press dismisses only the floating explanation. The edge inspector
   // is a separately owned Folding Tray and remains until its label is folded.
@@ -57782,35 +57766,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       potions.appendChild(el);
     });
     potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
-    const radialItems = [];
-    for (const kind of CHARGE_FLASK_KINDS) {
-      const def = chargeFlaskDefinition(registries, kind);
-      const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
-      radialItems.push({
-        target: 'top', label: kind === 'hp' ? 'HP Flask' : 'MP Flask', detail: String(current),
-        ariaLabel: `${def.name}, ${current} remaining`, hotkeySlot: kind === 'hp' ? 0 : 1,
-        activate: (anchor) => {
-          openCombatFlaskMenu(anchor, def, { chargeKind: kind, remaining: current });
-        },
-      });
-    }
-    const leftPiece = equippedIn(registries, run.loadout, run.class, 'leftHand');
-    const rightPiece = equippedIn(registries, run.loadout, run.class, 'rightHand');
-    const openHandArmoury = () => {
-      armamentRadial.close();
-      openCombatArmoury({ destination: 'equipment' });
-    };
-    radialItems.push({ target: 'left', label: 'Left', detail: leftPiece?.name || 'Empty', activate: openHandArmoury });
-    radialItems.push({ target: 'full', label: 'Full Armaments', detail: 'Open' });
-    radialItems.push({ target: 'right', label: 'Right', detail: rightPiece?.name || 'Empty', activate: openHandArmoury });
-    if (p.flasks.length) radialItems.push({
-      target: 'bottom', label: 'Potions', detail: String(p.flasks.length),
-      ariaLabel: `Other potions, ${p.flasks.length}`,
-      hotkeySlot: 2,
-      activate: () => openUtilityPotionPicker(p.flasks),
-    });
-    armamentRadial.setItems(radialItems);
-    syncArmamentSettings();
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -58192,12 +58147,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .n').textContent = combat.piles.draw.length;
     $('.pile.discard .n').textContent = combat.piles.discard.length;
-    const ex = $('.exhaust-summary');
-    ex.hidden = !combat.piles.exhaust.length;
-    ex.textContent = combat.piles.exhaust.length ? `${combat.piles.exhaust.length} Exhaust` : '';
-    $('.pile.discard').setAttribute('aria-label', combat.piles.exhaust.length
-      ? `Discard pile, ${combat.piles.discard.length}; Exhaust pile, ${combat.piles.exhaust.length}`
-      : `Discard pile, ${combat.piles.discard.length}`);
+    $('.pile.exhaust .n').textContent = combat.piles.exhaust.length;
+    $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
+    $('.pile.discard').setAttribute('aria-label', `Discard pile, ${combat.piles.discard.length}`);
+    $('.pile.exhaust').setAttribute('aria-label', `Exhausted pile, ${combat.piles.exhaust.length}`);
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -58483,17 +58436,12 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       return;
     }
 
-    // Flask keys activate the corresponding visible control; they never
-    // auto-use. Radial mode first reveals its real positioned shortcut so the
-    // shared action menu never measures a display:none HUD anchor.
+    // Flask keys activate the corresponding visible Quick Access control; they
+    // never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        let slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
-        if (combatEl.dataset.armamentsPresentation === 'radial') {
-          armamentRadial.open();
-          slotEl = armamentRadial.root.querySelector(`[data-flask-hotkey-slot="${slot}"]`);
-        }
+        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
         if (slotEl) slotEl.click();
         return;
       }
@@ -58731,59 +58679,11 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   endTurnBeat.refresh();
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
-  const showDiscard = () => {
-    if (!combat.piles.exhaust.length) return openPileModal(registries, 'Discard pile', combat.piles.discard);
-    const veil = document.createElement('div');
-    veil.className = 'modal-veil';
-    const modal = document.createElement('div');
-    modal.className = 'modal pile-surface-picker';
-    const heading = document.createElement('h2');
-    heading.textContent = 'Choose pile';
-    modal.appendChild(heading);
-    const opener = $('.pile.discard');
-    const closePicker = ({ restoreFocus = false } = {}) => {
-      window.removeEventListener('keydown', onPickerCancel);
-      veil.remove();
-      if (restoreFocus && opener.isConnected) {
-        opener.focus();
-        focusElement(opener);
-      }
-    };
-    const onPickerCancel = (event) => {
-      if (event.key !== 'Escape' && event.key !== 'Backspace') return;
-      event.preventDefault();
-      event.stopPropagation();
-      closePicker({ restoreFocus: true });
-    };
-    for (const [label, cards] of [['Discard pile', combat.piles.discard], ['Exhaust pile', combat.piles.exhaust]]) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = `${label} (${cards.length})`;
-      button.addEventListener('click', () => {
-        closePicker();
-        openPileModal(registries, label, cards);
-      });
-      modal.appendChild(button);
-    }
-    veil.appendChild(modal);
-    veil.addEventListener('click', (event) => { if (event.target === veil) closePicker(); });
-    document.body.appendChild(veil);
-    window.addEventListener('keydown', onPickerCancel);
-    const first = modal.querySelector('button');
-    first?.focus();
-    if (first) focusElement(first);
-    return veil;
-  };
+  const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  const showExhaust = () => openPileModal(registries, 'Exhausted pile', combat.piles.exhaust);
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
-  for (const [pile, open] of [[ $('.pile.draw'), showDraw ], [ $('.pile.discard'), showDiscard ]]) {
-    pile.addEventListener('keydown', (event) => {
-      if (event.target !== pile) return;
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      open();
-    });
-  }
+  $('.pile.exhaust').addEventListener('click', showExhaust);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
@@ -58866,7 +58766,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const pagerVeilObserver = new MutationObserver(() => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         pagerVeilObserver.disconnect();
-        armamentSettingsObserver?.disconnect();
         delete combatEl.dataset.handPagerOwner;
         return;
       }
@@ -59819,203 +59718,6 @@ function wireBattlefieldStage(field, model) {
 
 
 Object.assign(module.exports, { wireBattlefieldStage });
-
-},
-"src/ui/components/armamentRadial.js": function (module, exports, require) {
-const { focusElement } = require("src/ui/input.js");
-
-let activeRadial = null;
-
-function closeArmamentRadial({ restoreFocus = false } = {}) {
-  if (!activeRadial) return false;
-  activeRadial.close({ restoreFocus });
-  return true;
-}
-
-/**
- * One lifecycle owner for the combat Armaments shortcuts. Callers supply
- * existing actions; this component only presents, focuses, and dismisses them.
- */
-function mountArmamentRadial(anchor, {
-  mode = 'radial', placement = 'left', onFullArmaments = null,
-} = {}) {
-  if (!anchor) throw new Error('mountArmamentRadial requires an anchor');
-  closeArmamentRadial();
-
-  const root = document.createElement('div');
-  root.className = 'armament-radial';
-  root.hidden = true;
-  root.setAttribute('role', 'menu');
-  root.setAttribute('aria-label', 'Armaments shortcuts');
-  anchor.closest('.combat')?.appendChild(root);
-
-  let currentMode = mode;
-  let currentPlacement = placement;
-  let open = false;
-  let holdTimer = null;
-  let focusTimer = null;
-  let openedByHold = false;
-  let items = [];
-  let observer = null;
-
-  const buttons = () => [...root.querySelectorAll('button:not([disabled])')];
-  const sync = () => {
-    const radial = currentMode === 'radial';
-    anchor.dataset.armamentsMode = currentMode;
-    anchor.setAttribute('aria-haspopup', radial ? 'menu' : 'dialog');
-    anchor.setAttribute('aria-expanded', String(radial && open));
-    root.dataset.placement = currentPlacement;
-    root.hidden = !(radial && open);
-  };
-  const close = ({ restoreFocus = false } = {}) => {
-    if (!open && root.hidden) return;
-    clearTimeout(focusTimer);
-    open = false;
-    sync();
-    if (restoreFocus && anchor.isConnected) {
-      anchor.focus();
-      focusElement(anchor);
-    }
-  };
-  const openMenu = () => {
-    if (currentMode !== 'radial') return false;
-    open = true;
-    sync();
-    // Native click/keyboard activation is still completing here. Moving the
-    // unified cursor synchronously can make that same gesture activate the
-    // first radial target. Defer entry until the opener's gesture is finished.
-    clearTimeout(focusTimer);
-    focusTimer = setTimeout(() => {
-      if (!open) return;
-      const first = buttons()[0];
-      first?.focus();
-      if (first) focusElement(first);
-    }, 0);
-    return true;
-  };
-  const toggle = () => (open ? close({ restoreFocus: true }) : openMenu());
-
-  const draw = () => {
-    root.innerHTML = '';
-    for (const item of items) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'armament-radial-target';
-      button.dataset.radialTarget = item.target;
-      if (item.hotkeySlot != null) button.dataset.flaskHotkeySlot = String(item.hotkeySlot);
-      button.dataset.focusable = 'true';
-      button.disabled = item.disabled === true;
-      button.setAttribute('role', 'menuitem');
-      button.setAttribute('aria-label', item.ariaLabel || item.label);
-      const label = document.createElement('span');
-      label.textContent = item.label;
-      button.appendChild(label);
-      if (item.detail) {
-        const detail = document.createElement('small');
-        detail.textContent = item.detail;
-        button.appendChild(detail);
-      }
-      button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        if (item.target === 'full') {
-          close();
-          onFullArmaments?.();
-          return;
-        }
-        item.activate?.(button);
-      });
-      root.appendChild(button);
-    }
-  };
-
-  anchor.addEventListener('click', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (openedByHold) {
-      openedByHold = false;
-      return;
-    }
-    if (currentMode === 'fixed') onFullArmaments?.();
-    else toggle();
-  });
-  anchor.addEventListener('pointerdown', () => {
-    clearTimeout(holdTimer);
-    openedByHold = false;
-    holdTimer = setTimeout(() => {
-      openedByHold = openMenu();
-    }, 360);
-  });
-  const cancelHold = () => clearTimeout(holdTimer);
-  anchor.addEventListener('pointerup', cancelHold);
-  anchor.addEventListener('pointercancel', cancelHold);
-  anchor.addEventListener('pointerleave', cancelHold);
-
-  const onDocumentPointer = (event) => {
-    // Contextual action menus opened by a radial shortcut temporarily own
-    // pointer input. They are siblings of the radial in the combat surface,
-    // so containment alone cannot identify them as a child interaction.
-    if (!open || root.contains(event.target) || anchor.contains(event.target)
-      || event.target.closest?.('.flask-action-menu')) return;
-    close();
-  };
-  const onKey = (event) => {
-    if (!open) return;
-    // A radial destination may open and focus a child menu. Once focus has
-    // crossed that boundary, the child owns every key, including Cancel, and
-    // restores focus to its still-visible originating radial target.
-    if (!root.contains(document.activeElement)) return;
-    if (event.key === 'Escape' || event.key === 'Backspace') {
-      event.preventDefault();
-      close({ restoreFocus: true });
-      return;
-    }
-    const list = buttons();
-    if (!list.length || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    event.preventDefault();
-    const at = Math.max(0, list.indexOf(document.activeElement));
-    const next = event.key === 'Home' ? list[0]
-      : event.key === 'End' ? list.at(-1)
-        : list[(at + (event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1) + list.length) % list.length];
-    next?.focus();
-    if (next) focusElement(next);
-  };
-  document.addEventListener('pointerdown', onDocumentPointer, true);
-  window.addEventListener('keydown', onKey);
-  if (typeof MutationObserver !== 'undefined') {
-    observer = new MutationObserver(() => {
-      if (anchor.isConnected && root.isConnected) return;
-      document.removeEventListener('pointerdown', onDocumentPointer, true);
-      window.removeEventListener('keydown', onKey);
-      clearTimeout(focusTimer);
-      observer?.disconnect();
-      if (activeRadial?.root === root) activeRadial = null;
-    });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-  }
-
-  const api = {
-    anchor,
-    root,
-    close,
-    open: openMenu,
-    setItems(nextItems) {
-      items = Array.isArray(nextItems) ? nextItems : [];
-      draw();
-    },
-    update(next = {}) {
-      if (next.mode) currentMode = next.mode;
-      if (next.placement) currentPlacement = next.placement;
-      if (currentMode !== 'radial') open = false;
-      sync();
-    },
-  };
-  activeRadial = api;
-  sync();
-  return api;
-}
-
-
-Object.assign(module.exports, { closeArmamentRadial, mountArmamentRadial });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
