@@ -436,6 +436,14 @@ const enemyPhaseSchema = obj({
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
 });
 
+// #237 reserves the strict authored constraint shape before #238 populates it.
+// Bounds are optional during this inert phase; once present, validate.js also
+// enforces positive integers and min <= max through model/levels.js.
+const enemyLevelProfileSchema = obj({
+  min: int,
+  max: int,
+});
+
 // SFX layer schemas (#46), keyed by `kind` — validate.js discriminates on the
 // kind first so an error lands on the field, not on "matched no variant".
 // Field semantics are documented where the data lives (content/sfx.js);
@@ -707,6 +715,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
+    levelProfile: opt(enemyLevelProfileSchema),
     tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
