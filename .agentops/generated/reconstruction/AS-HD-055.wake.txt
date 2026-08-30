@@ -6,11 +6,11 @@ DONE-WHEN  : Every candidate presented for integration carries an independent ve
 AUTHORITY  : may author-exact-head-verdict, maintain-red-plants-and-fixtures | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
 FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
 REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-055
-BASE       : 3fc7a24104bfe375f8d73a665f99999452526c87 tree recovered-from-hub-snapshot dirty=clean
+BASE       : 0b47f2b15467dbadba062a86e9ff1a3a7b338c8e tree recovered-from-hub-snapshot dirty=clean
 NEXT ACTION: Author an independent verdict for PR #423 (branch claude/ashenspire-framework-continue-bhjo30) at whatever head the PR carries when this seat wakes. The candidate has now changed twice under Codex review, so Gate A has restarted twice and every receipt against an earlier head is void; the branch is frozen again from the commit carrying this instruction onward. Run verify, --selftest, opsctl.test.mjs and drill at that head. Verify specifically that deleting ANY rendered section of the governance view fails the coverage gate, not merely any contract: per-contract probes passed while seven individual sections were still deletable. The maker authored the change and cannot sign it. Then resume waiting.
 STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)
 REPORTING  : Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration. Must: lead with the verdict or result; quote check output verbatim, and name the exact command that produced it; state blockers, unknowns and unrecoverable evidence explicitly - 'nothing survives here' is a finding; reference tickets, paths and hashes exactly. Never: restate the brief or narrate steps already taken; pad with preamble, summary of the summary, or speculative next steps; claim a check passed that was not run; invent findings or backlog content to appear productive.
 EVIDENCE   : —
-SOURCE     : 3fc7a24104bfe375f8d73a665f99999452526c87
-FRESHNESS  : as-recorded (base 3fc7a24104bf); verify live HEAD out-of-band
+SOURCE     : 0b47f2b15467dbadba062a86e9ff1a3a7b338c8e
+FRESHNESS  : as-recorded (base 0b47f2b15467); verify live HEAD out-of-band
 INVALIDATION: base_oid, tree, writer_lease
