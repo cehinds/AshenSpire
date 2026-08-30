@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { acquireWatcherLock, cycle, isFastForward, readState, resolveGitStateFile, terminalIdentity, validateAuthoritativeCheckout, writeState } from "./pipeline-pilot-watch.mjs";
+import { acquireWatcherLock, cycle, isFastForward, readState, resolveGitStateFile, terminalIdentity, validateAuthoritativeCheckout, validateSourceIntegrity, writeState } from "./pipeline-pilot-watch.mjs";
 
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "agentops-pipeline-watch-"));
 const actualRepo = path.resolve(rootFromImportMeta(import.meta.url), "..", "..");
@@ -16,6 +16,7 @@ assert.match(terminalIdentity(capsule), /^sha256:[a-f0-9]{64}$/);
 assert.equal(terminalIdentity({ ...capsule, lifecycle_state: "assigned" }), null);
 const actualState = resolveGitStateFile(actualRepo);
 assert.match(actualState.replaceAll("\\", "/"), /\.git\/agentops-pipeline\/state\.json$/);
+assert.equal(validateSourceIntegrity(path.join(actualRepo, ".agentops")), true);
 const gitFixture = path.join(temp, "git-fixture");
 const linkedFixture = path.join(temp, "git-fixture-linked");
 const secondLinkedFixture = path.join(temp, "git-fixture-linked-second");
@@ -119,7 +120,7 @@ const release = acquireWatcherLock(lockFile);
 assert.throws(() => acquireWatcherLock(lockFile), /already active/);
 release();
 assert.equal(fs.existsSync(lockFile), false);
-console.log("PASS 39/39; terminal-denominator=120; second-scan-replay0; changed-hash-once=yes; removed-terminal-pruned=yes; observations-bounded=100; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; immediate-offer=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; AgentOps-writes=0");
+console.log("PASS 40/40; source-integrity-verify=yes; terminal-denominator=120; second-scan-replay0; changed-hash-once=yes; removed-terminal-pruned=yes; observations-bounded=100; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; immediate-offer=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; AgentOps-writes=0");
 
 function rootFromImportMeta(url) {
   return new URL(".", url).pathname.replace(/^\/(.:)/, "$1");
