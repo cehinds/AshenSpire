@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { globCovers } from "./opsctl.mjs";
@@ -78,12 +79,33 @@ export function atomicWriteJson(file, value) {
   fs.renameSync(temp, file);
 }
 
-function lockOwner() {
-  return { schema: "agentops/claim-lock/v1", pid: process.pid, process_started_at: new Date(Date.now() - process.uptime() * 1000).toISOString(), nonce: crypto.randomBytes(16).toString("hex"), acquired_at: new Date().toISOString() };
+export function processStartIdentity(pid) {
+  if (!Number.isInteger(pid) || pid < 1) return null;
+  try {
+    if (process.platform === "win32") {
+      const shell = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+      const script = `$p=Get-CimInstance Win32_Process -Filter \"ProcessId = ${pid}\" -ErrorAction Stop; if ($null -ne $p) { $p.CreationDate.ToUniversalTime().ToString(\"o\") }`;
+      const value = execFileSync(shell, ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", windowsHide: true }).trim();
+      return value ? `windows:${value}` : null;
+    }
+    if (process.platform === "linux") {
+      const stat = fs.readFileSync(`/proc/${pid}/stat`, "utf8"), close = stat.lastIndexOf(")"), fields = stat.slice(close + 2).trim().split(/\s+/);
+      const boot = fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim();
+      return fields[19] && boot ? `linux:${boot}:${fields[19]}` : null;
+    }
+    const value = execFileSync("ps", ["-o", "lstart=", "-p", String(pid)], { encoding: "utf8" }).trim();
+    return value ? `${process.platform}:${value}` : null;
+  } catch { return null; }
+}
+
+function lockOwner(identityLookup = processStartIdentity) {
+  const identity = identityLookup(process.pid);
+  if (!identity) throw new Error("claim transaction cannot establish current process identity");
+  return { schema: "agentops/claim-lock/v1", pid: process.pid, process_identity: identity, process_started_at: new Date(Date.now() - process.uptime() * 1000).toISOString(), nonce: crypto.randomBytes(16).toString("hex"), acquired_at: new Date().toISOString() };
 }
 
 function validateLockOwner(owner) {
-  if (owner?.schema !== "agentops/claim-lock/v1" || !Number.isInteger(owner.pid) || owner.pid < 1 || !Number.isFinite(Date.parse(owner.process_started_at)) || !/^[a-f0-9]{32}$/.test(owner.nonce || "") || !Number.isFinite(Date.parse(owner.acquired_at))) throw new Error("claim transaction lock owner is corrupt or foreign");
+  if (owner?.schema !== "agentops/claim-lock/v1" || !Number.isInteger(owner.pid) || owner.pid < 1 || typeof owner.process_identity !== "string" || owner.process_identity.length < 8 || !Number.isFinite(Date.parse(owner.process_started_at)) || !/^[a-f0-9]{32}$/.test(owner.nonce || "") || !Number.isFinite(Date.parse(owner.acquired_at))) throw new Error("claim transaction lock owner is corrupt or foreign");
   return owner;
 }
 
@@ -95,24 +117,29 @@ function pidAlive(pid) {
   }
 }
 
-export function acquireClaimLock(lockFile) {
+export function acquireClaimLock(lockFile, identityLookup = processStartIdentity) {
   fs.mkdirSync(path.dirname(lockFile), { recursive: true });
-  const owner = lockOwner();
-  let staleFile = null;
+  const owner = lockOwner(identityLookup);
+  let staleFile = null, staleOwner = null;
   try {
     fs.writeFileSync(lockFile, `${JSON.stringify(owner)}\n`, { flag: "wx" });
   } catch (error) {
     if (error.code !== "EEXIST") throw error;
     let stale;
     try { stale = validateLockOwner(JSON.parse(fs.readFileSync(lockFile, "utf8"))); } catch (invalid) { throw new Error(`claim transaction locked fail-closed: ${invalid.message}`); }
-    if (pidAlive(stale.pid)) throw new Error(`claim transaction locked by live pid ${stale.pid}`);
+    if (pidAlive(stale.pid)) {
+      const currentIdentity = identityLookup(stale.pid);
+      if (!currentIdentity) throw new Error(`claim transaction lock identity for live pid ${stale.pid} is unverifiable`);
+      if (currentIdentity === stale.process_identity) throw new Error(`claim transaction locked by live pid ${stale.pid}`);
+    }
+    staleOwner = stale;
     staleFile = `${lockFile}.stale-${stale.nonce}.json`;
     try { fs.renameSync(lockFile, staleFile); } catch (race) { throw new Error(`claim transaction stale-lock takeover lost: ${race.code}`); }
     try { fs.writeFileSync(lockFile, `${JSON.stringify(owner)}\n`, { flag: "wx" }); } catch (race) { throw new Error(`claim transaction takeover collision: ${race.code}`); }
     try { fs.unlinkSync(staleFile); } catch { /* stale owner metadata is harmless after the new lock is held */ }
   }
   return {
-    owner,
+    owner, staleOwner,
     release() {
       if (!fs.existsSync(lockFile)) return;
       const current = validateLockOwner(JSON.parse(fs.readFileSync(lockFile, "utf8")));
@@ -122,13 +149,16 @@ export function acquireClaimLock(lockFile) {
   };
 }
 
-function validateJournal(pending, expected) {
+function validateJournal(pending, expected, previousEventHash, staleOwner = null) {
   if (pending?.schema !== "agentops/claim-transaction-journal/v1" || !pending.result?.claim || !pending.result?.lease || !pending.result?.event) throw new Error("claim transaction journal is corrupt or foreign");
   for (const key of ["claimFile", "leaseFile", "eventDir"]) if (path.resolve(pending[key] || "") !== path.resolve(expected[key])) throw new Error("claim transaction journal target mismatch");
   if (path.dirname(path.resolve(pending.eventFile || "")) !== path.resolve(expected.eventDir)) throw new Error("claim transaction journal event target mismatch");
   validateClaim(pending.result.claim);
   validateLease(pending.result.lease, pending.result.claim, pending.result.lease.issued, true);
-  if (!/^sha256:[a-f0-9]{64}$/.test(pending.result.event.event_hash || "") || pending.result.event.claim_hash !== pending.result.claim.current_hash || pending.result.event.lease_hash !== pending.result.lease.current_hash) throw new Error("claim transaction journal result is inconsistent");
+  const journalOwner = validateLockOwner(pending.lock_owner);
+  if (staleOwner && (journalOwner.pid !== staleOwner.pid || journalOwner.nonce !== staleOwner.nonce || journalOwner.process_identity !== staleOwner.process_identity)) throw new Error("claim transaction journal does not bind the recovered stale owner");
+  const { event_hash: eventHash, ...eventBody } = pending.result.event;
+  if (eventBody.schema !== "agentops/seat-claim-event/v1" || !["claim-transferred", "expired-claim-recovered"].includes(eventBody.kind) || eventBody.actor !== "it-manager-iii" || eventBody.ticket !== pending.result.claim.ticket || eventBody.seat_id !== pending.result.claim.seat_id || eventBody.occurred_at !== pending.result.claim.issued || eventBody.occurred_at !== pending.result.lease.issued || !Number.isFinite(Date.parse(eventBody.occurred_at)) || digest(eventBody) !== eventHash || eventBody.previous_event_hash !== previousEventHash || eventBody.claim_hash !== pending.result.claim.current_hash || eventBody.lease_hash !== pending.result.lease.current_hash) throw new Error("claim transaction journal result is inconsistent");
   return pending;
 }
 
@@ -137,7 +167,10 @@ export function commitClaimTransfer({ claimFile, leaseFile, eventDir, lockFile, 
   const journal = `${lockFile}.journal.json`;
   try {
     if (fs.existsSync(journal)) {
-      const pending = validateJournal(JSON.parse(fs.readFileSync(journal, "utf8")), { claimFile, leaseFile, eventDir });
+      const rawPending = JSON.parse(fs.readFileSync(journal, "utf8"));
+      const priorFiles = fs.existsSync(eventDir) ? fs.readdirSync(eventDir).filter((name) => name.endsWith(".json") && path.resolve(path.join(eventDir, name)) !== path.resolve(rawPending.eventFile || "")).sort() : [];
+      const priorHash = priorFiles.length ? JSON.parse(fs.readFileSync(path.join(eventDir, priorFiles.at(-1)), "utf8")).event_hash : null;
+      const pending = validateJournal(rawPending, { claimFile, leaseFile, eventDir }, priorHash, lock.staleOwner);
       fs.mkdirSync(pending.eventDir, { recursive: true });
       if (!fs.existsSync(pending.eventFile)) fs.writeFileSync(pending.eventFile, `${JSON.stringify(pending.result.event, null, 2)}\n`, { flag: "wx" });
       else if (JSON.stringify(JSON.parse(fs.readFileSync(pending.eventFile, "utf8"))) !== JSON.stringify(pending.result.event)) throw new Error("claim transaction journal event conflicts with durable event");

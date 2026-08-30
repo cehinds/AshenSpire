@@ -42,9 +42,12 @@ failed journal leaves the terminal identity unprocessed so the next clean
 cycle may retry. Stopping the watcher disables assignment; rollback is a new
 forward CAS transfer and audit event, never deletion or history rewrite.
 
-The claim transaction lock records a schema, PID, process-start timestamp,
-nonce, and acquisition time. A live owner is never displaced. A dead owner may
-be taken over atomically; the successor validates and completes the pending
-journal before any new CAS attempt. Corrupt or foreign lock/journal data fails
-closed and is preserved. Hard termination after either journal or event write
-recovers forward exactly once without duplicating the audit event.
+The claim transaction lock records a schema, PID, OS process-start identity,
+process-start timestamp, nonce, and acquisition time. A matching live process
+instance is never displaced; a reused PID with a different start identity is
+stale. Unverifiable live identity fails closed. A dead or replaced owner may be
+taken over atomically; the successor recomputes the journal event hash,
+validates every semantic cross-link and prior event tail, and then completes it
+before any new CAS attempt. Corrupt or foreign lock/journal data fails closed
+and is preserved. Hard termination after either journal or event write recovers
+forward exactly once without duplicating the audit event.
