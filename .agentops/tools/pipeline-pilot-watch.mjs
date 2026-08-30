@@ -61,12 +61,25 @@ export function readState(file) {
   return state;
 }
 
+export function replaceStateFile(temp, file, rename = fs.renameSync, wait = (milliseconds) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds), attempts = 20) {
+  const retryable = new Set(["EPERM", "EACCES", "EBUSY"]);
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      rename(temp, file);
+      return;
+    } catch (error) {
+      if (!retryable.has(error.code) || attempt === attempts) throw error;
+      wait(25);
+    }
+  }
+}
+
 export function writeState(file, state, limit = 100) {
   const bounded = { ...state, observations: state.observations.slice(-limit) };
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const temp = `${file}.${process.pid}.tmp`;
+  const temp = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
   fs.writeFileSync(temp, `${JSON.stringify(bounded, null, 2)}\n`, { flag: "wx" });
-  fs.renameSync(temp, file);
+  replaceStateFile(temp, file);
 }
 
 export function acquireWatcherLock(file, pid = process.pid) {
