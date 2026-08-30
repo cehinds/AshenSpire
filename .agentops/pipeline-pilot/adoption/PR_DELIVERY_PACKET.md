@@ -39,7 +39,7 @@ Advances #269 without closing it.
 - `node .agentops/tools/pipeline-pilot-install.test.mjs` — PASS 17/17.
 - `node .agentops/tools/pipeline-pilot-agentops-adapter.test.mjs` — PASS 25/25.
 - `node .agentops/tools/pipeline-pilot-live.test.mjs` — PASS 17/17.
-- `node .agentops/tools/pipeline-pilot-watch.test.mjs` — PASS 18/18.
+- `node .agentops/tools/pipeline-pilot-watch.test.mjs` — PASS 22/22.
 - `node .agentops/tools/opsctl.mjs verify` — PASS.
 - `node --check` for every new tool and test — PASS.
 - `git diff --check` over the complete pilot scope — PASS.

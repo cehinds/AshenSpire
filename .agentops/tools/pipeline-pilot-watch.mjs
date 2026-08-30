@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -7,6 +8,12 @@ import { runLiveOffer } from "./pipeline-pilot-live.mjs";
 
 const agentopsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const terminalStates = new Set(["resolved", "released"]);
+
+export function resolveGitStateFile(repoRoot) {
+  const resolved = execFileSync("git", ["-C", repoRoot, "rev-parse", "--git-path", "agentops-pipeline/state.json"], { encoding: "utf8", windowsHide: true }).trim();
+  if (!resolved) throw new Error("git returned an empty scheduler state path");
+  return path.resolve(repoRoot, resolved);
+}
 
 export function terminalIdentity(capsule) {
   if (!capsule || !terminalStates.has(capsule.lifecycle_state) || !capsule.ticket || !capsule.owner_actor || !capsule.current_hash) return null;
@@ -97,7 +104,7 @@ export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOSt
 async function main(argv = process.argv.slice(2)) {
   const value = (flag, fallback) => { const i = argv.indexOf(flag); return i < 0 ? fallback : argv[i + 1]; };
   const repoRoot = path.dirname(agentopsRoot);
-  const stateFile = path.resolve(value("--state", path.join(repoRoot, ".git", "agentops-pipeline", "state.json")));
+  const stateFile = path.resolve(value("--state", resolveGitStateFile(repoRoot)));
   const pollMs = Number(value("--poll-ms", "1000"));
   if (!Number.isInteger(pollMs) || pollMs < 100) throw new Error("poll-ms must be an integer >= 100");
   const releaseLock = acquireWatcherLock(path.join(path.dirname(stateFile), "watcher.lock"));
