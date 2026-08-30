@@ -91,6 +91,9 @@ during a run except for a verified fast-forward. A fast-forward preserves
 processed identities, pending alarms, and observations before rescanning; a
 history rewrite fails closed. Remote fetch failure also fails closed rather
 than scanning stale state.
+Replay keys cover every current terminal capsule and are pruned only when that
+terminal identity disappears; only the diagnostic observation history is
+bounded to the latest 100 records.
 Stop that process to deactivate it. Removing its Git-local state resets only
 observability and replay history; it never changes AgentOps claims or history.
 On first start, existing terminal capsules are baselined without emitting

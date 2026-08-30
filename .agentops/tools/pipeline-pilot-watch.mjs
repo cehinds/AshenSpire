@@ -55,7 +55,7 @@ export function readState(file) {
 }
 
 export function writeState(file, state, limit = 100) {
-  const bounded = { ...state, processed: state.processed.slice(-limit), pending: state.pending.slice(-limit), observations: state.observations.slice(-limit) };
+  const bounded = { ...state, observations: state.observations.slice(-limit) };
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const temp = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(temp, `${JSON.stringify(bounded, null, 2)}\n`, { flag: "wx" });
@@ -99,10 +99,11 @@ export function cycle({ root = agentopsRoot, stateFile, now = new Date().toISOSt
   const state = readState(stateFile);
   if (sourceHead && state.source_head && state.source_head !== sourceHead && !allowSourceAdvance) throw new Error(`non-fast-forward authoritative source drift: ${state.source_head} -> ${sourceHead}`);
   if (sourceHead) state.source_head = sourceHead;
-  const output = [];
-  const processed = new Set(state.processed);
-  const pending = new Map(state.pending.map((row) => [row.event, row]));
   const terminals = scanTerminalCapsules(root);
+  const currentTerminalEvents = new Set(terminals.map(({ event }) => event));
+  const output = [];
+  const processed = new Set(state.processed.filter((event) => currentTerminalEvents.has(event)));
+  const pending = new Map(state.pending.filter((row) => currentTerminalEvents.has(row.event)).map((row) => [row.event, row]));
   if (firstRun && initialize) {
     for (const { event } of terminals) processed.add(event);
     state.initialized_at = now;

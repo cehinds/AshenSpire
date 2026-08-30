@@ -97,12 +97,29 @@ state.observations = Array.from({ length: 150 }, (_, i) => ({ i }));
 writeState(stateFile, state, 100);
 assert.equal(readState(stateFile).observations.length, 100);
 assert.equal(fs.readFileSync(path.join(root, "work", "AS-1", "CURRENT.json"), "utf8"), before);
+const bulkRoot = path.join(temp, "bulk-agentops");
+const bulkState = path.join(temp, ".git", "agentops-pipeline", "bulk.json");
+for (let i = 0; i < 120; i++) {
+  const ticket = `BULK-${String(i).padStart(3, "0")}`;
+  const directory = path.join(bulkRoot, "work", ticket);
+  fs.mkdirSync(directory, { recursive: true });
+  fs.writeFileSync(path.join(directory, "CURRENT.json"), JSON.stringify({ ticket, lifecycle_state: "resolved", owner_actor: "maker", current_hash: `sha256:bulk-${i}` }));
+}
+assert.equal(cycle({ root: bulkRoot, stateFile: bulkState, now: "2026-08-30T13:00:00Z", initialize: true, offer: offered }).status, "QUIET");
+assert.equal(readState(bulkState).processed.length, 120);
+assert.equal(cycle({ root: bulkRoot, stateFile: bulkState, now: "2026-08-30T13:00:01Z", offer: offered }).events.length, 0);
+const changedBulk = path.join(bulkRoot, "work", "BULK-000", "CURRENT.json");
+fs.writeFileSync(changedBulk, JSON.stringify({ ticket: "BULK-000", lifecycle_state: "resolved", owner_actor: "maker", current_hash: "sha256:bulk-changed" }));
+assert.equal(cycle({ root: bulkRoot, stateFile: bulkState, now: "2026-08-30T13:00:02Z", offer: offered }).events.length, 1);
+fs.writeFileSync(changedBulk, JSON.stringify({ ticket: "BULK-000", lifecycle_state: "assigned", owner_actor: "maker", current_hash: "sha256:bulk-assigned" }));
+cycle({ root: bulkRoot, stateFile: bulkState, now: "2026-08-30T13:00:03Z", offer: offered });
+assert.equal(readState(bulkState).processed.length, 119);
 const lockFile = path.join(temp, ".git", "agentops-pipeline", "test.lock");
 const release = acquireWatcherLock(lockFile);
 assert.throws(() => acquireWatcherLock(lockFile), /already active/);
 release();
 assert.equal(fs.existsSync(lockFile), false);
-console.log("PASS 34/34; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; two-linked-worktrees-one-identity=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; replay0; immediate-offer=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; bounded-state=100; AgentOps-writes=0");
+console.log("PASS 39/39; terminal-denominator=120; second-scan-replay0; changed-hash-once=yes; removed-terminal-pruned=yes; observations-bounded=100; fast-forward-retains-state=yes; pending-survives-fast-forward=yes; new-terminal-on-fast-forward-once=yes; non-fast-forward-refused=yes; current-dev-accepted=yes; stale-feature-refused=yes; second-linked-watcher-refused=yes; repo-wide-common-state=yes; single-watcher-lock=yes; historical-baseline=yes; stable-terminal-hash=yes; persistent-dedupe=yes; immediate-offer=yes; pending-alarm=yes; alarm-at-300s=yes; duplicate-alarm0; AgentOps-writes=0");
 
 function rootFromImportMeta(url) {
   return new URL(".", url).pathname.replace(/^\/(.:)/, "$1");
