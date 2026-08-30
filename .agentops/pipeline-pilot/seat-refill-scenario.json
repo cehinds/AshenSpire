@@ -1,0 +1,26 @@
+{
+  "schema": "agentops/seat-refill-scenario/v1",
+  "now": 200,
+  "idle_alarm_threshold": 30,
+  "review_capacity": 1,
+  "review_occupancy": 1,
+  "completions": [
+    { "seat_id": "seat-dev", "node_id": "done-dev", "terminal_state": "closed" },
+    { "seat_id": "seat-art", "node_id": "done-art-review", "terminal_state": "review" }
+  ],
+  "seats": [
+    { "id": "seat-dev", "capabilities": ["implementation"], "authority": ["reversible-local-work"], "assigned_node": "done-dev", "released_at": null },
+    { "id": "seat-art", "capabilities": ["art"], "authority": ["reversible-local-work"], "assigned_node": "done-art-review", "released_at": null }
+  ],
+  "nodes": [
+    { "id": "done-dev", "stage": "executing", "terminal": false, "assigned_seat": "seat-dev", "priority": "T1", "queued_at": 10, "required_capability": "implementation", "dependencies": [], "resource_locks": ["path:src/done.js"], "required_authority": ["reversible-local-work"], "requires_immediate_review_slot": false, "objective": "Completed implementation", "first_action": "None", "base_ref": "origin/dev" },
+    { "id": "done-art-review", "stage": "review", "terminal": false, "assigned_seat": "seat-art", "priority": "T1", "queued_at": 10, "required_capability": "art", "dependencies": [], "resource_locks": [], "required_authority": ["reversible-local-work"], "requires_immediate_review_slot": false, "objective": "Completed terminal art review", "first_action": "None", "base_ref": "origin/dev" },
+    { "id": "closed-dependency", "stage": "closed", "terminal": true, "assigned_seat": null, "priority": "T1", "queued_at": 5, "required_capability": "implementation", "dependencies": [], "resource_locks": [], "required_authority": [], "requires_immediate_review_slot": false, "objective": "Dependency", "first_action": "None", "base_ref": "origin/dev" },
+    { "id": "active-lock-holder", "stage": "executing", "terminal": false, "assigned_seat": "external-seat", "priority": "T1", "queued_at": 20, "required_capability": "implementation", "dependencies": [], "resource_locks": ["path:src/shared.js"], "required_authority": ["reversible-local-work"], "requires_immediate_review_slot": false, "objective": "Hold shared lock", "first_action": "Continue", "base_ref": "origin/dev" },
+    { "id": "unsafe-locked", "stage": "ready", "terminal": false, "assigned_seat": null, "priority": "T0", "queued_at": 30, "required_capability": "implementation", "dependencies": [], "resource_locks": ["path:src/shared.js"], "required_authority": ["reversible-local-work"], "requires_immediate_review_slot": false, "objective": "Would collide", "first_action": "Wait for lock", "base_ref": "origin/dev" },
+    { "id": "unsafe-dependency", "stage": "ready", "terminal": false, "assigned_seat": null, "priority": "T0", "queued_at": 35, "required_capability": "implementation", "dependencies": ["not-closed"], "resource_locks": ["path:src/dependency.js"], "required_authority": ["reversible-local-work"], "requires_immediate_review_slot": false, "objective": "Wait for dependency", "first_action": "Wait", "base_ref": "origin/dev" },
+    { "id": "unsafe-authority", "stage": "ready", "terminal": false, "assigned_seat": null, "priority": "T0", "queued_at": 40, "required_capability": "implementation", "dependencies": ["closed-dependency"], "resource_locks": ["path:src/protected.js"], "required_authority": ["merge"], "requires_immediate_review_slot": false, "objective": "Protected transition", "first_action": "Obtain authority", "base_ref": "origin/dev" },
+    { "id": "unsafe-review-pressure", "stage": "ready", "terminal": false, "assigned_seat": null, "priority": "T1", "queued_at": 45, "required_capability": "implementation", "dependencies": ["closed-dependency"], "resource_locks": ["path:src/review.js"], "required_authority": ["reversible-local-work"], "requires_immediate_review_slot": true, "objective": "Needs immediate review slot", "first_action": "Wait for review capacity", "base_ref": "origin/dev" },
+    { "id": "safe-refill", "stage": "ready", "terminal": false, "assigned_seat": null, "priority": "T1", "queued_at": 50, "required_capability": "implementation", "dependencies": ["closed-dependency"], "resource_locks": ["path:docs/safe.md"], "required_authority": ["reversible-local-work"], "requires_immediate_review_slot": false, "objective": "Continue the highest-priority safe independent node", "first_action": "Validate the bounded documentation fixture", "base_ref": "origin/dev" }
+  ]
+}

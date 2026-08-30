@@ -65,6 +65,40 @@ provider-neutral) with the reconstruction drill — see
 node .agentops/tools/opsctl.mjs drill
 ```
 
+When a terminal ticket releases an already-identified actor, the live-offer
+scheduler can immediately select that actor's highest-ranked safe ticket from
+the explicit Issue #269 priority list. It never creates or transfers a claim:
+
+```sh
+node .agentops/tools/pipeline-pilot-live.mjs --actor <actor> --completed <terminal-ticket> --released-at <UTC>
+```
+
+The output is a bounded wake offer or the distinct `NO_SAFE_ASSIGNMENT` /
+`IDLE_ALARM` state. AgentOps capsules and leases remain authoritative.
+For continuous local operation, run the repository-neutral watcher. It derives
+a stable event identity from the terminal capsule hash, persists bounded replay
+protection under `.git/agentops-pipeline/`, and rechecks pending rows until the
+300-second idle alarm is due:
+
+```sh
+node .agentops/tools/pipeline-pilot-watch.mjs
+```
+
+The watcher refuses feature/stale/dirty checkouts: it must run from a tracked-
+clean `dev` checkout whose HEAD exactly matches freshly fetched `origin/dev`.
+Its repo-wide state records that HEAD and fails closed if the source moves
+during a run except for a verified fast-forward. A fast-forward preserves
+processed identities, pending alarms, and observations before rescanning; a
+history rewrite fails closed. Remote fetch failure also fails closed rather
+than scanning stale state.
+Replay keys cover every current terminal capsule and are pruned only when that
+terminal identity disappears; only the diagnostic observation history is
+bounded to the latest 100 records.
+Stop that process to deactivate it. Removing its Git-local state resets only
+observability and replay history; it never changes AgentOps claims or history.
+On first start, existing terminal capsules are baselined without emitting
+historical offers; only a new terminal capsule hash triggers a cycle.
+
 Owner decisions flow through the authenticated owner-command path — enumerated,
 allowlisted, and compare-and-swap-checked. `--dry-run` validates and reports
 what it would do without touching the repository; `--apply` performs the same

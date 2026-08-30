@@ -1,0 +1,22 @@
+{
+  "schema": "agentops/task-node/v1",
+  "node_id": "AS-PIPELINE-PILOT-001-IMPLEMENT",
+  "ticket": "AS-PIPELINE-PILOT-001",
+  "objective": "Implement and verify the minimal task-driven pipeline pilot.",
+  "priority": "T1",
+  "risk_route": "reversible-docs",
+  "state": "ready",
+  "required_capability": "feature-architecture",
+  "dependencies": [],
+  "base_ref": "origin/dev",
+  "base_oid": null,
+  "owner": "review-approval-hub-lead",
+  "writer": null,
+  "first_action": "Validate the pilot files, then enter work and pin the current base commit.",
+  "done_when": "The validator proves ready-state base movement creates no event, entered work pins one exact base, and the cold-start packet stays under 1500 tokens.",
+  "affected_paths": [".agentops/pipeline-pilot/**", ".agentops/tools/pipeline-pilot*.mjs"],
+  "resource_locks": [],
+  "evidence_targets": ["pipeline-pilot test output", "bounded wake character count"],
+  "blocker": null,
+  "next_stage": "review"
+}
