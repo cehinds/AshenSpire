@@ -6,6 +6,7 @@ import path from "node:path";
 import { globCovers } from "./opsctl.mjs";
 
 const seatPattern = /^seat:[a-z0-9-]+:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const maxRevision = 999999;
 const canonical = (value) => Array.isArray(value) ? value.map(canonical) : value && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])])) : value;
 const digest = (value) => `sha256:${crypto.createHash("sha256").update(typeof value === "string" ? value : JSON.stringify(canonical(value))).digest("hex")}`;
 
@@ -28,7 +29,7 @@ export function sealLease(body) {
 
 export function validateClaim(claim) {
   if (claim?.schema !== "agentops/seat-claim/v1" || !seatPattern.test(claim.seat_id || "")) throw new Error("invalid seat claim identity");
-  if (!claim.ticket || !claim.lease_id || !claim.ref || !Array.isArray(claim.path_globs) || !claim.path_globs.length || !Number.isInteger(claim.revision) || claim.revision < 1 || claim.status !== "active" || !Number.isFinite(Date.parse(claim.issued)) || !Number.isFinite(Date.parse(claim.expiry))) throw new Error("incomplete seat claim");
+  if (!claim.ticket || !claim.lease_id || !claim.ref || !Array.isArray(claim.path_globs) || !claim.path_globs.length || !Number.isInteger(claim.revision) || claim.revision < 1 || claim.revision > maxRevision || claim.status !== "active" || !Number.isFinite(Date.parse(claim.issued)) || !Number.isFinite(Date.parse(claim.expiry))) throw new Error("incomplete seat claim");
   if (sealClaim(claim).current_hash !== claim.current_hash) throw new Error("seat claim seal mismatch");
   return claim;
 }
@@ -39,7 +40,7 @@ function overlaps(left, right) {
 
 export function validateLease(lease, claim, now, allowExpired = false) {
   if (lease?.schema !== "agentops/seat-lease/v1" || sealLease(lease).current_hash !== lease.current_hash) throw new Error("invalid or unsealed current lease");
-  if (!Number.isInteger(lease.revision) || lease.revision < 1 || !lease.actor || lease.issuer !== "it-manager-iii" || !Number.isFinite(Date.parse(lease.issued)) || !Number.isFinite(Date.parse(lease.expiry))) throw new Error("lease identity and currentness are incomplete");
+  if (!Number.isInteger(lease.revision) || lease.revision < 1 || lease.revision > maxRevision || !lease.actor || lease.issuer !== "it-manager-iii" || !Number.isFinite(Date.parse(lease.issued)) || !Number.isFinite(Date.parse(lease.expiry))) throw new Error("lease identity and currentness are incomplete");
   if (lease.id !== claim.lease_id || lease.ticket !== claim.ticket || lease.seat_id !== claim.seat_id || lease.ref !== claim.ref || lease.expiry !== claim.expiry || lease.revoked || (!allowExpired && Date.parse(lease.expiry) <= Date.parse(now)) || JSON.stringify(lease.path_globs) !== JSON.stringify(claim.path_globs)) throw new Error("lease is stale, revoked, expired, or does not bind the claim");
   return lease;
 }
@@ -47,6 +48,7 @@ export function validateLease(lease, claim, now, allowExpired = false) {
 export function transferClaim({ claim, lease, expectedHash, targetSeat, targetCapability, seatRegistry, issuerRole, now, expiry, activeClaims, eventTail = null, kind = "claim-transferred" }) {
   validateClaim(claim);
   validateLease(lease, claim, now, kind === "expired-claim-recovered");
+  if (claim.revision >= maxRevision || lease.revision >= maxRevision) throw new Error("seat claim revision capacity exhausted");
   if (expectedHash !== claim.current_hash) throw new Error("stale or replayed claim CAS");
   if (issuerRole !== "it-manager-iii") throw new Error("claim transfer requires IT Manager III");
   if (!seatPattern.test(targetSeat || "")) throw new Error("invalid target seat");
