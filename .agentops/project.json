@@ -14,7 +14,7 @@
   "pages_owner_hud": "ENABLED",
   "owner_command_path": "WORKFLOW_FORMS",
   "control_plane_root": ".agentops",
-  "installed_stage": "migration-tooling",
+  "installed_stage": "migration-tooling+pipeline-live-offer",
   "installed_contracts": [
     "governance/owner-intent.json",
     "governance/hierarchy.json",
@@ -40,9 +40,11 @@
     "owner_command": "opsctl command --dry-run | --apply (--request <json> | --file <path> | --issue-file <path> --actor <role>): enumerated, authenticated, allowlisted, compare-and-swap-checked. --apply appends one append-only decision event and re-seals only the target capsule, moving lifecycle state only where owner-command.json declares a lifecycle_target that transitions.json permits. Intake is the Owner decision issue form, executed by .github/workflows/owner-command.yml for owner-authored issues only",
     "owner_hud": "generated/hud/index.html (read-only, redacted, deterministic); a plain static file served by the repository's own branch-published GitHub Pages site (Deploy from a branch: main, root) and reachable at /hud/; no separate publish workflow. Publishing main means the live site is the released state: a regenerated HUD on dev reaches it only through an owner-authorized dev -> main promotion.",
     "migration": "opsctl migrate [--plan]: read-only inventory + classification of legacy sources (governance/migration.json) with proposed genesis stubs; report in generated/migration/PLAN.md; no legacy evidence mutated",
+    "pipeline_scheduler": "pipeline-pilot-live.mjs: Issue #269 live completion-triggered offer over existing AgentOps claims; never creates/transfers a claim or mutates Project/protected transitions; activation in pipeline-pilot/activation.json",
     "seed_ticket": "AS-1001"
   },
   "deferred_next_stages": [
+    "pipeline writable-claim cutover: provision unique seat identities, then separately authorize atomic claim transfer; shared role actors are insufficient",
     "migration cutover: create real genesis capsules + replace legacy entrypoints with one pointer (owner-gated)",
     "independent review then exact dev -> main promotion decision"
   ]

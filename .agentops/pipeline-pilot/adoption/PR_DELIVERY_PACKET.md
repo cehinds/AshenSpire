@@ -7,7 +7,7 @@
 - Base: `dev`
 - Rebased base: `191d563cb07bcda15f43d9b89ededf0402f2d7c5`
 - Tracking issue: [#269 — automatically assign whoever finishes](https://github.com/cehinds/AshenSpire/issues/269)
-- State: `PR_READY_LOCAL_NOT_DELIVERED`
+- State: `PR_READY_LIVE_OFFER_NOT_DELIVERED`
 
 This candidate advances #269 only as a non-authoritative shadow scheduler. It
 does not close #269: durable identity, authoritative claims, and Project-write
@@ -26,6 +26,9 @@ credentials remain outside this PR. Nothing has been pushed or opened remotely.
   Codex/Claude startup pointers;
 - add a read-only AgentOps compatibility adapter and one-ticket adoption plan;
   AgentOps remains authoritative and protected actions remain unavailable.
+- activate an immediate repository-native `LIVE_OFFER` scheduler bound to #269;
+  it selects only existing same-actor claims and emits bounded wake/no-safe/idle
+  observations without fabricating seat identity or mutating Project state.
 
 Advances #269 without closing it.
 
@@ -34,6 +37,7 @@ Advances #269 without closing it.
 - `node .agentops/tools/pipeline-pilot.test.mjs` — PASS 51/51.
 - `node .agentops/tools/pipeline-pilot-install.test.mjs` — PASS 16/16.
 - `node .agentops/tools/pipeline-pilot-agentops-adapter.test.mjs` — PASS 25/25.
+- `node .agentops/tools/pipeline-pilot-live.test.mjs` — PASS 17/17.
 - `node .agentops/tools/opsctl.mjs verify` — PASS.
 - `node --check` for every new tool and test — PASS.
 - `git diff --check` over the complete pilot scope — PASS.
@@ -52,6 +56,7 @@ deployment, publication, or release.
 Add:
 
 - `.agentops/pipeline-pilot/PIPELINE_KERNEL.md`
+- `.agentops/pipeline-pilot/activation.json`
 - `.agentops/pipeline-pilot/risk-routes.json`
 - `.agentops/pipeline-pilot/task-node.schema.json`
 - `.agentops/pipeline-pilot/saturation-scenario.json`
@@ -85,3 +90,10 @@ Add:
 - `.agentops/tools/pipeline-pilot-install.test.mjs`
 - `.agentops/tools/pipeline-pilot-agentops-adapter.mjs`
 - `.agentops/tools/pipeline-pilot-agentops-adapter.test.mjs`
+- `.agentops/tools/pipeline-pilot-live.mjs`
+- `.agentops/tools/pipeline-pilot-live.test.mjs`
+
+Change:
+
+- `.agentops/BOOTSTRAP.md`
+- `.agentops/project.json`

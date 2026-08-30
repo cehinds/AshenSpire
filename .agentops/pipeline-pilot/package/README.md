@@ -6,6 +6,11 @@ from AshenSpire's current AgentOps runtime so the pilot can be installed,
 tested, upgraded, or rolled back without rewriting existing authority or
 history.
 
+AshenSpire's repository-native integration runs in `LIVE_OFFER` mode: a
+completion immediately produces the highest-ranked safe offer from existing
+AgentOps claims. The reusable package does not assume GitHub Project access or
+invent worker identity.
+
 ## Three layers
 
 1. `templates/stable/` contains the small, versioned operating kernel.

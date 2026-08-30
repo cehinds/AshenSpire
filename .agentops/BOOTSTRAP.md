@@ -65,6 +65,17 @@ provider-neutral) with the reconstruction drill — see
 node .agentops/tools/opsctl.mjs drill
 ```
 
+When a terminal ticket releases an already-identified actor, the live-offer
+scheduler can immediately select that actor's highest-ranked safe ticket from
+the explicit Issue #269 priority list. It never creates or transfers a claim:
+
+```sh
+node .agentops/tools/pipeline-pilot-live.mjs --actor <actor> --completed <terminal-ticket> --released-at <UTC>
+```
+
+The output is a bounded wake offer or the distinct `NO_SAFE_ASSIGNMENT` /
+`IDLE_ALARM` state. AgentOps capsules and leases remain authoritative.
+
 Owner decisions flow through the authenticated owner-command path — enumerated,
 allowlisted, and compare-and-swap-checked. `--dry-run` validates and reports
 what it would do without touching the repository; `--apply` performs the same

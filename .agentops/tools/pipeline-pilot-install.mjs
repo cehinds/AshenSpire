@@ -5,6 +5,15 @@ import { pathToFileURL } from "node:url";
 
 const sourceRoot = path.resolve(".agentops", "pipeline-pilot", "package");
 
+function canonicalDirectory(target) {
+  const resolved = path.resolve(target);
+  if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) throw new Error("target must be an existing directory");
+  const real = fs.realpathSync.native(resolved);
+  const comparable = (value) => process.platform === "win32" ? path.normalize(value).toLowerCase() : path.normalize(value);
+  if (comparable(real) !== comparable(resolved)) throw new Error("target must not traverse a symbolic link or junction");
+  return resolved;
+}
+
 function sha256(file) {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex").toUpperCase();
 }
@@ -40,8 +49,7 @@ function listFiles(root) {
 
 export function planInstall(target) {
   const definition = manifest();
-  const targetRoot = path.resolve(target);
-  if (!fs.existsSync(targetRoot) || !fs.statSync(targetRoot).isDirectory()) throw new Error("target must be an existing directory");
+  const targetRoot = canonicalDirectory(target);
   const installRoot = path.join(targetRoot, definition.install_root);
   return {
     action: "install",
@@ -77,7 +85,7 @@ export function installPackage(target) {
 
 export function verifyInstall(target) {
   const definition = manifest();
-  const installRoot = path.join(path.resolve(target), definition.install_root);
+  const installRoot = path.join(canonicalDirectory(target), definition.install_root);
   const statePath = path.join(installRoot, ".install-state.json");
   if (fs.existsSync(installRoot) && fs.lstatSync(installRoot).isSymbolicLink()) throw new Error("installation root must not be a symbolic link");
   if (!fs.existsSync(statePath)) throw new Error("install state is missing");

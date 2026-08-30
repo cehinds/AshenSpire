@@ -6,6 +6,8 @@
     "ready_head_movement_events": 0,
     "entered_work_base_pins": 1,
     "completion_triggered_refills": 1,
+    "live_offer_mode": "PASS",
+    "authoritative_claim_writes": 0,
     "unsafe_assignments": 0,
     "duplicate_assignments": 0,
     "protected_action_attempts": 0,

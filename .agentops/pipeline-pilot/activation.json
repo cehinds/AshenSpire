@@ -1,0 +1,19 @@
+{
+  "schema": "agentops/pipeline-activation/v1",
+  "enabled": true,
+  "mode": "LIVE_OFFER",
+  "tracking_issue": 269,
+  "idle_alarm_seconds": 300,
+  "completion_states": ["resolved", "released"],
+  "priority": [
+    { "ticket": "AS-HD-029", "rank": "T0", "dependencies": [] },
+    { "ticket": "AS-HD-040", "rank": "T1", "dependencies": [] },
+    { "ticket": "AS-HD-050", "rank": "T1", "dependencies": [] },
+    { "ticket": "AS-HD-056", "rank": "T2", "dependencies": [] }
+  ],
+  "authority": {
+    "may": ["observe-current-agentops", "offer-existing-claimed-work", "emit-idle-alarm"],
+    "must_not": ["create-or-transfer-claim", "rewrite-lease", "mutate-project", "perform-protected-transition"]
+  },
+  "rollback": "Set enabled=false or revert the integration commit; AgentOps capsules, leases, events, and history remain authoritative and unchanged."
+}

@@ -5,6 +5,7 @@ import path from "node:path";
 import { installPackage, planInstall, rollbackPackage, upgradePackage, validatePackageManifest, verifyInstall } from "./pipeline-pilot-install.mjs";
 
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "task-pipeline-install-"));
+const linkedTarget = `${temporary}-junction`;
 try {
   const plan = planInstall(temporary);
   assert.equal(plan.writable, true);
@@ -13,6 +14,9 @@ try {
   assert.throws(() => validatePackageManifest({ ...validManifest, install_root: "../outside" }), /installation root/);
   assert.throws(() => validatePackageManifest({ ...validManifest, files: ["stable/A.json", "stable/A.json"] }), /duplicate/);
   assert.throws(() => validatePackageManifest({ ...validManifest, files: ["../outside"] }), /package path/);
+  fs.symlinkSync(temporary, linkedTarget, process.platform === "win32" ? "junction" : "dir");
+  assert.throws(() => planInstall(linkedTarget), /symbolic link or junction/);
+  fs.rmSync(linkedTarget, { force: true });
 
   const installed = installPackage(temporary);
   assert.equal(installed.action, "installed");
@@ -43,7 +47,8 @@ try {
   const rolledBack = rollbackPackage(temporary);
   assert.equal(rolledBack.action, "rolled-back");
   assert.equal(fs.existsSync(path.join(temporary, ".task-pipeline")), false);
-  console.log(`PASS 16/16; package-files=${plan.files.length}; stable-chars=${stableCharacters}; codex-startup-chars=${codexCharacters}; path-hardening=3/3; state-tamper-safe=yes; install=verified; same-version-upgrade=no-op; drift-safe=yes; rollback=verified`);
+  console.log(`PASS 17/17; package-files=${plan.files.length}; stable-chars=${stableCharacters}; codex-startup-chars=${codexCharacters}; path-hardening=4/4; state-tamper-safe=yes; install=verified; same-version-upgrade=no-op; drift-safe=yes; rollback=verified`);
 } finally {
+  if (fs.existsSync(linkedTarget)) fs.rmSync(linkedTarget, { force: true });
   fs.rmSync(temporary, { recursive: true, force: true });
 }
