@@ -15,12 +15,29 @@
     "BRANCH_WORKTREE": { "type": ["string", "null"] },
     "ALLOWED_PATHS": { "type": "array", "items": { "type": "string" } },
     "CLAIMED_RESOURCES": { "type": "array", "items": { "type": "string" } },
-    "LEASE": { "type": "object" },
+    "LEASE": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "epoch", "expiry"],
+      "properties": {
+        "id": { "type": "string" },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "expiry": { "type": "string", "format": "date-time" }
+      }
+    },
     "ACCEPTANCE_COMMANDS": { "type": "array", "items": { "type": "string" } },
     "EVIDENCE_TARGET": { "type": "array", "items": { "type": "string" } },
     "AUTHORITY_CEILING": { "type": "string" },
     "FORBIDDEN_ACTIONS": { "type": "array", "items": { "type": "string" } },
-    "BLOCKER_WAKE": { "type": "object" },
+    "BLOCKER_WAKE": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker", "wake_condition"],
+      "properties": {
+        "blocker": { "type": ["string", "null"] },
+        "wake_condition": { "type": ["string", "null"] }
+      }
+    },
     "ROLLBACK": { "type": "string" }
   }
 }

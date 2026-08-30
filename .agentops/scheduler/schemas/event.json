@@ -14,7 +14,7 @@
     "machine_id": { "type": ["string", "null"] },
     "lease_id": { "type": ["string", "null"] },
     "lease_epoch": { "type": ["integer", "null"], "minimum": 1 },
-    "event_type": { "enum": ["INTAKE_RECORDED", "CLAIM_ACQUIRED", "WORK_ENTERED", "CANDIDATE_READY", "QA_RESULT", "PR_OPENED", "MERGED_DEV", "BLOCKED", "RESOURCE_RELEASED", "LEASE_EXPIRED", "DRIFT_DETECTED", "RECOVERY_BOUND", "SUPERSEDED", "CANCELLED", "COMPLETED"] },
+    "event_type": { "enum": ["INTAKE_RECORDED", "CLAIM_ACQUIRED", "WORK_ENTERED", "CANDIDATE_READY", "QA_ASSIGNED", "QA_RESULT", "PR_OPENED", "MERGED_DEV", "BLOCKED", "RESOURCE_RELEASED", "LEASE_EXPIRED", "DRIFT_DETECTED", "RECOVERY_BOUND", "SUPERSEDED", "CANCELLED", "COMPLETED"] },
     "exact_object": { "type": "object" },
     "payload": { "type": "object" },
     "created_at": { "type": "string", "format": "date-time" }

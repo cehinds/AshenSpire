@@ -6,18 +6,36 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { validateSchema } from './opsctl.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REPOSITORY_ROOT = path.resolve(ROOT, '..');
 export const EVENT_TYPES = new Set([
   'INTAKE_RECORDED', 'CLAIM_ACQUIRED', 'WORK_ENTERED', 'CANDIDATE_READY',
-  'QA_RESULT', 'PR_OPENED', 'MERGED_DEV', 'BLOCKED', 'RESOURCE_RELEASED',
+  'QA_ASSIGNED', 'QA_RESULT', 'PR_OPENED', 'MERGED_DEV', 'BLOCKED', 'RESOURCE_RELEASED',
   'LEASE_EXPIRED', 'DRIFT_DETECTED', 'RECOVERY_BOUND', 'SUPERSEDED',
   'CANCELLED', 'COMPLETED'
 ]);
 export const ACTIVE_STATES = new Set(['CLAIMED', 'RUNNING', 'CANDIDATE_READY', 'QA', 'PR_READY', 'PR_OPEN']);
 export const TERMINAL_STATES = new Set(['DONE', 'SUPERSEDED', 'CANCELLED']);
 const SEAT_ID = /^seat:[a-z0-9-]+:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SYSTEM_ACTORS = new Set(['scheduler', 'recovery']);
+const SCHEMA_CACHE = new Map();
+
+function schedulerSchema(name) {
+  if (!SCHEMA_CACHE.has(name)) SCHEMA_CACHE.set(name, JSON.parse(fs.readFileSync(path.join(ROOT, 'scheduler', 'schemas', `${name}.json`), 'utf8')));
+  return SCHEMA_CACHE.get(name);
+}
+
+function assertSchema(value, name) {
+  const errors = validateSchema(value, schedulerSchema(name), '$');
+  if (errors.length) throw new Error(`${name} schema: ${errors.join('; ')}`);
+}
+
+export function validateSchedulerDocument(value, name) {
+  assertSchema(value, name);
+  return true;
+}
 
 export function stableStringify(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -53,6 +71,7 @@ function requiredString(value, label) {
 }
 
 export function validateEvent(event) {
+  assertSchema(event, 'event');
   if (!event || typeof event !== 'object' || Array.isArray(event)) throw new Error('event must be an object');
   for (const key of ['event_id', 'idempotency_key', 'previous_snapshot_hash', 'issue_id', 'actor', 'event_type', 'created_at']) requiredString(event[key], key);
   if (!Number.isInteger(event.sequence) || event.sequence < 1) throw new Error('sequence must be a positive integer');
@@ -89,12 +108,35 @@ function baseItem(event) {
     issue_id: event.issue_id, title: p.title, priority: p.priority ?? 'P2',
     dependencies: p.dependencies ?? [], state: 'READY', base_commit: null,
     candidate_commit: null, branch: p.branch ?? null, assigned_actor: null,
-    lease_id: null, lease_epoch: null, lease_expiry: null,
+    assignment_kind: null, lease_id: null, lease_epoch: null, lease_expiry: null, lease_machine_id: null,
+    maker_actor: null, lease_history: [], late_candidates: [],
     claimed_paths: p.claimed_paths ?? [], claimed_resources: p.claimed_resources ?? [],
     acceptance_commands: p.acceptance_commands ?? [], evidence_pointers: p.evidence_pointers ?? [],
     blocker: null, wake_condition: null, next_action: p.next_action ?? 'Inspect the issue and reproduce the acceptance gap.',
-    authority_ceiling: p.authority_ceiling ?? 'dev-delivery', updated_event: event.event_id
+    authority_ceiling: p.authority_ceiling ?? 'dev-delivery', updated_event: event.event_id, updated_at: event.created_at
   };
+}
+
+function assertExactLease(item, event, { requireActor = true } = {}) {
+  if (requireActor && event.actor !== item.assigned_actor) throw new Error('lease actor fencing mismatch');
+  if (event.machine_id !== item.lease_machine_id) throw new Error('lease machine fencing mismatch');
+  if (event.lease_id !== item.lease_id) throw new Error('lease id fencing mismatch');
+  if (event.lease_epoch !== item.lease_epoch) throw new Error('lease epoch fencing mismatch');
+}
+
+function priorLease(item, event) {
+  return item.lease_history.find((lease) => lease.actor === event.actor
+    && lease.machine_id === event.machine_id
+    && lease.lease_id === event.lease_id
+    && lease.lease_epoch === event.lease_epoch);
+}
+
+function clearSeat(item) {
+  item.assigned_actor = null;
+  item.assignment_kind = null;
+  item.lease_id = null;
+  item.lease_expiry = null;
+  item.lease_machine_id = null;
 }
 
 function applyEvent(snapshot, event) {
@@ -107,25 +149,30 @@ function applyEvent(snapshot, event) {
   }
   if (!item) throw new Error(`unknown issue ${event.issue_id}`);
   const staleLease = event.lease_epoch !== null && item.lease_epoch !== null && event.lease_epoch < item.lease_epoch;
-  if (staleLease) throw new Error(`stale lease epoch ${event.lease_epoch} for ${event.issue_id}`);
-  const touch = () => { item.revision += 1; item.updated_event = event.event_id; };
+  const leaseBound = new Set(['WORK_ENTERED', 'CANDIDATE_READY', 'QA_RESULT', 'BLOCKED', 'RESOURCE_RELEASED', 'LEASE_EXPIRED', 'DRIFT_DETECTED']);
+  if (staleLease && leaseBound.has(event.event_type) && event.event_type !== 'CANDIDATE_READY') throw new Error(`stale lease epoch ${event.lease_epoch} for ${event.issue_id}`);
+  const touch = () => { item.revision += 1; item.updated_event = event.event_id; item.updated_at = event.created_at; };
   switch (event.event_type) {
     case 'CLAIM_ACQUIRED':
       if (!['READY', 'WAITING_DEPENDENCY', 'REPAIR_REQUIRED'].includes(item.state)) throw new Error(`cannot claim ${item.state}`);
       if (!SEAT_ID.test(event.actor)) throw new Error('claim requires an issued UUID-backed seat identity');
+      requiredString(event.machine_id, 'claim machine_id');
+      requiredString(event.lease_id, 'claim lease_id');
+      if (!Number.isInteger(event.lease_epoch) || event.lease_epoch <= (item.lease_epoch ?? 0)) throw new Error('claim requires a strictly increasing lease epoch');
       if (!/^[0-9a-f]{40}$/.test(p.base_commit ?? '')) throw new Error('claim requires an exact base commit');
       if (!/^codex\/[A-Za-z0-9._\/-]+$/.test(p.branch ?? '')) throw new Error('claim requires a unique codex/ branch');
       if (Number.isNaN(Date.parse(p.lease_expiry)) || Date.parse(p.lease_expiry) <= Date.parse(event.created_at)) throw new Error('claim requires a future lease expiry');
       if (item.dependencies.some((dependency) => snapshot.work_items[String(dependency)]?.state !== 'DONE')) throw new Error('claim has unsatisfied dependencies');
       {
         const proposed = { ...item, branch: p.branch, claimed_paths: p.claimed_paths ?? item.claimed_paths, claimed_resources: p.claimed_resources ?? item.claimed_resources };
-        const collision = Object.values(snapshot.work_items).find((other) => other.issue_id !== item.issue_id && ACTIVE_STATES.has(other.state) && claimsConflict(proposed, other));
+        const collision = Object.values(snapshot.work_items).find((other) => other.issue_id !== item.issue_id && holdsExclusiveClaim(other) && claimsConflict(proposed, other));
         if (collision) throw new Error(`one-writer collision with ${collision.issue_id}`);
       }
+      item.lease_history.push({ actor: event.actor, machine_id: event.machine_id, lease_id: event.lease_id, lease_epoch: event.lease_epoch, assignment_kind: 'implementation' });
       Object.assign(item, {
-        state: 'CLAIMED', assigned_actor: event.actor, branch: p.branch ?? item.branch,
+        state: 'CLAIMED', assigned_actor: event.actor, assignment_kind: 'implementation', branch: p.branch ?? item.branch,
         base_commit: p.base_commit ?? item.base_commit, lease_id: event.lease_id,
-        lease_epoch: event.lease_epoch, lease_expiry: p.lease_expiry,
+        lease_epoch: event.lease_epoch, lease_expiry: p.lease_expiry, lease_machine_id: event.machine_id,
         claimed_paths: p.claimed_paths ?? item.claimed_paths,
         claimed_resources: p.claimed_resources ?? item.claimed_resources,
         blocker: null, wake_condition: null, next_action: p.next_action ?? item.next_action
@@ -133,61 +180,107 @@ function applyEvent(snapshot, event) {
       break;
     case 'WORK_ENTERED':
       if (item.state !== 'CLAIMED') throw new Error(`cannot enter ${item.state}`);
+      assertExactLease(item, event);
       item.state = 'RUNNING'; item.base_commit = p.base_commit ?? item.base_commit; item.next_action = p.next_action ?? item.next_action;
       break;
     case 'CANDIDATE_READY':
-      if (!['RUNNING', 'REPAIR_REQUIRED'].includes(item.state)) throw new Error(`cannot candidate ${item.state}`);
       if (!/^[0-9a-f]{40}$/.test(p.candidate_commit ?? '')) throw new Error('candidate requires an exact commit');
-      item.state = 'CANDIDATE_READY'; item.candidate_commit = p.candidate_commit; item.evidence_pointers = p.evidence_pointers ?? item.evidence_pointers; item.next_action = 'Bind independent QA to this exact candidate.';
+      if (staleLease || (item.assigned_actor === null && priorLease(item, event))) {
+        if (!priorLease(item, event)) throw new Error('late candidate does not match a previously issued lease');
+        item.late_candidates.push({ actor: event.actor, machine_id: event.machine_id, lease_id: event.lease_id, lease_epoch: event.lease_epoch, candidate_commit: p.candidate_commit, evidence_pointers: p.evidence_pointers ?? [], event_id: event.event_id, created_at: event.created_at });
+        break;
+      }
+      if (item.state !== 'RUNNING') throw new Error(`cannot candidate ${item.state}`);
+      assertExactLease(item, event);
+      item.state = 'CANDIDATE_READY'; item.candidate_commit = p.candidate_commit; item.maker_actor = event.actor; item.evidence_pointers = p.evidence_pointers ?? item.evidence_pointers; item.next_action = 'Bind independent QA to this exact candidate.';
+      clearSeat(item);
+      break;
+    case 'QA_ASSIGNED':
+      if (item.state !== 'CANDIDATE_READY') throw new Error(`cannot assign QA from ${item.state}`);
+      if (!SEAT_ID.test(event.actor)) throw new Error('QA assignment requires an issued UUID-backed seat identity');
+      if (event.actor === item.maker_actor) throw new Error('QA actor must be independent from maker');
+      if (p.candidate_commit !== item.candidate_commit || event.exact_object?.oid !== item.candidate_commit) throw new Error('QA assignment does not match exact candidate commit');
+      requiredString(event.machine_id, 'QA machine_id');
+      requiredString(event.lease_id, 'QA lease_id');
+      if (!Number.isInteger(event.lease_epoch) || event.lease_epoch <= (item.lease_epoch ?? 0)) throw new Error('QA assignment requires a strictly increasing lease epoch');
+      if (Number.isNaN(Date.parse(p.lease_expiry)) || Date.parse(p.lease_expiry) <= Date.parse(event.created_at)) throw new Error('QA assignment requires a future lease expiry');
+      item.lease_history.push({ actor: event.actor, machine_id: event.machine_id, lease_id: event.lease_id, lease_epoch: event.lease_epoch, assignment_kind: 'qa' });
+      item.state = 'QA'; item.assigned_actor = event.actor; item.assignment_kind = 'qa'; item.lease_machine_id = event.machine_id; item.lease_id = event.lease_id; item.lease_epoch = event.lease_epoch; item.lease_expiry = p.lease_expiry; item.next_action = 'Run independent QA against the exact candidate commit.';
       break;
     case 'QA_RESULT':
-      if (!['CANDIDATE_READY', 'QA'].includes(item.state)) throw new Error(`cannot QA ${item.state}`);
+      if (item.state !== 'QA') throw new Error(`cannot QA ${item.state}`);
+      assertExactLease(item, event);
+      if (!SEAT_ID.test(event.actor) || event.actor === item.maker_actor || item.assignment_kind !== 'qa') throw new Error('QA result requires the issued independent QA lease');
       if (p.candidate_commit !== item.candidate_commit) throw new Error('QA candidate does not match exact current head');
       if (!['PASS', 'FAIL'].includes(p.result)) throw new Error('QA result must be PASS or FAIL');
       item.state = p.result === 'PASS' ? 'PR_READY' : 'REPAIR_REQUIRED';
       item.next_action = p.result === 'PASS' ? 'Deliver an issue-closing PR to dev.' : (p.next_action ?? 'Repair the exact failed candidate.');
       item.evidence_pointers = [...new Set([...item.evidence_pointers, ...(p.evidence_pointers ?? [])])];
+      clearSeat(item);
       break;
     case 'PR_OPENED':
       if (item.state !== 'PR_READY') throw new Error(`cannot open PR from ${item.state}`);
+      if (event.actor !== 'scheduler') throw new Error('PR_OPENED requires scheduler actor');
       item.state = 'PR_OPEN'; item.next_action = 'Wait for required checks and independent exact-head review.'; item.evidence_pointers = [...new Set([...item.evidence_pointers, p.pr_url].filter(Boolean))];
       break;
     case 'MERGED_DEV':
       if (item.state !== 'PR_OPEN') throw new Error(`cannot merge from ${item.state}`);
+      if (event.actor !== 'scheduler') throw new Error('MERGED_DEV requires scheduler actor');
       if (!/^[0-9a-f]{40}$/.test(p.merge_commit ?? '')) throw new Error('dev merge requires an exact merge commit');
       item.state = 'MERGED_DEV'; item.next_action = 'Verify issue closure, release resources, and complete.'; item.evidence_pointers = [...new Set([...item.evidence_pointers, p.merge_commit].filter(Boolean))];
       break;
     case 'COMPLETED':
       if (item.state !== 'MERGED_DEV') throw new Error(`cannot complete from ${item.state}`);
+      if (!SYSTEM_ACTORS.has(event.actor)) throw new Error('COMPLETED requires system actor');
       item.state = 'DONE'; item.next_action = null;
+      item.claimed_paths = []; item.claimed_resources = []; clearSeat(item);
       break;
     case 'BLOCKED':
       if (TERMINAL_STATES.has(item.state)) throw new Error(`cannot block ${item.state}`);
+      assertExactLease(item, event);
       item.state = 'WAITING_DEPENDENCY'; item.blocker = p.blocker; item.wake_condition = p.wake_condition; item.next_action = p.next_action ?? null;
-      item.assigned_actor = null; item.lease_id = null; item.lease_expiry = null; item.claimed_resources = p.retained_resources ?? []; item.claimed_paths = p.retained_paths ?? [];
+      clearSeat(item); item.claimed_resources = p.retained_resources ?? []; item.claimed_paths = p.retained_paths ?? [];
       break;
     case 'RESOURCE_RELEASED':
-      item.assigned_actor = null; item.lease_id = null; item.lease_expiry = null; item.claimed_paths = p.retained_paths ?? []; item.claimed_resources = p.retained_resources ?? [];
+      if (item.state === 'WAITING_DEPENDENCY' && item.assigned_actor === null) {
+        if (event.actor !== 'scheduler' || !event.machine_id || event.lease_id !== null || event.lease_epoch !== item.lease_epoch) throw new Error('retained-claim release fencing mismatch');
+      } else assertExactLease(item, event);
+      clearSeat(item); item.claimed_paths = p.retained_paths ?? []; item.claimed_resources = p.retained_resources ?? [];
       if (p.requeue === true && !TERMINAL_STATES.has(item.state)) item.state = 'READY';
       break;
     case 'LEASE_EXPIRED':
-      if (event.lease_epoch !== item.lease_epoch) throw new Error('lease expiry fencing token mismatch');
-      item.state = 'READY'; item.assigned_actor = null; item.lease_id = null; item.lease_expiry = null; item.claimed_paths = []; item.claimed_resources = []; item.next_action = 'Reclaim from the last preserved candidate or worktree.';
+      if (event.actor !== 'scheduler') throw new Error('lease expiry requires scheduler actor');
+      requiredString(event.machine_id, 'lease expiry machine_id');
+      if (event.lease_id !== item.lease_id || event.lease_epoch !== item.lease_epoch) throw new Error('lease expiry fencing token mismatch');
+      item.state = item.assignment_kind === 'qa' ? 'CANDIDATE_READY' : 'READY'; clearSeat(item); item.next_action = item.state === 'CANDIDATE_READY' ? 'Reassign independent QA for the preserved candidate.' : 'Reclaim from the last preserved candidate or worktree.';
       break;
     case 'DRIFT_DETECTED':
-      item.state = 'REPAIR_REQUIRED'; item.blocker = p.blocker ?? 'drift detected'; item.wake_condition = p.wake_condition ?? 'current base and exact head reconciled'; item.assigned_actor = null; item.lease_id = null; item.lease_expiry = null;
+      if (event.actor !== 'scheduler') throw new Error('drift detection requires scheduler actor');
+      requiredString(event.machine_id, 'drift machine_id');
+      if (item.lease_id !== null && (event.lease_id !== item.lease_id || event.lease_epoch !== item.lease_epoch)) throw new Error('drift fencing token mismatch');
+      item.state = 'REPAIR_REQUIRED'; item.blocker = p.blocker ?? 'drift detected'; item.wake_condition = p.wake_condition ?? 'current base and exact head reconciled'; clearSeat(item);
       break;
     case 'RECOVERY_BOUND':
       if (!['READY', 'WAITING_DEPENDENCY', 'REPAIR_REQUIRED'].includes(item.state)) throw new Error(`cannot recover ${item.state}`);
       if (!SEAT_ID.test(event.actor)) throw new Error('recovery requires an issued UUID-backed seat identity');
+      requiredString(event.machine_id, 'recovery machine_id'); requiredString(event.lease_id, 'recovery lease_id');
+      if (!Number.isInteger(event.lease_epoch) || event.lease_epoch <= (item.lease_epoch ?? 0)) throw new Error('recovery requires a strictly increasing lease epoch');
       if (!/^[0-9a-f]{40}$/.test(p.base_commit ?? '') || Number.isNaN(Date.parse(p.lease_expiry))) throw new Error('recovery requires exact base and lease expiry');
-      item.state = 'CLAIMED'; item.assigned_actor = event.actor; item.lease_id = event.lease_id; item.lease_epoch = event.lease_epoch; item.lease_expiry = p.lease_expiry; item.branch = p.branch ?? item.branch; item.base_commit = p.base_commit ?? item.base_commit;
+      {
+        const proposed = { ...item, branch: p.branch ?? item.branch };
+        const collision = Object.values(snapshot.work_items).find((other) => other.issue_id !== item.issue_id && holdsExclusiveClaim(other) && claimsConflict(proposed, other));
+        if (collision) throw new Error(`one-writer collision with ${collision.issue_id}`);
+      }
+      item.lease_history.push({ actor: event.actor, machine_id: event.machine_id, lease_id: event.lease_id, lease_epoch: event.lease_epoch, assignment_kind: 'implementation' });
+      item.state = 'CLAIMED'; item.assigned_actor = event.actor; item.assignment_kind = 'implementation'; item.lease_id = event.lease_id; item.lease_epoch = event.lease_epoch; item.lease_expiry = p.lease_expiry; item.lease_machine_id = event.machine_id; item.branch = p.branch ?? item.branch; item.base_commit = p.base_commit ?? item.base_commit;
       break;
     case 'SUPERSEDED':
-      item.state = 'SUPERSEDED'; item.assigned_actor = null; item.lease_id = null; item.lease_expiry = null; item.claimed_paths = []; item.claimed_resources = []; item.next_action = null;
+      if (event.actor !== 'scheduler') throw new Error('SUPERSEDED requires scheduler actor');
+      item.state = 'SUPERSEDED'; clearSeat(item); item.claimed_paths = []; item.claimed_resources = []; item.next_action = null;
       break;
     case 'CANCELLED':
-      item.state = 'CANCELLED'; item.assigned_actor = null; item.lease_id = null; item.lease_expiry = null; item.claimed_paths = []; item.claimed_resources = []; item.next_action = null;
+      if (event.actor !== 'scheduler') throw new Error('CANCELLED requires scheduler actor');
+      item.state = 'CANCELLED'; clearSeat(item); item.claimed_paths = []; item.claimed_resources = []; item.next_action = null;
       break;
     default: throw new Error(`unhandled event ${event.event_type}`);
   }
@@ -255,25 +348,39 @@ export function planAssignments(snapshot, config, now = new Date().toISOString()
   const items = Object.values(snapshot.work_items);
   const active = items.filter((item) => ACTIVE_STATES.has(item.state));
   const activeActors = new Set(active.map((item) => item.assigned_actor).filter(Boolean));
-  const qaBacklog = items.filter((item) => ['CANDIDATE_READY', 'QA'].includes(item.state)).length;
+  const qaBacklogItems = items.filter((item) => item.state === 'CANDIDATE_READY')
+    .sort((a, b) => priorityValue(a.priority) - priorityValue(b.priority) || a.updated_event.localeCompare(b.updated_event) || a.issue_id.localeCompare(b.issue_id));
+  const qaInFlight = items.filter((item) => item.state === 'QA').length;
+  const qaBacklog = qaBacklogItems.length + qaInFlight;
   const prBacklog = items.filter((item) => ['PR_READY', 'PR_OPEN'].includes(item.state)).length;
   const implementationPaused = qaBacklog >= config.maximum_candidates_waiting_for_qa || prBacklog >= config.maximum_prs_waiting_for_review;
   const done = new Set(items.filter((item) => item.state === 'DONE').map((item) => item.issue_id));
-  const ready = items.filter((item) => item.state === 'READY' && item.dependencies.every((dependency) => done.has(String(dependency))))
+  const ready = items.filter((item) => ['READY', 'REPAIR_REQUIRED'].includes(item.state) && item.dependencies.every((dependency) => done.has(String(dependency))))
     .sort((a, b) => priorityValue(a.priority) - priorityValue(b.priority) || a.updated_event.localeCompare(b.updated_event) || a.issue_id.localeCompare(b.issue_id));
-  const seats = config.workers.filter((seat) => !activeActors.has(seat.actor) && seat.capabilities.includes('implementation'));
+  const seats = config.workers.filter((seat) => !activeActors.has(seat.actor));
   const planned = [];
   const locks = items.filter(holdsExclusiveClaim);
-  for (const seat of seats) {
+  const reservedActors = new Set();
+  for (const candidate of qaBacklogItems) {
+    if (qaInFlight + planned.filter((assignment) => assignment.kind === 'qa').length >= config.qa_slots) break;
+    const seat = seats.find((worker) => !reservedActors.has(worker.actor) && worker.actor !== candidate.maker_actor && (worker.capabilities.includes('qa') || worker.capabilities.includes('review')));
+    if (!seat) break;
+    const epoch = (candidate.lease_epoch ?? 0) + 1;
+    const expiry = new Date(Date.parse(now) + config.lease_duration_seconds * 1000).toISOString();
+    planned.push({ kind: 'qa', issue_id: candidate.issue_id, actor: seat.actor, lease_id: `qa-lease:${candidate.issue_id}:${epoch}`, lease_epoch: epoch, lease_expiry: expiry, base_commit: candidate.base_commit, candidate_commit: candidate.candidate_commit });
+    reservedActors.add(seat.actor);
+  }
+  for (const seat of seats.filter((worker) => !reservedActors.has(worker.actor) && worker.capabilities.includes('implementation'))) {
     if (implementationPaused) continue;
-    const candidate = ready.find((item) => !planned.some((p) => p.issue_id === item.issue_id) && !locks.some((lock) => claimsConflict(item, lock)));
+    const candidate = ready.find((item) => !planned.some((p) => p.issue_id === item.issue_id) && !locks.some((lock) => lock.issue_id !== item.issue_id && claimsConflict(item, lock)));
     if (!candidate) continue;
     const epoch = (candidate.lease_epoch ?? 0) + 1;
     const expiry = new Date(Date.parse(now) + config.lease_duration_seconds * 1000).toISOString();
-    planned.push({ issue_id: candidate.issue_id, actor: seat.actor, lease_id: `lease:${candidate.issue_id}:${epoch}`, lease_epoch: epoch, lease_expiry: expiry, base_commit: currentBaseCommit ?? candidate.base_commit });
+    planned.push({ kind: 'implementation', issue_id: candidate.issue_id, actor: seat.actor, lease_id: `lease:${candidate.issue_id}:${epoch}`, lease_epoch: epoch, lease_expiry: expiry, base_commit: currentBaseCommit ?? candidate.base_commit });
     locks.push(candidate);
+    reservedActors.add(seat.actor);
   }
-  return { assignments: planned, no_safe_assignment: seats.length > 0 && planned.length === 0, implementation_paused: implementationPaused, qa_backlog: qaBacklog, pr_backlog: prBacklog };
+  return { assignments: planned, no_safe_assignment: seats.length > 0 && planned.length === 0, implementation_paused: implementationPaused, qa_backlog: qaBacklog, qa_in_flight: qaInFlight, pr_backlog: prBacklog };
 }
 
 function currentDevelopmentBase(root, config) {
@@ -284,12 +391,13 @@ function currentDevelopmentBase(root, config) {
 }
 
 export function compileWake(item, config, repository = 'https://github.com/cehinds/AshenSpire.git') {
+  const qa = item.assignment_kind === 'qa';
   const wake = {
     IDENTITY: item.assigned_actor,
     ISSUE: item.issue_id,
     OBJECTIVE: item.title,
     FIRST_ACTION: item.next_action,
-    DONE_WHEN: `Acceptance commands pass and a CANDIDATE_READY event names the exact candidate commit for ${item.issue_id}.`,
+    DONE_WHEN: qa ? `Independent QA records PASS or FAIL for exact candidate ${item.candidate_commit}.` : `Acceptance commands pass and a CANDIDATE_READY event names the exact candidate commit for ${item.issue_id}.`,
     REPOSITORY: repository,
     BASE_COMMIT: item.base_commit,
     BRANCH_WORKTREE: item.branch,
@@ -303,6 +411,7 @@ export function compileWake(item, config, repository = 'https://github.com/cehin
     BLOCKER_WAKE: { blocker: item.blocker, wake_condition: item.wake_condition },
     ROLLBACK: 'Preserve the branch and evidence; emit BLOCKED or RESOURCE_RELEASED and let the scheduler refill the seat.'
   };
+  assertSchema(wake, 'wake');
   const characters = stableStringify(wake).length;
   const estimatedTokens = Math.ceil(characters / 4);
   if (estimatedTokens > config.wake_hard_limit_tokens) throw new Error(`wake capsule exceeds ${config.wake_hard_limit_tokens} tokens`);
@@ -388,6 +497,11 @@ export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unres
   return { ...protectedTransitionAllowed(config, 'merge-dev', gates), gates };
 }
 
+export function mergeCommandArgs(prNumber, candidateCommit) {
+  if (!/^[0-9a-f]{40}$/.test(candidateCommit ?? '')) throw new Error('merge command requires exact candidate head');
+  return ['pr', 'merge', String(prNumber), '--repo', 'cehinds/AshenSpire', '--merge', '--match-head-commit', candidateCommit];
+}
+
 export function mergeDevPr(root, config, item, prNumber, { rollbackKnown = false } = {}) {
   if (item.state !== 'PR_OPEN') throw new Error(`dev merge requires PR_OPEN, found ${item.state}`);
   runGit(root, ['fetch', 'origin', '+refs/heads/dev:refs/remotes/origin/dev']);
@@ -404,7 +518,7 @@ export function mergeDevPr(root, config, item, prNumber, { rollbackKnown = false
   const gate = mergeGateResult(config, item, pr, { currentBaseIsAncestor: ancestry, unresolvedThreads, competingPrs, rollbackKnown });
   if (!gate.allowed) throw new Error(`dev merge withheld: ${gate.reason}`);
   if (pr.mergeable !== 'MERGEABLE' || !['CLEAN', 'HAS_HOOKS', 'UNSTABLE'].includes(pr.mergeStateStatus)) throw new Error(`dev merge withheld: mergeable=${pr.mergeable} state=${pr.mergeStateStatus}`);
-  runGh(['pr', 'merge', String(pr.number), '--repo', 'cehinds/AshenSpire', '--merge']);
+  runGh(mergeCommandArgs(pr.number, item.candidate_commit));
   const merged = JSON.parse(runGh(['pr', 'view', String(pr.number), '--repo', 'cehinds/AshenSpire', '--json', 'state,mergedAt,mergeCommit,url']).stdout);
   if (merged.state !== 'MERGED' || !merged.mergeCommit?.oid) throw new Error('merge command returned without an exact merge commit');
   return { pr, gate, merged };
@@ -533,6 +647,57 @@ export function appendEvents(state, inputs) {
   return { ...state, events, snapshot };
 }
 
+export function assignmentEvent(state, assignment, machineId, createdAt = new Date().toISOString()) {
+  const item = state.snapshot.work_items[assignment.issue_id];
+  if (!item) throw new Error(`assignment references unknown issue ${assignment.issue_id}`);
+  if (assignment.kind === 'qa') {
+    return {
+      event_type: 'QA_ASSIGNED', issue_id: item.issue_id, actor: assignment.actor,
+      machine_id: machineId, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch,
+      exact_object: { oid: item.candidate_commit }, payload: { candidate_commit: item.candidate_commit, lease_expiry: assignment.lease_expiry },
+      created_at: createdAt, idempotency_key: `qa-assign:${item.issue_id}:${assignment.lease_epoch}`
+    };
+  }
+  return {
+    event_type: 'CLAIM_ACQUIRED', issue_id: item.issue_id, actor: assignment.actor,
+    machine_id: machineId, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch,
+    exact_object: { base_commit: assignment.base_commit },
+    payload: { branch: item.branch, base_commit: assignment.base_commit, lease_expiry: assignment.lease_expiry, claimed_paths: item.claimed_paths, claimed_resources: item.claimed_resources, next_action: item.next_action },
+    created_at: createdAt, idempotency_key: `auto-claim:${item.issue_id}:${assignment.lease_epoch}`
+  };
+}
+
+export function applyAssignments(state, assignments, machineId, createdAt = new Date().toISOString()) {
+  for (const assignment of assignments) state = appendEvents(state, [assignmentEvent(state, assignment, machineId, createdAt)]);
+  return state;
+}
+
+export function watcherPlan(snapshot, config, now = new Date().toISOString(), currentBaseCommit = null) {
+  const expirations = Object.values(snapshot.work_items)
+    .filter((item) => item.assigned_actor && item.lease_id && item.lease_expiry && Date.parse(item.lease_expiry) <= Date.parse(now))
+    .map((item) => ({ issue_id: item.issue_id, actor: 'scheduler', lease_id: item.lease_id, lease_epoch: item.lease_epoch }));
+  const lastMaterialAt = Object.values(snapshot.work_items).length === 0 ? null : Math.max(...Object.values(snapshot.work_items).map((item) => Date.parse(item.updated_at ?? 0) || 0));
+  const activeSeats = new Set(Object.values(snapshot.work_items).map((item) => item.assigned_actor).filter(Boolean));
+  const queued = Object.values(snapshot.work_items).some((item) => ['READY', 'REPAIR_REQUIRED', 'CANDIDATE_READY'].includes(item.state));
+  const idleAlarm = queued && activeSeats.size < config.worker_slots && lastMaterialAt > 0 && Date.parse(now) - lastMaterialAt >= config.idle_alarm_seconds * 1000;
+  return { expirations, idle_alarm: idleAlarm, current_base_commit: currentBaseCommit };
+}
+
+export function dispatchWakes(root, snapshot, assignments, config) {
+  const dispatchRoot = path.join(localRuntimeDir(root), 'dispatch');
+  fs.mkdirSync(dispatchRoot, { recursive: true });
+  const dispatched = [];
+  for (const assignment of assignments) {
+    const item = snapshot.work_items[assignment.issue_id];
+    if (!item || item.assigned_actor !== assignment.actor) throw new Error(`dispatch assignment drift for ${assignment.issue_id}`);
+    const compiled = compileWake(item, config);
+    const file = path.join(dispatchRoot, `${assignment.actor.replaceAll(':', '_')}.json`);
+    fs.writeFileSync(file, `${JSON.stringify(compiled, null, 2)}\n`, { flag: 'w' });
+    dispatched.push({ issue_id: item.issue_id, actor: assignment.actor, wake_file: path.relative(root, file).replaceAll('\\', '/'), estimated_tokens: compiled.estimated_tokens });
+  }
+  return dispatched;
+}
+
 export function simulate(config = readConfig()) {
   config = { ...config, workers: config.workers.length ? config.workers : [
     { actor: 'seat:simulation:00000000-0000-4000-8000-000000000001', capabilities: ['implementation'] },
@@ -604,9 +769,15 @@ export function verifyScheduler(root = REPOSITORY_ROOT) {
   const state = readPortableState(root);
   const rebuilt = reduceEvents(state.events);
   if (rebuilt.errors.length) problems.push(`event replay contains ${rebuilt.errors.length} error(s)`);
-  if (state.oid && rebuilt.snapshot_hash !== state.snapshot.snapshot_hash) problems.push('snapshot does not match deterministic replay');
+  try { assertSchema(rebuilt, 'snapshot'); } catch (error) { problems.push(error.message); }
+  try { assertSchema(state.snapshot, 'snapshot'); } catch (error) { problems.push(error.message); }
+  if (state.oid && !snapshotsMatch(rebuilt, state.snapshot)) problems.push('snapshot does not match deterministic replay');
   if (state.stateVersion !== '1') problems.push('unsupported STATE_VERSION');
   return { ok: problems.length === 0, problems, config, state, rebuilt };
+}
+
+export function snapshotsMatch(rebuilt, stored) {
+  return stableStringify(rebuilt) === stableStringify(stored);
 }
 
 export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
@@ -651,8 +822,27 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     emit(command, { changed, snapshot_hash: rebuilt.snapshot_hash, counts: stateCounts(rebuilt) }, changed ? 'SYNC PASS: snapshot rebuilt.' : 'SYNC NOOP: no material change.'); return 0;
   }
   if (command === 'watch') {
-    const before = state.snapshot.snapshot_hash; const rebuilt = reduceEvents(state.events); if (before === rebuilt.snapshot_hash) return 0;
-    state.snapshot = rebuilt; persistPortableState(root, state, { push: args.push === true, message: 'scheduler watcher recovery' }); emit(command, { snapshot_hash: rebuilt.snapshot_hash }, 'WATCH: recovered a material state change.'); return 0;
+    if (!state.oid) return 0;
+    ensureCustody(state, machine);
+    const now = args.at ?? new Date().toISOString();
+    const rebuilt = reduceEvents(state.events); if (rebuilt.errors.length) throw new Error(`replay errors: ${JSON.stringify(rebuilt.errors)}`);
+    const reconciled = stableStringify(state.snapshot) !== stableStringify(rebuilt);
+    state.snapshot = rebuilt;
+    const preliminary = watcherPlan(state.snapshot, config, now);
+    for (const expiration of preliminary.expirations) {
+      state = appendEvents(state, [{ ...expiration, machine_id: machine.machine_id, event_type: 'LEASE_EXPIRED', exact_object: {}, payload: {}, created_at: now, idempotency_key: `watch-expire:${expiration.issue_id}:${expiration.lease_epoch}` }]);
+    }
+    const needsBase = Object.values(state.snapshot.work_items).some((item) => ['READY', 'REPAIR_REQUIRED'].includes(item.state)) && config.workers.some((worker) => worker.capabilities.includes('implementation'));
+    const baseCommit = needsBase ? currentDevelopmentBase(root, config) : null;
+    const plan = planAssignments(state.snapshot, config, now, baseCommit);
+    state = applyAssignments(state, plan.assignments, machine.machine_id, now);
+    const material = reconciled || preliminary.expirations.length > 0 || plan.assignments.length > 0;
+    let oid = state.oid;
+    if (material) oid = persistPortableState(root, state, { push: args.push === true, message: 'scheduler watcher reconcile/expire/refill' });
+    const dispatched = dispatchWakes(root, state.snapshot, plan.assignments, config);
+    const after = watcherPlan(state.snapshot, config, now, baseCommit);
+    if (!material && !after.idle_alarm) return 0;
+    emit(command, { state_ref_oid: oid, reconciled, expired: preliminary.expirations, assignments: plan.assignments, dispatched, idle_alarm: after.idle_alarm, refill_target_seconds: config.refill_latency_target_seconds, idle_alarm_seconds: config.idle_alarm_seconds }, material ? 'WATCH: reconciled state, expired stale leases, and refilled available seats.' : 'WATCH IDLE ALARM: queued work has exceeded the configured idle limit.'); return 0;
   }
   ensureCustody(state, machine);
   if (command === 'enqueue') {
@@ -677,21 +867,16 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     ]);
     const baseCommit = currentDevelopmentBase(root, config);
     const plan = planAssignments(state.snapshot, config, createdAt, baseCommit);
-    for (const assignment of plan.assignments) {
-      const refillItem = state.snapshot.work_items[assignment.issue_id];
-      state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: refillItem.issue_id, actor: assignment.actor, machine_id: machine.machine_id, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch, exact_object: { base_commit: assignment.base_commit }, payload: { branch: refillItem.branch, base_commit: assignment.base_commit, lease_expiry: assignment.lease_expiry, claimed_paths: refillItem.claimed_paths, claimed_resources: refillItem.claimed_resources, next_action: refillItem.next_action }, created_at: createdAt, idempotency_key: `auto-claim:${refillItem.issue_id}:${assignment.lease_epoch}` }]);
-    }
+    state = applyAssignments(state, plan.assignments, machine.machine_id, createdAt);
     const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}` });
-    emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
+    const dispatched = dispatchWakes(root, state.snapshot, plan.assignments, config);
+    emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
   }
   const input = transitionInput(command, args, state, machine); state = appendEvents(state, [input]);
   const triggers = new Set(['candidate', 'qa', 'block', 'release', 'expire', 'complete', 'merged-dev']);
   const baseCommit = triggers.has(command) ? currentDevelopmentBase(root, config) : null;
   const plan = triggers.has(command) ? planAssignments(state.snapshot, config, input.created_at, baseCommit) : { assignments: [], no_safe_assignment: false };
-  for (const assignment of plan.assignments) {
-    const item = state.snapshot.work_items[assignment.issue_id];
-    state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: item.issue_id, actor: assignment.actor, machine_id: machine.machine_id, lease_id: assignment.lease_id, lease_epoch: assignment.lease_epoch, exact_object: { base_commit: assignment.base_commit }, payload: { branch: item.branch, base_commit: assignment.base_commit, lease_expiry: assignment.lease_expiry, claimed_paths: item.claimed_paths, claimed_resources: item.claimed_resources, next_action: item.next_action }, created_at: input.created_at, idempotency_key: `auto-claim:${item.issue_id}:${assignment.lease_epoch}` }]);
-  }
+  state = applyAssignments(state, plan.assignments, machine.machine_id, input.created_at);
   let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}` });
   state.oid = oid;
   let delivery = null;
@@ -703,7 +888,8 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     item = state.snapshot.work_items[input.issue_id];
   }
   const wake = item?.state === 'CLAIMED' ? compileWake(item, config) : null;
-  emit(command, { state_ref_oid: oid, snapshot_hash: state.snapshot.snapshot_hash, issue: item, refill_assignments: plan.assignments, no_safe_assignment: plan.no_safe_assignment, wake, delivery }, `${input.event_type} accepted for ${input.issue_id}; refill assignments=${plan.assignments.length}${delivery ? `; PR=${delivery.url}` : ''}.`); return 0;
+  const dispatched = dispatchWakes(root, state.snapshot, plan.assignments, config);
+  emit(command, { state_ref_oid: oid, snapshot_hash: state.snapshot.snapshot_hash, issue: item, refill_assignments: plan.assignments, no_safe_assignment: plan.no_safe_assignment, wake, dispatched, delivery }, `${input.event_type} accepted for ${input.issue_id}; refill assignments=${plan.assignments.length}${delivery ? `; PR=${delivery.url}` : ''}.`); return 0;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

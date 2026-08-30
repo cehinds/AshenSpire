@@ -5,10 +5,10 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  appendEvents, assertPortable, claimsConflict, compareAndSwap, compileWake,
-  emptySnapshot, historyAdvanceAllowed, makeEvent, pathsOverlap, planAssignments,
+  appendEvents, applyAssignments, assertPortable, claimsConflict, compareAndSwap, compileWake,
+  emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, pathsOverlap, planAssignments,
   protectedTransitionAllowed, readConfig, reduceEvents, resolveCanonicalIssue,
-  simulate, stableStringify
+  simulate, snapshotsMatch, stableStringify, validateEvent, validateSchedulerDocument, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -49,8 +49,14 @@ function candidate(state, issue, oid = 'b'.repeat(40)) {
   return appendEvents(state, [{ event_type: 'CANDIDATE_READY', issue_id: issue, actor: item.assigned_actor, machine_id: 'machine-a', lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid }, idempotency_key: `candidate:${issue}:${oid}`, created_at: '2026-08-30T00:00:03.000Z', payload: { candidate_commit: oid, evidence_pointers: ['receipt:test'] } }]);
 }
 function qa(state, issue, result = 'PASS', oid = 'b'.repeat(40)) {
-  const item = state.snapshot.work_items[issue];
-  return appendEvents(state, [{ event_type: 'QA_RESULT', issue_id: issue, actor: 'seat:qa:01', machine_id: 'machine-a', lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid }, idempotency_key: `qa:${issue}:${oid}:${result}`, created_at: '2026-08-30T00:00:04.000Z', payload: { candidate_commit: oid, result, evidence_pointers: ['receipt:qa'] } }]);
+  let item = state.snapshot.work_items[issue];
+  if (item.state === 'CANDIDATE_READY') {
+    const actor = 'seat:test:00000000-0000-4000-8000-000000000002';
+    const epoch = (item.lease_epoch ?? 0) + 1;
+    state = appendEvents(state, [{ event_type: 'QA_ASSIGNED', issue_id: issue, actor, machine_id: 'machine-a', lease_id: `qa-lease:${issue}:${epoch}`, lease_epoch: epoch, exact_object: { oid }, idempotency_key: `qa-assign:${issue}:${epoch}`, created_at: '2026-08-30T00:00:03.500Z', payload: { candidate_commit: oid, lease_expiry: '2026-08-30T00:30:03.500Z' } }]);
+    item = state.snapshot.work_items[issue];
+  }
+  return appendEvents(state, [{ event_type: 'QA_RESULT', issue_id: issue, actor: item.assigned_actor, machine_id: item.lease_machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid }, idempotency_key: `qa:${issue}:${oid}:${result}`, created_at: '2026-08-30T00:00:04.000Z', payload: { candidate_commit: oid, result, evidence_pointers: ['receipt:qa'] } }]);
 }
 
 test('1 deterministic replay and snapshot checksums', () => {
@@ -90,7 +96,8 @@ test('7 backpressure-aware assignment', () => {
   state = intake(state, 'I-7D'); const plan = planAssignments(state.snapshot, { ...config, workers: [{ actor: 'seat:test:00000000-0000-4000-8000-000000000007', capabilities: ['implementation'] }], worker_slots: 1 }, '2026-08-30T00:00:00Z');
   assert.equal(plan.implementation_paused, true); assert.equal(plan.assignments.length, 0);
   const reviewSeatPlan = planAssignments(state.snapshot, { ...config, workers: [{ actor: 'seat:test:00000000-0000-4000-8000-000000000008', capabilities: ['implementation', 'review'] }], worker_slots: 1 }, '2026-08-30T00:00:00Z', 'c'.repeat(40));
-  assert.equal(reviewSeatPlan.assignments.length, 0);
+  assert.equal(reviewSeatPlan.assignments.length, 1);
+  assert.equal(reviewSeatPlan.assignments[0].kind, 'qa');
 });
 
 test('8 immediate refill after completion', () => {
@@ -98,7 +105,7 @@ test('8 immediate refill after completion', () => {
   state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: 'I-8A', actor: 'scheduler', machine_id: 'machine-a', lease_id: 'lease:I-8A:1', lease_epoch: 1, exact_object: { pr_number: 8 }, payload: { pr_url: 'https://github.com/cehinds/AshenSpire/pull/8' }, idempotency_key: 'pr:I-8A', created_at: '2026-08-30T00:00:05Z' }]);
   state = appendEvents(state, [{ event_type: 'MERGED_DEV', issue_id: 'I-8A', actor: 'scheduler', machine_id: 'machine-a', lease_id: 'lease:I-8A:1', lease_epoch: 1, exact_object: { oid: 'd'.repeat(40) }, payload: { merge_commit: 'd'.repeat(40) }, idempotency_key: 'merge:I-8A', created_at: '2026-08-30T00:00:06Z' }]);
   state = intake(state, 'I-8B');
-  state = appendEvents(state, [{ event_type: 'COMPLETED', issue_id: 'I-8A', actor: 'seat:test:00000000-0000-4000-8000-000000000001', machine_id: 'machine-a', lease_id: 'lease:I-8A:1', lease_epoch: 1, exact_object: {}, payload: {}, idempotency_key: 'complete:I-8A', created_at: '2026-08-30T00:00:07Z' }]);
+  state = appendEvents(state, [{ event_type: 'COMPLETED', issue_id: 'I-8A', actor: 'scheduler', machine_id: 'machine-a', lease_id: 'lease:I-8A:1', lease_epoch: 1, exact_object: {}, payload: {}, idempotency_key: 'complete:I-8A', created_at: '2026-08-30T00:00:07Z' }]);
   const refill = planAssignments(state.snapshot, config, '2026-08-30T00:00:07Z', 'c'.repeat(40)).assignments.find((a) => a.issue_id === 'I-8B');
   assert.equal(refill.base_commit, 'c'.repeat(40));
   state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: refill.issue_id, actor: refill.actor, machine_id: 'machine-a', lease_id: refill.lease_id, lease_epoch: refill.lease_epoch, exact_object: { base_commit: refill.base_commit }, payload: { branch: state.snapshot.work_items[refill.issue_id].branch, base_commit: refill.base_commit, lease_expiry: refill.lease_expiry }, idempotency_key: 'auto-claim:I-8B:1', created_at: '2026-08-30T00:00:07Z' }]);
@@ -212,6 +219,92 @@ test('pipeline saturation acceptance fixture', () => {
 
 test('canonical serialization is key-order independent', () => {
   assert.equal(stableStringify({ b: 1, a: 2 }), stableStringify({ a: 2, b: 1 }));
+});
+
+test('lease holder fencing rejects actor machine id and epoch substitution', () => {
+  let state = intake(fresh(), 'I-FENCE'); state = claim(state, 'I-FENCE');
+  const item = state.snapshot.work_items['I-FENCE'];
+  const base = { event_type: 'WORK_ENTERED', issue_id: 'I-FENCE', actor: item.assigned_actor, machine_id: item.lease_machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: {}, payload: { base_commit: 'a'.repeat(40) }, created_at: '2026-08-30T00:00:02Z' };
+  assert.throws(() => appendEvents(state, [{ ...base, actor: config.workers[1].actor, idempotency_key: 'fence:actor' }]), /actor fencing/);
+  assert.throws(() => appendEvents(state, [{ ...base, machine_id: 'machine-b', idempotency_key: 'fence:machine' }]), /machine fencing/);
+  assert.throws(() => appendEvents(state, [{ ...base, lease_id: 'lease:other:1', idempotency_key: 'fence:id' }]), /id fencing/);
+  assert.throws(() => appendEvents(state, [{ ...base, lease_epoch: 2, idempotency_key: 'fence:epoch' }]), /epoch fencing/);
+});
+
+test('direct claims reject paths retained by dependency-wait work', () => {
+  let state = intake(fresh(), 'I-LOCK-A', { paths: ['src/locked'] }); state = claim(state, 'I-LOCK-A');
+  const held = state.snapshot.work_items['I-LOCK-A'];
+  state = appendEvents(state, [{ event_type: 'BLOCKED', issue_id: held.issue_id, actor: held.assigned_actor, machine_id: held.lease_machine_id, lease_id: held.lease_id, lease_epoch: held.lease_epoch, exact_object: {}, payload: { blocker: 'dependency', wake_condition: 'later', retained_paths: ['src/locked'] }, created_at: '2026-08-30T00:00:02Z', idempotency_key: 'lock:block' }]);
+  state = intake(state, 'I-LOCK-B', { paths: ['src/locked/file.js'] });
+  assert.throws(() => claim(state, 'I-LOCK-B', config.workers[1].actor), /one-writer collision/);
+  const blocked = state.snapshot.work_items['I-LOCK-A'];
+  state = appendEvents(state, [{ event_type: 'RESOURCE_RELEASED', issue_id: blocked.issue_id, actor: 'scheduler', machine_id: 'machine-b', lease_id: null, lease_epoch: blocked.lease_epoch, exact_object: {}, payload: { requeue: false, retained_paths: [], retained_resources: [] }, created_at: '2026-08-30T00:00:03Z', idempotency_key: 'lock:release' }]);
+  state = claim(state, 'I-LOCK-B', config.workers[1].actor);
+  assert.equal(state.snapshot.work_items['I-LOCK-B'].state, 'CLAIMED');
+});
+
+test('candidate releases maker and planner issues independent QA plus refill', () => {
+  let state = intake(fresh(), 'I-QA-A'); state = claim(state, 'I-QA-A'); state = entered(state, 'I-QA-A'); state = candidate(state, 'I-QA-A'); state = intake(state, 'I-QA-B');
+  assert.equal(state.snapshot.work_items['I-QA-A'].assigned_actor, null);
+  const plan = planAssignments(state.snapshot, config, '2026-08-30T00:00:04Z', 'c'.repeat(40));
+  assert.equal(plan.assignments.some((assignment) => assignment.issue_id === 'I-QA-A' && assignment.kind === 'qa'), true);
+  assert.equal(plan.assignments.some((assignment) => assignment.issue_id === 'I-QA-B' && assignment.kind === 'implementation'), true);
+  assert.notEqual(plan.assignments.find((assignment) => assignment.issue_id === 'I-QA-A').actor, state.snapshot.work_items['I-QA-A'].maker_actor);
+  state = applyAssignments(state, plan.assignments, 'machine-a', '2026-08-30T00:00:04Z');
+  assert.equal(state.snapshot.work_items['I-QA-A'].state, 'QA');
+  assert.equal(state.snapshot.work_items['I-QA-B'].state, 'CLAIMED');
+  assert.equal(compileWake(state.snapshot.work_items['I-QA-A'], config).wake.DONE_WHEN.includes('Independent QA'), true);
+});
+
+test('QA rejects maker self-certification and unissued identities', () => {
+  let state = intake(fresh(), 'I-QA-FENCE'); state = claim(state, 'I-QA-FENCE'); state = entered(state, 'I-QA-FENCE'); state = candidate(state, 'I-QA-FENCE');
+  const item = state.snapshot.work_items['I-QA-FENCE']; const epoch = item.lease_epoch + 1;
+  const assignment = { event_type: 'QA_ASSIGNED', issue_id: item.issue_id, machine_id: 'machine-a', lease_id: `qa:${epoch}`, lease_epoch: epoch, exact_object: { oid: item.candidate_commit }, payload: { candidate_commit: item.candidate_commit, lease_expiry: '2026-08-30T00:30:00Z' }, created_at: '2026-08-30T00:00:04Z' };
+  assert.throws(() => appendEvents(state, [{ ...assignment, actor: item.maker_actor, idempotency_key: 'qa:self' }]), /independent/);
+  assert.throws(() => appendEvents(state, [{ ...assignment, actor: 'qa-person', idempotency_key: 'qa:unissued' }]), /issued/);
+});
+
+test('late expired-epoch candidate is preserved but not current', () => {
+  let state = intake(fresh(), 'I-LATE'); state = claim(state, 'I-LATE'); state = entered(state, 'I-LATE');
+  const old = structuredClone(state.snapshot.work_items['I-LATE']);
+  state = appendEvents(state, [{ event_type: 'LEASE_EXPIRED', issue_id: old.issue_id, actor: 'scheduler', machine_id: old.lease_machine_id, lease_id: old.lease_id, lease_epoch: old.lease_epoch, exact_object: {}, payload: {}, created_at: '2026-08-30T00:31:00Z', idempotency_key: 'late:expire' }]);
+  state = claim(state, 'I-LATE', config.workers[1].actor, 2);
+  state = appendEvents(state, [{ event_type: 'CANDIDATE_READY', issue_id: old.issue_id, actor: old.assigned_actor, machine_id: old.lease_machine_id, lease_id: old.lease_id, lease_epoch: old.lease_epoch, exact_object: { oid: 'd'.repeat(40) }, payload: { candidate_commit: 'd'.repeat(40), evidence_pointers: ['late'] }, created_at: '2026-08-30T00:32:00Z', idempotency_key: 'late:candidate' }]);
+  assert.equal(state.snapshot.work_items['I-LATE'].candidate_commit, null);
+  assert.equal(state.snapshot.work_items['I-LATE'].late_candidates[0].candidate_commit, 'd'.repeat(40));
+});
+
+test('declared event schema rejects additional properties', () => {
+  const event = makeEvent(emptySnapshot(), { event_type: 'INTAKE_RECORDED', issue_id: 'I-SCHEMA', actor: 'intake', exact_object: {}, payload: {}, created_at: '2026-08-30T00:00:00Z' });
+  assert.throws(() => validateEvent({ ...event, undeclared: true }), /additional property/);
+});
+
+test('declared snapshot and wake schemas reject additional properties', () => {
+  assert.throws(() => validateSchedulerDocument({ ...emptySnapshot(), undeclared: true }, 'snapshot'), /additional property/);
+  let state = intake(fresh(), 'I-WAKE-SCHEMA'); state = claim(state, 'I-WAKE-SCHEMA');
+  const wake = compileWake(state.snapshot.work_items['I-WAKE-SCHEMA'], config).wake;
+  assert.throws(() => validateSchedulerDocument({ ...wake, undeclared: true }, 'wake'), /additional property/);
+  assert.throws(() => validateSchedulerDocument({ ...wake, LEASE: { ...wake.LEASE, undeclared: true } }, 'wake'), /additional property/);
+});
+
+test('snapshot verification compares complete deterministic content', () => {
+  let state = intake(fresh(), 'I-SNAPSHOT'); const corrupted = structuredClone(state.snapshot); corrupted.work_items['I-SNAPSHOT'].title = 'tampered';
+  assert.equal(corrupted.snapshot_hash, state.snapshot.snapshot_hash);
+  assert.equal(snapshotsMatch(state.snapshot, corrupted), false);
+});
+
+test('watcher plans expiry and raises configured idle alarm', () => {
+  let state = intake(fresh(), 'I-WATCH'); state = claim(state, 'I-WATCH');
+  const expired = watcherPlan(state.snapshot, config, '2026-08-30T00:31:00Z', 'c'.repeat(40));
+  assert.equal(expired.expirations.length, 1);
+  let idle = intake(fresh(), 'I-IDLE');
+  const alarm = watcherPlan(idle.snapshot, config, '2026-08-30T00:00:31Z', 'c'.repeat(40));
+  assert.equal(alarm.idle_alarm, true);
+});
+
+test('dev merge command pins the reviewed exact head', () => {
+  const oid = 'e'.repeat(40); const args = mergeCommandArgs(461, oid);
+  assert.deepEqual(args.slice(-2), ['--match-head-commit', oid]);
 });
 
 if (!process.exitCode) process.stdout.write(`1..${passed}\nPASS ${passed}/${passed}\n`);
