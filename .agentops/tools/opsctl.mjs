@@ -1280,7 +1280,6 @@ export function renderGovernance(c) {
       L.push(`| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`);
     }
     L.push('');
-    L.push(c.qa.rules.independence_is_not_self_recorded);
     L.push('');
   }
 
@@ -1334,7 +1333,6 @@ export function renderGovernance(c) {
       L.push(`| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`);
     }
     L.push('');
-    L.push(Object.values(me.rules).join(' '));
     L.push('');
   }
 
@@ -1369,6 +1367,25 @@ export function renderGovernance(c) {
       L.push(`| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} |`);
     }
     L.push('');
+  }
+
+
+  // Every contract's `rules` block is the set of invariants opsctl enforces, in
+  // the words the contract uses. Most of them rendered nowhere: 41 values across
+  // twelve contracts were machine-checked and humanly invisible, so the view a
+  // person reads to learn what the system guarantees did not state the
+  // guarantees. They are projected here, grouped by contract, and each value is
+  // a probe — dropping one fails the coverage gate.
+  const ruled = Object.keys(c).filter((k) => c[k] && typeof c[k] === 'object' && c[k].rules && !Array.isArray(c[k].rules)).sort();
+  if (ruled.length) {
+    L.push('## Enforced invariants');
+    L.push('');
+    for (const k of ruled) {
+      L.push(`**\`${k}\`**`);
+      L.push('');
+      for (const line of ruleLines(c[k])) L.push(line);
+      L.push('');
+    }
   }
 
   return L.join('\n');
@@ -2680,14 +2697,14 @@ const VIEW_PROBES = {
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
   migration: (x) => [x.principle],
-  'model-effort': (x) => [x.principle, x.assignment_record.format, ...Object.values(x.rules), ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
+  'model-effort': (x) => [x.principle, x.assignment_record.format, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
   'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} |`)],
   'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), ...x.priority_order.map((pr, i) => `  ${i + 1}. ${pr}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`)],
   project: (x) => [`Project: **${x.project_name}** \u2014 policy version`, `installed stage: \`${x.installed_stage}\``],
   'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
-  qa: (x) => [x.principle, x.rules.independence_is_not_self_recorded, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
+  qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
   roles: (x) => x.roles.map((r) => [
     '### `' + r.role + '`',
@@ -2702,6 +2719,21 @@ const VIEW_PROBES = {
   teams: (x) => [x.principle, x.pool_rules.note && 'Not standing teams', x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`)],
 };
+
+// Every contract's rules render in the Enforced invariants section, so every
+// probe carries its own rule lines. Doing it here rather than in twelve edited
+// probe entries means a rule added to a contract tomorrow is probed the same
+// day: it must appear in the view or the coverage gate fails.
+for (const [k, fn] of Object.entries(VIEW_PROBES)) {
+  VIEW_PROBES[k] = (x) => {
+    const rules = ruleLines(x);
+    // The per-contract heading is rendered only when that contract has rules,
+    // so it is probed only then. Static prose with no contract behind it is not
+    // added to this view: the projection disclaimer stays the single exemption
+    // the prose sweep allows.
+    return rules.length ? [...fn(x), `**\`${k}\`**`, ...rules] : fn(x);
+  };
+}
 
 // A probe value shared by two contracts lets one mask the other: the masked
 // contract's block can vanish while its values still appear, rendered by the
@@ -2862,6 +2894,15 @@ export function unrenderedFieldPaths(contracts, renderedText) {
 // shared helper and tableShapeErrors below is the structural guard: a row whose
 // cell count differs from its header cannot be rendered unnoticed, whatever
 // field it came from.
+// The rendered form of one contract's `rules` block. Shared by the renderer and
+// by the view probes for the same reason mdCell is: two copies of a rendered
+// string drift, and a probe that drifts stops proving anything.
+export function ruleLines(contract) {
+  const r = contract && contract.rules;
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return [];
+  return Object.entries(r).filter(([, v]) => typeof v === 'string').map(([n, v]) => `- \`${n}\` \u2014 ${v}`);
+}
+
 export function mdCell(value) {
   return String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 }
@@ -2949,7 +2990,7 @@ export function viewCoverageErrors(contracts, viewText) {
 // writes of `render` and the drift gate of `verify`. Frozen wake goldens make
 // reconstruction output part of the committed, deterministic surface: any clean
 // clone on any provider must reproduce them byte-for-byte.
-function generatedArtifacts(contracts, rt) {
+export function generatedArtifacts(contracts, rt) {
   const out = [{ rel: GENERATED_VIEW, text: renderGovernance(contracts) + '\n' }];
   for (const ticket of Object.keys(rt.capsules).sort()) {
     const cap = buildCapsule(contracts, rt, ticket, { frozen: true });
@@ -3664,13 +3705,26 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'the prose sweep found lines to sweep', pass: prose >= 20, errs: [String(prose)] });
 
     // Unrendered contract fields. No deletion sweep can see these, so the count
-    // is ratcheted: it may fall, never rise. 105 at the time this was written.
+    // is ratcheted: it may fall, never rise. 105 when the audit was written;
+    // 65 once every contract's `rules` block was projected into the view.
     const rtAll = loadRuntime(root);
     const everything = generatedArtifacts(contracts, rtAll).map((a) => a.text).join('\n');
     const unrendered = unrenderedFieldPaths(contracts, everything);
-    const RATCHET = 105;
+    const RATCHET = 65;
     results.push({ label: `unrendered contract fields do not grow past ${RATCHET}`, pass: unrendered.length <= RATCHET, errs: unrendered.slice(0, 10) });
     results.push({ label: 'the unrendered-field audit is actually looking at contracts', pass: unrendered.length < 400, errs: [String(unrendered.length)] });
+
+    // ...and every contract's rules are projected and probed. 41 rule values
+    // across twelve contracts were machine-checked and humanly invisible until
+    // the Enforced invariants section; the probe augmentation means a rule
+    // added tomorrow is probed the same day, so both directions are planted:
+    // a rule whose text drifts from the view, and a rule the view never gained.
+    const drifted = { ...contracts, delegation: { ...contracts.delegation, rules: { ...contracts.delegation.rules, subset_of_parent: 'a child may delegate whatever it likes' } } };
+    const driftErrs = viewCoverageErrors(drifted, govText);
+    results.push({ label: 'a rule reworded in the contract but not the view fails coverage', pass: driftErrs.length > 0, errs: driftErrs });
+    const gained = { ...contracts, raci: { ...contracts.raci, rules: { ...contracts.raci.rules, brand_new_rule: 'a rule nobody projected' } } };
+    const gainedErrs = viewCoverageErrors(gained, govText);
+    results.push({ label: 'a rule added to a contract but absent from the view fails coverage', pass: gainedErrs.length > 0, errs: gainedErrs });
 
     // ...and a contract added with no probe at all must fail rather than skip.
     const withGhost = { ...contracts, 'ghost-contract': { principle: 'a contract nobody projected' } };

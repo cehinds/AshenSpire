@@ -484,7 +484,6 @@ QA is risk-selected and independent. The verifier of an exact object is never it
 | accept-high-risk-object | high | qa-independent | yes | unit, regression, deterministic-view, security, accessibility | owner | test-run-receipt, security-scan-receipt, hosted-verification-receipt |
 | data-contract-clearance | standard | data-architecture-lead | yes | schema-lineage, migration-compatibility | it-manager-iii | data-lineage-receipt |
 
-A waiver of independence is never recorded by the party it constrains. Any future self-certification mechanism must be carried by a separately authenticated action from the approving role, not by a field the certifying seat writes into its own capsule and reseals.
 
 ## Authority tiers
 
@@ -534,7 +533,6 @@ Every assignment and reassignment records: `MODEL <model> | EFFORT <effort> | WH
 | High-risk or cross-system reasoning | `gpt-5.6-sol` | high, xhigh | Architecture, governance, schema and save compatibility, security, incident and P0 analysis, integration, and promotion-readiness analysis. |
 | Exceptional unresolved multi-system risk | `any capable available model` | max (needs a recorded exceptional reason) | Only when the packet records the exceptional reason that lesser effort is inadequate. |
 
-Model selection grants no product, path, board, integration, delivery, publication or release authority. A stronger model does not outrank a weaker one. QA independence comes from a non-maker reviewer, an immutable exact head, and independently produced evidence. Using a different model is neither required nor sufficient. Selection follows the risk-and-station matrix, never role rank. Use the smallest capable pairing the current execution venue supports.
 
 ## Owner commands
 
@@ -569,4 +567,87 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 | security-scan-receipt | qa-independent | commit OID | it-manager-iii | head_oid |
 | data-lineage-receipt | data-architecture-lead | schema/id/lineage manifest hash | it-manager-iii | schema_version, manifest_hash |
 | hosted-verification-receipt | qa-independent | deployed commit SHA + hosted URL | it-manager-iii | hosted_sha |
+
+## Enforced invariants
+
+**`delegation`**
+
+- `subset_of_parent` — A child envelope's delegated_actions must be a subset of its parent envelope's delegated_actions.
+- `depth_decreases` — A child envelope's max_subdelegation_depth must be strictly less than its parent's.
+- `deputy_cannot_delegate_excluded` — The deputy (it-manager-iii) must not delegate any action listed in owner-intent.deputy.excluded_actions.
+- `time_bound` — Every envelope has effective and expiry; expiry must be strictly after effective.
+
+**`delivery`**
+
+- `unknown_blocks` — Missing, contradictory, stale or unverified fields are UNKNOWN, and UNKNOWN blocks the associated delivery or promotion action.
+- `no_direct_push_to_dev` — Delivery discretion never authorizes a direct push to dev; it runs through the reviewable pull-request process.
+- `readiness_is_not_release` — Declaring a packet ready for owner review grants no promotion authority and is not a release-readiness claim.
+- `rollback_is_recorded_before_the_switch` — A Pages source switch records its rollback target, procedure, trigger, responsible actor and authority before it happens, so a failed deployment has somewhere to go back to.
+
+**`escalation`**
+
+- `acyclic_route` — Each route is an ordered list of actor_ids with no repeats; it must terminate at the Owner or a role that itself routes to the Owner.
+- `authority_effect_fixed` — authority_effect must be request-decision for every class; escalation never grants authority.
+
+**`evidence`**
+
+- `producer_exists` — every evidence type names a producer_role that is a declared role or the generator writer.
+- `bound_to_exact_object` — every evidence type binds to an exact object and lists invalidation keys.
+
+**`information-access`**
+
+- `startup_bounded` — startup has at most max_startup_items entries.
+- `no_forbidden_preload` — No forbidden class may appear in startup or on_demand.
+- `retrieval_order` — Retrieve by exact ID/path/hash first, keyword second, semantic fallback last; never recursively read all linked material; default maximum is one extra hop.
+
+**`migration`**
+
+- `read_only` — Every legacy_source disposition preserves or references the artifact; deletion, overwrite, and reset are never dispositions.
+- `one_authoritative_per_capsule` — No two work items may claim the same new_capsule.
+- `migrated_has_capsule` — A work item with status 'migrated' names an existing work capsule.
+- `proposed_is_a_stub` — A work item with status 'proposed' names a capsule that does not yet exist.
+- `legacy_ref_resolves` — A work item's legacy_ref is null or a declared legacy_source id.
+
+**`model-effort`**
+
+- `no_authority_from_model` — Model selection grants no product, path, board, integration, delivery, publication or release authority. A stronger model does not outrank a weaker one.
+- `independence_is_not_a_model` — QA independence comes from a non-maker reviewer, an immutable exact head, and independently produced evidence. Using a different model is neither required nor sufficient.
+- `not_by_rank` — Selection follows the risk-and-station matrix, never role rank.
+- `smallest_capable` — Use the smallest capable pairing the current execution venue supports.
+
+**`owner-command`**
+
+- `enumerated_only` — A command whose action is not in this allowlist is rejected.
+- `authenticated_actor` — The command actor must map to a role in the action's authenticator_roles.
+- `owner_exclusive` — authorize-release and record-owner-override authenticate the owner role only.
+- `compare_and_swap` — When requires_cas is true, expected_current_hash must equal the live sealed hash of the target; a mismatch is a stale command and fails safely.
+- `no_arbitrary_input` — The request schema forbids additional fields; there is no shell or free-form command field.
+- `dry_run_first` — The processor records a dry-run summary before any mutation; --apply performs the mutation only after the same validation passes.
+- `declared_lifecycle_target` — An action may declare lifecycle_target. Applying it moves the target capsule to that state only if transitions.json declares that exact transition from the capsule's current state and permits the authenticating role (the owner role is permitted on protected transitions). An undeclared or unpermitted transition is rejected and nothing is written.
+- `blocker_resolution` — An action may declare resolves_blocker. Applying it clears the target capsule's blocker, because the decision the blocker was waiting on has been recorded. A deferral or a routing-only action never clears one.
+- `append_only_apply` — Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket.
+
+**`promotion-gates`**
+
+- `one_frozen_head` — Every gate is evidenced against one exact SHA. A changed head invalidates the receipts recorded against the former one.
+- `no_implied_authority` — Passing a gate grants only what that gate declares. No gate grants main, release, tag, publication or Pages authority except Gate F, and there only per individual action.
+- `owner_gates_are_owner_exclusive` — Gates E and F are the Owner's alone and cannot be delegated, waived or satisfied by a deputy.
+
+**`qa`**
+
+- `independent_verifier` — verifier_role must be an independent reviewer role and never 'maker'.
+- `waiver_authority` — waiver_authority_role must be owner or it-manager-iii, never a maker or the verifier.
+- `evidence_has_owner` — every required_evidence id must be a declared evidence type with a producer in evidence.json.
+- `independence_is_not_self_recorded` — A waiver of independence is never recorded by the party it constrains. Any future self-certification mechanism must be carried by a separately authenticated action from the approving role, not by a field the certifying seat writes into its own capsule and reseals.
+
+**`raci`**
+
+- `single_accountable` — Each item lists exactly one Accountable role.
+- `no_maker_self_acceptance` — The Accountable for an independent-QA acceptance decision must not also be the Responsible maker of the object under review.
+
+**`transitions`**
+
+- `known_states` — Every transition from/to must be a declared state.
+- `protected_actor` — A transition into a protected_state, or any transition marked protected, must not permit maker or qa-independent as an actor; only owner or it-manager-iii (and only owner for release).
+- `failed_guard_scope` — A failed guard blocks only its own transition.
 
