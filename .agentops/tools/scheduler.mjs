@@ -291,6 +291,7 @@ function applyEvent(snapshot, event) {
       requiredString(event.machine_id, 'recovery machine_id'); requiredString(event.lease_id, 'recovery lease_id');
       if (!Number.isInteger(event.lease_epoch) || event.lease_epoch <= (item.lease_epoch ?? 0)) throw new Error('recovery requires a strictly increasing lease epoch');
       if (!/^[0-9a-f]{40}$/.test(p.base_commit ?? '') || Number.isNaN(Date.parse(p.lease_expiry))) throw new Error('recovery requires exact base and lease expiry');
+      if (Date.parse(p.lease_expiry) <= Date.parse(event.created_at)) throw new Error('recovery lease expiry must be later than the trusted event time');
       {
         const proposed = { ...item, branch: p.branch ?? item.branch };
         const collision = Object.values(snapshot.work_items).find((other) => other.issue_id !== item.issue_id && holdsExclusiveClaim(other) && claimsConflict(proposed, other));
@@ -1037,6 +1038,11 @@ export function transitionInput(command, args, state, machine) {
   throw new Error(`unknown transition command ${command}`);
 }
 
+export function trustedTransitionArgs(args, now = new Date().toISOString()) {
+  if (Number.isNaN(Date.parse(now))) throw new Error('trusted scheduler time must be an ISO instant');
+  return { ...args, at: now };
+}
+
 export function verifyScheduler(root = REPOSITORY_ROOT) {
   const config = readConfig(path.join(root, '.agentops'));
   const problems = [];
@@ -1070,7 +1076,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   }
   if (command === 'status') { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash, material_events: state.events.length, machine_lease: state.machineLease, live_worker_capacity: config.workers.length, configured_worker_slots: config.worker_slots, counts: stateCounts(state.snapshot) }, `STATUS: ${state.events.length} events; ${Object.values(state.snapshot.work_items).length} work items; ${config.workers.length}/${config.worker_slots} live workers.`); return 0; }
   if (command === 'acquire-machine') {
-    const now = args.at ?? new Date().toISOString();
+    const now = new Date().toISOString();
     if (state.machineLease && Date.parse(state.machineLease.expires_at) > Date.parse(now) && state.machineLease.machine_id !== machine.machine_id) throw new Error(`machine custody held by ${state.machineLease.machine_id}`);
     const epoch = (state.machineLease?.lease_epoch ?? 0) + 1;
     state.machineLease = { machine_id: machine.machine_id, lease_epoch: epoch, acquired_at: now, expires_at: new Date(Date.parse(now) + config.lease_duration_seconds * 1000).toISOString(), expected_state_ref_oid: state.oid };
@@ -1083,6 +1089,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   }
   if (command === 'sync') {
     const refs = schedulerStateRefs(config);
+    let localAheadOid = null;
     const remoteState = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', refs.local], { allowFailure: true });
     if (remoteState.status === 0) {
       runGit(root, ['fetch', 'origin', `+${refs.local}:${refs.remote}`]);
@@ -1091,21 +1098,28 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
       if (!localOid) runGit(root, ['update-ref', refs.local, remoteOid]);
       else if (localOid !== remoteOid) {
         const remoteIsAncestor = runGit(root, ['merge-base', '--is-ancestor', remoteOid, localOid], { allowFailure: true }).status === 0;
-        if (!remoteIsAncestor) {
+        if (remoteIsAncestor) localAheadOid = localOid;
+        else {
           runGit(root, ['update-ref', `refs/agentops/rejected-scheduler-state/${localOid}`, localOid]);
           runGit(root, ['update-ref', refs.local, remoteOid, localOid]);
         }
       }
       state = readPortableState(root, config);
-    }
+    } else localAheadOid = refOid(root, refs.local);
     const before = state.snapshot.snapshot_hash; const rebuilt = reduceEvents(state.events); if (rebuilt.errors.length) throw new Error(`replay errors: ${JSON.stringify(rebuilt.errors)}`); state.snapshot = rebuilt;
-    const changed = before !== rebuilt.snapshot_hash; if (changed) persistPortableState(root, state, { push: args.push === true, message: 'scheduler deterministic sync', config });
-    emit(command, { changed, snapshot_hash: rebuilt.snapshot_hash, counts: stateCounts(rebuilt) }, changed ? 'SYNC PASS: snapshot rebuilt.' : 'SYNC NOOP: no material change.'); return 0;
+    const changed = before !== rebuilt.snapshot_hash;
+    let pushed = false;
+    if (changed) { persistPortableState(root, state, { push: args.push === true, message: 'scheduler deterministic sync', config }); pushed = args.push === true; }
+    else if (args.push === true && localAheadOid) {
+      runGit(root, ['push', 'origin', `${localAheadOid}:${refs.local}`]);
+      pushed = true;
+    }
+    emit(command, { changed, pushed, snapshot_hash: rebuilt.snapshot_hash, counts: stateCounts(rebuilt) }, changed ? 'SYNC PASS: snapshot rebuilt.' : pushed ? 'SYNC PUSH: preserved local state published.' : 'SYNC NOOP: no material change.'); return 0;
   }
   if (command === 'watch') {
     if (!state.oid) return 0;
     ensureCustody(state, machine);
-    const now = args.at ?? new Date().toISOString();
+    const now = new Date().toISOString();
     const rebuilt = reduceEvents(state.events); if (rebuilt.errors.length) throw new Error(`replay errors: ${JSON.stringify(rebuilt.errors)}`);
     const reconciled = stableStringify(state.snapshot) !== stableStringify(rebuilt);
     state.snapshot = rebuilt;
@@ -1160,7 +1174,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const dispatched = refill.dispatched;
     emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
   }
-  const input = transitionInput(command, args, state, machine); state = appendEvents(state, [input]);
+  const input = transitionInput(command, trustedTransitionArgs(args), state, machine); state = appendEvents(state, [input]);
   let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}`, config });
   state.oid = oid;
   const triggers = new Set(['candidate', 'qa', 'block', 'release', 'expire', 'complete']);

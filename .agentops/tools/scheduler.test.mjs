@@ -8,9 +8,9 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
-  emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
+  emptySnapshot, historyAdvanceAllowed, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
+  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -554,6 +554,40 @@ test('dispatch reconciliation deletes a wake after its lease is released', () =>
     state = candidate(state, 'I-STALE-WAKE');
     beginWakeDispatch(temp, state.snapshot, [], authorized).commit();
     assert.equal(fs.existsSync(wakeFile), false);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('live transition time ignores a caller supplied backdate and recovery must remain future', () => {
+  const trusted = trustedTransitionArgs({ at: '2020-01-01T00:00:00Z' }, '2026-08-30T02:00:00Z');
+  assert.equal(trusted.at, '2026-08-30T02:00:00Z');
+  const state = intake(fresh(), 'I-TRUSTED-TIME');
+  const event = transitionInput('recover', {
+    ...trusted,
+    issue: 'I-TRUSTED-TIME', actor: config.workers[0].actor,
+    lease_id: 'recovery:expired', lease_epoch: 1,
+    branch: 'codex/I-TRUSTED-TIME', base_commit: 'a'.repeat(40),
+    expiry: '2026-08-30T01:59:59Z'
+  }, state, { machine_id: 'machine-a' });
+  assert.throws(() => appendEvents(state, [event]), /later than the trusted event time/);
+});
+
+test('sync push publishes a preserved local-ahead state commit', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-sync-push-'));
+  const remote = path.join(temp, 'remote.git'); const work = path.join(temp, 'work');
+  const git = (root, args) => {
+    const run = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr || run.stdout); return run.stdout.trim();
+  };
+  try {
+    fs.mkdirSync(work); git(temp, ['init', '--bare', remote]); git(work, ['init']); git(work, ['remote', 'add', 'origin', remote]);
+    const configDir = path.join(work, '.agentops', 'scheduler'); fs.mkdirSync(configDir, { recursive: true });
+    fs.writeFileSync(path.join(configDir, 'config.json'), `${JSON.stringify(config, null, 2)}\n`);
+    const initial = fresh(); initial.oid = persistPortableState(work, initial, { push: true, config, message: 'initial' });
+    const advanced = { ...initial, machineLease: { machine_id: 'local', lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
+    const localOid = persistPortableState(work, advanced, { push: false, config, message: 'local ahead' });
+    assert.equal(main(['sync', '--push'], work), 0);
+    const remoteOid = git(work, ['ls-remote', 'origin', config.state_ref]).split(/\s+/)[0];
+    assert.equal(remoteOid, localOid);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
