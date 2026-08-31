@@ -509,9 +509,16 @@ export const eventChoiceIds = Object.freeze({
   twoFingersRiddle: ['sharpen', 'mend', 'leave'],
 });
 
-// Later quest-chain content can populate this map with requirement objects by
-// event id and choice index. Empty today means no existing narrative changes.
-export const eventChoiceHistoryRequirements = Object.freeze({});
+// The merchant will not trade with a traveler who previously looted the
+// abandoned cart. Stealing remains available, and Leave is deliberately
+// requirement-free so this history branch can never trap the player.
+export const eventChoiceHistoryRequirements = Object.freeze({
+  merchantsGhost: [
+    { none: [{ eventId: 'abandonedCart', choiceId: 'lootStrongbox' }] },
+    undefined,
+    undefined,
+  ],
+});
 
 /** Enrich validated event choices with their durable history contract. */
 export function eventChoicesWithHistory(event) {

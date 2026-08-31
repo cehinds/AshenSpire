@@ -109,6 +109,19 @@ check('event choice projection gates from history without reindexing',
   && gatedChoices[1].choice.id === 'helpedPilgrim'
   && gatedChoices[1].index === 1);
 
+const merchant = events.find((event) => event.id === 'merchantsGhost');
+const merchantBefore = availableEventChoices(eventChoicesWithHistory(merchant), newRun())
+  .map(({ choice }) => choice.id);
+const cartLooter = newRun();
+recordEventChoice(cartLooter, { eventId: 'abandonedCart', choiceId: 'lootStrongbox' });
+const merchantAfter = availableEventChoices(eventChoicesWithHistory(merchant), cartLooter)
+  .map(({ choice }) => choice.id);
+check('shipped cart choice changes the later merchant event through the runtime projection',
+  merchantBefore.includes('payInKind')
+  && !merchantAfter.includes('payInKind')
+  && merchantAfter.includes('stealRelic')
+  && merchantAfter.includes('leave'));
+
 if (process.argv.includes('--selftest')) {
   const malformedHistory = {
     history: [{
