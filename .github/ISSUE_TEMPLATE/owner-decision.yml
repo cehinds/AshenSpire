@@ -30,7 +30,7 @@ body:
     id: action
     attributes:
       label: Action
-      description: Only these actions exist. `authorize-release` is owner-exclusive.
+      description: Only these actions exist. `authorize-scheduler-migration`, `authorize-release`, and `record-owner-override` are owner-exclusive.
       options:
         - prioritize
         - delegate
@@ -41,6 +41,7 @@ body:
         - revoke-lease
         - request-revision
         - authorize-integration
+        - authorize-scheduler-migration
         - authorize-release
         - record-owner-override
     validations:
@@ -71,11 +72,144 @@ body:
     id: oid
     attributes:
       label: Candidate OID
-      description: The exact object this decision authorizes. Required for approve, authorize-integration and authorize-release.
+      description: The exact object this decision authorizes. Required for approve, authorize-integration, authorize-scheduler-migration and authorize-release.
       placeholder: 9d280ddeccf8d31b17a4892f4a48f44626b11824
+
+  - type: input
+    id: scheduler_head
+    attributes:
+      label: Scheduler HEAD
+      description: Required only for authorize-scheduler-migration. Exact reviewed scheduler code HEAD; 40 lowercase hexadecimal characters.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+
+  - type: input
+    id: scheduler_tree
+    attributes:
+      label: Scheduler tree
+      description: Required only for authorize-scheduler-migration. Exact tree of the reviewed scheduler code HEAD; 40 lowercase hexadecimal characters.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+
+  - type: input
+    id: source_state_oid
+    attributes:
+      label: Source state OID
+      description: Required only for authorize-scheduler-migration. Exact released v1 scheduler-state commit R; 40 lowercase hexadecimal characters.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+
+  - type: input
+    id: source_state_tree
+    attributes:
+      label: Source state tree
+      description: Required only for authorize-scheduler-migration. Exact tree of released scheduler-state commit R; 40 lowercase hexadecimal characters.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+
+  - type: input
+    id: source_snapshot_sha256
+    attributes:
+      label: Source snapshot SHA-256
+      description: Required only for authorize-scheduler-migration. SHA-256 of snapshot.json at released state R; 64 lowercase hexadecimal characters without a prefix.
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+  - type: input
+    id: source_journal_manifest_sha256
+    attributes:
+      label: Source journal manifest SHA-256
+      description: Required only for authorize-scheduler-migration. SHA-256 of the released journal manifest at R; 64 lowercase hexadecimal characters without a prefix.
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+  - type: input
+    id: source_event_count
+    attributes:
+      label: Source event count
+      description: Required only for authorize-scheduler-migration. Exact non-negative event count bound to released state R.
+      placeholder: "123"
+
+  - type: dropdown
+    id: source_state_version
+    attributes:
+      label: Source state version
+      description: Required only for authorize-scheduler-migration. The released scheduler-state format being migrated.
+      options:
+        - "1"
+
+  - type: dropdown
+    id: target_state_version
+    attributes:
+      label: Target state version
+      description: Required only for authorize-scheduler-migration. The reviewed scheduler-state format produced by the migration.
+      options:
+        - "2"
+
+  - type: input
+    id: canonical_anchor_oid
+    attributes:
+      label: Canonical anchor OID
+      description: Required only for authorize-scheduler-migration. Exact canonical commit anchoring the migration; 40 lowercase hexadecimal characters.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+
+  - type: input
+    id: preserved_local_tip_oid
+    attributes:
+      label: Preserved local tip OID
+      description: Required only for authorize-scheduler-migration. Exact unrelated local scheduler-state tip that must remain preserved; 40 lowercase hexadecimal characters.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+
+  - type: dropdown
+    id: dispatch_frozen
+    attributes:
+      label: Dispatch frozen
+      description: Required only for authorize-scheduler-migration. Migration is forbidden unless dispatch remains frozen.
+      options:
+        - "true"
+
+  - type: dropdown
+    id: one_use
+    attributes:
+      label: One use
+      description: Required only for authorize-scheduler-migration. This authority can be consumed exactly once.
+      options:
+        - "true"
+
+  - type: input
+    id: expires_at
+    attributes:
+      label: Expires at
+      description: Required only for authorize-scheduler-migration. Strict UTC expiry; an expired request is rejected.
+      placeholder: 2026-09-01T15:10:17Z
+
+  - type: dropdown
+    id: target_ref
+    attributes:
+      label: Target ref
+      description: Required only for authorize-scheduler-migration. No other ref may be mutated.
+      options:
+        - refs/heads/agentops/scheduler-state
+
+  - type: input
+    id: expected_remote_oid
+    attributes:
+      label: Expected remote OID
+      description: Required only for authorize-scheduler-migration. Exact remote target-ref OID observed before migration; 40 lowercase hexadecimal characters.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+
+  - type: dropdown
+    id: push_mode
+    attributes:
+      label: Push mode
+      description: Required only for authorize-scheduler-migration. Force push and non-forward updates are forbidden.
+      options:
+        - non-force-forward-only-cas
+
+  - type: dropdown
+    id: abort_on_remote_change
+    attributes:
+      label: Abort on remote change
+      description: Required only for authorize-scheduler-migration. Any remote target-ref change aborts the migration without retrying stale intent.
+      options:
+        - "true"
 
   - type: textarea
     id: reason
     attributes:
       label: Reason
-      description: Required for reject, defer and request-revision. First line is recorded in the decision event.
+      description: Required for reject, defer and request-revision. First line is recorded in the decision event. It cannot authorize or replace any scheduler-migration field.
