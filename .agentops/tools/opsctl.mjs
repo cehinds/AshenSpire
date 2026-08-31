@@ -983,11 +983,22 @@ export function semanticChecks(c) {
     };
     const persistent = shape(nc.display_name_persistent);
     const agent = shape(nc.display_name_agent);
-    const checkDisplay = (where, id, value) => {
+    // Accepting either template for every seat was the whole check: a standing
+    // seat could be presented as `A | ...` and nothing objected, so the ledger's
+    // one persistent coordination seat could read as an agent a lead spins out
+    // and discards. The permitted kind is the seat's own, and a seat declared in
+    // roles.json or hierarchy.json is standing by construction — agent seats are
+    // spun out per ticket under agent_seat and are never declared there. Stated
+    // in teams.naming_convention.display_name_kind_is_not_a_choice.
+    const checkDisplay = (where, id, value, requiredKind) => {
       const segs = String(value).split('|').map((x) => x.trim());
       const kind = segs[0];
       if (kind !== persistent.kind && kind !== agent.kind) {
         errors.push(`${where} '${id}' display_name starts with '${kind}', which is neither seat kind the convention declares ('${persistent.kind}' or '${agent.kind}')`);
+        return;
+      }
+      if (kind !== requiredKind) {
+        errors.push(`${where} '${id}' is a declared standing seat but its display_name opens '${kind}', the kind a lead spins out; a declared seat carries '${requiredKind}'`);
         return;
       }
       const tpl = kind === agent.kind ? agent : persistent;
@@ -1012,8 +1023,8 @@ export function semanticChecks(c) {
         errors.push(`${where} '${id}' display_name carries no title before the project; a display name without a title says less than the role id it decorates`);
       }
     };
-    for (const r of (c.roles ? c.roles.roles : [])) if (r.display_name) checkDisplay('roles', r.role, r.display_name);
-    for (const n of (c.hierarchy ? c.hierarchy.nodes : [])) if (n.display_name) checkDisplay('hierarchy node', n.actor_id, n.display_name);
+    for (const r of (c.roles ? c.roles.roles : [])) if (r.display_name) checkDisplay('roles', r.role, r.display_name, persistent.kind);
+    for (const n of (c.hierarchy ? c.hierarchy.nodes : [])) if (n.display_name) checkDisplay('hierarchy node', n.actor_id, n.display_name, persistent.kind);
     // A role and its actor must not disagree about the same seat's name.
     if (c.roles && c.hierarchy) {
       const byRole = new Map(c.roles.roles.filter((r) => r.display_name).map((r) => [r.role, r.display_name]));
@@ -1426,6 +1437,8 @@ export function renderGovernance(c) {
       L.push(`- Agent display name: \`${nc.display_name_agent}\``);
       L.push('');
       L.push(nc.display_name_is_not_the_seat_name);
+      L.push('');
+      L.push(nc.display_name_kind_is_not_a_choice);
       L.push('');
       L.push(`${nc.leading_letter_is_seat_kind} ${nc.not_the_tier_namespace}`);
     }
@@ -2257,6 +2270,55 @@ export function runtimeChecks(g, rt) {
           errors.push(`event '${ev.id}' is kind '${ev.kind}' but carries a '${field}' payload, which only a '${kind}' event may carry; nothing would check it there`);
         } else if (action && ev.action !== action) {
           errors.push(`event '${ev.id}' carries a '${field}' payload but records action '${ev.action || 'none'}', not '${action}'; the ledger would claim a promotion no command performed`);
+        }
+      }
+    }
+  }
+
+  // Binding the payload to its action still validated only the LABEL. An
+  // `owner-decision` with action 'fast-forward-test' and `ref: 'main'`,
+  // `from: 'x'`, `to: 'y'`, `hosted_verified_dev_oid: 'z'` satisfied both the
+  // schema (minLength 1 strings) and every check above, so the authoritative
+  // ledger could claim a protected promotion that could not have occurred.
+  // The recorded facts are checked against the same contracts the command path
+  // derives them from — the ref from git-ownership, the evidence from the gate
+  // that guards the move — so a hand-written event cannot name its own ref or
+  // invent its own evidence.
+  const ffDecl = ((g['git-ownership'] || {}).refs || []).find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+  const ffGate = ((g['promotion-gates'] || {}).gates || []).find((x) => (x.guards_transitions || []).length && /fast-forward/i.test(x.entry || ''));
+  const declaredEvidence = new Set(((g.evidence || {}).evidence || []).map((x) => x.id));
+  const fullOid = (v) => typeof v === 'string' && /^[0-9a-f]{40}$/.test(v);
+  for (const [, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      const pr = ev.promotion;
+      if (!pr || ev.kind !== 'owner-decision' || ev.action !== 'fast-forward-test') continue;
+      if (!ffDecl) {
+        errors.push(`event '${ev.id}' records a promotion, but git-ownership declares no gate-c-fast-forward ref; there is no ref this promotion could have moved`);
+      } else if (pr.ref !== ffDecl.ref) {
+        errors.push(`event '${ev.id}' records a promotion of '${pr.ref}', but the only ref this action may move is '${ffDecl.ref}' (git-ownership); the ledger names the ref, so it must be the one the command was permitted to touch`);
+      }
+      for (const k of ['from', 'to', 'hosted_verified_dev_oid']) {
+        if (!fullOid(pr[k])) {
+          errors.push(`event '${ev.id}' promotion.${k} is '${String(pr[k]).slice(0, 24)}', not a full 40-character commit id; a promotion recorded against something that is not a commit cannot be verified or undone`);
+        }
+      }
+      if (fullOid(pr.to) && fullOid(pr.hosted_verified_dev_oid) && pr.to !== pr.hosted_verified_dev_oid) {
+        errors.push(`event '${ev.id}' promotion moved to ${pr.to.slice(0, 12)}, which is not the recorded hosted-verified dev SHA ${pr.hosted_verified_dev_oid.slice(0, 12)}; decision 0009 permits exactly that commit and no other`);
+      }
+      if (fullOid(pr.from) && fullOid(pr.to) && pr.from === pr.to) {
+        errors.push(`event '${ev.id}' promotion records the same commit as predecessor and target; a ref that did not move is not a promotion, and the rollback target it names restores nothing`);
+      }
+      const ev_ = Array.isArray(pr.evidence) ? pr.evidence : [];
+      for (const item of ev_) {
+        if (!declaredEvidence.has(item)) {
+          errors.push(`event '${ev.id}' promotion cites evidence '${item}', which evidence.json does not declare; the ledger would justify a protected move with a name nothing defines`);
+        }
+      }
+      if (ffGate) {
+        for (const need of ffGate.required_evidence || []) {
+          if (!ev_.includes(need)) {
+            errors.push(`event '${ev.id}' promotion cites no '${need}', which Gate ${ffGate.id} requires to open this move; the recorded justification is short of the gate it claims to have passed`);
+          }
         }
       }
     }
@@ -3806,7 +3868,7 @@ const VIEW_PROBES = {
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].filter((l) => l !== null).join('\n')),
-  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``, `- Persistent display name: \`${x.naming_convention.display_name_persistent}\``, `- Agent display name: \`${x.naming_convention.display_name_agent}\``, x.naming_convention.display_name_is_not_the_seat_name],
+  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``, `- Persistent display name: \`${x.naming_convention.display_name_persistent}\``, `- Agent display name: \`${x.naming_convention.display_name_agent}\``, x.naming_convention.display_name_is_not_the_seat_name, x.naming_convention.display_name_kind_is_not_a_choice],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`), x.legacy_rule, ...(x.legacy_values || []).map((lv) => `| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`)],
 };
 
@@ -4604,6 +4666,38 @@ export function runSelftest(root = ROOT) {
     const e = rt.events[t].find((x) => x.kind === 'state-change') || rt.events[t][0];
     e.promotion = { ref: 'test', from: 'a'.repeat(40), to: 'b'.repeat(40), hosted_verified_dev_oid: 'b'.repeat(40), evidence: ['x'] };
   }, "only a 'owner-decision' event may carry");
+
+  // Binding the payload to the action validated the LABEL only. These plant the
+  // payload itself: a promotion the ledger records must name the ref
+  // git-ownership permits, full commits, the hosted-verified SHA it claims, and
+  // the evidence its gate requires — or the authoritative record asserts a
+  // protected move that could not have occurred.
+  const ffRef = ((contracts['git-ownership'] || {}).refs || []).find((r) => /gate-c-fast-forward/i.test(r.mutation || '')).ref;
+  const ffGateId = ((contracts['promotion-gates'] || {}).gates || []).find((x) => (x.guards_transitions || []).length && /fast-forward/i.test(x.entry || ''));
+  const plantPromotion = (rt, mutate) => {
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'fast-forward-test';
+    e.promotion = {
+      ref: ffRef, from: 'a'.repeat(40), to: 'b'.repeat(40), hosted_verified_dev_oid: 'b'.repeat(40),
+      evidence: [...(ffGateId.required_evidence || [])],
+    };
+    if (mutate) mutate(e.promotion);
+    return e;
+  };
+  {
+    const rt = baseRt();
+    const e = plantPromotion(rt, null);
+    const errs = runtimeChecks(contracts, rt).filter((x) => x.includes(e.id) && x.includes('promotion'));
+    results.push({ label: 'promotion control: a well-formed recorded promotion validates', pass: errs.length === 0, errs });
+  }
+  expectRuntime('promotion: a ref the command was never permitted to move', (rt) => { plantPromotion(rt, (pr) => { pr.ref = 'main'; }); }, 'the only ref this action may move is');
+  expectRuntime('promotion: a target that is not a commit id', (rt) => { plantPromotion(rt, (pr) => { pr.to = 'y'; pr.hosted_verified_dev_oid = 'y'; }); }, 'not a full 40-character commit id');
+  expectRuntime('promotion: a predecessor that is not a commit id', (rt) => { plantPromotion(rt, (pr) => { pr.from = 'x'; }); }, 'not a full 40-character commit id');
+  expectRuntime('promotion: a target that is not the hosted-verified dev SHA', (rt) => { plantPromotion(rt, (pr) => { pr.to = 'c'.repeat(40); }); }, 'decision 0009 permits exactly that commit and no other');
+  expectRuntime('promotion: a ref that did not move', (rt) => { plantPromotion(rt, (pr) => { pr.from = pr.to; }); }, 'a ref that did not move is not a promotion');
+  expectRuntime('promotion: evidence nothing declares', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = ['looks-fine']; }); }, 'which evidence.json does not declare');
+  expectRuntime('promotion: short of the evidence its own gate requires', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = [pr.evidence[0]]; }); }, 'short of the gate it claims to have passed');
   expectRuntime('consolidation: a range that is not present', (rt) => { consolidate(rt, bigTicket, 12).consolidates.from_event = `${bigTicket}-8888`; }, 'must be present to be summarised');
     expectRuntime('consolidation: a count that does not match the range', (rt) => { consolidate(rt, bigTicket, 12).consolidates.count = 3; }, 'a dangling claim');
     expectRuntime('consolidation: a range that runs backwards', (rt) => { const e = consolidate(rt, bigTicket, 12); const f = e.consolidates.from_event; e.consolidates.from_event = e.consolidates.to_event; e.consolidates.to_event = f; }, 'runs backwards');
@@ -4962,6 +5056,12 @@ export function runSelftest(root = ROOT) {
   expectSemantic('display name: an empty role-and-level segment', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P |  | Coordination Specialist - AshenSpire'; }, 'a name with the right shape and nothing in it is not a name');
   expectSemantic('display name: a different project suffix', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | Coordination - SomeOtherProject'; }, 'closes with');
   expectSemantic('display name: no title before the project', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | - AshenSpire'; }, 'carries no title before the project');
+  expectSemantic('display name: a standing seat presented as an agent seat', (c) => {
+    const r = c.roles.roles.find((x) => x.display_name);
+    const n = c.hierarchy.nodes.find((x) => x.display_name);
+    r.display_name = r.display_name.replace(/^P /, 'A ');
+    if (n) n.display_name = n.display_name.replace(/^P /, 'A ');
+  }, 'the kind a lead spins out');
   expectSemantic('display name: a role and its actor disagreeing', (c) => { c.hierarchy.nodes.find((n) => n.display_name).display_name = 'P | IT Manager III | Something Else - AshenSpire'; }, 'one seat, two names');
 
   expectSemantic('directives: an issuer who is nobody in particular', (c) => { c.directives.directives[0].issued_by = 'someone'; }, 'binds nobody');

@@ -444,6 +444,8 @@ A seat's name states what it is, which team it serves and the project, so a rost
 
 A seat_name is the roster identity — kind, role level, team, project — and a display_name is the human-facing title the owner stated in #430: kind, role level, then a descriptive title and the project. They are different shapes on purpose and neither derives from the other, so a seat may carry both. Populating a display_name is naming a person's job, so it is recorded where the owner or the IT Manager III has stated the title and left absent otherwise, never guessed from the role id.
 
+The leading letter of a display_name is the seat's own kind, not a free pick between the two templates. Every seat declared in roles.json or hierarchy.json is standing — it exists before any ticket and outlives every pod — so its display_name takes display_name_persistent. Agent seats are spun out per ticket by a lead under agent_seat and are never declared in those contracts, so an agent-kind display_name on a declared seat presents a standing seat as one a lead could spin out and discard.
+
 The leading letter is the seat kind, never an authority code: a bare P is a persistent team lead, a bare A is an agent that lead spins out. P followed by a number is never a seat kind. P<n> is the authority tier in hierarchy.json, or an issue priority, and the subject decides which — exactly as the tier contract already says. A bare P and a P2 belong to different namespaces and must not be read as one.
 
 ### Work in progress
