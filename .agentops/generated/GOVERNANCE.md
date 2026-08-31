@@ -803,6 +803,7 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 - `producer_exists` — every evidence type names a producer_role that is a declared role or the generator writer.
 - `bound_to_exact_object` — every evidence type binds to an exact object and lists invalidation keys.
 - `pointers_are_types_not_receipts` — A capsule's evidence_pointers name evidence TYPES, not receipts. Listing a type says the capsule is expected to carry that kind of evidence; it does not say a receipt exists, nor that one binds to the current head. No artifact in this corpus records a receipt against an exact object, so freshness_rule and invalidation_keys are stated and unenforceable per candidate. A gate that must prove fresh evidence therefore cannot be satisfied from the corpus as it stands, and must refuse rather than accept a type name as proof.
+- `invalidation_keys_are_not_the_capsule_vocabulary` — An evidence declaration's invalidation_keys name properties of the exact object a receipt binds to — head_oid, tree_oid, candidate_sha and the like. A work capsule carries a field of the same name holding a different vocabulary: the capsule's own fields whose change makes its wake stale. They are one keystroke apart in places (tree against tree_oid, base_oid against head_oid) and neither is valid in the other's place. The capsule side is checked against the capsule schema; this side has no declared vocabulary to check against, so a key here is only as good as the reader.
 
 **`information-access`**
 

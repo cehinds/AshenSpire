@@ -2186,7 +2186,7 @@ export function loadRuntime(root = ROOT) {
       events[ticket] = list;
     }
   }
-  return { capsules, leases, events, errors };
+  return { capsules, leases, events, errors, schemas };
 }
 
 // Cross-checks tying runtime artifacts to the governance contracts and to each
@@ -2406,6 +2406,26 @@ export function runtimeChecks(g, rt, root = null) {
           errors.push(`event '${ev.id}' is kind '${ev.kind}' but carries a '${field}' payload, which only a '${kind}' event may carry; nothing would check it there`);
         } else if (action && ev.action !== action) {
           errors.push(`event '${ev.id}' carries a '${field}' payload but records action '${ev.action || 'none'}', not '${action}'; the ledger would claim a promotion no command performed`);
+        }
+      }
+    }
+  }
+
+  // A capsule's `invalidation_keys` name the capsule's OWN fields — the ones
+  // whose change makes the wake stale. Nothing checked them, so a key naming no
+  // field watched nothing and the capsule reported freshness rules it did not
+  // have. The near-miss risk is real and already visible in the corpus: evidence
+  // declarations carry a field of the same name holding a DIFFERENT vocabulary
+  // (`tree_oid`, `head_oid`, `candidate_sha` — properties of the object a
+  // receipt binds to), and `tree` against `tree_oid`, `base_oid` against
+  // `head_oid` are one keystroke apart. Only the capsule side is derivable
+  // without inventing a vocabulary, so only that side is checked here.
+  const capsuleFields = new Set(Object.keys((((rt.schemas || {}).capsule || {}).properties) || {}));
+  if (capsuleFields.size) {
+    for (const [ticket, cap] of Object.entries(rt.capsules)) {
+      for (const key of cap.invalidation_keys || []) {
+        if (!capsuleFields.has(key)) {
+          errors.push(`capsule '${ticket}' invalidates on '${key}', which is not a field of a work capsule; a key naming nothing is watched by nothing, and the capsule reports a freshness rule it does not have`);
         }
       }
     }
@@ -4909,6 +4929,18 @@ export function runSelftest(root = ROOT) {
       results.push({ label: 'consolidation control: a well-formed summary of a present range validates', pass: errs.length === 0, errs });
     }
     // A payload on the wrong kind is never checked, so it must never be accepted.
+  // Invalidation keys name capsule fields. The near-miss is the point: `tree_oid`
+  // and `head_oid` are real keys in the evidence contract's field of the same
+  // name, and both are wrong here.
+  expectRuntime('capsule: an invalidation key that names no capsule field', (rt) => { const t = Object.keys(rt.capsules)[0]; rt.capsules[t].invalidation_keys = ['tree_oid']; }, 'watched by nothing');
+  expectRuntime('capsule: an invalidation key borrowed from the evidence vocabulary', (rt) => { const t = Object.keys(rt.capsules)[0]; rt.capsules[t].invalidation_keys = ['base_oid', 'head_oid']; }, "invalidates on 'head_oid'");
+  {
+    // Control: the keys the live capsules actually use must all resolve, or the
+    // pair above could be passing because every key fails.
+    const rt = baseRt();
+    const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('watched by nothing'));
+    results.push({ label: 'capsule control: the invalidation keys in the live corpus all name real fields', pass: errs.length === 0, errs });
+  }
   expectRuntime('a consolidation payload on a genesis event', (rt) => {
     const t = Object.keys(rt.events)[0];
     const g = rt.events[t].find((e) => e.kind === 'genesis') || rt.events[t][0];
