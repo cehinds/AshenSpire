@@ -121,7 +121,7 @@
         "expected_current_hash",
         "params"
       ],
-      "affects": "an unstarted seat's base — pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time"
+      "affects": "an unstarted seat's base \u2014 pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time"
     },
     {
       "id": "request-revision",
@@ -154,6 +154,7 @@
       ],
       "affects": "integration to dev of an exact reviewed head",
       "lifecycle_target": "dev-integrated",
+      "performs_gate": "B",
       "resolves_blocker": true
     },
     {
@@ -165,12 +166,13 @@
       "requires_cas": true,
       "protected": true,
       "lifecycle_target": "hosted-verified",
+      "performs_gate": "C",
       "required_fields": [
         "target",
         "expected_current_hash",
         "params"
       ],
-      "affects": "the `test` ref — a true fast-forward to the exact hosted-verified `dev` SHA, and nothing else"
+      "affects": "the `test` ref \u2014 a true fast-forward to the exact hosted-verified `dev` SHA, and nothing else"
     },
     {
       "id": "grant-dev-delivery-authority",
@@ -200,6 +202,7 @@
       ],
       "affects": "release / main / publication of an exact object (owner-exclusive)",
       "lifecycle_target": "released",
+      "performs_gate": "F",
       "resolves_blocker": true
     },
     {
@@ -227,8 +230,8 @@
     "dry_run_first": "The processor records a dry-run summary before any mutation; --apply performs the mutation only after the same validation passes.",
     "declared_lifecycle_target": "An action may declare lifecycle_target. Applying it moves the target capsule to that state only if transitions.json declares that exact transition from the capsule's current state and permits the authenticating role (the owner role is permitted on protected transitions). An undeclared or unpermitted transition is rejected and nothing is written.",
     "blocker_resolution": "An action may declare resolves_blocker. Applying it clears the target capsule's blocker, because the decision the blocker was waiting on has been recorded. A deferral or a routing-only action never clears one.",
-    "append_only_apply": "Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket. One action also mutates a git ref — fast-forward-test — and it is bounded rather than excepted: only the ref git-ownership declares for it, only forward, only to an ancestor-checked target, only with the prior head recorded first, and only through an update that fails if the ref moved since validation. No apply path force-updates, deletes, or rewrites a ref.",
-    "reseat_is_not_a_sweep": "The reseat action moves ONE named target under compare-and-swap, and only a seat that has not started. It exists for a base a seat did not set for itself — a lane reassigned by the deputy — not for keeping capsules level with HEAD: a seat starting its own work reseats its own capsule, and an unstarted seat that should follow a branch carries base_ref instead, which appends nothing. Ruling AS-HD-029-0052 rules 1 and 2.",
+    "append_only_apply": "Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket. One action also mutates a git ref \u2014 fast-forward-test \u2014 and it is bounded rather than excepted: only the ref git-ownership declares for it, only forward, only to an ancestor-checked target, only with the prior head recorded first, and only through an update that fails if the ref moved since validation. No apply path force-updates, deletes, or rewrites a ref.",
+    "reseat_is_not_a_sweep": "The reseat action moves ONE named target under compare-and-swap, and only a seat that has not started. It exists for a base a seat did not set for itself \u2014 a lane reassigned by the deputy \u2014 not for keeping capsules level with HEAD: a seat starting its own work reseats its own capsule, and an unstarted seat that should follow a branch carries base_ref instead, which appends nothing. Ruling AS-HD-029-0052 rules 1 and 2.",
     "reseat_records_its_commander": "The event this action appends names the authenticating actor, never the seat whose capsule moved. A process or a deputy acting on a seat's behalf never carries that seat's actor. Ruling AS-HD-029-0052 rule 3.",
     "gate_c_conditions_are_the_contract": "fast-forward-test enforces all five conditions decision 0009 states for Gate C: gates A and B fresh; the target is exactly the hosted-verified dev SHA; current test is an ancestor of it, so the mutation is a true fast-forward; the exact head, rollback target and mutation evidence are recorded; and there is no P0/P1 WITHHOLD or unresolved blocker. A condition that cannot be shown is a refusal, never an assumption."
   }

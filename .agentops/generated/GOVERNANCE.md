@@ -692,22 +692,22 @@ Every assignment record carries: model, effort, why, escalate_when.
 
 The owner-command path accepts only enumerated actions from an authenticated actor. Every command is schema-validated against an allowlist, checks its expected_current_hash (compare-and-swap) against live state, records a dry-run summary, and would append a decision event and CAS-update only the affected state. No arbitrary shell or free-form field is ever accepted. A stale or unauthorized command fails safely and mutates nothing.
 
-| Action | Authenticator roles | CAS | Protected | Required fields | Affects |
-|---|---|---|---|---|---|
-| prioritize | owner | no | no | `target`, `params` | portfolio sequencing (recommendation input only) |
-| delegate | owner, it-manager-iii | no | no | `target`, `params` | delegation envelope assignment/rebind |
-| approve | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `candidate_oid` | acceptance of an exact object |
-| reject | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | rejection of an exact object |
-| defer | owner, it-manager-iii | no | no | `target`, `reason` | deferral (routing only) |
-| issue-lease | owner, it-manager-iii | no | no | `target`, `params` | writer lease issuance |
-| revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
-| reseat | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `params` | an unstarted seat's base — pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time |
-| request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
-| authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
-| fast-forward-test | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `params` | the `test` ref — a true fast-forward to the exact hosted-verified `dev` SHA, and nothing else |
-| grant-dev-delivery-authority | owner | yes | yes | `target`, `expected_current_hash`, `reason` | grant an it-manager-iii-owned capsule normal-PR delivery authority to dev only; direct dev push, deploy, main/release, tags, publication, and Pages remain forbidden |
-| authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
-| record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
+| Action | Authenticator roles | CAS | Protected | Gate | Advances to | Required fields | Affects |
+|---|---|---|---|---|---|---|---|
+| prioritize | owner | no | no | — | — | `target`, `params` | portfolio sequencing (recommendation input only) |
+| delegate | owner, it-manager-iii | no | no | — | — | `target`, `params` | delegation envelope assignment/rebind |
+| approve | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `candidate_oid` | acceptance of an exact object |
+| reject | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `reason` | rejection of an exact object |
+| defer | owner, it-manager-iii | no | no | — | — | `target`, `reason` | deferral (routing only) |
+| issue-lease | owner, it-manager-iii | no | no | — | — | `target`, `params` | writer lease issuance |
+| revoke-lease | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash` | writer lease revocation |
+| reseat | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `params` | an unstarted seat's base — pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time |
+| request-revision | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
+| authorize-integration | owner, it-manager-iii | yes | yes | Gate B | `dev-integrated` | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
+| fast-forward-test | owner, it-manager-iii | yes | yes | Gate C | `hosted-verified` | `target`, `expected_current_hash`, `params` | the `test` ref — a true fast-forward to the exact hosted-verified `dev` SHA, and nothing else |
+| grant-dev-delivery-authority | owner | yes | yes | — | — | `target`, `expected_current_hash`, `reason` | grant an it-manager-iii-owned capsule normal-PR delivery authority to dev only; direct dev push, deploy, main/release, tags, publication, and Pages remain forbidden |
+| authorize-release | owner | yes | yes | Gate F | `released` | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
+| record-owner-override | owner | yes | yes | — | — | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
 
 ## Retention and consolidation
 
