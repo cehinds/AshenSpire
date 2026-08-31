@@ -22,6 +22,18 @@ function check(name, cond, detail = '') {
   if (!ok) failures++;
 }
 
+// The GitHub trigger is an authority boundary, so keep its replay/provenance
+// contract executable even though the workflow itself is not run by this suite.
+{
+  const workflow = readFileSync(resolve(ROOT, '..', '.github/workflows/owner-command.yml'), 'utf8');
+  check('AT-01 owner-created event is the only executable trigger', workflow.includes('types: [opened]'));
+  check('AT-02 non-owner association is rejected', workflow.includes("github.event.issue.author_association == 'OWNER'"));
+  check('AT-03 edited event cannot replay a command', workflow.includes('types: [opened]') && !workflow.includes('types: [opened, edited]'));
+  check('AT-04 editor/sender mismatch cannot impersonate Constantine', workflow.includes("github.event.issue.user.login == 'cehinds'") && workflow.includes("github.event.sender.login == 'cehinds'"));
+  check('AT-05 issue body cannot supply the actor identity', workflow.includes('--actor owner') && workflow.includes('env:\n          ISSUE_BODY:'));
+  check('AT-06 workflow performs dry-run before apply', workflow.includes('command --dry-run') && workflow.includes('command --apply'));
+}
+
 // 1. The real, on-disk corpus parses, schema-validates, and is cross-consistent.
 {
   const { contracts, errors } = runValidate();
