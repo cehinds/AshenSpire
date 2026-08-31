@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000003-32a5dc6d-9753-4dc7-9851-fe7b6c55d9bd",
+  "idempotency_key": "WORK_ENTERED:467:1:2026-08-31T14:02:55.042Z",
+  "sequence": 3,
+  "previous_snapshot_hash": "94a4354c5a0a6fae4ce1145424ac4c68db3fef099c287e91894b49df6c86f7f7",
+  "issue_id": "467",
+  "actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:467:1",
+  "lease_epoch": 1,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "next_action": "Complete exact-head verification and delivery"
+  },
+  "created_at": "2026-08-31T14:02:55.042Z"
+}

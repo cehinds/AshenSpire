@@ -1,16 +1,16 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 2,
-  "last_sequence": 2,
+  "revision": 3,
+  "last_sequence": 3,
   "work_items": {
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "467",
       "title": "Bounded owner grant for dev delivery authority",
       "priority": "P0",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-467-authority-grant",
@@ -57,10 +57,10 @@
       "wake_condition": null,
       "next_action": "Complete exact-head verification and delivery",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000002-98a008aa-605e-4da0-ad16-16b1cad5d8a8",
-      "updated_at": "2026-08-31T14:02:54.353Z"
+      "updated_event": "evt-00000003-32a5dc6d-9753-4dc7-9851-fe7b6c55d9bd",
+      "updated_at": "2026-08-31T14:02:55.042Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "94a4354c5a0a6fae4ce1145424ac4c68db3fef099c287e91894b49df6c86f7f7"
+  "snapshot_hash": "8e0b10359fc9d1801d258e9d7c63393ea5dd352907d77a0d7360b1a6962abc52"
 }
