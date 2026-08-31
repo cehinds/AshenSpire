@@ -31,6 +31,8 @@
           "protected": {"type": "boolean"},
           "one_use": {"type": "boolean"},
           "expires": {"type": "boolean"},
+          "structured_only": {"type": "boolean"},
+          "consumes_on_attempt": {"type": "boolean"},
           "required_fields": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
           "affects": {"type": "string", "minLength": 1},
           "lifecycle_target": {"type": "string", "minLength": 1},
@@ -38,6 +40,47 @@
         }
       }
     },
-    "rules": {"type": "object"}
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enumerated_only",
+        "authenticated_actor",
+        "owner_exclusive",
+        "compare_and_swap",
+        "no_arbitrary_input",
+        "dry_run_first",
+        "declared_lifecycle_target",
+        "blocker_resolution",
+        "append_only_apply",
+        "reseat_is_not_a_sweep",
+        "reseat_records_its_commander",
+        "scheduler_migration_binding",
+        "project_schema_change_binding",
+        "scheduler_state_reconciliation_binding",
+        "scheduler_cutover_binding",
+        "protected_action_non_substitution",
+        "protected_action_consumption"
+      ],
+      "properties": {
+        "enumerated_only": {"type": "string", "minLength": 1},
+        "authenticated_actor": {"type": "string", "minLength": 1},
+        "owner_exclusive": {"type": "string", "minLength": 1},
+        "compare_and_swap": {"type": "string", "minLength": 1},
+        "no_arbitrary_input": {"type": "string", "minLength": 1},
+        "dry_run_first": {"type": "string", "minLength": 1},
+        "declared_lifecycle_target": {"type": "string", "minLength": 1},
+        "blocker_resolution": {"type": "string", "minLength": 1},
+        "append_only_apply": {"type": "string", "minLength": 1},
+        "reseat_is_not_a_sweep": {"type": "string", "minLength": 1},
+        "reseat_records_its_commander": {"type": "string", "minLength": 1},
+        "scheduler_migration_binding": {"type": "string", "minLength": 1},
+        "project_schema_change_binding": {"type": "string", "minLength": 1},
+        "scheduler_state_reconciliation_binding": {"type": "string", "minLength": 1},
+        "scheduler_cutover_binding": {"type": "string", "minLength": 1},
+        "protected_action_non_substitution": {"type": "string", "minLength": 1},
+        "protected_action_consumption": {"type": "string", "minLength": 1}
+      }
+    }
   }
 }
