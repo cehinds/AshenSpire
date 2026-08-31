@@ -1,8 +1,7 @@
 {
-  "machine_id": null,
-  "lease_epoch": 3,
-  "acquired_at": "2026-08-31T14:51:34.569Z",
-  "released_at": "2026-08-31T14:51:54.590Z",
-  "expires_at": "2026-08-31T14:51:54.590Z",
-  "expected_state_ref_oid": "9e07f8376bef6cadf100470f09b97b4d7dd7b065"
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_epoch": 4,
+  "acquired_at": "2026-08-31T15:13:15.031Z",
+  "expires_at": "2026-08-31T15:43:15.031Z",
+  "expected_state_ref_oid": "01b9766008cd9ca89ccb08b8c23c212f9649b68b"
 }
