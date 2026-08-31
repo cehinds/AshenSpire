@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 22,
-  "last_sequence": 22,
+  "revision": 23,
+  "last_sequence": 23,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -86,21 +86,21 @@
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 5,
+      "revision": 6,
       "issue_id": "426",
       "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
       "priority": "P1",
       "dependencies": [],
-      "state": "QA",
+      "state": "PR_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
       "branch": "codex/issue-426",
-      "assigned_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
-      "assignment_kind": "qa",
-      "lease_id": "qa-lease:426:2",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 2,
-      "lease_expiry": "2026-08-31T15:07:16.485Z",
-      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
       "lease_history": [
         {
@@ -128,14 +128,18 @@
         "opsctl verify: no new failures beyond two pre-existing stale hub mirrors",
         "tools/continuity.mjs --check OK, --audit OK (RED 36 findings -> green), --selftest 21/21",
         "single-file footprint docs/governance/continuity.json; git diff --check clean",
-        "artifact re-pinned to bytes 4241834 sha256 029154D5... buildOrdinal 1719; branch snapshot refreshed"
+        "artifact re-pinned to bytes 4241834 sha256 029154D5... buildOrdinal 1719; branch snapshot refreshed",
+        "baseline red reproduced at dev bbbc5e7: continuity audit RED, 7 genuine findings (artifact size+sha drift, snapshot age, 4 branch drifts)",
+        "pin independently recomputed: build/AshenSpire.html = 4241834 bytes, sha256 029154D5...163A8C, matches continuity.json; buildOrdinal 1719 + sourceDigest 8f546f2e1d match buildordinal.json",
+        "candidate green: continuity check OK, audit OK, selftest 21/21; opsctl verify fails only on the two pre-existing hub mirrors (identical at base)",
+        "footprint: single file, 10+/10-, only pin quad + branch snapshot + timestamps; git diff --check clean"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Run independent QA against the exact candidate commit.",
+      "next_action": "Deliver an issue-closing PR to dev.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000022-73e9fd1e-e934-4df1-9b89-02f4c1062f4c",
-      "updated_at": "2026-08-31T14:37:16.485Z"
+      "updated_event": "evt-00000023-e5fb6340-971b-4a50-8645-f21e03e205fd",
+      "updated_at": "2026-08-31T14:40:39.270Z"
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -245,5 +249,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "19b2ea87e1b0dc6d0ec4197a7e86741fbd5411915a13241af73da59f92fc2a07"
+  "snapshot_hash": "d5e6f9b9c3f3357373866ff7ac67cf7620baaafe52b7648ba339115c30352a9f"
 }

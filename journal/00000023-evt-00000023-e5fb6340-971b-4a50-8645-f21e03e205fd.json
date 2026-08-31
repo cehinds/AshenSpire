@@ -1,0 +1,26 @@
+{
+  "event_id": "evt-00000023-e5fb6340-971b-4a50-8645-f21e03e205fd",
+  "idempotency_key": "QA_RESULT:426:2:26d0e8df193b4d354a50a936e7db958855bf029e",
+  "sequence": 23,
+  "previous_snapshot_hash": "19b2ea87e1b0dc6d0ec4197a7e86741fbd5411915a13241af73da59f92fc2a07",
+  "issue_id": "426",
+  "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "qa-lease:426:2",
+  "lease_epoch": 2,
+  "event_type": "QA_RESULT",
+  "exact_object": {
+    "oid": "26d0e8df193b4d354a50a936e7db958855bf029e"
+  },
+  "payload": {
+    "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
+    "result": "PASS",
+    "evidence_pointers": [
+      "baseline red reproduced at dev bbbc5e7: continuity audit RED, 7 genuine findings (artifact size+sha drift, snapshot age, 4 branch drifts)",
+      "pin independently recomputed: build/AshenSpire.html = 4241834 bytes, sha256 029154D5...163A8C, matches continuity.json; buildOrdinal 1719 + sourceDigest 8f546f2e1d match buildordinal.json",
+      "candidate green: continuity check OK, audit OK, selftest 21/21; opsctl verify fails only on the two pre-existing hub mirrors (identical at base)",
+      "footprint: single file, 10+/10-, only pin quad + branch snapshot + timestamps; git diff --check clean"
+    ]
+  },
+  "created_at": "2026-08-31T14:40:39.270Z"
+}
