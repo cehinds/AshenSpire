@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 16,
-  "last_sequence": 16,
+  "revision": 17,
+  "last_sequence": 17,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,23 +66,31 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:257:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T15:30:00Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "lease:257:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         "src/model/quests.js",
@@ -101,10 +109,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Implement bounded quest-choice contract and RED-first gate",
+      "next_action": "Create RED-first quest vocabulary and consequence contract",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000016-55faa0be-ffa0-4a4b-9a7d-859a51decbff",
-      "updated_at": "2026-08-31T14:24:36.345Z"
+      "updated_event": "evt-00000017-b74ea43b-fe66-4296-9e93-6e15ca20ea05",
+      "updated_at": "2026-08-31T14:24:53.973Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -232,5 +240,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "c61855ddbbfec7a10d6b6c0f50dd60910ae93379c8f744ed82d3638790ad7972"
+  "snapshot_hash": "49d7102026267bf092649f6bffbc9246964684a00ee01dbffaaf2a8585a00f18"
 }

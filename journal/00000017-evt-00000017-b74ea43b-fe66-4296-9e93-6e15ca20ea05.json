@@ -1,0 +1,27 @@
+{
+  "event_id": "evt-00000017-b74ea43b-fe66-4296-9e93-6e15ca20ea05",
+  "idempotency_key": "CLAIM_ACQUIRED:257:1:2026-08-31T14:24:53.973Z",
+  "sequence": 17,
+  "previous_snapshot_hash": "c61855ddbbfec7a10d6b6c0f50dd60910ae93379c8f744ed82d3638790ad7972",
+  "issue_id": "257",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-257-quest-choice-pipeline",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T15:30:00Z",
+    "claimed_paths": [
+      "src/model/quests.js",
+      "tools/quest-choice-contract.mjs"
+    ],
+    "claimed_resources": [
+      "quest-choice-contract"
+    ],
+    "next_action": "Create RED-first quest vocabulary and consequence contract"
+  },
+  "created_at": "2026-08-31T14:24:53.973Z"
+}
