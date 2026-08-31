@@ -1,0 +1,24 @@
+{
+  "event_id": "evt-00000005-ccd57a27-1e26-4d26-a246-6e9cc5ff8777",
+  "idempotency_key": "CLAIM_ACQUIRED:427:1:2026-08-31T14:02:56.582Z",
+  "sequence": 5,
+  "previous_snapshot_hash": "f75666114210470a8aec0138bca062553d6e48182dc42d95d0c4f0da6b5f0893",
+  "issue_id": "427",
+  "actor": "seat:review-hub:21107085-cecd-4ce9-b65e-128936c1afa8",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:427:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-427-packet-digest",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T15:00:00Z",
+    "claimed_paths": [
+      "assets/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md"
+    ],
+    "claimed_resources": [],
+    "next_action": "Finish bounded digest repair"
+  },
+  "created_at": "2026-08-31T14:02:56.582Z"
+}
