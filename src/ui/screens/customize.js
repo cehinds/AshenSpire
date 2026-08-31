@@ -20,7 +20,9 @@ import {
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
+import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
+import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
   tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
@@ -110,6 +112,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
           <section id="cz-equipment-panel" class="cz-stage">
             <header class="cc-stage-toolbar"><h3>STARTING EQUIPMENT</h3><div class="cc-stage-tools"><div id="cz-auto-advance-toggle"></div><div id="cz-equipment-view-toggle"></div></div></header>
             <div id="cz-equipment-fold" class="cc-equipment-fold cz-disc"></div>
+            <div id="cz-equipment-receipts" class="cc-equip-group" aria-live="polite"></div>
             <p class="cc-move-note">An armament is one carried object. Choosing it for the other hand moves it.</p>
             <button type="button" class="cz-next" data-next="seed">Continue to Seed</button>
           </section>
@@ -540,6 +543,13 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       ? preferredOpenId
       : equipmentSectionViews[0]?.id;
     if (openId) equipmentFold.open(openId);
+
+    const surface = equipmentSurfaceReceipt(registries, previewRun());
+    $('#cz-equipment-receipts').innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
+      + renderRoleCopies(surface)
+      + '</section>'
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise);
   }
 
   function advanceEquipment(sectionId) {
