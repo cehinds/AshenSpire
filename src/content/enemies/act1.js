@@ -7,6 +7,7 @@ export const act1Enemies = [
     name: 'Wandering Soldier',
     hp: [22, 26],
     poiseMax: 10,
+    levelProfile: { min: 1, max: 4 },
     arcaneExposure: {
       mode: 'configured',
       threshold: 8, // PROVISIONAL
@@ -34,6 +35,7 @@ export const act1Enemies = [
     name: 'Blight Hound',
     hp: [12, 15],
     poiseMax: 6,
+    levelProfile: { min: 1, max: 3 },
     tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐕',
     moves: {
@@ -47,6 +49,7 @@ export const act1Enemies = [
     name: 'Husk Brute',
     hp: [30, 34],
     poiseMax: 16,
+    levelProfile: { min: 2, max: 5 },
     tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪨',
     moves: {
@@ -65,6 +68,7 @@ export const act1Enemies = [
     name: 'Grave Wisp',
     hp: [10, 12],
     poiseMax: 4,
+    levelProfile: { min: 1, max: 4 },
     tags: ['spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👻',
     moves: {
@@ -87,6 +91,7 @@ export const act1Enemies = [
     name: 'Wyrm Aspirant',
     hp: [68, 72],
     poiseMax: 24,
+    levelProfile: { min: 4, max: 6 },
     tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐲',
     firstMove: 'consecrate',
@@ -115,6 +120,7 @@ export const act1Enemies = [
     name: 'The Fell Warden',
     hp: [120, 120],
     poiseMax: 30,
+    levelProfile: { min: 5, max: 7 },
     tags: ['humanoid', 'undead'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👁',
     firstMove: 'caneStrike',

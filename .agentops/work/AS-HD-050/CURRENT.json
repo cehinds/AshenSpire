@@ -1,13 +1,13 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 51,
-  "current_hash": "sha256:8891e716b0c693ca428bf545edfc4a50b189341a27253bc40f6b2c4bfd6679d7",
-  "parent_hash": "sha256:344d8815c8259343267beb7eeabfd4ce863a8623a9c76b29dadabcbc6dd9fd58",
+  "revision": 52,
+  "current_hash": "sha256:64b3f796b3d26630dd69db3fb61ddb18f67e76b732dff0c782993c9ec03df1d2",
+  "parent_hash": "sha256:8891e716b0c693ca428bf545edfc4a50b189341a27253bc40f6b2c4bfd6679d7",
   "ticket": "AS-HD-050",
-  "lifecycle_state": "assigned",
+  "lifecycle_state": "in-progress",
   "objective": "Close the Art motif row through pointer-last reconciliation (Art D2).",
   "done_when": "The PM supersession, current register, independent Art reread and Art backlog r7 remain matched, and the Art pointer/continuity projection is refreshed pointer-last with history preserved.",
-  "next_action": "Await the owner authorization for one append-only successor; on mismatch route only the residual to Help Desk.",
+  "next_action": "Hold. The blocker record docs/art/AS-HD-050-BLOCKER.md reached dev ungated with no frozen candidate and no QA verdict (#468; #427 records AS-HD-050 as BLOCKED, nothing to freeze). Await the retrospective ruling on #468, then the owner authorization for one append-only successor; on mismatch route only the residual to Help Desk.",
   "repo": "https://github.com/cehinds/AshenSpire.git",
   "ref": "recovery/as-hd-050",
   "base_oid": "7bcc9ed08d3a5cc3bc77238851309d27308a78e9",
@@ -19,7 +19,11 @@
     "docs/art/**"
   ],
   "evidence_pointers": [],
-  "blocker": null,
+  "blocker": {
+    "kind": "ungated-integration",
+    "escalation_class": "technical-blocker",
+    "summary": "docs/art/AS-HD-050-BLOCKER.md (the #394 blocker record: Art continuity tuple absent; write target held by AS-HD-053) was integrated to dev via PR #423 (merge 3695e26f) and PR #432 (merge 9cd09b0b) while this capsule read assigned with no blocker recorded. No candidate was frozen and no QA verdict exists (#468). Requires the retrospective ruling on #468 before any successor work; the substantive #394 blocker also still stands."
+  },
   "authority": {
     "may": [
       "implement-locally-on-exclusive-paths",

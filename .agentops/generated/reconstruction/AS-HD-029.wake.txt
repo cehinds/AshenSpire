@@ -3,7 +3,7 @@ IDENTITY   : actor=it-manager-iii role=it-manager-iii ticket=AS-HD-029 lease=lea
 MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
 WORK       : Sequence the P0 NO_SAFE_ASSIGNMENT chain at Application by issuing and rebinding the writer leases each gate needs.
 DONE-WHEN  : Every gate in the chain (fresh Application custody/PASS -> CQM -> Data -> QA1 -> QA2) has an issued lease naming its holder and its exact entry condition, and no two of them collide on an overlapping path or ref.
-AUTHORITY  : may resolve-technical-ambiguity, assign-and-rebind-work, issue-and-revoke-lease, create-isolated-ref | must-not push-pr-merge-deploy-or-release, claim-overlapping-active-paths | expiry 2026-10-31T23:59:59Z
+AUTHORITY  : may resolve-technical-ambiguity, assign-and-rebind-work, issue-and-revoke-lease, create-isolated-ref, integrate-to-dev-via-pr | must-not claim-overlapping-active-paths, direct-push-to-dev, mutate-main-or-release, tag-publish-deploy-or-change-pages-source | expiry 2026-10-31T23:59:59Z
 FORBIDDEN  : push or force-push; PR creation or merge; direct update to dev or main; destructive cleanup, reset, deletion, or history rewrite; publication, Pages deployment, or release; credential, privacy, or security boundary crossing; external send or messaging; override of an independent QA verdict
 REPO/REF   : https://github.com/cehinds/AshenSpire.git @ recovery/as-hd-029
 BASE       : 7bcc9ed08d3a5cc3bc77238851309d27308a78e9 tree recovered-from-hub-snapshot dirty=clean

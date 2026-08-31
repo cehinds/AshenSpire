@@ -1008,7 +1008,7 @@ export function semanticChecks(c) {
       if (ids.has(a.id)) errors.push(`owner-command: duplicate action id '${a.id}'`);
       ids.add(a.id);
       for (const r of a.authenticator_roles) if (!roles.has(r)) errors.push(`owner-command: action '${a.id}' names unknown authenticator role '${r}'`);
-      if ((a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
+      if ((a.id === 'grant-dev-delivery-authority' || a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
         errors.push(`owner-command: action '${a.id}' must be owner-exclusive`);
       }
     }
@@ -2057,6 +2057,13 @@ export function runWake(root, actor, work, { frozen = false } = {}) {
 // ===========================================================================
 
 const REQUEST_SCHEMA_FILE = 'schemas/owner-command-request.schema.json';
+const DEV_DELIVERY_ACTION = 'integrate-to-dev-via-pr';
+const LEGACY_DELIVERY_DENIAL = 'push-pr-merge-deploy-or-release';
+const DEV_DELIVERY_PROTECTED_DENIALS = Object.freeze([
+  'direct-push-to-dev',
+  'mutate-main-or-release',
+  'tag-publish-deploy-or-change-pages-source'
+]);
 
 // Validate an owner-command request against the policy: enumerated action,
 // authenticated actor, required fields, and the compare-and-swap precondition.
@@ -2119,6 +2126,18 @@ export function validateCommand(contracts, rt, request, { root = null } = {}) {
   for (const f of action.required_fields) {
     const v = request[f];
     if (v === undefined || v === null || (typeof v === 'string' && v === '')) errors.push(`command '${request.action}' is missing required field '${f}'`);
+  }
+  if (action.id === 'grant-dev-delivery-authority') {
+    const cap = rt.capsules[request.target];
+    if (!cap) errors.push(`command target '${request.target}' has no work capsule`);
+    else {
+      const ownerRole = actorRole(contracts, cap.owner_actor);
+      const role = contracts.roles.roles.find((r) => r.role === ownerRole);
+      if (ownerRole !== 'it-manager-iii') errors.push(`command '${action.id}' may target only an it-manager-iii-owned capsule (target resolves to '${ownerRole}')`);
+      if (!role || !role.may.includes(DEV_DELIVERY_ACTION)) errors.push(`command '${action.id}' cannot grant '${DEV_DELIVERY_ACTION}' because the target role does not hold it`);
+      if (cap.authority.may.includes(DEV_DELIVERY_ACTION)) errors.push(`command '${action.id}' target '${request.target}' already has '${DEV_DELIVERY_ACTION}'`);
+      if (!cap.authority.must_not.includes(LEGACY_DELIVERY_DENIAL)) errors.push(`command '${action.id}' target '${request.target}' has no exact legacy delivery denial to narrow`);
+    }
   }
   let cas = 'n/a';
   if (action.requires_cas) {
@@ -2222,6 +2241,13 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
       if (bad.length) return { ok: false, errors: bad, written };
       if (request.params.base_ref) { next.base_ref = request.params.base_ref; }
       else { next.base_oid = request.params.base_oid; delete next.base_ref; }
+    }
+    if (action.id === 'grant-dev-delivery-authority') {
+      next.authority.may.push(DEV_DELIVERY_ACTION);
+      next.authority.must_not = next.authority.must_not.filter((item) => item !== LEGACY_DELIVERY_DENIAL);
+      for (const denial of DEV_DELIVERY_PROTECTED_DENIALS) {
+        if (!next.authority.must_not.includes(denial)) next.authority.must_not.push(denial);
+      }
     }
     // The appended event is the decision's record; evidence_pointers carries
     // declared evidence types only (evidence.json), never event ids.
@@ -3697,6 +3723,7 @@ export function runSelftest(root = ROOT) {
   expectCommand('owner-command: stale compare-and-swap rejected', (r) => { r.expected_current_hash = 'sha256:stale'; }, 'stale command');
   expectCommand('owner-command: missing required field rejected', (r) => { delete r.candidate_oid; }, 'missing required field');
   expectCommand('owner-command: owner-exclusive release by deputy rejected', (r) => { r.action = 'authorize-release'; }, 'not authorized');
+  expectCommand('owner-command: owner-exclusive dev-delivery grant by deputy rejected', (r) => { r.action = 'grant-dev-delivery-authority'; r.target = 'AS-HD-029'; r.expected_current_hash = computeCapsuleHash(rt0.capsules['AS-HD-029']); r.reason = 'bounded grant'; delete r.candidate_oid; }, 'not authorized');
 
   // A3 reseat plants, through the same validateCommand() the live dry run uses.
   // The control is a real unstarted seat: AS-1001 is in-progress, so it doubles
@@ -3912,6 +3939,9 @@ export function runSelftest(root = ROOT) {
   {
     const rtLead = baseRt();
     rtLead.capsules['AS-HD-050'].owner_actor = 'lead-game-systems';
+    // The plant tests the actor-vs-role conflation only; clear the live blocker
+    // so a blocked capsule (which wakes the blocker's owner) cannot mask it.
+    rtLead.capsules['AS-HD-050'].blocker = null;
     const d = computeDispatch(contracts, rtLead, { now: new Date().toISOString() }).find((x) => x.ticket === 'AS-HD-050');
     results.push({ label: 'dispatch wakes the lead that owns the capsule, not a role that does not', pass: !!d && d.wake === 'lead-game-systems', errs: [d ? d.wake : '(no entry)'] });
     const w = runWake(root, 'maker', 'AS-1001');
