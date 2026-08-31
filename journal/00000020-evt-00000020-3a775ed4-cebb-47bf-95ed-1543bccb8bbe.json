@@ -1,0 +1,25 @@
+{
+  "event_id": "evt-00000020-3a775ed4-cebb-47bf-95ed-1543bccb8bbe",
+  "idempotency_key": "CANDIDATE_READY:426:1:26d0e8df193b4d354a50a936e7db958855bf029e",
+  "sequence": 20,
+  "previous_snapshot_hash": "6fe28a80fe668990a25c4b3e5efc680d0055cebf3079da7ddac5a9a98078c15e",
+  "issue_id": "426",
+  "actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "lease:426:1",
+  "lease_epoch": 1,
+  "event_type": "CANDIDATE_READY",
+  "exact_object": {
+    "oid": "26d0e8df193b4d354a50a936e7db958855bf029e"
+  },
+  "payload": {
+    "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
+    "evidence_pointers": [
+      "opsctl verify: no new failures beyond two pre-existing stale hub mirrors",
+      "tools/continuity.mjs --check OK, --audit OK (RED 36 findings -> green), --selftest 21/21",
+      "single-file footprint docs/governance/continuity.json; git diff --check clean",
+      "artifact re-pinned to bytes 4241834 sha256 029154D5... buildOrdinal 1719; branch snapshot refreshed"
+    ]
+  },
+  "created_at": "2026-08-31T14:36:29.942Z"
+}

@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 19,
-  "last_sequence": 19,
+  "revision": 20,
+  "last_sequence": 20,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -89,22 +89,22 @@
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "426",
       "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
       "priority": "P1",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "CANDIDATE_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
-      "candidate_commit": null,
+      "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
       "branch": "codex/issue-426",
-      "assigned_actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:426:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T14:55:02.325Z",
-      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
-      "maker_actor": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
       "lease_history": [
         {
           "actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
@@ -120,13 +120,18 @@
       ],
       "claimed_resources": [],
       "acceptance_commands": [],
-      "evidence_pointers": [],
+      "evidence_pointers": [
+        "opsctl verify: no new failures beyond two pre-existing stale hub mirrors",
+        "tools/continuity.mjs --check OK, --audit OK (RED 36 findings -> green), --selftest 21/21",
+        "single-file footprint docs/governance/continuity.json; git diff --check clean",
+        "artifact re-pinned to bytes 4241834 sha256 029154D5... buildOrdinal 1719; branch snapshot refreshed"
+      ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Re-pin bytes/sha256 and refresh branch snapshot; lease-held path",
+      "next_action": "Bind independent QA to this exact candidate.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000018-1b36c693-969e-435a-bfba-02d3779a4a5d",
-      "updated_at": "2026-08-31T14:32:00.019Z"
+      "updated_event": "evt-00000020-3a775ed4-cebb-47bf-95ed-1543bccb8bbe",
+      "updated_at": "2026-08-31T14:36:29.942Z"
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -236,5 +241,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "6fe28a80fe668990a25c4b3e5efc680d0055cebf3079da7ddac5a9a98078c15e"
+  "snapshot_hash": "8efd36f12ab32a8f5998dd01b2ade069c3a185ee9a4b5a2da841848d607202db"
 }
