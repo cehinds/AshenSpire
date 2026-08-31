@@ -1,0 +1,8 @@
+{
+  "schema": "agentops/scheduler-snapshot/v1",
+  "revision": 0,
+  "last_sequence": 0,
+  "work_items": {},
+  "errors": [],
+  "snapshot_hash": "34dce31f701420375b3d62c46ae2ddcb86162769cff2c18635f25e5219d7db6b"
+}
