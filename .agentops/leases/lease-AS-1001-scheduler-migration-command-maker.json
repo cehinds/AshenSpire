@@ -1,0 +1,21 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-1001-scheduler-migration-command-maker",
+  "actor": "maker",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-1001",
+  "ref": "recovery/as-1001-scheduler-migration-command",
+  "path_globs": [
+    ".agentops/tools/opsctl.mjs",
+    ".agentops/tools/opsctl.test.mjs"
+  ],
+  "base_oid": "976efeb50b0d19c4cb499700a01cef578061b40a",
+  "actions": [
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch"
+  ],
+  "issued": "2026-08-31T15:10:17Z",
+  "expiry": "2026-09-01T15:10:17Z",
+  "revoked": false
+}

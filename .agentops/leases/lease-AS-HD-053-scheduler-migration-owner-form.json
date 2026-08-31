@@ -1,0 +1,21 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-HD-053-scheduler-migration-owner-form",
+  "actor": "help-desk",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-HD-053",
+  "ref": "recovery/as-hd-053-scheduler-migration-owner-form",
+  "path_globs": [
+    ".github/ISSUE_TEMPLATE/owner-decision.yml"
+  ],
+  "base_oid": "976efeb50b0d19c4cb499700a01cef578061b40a",
+  "actions": [
+    "record-triage-route-report-status",
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch"
+  ],
+  "issued": "2026-08-31T15:10:17Z",
+  "expiry": "2026-09-01T15:10:17Z",
+  "revoked": false
+}

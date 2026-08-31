@@ -994,7 +994,7 @@ export function semanticChecks(c) {
       if (ids.has(a.id)) errors.push(`owner-command: duplicate action id '${a.id}'`);
       ids.add(a.id);
       for (const r of a.authenticator_roles) if (!roles.has(r)) errors.push(`owner-command: action '${a.id}' names unknown authenticator role '${r}'`);
-      if ((a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
+      if ((a.id === 'authorize-scheduler-migration' || a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
         errors.push(`owner-command: action '${a.id}' must be owner-exclusive`);
       }
     }
@@ -1989,11 +1989,159 @@ export function runWake(root, actor, work, { frozen = false } = {}) {
 // ===========================================================================
 
 const REQUEST_SCHEMA_FILE = 'schemas/owner-command-request.schema.json';
+const SCHEDULER_MIGRATION_ACTION = 'authorize-scheduler-migration';
+const SCHEDULER_MIGRATION_ANCHOR = 'dbd50e1656d22a72cbda43dd349e5ab7c9a46777';
+const SCHEDULER_MIGRATION_PRESERVED_TIP = '1e1ea124f879467d28962edc3b102bd6fae45b2e';
+
+function priorSchedulerMigration(rt) {
+  for (const events of Object.values(rt.events || {})) {
+    const found = events.find((event) => event.kind === 'owner-decision' && event.decision?.action === SCHEDULER_MIGRATION_ACTION);
+    if (found) return found;
+  }
+  return null;
+}
+
+// Semantic checks that cannot be expressed by the request schema. The action is
+// deliberately specific and closed: the two recovery anchors and every safety
+// mode are exact values, while object/tree ancestry is checked separately
+// against Git by schedulerMigrationGitErrors().
+export function schedulerMigrationErrors(request, rt, { now = new Date().toISOString() } = {}) {
+  if (request.action !== SCHEDULER_MIGRATION_ACTION) {
+    return request.scheduler_migration === undefined ? [] : [`scheduler_migration is reserved for action '${SCHEDULER_MIGRATION_ACTION}'`];
+  }
+  const errors = [];
+  const m = request.scheduler_migration;
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return ["authorize-scheduler-migration requires the structured 'scheduler_migration' object"];
+  if ('reason' in request || 'params' in request) errors.push('scheduler migration authority is structured only; free-form reason or params fields are forbidden');
+  if (request.candidate_oid !== m.scheduler_head) errors.push('scheduler migration candidate_oid must equal scheduler_migration.scheduler_head');
+  if (m.source_state_oid !== m.expected_remote_oid) errors.push('scheduler migration source_state_oid must equal expected_remote_oid');
+  if (m.canonical_anchor_oid !== SCHEDULER_MIGRATION_ANCHOR) errors.push(`scheduler migration canonical_anchor_oid must equal ${SCHEDULER_MIGRATION_ANCHOR}`);
+  if (m.preserved_local_tip_oid !== SCHEDULER_MIGRATION_PRESERVED_TIP) errors.push(`scheduler migration preserved_local_tip_oid must equal ${SCHEDULER_MIGRATION_PRESERVED_TIP}`);
+  if (m.dispatch_frozen !== true) errors.push('scheduler migration requires dispatch_frozen=true');
+  if (m.one_use !== true) errors.push('scheduler migration requires one_use=true');
+  if (m.target_ref !== 'refs/heads/agentops/scheduler-state') errors.push('scheduler migration target_ref must be refs/heads/agentops/scheduler-state');
+  if (m.push_mode !== 'non-force-forward-only-cas') errors.push('scheduler migration push_mode must be non-force-forward-only-cas');
+  if (m.abort_on_remote_change !== true) errors.push('scheduler migration requires abort_on_remote_change=true');
+  if (m.source_state_version !== 1 || m.target_state_version !== 2) errors.push('scheduler migration requires source_state_version=1 and target_state_version=2');
+  if (!Number.isInteger(m.source_event_count) || m.source_event_count < 0) errors.push('scheduler migration source_event_count must be a non-negative integer');
+  const nowMs = Date.parse(now);
+  const expiryMs = Date.parse(m.expires_at);
+  if (!Number.isFinite(nowMs)) errors.push(`scheduler migration validator received invalid trusted time '${now}'`);
+  else if (!Number.isFinite(expiryMs) || expiryMs <= nowMs) errors.push('scheduler migration authority is expired; expires_at must be in the future');
+  const prior = priorSchedulerMigration(rt);
+  if (prior) errors.push(`scheduler migration authority is one-use and was already recorded by event '${prior.id}'`);
+  return errors;
+}
+
+function gitText(root, args) {
+  try {
+    return { ok: true, text: execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] }).toString().trim() };
+  } catch (error) {
+    const detail = error?.stderr?.toString().trim();
+    return { ok: false, text: detail || error.message };
+  }
+}
+
+// Bind the reviewed Git objects, not merely caller-provided strings. The
+// preserved local tip is intentionally divergent and is therefore checked only
+// for exact commit identity; it must not be forced through an ancestry test.
+export function schedulerMigrationGitErrors(root, request) {
+  if (request.action !== SCHEDULER_MIGRATION_ACTION) return [];
+  const m = request.scheduler_migration || {};
+  const errors = [];
+  const commits = [
+    ['scheduler_head', m.scheduler_head],
+    ['source_state_oid', m.source_state_oid],
+    ['canonical_anchor_oid', m.canonical_anchor_oid],
+    ['preserved_local_tip_oid', m.preserved_local_tip_oid],
+  ];
+  for (const [field, oid] of commits) {
+    const type = gitText(root, ['cat-file', '-t', String(oid || '')]);
+    if (!type.ok || type.text !== 'commit') errors.push(`scheduler migration ${field} does not resolve to a commit`);
+  }
+  const headTree = gitText(root, ['show', '-s', '--format=%T', String(m.scheduler_head || '')]);
+  if (headTree.ok && headTree.text !== m.scheduler_tree) errors.push('scheduler migration scheduler_tree does not match scheduler_head');
+  const stateTree = gitText(root, ['show', '-s', '--format=%T', String(m.source_state_oid || '')]);
+  if (stateTree.ok && stateTree.text !== m.source_state_tree) errors.push('scheduler migration source_state_tree does not match source_state_oid');
+  const headIntegrated = gitText(root, ['merge-base', '--is-ancestor', String(m.scheduler_head || ''), 'HEAD']);
+  if (!headIntegrated.ok) errors.push('scheduler migration scheduler_head is not reachable from the integrated HEAD');
+  const sourceObjectsExist = commits.slice(0, 3).every(([, oid]) => gitText(root, ['cat-file', '-e', `${oid}^{commit}`]).ok);
+  if (sourceObjectsExist) {
+    const ancestry = gitText(root, ['merge-base', '--is-ancestor', m.canonical_anchor_oid, m.source_state_oid]);
+    if (!ancestry.ok) errors.push('scheduler migration canonical_anchor_oid is not an ancestor of source_state_oid');
+  }
+
+  // Bind the source state contents. snapshot_hash is the scheduler's canonical
+  // stable-JSON digest, not the Git blob hash. The journal manifest algorithm is
+  // shared with the frozen v1 scheduler: sorted path:blobOID entries joined by
+  // LF, with no trailing newline.
+  if (sourceObjectsExist) {
+    const snapshotRaw = gitText(root, ['show', `${m.source_state_oid}:snapshot.json`]);
+    if (!snapshotRaw.ok) errors.push('scheduler migration source_state_oid has no readable snapshot.json');
+    else {
+      try {
+        const snapshot = strictParse(snapshotRaw.text);
+        const canonical = JSON.parse(JSON.stringify(snapshot));
+        delete canonical.snapshot_hash;
+        const recomputed = createHash('sha256').update(stableStringify(canonical)).digest('hex');
+        if (snapshot.snapshot_hash !== m.source_snapshot_sha256 || recomputed !== m.source_snapshot_sha256) errors.push('scheduler migration source_snapshot_sha256 does not match the stored and recomputed source snapshot hash');
+        if (snapshot.last_sequence !== m.source_event_count) errors.push('scheduler migration source snapshot last_sequence does not match source_event_count');
+        for (const [issue, item] of Object.entries(snapshot.work_items || {})) {
+          if (item.lease_id !== null || item.lease_expiry !== null) errors.push(`scheduler migration source snapshot work item '${issue}' retains live lease custody`);
+        }
+      } catch (error) {
+        errors.push(`scheduler migration source snapshot is invalid JSON (${error.message})`);
+      }
+    }
+
+    // --full-tree is required because opsctl's root is .agentops/, while the
+    // portable state commit stores journal/ at the Git tree root.
+    const journalTree = gitText(root, ['ls-tree', '-r', '--full-tree', m.source_state_oid, '--', 'journal']);
+    if (!journalTree.ok) errors.push('scheduler migration source journal tree could not be read');
+    else {
+      const entries = [];
+      const lines = journalTree.text ? journalTree.text.split(/\r?\n/) : [];
+      for (const line of lines) {
+        const match = /^100644 blob ([0-9a-f]{40})\t(journal\/[0-9]{8}-[A-Za-z0-9._-]+\.json)$/.exec(line);
+        if (!match) errors.push(`scheduler migration source journal has an invalid tree entry '${line}'`);
+        else entries.push([match[2], match[1]]);
+      }
+      entries.sort(([left], [right]) => left.localeCompare(right));
+      const manifest = entries.map(([name, oid]) => `${name}:${oid}`).join('\n');
+      const manifestHash = createHash('sha256').update(manifest).digest('hex');
+      if (entries.length !== m.source_event_count) errors.push('scheduler migration source_event_count does not match the exact source journal tree');
+      if (manifestHash !== m.source_journal_manifest_sha256) errors.push('scheduler migration source_journal_manifest_sha256 does not match the exact source journal tree');
+    }
+
+    const version = gitText(root, ['show', `${m.source_state_oid}:STATE_VERSION`]);
+    if (!version.ok || version.text !== String(m.source_state_version)) errors.push('scheduler migration source STATE_VERSION does not match source_state_version');
+    const custodyRaw = gitText(root, ['show', `${m.source_state_oid}:machine-lease.json`]);
+    if (!custodyRaw.ok) errors.push('scheduler migration source_state_oid has no readable machine-lease.json');
+    else {
+      try {
+        const custody = strictParse(custodyRaw.text);
+        if (custody.machine_id !== null || !custody.released_at || custody.expires_at !== custody.released_at) errors.push('scheduler migration source machine custody is not released');
+      } catch (error) {
+        errors.push(`scheduler migration source machine custody is invalid JSON (${error.message})`);
+      }
+    }
+  }
+
+  const remote = gitText(root, ['ls-remote', '--exit-code', 'origin', String(m.target_ref || '')]);
+  if (!remote.ok) errors.push(`scheduler migration could not read remote target ${m.target_ref || '(missing)'}`);
+  else {
+    const rows = remote.text.split(/\r?\n/).filter(Boolean);
+    const match = rows.length === 1 ? /^([0-9a-f]{40})\t(.+)$/.exec(rows[0]) : null;
+    if (!match || match[2] !== m.target_ref) errors.push('scheduler migration remote target lookup was ambiguous or malformed');
+    else if (match[1] !== m.expected_remote_oid) errors.push('scheduler migration remote target changed; abort_on_remote_change requires exact expected_remote_oid');
+  }
+  return errors;
+}
 
 // Validate an owner-command request against the policy: enumerated action,
 // authenticated actor, required fields, and the compare-and-swap precondition.
 // Pure over already-loaded contracts + runtime so the harness can plant defects.
-export function validateCommand(contracts, rt, request) {
+export function validateCommand(contracts, rt, request, { now = new Date().toISOString() } = {}) {
   const errors = [];
   const policy = contracts['owner-command'];
   if (!policy) return { ok: false, errors: ['owner-command policy not loaded'], decision: null };
@@ -2014,12 +2162,14 @@ export function validateCommand(contracts, rt, request) {
       errors.push(`stale command: expected_current_hash does not match the live state of '${request.target}' (compare-and-swap failed)`);
     } else if (request.expected_current_hash) cas = 'OK';
   }
+  errors.push(...schedulerMigrationErrors(request, rt, { now }));
   const ok = errors.length === 0;
   const decision = ok ? {
     schema: 'agentops/decision-event/v1',
     action: request.action, actor: request.actor, target: request.target,
     protected: action.protected, requires_cas: action.requires_cas, cas_precondition: cas,
     affects: action.affects,
+    ...(request.action === SCHEDULER_MIGRATION_ACTION ? { scheduler_migration: JSON.parse(JSON.stringify(request.scheduler_migration)) } : {}),
     result: 'DRY-RUN — would append this decision event and CAS-update only the affected state; no repository mutation performed'
   } : null;
   return { ok, errors, decision };
@@ -2054,13 +2204,22 @@ export function resolveTransition(contracts, capsule, action, actorRole) {
 export function applyCommand(root, contracts, rt, request, { now = new Date().toISOString() } = {}) {
   const action = contracts['owner-command'].actions.find((a) => a.id === request.action);
   const ticket = request.target;
-  const capsule = rt.capsules[ticket];
   const written = [];
+
+  // Reload immediately before mutation. Using the runtime captured for dry-run
+  // validation would make the advertised apply-time CAS recheck illusory.
+  const liveRt = loadRuntime(root);
+  if (liveRt.errors.length) return { ok: false, errors: liveRt.errors.map((e) => `runtime changed before apply: ${e}`), written };
+  const capsule = liveRt.capsules[ticket];
+  const migrationErrs = schedulerMigrationErrors(request, liveRt, { now });
+  if (migrationErrs.length) return { ok: false, errors: migrationErrs, written };
+  const migrationGitErrs = schedulerMigrationGitErrors(root, request);
+  if (migrationGitErrs.length) return { ok: false, errors: migrationGitErrs, written };
 
   const move = resolveTransition(contracts, capsule, action, request.actor);
   if (move && move.error) return { ok: false, errors: [move.error], written };
 
-  const chain = (rt.events[ticket] || []).slice().sort((a, b) => a.seq - b.seq);
+  const chain = (liveRt.events[ticket] || []).slice().sort((a, b) => a.seq - b.seq);
   const last = chain[chain.length - 1] || null;
   const seq = last ? last.seq + 1 : 1;
   const id = `${ticket}-${String(seq).padStart(4, '0')}`;
@@ -2082,7 +2241,8 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
       authority_path: '.github/workflows/owner-command.yml:owner-command/v1',
       target: request.target,
       expected_current_hash: request.expected_current_hash ?? null,
-      candidate_oid: request.candidate_oid ?? null
+      candidate_oid: request.candidate_oid ?? null,
+      ...(request.action === SCHEDULER_MIGRATION_ACTION ? { scheduler_migration: JSON.parse(JSON.stringify(request.scheduler_migration)) } : {})
     }
   };
 
@@ -2168,7 +2328,7 @@ export function parseIssueCommand(body, { actor } = {}) {
 // Run a command. Dry-run validates and reports what it would do without
 // touching the repository; --apply performs the same validation and then writes
 // the append-only decision event plus the compare-and-swap capsule re-seal.
-export function runCommand(root, request, { dryRun = true } = {}) {
+export function runCommand(root, request, { dryRun = true, now } = {}) {
   const { contracts, errors } = loadContracts(root);
   if (errors.length) return { ok: false, errors, decision: null };
   let reqSchema;
@@ -2178,10 +2338,16 @@ export function runCommand(root, request, { dryRun = true } = {}) {
   if (schemaErrs.length) return { ok: false, errors: schemaErrs.map((e) => `request schema: ${e}`), decision: null };
   const rt = loadRuntime(root);
   if (rt.errors.length) return { ok: false, errors: rt.errors.map((e) => `runtime: ${e}`), decision: null };
-  const res = validateCommand(contracts, rt, request);
+  const res = validateCommand(contracts, rt, request, { now: now ?? new Date().toISOString() });
+  if (res.ok) {
+    const gitErrors = schedulerMigrationGitErrors(root, request);
+    if (gitErrors.length) return { ok: false, errors: gitErrors, decision: null };
+  }
   if (!res.ok || dryRun) return res;
 
-  const applied = applyCommand(root, contracts, rt, request);
+  // A production apply takes a new clock reading for the immediate expiry
+  // recheck. Tests may inject one trusted instant explicitly.
+  const applied = applyCommand(root, contracts, rt, request, now === undefined ? {} : { now });
   if (!applied.ok) return { ok: false, errors: applied.errors, decision: null };
   return {
     ok: true, errors: [], written: applied.written,

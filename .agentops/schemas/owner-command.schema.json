@@ -29,6 +29,8 @@
           "authenticator_roles": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
           "requires_cas": {"type": "boolean"},
           "protected": {"type": "boolean"},
+          "one_use": {"type": "boolean"},
+          "expires": {"type": "boolean"},
           "required_fields": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
           "affects": {"type": "string", "minLength": 1},
           "lifecycle_target": {"type": "string", "minLength": 1},

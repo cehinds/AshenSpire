@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, applyCommand, validateCommand, schedulerMigrationErrors, schedulerMigrationGitErrors, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -286,6 +286,129 @@ function check(name, cond, detail = '') {
   check('issue form missing required fields is rejected', parseIssueCommand('### Reason\n\nnothing\n', { actor: 'owner' }).ok === false);
   // A parsed request is still fully validated downstream.
   check('parsed request with a bogus action is rejected by validation', runCommand(ROOT, parseIssueCommand('### Action\n\nnot-an-action\n\n### Target ticket\n\nAS-1001\n', { actor: 'owner' }).request, { dryRun: true }).ok === false);
+}
+
+// 2d-quater. The scheduler migration authority is a closed, one-use owner CAS
+// binding. Its structured object is preserved byte-for-byte in the event; no
+// reason string or generic owner override can stand in for these facts.
+{
+  const { contracts } = loadContracts();
+  const rt = loadRuntime();
+  const hash = computeCapsuleHash(rt.capsules['AS-1001']);
+  const migration = {
+    scheduler_head: 'e2f14171c7f172a8773d3e02d13316b8cb502e46',
+    scheduler_tree: '2c928a293a9e53430a3485e415d3fe49f2b348f4',
+    source_state_oid: '01b9766008cd9ca89ccb08b8c23c212f9649b68b',
+    source_state_tree: 'df189e26097d28c7bf3b6ff629e65d8ef417e840',
+    source_snapshot_sha256: 'cefd2e7c332c90f611da296d201dc6338bb683a3ef7e764c6acf7a79f5036b60',
+    source_journal_manifest_sha256: 'a0a3639db99232315d9027b6cdef9b7d8330aa36e0a78c1706dd97d15f3435ea',
+    source_event_count: 29,
+    source_state_version: 1,
+    target_state_version: 2,
+    canonical_anchor_oid: 'dbd50e1656d22a72cbda43dd349e5ab7c9a46777',
+    preserved_local_tip_oid: '1e1ea124f879467d28962edc3b102bd6fae45b2e',
+    dispatch_frozen: true,
+    one_use: true,
+    expires_at: '2099-01-01T00:00:00Z',
+    target_ref: 'refs/heads/agentops/scheduler-state',
+    expected_remote_oid: '01b9766008cd9ca89ccb08b8c23c212f9649b68b',
+    push_mode: 'non-force-forward-only-cas',
+    abort_on_remote_change: true,
+  };
+  const request = { schema: 'agentops/owner-command-request/v1', action: 'authorize-scheduler-migration', actor: 'owner', target: 'AS-1001', expected_current_hash: hash, candidate_oid: migration.scheduler_head, scheduler_migration: migration };
+  const accepted = validateCommand(contracts, rt, request, { now: '2026-08-31T15:30:00Z' });
+  check('scheduler migration semantic binding accepts the exact owner CAS packet', accepted.ok, accepted.errors.join(' | '));
+  check('scheduler migration dry-run preserves the structured binding', JSON.stringify(accepted.decision?.scheduler_migration) === JSON.stringify(migration));
+  const deputy = validateCommand(contracts, rt, { ...request, actor: 'it-manager-iii' }, { now: '2026-08-31T15:30:00Z' });
+  check('scheduler migration remains owner-exclusive', !deputy.ok && deputy.errors.some((e) => e.includes('not authorized')), deputy.errors.join(' | '));
+
+  const semanticPlant = (mutate, needle) => {
+    const planted = JSON.parse(JSON.stringify(request));
+    mutate(planted);
+    return schedulerMigrationErrors(planted, rt, { now: '2026-08-31T15:30:00Z' }).some((e) => e.includes(needle));
+  };
+  check('scheduler migration rejects candidate/head mismatch', semanticPlant((r) => { r.candidate_oid = 'f'.repeat(40); }, 'candidate_oid'));
+  check('scheduler migration rejects source/remote mismatch', semanticPlant((r) => { r.scheduler_migration.expected_remote_oid = 'f'.repeat(40); }, 'expected_remote_oid'));
+  check('scheduler migration rejects a substituted canonical anchor', semanticPlant((r) => { r.scheduler_migration.canonical_anchor_oid = 'f'.repeat(40); }, 'canonical_anchor_oid'));
+  check('scheduler migration rejects a substituted preserved local tip', semanticPlant((r) => { r.scheduler_migration.preserved_local_tip_oid = 'f'.repeat(40); }, 'preserved_local_tip_oid'));
+  check('scheduler migration rejects unfrozen dispatch', semanticPlant((r) => { r.scheduler_migration.dispatch_frozen = false; }, 'dispatch_frozen'));
+  check('scheduler migration rejects free-form reason text', semanticPlant((r) => { r.reason = 'trust me'; }, 'structured only'));
+  const overrideReuse = { ...request, action: 'record-owner-override', reason: 'treat this as migration authority' };
+  check('record-owner-override cannot carry scheduler migration authority', validateCommand(contracts, rt, overrideReuse, { now: '2026-08-31T15:30:00Z' }).errors.some((e) => e.includes('reserved for action')));
+  check('scheduler migration rejects an expired packet', schedulerMigrationErrors(request, rt, { now: migration.expires_at }).some((e) => e.includes('expired')));
+  check('scheduler migration rejects a negative source event count', semanticPlant((r) => { r.scheduler_migration.source_event_count = -1; }, 'source_event_count'));
+  const boxRepo = resolve(tmpdir(), `agentops-migration-apply-${process.pid}-${Date.now()}`);
+  const boxRemote = `${boxRepo}-remote.git`;
+  try {
+    // Copy only the small control plane. A full repository clone copies the
+    // large preview corpus and makes this unit test depend on free disk space.
+    mkdirSync(boxRepo, { recursive: true });
+    cpSync(ROOT, resolve(boxRepo, '.agentops'), { recursive: true });
+    execFileSync('git', ['init', '--quiet', boxRepo]);
+    const sourceRepo = resolve(ROOT, '..');
+    const common = execFileSync('git', ['rev-parse', '--git-common-dir'], { cwd: sourceRepo }).toString().trim();
+    const sourceObjects = resolve(sourceRepo, common, 'objects');
+    mkdirSync(resolve(boxRepo, '.git/objects/info'), { recursive: true });
+    writeFileSync(resolve(boxRepo, '.git/objects/info/alternates'), sourceObjects.replace(/\\/g, '/') + '\n');
+    const integratedHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRepo }).toString().trim();
+    execFileSync('git', ['update-ref', 'refs/heads/test-integrated', integratedHead], { cwd: boxRepo });
+    execFileSync('git', ['symbolic-ref', 'HEAD', 'refs/heads/test-integrated'], { cwd: boxRepo });
+    execFileSync('git', ['init', '--quiet', '--bare', boxRemote]);
+    mkdirSync(resolve(boxRemote, 'objects/info'), { recursive: true });
+    writeFileSync(resolve(boxRemote, 'objects/info/alternates'), sourceObjects.replace(/\\/g, '/') + '\n');
+    execFileSync('git', ['update-ref', migration.target_ref, migration.expected_remote_oid], { cwd: boxRemote });
+    execFileSync('git', ['remote', 'add', 'origin', boxRemote], { cwd: boxRepo });
+    const box = resolve(boxRepo, '.agentops');
+    const exactGitErrors = schedulerMigrationGitErrors(box, request);
+    check('scheduler migration Git binding verifies exact commits, trees, state contents, released custody, integrated reachability, anchor ancestry, and remote CAS', exactGitErrors.length === 0, exactGitErrors.join(' | '));
+    const gitPlant = (mutate, needle) => {
+      const planted = JSON.parse(JSON.stringify(request));
+      mutate(planted);
+      return schedulerMigrationGitErrors(box, planted).some((e) => e.includes(needle));
+    };
+    check('scheduler migration rejects a well-formed but false snapshot hash', gitPlant((r) => { r.scheduler_migration.source_snapshot_sha256 = 'f'.repeat(64); }, 'source_snapshot_sha256'));
+    check('scheduler migration rejects a well-formed but false journal manifest', gitPlant((r) => { r.scheduler_migration.source_journal_manifest_sha256 = 'f'.repeat(64); }, 'source_journal_manifest_sha256'));
+    check('scheduler migration rejects a source event count that disagrees with journal and snapshot', gitPlant((r) => { r.scheduler_migration.source_event_count++; }, 'source_event_count'));
+    check('scheduler migration rejects a scheduler head/tree mismatch', gitPlant((r) => { r.scheduler_migration.scheduler_tree = 'f'.repeat(40); }, 'scheduler_tree'));
+    const divergent = JSON.parse(JSON.stringify(request));
+    divergent.scheduler_migration.source_state_oid = migration.preserved_local_tip_oid;
+    divergent.scheduler_migration.expected_remote_oid = migration.preserved_local_tip_oid;
+    divergent.scheduler_migration.source_state_tree = 'e412abe7d77b0b74a33be5a5a03b659bf22c1228';
+    check('scheduler migration rejects a source state not descended from the canonical anchor', schedulerMigrationGitErrors(box, divergent).some((e) => e.includes('not an ancestor')));
+    const activeCustody = JSON.parse(JSON.stringify(request));
+    activeCustody.scheduler_migration.source_state_oid = '4056eabc5d0f8c9bbdaee73e6b20c534097872b2';
+    activeCustody.scheduler_migration.expected_remote_oid = activeCustody.scheduler_migration.source_state_oid;
+    activeCustody.scheduler_migration.source_state_tree = '256c2808b3cab47a4273a17008d05fa23f1ac6a9';
+    check('scheduler migration rejects source state with unreleased machine custody', schedulerMigrationGitErrors(box, activeCustody).some((e) => e.includes('custody is not released')));
+    const unintegrated = JSON.parse(JSON.stringify(request));
+    unintegrated.candidate_oid = migration.preserved_local_tip_oid;
+    unintegrated.scheduler_migration.scheduler_head = migration.preserved_local_tip_oid;
+    unintegrated.scheduler_migration.scheduler_tree = 'e412abe7d77b0b74a33be5a5a03b659bf22c1228';
+    check('scheduler migration rejects a scheduler head not reachable from integrated HEAD', schedulerMigrationGitErrors(box, unintegrated).some((e) => e.includes('not reachable')));
+    const boxRt = loadRuntime(box);
+    const boxHash = computeCapsuleHash(boxRt.capsules['AS-1001']);
+    const boxRequest = { ...request, expected_current_hash: boxHash };
+    const beforeCap = readFileSync(resolve(box, 'work/AS-1001/CURRENT.json'), 'utf8');
+    const expiredApply = applyCommand(box, loadContracts(box).contracts, boxRt, boxRequest, { now: migration.expires_at });
+    check('scheduler migration rechecks expiry immediately before apply', !expiredApply.ok && expiredApply.written.length === 0 && readFileSync(resolve(box, 'work/AS-1001/CURRENT.json'), 'utf8') === beforeCap, expiredApply.errors.join(' | '));
+
+    execFileSync('git', ['update-ref', migration.target_ref, migration.canonical_anchor_oid], { cwd: boxRemote });
+    const remoteChanged = applyCommand(box, loadContracts(box).contracts, loadRuntime(box), boxRequest, { now: '2026-08-31T15:30:00Z' });
+    check('scheduler migration rechecks the remote CAS immediately before apply', !remoteChanged.ok && remoteChanged.written.length === 0 && remoteChanged.errors.some((e) => e.includes('remote target changed')), remoteChanged.errors.join(' | '));
+    execFileSync('git', ['update-ref', migration.target_ref, migration.expected_remote_oid], { cwd: boxRemote });
+
+    const applied = runCommand(box, boxRequest, { dryRun: false, now: '2026-08-31T15:30:00Z' });
+    check('scheduler migration applies one append-only owner event under capsule CAS', applied.ok && applied.written?.length === 2, (applied.errors || []).join(' | '));
+    const eventPath = applied.written?.find((p) => p.startsWith('events/'));
+    const event = eventPath ? strictParse(readFileSync(resolve(box, eventPath), 'utf8')) : null;
+    check('scheduler migration applied event preserves every structured field', JSON.stringify(event?.decision?.scheduler_migration) === JSON.stringify(migration));
+    check('scheduler migration applied corpus remains schema-valid', runValidate(box).errors.length === 0, runValidate(box).errors.join(' | '));
+    const replay = runCommand(box, { ...boxRequest, expected_current_hash: computeCapsuleHash(loadRuntime(box).capsules['AS-1001']) }, { dryRun: false, now: '2026-08-31T15:31:00Z' });
+    check('scheduler migration rejects a second use even with a fresh capsule CAS', !replay.ok && replay.errors.some((e) => e.includes('one-use')), replay.errors.join(' | '));
+  } finally {
+    try { rmSync(boxRepo, { recursive: true, force: true }); } catch { /* best effort */ }
+    try { rmSync(boxRemote, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
 }
 
 // 2e. Owner HUD: committed, redacted, deterministic, carries the source-commit
