@@ -1,0 +1,38 @@
+{
+  "event_id": "evt-00000014-16f8c93b-320d-47eb-a062-517069f39019",
+  "idempotency_key": "CLAIM_ACQUIRED:238:1:2026-08-31T14:23:08.121Z",
+  "sequence": 14,
+  "previous_snapshot_hash": "74bb3f995fc167fd22747faaa939cfa34b7f3599d4a92058065a4e296c580a5c",
+  "issue_id": "238",
+  "actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:238:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-238-enemy-level-content",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T15:30:00Z",
+    "claimed_paths": [
+      "src/content/enemies/act1.js",
+      "src/content/enemies/act2.js",
+      "src/content/enemies/act3.js",
+      "src/content/encounters/act1.js",
+      "src/content/encounters/act2.js",
+      "src/content/encounters/act3.js",
+      "src/content/balance.js",
+      "src/model/levels.js",
+      "src/model/schemas.js",
+      "src/model/validate.js",
+      "tools/enemy-level-content.mjs",
+      "tests/run-node.mjs"
+    ],
+    "claimed_resources": [
+      "issue:238",
+      "enemy-level-content"
+    ],
+    "next_action": "Resolve 19 enemy and 21 encounter RED findings"
+  },
+  "created_at": "2026-08-31T14:23:08.121Z"
+}

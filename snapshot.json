@@ -1,27 +1,35 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 13,
-  "last_sequence": 13,
+  "revision": 14,
+  "last_sequence": 14,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "238",
       "title": "Author enemy level bands and data-owned stat scaling",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-238-enemy-level-content",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:238:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T15:30:00Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "lease:238:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         "src/content/enemies/act1.js",
@@ -51,10 +59,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Author data and strict validation, then turn focused RED gate green",
+      "next_action": "Resolve 19 enemy and 21 encounter RED findings",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000013-69387481-74ef-49b0-967b-dd7bd6d97e7a",
-      "updated_at": "2026-08-31T14:22:35.505Z"
+      "updated_event": "evt-00000014-16f8c93b-320d-47eb-a062-517069f39019",
+      "updated_at": "2026-08-31T14:23:08.121Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -182,5 +190,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "74bb3f995fc167fd22747faaa939cfa34b7f3599d4a92058065a4e296c580a5c"
+  "snapshot_hash": "04632c9e67fca7d5726d5b0267d41551c76918e7dccdb5daa16e972089a4c3fe"
 }
