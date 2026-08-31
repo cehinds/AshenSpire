@@ -1,0 +1,21 @@
+{
+  "event_id": "evt-00000021-a7db172c-cd0e-45da-9572-aa822bd01f9a",
+  "idempotency_key": "BLOCKED:422:1:2026-08-31T14:37:16.485Z",
+  "sequence": 21,
+  "previous_snapshot_hash": "8efd36f12ab32a8f5998dd01b2ade069c3a185ee9a4b5a2da841848d607202db",
+  "issue_id": "422",
+  "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "lease:422:1",
+  "lease_epoch": 1,
+  "event_type": "BLOCKED",
+  "exact_object": {},
+  "payload": {
+    "blocker": "Fix direction reserved to owner/ITM3: (a) which roles fold into it-support-i/ii/iii ladder, (b) ceiling inheritance per level, (c) AS-HD-057 seat + tools/** lease migration. ITM3 ruling on #422 (2026-08-30) is meta-level only; owner directive on #428 (2026-08-29) marks (a)-(c) 'not to be invented'; ladder unlanded at dev bbbc5e7. Decision packet (EVIDENCE/OPTIONS/REC/NEXT/AUTH) prepared by worker-c, recommending option 3 (land ladder docs-plane first) gated on the recorded answer.",
+    "wake_condition": "ITM3/owner records the (a)-(c) answer on #422 or as DECISIONS/0011",
+    "next_action": "Hand decision packet to ITM3 lane; implement docs+contract planes together once ruling lands",
+    "retained_paths": [],
+    "retained_resources": []
+  },
+  "created_at": "2026-08-31T14:37:16.485Z"
+}
