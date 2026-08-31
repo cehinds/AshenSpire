@@ -1,0 +1,24 @@
+{
+  "event_id": "evt-00000025-fb6b2df1-036f-4427-afb8-a8a685d81163",
+  "idempotency_key": "auto-claim:257:2",
+  "sequence": 25,
+  "previous_snapshot_hash": "3430afd5a9e8ca5bb6a4107412a8e94efcd4a17d5c63b24a700c0b25dda8e3b1",
+  "issue_id": "257",
+  "actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:2",
+  "lease_epoch": 2,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e"
+  },
+  "payload": {
+    "branch": "codex/issue-257-quest-choice-pipeline",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T15:10:15.868Z",
+    "claimed_paths": [],
+    "claimed_resources": [],
+    "next_action": "Reclaim from the last preserved candidate or worktree."
+  },
+  "created_at": "2026-08-31T14:40:15.868Z"
+}

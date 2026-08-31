@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 23,
-  "last_sequence": 23,
+  "revision": 25,
+  "last_sequence": 25,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 4,
+      "revision": 5,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
+      "state": "CLAIMED",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 1,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:257:2",
+      "lease_epoch": 2,
+      "lease_expiry": "2026-08-31T15:10:15.868Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": null,
       "lease_history": [
         {
@@ -88,6 +88,13 @@
           "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
           "lease_id": "lease:257:1",
           "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "lease:257:2",
+          "lease_epoch": 2,
           "assignment_kind": "implementation"
         }
       ],
@@ -106,26 +113,26 @@
       "wake_condition": null,
       "next_action": "Reclaim from the last preserved candidate or worktree.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000023-962c4b13-b56f-4554-968e-16e59da5d819",
+      "updated_event": "evt-00000025-fb6b2df1-036f-4427-afb8-a8a685d81163",
       "updated_at": "2026-08-31T14:40:15.868Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 4,
+      "revision": 5,
       "issue_id": "397",
       "title": "Durable owner asks ledger",
       "priority": "P1",
       "dependencies": [],
-      "state": "CANDIDATE_READY",
+      "state": "QA",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "8dd59d73904712ecd525d168ae6936195cbd412a",
       "branch": "codex/issue-397-durable-asks-ledger",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 1,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+      "assignment_kind": "qa",
+      "lease_id": "qa-lease:397:2",
+      "lease_epoch": 2,
+      "lease_expiry": "2026-08-31T15:10:15.868Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
       "lease_history": [
         {
@@ -134,6 +141,13 @@
           "lease_id": "lease:397:1",
           "lease_epoch": 1,
           "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "qa-lease:397:2",
+          "lease_epoch": 2,
+          "assignment_kind": "qa"
         }
       ],
       "late_candidates": [],
@@ -162,10 +176,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Bind independent QA to this exact candidate.",
+      "next_action": "Run independent QA against the exact candidate commit.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000022-1c6083d0-1bb6-4ea9-b024-07cb75f04ef6",
-      "updated_at": "2026-08-31T14:26:48.957Z"
+      "updated_event": "evt-00000024-5697ea48-1343-4f07-ac1e-44c9adf9d0c3",
+      "updated_at": "2026-08-31T14:40:15.868Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -293,5 +307,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "bea10c79aa21c671d7e7db21db8e40600a41e6fabb163ac721449eb1c940be03"
+  "snapshot_hash": "e226adfd24621749bf30394b31927e5d4a57b4e133ab5aafba28ece5c72df7de"
 }
