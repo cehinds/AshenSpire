@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 29,
-  "last_sequence": 29,
+  "revision": 35,
+  "last_sequence": 35,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -86,12 +86,12 @@
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 7,
+      "revision": 9,
       "issue_id": "426",
       "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
       "priority": "P1",
       "dependencies": [],
-      "state": "PR_OPEN",
+      "state": "DONE",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
       "branch": "codex/issue-426",
@@ -119,9 +119,7 @@
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [
-        "docs/governance/continuity.json"
-      ],
+      "claimed_paths": [],
       "claimed_resources": [],
       "acceptance_commands": [],
       "evidence_pointers": [
@@ -133,23 +131,24 @@
         "pin independently recomputed: build/AshenSpire.html = 4241834 bytes, sha256 029154D5...163A8C, matches continuity.json; buildOrdinal 1719 + sourceDigest 8f546f2e1d match buildordinal.json",
         "candidate green: continuity check OK, audit OK, selftest 21/21; opsctl verify fails only on the two pre-existing hub mirrors (identical at base)",
         "footprint: single file, 10+/10-, only pin quad + branch snapshot + timestamps; git diff --check clean",
-        "https://github.com/cehinds/AshenSpire/pull/478"
+        "https://github.com/cehinds/AshenSpire/pull/478",
+        "8bfdd32f5654e1496a42a9e0c780bddf4a1c45ad"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Wait for required checks and independent exact-head review.",
+      "next_action": null,
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000024-3237073a-79cc-4afc-b3d8-78751918eb4a",
-      "updated_at": "2026-08-31T14:41:05.088Z"
+      "updated_event": "evt-00000033-c0d8a5fd-8c98-4936-81b2-32544c1d7ec6",
+      "updated_at": "2026-08-31T15:13:28.351Z"
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 7,
+      "revision": 9,
       "issue_id": "468",
       "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
       "priority": "P1",
       "dependencies": [],
-      "state": "PR_OPEN",
+      "state": "DONE",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "495bf285ac2bcdd634f46b56352d03c6bd6cc593",
       "branch": "codex/issue-468",
@@ -177,11 +176,7 @@
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [
-        ".agentops/work/AS-HD-040",
-        ".agentops/work/AS-HD-050",
-        ".agentops/work/AS-HD-056"
-      ],
+      "claimed_paths": [],
       "claimed_resources": [],
       "acceptance_commands": [],
       "evidence_pointers": [
@@ -195,23 +190,24 @@
         "event chain: 3 new ledger events seq +1, parent seals match base current_hash, new seals match content",
         "render idempotent: only the two PR-475-owned mirrors re-dirty (deliberately kept at committed state); all committed projections current",
         "footprint: exactly 22 files +134/-78 within contract-explained set; PR-475-owned files absent from diff; git diff --check clean",
-        "https://github.com/cehinds/AshenSpire/pull/479"
+        "https://github.com/cehinds/AshenSpire/pull/479",
+        "8e6fdf4805e6eacfa879243ea09f5bec17a33892"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Wait for required checks and independent exact-head review.",
+      "next_action": null,
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000028-d282bd29-b732-496e-b592-470ff9049e77",
-      "updated_at": "2026-08-31T14:47:01.248Z"
+      "updated_event": "evt-00000035-5c2cf5e0-d5b4-4f40-ba88-c3eaee0b94cd",
+      "updated_at": "2026-08-31T15:13:28.351Z"
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 7,
+      "revision": 9,
       "issue_id": "470",
       "title": "Repair dev verify drift from #470 decision: commit dropped review-approval-hub mirror; widen owner-command git add",
       "priority": "P0",
       "dependencies": [],
-      "state": "PR_OPEN",
+      "state": "DONE",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "83f628925c211abe1afa8bd44cba946b04369fdb",
       "branch": "codex/issue-470",
@@ -239,11 +235,7 @@
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [
-        "review-approval-hub/decisions.html",
-        "review-approval-hub/tickets/AS-HD-029.html",
-        ".github/workflows/owner-command.yml"
-      ],
+      "claimed_paths": [],
       "claimed_resources": [],
       "acceptance_commands": [
         "node .agentops/tools/opsctl.mjs verify",
@@ -258,14 +250,15 @@
         "render idempotent at candidate: RENDER OK, git status --porcelain empty (no hand edits)",
         "owner-command.yml parses as YAML; diff is single-line git add widening only",
         "no security regression: 3-file footprint; no changes to triggers, permissions, secrets, or steps",
-        "https://github.com/cehinds/AshenSpire/pull/475"
+        "https://github.com/cehinds/AshenSpire/pull/475",
+        "6cf197a4dc9892e68588e4c69c8e8043389533ca"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Wait for required checks and independent exact-head review.",
+      "next_action": null,
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000016-d3dadd67-3273-4d90-ae68-3c727666b8f4",
-      "updated_at": "2026-08-31T14:28:22.496Z"
+      "updated_event": "evt-00000031-43184b3e-71c6-470a-a87e-6ba83dd21c46",
+      "updated_at": "2026-08-31T15:13:28.351Z"
     },
     "480": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -317,5 +310,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "cefd2e7c332c90f611da296d201dc6338bb683a3ef7e764c6acf7a79f5036b60"
+  "snapshot_hash": "9afdbc042dfa832d8d9a10c042f9b7e4c01be35477fc569bf3d5516b0c953986"
 }

@@ -1,0 +1,21 @@
+{
+  "event_id": "evt-00000032-71815822-6b33-450e-bc73-42f13e7dc2ab",
+  "idempotency_key": "merged-dev:478:8bfdd32f5654e1496a42a9e0c780bddf4a1c45ad",
+  "sequence": 32,
+  "previous_snapshot_hash": "e07e4f3a13345a18f04b186d37caa1cb27ed26a86a8db71f147694ff2523c214",
+  "issue_id": "426",
+  "actor": "scheduler",
+  "machine_id": null,
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "MERGED_DEV",
+  "exact_object": {
+    "oid": "8bfdd32f5654e1496a42a9e0c780bddf4a1c45ad",
+    "pr_number": 478
+  },
+  "payload": {
+    "merge_commit": "8bfdd32f5654e1496a42a9e0c780bddf4a1c45ad",
+    "note": "merged by owner cehinds via GitHub UI; reconcile authorized by Constantine in operator session session_017aHqQzu971qKcvxfeKxCk8"
+  },
+  "created_at": "2026-08-31T15:13:28.351Z"
+}

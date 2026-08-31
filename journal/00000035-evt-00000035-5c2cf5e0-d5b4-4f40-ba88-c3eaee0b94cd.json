@@ -1,0 +1,17 @@
+{
+  "event_id": "evt-00000035-5c2cf5e0-d5b4-4f40-ba88-c3eaee0b94cd",
+  "idempotency_key": "completed:468:8e6fdf4805e6eacfa879243ea09f5bec17a33892",
+  "sequence": 35,
+  "previous_snapshot_hash": "f9d55cca9c9fe0b5cce4779e2f56f6c941296f25674b536fe1f7fe58c43c9b2b",
+  "issue_id": "468",
+  "actor": "scheduler",
+  "machine_id": null,
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "COMPLETED",
+  "exact_object": {
+    "oid": "8e6fdf4805e6eacfa879243ea09f5bec17a33892"
+  },
+  "payload": {},
+  "created_at": "2026-08-31T15:13:28.351Z"
+}
