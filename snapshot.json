@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 48,
-  "last_sequence": 48,
+  "revision": 49,
+  "last_sequence": 49,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -145,23 +145,31 @@
     },
     "420": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "420",
       "title": "Fix changelog ordinal regression across prose-only date groups",
       "priority": "P2",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
       "candidate_commit": null,
       "branch": "codex/issue-420-changelog-prose-gap",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:420:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T17:26:33.8317205Z",
+      "lease_machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+          "machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
+          "lease_id": "lease:420:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         "tools/about-changelog.mjs"
@@ -184,8 +192,8 @@
       "wake_condition": null,
       "next_action": "Add a discriminating prose-gap regression plant and repair numeric-boundary comparison in tools/about-changelog.mjs.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000048-afc4b3e2-6b46-470e-a2cc-afb2019e6026",
-      "updated_at": "2026-08-31T16:40:46.090Z"
+      "updated_event": "evt-00000049-b5f54746-7f7c-4722-bab2-96fb85263074",
+      "updated_at": "2026-08-31T16:41:35.607Z"
     },
     "422": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -461,5 +469,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "501f4c8fc4eca1327b2f683afcb302dbc5786e5387e88455ac1a26f8f70950d5"
+  "snapshot_hash": "31556e8722b9b8e6d16ad6a97c746c6ed270995988ab9f12441251280fbb74b7"
 }
