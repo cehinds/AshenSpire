@@ -1,0 +1,19 @@
+{
+  "event_id": "evt-00000023-962c4b13-b56f-4554-968e-16e59da5d819",
+  "idempotency_key": "RESOURCE_RELEASED:257:1:2026-08-31T14:40:15.868Z",
+  "sequence": 23,
+  "previous_snapshot_hash": "9f05921c01827e6857e6f25ce12e9fed24ab996e224cf75f1aa6eaeba6363fc0",
+  "issue_id": "257",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:1",
+  "lease_epoch": 1,
+  "event_type": "RESOURCE_RELEASED",
+  "exact_object": {},
+  "payload": {
+    "requeue": true,
+    "retained_paths": [],
+    "retained_resources": []
+  },
+  "created_at": "2026-08-31T14:40:15.868Z"
+}

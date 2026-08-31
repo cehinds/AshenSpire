@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 22,
-  "last_sequence": 22,
+  "revision": 23,
+  "last_sequence": 23,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:257:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T15:30:00Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": null,
       "lease_history": [
         {
@@ -92,13 +92,8 @@
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [
-        "src/model/quests.js",
-        "tools/quest-choice-contract.mjs"
-      ],
-      "claimed_resources": [
-        "quest-choice-contract"
-      ],
+      "claimed_paths": [],
+      "claimed_resources": [],
       "acceptance_commands": [
         "node tools/quest-choice-contract.mjs",
         "node tests/run-node.mjs",
@@ -109,10 +104,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Create RED-first quest vocabulary and consequence contract",
+      "next_action": "Reclaim from the last preserved candidate or worktree.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000018-4eb91a56-43f3-4b7b-b28c-8c276c5e50b9",
-      "updated_at": "2026-08-31T14:25:11.371Z"
+      "updated_event": "evt-00000023-962c4b13-b56f-4554-968e-16e59da5d819",
+      "updated_at": "2026-08-31T14:40:15.868Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -298,5 +293,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "9f05921c01827e6857e6f25ce12e9fed24ab996e224cf75f1aa6eaeba6363fc0"
+  "snapshot_hash": "bea10c79aa21c671d7e7db21db8e40600a41e6fabb163ac721449eb1c940be03"
 }
