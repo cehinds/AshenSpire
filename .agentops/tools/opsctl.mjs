@@ -996,6 +996,15 @@ export function semanticChecks(c) {
         errors.push(`${where} '${id}' display_name has ${segs.length} segments; the declared template '${tplText}' has ${tpl.segments}`);
         return;
       }
+      // Every segment the template declares must carry content. Checking only
+      // the last one let `P |  | Coordination Specialist - AshenSpire` pass with
+      // the role and level missing — right shape, no name.
+      const tplSegs = String(tplText).split('|').map((x) => x.trim());
+      for (let k = 1; k < segs.length; k++) {
+        if (segs[k] === '') {
+          errors.push(`${where} '${id}' display_name leaves segment ${k + 1} empty, where the template declares '${tplSegs[k]}'; a name with the right shape and nothing in it is not a name`);
+        }
+      }
       const last = segs[segs.length - 1];
       if (!last.endsWith(`- ${tpl.suffix}`)) {
         errors.push(`${where} '${id}' display_name ends '${last}'; the declared template closes with '- ${tpl.suffix}'`);
@@ -2213,12 +2222,22 @@ export function runtimeChecks(g, rt) {
   // `consolidates` passed verify with an unchecked consolidation claim sitting
   // in the authoritative ledger. `promotion` arrived in this same PR with the
   // identical flaw; both are paired here.
-  const KIND_PAYLOAD = [['consolidates', 'consolidation'], ['promotion', 'owner-decision']];
+  // Binding `promotion` to kind 'owner-decision' was not enough: every owner
+  // command produces that kind, so a delegate or defer event could carry a
+  // fabricated promotion and nothing would look at it. The event records the
+  // ACTION that produced it now, and the payload is bound to the action.
+  const KIND_PAYLOAD = [
+    { field: 'consolidates', kind: 'consolidation', action: null },
+    { field: 'promotion', kind: 'owner-decision', action: 'fast-forward-test' },
+  ];
   for (const [ticket, list] of Object.entries(rt.events)) {
     for (const ev of list) {
-      for (const [field, kind] of KIND_PAYLOAD) {
-        if (ev[field] !== undefined && ev.kind !== kind) {
+      for (const { field, kind, action } of KIND_PAYLOAD) {
+        if (ev[field] === undefined) continue;
+        if (ev.kind !== kind) {
           errors.push(`event '${ev.id}' is kind '${ev.kind}' but carries a '${field}' payload, which only a '${kind}' event may carry; nothing would check it there`);
+        } else if (action && ev.action !== action) {
+          errors.push(`event '${ev.id}' carries a '${field}' payload but records action '${ev.action || 'none'}', not '${action}'; the ledger would claim a promotion no command performed`);
         }
       }
     }
@@ -2900,7 +2919,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const event = {
     schema: 'agentops/event/v1', id, ticket, seq,
     parent_event: last ? last.id : null,
-    kind: 'owner-decision', actor: request.actor, at: now, summary
+    kind: 'owner-decision', actor: request.actor, action: request.action, at: now, summary
   };
   // The ledger is the authoritative record of the promotion, so it carries the
   // exact facts rather than the 12-character prefixes the summary reads with.
@@ -4555,6 +4574,12 @@ export function runSelftest(root = ROOT) {
     const g = rt.events[t].find((e) => e.kind === 'genesis') || rt.events[t][0];
     g.consolidates = { from_event: 'x', to_event: 'y', count: 2, authorised_by: 'maker', recovery_consequence: 'none' };
   }, "only a 'consolidation' event may carry");
+  expectRuntime('a promotion payload on a decision that is not a fast-forward', (rt) => {
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'delegate';
+    e.promotion = { ref: 'test', from: 'a'.repeat(40), to: 'b'.repeat(40), hosted_verified_dev_oid: 'b'.repeat(40), evidence: ['fabricated'] };
+  }, 'the ledger would claim a promotion no command performed');
   expectRuntime('a promotion payload on a state-change event', (rt) => {
     const t = Object.keys(rt.events)[0];
     const e = rt.events[t].find((x) => x.kind === 'state-change') || rt.events[t][0];
@@ -4915,6 +4940,7 @@ export function runSelftest(root = ROOT) {
   // second naming scheme, so every way of drifting is planted.
   expectSemantic('display name: a seat kind the convention does not declare', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'X | IT Manager III | Coordination - AshenSpire'; }, 'neither seat kind the convention declares');
   expectSemantic('display name: the wrong number of segments', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | team | Coordination - AshenSpire'; }, 'segments; the declared template');
+  expectSemantic('display name: an empty role-and-level segment', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P |  | Coordination Specialist - AshenSpire'; }, 'a name with the right shape and nothing in it is not a name');
   expectSemantic('display name: a different project suffix', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | Coordination - SomeOtherProject'; }, 'closes with');
   expectSemantic('display name: no title before the project', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | - AshenSpire'; }, 'carries no title before the project');
   expectSemantic('display name: a role and its actor disagreeing', (c) => { c.hierarchy.nodes.find((n) => n.display_name).display_name = 'P | IT Manager III | Something Else - AshenSpire'; }, 'one seat, two names');
