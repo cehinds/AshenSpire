@@ -24,6 +24,7 @@ import { basicCardProfiles } from './generated/basicCardProfiles.js';
 import { cardExposure } from './generated/cardExposure.js';
 import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
+import { itemUpgradeChanges } from './generated/itemUpgradeChanges.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
 import { cardTagging } from './generated/cardTagging.js';
 import { armouryUi } from './generated/armouryUi.js';
@@ -34,14 +35,35 @@ function list(v) {
   return Array.isArray(v) ? v : [v];
 }
 
+export const ITEM_TYPE_TAG_PREFIX = 'item:';
+
+/** `item:magic-focus` -> `Magic Focus`; adding a new type is a content tag. */
+export function itemTypeLabel(tag) {
+  if (typeof tag !== 'string' || !tag.startsWith(ITEM_TYPE_TAG_PREFIX)) return null;
+  return tag.slice(ITEM_TYPE_TAG_PREFIX.length)
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 function normPiece(row) {
   const attributes = Object.fromEntries(equipmentRequirements
     .filter((requirement) => requirement.itemId === row.id)
     .map((requirement) => [requirement.attributeId, requirement.minimum]));
+  const entityTags = list(row.tags);
+  const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
+  if (!itemTypeTags.length) throw new Error(`Equipment '${row.id}' must declare at least one item:* type tag`);
   return {
     ...row,
     artKey: row.artKey || row.id,
-    tags: list(row.tags),
+    // Gameplay/presentation characteristics remain the familiar `tags` set;
+    // the complete authored entity vocabulary is retained separately so item
+    // cards never infer type from `kind` or a UI call site.
+    entityTags,
+    itemTypeTags,
+    itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
+    tags: entityTags.filter((tag) => !itemTypeLabel(tag)),
     mods: list(row.mods),
     ...(Object.keys(attributes).length ? { requirements: { attributes } } : {}),
   };
@@ -124,6 +146,9 @@ export const STARTING_KITS = startingKits.map((row) => ({ ...row }));
 
 /** Raw item/stat minima retained so validation can detect duplicate authored rows. */
 export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...row }));
+
+/** Exact item/tier upgrade facts. Interpretation belongs to model/itemUpgrades.js. */
+export const ITEM_UPGRADE_CHANGES = itemUpgradeChanges.map((row) => ({ ...row }));
 
 /** Registered exceptional card→weapon bonds; ordinary fit is class/tag based. */
 export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({ ...row }));

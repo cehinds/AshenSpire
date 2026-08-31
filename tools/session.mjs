@@ -372,6 +372,7 @@ export function createSession({ registries, seedString, endless = false, restore
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
+      itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
     };
   }
 
@@ -766,7 +767,7 @@ export function createSession({ registries, seedString, endless = false, restore
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       smithingStones: m.run.smithingStones,
-      armamentLevels: { ...(m.run.armamentLevels || {}) },
+      itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
       ...(m.run.lastSmithingReceipt
         ? { lastSmithingReceipt: structuredClone(m.run.lastSmithingReceipt) }
         : {}),

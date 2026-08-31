@@ -136,6 +136,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     energyMax: p.energyMax,
     drawPerTurn: p.drawPerTurn,
     damageBySchoolAdd: p.damageBySchoolAdd || {},
+    itemUpgradeLevels: p.itemUpgradeLevels || {},
     // Co-op players carry no loadout into this engine, so the vessel arrives
     // only if the caller stamped a threshold; absent stays absent (the HUD
     // refusal), never a lying 0/0. Same graceful shape as maxMana above.
@@ -314,7 +315,7 @@ function needsEnemyTarget(def) {
 function effectiveCost(C, def) {
   if (def.cost === 'X') return 'X';
   let cost = def.cost;
-  if (def.type === 'power') cost = Math.max(0, cost - passiveSum(C.registries, C.player.relicIds, 'powerCostReduction'));
+  if (def.type === 'power') cost = Math.max(0, cost - passiveSum(C.registries, C.player.relicIds, 'powerCostReduction', C.player.itemUpgradeLevels || {}));
   return cost;
 }
 
@@ -330,8 +331,10 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(C, def);
   const manaCost = def.manaCost || 0;
+  const staminaCost = def.staminaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
+  if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
   const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
     id: entry.id,
@@ -361,6 +364,8 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
   if (manaCost > 0) C.emit('manaSpent', { amount: manaCost });
+  p.stamina -= staminaCost;
+  if (staminaCost > 0) C.emit('staminaSpent', { amount: staminaCost });
 
   C.piles.hand.splice(idx, 1);
   p.counters.cardsPlayedThisTurn += 1;
@@ -368,6 +373,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const meta = {
     energySpent: cost,
     manaSpent: manaCost,
+    staminaSpent: staminaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -384,7 +390,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   C.emit('cardPlayed', {
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
-    ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost,
+    ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });
   drainQueue(C);
 

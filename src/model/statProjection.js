@@ -4,6 +4,7 @@
 import { deriveStat } from './derivedStats.js';
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
+import { resolveUpgradedRelic } from './itemUpgrades.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -30,7 +31,8 @@ function presentationRows(registries) {
  */
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
-  const pieces = equippedPieces(registries, run.loadout, run.class);
+  const levels = run.itemUpgradeLevels || {};
+  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
   const pieceSources = pieces.map((piece) => ({
     kind: 'equipment',
     id: piece.id,
@@ -38,11 +40,11 @@ export function playerPoiseThresholdReceipt(registries, run) {
     value: piece.poiseThreshold,
   }));
   const relicSources = (run.relics || [])
-    .map((id) => registries.relics.get(id))
+    .map((id) => resolveUpgradedRelic(registries, `relic/${id}`, levels[`relic/${id}`] || 0))
     .filter((relic) => relic.passives && Number.isFinite(relic.passives.poiseThresholdAdd))
     .map((relic) => ({ kind: 'relic', id: relic.id, value: relic.passives.poiseThresholdAdd }));
   const equipment = pieceSources.reduce((sum, source) => sum + source.value, 0);
-  const relic = passiveSum(registries, run.relics || [], 'poiseThresholdAdd');
+  const relic = passiveSum(registries, run.relics || [], 'poiseThresholdAdd', levels);
   const raw = equipment + relic;
   return {
     id: 'poiseThreshold',

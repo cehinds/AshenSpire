@@ -63,7 +63,7 @@ import {
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
-import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
+import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
@@ -181,6 +181,14 @@ const OWNS_EVERYTHING = { has: () => true };
 const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
 const AT_CAMP = { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
+const TEST_ARMAMENT_INTRINSICS = Object.freeze({
+  attackRating: 0,
+  defenseRating: 0,
+  weight: 0,
+  poiseThreshold: 0,
+  weaponArtManaCost: 0,
+  uniqueSkillStaminaCost: 0,
+});
 
 // #104 — THE WIDE, SEALED SLOT, WOKEN ONCE. `talisman` is the only row in
 // equipSlots.csv that is BOTH multi-set (`sets=3`) and `swap=outOfCombat`, so it
@@ -193,7 +201,7 @@ const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 // test-only content that is never shipped.
 const TEST_CHARM = {
   id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '',
-  rarity: 'common', tags: [], mods: [], unlock: '',
+  rarity: 'common', tags: [], itemTypeTags: [], mods: [], unlock: '', ...TEST_ARMAMENT_INTRINSICS,
 };
 const REG_CHARM = {
   ...REG,
@@ -1434,7 +1442,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rn.flaskCharges.capacity, 5, "Traveler's Flask raises fixed charge capacity");
     eq(rn.flaskCharges.hp, 4, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
-    assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
+    eq(rn.itemUpgradeLevels['armament/straightSword'], 1, 'Whetstone Memory promotes the sourced Straight Sword package');
+    assert(rn.deck.filter((c) => c.cardId === 'strike').every((c) => c.smithingLevel === 1 && !c.upgraded),
+      'Whetstone Memory upgrades every sourced Strike through equipment authority, not per-copy flags');
   });
 
   // ---- 20. M3 phase 1: Starseer + Herald class mechanics ---------------------------------
@@ -1886,6 +1896,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         assert(tagIds.includes(t), `${where}: tag '${t}' is registered`);
       }
     };
+    const checkItemTypes = (tags, where) => {
+      const values = (tags === '' ? [] : Array.isArray(tags) ? tags : [tags]);
+      const itemTypes = values.filter((tag) => tag.startsWith('item:'));
+      assert(itemTypes.length > 0, `${where}: at least one authored item:* type tag`);
+      checkTags(values.filter((tag) => !tag.startsWith('item:')), where);
+    };
 
     for (const w of weapons) {
       assert(KINDS.includes(w.kind), `${w.id}: known kind`);
@@ -1894,7 +1910,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(/^[0-9A-Fa-f]{6}$/.test(w.metal), `${w.id}: metal is a 6-digit hex`);
       assert(/^[0-9A-Fa-f]{6}$/.test(w.accent), `${w.id}: accent is a 6-digit hex`);
       assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
-      checkTags(w.tags, w.id);
+      checkItemTypes(w.tags, w.id);
       checkMods(w.mods, w.id);
       eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
     }
@@ -1906,7 +1922,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
-      checkTags(o.tags, o.id);
+      checkItemTypes(o.tags, o.id);
       checkMods(o.mods, o.id);
     }
   });
@@ -1917,6 +1933,44 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // no engine code. It changes numbers on the starters, through one closed
     // vocabulary (equipMods.csv) that a typo cannot slip past.
     eq(validateEquipment(REG).join('; '), '', 'every authored piece parses against the vocabulary');
+
+    const intrinsicReceipts = REG.equipment.armaments.map(armamentIntrinsicReceipt);
+    eq(intrinsicReceipts.length, 25, 'all 25 armaments expose an intrinsic stat receipt');
+    assert(intrinsicReceipts.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
+      .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
+    'each intrinsic receipt exposes five explicit non-negative integer facts');
+    assert(REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
+      'presentation weight is the already-authored Poise threshold and adds no balance behavior');
+    assert(REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
+      piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
+    )), 'only magic-focus staff-technique armaments author one Weapon Art Mana');
+    assert(REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
+      'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
+    eq(JSON.stringify(armamentIntrinsicReceipt(REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
+      JSON.stringify({ itemId: 'greatsword', attackRating: 9, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
+      'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
+
+    const missingIntrinsicBundle = {
+      ...contentBundle,
+      equipment: {
+        ...contentBundle.equipment,
+        armaments: contentBundle.equipment.armaments.map((piece) => ({ ...piece })),
+      },
+    };
+    delete missingIntrinsicBundle.equipment.armaments[0].attackRating;
+    assert(validateContent(missingIntrinsicBundle).errors.some((error) => error.path.endsWith('.attackRating')),
+      'boot validation fails closed when an intrinsic armament field is absent');
+    const mismatchedIntrinsicRegistries = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armaments: REG.equipment.armaments.map((piece) => (
+          piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 1 } : piece
+        )),
+      },
+    };
+    assert(validateEquipment(mismatchedIntrinsicRegistries).some((problem) => /straightSword: weaponArtManaCost/.test(problem)),
+      'registry validation rejects a Weapon Art cost that contradicts the authored type/profile contract');
 
     const bal = REG.balance.equipment;
     const strikeOf = (mods) => resolveCard(REG, { cardId: 'strike', mods });
@@ -2056,7 +2110,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     };
     const probe = {
       id: 'poolProbe', name: 'Pool Probe', kind: 'weapon', hand: 'right', rarity: 'rare',
-      tags: [], mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
+      tags: [], itemTypeTags: [], mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
+      ...TEST_ARMAMENT_INTRINSICS,
     };
     const POOL_REG = {
       ...REG,
@@ -2238,7 +2293,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         ...REG.equipment,
         armaments: [...REG.equipment.armaments,
           { id: 'testCharm', name: 'Heavy Charm', kind: 'weapon', hand: 'right', rarity: 'common',
-            tags: [], mods: ['self.swapCost=+2'], unlock: '' }],
+            tags: [], itemTypeTags: [], mods: ['self.swapCost=+2'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
       },
     };
     const charmRun = createRunState({ seed: 5, classId: 'reaver', registries: REG });
@@ -2407,7 +2462,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           ...REG.equipment,
           modFields: { ...REG.equipment.modFields, probe: { field: 'probe', scope: 'run', apply, status: 'strength' } },
           armaments: [...REG.equipment.armaments,
-            { id: 'probePiece', name: 'Probe', kind: 'weapon', hand: 'right', rarity: 'common', tags: [], mods: ['self.probe=+3'], unlock: '' }],
+            { id: 'probePiece', name: 'Probe', kind: 'weapon', hand: 'right', rarity: 'common', tags: [], itemTypeTags: [], mods: ['self.probe=+3'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
         },
       };
       const lo = createLoadout(reg, 'reaver');
@@ -5875,8 +5930,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
     }).properties.holdAction === false,
     'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
-    eq(contentBundle.balance.ui.holdConfirm.def, 'off',
-      'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
+    eq(contentBundle.balance.ui.holdConfirm.def, 'normal',
+      'the universal hold setting defaults normal so state-changing options expose click-review and hold-direct from first run');
     eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
       'the title quick-load hold duration is authored as 600 ms');
     const malformedTitleLoadHold = {

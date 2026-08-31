@@ -13,10 +13,10 @@
 //     NEVER A LIST OF CALL SITES.
 //
 // So no screen decides. A screen names the action it is wiring and hands over
-// the commit; the machinery reads the characteristics below and picks the form.
-// Adding a second beat to something is A ROW HERE. Taking one away is a row
-// here. Neither is a line in a screen. (Law 0 clause 1: the entry DESCRIBES,
-// the machinery DERIVES.)
+// the commit. The characteristics below remain the enumerable stakes/hazard
+// record; the UI applies one universal option contract: tap reviews, deliberate
+// hold commits directly. Adding a reviewed action is A ROW HERE, never a new
+// call-site interaction rule. (Law 0 clause 1: the entry DESCRIBES.)
 //
 // ---------------------------------------------------------------------------
 // WHY ONE TABLE RATHER THAN A DECLARATION BESIDE EACH ACTION. The precedent is

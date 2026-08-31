@@ -52,12 +52,14 @@ export function openConfirmationModal({
   confirmLabel = 'Continue',
   cancelLabel = 'Back',
   consequence = '',
+  detailsHtml = '',
   tone = 'normal',
   onConfirm,
   onCancel = () => {},
   returnFocusElement = document.activeElement,
   component = UI.confirmationModal,
   inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
+  confirmEnabled = true,
 } = {}) {
   // One service, one active decision. Repeated activation replaces the stale
   // surface without committing or reporting a cancellation that was not made.
@@ -90,6 +92,14 @@ export function openConfirmationModal({
   copy.className = 'confirmation-copy';
   copy.textContent = message || '';
 
+  const details = document.createElement('div');
+  details.className = 'confirmation-details';
+  details.hidden = !detailsHtml;
+  // Callers build this only from escaped, model-owned presentation values.
+  // Keeping the detail region in the shared modal is what makes costs and
+  // consequences uniform rather than a collection of screen-owned dialogs.
+  if (detailsHtml) details.innerHTML = detailsHtml;
+
   const footer = document.createElement('footer');
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
@@ -100,9 +110,10 @@ export function openConfirmationModal({
   confirmButton.type = 'button';
   confirmButton.className = `subtle confirmation-confirm${tone === 'danger' ? ' danger' : ''}`;
   confirmButton.textContent = confirmLabel;
+  confirmButton.hidden = !confirmEnabled;
   markUiComponent(confirmButton, UI.confirmationAction, tone);
   footer.append(cancelButton, confirmButton);
-  dialog.append(header, copy, footer);
+  dialog.append(header, copy, details, footer);
   veil.appendChild(dialog);
   document.body.appendChild(veil);
 
@@ -134,7 +145,7 @@ export function openConfirmationModal({
       return;
     }
     if (event.key !== 'Tab') return;
-    const controls = [cancelButton, confirmButton];
+    const controls = [cancelButton, ...(confirmEnabled ? [confirmButton] : [])];
     const at = controls.indexOf(document.activeElement);
     if (event.shiftKey && at <= 0) {
       event.preventDefault();
@@ -147,6 +158,7 @@ export function openConfirmationModal({
 
   cancelButton.addEventListener('click', cancel);
   confirmButton.addEventListener('click', () => {
+    if (!confirmEnabled) return;
     if (closed) return;
     close({ restoreFocus: false, retainInputShield: true });
     const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });

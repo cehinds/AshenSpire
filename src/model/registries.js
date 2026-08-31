@@ -10,6 +10,7 @@ import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
+import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -236,11 +237,12 @@ export function passiveMult(registries, relicIds, key) {
 }
 
 /** Sum of an additive passive across owned relics (default 0). */
-export function passiveSum(registries, relicIds, key) {
+export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
   knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
-    const p = registries.relics.get(id).passives;
+    const itemRef = `relic/${id}`;
+    const p = resolveUpgradedRelic(registries, itemRef, itemUpgradeLevels[itemRef] || 0).passives;
     if (p && typeof p[key] === 'number') s += p[key];
   }
   return s;
@@ -280,6 +282,7 @@ export function resolveCard(registries, instanceOrRef) {
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
+  const sourceArmamentId = instanceOrRef.sourceArmamentId || '';
   if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
   if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0) return base;
@@ -292,7 +295,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${smithingLevel}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -318,41 +321,19 @@ export function resolveCard(registries, instanceOrRef) {
       ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
     });
   }
-  // Equipment profiles author absolute values, so the generic upgrade delta is
-  // applied after profile/mod projection. This keeps actual play and previews
-  // aligned for equipment-bound basic cards.
-  for (let level = 0; level < smithingLevel; level += 1) {
-    result = applyUpgradeDelta(result, base, mergeUpgrade(base));
+  // Smithing changes are exact item/tier content. No source id means there is
+  // no authority for a tier and therefore nothing may be inferred.
+  if (smithingLevel > 0 && !sourceArmamentId) throw new Error('A Smithed card must carry sourceArmamentId');
+  for (let nextTier = 1; nextTier <= smithingLevel; nextTier += 1) {
+    result = applyItemCardUpgradeRows(
+      result,
+      instanceOrRef.equipmentRole || result.equipmentRole,
+      itemUpgradeRows(registries, `armament/${sourceArmamentId}`, nextTier),
+      registries.attributes.ids(),
+    );
   }
   cache.set(key, result);
   return result;
-}
-
-function applyUpgradeDelta(projected, base, upgraded) {
-  const effects = (projected.effects || []).map((effect) => ({ ...effect }));
-  const baseEffects = base.effects || [];
-  const upgradedEffects = upgraded.effects || [];
-  for (let index = 0; index < upgradedEffects.length; index += 1) {
-    const before = baseEffects[index];
-    const after = upgradedEffects[index];
-    const target = effects[index];
-    if (!before || !after || !target) continue;
-    for (const field of ['amount', 'stacks', 'hits']) {
-      if (typeof before[field] === 'number' && typeof after[field] === 'number' && typeof target[field] === 'number') {
-        target[field] += after[field] - before[field];
-      }
-    }
-  }
-  const result = {
-    ...projected,
-    effects,
-    name: upgraded.name !== base.name ? `${projected.name}+` : projected.name,
-  };
-  if (typeof base.cost === 'number' && typeof upgraded.cost === 'number' && typeof result.cost === 'number') {
-    result.cost += upgraded.cost - base.cost;
-  }
-  if (upgraded.keywords && upgraded.keywords !== base.keywords) result.keywords = [...upgraded.keywords];
-  return deepFreeze(result);
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */

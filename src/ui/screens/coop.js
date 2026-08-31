@@ -148,7 +148,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
     let energyCost = def.cost === 'X' ? 1 : def.cost;
     if (def.type === 'power') {
-      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
+      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}));
     }
     return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
   }
@@ -785,28 +785,29 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     app.innerHTML = rewardShell(`${rTitle('Shrine of Emberlight')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
-        <button id="coop-smith" ${candidates.length ? '' : 'disabled'}>Smith an armament · ${mm?.smithingStones || 0} Stone${mm?.smithingStones === 1 ? '' : 's'}</button>
+        <button id="coop-smith" ${candidates.length ? '' : 'disabled'}>Upgrade an item · ${mm?.smithingStones || 0} Stone${mm?.smithingStones === 1 ? '' : 's'}</button>
         ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
       </div>`}`);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
     // The shared modal keeps the co-op transaction identical to solo:
     // reversible selection, every real delta, explicit affordability, then a
-    // separate Confirm. The client sends only that final stable armament id;
+    // separate Confirm. The client sends only that final stable item ref;
     // the host still rebuilds and revalidates before committing.
     const smithBtn = app.querySelector('#coop-smith');
     if (smithBtn && candidates.length) smithBtn.addEventListener('click', () => {
-      let selectedArmamentId = null;
-      const model = () => smithSelectionModel(registries, smith, selectedArmamentId);
+      let selectedItemRef = null;
+      const model = () => smithSelectionModel(registries, smith, selectedItemRef);
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
+        meta,
         returnFocusElement: smithBtn,
-        onSelect: (armamentId) => {
-          selectedArmamentId = armamentId;
+        onSelect: (itemRef) => {
+          selectedItemRef = itemRef;
           modal.update(model());
         },
         onBack: () => {},
-        onConfirm: (armamentId) => send({ t: 'shrineChoice', choice: 'smith', targetId: armamentId }),
+        onConfirm: (itemRef) => send({ t: 'shrineChoice', choice: 'smith', targetId: itemRef }),
       });
     });
     renderPartyBar(); wireLeave();

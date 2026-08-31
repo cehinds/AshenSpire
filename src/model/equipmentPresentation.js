@@ -4,6 +4,7 @@
 
 import {
   equipmentKitReceipt,
+  armamentIntrinsicStatProblems,
   buildEquippedWeaponCardPlan,
   equipmentRequirementReceipt,
   applyEquipTransition,
@@ -25,10 +26,28 @@ function pieceFor(registries, classId, pieceId, slot) {
     : (equipment.armaments || []).find((row) => row.id === pieceId) || null;
 }
 
+/**
+ * Immutable presentation receipt for authored armament facts. These numbers
+ * deliberately do not include Smithing tiers, attributes, or generated-card
+ * deltas; those remain separate receipts and gameplay authorities.
+ */
+export function armamentIntrinsicReceipt(piece) {
+  const problems = armamentIntrinsicStatProblems(piece);
+  if (problems.length) throw new Error(problems.join('; '));
+  return Object.freeze({
+    itemId: piece.id,
+    attackRating: piece.attackRating,
+    defenseRating: piece.defenseRating,
+    weight: piece.weight,
+    weaponArtManaCost: piece.weaponArtManaCost,
+    uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost,
+  });
+}
+
 function requirementsFor(registries, run, pieces) {
   return pieces
     .map((piece) => {
-      const receipt = equipmentRequirementReceipt(registries, piece, run.attributes);
+      const receipt = equipmentRequirementReceipt(registries, piece, run.attributes, { itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
       return {
         ...receipt,
         pieceName: piece.name,
@@ -322,6 +341,7 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
     setIndex,
     pieceId: piece && piece.id,
     pieceName: piece ? piece.name : 'Bare',
+    intrinsic: piece && piece.kind !== 'armor' ? armamentIntrinsicReceipt(piece) : null,
     requirement: piece ? requirementsFor(registries, run, [piece])[0] || {
       itemId: piece.id, pieceName: piece.name, requirements: [], failures: [], ok: true,
     } : null,
@@ -378,6 +398,9 @@ export function equipmentSurfaceReceipt(registries, run, { candidate = null, met
       copies: roleCopies.signature,
     },
     requirements: requirementsFor(registries, run, equippedPieces(registries, run.loadout, run.class)),
+    intrinsicArmaments: equippedPieces(registries, run.loadout, run.class)
+      .filter((piece) => piece.kind !== 'armor')
+      .map(armamentIntrinsicReceipt),
     poise: playerPoiseThresholdReceipt(registries, run),
   };
   if (candidate) receipt.candidate = candidateReceipt(registries, run, candidate, roles, meta);

@@ -89,12 +89,22 @@ function check(ok, label, detail = '') {
 }
 
 let equipmentSurfaceReceipt = null;
+let armamentIntrinsicReceipt = null;
 try {
-  ({ equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js'));
+  ({ equipmentSurfaceReceipt, armamentIntrinsicReceipt } = await import('../src/model/equipmentPresentation.js'));
 } catch (error) {
   check(false, 'shared equipment presentation reader exists', error.message);
 }
 check(typeof equipmentSurfaceReceipt === 'function', 'shared equipment presentation reader is exported');
+check(typeof armamentIntrinsicReceipt === 'function', 'shared intrinsic armament receipt is exported');
+
+if (armamentIntrinsicReceipt) {
+  const intrinsic = (R.equipment.armaments || []).map(armamentIntrinsicReceipt);
+  check(intrinsic.length === 25, 'all 25 armaments have intrinsic stat receipts', String(intrinsic.length));
+  check(intrinsic.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
+    .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
+  'every intrinsic receipt carries all five explicit non-negative integer facts', JSON.stringify(intrinsic));
+}
 
 if (equipmentSurfaceReceipt) {
   const reaver = createRunState({ seed: 0x51, classId: 'reaver', registries: R });
@@ -105,8 +115,10 @@ if (equipmentSurfaceReceipt) {
     'each equipment role carries its authored copy count', JSON.stringify(active.roles));
   check(active.signature?.copies === 1 && active.signature?.cardId === R.classes.get('reaver').startingSignatureCard,
     'class signature is the fourth fixed type and carries one copy', JSON.stringify(active.signature));
-  check(active.requirements.every((row) => row.pieceId && Array.isArray(row.requirements)),
+  check(active.requirements.every((row) => row.itemId && Array.isArray(row.requirements)),
     'active equipment requirements are presentation-ready receipts', JSON.stringify(active.requirements));
+  check(active.intrinsicArmaments.length > 0 && active.intrinsicArmaments.every((row) => row.itemId),
+    'active equipment receipt exposes intrinsic armament facts separately from generated-card roles', JSON.stringify(active.intrinsicArmaments));
   check(active.poise?.active === false && active.poise?.value === active.poise?.equipment + active.poise?.relic,
     'player Poise threshold stays an inert item plus relic receipt', JSON.stringify(active.poise));
   // WAS AN EXACT-BYTES COPY OF A MODEL-OWNED SENTENCE, AND IT HAD DRIFTED RED.
@@ -263,6 +275,9 @@ for (const [source, label] of [[customize, 'creation'], [armoury, 'Armoury']]) {
   check(/renderPlayerPoise/.test(source), `${label} renders the shared player Poise receipt`);
 }
 check(/role-copy-count/.test(armoury), 'Armoury renders role copy-count selectors');
+for (const label of ['Attack rating (AR)', 'Defense rating (DEF)', 'Weapon Art Mana', 'Unique Skill Stamina']) {
+  check(armoury.includes(label), `Armoury renders intrinsic '${label}'`);
+}
 check(/renderCandidateComparison/.test(armoury) && /equip-candidate-comparison/.test(receiptComponents),
   'Armoury renders the canonical candidate comparison');
 check(/equip-resource-change/.test(receiptComponents) && /equip-added-effect/.test(receiptComponents),
