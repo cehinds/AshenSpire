@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000015-c134f66f-ab68-4c7d-a467-22c34112b44b",
+  "idempotency_key": "WORK_ENTERED:238:1:2026-08-31T14:23:55.813Z",
+  "sequence": 15,
+  "previous_snapshot_hash": "04632c9e67fca7d5726d5b0267d41551c76918e7dccdb5daa16e972089a4c3fe",
+  "issue_id": "238",
+  "actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:238:1",
+  "lease_epoch": 1,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "next_action": "Resolve 19 enemy and 21 encounter RED findings"
+  },
+  "created_at": "2026-08-31T14:23:55.813Z"
+}

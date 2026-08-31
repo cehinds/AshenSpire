@@ -1,16 +1,16 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 14,
-  "last_sequence": 14,
+  "revision": 15,
+  "last_sequence": 15,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "238",
       "title": "Author enemy level bands and data-owned stat scaling",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-238-enemy-level-content",
@@ -61,8 +61,8 @@
       "wake_condition": null,
       "next_action": "Resolve 19 enemy and 21 encounter RED findings",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000014-16f8c93b-320d-47eb-a062-517069f39019",
-      "updated_at": "2026-08-31T14:23:08.121Z"
+      "updated_event": "evt-00000015-c134f66f-ab68-4c7d-a467-22c34112b44b",
+      "updated_at": "2026-08-31T14:23:55.813Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -190,5 +190,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "04632c9e67fca7d5726d5b0267d41551c76918e7dccdb5daa16e972089a4c3fe"
+  "snapshot_hash": "47a9cdb25259650e38e9483d1f4121ee08897e2c16e0e17c93fa3ba1bd8887bd"
 }
