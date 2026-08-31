@@ -1934,6 +1934,15 @@ function onBranch(root) {
 // Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
 // work, so an absent ref is normal for an unstarted seat — but wake must say so
 // rather than printing a checkout instruction that silently cannot be followed.
+// Does this repository carry the object, and is it a commit? Same execFileSync
+// discipline as resolveRef: the value comes from a command request.
+function commitExists(root, oid) {
+  try {
+    const t = execFileSync('git', ['cat-file', '-t', oid], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return t === 'commit';
+  } catch { return false; }
+}
+
 // Resolve a branch name to its current OID. Same execFileSync discipline as
 // refExists: the ref comes from capsule JSON and a shell would expand `$(...)`
 // in it. Returns null when the ref does not exist in this checkout.
@@ -2052,7 +2061,53 @@ const REQUEST_SCHEMA_FILE = 'schemas/owner-command-request.schema.json';
 // Validate an owner-command request against the policy: enumerated action,
 // authenticated actor, required fields, and the compare-and-swap precondition.
 // Pure over already-loaded contracts + runtime so the harness can plant defects.
-export function validateCommand(contracts, rt, request) {
+// A3 (#430): reseat as an enumerated, authenticated, compare-and-swap-checked
+// action, so the precondition a stale wake demands is satisfiable by a declared
+// path rather than only by a seat running the CLI.
+//
+// Scope is narrow by ruling, not by omission. AS-HD-029-0052 rule 1 makes reseat
+// seat-initiated at the start of work, and rule 2 gives an unstarted seat a
+// base_ref that follows a branch without appending anything. What is left for a
+// COMMAND is the case those two do not cover: a base a seat did not set for
+// itself, moved by the deputy — one named target, under CAS, never a sweep.
+export function reseatParamErrors(rt, request, root = null) {
+  const errors = [];
+  const cap = rt.capsules[request.target];
+  const p = (request.params && typeof request.params === 'object') ? request.params : null;
+  if (!p) return [`command 'reseat' requires params naming the new base`];
+  const hasOid = typeof p.base_oid === 'string' && p.base_oid !== '';
+  const hasRef = typeof p.base_ref === 'string' && p.base_ref !== '';
+  if (hasOid === hasRef) {
+    errors.push(`command 'reseat' takes exactly one of params.base_oid (pin an exact commit) or params.base_ref (track a branch); it was given ${hasOid ? 'both' : 'neither'}`);
+  }
+  for (const k of Object.keys(p)) {
+    if (k !== 'base_oid' && k !== 'base_ref') errors.push(`command 'reseat' params carries unknown field '${k}'; the action reads base_oid and base_ref only`);
+  }
+  if (cap && !RESEATABLE.has(cap.lifecycle_state)) {
+    errors.push(`command 'reseat' target '${request.target}' is '${cap.lifecycle_state}', not unstarted; work already stands on its base, and moving it would silently rebase what the seat assumed`);
+  }
+  if (hasOid && !/^[0-9a-f]{40}$/.test(p.base_oid)) {
+    errors.push(`command 'reseat' params.base_oid '${p.base_oid}' is not a full 40-character commit id; an abbreviated base is ambiguous in a growing repository`);
+  }
+  if (hasRef && /^[0-9a-f]{7,40}$/.test(p.base_ref)) {
+    errors.push(`command 'reseat' params.base_ref '${p.base_ref}' is a commit id, not a branch; a pinned value recorded as a pointer is neither`);
+  }
+  if (cap && hasOid && cap.base_oid === p.base_oid && !cap.base_ref) {
+    errors.push(`command 'reseat' would set '${request.target}' to the base it already records; a command that changes nothing still appends an event`);
+  }
+  if (cap && hasRef && cap.base_ref === p.base_ref) {
+    errors.push(`command 'reseat' would set '${request.target}' to the pointer it already records; a command that changes nothing still appends an event`);
+  }
+  // Repository-dependent checks run only where a checkout is available, so the
+  // function stays pure for the plant harness.
+  if (root) {
+    if (hasOid && !commitExists(root, p.base_oid)) errors.push(`command 'reseat' params.base_oid '${p.base_oid.slice(0, 12)}' is not a commit in this repository`);
+    if (hasRef && resolveRef(root, p.base_ref) === null) errors.push(`command 'reseat' params.base_ref '${p.base_ref}' is not a branch in this repository`);
+  }
+  return errors;
+}
+
+export function validateCommand(contracts, rt, request, { root = null } = {}) {
   const errors = [];
   const policy = contracts['owner-command'];
   if (!policy) return { ok: false, errors: ['owner-command policy not loaded'], decision: null };
@@ -2073,6 +2128,12 @@ export function validateCommand(contracts, rt, request) {
       errors.push(`stale command: expected_current_hash does not match the live state of '${request.target}' (compare-and-swap failed)`);
     } else if (request.expected_current_hash) cas = 'OK';
   }
+  // Action-specific shape. `params` is an open object in the request schema, so
+  // an action that reads it validates what it reads — otherwise no_arbitrary_input
+  // holds for every field except the one that carries the payload. Checked here
+  // rather than at apply so dry_run_first actually reports it.
+  if (action.id === 'reseat') errors.push(...reseatParamErrors(rt, request, root));
+
   const ok = errors.length === 0;
   const decision = ok ? {
     schema: 'agentops/decision-event/v1',
@@ -2128,7 +2189,9 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const summary = [
     move
       ? `Owner-command '${request.action}' by ${request.actor}: lifecycle ${move.from} -> ${move.target}.${request.candidate_oid ? ` Exact object ${request.candidate_oid}.` : ''}`
-      : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
+      : request.action === 'reseat' && capsule
+        ? `Owner-command 'reseat' by ${request.actor}: ${capsule.base_ref ? `base_ref ${capsule.base_ref}` : `base ${String(capsule.base_oid).slice(0, 12)}`} -> ${request.params.base_ref ? `base_ref ${request.params.base_ref} (resolved at read time)` : `base ${String(request.params.base_oid).slice(0, 12)}`}. The seat did not perform this; the authenticating actor did.`
+        : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
     clearsBlocker ? 'Blocker cleared: the decision it was waiting on is now recorded.' : ''
   ].filter(Boolean).join(' ');
   const event = {
@@ -2152,6 +2215,14 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     // this the capsule would keep reporting itself blocked after the answer
     // arrived, and the HUD would list a resolved decision forever.
     if (action.resolves_blocker && next.blocker) next.blocker = null;
+    // A3: move the base. Re-validated here against the same function the dry run
+    // used, because apply must never trust a decision taken against older state.
+    if (action.id === 'reseat') {
+      const bad = reseatParamErrors(rt, request, root);
+      if (bad.length) return { ok: false, errors: bad, written };
+      if (request.params.base_ref) { next.base_ref = request.params.base_ref; }
+      else { next.base_oid = request.params.base_oid; delete next.base_ref; }
+    }
     // The appended event is the decision's record; evidence_pointers carries
     // declared evidence types only (evidence.json), never event ids.
     delete next.current_hash;
@@ -2229,7 +2300,7 @@ export function runCommand(root, request, { dryRun = true } = {}) {
   if (schemaErrs.length) return { ok: false, errors: schemaErrs.map((e) => `request schema: ${e}`), decision: null };
   const rt = loadRuntime(root);
   if (rt.errors.length) return { ok: false, errors: rt.errors.map((e) => `runtime: ${e}`), decision: null };
-  const res = validateCommand(contracts, rt, request);
+  const res = validateCommand(contracts, rt, request, { root });
   if (!res.ok || dryRun) return res;
 
   const applied = applyCommand(root, contracts, rt, request);
@@ -3626,6 +3697,30 @@ export function runSelftest(root = ROOT) {
   expectCommand('owner-command: stale compare-and-swap rejected', (r) => { r.expected_current_hash = 'sha256:stale'; }, 'stale command');
   expectCommand('owner-command: missing required field rejected', (r) => { delete r.candidate_oid; }, 'missing required field');
   expectCommand('owner-command: owner-exclusive release by deputy rejected', (r) => { r.action = 'authorize-release'; }, 'not authorized');
+
+  // A3 reseat plants, through the same validateCommand() the live dry run uses.
+  // The control is a real unstarted seat: AS-1001 is in-progress, so it doubles
+  // as the started-target rejection below.
+  const rsTicket = Object.keys(rt0.capsules).find((t) => RESEATABLE.has(rt0.capsules[t].lifecycle_state));
+  const rsHash = computeCapsuleHash(rt0.capsules[rsTicket]);
+  const rsReq = (params) => ({ schema: 'agentops/owner-command-request/v1', action: 'reseat', actor: 'it-manager-iii', target: rsTicket, expected_current_hash: rsHash, params });
+  results.push({ label: 'reseat control: an unstarted seat pointed at a branch is accepted', pass: validateCommand(contracts, rt0, rsReq({ base_ref: 'dev' }), { root }).ok, errs: validateCommand(contracts, rt0, rsReq({ base_ref: 'dev' }), { root }).errors });
+  const expectReseat = (label, req, needle) => {
+    const res = validateCommand(contracts, rt0, req, { root });
+    const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+    results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+  };
+  expectReseat('reseat: both a pin and a pointer', rsReq({ base_oid: 'a'.repeat(40), base_ref: 'dev' }), 'exactly one of');
+  expectReseat('reseat: neither a pin nor a pointer', rsReq({}), 'exactly one of');
+  expectReseat('reseat: an unknown params field', rsReq({ base_ref: 'dev', sweep: true }), 'unknown field');
+  expectReseat('reseat: an abbreviated commit id', rsReq({ base_oid: 'a72cac96' }), 'not a full 40-character commit id');
+  expectReseat('reseat: a commit this repository does not carry', rsReq({ base_oid: 'a'.repeat(40) }), 'not a commit in this repository');
+  expectReseat('reseat: a branch this repository does not carry', rsReq({ base_ref: 'no-such-branch-anywhere' }), 'not a branch in this repository');
+  expectReseat('reseat: a commit id recorded as a pointer', rsReq({ base_ref: 'a72cac9611df' }), 'a pinned value recorded as a pointer is neither');
+  expectReseat('reseat: a no-op that would still append an event', rsReq({ base_oid: rt0.capsules[rsTicket].base_oid }), 'a command that changes nothing still appends');
+  expectReseat('reseat: a seat that has already started', { ...rsReq({ base_ref: 'dev' }), target: 'AS-1001', expected_current_hash: computeCapsuleHash(rt0.capsules['AS-1001']) }, 'work already stands on its base');
+  expectReseat('reseat: an unauthenticated actor', { ...rsReq({ base_ref: 'dev' }), actor: 'maker' }, 'not authorized');
+  expectReseat('reseat: a stale compare-and-swap', { ...rsReq({ base_ref: 'dev' }), expected_current_hash: 'sha256:' + '0'.repeat(64) }, 'stale command');
 
   // Stage 6 migration plants — run through the same runtimeChecks the live
   // validate uses (pure over migration.json + capsules).

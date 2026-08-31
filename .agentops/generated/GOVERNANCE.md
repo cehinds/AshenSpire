@@ -681,6 +681,7 @@ The owner-command path accepts only enumerated actions from an authenticated act
 | defer | owner, it-manager-iii | no | no | `target`, `reason` | deferral (routing only) |
 | issue-lease | owner, it-manager-iii | no | no | `target`, `params` | writer lease issuance |
 | revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
+| reseat | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `params` | an unstarted seat's base — pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time |
 | request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
 | authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
 | authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
@@ -760,6 +761,8 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 - `declared_lifecycle_target` — An action may declare lifecycle_target. Applying it moves the target capsule to that state only if transitions.json declares that exact transition from the capsule's current state and permits the authenticating role (the owner role is permitted on protected transitions). An undeclared or unpermitted transition is rejected and nothing is written.
 - `blocker_resolution` — An action may declare resolves_blocker. Applying it clears the target capsule's blocker, because the decision the blocker was waiting on has been recorded. A deferral or a routing-only action never clears one.
 - `append_only_apply` — Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket.
+- `reseat_is_not_a_sweep` — The reseat action moves ONE named target under compare-and-swap, and only a seat that has not started. It exists for a base a seat did not set for itself — a lane reassigned by the deputy — not for keeping capsules level with HEAD: a seat starting its own work reseats its own capsule, and an unstarted seat that should follow a branch carries base_ref instead, which appends nothing. Ruling AS-HD-029-0052 rules 1 and 2.
+- `reseat_records_its_commander` — The event this action appends names the authenticating actor, never the seat whose capsule moved. A process or a deputy acting on a seat's behalf never carries that seat's actor. Ruling AS-HD-029-0052 rule 3.
 
 **`promotion-gates`**
 
