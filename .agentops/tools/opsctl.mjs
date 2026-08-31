@@ -566,6 +566,34 @@ export function semanticChecks(c) {
   // fast-forward-test advanced `test` and left the capsule at dev-integrated,
   // so Gate D's declared hosted-verified -> resolved transition was unreachable:
   // the ref said promoted and the authoritative lifecycle did not.
+  // `required_evidence` was validated against evidence.json in promotion-gates
+  // and in qa, each by its own loop, and nowhere else. authority.json carried a
+  // field of the same name holding prose — one name, two types — so a generic
+  // check would either have failed on it or been written to skip it, and
+  // skipping is how a check stops firing. The prose field is `evidence_expected`
+  // now, and this sweeps every `required_evidence` in the corpus instead of the
+  // two contracts someone thought of.
+  if (c.evidence) {
+    const evIds = new Set(c.evidence.evidence.map((e) => e.id));
+    const sweepEvidence = (node, where) => {
+      if (Array.isArray(node)) { node.forEach((v, i) => sweepEvidence(v, `${where}[${i}]`)); return; }
+      if (!node || typeof node !== 'object') return;
+      for (const [k, v] of Object.entries(node)) {
+        if (k === 'required_evidence') {
+          if (!Array.isArray(v)) {
+            errors.push(`${where}.${k} is not a list of evidence ids; that name means a list of evidence.json ids everywhere in this corpus, and prose under it would be read as one`);
+          } else {
+            for (const need of v) {
+              if (!evIds.has(need)) errors.push(`${where}.${k} requires '${need}', which evidence.json does not declare; nothing can produce it and nothing can pass by holding it`);
+            }
+          }
+        }
+        sweepEvidence(v, `${where}.${k}`);
+      }
+    };
+    for (const [name, contract] of Object.entries(c)) sweepEvidence(contract, name);
+  }
+
   // Role-valued fields were checked one at a time, where someone remembered.
   // A sweep found four references nothing declared: three were deliberate
   // non-seat writers with no declaration to point at, and one — Gate D's
@@ -1417,10 +1445,12 @@ export function renderGovernance(c) {
 
   L.push('## Authority matrix');
   L.push('');
-  L.push('| Action | Routine owner role | Scope | Protected | Required evidence |');
+  L.push(c.authority.evidence_expected_is_prose);
+  L.push('');
+  L.push('| Action | Routine owner role | Scope | Protected | Evidence expected |');
   L.push('|---|---|---|---|---|');
   for (const g of c.authority.grants) {
-    L.push(`| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`);
+    L.push(`| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${mdCell(g.evidence_expected)} |`);
   }
   L.push('');
 
@@ -4025,7 +4055,7 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // escalation classes), and probeStrengthErrors below proves each one still fails
 // when its block is removed.
 const VIEW_PROBES = {
-  authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
+  authority: (x) => [x.evidence_expected_is_prose, ...x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${mdCell(g.evidence_expected)} |`)],
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '\`' + mdCell(g) + '\`').join(', ') || '\u2014 (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
@@ -5432,6 +5462,9 @@ export function runSelftest(root = ROOT) {
   // remove one arm of the declared vocabulary each — if an arm is never the
   // reason something resolves, it is dead permission widening the check for
   // nothing, and these say which arm carries which reference.
+  // The evidence sweep, now that one name means one type corpus-wide.
+  expectSemantic('evidence sweep: a gate requiring evidence nothing declares', (c) => { c.qa.gates[0].required_evidence = ['smoke-receipt']; }, 'nothing can produce it and nothing can pass by holding it');
+  expectSemantic('evidence sweep: prose under the name that means a list of ids', (c) => { c['promotion-gates'].gates[0].required_evidence = 'the usual checks'; }, 'prose under it would be read as one');
   expectSemantic('role sweep: a typo in a nested authority role', (c) => { c.retention.authority.actor_role = 'it-manager-ii'; }, 'is not a declared role, capability pool, legacy alias or non-seat writer');
   expectSemantic('role sweep: a typo inside an array of arrays', (c) => { c['promotion-gates'].gates.find((g) => g.conditional_roles).conditional_roles[0].role = 'data-architecture-leed'; }, 'routes to no one');
   expectSemantic('role sweep: a typo in a path owner', (c) => { c['git-ownership'].paths[0].owner_role = 'makerr'; }, 'is not a declared role');

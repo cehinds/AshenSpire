@@ -254,7 +254,9 @@ These identifiers appear where a role identifier does, and nothing holds them. T
 
 ## Authority matrix
 
-| Action | Routine owner role | Scope | Protected | Required evidence |
+What a grant expects before it is exercised, written for a person to read. It is deliberately NOT called required_evidence: that name means a list of evidence.json ids everywhere else in this corpus (promotion-gates, qa), and one name carrying two types is how a check that reads it generically ends up skipping the contract it cannot parse. A grant that should demand a specific receipt names it in the gate that guards the move, not here.
+
+| Action | Routine owner role | Scope | Protected | Evidence expected |
 |---|---|---|---|---|
 | record-triage-route-report-status | help-desk | ticket-intake-and-status | no | Complete ticket and truthful Project readback. |
 | implement-locally | maker | assigned-exclusive-paths | no | CONTRACT READY, explicit implementation scope, fresh base, exclusive paths, and a held writer lease. |
