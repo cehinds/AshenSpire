@@ -284,8 +284,8 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/schemas/**` | it-manager-iii | governance |
 | `.agentops/tools/**` | maker | agentops-tooling |
 | `.agentops/generated/**` | generator | governance |
-| `.agentops/work/**` | maker | per-ticket |
-| `.agentops/events/**` | maker | per-ticket |
+| `.agentops/work/**` | `per-seat` — the ticket’s lease | per-ticket |
+| `.agentops/events/**` | `per-seat` — the ticket’s lease | per-ticket |
 | `.agentops/leases/**` | it-manager-iii | governance |
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
 | `src/**` | maker | product-source |
@@ -311,6 +311,10 @@ A branch is brought forward by rebase so its history stays linear and its diff k
 Default: `rebase`. Rewriting needs `it-manager-iii` when the branch is not the acting role's own; absent that, merge the base branch in, which leaves every existing checkout valid. Records: the branch, the prior head, the new head, the role that authorized the rewrite, why the rebase was preferred to a merge. Never: rewriting a protected or pr-only ref; discarding a commit that carries evidence without recording where that evidence now lives.
 
 Generated lane `governance`: A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift.
+
+Ledger lane `per-ticket`, written solely by `opsctl`: A work capsule and its event chain are written only by an opsctl command, never by hand: the command seals the capsule, appends the event and checks the chain, so a hand-edited ledger fails its own seal. The path is therefore owned per seat rather than by one role — any seat drives the command for its own ticket, and a role that cannot be granted the ledger cannot record what it did.
+
+The ledger records the seat as the actor of what the seat did, and opsctl as the actor of what the tool did on its own account. A process appending on a seat’s behalf never carries that seat’s actor.
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 
@@ -677,6 +681,7 @@ The owner-command path accepts only enumerated actions from an authenticated act
 | defer | owner, it-manager-iii | no | no | `target`, `reason` | deferral (routing only) |
 | issue-lease | owner, it-manager-iii | no | no | `target`, `params` | writer lease issuance |
 | revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
+| reseat | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `params` | an unstarted seat's base — pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time |
 | request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
 | authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
 | grant-dev-delivery-authority | owner | yes | yes | `target`, `expected_current_hash`, `reason` | grant an it-manager-iii-owned capsule normal-PR delivery authority to dev only; direct dev push, deploy, main/release, tags, publication, and Pages remain forbidden |
@@ -757,6 +762,8 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 - `declared_lifecycle_target` — An action may declare lifecycle_target. Applying it moves the target capsule to that state only if transitions.json declares that exact transition from the capsule's current state and permits the authenticating role (the owner role is permitted on protected transitions). An undeclared or unpermitted transition is rejected and nothing is written.
 - `blocker_resolution` — An action may declare resolves_blocker. Applying it clears the target capsule's blocker, because the decision the blocker was waiting on has been recorded. A deferral or a routing-only action never clears one.
 - `append_only_apply` — Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket.
+- `reseat_is_not_a_sweep` — The reseat action moves ONE named target under compare-and-swap, and only a seat that has not started. It exists for a base a seat did not set for itself — a lane reassigned by the deputy — not for keeping capsules level with HEAD: a seat starting its own work reseats its own capsule, and an unstarted seat that should follow a branch carries base_ref instead, which appends nothing. Ruling AS-HD-029-0052 rules 1 and 2.
+- `reseat_records_its_commander` — The event this action appends names the authenticating actor, never the seat whose capsule moved. A process or a deputy acting on a seat's behalf never carries that seat's actor. Ruling AS-HD-029-0052 rule 3.
 
 **`promotion-gates`**
 

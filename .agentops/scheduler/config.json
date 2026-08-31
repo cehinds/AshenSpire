@@ -19,9 +19,15 @@
   "wake_hard_limit_tokens": 1500,
   "workers": [],
   "cutover": {
-    "scheduler_dispatch_enabled": false,
-    "legacy_watcher_authoritative": true,
-    "authorization_evidence": null
+    "scheduler_dispatch_enabled": true,
+    "legacy_watcher_authoritative": false,
+    "authorization_evidence": {
+      "authorized_by": "constantine (owner)",
+      "instruction": "Proceed with full cutover — selected by the owner from an explicit option set (alongside 'ship the fix only')",
+      "channel": "owner-authenticated Claude Code session session_017aHqQzu971qKcvxfeKxCk8 (scheduler cutover operator), interactive AskUserQuestion selection",
+      "at": "2026-08-31T14:16:00Z",
+      "context": "given after this operator session declined to act on a relayed authorization it could not verify, ran a read-only inspection confirming the issue-470 candidate (83f628925c211abe1afa8bd44cba946b04369fdb, VERIFY OK) and the scheduler state (10 events, 470 CANDIDATE_READY), and put the cutover decision to the owner directly"
+    }
   },
   "authority": {
     "non_force_push_codex_branch": true,
