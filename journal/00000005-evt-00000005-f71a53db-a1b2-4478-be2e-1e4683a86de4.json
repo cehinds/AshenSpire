@@ -1,0 +1,26 @@
+{
+  "event_id": "evt-00000005-f71a53db-a1b2-4478-be2e-1e4683a86de4",
+  "idempotency_key": "CLAIM_ACQUIRED:396:1:2026-08-31T13:53:39.042Z",
+  "sequence": 5,
+  "previous_snapshot_hash": "1f789d0fabd5eb7b6af140c62262010cbbc81972eaee84f4d1d090fc02acaa0b",
+  "issue_id": "396",
+  "actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
+  "machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+  "lease_id": "lease:396:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-396",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T14:23:38Z",
+    "claimed_paths": [
+      "review-approval-hub/index.html",
+      "review-approval-hub/reviews/as-hd-20260826-050-decision-debt.html",
+      "review-approval-hub/reviews/as-hd-20260826-053-context-rotation.html"
+    ],
+    "claimed_resources": [],
+    "next_action": "Author redirect stubs"
+  },
+  "created_at": "2026-08-31T13:53:39.042Z"
+}
