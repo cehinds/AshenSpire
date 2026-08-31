@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 43,
-  "last_sequence": 43,
+  "revision": 44,
+  "last_sequence": 44,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 17,
+      "revision": 18,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "QA",
+      "state": "PR_READY",
       "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
       "candidate_commit": "5b113a8c1bafeda4ae0c849145dfeba557d9a853",
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": "seat:qa-functional:7c554c0c-14c4-40c6-8d05-66acdff06ba2",
-      "assignment_kind": "qa",
-      "lease_id": "qa-lease:257:7",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 7,
-      "lease_expiry": "2026-08-31T16:14:59.438Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
       "lease_history": [
         {
@@ -153,14 +153,22 @@
         "node tools/quest-choice-contract.mjs --selftest:18/18",
         "node tests/run-node.mjs:114/114",
         "git diff --check:PASS",
-        "shipped-chain:abandonedCart/lootStrongbox->merchantsGhost/payInKind hidden; stealRelic+leave remain"
+        "shipped-chain:abandonedCart/lootStrongbox->merchantsGhost/payInKind hidden; stealRelic+leave remain",
+        "candidate:5b113a8c1bafeda4ae0c849145dfeba557d9a853",
+        "base:82ec1f28010eeb2f76440cba95c0814221900e68",
+        "independent-checkout:C:/repos/AshenSpire-qa-257-5b113a8c",
+        "node tools/quest-choice-contract.mjs:13/13 PASS",
+        "node tools/quest-choice-contract.mjs --selftest:18/18 PASS",
+        "node tests/run-node.mjs:114/114 PASS",
+        "opsctl verify:PASS",
+        "event-screen runtime probe: before merchant choices=3; after abandonedCart/lootStrongbox choices=2; payInKind hidden; stealRelic+leave visible; clicking leave appends merchantsGhost/leave receipt and renders result controls"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Run independent QA against the exact candidate commit.",
+      "next_action": "Deliver an issue-closing PR to dev.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000043-fdc70146-9a9f-4c2f-b1be-44a17d82d78c",
-      "updated_at": "2026-08-31T15:44:59.438Z"
+      "updated_event": "evt-00000044-c01d2bf9-a1f7-4689-b8d4-96c535bcf685",
+      "updated_at": "2026-08-31T15:51:37.648Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -368,5 +376,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "1f35dcf879e2ebe689b03aa4cf946537cf544873529a840cc3f4442b79f3645f"
+  "snapshot_hash": "f7cb3551e874c36543a1ff53179db663c40dff0a60c23f5e44ef80bc1a3f65ba"
 }
