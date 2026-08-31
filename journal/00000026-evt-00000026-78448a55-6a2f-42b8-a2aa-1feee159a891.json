@@ -1,0 +1,29 @@
+{
+  "event_id": "evt-00000026-78448a55-6a2f-42b8-a2aa-1feee159a891",
+  "idempotency_key": "QA_RESULT:397:2:8dd59d73904712ecd525d168ae6936195cbd412a",
+  "sequence": 26,
+  "previous_snapshot_hash": "e226adfd24621749bf30394b31927e5d4a57b4e133ab5aafba28ece5c72df7de",
+  "issue_id": "397",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "qa-lease:397:2",
+  "lease_epoch": 2,
+  "event_type": "QA_RESULT",
+  "exact_object": {
+    "oid": "8dd59d73904712ecd525d168ae6936195cbd412a"
+  },
+  "payload": {
+    "candidate_commit": "8dd59d73904712ecd525d168ae6936195cbd412a",
+    "result": "PASS",
+    "evidence_pointers": [
+      "candidate-tree:b70fc4a7d62523edbe9ff7eb3f0034d65861c7fa",
+      "asks ledger local 10/10 PASS",
+      "live GitHub drift 10/10 PASS",
+      "selftest 3/3 CAUGHT",
+      "Node suite 114/114 PASS",
+      "git diff --check PASS",
+      "independent clean detached worktree C:/repos/AshenSpire-qa-397-8dd59d73"
+    ]
+  },
+  "created_at": "2026-08-31T15:08:16.560Z"
+}

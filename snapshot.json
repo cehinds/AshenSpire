@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 25,
-  "last_sequence": 25,
+  "revision": 26,
+  "last_sequence": 26,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -118,21 +118,21 @@
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 5,
+      "revision": 6,
       "issue_id": "397",
       "title": "Durable owner asks ledger",
       "priority": "P1",
       "dependencies": [],
-      "state": "QA",
+      "state": "PR_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "8dd59d73904712ecd525d168ae6936195cbd412a",
       "branch": "codex/issue-397-durable-asks-ledger",
-      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
-      "assignment_kind": "qa",
-      "lease_id": "qa-lease:397:2",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 2,
-      "lease_expiry": "2026-08-31T15:10:15.868Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
       "lease_history": [
         {
@@ -172,14 +172,19 @@
         "10/10 asks PASS",
         "GitHub drift 10/10 PASS",
         "selftest 3/3 CAUGHT",
-        "Node suite PASS"
+        "Node suite PASS",
+        "asks ledger local 10/10 PASS",
+        "live GitHub drift 10/10 PASS",
+        "Node suite 114/114 PASS",
+        "git diff --check PASS",
+        "independent clean detached worktree C:/repos/AshenSpire-qa-397-8dd59d73"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Run independent QA against the exact candidate commit.",
+      "next_action": "Deliver an issue-closing PR to dev.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000024-5697ea48-1343-4f07-ac1e-44c9adf9d0c3",
-      "updated_at": "2026-08-31T14:40:15.868Z"
+      "updated_event": "evt-00000026-78448a55-6a2f-42b8-a2aa-1feee159a891",
+      "updated_at": "2026-08-31T15:08:16.560Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -307,5 +312,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "e226adfd24621749bf30394b31927e5d4a57b4e133ab5aafba28ece5c72df7de"
+  "snapshot_hash": "1191048f782632ffbd71c9abe80820c5f674d654d926ed6fe746fe4952b05286"
 }
