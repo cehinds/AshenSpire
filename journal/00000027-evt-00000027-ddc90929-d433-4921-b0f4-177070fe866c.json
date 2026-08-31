@@ -1,0 +1,15 @@
+{
+  "event_id": "evt-00000027-ddc90929-d433-4921-b0f4-177070fe866c",
+  "idempotency_key": "watch-expire:257:2",
+  "sequence": 27,
+  "previous_snapshot_hash": "1191048f782632ffbd71c9abe80820c5f674d654d926ed6fe746fe4952b05286",
+  "issue_id": "257",
+  "actor": "scheduler",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:2",
+  "lease_epoch": 2,
+  "event_type": "LEASE_EXPIRED",
+  "exact_object": {},
+  "payload": {},
+  "created_at": "2026-08-31T15:10:59.231Z"
+}
