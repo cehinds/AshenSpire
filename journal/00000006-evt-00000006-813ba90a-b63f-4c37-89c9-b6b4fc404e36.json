@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000006-813ba90a-b63f-4c37-89c9-b6b4fc404e36",
+  "idempotency_key": "WORK_ENTERED:427:1:2026-08-31T14:02:57.457Z",
+  "sequence": 6,
+  "previous_snapshot_hash": "1d350d67baf4564ea20d387c9dfccfefa29baa50dd4311816e00a80497fe72f3",
+  "issue_id": "427",
+  "actor": "seat:review-hub:21107085-cecd-4ce9-b65e-128936c1afa8",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:427:1",
+  "lease_epoch": 1,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "next_action": "Finish bounded digest repair"
+  },
+  "created_at": "2026-08-31T14:02:57.457Z"
+}

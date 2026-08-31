@@ -1,16 +1,16 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 5,
-  "last_sequence": 5,
+  "revision": 6,
+  "last_sequence": 6,
   "work_items": {
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "427",
       "title": "Repair AS-HD-040 packet aggregate digest",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-427-packet-digest",
@@ -47,8 +47,8 @@
       "wake_condition": null,
       "next_action": "Finish bounded digest repair",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000005-ccd57a27-1e26-4d26-a246-6e9cc5ff8777",
-      "updated_at": "2026-08-31T14:02:56.582Z"
+      "updated_event": "evt-00000006-813ba90a-b63f-4c37-89c9-b6b4fc404e36",
+      "updated_at": "2026-08-31T14:02:57.457Z"
     },
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -109,5 +109,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "1d350d67baf4564ea20d387c9dfccfefa29baa50dd4311816e00a80497fe72f3"
+  "snapshot_hash": "58f8700726902310ea04def972215be79d7f664d548c224e99e667ca3c812381"
 }
