@@ -1,0 +1,19 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "GH-183-0004",
+  "ticket": "GH-183",
+  "seq": 4,
+  "parent_event": "GH-183-0003",
+  "kind": "owner-decision",
+  "actor": "owner",
+  "at": "2026-08-31T17:05:08.611Z",
+  "summary": "Owner-command 'revoke-lease' by owner recorded.",
+  "decision": {
+    "action": "revoke-lease",
+    "authenticated_role": "owner",
+    "authority_path": ".github/workflows/owner-command.yml:owner-command/v1",
+    "target": "GH-183",
+    "expected_current_hash": "sha256:8f1c27e67e5c1f0edefddf8ddfc697cd4f1509bb59116bfbf1654127ac48f7b9",
+    "candidate_oid": null
+  }
+}

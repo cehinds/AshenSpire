@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 3,
-  "current_hash": "sha256:8f1c27e67e5c1f0edefddf8ddfc697cd4f1509bb59116bfbf1654127ac48f7b9",
-  "parent_hash": "sha256:b268a8437adaacac7c30a4ce7a414179e4dc497b400b1534273eb5b067b175d9",
+  "revision": 4,
+  "current_hash": "sha256:42e0b04b165b94b7937c69d4520cd287409a600b15e518f19c5a6a0b18bdb3e9",
+  "parent_hash": "sha256:8f1c27e67e5c1f0edefddf8ddfc697cd4f1509bb59116bfbf1654127ac48f7b9",
   "ticket": "GH-183",
   "lifecycle_state": "assigned",
   "objective": "Refresh current-build links and component-catalog documentation for GitHub issue #183 while keeping generated Hub projections derived from validated AgentOps state.",
