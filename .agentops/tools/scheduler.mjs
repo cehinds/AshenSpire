@@ -70,6 +70,22 @@ function requiredString(value, label) {
   if (typeof value !== 'string' || value.trim() === '') throw new Error(`${label} must be a non-empty string`);
 }
 
+export function canonicalClaimPath(value) {
+  requiredString(value, 'claimed path');
+  const slash = value.replaceAll('\\', '/');
+  if (slash.startsWith('/') || /^[A-Za-z]:\//.test(slash)) throw new Error(`claimed path must be repository-relative: ${value}`);
+  const segments = slash.split('/');
+  if (segments.some((segment) => segment === '.' || segment === '..')) throw new Error(`claimed path contains a forbidden dot segment: ${value}`);
+  const canonical = segments.filter(Boolean).join('/');
+  if (!canonical) throw new Error('claimed path must name a repository-relative path');
+  return canonical;
+}
+
+function canonicalClaimPaths(values) {
+  if (!Array.isArray(values)) throw new Error('claimed_paths must be an array');
+  return [...new Set(values.map(canonicalClaimPath))];
+}
+
 export function validateEvent(event) {
   assertSchema(event, 'event');
   if (!event || typeof event !== 'object' || Array.isArray(event)) throw new Error('event must be an object');
@@ -111,7 +127,7 @@ function baseItem(event) {
     candidate_commit: null, branch: p.branch ?? null, assigned_actor: null,
     assignment_kind: null, lease_id: null, lease_epoch: null, lease_expiry: null, lease_machine_id: null,
     maker_actor: null, lease_history: [], late_candidates: [],
-    claimed_paths: p.claimed_paths ?? [], claimed_resources: p.claimed_resources ?? [],
+    claimed_paths: canonicalClaimPaths(p.claimed_paths ?? []), claimed_resources: p.claimed_resources ?? [],
     acceptance_commands: p.acceptance_commands ?? [], evidence_pointers: p.evidence_pointers ?? [],
     blocker: null, wake_condition: null, next_action: p.next_action ?? 'Inspect the issue and reproduce the acceptance gap.',
     authority_ceiling: p.authority_ceiling ?? 'dev-delivery', updated_event: event.event_id, updated_at: event.created_at
@@ -166,7 +182,7 @@ function applyEvent(snapshot, event) {
       if (Number.isNaN(Date.parse(p.lease_expiry)) || Date.parse(p.lease_expiry) <= Date.parse(event.created_at)) throw new Error('claim requires a future lease expiry');
       if (item.dependencies.some((dependency) => snapshot.work_items[String(dependency)]?.state !== 'DONE')) throw new Error('claim has unsatisfied dependencies');
       {
-        const proposed = { ...item, branch: p.branch, claimed_paths: p.claimed_paths ?? item.claimed_paths, claimed_resources: p.claimed_resources ?? item.claimed_resources };
+        const proposed = { ...item, branch: p.branch, claimed_paths: canonicalClaimPaths(p.claimed_paths ?? item.claimed_paths), claimed_resources: p.claimed_resources ?? item.claimed_resources };
         const collision = Object.values(snapshot.work_items).find((other) => other.issue_id !== item.issue_id && holdsExclusiveClaim(other) && claimsConflict(proposed, other));
         if (collision) throw new Error(`one-writer collision with ${collision.issue_id}`);
       }
@@ -175,7 +191,7 @@ function applyEvent(snapshot, event) {
         state: 'CLAIMED', assigned_actor: event.actor, assignment_kind: 'implementation', branch: p.branch ?? item.branch,
         base_commit: p.base_commit ?? item.base_commit, lease_id: event.lease_id,
         lease_epoch: event.lease_epoch, lease_expiry: p.lease_expiry, lease_machine_id: event.machine_id,
-        claimed_paths: p.claimed_paths ?? item.claimed_paths,
+        claimed_paths: canonicalClaimPaths(p.claimed_paths ?? item.claimed_paths),
         claimed_resources: p.claimed_resources ?? item.claimed_resources,
         blocker: null, wake_condition: null, next_action: p.next_action ?? item.next_action
       });
@@ -241,13 +257,13 @@ function applyEvent(snapshot, event) {
       if (TERMINAL_STATES.has(item.state)) throw new Error(`cannot block ${item.state}`);
       assertExactLease(item, event);
       item.state = 'WAITING_DEPENDENCY'; item.blocker = p.blocker; item.wake_condition = p.wake_condition; item.next_action = p.next_action ?? null;
-      clearSeat(item); item.claimed_resources = p.retained_resources ?? []; item.claimed_paths = p.retained_paths ?? [];
+      clearSeat(item); item.claimed_resources = p.retained_resources ?? []; item.claimed_paths = canonicalClaimPaths(p.retained_paths ?? []);
       break;
     case 'RESOURCE_RELEASED':
       if (item.state === 'WAITING_DEPENDENCY' && item.assigned_actor === null) {
         if (event.actor !== 'scheduler' || !event.machine_id || event.lease_id !== null || event.lease_epoch !== item.lease_epoch) throw new Error('retained-claim release fencing mismatch');
       } else assertExactLease(item, event);
-      clearSeat(item); item.claimed_paths = p.retained_paths ?? []; item.claimed_resources = p.retained_resources ?? [];
+      clearSeat(item); item.claimed_paths = canonicalClaimPaths(p.retained_paths ?? []); item.claimed_resources = p.retained_resources ?? [];
       if (p.requeue === true && !TERMINAL_STATES.has(item.state)) item.state = 'READY';
       break;
     case 'LEASE_EXPIRED':
@@ -317,8 +333,7 @@ export function reduceEvents(events) {
 }
 
 export function pathsOverlap(left, right) {
-  const normalize = (value) => value.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '').toLowerCase();
-  const a = normalize(left); const b = normalize(right);
+  const a = canonicalClaimPath(left).toLowerCase(); const b = canonicalClaimPath(right).toLowerCase();
   return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 }
 
@@ -347,6 +362,7 @@ function priorityValue(value) {
 }
 
 export function planAssignments(snapshot, config, now = new Date().toISOString(), currentBaseCommit = null) {
+  validateWorkers(config.workers, config.worker_slots);
   const items = Object.values(snapshot.work_items);
   const active = items.filter((item) => ACTIVE_STATES.has(item.state));
   const activeActors = new Set(active.map((item) => item.assigned_actor).filter(Boolean));
@@ -605,12 +621,23 @@ export function persistPortableState(root, state, { push = false, expectedOid = 
   const update = ['update-ref', 'refs/heads/agentops/scheduler-state', newOid]; if (expectedOid) update.push(expectedOid);
   runGit(root, update);
   if (push) {
-    try { runGit(root, ['push', 'origin', `${newOid}:refs/heads/agentops/scheduler-state`]); }
-    catch (error) {
-      // The local CAS already committed. Callers must retain its dispatched wake
-      // rather than rolling it back and stranding this locally durable lease.
-      error.portableStatePersisted = true;
-      error.portableStateOid = newOid;
+    const pushed = runGit(root, ['push', 'origin', `${newOid}:refs/heads/agentops/scheduler-state`], { allowFailure: true });
+    if (pushed.status !== 0) {
+      const error = new Error((pushed.stderr || pushed.stdout || 'scheduler state push failed').trim());
+      const fetched = runGit(root, ['fetch', 'origin', '+refs/heads/agentops/scheduler-state:refs/remotes/origin/agentops/scheduler-state'], { allowFailure: true });
+      const authoritativeOid = fetched.status === 0 ? refOid(root, 'refs/remotes/origin/agentops/scheduler-state') : null;
+      if (authoritativeOid && authoritativeOid !== newOid) {
+        runGit(root, ['update-ref', `refs/agentops/rejected-scheduler-state/${newOid}`, newOid]);
+        runGit(root, ['update-ref', 'refs/heads/agentops/scheduler-state', authoritativeOid, newOid]);
+        error.portableStateAuthorityLost = true;
+        error.authoritativeStateOid = authoritativeOid;
+        error.authoritativeState = readPortableState(root);
+      } else {
+        // A transport failure without a conflicting authoritative ref leaves the
+        // locally committed lease durable and retryable.
+        error.portableStatePersisted = true;
+        error.portableStateOid = newOid;
+      }
       throw error;
     }
   }
@@ -627,13 +654,21 @@ export function localMachine(root = REPOSITORY_ROOT) {
 export function configuredWorkers(root = REPOSITORY_ROOT, config = readConfig(path.join(root, '.agentops'))) {
   const file = path.join(localRuntimeDir(root), 'workers.json');
   const workers = fs.existsSync(file) ? readJsonFile(file).workers : config.workers;
+  validateWorkers(workers, config.worker_slots);
+  return workers;
+}
+
+export function validateWorkers(workers, workerSlots) {
   if (!Array.isArray(workers)) throw new Error('workers must be an array');
+  const actors = new Set();
   for (const worker of workers) {
     if (!SEAT_ID.test(worker.actor ?? '')) throw new Error(`unissued or invalid seat identity ${worker.actor ?? '<missing>'}`);
+    if (actors.has(worker.actor)) throw new Error(`duplicate worker actor identity ${worker.actor}`);
+    actors.add(worker.actor);
     if (!Array.isArray(worker.capabilities) || worker.capabilities.length === 0) throw new Error(`seat ${worker.actor} has no capabilities`);
   }
-  if (workers.length > config.worker_slots) throw new Error('registered workers exceed worker_slots');
-  return workers;
+  if (workers.length > workerSlots) throw new Error('registered workers exceed worker_slots');
+  return true;
 }
 
 export function makeEvent(snapshot, input) {
@@ -733,8 +768,23 @@ export function beginWakeDispatch(root, snapshot, assignments, config) {
   return {
     dispatched: prepared.map((entry) => entry.receipt),
     commit() { open = false; },
-    rollback() { if (open) { restoreWakeFiles(backups); open = false; } }
+    rollback() { if (open) { restoreWakeFiles(backups); open = false; } },
+    reconcile(authoritativeSnapshot) { if (open) { reconcileWakeDispatch(root, authoritativeSnapshot, config); open = false; } }
   };
+}
+
+export function reconcileWakeDispatch(root, snapshot, config) {
+  const dispatchRoot = path.join(localRuntimeDir(root), 'dispatch');
+  fs.mkdirSync(dispatchRoot, { recursive: true });
+  const byActor = new Map(Object.values(snapshot.work_items)
+    .filter((item) => item.assigned_actor && ['CLAIMED', 'QA'].includes(item.state))
+    .map((item) => [item.assigned_actor, item]));
+  for (const worker of config.workers) {
+    const file = path.join(dispatchRoot, `${worker.actor.replaceAll(':', '_')}.json`);
+    const item = byActor.get(worker.actor);
+    if (!item) fs.rmSync(file, { force: true });
+    else fs.writeFileSync(file, `${JSON.stringify(compileWake(item, config), null, 2)}\n`, { flag: 'w' });
+  }
 }
 
 export function dispatchWakes(root, snapshot, assignments, config) {
@@ -754,10 +804,11 @@ export function commitAssignmentsAfterWakeDispatch(state, assignments, machineId
     transaction.commit?.();
     return { state: { ...assignedState, oid }, oid, dispatched: transaction.dispatched ?? [] };
   } catch (error) {
-    // If the local state CAS already landed and only its remote push failed,
-    // the assignment is durable and must keep its wake. Otherwise restore the
-    // exact pre-dispatch files so a later cycle can retry cleanly.
-    if (error.portableStatePersisted !== true) transaction.rollback?.();
+    // A remote race loser replaces its speculative wake set with the fetched
+    // authoritative assignments. A transport-only failure keeps the locally
+    // durable wake; a pre-CAS failure restores the exact pre-dispatch files.
+    if (error.portableStateAuthorityLost === true && error.authoritativeState?.snapshot) transaction.reconcile?.(error.authoritativeState.snapshot);
+    else if (error.portableStatePersisted !== true) transaction.rollback?.();
     else transaction.commit?.();
     throw error;
   }

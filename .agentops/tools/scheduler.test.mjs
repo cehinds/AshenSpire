@@ -5,10 +5,10 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  appendEvents, applyAssignments, assertPortable, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
+  appendEvents, applyAssignments, assertPortable, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
   emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, mergeGateResult, pathsOverlap, planAssignments,
   protectedTransitionAllowed, readConfig, reduceEvents, resolveCanonicalIssue,
-  simulate, snapshotsMatch, stableStringify, validateEvent, validateSchedulerDocument, watcherPlan
+  simulate, snapshotsMatch, stableStringify, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -356,6 +356,44 @@ test('refill assignment persistence waits for successful recoverable dispatch', 
   }), /state CAS failed/);
   assert.equal(rolledBack, true);
   assert.equal(state.snapshot.work_items['I-DISPATCH'].state, 'READY');
+});
+
+test('remote CAS loss revokes losing wake and reconciles authoritative assignments', () => {
+  const state = intake(fresh(), 'I-CAS-LOSS');
+  const plan = planAssignments(state.snapshot, config, '2026-08-30T00:00:01Z', 'c'.repeat(40));
+  const authoritative = intake(fresh(), 'I-AUTHORITATIVE');
+  let rolledBack = false; let reconciled = null;
+  assert.throws(() => commitAssignmentsAfterWakeDispatch(state, plan.assignments, 'machine-a', '2026-08-30T00:00:01Z', {
+    dispatch: () => ({
+      dispatched: [{ issue_id: 'I-CAS-LOSS' }],
+      commit() {}, rollback() { rolledBack = true; },
+      reconcile(snapshot) { reconciled = snapshot; }
+    }),
+    persist: () => {
+      const error = new Error('non-fast-forward');
+      error.portableStateAuthorityLost = true;
+      error.authoritativeState = authoritative;
+      throw error;
+    }
+  }), /non-fast-forward/);
+  assert.equal(rolledBack, false);
+  assert.equal(reconciled.snapshot_hash, authoritative.snapshot.snapshot_hash);
+  assert.equal(state.snapshot.work_items['I-CAS-LOSS'].state, 'READY');
+});
+
+test('configured worker identities are unique before scheduling', () => {
+  const duplicate = [config.workers[0], { ...config.workers[0], capabilities: ['review'] }];
+  assert.throws(() => validateWorkers(duplicate, 3), /duplicate worker actor identity/);
+  assert.throws(() => planAssignments(intake(fresh(), 'I-DUP-WORKER').snapshot, { ...config, workers: duplicate }, '2026-08-30T00:00:01Z'), /duplicate worker actor identity/);
+});
+
+test('claimed paths are canonical repository-relative identities', () => {
+  assert.equal(canonicalClaimPath('src//feature\\file.js'), 'src/feature/file.js');
+  assert.equal(pathsOverlap('src//feature\\file.js', 'src/feature/file.js'), true);
+  for (const invalid of ['../src/file.js', 'src/../file.js', './src/file.js', '/src/file.js', 'C:\\src\\file.js']) {
+    assert.throws(() => canonicalClaimPath(invalid), /claimed path/);
+  }
+  assert.throws(() => intake(fresh(), 'I-PATH-ESCAPE', { paths: ['src/../../outside'] }), /claimed path/);
 });
 
 if (!process.exitCode) process.stdout.write(`1..${passed}\nPASS ${passed}/${passed}\n`);
