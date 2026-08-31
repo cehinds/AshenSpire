@@ -360,8 +360,8 @@ jobs:
     name: the checks that need a real browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
 
@@ -371,6 +371,17 @@ jobs:
             [ -x "$p" ] && echo "found: $p" && "$p" --version
           done
           echo "(probe exits 2 if none of these exist — unknown, which blocks)"
+
+      - name: Hand-side placement reaches the correct rendered side
+        # #16's remaining live half after #306: exercise every legal left/right
+        # armament slot through the actual stylesheet and browser compositor.
+        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
+
+      - name: The hand-side gate can fail — five same-door plants caught
+        # The selftest copies the real tree, plants each known-bad in the file a
+        # real regression would change, and requires the named red from the whole
+        # browser door. A green baseline alone is not evidence that this is a gate.
+        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs --selftest
 
       - name: Unavailable instrument resolves to 2, not to a verdict
         # THIS STEP EXISTS BECAUSE OF RUN 1 OF THIS WORKFLOW. The probe timed out
@@ -633,6 +644,8 @@ jobs:
           echo "    NO other combat control — at every cell hintstrip declares, including one"
           echo "    written through the game's own rebind store; its six known-bads are each"
           echo "    observed red through the same door. THIS IS RENDERED GEOMETRY."
+          echo "  · every legal left/right armament slot reaches the correct rendered side"
+          echo "    of the viewer-facing figure, with all five same-door known-bads caught"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this
@@ -682,12 +695,12 @@ jobs:
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
           echo "  · that the game is playable. NOTHING HERE PLAYS IT. Two jobs open a browser."
-          echo "    browser-guard owns TWO gates: the hint strip at ?shot=combat and Armoury"
-          echo "    at ?shot=combat -> overlay. display-first owns Settings through BOTH the"
+          echo "    browser-guard owns focused guards including the hint strip, Armoury, and"
+          echo "    hand-side rendered placement. display-first owns Settings through BOTH the"
           echo "    cold Startup -> Title door and the in-run door. It sends a complete CDP"
           echo "    Enter down/up through Startup, then the Settings controls are DOM clicks."
-          echo "    These gates measure BOXES; Armoury also checks that its pane opened. None"
-          echo "    fights, wins, loses, or finishes a run, and none proves general playability."
+          echo "    These gates inspect focused rectangles or alpha-weighted rendered pixels;"
+          echo "    none fights, wins, loses, or finishes a run, or proves general playability."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
@@ -716,13 +729,12 @@ jobs:
           # hint-strip gate reads rendered rects, so "nothing rendered" is no longer
           # true as written. What it never touched — and still does not — is ART.
           # — Bjorn, 2026-08-21, wiring #295.
-          echo "  · that the ART rendered. Art present in the file is not art on screen;"
-          echo "    no screenshot is compared, and screenshot bytes are not even"
-          echo "    deterministic on this app (two runs of identical code differ). The"
-          echo "    three browser gates read geometry off a live page — rects, never pixels —"
-          echo "    and between them they are silent about every surface but combat's control"
-          echo "    strip, the Armoury's figure-and-cards pane, and Title/in-run Settings."
-          echo "    NONE compares an image:"
+          echo "  · that the ART matches an approved visual reference. Art present in the"
+          echo "    file is not automatically correct art on screen; screenshot bytes are not"
+          echo "    deterministic on this app (two runs of identical code differ). The focused"
+          echo "    browser gates mostly read rects; hand-side alone reads alpha-weighted"
+          echo "    screenshot pixels to locate armament ink. They remain silent about every"
+          echo "    other art surface. NONE compares an image to an approved reference:"
           echo "    the pixel diffs in #316 were run by hand and are not repeated here."
           echo "  · that content is correct or balanced. README.md:55's counts disagree"
           echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"
