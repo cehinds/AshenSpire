@@ -89,6 +89,7 @@ function makeCombatFromRun(registries, run, seed = 0x5157) {
       deck: run.deck,
       relicIds: run.relics,
       loadout: run.loadout,
+      armamentLevels: run.armamentLevels,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
     },
     enemyIds: ['fellWarden'],
@@ -113,19 +114,36 @@ function snapshotIdentity(snapshot) {
     pile,
     instanceId: card.instanceId,
     upgraded: card.upgraded,
+    sourceArmamentId: card.sourceArmamentId,
+    smithingLevel: card.smithingLevel,
     acquiredAt: card.acquiredAt,
   }));
 }
 
+function snapshotOrdinaryIdentity(snapshot) {
+  return pileNames.flatMap((pile) => (snapshot.piles[pile] || [])
+    .filter((card) => !card.equipmentRole)
+    .map((card) => ({ pile, instanceId: card.instanceId, upgraded: card.upgraded, acquiredAt: card.acquiredAt })));
+}
+
 function activeSnapshotRun(registries, snapshotRight, snapshotLeft, topRight = snapshotRight, topLeft = snapshotLeft) {
   const source = makeRun(registries, snapshotRight, snapshotLeft);
+  source.armamentLevels = Object.fromEntries(
+    [...new Set([snapshotRight, snapshotLeft].filter(Boolean))].map((armamentId) => [armamentId, 1]),
+  );
+  stampDeck(registries, source);
   attacks(source).forEach((card, index) => {
-    card.upgraded = index % 2 === 0;
     card.acquiredAt = `snapshot-floor-${index}`;
   });
+  const ordinary = source.deck.find((card) => !card.equipmentRole);
+  if (ordinary) {
+    ordinary.upgraded = true;
+    ordinary.acquiredAt = 'snapshot-ordinary';
+  }
   const combat = makeCombatFromRun(registries, source);
   spreadGeneratedAttacksAcrossPiles(combat);
   const run = makeRun(registries, topRight, topLeft);
+  run.armamentLevels = { ...source.armamentLevels };
   run.combatEntered = {
     nodeId: 'weapon-snapshot-node',
     encounterId: 'weapon-snapshot-encounter',
@@ -257,11 +275,15 @@ const corruptRegistries = registriesWith({ armamentPatches: { straightSword: { w
 check(throwsNamed(() => makeRun(corruptRegistries, 'straightSword', null), /missing attack profile/), 'claimed package with missing filler/profile is content-invalid, never Unarmed');
 
 const mutable = makeRun(baseRegistries, 'straightSword', null);
+mutable.armamentLevels.straightSword = 1;
+stampDeck(baseRegistries, mutable);
+const ordinaryMutable = mutable.deck.find((card) => !card.equipmentRole);
+ordinaryMutable.upgraded = true;
 const unrelatedBefore = JSON.stringify(mutable.deck.filter((card) => card.equipmentRole !== 'attack'));
+const ordinaryBefore = JSON.stringify(mutable.deck.filter((card) => !card.equipmentRole));
 const attackIdentityBefore = attacks(mutable).map((card, index) => {
-  card.upgraded = index === 0;
   card.acquiredAt = `floor-${index}`;
-  return { instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, upgraded: card.upgraded, acquiredAt: card.acquiredAt };
+  return { instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, acquiredAt: card.acquiredAt };
 });
 const events = [];
 mutable.loadout.storage.push('dagger');
@@ -274,7 +296,14 @@ const once = JSON.stringify(mutable.deck);
 stampDeck(baseRegistries, mutable);
 check(JSON.stringify(mutable.deck) === once, 'compose/apply twice is byte-identical after the first pass');
 check(mutable.deck.length === 10 && attacks(mutable).length === 4, 'equip preserves deck size and authored attack count');
-check(JSON.stringify(attacks(mutable).map((card) => ({ instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, upgraded: card.upgraded, acquiredAt: card.acquiredAt }))) === JSON.stringify(attackIdentityBefore), 'slot ids, instance ids, upgrades, and acquisition metadata survive rebind');
+const reboundAttacks = attacks(mutable);
+check(JSON.stringify(reboundAttacks.map((card) => ({ instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, acquiredAt: card.acquiredAt }))) === JSON.stringify(attackIdentityBefore)
+  && reboundAttacks.every((card, index) => card.upgraded === false
+    && card.sourceArmamentId === mutablePlan.slots[index].weaponId
+    && card.smithingLevel === (mutable.armamentLevels[mutablePlan.slots[index].weaponId] || 0)),
+'slot/instance/acquisition identity survives while equipment upgrade identity follows source armament and tier');
+check(JSON.stringify(mutable.deck.filter((card) => !card.equipmentRole)) === ordinaryBefore,
+  'ordinary-card per-copy upgrade identity survives equipment rebind unchanged');
 check(events.length === 1 && events[0].reason === 'equip' && events[0].changedPositions.length > 0, 'equip emits one post-commit equipmentChanged receipt');
 
 check(equipPiece(baseRegistries, mutable.loadout, 'rightHand', 0, null, ownsEverything, { ...atCamp, onEquipmentChanged: (event) => events.push(event) }), 'unequip commits through the same gate');
@@ -354,6 +383,7 @@ currentSnapshotRun.streamCounters.shuffle = 11;
 const currentCountersBefore = JSON.stringify(currentSnapshotRun.streamCounters);
 const currentSnapshotBefore = JSON.stringify(currentSnapshotRun.combatEntered.snapshot);
 const currentSnapshotIdentity = JSON.stringify(snapshotIdentity(currentSnapshotRun.combatEntered.snapshot));
+const currentOrdinaryIdentity = JSON.stringify(snapshotOrdinaryIdentity(currentSnapshotRun.combatEntered.snapshot));
 check(JSON.stringify(snapshotAttackRows(currentSnapshotRun.combatEntered.snapshot).map(({ card }) => card.acquiredAt).sort())
   === JSON.stringify(['snapshot-floor-0', 'snapshot-floor-1', 'snapshot-floor-2', 'snapshot-floor-3']), 'combat creation carries acquisition metadata into live generated attack piles');
 const currentSnapshotLoad = loadStoredRun(baseRegistries, currentSnapshotRun);
@@ -361,7 +391,11 @@ check(!!currentSnapshotLoad.loaded, 'current combat snapshot passes the ordinary
 if (currentSnapshotLoad.loaded) {
   const loadedSnapshot = currentSnapshotLoad.loaded.combatEntered.snapshot;
   check(JSON.stringify(loadedSnapshot) === currentSnapshotBefore, 'current combat snapshot migration is byte-identical on first pass');
-  check(JSON.stringify(snapshotIdentity(loadedSnapshot)) === currentSnapshotIdentity, 'current snapshot preserves pile, instance, upgrade, and acquisition identity');
+  check(JSON.stringify(snapshotIdentity(loadedSnapshot)) === currentSnapshotIdentity
+    && snapshotAttackRows(loadedSnapshot).every(({ card }) => card.upgraded === false),
+  'current snapshot preserves pile, instance, armament source/tier, and acquisition identity with no equipment per-copy upgrade');
+  check(JSON.stringify(snapshotOrdinaryIdentity(loadedSnapshot)) === currentOrdinaryIdentity,
+    'current snapshot preserves ordinary-card per-copy upgrade identity');
   check(JSON.stringify(currentSnapshotLoad.loaded.streamCounters) === currentCountersBefore, 'snapshot migration preserves every named RNG stream counter');
   const restoredRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
   const controlRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
@@ -407,7 +441,9 @@ if (legacySnapshotLoad.loaded) {
   const rows = snapshotAttackRows(migrated);
   check(JSON.stringify(rows.map(({ card }) => card.equipmentAttackSlotId)) === JSON.stringify(['attack:0', 'attack:1', 'attack:2', 'attack:3']), 'legacy snapshot slots map once in draw/hand/discard/exhaust order');
   check(rows.every(({ card }) => card.profileId === 'daggerPierceAttack' && card.sourceHand === 'left'), 'legacy snapshot uses its authoritative left-hand Dagger instead of stale top-level loadout');
-  check(JSON.stringify(snapshotIdentity(migrated)) === legacyIdentity, 'legacy snapshot keeps pile, instance, upgrade, and acquisition identity');
+  check(JSON.stringify(snapshotIdentity(migrated)) === legacyIdentity
+    && rows.every(({ card }) => card.upgraded === false),
+  'legacy snapshot keeps pile, instance, armament source/tier, and acquisition identity with no equipment per-copy upgrade');
   check(JSON.stringify({
     turn: migrated.turn,
     phase: migrated.phase,
