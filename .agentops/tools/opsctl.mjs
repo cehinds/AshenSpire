@@ -3728,6 +3728,9 @@ export function runSelftest(root = ROOT) {
   {
     const rtLead = baseRt();
     rtLead.capsules['AS-HD-050'].owner_actor = 'lead-game-systems';
+    // The plant tests the actor-vs-role conflation only; clear the live blocker
+    // so a blocked capsule (which wakes the blocker's owner) cannot mask it.
+    rtLead.capsules['AS-HD-050'].blocker = null;
     const d = computeDispatch(contracts, rtLead, { now: new Date().toISOString() }).find((x) => x.ticket === 'AS-HD-050');
     results.push({ label: 'dispatch wakes the lead that owns the capsule, not a role that does not', pass: !!d && d.wake === 'lead-game-systems', errs: [d ? d.wake : '(no entry)'] });
     const w = runWake(root, 'maker', 'AS-1001');
