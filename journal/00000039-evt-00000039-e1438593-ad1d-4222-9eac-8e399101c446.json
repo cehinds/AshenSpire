@@ -1,0 +1,26 @@
+{
+  "event_id": "evt-00000039-e1438593-ad1d-4222-9eac-8e399101c446",
+  "idempotency_key": "CANDIDATE_READY:313:1:ab7f6f70720d1eb7165eb00f4be5107f6e98e938",
+  "sequence": 39,
+  "previous_snapshot_hash": "0e39a9c08b38e42e74273d59a0fe496b4840a70e34d6d6607fdfc621fd0f0e8c",
+  "issue_id": "313",
+  "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": "lease:313:1",
+  "lease_epoch": 1,
+  "event_type": "CANDIDATE_READY",
+  "exact_object": {
+    "oid": "ab7f6f70720d1eb7165eb00f4be5107f6e98e938"
+  },
+  "payload": {
+    "candidate_commit": "ab7f6f70720d1eb7165eb00f4be5107f6e98e938",
+    "evidence_pointers": [
+      "friendly-target-parity: source 23/23 + dynamic 15/15 PASS",
+      "tests/run-node: 114/114 PASS",
+      "ad-hoc friendlyDragDefault: 3/3 PASS",
+      "git diff --check: PASS",
+      "coop-hand-parity: WITHHOLD timeout waiting for host sees LAN"
+    ]
+  },
+  "created_at": "2026-08-31T16:05:25.064Z"
+}
