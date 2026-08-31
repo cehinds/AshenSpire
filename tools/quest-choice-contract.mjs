@@ -5,12 +5,14 @@
 // requirements under --selftest so fail-closed behavior remains observable.
 
 import {
+  availableEventChoices,
   availableQuestSteps,
   eventChoiceHistoryProblems,
   eventChoiceRequirementMet,
   hasEventChoice,
   recordEventChoice,
 } from '../src/model/quests.js';
+import { eventChoiceIds, eventChoicesWithHistory, events } from '../src/content/events.js';
 
 let pass = 0;
 let fail = 0;
@@ -79,6 +81,33 @@ check('any group accepts one of several prior choices', eventChoiceRequirementMe
 const replay = newRun();
 recordEventChoice(replay, { eventId: 'weepingPilgrim', choiceId: 'helpPilgrim' });
 check('same state and choice replay byte-identically', JSON.stringify(replay) === JSON.stringify(firstRun));
+
+const authoredChoices = events.flatMap((event) => eventChoicesWithHistory(event)
+  .map((choice) => ({ event, choice })));
+check('all shipped event choices have stable explicit ids', authoredChoices.length === 54
+  && authoredChoices.every(({ choice }) => /^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(choice.id)));
+check('choice ids are unique within each event', events.every((event) => {
+  const ids = eventChoiceIds[event.id] || [];
+  return new Set(ids).size === ids.length;
+}));
+
+const gatedChoices = availableEventChoices([
+  { id: 'alwaysVisible' },
+  {
+    id: 'helpedPilgrim',
+    requiresHistory: { all: [{ eventId: 'weepingPilgrim', choiceId: 'helpPilgrim' }] },
+  },
+  {
+    id: 'refusedPilgrim',
+    requiresHistory: { all: [{ eventId: 'weepingPilgrim', choiceId: 'refusePilgrim' }] },
+  },
+], firstRun);
+check('event choice projection gates from history without reindexing',
+  gatedChoices.length === 2
+  && gatedChoices[0].choice.id === 'alwaysVisible'
+  && gatedChoices[0].index === 0
+  && gatedChoices[1].choice.id === 'helpedPilgrim'
+  && gatedChoices[1].index === 1);
 
 if (process.argv.includes('--selftest')) {
   const malformedHistory = {

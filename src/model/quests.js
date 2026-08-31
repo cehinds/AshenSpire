@@ -140,3 +140,17 @@ export function availableQuestSteps(steps, subject) {
     && validId(step.id)
     && eventChoiceRequirementMet(step.requiresHistory, subject));
 }
+
+/**
+ * Return visible event choices together with their original authored index.
+ * Keeping that index lets input bindings and telemetry remain stable even
+ * when a history requirement hides an earlier choice in the array.
+ */
+export function availableEventChoices(choices, subject) {
+  if (!Array.isArray(choices)) throw new Error('availableEventChoices requires an array');
+  return choices
+    .map((choice, index) => ({ choice, index }))
+    .filter(({ choice }) => choice && typeof choice === 'object'
+      && validId(choice.id)
+      && eventChoiceRequirementMet(choice.requiresHistory, subject));
+}

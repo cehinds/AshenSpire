@@ -483,3 +483,45 @@ export const events = [
     ],
   },
 ];
+
+// Stable history ids live beside event content without widening the validated
+// event opcode schema. Labels may change; these ids are durable save facts.
+export const eventChoiceIds = Object.freeze({
+  goldboughAvatar: ['offerCard', 'pray', 'leave'],
+  abandonedCart: ['lootStrongbox', 'leave'],
+  weepingPilgrim: ['giveCinders', 'refuse'],
+  bloodstainedAltar: ['offerBlood', 'leave'],
+  wanderingPhysician: ['procedure', 'patch', 'leave'],
+  goldenMoth: ['gatherCinders', 'keepVigil', 'leave'],
+  feralShrine: ['takeOffering', 'leave'],
+  ancientRuneStone: ['studyStone', 'smashStone', 'leave'],
+  graveOfTheNameless: ['digForCinders', 'payRespects', 'leave'],
+  sleepingSmith: ['takeBlade', 'wakeSmith', 'leave'],
+  wyrmTrial: ['enterRing', 'circleRing', 'leave'],
+  discardedReliquary: ['takeCurse', 'burnPack', 'leave'],
+  omensAltar: ['acceptGaze', 'shatterAltar', 'leave'],
+  rotPriestOffer: ['acceptBlessing', 'robPriest', 'leave'],
+  handspiderNest: ['snatchStrongbox', 'backAway'],
+  fadedGrace: ['warmYourself', 'temperBlade', 'leave'],
+  merchantsGhost: ['payInKind', 'stealRelic', 'leave'],
+  cinderbearDen: ['takeHoard', 'skimEdges', 'leave'],
+  stakeOfTheMartyr: ['makeOffering', 'leave'],
+  twoFingersRiddle: ['sharpen', 'mend', 'leave'],
+});
+
+// Later quest-chain content can populate this map with requirement objects by
+// event id and choice index. Empty today means no existing narrative changes.
+export const eventChoiceHistoryRequirements = Object.freeze({});
+
+/** Enrich validated event choices with their durable history contract. */
+export function eventChoicesWithHistory(event) {
+  const ids = eventChoiceIds[event?.id];
+  if (!event || !Array.isArray(event.choices) || !Array.isArray(ids)
+    || ids.length !== event.choices.length) return [];
+  const requirements = eventChoiceHistoryRequirements[event.id] || [];
+  return event.choices.map((choice, index) => ({
+    ...choice,
+    id: ids[index],
+    requiresHistory: requirements[index],
+  }));
+}
