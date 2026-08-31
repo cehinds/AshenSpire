@@ -3195,6 +3195,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
+#cz-equipment-receipts, .armoury-equipment-receipts { font-size: max(13px, 1em); }
+#cz-equipment-receipts small, .armoury-equipment-receipts small { font-size: max(13px, 0.84em); line-height: 1.35; }
+.armoury-stats-summary > .armoury-equipment-receipts { grid-column: 1 / -1; }
+@media (max-width: 700px) {
+  .armoury-equipment-receipts, .armoury-equipment-receipts * { min-width: 0; overflow-wrap: anywhere; }
+  .armoury-equipment-receipts .equip-role-receipts > div { grid-template-columns: minmax(0, 1fr); }
+  .armoury-equipment-receipts .equip-role-receipts small { grid-column: 1; }
+  .equipmentReceiptsCard .character-info-label { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+}
 
 /* ---------- ATTRIBUTES & RESOURCES — a label and its value are a PAIR --------
    Both screens that print `model/statProjection` — the Armoury strip and the

@@ -22,7 +22,9 @@ import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
 import { equippedTagColor } from '../../model/equipmentUi.js';
 import { renderCard, relicText } from '../components/card.js';
-import { renderCandidateComparison } from '../components/equipmentReceipts.js';
+import {
+  renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies,
+} from '../components/equipmentReceipts.js';
 import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
 import { armHold, holdMs, HOLD_POINTER_SLOP } from '../components/holdconfirm.js';
 import { refuses } from '../components/refusal.js';
@@ -1371,7 +1373,7 @@ export function mountEquipment(host, {
         + `<span class="armoury-card-row-type">${esc(type)}</span>`
         + `<span class="armoury-card-row-cost">◆ ${esc(cost)}${mana ? ` ${esc(mana.textContent.trim())}` : ''}</span>`
         + `<span class="armoury-card-row-tags">${tags ? tags.textContent.trim() : ''}</span>`
-        + `<em class="armoury-card-row-count">x${esc(String(copyCount))}</em>`;
+        + `<em class="armoury-card-row-count role-copy-count">x${esc(String(copyCount))}</em>`;
       attachTooltip(summary, () => `<div class="tt-title">${esc(def.name)}</div><p>Tap to expand the card details.</p>`);
 
       const detail = document.createElement('div');
@@ -1403,6 +1405,17 @@ export function mountEquipment(host, {
     return box;
   }
 
+  function equipmentReceiptPanel(surface) {
+    const panel = document.createElement('section');
+    panel.className = 'armoury-equipment-receipts';
+    panel.innerHTML = '<section class="equip-role-receipts"><b>Equipment card packages</b>'
+      + renderRoleCopies(surface)
+      + '</section>'
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise);
+    return panel;
+  }
+
   /** A compact, separate Stats tray; Cards owns no stat receipts. */
   function statsComparison() {
     const projection = statProjection(registries, run);
@@ -1428,6 +1441,7 @@ export function mountEquipment(host, {
       + `<span>Damage dealt ${esc(String(runStats.damageDealt || 0))}</span>`
       + `<span>Damage taken ${esc(String(runStats.damageTaken || 0))}</span></section>`
       + `<section class="armoury-stats-group"><b>Relics</b><span>${esc(relicNames.length ? `${relicNames.length}: ${relicNames.join(' · ')}` : '0 equipped')}</span></section>`;
+    box.appendChild(equipmentReceiptPanel(surface));
     return box;
   }
 
@@ -1472,6 +1486,7 @@ export function mountEquipment(host, {
     const box = document.createElement('section');
     box.className = 'armoury-character-stats';
     const projection = statProjection(registries, run);
+    const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
 
     function informationCard({ id, label, summary, body }) {
@@ -1527,6 +1542,12 @@ export function mountEquipment(host, {
       label: 'Relics',
       summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
       body: relics,
+    }));
+    box.appendChild(informationCard({
+      id: 'equipmentReceiptsCard',
+      label: 'Equipment cards',
+      summary: surface.roles.map((row) => `${row.profile.displayName} x${row.copies}`).join(' · '),
+      body: equipmentReceiptPanel(surface),
     }));
     return box;
   }
