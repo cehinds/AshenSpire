@@ -1858,8 +1858,13 @@ export function runtimeChecks(g, rt) {
       if (/^[0-9a-f]{7,40}$/.test(cap.base_ref)) {
         errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is a commit id, not a branch; a pinned value recorded as a pointer is neither`);
       }
-      if (cap.base_ref.split('/').includes('..') || /[\s~^:?*\[\\]/.test(cap.base_ref)) {
-        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is not a valid branch name`);
+      // git decides what a branch name is. The hand-rolled character filter that
+      // stood here passed `dev..bad`, `foo//bar`, `trailing/`, `-lead`,
+      // `.hidden` and `a.lock` — six names git rejects — while this file already
+      // used refNameValid() for a capsule's own ref 400 lines up. Restating a
+      // rule instead of reusing it is the defect this branch keeps finding.
+      if (!refNameValid(cap.base_ref)) {
+        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is not a valid git branch name; git could not create it`);
       }
     }
     if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
@@ -2020,7 +2025,19 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
   const refNote = frozen ? '' : (refExists(root, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
   L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
-  L.push(`BASE       : ${cap.base_ref ? `${cap.base_ref} (tracked; last resolved ${cap.base_oid})` : cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
+  // While tracking, the RESOLVED commit is the base the seat works from — naming
+  // the last-recorded one here told the seat to follow a branch and then handed
+  // it a different commit. Frozen mode resolves nothing and says so, keeping the
+  // reconstruction goldens deterministic.
+  const effectiveBase = tracked || cap.base_oid;
+  const baseLine = cap.base_ref
+    ? (frozen
+      ? `${cap.base_ref} (tracked; resolve in this checkout, recorded ${cap.base_oid})`
+      : tracked
+        ? `${tracked} (tracking \`${cap.base_ref}\`)`
+        : `${cap.base_ref} (tracked; UNRESOLVED in this checkout)`)
+    : cap.base_oid;
+  L.push(`BASE       : ${baseLine} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
   // A seat at a gated state must know which gate stands in front of it, who
   // may open it, and what evidence it needs — otherwise it discovers the wall
@@ -2033,11 +2050,17 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
       L.push(`GATE       : ${g.id} (${g.name}) stands before ${to} — ${g.actor_role} acts; evidence ${g.required_evidence.join(', ') || 'none declared'}`);
     }
   }
-  L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
+  // A tracking seat is not stopped by its base moving — that is the whole point
+  // of the pointer. Leaving the pinned-base clause in place emitted a capsule
+  // that said follow the branch and must not work, in the same breath.
+  const stopBase = cap.base_ref
+    ? 'the tracked branch cannot be resolved, or the base freezes when work starts'
+    : 'base_oid moved from HEAD';
+  L.push(`STOP       : lease expired or revoked; ${stopBase}; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
   const rep = contracts['information-access'].reporting;
   L.push(`REPORTING  : ${rep.style} Must: ${rep.must.join('; ')}. Never: ${rep.must_not.join('; ')}.`);
   L.push(`EVIDENCE   : ${cap.evidence_pointers.slice(0, 8).join(', ') || '—'}`);
-  L.push(`SOURCE     : ${cap.base_oid}`);
+  L.push(`SOURCE     : ${frozen ? cap.base_oid : effectiveBase}`);
   L.push(`FRESHNESS  : ${freshness}`);
   L.push(`INVALIDATION: ${cap.invalidation_keys.join(', ')}`);
   if (cap.blocker) L.push(`BLOCKER    : ${JSON.stringify(cap.blocker)}`);
@@ -3676,7 +3699,7 @@ export function runSelftest(root = ROOT) {
   expectRuntime('a tracking pointer that is not a branch name', (rt) => {
     const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
     cap.base_ref = 'dev^{tree}';
-  }, 'is not a valid branch name');
+  }, 'is not a valid git branch name');
   {
     // ...and the pointer actually removes the staleness it was ruled against:
     // an unstarted capsule tracking a branch reads as tracking, not STALE.
@@ -3695,6 +3718,43 @@ export function runSelftest(root = ROOT) {
     const missing = buildCapsule(contracts, rt, t, { head: 'ffffffffffffffffffffffffffffffffffffffff', root });
     const mline = (missing.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
     results.push({ label: 'an unresolvable tracking pointer is reported, not assumed', pass: !!mline && mline.includes('UNRESOLVABLE'), errs: [String(mline)] });
+  }
+
+  // Codex finding: a hand-rolled character filter is not git's branch-name rule.
+  for (const badName of ['dev..bad', 'foo//bar', 'trailing/', '-lead', '.hidden', 'a.lock']) {
+    expectRuntime(`a base_ref git would reject: ${badName}`, (rt) => {
+      const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+      cap.base_ref = badName;
+    }, 'not a valid git branch name');
+  }
+  {
+    // Codex finding: while tracking, the resolved commit is the effective base.
+    // A capsule that says follow the branch and then names a different commit —
+    // or tells the seat to stop because its base moved — defeats the pointer.
+    const rt = baseRt();
+    const t = Object.keys(rt.capsules).find((k) => RESEATABLE.has(rt.capsules[k].lifecycle_state));
+    const branch = anyLocalBranch(root);
+    // Visible, not silent: these four assertions need a branch that resolves,
+    // and a CI pull-request checkout carries none. A block that quietly stops
+    // running is the failure mode this file has already been bitten by twice, so
+    // the skip is itself a reported result.
+    results.push({ label: 'tracking-capsule assertions ' + (branch ? 'ran against ' + branch : 'skipped — this checkout carries no local branch to resolve'), pass: true, errs: [] });
+    if (branch) {
+      const resolved = resolveRef(root, branch);
+      rt.capsules[t].base_ref = branch;
+      const lines = (buildCapsule(contracts, rt, t, { head: 'f'.repeat(40), root }).text || '').split('\n');
+      const get = (k) => lines.find((l) => l.startsWith(k)) || '';
+      results.push({ label: 'a tracking capsule names the resolved commit as its base', pass: get('BASE').includes(resolved), errs: [get('BASE')] });
+      results.push({ label: 'a tracking capsule sources the resolved commit', pass: get('SOURCE').includes(resolved), errs: [get('SOURCE')] });
+      results.push({ label: 'a tracking capsule does not report the old recorded base as its base', pass: !get('BASE').includes(rt.capsules[t].base_oid) || rt.capsules[t].base_oid === resolved, errs: [get('BASE')] });
+      results.push({ label: 'a tracking capsule is not told to stop because its base moved', pass: !get('STOP').includes('base_oid moved from HEAD'), errs: [get('STOP')] });
+    }
+    // ...and a pinned capsule keeps the pinned-base stop condition.
+    const pinned = baseRt();
+    const pt = Object.keys(pinned.capsules).find((k) => RESEATABLE.has(pinned.capsules[k].lifecycle_state));
+    const pLines = (buildCapsule(contracts, pinned, pt, { head: 'f'.repeat(40), root }).text || '').split('\n');
+    const pStop = pLines.find((l) => l.startsWith('STOP')) || '';
+    results.push({ label: 'a pinned capsule still stops when its base moves', pass: pStop.includes('base_oid moved from HEAD'), errs: [pStop] });
   }
 
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
