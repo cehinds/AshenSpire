@@ -1,0 +1,27 @@
+{
+  "event_id": "evt-00000013-7883504f-043a-4aa5-9095-ab9d14230328",
+  "idempotency_key": "auto-claim:422:1",
+  "sequence": 13,
+  "previous_snapshot_hash": "f8998bf720c158551bfc8b206b217753217155d23e21638c9d1d321d515acd74",
+  "issue_id": "422",
+  "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "lease:422:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e"
+  },
+  "payload": {
+    "branch": "codex/issue-422",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T14:55:02.325Z",
+    "claimed_paths": [
+      "docs/governance/AUTHORITY.md",
+      "docs/governance/TEAM-CHARTERS.md"
+    ],
+    "claimed_resources": [],
+    "next_action": "Add authority-matrix row or remove role; ITM3 ruling"
+  },
+  "created_at": "2026-08-31T14:25:02.325Z"
+}

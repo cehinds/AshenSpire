@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 10,
-  "last_sequence": 10,
+  "revision": 13,
+  "last_sequence": 13,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -47,23 +47,31 @@
     },
     "422": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "422",
       "title": "Reconcile it-support role across AUTHORITY.md and roles.json",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-422",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:422:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T14:55:02.325Z",
+      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+          "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+          "lease_id": "lease:422:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         "docs/governance/AUTHORITY.md",
@@ -76,28 +84,36 @@
       "wake_condition": null,
       "next_action": "Add authority-matrix row or remove role; ITM3 ruling",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000003-70f1b556-cfbf-4431-8a4a-e80f91f89037",
-      "updated_at": "2026-08-31T13:52:00.251Z"
+      "updated_event": "evt-00000013-7883504f-043a-4aa5-9095-ab9d14230328",
+      "updated_at": "2026-08-31T14:25:02.325Z"
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "426",
       "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-426",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:426:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T14:55:02.325Z",
+      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
+          "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+          "lease_id": "lease:426:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         "docs/governance/continuity.json"
@@ -109,8 +125,8 @@
       "wake_condition": null,
       "next_action": "Re-pin bytes/sha256 and refresh branch snapshot; lease-held path",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000002-f7b0be8e-6080-476e-8a64-a89023eb657f",
-      "updated_at": "2026-08-31T13:52:00.038Z"
+      "updated_event": "evt-00000012-e7e38602-e6ec-4a5a-9457-f0e845221ce5",
+      "updated_at": "2026-08-31T14:25:02.325Z"
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -149,21 +165,21 @@
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 4,
+      "revision": 5,
       "issue_id": "470",
       "title": "Repair dev verify drift from #470 decision: commit dropped review-approval-hub mirror; widen owner-command git add",
       "priority": "P0",
       "dependencies": [],
-      "state": "CANDIDATE_READY",
+      "state": "QA",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "83f628925c211abe1afa8bd44cba946b04369fdb",
       "branch": "codex/issue-470",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 1,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
+      "assignment_kind": "qa",
+      "lease_id": "qa-lease:470:2",
+      "lease_epoch": 2,
+      "lease_expiry": "2026-08-31T14:55:02.325Z",
+      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
       "maker_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
       "lease_history": [
         {
@@ -172,6 +188,13 @@
           "lease_id": "lease:470:1",
           "lease_epoch": 1,
           "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
+          "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+          "lease_id": "qa-lease:470:2",
+          "lease_epoch": 2,
+          "assignment_kind": "qa"
         }
       ],
       "late_candidates": [],
@@ -192,12 +215,12 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Bind independent QA to this exact candidate.",
+      "next_action": "Run independent QA against the exact candidate commit.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000010-2d856748-c8c9-4e69-98ca-ce78be1dae8c",
-      "updated_at": "2026-08-31T14:00:16.385Z"
+      "updated_event": "evt-00000011-b8a1e170-7bcd-4342-895b-8b2aeef05d96",
+      "updated_at": "2026-08-31T14:25:02.325Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "8aff5c032c7888448f8013e3998b5ae533cb8993c937eb8564c47d55591c26d0"
+  "snapshot_hash": "6e4838e99cc5fa7a8a6334582be60fa377bb7f10861a71cddd9fa1b9c25e5154"
 }

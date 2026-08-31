@@ -1,0 +1,26 @@
+{
+  "event_id": "evt-00000012-e7e38602-e6ec-4a5a-9457-f0e845221ce5",
+  "idempotency_key": "auto-claim:426:1",
+  "sequence": 12,
+  "previous_snapshot_hash": "932b1de684142a2046119adb8a360d034205230147b9ed50c7452ad55d51c56a",
+  "issue_id": "426",
+  "actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "lease:426:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e"
+  },
+  "payload": {
+    "branch": "codex/issue-426",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T14:55:02.325Z",
+    "claimed_paths": [
+      "docs/governance/continuity.json"
+    ],
+    "claimed_resources": [],
+    "next_action": "Re-pin bytes/sha256 and refresh branch snapshot; lease-held path"
+  },
+  "created_at": "2026-08-31T14:25:02.325Z"
+}
