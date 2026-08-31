@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 17,
-  "last_sequence": 17,
+  "revision": 18,
+  "last_sequence": 18,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,12 +66,12 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
@@ -111,8 +111,8 @@
       "wake_condition": null,
       "next_action": "Create RED-first quest vocabulary and consequence contract",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000017-b74ea43b-fe66-4296-9e93-6e15ca20ea05",
-      "updated_at": "2026-08-31T14:24:53.973Z"
+      "updated_event": "evt-00000018-4eb91a56-43f3-4b7b-b28c-8c276c5e50b9",
+      "updated_at": "2026-08-31T14:25:11.371Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -240,5 +240,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "49d7102026267bf092649f6bffbc9246964684a00ee01dbffaaf2a8585a00f18"
+  "snapshot_hash": "75afe15c9507fa1d57fdd933ef279061f6c335fd3a7a9eb798a07faaa668fae7"
 }
