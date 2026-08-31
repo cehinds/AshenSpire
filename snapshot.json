@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 26,
-  "last_sequence": 26,
+  "revision": 27,
+  "last_sequence": 27,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -144,21 +144,21 @@
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 5,
+      "revision": 6,
       "issue_id": "468",
       "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
       "priority": "P1",
       "dependencies": [],
-      "state": "QA",
+      "state": "PR_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "495bf285ac2bcdd634f46b56352d03c6bd6cc593",
       "branch": "codex/issue-468",
-      "assigned_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
-      "assignment_kind": "qa",
-      "lease_id": "qa-lease:468:2",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 2,
-      "lease_expiry": "2026-08-31T15:13:13.438Z",
-      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
       "lease_history": [
         {
@@ -189,14 +189,19 @@
         "RESEAL OK x3 via opsctl reseal, chain intact, revisions 51->52, ledger events AS-HD-040-0053/050-0054/056-0053",
         "opsctl verify: only the two pre-existing stale hub mirrors (byte-identical at base); VALIDATE OK 19 contracts",
         "footprint 22 files +134/-78: capsule dirs plus contract-required tool-written events and regenerated projections; the two PR-475-owned mirror files restored untouched",
-        "retro QA ruling NOT fabricated: requires qa-independent verdict + ITM3/owner CAS-guarded approve; ready-to-sign packet with live seal hashes prepared"
+        "retro QA ruling NOT fabricated: requires qa-independent verdict + ITM3/owner CAS-guarded approve; ready-to-sign packet with live seal hashes prepared",
+        "seal integrity: VALIDATE OK 19 contracts at candidate incl. current_hash/chain checks; verify fails only on the two pre-existing mirrors, identical at base",
+        "lifecycle legality per transitions.json: maker-permitted states only (040 qa-review not accepted, 050 in-progress, 056 local); no fabricated verdict/acceptance; no governance file in diff",
+        "event chain: 3 new ledger events seq +1, parent seals match base current_hash, new seals match content",
+        "render idempotent: only the two PR-475-owned mirrors re-dirty (deliberately kept at committed state); all committed projections current",
+        "footprint: exactly 22 files +134/-78 within contract-explained set; PR-475-owned files absent from diff; git diff --check clean"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Run independent QA against the exact candidate commit.",
+      "next_action": "Deliver an issue-closing PR to dev.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000026-f5bb8f51-0735-4934-acf9-a3c615d3ae20",
-      "updated_at": "2026-08-31T14:43:13.438Z"
+      "updated_event": "evt-00000027-6f1ee007-818a-41e0-b7f3-88881eda3c42",
+      "updated_at": "2026-08-31T14:46:28.084Z"
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -263,5 +268,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "3daefc41343b84257a0f3bc4af746c5e3fe75e0b141c63769766b221cde34071"
+  "snapshot_hash": "4ac93ef824c7984ff09c913a48790222912becb773071513463454e1cb8d91d7"
 }

@@ -1,0 +1,27 @@
+{
+  "event_id": "evt-00000027-6f1ee007-818a-41e0-b7f3-88881eda3c42",
+  "idempotency_key": "QA_RESULT:468:2:495bf285ac2bcdd634f46b56352d03c6bd6cc593",
+  "sequence": 27,
+  "previous_snapshot_hash": "3daefc41343b84257a0f3bc4af746c5e3fe75e0b141c63769766b221cde34071",
+  "issue_id": "468",
+  "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "qa-lease:468:2",
+  "lease_epoch": 2,
+  "event_type": "QA_RESULT",
+  "exact_object": {
+    "oid": "495bf285ac2bcdd634f46b56352d03c6bd6cc593"
+  },
+  "payload": {
+    "candidate_commit": "495bf285ac2bcdd634f46b56352d03c6bd6cc593",
+    "result": "PASS",
+    "evidence_pointers": [
+      "seal integrity: VALIDATE OK 19 contracts at candidate incl. current_hash/chain checks; verify fails only on the two pre-existing mirrors, identical at base",
+      "lifecycle legality per transitions.json: maker-permitted states only (040 qa-review not accepted, 050 in-progress, 056 local); no fabricated verdict/acceptance; no governance file in diff",
+      "event chain: 3 new ledger events seq +1, parent seals match base current_hash, new seals match content",
+      "render idempotent: only the two PR-475-owned mirrors re-dirty (deliberately kept at committed state); all committed projections current",
+      "footprint: exactly 22 files +134/-78 within contract-explained set; PR-475-owned files absent from diff; git diff --check clean"
+    ]
+  },
+  "created_at": "2026-08-31T14:46:28.084Z"
+}
