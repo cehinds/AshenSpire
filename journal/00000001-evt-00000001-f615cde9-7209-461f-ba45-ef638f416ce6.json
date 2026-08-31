@@ -1,0 +1,44 @@
+{
+  "event_id": "evt-00000001-f615cde9-7209-461f-ba45-ef638f416ce6",
+  "idempotency_key": "INTAKE_RECORDED:467:0:2026-08-31T14:02:53.592Z",
+  "sequence": 1,
+  "previous_snapshot_hash": "34dce31f701420375b3d62c46ae2ddcb86162769cff2c18635f25e5219d7db6b",
+  "issue_id": "467",
+  "actor": "intake",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Bounded owner grant for dev delivery authority",
+    "priority": "P0",
+    "dependencies": [],
+    "branch": "codex/issue-467-authority-grant",
+    "claimed_paths": [
+      ".agentops/governance/owner-command.json",
+      ".agentops/tools/opsctl.mjs",
+      ".agentops/tools/opsctl.test.mjs",
+      ".github/ISSUE_TEMPLATE/owner-decision.yml",
+      ".github/workflows/validate-owner-command-issue.test.mjs",
+      ".agentops/generated",
+      "hud",
+      "review-approval-hub"
+    ],
+    "claimed_resources": [
+      "owner-command-authority"
+    ],
+    "acceptance_commands": [
+      "node .agentops/tools/opsctl.mjs verify",
+      "node .agentops/tools/opsctl.mjs --selftest",
+      "git diff --check"
+    ],
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/issues/467",
+      "https://github.com/cehinds/AshenSpire/issues/470"
+    ],
+    "next_action": "Finish exact-head verification and delivery",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T14:02:53.592Z"
+}

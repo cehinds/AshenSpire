@@ -1,8 +1,58 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 0,
-  "last_sequence": 0,
-  "work_items": {},
+  "revision": 1,
+  "last_sequence": 1,
+  "work_items": {
+    "467": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "467",
+      "title": "Bounded owner grant for dev delivery authority",
+      "priority": "P0",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-467-authority-grant",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        ".agentops/governance/owner-command.json",
+        ".agentops/tools/opsctl.mjs",
+        ".agentops/tools/opsctl.test.mjs",
+        ".github/ISSUE_TEMPLATE/owner-decision.yml",
+        ".github/workflows/validate-owner-command-issue.test.mjs",
+        ".agentops/generated",
+        "hud",
+        "review-approval-hub"
+      ],
+      "claimed_resources": [
+        "owner-command-authority"
+      ],
+      "acceptance_commands": [
+        "node .agentops/tools/opsctl.mjs verify",
+        "node .agentops/tools/opsctl.mjs --selftest",
+        "git diff --check"
+      ],
+      "evidence_pointers": [
+        "https://github.com/cehinds/AshenSpire/issues/467",
+        "https://github.com/cehinds/AshenSpire/issues/470"
+      ],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Finish exact-head verification and delivery",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000001-f615cde9-7209-461f-ba45-ef638f416ce6",
+      "updated_at": "2026-08-31T14:02:53.592Z"
+    }
+  },
   "errors": [],
-  "snapshot_hash": "34dce31f701420375b3d62c46ae2ddcb86162769cff2c18635f25e5219d7db6b"
+  "snapshot_hash": "9d97746d1edb3c57d4ffec9a72daca48402b553c547a5983736b7bc7746df3c9"
 }
