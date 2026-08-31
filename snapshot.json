@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 30,
-  "last_sequence": 30,
+  "revision": 31,
+  "last_sequence": 31,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -254,21 +254,21 @@
     },
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 7,
+      "revision": 8,
       "issue_id": "467",
       "title": "Bounded owner grant for dev delivery authority",
       "priority": "P0",
       "dependencies": [],
-      "state": "QA",
+      "state": "REPAIR_REQUIRED",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "4a14a6025064a03c9eeae37495d16496dcf43560",
       "branch": "codex/issue-467-authority-grant",
-      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
-      "assignment_kind": "qa",
-      "lease_id": "qa-lease:467:3",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 3,
-      "lease_expiry": "2026-08-31T15:40:59.231Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
       "lease_history": [
         {
@@ -315,16 +315,23 @@
       "evidence_pointers": [
         "https://github.com/cehinds/AshenSpire/pull/472",
         "https://github.com/cehinds/AshenSpire/issues/467#issuecomment-5479495813",
-        "sha256:55d86a4e395f8b94af54b447e171c5e0884513d19ebc03a22e4d9f1f4c687878"
+        "sha256:55d86a4e395f8b94af54b447e171c5e0884513d19ebc03a22e4d9f1f4c687878",
+        "exact candidate 4a14a6025064a03c9eeae37495d16496dcf43560 tree 8c0ac4fe19218279bf0c212325b02b509b5954b2",
+        "opsctl verify PASS",
+        "opsctl selftest 235/235 PASS",
+        "git diff --check PASS",
+        "LEASE VIOLATION: .agentops/events/AS-HD-029/AS-HD-029-0058.json outside allowed paths",
+        "LEASE VIOLATION: .agentops/work/AS-HD-029/CURRENT.json outside allowed paths",
+        "independent checkout C:/repos/AshenSpire-qa-467-4a14a602"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Run independent QA against the exact candidate commit.",
+      "next_action": "Reconcile candidate to the exact lease: remove the two out-of-lease paths or obtain an explicit expanded implementation lease, then return a new exact candidate for independent QA.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000029-5ef0681b-1cd1-4576-830b-e2a5642e00b3",
-      "updated_at": "2026-08-31T15:10:59.231Z"
+      "updated_event": "evt-00000031-12e0bb70-2dfe-46a3-8798-dd46d9bcb0fa",
+      "updated_at": "2026-08-31T15:13:25.312Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "f7e30c937d22762a39ee20976cc62f1923b01b615c421edcb44b87541ee8677d"
+  "snapshot_hash": "ba879a1b84c9b8963654360a036bee7e3fd6a61ab794fd6455dafe9de1698d67"
 }

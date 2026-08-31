@@ -1,0 +1,30 @@
+{
+  "event_id": "evt-00000031-12e0bb70-2dfe-46a3-8798-dd46d9bcb0fa",
+  "idempotency_key": "QA_RESULT:467:3:4a14a6025064a03c9eeae37495d16496dcf43560",
+  "sequence": 31,
+  "previous_snapshot_hash": "f7e30c937d22762a39ee20976cc62f1923b01b615c421edcb44b87541ee8677d",
+  "issue_id": "467",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "qa-lease:467:3",
+  "lease_epoch": 3,
+  "event_type": "QA_RESULT",
+  "exact_object": {
+    "oid": "4a14a6025064a03c9eeae37495d16496dcf43560"
+  },
+  "payload": {
+    "candidate_commit": "4a14a6025064a03c9eeae37495d16496dcf43560",
+    "result": "FAIL",
+    "evidence_pointers": [
+      "exact candidate 4a14a6025064a03c9eeae37495d16496dcf43560 tree 8c0ac4fe19218279bf0c212325b02b509b5954b2",
+      "opsctl verify PASS",
+      "opsctl selftest 235/235 PASS",
+      "git diff --check PASS",
+      "LEASE VIOLATION: .agentops/events/AS-HD-029/AS-HD-029-0058.json outside allowed paths",
+      "LEASE VIOLATION: .agentops/work/AS-HD-029/CURRENT.json outside allowed paths",
+      "independent checkout C:/repos/AshenSpire-qa-467-4a14a602"
+    ],
+    "next_action": "Reconcile candidate to the exact lease: remove the two out-of-lease paths or obtain an explicit expanded implementation lease, then return a new exact candidate for independent QA."
+  },
+  "created_at": "2026-08-31T15:13:25.312Z"
+}
