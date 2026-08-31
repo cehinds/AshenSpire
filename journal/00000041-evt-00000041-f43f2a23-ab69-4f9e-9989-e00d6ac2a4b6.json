@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000041-f43f2a23-ab69-4f9e-9989-e00d6ac2a4b6",
+  "idempotency_key": "WORK_ENTERED:257:6:2026-08-31T15:42:29.429Z",
+  "sequence": 41,
+  "previous_snapshot_hash": "03fb2b1d83665a4056f28bce2c688543dbbccd67479a6f2b9c1639ae50ff2223",
+  "issue_id": "257",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:6",
+  "lease_epoch": 6,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
+    "next_action": "Validate shipped abandoned-cart to merchant-ghost history branch, then commit, push, and submit exact candidate for independent QA."
+  },
+  "created_at": "2026-08-31T15:42:29.429Z"
+}

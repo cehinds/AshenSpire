@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 40,
-  "last_sequence": 40,
+  "revision": 41,
+  "last_sequence": 41,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,12 +66,12 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 14,
+      "revision": 15,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
       "candidate_commit": "ba7b947c099b3379849cfdbdd116f18b3644351d",
       "branch": "codex/issue-257-quest-choice-pipeline",
@@ -155,10 +155,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Author at least one real later-event or later-choice outcome keyed to an earlier shipped choice, preserve one always-available exit, and extend the contract to prove the shipped chain through the runtime screen path.",
+      "next_action": "Validate shipped abandoned-cart to merchant-ghost history branch, then commit, push, and submit exact candidate for independent QA.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000040-61a92605-ee1d-42fe-be42-d896cecb3f7d",
-      "updated_at": "2026-08-31T15:40:12.568Z"
+      "updated_event": "evt-00000041-f43f2a23-ab69-4f9e-9989-e00d6ac2a4b6",
+      "updated_at": "2026-08-31T15:42:29.429Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -366,5 +366,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "03fb2b1d83665a4056f28bce2c688543dbbccd67479a6f2b9c1639ae50ff2223"
+  "snapshot_hash": "59f214afc7f4c1fe27d9fa17e2f4dbb3c7bdb41386ffb3cb2146ce9b45a7e519"
 }
