@@ -1,0 +1,28 @@
+{
+  "event_id": "evt-00000015-09aca773-3027-4fe6-8016-4fa1fd544f86",
+  "idempotency_key": "auto-claim:468:1",
+  "sequence": 15,
+  "previous_snapshot_hash": "f00b97d5977d0e3df708cf4bd39e676150e3c532b240ad19e53bdc35507b5612",
+  "issue_id": "468",
+  "actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "lease:468:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e"
+  },
+  "payload": {
+    "branch": "codex/issue-468",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T14:56:58.717Z",
+    "claimed_paths": [
+      ".agentops/work/AS-HD-040",
+      ".agentops/work/AS-HD-050",
+      ".agentops/work/AS-HD-056"
+    ],
+    "claimed_resources": [],
+    "next_action": "Re-seal capsules; record retro QA ruling"
+  },
+  "created_at": "2026-08-31T14:26:58.717Z"
+}

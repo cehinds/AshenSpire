@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 14,
-  "last_sequence": 14,
+  "revision": 15,
+  "last_sequence": 15,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -130,23 +130,31 @@
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "468",
       "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-468",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:468:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T14:56:58.717Z",
+      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
+          "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+          "lease_id": "lease:468:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         ".agentops/work/AS-HD-040",
@@ -160,8 +168,8 @@
       "wake_condition": null,
       "next_action": "Re-seal capsules; record retro QA ruling",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000004-1dbb18c2-24fe-4fb1-a588-e757ea98a893",
-      "updated_at": "2026-08-31T13:52:00.492Z"
+      "updated_event": "evt-00000015-09aca773-3027-4fe6-8016-4fa1fd544f86",
+      "updated_at": "2026-08-31T14:26:58.717Z"
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -227,5 +235,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "f00b97d5977d0e3df708cf4bd39e676150e3c532b240ad19e53bdc35507b5612"
+  "snapshot_hash": "1621378a6e52208b314b524f3bcf98c37b9795c002b805964d55f9519f3b60f3"
 }
