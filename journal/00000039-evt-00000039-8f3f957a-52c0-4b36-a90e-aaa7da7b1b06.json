@@ -1,0 +1,31 @@
+{
+  "event_id": "evt-00000039-8f3f957a-52c0-4b36-a90e-aaa7da7b1b06",
+  "idempotency_key": "QA_RESULT:257:5:ba7b947c099b3379849cfdbdd116f18b3644351d",
+  "sequence": 39,
+  "previous_snapshot_hash": "d4eba2034291501c2d1dd42452e24032d6fe0276fe8af76f253b0b08436e401e",
+  "issue_id": "257",
+  "actor": "seat:qa-functional:7c554c0c-14c4-40c6-8d05-66acdff06ba2",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "qa-lease:257:5",
+  "lease_epoch": 5,
+  "event_type": "QA_RESULT",
+  "exact_object": {
+    "oid": "ba7b947c099b3379849cfdbdd116f18b3644351d"
+  },
+  "payload": {
+    "candidate_commit": "ba7b947c099b3379849cfdbdd116f18b3644351d",
+    "result": "FAIL",
+    "evidence_pointers": [
+      "candidate:ba7b947c099b3379849cfdbdd116f18b3644351d",
+      "tree:7dda027b56189689badcbe7399cfa4d681bda2df",
+      "independent-checkout:C:/repos/AshenSpire-qa-257-ba7b947c",
+      "node tools/quest-choice-contract.mjs:12/12 PASS",
+      "node tools/quest-choice-contract.mjs --selftest:17/17 PASS",
+      "node tests/run-node.mjs:114/114 PASS",
+      "git diff --check:PASS",
+      "ACCEPTANCE FAIL: src/content/events.js eventChoiceHistoryRequirements is empty, so no shipped later event or choice is influenced by any earlier choice; only synthetic tool fixtures exercise history gating"
+    ],
+    "next_action": "Author at least one real later-event or later-choice outcome keyed to an earlier shipped choice, preserve one always-available exit, and extend the contract to prove the shipped chain through the runtime screen path."
+  },
+  "created_at": "2026-08-31T15:40:12.568Z"
+}

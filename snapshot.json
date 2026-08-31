@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 38,
-  "last_sequence": 38,
+  "revision": 39,
+  "last_sequence": 39,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 12,
+      "revision": 13,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "QA",
+      "state": "REPAIR_REQUIRED",
       "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
       "candidate_commit": "ba7b947c099b3379849cfdbdd116f18b3644351d",
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": "seat:qa-functional:7c554c0c-14c4-40c6-8d05-66acdff06ba2",
-      "assignment_kind": "qa",
-      "lease_id": "qa-lease:257:5",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 5,
-      "lease_expiry": "2026-08-31T16:01:32.144Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
       "lease_history": [
         {
@@ -137,14 +137,21 @@
         "node tools/quest-choice-contract.mjs:12/12",
         "node tools/quest-choice-contract.mjs --selftest:17/17",
         "node tests/run-node.mjs:114/114",
-        "git diff --check:PASS"
+        "git diff --check:PASS",
+        "candidate:ba7b947c099b3379849cfdbdd116f18b3644351d",
+        "tree:7dda027b56189689badcbe7399cfa4d681bda2df",
+        "independent-checkout:C:/repos/AshenSpire-qa-257-ba7b947c",
+        "node tools/quest-choice-contract.mjs:12/12 PASS",
+        "node tools/quest-choice-contract.mjs --selftest:17/17 PASS",
+        "node tests/run-node.mjs:114/114 PASS",
+        "ACCEPTANCE FAIL: src/content/events.js eventChoiceHistoryRequirements is empty, so no shipped later event or choice is influenced by any earlier choice; only synthetic tool fixtures exercise history gating"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Run independent QA against the exact candidate commit.",
+      "next_action": "Author at least one real later-event or later-choice outcome keyed to an earlier shipped choice, preserve one always-available exit, and extend the contract to prove the shipped chain through the runtime screen path.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000038-8a58b76e-7b21-42b5-81d8-7aec9a2abfd9",
-      "updated_at": "2026-08-31T15:31:32.144Z"
+      "updated_event": "evt-00000039-8f3f957a-52c0-4b36-a90e-aaa7da7b1b06",
+      "updated_at": "2026-08-31T15:40:12.568Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -352,5 +359,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "d4eba2034291501c2d1dd42452e24032d6fe0276fe8af76f253b0b08436e401e"
+  "snapshot_hash": "9fde79710c71bc427837526211186cb80b1a862d5c52f547aef968a36d4436e4"
 }
