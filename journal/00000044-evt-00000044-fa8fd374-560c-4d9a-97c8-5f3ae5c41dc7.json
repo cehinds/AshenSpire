@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000044-fa8fd374-560c-4d9a-97c8-5f3ae5c41dc7",
+  "idempotency_key": "WORK_ENTERED:256:1:2026-08-31T16:09:13.995Z",
+  "sequence": 44,
+  "previous_snapshot_hash": "cf331abfcaffca846ea92fd4916e98e4df2b60c785f591c23d134a9daf2fe9d2",
+  "issue_id": "256",
+  "actor": "seat:codex:9d6e4f32-bf53-4ca7-a184-5039e7db6f42",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": "lease:256:1",
+  "lease_epoch": 1,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
+    "next_action": "Implement and validate player-facing reward armament effect labels in the two claimed source files."
+  },
+  "created_at": "2026-08-31T16:09:13.995Z"
+}

@@ -1,16 +1,16 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 43,
-  "last_sequence": 43,
+  "revision": 44,
+  "last_sequence": 44,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "256",
       "title": "E11 regression: render armament reward effects as player-facing copy",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
       "candidate_commit": null,
       "branch": "codex/issue-256-armament-reward-copy",
@@ -44,10 +44,10 @@
       "evidence_pointers": [],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Create fresh isolated worktree, implement shared effect labels, run reward and unit gates.",
+      "next_action": "Implement and validate player-facing reward armament effect labels in the two claimed source files.",
       "authority_ceiling": "local-candidate",
-      "updated_event": "evt-00000043-927c3248-274d-4366-ad08-58e819039f41",
-      "updated_at": "2026-08-31T16:08:59.437Z"
+      "updated_event": "evt-00000044-fa8fd374-560c-4d9a-97c8-5f3ae5c41dc7",
+      "updated_at": "2026-08-31T16:09:13.995Z"
     },
     "313": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -408,5 +408,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "cf331abfcaffca846ea92fd4916e98e4df2b60c785f591c23d134a9daf2fe9d2"
+  "snapshot_hash": "a80f31cf1e2818c2e44522eb43bfea8edd951c537e9cc69b7caa0b2f15088bc5"
 }
