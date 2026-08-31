@@ -227,7 +227,7 @@ function buildProjectPayload(flat, request, errors, now) {
   constant(flat, "preflight_item_count", 155, errors);
   if (!/^PVTSSF_[A-Za-z0-9]+$/.test(flat.priority_field_id ?? "")) errors.push("priority_field_id must be a canonical ProjectV2 single-select field ID");
   constant(flat, "mode", "create-missing-only", errors);
-  constant(flat, "allowed_mutation", "createProjectV2Field", errors);
+  constant(flat, "allowed_mutation", "project-field-create", errors);
   for (const key of ["forbid_item_mutation", "forbid_existing_field_update", "forbid_backfill", "abort_on_any_drift", "one_use"]) strictTrue(flat, key, errors);
   constant(flat, "retry_mode", "never", errors);
   timestamp(flat.project_updated_at, "project_updated_at", errors, {}, now);

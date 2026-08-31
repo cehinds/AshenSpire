@@ -241,7 +241,7 @@ const projectValues = Object.freeze({
   "Field state root": HASH_A, "Preflight item count": "155", "Preflight field value count": "412",
   "Item state root": HASH_B, "Pagination manifest hash": "3".repeat(64),
   "Priority field ID": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4", "Priority contract hash": "4".repeat(64),
-  "Definitions hash": "5".repeat(64), "Mode": "create-missing-only", "Allowed mutation": "createProjectV2Field",
+  "Definitions hash": "5".repeat(64), "Mode": "create-missing-only", "Allowed mutation": "project-field-create",
   "Forbid item mutation": "true", "Forbid existing field update": "true", "Forbid backfill": "true",
   "Abort on any drift": "true", "Retry mode": "never", "One use": "true", "Expires at": "2026-09-01T15:10:17.1234567Z"
 });
