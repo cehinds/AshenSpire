@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentops/scheduler-state-reconciliation-attempt/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "attempt_id", "idempotency_key", "observed_at", "source", "findings", "plan", "cas_plan", "attempt_hash"],
+  "properties": {
+    "schema": { "const": "agentops/scheduler-state-reconciliation-attempt/v1" },
+    "attempt_id": { "type": "string", "pattern": "^reconcile-[0-9a-f]{64}$" },
+    "idempotency_key": { "type": "string", "pattern": "^scheduler-state-reconciliation:[0-9a-f]{64}$" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_ref", "state_oid", "state_tree", "snapshot_hash", "state_version", "dev_oid", "dev_tree", "custody_lease_epoch", "custody_released_at"],
+      "properties": {
+        "state_ref": { "type": "string", "pattern": "^refs/heads/[A-Za-z0-9._/-]+$" },
+        "state_oid": { "$ref": "#/$defs/oid" },
+        "state_tree": { "$ref": "#/$defs/oid" },
+        "snapshot_hash": { "$ref": "#/$defs/hash" },
+        "state_version": { "enum": ["1", "2"] },
+        "dev_oid": { "$ref": "#/$defs/oid" },
+        "dev_tree": { "$ref": "#/$defs/oid" },
+        "custody_lease_epoch": { "type": "integer", "minimum": 0 },
+        "custody_released_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "issue_id", "state", "lease_id", "lease_epoch", "candidate_commit"],
+        "properties": {
+          "code": { "enum": ["EXPIRED_ACTIVE_LEASE", "UNREACHABLE_CANDIDATE"] },
+          "issue_id": { "type": "string", "minLength": 1 },
+          "state": { "type": "string", "minLength": 1 },
+          "lease_id": { "type": ["string", "null"] },
+          "lease_epoch": { "type": ["integer", "null"], "minimum": 0 },
+          "candidate_commit": { "anyOf": [{ "$ref": "#/$defs/oid" }, { "type": "null" }] }
+        }
+      }
+    },
+    "plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ordinal", "action", "issue_id", "expected_state", "expected_lease_id", "expected_lease_epoch", "expected_candidate_commit", "projected_state", "reason"],
+        "properties": {
+          "ordinal": { "type": "integer", "minimum": 1 },
+          "action": { "enum": ["EXPIRE_LEASE", "QUARANTINE_CANDIDATE"] },
+          "issue_id": { "type": "string", "minLength": 1 },
+          "expected_state": { "type": "string", "minLength": 1 },
+          "expected_lease_id": { "type": ["string", "null"] },
+          "expected_lease_epoch": { "type": ["integer", "null"], "minimum": 0 },
+          "expected_candidate_commit": { "anyOf": [{ "$ref": "#/$defs/oid" }, { "type": "null" }] },
+          "projected_state": { "enum": ["READY", "CANDIDATE_READY", "REPAIR_REQUIRED"] },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "cas_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_ref", "expected_old_oid", "expected_old_tree", "expected_dev_oid", "expected_dev_tree", "planned_operations", "mutation_authorized", "execution_scope"],
+      "properties": {
+        "target_ref": { "type": "string", "pattern": "^refs/heads/[A-Za-z0-9._/-]+$" },
+        "expected_old_oid": { "$ref": "#/$defs/oid" },
+        "expected_old_tree": { "$ref": "#/$defs/oid" },
+        "expected_dev_oid": { "$ref": "#/$defs/oid" },
+        "expected_dev_tree": { "$ref": "#/$defs/oid" },
+        "planned_operations": { "type": "integer", "minimum": 0 },
+        "mutation_authorized": { "const": false },
+        "execution_scope": { "const": "PLAN_ONLY_NO_REF_STATE_PROJECT_CUSTODY_MUTATION" }
+      }
+    },
+    "attempt_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

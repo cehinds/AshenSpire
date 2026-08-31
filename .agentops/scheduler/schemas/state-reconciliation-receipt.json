@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentops/scheduler-state-reconciliation-receipt/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "receipt_id", "attempt_id", "attempt_hash", "idempotency_key", "mode", "outcome", "planned_operations", "protected_mutations", "artifacts", "receipt_hash"],
+  "properties": {
+    "schema": { "const": "agentops/scheduler-state-reconciliation-receipt/v1" },
+    "receipt_id": { "type": "string", "pattern": "^receipt-[0-9a-f]{64}$" },
+    "attempt_id": { "type": "string", "pattern": "^reconcile-[0-9a-f]{64}$" },
+    "attempt_hash": { "$ref": "#/$defs/hash" },
+    "idempotency_key": { "type": "string", "pattern": "^scheduler-state-reconciliation:[0-9a-f]{64}$" },
+    "mode": { "enum": ["DRY_RUN", "LOCAL_RECORD"] },
+    "outcome": { "enum": ["NOOP", "PLAN_READY"] },
+    "planned_operations": { "type": "integer", "minimum": 0 },
+    "protected_mutations": { "const": 0 },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^(attempt|receipt)-[0-9a-f]{64}\\.json$" },
+      "maxItems": 2,
+      "uniqueItems": true
+    },
+    "receipt_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+}
