@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 46,
-  "last_sequence": 46,
+  "revision": 47,
+  "last_sequence": 47,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -360,21 +360,21 @@
     },
     "480": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 5,
+      "revision": 6,
       "issue_id": "480",
       "title": "Rebuild shipped bundle: source-vs-build drift (tree 3543637990 vs shipped 8f546f2e1d) from 4b5793a8",
       "priority": "P2",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "READY",
       "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
       "candidate_commit": null,
       "branch": "codex/issue-480",
-      "assigned_actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:480:2",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 2,
-      "lease_expiry": "2026-08-31T16:53:52.676Z",
-      "lease_machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": null,
       "lease_history": [
         {
@@ -394,16 +394,9 @@
       ],
       "late_candidates": [],
       "claimed_paths": [
-        "assets/classes/successor-packet.manifest.json",
-        "build/AshenSpire.html",
-        "buildordinal.json",
-        "AshenSpire.html",
-        "dist/**"
+        "refs/heads/codex/issue-480"
       ],
-      "claimed_resources": [
-        "buildordinal.json",
-        "generated-outputs"
-      ],
+      "claimed_resources": [],
       "acceptance_commands": [
         "node tools/buildversion.mjs --check",
         "node tools/verify-shipped.mjs",
@@ -417,12 +410,12 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Patch the manifest value shape, verify packet integrity, run node tools/launch.mjs --build-only once, then buildversion, verify-shipped, rebuild-matches, full Node, and git diff --check.",
+      "next_action": "Reclaim from the last preserved candidate or worktree.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000046-0cea3cd5-b68d-4e6a-927e-258cf058eb14",
-      "updated_at": "2026-08-31T16:24:00.589Z"
+      "updated_event": "evt-00000047-e9b41ca0-963e-4abc-a311-b82b67de2881",
+      "updated_at": "2026-08-31T16:33:25.113Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "e59ff4e1e49ee1f87146a27597c2e5fbb5e9d795cf236ba3b64facae24cfb2f9"
+  "snapshot_hash": "3b4e9aa0e0a2444a2cb3e402238dca5109c247239e869c4fd7da3a416ebeae14"
 }
