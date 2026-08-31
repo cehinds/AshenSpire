@@ -16,6 +16,21 @@
   "idle_alarm_seconds": 30,
   "lease_duration_seconds": 1800,
   "project_evidence_max_age_seconds": 30,
+  "project_contract": {
+    "owner": "cehinds",
+    "number": 4,
+    "id": "PVT_kwHOCSCyJ84BgfH9",
+    "title": "Family Delivery",
+    "fields": {
+      "Priority": { "id": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4", "data_type": "ProjectV2SingleSelectField" }
+    }
+  },
+  "migration": {
+    "target_state_version": 2,
+    "dispatch_frozen": true,
+    "canonical_anchor_oid": "dbd50e1656d22a72cbda43dd349e5ab7c9a46777",
+    "authorization_evidence": null
+  },
   "wake_target_tokens": 1200,
   "wake_hard_limit_tokens": 1500,
   "workers": [],

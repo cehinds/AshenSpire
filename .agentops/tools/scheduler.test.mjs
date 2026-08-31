@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
-  appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, canonicalIssueIdentity, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
+  appendEvents, applyAssignments, assertPortable, assertSchedulerCommandAllowed, assertSchedulerDispatchCutover, canonicalClaimPath, canonicalIssueIdentity, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
   emptySnapshot, historyAdvanceAllowed, intakeAdmissionEvidence, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
-  fetchAuthenticatedProjectEvidence, localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reconcileAssignmentEnvironment, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, schedulerStateRefs, sealAdmissionEvidence, sha256, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerCutoverAuthority, validateSchedulerDocument, validateWorkers, watcherPlan
+  fetchAuthenticatedProjectEvidence, legacyJournalManifestHash, localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reconcileAssignmentEnvironment, reduceEvents, repositorySlug, resolveCanonicalIssue,
+  runBoundedCommand, schedulerEventVersion, schedulerStateRefs, sealAdmissionEvidence, sha256, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validatePortableStateVersion, validateSchedulerCutoverAuthority, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
+import { exactV1NumericCheckpoint169333, schedulerV1CompatFixture } from './testdata/scheduler-v1-compat.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolDir, '..', '..');
@@ -34,11 +36,32 @@ function test(name, fn) {
   catch (error) { process.stderr.write(`not ok - ${name}: ${error.stack}\n`); process.exitCode = 1; }
 }
 
-function fresh() { return { oid: null, events: [], snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' }; }
+function fresh() { return { oid: null, events: [], eventBlobs: {}, snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' }; }
+function migrateFixture(source, sourceTree, createdAt = '2026-08-30T02:00:00.000Z') {
+  const authorityReceipt = { event_path: '.agentops/events/test-owner-decision.json', event_id: 'test-owner-decision', event_hash: 'f'.repeat(64) };
+  const payload = {
+    from_state_version: 1, to_state_version: 2,
+    source_state_oid: source.oid, source_state_tree: sourceTree,
+    source_snapshot_hash: source.snapshot.snapshot_hash, source_last_sequence: source.snapshot.last_sequence,
+    legacy_journal_manifest_hash: legacyJournalManifestHash(source.eventBlobs), legacy_machine_lease: source.machineLease,
+    preserved_local_tip: null, dispatch_frozen: true, authority_receipt: authorityReceipt
+  };
+  const migrated = appendEvents(source, [{ event_version: 2, event_type: 'STATE_MIGRATED', issue_id: 'scheduler-state', actor: 'it-manager-iii', machine_id: null, lease_id: null, lease_epoch: null, exact_object: { oid: source.oid, snapshot_hash: source.snapshot.snapshot_hash }, payload, created_at: createdAt, idempotency_key: `test-migrate:${source.oid}` }]);
+  return { ...migrated, stateVersion: '2', machineLease: { machine_id: null, lease_epoch: source.machineLease?.lease_epoch ?? 0, acquired_at: null, expires_at: createdAt, expected_state_ref_oid: source.oid, released_at: createdAt } };
+}
 function testProjectReceipt(observedAt = '2026-08-30T00:00:05.000Z') {
+  const requiredFields = ['Scheduler Status', 'Priority', 'Owner Role', 'Affected Paths', 'Affected Resources', 'Dependencies', 'External Claims', 'Human Gate', 'Scope Complete'];
   const body = {
     schema: 'agentops/scheduler-project-fetch-receipt/v1', repository: repositorySlug(config.repository),
-    project_owner: 'cehinds', project_number: 1, authenticated_login: 'test-owner', granted_scopes: ['read:project'],
+    project_owner: config.project_contract.owner, project_number: config.project_contract.number, project_id: config.project_contract.id, project_title: config.project_contract.title,
+    project_item_count: 1, project_total_item_count: 1, project_field_count: 9, project_total_field_count: 9,
+    required_fields: requiredFields, required_fields_complete: true,
+    project_fields: requiredFields.map((name, index) => ({
+      id: config.project_contract.fields[name]?.id ?? `PVTF_test_${index}`,
+      name,
+      data_type: config.project_contract.fields[name]?.data_type ?? 'TEXT'
+    })),
+    authenticated_login: 'test-owner', granted_scopes: ['read:project'],
     fetched_at: observedAt, response_sha256: sha256('authenticated-project-response')
   };
   return { ...body, receipt_hash: sha256(body) };
@@ -49,7 +72,7 @@ function intake(state, issue, options = {}) {
   const projectEvidence = sealAdmissionEvidence({
     schema: 'agentops/scheduler-admission/v1', canonical_issue_id: issue, board_sync_status: 'OK',
     project_priority: options.priority ?? 'P2', project_owner_role: options.ownerRole ?? 'maker', project_status: 'READY',
-    project_authenticated_login: receipt.authenticated_login, project_fetch_receipt_hash: receipt.receipt_hash, project_response_sha256: receipt.response_sha256,
+    project_authenticated_login: receipt.authenticated_login, project_fetch_receipt_hash: receipt.receipt_hash, project_response_sha256: receipt.response_sha256, project_fetch_receipt: structuredClone(receipt),
     scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true,
     conflict_identities: [], observed_at: observedAt, fresh_until: options.freshUntil ?? '2026-08-30T00:30:00.000Z'
   });
@@ -68,7 +91,7 @@ function liveReconciliation(state, issue, projectOverrides = {}, environmentOver
   const receipt = testProjectReceipt();
   return {
     project_sync: {
-      status: 'OK', observed_at: '2026-08-30T00:00:05.000Z', source_id: 'github-project',
+      status: 'OK', observed_at: '2026-08-30T00:00:05.000Z', source_id: `github-project:${config.project_contract.owner}/${config.project_contract.number}`,
       fetch_receipt: receipt,
       issues: {
         [issue]: {
@@ -258,7 +281,7 @@ test('25 cross-machine custody transfer', () => {
   assert.equal(second.ok, true); assert.equal(second.current.machine_id, 'b');
 });
 
-test('26 quiet no-change watcher cycle', () => {
+test('26 pre-migration watcher is blocked before creating machine identity', () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-scheduler-quiet-'));
   try {
     fs.mkdirSync(path.join(temp, '.agentops', 'scheduler'), { recursive: true });
@@ -268,7 +291,8 @@ test('26 quiet no-change watcher cycle', () => {
     const moduleUrl = pathToFileURL(path.join(toolDir, 'scheduler.mjs')).href;
     const script = `import(${JSON.stringify(moduleUrl)}).then(({main}) => { process.exitCode = main(['watch'], ${JSON.stringify(temp)}); })`;
     const run = spawnSync(process.execPath, ['--input-type=module', '--eval', script], { cwd: temp, encoding: 'utf8', timeout: 5000 });
-    assert.equal(run.status, 0, run.stderr); assert.equal(run.stdout, '');
+    assert.notEqual(run.status, 0); assert.match(run.stderr, /SCHEDULER_STATE_MIGRATION_REQUIRED/); assert.equal(run.stdout, '');
+    assert.equal(fs.existsSync(path.join(temp, '.git', 'agentops-scheduler', 'machine.json')), false);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
@@ -460,17 +484,17 @@ test('portable state push race fetches and installs the authoritative winner', (
     git(temp, ['init', '--bare', remote]);
     for (const root of [first, second]) { git(root, ['init']); git(root, ['remote', 'add', 'origin', remote]); }
     const initial = fresh(); initial.machineLease = { machine_id: null, lease_epoch: 0, acquired_at: null, expires_at: null, expected_state_ref_oid: null };
-    initial.oid = persistPortableState(first, initial, { push: true, message: 'initial' });
+    initial.oid = persistPortableState(first, initial, { push: true, message: 'initial', config });
     git(second, ['fetch', 'origin', '+refs/heads/agentops/scheduler-state:refs/remotes/origin/agentops/scheduler-state']);
-    let winner = readPortableState(second); winner.machineLease = { machine_id: MACHINE_A, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: winner.oid };
-    const winnerOid = persistPortableState(second, winner, { push: true, message: 'winner' });
+    let winner = readPortableState(second, config); winner.machineLease = { machine_id: MACHINE_A, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: winner.oid };
+    const winnerOid = persistPortableState(second, winner, { push: true, message: 'winner', config });
     const loser = { ...initial, machineLease: { machine_id: MACHINE_B, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
     let failure;
-    try { persistPortableState(first, loser, { push: true, message: 'loser' }); } catch (error) { failure = error; }
+    try { persistPortableState(first, loser, { push: true, message: 'loser', config }); } catch (error) { failure = error; }
     assert.equal(failure?.portableStateAuthorityLost, true);
     assert.equal(failure?.authoritativeStateOid, winnerOid);
-    assert.equal(readPortableState(first).oid, winnerOid);
-    assert.equal(readPortableState(first).machineLease.machine_id, MACHINE_A);
+    assert.equal(readPortableState(first, config).oid, winnerOid);
+    assert.equal(readPortableState(first, config).machineLease.machine_id, MACHINE_A);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
@@ -765,7 +789,7 @@ test('admission fails closed when Project evidence is missing, stale, or has no 
   let blocked = blockedAdmission(state, 'GH-BOARD-SYNC', { ...reconciliation, project_sync: { ...reconciliation.project_sync, status: 'BOARD_SYNC_FAILED' } });
   assert.deepEqual(
     { blocker: blocked.blocker, conflict_identity: blocked.conflict_identity, wake_evidence: blocked.wake_evidence },
-    { blocker: 'BOARD_SYNC_FAILED', conflict_identity: 'github-project', wake_evidence: 'record a fresh successful Project priority and ownership observation' }
+    { blocker: 'BOARD_SYNC_FAILED', conflict_identity: `github-project:${config.project_contract.owner}/${config.project_contract.number}`, wake_evidence: 'record a fresh successful Project priority and ownership observation' }
   );
   reconciliation = { ...reconciliation, project_sync: { ...reconciliation.project_sync, observed_at: '2026-08-29T00:00:00Z' } };
   blocked = blockedAdmission(state, 'GH-BOARD-SYNC', reconciliation);
@@ -837,23 +861,53 @@ test('GitHub Project admission is built from an authenticated read-project fetch
   try {
     const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' }); assert.equal(init.status, 0, init.stderr);
     const runtime = path.join(temp, '.git', 'agentops-scheduler'); fs.mkdirSync(runtime, { recursive: true });
-    fs.writeFileSync(path.join(runtime, 'project-source.json'), `${JSON.stringify({ schema: 'agentops/scheduler-project-source/v1', repository: repositorySlug(config.repository), owner: 'cehinds', number: 1 })}\n`);
-    const projectResponse = JSON.stringify({ items: [{
+    fs.writeFileSync(path.join(runtime, 'project-source.json'), `${JSON.stringify({ schema: 'agentops/scheduler-project-source/v1', repository: repositorySlug(config.repository), owner: 'cehinds', number: 4 })}\n`);
+    const projectResponse = JSON.stringify({ totalCount: 1, items: [{
       content: { number: 426, repository: repositorySlug(config.repository), state: 'OPEN', assignees: [] },
-      Priority: 'P1', 'Owner Role': 'maker', Status: 'READY', 'Scope Complete': true,
+       Priority: 'P1', 'Owner Role': 'maker', 'Scheduler Status': 'READY', 'Scope Complete': true,
       'Affected Paths': JSON.stringify(['src/receipt.js']), 'Affected Resources': '[]', Dependencies: '[]', 'External Claims': '[]'
     }] });
+    const requiredFields = ['Scheduler Status', 'Priority', 'Owner Role', 'Affected Paths', 'Affected Resources', 'Dependencies', 'External Claims', 'Human Gate', 'Scope Complete'];
+    const fieldResponse = JSON.stringify({ totalCount: requiredFields.length, fields: requiredFields.map((name, index) => ({
+      id: config.project_contract.fields[name]?.id ?? `field-${index}`,
+      name,
+      dataType: config.project_contract.fields[name]?.data_type ?? 'TEXT'
+    })) });
+    const identityResponse = JSON.stringify({ id: config.project_contract.id, title: config.project_contract.title, number: 4, owner: { login: 'cehinds' } });
     const runner = (command, args) => {
       assert.equal(command, 'gh');
       if (args[0] === 'auth') return { status: 0, stdout: '', stderr: "Logged in to github.com account test-owner\nToken scopes: 'repo', 'read:project'" };
-      return { status: 0, stdout: projectResponse, stderr: '' };
+      if (args[1] === 'item-list') {
+        for (const field of requiredFields) assert.equal(args.some((value, index) => value === '--field' && args[index + 1] === field), true);
+        return { status: 0, stdout: projectResponse, stderr: '' };
+      }
+      if (args[1] === 'field-list') return { status: 0, stdout: fieldResponse, stderr: '' };
+      if (args[1] === 'view') return { status: 0, stdout: identityResponse, stderr: '' };
+      throw new Error(`unexpected gh call ${args.join(' ')}`);
     };
     const sync = fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', runner);
     assert.equal(sync.status, 'OK');
     assert.equal(sync.issues['#426'].canonical_issue_id, '#426');
     assert.equal(sync.fetch_receipt.authenticated_login, 'test-owner');
     assert.equal(sync.fetch_receipt.granted_scopes.includes('read:project'), true);
+    assert.equal(sync.fetch_receipt.project_item_count, sync.fetch_receipt.project_total_item_count);
+    assert.equal(sync.fetch_receipt.project_field_count, sync.fetch_receipt.project_total_field_count);
     assert.equal(sync.fetch_receipt.receipt_hash, sha256(Object.fromEntries(Object.entries(sync.fetch_receipt).filter(([key]) => key !== 'receipt_hash'))));
+    const truncatedRunner = (command, args) => {
+      const result = runner(command, args);
+      if (args[1] === 'item-list') return { ...result, stdout: JSON.stringify({ ...JSON.parse(result.stdout), totalCount: 2 }) };
+      return result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', truncatedRunner), /truncated GitHub Project item response/);
+    const malformedRunner = (command, args) => {
+      const result = runner(command, args);
+      if (args[1] === 'item-list') {
+        const malformed = JSON.parse(result.stdout); malformed.items[0].Dependencies = '{not-json';
+        return { ...result, stdout: JSON.stringify(malformed) };
+      }
+      return result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', malformedRunner), /Dependencies is not valid JSON/);
     assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', (command, args) => args[0] === 'auth' ? { status: 0, stdout: '', stderr: 'Logged in to github.com account test-owner\nToken scopes: repo' } : { status: 0, stdout: projectResponse, stderr: '' }), /lacks read:project/);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
@@ -868,7 +922,7 @@ test('caller-supplied admission JSON cannot bypass the trusted GitHub Project re
     admission_evidence: JSON.stringify(item.project_evidence)
   }, state, { machine_id: 'machine-a' });
   assert.equal(event.payload.admission_evidence, null);
-  assert.throws(() => appendEvents(state, [event]), /sealed repository admission evidence/);
+  assert.throws(() => appendEvents(state, [event]), /fresh authenticated admission evidence/);
 });
 
 test('issue 426-shaped continuity work waits for precursor termination and the live governance-docs lease', () => {
@@ -944,7 +998,7 @@ test('unmapped live worktree custody and duplicate canonical intake both fail cl
   assert.throws(() => appendEvents(state, [duplicate]), /duplicate (canonical )?issue intake/);
 });
 
-test('sync push publishes a preserved local-ahead state commit', () => {
+test('pre-migration sync push cannot publish a preserved local-ahead state commit', () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-sync-push-'));
   const remote = path.join(temp, 'remote.git'); const work = path.join(temp, 'work');
   const git = (root, args) => {
@@ -958,9 +1012,117 @@ test('sync push publishes a preserved local-ahead state commit', () => {
     const initial = fresh(); initial.oid = persistPortableState(work, initial, { push: true, config, message: 'initial' });
     const advanced = { ...initial, machineLease: { machine_id: MACHINE_A, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
     const localOid = persistPortableState(work, advanced, { push: false, config, message: 'local ahead' });
-    assert.equal(main(['sync', '--push'], work), 0);
+    assert.throws(() => main(['sync', '--push'], work), /SCHEDULER_STATE_MIGRATION_REQUIRED/);
     const remoteOid = git(work, ['ls-remote', 'origin', config.state_ref]).split(/\s+/)[0];
-    assert.equal(remoteOid, localOid);
+    assert.equal(remoteOid, initial.oid);
+    assert.notEqual(remoteOid, localOid);
+    assert.equal(fs.existsSync(path.join(work, '.git', 'agentops-scheduler', 'machine.json')), false);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('frozen numeric v1 events replay only when event_version is absent', () => {
+  const fixture = schedulerV1CompatFixture(reduceEvents);
+  const sourceBytes = fixture.events.map((event) => JSON.stringify(event));
+  const replay = reduceEvents(fixture.events);
+  assert.equal(replay.errors.length, 0);
+  assert.equal(replay.schema, 'agentops/scheduler-snapshot/v1');
+  assert.equal(replay.work_items['00422'].state, 'CLAIMED');
+  assert.equal(fixture.events.every((event) => schedulerEventVersion(event) === 1), true);
+  assert.deepEqual(fixture.events.map((event) => JSON.stringify(event)), sourceBytes);
+  assert.throws(() => validateEvent({ ...fixture.events[0], event_version: 1 }), /must omit event_version/);
+});
+
+test('exact 16-event numeric checkpoint preserves blob identities and rejects exact-object tampering', () => {
+  const fixture = exactV1NumericCheckpoint169333();
+  assert.equal(fixture.events.length, 16);
+  for (const entry of fixture.entries) {
+    const header = `blob ${Buffer.byteLength(entry.raw)}\0`;
+    const oid = crypto.createHash('sha1').update(header).update(entry.raw).digest('hex');
+    assert.equal(oid, entry.oid);
+  }
+  const replay = reduceEvents(fixture.events);
+  assert.equal(replay.errors.length, 0);
+  assert.equal(replay.snapshot_hash, fixture.snapshot_hash);
+  assert.deepEqual(Object.fromEntries(Object.entries(replay.work_items).map(([id, item]) => [id, item.state])), {
+    396: 'SUPERSEDED', 422: 'CLAIMED', 426: 'CLAIMED', 468: 'CLAIMED', 470: 'PR_OPEN'
+  });
+  assert.equal(fixture.events.every((event) => !Object.prototype.hasOwnProperty.call(event, 'event_version')), true);
+  const tampered = structuredClone(fixture.events);
+  const candidate = tampered.find((event) => event.event_type === 'CANDIDATE_READY');
+  candidate.exact_object.oid = 'f'.repeat(40);
+  assert.match(reduceEvents(tampered).errors.find((error) => error.event_id === candidate.event_id).error, /exact object and payload disagree/);
+});
+
+test('single v2 migration boundary canonicalizes and quarantines legacy authority', () => {
+  const fixture = schedulerV1CompatFixture(reduceEvents);
+  const snapshot = reduceEvents(fixture.events);
+  const eventBlobs = {
+    'journal/00000001-legacy-intake-00422.json': '3'.repeat(40),
+    'journal/00000002-legacy-claim-00422.json': '4'.repeat(40)
+  };
+  const source = { oid: fixture.source_state_oid, events: fixture.events, eventBlobs, snapshot, machineLease: null, stateVersion: '1' };
+  const migrated = migrateFixture(source, fixture.source_state_tree);
+  assert.equal(migrated.stateVersion, '2');
+  assert.equal(migrated.events.length, 3);
+  assert.equal(migrated.events[2].event_type, 'STATE_MIGRATED');
+  assert.equal(migrated.snapshot.schema, 'agentops/scheduler-snapshot/v2');
+  assert.deepEqual(Object.keys(migrated.snapshot.work_items), ['#422']);
+  const item = migrated.snapshot.work_items['#422'];
+  assert.equal(item.state, 'MIGRATION_QUARANTINED');
+  assert.equal(item.assigned_actor, null);
+  assert.equal(item.migration_quarantine.prior_assignments[0].assigned_actor, 'seat:legacy:00000000-0000-4000-8000-000000000422');
+  assert.deepEqual(item.claimed_paths, ['src/legacy/**']);
+  assert.equal(migrated.snapshot.migration.legacy_journal_manifest_hash, legacyJournalManifestHash(eventBlobs));
+  assert.equal(migrated.snapshot.migration.dispatch_frozen, true);
+  assert.equal(validatePortableStateVersion(migrated), true);
+  assert.deepEqual(migrated.events.slice(0, 2), fixture.events);
+
+  const missingVersionAfterBoundary = { ...fixture.events[0], event_id: 'legacy-after-boundary', idempotency_key: 'legacy-after-boundary', sequence: 4, previous_snapshot_hash: migrated.snapshot.snapshot_hash };
+  assert.match(reduceEvents([...migrated.events, missingVersionAfterBoundary]).errors.at(-1).error, /forbidden after/);
+  const duplicateBoundary = { ...migrated.events[2], event_id: 'second-boundary', idempotency_key: 'second-boundary', sequence: 4, previous_snapshot_hash: migrated.snapshot.snapshot_hash };
+  assert.match(reduceEvents([...migrated.events, duplicateBoundary]).errors.at(-1).error, /duplicate STATE_MIGRATED/);
+  assert.throws(() => validatePortableStateVersion({ ...migrated, stateVersion: '1' }), /boundary-free v1/);
+});
+
+test('v2 exact-object pairs fail closed and read-only status creates no machine identity', () => {
+  const fixture = schedulerV1CompatFixture(reduceEvents);
+  const snapshot = reduceEvents(fixture.events);
+  const source = { oid: fixture.source_state_oid, events: fixture.events, eventBlobs: {}, snapshot, machineLease: null, stateVersion: '1' };
+  const migrated = migrateFixture(source, fixture.source_state_tree);
+  assert.throws(() => makeEvent(migrated.snapshot, { event_type: 'CLAIM_ACQUIRED', issue_id: '#422', actor: config.workers[0].actor, machine_id: 'machine-v2', lease_id: 'lease-v2', lease_epoch: 2, exact_object: { base_commit: 'a'.repeat(40) }, payload: { base_commit: 'b'.repeat(40) }, created_at: '2026-08-30T02:00:01.000Z' }), /exact object and payload disagree/);
+
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-status-guard-'));
+  try {
+    fs.mkdirSync(path.join(temp, '.agentops', 'scheduler'), { recursive: true });
+    fs.mkdirSync(path.join(temp, '.agentops', 'governance'), { recursive: true });
+    fs.copyFileSync(path.join(toolDir, '..', 'scheduler', 'config.json'), path.join(temp, '.agentops', 'scheduler', 'config.json'));
+    fs.copyFileSync(path.join(repoRoot, '.agentops', 'governance', 'git-ownership.json'), path.join(temp, '.agentops', 'governance', 'git-ownership.json'));
+    assert.equal(spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' }).status, 0);
+    assert.equal(main(['status'], temp), 0);
+    assert.equal(fs.existsSync(path.join(temp, '.git', 'agentops-scheduler', 'machine.json')), false);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('every operational command is side-effect-free on v1 and blocked on frozen v2', () => {
+  const commands = ['bootstrap', 'sync', 'acquire-machine', 'release-machine', 'watch', 'enqueue', 'claim', 'entered', 'candidate', 'qa', 'block', 'release', 'recover', 'deliver', 'merge-dev', 'complete', 'expire', 'supersede', 'cancel'];
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-command-matrix-'));
+  try {
+    fs.mkdirSync(path.join(temp, '.agentops', 'scheduler'), { recursive: true });
+    fs.mkdirSync(path.join(temp, '.agentops', 'governance'), { recursive: true });
+    fs.copyFileSync(path.join(toolDir, '..', 'scheduler', 'config.json'), path.join(temp, '.agentops', 'scheduler', 'config.json'));
+    fs.copyFileSync(path.join(repoRoot, '.agentops', 'governance', 'git-ownership.json'), path.join(temp, '.agentops', 'governance', 'git-ownership.json'));
+    assert.equal(spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' }).status, 0);
+    for (const command of commands) assert.throws(() => main([command], temp), command === 'bootstrap' ? /SCHEDULER_BOOTSTRAP_AUTHORITY_REQUIRED/ : /SCHEDULER_STATE_MIGRATION_REQUIRED/);
+    assert.equal(fs.existsSync(path.join(temp, '.git', 'agentops-scheduler')), false);
+    const ref = spawnSync('git', ['show-ref'], { cwd: temp, encoding: 'utf8' });
+    assert.equal(ref.stdout, '');
+
+    const fixture = schedulerV1CompatFixture(reduceEvents);
+    const source = { oid: fixture.source_state_oid, events: fixture.events, eventBlobs: {}, snapshot: reduceEvents(fixture.events), machineLease: null, stateVersion: '1' };
+    const migrated = migrateFixture(source, fixture.source_state_tree);
+    for (const command of commands) assert.throws(() => assertSchedulerCommandAllowed(command, migrated, config, temp), /PRE_CUTOVER_MUTATION_BLOCKED/);
+    assert.throws(() => main(['pr-open'], temp), /not accepted as a raw/);
+    assert.throws(() => main(['merged-dev'], temp), /not accepted as a raw/);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 

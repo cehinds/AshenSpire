@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentops/scheduler-migration/v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["from_state_version", "to_state_version", "source_state_oid", "source_state_tree", "source_snapshot_hash", "source_last_sequence", "legacy_journal_manifest_hash", "legacy_machine_lease", "preserved_local_tip", "dispatch_frozen", "authority_receipt"],
+  "properties": {
+    "from_state_version": { "const": 1 },
+    "to_state_version": { "const": 2 },
+    "source_state_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "source_state_tree": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "source_snapshot_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "source_last_sequence": { "type": "integer", "minimum": 0 },
+    "legacy_journal_manifest_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "legacy_machine_lease": { "type": ["object", "null"] },
+    "preserved_local_tip": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
+    "dispatch_frozen": { "const": true },
+    "authority_receipt": { "type": "object" }
+  }
+}

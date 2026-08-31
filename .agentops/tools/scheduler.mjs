@@ -16,6 +16,7 @@ export const EVENT_TYPES = new Set([
   'LEASE_EXPIRED', 'DRIFT_DETECTED', 'RECOVERY_BOUND', 'SUPERSEDED',
   'CANCELLED', 'COMPLETED'
 ]);
+export const V2_EVENT_TYPES = new Set(['STATE_MIGRATED', ...EVENT_TYPES]);
 export const ACTIVE_STATES = new Set(['CLAIMED', 'RUNNING', 'CANDIDATE_READY', 'QA', 'PR_READY', 'PR_OPEN']);
 export const TERMINAL_STATES = new Set(['DONE', 'SUPERSEDED', 'CANCELLED']);
 const SEAT_ID = /^seat:[a-z0-9-]+:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -24,6 +25,9 @@ const SYSTEM_ACTORS = new Set(['scheduler', 'recovery']);
 const SCHEMA_CACHE = new Map();
 const DEFAULT_PROCESS_TIMEOUT_MS = 30_000;
 const MAX_PROCESS_TIMEOUT_MS = 120_000;
+const REQUIRED_PROJECT_FIELDS = Object.freeze(['Scheduler Status', 'Priority', 'Owner Role', 'Affected Paths', 'Affected Resources', 'Dependencies', 'External Claims', 'Human Gate', 'Scope Complete']);
+const AUTHORIZED_MIGRATION_STATES = new WeakSet();
+const AUTHORIZED_OPERATIONAL_STATES = new WeakSet();
 
 function schedulerSchema(name) {
   if (!SCHEMA_CACHE.has(name)) SCHEMA_CACHE.set(name, JSON.parse(fs.readFileSync(path.join(ROOT, 'scheduler', 'schemas', `${name}.json`), 'utf8')));
@@ -88,6 +92,13 @@ export function canonicalIssueIdentity(value) {
   return identity;
 }
 
+export function schedulerEventVersion(event) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) throw new Error('event must be an object');
+  if (!Object.prototype.hasOwnProperty.call(event, 'event_version')) return 1;
+  if (event.event_version === 2) return 2;
+  throw new Error('legacy v1 events must omit event_version; new events require event_version=2');
+}
+
 function assertNoAdditionalKeys(value, allowed, label) {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length) throw new Error(`${label} contains undeclared keys: ${unexpected.sort().join(', ')}`);
@@ -140,20 +151,63 @@ function canonicalClaimPaths(values) {
   return [...new Set(values.map(canonicalClaimPath))];
 }
 
-export function validateEvent(event) {
-  assertSchema(event, 'event');
+function validateExactObjectPair(event) {
+  const exact = event.exact_object;
+  const payload = event.payload;
+  const requirePair = (exactKey, payloadKey, label) => {
+    requiredString(exact[exactKey], `${label} exact_object.${exactKey}`);
+    requiredString(payload[payloadKey], `${label} payload.${payloadKey}`);
+    if (exact[exactKey] !== payload[payloadKey]) throw new Error(`${label} exact object and payload disagree`);
+  };
+  if (event.event_type === 'CLAIM_ACQUIRED' || event.event_type === 'RECOVERY_BOUND') requirePair('base_commit', 'base_commit', event.event_type);
+  if (['WORK_ENTERED', 'CANDIDATE_READY', 'QA_ASSIGNED', 'QA_RESULT'].includes(event.event_type)) requirePair('oid', event.event_type === 'WORK_ENTERED' ? 'base_commit' : 'candidate_commit', event.event_type);
+  if (event.event_type === 'MERGED_DEV') requirePair('oid', 'merge_commit', event.event_type);
+  if (event.event_type === 'PR_OPENED') {
+    requirePair('oid', 'candidate_commit', event.event_type);
+    requirePair('pr_url', 'pr_url', event.event_type);
+    if (!Number.isInteger(event.exact_object.pr_number) || event.exact_object.pr_number !== event.payload.pr_number) throw new Error('PR_OPENED exact PR number and payload disagree');
+  }
+  if (event.event_type === 'MERGED_DEV') {
+    if (!Number.isInteger(event.exact_object.pr_number) || event.exact_object.pr_number !== event.payload.pr_number) throw new Error('MERGED_DEV exact PR number and payload disagree');
+  }
+  if (event.event_type === 'COMPLETED') requirePair('oid', 'merge_commit', event.event_type);
+}
+
+function validateLegacyExactObjectPair(event) {
+  const pairs = event.event_type === 'CLAIM_ACQUIRED' || event.event_type === 'RECOVERY_BOUND'
+    ? [['base_commit', 'base_commit']]
+    : ['WORK_ENTERED', 'CANDIDATE_READY', 'QA_ASSIGNED', 'QA_RESULT'].includes(event.event_type)
+      ? [['oid', event.event_type === 'WORK_ENTERED' ? 'base_commit' : 'candidate_commit']]
+      : event.event_type === 'MERGED_DEV' ? [['oid', 'merge_commit']] : [];
+  for (const [exactKey, payloadKey] of pairs) {
+    if (event.exact_object[exactKey] !== undefined && event.payload[payloadKey] !== undefined && event.exact_object[exactKey] !== event.payload[payloadKey]) {
+      if (event.event_type === 'WORK_ENTERED') throw new Error('work entry must preserve the claimed exact base');
+      throw new Error(`${event.event_type} exact object and payload disagree`);
+    }
+  }
+}
+
+export function validateEvent(event, { frozenLegacy = false } = {}) {
+  const version = schedulerEventVersion(event);
+  assertSchema(event, version === 1 ? 'event' : 'event-v2');
   if (!event || typeof event !== 'object' || Array.isArray(event)) throw new Error('event must be an object');
   for (const key of ['event_id', 'idempotency_key', 'previous_snapshot_hash', 'issue_id', 'actor', 'event_type', 'created_at']) requiredString(event[key], key);
   if (!Number.isInteger(event.sequence) || event.sequence < 1) throw new Error('sequence must be a positive integer');
   if (!/^[0-9a-f]{64}$/.test(event.previous_snapshot_hash)) throw new Error('previous_snapshot_hash must be sha256');
-  if (!EVENT_TYPES.has(event.event_type)) throw new Error(`unsupported event_type ${event.event_type}`);
+  if (!(version === 1 ? EVENT_TYPES : V2_EVENT_TYPES).has(event.event_type)) throw new Error(`unsupported event_type ${event.event_type}`);
   if (event.machine_id !== null && typeof event.machine_id !== 'string') throw new Error('machine_id must be string or null');
   if (event.lease_id !== null && typeof event.lease_id !== 'string') throw new Error('lease_id must be string or null');
   if (event.lease_epoch !== null && (!Number.isInteger(event.lease_epoch) || event.lease_epoch < 1)) throw new Error('lease_epoch must be positive integer or null');
   if (!event.exact_object || typeof event.exact_object !== 'object' || Array.isArray(event.exact_object)) throw new Error('exact_object must be an object');
   if (!event.payload || typeof event.payload !== 'object' || Array.isArray(event.payload)) throw new Error('payload must be an object');
   if (event.event_type === 'INTAKE_RECORDED') requiredString(event.payload.title, 'intake title');
-  if (canonicalIssueIdentity(event.issue_id) !== event.issue_id) throw new Error('issue_id must use its canonical GitHub issue identity');
+  if (version === 2) {
+    if (event.event_type === 'STATE_MIGRATED') {
+      if (event.issue_id !== 'scheduler-state') throw new Error('STATE_MIGRATED must use scheduler-state identity');
+      assertSchema(event.payload, 'migration');
+    } else if (canonicalIssueIdentity(event.issue_id) !== event.issue_id) throw new Error('v2 issue_id must use its canonical GitHub issue identity');
+    validateExactObjectPair(event);
+  } else validateLegacyExactObjectPair(event);
   if (Number.isNaN(Date.parse(event.created_at))) throw new Error('created_at must be an ISO instant');
   assertPortable(event);
   return true;
@@ -186,6 +240,9 @@ function validateAdmissionEvidence(evidence, issueId, instant) {
   if (evidence.project_status !== 'READY') throw new Error(`project status ${evidence.project_status} is not runnable`);
   if (!/^P[0-9]+$/i.test(evidence.project_priority)) throw new Error('admission evidence requires Project priority');
   if (!/^[0-9a-f]{64}$/.test(evidence.project_fetch_receipt_hash) || !/^[0-9a-f]{64}$/.test(evidence.project_response_sha256)) throw new Error('admission evidence requires an authenticated GitHub Project fetch receipt');
+  if (!evidence.project_fetch_receipt || typeof evidence.project_fetch_receipt !== 'object' || Array.isArray(evidence.project_fetch_receipt)) throw new Error('admission evidence requires the complete authenticated Project receipt');
+  const receipt = structuredClone(evidence.project_fetch_receipt); const receiptHash = receipt.receipt_hash; delete receipt.receipt_hash;
+  if (sha256(receipt) !== receiptHash || receiptHash !== evidence.project_fetch_receipt_hash || evidence.project_fetch_receipt.response_sha256 !== evidence.project_response_sha256) throw new Error('admission Project receipt binding mismatch');
   if (evidence.scope_complete !== true || evidence.dependencies_ready !== true || evidence.human_gate_clear !== true || evidence.external_claim_clear !== true) throw new Error('admission evidence does not prove a complete runnable scope');
   if (!Array.isArray(evidence.conflict_identities) || evidence.conflict_identities.length !== 0) throw new Error('admission evidence contains unresolved repository conflicts');
   validInstant(evidence.observed_at, 'admission observed_at'); validInstant(evidence.fresh_until, 'admission fresh_until');
@@ -196,13 +253,29 @@ function validateAdmissionEvidence(evidence, issueId, instant) {
   return true;
 }
 
-function baseItem(event) {
+function baseItem(event, { legacy = false, frozenLegacy = false } = {}) {
   const p = event.payload;
-  validateAdmissionEvidence(p.project_evidence, event.issue_id, event.created_at);
+  if (frozenLegacy) {
+    return {
+      schema: 'agentops/scheduler-work-item/v1', revision: 1,
+      issue_id: event.issue_id, title: p.title, priority: p.priority ?? 'P2',
+      dependencies: p.dependencies ?? [], state: 'READY', base_commit: null,
+      candidate_commit: null, branch: p.branch ?? null, assigned_actor: null,
+      assignment_kind: null, lease_id: null, lease_epoch: null, lease_expiry: null, lease_machine_id: null,
+      maker_actor: null, lease_history: [], late_candidates: [],
+      claimed_paths: canonicalClaimPaths(p.claimed_paths ?? []), claimed_resources: p.claimed_resources ?? [],
+      acceptance_commands: p.acceptance_commands ?? [], evidence_pointers: p.evidence_pointers ?? [],
+      blocker: null, wake_condition: null, next_action: p.next_action ?? 'Inspect the issue and reproduce the acceptance gap.',
+      authority_ceiling: p.authority_ceiling ?? 'dev-delivery', updated_event: event.event_id, updated_at: event.created_at
+    };
+  }
+  if (p.project_evidence) validateAdmissionEvidence(p.project_evidence, event.issue_id, event.created_at);
+  else if (!legacy) throw new Error('intake requires sealed repository admission evidence');
+  const canonicalIssueId = canonicalIssueIdentity(p.project_evidence?.canonical_issue_id ?? event.issue_id);
   return {
     schema: 'agentops/scheduler-work-item/v1', revision: 1,
-    issue_id: event.issue_id, canonical_issue_id: canonicalIssueIdentity(p.project_evidence.canonical_issue_id), title: p.title, priority: p.priority ?? 'P2', project_owner_role: p.project_evidence.project_owner_role,
-    project_evidence: structuredClone(p.project_evidence),
+    issue_id: event.issue_id, canonical_issue_id: canonicalIssueId, title: p.title, priority: p.priority ?? 'P2', project_owner_role: p.project_evidence?.project_owner_role ?? 'UNVERIFIED_LEGACY',
+    project_evidence: p.project_evidence ? structuredClone(p.project_evidence) : null,
     dependencies: (p.dependencies ?? []).map(canonicalIssueIdentity), state: 'READY', base_commit: null,
     candidate_commit: null, branch: p.branch ?? null, assigned_actor: null,
     assignment_kind: null, lease_id: null, lease_epoch: null, lease_expiry: null, lease_machine_id: null,
@@ -240,15 +313,81 @@ function clearSeat(item) {
   item.lease_machine_id = null;
 }
 
-function applyEvent(snapshot, event) {
+function applyStateMigration(snapshot, event) {
+  if (snapshot.schema !== 'agentops/scheduler-snapshot/v1') throw new Error('STATE_MIGRATED requires an unmigrated v1 snapshot');
+  const p = event.payload;
+  if (p.source_snapshot_hash !== snapshot.snapshot_hash || p.source_last_sequence !== snapshot.last_sequence) throw new Error('STATE_MIGRATED source snapshot does not match the exact v1 replay');
+  if (event.exact_object.oid !== p.source_state_oid || event.exact_object.snapshot_hash !== p.source_snapshot_hash) throw new Error('STATE_MIGRATED exact object does not match its source state');
+  const authorityKeys = Object.keys(p.authority_receipt ?? {}).sort();
+  if (stableStringify(authorityKeys) !== stableStringify(['event_hash', 'event_id', 'event_path']) || !/^[0-9a-f]{64}$/.test(p.authority_receipt.event_hash ?? '')) throw new Error('STATE_MIGRATED authority receipt is not canonical owner-decision evidence');
+  const groups = new Map();
+  for (const item of Object.values(snapshot.work_items)) {
+    const canonical = canonicalIssueIdentity(item.canonical_issue_id ?? item.issue_id);
+    if (!groups.has(canonical)) groups.set(canonical, []);
+    groups.get(canonical).push(structuredClone(item));
+  }
+  const projected = {};
+  let quarantineCount = 0;
+  const aliasProjection = [];
+  for (const [canonical, sources] of [...groups.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+    const item = structuredClone(sources[0]);
+    const aliases = [...new Set(sources.flatMap((source) => [String(source.issue_id), String(source.canonical_issue_id ?? source.issue_id)]))].sort();
+    const terminal = sources.every((source) => TERMINAL_STATES.has(source.state));
+    const collision = sources.length > 1;
+    item.issue_id = canonical;
+    item.canonical_issue_id = canonical;
+    item.dependencies = [...new Set(sources.flatMap((source) => source.dependencies ?? []).map(canonicalIssueIdentity))];
+    item.claimed_paths = [...new Set(sources.flatMap((source) => source.claimed_paths ?? []).map(canonicalClaimPath))];
+    item.claimed_resources = [...new Set(sources.flatMap((source) => source.claimed_resources ?? []))];
+    item.legacy_identity = { aliases };
+    item.migration_quarantine = {
+      admission: 'UNVERIFIED_LEGACY', alias_collision: collision,
+      source_items: sources,
+      prior_states: [...new Set(sources.map((source) => source.state))].sort(),
+      prior_assignments: sources.map((source) => ({ issue_id: source.issue_id, assigned_actor: source.assigned_actor ?? null, assignment_kind: source.assignment_kind ?? null, lease_id: source.lease_id ?? null, lease_epoch: source.lease_epoch ?? null, lease_expiry: source.lease_expiry ?? null, lease_machine_id: source.lease_machine_id ?? null, candidate_commit: source.candidate_commit ?? null }))
+    };
+    if (!terminal || collision) {
+      item.state = 'MIGRATION_QUARANTINED';
+      item.blocker = collision ? 'legacy issue aliases collide under canonical v2 identity' : 'legacy authority is quarantined at the v2 migration boundary';
+      item.wake_condition = 'fresh authenticated Project reconciliation, explicit recovery, and new v2 fencing evidence';
+      item.next_action = 'Reconcile and explicitly recover this item under v2 authority.';
+      clearSeat(item);
+      quarantineCount += 1;
+    }
+    projected[canonical] = item;
+    aliasProjection.push({ canonical_issue_id: canonical, aliases, collision });
+  }
+  snapshot.schema = 'agentops/scheduler-snapshot/v2';
+  snapshot.work_items = projected;
+  snapshot.migration = {
+    boundary_event_id: event.event_id,
+    source_state_oid: p.source_state_oid,
+    source_state_tree: p.source_state_tree,
+    source_snapshot_hash: p.source_snapshot_hash,
+    legacy_journal_manifest_hash: p.legacy_journal_manifest_hash,
+    legacy_machine_lease: structuredClone(p.legacy_machine_lease),
+    preserved_local_tip: p.preserved_local_tip,
+    dispatch_frozen: true,
+    quarantine_count: quarantineCount,
+    alias_projection_hash: sha256(aliasProjection)
+  };
+}
+
+function applyEvent(snapshot, event, { legacy = false, frozenLegacy = false } = {}) {
+  if (event.event_type === 'STATE_MIGRATED') {
+    applyStateMigration(snapshot, event);
+    return;
+  }
   const item = snapshot.work_items[event.issue_id];
   const p = event.payload;
   if (event.event_type === 'INTAKE_RECORDED') {
     if (item) throw new Error(`duplicate issue intake ${event.issue_id}`);
-    const canonical = event.payload.project_evidence?.canonical_issue_id ?? event.issue_id;
-    const duplicate = Object.values(snapshot.work_items).find((candidate) => candidate.canonical_issue_id === canonical);
-    if (duplicate) throw new Error(`duplicate canonical issue intake ${canonical} already stored as ${duplicate.issue_id}`);
-    snapshot.work_items[event.issue_id] = baseItem(event);
+    if (!frozenLegacy) {
+      const canonical = event.payload.project_evidence?.canonical_issue_id ?? event.issue_id;
+      const duplicate = Object.values(snapshot.work_items).find((candidate) => candidate.canonical_issue_id === canonical);
+      if (duplicate) throw new Error(`duplicate canonical issue intake ${canonical} already stored as ${duplicate.issue_id}`);
+    }
+    snapshot.work_items[event.issue_id] = baseItem(event, { legacy, frozenLegacy });
     return;
   }
   if (!item) throw new Error(`unknown issue ${event.issue_id}`);
@@ -267,8 +406,9 @@ function applyEvent(snapshot, event) {
       if (!/^[0-9a-f]{40}$/.test(p.base_commit ?? '')) throw new Error('claim requires an exact base commit');
       if (!/^codex\/[A-Za-z0-9._\/-]+$/.test(p.branch ?? '')) throw new Error('claim requires a unique codex/ branch');
       if (Number.isNaN(Date.parse(p.lease_expiry)) || Date.parse(p.lease_expiry) <= Date.parse(event.created_at)) throw new Error('claim requires a future lease expiry');
-      validateAdmissionEvidence(p.admission_evidence, item.canonical_issue_id, event.created_at);
-      if (p.admission_evidence.project_priority !== item.priority || p.admission_evidence.project_owner_role !== item.project_owner_role) throw new Error('claim admission evidence contradicts the canonical Project priority or owner');
+      if (!frozenLegacy && p.admission_evidence) validateAdmissionEvidence(p.admission_evidence, item.canonical_issue_id, event.created_at);
+      else if (!frozenLegacy && !legacy) throw new Error('claim requires fresh authenticated admission evidence');
+      if (!frozenLegacy && p.admission_evidence && (p.admission_evidence.project_priority !== item.priority || p.admission_evidence.project_owner_role !== item.project_owner_role)) throw new Error('claim admission evidence contradicts the canonical Project priority or owner');
       if (item.dependencies.some((dependency) => snapshot.work_items[String(dependency)]?.state !== 'DONE')) throw new Error('claim has unsatisfied dependencies');
       {
         const proposed = { ...item, branch: p.branch, claimed_paths: canonicalClaimPaths(p.claimed_paths ?? item.claimed_paths), claimed_resources: p.claimed_resources ?? item.claimed_resources };
@@ -288,9 +428,9 @@ function applyEvent(snapshot, event) {
     case 'WORK_ENTERED':
       if (item.state !== 'CLAIMED') throw new Error(`cannot enter ${item.state}`);
       assertExactLease(item, event);
-      if (leaseExpiredAt(item, event.created_at)) throw new Error('cannot enter work at or after lease expiry');
-      if (p.base_commit !== item.base_commit || event.exact_object?.oid !== item.base_commit) throw new Error('work entry must preserve the claimed exact base');
-      item.state = 'RUNNING'; item.next_action = p.next_action ?? item.next_action;
+      if (!frozenLegacy && leaseExpiredAt(item, event.created_at)) throw new Error('cannot enter work at or after lease expiry');
+      if (!frozenLegacy && (p.base_commit !== item.base_commit || event.exact_object?.oid !== item.base_commit)) throw new Error('work entry must preserve the claimed exact base');
+      item.state = 'RUNNING'; item.base_commit = p.base_commit ?? item.base_commit; item.next_action = p.next_action ?? item.next_action;
       break;
     case 'CANDIDATE_READY':
       if (!/^[0-9a-f]{40}$/.test(p.candidate_commit ?? '')) throw new Error('candidate requires an exact commit');
@@ -319,7 +459,7 @@ function applyEvent(snapshot, event) {
     case 'QA_RESULT':
       if (item.state !== 'QA') throw new Error(`cannot QA ${item.state}`);
       assertExactLease(item, event);
-      if (leaseExpiredAt(item, event.created_at)) throw new Error('QA result cannot be accepted at or after QA lease expiry');
+      if (!frozenLegacy && leaseExpiredAt(item, event.created_at)) throw new Error('QA result cannot be accepted at or after QA lease expiry');
       if (!SEAT_ID.test(event.actor) || event.actor === item.maker_actor || item.assignment_kind !== 'qa') throw new Error('QA result requires the issued independent QA lease');
       if (p.candidate_commit !== item.candidate_commit) throw new Error('QA candidate does not match exact current head');
       if (!['PASS', 'FAIL'].includes(p.result)) throw new Error('QA result must be PASS or FAIL');
@@ -331,17 +471,22 @@ function applyEvent(snapshot, event) {
     case 'PR_OPENED':
       if (item.state !== 'PR_READY') throw new Error(`cannot open PR from ${item.state}`);
       if (event.actor !== 'scheduler') throw new Error('PR_OPENED requires scheduler actor');
-      item.state = 'PR_OPEN'; item.next_action = 'Wait for required checks and independent exact-head review.'; item.evidence_pointers = [...new Set([...item.evidence_pointers, p.pr_url].filter(Boolean))];
+      if (event.event_version === 2 && (p.candidate_commit !== item.candidate_commit || event.exact_object.oid !== item.candidate_commit)) throw new Error('PR_OPENED does not bind the accepted exact candidate');
+      item.state = 'PR_OPEN';
+      if (event.event_version === 2) { item.pr_number = p.pr_number; item.pr_url = p.pr_url; }
+      item.next_action = 'Wait for required checks and independent exact-head review.'; item.evidence_pointers = [...new Set([...item.evidence_pointers, p.pr_url].filter(Boolean))];
       break;
     case 'MERGED_DEV':
       if (item.state !== 'PR_OPEN') throw new Error(`cannot merge from ${item.state}`);
       if (event.actor !== 'scheduler') throw new Error('MERGED_DEV requires scheduler actor');
       if (!/^[0-9a-f]{40}$/.test(p.merge_commit ?? '')) throw new Error('dev merge requires an exact merge commit');
-      item.state = 'MERGED_DEV'; item.next_action = 'Verify issue closure, release resources, and complete.'; item.evidence_pointers = [...new Set([...item.evidence_pointers, p.merge_commit].filter(Boolean))];
+      if (event.event_version === 2 && (p.pr_number !== item.pr_number || event.exact_object.pr_number !== item.pr_number)) throw new Error('MERGED_DEV does not bind the accepted PR');
+      item.state = 'MERGED_DEV'; if (event.event_version === 2) item.merge_commit = p.merge_commit; item.next_action = 'Verify issue closure, release resources, and complete.'; item.evidence_pointers = [...new Set([...item.evidence_pointers, p.merge_commit].filter(Boolean))];
       break;
     case 'COMPLETED':
       if (item.state !== 'MERGED_DEV') throw new Error(`cannot complete from ${item.state}`);
       if (!SYSTEM_ACTORS.has(event.actor)) throw new Error('COMPLETED requires system actor');
+      if (event.event_version === 2 && (p.merge_commit !== item.merge_commit || event.exact_object.oid !== item.merge_commit)) throw new Error('COMPLETED does not bind the accepted merge commit');
       item.state = 'DONE'; item.next_action = null;
       item.claimed_paths = []; item.claimed_resources = []; clearSeat(item);
       break;
@@ -359,7 +504,10 @@ function applyEvent(snapshot, event) {
         if (item.state === 'WAITING_DEPENDENCY' && item.assigned_actor === null) {
           if (event.actor !== 'scheduler' || !event.machine_id || event.lease_id !== null || event.lease_epoch !== item.lease_epoch) throw new Error('retained-claim release fencing mismatch');
         } else assertExactLease(item, event);
-        if (p.requeue === true && !TERMINAL_STATES.has(item.state)) validateAdmissionEvidence(p.admission_evidence, item.canonical_issue_id, event.created_at);
+        if (!frozenLegacy && p.requeue === true && !TERMINAL_STATES.has(item.state)) {
+          if (p.admission_evidence) validateAdmissionEvidence(p.admission_evidence, item.canonical_issue_id, event.created_at);
+          else if (!legacy) throw new Error('requeue requires fresh authenticated admission evidence');
+        }
         clearSeat(item); item.claimed_paths = canonicalClaimPaths(p.retained_paths ?? []); item.claimed_resources = p.retained_resources ?? [];
         if (p.requeue === true && !TERMINAL_STATES.has(item.state)) {
           item.state = releasedFrom === 'QA' ? 'CANDIDATE_READY' : 'READY';
@@ -389,7 +537,8 @@ function applyEvent(snapshot, event) {
       if (!Number.isInteger(event.lease_epoch) || event.lease_epoch <= (item.lease_epoch ?? 0)) throw new Error('recovery requires a strictly increasing lease epoch');
       if (!/^[0-9a-f]{40}$/.test(p.base_commit ?? '') || Number.isNaN(Date.parse(p.lease_expiry))) throw new Error('recovery requires exact base and lease expiry');
       if (Date.parse(p.lease_expiry) <= Date.parse(event.created_at)) throw new Error('recovery lease expiry must be later than the trusted event time');
-      validateAdmissionEvidence(p.admission_evidence, item.canonical_issue_id, event.created_at);
+      if (!frozenLegacy && p.admission_evidence) validateAdmissionEvidence(p.admission_evidence, item.canonical_issue_id, event.created_at);
+      else if (!frozenLegacy && !legacy) throw new Error('recovery requires fresh authenticated admission evidence');
       {
         const proposed = { ...item, branch: p.branch ?? item.branch };
         const collision = Object.values(snapshot.work_items).find((other) => other.issue_id !== item.issue_id && holdsExclusiveClaim(other) && claimsConflict(proposed, other));
@@ -414,22 +563,32 @@ function applyEvent(snapshot, event) {
 export function reduceEvents(events) {
   const snapshot = emptySnapshot();
   const seen = new Map();
+  let phase = 1;
+  let boundarySeen = false;
+  let frozenLegacy = null;
   const ordered = [...events].sort((a, b) => a.sequence - b.sequence || a.event_id.localeCompare(b.event_id));
   for (const event of ordered) {
     try {
-      validateEvent(event);
+      const version = schedulerEventVersion(event);
+      if (phase === 1 && version === 1 && frozenLegacy === null) frozenLegacy = event.event_type === 'INTAKE_RECORDED' && !event.payload?.project_evidence;
+      if (phase === 1 && version === 2 && event.event_type !== 'STATE_MIGRATED') throw new Error('first v2 event must be the STATE_MIGRATED boundary');
+      if (phase === 2 && version === 1) throw new Error('legacy v1 event is forbidden after the v2 migration boundary');
+      if (event.event_type === 'STATE_MIGRATED' && boundarySeen) throw new Error('duplicate STATE_MIGRATED boundary');
+      validateEvent(event, { frozenLegacy: frozenLegacy === true && version === 1 });
       const prior = seen.get(event.idempotency_key);
       if (prior) {
+        if (event.event_type === 'STATE_MIGRATED') throw new Error('duplicate STATE_MIGRATED boundary');
         if (stableStringify(prior) !== stableStringify(event)) throw new Error(`idempotency collision ${event.idempotency_key}`);
         continue;
       }
       if (event.sequence !== snapshot.last_sequence + 1) throw new Error(`missing sequence ${snapshot.last_sequence + 1}`);
       if (event.previous_snapshot_hash !== snapshot.snapshot_hash) throw new Error('previous snapshot hash mismatch');
-      applyEvent(snapshot, event);
+      applyEvent(snapshot, event, { legacy: version === 1, frozenLegacy: frozenLegacy === true && version === 1 });
       snapshot.revision += 1;
       snapshot.last_sequence = event.sequence;
       snapshot.snapshot_hash = snapshotHash(snapshot);
       seen.set(event.idempotency_key, event);
+      if (event.event_type === 'STATE_MIGRATED') { phase = 2; boundarySeen = true; }
     } catch (error) {
       snapshot.errors.push({ event_id: event?.event_id ?? null, issue_id: event?.issue_id ?? null, error: error.message });
       snapshot.snapshot_hash = snapshotHash(snapshot);
@@ -471,7 +630,8 @@ export function claimsConflict(left, right) {
 function holdsExclusiveClaim(item) {
   if (TERMINAL_STATES.has(item.state)) return false;
   if (item.state === 'READY') return false;
-  return ACTIVE_STATES.has(item.state)
+  return item.state === 'MIGRATION_QUARANTINED'
+    || ACTIVE_STATES.has(item.state)
     || (item.claimed_paths ?? []).length > 0
     || (item.claimed_resources ?? []).length > 0;
 }
@@ -525,7 +685,7 @@ export function assessAssignmentAdmission(item, snapshot, config, now, reconcili
   const projectResources = [...new Set(project.claimed_resources ?? [])];
   if (projectPaths.length + projectResources.length === 0 || stableStringify(projectPaths) !== stableStringify(canonicalClaimPaths(item.claimed_paths ?? [])) || stableStringify(projectResources) !== stableStringify([...new Set(item.claimed_resources ?? [])])) return admissionBlocked('AFFECTED_SCOPE_CONTRADICTION', item.issue_id, 'make the canonical intake and fresh Project scope evidence name the same complete paths and resources');
   if (config.simulation_mode === true) {
-    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: item.canonical_issue_id ?? item.issue_id, board_sync_status: 'OK', project_priority: project.priority, project_owner_role: project.owner_role, project_status: project.status, project_authenticated_login: sync.fetch_receipt.authenticated_login ?? 'simulation', project_fetch_receipt_hash: sync.fetch_receipt.receipt_hash, project_response_sha256: sync.fetch_receipt.response_sha256, scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: sync.observed_at, fresh_until: new Date(Date.parse(sync.observed_at) + (config.project_evidence_max_age_seconds ?? 30) * 1000).toISOString() };
+    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: item.canonical_issue_id ?? item.issue_id, board_sync_status: 'OK', project_priority: project.priority, project_owner_role: project.owner_role, project_status: project.status, project_authenticated_login: sync.fetch_receipt.authenticated_login ?? 'simulation', project_fetch_receipt_hash: sync.fetch_receipt.receipt_hash, project_response_sha256: sync.fetch_receipt.response_sha256, project_fetch_receipt: structuredClone(sync.fetch_receipt), scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: sync.observed_at, fresh_until: new Date(Date.parse(sync.observed_at) + (config.project_evidence_max_age_seconds ?? 30) * 1000).toISOString() };
     return { eligible: true, evidence: { ...body, reconciliation_hash: sha256(body) } };
   }
   for (const claimedPath of item.claimed_paths ?? []) {
@@ -558,7 +718,7 @@ export function assessAssignmentAdmission(item, snapshot, config, now, reconcili
   const body = {
     schema: 'agentops/scheduler-admission/v1', canonical_issue_id: item.canonical_issue_id ?? item.issue_id,
     board_sync_status: 'OK', project_priority: project.priority, project_owner_role: project.owner_role, project_status: project.status,
-    project_authenticated_login: sync.fetch_receipt.authenticated_login, project_fetch_receipt_hash: sync.fetch_receipt.receipt_hash, project_response_sha256: sync.fetch_receipt.response_sha256,
+    project_authenticated_login: sync.fetch_receipt.authenticated_login, project_fetch_receipt_hash: sync.fetch_receipt.receipt_hash, project_response_sha256: sync.fetch_receipt.response_sha256, project_fetch_receipt: structuredClone(sync.fetch_receipt),
     scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [],
     observed_at: sync.observed_at, fresh_until: new Date(Date.parse(sync.observed_at) + (config.project_evidence_max_age_seconds ?? 30) * 1000).toISOString()
   };
@@ -669,10 +829,15 @@ function projectField(item, ...names) {
   return undefined;
 }
 
-function jsonProjectField(value, fallback) {
+function jsonProjectField(value, fallback, label, expectedType) {
   if (value === undefined || value === null || value === '') return fallback;
-  if (typeof value !== 'string') return value;
-  try { return JSON.parse(value); } catch { return fallback; }
+  let parsed = value;
+  if (typeof value === 'string') {
+    try { parsed = JSON.parse(value); } catch { throw new Error(`BOARD_SYNC_FAILED: ${label} is not valid JSON`); }
+  }
+  if (expectedType === 'array' && !Array.isArray(parsed)) throw new Error(`BOARD_SYNC_FAILED: ${label} must be a JSON array`);
+  if (expectedType === 'object' && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))) throw new Error(`BOARD_SYNC_FAILED: ${label} must be a JSON object`);
+  return parsed;
 }
 
 function authenticatedProjectReceipt(body) {
@@ -684,8 +849,19 @@ function validateProjectFetchReceipt(sync, config, now) {
   const receipt = sync?.fetch_receipt;
   if (config.simulation_mode === true && receipt?.simulation === true) return true;
   if (!receipt || receipt.schema !== 'agentops/scheduler-project-fetch-receipt/v1') return false;
+  const contract = config.project_contract;
+  if (!contract || receipt.project_owner !== contract.owner || receipt.project_number !== contract.number || receipt.project_id !== contract.id || receipt.project_title !== contract.title || sync.source_id !== `github-project:${contract.owner}/${contract.number}`) return false;
   if (!receipt.authenticated_login || !Array.isArray(receipt.granted_scopes) || !receipt.granted_scopes.some((scope) => scope === 'read:project' || scope === 'project')) return false;
   if (receipt.repository !== repositorySlug(config.repository) || receipt.fetched_at !== sync.observed_at || Date.parse(receipt.fetched_at) > Date.parse(now)) return false;
+  if (!Number.isInteger(receipt.project_item_count) || receipt.project_item_count !== receipt.project_total_item_count) return false;
+  if (!Number.isInteger(receipt.project_field_count) || receipt.project_field_count !== receipt.project_total_field_count) return false;
+  if (!Array.isArray(receipt.required_fields) || stableStringify([...receipt.required_fields].sort()) !== stableStringify([...REQUIRED_PROJECT_FIELDS].sort()) || receipt.required_fields_complete !== true) return false;
+  if (!Array.isArray(receipt.project_fields) || receipt.project_fields.length !== receipt.project_field_count || new Set(receipt.project_fields.map((field) => String(field.name).toLowerCase())).size !== receipt.project_fields.length || receipt.project_fields.some((field) => !field.id || !field.name || !field.data_type)) return false;
+  if (new Set(receipt.project_fields.map((field) => field.id)).size !== receipt.project_fields.length) return false;
+  for (const [name, expected] of Object.entries(contract.fields ?? {})) {
+    const field = receipt.project_fields.find((candidate) => candidate.name === name);
+    if (!field || field.id !== expected.id || field.data_type !== expected.data_type) return false;
+  }
   if (!/^[0-9a-f]{64}$/.test(receipt.response_sha256 ?? '') || !/^[0-9a-f]{64}$/.test(receipt.receipt_hash ?? '')) return false;
   const unsealed = structuredClone(receipt); delete unsealed.receipt_hash;
   return sha256(unsealed) === receipt.receipt_hash;
@@ -698,16 +874,42 @@ export function fetchAuthenticatedProjectEvidence(root, config, now = new Date()
   if (source?.schema !== 'agentops/scheduler-project-source/v1' || !/^[A-Za-z0-9-]+$/.test(source.owner ?? '') || !Number.isInteger(source.number) || source.number < 1) throw new Error('BOARD_SYNC_FAILED: invalid GitHub Project source request');
   const repository = repositorySlug(config.repository);
   if (source.repository !== repository) throw new Error('BOARD_SYNC_FAILED: Project source names a different repository');
+  const contract = config.project_contract;
+  if (!contract || source.owner !== contract.owner || source.number !== contract.number) throw new Error('BOARD_SYNC_FAILED: Project source does not match the pinned repository contract');
   const auth = runner('gh', ['auth', 'status', '--hostname', 'github.com', '--active'], { cwd: root, timeoutMs: 30_000 });
   const authText = `${auth.stdout ?? ''}\n${auth.stderr ?? ''}`;
   const login = /Logged in to github\.com account\s+([^\s(]+)/i.exec(authText)?.[1] ?? null;
   const scopeLine = /Token scopes:\s*([^\r\n]+)/i.exec(authText)?.[1] ?? '';
   const grantedScopes = [...scopeLine.matchAll(/['"]([^'"]+)['"]/g)].map((match) => match[1]);
   if (!login || !grantedScopes.some((scope) => scope === 'read:project' || scope === 'project')) throw new Error('BOARD_SYNC_FAILED: authenticated GitHub identity lacks read:project scope');
-  const fetched = runner('gh', ['project', 'item-list', String(source.number), '--owner', source.owner, '--format', 'json', '--limit', '100'], { cwd: root, timeoutMs: 30_000 });
+  const requiredFields = [...REQUIRED_PROJECT_FIELDS];
+  const itemArgs = ['project', 'item-list', String(source.number), '--owner', source.owner, '--format', 'json', '--limit', '1000'];
+  for (const field of requiredFields) itemArgs.push('--field', field);
+  const fetched = runner('gh', itemArgs, { cwd: root, timeoutMs: 30_000 });
+  const fetchedFields = runner('gh', ['project', 'field-list', String(source.number), '--owner', source.owner, '--format', 'json', '--limit', '1000'], { cwd: root, timeoutMs: 30_000 });
+  const fetchedProject = runner('gh', ['project', 'view', String(source.number), '--owner', source.owner, '--format', 'json'], { cwd: root, timeoutMs: 30_000 });
   let response;
-  try { response = JSON.parse(fetched.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project response is not valid JSON'); }
+  let fieldResponse;
+  let projectResponse;
+  try { response = JSON.parse(fetched.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project item response is not valid JSON'); }
+  try { fieldResponse = JSON.parse(fetchedFields.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project field response is not valid JSON'); }
+  try { projectResponse = JSON.parse(fetchedProject.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project identity response is not valid JSON'); }
   if (!Array.isArray(response.items)) throw new Error('BOARD_SYNC_FAILED: GitHub Project response has no item list');
+  if (!Number.isInteger(response.totalCount) || response.totalCount !== response.items.length || response.totalCount >= 1000) throw new Error(`BOARD_SYNC_FAILED: truncated GitHub Project item response (${response.items.length}/${response.totalCount ?? 'unknown'})`);
+  if (!Array.isArray(fieldResponse.fields) || !Number.isInteger(fieldResponse.totalCount) || fieldResponse.totalCount !== fieldResponse.fields.length || fieldResponse.totalCount >= 1000) throw new Error(`BOARD_SYNC_FAILED: truncated GitHub Project field response (${fieldResponse.fields?.length ?? 0}/${fieldResponse.totalCount ?? 'unknown'})`);
+  const projectOwner = typeof projectResponse.owner === 'string' ? projectResponse.owner : projectResponse.owner?.login;
+  if (projectResponse.number !== source.number || projectOwner !== source.owner || projectResponse.id !== contract.id || projectResponse.title !== contract.title) throw new Error('BOARD_SYNC_FAILED: GitHub Project identity does not match the pinned contract');
+  const normalizedNames = fieldResponse.fields.map((field) => String(field.name ?? '').trim().toLowerCase());
+  if (new Set(normalizedNames).size !== normalizedNames.length) throw new Error('BOARD_SYNC_FAILED: GitHub Project field names are not unique case-insensitively');
+  if (fieldResponse.fields.some((field) => typeof field.id !== 'string' || field.id === '' || typeof (field.dataType ?? field.type) !== 'string')) throw new Error('BOARD_SYNC_FAILED: GitHub Project field identity/type metadata is incomplete');
+  if (new Set(fieldResponse.fields.map((field) => field.id)).size !== fieldResponse.fields.length) throw new Error('BOARD_SYNC_FAILED: GitHub Project field IDs are not unique');
+  for (const [name, expected] of Object.entries(contract.fields ?? {})) {
+    const field = fieldResponse.fields.find((candidate) => candidate.name === name);
+    if (!field || field.id !== expected.id || (field.dataType ?? field.type) !== expected.data_type) throw new Error(`BOARD_SYNC_FAILED: GitHub Project field contract mismatch for ${name}`);
+  }
+  const fieldNames = new Set(fieldResponse.fields.map((field) => field.name));
+  const missingFields = requiredFields.filter((name) => !fieldNames.has(name));
+  if (missingFields.length) throw new Error(`BOARD_SYNC_FAILED: GitHub Project is missing required fields: ${missingFields.join(', ')}`);
   const issues = {};
   for (const raw of response.items) {
     const content = raw.content ?? {};
@@ -715,16 +917,16 @@ export function fetchAuthenticatedProjectEvidence(root, config, now = new Date()
     if (itemRepository !== repository || !Number.isInteger(content.number)) continue;
     const canonical = canonicalIssueIdentity(content.number);
     if (issues[canonical]) throw new Error(`BOARD_SYNC_FAILED: duplicate canonical Project item ${canonical}`);
-    const paths = jsonProjectField(projectField(raw, 'Affected Paths', 'claimed_paths'), []);
-    const resources = jsonProjectField(projectField(raw, 'Affected Resources', 'claimed_resources'), []);
-    const dependencies = jsonProjectField(projectField(raw, 'Dependencies'), []);
-    const externalClaims = jsonProjectField(projectField(raw, 'External Claims'), []);
-    const humanGate = jsonProjectField(projectField(raw, 'Human Gate'), null);
+    const paths = jsonProjectField(projectField(raw, 'Affected Paths', 'claimed_paths'), [], 'Affected Paths', 'array');
+    const resources = jsonProjectField(projectField(raw, 'Affected Resources', 'claimed_resources'), [], 'Affected Resources', 'array');
+    const dependencies = jsonProjectField(projectField(raw, 'Dependencies'), [], 'Dependencies', 'array');
+    const externalClaims = jsonProjectField(projectField(raw, 'External Claims'), [], 'External Claims', 'array');
+    const humanGate = jsonProjectField(projectField(raw, 'Human Gate'), null, 'Human Gate', 'object');
     const scopeComplete = projectField(raw, 'Scope Complete', 'scope_complete');
     const assigneeValues = content.assignees?.nodes ?? content.assignees ?? [];
     issues[canonical] = {
       canonical_issue_id: canonical,
-      priority: projectField(raw, 'Priority'), owner_role: projectField(raw, 'Owner Role', 'Owner'), status: projectField(raw, 'Status'),
+      priority: projectField(raw, 'Priority'), owner_role: projectField(raw, 'Owner Role'), status: projectField(raw, 'Scheduler Status'),
       issue_state: content.state, issue_resolution: content.stateReason ?? projectField(raw, 'Resolution'),
       scope_complete: scopeComplete === true || String(scopeComplete).toUpperCase() === 'TRUE',
       claimed_paths: Array.isArray(paths) ? paths : [], claimed_resources: Array.isArray(resources) ? resources : [],
@@ -735,7 +937,13 @@ export function fetchAuthenticatedProjectEvidence(root, config, now = new Date()
   }
   const receipt = authenticatedProjectReceipt({
     schema: 'agentops/scheduler-project-fetch-receipt/v1', repository, project_owner: source.owner, project_number: source.number,
-    authenticated_login: login, granted_scopes: grantedScopes, fetched_at: now, response_sha256: sha256(fetched.stdout)
+    project_id: projectResponse.id, project_title: projectResponse.title,
+    project_item_count: response.items.length, project_total_item_count: response.totalCount,
+    project_field_count: fieldResponse.fields.length, project_total_field_count: fieldResponse.totalCount,
+    required_fields: requiredFields, required_fields_complete: true,
+    project_fields: fieldResponse.fields.map((field) => ({ id: field.id, name: field.name, data_type: field.dataType ?? field.type })).sort((left, right) => left.id.localeCompare(right.id)),
+    authenticated_login: login, granted_scopes: grantedScopes, fetched_at: now,
+    response_sha256: sha256({ items: fetched.stdout, fields: fetchedFields.stdout, project: fetchedProject.stdout })
   });
   return { status: 'OK', observed_at: now, source_id: `github-project:${source.owner}/${source.number}`, issues, fetch_receipt: receipt };
 }
@@ -922,8 +1130,10 @@ export function validateSchedulerCutoverAuthority(root, evidence, config) {
   if (!fs.existsSync(capsuleFile)) throw new Error('scheduler cutover owner-command target has no supported work capsule');
   const capsule = readJsonFile(capsuleFile);
   if (capsule.parent_hash !== decision.expected_current_hash) throw new Error('scheduler cutover decision is not bound to the target capsule compare-and-swap predecessor');
-  runGit(root, ['fetch', 'origin', `refs/heads/${config.development_branch}:refs/remotes/origin/${config.development_branch}`]);
   const authorityRef = `refs/remotes/origin/${config.development_branch}`;
+  const remoteAuthority = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', `refs/heads/${config.development_branch}`], { allowFailure: true });
+  const remoteAuthorityOid = remoteAuthority.status === 0 ? remoteAuthority.stdout.trim().split(/\s+/)[0] : null;
+  if (!remoteAuthorityOid || refOid(root, authorityRef) !== remoteAuthorityOid) throw new Error('scheduler cutover authority cache is not an exact read-only match for the protected remote branch');
   const committedEvent = runGit(root, ['show', `${authorityRef}:${relative}`], { allowFailure: true });
   if (committedEvent.status !== 0) throw new Error('scheduler cutover authority event is not committed on freshly fetched protected authority state');
   let remoteEvent;
@@ -932,8 +1142,10 @@ export function validateSchedulerCutoverAuthority(root, evidence, config) {
   const committedCapsule = runGit(root, ['show', `${authorityRef}:${capsulePath}`], { allowFailure: true });
   if (committedCapsule.status !== 0 || sha256(JSON.parse(committedCapsule.stdout)) !== sha256(capsule)) throw new Error('scheduler cutover target capsule is not the exact freshly fetched protected authority state');
   const refs = schedulerStateRefs(config);
-  const currentStateOid = refOid(root, refs.local) ?? refOid(root, refs.remote);
-  if (currentStateOid !== decision.candidate_oid) throw new Error('scheduler cutover authority is stale for the current scheduler-state ref');
+  const remoteState = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', refs.local], { allowFailure: true });
+  const remoteStateOid = remoteState.status === 0 ? remoteState.stdout.trim().split(/\s+/)[0] : null;
+  const localStateOid = refOid(root, refs.local);
+  if (remoteStateOid !== decision.candidate_oid || localStateOid !== decision.candidate_oid) throw new Error('scheduler cutover authority is stale for the exact local and remote scheduler-state refs');
   return true;
 }
 
@@ -943,7 +1155,7 @@ function numericIssue(issueId) {
   return Number(match[1]);
 }
 
-export function deliverCandidate(root, item, config) {
+function deliverCandidate(root, item, config) {
   const repository = repositorySlug(config.repository);
   const developmentBranch = validateBranchName(config.development_branch, 'development_branch');
   if (item.state !== 'PR_READY') throw new Error(`delivery requires PR_READY, found ${item.state}`);
@@ -1013,7 +1225,7 @@ export function mergedPrRecovery(config, item, pr) {
   };
 }
 
-export function mergeDevPr(root, config, item, prNumber, { rollbackKnown = false } = {}) {
+function mergeDevPr(root, config, item, prNumber, { rollbackKnown = false } = {}) {
   if (item.state !== 'PR_OPEN') throw new Error(`dev merge requires PR_OPEN, found ${item.state}`);
   const repository = repositorySlug(config.repository);
   const developmentBranch = validateBranchName(config.development_branch, 'development_branch');
@@ -1065,28 +1277,55 @@ function showJson(root, ref, name) {
   return result.status === 0 ? JSON.parse(result.stdout) : null;
 }
 
-export function readPortableState(root = REPOSITORY_ROOT, config = stateConfig(root)) {
-  const refs = schedulerStateRefs(stateConfig(root, config));
-  const oid = refOid(root, refs.local) ?? refOid(root, refs.remote);
-  if (!oid) return { oid: null, events: [], snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' };
+function readPortableStateAtOid(root, oid) {
+  if (!oid) return { oid: null, events: [], eventBlobs: {}, snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' };
   const treeNames = runGit(root, ['ls-tree', '-r', '--name-only', oid]).stdout.split(/\r?\n/).filter(Boolean);
   const unexpected = treeNames.filter((name) => !['snapshot.json', 'machine-lease.json', 'STATE_VERSION'].includes(name) && !/^journal\/[0-9]{8}-[A-Za-z0-9._-]+\.json$/.test(name));
   if (unexpected.length) throw new Error(`scheduler state contains forbidden paths: ${unexpected.join(',')}`);
-  const namesResult = runGit(root, ['ls-tree', '-r', '--name-only', oid, '--', 'journal']);
-  const events = namesResult.stdout ? namesResult.stdout.split(/\r?\n/).filter(Boolean).map((name) => showJson(root, oid, name)) : [];
+  const journalResult = runGit(root, ['ls-tree', '-r', oid, '--', 'journal']);
+  const journalEntries = journalResult.stdout ? journalResult.stdout.split(/\r?\n/).filter(Boolean).map((line) => {
+    const match = /^(\d+)\s+blob\s+([0-9a-f]{40})\t(.+)$/.exec(line);
+    if (!match) throw new Error(`invalid scheduler journal tree entry: ${line}`);
+    return { mode: match[1], oid: match[2], name: match[3] };
+  }) : [];
+  const eventBlobs = Object.fromEntries(journalEntries.map((entry) => [entry.name, entry.oid]));
+  const events = journalEntries.map((entry) => showJson(root, oid, entry.name));
   const snapshot = showJson(root, oid, 'snapshot.json') ?? reduceEvents(events);
   const machineLease = showJson(root, oid, 'machine-lease.json');
   validateMachineLease(machineLease);
   const version = runGit(root, ['show', `${oid}:STATE_VERSION`], { allowFailure: true });
-  return { oid, events, snapshot, machineLease, stateVersion: version.status === 0 ? version.stdout : null };
+  return { oid, events, eventBlobs, snapshot, machineLease, stateVersion: version.status === 0 ? version.stdout : null };
+}
+
+export function readPortableState(root = REPOSITORY_ROOT, config = stateConfig(root)) {
+  const refs = schedulerStateRefs(stateConfig(root, config));
+  return readPortableStateAtOid(root, refOid(root, refs.local) ?? refOid(root, refs.remote));
 }
 
 function hashObject(root, text) {
   return runGit(root, ['hash-object', '-w', '--stdin'], { input: text }).stdout;
 }
 
+export function validatePortableStateVersion(state) {
+  const version = String(state.stateVersion ?? '').trim();
+  const boundaries = state.events.filter((event) => event.event_type === 'STATE_MIGRATED');
+  if (version === '1') {
+    if (boundaries.length !== 0 || state.snapshot.schema !== 'agentops/scheduler-snapshot/v1') throw new Error('STATE_VERSION=1 requires a boundary-free v1 snapshot');
+  } else if (version === '2') {
+    if (boundaries.length !== 1 || state.snapshot.schema !== 'agentops/scheduler-snapshot/v2') throw new Error('STATE_VERSION=2 requires exactly one STATE_MIGRATED boundary and a v2 snapshot');
+  } else throw new Error(`unsupported STATE_VERSION ${version || '<missing>'}`);
+  return true;
+}
+
+export function legacyJournalManifestHash(eventBlobs) {
+  const manifest = Object.entries(eventBlobs ?? {}).sort(([left], [right]) => left.localeCompare(right)).map(([name, oid]) => `${name}:${oid}`);
+  if (manifest.some((entry) => !/^[^:]+:[0-9a-f]{40}$/.test(entry))) throw new Error('legacy journal manifest contains an invalid blob OID');
+  return sha256(manifest.join('\n'));
+}
+
 function writePortableCommit(root, state, oldOid, message) {
   validateMachineLease(state.machineLease);
+  validatePortableStateVersion(state);
   const runtime = localRuntimeDir(root); fs.mkdirSync(runtime, { recursive: true });
   const index = path.join(runtime, `index-${process.pid}-${crypto.randomUUID()}`);
   const env = { GIT_INDEX_FILE: index };
@@ -1098,11 +1337,21 @@ function writePortableCommit(root, state, oldOid, message) {
     files.set('machine-lease.json', `${JSON.stringify(state.machineLease, null, 2)}\n`);
     files.set('STATE_VERSION', `${state.stateVersion ?? '1'}\n`);
     for (const [name, text] of files) {
-      const oid = hashObject(root, text);
+      const preserved = state.eventBlobs?.[name];
+      let oid;
+      if (preserved) {
+        const raw = runGit(root, ['cat-file', 'blob', preserved]).stdout;
+        let original;
+        try { original = JSON.parse(raw); } catch { throw new Error(`preserved scheduler journal blob ${preserved} is not valid JSON`); }
+        if (stableStringify(original) !== stableStringify(JSON.parse(text))) throw new Error(`preserved scheduler journal blob ${preserved} does not match ${name}`);
+        oid = preserved;
+      } else oid = hashObject(root, text);
       runGit(root, ['update-index', '--add', '--cacheinfo', `100644,${oid},${name}`], { env });
     }
     const tree = runGit(root, ['write-tree'], { env }).stdout;
-    const args = ['commit-tree', tree, '-m', message]; if (oldOid) args.push('-p', oldOid);
+    const parents = state.commitParents ?? (oldOid ? [oldOid] : []);
+    if (!Array.isArray(parents) || new Set(parents).size !== parents.length || parents.some((oid) => !/^[0-9a-f]{40}$/.test(oid))) throw new Error('portable state commit parents must be unique commit OIDs');
+    const args = ['commit-tree', tree, '-m', message]; for (const parent of parents) args.push('-p', parent);
     return runGit(root, args, { env: { ...env, GIT_AUTHOR_NAME: 'AshenSpire Scheduler', GIT_AUTHOR_EMAIL: 'scheduler@local.invalid', GIT_COMMITTER_NAME: 'AshenSpire Scheduler', GIT_COMMITTER_EMAIL: 'scheduler@local.invalid' } }).stdout;
   } finally {
     try { fs.rmSync(index, { force: true }); }
@@ -1114,12 +1363,34 @@ function writePortableCommit(root, state, oldOid, message) {
   }
 }
 
+function persistMigrationCandidate(root, state, sourceOid, message) {
+  if (!AUTHORIZED_MIGRATION_STATES.has(state)) throw new Error('unauthorized scheduler migration candidate');
+  if (state.commitParents?.[0] !== sourceOid) throw new Error('migration candidate first parent must be the canonical remote source');
+  const newOid = writePortableCommit(root, state, sourceOid, message);
+  for (const parent of state.commitParents) {
+    if (runGit(root, ['merge-base', '--is-ancestor', parent, newOid], { allowFailure: true }).status !== 0) throw new Error(`migration candidate does not preserve parent ${parent}`);
+  }
+  const candidateRef = `refs/agentops/scheduler-migration-candidates/${sourceOid}`;
+  const prior = refOid(root, candidateRef);
+  if (prior && prior !== newOid) throw new Error(`migration candidate ref already binds a different commit ${prior}`);
+  if (!prior) runGit(root, ['update-ref', candidateRef, newOid, '0'.repeat(40)]);
+  return { oid: newOid, candidateRef };
+}
+
 export function persistPortableState(root, state, { push = false, expectedOid = state.oid, message = 'agentops scheduler state', config = stateConfig(root) } = {}) {
+  validatePortableStateVersion(state);
   const refs = schedulerStateRefs(config);
   const local = refOid(root, refs.local);
   const remote = refOid(root, refs.remote);
   const current = local ?? remote;
   if (current !== expectedOid) throw new Error(`state CAS failed: expected ${expectedOid ?? 'missing'}, found ${current ?? 'missing'}`);
+  if (config.simulation_mode !== true && current) {
+    const version = String(state.stateVersion ?? '').trim();
+    if (version === '1') throw new Error('SCHEDULER_STATE_MIGRATION_REQUIRED: durable v1 writes are frozen');
+    const migrationFromCurrent = state.snapshot.migration?.source_state_oid === current;
+    if (migrationFromCurrent && !AUTHORIZED_MIGRATION_STATES.has(state)) throw new Error('unauthorized scheduler migration persistence');
+    if (!migrationFromCurrent && !AUTHORIZED_OPERATIONAL_STATES.has(state)) throw new Error('unauthorized scheduler operational persistence');
+  }
   if (!local && expectedOid) runGit(root, ['update-ref', refs.local, expectedOid]);
   const newOid = writePortableCommit(root, state, expectedOid, message);
   const update = ['update-ref', refs.local, newOid]; if (expectedOid) update.push(expectedOid);
@@ -1209,17 +1480,103 @@ export function makeEvent(snapshot, input) {
     lease_epoch: input.lease_epoch ?? null, event_type: input.event_type,
     exact_object: input.exact_object ?? {}, payload: input.payload ?? {}, created_at: input.created_at ?? new Date().toISOString()
   };
+  const version = input.event_version ?? (snapshot.schema === 'agentops/scheduler-snapshot/v2' ? 2 : null);
+  if (version !== null) event.event_version = version;
   validateEvent(event); return event;
 }
 
 export function appendEvents(state, inputs) {
   const events = [...state.events]; let snapshot = state.snapshot;
   for (const input of inputs) {
+    if (snapshot.schema === 'agentops/scheduler-snapshot/v1' && input.event_version === undefined) {
+      if (['CLAIM_ACQUIRED', 'RECOVERY_BOUND'].includes(input.event_type) && !input.payload?.admission_evidence) throw new Error(`${input.event_type} requires fresh authenticated admission evidence`);
+      if (input.event_type === 'RESOURCE_RELEASED' && input.payload?.requeue === true && !input.payload?.admission_evidence) throw new Error('requeue requires fresh authenticated admission evidence');
+    }
     const event = makeEvent(snapshot, input); events.push(event); snapshot = reduceEvents(events);
     const failure = snapshot.errors.find((item) => item.event_id === event.event_id);
     if (failure) throw new Error(failure.error);
   }
-  return { ...state, events, snapshot };
+  const appended = { ...state, events, snapshot };
+  if (AUTHORIZED_OPERATIONAL_STATES.has(state)) AUTHORIZED_OPERATIONAL_STATES.add(appended);
+  return appended;
+}
+
+function validateMigrationAuthority(root, config, state, expectedTree, now) {
+  const ownerCommand = readJsonFile(path.join(root, '.agentops', 'governance', 'owner-command.json'));
+  const action = ownerCommand.actions?.find((candidate) => candidate.id === 'authorize-scheduler-migration');
+  if (!action) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: canonical owner-command contracts expose no scheduler migration action');
+  const evidence = config.migration?.authorization_evidence;
+  if (config.migration?.target_state_version !== 2 || config.migration?.dispatch_frozen !== true) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: v2 migration freeze is not configured');
+  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: exact migration authority evidence is absent');
+  const allowedKeys = new Set(['event_path', 'event_id', 'event_hash']);
+  if (Object.keys(evidence).some((key) => !allowedKeys.has(key))) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority evidence contains undeclared fields');
+  const relative = canonicalClaimPath(evidence.event_path);
+  const committed = runGit(root, ['show', `HEAD:${relative}`], { allowFailure: true });
+  if (committed.status !== 0) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority event is not committed');
+  const event = JSON.parse(committed.stdout);
+  if (event.id !== evidence.event_id || sha256(event) !== evidence.event_hash || event.kind !== 'owner-decision' || event.actor !== 'owner') throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority event identity/hash is invalid');
+  const decision = event.decision;
+  const binding = decision?.scheduler_migration;
+  const refs = schedulerStateRefs(config);
+  const preservedLocalTip = refOid(root, refs.local);
+  if (decision?.action !== 'authorize-scheduler-migration' || decision.authenticated_role !== 'owner' || !binding) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision does not contain the structured migration binding');
+  if (decision.candidate_oid !== binding.scheduler_head || runGit(root, ['rev-parse', `${binding.scheduler_head}^{tree}`]).stdout !== binding.scheduler_tree || runGit(root, ['merge-base', '--is-ancestor', binding.scheduler_head, 'HEAD'], { allowFailure: true }).status !== 0) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: repaired scheduler code head/tree is not exact and committed');
+  if (binding.source_state_oid !== state.oid || binding.expected_remote_oid !== state.oid || binding.source_state_tree !== expectedTree || binding.source_snapshot_sha256 !== state.snapshot.snapshot_hash || binding.source_journal_manifest_sha256 !== legacyJournalManifestHash(state.eventBlobs) || binding.source_event_count !== state.events.length) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision is not bound to the exact released source state');
+  if (binding.source_state_version !== 1 || binding.target_state_version !== 2 || binding.canonical_anchor_oid !== config.migration.canonical_anchor_oid || binding.preserved_local_tip_oid !== preservedLocalTip || binding.dispatch_frozen !== true || binding.one_use !== true || binding.target_ref !== refs.local || binding.push_mode !== 'non-force-forward-only-cas' || binding.abort_on_remote_change !== true) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision migration invariants do not match the scheduler contract');
+  validInstant(binding.expires_at, 'scheduler migration authority expires_at');
+  if (Date.parse(now) >= Date.parse(binding.expires_at)) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision has expired');
+  const capsuleFile = path.join(root, '.agentops', 'work', decision.target, 'CURRENT.json');
+  if (!fs.existsSync(capsuleFile) || readJsonFile(capsuleFile).parent_hash !== decision.expected_current_hash) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision capsule CAS binding is stale');
+  if (!action.protected || action.authenticator_roles?.length !== 1 || action.authenticator_roles[0] !== 'owner') throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: migration action is not owner-exclusive');
+  assertPortable(evidence);
+  return structuredClone(evidence);
+}
+
+function planStateMigration(state, {
+  expectedOid, expectedTree, expectedSnapshotHash, authorityReceipt,
+  preservedLocalTip = null, createdAt = new Date().toISOString()
+} = {}) {
+  if (String(state.stateVersion ?? '').trim() !== '1' || state.snapshot.schema !== 'agentops/scheduler-snapshot/v1') throw new Error('migrate-state requires an exact v1 source state');
+  if (!state.oid || expectedOid !== state.oid || expectedSnapshotHash !== state.snapshot.snapshot_hash) throw new Error('migrate-state expected old OID/snapshot CAS mismatch');
+  if (!/^[0-9a-f]{40}$/.test(expectedTree ?? '')) throw new Error('migrate-state requires the exact source tree');
+  if (preservedLocalTip !== null && !/^[0-9a-f]{40}$/.test(preservedLocalTip)) throw new Error('migrate-state preserved local tip must be a commit OID or null');
+  validInstant(createdAt, 'migration created_at');
+  if (state.machineLease?.machine_id !== null || !state.machineLease?.released_at || state.machineLease.expires_at !== state.machineLease.released_at) throw new Error('migrate-state requires explicit released machine custody');
+  const payload = {
+    from_state_version: 1, to_state_version: 2,
+    source_state_oid: state.oid, source_state_tree: expectedTree,
+    source_snapshot_hash: state.snapshot.snapshot_hash,
+    source_last_sequence: state.snapshot.last_sequence,
+    legacy_journal_manifest_hash: legacyJournalManifestHash(state.eventBlobs),
+    legacy_machine_lease: structuredClone(state.machineLease),
+    preserved_local_tip: preservedLocalTip,
+    dispatch_frozen: true,
+    authority_receipt: structuredClone(authorityReceipt)
+  };
+  let migrated = appendEvents(state, [{
+    event_version: 2,
+    event_type: 'STATE_MIGRATED', issue_id: 'scheduler-state', actor: 'it-manager-iii',
+    machine_id: null, lease_id: null, lease_epoch: null,
+    exact_object: { oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash },
+    payload, created_at: createdAt,
+    idempotency_key: `state-migrated-v2:${state.oid}:${state.snapshot.snapshot_hash}`
+  }]);
+  migrated = {
+    ...migrated,
+    stateVersion: '2',
+    commitParents: [state.oid, ...(preservedLocalTip && preservedLocalTip !== state.oid ? [preservedLocalTip] : [])],
+    machineLease: {
+      machine_id: null,
+      lease_epoch: state.machineLease?.lease_epoch ?? 0,
+      acquired_at: state.machineLease?.acquired_at ?? null,
+      expires_at: createdAt,
+      expected_state_ref_oid: state.oid,
+      released_at: createdAt
+    }
+  };
+  AUTHORIZED_MIGRATION_STATES.add(migrated);
+  validatePortableStateVersion(migrated);
+  return migrated;
 }
 
 export function assignmentEvent(state, assignment, machineId, createdAt = new Date().toISOString()) {
@@ -1265,7 +1622,7 @@ function restoreWakeFiles(backups) {
   }
 }
 
-export function beginWakeDispatch(root, snapshot, assignments, config) {
+function beginWakeDispatch(root, snapshot, assignments, config) {
   const dispatchRoot = path.join(localRuntimeDir(root), 'dispatch');
   fs.mkdirSync(dispatchRoot, { recursive: true });
   // Compile the complete desired dispatch set before touching any live wake.
@@ -1394,7 +1751,7 @@ export function simulate(config = readConfig()) {
   }));
   for (const spec of specs) {
     const simulationReceipt = authenticatedProjectReceipt({ schema: 'agentops/scheduler-project-fetch-receipt/v1', simulation: true, repository: 'simulation/repository', authenticated_login: 'simulation', granted_scopes: ['read:project'], fetched_at: now, response_sha256: sha256(spec) });
-    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: spec.issue_id, board_sync_status: 'OK', project_priority: spec.priority, project_owner_role: 'maker', project_status: 'READY', project_authenticated_login: 'simulation', project_fetch_receipt_hash: simulationReceipt.receipt_hash, project_response_sha256: simulationReceipt.response_sha256, scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: now, fresh_until: new Date(Date.parse(now) + config.project_evidence_max_age_seconds * 1000).toISOString() };
+    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: spec.issue_id, board_sync_status: 'OK', project_priority: spec.priority, project_owner_role: 'maker', project_status: 'READY', project_authenticated_login: 'simulation', project_fetch_receipt_hash: simulationReceipt.receipt_hash, project_response_sha256: simulationReceipt.response_sha256, project_fetch_receipt: structuredClone(simulationReceipt), scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: now, fresh_until: new Date(Date.parse(now) + config.project_evidence_max_age_seconds * 1000).toISOString() };
     state = appendEvents(state, [{ event_id: `sim-intake-${spec.issue_id}`, event_type: 'INTAKE_RECORDED', issue_id: spec.issue_id, actor: 'simulation', exact_object: { issue: spec.issue_id }, payload: { ...spec, project_evidence: sealAdmissionEvidence(body) }, created_at: now, idempotency_key: `sim-intake:${spec.issue_id}` }]);
   }
   const plan = planAssignments(state.snapshot, config, now);
@@ -1411,6 +1768,34 @@ function parseArgs(argv) {
     if (!next || next.startsWith('--')) args[key] = true; else { args[key] = next; index += 1; }
   }
   return { command, args };
+}
+
+const READ_ONLY_COMMANDS = new Set(['verify', 'status', 'simulate']);
+const OPERATIONAL_COMMANDS = new Set(['bootstrap', 'sync', 'acquire-machine', 'release-machine', 'watch', 'enqueue', 'claim', 'entered', 'candidate', 'qa', 'block', 'release', 'recover', 'deliver', 'merge-dev', 'complete', 'expire', 'supersede', 'cancel']);
+const NEVER_RAW_COMMANDS = new Set(['pr-open', 'merged-dev']);
+
+export function schedulerCommandClass(command) {
+  if (READ_ONLY_COMMANDS.has(command)) return 'READ_ONLY';
+  if (command === 'migrate-state') return 'MIGRATION_ONLY';
+  if (OPERATIONAL_COMMANDS.has(command)) return 'OPERATIONAL';
+  if (NEVER_RAW_COMMANDS.has(command)) return 'NEVER_RAW';
+  return 'UNKNOWN';
+}
+
+export function assertSchedulerCommandAllowed(command, state, config, root = null) {
+  const commandClass = schedulerCommandClass(command);
+  if (commandClass === 'READ_ONLY' || commandClass === 'MIGRATION_ONLY') return true;
+  if (commandClass === 'NEVER_RAW') throw new Error(`${command} is not accepted as a raw scheduler command`);
+  if (commandClass === 'UNKNOWN') throw new Error(`unknown scheduler command ${command}`);
+  if (String(state.stateVersion ?? '').trim() !== '2' || state.snapshot.schema !== 'agentops/scheduler-snapshot/v2') throw new Error('SCHEDULER_STATE_MIGRATION_REQUIRED: operational commands are frozen on v1');
+  validatePortableStateVersion(state);
+  const rebuilt = reduceEvents(state.events);
+  if (rebuilt.errors.length || !snapshotsMatch(rebuilt, state.snapshot)) throw new Error('scheduler operational state fails deterministic replay');
+  assertSchema(rebuilt, 'snapshot-v2');
+  if (state.snapshot.migration?.dispatch_frozen === true || config.migration?.dispatch_frozen !== false) throw new Error('SCHEDULER_PRE_CUTOVER_MUTATION_BLOCKED: migrated state remains dispatch-frozen');
+  assertSchedulerDispatchCutover(config, root);
+  AUTHORIZED_OPERATIONAL_STATES.add(state);
+  return true;
 }
 
 function jsonArg(value, fallback) { return value === undefined ? fallback : JSON.parse(value); }
@@ -1430,15 +1815,15 @@ export function transitionInput(command, args, state, machine) {
   const item = state.snapshot.work_items[issue];
   const common = { issue_id: issue, actor: args.actor ?? item?.assigned_actor ?? 'scheduler', machine_id: machine.machine_id, lease_id: args.lease_id ?? item?.lease_id ?? null, lease_epoch: args.lease_epoch ? Number(args.lease_epoch) : item?.lease_epoch ?? null, exact_object: jsonArg(args.exact_object, {}), created_at: args.at ?? new Date().toISOString(), idempotency_key: args.idempotency_key };
   if (command === 'enqueue') return { ...common, actor: args.actor ?? 'intake', lease_id: null, lease_epoch: null, event_type: 'INTAKE_RECORDED', payload: { title: args.title, priority: args.priority ?? 'P2', dependencies: jsonArg(args.dependencies, []), branch: args.branch ?? `codex/issue-${issue.replace(/^#/, '')}`, claimed_paths: jsonArg(args.paths, []), claimed_resources: jsonArg(args.resources, []), acceptance_commands: jsonArg(args.acceptance, []), evidence_pointers: jsonArg(args.evidence, []), next_action: args.next_action, authority_ceiling: args.authority_ceiling ?? 'dev-delivery', project_evidence: args.trusted_project_evidence ?? null } };
-  if (command === 'claim') return { ...common, event_type: 'CLAIM_ACQUIRED', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), payload: { branch: args.branch ?? item.branch, base_commit: args.base_commit, lease_expiry: args.expiry, claimed_paths: jsonArg(args.paths, item.claimed_paths), claimed_resources: jsonArg(args.resources, item.claimed_resources), next_action: args.next_action, admission_evidence: args.trusted_admission_evidence ?? null } };
+  if (command === 'claim') return { ...common, event_type: 'CLAIM_ACQUIRED', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), exact_object: { base_commit: args.base_commit }, payload: { branch: args.branch ?? item.branch, base_commit: args.base_commit, lease_expiry: args.expiry, claimed_paths: jsonArg(args.paths, item.claimed_paths), claimed_resources: jsonArg(args.resources, item.claimed_resources), next_action: args.next_action, admission_evidence: args.trusted_admission_evidence ?? null } };
   if (command === 'entered') return { ...common, event_type: 'WORK_ENTERED', exact_object: { oid: args.base_commit }, payload: { base_commit: args.base_commit, next_action: args.next_action } };
   if (command === 'candidate') return { ...common, event_type: 'CANDIDATE_READY', exact_object: { oid: args.commit }, payload: { candidate_commit: args.commit, evidence_pointers: jsonArg(args.evidence, []) } };
   if (command === 'qa') return { ...common, actor: args.actor ?? 'independent-qa', event_type: 'QA_RESULT', exact_object: { oid: args.commit }, payload: { candidate_commit: args.commit, result: args.result, evidence_pointers: jsonArg(args.evidence, []), next_action: args.next_action } };
   if (command === 'pr-open') return { ...common, event_type: 'PR_OPENED', payload: { pr_url: args.url } };
-  if (command === 'complete') return { ...common, event_type: 'COMPLETED', payload: {} };
+  if (command === 'complete') return { ...common, event_type: 'COMPLETED', exact_object: { oid: item?.merge_commit }, payload: { merge_commit: item?.merge_commit } };
   if (command === 'block') return { ...common, event_type: 'BLOCKED', payload: { blocker: args.blocker, wake_condition: args.wake, next_action: args.next_action, retained_paths: jsonArg(args.retained_paths, []), retained_resources: jsonArg(args.retained_resources, []) } };
   if (command === 'release') return { ...common, event_type: 'RESOURCE_RELEASED', payload: { requeue: args.requeue === true || args.requeue === 'true', retained_paths: jsonArg(args.retained_paths, []), retained_resources: jsonArg(args.retained_resources, []), admission_evidence: args.trusted_admission_evidence ?? null } };
-  if (command === 'recover') return { ...common, event_type: 'RECOVERY_BOUND', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), payload: { branch: args.branch, base_commit: args.base_commit, lease_expiry: args.expiry, admission_evidence: args.trusted_admission_evidence ?? null } };
+  if (command === 'recover') return { ...common, event_type: 'RECOVERY_BOUND', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), exact_object: { base_commit: args.base_commit }, payload: { branch: args.branch, base_commit: args.base_commit, lease_expiry: args.expiry, admission_evidence: args.trusted_admission_evidence ?? null } };
   if (command === 'expire') return { ...common, event_type: 'LEASE_EXPIRED', payload: {} };
   if (command === 'supersede') return { ...common, event_type: 'SUPERSEDED', payload: {} };
   if (command === 'cancel') return { ...common, event_type: 'CANCELLED', payload: {} };
@@ -1450,19 +1835,46 @@ export function trustedTransitionArgs(args, now = new Date().toISOString()) {
   return { ...args, at: now };
 }
 
+function verifyMigrationBoundary(root, config, state, rebuilt) {
+  const boundaries = state.events.filter((event) => event.event_type === 'STATE_MIGRATED');
+  if (boundaries.length !== 1) throw new Error('v2 verification requires exactly one migration boundary');
+  const boundary = boundaries[0]; const payload = boundary.payload;
+  const source = readPortableStateAtOid(root, payload.source_state_oid);
+  const sourceTree = runGit(root, ['rev-parse', `${payload.source_state_oid}^{tree}`]).stdout;
+  if (sourceTree !== payload.source_state_tree || source.snapshot.snapshot_hash !== payload.source_snapshot_hash || source.snapshot.last_sequence !== payload.source_last_sequence) throw new Error('migration boundary source object/tree/snapshot binding mismatch');
+  const sourceReplay = reduceEvents(source.events);
+  if (sourceReplay.errors.length || !snapshotsMatch(sourceReplay, source.snapshot)) throw new Error('migration source no longer replays exactly');
+  if (legacyJournalManifestHash(source.eventBlobs) !== payload.legacy_journal_manifest_hash) throw new Error('migration legacy journal blob manifest mismatch');
+  if (stableStringify(source.machineLease) !== stableStringify(payload.legacy_machine_lease)) throw new Error('migration legacy machine custody evidence mismatch');
+  const authorityReceipt = validateMigrationAuthority(root, config, source, sourceTree, boundary.created_at);
+  if (stableStringify(authorityReceipt) !== stableStringify(payload.authority_receipt)) throw new Error('migration boundary authority receipt differs from the committed owner decision binding');
+  if (state.oid) {
+    const parents = runGit(root, ['show', '-s', '--format=%P', state.oid]).stdout.split(/\s+/).filter(Boolean);
+    const expectedParents = [payload.source_state_oid, ...(payload.preserved_local_tip ? [payload.preserved_local_tip] : [])];
+    if (stableStringify(parents) !== stableStringify(expectedParents)) throw new Error('migration commit parent topology mismatch');
+  }
+  if (rebuilt.snapshot_hash !== state.snapshot.snapshot_hash) throw new Error('migration rebuilt snapshot hash mismatch');
+  return true;
+}
+
 export function verifyScheduler(root = REPOSITORY_ROOT) {
   const config = readConfig(path.join(root, '.agentops'));
   const problems = [];
-  for (const name of ['event.json', 'snapshot.json', 'wake.json']) if (!fs.existsSync(path.join(root, '.agentops', 'scheduler', 'schemas', name))) problems.push(`missing schema ${name}`);
+  for (const name of ['event.json', 'event-v2.json', 'migration.json', 'snapshot.json', 'snapshot-v2.json', 'wake.json']) if (!fs.existsSync(path.join(root, '.agentops', 'scheduler', 'schemas', name))) problems.push(`missing schema ${name}`);
   if (config.workers.length > config.worker_slots) problems.push('configured workers exceed worker_slots');
   if (config.wake_hard_limit_tokens > 1500) problems.push('wake hard limit exceeds 1500');
   const state = readPortableState(root, config);
   const rebuilt = reduceEvents(state.events);
   if (rebuilt.errors.length) problems.push(`event replay contains ${rebuilt.errors.length} error(s)`);
-  try { assertSchema(rebuilt, 'snapshot'); } catch (error) { problems.push(error.message); }
-  try { assertSchema(state.snapshot, 'snapshot'); } catch (error) { problems.push(error.message); }
+  const rebuiltSchema = rebuilt.schema === 'agentops/scheduler-snapshot/v2' ? 'snapshot-v2' : 'snapshot';
+  const storedSchema = state.snapshot.schema === 'agentops/scheduler-snapshot/v2' ? 'snapshot-v2' : 'snapshot';
+  try { assertSchema(rebuilt, rebuiltSchema); } catch (error) { problems.push(error.message); }
+  try { assertSchema(state.snapshot, storedSchema); } catch (error) { problems.push(error.message); }
   if (state.oid && !snapshotsMatch(rebuilt, state.snapshot)) problems.push('snapshot does not match deterministic replay');
-  if (state.stateVersion !== '1') problems.push('unsupported STATE_VERSION');
+  try { validatePortableStateVersion({ ...state, snapshot: rebuilt }); } catch (error) { problems.push(error.message); }
+  if (String(state.stateVersion ?? '').trim() === '2') {
+    try { verifyMigrationBoundary(root, config, state, rebuilt); } catch (error) { problems.push(error.message); }
+  }
   return { ok: problems.length === 0, problems, config, state, rebuilt };
 }
 
@@ -1472,21 +1884,50 @@ export function snapshotsMatch(rebuilt, stored) {
 
 export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   const { command, args } = parseArgs(argv); const config = readConfig(path.join(root, '.agentops'));
+  const commandClass = schedulerCommandClass(command);
+  if (commandClass === 'UNKNOWN') throw new Error(`unknown scheduler command ${command}`);
+  if (commandClass === 'NEVER_RAW') throw new Error(`${command} is not accepted as a raw scheduler command`);
   config.workers = configuredWorkers(root, config);
   if (command === 'simulate') { const result = simulate(config); emit(command, result, `SIMULATE ${result.concurrent && result.conflict_rejected && result.protected_stop ? 'PASS' : 'FAIL'}: ${result.tickets} tickets, ${result.assignments} concurrent assignments.`); return 0; }
   if (command === 'verify') { const result = verifyScheduler(root); if (!result.ok) throw new Error(result.problems.join('; ')); emit(command, { state_ref_oid: result.state.oid, snapshot_hash: result.rebuilt.snapshot_hash, events: result.state.events.length }, `VERIFY PASS: ${result.state.events.length} material events replayed deterministically.`); return 0; }
-  let state = readPortableState(root, config); const machine = localMachine(root);
-  if (command === 'bootstrap') {
-    if (state.oid) { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP NOOP: scheduler state already exists.'); return 0; }
-    state.machineLease = { machine_id: null, lease_epoch: 0, acquired_at: null, expires_at: null, expected_state_ref_oid: null }; const oid = persistPortableState(root, state, { push: args.push === true, message: 'agentops scheduler bootstrap', config });
-    emit(command, { state_ref_oid: oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP PASS: portable scheduler state initialized.'); return 0;
-  }
+  let state = readPortableState(root, config);
   if (command === 'status') {
     const reconciliation = reconcileAssignmentEnvironment(root, config);
     const plan = planAssignments(state.snapshot, config, new Date().toISOString(), null, reconciliation);
     const projectSyncStatus = { status: reconciliation.project_sync.status, source_id: reconciliation.project_sync.source_id, error: reconciliation.project_sync.error ?? null, wake_condition: reconciliation.project_sync.wake_condition ?? null };
-    emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash, material_events: state.events.length, machine_lease: state.machineLease, live_worker_capacity: config.workers.length, configured_worker_slots: config.worker_slots, counts: stateCounts(state.snapshot), project_sync: projectSyncStatus, blockers: plan.blocked_items }, `STATUS: ${state.events.length} events; ${Object.values(state.snapshot.work_items).length} work items; ${config.workers.length}/${config.worker_slots} live workers; project_sync=${projectSyncStatus.status}; blockers=${plan.blocked_items.length}.`); return 0;
+    emit(command, { state_ref_oid: state.oid, state_version: String(state.stateVersion ?? '').trim(), snapshot_hash: state.snapshot.snapshot_hash, material_events: state.events.length, migration: state.snapshot.migration ?? null, dispatch_frozen: state.snapshot.migration?.dispatch_frozen ?? true, machine_lease: state.machineLease, live_worker_capacity: config.workers.length, configured_worker_slots: config.worker_slots, counts: stateCounts(state.snapshot), project_sync: projectSyncStatus, blockers: plan.blocked_items }, `STATUS: ${state.events.length} events; ${Object.values(state.snapshot.work_items).length} work items; state_version=${String(state.stateVersion ?? '').trim()}; dispatch_frozen=${state.snapshot.migration?.dispatch_frozen ?? true}; project_sync=${projectSyncStatus.status}.`); return 0;
   }
+  if (command === 'migrate-state') {
+    if (args.push === true) throw new Error('migrate-state is local-only; push requires separate authority');
+    const now = new Date().toISOString();
+    const refs = schedulerStateRefs(config);
+    const observed = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', refs.local], { allowFailure: true });
+    const remoteOid = observed.status === 0 ? observed.stdout.trim().split(/\s+/)[0] : null;
+    if (!remoteOid || args.expected_oid !== remoteOid) throw new Error('migrate-state expected old OID no longer matches the canonical remote state');
+    runGit(root, ['fetch', '--no-write-fetch-head', 'origin', remoteOid]);
+    const anchor = config.migration?.canonical_anchor_oid;
+    if (!/^[0-9a-f]{40}$/.test(anchor ?? '') || runGit(root, ['merge-base', '--is-ancestor', anchor, remoteOid], { allowFailure: true }).status !== 0) throw new Error('migrate-state source does not descend from the configured canonical anchor');
+    state = readPortableStateAtOid(root, remoteOid);
+    const actualTree = runGit(root, ['rev-parse', `${remoteOid}^{tree}`]).stdout;
+    if (args.expected_tree !== actualTree || args.expected_snapshot_hash !== state.snapshot.snapshot_hash) throw new Error('migrate-state expected old tree/snapshot CAS mismatch');
+    const rebuilt = reduceEvents(state.events);
+    if (rebuilt.errors.length || !snapshotsMatch(rebuilt, state.snapshot)) throw new Error('migrate-state source fails exact deterministic replay');
+    const authorityReceipt = validateMigrationAuthority(root, config, state, actualTree, now);
+    const localTip = refOid(root, refs.local);
+    if (args.preserved_local_tip !== undefined && args.preserved_local_tip !== localTip) throw new Error('migrate-state preserved local tip does not match the observed local scheduler ref');
+    state = planStateMigration(state, { expectedOid: remoteOid, expectedTree: actualTree, expectedSnapshotHash: state.snapshot.snapshot_hash, authorityReceipt, preservedLocalTip: localTip && localTip !== remoteOid ? localTip : null, createdAt: now });
+    const candidate = persistMigrationCandidate(root, state, remoteOid, `scheduler v2 migration candidate from ${remoteOid}`);
+    emit(command, { candidate_state_oid: candidate.oid, candidate_ref: candidate.candidateRef, parent_state_oid: remoteOid, preserved_local_tip: localTip && localTip !== remoteOid ? localTip : null, source_snapshot_hash: args.expected_snapshot_hash, state_version: '2', dispatch_frozen: true }, 'MIGRATE-STATE CANDIDATE PASS: v1 journal preserved in a two-parent local candidate; publication remains separately authorized.'); return 0;
+  }
+  if (command === 'bootstrap') {
+    if (state.oid) { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP NOOP: scheduler state already exists.'); return 0; }
+    throw new Error('SCHEDULER_BOOTSTRAP_AUTHORITY_REQUIRED: fresh portable state creation is a separate protected transition');
+  }
+  assertSchedulerCommandAllowed(command, state, config, root);
+  if (command === 'deliver' || command === 'merge-dev' || (command === 'qa' && args.no_deliver !== true && args.no_deliver !== 'true')) {
+    throw new Error('SCHEDULER_EXTERNAL_EFFECT_PROTOCOL_UNAVAILABLE: GitHub mutations require a separately authorized durable two-phase reservation protocol');
+  }
+  const machine = localMachine(root);
   if (command === 'acquire-machine') {
     const now = new Date().toISOString();
     if (state.machineLease && Date.parse(state.machineLease.expires_at) > Date.parse(now) && state.machineLease.machine_id !== machine.machine_id) throw new Error(`machine custody held by ${state.machineLease.machine_id}`);
@@ -1585,7 +2026,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const item = state.snapshot.work_items[canonicalIssueIdentity(args.issue)]; if (!item) throw new Error(`unknown issue ${args.issue}`);
     if (!config.authority.non_force_push_codex_branch || !config.authority.open_issue_closing_pr_to_dev) throw new Error('PR delivery authority is not enabled');
     const delivered = deliverCandidate(root, item, config);
-    state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivered.number, oid: item.candidate_commit }, payload: { pr_url: delivered.url }, created_at: new Date().toISOString(), idempotency_key: `pr-open:${delivered.number}:${item.candidate_commit}` }]);
+    state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivered.number, pr_url: delivered.url, oid: item.candidate_commit }, payload: { pr_number: delivered.number, pr_url: delivered.url, candidate_commit: item.candidate_commit }, created_at: new Date().toISOString(), idempotency_key: `pr-open:${delivered.number}:${item.candidate_commit}` }]);
     const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler PR_OPENED ${item.issue_id}`, config });
     emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], delivery: delivered }, `PR_OPENED accepted for ${item.issue_id}: ${delivered.url}`); return 0;
   }
@@ -1594,8 +2035,8 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const result = mergeDevPr(root, config, item, Number(args.pr), { rollbackKnown: args.rollback_known === true || args.rollback_known === 'true' });
     const createdAt = result.merged.mergedAt;
     state = appendEvents(state, [
-      { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
-      { event_type: 'COMPLETED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid }, payload: {}, created_at: createdAt, idempotency_key: `completed:${item.issue_id}:${result.merged.mergeCommit.oid}` }
+      { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid, pr_number: result.pr.number }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
+      { event_type: 'COMPLETED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid }, payload: { merge_commit: result.merged.mergeCommit.oid }, created_at: createdAt, idempotency_key: `completed:${item.issue_id}:${result.merged.mergeCommit.oid}` }
     ]);
     let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}`, config });
     state.oid = oid;
@@ -1616,7 +2057,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   let item = state.snapshot.work_items[input.issue_id];
   if (command === 'qa' && args.result === 'PASS' && args.no_deliver !== true && args.no_deliver !== 'true' && config.authority.non_force_push_codex_branch && config.authority.open_issue_closing_pr_to_dev) {
     delivery = deliverCandidate(root, item, config);
-    state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivery.number, oid: item.candidate_commit }, payload: { pr_url: delivery.url }, created_at: input.created_at, idempotency_key: `pr-open:${delivery.number}:${item.candidate_commit}` }]);
+    state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivery.number, pr_url: delivery.url, oid: item.candidate_commit }, payload: { pr_number: delivery.number, pr_url: delivery.url, candidate_commit: item.candidate_commit }, created_at: input.created_at, idempotency_key: `pr-open:${delivery.number}:${item.candidate_commit}` }]);
     oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler PR_OPENED ${item.issue_id}`, config });
     state.oid = oid;
     item = state.snapshot.work_items[input.issue_id];
