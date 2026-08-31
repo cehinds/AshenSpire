@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentops/project-schema-attempt/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "authority", "executor", "project", "definitions_hash", "initial_preflight", "attempted_at", "attempt_hash"],
+  "properties": {
+    "schema": { "const": "agentops/project-schema-attempt/v1" },
+    "status": { "const": "ATTEMPTED" },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_oid", "event_path", "event_id", "event_hash", "parent_oid", "target_capsule_path", "parent_capsule_hash", "current_capsule_hash"],
+      "properties": {
+        "state_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "event_path": { "type": "string", "pattern": "^\\.agentops/events/.+\\.json$" },
+        "event_id": { "type": "string", "minLength": 1 },
+        "event_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "parent_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "target_capsule_path": { "type": "string", "pattern": "^\\.agentops/work/.+/CURRENT\\.json$" },
+        "parent_capsule_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "current_capsule_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["head", "tree"],
+      "properties": {
+        "head": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "tree": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "owner_type", "number", "id", "title", "closed", "updated_at"],
+      "properties": {
+        "owner": { "const": "cehinds" },
+        "owner_type": { "const": "user" },
+        "number": { "const": 4 },
+        "id": { "const": "PVT_kwHOCSCyJ84BgfH9" },
+        "title": { "const": "Family Delivery" },
+        "closed": { "const": false },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "definitions_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "initial_preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field_count", "field_state_root", "item_count", "field_value_count", "item_state_root", "pagination_manifest_hash", "priority_field_id", "priority_contract_hash"],
+      "properties": {
+        "field_count": { "type": "integer", "minimum": 0 },
+        "field_state_root": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "item_count": { "type": "integer", "minimum": 0 },
+        "field_value_count": { "type": "integer", "minimum": 0 },
+        "item_state_root": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "pagination_manifest_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "priority_field_id": { "const": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4" },
+        "priority_contract_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "attempted_at": { "type": "string", "format": "date-time" },
+    "attempt_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
