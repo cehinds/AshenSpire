@@ -175,11 +175,12 @@ function validateBindingShape(binding, trustedNow) {
   if (!Array.isArray(binding.work_leases)) throw new Error('work_leases must be an exact array');
 }
 
-export function validateAuthority(root, { authorityEventPath, authorityStateOid, trustedNow, remote = 'origin', quietWindowReceipt }) {
+export function validateAuthority(root, { authorityEventPath, authorityStateOid, trustedNow, remote = 'origin', quietWindowReceipt, requireFreshDev = true }) {
   if (!OID.test(authorityStateOid ?? '')) throw new Error('authority_state_oid must be an exact commit OID');
   if (!/^\.agentops\/events\/[^/]+\/[^/]+\.json$/.test(authorityEventPath ?? '') || authorityEventPath.includes('..')) throw new Error('authority event must use a canonical AgentOps event path');
   const freshDev = remoteOid(root, remote, DEV_REF);
-  if (freshDev !== authorityStateOid) throw new Error(`authority_state_oid is stale; fresh ${DEV_REF} is ${freshDev}`);
+  if (requireFreshDev && freshDev !== authorityStateOid) throw new Error(`authority_state_oid is stale; fresh ${DEV_REF} is ${freshDev}`);
+  if (!requireFreshDev && runGit(root, ['merge-base', '--is-ancestor', authorityStateOid, freshDev], { allowFailure: true }).status !== 0) throw new Error('authority_state_oid is not an ancestor of fresh dev receipt state');
   ensureCommitObject(root, authorityStateOid, remote, DEV_REF);
   const event = jsonAt(root, authorityStateOid, authorityEventPath);
   const eventSchema = jsonAt(root, authorityStateOid, '.agentops/schemas/event.schema.json');
@@ -221,6 +222,10 @@ export function validateAuthority(root, { authorityEventPath, authorityStateOid,
   const capsuleSchema = jsonAt(root, authorityStateOid, '.agentops/schemas/work-capsule.schema.json');
   const capsuleErrors = validateSchema(capsule, capsuleSchema, '$');
   if (capsuleErrors.length) throw new Error(`authority capsule schema validation failed: ${capsuleErrors.join('; ')}`);
+  const parentCapsuleErrors = validateSchema(parentCapsule, capsuleSchema, '$');
+  if (parentCapsuleErrors.length) throw new Error(`authority parent capsule schema validation failed: ${parentCapsuleErrors.join('; ')}`);
+  const unsealedParentCapsule = structuredClone(parentCapsule); unsealedParentCapsule.current_hash = '';
+  if (parentCapsule.current_hash !== `sha256:${sha256(unsealedParentCapsule)}`) throw new Error('authority parent capsule seal is invalid');
   const unsealedCapsule = structuredClone(capsule); unsealedCapsule.current_hash = '';
   if (capsule.ticket !== event.ticket || capsule.current_hash !== `sha256:${sha256(unsealedCapsule)}`) throw new Error('authority capsule identity or seal is invalid');
   if (event.decision.expected_current_hash !== parentCapsule.current_hash || capsule.parent_hash !== parentCapsule.current_hash || capsule.revision !== parentCapsule.revision + 1) throw new Error('authority event/capsule compare-and-swap does not bind the exact parent capsule');
@@ -350,22 +355,56 @@ function attemptIdentity(authority, binding) {
   return sha256({ authority, source: binding.source, target: binding.target, reconciler_head: binding.reconciler_head });
 }
 
-function ensureNoPriorAttempt(root, authorityStateOid, attemptPath) {
-  if (runGit(root, ['cat-file', '-e', `${authorityStateOid}:${attemptPath}`], { allowFailure: true }).status === 0) throw new Error('exact reconciliation authority packet was already attempted');
+function tombstoneRef(authority) {
+  return `refs/agentops/consumed/scheduler-state-reconciliation/${authority.event_hash}`;
 }
 
-function attemptRecord(authority, binding, trustedNow) {
+function ensureNoPriorAttempt(root, authorityStateOid, attemptPath, consumedRef) {
+  if (runGit(root, ['cat-file', '-e', `${authorityStateOid}:${attemptPath}`], { allowFailure: true }).status === 0) throw new Error('exact reconciliation authority packet was already attempted');
+  if (runGit(root, ['show-ref', '--verify', '--quiet', consumedRef], { allowFailure: true }).status === 0) throw new Error('exact reconciliation authority packet has a durable local consumption tombstone');
+}
+
+function createConsumptionTombstone(root, authority, binding, trustedNow) {
+  const ref = tombstoneRef(authority);
+  const pathName = `${ATTEMPT_ROOT}/tombstones/${authority.event_hash}.json`;
+  const record = { schema: 'agentops/scheduler-state-reconciliation-consumption/v1', status: 'CONSUMED_BEFORE_TRANSPORT', authority, source_state_oid: binding.source.state_oid, target_state_oid: binding.target.state_oid, reconciler_head: binding.reconciler_head, consumed_at: trustedNow };
+  const commit = createCommit(root, authority.authority_state_oid, { [pathName]: `${JSON.stringify(record, null, 2)}\n` }, `scheduler state reconciliation consume ${authority.event_hash}`, trustedNow);
+  const zero = '0'.repeat(40);
+  const updated = runGit(root, ['update-ref', ref, commit.oid, zero], { allowFailure: true });
+  if (updated.status !== 0) throw new Error('could not atomically create the append-only local consumption tombstone');
+  return { ref, oid: commit.oid, path: pathName };
+}
+
+function preparePreservationRefs(root, source, leases) {
+  const refs = [];
+  for (const lease of leases) {
+    const item = source.snapshot.work_items?.[lease.issue_id.slice(1)];
+    for (const [kind, oid] of [['base', item?.base_commit], ['candidate', item?.candidate_commit]]) {
+      if (oid === null || oid === undefined) continue;
+      if (!OID.test(oid) || runGit(root, ['cat-file', '-e', `${oid}^{commit}`], { allowFailure: true }).status !== 0) throw new Error(`${lease.issue_id} ${kind} commit is not available for preservation`);
+      const ref = `refs/agentops/quarantine/scheduler-state-reconciliation/${lease.issue_id.slice(1)}/${kind}`;
+      const existing = runGit(root, ['show-ref', '--hash', '--verify', ref], { allowFailure: true });
+      if (existing.status === 0 && existing.stdout !== oid) throw new Error(`${lease.issue_id} ${kind} quarantine ref already binds a different commit`);
+      if (existing.status !== 0) runGit(root, ['update-ref', ref, oid, '0'.repeat(40)]);
+      refs.push({ issue_id: lease.issue_id, kind, ref, oid });
+    }
+  }
+  return refs;
+}
+
+function attemptRecord(authority, binding, trustedNow, quietWindowReceipt, tombstone, preservationRefs) {
   const attempt_id = attemptIdentity(authority, binding);
   return {
     schema: 'agentops/scheduler-state-reconciliation-attempt/v1', attempt_id, status: 'ATTEMPTED', authority,
     reconciler: { head: binding.reconciler_head, tree: binding.reconciler_tree }, source: binding.source, target: binding.target,
-    quiet_window_receipt_hash: binding.quiet_window_receipt_hash, trusted_now: trustedNow, state_ref: binding.target_ref, development_ref: DEV_REF,
+    quiet_window_receipt: quietWindowReceipt, quiet_window_receipt_hash: binding.quiet_window_receipt_hash, trusted_now: trustedNow, state_ref: binding.target_ref, development_ref: DEV_REF,
+    consumption_tombstone: tombstone, preservation_refs: preservationRefs,
     invariants: { dispatch_frozen: binding.dispatch_frozen, no_refill: binding.no_refill, no_assignment: binding.no_assignment, no_dispatch: binding.no_dispatch, no_external_mutation: binding.no_external_mutation, push_mode: binding.push_mode, abort_on_remote_change: binding.abort_on_remote_change },
   };
 }
 
 function receiptRecord(attempt, attemptPath, attemptCommitOid, authority, statePush) {
-  const receipt = { schema: 'agentops/scheduler-state-reconciliation-receipt/v1', attempt_id: attempt.attempt_id, status: 'APPLIED', attempt_path: attemptPath, attempt_commit_oid: attemptCommitOid, authority, source_state_oid: attempt.source.state_oid, target_state_oid: attempt.target.state_oid, observed_state_remote_oid: attempt.target.state_oid, development_parent_oid: attemptCommitOid, state_push: statePush, receipt_hash: '' };
+  const receipt = { schema: 'agentops/scheduler-state-reconciliation-receipt/v1', attempt_id: attempt.attempt_id, status: 'APPLIED', attempt_path: attemptPath, attempt_commit_oid: attemptCommitOid, authority, source_state_oid: attempt.source.state_oid, target_state_oid: attempt.target.state_oid, observed_state_remote_oid: attempt.target.state_oid, development_parent_oid: attemptCommitOid, state_push: statePush, consumption_tombstone: attempt.consumption_tombstone, preservation_refs: attempt.preservation_refs, receipt_hash: '' };
   receipt.receipt_hash = sha256({ ...receipt, receipt_hash: '' });
   return receipt;
 }
@@ -376,10 +415,14 @@ export function applyReconciliation(root, options) {
   ensureCommitObject(root, validated.binding.source.state_oid, remote, validated.binding.target_ref);
   const plan = buildPlan(root, { binding: validated.binding });
   if (remoteOid(root, remote, validated.binding.target_ref) !== plan.source.oid) throw new Error('state remote changed after planning; nothing attempted');
-  const attempt = attemptRecord(validated.authority, validated.binding, trustedNow);
+  const attemptId = attemptIdentity(validated.authority, validated.binding);
+  const consumedRef = tombstoneRef(validated.authority);
+  const attemptPath = `${ATTEMPT_ROOT}/${attemptId}.json`;
+  ensureNoPriorAttempt(root, authorityStateOid, attemptPath, consumedRef);
+  const tombstone = createConsumptionTombstone(root, validated.authority, validated.binding, trustedNow);
+  const preservationRefs = preparePreservationRefs(root, plan.source, plan.work_leases);
+  const attempt = attemptRecord(validated.authority, validated.binding, trustedNow, quietWindowReceipt, tombstone, preservationRefs);
   validateCommittedRecord(root, validated.binding.reconciler_head, 'state-reconciliation-attempt.json', attempt, 'reconciliation attempt');
-  const attemptPath = `${ATTEMPT_ROOT}/${attempt.attempt_id}.json`;
-  ensureNoPriorAttempt(root, authorityStateOid, attemptPath);
   const attemptCommit = createCommit(root, authorityStateOid, { [attemptPath]: `${JSON.stringify(attempt, null, 2)}\n` }, `scheduler state reconciliation attempted ${attempt.attempt_id}`, trustedNow);
   const attemptPush = pushCas(root, remote, attemptCommit.oid, DEV_REF, authorityStateOid, pushRunner);
   if (attemptPush.outcome === 'AMBIGUOUS_UNCHANGED_ONCE') {
@@ -407,9 +450,11 @@ export function applyReconciliation(root, options) {
 }
 
 export function verifyReceipt(root, { receipt, receiptPath, remote = 'origin' }) {
-  exactKeys(receipt, ['schema', 'attempt_id', 'status', 'attempt_path', 'attempt_commit_oid', 'authority', 'source_state_oid', 'target_state_oid', 'observed_state_remote_oid', 'development_parent_oid', 'state_push', 'receipt_hash'], 'reconciliation receipt');
+  exactKeys(receipt, ['schema', 'attempt_id', 'status', 'attempt_path', 'attempt_commit_oid', 'authority', 'source_state_oid', 'target_state_oid', 'observed_state_remote_oid', 'development_parent_oid', 'state_push', 'consumption_tombstone', 'preservation_refs', 'receipt_hash'], 'reconciliation receipt');
   if (receipt.schema !== 'agentops/scheduler-state-reconciliation-receipt/v1' || receipt.status !== 'APPLIED') throw new Error('reconciliation receipt schema/status is invalid');
-  receiptPath ??= `${ATTEMPT_ROOT}/${receipt.attempt_id}.receipt.json`;
+  const canonicalReceiptPath = `${ATTEMPT_ROOT}/${receipt.attempt_id}.receipt.json`;
+  if (receiptPath !== undefined && receiptPath !== canonicalReceiptPath) throw new Error('receipt path is not the canonical path for its attempt id');
+  receiptPath = canonicalReceiptPath;
   if (receipt.development_parent_oid !== receipt.attempt_commit_oid || !['CONFIRMED', 'AMBIGUOUS_CONFIRMED_ONCE'].includes(receipt.state_push)) throw new Error('reconciliation receipt parent or state-push outcome is invalid');
   if (receipt.receipt_hash !== sha256({ ...receipt, receipt_hash: '' })) throw new Error('reconciliation receipt hash mismatch');
   if (remoteOid(root, remote, STATE_REF) !== receipt.target_state_oid) throw new Error('receipt target is not the fresh scheduler-state remote');
@@ -419,9 +464,9 @@ export function verifyReceipt(root, { receipt, receiptPath, remote = 'origin' })
   const parents = gitText(root, ['show', '-s', '--format=%P', dev]).split(/\s+/).filter(Boolean);
   if (stableStringify(parents) !== stableStringify([receipt.attempt_commit_oid])) throw new Error('receipt commit is not the exact child of the durable attempt commit');
   const attempt = jsonAt(root, receipt.attempt_commit_oid, receipt.attempt_path);
-  exactKeys(attempt, ['schema', 'attempt_id', 'status', 'authority', 'reconciler', 'source', 'target', 'quiet_window_receipt_hash', 'trusted_now', 'state_ref', 'development_ref', 'invariants'], 'reconciliation attempt');
+  exactKeys(attempt, ['schema', 'attempt_id', 'status', 'authority', 'reconciler', 'source', 'target', 'quiet_window_receipt', 'quiet_window_receipt_hash', 'trusted_now', 'state_ref', 'development_ref', 'consumption_tombstone', 'preservation_refs', 'invariants'], 'reconciliation attempt');
   const expectedAttemptId = sha256({ authority: attempt.authority, source: attempt.source, target: attempt.target, reconciler_head: attempt.reconciler.head });
-  if (attempt.schema !== 'agentops/scheduler-state-reconciliation-attempt/v1' || attempt.status !== 'ATTEMPTED' || attempt.attempt_id !== expectedAttemptId || attempt.attempt_id !== receipt.attempt_id || stableStringify(attempt.authority) !== stableStringify(receipt.authority) || attempt.target.state_oid !== receipt.target_state_oid || attempt.source.state_oid !== receipt.source_state_oid) throw new Error('receipt does not bind its exact durable attempt');
+  if (attempt.schema !== 'agentops/scheduler-state-reconciliation-attempt/v1' || attempt.status !== 'ATTEMPTED' || attempt.attempt_id !== expectedAttemptId || attempt.attempt_id !== receipt.attempt_id || stableStringify(attempt.authority) !== stableStringify(receipt.authority) || attempt.target.state_oid !== receipt.target_state_oid || attempt.source.state_oid !== receipt.source_state_oid || stableStringify(attempt.consumption_tombstone) !== stableStringify(receipt.consumption_tombstone) || stableStringify(attempt.preservation_refs) !== stableStringify(receipt.preservation_refs)) throw new Error('receipt does not bind its exact durable attempt');
   validateCommittedRecord(root, attempt.reconciler.head, 'state-reconciliation-attempt.json', attempt, 'reconciliation attempt');
   validateCommittedRecord(root, attempt.reconciler.head, 'state-reconciliation-receipt.json', receipt, 'reconciliation receipt');
   const attemptParents = gitText(root, ['show', '-s', '--format=%P', receipt.attempt_commit_oid]).split(/\s+/).filter(Boolean);
@@ -435,6 +480,17 @@ export function verifyReceipt(root, { receipt, receiptPath, remote = 'origin' })
   const authorityBinding = authorityEvent.decision?.scheduler_state_reconciliation;
   if (authorityEvent.decision?.action !== ACTION || authorityEvent.decision?.candidate_oid !== attempt.reconciler.head || attempt.reconciler.tree !== authorityBinding?.reconciler_tree || stableStringify(attempt.source) !== stableStringify(authorityBinding?.source) || stableStringify(attempt.target) !== stableStringify(authorityBinding?.target) || attempt.quiet_window_receipt_hash !== authorityBinding?.quiet_window_receipt_hash || attempt.state_ref !== authorityBinding?.target_ref || stableStringify(attempt.invariants) !== stableStringify({ dispatch_frozen: authorityBinding?.dispatch_frozen, no_refill: authorityBinding?.no_refill, no_assignment: authorityBinding?.no_assignment, no_dispatch: authorityBinding?.no_dispatch, no_external_mutation: authorityBinding?.no_external_mutation, push_mode: authorityBinding?.push_mode, abort_on_remote_change: authorityBinding?.abort_on_remote_change })) throw new Error('receipt attempt does not bind the full authority source, target, reconciler, and invariant payload');
   if (gitText(root, ['show', '-s', '--format=%T', attempt.reconciler.head]) !== attempt.reconciler.tree) throw new Error('receipt reconciler head/tree binding is invalid');
+  const revalidated = validateAuthority(root, { authorityEventPath: attempt.authority.event_path, authorityStateOid: attempt.authority.authority_state_oid, trustedNow: attempt.trusted_now, remote, quietWindowReceipt: attempt.quiet_window_receipt, requireFreshDev: false });
+  if (stableStringify(revalidated.authority) !== stableStringify(attempt.authority) || stableStringify(revalidated.binding) !== stableStringify(authorityBinding)) throw new Error('receipt authority packet does not revalidate exactly');
+  const tombstoneOid = runGit(root, ['show-ref', '--hash', '--verify', attempt.consumption_tombstone.ref], { allowFailure: true });
+  if (tombstoneOid.status !== 0 || tombstoneOid.stdout !== attempt.consumption_tombstone.oid) throw new Error('receipt local consumption tombstone is absent or substituted');
+  const tombstone = jsonAt(root, attempt.consumption_tombstone.oid, attempt.consumption_tombstone.path);
+  exactKeys(tombstone, ['schema', 'status', 'authority', 'source_state_oid', 'target_state_oid', 'reconciler_head', 'consumed_at'], 'reconciliation consumption tombstone');
+  if (tombstone.schema !== 'agentops/scheduler-state-reconciliation-consumption/v1' || tombstone.status !== 'CONSUMED_BEFORE_TRANSPORT' || attempt.consumption_tombstone.ref !== tombstoneRef(attempt.authority) || attempt.consumption_tombstone.path !== `${ATTEMPT_ROOT}/tombstones/${attempt.authority.event_hash}.json` || stableStringify(tombstone.authority) !== stableStringify(attempt.authority) || tombstone.source_state_oid !== attempt.source.state_oid || tombstone.target_state_oid !== attempt.target.state_oid || tombstone.reconciler_head !== attempt.reconciler.head || tombstone.consumed_at !== attempt.trusted_now) throw new Error('receipt local consumption tombstone does not bind the exact authority packet');
+  for (const preserved of attempt.preservation_refs) {
+    const observed = runGit(root, ['show-ref', '--hash', '--verify', preserved.ref], { allowFailure: true });
+    if (observed.status !== 0 || observed.stdout !== preserved.oid || runGit(root, ['cat-file', '-e', `${preserved.oid}^{commit}`], { allowFailure: true }).status !== 0) throw new Error(`receipt preservation ref ${preserved.ref} is absent or substituted`);
+  }
   const rebuilt = buildPlan(root, { binding: authorityBinding });
   if (rebuilt.target.state_oid !== receipt.target_state_oid || rebuilt.source.oid !== receipt.source_state_oid) throw new Error('receipt does not bind the deterministic authority source and target');
   const state = readState(root, receipt.target_state_oid);

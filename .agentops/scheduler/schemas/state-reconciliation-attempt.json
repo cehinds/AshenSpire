@@ -3,7 +3,7 @@
   "$id": "agentops/scheduler-state-reconciliation-attempt/v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "attempt_id", "status", "authority", "reconciler", "source", "target", "quiet_window_receipt_hash", "trusted_now", "state_ref", "development_ref", "invariants"],
+  "required": ["schema", "attempt_id", "status", "authority", "reconciler", "source", "target", "quiet_window_receipt", "quiet_window_receipt_hash", "trusted_now", "state_ref", "development_ref", "consumption_tombstone", "preservation_refs", "invariants"],
   "properties": {
     "schema": {"const": "agentops/scheduler-state-reconciliation-attempt/v1"},
     "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -18,8 +18,11 @@
     "target": {"type": "object", "additionalProperties": false, "required": ["state_oid", "state_tree", "snapshot_sha256", "journal_manifest_sha256", "event_count"], "properties": {
       "state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "state_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "journal_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "event_count": {"type": "integer", "minimum": 0}
     }},
+    "quiet_window_receipt": {"type": "object"},
     "quiet_window_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "trusted_now": {"type": "string", "format": "date-time"},
     "state_ref": {"const": "refs/heads/agentops/scheduler-state"}, "development_ref": {"const": "refs/heads/dev"},
+    "consumption_tombstone": {"type": "object", "additionalProperties": false, "required": ["ref", "oid", "path"], "properties": {"ref": {"type": "string", "pattern": "^refs/agentops/consumed/scheduler-state-reconciliation/[0-9a-f]{64}$"}, "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "path": {"type": "string", "pattern": "^\\.agentops/scheduler/state-reconciliation-attempts/tombstones/[0-9a-f]{64}\\.json$"}}},
+    "preservation_refs": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["issue_id", "kind", "ref", "oid"], "properties": {"issue_id": {"type": "string", "pattern": "^#[1-9][0-9]*$"}, "kind": {"enum": ["base", "candidate"]}, "ref": {"type": "string", "pattern": "^refs/agentops/quarantine/scheduler-state-reconciliation/[1-9][0-9]*/(base|candidate)$"}, "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}}},
     "invariants": {"type": "object", "additionalProperties": false, "required": ["dispatch_frozen", "no_refill", "no_assignment", "no_dispatch", "no_external_mutation", "push_mode", "abort_on_remote_change"], "properties": {
       "dispatch_frozen": {"const": true}, "no_refill": {"const": true}, "no_assignment": {"const": true}, "no_dispatch": {"const": true}, "no_external_mutation": {"const": true}, "push_mode": {"const": "non-force-forward-only-cas"}, "abort_on_remote_change": {"const": true}
     }}

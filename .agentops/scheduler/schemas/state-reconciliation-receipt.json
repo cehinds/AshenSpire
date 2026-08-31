@@ -3,7 +3,7 @@
   "$id": "agentops/scheduler-state-reconciliation-receipt/v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "attempt_id", "status", "attempt_path", "attempt_commit_oid", "authority", "source_state_oid", "target_state_oid", "observed_state_remote_oid", "development_parent_oid", "state_push", "receipt_hash"],
+  "required": ["schema", "attempt_id", "status", "attempt_path", "attempt_commit_oid", "authority", "source_state_oid", "target_state_oid", "observed_state_remote_oid", "development_parent_oid", "state_push", "consumption_tombstone", "preservation_refs", "receipt_hash"],
   "properties": {
     "schema": {"const": "agentops/scheduler-state-reconciliation-receipt/v1"}, "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "status": {"const": "APPLIED"},
     "attempt_path": {"type": "string", "pattern": "^\\.agentops/scheduler/state-reconciliation-attempts/[0-9a-f]{64}\\.json$"}, "attempt_commit_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
@@ -11,6 +11,9 @@
       "authority_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "event_path": {"type": "string", "pattern": "^\\.agentops/events/[^/]+/[^/]+\\.json$"}, "event_id": {"type": "string", "minLength": 1}, "event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
     }},
     "source_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "target_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "observed_state_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "development_parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-    "state_push": {"enum": ["CONFIRMED", "AMBIGUOUS_CONFIRMED_ONCE"]}, "receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    "state_push": {"enum": ["CONFIRMED", "AMBIGUOUS_CONFIRMED_ONCE"]},
+    "consumption_tombstone": {"type": "object", "additionalProperties": false, "required": ["ref", "oid", "path"], "properties": {"ref": {"type": "string", "pattern": "^refs/agentops/consumed/scheduler-state-reconciliation/[0-9a-f]{64}$"}, "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "path": {"type": "string", "pattern": "^\\.agentops/scheduler/state-reconciliation-attempts/tombstones/[0-9a-f]{64}\\.json$"}}},
+    "preservation_refs": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["issue_id", "kind", "ref", "oid"], "properties": {"issue_id": {"type": "string", "pattern": "^#[1-9][0-9]*$"}, "kind": {"enum": ["base", "candidate"]}, "ref": {"type": "string", "pattern": "^refs/agentops/quarantine/scheduler-state-reconciliation/[1-9][0-9]*/(base|candidate)$"}, "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}}},
+    "receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
   }
 }

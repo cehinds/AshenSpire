@@ -133,9 +133,25 @@ function setup() {
     check('apply first commits durable ATTEMPTED record then final receipt', result.attempt.status === 'ATTEMPTED' && result.receipt.status === 'APPLIED');
     const verified = verifyReceipt(box.root, { receipt: result.receipt, receiptPath: result.receipt_path });
     check('verify-receipt proves fresh dev and state refs', verified.ok && verified.state.oid === result.target.state_oid);
+    check('attempt and receipt persist the exact pre-transport tombstone', result.attempt.consumption_tombstone.oid === result.receipt.consumption_tombstone.oid && exec(box.root, ['show-ref', '--hash', '--verify', result.attempt.consumption_tombstone.ref]) === result.attempt.consumption_tombstone.oid);
+    check('active #256 base is held by an exact local quarantine ref before custody clear', result.attempt.preservation_refs.some((entry) => entry.issue_id === '#256' && entry.kind === 'base' && exec(box.root, ['show-ref', '--hash', '--verify', entry.ref]) === entry.oid));
+    throws('verify-receipt rejects a caller-selected noncanonical receipt path', () => verifyReceipt(box.root, { receipt: result.receipt, receiptPath: '.agentops/scheduler/state-reconciliation-attempts/other.receipt.json' }), 'canonical path');
     throws('exact authority replay is rejected after dev advanced', () => applyReconciliation(box.root, { authorityEventPath: box.eventPath, authorityStateOid: box.authorityOid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet }), 'stale');
     const tampered = { ...result.receipt, target_state_oid: SOURCE_OID };
     throws('receipt target substitution is rejected', () => verifyReceipt(box.root, { receipt: tampered, receiptPath: result.receipt_path }), 'hash mismatch');
+  } finally { box.cleanup(); }
+}
+
+// Even if both the attempt publication and the fallback consumed-marker
+// publication are ambiguous and inspection observes dev unchanged, the local
+// append-only tombstone was created first and permanently denies replay.
+{
+  const box = setup();
+  try {
+    const doubleAmbiguous = () => ({ status: 1, stdout: '', stderr: 'simulated repeated transport ambiguity before update' });
+    throws('double ambiguous attempt transport fails closed after local tombstone', () => applyReconciliation(box.root, { authorityEventPath: box.eventPath, authorityStateOid: box.authorityOid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet, pushRunner: doubleAmbiguous }), 'operator intervention required');
+    check('double ambiguity leaves remote refs unchanged', exec(box.remote, ['rev-parse', DEV_REF]) === box.authorityOid && exec(box.remote, ['rev-parse', STATE_REF]) === SOURCE_OID);
+    throws('double ambiguous authority cannot replay in the originating repository', () => applyReconciliation(box.root, { authorityEventPath: box.eventPath, authorityStateOid: box.authorityOid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet }), 'consumption tombstone');
   } finally { box.cleanup(); }
 }
 
