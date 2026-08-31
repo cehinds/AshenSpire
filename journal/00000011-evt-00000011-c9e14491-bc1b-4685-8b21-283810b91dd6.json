@@ -1,0 +1,25 @@
+{
+  "event_id": "evt-00000011-c9e14491-bc1b-4685-8b21-283810b91dd6",
+  "idempotency_key": "QA_RESULT:427:2:f02d9d407e0f881320e11bb176215558684be011",
+  "sequence": 11,
+  "previous_snapshot_hash": "a3eaf2407894cd0348b2d2c141cff130edad6be629a2662e7cfa94cbaf7e18d4",
+  "issue_id": "427",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "qa-lease:427:2",
+  "lease_epoch": 2,
+  "event_type": "QA_RESULT",
+  "exact_object": {
+    "oid": "f02d9d407e0f881320e11bb176215558684be011"
+  },
+  "payload": {
+    "candidate_commit": "f02d9d407e0f881320e11bb176215558684be011",
+    "result": "PASS",
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/pull/471#issuecomment-5479539481",
+      "tree:2488393600030594fe2ca03e55cb789e4136d49c",
+      "sha256:524A68EAC8873061D655448345024A0FD7348814372C5B56418E532F3CEFE2D1"
+    ]
+  },
+  "created_at": "2026-08-31T14:08:16.311Z"
+}
