@@ -1,0 +1,28 @@
+{
+  "event_id": "evt-00000002-f7b0be8e-6080-476e-8a64-a89023eb657f",
+  "idempotency_key": "INTAKE_RECORDED:426:0:2026-08-31T13:52:00.038Z",
+  "sequence": 2,
+  "previous_snapshot_hash": "096f6c5620b50c862bdf32c452b23d336cdb4ef7a7d234aee3bd3a312a7e3ab1",
+  "issue_id": "426",
+  "actor": "intake",
+  "machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-426",
+    "claimed_paths": [
+      "docs/governance/continuity.json"
+    ],
+    "claimed_resources": [],
+    "acceptance_commands": [],
+    "evidence_pointers": [],
+    "next_action": "Re-pin bytes/sha256 and refresh branch snapshot; lease-held path",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T13:52:00.038Z"
+}

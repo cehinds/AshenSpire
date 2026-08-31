@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 1,
-  "last_sequence": 1,
+  "revision": 2,
+  "last_sequence": 2,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -40,8 +40,41 @@
       "authority_ceiling": "dev-delivery",
       "updated_event": "evt-00000001-4be75473-09aa-41a9-a044-ce37127e07cf",
       "updated_at": "2026-08-31T13:51:59.846Z"
+    },
+    "426": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "426",
+      "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
+      "priority": "P1",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-426",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        "docs/governance/continuity.json"
+      ],
+      "claimed_resources": [],
+      "acceptance_commands": [],
+      "evidence_pointers": [],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Re-pin bytes/sha256 and refresh branch snapshot; lease-held path",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000002-f7b0be8e-6080-476e-8a64-a89023eb657f",
+      "updated_at": "2026-08-31T13:52:00.038Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "096f6c5620b50c862bdf32c452b23d336cdb4ef7a7d234aee3bd3a312a7e3ab1"
+  "snapshot_hash": "a3db3495b39e81a6b847954d5067c5af4d1318272748319ec8999b3ebfd05390"
 }
