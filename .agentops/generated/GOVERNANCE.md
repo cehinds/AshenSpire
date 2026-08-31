@@ -681,6 +681,7 @@ The owner-command path accepts only enumerated actions from an authenticated act
 | revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
 | request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
 | authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
+| authorize-scheduler-migration | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid`, `scheduler_migration` | one non-force compare-and-swap migration of the exact released scheduler state into the exact reviewed v2 implementation while dispatch remains frozen |
 | authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
 | record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
 
@@ -751,13 +752,14 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 
 - `enumerated_only` — A command whose action is not in this allowlist is rejected.
 - `authenticated_actor` — The command actor must map to a role in the action's authenticator_roles.
-- `owner_exclusive` — authorize-release and record-owner-override authenticate the owner role only.
+- `owner_exclusive` — authorize-scheduler-migration, authorize-release and record-owner-override authenticate the owner role only.
 - `compare_and_swap` — When requires_cas is true, expected_current_hash must equal the live sealed hash of the target; a mismatch is a stale command and fails safely.
 - `no_arbitrary_input` — The request schema forbids additional fields; there is no shell or free-form command field.
 - `dry_run_first` — The processor records a dry-run summary before any mutation; --apply performs the mutation only after the same validation passes.
 - `declared_lifecycle_target` — An action may declare lifecycle_target. Applying it moves the target capsule to that state only if transitions.json declares that exact transition from the capsule's current state and permits the authenticating role (the owner role is permitted on protected transitions). An undeclared or unpermitted transition is rejected and nothing is written.
 - `blocker_resolution` — An action may declare resolves_blocker. Applying it clears the target capsule's blocker, because the decision the blocker was waiting on has been recorded. A deferral or a routing-only action never clears one.
 - `append_only_apply` — Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket.
+- `scheduler_migration_binding` — authorize-scheduler-migration is valid for one use before its expiry only. Its structured scheduler_migration object binds the exact reviewed code head and tree; exact released source state OID, tree, snapshot hash, journal manifest and event count; canonical anchor; preserved unrelated local tip; frozen dispatch; state versions; target ref; expected remote OID; ordinary non-force forward-only compare-and-swap; and abort-on-remote-change. Free-form reason text and record-owner-override cannot substitute for any field.
 
 **`promotion-gates`**
 
