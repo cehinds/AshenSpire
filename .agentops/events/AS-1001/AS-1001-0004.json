@@ -1,0 +1,19 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-1001-0004",
+  "ticket": "AS-1001",
+  "seq": 4,
+  "parent_event": "AS-1001-0003",
+  "kind": "owner-decision",
+  "actor": "owner",
+  "at": "2026-08-31T13:24:24.079Z",
+  "summary": "Owner-command 'record-owner-override' by owner recorded: Temporary one-time scheduler bootstrap OWNER_OVERRIDE; epoch=1; expires=2026-08-31T14:23:33.9121391Z; action=provision initial provider-neutral it-manager-iii seat plus canonical #460 claim and lease only; source_ref=codex/issue-460-scheduler-repair-2; source_oid=e2f14171c7f172a8773d3e02d13316b8cb502e46; target_ref=codex/issue-460-scheduler-bootstrap; expected_old_ref_oid=0000000000000000000000000000000000000000; base_ref=origin/dev; base_oid=e990a765f5d48828b394993abb955f43da05f060; tracked_paths=.agentops/tools/pipeline-seat-bootstrap.mjs,.agentops/tools/pipeline-seat-bootstrap.test.mjs; runtime_resource=<git-common-dir>/agentops-pipeline/runtime/**; legacy_overlap=lease-AS-1001-maker; live watcher create-seat/create-claim prohibition remains unchanged; override terminates when the sealed bootstrap receipt is consumed.",
+  "decision": {
+    "action": "record-owner-override",
+    "authenticated_role": "owner",
+    "authority_path": ".github/workflows/owner-command.yml:owner-command/v1",
+    "target": "AS-1001",
+    "expected_current_hash": "sha256:5f90465cc35dc8494e9a5e169b24a7f4c07097a6cfbf6ef0b5e65bdb0f1c2b4b",
+    "candidate_oid": null
+  }
+}

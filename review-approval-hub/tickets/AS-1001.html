@@ -13,18 +13,18 @@
 <dt>State</dt><dd>in-progress</dd>
 <dt>Objective</dt><dd>Seed and validate the AgentOps runtime capsule / lease / event model and the opsctl wake compiler.</dd>
 <dt>Done when</dt><dd>Runtime schemas, one sealed work capsule, its writer lease, and an append-only event chain validate green, and opsctl wake emits a bounded capsule under the startup token limit.</dd>
-<dt>Next action</dt><dd>Run node .agentops/tools/opsctl.mjs verify and opsctl wake --actor maker --work AS-1001, then open the draft PR.</dd>
+<dt>Next action</dt><dd>Preserve the historical seed capsule under its narrowed replacement lease; any further AgentOps tooling change requires a separately issued ticket lease.</dd>
 <dt>Branch</dt><dd><code>claude/ashenspire-agentops-stage3-capsules</code></dd>
-<dt>Base</dt><dd><code>985664c2439c</code></dd>
-<dt>Revision</dt><dd>1 · seal <code>sha256:5f90465cc35dc849…</code></dd>
-<dt>Succeeds</dt><dd><span class="none">nothing (genesis)</span></dd>
+<dt>Base</dt><dd><code>4779b32a7596</code></dd>
+<dt>Revision</dt><dd>3 · seal <code>sha256:7694ebc0aacfbfae…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:a2da8b7d70be6ee2…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
 <dt>May</dt><dd><span class="pill">implement-locally-on-exclusive-paths</span> <span class="pill">run-tests-and-builds</span> <span class="pill">commit-on-isolated-branch</span></dd>
 <dt>Must not</dt><dd><span class="pill">push-pr-merge-deploy-or-release</span> <span class="pill">claim-overlapping-active-paths</span></dd>
 <dt>Expires</dt><dd>2026-09-30T23:59:59Z</dd>
-<dt>Writer lease</dt><dd><code>lease-AS-1001-maker</code> issued by it-manager-iii</dd>
-<dt>Paths</dt><dd><code>.agentops/schemas/**</code> <code>.agentops/tools/**</code> <code>.agentops/work/**</code> <code>.agentops/events/**</code></dd>
+<dt>Writer lease</dt><dd><code>lease-AS-1001-maker-r2</code> issued by it-manager-iii</dd>
+<dt>Paths</dt><dd><code>.agentops/work/AS-1001/**</code> <code>.agentops/events/AS-1001/**</code></dd>
 </dl></section>
 <section><h2>Status</h2>
 <p class="ok">Due: 'in-progress' is ready to move to local — waking maker.</p>
@@ -34,6 +34,9 @@
 <li><code>AS-1001-0001</code> · genesis · help-desk · 2026-08-28T00:00:00Z<br>Ticket AS-1001 opened: seed and validate the AgentOps runtime capsule / lease / event model.</li>
 <li><code>AS-1001-0002</code> · lease-issued · it-manager-iii · 2026-08-28T00:05:00Z<br>Writer lease lease-AS-1001-maker issued to maker over the runtime artifact paths.</li>
 <li><code>AS-1001-0003</code> · state-change · maker · 2026-08-28T00:10:00Z<br>Lifecycle assigned -&gt; in-progress; runtime schemas and opsctl wake under implementation.</li>
+<li><code>AS-1001-0004</code> · owner-decision · owner · 2026-08-31T13:24:24.079Z<br>Owner-command 'record-owner-override' by owner recorded: Temporary one-time scheduler bootstrap OWNER_OVERRIDE; epoch=1; expires=2026-08-31T14:23:33.9121391Z; action=provision initial provider-neutral it-manager-iii seat plus canonical #460 claim and lease only; source_ref=codex/issue-460-scheduler-repair-2; source_oid=e2f14171c7f172a8773d3e02d13316b8cb502e46; target_ref=codex/issue-460-scheduler-bootstrap; expected_old_ref_oid=0000000000000000000000000000000000000000; base_ref=origin/dev; base_oid=e990a765f5d48828b394993abb955f43da05f060; tracked_paths=.agentops/tools/pipeline-seat-bootstrap.mjs,.agentops/tools/pipeline-seat-bootstrap.test.mjs; runtime_resource=&lt;git-common-dir&gt;/agentops-pipeline/runtime/**; legacy_overlap=lease-AS-1001-maker; live watcher create-seat/create-claim prohibition remains unchanged; override terminates when the sealed bootstrap receipt is consumed.</li>
+<li><code>AS-1001-0005</code> · lease-revoked · it-manager-iii · 2026-08-31T13:24:24.079Z<br>Forward transition under OWNER_OVERRIDE AS-1001-0004: revoked legacy lease lease-AS-1001-maker at expected capsule hash sha256:a2da8b7d70be6ee2284292dd92605caafc5d643997852427fc056eaf591f5d3a; no history or evidence was deleted.</li>
+<li><code>AS-1001-0006</code> · lease-issued · it-manager-iii · 2026-08-31T13:24:24.079Z<br>Issued replacement lease lease-AS-1001-maker-r2 at base 4779b32a759677b971a66411861515c1a569b9f9, narrowed to .agentops/work/AS-1001/** and .agentops/events/AS-1001/**; the legacy .agentops/tools/** overlap is released.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>

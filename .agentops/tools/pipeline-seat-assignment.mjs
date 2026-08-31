@@ -24,7 +24,9 @@ function inside(root, candidate) {
 }
 
 function samePath(left, right) {
-  const a = path.resolve(left), b = path.resolve(right);
+  const resolvedLeft = path.resolve(left), resolvedRight = path.resolve(right);
+  const a = fs.existsSync(resolvedLeft) ? fs.realpathSync.native(resolvedLeft) : resolvedLeft;
+  const b = fs.existsSync(resolvedRight) ? fs.realpathSync.native(resolvedRight) : resolvedRight;
   return process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
 }
 

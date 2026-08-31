@@ -1,0 +1,21 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-1001-maker-r2",
+  "actor": "maker",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-1001",
+  "ref": "claude/ashenspire-agentops-stage3-capsules",
+  "path_globs": [
+    ".agentops/work/AS-1001/**",
+    ".agentops/events/AS-1001/**"
+  ],
+  "base_oid": "4779b32a759677b971a66411861515c1a569b9f9",
+  "actions": [
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch"
+  ],
+  "issued": "2026-08-31T13:24:24Z",
+  "expiry": "2026-09-30T23:59:59Z",
+  "revoked": false
+}

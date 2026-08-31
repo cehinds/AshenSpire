@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-1001-0006",
+  "ticket": "AS-1001",
+  "seq": 6,
+  "parent_event": "AS-1001-0005",
+  "kind": "lease-issued",
+  "actor": "it-manager-iii",
+  "at": "2026-08-31T13:24:24.079Z",
+  "summary": "Issued replacement lease lease-AS-1001-maker-r2 at base 4779b32a759677b971a66411861515c1a569b9f9, narrowed to .agentops/work/AS-1001/** and .agentops/events/AS-1001/**; the legacy .agentops/tools/** overlap is released."
+}
