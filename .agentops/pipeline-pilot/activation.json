@@ -1,7 +1,7 @@
 {
   "schema": "agentops/pipeline-activation/v1",
-  "enabled": true,
-  "mode": "LIVE_ASSIGNMENT",
+  "enabled": false,
+  "mode": "STOOD_DOWN_FOR_SCHEDULER_CUTOVER",
   "authoritative_ref": "dev",
   "tracking_issue": 269,
   "idle_alarm_seconds": 300,
