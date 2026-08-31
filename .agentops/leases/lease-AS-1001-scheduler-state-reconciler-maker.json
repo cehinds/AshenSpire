@@ -1,0 +1,24 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-1001-scheduler-state-reconciler-maker",
+  "actor": "maker",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-1001",
+  "ref": "recovery/as-1001-scheduler-state-reconciler",
+  "path_globs": [
+    ".agentops/tools/scheduler-state-reconciler.mjs",
+    ".agentops/tools/scheduler-state-reconciler.test.mjs",
+    ".agentops/scheduler/schemas/state-reconciliation-attempt.json",
+    ".agentops/scheduler/schemas/state-reconciliation-receipt.json",
+    ".agentops/scheduler/state-reconciliation-attempts/**"
+  ],
+  "base_oid": "c656ac32afb48ae4620f386c34f88691856542f0",
+  "actions": [
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch"
+  ],
+  "issued": "2026-08-31T18:20:33Z",
+  "expiry": "2026-09-01T18:20:33Z",
+  "revoked": false
+}
