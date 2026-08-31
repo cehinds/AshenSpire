@@ -117,7 +117,7 @@
 // *rare* and *yours*. Her palette, and Sunna's floor the moment it costs the
 // read.
 
-import { esc, attachTooltip, showTooltipFor, hideTooltip } from '../components/tooltip.js';
+import { esc, attachTooltip, ensureTooltip, showTooltipFor, hideTooltip } from '../components/tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { pieceReveal } from '../../model/unlocks.js';
 import { ownership } from '../../model/loadout.js';
@@ -168,6 +168,8 @@ function cell(piece, { state, hint, gate }, modFields) {
   // eye does — the alternative is an accessible label that leaks every name the
   // picture is deliberately hiding.
   el.setAttribute('aria-label', named ? piece.name : `Unknown ${piece.kind}`);
+  ensureTooltip();
+  el.setAttribute('aria-describedby', 'tooltip');
   el.innerHTML =
     `<span class="cp-art"><img src="${esc(assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`))}" alt=""></span>`
     + `<span class="cp-name">${named ? esc(piece.name) : ''}</span>`;
