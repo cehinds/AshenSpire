@@ -5,9 +5,11 @@
 // launches it after the result text.
 
 import { executeRunEffects } from '../../engine/actions.js';
+import { eventChoicesWithHistory } from '../../content/events.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { isBindingChoice } from '../../model/consequence.js';
+import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
 import { beatArmer } from '../components/holdconfirm.js';
 
 export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
@@ -46,7 +48,8 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     </div>`;
 
   const box = app.querySelector('#choices');
-  def.choices.forEach((choice, i) => {
+  const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);
+  visibleChoices.forEach(({ choice, index: i }, visibleIndex) => {
     const btn = document.createElement('button');
     // `ev-choice`, not a bare `.subtle`: these three bars are the only control
     // on this screen and the floor belongs to THEM, not to every subtle button
@@ -59,7 +62,7 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     // that will. The size now lives in the stylesheet in rem, where the one
     // question it answers is "how big is a letter".
     btn.dataset.choice = String(i);
-    btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
+    btn.style.animationDelay = `${visibleIndex * 70}ms`; // staggered entrance
     btn.textContent = choice.label;
     // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
     // player can pay today. Vira's finding, and it is my own sentence back at
@@ -113,6 +116,7 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     } else {
       const commit = () => {
         executeRunEffects({ run, registries, rng }, choice.effects);
+        recordEventChoice(run, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
       };
       // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
