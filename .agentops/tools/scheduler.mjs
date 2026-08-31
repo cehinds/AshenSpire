@@ -82,6 +82,7 @@ export function validateEvent(event) {
   if (event.lease_epoch !== null && (!Number.isInteger(event.lease_epoch) || event.lease_epoch < 1)) throw new Error('lease_epoch must be positive integer or null');
   if (!event.exact_object || typeof event.exact_object !== 'object' || Array.isArray(event.exact_object)) throw new Error('exact_object must be an object');
   if (!event.payload || typeof event.payload !== 'object' || Array.isArray(event.payload)) throw new Error('payload must be an object');
+  if (event.event_type === 'INTAKE_RECORDED') requiredString(event.payload.title, 'intake title');
   if (Number.isNaN(Date.parse(event.created_at))) throw new Error('created_at must be an ISO instant');
   assertPortable(event);
   return true;
@@ -96,7 +97,7 @@ export function assertPortable(value, keyPath = '$') {
     }
     return;
   }
-  if (typeof value === 'string' && (/^[A-Za-z]:[\\/]/.test(value) || value.startsWith('\\\\') || value.startsWith('/Users/') || value.startsWith('/home/'))) {
+  if (typeof value === 'string' && (/^[A-Za-z]:[\\/]/.test(value) || value.startsWith('\\\\') || value.startsWith('/'))) {
     throw new Error(`absolute machine path rejected at ${keyPath}`);
   }
 }
@@ -148,6 +149,7 @@ function applyEvent(snapshot, event) {
     return;
   }
   if (!item) throw new Error(`unknown issue ${event.issue_id}`);
+  if (TERMINAL_STATES.has(item.state)) throw new Error(`cannot apply ${event.event_type} to terminal ${item.state}`);
   const staleLease = event.lease_epoch !== null && item.lease_epoch !== null && event.lease_epoch < item.lease_epoch;
   const leaseBound = new Set(['WORK_ENTERED', 'CANDIDATE_READY', 'QA_RESULT', 'BLOCKED', 'RESOURCE_RELEASED', 'LEASE_EXPIRED', 'DRIFT_DETECTED']);
   if (staleLease && leaseBound.has(event.event_type) && event.event_type !== 'CANDIDATE_READY') throw new Error(`stale lease epoch ${event.lease_epoch} for ${event.issue_id}`);
@@ -484,10 +486,11 @@ export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unres
   const checks = pr.statusCheckRollup ?? [];
   const checksPassed = checks.length > 0 && checks.every((check) => ['SUCCESS', 'SKIPPED', 'NEUTRAL'].includes(check.conclusion ?? check.state));
   const independentReview = (pr.reviews ?? []).some((review) => review.state === 'APPROVED' && review.author?.login && review.author.login !== pr.author?.login && review.commit?.oid === item.candidate_commit);
+  const makerLeaseRecorded = (item.lease_history ?? []).some((lease) => lease.assignment_kind === 'implementation' && lease.actor === item.maker_actor);
   const gates = {
     current_base: currentBaseIsAncestor,
     head_unchanged: pr.headRefOid === item.candidate_commit,
-    one_writer: Boolean(item.lease_id && item.assigned_actor && item.claimed_paths.length + item.claimed_resources.length > 0),
+    one_writer: Boolean(makerLeaseRecorded && item.claimed_paths.length + item.claimed_resources.length > 0),
     checks_passed: checksPassed,
     independent_review: independentReview,
     threads_resolved: unresolvedThreads === 0,
@@ -601,7 +604,16 @@ export function persistPortableState(root, state, { push = false, expectedOid = 
   const newOid = writePortableCommit(root, state, expectedOid, message);
   const update = ['update-ref', 'refs/heads/agentops/scheduler-state', newOid]; if (expectedOid) update.push(expectedOid);
   runGit(root, update);
-  if (push) runGit(root, ['push', 'origin', `${newOid}:refs/heads/agentops/scheduler-state`]);
+  if (push) {
+    try { runGit(root, ['push', 'origin', `${newOid}:refs/heads/agentops/scheduler-state`]); }
+    catch (error) {
+      // The local CAS already committed. Callers must retain its dispatched wake
+      // rather than rolling it back and stranding this locally durable lease.
+      error.portableStatePersisted = true;
+      error.portableStateOid = newOid;
+      throw error;
+    }
+  }
   return newOid;
 }
 
@@ -683,19 +695,79 @@ export function watcherPlan(snapshot, config, now = new Date().toISOString(), cu
   return { expirations, idle_alarm: idleAlarm, current_base_commit: currentBaseCommit };
 }
 
-export function dispatchWakes(root, snapshot, assignments, config) {
+function restoreWakeFiles(backups) {
+  for (const [file, prior] of [...backups.entries()].reverse()) {
+    if (prior === null) fs.rmSync(file, { force: true });
+    else fs.writeFileSync(file, prior);
+  }
+}
+
+export function beginWakeDispatch(root, snapshot, assignments, config) {
   const dispatchRoot = path.join(localRuntimeDir(root), 'dispatch');
   fs.mkdirSync(dispatchRoot, { recursive: true });
-  const dispatched = [];
-  for (const assignment of assignments) {
+  // Compile the complete batch before touching any live wake. One malformed
+  // capsule must leave every seat available for the next scheduler cycle.
+  const prepared = assignments.map((assignment) => {
     const item = snapshot.work_items[assignment.issue_id];
     if (!item || item.assigned_actor !== assignment.actor) throw new Error(`dispatch assignment drift for ${assignment.issue_id}`);
     const compiled = compileWake(item, config);
     const file = path.join(dispatchRoot, `${assignment.actor.replaceAll(':', '_')}.json`);
-    fs.writeFileSync(file, `${JSON.stringify(compiled, null, 2)}\n`, { flag: 'w' });
-    dispatched.push({ issue_id: item.issue_id, actor: assignment.actor, wake_file: path.relative(root, file).replaceAll('\\', '/'), estimated_tokens: compiled.estimated_tokens });
+    return {
+      file,
+      contents: `${JSON.stringify(compiled, null, 2)}\n`,
+      receipt: { issue_id: item.issue_id, actor: assignment.actor, wake_file: path.relative(root, file).replaceAll('\\', '/'), estimated_tokens: compiled.estimated_tokens }
+    };
+  });
+  const backups = new Map();
+  try {
+    for (const entry of prepared) {
+      backups.set(entry.file, fs.existsSync(entry.file) ? fs.readFileSync(entry.file) : null);
+      fs.writeFileSync(entry.file, entry.contents, { flag: 'w' });
+    }
+  } catch (error) {
+    try { restoreWakeFiles(backups); }
+    catch (rollbackError) { error.message += `; wake rollback failed: ${rollbackError.message}`; }
+    throw error;
   }
-  return dispatched;
+  let open = true;
+  return {
+    dispatched: prepared.map((entry) => entry.receipt),
+    commit() { open = false; },
+    rollback() { if (open) { restoreWakeFiles(backups); open = false; } }
+  };
+}
+
+export function dispatchWakes(root, snapshot, assignments, config) {
+  const transaction = beginWakeDispatch(root, snapshot, assignments, config);
+  transaction.commit();
+  return transaction.dispatched;
+}
+
+export function commitAssignmentsAfterWakeDispatch(state, assignments, machineId, createdAt, { dispatch, persist }) {
+  if (assignments.length === 0) return { state, oid: state.oid, dispatched: [] };
+  const assignedState = applyAssignments(state, assignments, machineId, createdAt);
+  // Dispatch is deliberately first. A compilation or filesystem failure never
+  // makes a lease durable, so the seat remains eligible for immediate refill.
+  const transaction = dispatch(assignedState.snapshot, assignments);
+  try {
+    const oid = persist(assignedState);
+    transaction.commit?.();
+    return { state: { ...assignedState, oid }, oid, dispatched: transaction.dispatched ?? [] };
+  } catch (error) {
+    // If the local state CAS already landed and only its remote push failed,
+    // the assignment is durable and must keep its wake. Otherwise restore the
+    // exact pre-dispatch files so a later cycle can retry cleanly.
+    if (error.portableStatePersisted !== true) transaction.rollback?.();
+    else transaction.commit?.();
+    throw error;
+  }
+}
+
+function persistRefillAssignments(root, state, plan, machineId, createdAt, config, { push = false, message = 'scheduler refill assignments' } = {}) {
+  return commitAssignmentsAfterWakeDispatch(state, plan.assignments, machineId, createdAt, {
+    dispatch: (snapshot, assignments) => beginWakeDispatch(root, snapshot, assignments, config),
+    persist: (assignedState) => persistPortableState(root, assignedState, { push, message })
+  });
 }
 
 export function simulate(config = readConfig()) {
@@ -832,14 +904,19 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     for (const expiration of preliminary.expirations) {
       state = appendEvents(state, [{ ...expiration, machine_id: machine.machine_id, event_type: 'LEASE_EXPIRED', exact_object: {}, payload: {}, created_at: now, idempotency_key: `watch-expire:${expiration.issue_id}:${expiration.lease_epoch}` }]);
     }
+    const coreMaterial = reconciled || preliminary.expirations.length > 0;
+    let oid = state.oid;
+    if (coreMaterial) {
+      oid = persistPortableState(root, state, { push: args.push === true, message: 'scheduler watcher reconcile/expire' });
+      state.oid = oid;
+    }
     const needsBase = Object.values(state.snapshot.work_items).some((item) => ['READY', 'REPAIR_REQUIRED'].includes(item.state)) && config.workers.some((worker) => worker.capabilities.includes('implementation'));
     const baseCommit = needsBase ? currentDevelopmentBase(root, config) : null;
     const plan = planAssignments(state.snapshot, config, now, baseCommit);
-    state = applyAssignments(state, plan.assignments, machine.machine_id, now);
-    const material = reconciled || preliminary.expirations.length > 0 || plan.assignments.length > 0;
-    let oid = state.oid;
-    if (material) oid = persistPortableState(root, state, { push: args.push === true, message: 'scheduler watcher reconcile/expire/refill' });
-    const dispatched = dispatchWakes(root, state.snapshot, plan.assignments, config);
+    const refill = persistRefillAssignments(root, state, plan, machine.machine_id, now, config, { push: args.push === true, message: 'scheduler watcher refill' });
+    state = refill.state; oid = refill.oid;
+    const dispatched = refill.dispatched;
+    const material = coreMaterial || plan.assignments.length > 0;
     const after = watcherPlan(state.snapshot, config, now, baseCommit);
     if (!material && !after.idle_alarm) return 0;
     emit(command, { state_ref_oid: oid, reconciled, expired: preliminary.expirations, assignments: plan.assignments, dispatched, idle_alarm: after.idle_alarm, refill_target_seconds: config.refill_latency_target_seconds, idle_alarm_seconds: config.idle_alarm_seconds }, material ? 'WATCH: reconciled state, expired stale leases, and refilled available seats.' : 'WATCH IDLE ALARM: queued work has exceeded the configured idle limit.'); return 0;
@@ -865,30 +942,38 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
       { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
       { event_type: 'COMPLETED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid }, payload: {}, created_at: createdAt, idempotency_key: `completed:${item.issue_id}:${result.merged.mergeCommit.oid}` }
     ]);
+    let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}` });
+    state.oid = oid;
     const baseCommit = currentDevelopmentBase(root, config);
     const plan = planAssignments(state.snapshot, config, createdAt, baseCommit);
-    state = applyAssignments(state, plan.assignments, machine.machine_id, createdAt);
-    const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}` });
-    const dispatched = dispatchWakes(root, state.snapshot, plan.assignments, config);
+    const refill = persistRefillAssignments(root, state, plan, machine.machine_id, createdAt, config, { push: args.push === true, message: `scheduler post-merge refill ${item.issue_id}` });
+    state = refill.state; oid = refill.oid;
+    const dispatched = refill.dispatched;
     emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
   }
   const input = transitionInput(command, args, state, machine); state = appendEvents(state, [input]);
-  const triggers = new Set(['candidate', 'qa', 'block', 'release', 'expire', 'complete', 'merged-dev']);
-  const baseCommit = triggers.has(command) ? currentDevelopmentBase(root, config) : null;
-  const plan = triggers.has(command) ? planAssignments(state.snapshot, config, input.created_at, baseCommit) : { assignments: [], no_safe_assignment: false };
-  state = applyAssignments(state, plan.assignments, machine.machine_id, input.created_at);
   let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}` });
   state.oid = oid;
+  const triggers = new Set(['candidate', 'qa', 'block', 'release', 'expire', 'complete', 'merged-dev']);
   let delivery = null;
   let item = state.snapshot.work_items[input.issue_id];
   if (command === 'qa' && args.result === 'PASS' && args.no_deliver !== true && args.no_deliver !== 'true' && config.authority.non_force_push_codex_branch && config.authority.open_issue_closing_pr_to_dev) {
     delivery = deliverCandidate(root, item);
     state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivery.number, oid: item.candidate_commit }, payload: { pr_url: delivery.url }, created_at: input.created_at, idempotency_key: `pr-open:${delivery.number}:${item.candidate_commit}` }]);
     oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler PR_OPENED ${item.issue_id}` });
+    state.oid = oid;
     item = state.snapshot.work_items[input.issue_id];
   }
+  const needsBase = triggers.has(command)
+    && Object.values(state.snapshot.work_items).some((workItem) => ['READY', 'REPAIR_REQUIRED'].includes(workItem.state))
+    && config.workers.some((worker) => worker.capabilities.includes('implementation'));
+  const baseCommit = needsBase ? currentDevelopmentBase(root, config) : null;
+  const plan = triggers.has(command) ? planAssignments(state.snapshot, config, input.created_at, baseCommit) : { assignments: [], no_safe_assignment: false };
+  const refill = persistRefillAssignments(root, state, plan, machine.machine_id, input.created_at, config, { push: args.push === true, message: `scheduler refill after ${input.event_type} ${input.issue_id}` });
+  state = refill.state; oid = refill.oid;
+  item = state.snapshot.work_items[input.issue_id];
   const wake = item?.state === 'CLAIMED' ? compileWake(item, config) : null;
-  const dispatched = dispatchWakes(root, state.snapshot, plan.assignments, config);
+  const dispatched = refill.dispatched;
   emit(command, { state_ref_oid: oid, snapshot_hash: state.snapshot.snapshot_hash, issue: item, refill_assignments: plan.assignments, no_safe_assignment: plan.no_safe_assignment, wake, dispatched, delivery }, `${input.event_type} accepted for ${input.issue_id}; refill assignments=${plan.assignments.length}${delivery ? `; PR=${delivery.url}` : ''}.`); return 0;
 }
 

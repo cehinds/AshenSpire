@@ -5,8 +5,8 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  appendEvents, applyAssignments, assertPortable, claimsConflict, compareAndSwap, compileWake,
-  emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, pathsOverlap, planAssignments,
+  appendEvents, applyAssignments, assertPortable, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
+  emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, mergeGateResult, pathsOverlap, planAssignments,
   protectedTransitionAllowed, readConfig, reduceEvents, resolveCanonicalIssue,
   simulate, snapshotsMatch, stableStringify, validateEvent, validateSchedulerDocument, watcherPlan
 } from './scheduler.mjs';
@@ -195,6 +195,7 @@ test('22 rejection of unauthorized protected promotion', () => {
 test('23 secret and machine-path rejection', () => {
   assert.throws(() => assertPortable({ access_token: 'x' }), /secret-like/);
   assert.throws(() => assertPortable({ evidence: 'C:\\private\\file' }), /absolute machine path/);
+  assert.throws(() => assertPortable({ evidence: '/workspace/private/file' }), /absolute machine path/);
 });
 
 test('24 clean-clone bounded wake reconstruction', () => {
@@ -275,7 +276,7 @@ test('late expired-epoch candidate is preserved but not current', () => {
 });
 
 test('declared event schema rejects additional properties', () => {
-  const event = makeEvent(emptySnapshot(), { event_type: 'INTAKE_RECORDED', issue_id: 'I-SCHEMA', actor: 'intake', exact_object: {}, payload: {}, created_at: '2026-08-30T00:00:00Z' });
+  const event = makeEvent(emptySnapshot(), { event_type: 'INTAKE_RECORDED', issue_id: 'I-SCHEMA', actor: 'intake', exact_object: {}, payload: { title: 'Schema test' }, created_at: '2026-08-30T00:00:00Z' });
   assert.throws(() => validateEvent({ ...event, undeclared: true }), /additional property/);
 });
 
@@ -305,6 +306,56 @@ test('watcher plans expiry and raises configured idle alarm', () => {
 test('dev merge command pins the reviewed exact head', () => {
   const oid = 'e'.repeat(40); const args = mergeCommandArgs(461, oid);
   assert.deepEqual(args.slice(-2), ['--match-head-commit', oid]);
+});
+
+test('dev merge one-writer gate uses preserved maker lease after QA releases seats', () => {
+  let state = intake(fresh(), '461'); state = claim(state, '461'); state = entered(state, '461'); state = candidate(state, '461'); state = qa(state, '461');
+  state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: '461', actor: 'scheduler', machine_id: 'machine-a', lease_id: null, lease_epoch: state.snapshot.work_items['461'].lease_epoch, exact_object: { pr_number: 461 }, payload: { pr_url: 'https://github.com/cehinds/AshenSpire/pull/461' }, idempotency_key: 'merge-gate:pr', created_at: '2026-08-30T00:00:05Z' }]);
+  const item = state.snapshot.work_items['461'];
+  assert.equal(item.assigned_actor, null);
+  const pr = { author: { login: 'maker' }, headRefOid: item.candidate_commit, statusCheckRollup: [{ conclusion: 'SUCCESS' }], reviews: [{ state: 'APPROVED', author: { login: 'independent' }, commit: { oid: item.candidate_commit } }] };
+  const gate = mergeGateResult(config, item, pr, { currentBaseIsAncestor: true, unresolvedThreads: 0, competingPrs: 0, rollbackKnown: true });
+  assert.equal(gate.gates.one_writer, true);
+  assert.equal(gate.allowed, true);
+});
+
+test('terminal DONE rejects lease expiry and drift regressions', () => {
+  let state = intake(fresh(), 'I-TERMINAL'); state = claim(state, 'I-TERMINAL'); state = entered(state, 'I-TERMINAL'); state = candidate(state, 'I-TERMINAL'); state = qa(state, 'I-TERMINAL');
+  state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: 'I-TERMINAL', actor: 'scheduler', machine_id: 'machine-a', lease_id: null, lease_epoch: state.snapshot.work_items['I-TERMINAL'].lease_epoch, exact_object: { pr_number: 999 }, payload: { pr_url: 'https://github.com/cehinds/AshenSpire/pull/999' }, idempotency_key: 'terminal:pr', created_at: '2026-08-30T00:00:05Z' }]);
+  state = appendEvents(state, [{ event_type: 'MERGED_DEV', issue_id: 'I-TERMINAL', actor: 'scheduler', machine_id: 'machine-a', lease_id: null, lease_epoch: state.snapshot.work_items['I-TERMINAL'].lease_epoch, exact_object: { oid: 'd'.repeat(40) }, payload: { merge_commit: 'd'.repeat(40) }, idempotency_key: 'terminal:merge', created_at: '2026-08-30T00:00:06Z' }]);
+  state = appendEvents(state, [{ event_type: 'COMPLETED', issue_id: 'I-TERMINAL', actor: 'scheduler', machine_id: 'machine-a', lease_id: null, lease_epoch: state.snapshot.work_items['I-TERMINAL'].lease_epoch, exact_object: {}, payload: {}, idempotency_key: 'terminal:done', created_at: '2026-08-30T00:00:07Z' }]);
+  const terminal = state.snapshot.work_items['I-TERMINAL'];
+  const base = { issue_id: terminal.issue_id, actor: 'scheduler', machine_id: 'machine-a', lease_id: null, lease_epoch: terminal.lease_epoch, exact_object: {}, payload: {}, created_at: '2026-08-30T00:01:00Z' };
+  assert.throws(() => appendEvents(state, [{ ...base, event_type: 'LEASE_EXPIRED', idempotency_key: 'terminal:expire' }]), /terminal DONE/);
+  assert.throws(() => appendEvents(state, [{ ...base, event_type: 'DRIFT_DETECTED', idempotency_key: 'terminal:drift' }]), /terminal DONE/);
+  assert.equal(state.snapshot.work_items['I-TERMINAL'].state, 'DONE');
+});
+
+test('intake rejects missing or blank titles before storage', () => {
+  const base = { event_type: 'INTAKE_RECORDED', issue_id: 'I-NO-TITLE', actor: 'intake', machine_id: 'machine-a', exact_object: { issue: 'I-NO-TITLE' }, created_at: '2026-08-30T00:00:00Z' };
+  assert.throws(() => appendEvents(fresh(), [{ ...base, payload: {}, idempotency_key: 'intake:no-title' }]), /intake title/);
+  assert.throws(() => appendEvents(fresh(), [{ ...base, payload: { title: '   ' }, idempotency_key: 'intake:blank-title' }]), /intake title/);
+  assert.equal(Object.keys(fresh().snapshot.work_items).length, 0);
+});
+
+test('refill assignment persistence waits for successful recoverable dispatch', () => {
+  const state = intake(fresh(), 'I-DISPATCH');
+  const plan = planAssignments(state.snapshot, config, '2026-08-30T00:00:01Z', 'c'.repeat(40));
+  let persistCalled = false;
+  assert.throws(() => commitAssignmentsAfterWakeDispatch(state, plan.assignments, 'machine-a', '2026-08-30T00:00:01Z', {
+    dispatch: () => { throw new Error('wake compilation failed'); },
+    persist: () => { persistCalled = true; return 'f'.repeat(40); }
+  }), /wake compilation failed/);
+  assert.equal(persistCalled, false);
+  assert.equal(state.snapshot.work_items['I-DISPATCH'].state, 'READY');
+
+  let rolledBack = false;
+  assert.throws(() => commitAssignmentsAfterWakeDispatch(state, plan.assignments, 'machine-a', '2026-08-30T00:00:01Z', {
+    dispatch: () => ({ dispatched: [{ issue_id: 'I-DISPATCH' }], commit() {}, rollback() { rolledBack = true; } }),
+    persist: () => { throw new Error('state CAS failed'); }
+  }), /state CAS failed/);
+  assert.equal(rolledBack, true);
+  assert.equal(state.snapshot.work_items['I-DISPATCH'].state, 'READY');
 });
 
 if (!process.exitCode) process.stdout.write(`1..${passed}\nPASS ${passed}/${passed}\n`);
