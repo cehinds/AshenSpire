@@ -1,0 +1,34 @@
+{
+  "event_id": "evt-00000004-5565ef22-e16b-481d-b81f-395d88dbddf3",
+  "idempotency_key": "INTAKE_RECORDED:427:0:2026-08-31T14:02:55.792Z",
+  "sequence": 4,
+  "previous_snapshot_hash": "8e0b10359fc9d1801d258e9d7c63393ea5dd352907d77a0d7360b1a6962abc52",
+  "issue_id": "427",
+  "actor": "intake",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Repair AS-HD-040 packet aggregate digest",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-427-packet-digest",
+    "claimed_paths": [
+      "assets/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md"
+    ],
+    "claimed_resources": [],
+    "acceptance_commands": [
+      "verify 12/12 cited blobs",
+      "git diff --check",
+      "independent exact-head QA"
+    ],
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/issues/427#issuecomment-5479433672"
+    ],
+    "next_action": "Bind independent QA to exact head f02d9d40",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T14:02:55.792Z"
+}

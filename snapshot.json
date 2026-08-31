@@ -1,8 +1,47 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 3,
-  "last_sequence": 3,
+  "revision": 4,
+  "last_sequence": 4,
   "work_items": {
+    "427": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "427",
+      "title": "Repair AS-HD-040 packet aggregate digest",
+      "priority": "P1",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-427-packet-digest",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        "assets/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md"
+      ],
+      "claimed_resources": [],
+      "acceptance_commands": [
+        "verify 12/12 cited blobs",
+        "git diff --check",
+        "independent exact-head QA"
+      ],
+      "evidence_pointers": [
+        "https://github.com/cehinds/AshenSpire/issues/427#issuecomment-5479433672"
+      ],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Bind independent QA to exact head f02d9d40",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000004-5565ef22-e16b-481d-b81f-395d88dbddf3",
+      "updated_at": "2026-08-31T14:02:55.792Z"
+    },
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
       "revision": 3,
@@ -62,5 +101,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "8e0b10359fc9d1801d258e9d7c63393ea5dd352907d77a0d7360b1a6962abc52"
+  "snapshot_hash": "f75666114210470a8aec0138bca062553d6e48182dc42d95d0c4f0da6b5f0893"
 }
