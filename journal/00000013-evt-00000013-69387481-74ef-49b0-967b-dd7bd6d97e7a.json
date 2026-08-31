@@ -1,0 +1,48 @@
+{
+  "event_id": "evt-00000013-69387481-74ef-49b0-967b-dd7bd6d97e7a",
+  "idempotency_key": "INTAKE_RECORDED:238:0:2026-08-31T14:22:35.505Z",
+  "sequence": 13,
+  "previous_snapshot_hash": "95b96d56a600b87375781b9dbb1e7a526809caed4b2ac97e2f4d22430ff1620d",
+  "issue_id": "238",
+  "actor": "intake",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Author enemy level bands and data-owned stat scaling",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-238-enemy-level-content",
+    "claimed_paths": [
+      "src/content/enemies/act1.js",
+      "src/content/enemies/act2.js",
+      "src/content/enemies/act3.js",
+      "src/content/encounters/act1.js",
+      "src/content/encounters/act2.js",
+      "src/content/encounters/act3.js",
+      "src/content/balance.js",
+      "src/model/levels.js",
+      "src/model/schemas.js",
+      "src/model/validate.js",
+      "tools/enemy-level-content.mjs",
+      "tests/run-node.mjs"
+    ],
+    "claimed_resources": [
+      "issue:238",
+      "enemy-level-content"
+    ],
+    "acceptance_commands": [
+      "node tools/enemy-level-content.mjs",
+      "node tests/run-node.mjs",
+      "git diff --check"
+    ],
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/issues/238#issuecomment-5479555483"
+    ],
+    "next_action": "Author data and strict validation, then turn focused RED gate green",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T14:22:35.505Z"
+}
