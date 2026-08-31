@@ -1,0 +1,26 @@
+{
+  "event_id": "evt-00000037-4826d7b2-ee20-4780-8bcc-04923850dc6f",
+  "idempotency_key": "CANDIDATE_READY:257:4:ba7b947c099b3379849cfdbdd116f18b3644351d",
+  "sequence": 37,
+  "previous_snapshot_hash": "7b08323a677e7200c4e5b6f1ccfbc3e218e852c1393c6aff5134bccc43e7811d",
+  "issue_id": "257",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:4",
+  "lease_epoch": 4,
+  "event_type": "CANDIDATE_READY",
+  "exact_object": {
+    "oid": "ba7b947c099b3379849cfdbdd116f18b3644351d"
+  },
+  "payload": {
+    "candidate_commit": "ba7b947c099b3379849cfdbdd116f18b3644351d",
+    "evidence_pointers": [
+      "origin/codex/issue-257-quest-choice-pipeline@ba7b947c099b3379849cfdbdd116f18b3644351d",
+      "node tools/quest-choice-contract.mjs:12/12",
+      "node tools/quest-choice-contract.mjs --selftest:17/17",
+      "node tests/run-node.mjs:114/114",
+      "git diff --check:PASS"
+    ]
+  },
+  "created_at": "2026-08-31T15:31:32.144Z"
+}

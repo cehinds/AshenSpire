@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 36,
-  "last_sequence": 36,
+  "revision": 37,
+  "last_sequence": 37,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,22 +66,22 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 10,
+      "revision": 11,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "CANDIDATE_READY",
       "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
-      "candidate_commit": null,
+      "candidate_commit": "ba7b947c099b3379849cfdbdd116f18b3644351d",
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:257:4",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 4,
-      "lease_expiry": "2026-08-31T15:47:45.594Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
-      "maker_actor": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
       "lease_history": [
         {
           "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
@@ -126,14 +126,18 @@
         "git diff --check"
       ],
       "evidence_pointers": [
-        "https://github.com/cehinds/AshenSpire/issues/257"
+        "origin/codex/issue-257-quest-choice-pipeline@ba7b947c099b3379849cfdbdd116f18b3644351d",
+        "node tools/quest-choice-contract.mjs:12/12",
+        "node tools/quest-choice-contract.mjs --selftest:17/17",
+        "node tests/run-node.mjs:114/114",
+        "git diff --check:PASS"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Rebase preserved candidate and implement stable choice IDs plus runtime record/gating.",
+      "next_action": "Bind independent QA to this exact candidate.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000036-c16b2922-c407-4d0e-9ef5-b01deccf2969",
-      "updated_at": "2026-08-31T15:18:49.302Z"
+      "updated_event": "evt-00000037-4826d7b2-ee20-4780-8bcc-04923850dc6f",
+      "updated_at": "2026-08-31T15:31:32.144Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -341,5 +345,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "7b08323a677e7200c4e5b6f1ccfbc3e218e852c1393c6aff5134bccc43e7811d"
+  "snapshot_hash": "5a3be9a3775b9bf900e8cfc3d236a564032f0d0725e46c4ae2efcf51c0c2cee9"
 }
