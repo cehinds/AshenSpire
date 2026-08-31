@@ -1,0 +1,25 @@
+{
+  "event_id": "evt-00000037-6848e577-229b-4e14-945e-e688fe58352e",
+  "idempotency_key": "CLAIM_ACQUIRED:313:1:2026-08-31T15:54:20.910Z",
+  "sequence": 37,
+  "previous_snapshot_hash": "878150a9f6fa1edbb0097bd4b7f732b0631ba96e918b1e82018d7b5e80320990",
+  "issue_id": "313",
+  "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": "lease:313:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-313-friendly-drag-default-current",
+    "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
+    "lease_expiry": "2026-08-31T16:24:19.5351069Z",
+    "claimed_paths": [
+      "src/model/friendlyTargets.js",
+      "src/ui/screens/coop.js"
+    ],
+    "claimed_resources": [],
+    "next_action": "Finish source implementation, add no overlapping tool edits, and run existing gates."
+  },
+  "created_at": "2026-08-31T15:54:20.910Z"
+}
