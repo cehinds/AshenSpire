@@ -132,12 +132,13 @@
             "audit_paths": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["root", "journal_path", "attempt_path_template", "receipt_path_template"],
+              "required": ["root", "journal_path", "attempt_path_template", "receipt_path_template", "manifest_path_template"],
               "properties": {
                 "root": {"const": ".agentops/scheduler/project-schema-attempts"},
                 "journal_path": {"const": ".agentops/scheduler/project-schema-attempts/journal.jsonl"},
                 "attempt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json"},
-                "receipt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json"}
+                "receipt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json"},
+                "manifest_path_template": {"const": ".agentops/scheduler/project-schema-attempts/manifests/{attempt_id}.json"}
               }
             },
             "audit_guards": {
@@ -161,13 +162,14 @@
             "audit_result_contract": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "ambiguity_policy", "no_self_reference"],
+              "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "finalization_timing", "ambiguity_policy", "no_self_reference"],
               "properties": {
                 "schema": {"const": "agentops/project-schema-audit-result-contract/v1"},
                 "result_schema": {"const": "agentops/project-schema-audit-result/v1"},
                 "path": {"const": ".git/agentops-project-schema/audit-result.json"},
                 "schema_pointer": {"const": ".agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt"},
-                "construction_timing": {"const": "after-local-initial-commit-before-ref-creation"},
+                "construction_timing": {"const": "after-manifest-publication-and-single-postinspection"},
+                "finalization_timing": {"const": "after-manifest-publication-and-single-postinspection"},
                 "ambiguity_policy": {"const": "inspect-once-never-create"},
                 "no_self_reference": {"const": true}
               }
@@ -268,7 +270,7 @@
           "required": [
             "schema", "scheduler_head", "scheduler_tree", "qa_receipt", "migration", "current_state",
             "project_schema_receipt", "project_manifest", "quiet_window_receipt",
-            "active_work_lease_count", "legacy_activation", "pre_cutover_config", "post_cutover_config", "activation_manifest", "result_receipt_contract", "cross_field_equalities",
+            "active_work_lease_count", "legacy_activation", "pre_cutover_config", "post_cutover_config", "activation_manifest", "result_receipt_contract",
             "state_target_ref", "expected_state_remote_oid", "development_ref", "expected_development_remote_oid", "publication_mode",
             "ambiguity_policy", "postcondition_policy", "one_use", "expires_at", "push_mode", "abort_on_remote_change"
           ],
@@ -279,12 +281,25 @@
             "qa_receipt": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["schema", "path", "blob_oid", "sha256"],
+              "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
               "properties": {
                 "schema": {"const": "agentops/independent-qa-receipt/v1"},
                 "path": {"const": ".agentops/scheduler/cutover/qa-receipt.json"},
                 "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "semantics": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["schema", "candidate", "verdict", "verifier", "maker_actor", "independent_of_maker", "tested_at", "tests", "evidence"],
+                  "properties": {
+                    "schema": {"const": "agentops/independent-qa-receipt/v1"},
+                    "candidate": {"type": "object", "additionalProperties": false, "required": ["head", "tree"], "properties": {"head": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}},
+                    "verdict": {"enum": ["PASS", "WITHHOLD"]},
+                    "verifier": {"type": "object", "additionalProperties": false, "required": ["actor", "role"], "properties": {"actor": {"type": "string", "minLength": 1}, "role": {"const": "qa-independent"}}},
+                    "maker_actor": {"type": "string", "minLength": 1}, "independent_of_maker": {"const": true}, "tested_at": {"type": "string", "minLength": 1},
+                    "tests": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "command", "exit_code", "outcome", "output_sha256"], "properties": {"id": {"type": "string", "minLength": 1}, "command": {"type": "string", "minLength": 1}, "exit_code": {"type": "integer"}, "outcome": {"enum": ["PASS", "FAIL"]}, "output_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}},
+                    "evidence": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["kind", "path", "blob_oid", "sha256"], "properties": {"kind": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}}
+                  }
+                }
               }
             },
             "migration": {
@@ -353,36 +368,46 @@
               }
             },
             "project_schema_receipt": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["schema", "path", "blob_oid", "sha256"],
+              "type": "object", "additionalProperties": false, "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
               "properties": {
-                "schema": {"const": "agentops/project-schema-change-receipt/v1"},
-                "path": {"const": ".agentops/scheduler/cutover/project-schema-receipt.json"},
-                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                "schema": {"const": "agentops/project-schema-change-receipt/v1"}, "path": {"const": ".agentops/scheduler/cutover/project-schema-receipt.json"},
+                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "semantics": {
+                  "type": "object", "additionalProperties": false, "required": ["status", "failure_code", "project", "mutation_counts", "readback_schema", "audit_ref"],
+                  "properties": {
+                    "status": {"const": "COMPLETE"}, "failure_code": {"const": null},
+                    "project": {"type": "object", "additionalProperties": false, "required": ["owner", "owner_type", "number", "id", "title", "closed"], "properties": {"owner": {"const": "cehinds"}, "owner_type": {"const": "user"}, "number": {"const": 4}, "id": {"const": "PVT_kwHOCSCyJ84BgfH9"}, "title": {"const": "Family Delivery"}, "closed": {"const": false}}},
+                    "mutation_counts": {"type": "object", "additionalProperties": false, "required": ["created_field_count", "mutated_item_count", "updated_existing_field_count", "backfill_count"], "properties": {"created_field_count": {"const": 8}, "mutated_item_count": {"const": 0}, "updated_existing_field_count": {"const": 0}, "backfill_count": {"const": 0}}},
+                    "readback_schema": {"const": "agentops/project-field-readback/v1"},
+                    "audit_ref": {"const": "refs/heads/agentops/project-schema-audit"}
+                  }
+                }
               }
             },
             "project_manifest": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["schema", "path", "blob_oid", "sha256"],
+              "type": "object", "additionalProperties": false, "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
               "properties": {
-                "schema": {"const": "agentops/project-field-manifest/v1"},
-                "path": {"const": ".agentops/scheduler/cutover/project-manifest.json"},
-                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                "schema": {"const": "agentops/project-field-manifest/v1"}, "path": {"const": ".agentops/scheduler/cutover/project-manifest.json"},
+                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "semantics": {
+                  "type": "object", "additionalProperties": false, "required": ["schema", "definitions_hash", "project", "observed_at", "fields", "source_receipt_hash"],
+                  "properties": {
+                    "schema": {"const": "agentops/project-field-manifest/v1"}, "definitions_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "project": {"type": "object", "additionalProperties": false, "required": ["owner", "owner_type", "number", "id", "title", "closed"], "properties": {"owner": {"const": "cehinds"}, "owner_type": {"const": "user"}, "number": {"const": 4}, "id": {"const": "PVT_kwHOCSCyJ84BgfH9"}, "title": {"const": "Family Delivery"}, "closed": {"const": false}}},
+                    "observed_at": {"type": "string", "minLength": 1}, "project_updated_at": {"type": "string", "minLength": 1},
+                    "fields": {"type": "array", "minItems": 9, "maxItems": 9, "items": {"type": "object", "additionalProperties": false, "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"type": "string", "minLength": 1}, "kind": {"enum": ["ProjectV2Field", "ProjectV2SingleSelectField"]}, "data_type": {"enum": ["TEXT", "SINGLE_SELECT"]}, "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1}, "options": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "name", "color", "description"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"type": "string", "minLength": 1}, "color": {"type": "string", "minLength": 1}, "description": {"type": "string"}}}}}}},
+                    "source_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                  }
+                }
               }
             },
             "quiet_window_receipt": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["schema", "path", "blob_oid", "sha256"],
+              "type": "object", "additionalProperties": false, "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
               "properties": {
-                "schema": {"const": "agentops/scheduler-quiet-window-receipt/v1"},
-                "path": {"const": ".agentops/scheduler/cutover/quiet-window-receipt.json"},
-                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                "schema": {"const": "agentops/scheduler-quiet-window-receipt/v1"}, "path": {"const": ".agentops/scheduler/cutover/quiet-window-receipt.json"},
+                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "semantics": {"type": "object", "additionalProperties": false, "required": ["observed_from", "observed_until", "source_state_oid", "state_ref", "development_ref", "scheduler_process_count", "legacy_process_count", "state_mutation_count", "dispatch_frozen", "no_external_mutation"], "properties": {"observed_from": {"type": "string", "minLength": 1}, "observed_until": {"type": "string", "minLength": 1}, "source_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "state_ref": {"const": "refs/heads/agentops/scheduler-state"}, "development_ref": {"const": "refs/heads/dev"}, "scheduler_process_count": {"const": 0}, "legacy_process_count": {"const": 0}, "state_mutation_count": {"const": 0}, "dispatch_frozen": {"const": true}, "no_external_mutation": {"const": true}}
+                }
               }
             },
             "active_work_lease_count": {"const": 0},
@@ -609,21 +634,6 @@
                 "no_self_reference": {"const": true}
               }
             },
-            "cross_field_equalities": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["development_d0_oid", "state_s0_oid", "state_s0_tree", "legacy_activation_blob", "pre_cutover_config_blob", "post_cutover_config_blob", "expected_state_remote", "migration_boundary_event_blob"],
-              "properties": {
-                "development_d0_oid": {"const": "activation_manifest.template.development_d0.oid == expected_development_remote_oid"},
-                "state_s0_oid": {"const": "activation_manifest.template.state_s0.oid == current_state.oid"},
-                "state_s0_tree": {"const": "activation_manifest.template.state_s0.tree == current_state.tree"},
-                "legacy_activation_blob": {"const": "activation_manifest.template.development_d0.legacy_activation_blob_oid == legacy_activation.blob_oid"},
-                "pre_cutover_config_blob": {"const": "activation_manifest.template.development_d0.pre_cutover_config_blob_oid == pre_cutover_config.blob_oid"},
-                "post_cutover_config_blob": {"const": "activation_manifest.template.development_d0.post_cutover_config_blob_oid == post_cutover_config.blob_oid"},
-                "expected_state_remote": {"const": "expected_state_remote_oid == current_state.oid"},
-                "migration_boundary_event_blob": {"const": "migration.state_migrated_event.blob_oid exists at migration.boundary_oid:migration.state_migrated_event.path"}
-              }
-            },
             "state_target_ref": {"const": "refs/heads/agentops/scheduler-state"},
             "expected_state_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "development_ref": {"const": "refs/heads/dev"},
@@ -644,7 +654,7 @@
     "project_schema_audit_result_receipt": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "initial_commit", "publication", "postinspection"],
+      "required": ["schema", "initial_commit", "publication", "manifest", "postinspection"],
       "properties": {
         "schema": {"const": "agentops/project-schema-audit-result/v1"},
         "initial_commit": {
@@ -660,26 +670,35 @@
         "publication": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["ref", "expected_absent", "target_oid", "push_mode", "push_exit_code"],
+          "required": ["ref", "expected_absent", "push_mode", "push_exit_code"],
           "properties": {
             "ref": {"const": "refs/heads/agentops/project-schema-audit"},
             "expected_absent": {"const": true},
-            "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "push_mode": {"const": "create-if-absent"},
             "push_exit_code": {"type": ["integer", "null"]}
+          }
+        },
+        "manifest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "commit_oid", "parent_oid", "blob_oid", "sha256", "source_receipt_hash"],
+          "properties": {
+            "path": {"type": "string", "pattern": "^\\.agentops/scheduler/project-schema-attempts/manifests/[0-9a-f]{64}\\.json$"},
+            "commit_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "source_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
           }
         },
         "postinspection": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["inspection_count", "retry_create_permitted", "actual_oid", "target_exact", "outcome", "policy"],
+          "required": ["inspection_count", "retry_create_permitted", "actual_oid"],
           "properties": {
             "inspection_count": {"const": 1},
             "retry_create_permitted": {"const": false},
-            "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
-            "target_exact": {"type": "boolean"},
-            "outcome": {"enum": ["EXACT", "ABSENT", "OTHER"]},
-            "policy": {"const": "exact-target-or-withhold-never-create-again"}
+            "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
           }
         }
       }
@@ -750,21 +769,19 @@
             "state": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["ref", "expected_oid", "target_oid"],
+              "required": ["ref", "expected_oid"],
               "properties": {
                 "ref": {"const": "refs/heads/agentops/scheduler-state"},
-                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
               }
             },
             "development": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["ref", "expected_oid", "target_oid"],
+              "required": ["ref", "expected_oid"],
               "properties": {
                 "ref": {"const": "refs/heads/dev"},
-                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
               }
             },
             "atomic_push_exit_code": {"type": ["integer", "null"]}
@@ -773,17 +790,12 @@
         "postinspection": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["inspection_count", "retry_permitted", "state_actual_oid", "development_actual_oid", "state_exact", "development_exact", "outcome", "dispatch_permitted", "policy"],
+          "required": ["inspection_count", "retry_permitted", "state_actual_oid", "development_actual_oid"],
           "properties": {
             "inspection_count": {"const": 1},
             "retry_permitted": {"const": false},
             "state_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
-            "development_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
-            "state_exact": {"type": "boolean"},
-            "development_exact": {"type": "boolean"},
-            "outcome": {"enum": ["BOTH_EXACT", "MIXED", "NEITHER"]},
-            "dispatch_permitted": {"type": "boolean"},
-            "policy": {"const": "dispatch-only-on-both-exact-otherwise-withhold"}
+            "development_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
           }
         }
       }
