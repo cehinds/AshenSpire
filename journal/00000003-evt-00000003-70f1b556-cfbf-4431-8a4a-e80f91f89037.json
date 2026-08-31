@@ -1,0 +1,29 @@
+{
+  "event_id": "evt-00000003-70f1b556-cfbf-4431-8a4a-e80f91f89037",
+  "idempotency_key": "INTAKE_RECORDED:422:0:2026-08-31T13:52:00.251Z",
+  "sequence": 3,
+  "previous_snapshot_hash": "a3db3495b39e81a6b847954d5067c5af4d1318272748319ec8999b3ebfd05390",
+  "issue_id": "422",
+  "actor": "intake",
+  "machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Reconcile it-support role across AUTHORITY.md and roles.json",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-422",
+    "claimed_paths": [
+      "docs/governance/AUTHORITY.md",
+      "docs/governance/TEAM-CHARTERS.md"
+    ],
+    "claimed_resources": [],
+    "acceptance_commands": [],
+    "evidence_pointers": [],
+    "next_action": "Add authority-matrix row or remove role; ITM3 ruling",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T13:52:00.251Z"
+}
