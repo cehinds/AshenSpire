@@ -6,7 +6,25 @@
   "required": ["schema", "action", "actor", "target"],
   "properties": {
     "schema": {"const": "agentops/owner-command-request/v1"},
-    "action": {"type": "string", "minLength": 1},
+    "action": {
+      "enum": [
+        "prioritize",
+        "delegate",
+        "approve",
+        "reject",
+        "defer",
+        "issue-lease",
+        "revoke-lease",
+        "request-revision",
+        "authorize-integration",
+        "authorize-scheduler-migration",
+        "authorize-project-schema-change",
+        "authorize-scheduler-state-reconciliation",
+        "authorize-scheduler-cutover",
+        "authorize-release",
+        "record-owner-override"
+      ]
+    },
     "actor": {"type": "string", "minLength": 1},
     "target": {"type": "string", "minLength": 1},
     "expected_current_hash": {"type": "string", "minLength": 1},
@@ -51,6 +69,251 @@
         "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
         "target_ref": {"const": "refs/heads/agentops/scheduler-state"},
         "expected_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "push_mode": {"const": "non-force-forward-only-cas"},
+        "abort_on_remote_change": {"const": true}
+      }
+    },
+    "project_schema_change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "executor_head",
+        "executor_tree",
+        "project",
+        "authenticated_login",
+        "required_scope",
+        "project_updated_at",
+        "preflight",
+        "definitions_hash",
+        "mode",
+        "allowed_mutation",
+        "forbid_item_mutation",
+        "forbid_existing_field_update",
+        "forbid_backfill",
+        "abort_on_any_drift",
+        "retry_mode",
+        "one_use",
+        "expires_at"
+      ],
+      "properties": {
+        "schema": {"const": "agentops/project-schema-change-authority/v1"},
+        "executor_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "executor_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "project": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["owner", "owner_type", "number", "id", "title", "closed"],
+          "properties": {
+            "owner": {"const": "cehinds"},
+            "owner_type": {"const": "user"},
+            "number": {"const": 4},
+            "id": {"const": "PVT_kwHOCSCyJ84BgfH9"},
+            "title": {"const": "Family Delivery"},
+            "closed": {"const": false}
+          }
+        },
+        "authenticated_login": {"const": "cehinds"},
+        "required_scope": {"const": "project"},
+        "project_updated_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
+        "preflight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["field_count", "field_state_root", "item_count", "field_value_count", "item_state_root", "pagination_manifest_hash", "priority_field_id", "priority_contract_hash"],
+          "properties": {
+            "field_count": {"type": "integer"},
+            "field_state_root": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "item_count": {"type": "integer"},
+            "field_value_count": {"type": "integer"},
+            "item_state_root": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "pagination_manifest_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "priority_field_id": {"const": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4"},
+            "priority_contract_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        },
+        "definitions_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "mode": {"const": "create-missing-only"},
+        "allowed_mutation": {"const": "project-field-create"},
+        "forbid_item_mutation": {"const": true},
+        "forbid_existing_field_update": {"const": true},
+        "forbid_backfill": {"const": true},
+        "abort_on_any_drift": {"const": true},
+        "retry_mode": {"const": "never"},
+        "one_use": {"const": true},
+        "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"}
+      }
+    },
+    "scheduler_state_reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "reconciler_head",
+        "reconciler_tree",
+        "source",
+        "target",
+        "canonical_anchor_oid",
+        "machine_lease",
+        "work_leases",
+        "mode",
+        "not_before",
+        "quiet_window_receipt_hash",
+        "expected_event_count_delta",
+        "dispatch_frozen",
+        "no_refill",
+        "no_assignment",
+        "no_dispatch",
+        "no_external_mutation",
+        "one_use",
+        "expires_at",
+        "target_ref",
+        "expected_remote_oid",
+        "push_mode",
+        "abort_on_remote_change"
+      ],
+      "properties": {
+        "schema": {"const": "agentops/scheduler-state-reconciliation-authority/v1"},
+        "reconciler_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "reconciler_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state_oid", "state_tree", "snapshot_sha256", "journal_manifest_sha256", "event_count", "state_version"],
+          "properties": {
+            "state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "state_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "journal_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "event_count": {"type": "integer"},
+            "state_version": {"type": "integer"}
+          }
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state_oid", "state_tree", "snapshot_sha256", "journal_manifest_sha256", "event_count"],
+          "properties": {
+            "state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "state_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "journal_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "event_count": {"type": "integer"}
+          }
+        },
+        "canonical_anchor_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "machine_lease": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["machine_id", "lease_epoch", "acquired_at", "released_at", "expires_at", "expected_state_ref_oid"],
+          "properties": {
+            "machine_id": {"type": ["string", "null"]},
+            "lease_epoch": {"type": "integer"},
+            "acquired_at": {"type": ["string", "null"]},
+            "released_at": {"type": ["string", "null"]},
+            "expires_at": {"type": "string", "minLength": 1},
+            "expected_state_ref_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "work_leases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["issue_id", "state", "assigned_actor", "assignment_kind", "lease_id", "lease_epoch", "lease_expiry", "lease_machine_id", "base_commit"],
+            "properties": {
+              "issue_id": {"type": "string", "pattern": "^#[1-9][0-9]*$"},
+              "state": {"type": "string", "minLength": 1},
+              "assigned_actor": {"type": ["string", "null"]},
+              "assignment_kind": {"type": ["string", "null"]},
+              "lease_id": {"type": ["string", "null"]},
+              "lease_epoch": {"type": ["integer", "null"]},
+              "lease_expiry": {"type": ["string", "null"]},
+              "lease_machine_id": {"type": ["string", "null"]},
+              "base_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
+            }
+          }
+        },
+        "mode": {"const": "release-custody-and-reconcile-work-leases"},
+        "not_before": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
+        "quiet_window_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "expected_event_count_delta": {"type": "integer"},
+        "dispatch_frozen": {"const": true},
+        "no_refill": {"const": true},
+        "no_assignment": {"const": true},
+        "no_dispatch": {"const": true},
+        "no_external_mutation": {"const": true},
+        "one_use": {"const": true},
+        "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
+        "target_ref": {"const": "refs/heads/agentops/scheduler-state"},
+        "expected_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "push_mode": {"const": "non-force-forward-only-cas"},
+        "abort_on_remote_change": {"const": true}
+      }
+    },
+    "scheduler_cutover": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "scheduler_head",
+        "scheduler_tree",
+        "qa_receipt_hash",
+        "migration",
+        "current_state",
+        "project_schema_receipt_hash",
+        "project_manifest_hash",
+        "quiet_window_receipt_hash",
+        "released_custody_hash",
+        "active_work_lease_count",
+        "legacy_activation_blob_oid",
+        "pre_cutover_config_blob_oid",
+        "activation_manifest_hash",
+        "state_target_ref",
+        "expected_state_remote_oid",
+        "development_ref",
+        "expected_development_remote_oid",
+        "one_use",
+        "expires_at",
+        "push_mode",
+        "abort_on_remote_change"
+      ],
+      "properties": {
+        "schema": {"const": "agentops/scheduler-cutover-authority/v1"},
+        "scheduler_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "scheduler_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "qa_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "migration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["boundary_oid", "state_migrated_event_hash"],
+          "properties": {
+            "boundary_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "state_migrated_event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        },
+        "current_state": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "project_schema_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "project_manifest_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "quiet_window_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "released_custody_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "active_work_lease_count": {"const": 0},
+        "legacy_activation_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "pre_cutover_config_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "activation_manifest_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "state_target_ref": {"const": "refs/heads/agentops/scheduler-state"},
+        "expected_state_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "development_ref": {"const": "refs/heads/dev"},
+        "expected_development_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "one_use": {"const": true},
+        "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
         "push_mode": {"const": "non-force-forward-only-cas"},
         "abort_on_remote_change": {"const": true}
       }
