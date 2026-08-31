@@ -149,6 +149,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
+    ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
   }));
   const shuffled = C.rng.shuffle('shuffle', deck);
   const innate = [];

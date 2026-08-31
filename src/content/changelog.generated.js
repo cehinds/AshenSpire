@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-502",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Smithing upgrades an armament and every basic card it owns",
+    "detail": "Elite and boss victories award Smithing Stones; the Shrine spends one Stone to improve an owned armament for the run, with exact before-and-after card values shown before confirmation. The upgrade follows the armament through swaps, saves, active combats, legacy runs, rewards, and co-op host restoration. The picker uses the owned weapon or shield art, inventory quantity, WEAPON label, and equipment tags instead of borrowing one combat card's identity.",
+    "build": "0.4.0.1854",
+    "pullRequest": 502,
+    "url": "https://github.com/cehinds/AshenSpire/pull/502"
+  },
+  {
     "id": "pr-361",
     "date": "2026-08-28",
     "group": "2026-08-28",

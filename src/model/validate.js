@@ -43,6 +43,7 @@ import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
+import { normalizeSmithingRules } from './smithingRules.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -264,6 +265,11 @@ export function validateContent(bundle) {
   }
   const flaskCapacity = b.balance && b.balance.flaskCapacity;
   if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
+  try {
+    normalizeSmithingRules(b.balance && b.balance.smithing);
+  } catch (error) {
+    err('balance.smithing', error?.message || 'must be a complete Smithing economy block');
+  }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0

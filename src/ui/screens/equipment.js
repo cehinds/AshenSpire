@@ -1661,6 +1661,8 @@ export function mountEquipment(host, {
     const mods = modSummary(registries, item);
     const value = item.value != null ? String(item.value) : '—';
     const weight = item.weight != null ? String(item.weight) : '—';
+    const smithingLevel = Number.isInteger(run.armamentLevels?.[item.id]) ? run.armamentLevels[item.id] : 0;
+    const smithingReceipt = run.lastSmithingReceipt?.armamentId === item.id ? run.lastSmithingReceipt : null;
 
     const detail = document.createElement('section');
     detail.className = 'armoury-armament-details';
@@ -1670,8 +1672,12 @@ export function mountEquipment(host, {
       + `<dl><div><dt>Type</dt><dd>${esc(summaryItem.category)} · ${esc(item.rarity || 'standard')}</dd></div>`
       + `<div><dt>Effects</dt><dd>${esc(mods.length ? mods.join(' · ') : 'No additional equipment effects authored.')}</dd></div>`
       + `<div><dt>Combat bonuses</dt><dd>${esc(summaryItem.bonus)}</dd></div>`
+      + `<div><dt>Smithing tier</dt><dd>${smithingLevel}</dd></div>`
       + `<div><dt>Value</dt><dd>${esc(value)}</dd></div>`
       + `<div><dt>Weight</dt><dd>${esc(weight)}</dd></div></dl>`
+      + (smithingReceipt
+        ? `<p class="armoury-smithing-receipt"><b>Last Smithing</b><span>Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved</span></p>`
+        : '')
       + `<div class="armoury-armament-tag-details">${tagRows.map((tag) => `<p><strong>${esc(tag.label)}</strong><span>${esc(tag.description)}</span></p>`).join('') || '<p><strong>Tags</strong><span>No tags authored.</span></p>'}</div>`;
     card.append(detail);
     attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);

@@ -74,6 +74,14 @@ export const balance = {
 
   shrine: { healPct: 35 },
 
+  // Smithing promotes the owned armament, not one card copy. The model owns
+  // the transaction; balance owns the tier ceiling, price, and reward faucet.
+  smithing: {
+    maxArmamentLevel: 1,
+    costByNextLevel: { 1: 1 },
+    rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
+  },
+
   // ---- canonical hidden level semantics (#237) ---------------------------
   //
   // Player level begins at one authored value and advances once per shrine

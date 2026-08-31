@@ -1,6 +1,6 @@
 // Dedicated Smith selection/review overlay. The component owns dialog
 // semantics, focus containment and rendering; the screen owns run mutation.
-import { renderCard, upgradePreviewHtml } from './card.js';
+import { assetUrl } from '../assetmap.js';
 import { esc } from './tooltip.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
@@ -40,10 +40,10 @@ export function mountSmithUpgradeModal(host, initialModel, {
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
         <div class="smith-region-head">
-          <h3 id="smith-candidate-title">Choose a card</h3>
+          <h3 id="smith-candidate-title">Choose an armament</h3>
           <span data-smith-count></span>
         </div>
-        <div class="smith-card-list" role="listbox" aria-label="Cards available to upgrade"></div>
+        <div class="smith-card-list" role="listbox" aria-label="Armaments available to Smith"></div>
       </section>
       <section class="smith-preview-region" aria-live="polite" aria-label="Selected upgrade preview"></section>
     </div>
@@ -69,23 +69,26 @@ export function mountSmithUpgradeModal(host, initialModel, {
     currentModel = model;
     markUiComponent(modal, UI.smithUpgradeModal, model.variant);
     cardsHost.innerHTML = '';
-    count.textContent = `${model.properties.candidates.length} eligible`;
+    count.textContent = `${model.properties.purseLabel} · ${model.properties.candidates.length} eligible`;
     for (const item of model.properties.candidates) {
-      const card = renderCard(registries, item.reference, {
-        small: true,
-        // The modal's persistent preview owns this information. A transient
-        // card tooltip otherwise covers the modal title/instructions as soon
-        // as the pointer that opened Smith happens to land over the new grid.
-        tooltip: false,
-      });
-      card.classList.add('smith-candidate-card');
+      const card = document.createElement('div');
+      card.className = `smith-candidate-card smith-weapon-card rarity-${item.rarity}`;
       card.classList.toggle('selected', item.selected);
       card.setAttribute('role', 'option');
       card.setAttribute('aria-selected', String(item.selected));
-      card.setAttribute('aria-label', `${item.name}. Select to preview its permanent upgrade.`);
+      card.dataset.armamentId = item.armamentId;
+      card.innerHTML = `
+        <span class="smith-weapon-count" aria-label="${item.inventoryCount} in inventory">${item.inventoryCount}</span>
+        <strong class="smith-weapon-name">${esc(item.name)}</strong>
+        <span class="smith-weapon-art"><img src="${esc(assetUrl(item.artAsset))}" alt=""></span>
+        <span class="smith-weapon-type">WEAPON</span>
+        <span class="smith-weapon-tags">${item.tags.map((tag) => `<em>${esc(tag)}</em>`).join('')}</span>`;
+      const art = card.querySelector('.smith-weapon-art img');
+      art.addEventListener('error', () => art.remove());
+      card.setAttribute('aria-label', `${item.name}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone. Select to review ${item.affectedCount} affected cards.`);
       card.tabIndex = item.selected || (!model.properties.selected && cardsHost.childElementCount === 0) ? 0 : -1;
       markUiComponent(card, UI.smithCandidateCard, item.selected ? 'selected' : 'available');
-      const choose = () => onSelect(item.instanceId);
+      const choose = () => onSelect(item.armamentId);
       card.addEventListener('click', choose);
       card.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -98,12 +101,18 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const selected = model.properties.selected;
     previewHost.innerHTML = selected
       ? `<div class="smith-preview-card" data-ui-component="${UI.smithUpgradePreview}">
-          <span class="smith-preview-label">Selected upgrade</span>
-          ${upgradePreviewHtml(registries, selected.reference)}
+          <span class="smith-preview-label">Selected armament</span>
+          <div class="tt-title">${esc(selected.name)} · Tier ${selected.currentLevel} → ${selected.nextLevel}</div>
+          <div class="smith-preview-economy"><b>Cost ${selected.cost}</b><span>Purse ${selected.stones}</span></div>
+          ${selected.affectedRows.map((row) => `<div class="smith-preview-delta">
+            <b>${row.count}× ${esc(row.name)}</b><small>${esc(row.role)}</small>
+            <span>${row.changes.map(esc).join(' · ')}</span>
+          </div>`).join('')}
+          ${selected.affordable ? '' : `<div class="smith-preview-shortfall">Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.</div>`}
         </div>`
       : `<div class="smith-preview-empty" data-ui-component="${UI.smithUpgradePreview}">
           <span class="smith-preview-glyph" aria-hidden="true">⚒</span>
-          <b>Select a card to compare its current and upgraded forms.</b>
+          <b>Select an armament to compare every sourced basic card.</b>
           <span>Nothing changes until Confirm.</span>
         </div>`;
     confirm.disabled = !model.properties.canConfirm;
@@ -154,7 +163,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   back.addEventListener('click', backOut);
   confirm.addEventListener('click', () => {
     if (!currentModel.properties.canConfirm) return;
-    const selectedId = currentModel.properties.selected.instanceId;
+    const selectedId = currentModel.properties.selected.armamentId;
     close({ restoreFocus: false });
     onConfirm(selectedId);
   });
