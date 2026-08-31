@@ -1,0 +1,17 @@
+{
+  "event_id": "evt-00000018-1b36c693-969e-435a-bfba-02d3779a4a5d",
+  "idempotency_key": "WORK_ENTERED:426:1:2026-08-31T14:32:00.019Z",
+  "sequence": 18,
+  "previous_snapshot_hash": "093b3cac52b79c25684dbb8f2c425af6bbf7607e4744b62fedf1b87365bc489c",
+  "issue_id": "426",
+  "actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "lease:426:1",
+  "lease_epoch": 1,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e"
+  },
+  "created_at": "2026-08-31T14:32:00.019Z"
+}

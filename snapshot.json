@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 17,
-  "last_sequence": 17,
+  "revision": 18,
+  "last_sequence": 18,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -89,12 +89,12 @@
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "426",
       "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-426",
@@ -125,8 +125,8 @@
       "wake_condition": null,
       "next_action": "Re-pin bytes/sha256 and refresh branch snapshot; lease-held path",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000012-e7e38602-e6ec-4a5a-9457-f0e845221ce5",
-      "updated_at": "2026-08-31T14:25:02.325Z"
+      "updated_event": "evt-00000018-1b36c693-969e-435a-bfba-02d3779a4a5d",
+      "updated_at": "2026-08-31T14:32:00.019Z"
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -236,5 +236,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "093b3cac52b79c25684dbb8f2c425af6bbf7607e4744b62fedf1b87365bc489c"
+  "snapshot_hash": "7fbb19ea41afbcc434eef8340b92147e7a20e875382888da59ca9594ee0b81ce"
 }
