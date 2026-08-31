@@ -566,6 +566,38 @@ export function semanticChecks(c) {
   // fast-forward-test advanced `test` and left the capsule at dev-integrated,
   // so Gate D's declared hosted-verified -> resolved transition was unreachable:
   // the ref said promoted and the authoritative lifecycle did not.
+  // Role-valued fields were checked one at a time, where someone remembered.
+  // A sweep found four references nothing declared: three were deliberate
+  // non-seat writers with no declaration to point at, and one — Gate D's
+  // 'delivery-systems-review' conditional reviewer — was dangling outright, so
+  // that condition could never be routed to anyone. A role field naming
+  // something nobody holds is the same defect as a status string nothing
+  // matches: the check that reads it compares against a value that never
+  // appears, and passes by never running. Every such field is swept now, and
+  // the vocabulary it may draw from is declared rather than remembered.
+  if (c.roles && c.teams) {
+    const roleIds = new Set(c.roles.roles.map((r) => r.role));
+    const nonSeat = new Set((c.roles.non_seat_writers || []).map((w) => w.id));
+    const pools = new Set((c.teams.capability_pools || []).map((pp) => pp.id));
+    const aliases = new Set((c.teams.legacy_aliases || []).map((a) => a.legacy));
+    const overlap = [...nonSeat].filter((id) => roleIds.has(id));
+    for (const id of overlap) {
+      errors.push(`roles: '${id}' is declared both as a role and as a non-seat writer; a reference naming it would mean two different things`);
+    }
+    const known = (v) => roleIds.has(v) || nonSeat.has(v) || pools.has(v) || aliases.has(v);
+    const sweep = (node, where) => {
+      if (Array.isArray(node)) { node.forEach((v, i) => sweep(v, `${where}[${i}]`)); return; }
+      if (!node || typeof node !== 'object') return;
+      for (const [k, v] of Object.entries(node)) {
+        if (typeof v === 'string' && (k === 'role' || k.endsWith('_role')) && !known(v)) {
+          errors.push(`${where}.${k} names '${v}', which is not a declared role, capability pool, legacy alias or non-seat writer; a reference nobody holds routes to no one and every check reading it passes by never matching`);
+        }
+        sweep(v, `${where}.${k}`);
+      }
+    };
+    for (const [name, contract] of Object.entries(c)) sweep(contract, name);
+  }
+
   // A ref naming the command that may move it is a grant, so it is checked like
   // one: the action must exist, must be a protected one (moving a shared ref is
   // never ordinary), and no two refs may claim the same command — two refs
@@ -1372,6 +1404,16 @@ export function renderGovernance(c) {
     L.push(`- **Approval ceiling:** ${r.approval_ceiling}`);
     L.push('');
   }
+
+  // Identifiers that stand where a role does and are held by no one. They are
+  // rendered because a reader hitting `generator` or `per-seat` in the ref and
+  // path tables has no other place to find out what they mean.
+  L.push('### Identifiers that are not seats');
+  L.push('');
+  L.push(c.roles.non_seat_writers_are_not_roles);
+  L.push('');
+  for (const w of c.roles.non_seat_writers) L.push(`- \`${w.id}\` — ${w.means}`);
+  L.push('');
 
   L.push('## Authority matrix');
   L.push('');
@@ -4028,7 +4070,7 @@ const VIEW_PROBES = {
   'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => gateDetailLines(g).length ? [`#### Gate ${g.id} \u2014 ${g.name}`, '', ...gateDetailLines(g)].join('\n') : null).filter((y) => y !== null), ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
-  roles: (x) => x.roles.map((r) => [
+  roles: (x) => [x.non_seat_writers_are_not_roles, ...x.non_seat_writers.map((w) => `- \`${w.id}\` \u2014 ${w.means}`), ...x.roles.map((r) => [
     '### `' + r.role + '`',
     '',
     `- **Mission:** ${r.mission}`,
@@ -4038,7 +4080,7 @@ const VIEW_PROBES = {
     `- **Must:** ${r.must.join('; ') || '\u2014'}`,
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
-  ].filter((l) => l !== null).join('\n')),
+  ].filter((l) => l !== null).join('\n'))],
   teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``, `- Persistent display name: \`${x.naming_convention.display_name_persistent}\``, `- Agent display name: \`${x.naming_convention.display_name_agent}\``, x.naming_convention.display_name_is_not_the_seat_name, x.naming_convention.display_name_kind_is_not_a_choice],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`), x.legacy_rule, ...(x.legacy_values || []).map((lv) => `| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`)],
 };
@@ -5386,6 +5428,17 @@ export function runSelftest(root = ROOT) {
     const hit = errs.some((e) => e.includes('not in enum'));
     results.push({ label: 'ref binding: a mutation value outside the declared vocabulary', pass: hit, errs: hit ? [] : errs });
   }
+  // The role sweep. Three plants put a typo at a different depth, and three more
+  // remove one arm of the declared vocabulary each — if an arm is never the
+  // reason something resolves, it is dead permission widening the check for
+  // nothing, and these say which arm carries which reference.
+  expectSemantic('role sweep: a typo in a nested authority role', (c) => { c.retention.authority.actor_role = 'it-manager-ii'; }, 'is not a declared role, capability pool, legacy alias or non-seat writer');
+  expectSemantic('role sweep: a typo inside an array of arrays', (c) => { c['promotion-gates'].gates.find((g) => g.conditional_roles).conditional_roles[0].role = 'data-architecture-leed'; }, 'routes to no one');
+  expectSemantic('role sweep: a typo in a path owner', (c) => { c['git-ownership'].paths[0].owner_role = 'makerr'; }, 'is not a declared role');
+  expectSemantic('role sweep: the non-seat writers undeclared', (c) => { c.roles.non_seat_writers = [{ id: 'unused-writer', means: 'nothing references this' }]; }, "names 'generator'");
+  expectSemantic('role sweep: the capability pools undeclared', (c) => { c.teams.capability_pools = []; }, "names 'experience-accessibility-review'");
+  expectSemantic('role sweep: the legacy aliases undeclared', (c) => { c.teams.legacy_aliases = []; }, "names 'delivery-systems-review'");
+  expectSemantic('role sweep: an identifier declared as both a role and a non-seat writer', (c) => { c.roles.non_seat_writers.push({ id: 'maker', means: 'ambiguous on purpose' }); }, 'two different things');
   expectSemantic('ref binding: a ref moved by a command nothing declares', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'fast-forward-anything'; }, 'which owner-command.json does not declare');
   expectSemantic('ref binding: a shared ref moved by an unprotected command', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'delegate'; }, 'moving a shared ref is never an ordinary command');
   expectSemantic('ref binding: two refs claiming the same command', (c) => { const r = c['git-ownership'].refs.find((x) => x.mutated_by_action); c['git-ownership'].refs.push({ ...r, ref: 'test-2' }); }, 'would depend on declaration order');

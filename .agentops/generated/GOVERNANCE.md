@@ -245,6 +245,13 @@ Elapsed time changes routing only, never truth, evidence, or authority. FYIs rem
 - **Must not:** approve-its-own-implementation, waive-independent-qa, push-pr-merge-deploy-or-release, amend-its-own-grant
 - **Approval ceiling:** Forms and staffs its own team. Holds no waiver over independent QA: decision 0010 withdrew that mechanism pending an authenticated approval path.
 
+### Identifiers that are not seats
+
+These identifiers appear where a role identifier does, and nothing holds them. They are declared so a reference naming one is checked rather than waved through, and so a typo in a role field cannot pass as one of them.
+
+- `generator` — The generated-artifact lane’s single writer. `opsctl render` is the only thing that writes those paths, so the owner is a tool rather than a seat, and no one holds it.
+- `per-seat` — Ownership follows the ticket’s writer lease rather than a fixed seat, so the owner is whichever role currently holds that ticket. Used where a path or ref is one lane per seat and can therefore be owned by any role in turn.
+
 ## Authority matrix
 
 | Action | Routine owner role | Scope | Protected | Required evidence |
@@ -469,6 +476,7 @@ Idle capacity: Read-only audits, modernization-register refreshes, documentation
 | `qa-functional` | `qa-guild` | Independent functional and regression evidence. |
 | `review-approval-hub` | `platform-release` | The Hub is now generated output under the generated-artifact lane; approval gates themselves live in transitions.json and authority.json, not a team. |
 | `writing` | `experience-design` | Narrative, copy and documentation clarity. |
+| `delivery-systems-review` | `platform-release` | Named as a Gate D conditional reviewer in promotion-gates while no role, pool or alias declared it, so that condition could never be routed to anyone. Routed here because platform-release is the declared pool for CI, packaging, deployment and release staging — the surfaces the gate condition names. This is a routing decision recorded where routing decisions live; the IT Manager III or the owner may rebind it. |
 
 
 ## RACI (exactly one Accountable per item)
