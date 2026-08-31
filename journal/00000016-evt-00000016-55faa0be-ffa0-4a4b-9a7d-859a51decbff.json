@@ -1,0 +1,37 @@
+{
+  "event_id": "evt-00000016-55faa0be-ffa0-4a4b-9a7d-859a51decbff",
+  "idempotency_key": "INTAKE_RECORDED:257:0:2026-08-31T14:24:36.345Z",
+  "sequence": 16,
+  "previous_snapshot_hash": "47a9cdb25259650e38e9483d1f4121ee08897e2c16e0e17c93fa3ba1bd8887bd",
+  "issue_id": "257",
+  "actor": "intake",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Quests and earlier choices influence later events",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-257-quest-choice-pipeline",
+    "claimed_paths": [
+      "src/model/quests.js",
+      "tools/quest-choice-contract.mjs"
+    ],
+    "claimed_resources": [
+      "quest-choice-contract"
+    ],
+    "acceptance_commands": [
+      "node tools/quest-choice-contract.mjs",
+      "node tests/run-node.mjs",
+      "git diff --check"
+    ],
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/issues/257"
+    ],
+    "next_action": "Implement bounded quest-choice contract and RED-first gate",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T14:24:36.345Z"
+}

@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 15,
-  "last_sequence": 15,
+  "revision": 16,
+  "last_sequence": 16,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -63,6 +63,48 @@
       "authority_ceiling": "dev-delivery",
       "updated_event": "evt-00000015-c134f66f-ab68-4c7d-a467-22c34112b44b",
       "updated_at": "2026-08-31T14:23:55.813Z"
+    },
+    "257": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "257",
+      "title": "Quests and earlier choices influence later events",
+      "priority": "P1",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-257-quest-choice-pipeline",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        "src/model/quests.js",
+        "tools/quest-choice-contract.mjs"
+      ],
+      "claimed_resources": [
+        "quest-choice-contract"
+      ],
+      "acceptance_commands": [
+        "node tools/quest-choice-contract.mjs",
+        "node tests/run-node.mjs",
+        "git diff --check"
+      ],
+      "evidence_pointers": [
+        "https://github.com/cehinds/AshenSpire/issues/257"
+      ],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Implement bounded quest-choice contract and RED-first gate",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000016-55faa0be-ffa0-4a4b-9a7d-859a51decbff",
+      "updated_at": "2026-08-31T14:24:36.345Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -190,5 +232,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "47a9cdb25259650e38e9483d1f4121ee08897e2c16e0e17c93fa3ba1bd8887bd"
+  "snapshot_hash": "c61855ddbbfec7a10d6b6c0f50dd60910ae93379c8f744ed82d3638790ad7972"
 }
