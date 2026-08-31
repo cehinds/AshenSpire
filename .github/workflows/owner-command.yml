@@ -71,7 +71,10 @@ jobs:
       - name: Capture the issue body
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
-        run: printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
+        run: |
+          umask 077
+          install -m 600 /dev/null /tmp/issue-body.md
+          printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
 
       - name: Verify and transport the structured owner decision
         env:
@@ -84,8 +87,6 @@ jobs:
 
       - name: Validate the command (dry-run first)
         id: dryrun
-        env:
-          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
           set +e
           node .agentops/tools/opsctl.mjs command --dry-run \
