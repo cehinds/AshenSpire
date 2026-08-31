@@ -1,0 +1,24 @@
+{
+  "event_id": "evt-00000034-62a7bb90-8a7b-43c7-9deb-4ea2a9a78ee6",
+  "idempotency_key": "RESOURCE_RELEASED:257:3:2026-08-31T15:17:45.594Z",
+  "sequence": 34,
+  "previous_snapshot_hash": "beece2f482a8ebbee74d252cdf8b4983629145547f4c64b7a706b006a99d72f0",
+  "issue_id": "257",
+  "actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:3",
+  "lease_epoch": 3,
+  "event_type": "RESOURCE_RELEASED",
+  "exact_object": {},
+  "payload": {
+    "requeue": true,
+    "retained_paths": [
+      "src/model/quests.js",
+      "tools/quest-choice-contract.mjs",
+      "src/ui/screens/event.js",
+      "src/content/events.js"
+    ],
+    "retained_resources": []
+  },
+  "created_at": "2026-08-31T15:17:45.594Z"
+}

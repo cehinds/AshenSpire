@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 33,
-  "last_sequence": 33,
+  "revision": 34,
+  "last_sequence": 34,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 7,
+      "revision": 8,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "READY",
       "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:257:3",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 3,
-      "lease_expiry": "2026-08-31T15:40:59.231Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": null,
       "lease_history": [
         {
@@ -106,7 +106,12 @@
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [],
+      "claimed_paths": [
+        "src/model/quests.js",
+        "tools/quest-choice-contract.mjs",
+        "src/ui/screens/event.js",
+        "src/content/events.js"
+      ],
       "claimed_resources": [],
       "acceptance_commands": [
         "node tools/quest-choice-contract.mjs",
@@ -120,8 +125,8 @@
       "wake_condition": null,
       "next_action": "Reclaim from the last preserved candidate or worktree.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000030-87712a8e-26e7-4bea-8010-ef0907d3e36c",
-      "updated_at": "2026-08-31T15:10:59.231Z"
+      "updated_event": "evt-00000034-62a7bb90-8a7b-43c7-9deb-4ea2a9a78ee6",
+      "updated_at": "2026-08-31T15:17:45.594Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -329,5 +334,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "beece2f482a8ebbee74d252cdf8b4983629145547f4c64b7a706b006a99d72f0"
+  "snapshot_hash": "2d664ee302bd29e77a7a34f60a630559ec4a774506d41387782c277fa59541a2"
 }
