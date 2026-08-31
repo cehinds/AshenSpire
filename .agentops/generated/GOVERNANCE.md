@@ -702,7 +702,7 @@ The owner-command path accepts only enumerated actions from an authenticated act
 | reseat | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `params` | an unstarted seat's base — pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time |
 | request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
 | authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
-| fast-forward-test | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `params` | the `test` ref — a true fast-forward to the exact hosted-verified `dev` SHA, and nothing else |
+| fast-forward-test | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `params` | the `test` ref — a true fast-forward to the exact hosted-verified `dev` SHA, and nothing else |
 | grant-dev-delivery-authority | owner | yes | yes | `target`, `expected_current_hash`, `reason` | grant an it-manager-iii-owned capsule normal-PR delivery authority to dev only; direct dev push, deploy, main/release, tags, publication, and Pages remain forbidden |
 | authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
 | record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |

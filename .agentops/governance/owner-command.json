@@ -163,7 +163,7 @@
         "it-manager-iii"
       ],
       "requires_cas": true,
-      "protected": false,
+      "protected": true,
       "lifecycle_target": "hosted-verified",
       "required_fields": [
         "target",

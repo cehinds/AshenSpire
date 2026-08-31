@@ -547,6 +547,21 @@ export function semanticChecks(c) {
   // and — the part that matters most — what each explicitly does NOT grant.
   // It lived only as a decision record, so nothing stopped a transition guard
   // paraphrasing a gate wrongly, or a gate quietly claiming release authority.
+  // An action whose lifecycle_target is reached by a protected transition is a
+  // protected action. Restating the flag by hand let fast-forward-test declare
+  // itself unprotected while moving through transitions.json's protected
+  // `dev-integrated -> hosted-verified`, so generated governance and every
+  // decision event reported a protected promotion as ordinary.
+  if (c['owner-command'] && c.transitions) {
+    for (const a of c['owner-command'].actions) {
+      if (!a.lifecycle_target) continue;
+      const moves = c.transitions.transitions.filter((t) => t.to === a.lifecycle_target);
+      if (moves.length && moves.every((t) => t.protected) && !a.protected) {
+        errors.push(`owner-command: action '${a.id}' moves to '${a.lifecycle_target}', which transitions.json reaches only by protected moves, but declares protected:false; a consumer filtering on that flag would omit it`);
+      }
+    }
+  }
+
   // An action that performs a gate must move the lifecycle that gate guards.
   // fast-forward-test advanced `test` and left the capsule at dev-integrated,
   // so Gate D's declared hosted-verified -> resolved transition was unreachable:
@@ -1045,6 +1060,23 @@ export function semanticChecks(c) {
       }
       if (d.superseded_by && !c.directives.directives.some((x) => x.id === d.superseded_by)) {
         errors.push(`directives: '${d.id}' names successor '${d.superseded_by}', which is not a declared directive`);
+      }
+      // Existence is not succession. A directive naming itself, or two naming
+      // each other, leaves every one of them claiming to be replaced by
+      // something that was also replaced — a supersession chain with no live
+      // end, which is not a record of what is in force.
+      if (d.superseded_by) {
+        const seen = new Set([d.id]);
+        let cur = d.superseded_by;
+        while (cur) {
+          if (seen.has(cur)) {
+            errors.push(`directives: supersession from '${d.id}' closes a loop at '${cur}'; a chain of replacements with no live end says nothing about what is in force`);
+            break;
+          }
+          seen.add(cur);
+          const nxt = c.directives.directives.find((x) => x.id === cur);
+          cur = nxt ? nxt.superseded_by : null;
+        }
       }
       if (d.status !== 'superseded' && d.superseded_by) {
         errors.push(`directives: '${d.id}' names a successor but is still '${d.status}'; two live directives on one instruction is a contradiction nothing resolves`);
@@ -2175,6 +2207,23 @@ export function runtimeChecks(g, rt) {
   // a node and removes nothing, so every check here exists to keep it that way.
   // A summary whose range has gone is not a shorter record — it is a claim about
   // events nobody can read.
+  // A payload belongs to the kind that owns it. The schema lists `consolidates`
+  // and `promotion` as free properties, and runtimeChecks skips a payload whose
+  // kind does not match — so a `genesis` event carrying a schema-valid
+  // `consolidates` passed verify with an unchecked consolidation claim sitting
+  // in the authoritative ledger. `promotion` arrived in this same PR with the
+  // identical flaw; both are paired here.
+  const KIND_PAYLOAD = [['consolidates', 'consolidation'], ['promotion', 'owner-decision']];
+  for (const [ticket, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      for (const [field, kind] of KIND_PAYLOAD) {
+        if (ev[field] !== undefined && ev.kind !== kind) {
+          errors.push(`event '${ev.id}' is kind '${ev.kind}' but carries a '${field}' payload, which only a '${kind}' event may carry; nothing would check it there`);
+        }
+      }
+    }
+  }
+
   if (g.retention) {
     const ret = g.retention;
     const protectedTickets = new Set(ret.corrections_are_never_consolidated.protected_tickets || []);
@@ -4500,7 +4549,18 @@ export function runSelftest(root = ROOT) {
       const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('-9100'));
       results.push({ label: 'consolidation control: a well-formed summary of a present range validates', pass: errs.length === 0, errs });
     }
-    expectRuntime('consolidation: a range that is not present', (rt) => { consolidate(rt, bigTicket, 12).consolidates.from_event = `${bigTicket}-8888`; }, 'must be present to be summarised');
+    // A payload on the wrong kind is never checked, so it must never be accepted.
+  expectRuntime('a consolidation payload on a genesis event', (rt) => {
+    const t = Object.keys(rt.events)[0];
+    const g = rt.events[t].find((e) => e.kind === 'genesis') || rt.events[t][0];
+    g.consolidates = { from_event: 'x', to_event: 'y', count: 2, authorised_by: 'maker', recovery_consequence: 'none' };
+  }, "only a 'consolidation' event may carry");
+  expectRuntime('a promotion payload on a state-change event', (rt) => {
+    const t = Object.keys(rt.events)[0];
+    const e = rt.events[t].find((x) => x.kind === 'state-change') || rt.events[t][0];
+    e.promotion = { ref: 'test', from: 'a'.repeat(40), to: 'b'.repeat(40), hosted_verified_dev_oid: 'b'.repeat(40), evidence: ['x'] };
+  }, "only a 'owner-decision' event may carry");
+  expectRuntime('consolidation: a range that is not present', (rt) => { consolidate(rt, bigTicket, 12).consolidates.from_event = `${bigTicket}-8888`; }, 'must be present to be summarised');
     expectRuntime('consolidation: a count that does not match the range', (rt) => { consolidate(rt, bigTicket, 12).consolidates.count = 3; }, 'a dangling claim');
     expectRuntime('consolidation: a range that runs backwards', (rt) => { const e = consolidate(rt, bigTicket, 12); const f = e.consolidates.from_event; e.consolidates.from_event = e.consolidates.to_event; e.consolidates.to_event = f; }, 'runs backwards');
     expectRuntime('consolidation: fewer events than the declared minimum', (rt) => { consolidate(rt, bigTicket, 3); }, 'below the declared minimum');
@@ -4869,6 +4929,9 @@ export function runSelftest(root = ROOT) {
   for (const ghost of ['constructor', 'toString', 'reporting.__proto__', 'reporting.toString']) {
     expectSemantic(`directives: an inherited codification path (${ghost})`, (c) => { const d = c.directives.directives[0]; d.codified_in = 'information-access'; d.codified_as = ghost; }, 'which does not exist');
   }
+  expectSemantic('owner-command: a protected move declared unprotected', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').protected = false; }, 'a consumer filtering on that flag would omit it');
+  expectSemantic('directives: a directive superseded by itself', (c) => { const d = c.directives.directives[0]; d.status = 'superseded'; d.superseded_by = d.id; }, 'closes a loop at');
+  expectSemantic('directives: two directives superseding each other', (c) => { const [x, y] = c.directives.directives; x.status = 'superseded'; y.status = 'superseded'; x.superseded_by = y.id; y.superseded_by = x.id; }, 'closes a loop at');
   expectSemantic('gate C: the action no longer moves the lifecycle its gate guards', (c) => { delete c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').lifecycle_target; }, 'the ref would advance while the capsule stood still');
   expectSemantic('directives: a contract named with no field named', (c) => { delete c.directives.directives[0].codified_as; }, 'names the contract AND the exact field');
   expectSemantic('directives: a field named with no contract named', (c) => { delete c.directives.directives[0].codified_in; }, 'names the contract AND the exact field');
