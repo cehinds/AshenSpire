@@ -1,0 +1,25 @@
+{
+  "event_id": "evt-00000007-2bc08e4e-39ef-4cfa-b4de-f8004333239e",
+  "idempotency_key": "CLAIM_ACQUIRED:470:1:2026-08-31T13:57:36.182Z",
+  "sequence": 7,
+  "previous_snapshot_hash": "b96bf37fa690929ade45c226489ee76b858f1cee13d0349023e18ea0cba421bc",
+  "issue_id": "470",
+  "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+  "machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+  "lease_id": "lease:470:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-470",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T14:27:36Z",
+    "claimed_paths": [
+      "review-approval-hub/decisions.html",
+      "review-approval-hub/tickets/AS-HD-029.html",
+      ".github/workflows/owner-command.yml"
+    ],
+    "claimed_resources": []
+  },
+  "created_at": "2026-08-31T13:57:36.182Z"
+}

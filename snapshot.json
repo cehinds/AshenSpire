@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 6,
-  "last_sequence": 6,
+  "revision": 7,
+  "last_sequence": 7,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -153,23 +153,31 @@
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "470",
       "title": "Repair dev verify drift from #470 decision: commit dropped review-approval-hub mirror; widen owner-command git add",
       "priority": "P0",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-470",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:470:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T14:27:36Z",
+      "lease_machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+          "machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+          "lease_id": "lease:470:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         "review-approval-hub/decisions.html",
@@ -186,10 +194,10 @@
       "wake_condition": null,
       "next_action": "Regenerate the two mirror files via opsctl render; add review-approval-hub to the workflow git add",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000006-3329a5ba-e53d-4d7f-ae17-2122f586a081",
-      "updated_at": "2026-08-31T13:57:35.832Z"
+      "updated_event": "evt-00000007-2bc08e4e-39ef-4cfa-b4de-f8004333239e",
+      "updated_at": "2026-08-31T13:57:36.182Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "b96bf37fa690929ade45c226489ee76b858f1cee13d0349023e18ea0cba421bc"
+  "snapshot_hash": "5a72613f99df9326f5e8d10b06e6fd211d3f26b12a7afc6064aa57ab1ef1beaa"
 }
