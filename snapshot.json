@@ -1,27 +1,35 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 42,
-  "last_sequence": 42,
+  "revision": 43,
+  "last_sequence": 43,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "256",
       "title": "E11 regression: render armament reward effects as player-facing copy",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
       "candidate_commit": null,
       "branch": "codex/issue-256-armament-reward-copy",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:codex:9d6e4f32-bf53-4ca7-a184-5039e7db6f42",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:256:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T16:38:57.8261597Z",
+      "lease_machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:codex:9d6e4f32-bf53-4ca7-a184-5039e7db6f42",
+          "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+          "lease_id": "lease:256:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         "src/model/equipmentPresentation.js",
@@ -36,10 +44,10 @@
       "evidence_pointers": [],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Replace raw armament modifier keys with shared player-facing labels and preserve reward behavior.",
+      "next_action": "Create fresh isolated worktree, implement shared effect labels, run reward and unit gates.",
       "authority_ceiling": "local-candidate",
-      "updated_event": "evt-00000042-5a690d37-81f8-453d-9754-c886df9affc9",
-      "updated_at": "2026-08-31T16:08:41.997Z"
+      "updated_event": "evt-00000043-927c3248-274d-4366-ad08-58e819039f41",
+      "updated_at": "2026-08-31T16:08:59.437Z"
     },
     "313": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -400,5 +408,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "e0a81bc5fd81fd0abee1d31368f095ae1e596a484b6dc828011bd7dcb3044c68"
+  "snapshot_hash": "cf331abfcaffca846ea92fd4916e98e4df2b60c785f591c23d134a9daf2fe9d2"
 }

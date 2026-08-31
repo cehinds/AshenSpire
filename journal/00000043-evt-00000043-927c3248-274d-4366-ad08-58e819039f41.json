@@ -1,0 +1,25 @@
+{
+  "event_id": "evt-00000043-927c3248-274d-4366-ad08-58e819039f41",
+  "idempotency_key": "CLAIM_ACQUIRED:256:1:2026-08-31T16:08:59.437Z",
+  "sequence": 43,
+  "previous_snapshot_hash": "e0a81bc5fd81fd0abee1d31368f095ae1e596a484b6dc828011bd7dcb3044c68",
+  "issue_id": "256",
+  "actor": "seat:codex:9d6e4f32-bf53-4ca7-a184-5039e7db6f42",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": "lease:256:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-256-armament-reward-copy",
+    "base_commit": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
+    "lease_expiry": "2026-08-31T16:38:57.8261597Z",
+    "claimed_paths": [
+      "src/model/equipmentPresentation.js",
+      "src/ui/screens/reward.js"
+    ],
+    "claimed_resources": [],
+    "next_action": "Create fresh isolated worktree, implement shared effect labels, run reward and unit gates."
+  },
+  "created_at": "2026-08-31T16:08:59.437Z"
+}
