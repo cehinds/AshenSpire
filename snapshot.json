@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 16,
-  "last_sequence": 16,
+  "revision": 17,
+  "last_sequence": 17,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -47,12 +47,12 @@
     },
     "422": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "422",
       "title": "Reconcile it-support role across AUTHORITY.md and roles.json",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-422",
@@ -84,8 +84,8 @@
       "wake_condition": null,
       "next_action": "Add authority-matrix row or remove role; ITM3 ruling",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000013-7883504f-043a-4aa5-9095-ab9d14230328",
-      "updated_at": "2026-08-31T14:25:02.325Z"
+      "updated_event": "evt-00000017-ed6561c8-9ebd-48ca-be61-a3c6e387d709",
+      "updated_at": "2026-08-31T14:31:57.191Z"
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -236,5 +236,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "6f46306eafeb9469492cdb8f669bcd2f050a7030c7339ad925f08511f0f7eac8"
+  "snapshot_hash": "093b3cac52b79c25684dbb8f2c425af6bbf7607e4744b62fedf1b87365bc489c"
 }
