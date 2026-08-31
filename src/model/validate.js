@@ -42,7 +42,7 @@ import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttribut
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { characterCreationProblems } from './characterCreation.js';
-import { enemyLevelProfileProblems, levelConfigProblems } from './levels.js';
+import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -593,6 +593,15 @@ export function validateContent(bundle) {
     if (!enemy || enemy.levelProfile == null) continue;
     for (const problem of enemyLevelProfileProblems(enemy.levelProfile, `enemies.${enemy.id || '?'}.levelProfile`)) {
       err(problem.path, problem.msg);
+    }
+  }
+  for (const encounter of Array.isArray(b.encounters) ? b.encounters : []) {
+    if (!encounter) continue;
+    for (const field of ['floorBand', 'targetBand']) {
+      if (encounter[field] == null) continue;
+      for (const problem of levelBandProblems(encounter[field], `encounters.${encounter.id || '?'}.${field}`)) {
+        err(problem.path, problem.msg);
+      }
     }
   }
   // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS

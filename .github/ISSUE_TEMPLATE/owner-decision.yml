@@ -30,7 +30,7 @@ body:
     id: action
     attributes:
       label: Action
-      description: Only these actions exist. `authorize-release` is owner-exclusive.
+      description: Only these actions exist. `grant-dev-delivery-authority`, `authorize-release`, and `record-owner-override` are owner-exclusive.
       options:
         - prioritize
         - delegate
@@ -41,6 +41,7 @@ body:
         - revoke-lease
         - request-revision
         - authorize-integration
+        - grant-dev-delivery-authority
         - authorize-release
         - record-owner-override
     validations:
@@ -63,8 +64,8 @@ body:
         Compare-and-swap guard, copied from the Owner HUD. If the ticket changed
         since you read it, the command is rejected as stale rather than applied
         to state you did not see. Required for approve, reject, revoke-lease,
-        request-revision, authorize-integration, authorize-release, and
-        record-owner-override.
+        request-revision, authorize-integration, grant-dev-delivery-authority,
+        authorize-release, and record-owner-override.
       placeholder: "sha256:…"
 
   - type: input

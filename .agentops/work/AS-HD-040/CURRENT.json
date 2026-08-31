@@ -1,13 +1,13 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 51,
-  "current_hash": "sha256:a0e678447bc1dfaf529ab86a9d3af451d5fdb091a7a36ba8eebb852a618144fa",
-  "parent_hash": "sha256:102e25743e37964215f45053bc8de3e32a4da372fb02ade4cf40ea45bbe49511",
+  "revision": 52,
+  "current_hash": "sha256:8d3160b2e1295cb99441e74871f8c3545eec0fc4296b185dfad38de2a972b674",
+  "parent_hash": "sha256:a0e678447bc1dfaf529ab86a9d3af451d5fdb091a7a36ba8eebb852a618144fa",
   "ticket": "AS-HD-040",
-  "lifecycle_state": "assigned",
+  "lifecycle_state": "qa-review",
   "objective": "Close the component-card silhouette successor contract for the class facelift (Art D1).",
   "done_when": "One owner-selected successor path is recorded and the frozen four-crop desktop/mobile packet either satisfies the full-class-silhouette clause or is superseded by an approved successor.",
-  "next_action": "Await the owner decision recorded on this ticket; do not generate new art until D1 selects proof-only upper-body successor or new full-body inputs.",
+  "next_action": "Hold. Frozen candidate a72cac9689cfb3b7e302cbcaa4d0a88f4e9ab7ff sits on dev without a verdict (Gate A skipped, #468). Await the retrospective ruling: qa-independent (AS-HD-055) verdicts the candidate in place on dev at an exact head, or it-manager-iii records acceptance/waiver through the owner-command approve path. This seat must not override or self-certify an independent QA verdict.",
   "repo": "https://github.com/cehinds/AshenSpire.git",
   "ref": "recovery/as-hd-040",
   "base_oid": "7bcc9ed08d3a5cc3bc77238851309d27308a78e9",
@@ -18,8 +18,15 @@
   "affected_paths": [
     "assets/classes/**"
   ],
-  "evidence_pointers": [],
-  "blocker": null,
+  "evidence_pointers": [
+    "test-run-receipt",
+    "generated-view-drift-check"
+  ],
+  "blocker": {
+    "kind": "qa-verdict-missing",
+    "escalation_class": "technical-blocker",
+    "summary": "Frozen candidate a72cac9689cfb3b7e302cbcaa4d0a88f4e9ab7ff (sent to qa-independent on #427) was integrated to dev via PR #423 (merge 3695e26f) and PR #432 (merge 9cd09b0b) before any verdict existed; Gate A was skipped (#468). assets/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md on dev has since drifted from the frozen head, and a changed candidate reopens verification. Requires a retroactive independent QA verdict at an exact head, or an it-manager-iii acceptance/waiver recorded through the owner-command path; neither is this seat’s to record."
+  },
   "authority": {
     "may": [
       "implement-locally-on-exclusive-paths",
