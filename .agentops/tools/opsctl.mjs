@@ -1027,6 +1027,25 @@ export function semanticChecks(c) {
     }
   }
 
+  // The same shape as the directive status the review flagged, found by sweeping
+  // the two contracts this PR added for unconstrained strings that other code
+  // then compares against. Both of these are read by checks, so a typo does not
+  // fail loudly — it makes the check quietly match nothing.
+  if (c.retention) {
+    const ret = c.retention;
+    if (c.roles && !c.roles.roles.some((r) => r.role === ret.authority.actor_role)) {
+      errors.push(`retention: authority.actor_role '${ret.authority.actor_role}' is not a declared role; the consolidation authority check would compare against a role nobody holds and refuse every consolidation`);
+    }
+    // The event kind consolidations use must be one events can actually carry,
+    // or runtimeChecks matches no event and every range, authority and
+    // protected-ticket check silently never runs.
+    let kinds = [];
+    try { kinds = JSON.parse(readFileSync(resolve(ROOT, RUNTIME_SCHEMAS.event), 'utf8')).properties.kind.enum || []; } catch { kinds = []; }
+    if (kinds.length && !kinds.includes(ret.consolidation.kind)) {
+      errors.push(`retention: consolidation.kind '${ret.consolidation.kind}' is not a declared event kind (${kinds.join(', ')}); no event could ever match it, so every consolidation check would pass by never running`);
+    }
+  }
+
   if (c.directives) {
     const ids = new Set();
     const known = new Set(Object.keys(c));
@@ -4956,6 +4975,8 @@ export function runSelftest(root = ROOT) {
     expectSemantic(`directives: an inherited codification path (${ghost})`, (c) => { const d = c.directives.directives[0]; d.codified_in = 'information-access'; d.codified_as = ghost; }, 'which does not exist');
   }
   expectSemantic('owner-command: a protected move declared unprotected', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').protected = false; }, 'a consumer filtering on that flag would omit it');
+  expectSemantic('retention: an authority role nobody holds', (c) => { c.retention.authority.actor_role = 'it-manger-iii'; }, 'refuse every consolidation');
+  expectSemantic('retention: a consolidation kind no event can carry', (c) => { c.retention.consolidation.kind = 'consolidaton'; }, 'pass by never running');
   expectSemantic('directives: a directive superseded by itself', (c) => { const d = c.directives.directives[0]; d.status = 'superseded'; d.superseded_by = d.id; }, 'closes a loop at');
   expectSemantic('directives: two directives superseding each other', (c) => { const [x, y] = c.directives.directives; x.status = 'superseded'; y.status = 'superseded'; x.superseded_by = y.id; y.superseded_by = x.id; }, 'closes a loop at');
   expectSemantic('gate C: the action no longer moves the lifecycle its gate guards', (c) => { delete c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').lifecycle_target; }, 'the ref would advance while the capsule stood still');
