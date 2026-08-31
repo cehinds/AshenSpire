@@ -16,9 +16,9 @@ body:
     id: request_schema
     attributes:
       label: Request schema
-      description: "Required constant: agentops/project-schema-change-authority/v1."
+      description: "Required constant: agentops/project-schema-change-authority/v2."
       options:
-        - agentops/project-schema-change-authority/v1
+        - agentops/project-schema-change-authority/v2
     validations:
       required: true
 
@@ -334,5 +334,82 @@ body:
       label: Expires at
       description: "Required strict future UTC expiry with seconds and optional milliseconds."
       placeholder: 2026-09-01T15:10:17Z
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audit_ref
+    attributes:
+      label: Audit ref
+      description: "Required constant: refs/heads/agentops/project-schema-audit."
+      options:
+        - refs/heads/agentops/project-schema-audit
+    validations:
+      required: true
+
+  - type: dropdown
+    id: expected_audit_remote_oid
+    attributes:
+      label: Expected audit remote OID
+      description: "Required constant: null. This records the independently observed absent audit ref; it is not permission to recreate a deleted ref."
+      options:
+        - "null"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audit_push_mode
+    attributes:
+      label: Audit push mode
+      description: "Required constant: create-if-absent-then-non-force-forward-only-cas."
+      options:
+        - create-if-absent-then-non-force-forward-only-cas
+    validations:
+      required: true
+
+  - type: dropdown
+    id: journal_mode
+    attributes:
+      label: Journal mode
+      description: "Required constant: append-only-intent-result."
+      options:
+        - append-only-intent-result
+    validations:
+      required: true
+
+  - type: dropdown
+    id: recovery_mode
+    attributes:
+      label: Recovery mode
+      description: "Required constant: inspect-once-never-create."
+      options:
+        - inspect-once-never-create
+    validations:
+      required: true
+
+  - type: input
+    id: audit_paths
+    attributes:
+      label: Audit paths
+      description: 'Required one-line canonical JSON object with exactly root, journal_path, attempt_path_template, receipt_path_template, and manifest_path_template. Constants: {"attempt_path_template":".agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json","journal_path":".agentops/scheduler/project-schema-attempts/journal.jsonl","manifest_path_template":".agentops/scheduler/project-schema-attempts/manifests/{attempt_id}.json","receipt_path_template":".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json","root":".agentops/scheduler/project-schema-attempts"}.'
+      placeholder: '{"attempt_path_template":".agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json","journal_path":".agentops/scheduler/project-schema-attempts/journal.jsonl","manifest_path_template":".agentops/scheduler/project-schema-attempts/manifests/{attempt_id}.json","receipt_path_template":".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json","root":".agentops/scheduler/project-schema-attempts"}'
+    validations:
+      required: true
+
+  - type: input
+    id: audit_guards
+    attributes:
+      label: Audit guards
+      description: 'Required one-line canonical JSON object with exactly the frozen guards. Constants: {"allowed_mutation":"append-intent-result-attempt-and-receipt-records-only","consumed_create_retry_forbidden":true,"development_ref_mutation_forbidden":true,"expected_absence":true,"initial_commit_parent_binding":"derived-owner-authority-a","initial_creation_authorized_if_absent":true,"intent_before_each_create":true,"read_only_recovery":true,"ref_recreation_forbidden":true,"result_after_each_response":true,"subsequent_linear_direct_successors":true}.'
+      placeholder: '{"allowed_mutation":"append-intent-result-attempt-and-receipt-records-only","consumed_create_retry_forbidden":true,"development_ref_mutation_forbidden":true,"expected_absence":true,"initial_commit_parent_binding":"derived-owner-authority-a","initial_creation_authorized_if_absent":true,"intent_before_each_create":true,"read_only_recovery":true,"ref_recreation_forbidden":true,"result_after_each_response":true,"subsequent_linear_direct_successors":true}'
+    validations:
+      required: true
+
+  - type: input
+    id: audit_result_contract
+    attributes:
+      label: Audit result contract
+      description: 'Required one-line canonical JSON object with exactly schema, result_schema, path, schema_pointer, construction_timing, finalization_timing, ambiguity_policy, and no_self_reference. It binds the observable-only result schema; it does not assert a future outcome.'
+      placeholder: '{"ambiguity_policy":"inspect-once-never-create","construction_timing":"after-manifest-publication-and-single-postinspection","finalization_timing":"after-manifest-publication-and-single-postinspection","no_self_reference":true,"path":".git/agentops-project-schema/audit-result.json","result_schema":"agentops/project-schema-audit-result/v1","schema":"agentops/project-schema-audit-result-contract/v1","schema_pointer":".agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt"}'
     validations:
       required: true
