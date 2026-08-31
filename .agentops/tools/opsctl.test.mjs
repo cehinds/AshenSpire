@@ -632,6 +632,26 @@ function check(name, cond, detail = '') {
     check('the reseated capsule links to the seal it succeeded', after.parent_hash === before.current_hash, `${after.parent_hash} vs ${before.current_hash}`);
     check('reseating twice is a no-op', (() => { const again = runReseat(agentops, 'AS-HD-057'); return again.ok && again.unchanged === true; })());
 
+    // A tracked base is provenance, not a request to freeze some other
+    // checkout. Divergence must fail before either capsule or ledger changes.
+    const trackedBranch = git('branch', '--show-current').toString().trim();
+    git('branch', 'tracked-base', 'HEAD');
+    writeFileSync(resolve(sandbox, 'divergence-probe.txt'), 'checkout moved\n');
+    git('add', 'divergence-probe.txt');
+    git('commit', '-q', '-m', 'move checkout past tracked base');
+    const trackedFile = resolve(agentops, 'work/AS-HD-054/CURRENT.json');
+    const trackedCap = JSON.parse(readFileSync(trackedFile, 'utf8'));
+    trackedCap.base_ref = 'tracked-base';
+    writeFileSync(trackedFile, JSON.stringify(trackedCap, null, 2) + '\n');
+    const capsuleBeforeRefusal = readFileSync(trackedFile, 'utf8');
+    const eventDir = resolve(agentops, 'events/AS-HD-054');
+    const eventsBeforeRefusal = readdirSync(eventDir).filter((name) => name.endsWith('.json')).sort();
+    const divergent = runReseat(agentops, 'AS-HD-054');
+    check('a tracked base refuses a divergent seat checkout', !divergent.ok && /align the checkout/.test(divergent.errors.join(' ')), JSON.stringify(divergent));
+    check('a divergent tracked-base refusal mutates no capsule', readFileSync(trackedFile, 'utf8') === capsuleBeforeRefusal);
+    check('a divergent tracked-base refusal appends no event', JSON.stringify(readdirSync(eventDir).filter((name) => name.endsWith('.json')).sort()) === JSON.stringify(eventsBeforeRefusal));
+    git('checkout', '-q', trackedBranch);
+
     // The CI shape: a pull request is checked out as a detached merge commit.
     // AS-HD-054 is a still-unstarted capsule on a stale base, so the refusal
     // exercised here is the detached HEAD, not an already-started state.

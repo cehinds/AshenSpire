@@ -4955,8 +4955,12 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   if (freezing && tracked === null) {
     return { ok: false, errors: [`capsule ${ticket} tracks '${cap.base_ref}', which this checkout does not carry; a pointer that cannot be resolved cannot be frozen into a base`] };
   }
+  if (freezing && tracked !== head) {
+    return { ok: false, errors: [`capsule ${ticket} tracks '${cap.base_ref}' at ${tracked.slice(0, 12)}, but this checkout is at ${head.slice(0, 12)}; align the checkout through the separately governed seat workflow before freezing the base`] };
+  }
   const frozenRef = cap.base_ref;
-  cap.base_oid = freezing ? tracked : head;
+  const frozenBase = freezing ? tracked : head;
+  cap.base_oid = frozenBase;
   if (freezing) delete cap.base_ref;
   writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
   const r = runReseal(root, ticket, {
@@ -4967,7 +4971,7 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
       : `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
   });
   if (!r.ok) return r;
-  return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
+  return { ok: true, ticket, from, base: frozenBase, revision: r.revision, event: r.event };
 }
 
 // `reseat --all` used to live here. It is gone, and the reason is on the record:
