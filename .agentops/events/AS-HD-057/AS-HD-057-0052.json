@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-057-0052",
+  "ticket": "AS-HD-057",
+  "seq": 52,
+  "parent_event": "AS-HD-057-0051",
+  "kind": "lease-revoked",
+  "actor": "it-manager-iii",
+  "at": "2026-08-31T15:23:35Z",
+  "summary": "Revoked unused broad tools/** lease lease-AS-HD-057-it-support and issued sealed successor lease-AS-HD-057-it-support-r2 for only this ticket's capsule and event chain. Issue #392 tool writes require a later exact non-overlapping path lease."
+}
