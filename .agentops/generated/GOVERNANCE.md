@@ -273,6 +273,7 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `main` | owner | protected |
 | `dev` | it-manager-iii | pr-only |
 | `test` | it-manager-iii | gate-c-fast-forward-only |
+| `codex/docs-current-build-links` | maker | isolated-continuation |
 | `claude/*` | maker | isolated-continuation |
 | `recovery/*` | per-seat | isolated-continuation |
 
