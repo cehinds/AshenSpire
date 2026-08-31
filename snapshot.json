@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 9,
-  "last_sequence": 9,
+  "revision": 10,
+  "last_sequence": 10,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -149,22 +149,22 @@
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "470",
       "title": "Repair dev verify drift from #470 decision: commit dropped review-approval-hub mirror; widen owner-command git add",
       "priority": "P0",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "CANDIDATE_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
-      "candidate_commit": null,
+      "candidate_commit": "83f628925c211abe1afa8bd44cba946b04369fdb",
       "branch": "codex/issue-470",
-      "assigned_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:470:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T14:27:36Z",
-      "lease_machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
-      "maker_actor": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
       "lease_history": [
         {
           "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
@@ -185,15 +185,19 @@
         "node .agentops/tools/opsctl.mjs verify",
         "git diff --check"
       ],
-      "evidence_pointers": [],
+      "evidence_pointers": [
+        "VERIFY OK at head",
+        "render idempotent",
+        "3-file footprint"
+      ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Regenerate the two mirror files via opsctl render; add review-approval-hub to the workflow git add",
+      "next_action": "Bind independent QA to this exact candidate.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000008-1a0351d1-6fe2-4b26-be03-af0097a978df",
-      "updated_at": "2026-08-31T13:57:36.463Z"
+      "updated_event": "evt-00000010-2d856748-c8c9-4e69-98ca-ce78be1dae8c",
+      "updated_at": "2026-08-31T14:00:16.385Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "eb57b9c521072066fe4d8afab242f0a57a9611421dba1cd104a5b16db6cf4f10"
+  "snapshot_hash": "8aff5c032c7888448f8013e3998b5ae533cb8993c937eb8564c47d55591c26d0"
 }
