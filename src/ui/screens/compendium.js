@@ -107,18 +107,17 @@
 // is also where a locked cell's reason lives: printing "not yet found" twenty
 // three times IS the wall of grey, and the wall is the thing to avoid.
 //
-// TWO OPEN, NEITHER THIS BRANCH'S AND NEITHER FIXED HERE (Freja, carried by Viki
-// so the next reader does not rediscover them):
+// THE TAP PATH USES THE SAME DISCLOSURE AS HOVER AND FOCUS: each cell anchors
+// the shared tooltip beside itself, while the screen background and Back close
+// it. Locked cells therefore remain governed by the same reveal function on
+// every input path instead of gaining a second, leak-prone copy of their text.
 //
-//   THE TAP PATH IS WRONG, on the screen whose whole payload is the tooltip. It
-//   shows under the finger with `afterRelease: null`, and the 24 <button>s below
-//   carry NO click handler at all. That is component behaviour and it is already
-//   on dev — `showTooltipAt()` exists, one handler closes it, and it is hers.
-//
-//   GOLD MEANS TWO THINGS ON ONE GRID — *rare* and *yours*. Her palette, and
-//   Sunna's floor the moment it costs the read.
+// ONE OPEN, NOT THIS BRANCH'S AND NOT FIXED HERE (Freja, carried by Viki so the
+// next reader does not rediscover it): GOLD MEANS TWO THINGS ON ONE GRID —
+// *rare* and *yours*. Her palette, and Sunna's floor the moment it costs the
+// read.
 
-import { esc, attachTooltip } from '../components/tooltip.js';
+import { esc, attachTooltip, showTooltipFor, hideTooltip } from '../components/tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { pieceReveal } from '../../model/unlocks.js';
 import { ownership } from '../../model/loadout.js';
@@ -175,7 +174,7 @@ function cell(piece, { state, hint, gate }, modFields) {
   const art = el.querySelector('img');
   art.addEventListener('error', () => art.remove());
 
-  attachTooltip(el, () => {
+  const tooltipHtml = () => {
     if (held) {
       const mods = modSummary(modFields, piece);
       return `<b>${esc(piece.name)}</b><br>${esc(piece.rarity)} · ${esc(piece.hand)} hand`
@@ -190,6 +189,12 @@ function cell(piece, { state, hint, gate }, modFields) {
     // in the design; it is the same decision at a different magnification.
     const head = named ? `<b>${esc(piece.name)}</b><br>` : '';
     return `${head}${esc(piece.rarity)} · ${esc(piece.hand)} hand<br><i>${esc(hint || LOCK_COPY[gate] || '')}</i>`;
+  };
+  attachTooltip(el, tooltipHtml);
+  el.addEventListener('click', () => {
+    // A tap gets the same element-anchored disclosure as hover/focus, rather
+    // than a point-anchored tooltip underneath the player's finger.
+    showTooltipFor(el, tooltipHtml());
   });
   return el;
 }
@@ -251,5 +256,12 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     host.appendChild(box);
   }
 
-  app.querySelector('#cp-back').addEventListener('click', onBack);
+  const screen = app.querySelector('.compendium');
+  screen.addEventListener('click', (event) => {
+    if (!event.target.closest('.cp-cell, #cp-back')) hideTooltip();
+  });
+  app.querySelector('#cp-back').addEventListener('click', () => {
+    hideTooltip();
+    onBack();
+  });
 }
