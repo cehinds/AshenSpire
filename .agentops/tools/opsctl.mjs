@@ -566,6 +566,30 @@ export function semanticChecks(c) {
   // fast-forward-test advanced `test` and left the capsule at dev-integrated,
   // so Gate D's declared hosted-verified -> resolved transition was unreachable:
   // the ref said promoted and the authoritative lifecycle did not.
+  // A ref naming the command that may move it is a grant, so it is checked like
+  // one: the action must exist, must be a protected one (moving a shared ref is
+  // never ordinary), and no two refs may claim the same command — two refs
+  // answering one lookup means the ref a command moves depends on array order.
+  if (c['git-ownership'] && c['owner-command']) {
+    const byActionId = new Map(c['owner-command'].actions.map((a) => [a.id, a]));
+    const claimed = new Map();
+    for (const r of c['git-ownership'].refs) {
+      if (!r.mutated_by_action) continue;
+      const act = byActionId.get(r.mutated_by_action);
+      if (!act) {
+        errors.push(`git-ownership: ref '${r.ref}' names '${r.mutated_by_action}' as the command that may move it, which owner-command.json does not declare; the ref would answer a lookup no command makes`);
+      } else if (!act.protected) {
+        errors.push(`git-ownership: ref '${r.ref}' may be moved by '${act.id}', which is declared unprotected; moving a shared ref is never an ordinary command`);
+      }
+      const prior = claimed.get(r.mutated_by_action);
+      if (prior) {
+        errors.push(`git-ownership: refs '${prior}' and '${r.ref}' both claim '${r.mutated_by_action}'; which ref that command moves would depend on declaration order`);
+      } else {
+        claimed.set(r.mutated_by_action, r.ref);
+      }
+    }
+  }
+
   // The earlier form found Gate C by matching /fast-forward/ against its prose
   // `entry`. Rewording the gate would have made the lookup miss and the check
   // pass by never running — the defect class this file exists to catch, sitting
@@ -1364,9 +1388,9 @@ export function renderGovernance(c) {
   L.push('');
   L.push('### Refs');
   L.push('');
-  L.push('| Ref | Owner role | Mutation |');
-  L.push('|---|---|---|');
-  for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  L.push('| Ref | Owner role | Mutation | Moved by |');
+  L.push('|---|---|---|---|');
+  for (const r of c['git-ownership'].refs) L.push(gitRefRow(r));
   L.push('');
   L.push('### Paths');
   L.push('');
@@ -2324,7 +2348,7 @@ export function runtimeChecks(g, rt) {
   // derives them from — the ref from git-ownership, the evidence from the gate
   // that guards the move — so a hand-written event cannot name its own ref or
   // invent its own evidence.
-  const ffDecl = ((g['git-ownership'] || {}).refs || []).find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+  const ffDecl = refForAction(g, 'fast-forward-test');
   // Every check above reads the payload and none read who wrote it. An
   // `owner-decision` naming 'maker' as its actor validated a full, correct
   // promotion, attributing a protected move to a seat with no authority to
@@ -2776,7 +2800,7 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
   }
   // The ref it may touch comes from git-ownership, not from the request: a
   // command must not be able to name the ref it mutates.
-  const decl = ((contracts['git-ownership'] || {}).refs || []).find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+  const decl = refForAction(contracts, 'fast-forward-test');
   if (!decl) return [`git-ownership declares no ref whose mutation is gate-c-fast-forward-only; there is nothing this action may move`];
   const ref = decl.ref;
 
@@ -3089,7 +3113,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
       : request.action === 'reseat' && capsule
         ? `Owner-command 'reseat' by ${request.actor}: ${capsule.base_ref ? `base_ref ${capsule.base_ref}` : `base ${String(capsule.base_oid).slice(0, 12)}`} -> ${request.params.base_ref ? `base_ref ${request.params.base_ref} (resolved at read time)` : `base ${String(request.params.base_oid).slice(0, 12)}`}. The seat did not perform this; the authenticating actor did.`
         : request.action === 'fast-forward-test'
-        ? `Owner-command 'fast-forward-test' by ${request.actor}: fast-forwarded '${(contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || '')) || {}).ref}' from ${String(request.params.rollback_oid).slice(0, 12)} to ${String(request.params.target_oid).slice(0, 12)}, the hosted-verified dev SHA. Rollback target is the recorded predecessor.`
+        ? `Owner-command 'fast-forward-test' by ${request.actor}: fast-forwarded '${(refForAction(contracts, 'fast-forward-test') || {}).ref}' from ${String(request.params.rollback_oid).slice(0, 12)} to ${String(request.params.target_oid).slice(0, 12)}, the hosted-verified dev SHA. Rollback target is the recorded predecessor.`
         : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
     clearsBlocker ? 'Blocker cleared: the decision it was waiting on is now recorded.' : ''
   ].filter(Boolean).join(' ');
@@ -3104,7 +3128,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   // to reconstruct what the promotion was justified by.
   if (request.action === 'fast-forward-test' && request.params) {
     event.promotion = {
-      ref: (contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || '')) || {}).ref,
+      ref: (refForAction(contracts, 'fast-forward-test') || {}).ref,
       from: request.params.rollback_oid,
       to: request.params.target_oid,
       hosted_verified_dev_oid: request.params.hosted_verified_dev_oid,
@@ -3179,7 +3203,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   if (action.id === 'fast-forward-test') {
     const bad = fastForwardTestErrors(contracts, rt, request, root);
     if (bad.length) return { ok: false, errors: bad, written };
-    const decl = contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+    const decl = refForAction(contracts, 'fast-forward-test');
     // The ref moves FIRST among the writes, because it is the only one whose
     // failure mode is a lost race rather than an I/O error, and losing it must
     // cost nothing. The previous version wrote the capsule immediately before
@@ -3921,7 +3945,7 @@ const VIEW_PROBES = {
     ...x.pages.switch_packet_records.map((r) => `- ${r}`)],
   escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), ...x.classes.map((cl) => `- \`${cl.id}\` \u2014 ${cl.hazard}`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.per_seat ? '\`per-seat\` \u2014 the ticket\u2019s lease' : pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, `Ledger lane \`${x.ledger_serialization.lane}\`, written solely by \`${x.ledger_serialization.writer}\`: ${x.ledger_serialization.rule}`, x.ledger_serialization.actor_rule, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  'git-ownership': (x) => [x.principle, ...x.refs.map(gitRefRow), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.per_seat ? '\`per-seat\` \u2014 the ticket\u2019s lease' : pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, `Ledger lane \`${x.ledger_serialization.lane}\`, written solely by \`${x.ledger_serialization.writer}\`: ${x.ledger_serialization.rule}`, x.ledger_serialization.actor_rule, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
   hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.note, x.authority_tiers.namespace_note, x.authority_tiers.disambiguation.known_ambiguous_artifact, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
@@ -4103,6 +4127,22 @@ export function governanceGateErrors(contracts, arts) {
 // check, the capsule authority check, dispatch's wake selection, and the wake
 // capsule's own IDENTITY line, which printed `role=<actor id>`. One helper
 // instead of four fixes, so the fifth site cannot drift.
+// The ref a command may move, looked up by the command's id. Seven call sites
+// each carried their own /gate-c-fast-forward/ substring match against the
+// ref's `mutation` prose, so the binding lived in seven places and none of
+// them named the command. A ref declares which action may move it now, and
+// every call site asks the same question here.
+// One row shape for the ref table, shared by the renderer and the coverage
+// projection. The Moved-by column exists because mutated_by_action decides
+// which command may move a shared ref, and a reader could not see it.
+export function gitRefRow(r) {
+  return `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} | ${r.mutated_by_action ? '\`' + r.mutated_by_action + '\`' : '\u2014'} |`;
+}
+
+export function refForAction(contracts, actionId) {
+  return (((contracts || {})['git-ownership'] || {}).refs || []).find((r) => r.mutated_by_action === actionId) || null;
+}
+
 export function actorRole(g, actorId) {
   const node = g && g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === actorId);
   return node ? node.role : actorId;
@@ -4768,7 +4808,7 @@ export function runSelftest(root = ROOT) {
   // git-ownership permits, full commits, the hosted-verified SHA it claims, and
   // the evidence its gate requires — or the authoritative record asserts a
   // protected move that could not have occurred.
-  const ffRef = ((contracts['git-ownership'] || {}).refs || []).find((r) => /gate-c-fast-forward/i.test(r.mutation || '')).ref;
+  const ffRef = refForAction(contracts, 'fast-forward-test').ref;
   const ffGateId = ((contracts['promotion-gates'] || {}).gates || []).find((x) => x.id === contracts['owner-command'].actions.find((a) => a.id === 'fast-forward-test').performs_gate);
   const plantPromotion = (rt, mutate) => {
     const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
@@ -5085,12 +5125,12 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'gate C: no pr-only integration ref to check the hosted claim against', pass: !noDevRes.ok && noDevRes.errors.some((e) => e.includes('no pr-only integration ref')), errs: noDevRes.errors });
 
     // ...and the action must not be able to name the ref it moves.
-    const noRef = { ...contracts, 'git-ownership': { ...contracts['git-ownership'], refs: contracts['git-ownership'].refs.filter((r) => !/gate-c-fast-forward/i.test(r.mutation || '')) } };
+    const noRef = { ...contracts, 'git-ownership': { ...contracts['git-ownership'], refs: contracts['git-ownership'].refs.map((r) => { const { mutated_by_action, ...rest } = r; return rest; }) } };
     const orphan = validateCommand(noRef, rtFF, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
     results.push({ label: 'gate C: no declared gate-c ref means nothing to move', pass: !orphan.ok && orphan.errors.some((e) => e.includes('nothing this action may move')), errs: orphan.errors });
 
     // Repository-dependent refusals: the ancestor check and the live-ref checks.
-    const ffRefDecl = contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+    const ffRefDecl = refForAction(contracts, 'fast-forward-test');
     const liveRef = ffRefDecl ? resolveRef(root, ffRefDecl.ref) : null;
     results.push({ label: 'gate C repository checks ' + (liveRef ? 'ran against ' + ffRefDecl.ref : 'skipped — this checkout carries no ' + (ffRefDecl ? ffRefDecl.ref : 'gate-c') + ' branch'), pass: true, errs: [] });
     if (liveRef) {
@@ -5236,6 +5276,21 @@ export function runSelftest(root = ROOT) {
   // The binding itself, and the two ways it can be broken without breaking any
   // other check: a gate that is not declared, and a lifecycle advance that
   // names no gate at all.
+  // `mutation` was an unconstrained string that three checks compare against
+  // ('pr-only', 'protected', and the gate-C value). A typo there matched no
+  // check and every one of them passed by never running — the same shape as the
+  // consolidation-kind and ledger-scope defects this file already carries.
+  {
+    const c = base();
+    c['git-ownership'].refs.find((r) => r.mutation === 'pr-only').mutation = 'pr-onIy';
+    const schema = JSON.parse(readFileSync(resolve(root, CONTRACTS.find((x) => x.name === 'git-ownership').schema), 'utf8'));
+    const errs = validateSchema(c['git-ownership'], schema);
+    const hit = errs.some((e) => e.includes('not in enum'));
+    results.push({ label: 'ref binding: a mutation value outside the declared vocabulary', pass: hit, errs: hit ? [] : errs });
+  }
+  expectSemantic('ref binding: a ref moved by a command nothing declares', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'fast-forward-anything'; }, 'which owner-command.json does not declare');
+  expectSemantic('ref binding: a shared ref moved by an unprotected command', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'delegate'; }, 'moving a shared ref is never an ordinary command');
+  expectSemantic('ref binding: two refs claiming the same command', (c) => { const r = c['git-ownership'].refs.find((x) => x.mutated_by_action); c['git-ownership'].refs.push({ ...r, ref: 'test-2' }); }, 'would depend on declaration order');
   expectSemantic('gate binding: an action performing a gate nothing declares', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').performs_gate = 'Z'; }, 'which promotion-gates does not declare');
   expectSemantic('gate binding: a lifecycle advance naming no gate', (c) => { delete c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').performs_gate; }, 'a lifecycle advance no gate guards is an ungated promotion');
   expectSemantic('gate binding: a gate whose actor cannot authenticate the command that opens it', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').authenticator_roles = ['owner']; }, 'could not run the command that opens it');
