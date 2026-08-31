@@ -1,0 +1,10 @@
+[2026-08-31T15:48:14.521015600+00:00] startup: base_url=https://chatgpt.com/backend-api path_style=wham
+[2026-08-31T15:48:14.521558100+00:00] auth: mode=ChatGPT account_id=92101616-239a-4961-99da-fe6033a2ca2a
+[2026-08-31T15:48:14.521935600+00:00] auth: set ChatGPT-Account-Id header: 92101616-239a-4961-99da-fe6033a2ca2a
+[2026-08-31T15:48:14.892062300+00:00] http.list_tasks: env=<all> limit=20 cursor_in=<none> cursor_out=<none> items=4
+[2026-08-31T15:48:42.845198600+00:00] startup: base_url=https://chatgpt.com/backend-api path_style=wham
+[2026-08-31T15:48:42.845565+00:00] auth: mode=ChatGPT account_id=92101616-239a-4961-99da-fe6033a2ca2a
+[2026-08-31T15:48:42.845937900+00:00] auth: set ChatGPT-Account-Id header: 92101616-239a-4961-99da-fe6033a2ca2a
+[2026-08-31T15:48:51.617928700+00:00] startup: base_url=https://chatgpt.com/backend-api path_style=wham
+[2026-08-31T15:48:51.618265+00:00] auth: mode=ChatGPT account_id=92101616-239a-4961-99da-fe6033a2ca2a
+[2026-08-31T15:48:51.618631900+00:00] auth: set ChatGPT-Account-Id header: 92101616-239a-4961-99da-fe6033a2ca2a
