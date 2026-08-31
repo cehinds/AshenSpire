@@ -193,6 +193,10 @@ function cell(piece, { state, hint, gate }, modFields) {
     return `${head}${esc(piece.rarity)} · ${esc(piece.hand)} hand<br><i>${esc(hint || LOCK_COPY[gate] || '')}</i>`;
   };
   attachTooltip(el, tooltipHtml);
+  el.addEventListener('focus', () => {
+    showTooltipFor(el, tooltipHtml());
+  });
+  el.addEventListener('blur', hideTooltip);
   el.addEventListener('click', () => {
     // A tap gets the same element-anchored disclosure as hover/focus, rather
     // than a point-anchored tooltip underneath the player's finger.
