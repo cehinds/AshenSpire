@@ -22,6 +22,12 @@
       "note": "Exact fast-forward to hosted-verified dev SHA; non-release."
     },
     {
+      "ref": "agentops/scheduler-state",
+      "owner_role": "it-manager-iii",
+      "mutation": "expected-old-oid-cas-only",
+      "note": "Portable scheduler state only; the active machine custodian advances it by expected-old-OID compare-and-swap. It never merges into a product branch."
+    },
+    {
       "ref": "claude/*",
       "owner_role": "maker",
       "mutation": "isolated-continuation",
@@ -53,6 +59,12 @@
       "owner_role": "maker",
       "serialized_lane": "agentops-tooling",
       "note": "Validator and future wake compiler."
+    },
+    {
+      "glob": ".agentops/scheduler/**",
+      "owner_role": "maker",
+      "serialized_lane": "agentops-scheduler",
+      "note": "Scheduler product configuration and schemas; one exact issue/ref/lease writer at a time. Portable runtime state belongs only on agentops/scheduler-state."
     },
     {
       "glob": ".agentops/generated/**",

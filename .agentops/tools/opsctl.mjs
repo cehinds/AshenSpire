@@ -994,7 +994,7 @@ export function semanticChecks(c) {
       if (ids.has(a.id)) errors.push(`owner-command: duplicate action id '${a.id}'`);
       ids.add(a.id);
       for (const r of a.authenticator_roles) if (!roles.has(r)) errors.push(`owner-command: action '${a.id}' names unknown authenticator role '${r}'`);
-      if ((a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
+      if ((a.id === 'authorize-scheduler-cutover' || a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
         errors.push(`owner-command: action '${a.id}' must be owner-exclusive`);
       }
     }
@@ -2075,7 +2075,14 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const event = {
     schema: 'agentops/event/v1', id, ticket, seq,
     parent_event: last ? last.id : null,
-    kind: 'owner-decision', actor: request.actor, at: now, summary
+    kind: 'owner-decision', actor: request.actor, at: now, summary,
+    decision: {
+      action: request.action,
+      authenticated_role: request.actor,
+      target: request.target,
+      expected_current_hash: request.expected_current_hash ?? null,
+      candidate_oid: request.candidate_oid ?? null
+    }
   };
 
   if (capsule) {

@@ -273,6 +273,7 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `main` | owner | protected |
 | `dev` | it-manager-iii | pr-only |
 | `test` | it-manager-iii | gate-c-fast-forward-only |
+| `agentops/scheduler-state` | it-manager-iii | expected-old-oid-cas-only |
 | `claude/*` | maker | isolated-continuation |
 | `recovery/*` | per-seat | isolated-continuation |
 
@@ -283,6 +284,7 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/governance/**` | it-manager-iii | governance |
 | `.agentops/schemas/**` | it-manager-iii | governance |
 | `.agentops/tools/**` | maker | agentops-tooling |
+| `.agentops/scheduler/**` | maker | agentops-scheduler |
 | `.agentops/generated/**` | generator | governance |
 | `.agentops/work/**` | maker | per-ticket |
 | `.agentops/events/**` | maker | per-ticket |
@@ -678,6 +680,7 @@ The owner-command path accepts only enumerated actions from an authenticated act
 | issue-lease | owner, it-manager-iii | no | no | `target`, `params` | writer lease issuance |
 | revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
 | request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
+| authorize-scheduler-cutover | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | enable scheduler dispatch at one exact agentops/scheduler-state commit after the real-ticket pilot |
 | authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
 | authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
 | record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
@@ -749,7 +752,7 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 
 - `enumerated_only` — A command whose action is not in this allowlist is rejected.
 - `authenticated_actor` — The command actor must map to a role in the action's authenticator_roles.
-- `owner_exclusive` — authorize-release and record-owner-override authenticate the owner role only.
+- `owner_exclusive` — authorize-scheduler-cutover, authorize-release, and record-owner-override authenticate the owner role only.
 - `compare_and_swap` — When requires_cas is true, expected_current_hash must equal the live sealed hash of the target; a mismatch is a stale command and fails safely.
 - `no_arbitrary_input` — The request schema forbids additional fields; there is no shell or free-form command field.
 - `dry_run_first` — The processor records a dry-run summary before any mutation; --apply performs the mutation only after the same validation passes.
