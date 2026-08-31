@@ -1846,6 +1846,22 @@ export function runtimeChecks(g, rt) {
   // Capsules: seal/CAS integrity, evidence ownership, authority, lease binding.
   for (const [ticket, cap] of Object.entries(rt.capsules)) {
     if (cap.ticket !== ticket) errors.push(`capsule for '${ticket}' has mismatched ticket field '${cap.ticket}'`);
+    // Ruling AS-HD-029-0052 point 2. A tracking pointer belongs only to a seat
+    // that has not started: once work stands on a tree, the base is that tree
+    // and following the branch would silently rebase the seat's assumptions.
+    // The freeze is what makes the pointer safe, so it is checked rather than
+    // trusted to the writer.
+    if (cap.base_ref) {
+      if (!RESEATABLE.has(cap.lifecycle_state)) {
+        errors.push(`capsule '${ticket}' is '${cap.lifecycle_state}' and still tracks '${cap.base_ref}'; work stands on a tree, so the base freezes into base_oid when the seat starts`);
+      }
+      if (/^[0-9a-f]{7,40}$/.test(cap.base_ref)) {
+        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is a commit id, not a branch; a pinned value recorded as a pointer is neither`);
+      }
+      if (cap.base_ref.split('/').includes('..') || /[\s~^:?*\[\\]/.test(cap.base_ref)) {
+        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is not a valid branch name`);
+      }
+    }
     if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
     if (cap.evidence_pointers.length > 8) errors.push(`capsule '${ticket}' has ${cap.evidence_pointers.length} evidence pointers, exceeding the max of 8`);
     for (const ep of cap.evidence_pointers) if (!evIds.has(ep)) errors.push(`capsule '${ticket}' evidence pointer '${ep}' is not a declared evidence type in evidence.json`);
@@ -1918,6 +1934,15 @@ function onBranch(root) {
 // Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
 // work, so an absent ref is normal for an unstarted seat — but wake must say so
 // rather than printing a checkout instruction that silently cannot be followed.
+// Resolve a branch name to its current OID. Same execFileSync discipline as
+// refExists: the ref comes from capsule JSON and a shell would expand `$(...)`
+// in it. Returns null when the ref does not exist in this checkout.
+function resolveRef(root, ref) {
+  try {
+    return execFileSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${ref}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null;
+  } catch { return null; }
+}
+
 function refExists(root, ref) {
   try {
     // execFileSync, never execSync: the ref comes from capsule JSON, and a
@@ -1949,8 +1974,17 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   const oi = contracts['owner-intent'];
   const lease = rt.leases.find((l) => l.id === cap.writer_lease);
   const shrt = (o) => (o && o.length > 12) ? o.slice(0, 12) : (o || '?');
+  // Ruling AS-HD-029-0052 point 2: an unstarted seat's base may TRACK a branch
+  // rather than pin a commit it never worked from. The pointer is resolved here,
+  // at read time, and nothing is appended to say so — chasing HEAD with an event
+  // per commit is what wrote 423 no-op entries. A tracking capsule is never
+  // stale, because there is no pinned value to fall behind.
   let freshness;
-  if (frozen) freshness = `as-recorded (base ${shrt(cap.base_oid)}); verify live HEAD out-of-band`;
+  const tracked = cap.base_ref ? resolveRef(root, cap.base_ref) : null;
+  if (cap.base_ref && frozen) freshness = `tracking \`${cap.base_ref}\` (as recorded); resolve the ref in this checkout`;
+  else if (cap.base_ref && tracked) freshness = `tracking \`${cap.base_ref}\` @ ${shrt(tracked)}; an unstarted seat follows the branch, so it does not go stale`;
+  else if (cap.base_ref) freshness = `UNRESOLVABLE — capsule tracks \`${cap.base_ref}\`, which this checkout does not carry; a pointer that cannot be resolved is not a base`;
+  else if (frozen) freshness = `as-recorded (base ${shrt(cap.base_oid)}); verify live HEAD out-of-band`;
   else if (!head) freshness = 'unknown (no live HEAD)';
   else if (head.startsWith(cap.base_oid) || cap.base_oid.startsWith(head)) freshness = `current (base matches HEAD ${shrt(head)})`;
   else freshness = `STALE — capsule base ${shrt(cap.base_oid)} != live HEAD ${shrt(head)}; re-seat before mutating`;
@@ -1966,7 +2000,7 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
   const refNote = frozen ? '' : (refExists(root, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
   L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
-  L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
+  L.push(`BASE       : ${cap.base_ref ? `${cap.base_ref} (tracked; last resolved ${cap.base_oid})` : cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
   // A seat at a gated state must know which gate stands in front of it, who
   // may open it, and what evidence it needs — otherwise it discovers the wall
@@ -3385,6 +3419,10 @@ export function runDrill(root = ROOT) {
     total = Object.keys(rtNow.capsules).length;
     for (const t of Object.keys(rtNow.capsules).sort()) {
       const cap = rtNow.capsules[t];
+      // A capsule tracking a branch has no pinned value to fall behind, so it is
+      // not stale — that is the point of ruling AS-HD-029-0052's pointer. An
+      // UNRESOLVABLE pointer is a different matter and wake reports it.
+      if (cap.base_ref) continue;
       if (cap.base_oid !== head) stale.push({ ticket: t, base: cap.base_oid, state: cap.lifecycle_state });
     }
   }
@@ -3515,6 +3553,40 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'reseat no longer defaults its actor to the seat', pass: !/actor:\s*actor \|\| cap\.owner_actor/.test(self), errs: [] });
     const sweepName = 'runReseat' + 'All';
     results.push({ label: 'the reseat sweep is gone, not merely undocumented', pass: !new RegExp('function ' + sweepName).test(self), errs: [] });
+  }
+
+  // Ruling AS-HD-029-0052 point 2. The pointer is only safe because it freezes
+  // when work starts; every way of loosening that is planted.
+  expectRuntime('a started capsule still tracking a branch', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => !RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'dev';
+  }, 'work stands on a tree, so the base freezes');
+  expectRuntime('a commit id recorded as a tracking pointer', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'a72cac9611df';
+  }, 'a pinned value recorded as a pointer is neither');
+  expectRuntime('a tracking pointer that is not a branch name', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'dev^{tree}';
+  }, 'is not a valid branch name');
+  {
+    // ...and the pointer actually removes the staleness it was ruled against:
+    // an unstarted capsule tracking a branch reads as tracking, not STALE.
+    const rt = baseRt();
+    const t = Object.keys(rt.capsules).find((k) => RESEATABLE.has(rt.capsules[k].lifecycle_state));
+    rt.capsules[t].base_ref = 'dev';
+    const built = buildCapsule(contracts, rt, t, { head: 'ffffffffffffffffffffffffffffffffffffffff', root });
+    const line = (built.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'an unstarted capsule tracking a branch never reads STALE', pass: !!line && !line.includes('STALE'), errs: [String(line)] });
+    const frozenBuilt = buildCapsule(contracts, rt, t, { frozen: true, root });
+    const fline = (frozenBuilt.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'a tracking capsule reconstructs deterministically when frozen', pass: !!fline && fline.includes('as recorded'), errs: [String(fline)] });
+    // ...and a pointer this checkout cannot resolve is reported, not silently
+    // treated as a base.
+    rt.capsules[t].base_ref = 'no-such-branch-anywhere';
+    const missing = buildCapsule(contracts, rt, t, { head: 'ffffffffffffffffffffffffffffffffffffffff', root });
+    const mline = (missing.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'an unresolvable tracking pointer is reported, not assumed', pass: !!mline && mline.includes('UNRESOLVABLE'), errs: [String(mline)] });
   }
 
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
