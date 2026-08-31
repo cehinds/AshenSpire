@@ -196,7 +196,6 @@ function armaments() {
         hand: slotHand,
         declaredHand: hand,
         authoredHand,
-        mirror: slotHand !== authoredHand,
         art,
         url,
         missing: !existsSync(resolve(ROOT, url)),
@@ -296,13 +295,19 @@ async function renderedMeasure(cdp, S, port, pieces) {
   };
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 400, height: 500, deviceScaleFactor: 1, mobile: false }, S);
 
-  const HARNESS = `(() => {
+  const HARNESS = `(async () => {
+    const [{ equippedFigure }, { figureSpec }, { ARMAMENTS, ARMOUR, SLOTS }] = await Promise.all([
+      import('/src/ui/assets.js'),
+      import('/src/model/loadout.js'),
+      import('/src/content/equipment.js'),
+    ]);
+    const registries = { equipment: { armaments: ARMAMENTS, armour: ARMOUR, slots: SLOTS } };
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:#ff00ff;width:400px;height:500px;overflow:hidden';
     const host = document.createElement('div');
     host.style.cssText = 'position:absolute;left:0;top:0;width:400px;height:500px;background:#ff00ff;';
     document.body.appendChild(host);
-    window.__probeShow = (wrapper, srcs) => new Promise((done) => {
+    window.__probeShow = async (wrapper, piece) => {
       host.innerHTML = '';
       let outer = host;
       if (wrapper === 'nested') {
@@ -312,30 +317,34 @@ async function renderedMeasure(cdp, S, port, pieces) {
         host.appendChild(cs);
         outer = cs;
       }
-      const fig = document.createElement('div');
-      fig.className = 'equipped-figure';
-      fig.style.cssText = 'position:absolute;inset:0;';
+      const slotId = piece && piece.hand === 'left' ? 'leftHand' : 'rightHand';
+      const loadout = piece ? {
+        sets: { [slotId]: [piece.pieceId] },
+        active: { [slotId]: 0 },
+      } : { sets: {}, active: {} };
+      const spec = figureSpec(registries, loadout, 'reaver');
+      const fig = equippedFigure({ classId: 'reaver', ...spec });
+      if (!fig) throw new Error('equippedFigure returned no Reaver figure');
+      fig.style.position = 'absolute';
+      fig.style.inset = '0';
       outer.appendChild(fig);
-      let left = srcs.length;
-      const settle = () => requestAnimationFrame(() => requestAnimationFrame(() => done(true)));
-      if (!left) return settle();
-      for (const entry of srcs) {
-        const s = typeof entry === 'string' ? { url: entry, mirror: false } : entry;
-        const img = document.createElement('img');
-        img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;' +
-          (s.mirror ? 'transform:scaleX(-1);' : '');
-        img.onload = () => { if (--left === 0) settle(); };
-        img.onerror = () => { img.remove(); if (--left === 0) settle(); };
-        img.src = s.url;
-        fig.appendChild(img);
+      const images = [...fig.querySelectorAll('img')];
+      await Promise.all(images.map((img) => img.decode().catch(() => null)));
+      // Piece readings exclude body pixels, but preserve the exact element,
+      // layer transform and enclosing shipped CSS produced by the runtime.
+      if (piece) {
+        const body = images.find((img) => img.getAttribute('src').includes('/body_'));
+        if (body) body.style.visibility = 'hidden';
       }
-    });
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      return true;
+    };
     return true;
   })()`;
   await mount(HARNESS);
-  const show = (wrapper, srcs) => mount(`window.__probeShow(${JSON.stringify(wrapper)}, ${JSON.stringify(srcs)})`);
+  const show = (wrapper, piece) => mount(`window.__probeShow(${JSON.stringify(wrapper)}, ${JSON.stringify(piece)})`);
 
-  await show('bare', [BODY]);
+  await show('bare', null);
   const bodyBare = await shoot();
 
   // THE NESTING PROBE MUST BE ASYMMETRIC, and the first version of it was not.
@@ -346,19 +355,19 @@ async function renderedMeasure(cdp, S, port, pieces) {
   // side: bare and nested must put it on the SAME side, or the mirror count
   // differs between the Armoury and the combat board.
   const witness = pieces.find((p) => p.hand === 'right') || pieces[0];
-  await show('bare', [BODY, { url: witness.url, mirror: witness.mirror }]);
+  await show('bare', witness);
   const witnessBare = await shoot();
-  await show('nested', [BODY, { url: witness.url, mirror: witness.mirror }]);
+  await show('nested', witness);
   const witnessNested = await shoot();
   // REPEATABILITY CONTROL. A difference between two SHAPES means nothing until
   // the same shape twice means nothing — otherwise noise in the harness is read
   // as a finding about the page. Measured before the shapes are compared.
-  await show('bare', [BODY, { url: witness.url, mirror: witness.mirror }]);
+  await show('bare', witness);
   const witnessBareAgain = await shoot();
 
   const rows = [];
   for (const p of pieces) {
-    await show('bare', [{ url: p.url, mirror: p.mirror }]);
+    await show('bare', p);
     rows.push({ ...p, piece: await shoot() });
   }
   return { bodyBare, witnessBare, witnessNested, witnessBareAgain, witness, rows };
@@ -396,9 +405,9 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'P3 a slot correction is removed — either-hand pieces collapse to their authored socket',
-        file: 'tools/hand-side-probe.mjs',
-        find: "        mirror: slotHand !== authoredHand,",
-        replace: "        mirror: false,",
+        file: 'src/model/loadout.js',
+        find: "      spec.leftMirror = piece.kind !== 'shield';",
+        replace: "      spec.leftMirror = false;",
         expectRed: /WRONG .*@(left|right)/,
       },
       {
@@ -431,7 +440,7 @@ async function run(port, pieces) {
     await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
     await new Promise((r) => setTimeout(r, 1200));
     const sources = [...new Map(pieces.map((piece) => [piece.pieceId, {
-      ...piece, id: piece.pieceId, hand: piece.authoredHand, mirror: false,
+      ...piece, id: piece.pieceId, hand: piece.authoredHand,
     }])).values()];
     const res = await cdp.send('Runtime.evaluate',
       { expression: MEASURE(BODY, sources), awaitPromise: true, returnByValue: true }, S);
