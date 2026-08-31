@@ -208,11 +208,14 @@
         "schema",
         "reconciler_head",
         "reconciler_tree",
+        "qa_receipt",
         "source",
         "target",
         "canonical_anchor_oid",
         "machine_lease",
         "work_leases",
+        "work_lease_ordering",
+        "late_candidate_gate",
         "mode",
         "not_before",
         "quiet_window_receipt_hash",
@@ -226,13 +229,46 @@
         "expires_at",
         "target_ref",
         "expected_remote_oid",
+        "development_ref",
+        "expected_development_remote_oid",
+        "publication_mode",
+        "ambiguity_policy",
+        "postcondition_policy",
         "push_mode",
-        "abort_on_remote_change"
+        "abort_on_remote_change",
+        "result_receipt_contract"
       ],
       "properties": {
-        "schema": {"const": "agentops/scheduler-state-reconciliation-authority/v1"},
+        "schema": {"const": "agentops/scheduler-state-reconciliation-authority/v2"},
         "reconciler_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "reconciler_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "qa_receipt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
+          "properties": {
+            "schema": {"const": "agentops/independent-qa-receipt/v1"},
+            "path": {"const": ".agentops/scheduler/reconciliation/qa-receipt.json"},
+            "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schema", "candidate", "verdict", "verifier", "maker_actor", "independent_of_maker", "tested_at", "tests", "evidence"],
+              "properties": {
+                "schema": {"const": "agentops/independent-qa-receipt/v1"},
+                "candidate": {"type": "object", "additionalProperties": false, "required": ["head", "tree"], "properties": {"head": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}},
+                "verdict": {"const": "PASS"},
+                "verifier": {"type": "object", "additionalProperties": false, "required": ["actor", "role"], "properties": {"actor": {"type": "string", "minLength": 1}, "role": {"const": "qa-independent"}}},
+                "maker_actor": {"type": "string", "minLength": 1},
+                "independent_of_maker": {"const": true},
+                "tested_at": {"type": "string", "minLength": 1},
+                "tests": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "command", "exit_code", "outcome", "output_sha256"], "properties": {"id": {"type": "string", "minLength": 1}, "command": {"type": "string", "minLength": 1}, "exit_code": {"const": 0}, "outcome": {"const": "PASS"}, "output_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}},
+                "evidence": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["kind", "path", "blob_oid", "sha256"], "properties": {"kind": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}}
+              }
+            }
+          }
+        },
         "source": {
           "type": "object",
           "additionalProperties": false,
@@ -291,6 +327,62 @@
             }
           }
         },
+        "work_lease_ordering": {"const": "numeric-issue-id-then-lease-epoch-then-lease-id"},
+        "late_candidate_gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "preserved", "unavailable", "ordering", "publication_permitted"],
+          "properties": {
+            "status": {"enum": ["READY", "WITHHOLD"]},
+            "preserved": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["issue_id", "candidate_commit", "candidate_tree", "preservation_mode", "remote_ref", "expected_remote_oid", "immutability"],
+                "properties": {
+                  "issue_id": {"type": "string", "pattern": "^#[1-9][0-9]*$"},
+                  "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "candidate_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "preservation_mode": {"enum": ["existing-immutable-remote-ref", "atomically-create-quarantine-ref"]},
+                  "remote_ref": {"type": "string", "pattern": "^refs/heads/agentops/quarantine/late-candidates/[1-9][0-9]*/[0-9a-f]{40}$"},
+                  "expected_remote_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+                  "immutability": {"enum": ["preexisting-never-move", "create-once-never-move"]}
+                },
+                "allOf": [
+                  {"if": {"properties": {"preservation_mode": {"const": "existing-immutable-remote-ref"}}}, "then": {"properties": {"expected_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "immutability": {"const": "preexisting-never-move"}}}},
+                  {"if": {"properties": {"preservation_mode": {"const": "atomically-create-quarantine-ref"}}}, "then": {"properties": {"expected_remote_oid": {"const": null}, "immutability": {"const": "create-once-never-move"}}}}
+                ]
+              }
+            },
+            "unavailable": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["issue_id", "candidate_commit", "expected_tree", "expected_blob_oid", "expected_sha256", "recorded_base_commits", "recovery_evidence", "owner_actor", "disposition", "reason_code"],
+                "properties": {
+                  "issue_id": {"type": "string", "pattern": "^#[1-9][0-9]*$"},
+                  "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "expected_tree": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+                  "expected_blob_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+                  "expected_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+                  "recorded_base_commits": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{40}$"}},
+                  "recovery_evidence": {"type": "object", "additionalProperties": false, "required": ["schema", "path", "blob_oid", "sha256"], "properties": {"schema": {"const": "agentops/late-candidate-recovery-receipt/v1"}, "path": {"type": "string", "pattern": "^\\.agentops/scheduler/reconciliation/late-candidates/[1-9][0-9]*/recovery-receipt\\.json$"}, "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+                  "owner_actor": {"const": "owner"},
+                  "disposition": {"const": "retain-custody-and-withhold"},
+                  "reason_code": {"enum": ["candidate-object-missing", "candidate-object-corrupt", "candidate-object-unreachable", "candidate-object-not-byte-recoverable", "conflicting-base-evidence"]}
+                }
+              }
+            },
+            "ordering": {"const": "numeric-issue-id-then-candidate-commit"},
+            "publication_permitted": {"type": "boolean"}
+          },
+          "allOf": [
+            {"if": {"properties": {"status": {"const": "READY"}}}, "then": {"properties": {"publication_permitted": {"const": true}, "unavailable": {"maxItems": 0}}}},
+            {"if": {"properties": {"status": {"const": "WITHHOLD"}}}, "then": {"properties": {"publication_permitted": {"const": false}, "unavailable": {"minItems": 1}}}}
+          ]
+        },
         "mode": {"const": "release-custody-and-reconcile-work-leases"},
         "not_before": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
         "quiet_window_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -304,8 +396,26 @@
         "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
         "target_ref": {"const": "refs/heads/agentops/scheduler-state"},
         "expected_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "push_mode": {"const": "non-force-forward-only-cas"},
-        "abort_on_remote_change": {"const": true}
+        "development_ref": {"const": "refs/heads/dev"},
+        "expected_development_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "publication_mode": {"const": "atomic-authority-state-and-quarantine-cas"},
+        "ambiguity_policy": {"const": "inspect-once-never-retry"},
+        "postcondition_policy": {"const": "authority-state-and-all-candidate-refs-exact-or-withhold"},
+        "push_mode": {"const": "git-push-atomic-exact-leases"},
+        "abort_on_remote_change": {"const": true},
+        "result_receipt_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "no_self_reference"],
+          "properties": {
+            "schema": {"const": "agentops/scheduler-state-reconciliation-result-contract/v1"},
+            "result_schema": {"const": "agentops/scheduler-state-reconciliation-result/v1"},
+            "path": {"const": ".git/agentops-scheduler/reconciliation-result.json"},
+            "schema_pointer": {"const": ".agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_state_reconciliation_result_receipt"},
+            "construction_timing": {"const": "after-atomic-publication-and-single-postinspection"},
+            "no_self_reference": {"const": true}
+          }
+        }
       }
     },
     "scheduler_cutover": {
@@ -940,6 +1050,67 @@
             "retry_create_permitted": {"const": false},
             "ref": {"const": "refs/heads/agentops/project-schema-audit"},
             "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
+          }
+        }
+      }
+    },
+    "scheduler_state_reconciliation_result_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "authority_a", "state_s1", "publication", "postinspection"],
+      "properties": {
+        "schema": {"const": "agentops/scheduler-state-reconciliation-result/v1"},
+        "authority_a": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "state_s1": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "publication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "attempted_at", "atomic_push_exit_code"],
+          "properties": {
+            "mode": {"const": "git-push-atomic-authority-state-quarantine-exact-leases"},
+            "attempted_at": {"type": "string", "minLength": 1},
+            "atomic_push_exit_code": {"type": ["integer", "null"]}
+          }
+        },
+        "postinspection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inspection_count", "retry_permitted", "state_ref", "state_actual_oid", "development_ref", "development_actual_oid", "late_candidate_refs"],
+          "properties": {
+            "inspection_count": {"const": 1},
+            "retry_permitted": {"const": false},
+            "state_ref": {"const": "refs/heads/agentops/scheduler-state"},
+            "state_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+            "development_ref": {"const": "refs/heads/dev"},
+            "development_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+            "late_candidate_refs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["ref", "actual_oid"],
+                "properties": {
+                  "ref": {"type": "string", "pattern": "^refs/heads/agentops/quarantine/late-candidates/[1-9][0-9]*/[0-9a-f]{40}$"},
+                  "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
+                }
+              }
+            }
           }
         }
       }
