@@ -1,0 +1,15 @@
+{
+  "event_id": "evt-00000009-bd34e452-bb62-42c7-a391-eb047122b969",
+  "idempotency_key": "SUPERSEDED:396:1:2026-08-31T13:57:48.616Z",
+  "sequence": 9,
+  "previous_snapshot_hash": "8ac650d2445af483ec7ab35598fb272636f7cf1b235d5c4ae0136c4ad05f4d62",
+  "issue_id": "396",
+  "actor": "scheduler",
+  "machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+  "lease_id": "lease:396:1",
+  "lease_epoch": 1,
+  "event_type": "SUPERSEDED",
+  "exact_object": {},
+  "payload": {},
+  "created_at": "2026-08-31T13:57:48.616Z"
+}

@@ -1,25 +1,25 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 8,
-  "last_sequence": 8,
+  "revision": 9,
+  "last_sequence": 9,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "396",
       "title": "Decommission orphan Hub: redirect /review-approval-hub/ to the generated hub (owner decision)",
       "priority": "P0",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "SUPERSEDED",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-396",
-      "assigned_actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:396:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T14:23:38Z",
-      "lease_machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": null,
       "lease_history": [
         {
@@ -31,11 +31,7 @@
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [
-        "review-approval-hub/index.html",
-        "review-approval-hub/reviews/as-hd-20260826-050-decision-debt.html",
-        "review-approval-hub/reviews/as-hd-20260826-053-context-rotation.html"
-      ],
+      "claimed_paths": [],
       "claimed_resources": [],
       "acceptance_commands": [
         "node .agentops/tools/opsctl.mjs verify",
@@ -44,10 +40,10 @@
       "evidence_pointers": [],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Author redirect stubs",
+      "next_action": null,
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000005-f71a53db-a1b2-4478-be2e-1e4683a86de4",
-      "updated_at": "2026-08-31T13:53:39.042Z"
+      "updated_event": "evt-00000009-bd34e452-bb62-42c7-a391-eb047122b969",
+      "updated_at": "2026-08-31T13:57:48.616Z"
     },
     "422": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -199,5 +195,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "8ac650d2445af483ec7ab35598fb272636f7cf1b235d5c4ae0136c4ad05f4d62"
+  "snapshot_hash": "eb57b9c521072066fe4d8afab242f0a57a9611421dba1cd104a5b16db6cf4f10"
 }
