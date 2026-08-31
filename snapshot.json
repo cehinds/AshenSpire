@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 44,
-  "last_sequence": 44,
+  "revision": 45,
+  "last_sequence": 45,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,12 +66,12 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 18,
+      "revision": 19,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "PR_READY",
+      "state": "PR_OPEN",
       "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
       "candidate_commit": "5b113a8c1bafeda4ae0c849145dfeba557d9a853",
       "branch": "codex/issue-257-quest-choice-pipeline",
@@ -161,14 +161,15 @@
         "node tools/quest-choice-contract.mjs --selftest:18/18 PASS",
         "node tests/run-node.mjs:114/114 PASS",
         "opsctl verify:PASS",
-        "event-screen runtime probe: before merchant choices=3; after abandonedCart/lootStrongbox choices=2; payInKind hidden; stealRelic+leave visible; clicking leave appends merchantsGhost/leave receipt and renders result controls"
+        "event-screen runtime probe: before merchant choices=3; after abandonedCart/lootStrongbox choices=2; payInKind hidden; stealRelic+leave visible; clicking leave appends merchantsGhost/leave receipt and renders result controls",
+        "https://github.com/cehinds/AshenSpire/pull/491"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Deliver an issue-closing PR to dev.",
+      "next_action": "Wait for required checks and independent exact-head review.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000044-c01d2bf9-a1f7-4689-b8d4-96c535bcf685",
-      "updated_at": "2026-08-31T15:51:37.648Z"
+      "updated_event": "evt-00000045-f151d70c-161b-4ae3-b7e4-c070f98b2941",
+      "updated_at": "2026-08-31T15:52:58.651Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -376,5 +377,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "f7cb3551e874c36543a1ff53179db663c40dff0a60c23f5e44ef80bc1a3f65ba"
+  "snapshot_hash": "49ecb73a9edbd812ccff836914c39ae72b95e7a05ce99b6fd5fcbf68332cf879"
 }
