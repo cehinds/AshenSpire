@@ -378,7 +378,7 @@ if (process.argv.includes('--selftest')) {
   // `assets` is NOT in doorplant's COPY_SET and this probe reads nothing else:
   // without it every plant would fail to load an image and go red for a reason
   // that has nothing to do with handedness — a catch that proves nothing.
-  process.exit(await doorSelftest({
+  const selftestCode = await doorSelftest({
     tool: 'hand-side-probe.mjs',
     extraCopy: ['assets'],
     env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
@@ -425,7 +425,11 @@ if (process.argv.includes('--selftest')) {
         expectRed: /POPULATION WRONG.*hand=either.*both left and right/,
       },
     ],
-  }));
+  });
+  if (selftestCode === 0) {
+    console.log('hand-side-probe --selftest: OK — 5/5 known-bads observed red');
+  }
+  process.exit(selftestCode);
 }
 
 async function run(port, pieces) {
@@ -551,7 +555,8 @@ async function main() {
       // `population.length`, not `rows.length`: the denominator is what the
       // FILE holds, so the count cannot quietly shrink to the size of whatever
       // this run happened to manage to measure.
-      console.log(`\nhand-side-probe: OK — ${rows.length} of ${population.length} legal armament-slot placements reach the player's correct side with exactly one global mirror.`);
+      console.log(`\nhand-side-probe: OK — ${rows.length} of ${population.length} legal armament-slot placement checks ran.`);
+      console.log(`  Every measured placement reaches the player's correct side with exactly one global mirror.`);
       console.log(`  Every hand=either row is measured in both slots; each asset is derived`);
       console.log(`  as artKey || id — the runtime's own rule (src/model/loadout.js:962).`);
     }
