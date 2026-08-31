@@ -1,0 +1,24 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-HD-029-scheduler-migration-authority",
+  "actor": "it-manager-iii",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-HD-029",
+  "ref": "recovery/as-hd-029-scheduler-migration-authority",
+  "path_globs": [
+    ".agentops/governance/owner-command.json",
+    ".agentops/schemas/owner-command.schema.json",
+    ".agentops/schemas/owner-command-request.schema.json",
+    ".agentops/schemas/event.schema.json"
+  ],
+  "base_oid": "976efeb50b0d19c4cb499700a01cef578061b40a",
+  "actions": [
+    "resolve-technical-ambiguity",
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch"
+  ],
+  "issued": "2026-08-31T15:10:17Z",
+  "expiry": "2026-09-01T15:10:17Z",
+  "revoked": false
+}
