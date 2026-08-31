@@ -13,11 +13,11 @@
 <dt>State</dt><dd>assigned</dd>
 <dt>Objective</dt><dd>Refresh current-build links and component-catalog documentation for GitHub issue #183 while keeping generated Hub projections derived from validated AgentOps state.</dd>
 <dt>Done when</dt><dd>README, CHANGELOG, both component-catalog documents, and any strictly necessary opsctl source/tests are committed on the exact isolated lane; AgentOps tests and render checks pass; generated Hub projections match sources; no product, promotion, deployment, or release state is changed.</dd>
-<dt>Next action</dt><dd>Task 01a02bc1-1611-7a22-9803-8c5e617ab711 enters C:\repos\AshenSpire-docs-build-links-current, confirms base 3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0 and clean status, then updates the exact leased files. Serialize resources current-branch-build-links, component-catalog-docs, and owner-hub-render; use opsctl render for generated projections.</dd>
+<dt>Next action</dt><dd>Task 01a02bc1-1611-7a22-9803-8c5e617ab711 enters C:\repos\AshenSpire-docs-build-links-current, brings the clean lane forward to dd37a367da922ca9adeb09c08bb81aa0ec97bb8d without history loss, then updates the exact leased files. Serialize resources current-branch-build-links, component-catalog-docs, and owner-hub-render; use opsctl render for generated projections.</dd>
 <dt>Branch</dt><dd><code>codex/docs-current-build-links</code></dd>
-<dt>Base</dt><dd><code>3ad9a77b6013</code></dd>
-<dt>Revision</dt><dd>1 · seal <code>sha256:a9342b2e17916c27…</code></dd>
-<dt>Succeeds</dt><dd><span class="none">nothing (genesis)</span></dd>
+<dt>Base</dt><dd><code>dd37a367da92</code></dd>
+<dt>Revision</dt><dd>2 · seal <code>sha256:b268a8437adaacac…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:a9342b2e17916c27…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
 <dt>May</dt><dd><span class="pill">implement-locally-on-exclusive-paths</span> <span class="pill">run-tests-and-builds</span> <span class="pill">commit-on-isolated-branch</span></dd>
@@ -32,6 +32,7 @@
 <section><h2>Event chain</h2>
 <ol class="chain">
 <li><code>GH-183-0001</code> · state-change · it-manager-iii · 2026-08-31T16:05:13.668Z<br>Issued the exact short-lived issue #183 documentation lease to task 01a02bc1-1611-7a22-9803-8c5e617ab711 on current dev with one writer and three serialized resources. Resealed as revision 1; parent_hash names no predecessor (genesis).</li>
+<li><code>GH-183-0002</code> · state-change · it-manager-iii · 2026-08-31T16:16:36.438Z<br>Refreshed the unstarted #183 lease and capsule from 3ad9a77b to live dev dd37a367 after PR #490 moved dev; the docs lane must merge this base before editing. Resealed as revision 2; parent_hash names sha256:a9342b2e17916c275863e9ac09f6d0938725d043cfece1e90d140718b055b6a1.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>

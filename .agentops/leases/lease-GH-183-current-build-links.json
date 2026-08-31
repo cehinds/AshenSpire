@@ -13,7 +13,7 @@
     ".agentops/tools/opsctl.mjs",
     ".agentops/tools/opsctl.test.mjs"
   ],
-  "base_oid": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
+  "base_oid": "dd37a367da922ca9adeb09c08bb81aa0ec97bb8d",
   "actions": [
     "implement-locally-on-exclusive-paths",
     "run-tests-and-builds",
