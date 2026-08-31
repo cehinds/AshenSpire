@@ -66,8 +66,12 @@ where that census names the file. Concept-crop hashes: 4/4 MATCH.
 | 11 | look-switcher future | `review-approval-hub/evidence/look-switcher/assets/rogue-future.png` | 87,974 | `370E8DD353E4C27866B7C8E615DA5C8A90B48E4784B181D93030A95EDBE6CA3A` |
 | 12 | look-switcher future | `review-approval-hub/evidence/look-switcher/assets/herald-future.png` | 73,383 | `4EED36360A425935BAA66C0AF39D6827542826D5872BEFB1BD525CB82C185414` |
 
-Packet digest (SHA-256 over `sha256sum` lines in the order above):
-`BB43990FFE5E6C5DE736EF5881927B5B4C1778FBBA9507D62DFADBA953FE58BA`
+Packet manifest canonical serialization: UTF-8, one line per table row in the order above,
+formatted as lowercase SHA-256, two ASCII spaces, repository-relative path, then LF
+(`\n`), including the final LF; no `./` prefix. The 12-line manifest is 1,578 bytes.
+
+Packet digest (SHA-256 over those exact canonical manifest bytes):
+`D834E2DD1EB24DC58AF849AE467CB68DAF59AC65832B4DDDC7CB0FE50B03B033`
 
 **Explicitly excluded.** `review-approval-hub/evidence/reaver-alpha-retry-rejected.png` is rejected
 diagnostic evidence, not packet content and not a candidate.
@@ -122,7 +126,7 @@ SHA-256 after the move. Only the paths change. Whoever executes that relocation 
 |---|---|
 | Selected path | proof-only upper-body successor from the frozen 12-file packet |
 | Superseded | full-class-silhouette clause / Option B new full-body inputs |
-| Packet | preserved, 12 files, digest `BB43990F…58BA`, unmodified by this ticket |
+| Packet | preserved, 12 files, digest `D834E2DD…B033`, unmodified by this ticket |
 | Eligible sources | 0 |
 | Final assets | 0 |
 | Generation authorized by this record | none |
