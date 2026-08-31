@@ -59,8 +59,13 @@ function setup() {
   exec(root, ['init', '--quiet']);
   fs.mkdirSync(path.join(root, '.git', 'objects', 'info'), { recursive: true });
   fs.writeFileSync(path.join(root, '.git', 'objects', 'info', 'alternates'), `${objectDirectory(REPOSITORY_ROOT)}\n`);
-  const candidate = '3f3272c7e878cd0055d022e084478189365efe25';
-  const candidateTree = exec(REPOSITORY_ROOT, ['show', '-s', '--format=%T', candidate]);
+  // The executable candidate is synthesized on the authority-schema line so
+  // the fixture binds the exact current reconciler bytes and trusted action.
+  const base = '3f3272c7e878cd0055d022e084478189365efe25';
+  const leasedPaths = ['.agentops/tools/scheduler-state-reconciler.mjs', '.agentops/tools/scheduler-state-reconciler.test.mjs', '.agentops/scheduler/schemas/state-reconciliation-attempt.json', '.agentops/scheduler/schemas/state-reconciliation-receipt.json'];
+  const candidateCommit = commitFiles(root, base, Object.fromEntries(leasedPaths.map((name) => [name, fs.readFileSync(path.join(REPOSITORY_ROOT, name), 'utf8')])), 'test exact reconciler candidate', '2026-08-31T18:00:00Z');
+  const candidate = candidateCommit.oid;
+  const candidateTree = candidateCommit.tree;
   exec(root, ['update-ref', 'refs/heads/test', candidate]);
   exec(root, ['symbolic-ref', 'HEAD', 'refs/heads/test']);
   exec(root, ['config', 'core.sparseCheckout', 'true']);
@@ -71,8 +76,9 @@ function setup() {
   fs.mkdirSync(path.join(remote, 'objects', 'info'), { recursive: true });
   fs.writeFileSync(path.join(remote, 'objects', 'info', 'alternates'), `${objectDirectory(REPOSITORY_ROOT)}\n`);
   exec(remote, ['update-ref', STATE_REF, SOURCE_OID]);
-  exec(remote, ['update-ref', DEV_REF, candidate]);
+  exec(remote, ['update-ref', DEV_REF, base]);
   exec(root, ['remote', 'add', 'origin', remote]);
+  exec(root, ['push', 'origin', `${candidate}:${DEV_REF}`]);
 
   const source = readState(root, SOURCE_OID);
   const trustedNow = '2026-08-31T18:30:00Z';
@@ -89,10 +95,13 @@ function setup() {
   };
   const prebuilt = buildPlan(root, { binding, enforceTarget: false });
   binding.target = prebuilt.target;
-  const eventPath = '.agentops/events/AS-1001/AS-1001-state-reconciliation-authority-test.json';
-  const event = { schema: 'agentops/event/v1', id: 'AS-1001-state-reconciliation-authority-test', ticket: 'AS-1001', seq: 999, parent_event: 'AS-1001-0003', kind: 'owner-decision', actor: 'owner', at: trustedNow, summary: 'Exact scheduler state reconciliation authority.', decision: { action: 'authorize-scheduler-state-reconciliation', authenticated_role: 'owner', authority_path: '.github/workflows/owner-command.yml:owner-command/v1', target: 'AS-1001', expected_current_hash: `sha256:${'1'.repeat(64)}`, candidate_oid: candidate, scheduler_state_reconciliation: binding } };
+  const priorEventPaths = exec(root, ['ls-tree', '-r', '--name-only', candidate, '--', '.agentops/events/AS-1001']).split(/\r?\n/).filter(Boolean);
+  const priorEvents = priorEventPaths.map((name) => JSON.parse(exec(root, ['show', `${candidate}:${name}`]))).sort((a, b) => a.seq - b.seq);
+  const priorEvent = priorEvents.at(-1);
+  const eventPath = `.agentops/events/AS-1001/AS-1001-${String(priorEvent.seq + 1).padStart(4, '0')}.json`;
   const capsulePath = '.agentops/work/AS-1001/CURRENT.json';
   const capsule = JSON.parse(exec(root, ['show', `${candidate}:${capsulePath}`]));
+  const event = { schema: 'agentops/event/v1', id: `AS-1001-${String(priorEvent.seq + 1).padStart(4, '0')}`, ticket: 'AS-1001', seq: priorEvent.seq + 1, parent_event: priorEvent.id, kind: 'owner-decision', actor: 'owner', at: trustedNow, summary: 'Exact scheduler state reconciliation authority.', decision: { action: 'authorize-scheduler-state-reconciliation', authenticated_role: 'owner', authority_path: '.github/workflows/owner-command.yml:owner-command/v1', target: 'AS-1001', expected_current_hash: capsule.current_hash, candidate_oid: candidate, scheduler_state_reconciliation: binding } };
   capsule.parent_hash = capsule.current_hash; capsule.revision += 1; capsule.next_action = 'Execute the exact scheduler state reconciliation authority once.'; capsule.current_hash = '';
   capsule.current_hash = `sha256:${sha256(capsule)}`;
   const authority = commitFiles(root, candidate, { [eventPath]: `${JSON.stringify(event, null, 2)}\n`, [capsulePath]: `${JSON.stringify(capsule, null, 2)}\n` }, 'owner authorize exact scheduler state reconciliation', trustedNow);
@@ -130,6 +139,35 @@ function setup() {
   } finally { box.cleanup(); }
 }
 
+// The authority commit must append the real event chain and consume the exact
+// parent capsule seal; syntactically valid invented sequence/CAS values fail.
+{
+  const box = setup();
+  try {
+    const capsulePath = '.agentops/work/AS-1001/CURRENT.json';
+    const capsule = JSON.parse(exec(box.root, ['show', `${box.authorityOid}:${capsulePath}`]));
+    capsule.parent_hash = capsule.current_hash; capsule.revision += 1; capsule.next_action = 'Reject invented event custody.'; capsule.current_hash = ''; capsule.current_hash = `sha256:${sha256(capsule)}`;
+    const forged = structuredClone(box.event); forged.id = 'AS-1001-forged-chain'; forged.seq = 999; forged.parent_event = 'AS-1001-0003'; forged.decision.expected_current_hash = `sha256:${'1'.repeat(64)}`;
+    const forgedPath = '.agentops/events/AS-1001/AS-1001-forged-chain.json';
+    const commit = commitFiles(box.root, box.authorityOid, { [forgedPath]: `${JSON.stringify(forged, null, 2)}\n`, [capsulePath]: `${JSON.stringify(capsule, null, 2)}\n` }, 'forged authority chain plant', box.trustedNow);
+    exec(box.root, ['push', 'origin', `${commit.oid}:${DEV_REF}`]);
+    throws('invented authority seq/parent/CAS is rejected', () => validateAuthority(box.root, { authorityEventPath: forgedPath, authorityStateOid: commit.oid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet }), 'seq/parent');
+  } finally { box.cleanup(); }
+}
+
+// A source whose stored snapshot looks intact but whose journal cannot replay
+// through the authoritative reducer is not canonical input.
+{
+  const box = setup();
+  try {
+    const last = box.source.entries.filter((entry) => entry.name.startsWith('journal/')).at(-1).name;
+    const event = JSON.parse(exec(box.root, ['show', `${box.source.oid}:${last}`]));
+    event.idempotency_key = box.source.events[0].idempotency_key;
+    const corrupt = commitFiles(box.root, box.source.oid, { [last]: `${JSON.stringify(event, null, 2)}\n` }, 'corrupt state replay plant', box.trustedNow);
+    throws('source journal idempotency replay corruption is rejected', () => readState(box.root, corrupt.oid), 'authoritative replay');
+  } finally { box.cleanup(); }
+}
+
 // Binding omissions, additions, time and target substitutions all fail before
 // a durable attempt is written.
 for (const [label, mutate, needle] of [
@@ -157,16 +195,37 @@ for (const [label, mutate, needle] of [
       capsule.parent_hash = capsule.current_hash; capsule.revision += 1; capsule.next_action = nextAction; capsule.current_hash = ''; capsule.current_hash = `sha256:${sha256(capsule)}`;
       return capsule;
     };
-    const skewEvent = structuredClone(box.event); skewEvent.id = 'AS-1001-time-skew'; skewEvent.decision.scheduler_state_reconciliation.quiet_window_receipt_hash = sha256(skewed);
+    const skewEvent = structuredClone(box.event); skewEvent.id = 'AS-1001-time-skew'; skewEvent.seq = box.event.seq + 1; skewEvent.parent_event = box.event.id; skewEvent.decision.expected_current_hash = JSON.parse(exec(box.root, ['show', `${box.authorityOid}:${capsulePath}`])).current_hash; skewEvent.decision.scheduler_state_reconciliation.quiet_window_receipt_hash = sha256(skewed);
     const skewPath = '.agentops/events/AS-1001/AS-1001-time-skew.json';
     const skewCommit = commitFiles(box.root, box.authorityOid, { [skewPath]: `${JSON.stringify(skewEvent, null, 2)}\n`, [capsulePath]: `${JSON.stringify(nextCapsule(box.authorityOid, 'Reject trusted-time skew.'), null, 2)}\n` }, 'time skew authority plant', box.trustedNow);
     exec(box.root, ['push', 'origin', `${skewCommit.oid}:${DEV_REF}`]);
     throws('trusted-time skew is rejected', () => validateAuthority(box.root, { authorityEventPath: skewPath, authorityStateOid: skewCommit.oid, trustedNow: box.trustedNow, quietWindowReceipt: skewed }), 'trusted time skew');
-    const wrongHash = structuredClone(box.event); wrongHash.decision.scheduler_state_reconciliation.quiet_window_receipt_hash = 'f'.repeat(64);
+    const wrongHash = structuredClone(box.event); wrongHash.id = 'AS-1001-wrong-quiet'; wrongHash.seq = skewEvent.seq + 1; wrongHash.parent_event = skewEvent.id; wrongHash.decision.expected_current_hash = JSON.parse(exec(box.root, ['show', `${skewCommit.oid}:${capsulePath}`])).current_hash; wrongHash.decision.scheduler_state_reconciliation.quiet_window_receipt_hash = 'f'.repeat(64);
     const wrongPath = '.agentops/events/AS-1001/AS-1001-wrong-quiet.json';
     const wrongCommit = commitFiles(box.root, skewCommit.oid, { [wrongPath]: `${JSON.stringify(wrongHash, null, 2)}\n`, [capsulePath]: `${JSON.stringify(nextCapsule(skewCommit.oid, 'Attempt substituted quiet receipt.'), null, 2)}\n` }, 'wrong quiet authority', box.trustedNow);
     exec(box.root, ['push', 'origin', `${wrongCommit.oid}:${DEV_REF}`]);
     throws('quiet receipt hash substitution is rejected', () => validateAuthority(box.root, { authorityEventPath: wrongPath, authorityStateOid: wrongCommit.oid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet }), 'hash mismatch');
+  } finally { box.cleanup(); }
+}
+
+// If the first dev attempt publication loses transport and inspection proves
+// it unchanged, a distinct consumed marker is durably CAS-published. The
+// exact authority cannot replay and no state mutation is attempted.
+{
+  const box = setup();
+  try {
+    let pushes = 0;
+    const ambiguousAttempt = (root, args, options) => {
+      pushes++;
+      if (pushes === 1) return { status: 1, stdout: '', stderr: 'simulated attempt transport loss before update' };
+      return runGit(root, args, options);
+    };
+    throws('ambiguous unchanged attempt writes a durable consumed marker', () => applyReconciliation(box.root, { authorityEventPath: box.eventPath, authorityStateOid: box.authorityOid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet, pushRunner: ambiguousAttempt }), 'durable consumption marker recorded');
+    const consumedDev = exec(box.remote, ['rev-parse', DEV_REF]);
+    const attemptId = sha256({ authority: { authority_state_oid: box.authorityOid, event_path: box.eventPath, event_id: box.event.id, event_hash: sha256(box.event) }, source: box.binding.source, target: box.binding.target, reconciler_head: box.binding.reconciler_head });
+    const marker = JSON.parse(exec(box.root, ['show', `${consumedDev}:.agentops/scheduler/state-reconciliation-attempts/${attemptId}.json`]));
+    check('ambiguous attempt marker is closed and state remains unchanged', pushes === 2 && marker.status === 'AMBIGUOUS_UNCHANGED_CONSUMED' && exec(box.remote, ['rev-parse', STATE_REF]) === SOURCE_OID);
+    throws('durably consumed ambiguous attempt cannot replay', () => applyReconciliation(box.root, { authorityEventPath: box.eventPath, authorityStateOid: box.authorityOid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet }), 'stale');
   } finally { box.cleanup(); }
 }
 
@@ -184,13 +243,16 @@ for (const [label, mutate, needle] of [
   const box = setup();
   try {
     let pushes = 0;
+    const pushArgv = [];
     const ambiguousConfirmed = (root, args, options) => {
       pushes++;
+      pushArgv.push(args);
       const real = runGit(root, args, options);
       return pushes === 2 ? { ...real, status: 1, stderr: 'simulated lost transport acknowledgement' } : real;
     };
     const result = applyReconciliation(box.root, { authorityEventPath: box.eventPath, authorityStateOid: box.authorityOid, trustedNow: box.trustedNow, quietWindowReceipt: box.quiet, pushRunner: ambiguousConfirmed });
     check('ambiguous state transport is inspected once and confirmed without retry', pushes === 3 && result.receipt.state_push === 'AMBIGUOUS_CONFIRMED_ONCE');
+    check('every publication uses a server-enforced exact old-OID lease', pushArgv.every((args) => args.some((arg) => /^--force-with-lease=refs\/heads\/.+:[0-9a-f]{40}$/.test(arg))));
   } finally { box.cleanup(); }
 }
 

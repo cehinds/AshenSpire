@@ -3,82 +3,25 @@
   "$id": "agentops/scheduler-state-reconciliation-attempt/v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "attempt_id", "idempotency_key", "observed_at", "source", "findings", "plan", "cas_plan", "attempt_hash"],
+  "required": ["schema", "attempt_id", "status", "authority", "reconciler", "source", "target", "quiet_window_receipt_hash", "trusted_now", "state_ref", "development_ref", "invariants"],
   "properties": {
-    "schema": { "const": "agentops/scheduler-state-reconciliation-attempt/v1" },
-    "attempt_id": { "type": "string", "pattern": "^reconcile-[0-9a-f]{64}$" },
-    "idempotency_key": { "type": "string", "pattern": "^scheduler-state-reconciliation:[0-9a-f]{64}$" },
-    "observed_at": { "type": "string", "format": "date-time" },
-    "source": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["state_ref", "state_oid", "state_tree", "snapshot_hash", "state_version", "dev_oid", "dev_tree", "custody_lease_epoch", "custody_released_at"],
-      "properties": {
-        "state_ref": { "type": "string", "pattern": "^refs/heads/[A-Za-z0-9._/-]+$" },
-        "state_oid": { "$ref": "#/$defs/oid" },
-        "state_tree": { "$ref": "#/$defs/oid" },
-        "snapshot_hash": { "$ref": "#/$defs/hash" },
-        "state_version": { "enum": ["1", "2"] },
-        "dev_oid": { "$ref": "#/$defs/oid" },
-        "dev_tree": { "$ref": "#/$defs/oid" },
-        "custody_lease_epoch": { "type": "integer", "minimum": 0 },
-        "custody_released_at": { "type": "string", "format": "date-time" }
-      }
-    },
-    "findings": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["code", "issue_id", "state", "lease_id", "lease_epoch", "candidate_commit"],
-        "properties": {
-          "code": { "enum": ["EXPIRED_ACTIVE_LEASE", "UNREACHABLE_CANDIDATE"] },
-          "issue_id": { "type": "string", "minLength": 1 },
-          "state": { "type": "string", "minLength": 1 },
-          "lease_id": { "type": ["string", "null"] },
-          "lease_epoch": { "type": ["integer", "null"], "minimum": 0 },
-          "candidate_commit": { "anyOf": [{ "$ref": "#/$defs/oid" }, { "type": "null" }] }
-        }
-      }
-    },
-    "plan": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["ordinal", "action", "issue_id", "expected_state", "expected_lease_id", "expected_lease_epoch", "expected_candidate_commit", "projected_state", "reason"],
-        "properties": {
-          "ordinal": { "type": "integer", "minimum": 1 },
-          "action": { "enum": ["EXPIRE_LEASE", "QUARANTINE_CANDIDATE"] },
-          "issue_id": { "type": "string", "minLength": 1 },
-          "expected_state": { "type": "string", "minLength": 1 },
-          "expected_lease_id": { "type": ["string", "null"] },
-          "expected_lease_epoch": { "type": ["integer", "null"], "minimum": 0 },
-          "expected_candidate_commit": { "anyOf": [{ "$ref": "#/$defs/oid" }, { "type": "null" }] },
-          "projected_state": { "enum": ["READY", "CANDIDATE_READY", "REPAIR_REQUIRED"] },
-          "reason": { "type": "string", "minLength": 1 }
-        }
-      }
-    },
-    "cas_plan": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["target_ref", "expected_old_oid", "expected_old_tree", "expected_dev_oid", "expected_dev_tree", "planned_operations", "mutation_authorized", "execution_scope"],
-      "properties": {
-        "target_ref": { "type": "string", "pattern": "^refs/heads/[A-Za-z0-9._/-]+$" },
-        "expected_old_oid": { "$ref": "#/$defs/oid" },
-        "expected_old_tree": { "$ref": "#/$defs/oid" },
-        "expected_dev_oid": { "$ref": "#/$defs/oid" },
-        "expected_dev_tree": { "$ref": "#/$defs/oid" },
-        "planned_operations": { "type": "integer", "minimum": 0 },
-        "mutation_authorized": { "const": false },
-        "execution_scope": { "const": "PLAN_ONLY_NO_REF_STATE_PROJECT_CUSTODY_MUTATION" }
-      }
-    },
-    "attempt_hash": { "$ref": "#/$defs/hash" }
-  },
-  "$defs": {
-    "oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
-    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    "schema": {"const": "agentops/scheduler-state-reconciliation-attempt/v1"},
+    "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"enum": ["ATTEMPTED", "AMBIGUOUS_UNCHANGED_CONSUMED"]},
+    "authority": {"type": "object", "additionalProperties": false, "required": ["authority_state_oid", "event_path", "event_id", "event_hash"], "properties": {
+      "authority_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "event_path": {"type": "string", "pattern": "^\\.agentops/events/[^/]+/[^/]+\\.json$"}, "event_id": {"type": "string", "minLength": 1}, "event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    }},
+    "reconciler": {"type": "object", "additionalProperties": false, "required": ["head", "tree"], "properties": {"head": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}},
+    "source": {"type": "object", "additionalProperties": false, "required": ["state_oid", "state_tree", "snapshot_sha256", "journal_manifest_sha256", "event_count", "state_version"], "properties": {
+      "state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "state_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "journal_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "event_count": {"type": "integer", "minimum": 0}, "state_version": {"type": "integer", "minimum": 1}
+    }},
+    "target": {"type": "object", "additionalProperties": false, "required": ["state_oid", "state_tree", "snapshot_sha256", "journal_manifest_sha256", "event_count"], "properties": {
+      "state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "state_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "journal_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "event_count": {"type": "integer", "minimum": 0}
+    }},
+    "quiet_window_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "trusted_now": {"type": "string", "format": "date-time"},
+    "state_ref": {"const": "refs/heads/agentops/scheduler-state"}, "development_ref": {"const": "refs/heads/dev"},
+    "invariants": {"type": "object", "additionalProperties": false, "required": ["dispatch_frozen", "no_refill", "no_assignment", "no_dispatch", "no_external_mutation", "push_mode", "abort_on_remote_change"], "properties": {
+      "dispatch_frozen": {"const": true}, "no_refill": {"const": true}, "no_assignment": {"const": true}, "no_dispatch": {"const": true}, "no_external_mutation": {"const": true}, "push_mode": {"const": "non-force-forward-only-cas"}, "abort_on_remote_change": {"const": true}
+    }}
   }
 }

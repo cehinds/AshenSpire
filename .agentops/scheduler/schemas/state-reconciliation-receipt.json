@@ -3,24 +3,14 @@
   "$id": "agentops/scheduler-state-reconciliation-receipt/v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "receipt_id", "attempt_id", "attempt_hash", "idempotency_key", "mode", "outcome", "planned_operations", "protected_mutations", "artifacts", "receipt_hash"],
+  "required": ["schema", "attempt_id", "status", "attempt_path", "attempt_commit_oid", "authority", "source_state_oid", "target_state_oid", "observed_state_remote_oid", "development_parent_oid", "state_push", "receipt_hash"],
   "properties": {
-    "schema": { "const": "agentops/scheduler-state-reconciliation-receipt/v1" },
-    "receipt_id": { "type": "string", "pattern": "^receipt-[0-9a-f]{64}$" },
-    "attempt_id": { "type": "string", "pattern": "^reconcile-[0-9a-f]{64}$" },
-    "attempt_hash": { "$ref": "#/$defs/hash" },
-    "idempotency_key": { "type": "string", "pattern": "^scheduler-state-reconciliation:[0-9a-f]{64}$" },
-    "mode": { "enum": ["DRY_RUN", "LOCAL_RECORD"] },
-    "outcome": { "enum": ["NOOP", "PLAN_READY"] },
-    "planned_operations": { "type": "integer", "minimum": 0 },
-    "protected_mutations": { "const": 0 },
-    "artifacts": {
-      "type": "array",
-      "items": { "type": "string", "pattern": "^(attempt|receipt)-[0-9a-f]{64}\\.json$" },
-      "maxItems": 2,
-      "uniqueItems": true
-    },
-    "receipt_hash": { "$ref": "#/$defs/hash" }
-  },
-  "$defs": { "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+    "schema": {"const": "agentops/scheduler-state-reconciliation-receipt/v1"}, "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "status": {"const": "APPLIED"},
+    "attempt_path": {"type": "string", "pattern": "^\\.agentops/scheduler/state-reconciliation-attempts/[0-9a-f]{64}\\.json$"}, "attempt_commit_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "authority": {"type": "object", "additionalProperties": false, "required": ["authority_state_oid", "event_path", "event_id", "event_hash"], "properties": {
+      "authority_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "event_path": {"type": "string", "pattern": "^\\.agentops/events/[^/]+/[^/]+\\.json$"}, "event_id": {"type": "string", "minLength": 1}, "event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    }},
+    "source_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "target_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "observed_state_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "development_parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "state_push": {"enum": ["CONFIRMED", "AMBIGUOUS_CONFIRMED_ONCE"]}, "receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
 }

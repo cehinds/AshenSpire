@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validateSchema } from './opsctl.mjs';
+import { reduceEvents } from './scheduler.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPOSITORY_ROOT = path.resolve(HERE, '..', '..');
@@ -15,6 +16,17 @@ const ATTEMPT_ROOT = '.agentops/scheduler/state-reconciliation-attempts';
 const OID = /^[0-9a-f]{40}$/;
 const TRUSTED_EVENT_BINDING_SCHEMA_HASH = 'f653f120a443582c0ba7c90fe6ab0d46089dafa887cb7ad3d8f4c4f3833b9a01';
 const TRUSTED_POLICY_ACTION_HASH = '5a892589de04968e80ae8712f421949906076684ba83e55b3b4b7bcccd985039';
+
+function trustedGitExecutable() {
+  const candidates = process.platform === 'win32'
+    ? [process.env.AGENTOPS_TRUSTED_GIT, process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Programs', 'Git', 'cmd', 'git.exe'), process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'Git', 'cmd', 'git.exe')]
+    : [process.env.AGENTOPS_TRUSTED_GIT, '/usr/bin/git', '/usr/local/bin/git'];
+  const found = candidates.find((candidate) => candidate && path.isAbsolute(candidate) && fs.existsSync(candidate));
+  if (!found) throw new Error('trusted host Git executable was not discovered; set AGENTOPS_TRUSTED_GIT to an absolute executable path');
+  return found;
+}
+
+const TRUSTED_GIT = trustedGitExecutable();
 
 export function stableStringify(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -39,7 +51,7 @@ function instant(value, label) {
 }
 
 export function runGit(root, args, { input = null, allowFailure = false, env = {} } = {}) {
-  const result = spawnSync('git', args, { cwd: root, input, encoding: 'utf8', env: { ...process.env, ...env } });
+  const result = spawnSync(TRUSTED_GIT, args, { cwd: root, input, encoding: 'utf8', env: { ...process.env, ...env } });
   const out = { status: result.status ?? 1, stdout: (result.stdout ?? '').trim(), stderr: (result.stderr ?? '').trim() };
   if (!allowFailure && out.status !== 0) throw new Error(`git ${args.join(' ')} failed: ${out.stderr || out.stdout || `exit ${out.status}`}`);
   return out;
@@ -105,8 +117,20 @@ export function readState(root, oid) {
   const snapshot = jsonAt(root, oid, 'snapshot.json');
   const machineLease = jsonAt(root, oid, 'machine-lease.json');
   const stateVersion = Number(textAt(root, oid, 'STATE_VERSION').trim());
+  const eventSchemaName = stateVersion === 2 ? 'event-v2.json' : 'event.json';
+  const schemaHead = gitText(root, ['rev-parse', 'HEAD']);
+  const eventSchema = jsonAt(root, schemaHead, `.agentops/scheduler/schemas/${eventSchemaName}`);
+  const journalEntries = entries.filter((entry) => entry.name.startsWith('journal/')).sort((a, b) => a.name.localeCompare(b.name));
+  for (let index = 0; index < events.length; index++) {
+    const schemaErrors = validateSchema(events[index], eventSchema, '$');
+    if (schemaErrors.length) throw new Error(`source journal event ${index + 1} schema validation failed: ${schemaErrors.join('; ')}`);
+    const expectedPath = `journal/${String(index + 1).padStart(8, '0')}-${events[index].event_id}.json`;
+    if (journalEntries[index]?.name !== expectedPath) throw new Error(`source journal event ${index + 1} path/sequence/id binding is invalid`);
+  }
   if (snapshot.snapshot_hash !== snapshotHash(snapshot)) throw new Error('source snapshot hash is not canonical');
   if (snapshot.last_sequence !== events.length || events.some((event, index) => event.sequence !== index + 1)) throw new Error('source journal sequence/count disagrees with snapshot');
+  const replayed = reduceEvents(events);
+  if (replayed.errors.length || stableStringify(replayed) !== stableStringify(snapshot)) throw new Error(`source state fails authoritative replay${replayed.errors.length ? `: ${replayed.errors.map((entry) => entry.error).join('; ')}` : ''}`);
   if (machineLease.machine_id !== null || !machineLease.released_at || machineLease.expires_at !== machineLease.released_at) throw new Error('source machine custody is not already released');
   return { oid, tree: gitText(root, ['show', '-s', '--format=%T', oid]), entries, events, snapshot, machineLease, stateVersion, journalManifest: journalManifest(entries) };
 }
@@ -183,12 +207,26 @@ export function validateAuthority(root, { authorityEventPath, authorityStateOid,
   if (stableStringify(changed) !== stableStringify([authorityEventPath, capsulePath].sort())) throw new Error('authority event commit changed paths beyond its event and sealed capsule');
   const introducing = gitText(root, ['log', '--format=%H', '--diff-filter=A', authorityStateOid, '--', authorityEventPath]).split(/\r?\n/).filter(Boolean);
   if (stableStringify(introducing) !== stableStringify([authorityStateOid])) throw new Error('authority event is not introduced exactly once by authority_state_oid');
+  const ticketFromPath = /^\.agentops\/events\/([^/]+)\//.exec(authorityEventPath)?.[1];
+  if (event.ticket !== ticketFromPath || event.decision.target !== event.ticket) throw new Error('authority event path, ticket, and decision target are not identical');
+  const priorPaths = gitText(root, ['ls-tree', '-r', '--name-only', parents[0], '--', `.agentops/events/${event.ticket}`]).split(/\r?\n/).filter(Boolean).sort();
+  const priorEvents = priorPaths.map((eventPath) => jsonAt(root, parents[0], eventPath)).sort((left, right) => left.seq - right.seq);
+  for (let index = 0; index < priorEvents.length; index++) {
+    if (priorEvents[index].seq !== index + 1 || (index === 0 ? priorEvents[index].parent_event !== null : priorEvents[index].parent_event !== priorEvents[index - 1].id)) throw new Error('authority parent event chain is not contiguous and append-only');
+  }
+  const priorEvent = priorEvents.at(-1);
+  if (!priorEvent || event.seq !== priorEvent.seq + 1 || event.parent_event !== priorEvent.id) throw new Error('authority event seq/parent does not append the canonical ticket event chain');
   const capsule = jsonAt(root, authorityStateOid, capsulePath);
+  const parentCapsule = jsonAt(root, parents[0], capsulePath);
   const capsuleSchema = jsonAt(root, authorityStateOid, '.agentops/schemas/work-capsule.schema.json');
   const capsuleErrors = validateSchema(capsule, capsuleSchema, '$');
   if (capsuleErrors.length) throw new Error(`authority capsule schema validation failed: ${capsuleErrors.join('; ')}`);
   const unsealedCapsule = structuredClone(capsule); unsealedCapsule.current_hash = '';
   if (capsule.ticket !== event.ticket || capsule.current_hash !== `sha256:${sha256(unsealedCapsule)}`) throw new Error('authority capsule identity or seal is invalid');
+  if (event.decision.expected_current_hash !== parentCapsule.current_hash || capsule.parent_hash !== parentCapsule.current_hash || capsule.revision !== parentCapsule.revision + 1) throw new Error('authority event/capsule compare-and-swap does not bind the exact parent capsule');
+  const parentStable = structuredClone(parentCapsule); const nextStable = structuredClone(capsule);
+  for (const field of ['current_hash', 'parent_hash', 'revision', 'next_action']) { delete parentStable[field]; delete nextStable[field]; }
+  if (stableStringify(parentStable) !== stableStringify(nextStable)) throw new Error('authority capsule changes fields beyond its seal, revision, and next action');
   if (sha256(quietWindowReceipt) !== binding.quiet_window_receipt_hash) throw new Error('quiet-window receipt hash mismatch');
   validateQuietReceipt(quietWindowReceipt, binding, trustedNow);
   return { event, binding, authority: { authority_state_oid: authorityStateOid, event_path: authorityEventPath, event_id: event.id, event_hash: sha256(event) } };
@@ -204,6 +242,9 @@ function validateSourceBinding(root, source, binding) {
   if (stableStringify(binding.work_leases) !== stableStringify(active)) throw new Error('authority work_leases omits, adds, reorders, or substitutes active custody');
   for (const lease of active) if (instant(lease.lease_expiry, `${lease.issue_id} lease_expiry`) > instant(binding.not_before, 'not_before')) throw new Error(`${lease.issue_id} lease is not expired at not_before`);
   if (binding.expected_event_count_delta !== active.length) throw new Error('expected_event_count_delta must equal the exact enumerated expired work lease count');
+  for (const lease of active) {
+    if (!OID.test(lease.base_commit ?? '') || runGit(root, ['cat-file', '-e', `${lease.base_commit}^{commit}`], { allowFailure: true }).status !== 0) throw new Error(`${lease.issue_id} base/candidate reachability is unavailable`);
+  }
   return active;
 }
 
@@ -291,11 +332,18 @@ export function buildPlan(root, { binding, sourceOid = binding?.source?.state_oi
 function pushCas(root, remote, newOid, ref, expectedOld, pushRunner = runGit) {
   const before = remoteOid(root, remote, ref);
   if (before !== expectedOld) throw new Error(`${ref} remote CAS changed before push; expected ${expectedOld}, observed ${before}`);
-  const pushed = pushRunner(root, ['push', remote, `${newOid}:${ref}`], { allowFailure: true });
+  const pushed = pushRunner(root, ['push', `--force-with-lease=${ref}:${expectedOld}`, remote, `${newOid}:${ref}`], { allowFailure: true });
   const observed = remoteOid(root, remote, ref); // exactly one ambiguity inspection
   if (observed === newOid) return { outcome: pushed.status === 0 ? 'CONFIRMED' : 'AMBIGUOUS_CONFIRMED_ONCE', observed };
-  if (pushed.status !== 0) throw new Error(`${ref} push result was ambiguous and one inspection observed ${observed}; attempt is consumed and will not retry`);
+  if (pushed.status !== 0 && observed === expectedOld) return { outcome: 'AMBIGUOUS_UNCHANGED_ONCE', observed };
+  if (pushed.status !== 0) throw new Error(`${ref} push result was ambiguous and one inspection observed ${observed}; exact lease is lost and will not retry`);
   throw new Error(`${ref} push reported success but exact target was not observed; attempt is consumed and will not retry`);
+}
+
+function validateCommittedRecord(root, reconcilerHead, schemaName, value, label) {
+  const schema = jsonAt(root, reconcilerHead, `.agentops/scheduler/schemas/${schemaName}`);
+  const errors = validateSchema(value, schema, '$');
+  if (errors.length) throw new Error(`${label} schema validation failed: ${errors.join('; ')}`);
 }
 
 function attemptIdentity(authority, binding) {
@@ -329,20 +377,32 @@ export function applyReconciliation(root, options) {
   const plan = buildPlan(root, { binding: validated.binding });
   if (remoteOid(root, remote, validated.binding.target_ref) !== plan.source.oid) throw new Error('state remote changed after planning; nothing attempted');
   const attempt = attemptRecord(validated.authority, validated.binding, trustedNow);
+  validateCommittedRecord(root, validated.binding.reconciler_head, 'state-reconciliation-attempt.json', attempt, 'reconciliation attempt');
   const attemptPath = `${ATTEMPT_ROOT}/${attempt.attempt_id}.json`;
   ensureNoPriorAttempt(root, authorityStateOid, attemptPath);
   const attemptCommit = createCommit(root, authorityStateOid, { [attemptPath]: `${JSON.stringify(attempt, null, 2)}\n` }, `scheduler state reconciliation attempted ${attempt.attempt_id}`, trustedNow);
-  pushCas(root, remote, attemptCommit.oid, DEV_REF, authorityStateOid, pushRunner);
+  const attemptPush = pushCas(root, remote, attemptCommit.oid, DEV_REF, authorityStateOid, pushRunner);
+  if (attemptPush.outcome === 'AMBIGUOUS_UNCHANGED_ONCE') {
+    const consumed = { ...attempt, status: 'AMBIGUOUS_UNCHANGED_CONSUMED' };
+    validateCommittedRecord(root, validated.binding.reconciler_head, 'state-reconciliation-attempt.json', consumed, 'reconciliation consumed marker');
+    const consumedCommit = createCommit(root, authorityStateOid, { [attemptPath]: `${JSON.stringify(consumed, null, 2)}\n` }, `scheduler state reconciliation consumed ${attempt.attempt_id}`, trustedNow);
+    const consumedPush = pushCas(root, remote, consumedCommit.oid, DEV_REF, authorityStateOid, pushRunner);
+    if (!['CONFIRMED', 'AMBIGUOUS_CONFIRMED_ONCE'].includes(consumedPush.outcome)) throw new Error('ambiguous attempt publication could not durably record consumption; operator intervention required');
+    throw new Error('attempt publication was ambiguous and unchanged; durable consumption marker recorded and state push forbidden');
+  }
 
   // The authority is now durably consumed on dev. From here every failure is
   // terminal for this packet: inspect ambiguous transport once, never retry.
   if (remoteOid(root, remote, DEV_REF) !== attemptCommit.oid) throw new Error('dev changed after durable attempt; attempt consumed and state push forbidden');
   if (remoteOid(root, remote, validated.binding.target_ref) !== plan.source.oid) throw new Error('state remote changed after durable attempt; attempt consumed and no state push performed');
   const stateResult = pushCas(root, remote, plan.target.state_oid, validated.binding.target_ref, plan.source.oid, pushRunner);
+  if (stateResult.outcome === 'AMBIGUOUS_UNCHANGED_ONCE') throw new Error('state push was ambiguous and unchanged; durable attempt is consumed and state push will not retry');
   const receipt = receiptRecord(attempt, attemptPath, attemptCommit.oid, validated.authority, stateResult.outcome);
+  validateCommittedRecord(root, validated.binding.reconciler_head, 'state-reconciliation-receipt.json', receipt, 'reconciliation receipt');
   const receiptPath = `${ATTEMPT_ROOT}/${attempt.attempt_id}.receipt.json`;
   const receiptCommit = createCommit(root, attemptCommit.oid, { [receiptPath]: `${JSON.stringify(receipt, null, 2)}\n` }, `scheduler state reconciliation applied ${attempt.attempt_id}`, trustedNow);
-  pushCas(root, remote, receiptCommit.oid, DEV_REF, attemptCommit.oid, pushRunner);
+  const receiptPush = pushCas(root, remote, receiptCommit.oid, DEV_REF, attemptCommit.oid, pushRunner);
+  if (receiptPush.outcome === 'AMBIGUOUS_UNCHANGED_ONCE') throw new Error('receipt publication was ambiguous and unchanged; attempt remains consumed and receipt will not retry');
   return { attempt, attempt_path: attemptPath, attempt_commit_oid: attemptCommit.oid, target: plan.target, receipt, receipt_path: receiptPath, receipt_commit_oid: receiptCommit.oid };
 }
 
@@ -362,10 +422,28 @@ export function verifyReceipt(root, { receipt, receiptPath, remote = 'origin' })
   exactKeys(attempt, ['schema', 'attempt_id', 'status', 'authority', 'reconciler', 'source', 'target', 'quiet_window_receipt_hash', 'trusted_now', 'state_ref', 'development_ref', 'invariants'], 'reconciliation attempt');
   const expectedAttemptId = sha256({ authority: attempt.authority, source: attempt.source, target: attempt.target, reconciler_head: attempt.reconciler.head });
   if (attempt.schema !== 'agentops/scheduler-state-reconciliation-attempt/v1' || attempt.status !== 'ATTEMPTED' || attempt.attempt_id !== expectedAttemptId || attempt.attempt_id !== receipt.attempt_id || stableStringify(attempt.authority) !== stableStringify(receipt.authority) || attempt.target.state_oid !== receipt.target_state_oid || attempt.source.state_oid !== receipt.source_state_oid) throw new Error('receipt does not bind its exact durable attempt');
+  validateCommittedRecord(root, attempt.reconciler.head, 'state-reconciliation-attempt.json', attempt, 'reconciliation attempt');
+  validateCommittedRecord(root, attempt.reconciler.head, 'state-reconciliation-receipt.json', receipt, 'reconciliation receipt');
+  const attemptParents = gitText(root, ['show', '-s', '--format=%P', receipt.attempt_commit_oid]).split(/\s+/).filter(Boolean);
+  if (stableStringify(attemptParents) !== stableStringify([attempt.authority.authority_state_oid])) throw new Error('durable attempt commit is not the exact child of authority_state_oid');
+  const attemptPaths = gitText(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', attempt.authority.authority_state_oid, receipt.attempt_commit_oid]).split(/\r?\n/).filter(Boolean);
+  if (stableStringify(attemptPaths) !== stableStringify([receipt.attempt_path])) throw new Error('durable attempt commit manifest is not exactly the attempt record');
+  const receiptPaths = gitText(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', receipt.attempt_commit_oid, dev]).split(/\r?\n/).filter(Boolean);
+  if (stableStringify(receiptPaths) !== stableStringify([receiptPath])) throw new Error('receipt commit manifest is not exactly the receipt record');
   const authorityEvent = jsonAt(root, attempt.authority.authority_state_oid, attempt.authority.event_path);
   if (authorityEvent.id !== attempt.authority.event_id || sha256(authorityEvent) !== attempt.authority.event_hash) throw new Error('receipt durable attempt authority evidence is unavailable or changed');
+  const authorityBinding = authorityEvent.decision?.scheduler_state_reconciliation;
+  if (authorityEvent.decision?.action !== ACTION || authorityEvent.decision?.candidate_oid !== attempt.reconciler.head || attempt.reconciler.tree !== authorityBinding?.reconciler_tree || stableStringify(attempt.source) !== stableStringify(authorityBinding?.source) || stableStringify(attempt.target) !== stableStringify(authorityBinding?.target) || attempt.quiet_window_receipt_hash !== authorityBinding?.quiet_window_receipt_hash || attempt.state_ref !== authorityBinding?.target_ref || stableStringify(attempt.invariants) !== stableStringify({ dispatch_frozen: authorityBinding?.dispatch_frozen, no_refill: authorityBinding?.no_refill, no_assignment: authorityBinding?.no_assignment, no_dispatch: authorityBinding?.no_dispatch, no_external_mutation: authorityBinding?.no_external_mutation, push_mode: authorityBinding?.push_mode, abort_on_remote_change: authorityBinding?.abort_on_remote_change })) throw new Error('receipt attempt does not bind the full authority source, target, reconciler, and invariant payload');
+  if (gitText(root, ['show', '-s', '--format=%T', attempt.reconciler.head]) !== attempt.reconciler.tree) throw new Error('receipt reconciler head/tree binding is invalid');
+  const rebuilt = buildPlan(root, { binding: authorityBinding });
+  if (rebuilt.target.state_oid !== receipt.target_state_oid || rebuilt.source.oid !== receipt.source_state_oid) throw new Error('receipt does not bind the deterministic authority source and target');
   const state = readState(root, receipt.target_state_oid);
-  if (state.snapshot.snapshot_hash !== attempt.target.snapshot_sha256 || state.journalManifest !== attempt.target.journal_manifest_sha256 || state.events.length !== attempt.target.event_count) throw new Error('receipt target state evidence mismatch');
+  if (state.tree !== attempt.target.state_tree || state.snapshot.snapshot_hash !== attempt.target.snapshot_sha256 || state.journalManifest !== attempt.target.journal_manifest_sha256 || state.events.length !== attempt.target.event_count || receipt.observed_state_remote_oid !== receipt.target_state_oid) throw new Error('receipt target state tree/hash/manifest/count evidence mismatch');
+  const stateParents = gitText(root, ['show', '-s', '--format=%P', receipt.target_state_oid]).split(/\s+/).filter(Boolean);
+  if (stableStringify(stateParents) !== stableStringify([receipt.source_state_oid])) throw new Error('receipt target state is not the exact direct successor of source state');
+  const targetPaths = gitText(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', receipt.source_state_oid, receipt.target_state_oid]).split(/\r?\n/).filter(Boolean).sort();
+  const expectedTargetPaths = ['snapshot.json', ...state.entries.filter((entry) => entry.name.startsWith('journal/')).slice(attempt.source.event_count).map((entry) => entry.name)].sort();
+  if (stableStringify(targetPaths) !== stableStringify(expectedTargetPaths)) throw new Error('receipt target commit manifest contains omissions or extra paths');
   return { ok: true, receipt_commit_oid: dev, attempt, state };
 }
 
