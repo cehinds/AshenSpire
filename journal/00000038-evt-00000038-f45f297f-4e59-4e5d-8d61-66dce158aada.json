@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000038-f45f297f-4e59-4e5d-8d61-66dce158aada",
+  "idempotency_key": "WORK_ENTERED:313:1:2026-08-31T15:54:34.766Z",
+  "sequence": 38,
+  "previous_snapshot_hash": "1ba50bed9214f6151ac50f4e4fc7e800da2baa86d430ec954fdfbc3e1759f2df",
+  "issue_id": "313",
+  "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": "lease:313:1",
+  "lease_epoch": 1,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
+    "next_action": "Complete the in-progress two-file source diff, then run the three acceptance commands."
+  },
+  "created_at": "2026-08-31T15:54:34.766Z"
+}

@@ -1,16 +1,16 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 37,
-  "last_sequence": 37,
+  "revision": 38,
+  "last_sequence": 38,
   "work_items": {
     "313": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "313",
       "title": "Friendly card drag defaults from frozen legal board set",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
       "candidate_commit": null,
       "branch": "codex/issue-313-friendly-drag-default-current",
@@ -44,10 +44,10 @@
       "evidence_pointers": [],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Finish source implementation, add no overlapping tool edits, and run existing gates.",
+      "next_action": "Complete the in-progress two-file source diff, then run the three acceptance commands.",
       "authority_ceiling": "local-candidate",
-      "updated_event": "evt-00000037-6848e577-229b-4e14-945e-e688fe58352e",
-      "updated_at": "2026-08-31T15:54:20.910Z"
+      "updated_event": "evt-00000038-f45f297f-4e59-4e5d-8d61-66dce158aada",
+      "updated_at": "2026-08-31T15:54:34.766Z"
     },
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -356,5 +356,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "1ba50bed9214f6151ac50f4e4fc7e800da2baa86d430ec954fdfbc3e1759f2df"
+  "snapshot_hash": "0e39a9c08b38e42e74273d59a0fe496b4840a70e34d6d6607fdfc621fd0f0e8c"
 }
