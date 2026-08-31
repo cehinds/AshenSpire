@@ -1,0 +1,33 @@
+{
+  "event_id": "evt-00000036-e02099ec-c11b-4b29-9219-ab71c2747c5f",
+  "idempotency_key": "INTAKE_RECORDED:313:0:2026-08-31T15:54:01.578Z",
+  "sequence": 36,
+  "previous_snapshot_hash": "9afdbc042dfa832d8d9a10c042f9b7e4c01be35477fc569bf3d5516b0c953986",
+  "issue_id": "313",
+  "actor": "intake",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Friendly card drag defaults from frozen legal board set",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-313-friendly-drag-default-current",
+    "claimed_paths": [
+      "src/model/friendlyTargets.js",
+      "src/ui/screens/coop.js"
+    ],
+    "claimed_resources": [],
+    "acceptance_commands": [
+      "node tools/friendly-target-parity.mjs",
+      "node tools/coop-hand-parity.mjs",
+      "git diff --check"
+    ],
+    "evidence_pointers": [],
+    "next_action": "Implement owner-authored drag-start singleton default rule and validate without generated artifacts.",
+    "authority_ceiling": "local-candidate"
+  },
+  "created_at": "2026-08-31T15:54:01.578Z"
+}
