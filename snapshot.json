@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 28,
-  "last_sequence": 28,
+  "revision": 30,
+  "last_sequence": 30,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 6,
+      "revision": 7,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+      "state": "CLAIMED",
+      "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 2,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:257:3",
+      "lease_epoch": 3,
+      "lease_expiry": "2026-08-31T15:40:59.231Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": null,
       "lease_history": [
         {
@@ -95,6 +95,13 @@
           "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
           "lease_id": "lease:257:2",
           "lease_epoch": 2,
+          "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "lease:257:3",
+          "lease_epoch": 3,
           "assignment_kind": "implementation"
         }
       ],
@@ -113,7 +120,7 @@
       "wake_condition": null,
       "next_action": "Reclaim from the last preserved candidate or worktree.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000027-ddc90929-d433-4921-b0f4-177070fe866c",
+      "updated_event": "evt-00000030-87712a8e-26e7-4bea-8010-ef0907d3e36c",
       "updated_at": "2026-08-31T15:10:59.231Z"
     },
     "397": {
@@ -247,21 +254,21 @@
     },
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 6,
+      "revision": 7,
       "issue_id": "467",
       "title": "Bounded owner grant for dev delivery authority",
       "priority": "P0",
       "dependencies": [],
-      "state": "CANDIDATE_READY",
+      "state": "QA",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "4a14a6025064a03c9eeae37495d16496dcf43560",
       "branch": "codex/issue-467-authority-grant",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 2,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+      "assignment_kind": "qa",
+      "lease_id": "qa-lease:467:3",
+      "lease_epoch": 3,
+      "lease_expiry": "2026-08-31T15:40:59.231Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
       "lease_history": [
         {
@@ -276,6 +283,13 @@
           "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
           "lease_id": "qa-lease:467:2",
           "lease_epoch": 2,
+          "assignment_kind": "qa"
+        },
+        {
+          "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "qa-lease:467:3",
+          "lease_epoch": 3,
           "assignment_kind": "qa"
         }
       ],
@@ -305,12 +319,12 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Reassign independent QA for the preserved candidate.",
+      "next_action": "Run independent QA against the exact candidate commit.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000028-5681b52e-616b-4ae9-b435-ab560117f299",
+      "updated_event": "evt-00000029-5ef0681b-1cd1-4576-830b-e2a5642e00b3",
       "updated_at": "2026-08-31T15:10:59.231Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "f33443ad6587d3f75bb1613d0841edb5ddc5ab85633c8d15238679bc93e17e23"
+  "snapshot_hash": "f7e30c937d22762a39ee20976cc62f1923b01b615c421edcb44b87541ee8677d"
 }
