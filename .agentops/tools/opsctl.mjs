@@ -262,8 +262,14 @@ const CONTRACTS = [
   { name: 'qa', file: 'governance/qa.json', schema: 'schemas/qa.schema.json' },
   { name: 'evidence', file: 'governance/evidence.json', schema: 'schemas/evidence.schema.json' },
   { name: 'owner-command', file: 'governance/owner-command.json', schema: 'schemas/owner-command.schema.json' },
-  { name: 'migration', file: 'governance/migration.json', schema: 'schemas/migration.schema.json' }
+  { name: 'migration', file: 'governance/migration.json', schema: 'schemas/migration.schema.json' },
+  { name: 'directives', file: 'governance/directives.json', schema: 'schemas/directives.schema.json' }
 ];
+
+// Derived, never restated. The test asserted a hardcoded 19 with the number
+// spelled out in its own label, so registering a contract failed a check whose
+// real subject is "every registered contract loads".
+export const CONTRACT_COUNT = CONTRACTS.length;
 
 export function loadContracts(root = ROOT) {
   const out = {};
@@ -910,6 +916,52 @@ export function semanticChecks(c) {
     }
   }
 
+  // B3 (#430): standing directives. The cap the routing package demands is
+  // non-amplification — a directive changes what a seat MUST do, never what it
+  // MAY do. Everything else here exists because a directive that claims
+  // enforcement it does not have is worse than one that claims none.
+  if (c.directives) {
+    const ids = new Set();
+    const known = new Set(Object.keys(c));
+    const actorIds = c.hierarchy ? new Set(c.hierarchy.nodes.map((n) => n.actor_id)) : new Set();
+    const ownerActor = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    const ownerReserved = new Set((c['owner-intent'] && c['owner-intent'].owner.reserved_authority) || []);
+    for (const d of c.directives.directives) {
+      if (ids.has(d.id)) errors.push(`directives: '${d.id}' is declared twice`);
+      ids.add(d.id);
+      if (actorIds.size && !actorIds.has(d.issued_by)) {
+        errors.push(`directives: '${d.id}' is issued by '${d.issued_by}', which is not a hierarchy actor; an instruction from nobody in particular binds nobody`);
+      }
+      if (utcInstant(d.issued_at) === null) errors.push(`directives: '${d.id}' issued_at '${d.issued_at}' is not a real instant`);
+      // Non-amplification. An action a directive purports to grant must already
+      // be held by its issuer, and owner-reserved authority is never reachable
+      // by instruction — that is how a directive would become a back door.
+      for (const a of d.grants_actions || []) {
+        if (ownerReserved.has(a) && d.issued_by !== ownerActor) {
+          errors.push(`directives: '${d.id}' purports to grant owner-reserved authority '${a}'; a directive constrains a seat, it does not empower one`);
+        }
+        errors.push(`directives: '${d.id}' grants action '${a}'; a directive changes what a seat must do, never what it may do — grants belong in authority.json or a delegation envelope`);
+      }
+      // A claimed codification is checked against the corpus, not trusted.
+      if (d.codified_in) {
+        if (!known.has(d.codified_in)) {
+          errors.push(`directives: '${d.id}' claims codification in '${d.codified_in}', which is not a declared contract`);
+        } else if (d.codified_as && contractFieldAt(c[d.codified_in], d.codified_as) === undefined) {
+          errors.push(`directives: '${d.id}' claims codification at '${d.codified_in}.${d.codified_as}', which does not exist; a directive claiming enforcement it does not have is worse than one claiming none`);
+        }
+      }
+      if (d.status === 'superseded' && !d.superseded_by) {
+        errors.push(`directives: '${d.id}' is superseded but names no successor; the record of what replaced it is the point of keeping it`);
+      }
+      if (d.superseded_by && !c.directives.directives.some((x) => x.id === d.superseded_by)) {
+        errors.push(`directives: '${d.id}' names successor '${d.superseded_by}', which is not a declared directive`);
+      }
+      if (d.status !== 'superseded' && d.superseded_by) {
+        errors.push(`directives: '${d.id}' names a successor but is still '${d.status}'; two live directives on one instruction is a contradiction nothing resolves`);
+      }
+    }
+  }
+
   // 7. Delegation: subset-of-parent, decreasing depth, deputy cannot delegate an
   //    Owner-excluded action, time-bound, path-safe, declared roles.
   if (c.delegation) {
@@ -1338,6 +1390,18 @@ export function renderGovernance(c) {
     L.push(`- **Restricted:** ${ia.restricted.join('; ')}`);
     L.push(`- **Forbidden (never loaded):** ${ia.forbidden.join('; ')}`);
     L.push('');
+    // The one carve-out from concise output, and the shape it must take. Both
+    // arrived as owner directives and are codified here; directives.json names
+    // this field as their enforcement, and a claim of codification is checked
+    // against the corpus rather than believed.
+    L.push(`**Owner decision surfaces are the exception.** ${ia.reporting.owner_decision_exception}`);
+    L.push('');
+    L.push(`The packet shape is ${ia.reporting.decision_packet.source}:`);
+    L.push('');
+    for (const part of ia.reporting.decision_packet.parts) L.push(`- ${part}`);
+    L.push('');
+    L.push(ia.reporting.decision_packet.open_question_is_a_failure);
+    L.push('');
     if (ia.canonical_documents) {
       L.push('');
       L.push('### Canonical documents');
@@ -1449,6 +1513,23 @@ export function renderGovernance(c) {
     L.push('|---|---|---|---|---|---|');
     for (const a of c['owner-command'].actions) {
       L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.required_fields.map((f) => '\`' + f + '\`').join(', ')} | ${mdCell(a.affects)} |`);
+    }
+    L.push('');
+  }
+
+  if (c.directives) {
+    const dv = c.directives;
+    L.push('## Standing directives');
+    L.push('');
+    L.push(dv.principle);
+    L.push('');
+    L.push(dv.non_amplification);
+    L.push('');
+    L.push('| Directive | Issued by | Issued | Status | Codified in | Instruction |');
+    L.push('|---|---|---|---|---|---|');
+    for (const d of dv.directives) {
+      const cod = d.codified_in ? `\`${d.codified_in}.${d.codified_as}\`` : '— (nothing enforces it)';
+      L.push(`| ${d.id} | \`${d.issued_by}\` | ${d.issued_at} | ${d.status}${d.superseded_by ? ` → \`${d.superseded_by}\`` : ''} | ${cod} | ${mdCell(d.text)} |`);
     }
     L.push('');
   }
@@ -1587,14 +1668,35 @@ export function globCovers(declGlob, glob) {
   return dirG.startsWith(dirD);
 }
 
-// The ticket a ledger glob is scoped to, or null when it grants the whole root.
-// `.agentops/events/AS-HD-055/**` under root `.agentops/events/**` is AS-HD-055's.
-export function ledgerTicketOf(rootGlob, granted) {
+// Read a dotted field path out of a contract, for checking that a claimed
+// codification really exists rather than taking the claim's word for it.
+export function contractFieldAt(contract, path) {
+  let node = contract;
+  for (const key of String(path).split('.')) {
+    if (node === null || node === undefined || typeof node !== 'object') return undefined;
+    node = node[key];
+  }
+  return node;
+}
+
+// How a ledger glob is scoped, as three cases rather than a nullable ticket.
+// The nullable form conflated "grants the whole root" with "cannot be proven to
+// name one ticket", so `.agentops/events/AS-HD-040*/**` on an AS-HD-055 lease
+// read as a broad root grant and passed: the per-ticket check was bypassable by
+// putting a wildcard where the ticket goes.
+//
+//   root        exactly the declared root. Broad, and authorized only for the
+//               lease's own subtree, which the affected-path check enforces.
+//   ticket      a literal ticket name in the first component.
+//   unprovable  anything else, a wildcard in the ticket position included.
+export function ledgerScopeOf(rootGlob, granted) {
   const root = rootGlob.replace(/\*+$/, '');
-  if (!granted.startsWith(root)) return null;
+  if (!granted.startsWith(root)) return { kind: 'outside' };
   const rest = granted.slice(root.length).replace(/^\/+/, '');
+  if (rest === '' || rest === '**') return { kind: 'root' };
   const first = rest.split('/')[0];
-  return first && !first.includes('*') ? first : null;
+  if (!first || /[*?\[]/.test(first)) return { kind: 'unprovable' };
+  return { kind: 'ticket', ticket: first };
 }
 
 export function pathGrantErrors(contracts, lease) {
@@ -1633,9 +1735,11 @@ export function pathGrantErrors(contracts, lease) {
       // A glob scoped to a ticket must name the lease's own; a broad root grant
       // stays legal (AS-1001 holds one) but authorizes only that subtree, which
       // ledgerScopeErrors enforces where the writes actually are.
-      const scoped = ledgerTicketOf(owner.glob, g);
-      if (scoped && lease.ticket && scoped !== lease.ticket) {
-        errors.push(`lease '${lease.id}' is issued for '${lease.ticket}' but grants '${g}', which is ${scoped}'s ledger; a seat records what it did, not what another seat did`);
+      const scope = ledgerScopeOf(owner.glob, g);
+      if (scope.kind === 'ticket' && lease.ticket && scope.ticket !== lease.ticket) {
+        errors.push(`lease '${lease.id}' is issued for '${lease.ticket}' but grants '${g}', which is ${scope.ticket}'s ledger; a seat records what it did, not what another seat did`);
+      } else if (scope.kind === 'unprovable') {
+        errors.push(`lease '${lease.id}' grants '${g}', whose ticket segment is a pattern; a ledger scope is either the whole root or one literal ticket, because a wildcard there cannot be proven to name this lease's own`);
       }
       continue;
     } else if (owner.owner_role !== actorRole(contracts, lease.actor)) {
@@ -2046,9 +2150,11 @@ export function runtimeChecks(g, rt) {
         // what the per-ticket lane was supposed to prevent.
         for (const decl of (g['git-ownership'] || {}).paths || []) {
           if (!decl.per_seat || !globCovers(decl.glob, p)) continue;
-          const scoped = ledgerTicketOf(decl.glob, p);
-          if (scoped && scoped !== ticket) {
-            errors.push(`capsule '${ticket}' claims affected path '${p}', which is ${scoped}'s ledger; a per-seat grant authorizes the lease's own ticket, not the whole root`);
+          const scope = ledgerScopeOf(decl.glob, p);
+          if (scope.kind === 'ticket' && scope.ticket !== ticket) {
+            errors.push(`capsule '${ticket}' claims affected path '${p}', which is ${scope.ticket}'s ledger; a per-seat grant authorizes the lease's own ticket, not the whole root`);
+          } else if (scope.kind === 'unprovable') {
+            errors.push(`capsule '${ticket}' claims affected path '${p}', whose ticket segment is a pattern; it cannot be proven to stay inside this seat's own ledger`);
           }
         }
       }
@@ -3152,7 +3258,12 @@ const VIEW_PROBES = {
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
+    `**Owner decision surfaces are the exception.** ${x.reporting.owner_decision_exception}`,
+    `The packet shape is ${x.reporting.decision_packet.source}:`,
+    ...x.reporting.decision_packet.parts.map((y) => `- ${y}`),
+    x.reporting.decision_packet.open_question_is_a_failure,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
+  directives: (x) => [x.principle, x.non_amplification, ...x.directives.map((d) => `| ${d.id} | \`${d.issued_by}\` | ${d.issued_at} | ${d.status}${d.superseded_by ? ' \u2192 \`' + d.superseded_by + '\`' : ''} | ${d.codified_in ? '\`' + d.codified_in + '.' + d.codified_as + '\`' : '\u2014 (nothing enforces it)'} | ${mdCell(d.text)} |`)],
   migration: (x) => [x.principle],
   'model-effort': (x) => [x.principle, x.assignment_record.format,
     `Selection stability: ${x.stability} Substitution: ${x.substitution}`,
@@ -4168,6 +4279,34 @@ export function runSelftest(root = ROOT) {
   expectSemantic('per-seat path on a lane with no sole writer', (c) => { c['git-ownership'].paths.find((pp) => pp.glob === '.agentops/events/**').serialized_lane = 'product-source'; }, 'declares no sole writer');
   expectSemantic('per-seat owner_role without the marker', (c) => { const pp = c['git-ownership'].paths.find((x) => x.glob === '.agentops/work/**'); delete pp.per_seat; }, 'without the per_seat marker');
   expectSemantic('the ledger lane losing its sole writer', (c) => { delete c['git-ownership'].ledger_serialization; }, 'declares no sole writer');
+  // B3 (#430): standing directives. The cap the routing package demands is
+  // non-amplification; the rest exists because a directive claiming enforcement
+  // it does not have is worse than one claiming none.
+  expectSemantic('directives: an issuer who is nobody in particular', (c) => { c.directives.directives[0].issued_by = 'someone'; }, 'binds nobody');
+  expectSemantic('directives: a duplicate id', (c) => { c.directives.directives.push({ ...c.directives.directives[0] }); }, 'is declared twice');
+  expectSemantic('directives: an issued_at that is not a real instant', (c) => { c.directives.directives[0].issued_at = '2026-02-30T00:00:00Z'; }, 'not a real instant');
+  expectSemantic('directives: a directive that grants an action', (c) => { c.directives.directives[0].grants_actions = ['integrate-to-dev']; }, 'never what it may do');
+  expectSemantic('directives: a directive reaching for owner-reserved authority', (c) => { const d = c.directives.directives[0]; d.issued_by = 'it-manager-iii'; d.grants_actions = [c['owner-intent'].owner.reserved_authority[0]]; }, 'it does not empower one');
+  expectSemantic('directives: codification in a contract that does not exist', (c) => { c.directives.directives[0].codified_in = 'ghost-contract'; }, 'not a declared contract');
+  expectSemantic('directives: codification at a field that does not exist', (c) => { c.directives.directives[0].codified_as = 'reporting.imaginary_clause'; }, 'claiming enforcement it does not have');
+  expectSemantic('directives: superseded with no successor named', (c) => { c.directives.directives[0].status = 'superseded'; }, 'names no successor');
+  expectSemantic('directives: a successor that does not exist', (c) => { const d = c.directives.directives[0]; d.status = 'superseded'; d.superseded_by = 'no-such-directive'; }, 'not a declared directive');
+  expectSemantic('directives: a live directive that also names a successor', (c) => { c.directives.directives[0].superseded_by = c.directives.directives[1].id; }, 'two live directives on one instruction');
+
+  // Codex P1: a wildcard where the ticket goes made the per-ticket ledger check
+  // bypassable, because "cannot be proven" read as "whole root, allowed".
+  expectRuntime('a wildcarded cross-ticket ledger grant', (rt) => {
+    rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent').path_globs.push('.agentops/events/AS-HD-040*/**');
+  }, 'ticket segment is a pattern');
+  expectRuntime('a bare wildcard in the ticket position', (rt) => {
+    rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent').path_globs.push('.agentops/work/*/**');
+  }, 'ticket segment is a pattern');
+  expectRuntime('a capsule claiming a wildcarded ledger path', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker');
+    l.path_globs.push('.agentops/events/**');
+    rt.capsules['AS-1001'].affected_paths.push('.agentops/events/AS*/**');
+  }, 'cannot be proven to stay inside');
+
   expectSemantic('branch hygiene: rewrite permission held by a pool', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'qa-guild'; }, 'is not a declared role');
   expectSemantic('branch hygiene: rewrite permission held by a non-standing role', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'maker'; }, 'is not a standing role');
   expectSemantic('branch hygiene: no prior head recorded', (c) => { c['git-ownership'].branch_hygiene.records = ['the branch']; }, 'cannot be undone');
@@ -4780,7 +4919,10 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
       : `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
   });
   if (!r.ok) return r;
-  return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
+  // The OID actually written, not HEAD: on the freezing path the base becomes
+  // the resolved ref, which need not be HEAD, so returning `head` made the CLI
+  // report a move that did not happen.
+  return { ok: true, ticket, from, base: cap.base_oid, froze: freezing ? frozenRef : null, revision: r.revision, event: r.event };
 }
 
 // `reseat --all` used to live here. It is gone, and the reason is on the record:

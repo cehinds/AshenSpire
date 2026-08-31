@@ -566,6 +566,18 @@ Minimal sufficient context. A cold-start agent loads only what the current actio
 - **Restricted:** credential, token, or secret material; owner private decision context; another writer's in-flight uncommitted workspace
 - **Forbidden (never loaded):** full-git-history; full-backlog-or-portfolio; all-chat-transcripts; raw-tool-logs; whole-diffs-or-screenshot-sets; unrelated-source-trees; the-reconstruction-installer-bundle-at-startup
 
+**Owner decision surfaces are the exception.** A seat may exceed concise output only where the emission is an owner decision surface: an owner-reserved authority, a protected transition, or a recorded blocker whose wake is the owner. Such an emission MUST take the form of the decision packet AUTHORITY.md already specifies, in the order decision_packet names it, with OPTIONS as its default form rather than an open question. Every other emission stays concise; the exception is never claimed to justify narration, and needing an owner decision does not itself widen any grant.
+
+The packet shape is docs/governance/AUTHORITY.md § Decision and exception packets:
+
+- EVIDENCE — exact current state, links, base/head, and conflict
+- OPTIONS — two or three materially different choices when applicable, each stating what it authorizes, what it forecloses, and its reversibility
+- REC — recommendation and trade-off
+- NEXT — smallest action after the decision
+- AUTH — exact new authority required, or 'No new authority'
+
+A request for direction without enumerated options is a contract failure, not a shorter packet.
+
 
 ### Canonical documents
 
@@ -689,6 +701,17 @@ The owner-command path accepts only enumerated actions from an authenticated act
 | authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
 | record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
 
+## Standing directives
+
+A standing directive is an owner instruction that outlives the conversation it was given in. Chat is a projection; this file is the record. A directive that has been codified names the contract that enforces it, so the enforcement is checkable rather than remembered — and a directive nothing enforces is visible as exactly that.
+
+A directive can never exceed the issuing role's own grant. It changes what a seat must do, never what a seat may do: an instruction that would confer an action its issuer does not hold is void, and delegation.non_amplification_rule governs. Needing an owner decision does not itself widen any grant.
+
+| Directive | Issued by | Issued | Status | Codified in | Instruction |
+|---|---|---|---|---|---|
+| concise-by-default | `constantine` | 2026-08-29T19:31:22Z | standing | `information-access.reporting.style` | All teams default to concise, minimal output unless it is something the owner needs to decide on. |
+| options-when-the-owner-decides | `constantine` | 2026-08-29T19:33:07Z | standing | `information-access.reporting.owner_decision_exception` | Options are the default form whenever something needs owner attention, not an open question. An emission on an owner decision surface presents enumerated options, a recommendation, and the consequence of deciding nothing. |
+
 ## Legacy migration
 
 Migration is read-only over legacy evidence. It inventories the old coordination artifacts, selects at most one authoritative current record per work item, classifies the rest as evidence, generated view, superseded, or unknown, and proposes genesis work capsules that REFERENCE old evidence without rewriting it. No legacy artifact is deleted, overwritten, or reset; the destructive cutover and legacy-entrypoint replacement are owner-gated and out of scope here.
@@ -720,6 +743,14 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 - `no_direct_push_to_dev` — Delivery discretion never authorizes a direct push to dev; it runs through the reviewable pull-request process.
 - `readiness_is_not_release` — Declaring a packet ready for owner review grants no promotion authority and is not a release-readiness claim.
 - `rollback_is_recorded_before_the_switch` — A Pages source switch records its rollback target, procedure, trigger, responsible actor and authority before it happens, so a failed deployment has somewhere to go back to.
+
+**`directives`**
+
+- `chat_is_not_the_record` — A directive given in conversation is a projection until it is recorded here. Nothing enforces an uncodified directive, and this file makes that visible rather than leaving it to memory.
+- `issuer_must_be_declared` — A directive's issuer is an actor the hierarchy declares. An instruction from nobody in particular binds nobody.
+- `codification_is_named` — A directive marked codified names the contract and the exact field that carries it, and validation checks the field is really there. A directive that claims enforcement it does not have is worse than one that claims none.
+- `supersession_is_explicit` — A superseded directive names the directive that replaced it and stays in the file. The record of what was once instructed is not deleted to tidy the current state.
+- `never_amplifies` — A directive may constrain a seat and may not empower one. Any action it purports to grant must already be held by its issuer, and a directive is never a route to an owner-reserved authority.
 
 **`escalation`**
 
