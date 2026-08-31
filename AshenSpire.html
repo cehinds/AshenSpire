@@ -5413,7 +5413,14 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
 
-.combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.combat {
+  --safe-top-local: calc(env(safe-area-inset-top, 0px) / var(--ui-zoom, 1));
+  --safe-right-local: calc(env(safe-area-inset-right, 0px) / var(--ui-zoom, 1));
+  --safe-bottom-local: calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
+  --safe-left-local: calc(env(safe-area-inset-left, 0px) / var(--ui-zoom, 1));
+  --safe-edge-local: calc(2px / var(--ui-zoom, 1));
+  flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden;
+}
 
 /* ---------- shared map/combat HUD: THREE ROWS ----------
    TOP — character/run identity left, Cinders truly centred, progress/build right.
@@ -6702,9 +6709,9 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);
     transform: none; inline-size: auto;
   }
-  .armament-radial[data-placement='left'] { left: max(.4rem, env(safe-area-inset-left)); right: auto; }
+  .armament-radial[data-placement='left'] { left: max(.4rem, var(--safe-left-local)); right: auto; }
   .armament-radial[data-placement='center'] { left: 50%; right: auto; transform: translateX(-50%); }
-  .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, env(safe-area-inset-right)); }
+  .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, var(--safe-right-local)); }
 }
 
 /* ---------- targeting arrow ---------- */
@@ -7213,6 +7220,64 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     margin-right: 13.8rem;
   }
+
+/* ---------- mobile safe areas -------------------------------------------------
+   iPhone browser chrome can expose the whole physical viewport when
+   viewport-fit=cover is active. Keep the interactive HUD and action rail inside
+   the resulting safe rectangle; the battlefield may still paint behind it. */
+.combat > .topbar.combat-hud.shared-hud {
+  padding-block-start: max(calc(1px / var(--ui-zoom, 1)), var(--safe-top-local));
+}
+.combat > .topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) {
+  padding-inline-start: max(1.6rem, calc(var(--safe-left-local) + var(--safe-edge-local)));
+  padding-inline-end: max(1.6rem, calc(var(--safe-right-local) + var(--safe-edge-local)));
+}
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding-inline-start: max(calc(8px / var(--ui-zoom, 1)), calc(var(--safe-left-local) + var(--safe-edge-local)));
+  padding-inline-end: max(calc(8px / var(--ui-zoom, 1)), calc(var(--safe-right-local) + var(--safe-edge-local)));
+}
+:root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud,
+:root[data-composition='short-wide'] .combat > .topbar.combat-hud.shared-hud {
+  padding-block-start: max(calc(1px / var(--ui-zoom, 1)), var(--safe-top-local));
+}
+.topbar.combat-hud.shared-hud .hud-quick-settings,
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-settings {
+  right: calc(var(--safe-right-local) + (8px / var(--ui-zoom, 1)));
+}
+:root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(var(--safe-right-local) + (9px / var(--ui-zoom, 1)));
+}
+.hand-area {
+  margin-bottom: calc(var(--action-row-drop) + var(--safe-bottom-local));
+}
+.combat-action-row {
+  inset-inline-start: max(1.6rem, calc(var(--safe-left-local) + var(--safe-edge-local)));
+  inset-inline-end: max(1.6rem, calc(var(--safe-right-local) + var(--safe-edge-local)));
+  bottom: calc(var(--safe-bottom-local) - var(--action-row-drop));
+}
+@media (max-width: 900px) {
+  .armament-radial {
+    max-width: calc(100vw - var(--safe-left-local) - var(--safe-right-local) - .8rem);
+    bottom: calc(var(--action-row-drop) + var(--safe-bottom-local) + .4rem);
+  }
+  .armament-radial-picker { bottom: calc(var(--action-row-drop) + var(--safe-bottom-local) + var(--tap-floor) + .75rem); }
+}
+@media (pointer: coarse) {
+  .combat .et-key,
+  .combat .flask-key,
+  .combat .key-hint,
+  .combat .hint-bar kbd { display: none; }
+}
+:root[data-layout='narrow'] .hand-area {
+  margin-bottom: 0;
+  padding-inline-start: max(1rem, var(--safe-left-local));
+  padding-inline-end: max(1rem, var(--safe-right-local));
+  padding-bottom: calc(1rem + var(--safe-bottom-local));
+}
+:root[data-layout='narrow'] .combat-action-row {
+  inset-inline: auto;
+  bottom: auto;
+}
 
   </style>
   <style data-src="styles/map.css">
@@ -42264,7 +42329,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e1b494b667';
+const SOURCE = '8f546f2e1d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42298,7 +42363,7 @@ const SOURCE = 'e1b494b667';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1708';
+const ORDINAL = '1719';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -42325,7 +42390,7 @@ const ORDINAL = '1708';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-30';
+const BUILT = '2026-08-31';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
