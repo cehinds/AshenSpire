@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 20,
-  "last_sequence": 20,
+  "revision": 21,
+  "last_sequence": 21,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -116,12 +116,12 @@
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "397",
       "title": "Durable owner asks ledger",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-397-durable-asks-ledger",
@@ -165,8 +165,8 @@
       "wake_condition": null,
       "next_action": "Finish deterministic asks ledger candidate",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000020-d1131f2c-d00c-43af-b437-9a2a5208f3bc",
-      "updated_at": "2026-08-31T14:25:45.863Z"
+      "updated_event": "evt-00000021-5d3051ba-5af6-49f2-a8b5-2211fce41900",
+      "updated_at": "2026-08-31T14:26:16.485Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -294,5 +294,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "7973a0daaac5eca7e3487a19e079bff45df8c0962a0141de3fac3e6c7b10ae21"
+  "snapshot_hash": "c23399b4f24469c8a8a12570102b4e18885d100981a80e94e36cf8034135b4af"
 }

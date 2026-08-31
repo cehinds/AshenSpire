@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000021-5d3051ba-5af6-49f2-a8b5-2211fce41900",
+  "idempotency_key": "WORK_ENTERED:397:1:2026-08-31T14:26:16.485Z",
+  "sequence": 21,
+  "previous_snapshot_hash": "7973a0daaac5eca7e3487a19e079bff45df8c0962a0141de3fac3e6c7b10ae21",
+  "issue_id": "397",
+  "actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:397:1",
+  "lease_epoch": 1,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "next_action": "Finish deterministic asks ledger candidate"
+  },
+  "created_at": "2026-08-31T14:26:16.485Z"
+}
