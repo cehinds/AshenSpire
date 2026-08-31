@@ -159,12 +159,13 @@
         "audit_paths": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["root", "journal_path", "attempt_path_template", "receipt_path_template"],
+          "required": ["root", "journal_path", "attempt_path_template", "receipt_path_template", "manifest_path_template"],
           "properties": {
             "root": {"const": ".agentops/scheduler/project-schema-attempts"},
             "journal_path": {"const": ".agentops/scheduler/project-schema-attempts/journal.jsonl"},
             "attempt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json"},
-            "receipt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json"}
+            "receipt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json"},
+            "manifest_path_template": {"const": ".agentops/scheduler/project-schema-attempts/manifests/{attempt_id}.json"}
           }
         },
         "audit_guards": {
@@ -188,13 +189,14 @@
         "audit_result_contract": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "ambiguity_policy", "no_self_reference"],
+          "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "finalization_timing", "ambiguity_policy", "no_self_reference"],
           "properties": {
             "schema": {"const": "agentops/project-schema-audit-result-contract/v1"},
             "result_schema": {"const": "agentops/project-schema-audit-result/v1"},
             "path": {"const": ".git/agentops-project-schema/audit-result.json"},
             "schema_pointer": {"const": ".agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt"},
-            "construction_timing": {"const": "after-local-initial-commit-before-ref-creation"},
+            "construction_timing": {"const": "after-manifest-publication-and-single-postinspection"},
+            "finalization_timing": {"const": "after-manifest-publication-and-single-postinspection"},
             "ambiguity_policy": {"const": "inspect-once-never-create"},
             "no_self_reference": {"const": true}
           }
@@ -208,11 +210,14 @@
         "schema",
         "reconciler_head",
         "reconciler_tree",
+        "qa_receipt",
         "source",
         "target",
         "canonical_anchor_oid",
         "machine_lease",
         "work_leases",
+        "work_lease_ordering",
+        "late_candidate_gate",
         "mode",
         "not_before",
         "quiet_window_receipt_hash",
@@ -226,13 +231,46 @@
         "expires_at",
         "target_ref",
         "expected_remote_oid",
+        "development_ref",
+        "expected_development_remote_oid",
+        "publication_mode",
+        "ambiguity_policy",
+        "postcondition_policy",
         "push_mode",
-        "abort_on_remote_change"
+        "abort_on_remote_change",
+        "result_receipt_contract"
       ],
       "properties": {
-        "schema": {"const": "agentops/scheduler-state-reconciliation-authority/v1"},
+        "schema": {"const": "agentops/scheduler-state-reconciliation-authority/v2"},
         "reconciler_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "reconciler_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "qa_receipt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
+          "properties": {
+            "schema": {"const": "agentops/independent-qa-receipt/v1"},
+            "path": {"const": ".agentops/scheduler/reconciliation/qa-receipt.json"},
+            "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schema", "candidate", "verdict", "verifier", "maker_actor", "independent_of_maker", "tested_at", "tests", "evidence"],
+              "properties": {
+                "schema": {"const": "agentops/independent-qa-receipt/v1"},
+                "candidate": {"type": "object", "additionalProperties": false, "required": ["head", "tree"], "properties": {"head": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}},
+                "verdict": {"const": "PASS"},
+                "verifier": {"type": "object", "additionalProperties": false, "required": ["actor", "role"], "properties": {"actor": {"type": "string", "minLength": 1}, "role": {"const": "qa-independent"}}},
+                "maker_actor": {"type": "string", "minLength": 1},
+                "independent_of_maker": {"const": true},
+                "tested_at": {"type": "string", "minLength": 1},
+                "tests": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "command", "exit_code", "outcome", "output_sha256"], "properties": {"id": {"type": "string", "minLength": 1}, "command": {"type": "string", "minLength": 1}, "exit_code": {"const": 0}, "outcome": {"const": "PASS"}, "output_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}},
+                "evidence": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["kind", "path", "blob_oid", "sha256"], "properties": {"kind": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}}
+              }
+            }
+          }
+        },
         "source": {
           "type": "object",
           "additionalProperties": false,
@@ -291,6 +329,62 @@
             }
           }
         },
+        "work_lease_ordering": {"const": "numeric-issue-id-then-lease-epoch-then-lease-id"},
+        "late_candidate_gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "preserved", "unavailable", "ordering", "publication_permitted"],
+          "properties": {
+            "status": {"enum": ["READY", "WITHHOLD"]},
+            "preserved": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["issue_id", "candidate_commit", "candidate_tree", "preservation_mode", "remote_ref", "expected_remote_oid", "immutability"],
+                "properties": {
+                  "issue_id": {"type": "string", "pattern": "^#[1-9][0-9]*$"},
+                  "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "candidate_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "preservation_mode": {"enum": ["existing-immutable-remote-ref", "atomically-create-quarantine-ref"]},
+                  "remote_ref": {"type": "string", "pattern": "^refs/heads/agentops/quarantine/late-candidates/[1-9][0-9]*/[0-9a-f]{40}$"},
+                  "expected_remote_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+                  "immutability": {"enum": ["preexisting-never-move", "create-once-never-move"]}
+                },
+                "allOf": [
+                  {"if": {"properties": {"preservation_mode": {"const": "existing-immutable-remote-ref"}}}, "then": {"properties": {"expected_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "immutability": {"const": "preexisting-never-move"}}}},
+                  {"if": {"properties": {"preservation_mode": {"const": "atomically-create-quarantine-ref"}}}, "then": {"properties": {"expected_remote_oid": {"const": null}, "immutability": {"const": "create-once-never-move"}}}}
+                ]
+              }
+            },
+            "unavailable": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["issue_id", "candidate_commit", "expected_tree", "expected_blob_oid", "expected_sha256", "recorded_base_commits", "recovery_evidence", "owner_actor", "disposition", "reason_code"],
+                "properties": {
+                  "issue_id": {"type": "string", "pattern": "^#[1-9][0-9]*$"},
+                  "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                  "expected_tree": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+                  "expected_blob_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+                  "expected_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+                  "recorded_base_commits": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{40}$"}},
+                  "recovery_evidence": {"type": "object", "additionalProperties": false, "required": ["schema", "path", "blob_oid", "sha256"], "properties": {"schema": {"const": "agentops/late-candidate-recovery-receipt/v1"}, "path": {"type": "string", "pattern": "^\\.agentops/scheduler/reconciliation/late-candidates/[1-9][0-9]*/recovery-receipt\\.json$"}, "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+                  "owner_actor": {"const": "owner"},
+                  "disposition": {"const": "retain-custody-and-withhold"},
+                  "reason_code": {"enum": ["candidate-object-missing", "candidate-object-corrupt", "candidate-object-unreachable", "candidate-object-not-byte-recoverable", "conflicting-base-evidence"]}
+                }
+              }
+            },
+            "ordering": {"const": "numeric-issue-id-then-candidate-commit"},
+            "publication_permitted": {"type": "boolean"}
+          },
+          "allOf": [
+            {"if": {"properties": {"status": {"const": "READY"}}}, "then": {"properties": {"publication_permitted": {"const": true}, "unavailable": {"maxItems": 0}}}},
+            {"if": {"properties": {"status": {"const": "WITHHOLD"}}}, "then": {"properties": {"publication_permitted": {"const": false}, "unavailable": {"minItems": 1}}}}
+          ]
+        },
         "mode": {"const": "release-custody-and-reconcile-work-leases"},
         "not_before": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
         "quiet_window_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -304,8 +398,26 @@
         "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
         "target_ref": {"const": "refs/heads/agentops/scheduler-state"},
         "expected_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "push_mode": {"const": "non-force-forward-only-cas"},
-        "abort_on_remote_change": {"const": true}
+        "development_ref": {"const": "refs/heads/dev"},
+        "expected_development_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "publication_mode": {"const": "atomic-authority-state-and-quarantine-cas"},
+        "ambiguity_policy": {"const": "inspect-once-never-retry"},
+        "postcondition_policy": {"const": "authority-state-and-all-candidate-refs-exact-or-withhold"},
+        "push_mode": {"const": "git-push-atomic-exact-leases"},
+        "abort_on_remote_change": {"const": true},
+        "result_receipt_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "no_self_reference"],
+          "properties": {
+            "schema": {"const": "agentops/scheduler-state-reconciliation-result-contract/v1"},
+            "result_schema": {"const": "agentops/scheduler-state-reconciliation-result/v1"},
+            "path": {"const": ".git/agentops-scheduler/reconciliation-result.json"},
+            "schema_pointer": {"const": ".agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_state_reconciliation_result_receipt"},
+            "construction_timing": {"const": "after-atomic-publication-and-single-postinspection"},
+            "no_self_reference": {"const": true}
+          }
+        }
       }
     },
     "scheduler_cutover": {
@@ -327,7 +439,6 @@
         "post_cutover_config",
         "activation_manifest",
         "result_receipt_contract",
-        "cross_field_equalities",
         "state_target_ref",
         "expected_state_remote_oid",
         "development_ref",
@@ -347,12 +458,48 @@
         "qa_receipt": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "blob_oid", "sha256"],
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
           "properties": {
             "schema": {"const": "agentops/independent-qa-receipt/v1"},
             "path": {"const": ".agentops/scheduler/cutover/qa-receipt.json"},
             "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schema", "candidate", "verdict", "verifier", "maker_actor", "independent_of_maker", "tested_at", "tests", "evidence"],
+              "properties": {
+                "schema": {"const": "agentops/independent-qa-receipt/v1"},
+                "candidate": {
+                  "type": "object", "additionalProperties": false, "required": ["head", "tree"],
+                  "properties": {"head": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}
+                },
+                "verdict": {"const": "PASS"},
+                "verifier": {
+                  "type": "object", "additionalProperties": false, "required": ["actor", "role"],
+                  "properties": {"actor": {"type": "string", "minLength": 1}, "role": {"const": "qa-independent"}}
+                },
+                "maker_actor": {"type": "string", "minLength": 1},
+                "independent_of_maker": {"const": true},
+                "tested_at": {"type": "string", "minLength": 1},
+                "tests": {
+                  "type": "array", "minItems": 1,
+                  "items": {
+                    "type": "object", "additionalProperties": false,
+                    "required": ["id", "command", "exit_code", "outcome", "output_sha256"],
+                    "properties": {"id": {"type": "string", "minLength": 1}, "command": {"type": "string", "minLength": 1}, "exit_code": {"const": 0}, "outcome": {"const": "PASS"}, "output_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+                  }
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "object", "additionalProperties": false,
+                    "required": ["kind", "path", "blob_oid", "sha256"],
+                    "properties": {"kind": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+                  }
+                }
+              }
+            }
           }
         },
         "migration": {
@@ -423,34 +570,103 @@
         "project_schema_receipt": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "blob_oid", "sha256"],
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
           "properties": {
             "schema": {"const": "agentops/project-schema-change-receipt/v1"},
             "path": {"const": ".agentops/scheduler/cutover/project-schema-receipt.json"},
             "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "failure_code", "project", "mutation_counts", "readback_schema", "audit_ref"],
+              "properties": {
+                "status": {"const": "COMPLETE"},
+                "failure_code": {"const": null},
+                "project": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["owner", "owner_type", "number", "id", "title", "closed"],
+                  "properties": {"owner": {"const": "cehinds"}, "owner_type": {"const": "user"}, "number": {"const": 4}, "id": {"const": "PVT_kwHOCSCyJ84BgfH9"}, "title": {"const": "Family Delivery"}, "closed": {"const": false}}
+                },
+                "mutation_counts": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["created_field_count", "mutated_item_count", "updated_existing_field_count", "backfill_count"],
+                  "properties": {"created_field_count": {"const": 8}, "mutated_item_count": {"const": 0}, "updated_existing_field_count": {"const": 0}, "backfill_count": {"const": 0}}
+                },
+                "readback_schema": {"const": "agentops/project-field-readback/v1"},
+                "audit_ref": {"const": "refs/heads/agentops/project-schema-audit"}
+              }
+            }
           }
         },
         "project_manifest": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "blob_oid", "sha256"],
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
           "properties": {
             "schema": {"const": "agentops/project-field-manifest/v1"},
             "path": {"const": ".agentops/scheduler/cutover/project-manifest.json"},
             "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schema", "definitions_hash", "project", "observed_at", "project_updated_at", "fields", "source_receipt_hash"],
+              "properties": {
+                "schema": {"const": "agentops/project-field-manifest/v1"},
+                "definitions_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "project": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["owner", "owner_type", "number", "id", "title", "closed"],
+                  "properties": {"owner": {"const": "cehinds"}, "owner_type": {"const": "user"}, "number": {"const": 4}, "id": {"const": "PVT_kwHOCSCyJ84BgfH9"}, "title": {"const": "Family Delivery"}, "closed": {"const": false}}
+                },
+                "observed_at": {"type": "string", "minLength": 1},
+                "project_updated_at": {"type": "string", "minLength": 1},
+                "fields": {
+                  "type": "array", "minItems": 9, "maxItems": 9, "items": false,
+                  "prefixItems": [
+                    {"$ref": "#/definitions/project_manifest_scheduler_status_field"},
+                    {"$ref": "#/definitions/project_manifest_priority_field"},
+                    {"$ref": "#/definitions/project_manifest_owner_role_field"},
+                    {"$ref": "#/definitions/project_manifest_affected_paths_field"},
+                    {"$ref": "#/definitions/project_manifest_affected_resources_field"},
+                    {"$ref": "#/definitions/project_manifest_dependencies_field"},
+                    {"$ref": "#/definitions/project_manifest_external_claims_field"},
+                    {"$ref": "#/definitions/project_manifest_human_gate_field"},
+                    {"$ref": "#/definitions/project_manifest_scope_complete_field"}
+                  ]
+                },
+                "source_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              }
+            }
           }
         },
         "quiet_window_receipt": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "blob_oid", "sha256"],
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
           "properties": {
             "schema": {"const": "agentops/scheduler-quiet-window-receipt/v1"},
             "path": {"const": ".agentops/scheduler/cutover/quiet-window-receipt.json"},
             "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["observed_from", "observed_until", "source_state_oid", "state_ref", "development_ref", "scheduler_process_count", "legacy_process_count", "state_mutation_count", "dispatch_frozen", "no_external_mutation"],
+              "properties": {
+                "observed_from": {"type": "string", "minLength": 1},
+                "observed_until": {"type": "string", "minLength": 1},
+                "source_state_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "state_ref": {"const": "refs/heads/agentops/scheduler-state"},
+                "development_ref": {"const": "refs/heads/dev"},
+                "scheduler_process_count": {"const": 0},
+                "legacy_process_count": {"const": 0},
+                "state_mutation_count": {"const": 0},
+                "dispatch_frozen": {"const": true},
+                "no_external_mutation": {"const": true}
+              }
+            }
           }
         },
         "active_work_lease_count": {"const": 0},
@@ -677,21 +893,6 @@
             "no_self_reference": {"const": true}
           }
         },
-        "cross_field_equalities": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["development_d0_oid", "state_s0_oid", "state_s0_tree", "legacy_activation_blob", "pre_cutover_config_blob", "post_cutover_config_blob", "expected_state_remote", "migration_boundary_event_blob"],
-          "properties": {
-            "development_d0_oid": {"const": "activation_manifest.template.development_d0.oid == expected_development_remote_oid"},
-            "state_s0_oid": {"const": "activation_manifest.template.state_s0.oid == current_state.oid"},
-            "state_s0_tree": {"const": "activation_manifest.template.state_s0.tree == current_state.tree"},
-            "legacy_activation_blob": {"const": "activation_manifest.template.development_d0.legacy_activation_blob_oid == legacy_activation.blob_oid"},
-            "pre_cutover_config_blob": {"const": "activation_manifest.template.development_d0.pre_cutover_config_blob_oid == pre_cutover_config.blob_oid"},
-            "post_cutover_config_blob": {"const": "activation_manifest.template.development_d0.post_cutover_config_blob_oid == post_cutover_config.blob_oid"},
-            "expected_state_remote": {"const": "expected_state_remote_oid == current_state.oid"},
-            "migration_boundary_event_blob": {"const": "migration.state_migrated_event.blob_oid exists at migration.boundary_oid:migration.state_migrated_event.path"}
-          }
-        },
         "state_target_ref": {"const": "refs/heads/agentops/scheduler-state"},
         "expected_state_remote_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "development_ref": {"const": "refs/heads/dev"},
@@ -709,45 +910,209 @@
     "params": {"type": "object"}
   },
   "definitions": {
+    "project_manifest_option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "color", "description"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "color": {"type": "string", "minLength": 1},
+        "description": {"type": "string"}
+      }
+    },
+    "project_manifest_scheduler_status_field": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1}, "name": {"const": "Scheduler Status"},
+        "kind": {"const": "ProjectV2SingleSelectField"}, "data_type": {"const": "SINGLE_SELECT"},
+        "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 9, "maxItems": 9, "items": false, "prefixItems": [
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "READY"}, "color": {"const": "GREEN"}, "description": {"const": "Eligible for scheduler admission."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "BLOCKED"}, "color": {"const": "RED"}, "description": {"const": "Blocked by a recorded condition."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "PAUSED"}, "color": {"const": "GRAY"}, "description": {"const": "Intentionally paused and not schedulable."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "IN_PROGRESS"}, "color": {"const": "YELLOW"}, "description": {"const": "Implementation is active."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "QA_REVIEW"}, "color": {"const": "PURPLE"}, "description": {"const": "Awaiting or undergoing independent QA."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "PR_OPEN"}, "color": {"const": "BLUE"}, "description": {"const": "A pull request is open."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "DONE"}, "color": {"const": "GREEN"}, "description": {"const": "Completed and terminal."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "CANCELLED"}, "color": {"const": "GRAY"}, "description": {"const": "Cancelled and terminal."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "SUPERSEDED"}, "color": {"const": "PINK"}, "description": {"const": "Superseded by another work item or candidate."}}}]}
+        ]}
+      }
+    },
+    "project_manifest_priority_field": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"],
+      "properties": {
+        "id": {"const": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4"}, "name": {"const": "Priority"},
+        "kind": {"const": "ProjectV2SingleSelectField"}, "data_type": {"const": "SINGLE_SELECT"},
+        "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 4, "maxItems": 4, "items": false, "prefixItems": [
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"id": {"const": "5901e7b3"}, "name": {"const": "P0"}, "color": {"const": "GRAY"}, "description": {"const": ""}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"id": {"const": "c3bc1e0d"}, "name": {"const": "P1"}, "color": {"const": "GRAY"}, "description": {"const": ""}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"id": {"const": "f2b023f2"}, "name": {"const": "P2"}, "color": {"const": "GRAY"}, "description": {"const": ""}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"id": {"const": "f85da77c"}, "name": {"const": "P3"}, "color": {"const": "GRAY"}, "description": {"const": ""}}}]}
+        ]}
+      }
+    },
+    "project_manifest_owner_role_field": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1}, "name": {"const": "Owner Role"},
+        "kind": {"const": "ProjectV2SingleSelectField"}, "data_type": {"const": "SINGLE_SELECT"},
+        "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 18, "maxItems": 18, "items": false, "prefixItems": [
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "owner"}, "color": {"const": "PURPLE"}, "description": {"const": "Owner authority."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "it-manager-iii"}, "color": {"const": "RED"}, "description": {"const": "Technical integration and delivery authority."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "project-management-lead"}, "color": {"const": "BLUE"}, "description": {"const": "Portfolio, dependency, and sequencing stewardship."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "data-architecture-lead"}, "color": {"const": "PURPLE"}, "description": {"const": "Schema, lineage, and compatibility authority."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "help-desk"}, "color": {"const": "GRAY"}, "description": {"const": "Intake, routing, and status hygiene."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "maker"}, "color": {"const": "GREEN"}, "description": {"const": "Bounded implementation owner."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "qa-independent"}, "color": {"const": "YELLOW"}, "description": {"const": "Independent exact-head verification."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "it-support"}, "color": {"const": "ORANGE"}, "description": {"const": "Tooling and environment support."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "app-dev-i"}, "color": {"const": "GREEN"}, "description": {"const": "Application developer I."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "app-dev-ii"}, "color": {"const": "GREEN"}, "description": {"const": "Application developer II."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "app-dev-iii"}, "color": {"const": "GREEN"}, "description": {"const": "Application developer III."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "artist-i"}, "color": {"const": "PINK"}, "description": {"const": "Designer or artist I."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "artist-ii"}, "color": {"const": "PINK"}, "description": {"const": "Designer or artist II."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "artist-iii"}, "color": {"const": "PINK"}, "description": {"const": "Designer or artist III."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "qa-technician-i"}, "color": {"const": "YELLOW"}, "description": {"const": "QA technician I."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "qa-technician-ii"}, "color": {"const": "YELLOW"}, "description": {"const": "QA technician II."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "qa-technician-iii"}, "color": {"const": "YELLOW"}, "description": {"const": "QA technician III."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "team-lead"}, "color": {"const": "BLUE"}, "description": {"const": "Team staffing and capacity lead."}}}]}
+        ]}
+      }
+    },
+    "project_manifest_affected_paths_field": {"$ref": "#/definitions/project_manifest_text_affected_paths"},
+    "project_manifest_affected_resources_field": {"$ref": "#/definitions/project_manifest_text_affected_resources"},
+    "project_manifest_dependencies_field": {"$ref": "#/definitions/project_manifest_text_dependencies"},
+    "project_manifest_external_claims_field": {"$ref": "#/definitions/project_manifest_text_external_claims"},
+    "project_manifest_human_gate_field": {"$ref": "#/definitions/project_manifest_text_human_gate"},
+    "project_manifest_text_affected_paths": {"type": "object", "additionalProperties": false, "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"const": "Affected Paths"}, "kind": {"const": "ProjectV2Field"}, "data_type": {"const": "TEXT"}, "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1}, "options": {"const": []}}},
+    "project_manifest_text_affected_resources": {"type": "object", "additionalProperties": false, "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"const": "Affected Resources"}, "kind": {"const": "ProjectV2Field"}, "data_type": {"const": "TEXT"}, "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1}, "options": {"const": []}}},
+    "project_manifest_text_dependencies": {"type": "object", "additionalProperties": false, "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"const": "Dependencies"}, "kind": {"const": "ProjectV2Field"}, "data_type": {"const": "TEXT"}, "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1}, "options": {"const": []}}},
+    "project_manifest_text_external_claims": {"type": "object", "additionalProperties": false, "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"const": "External Claims"}, "kind": {"const": "ProjectV2Field"}, "data_type": {"const": "TEXT"}, "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1}, "options": {"const": []}}},
+    "project_manifest_text_human_gate": {"type": "object", "additionalProperties": false, "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"const": "Human Gate"}, "kind": {"const": "ProjectV2Field"}, "data_type": {"const": "TEXT"}, "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1}, "options": {"const": []}}},
+    "project_manifest_scope_complete_field": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1}, "name": {"const": "Scope Complete"},
+        "kind": {"const": "ProjectV2SingleSelectField"}, "data_type": {"const": "SINGLE_SELECT"},
+        "created_at": {"type": "string", "minLength": 1}, "updated_at": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 2, "maxItems": 2, "items": false, "prefixItems": [
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "TRUE"}, "color": {"const": "GREEN"}, "description": {"const": "Affected scope is complete."}}}]},
+          {"allOf": [{"$ref": "#/definitions/project_manifest_option"}, {"properties": {"name": {"const": "FALSE"}, "color": {"const": "RED"}, "description": {"const": "Affected scope is incomplete."}}}]}
+        ]}
+      }
+    },
     "project_schema_audit_result_receipt": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "initial_commit", "publication", "postinspection"],
+      "required": ["schema", "published_object", "publication", "manifest", "postinspection"],
       "properties": {
         "schema": {"const": "agentops/project-schema-audit-result/v1"},
-        "initial_commit": {
+        "published_object": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["oid", "tree", "parent_oid"],
+          "required": ["oid", "tree"],
           "properties": {
             "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
           }
         },
         "publication": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["ref", "expected_absent", "target_oid", "push_mode", "push_exit_code"],
+          "required": ["ref", "push_mode", "initial_create_exit_code", "manifest_cas_exit_code"],
           "properties": {
             "ref": {"const": "refs/heads/agentops/project-schema-audit"},
-            "expected_absent": {"const": true},
-            "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "push_mode": {"const": "create-if-absent"},
-            "push_exit_code": {"type": ["integer", "null"]}
+            "push_mode": {"const": "create-if-absent-then-linear-cas"},
+            "initial_create_exit_code": {"type": ["integer", "null"]},
+            "manifest_cas_exit_code": {"type": ["integer", "null"]}
+          }
+        },
+        "manifest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["blob_oid", "sha256"],
+          "properties": {
+            "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
           }
         },
         "postinspection": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["inspection_count", "retry_create_permitted", "actual_oid", "target_exact", "outcome", "policy"],
+          "required": ["inspection_count", "retry_create_permitted", "ref", "actual_oid"],
           "properties": {
             "inspection_count": {"const": 1},
             "retry_create_permitted": {"const": false},
-            "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
-            "target_exact": {"type": "boolean"},
-            "outcome": {"enum": ["EXACT", "ABSENT", "OTHER"]},
-            "policy": {"const": "exact-target-or-withhold-never-create-again"}
+            "ref": {"const": "refs/heads/agentops/project-schema-audit"},
+            "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
+          }
+        }
+      }
+    },
+    "scheduler_state_reconciliation_result_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "authority_a", "state_s1", "publication", "postinspection"],
+      "properties": {
+        "schema": {"const": "agentops/scheduler-state-reconciliation-result/v1"},
+        "authority_a": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "state_s1": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "publication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "attempted_at", "atomic_push_exit_code"],
+          "properties": {
+            "mode": {"const": "git-push-atomic-authority-state-quarantine-exact-leases"},
+            "attempted_at": {"type": "string", "minLength": 1},
+            "atomic_push_exit_code": {"type": ["integer", "null"]}
+          }
+        },
+        "postinspection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inspection_count", "retry_permitted", "state_ref", "state_actual_oid", "development_ref", "development_actual_oid", "late_candidate_refs"],
+          "properties": {
+            "inspection_count": {"const": 1},
+            "retry_permitted": {"const": false},
+            "state_ref": {"const": "refs/heads/agentops/scheduler-state"},
+            "state_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+            "development_ref": {"const": "refs/heads/dev"},
+            "development_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+            "late_candidate_refs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["ref", "actual_oid"],
+                "properties": {
+                  "ref": {"type": "string", "pattern": "^refs/heads/agentops/quarantine/late-candidates/[1-9][0-9]*/[0-9a-f]{40}$"},
+                  "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
+                }
+              }
+            }
           }
         }
       }
@@ -761,21 +1126,19 @@
         "authority_a": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["oid", "tree", "parent_oid"],
+          "required": ["oid", "tree"],
           "properties": {
             "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
           }
         },
         "state_s1": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["oid", "tree", "parent_oid", "activation_event"],
+          "required": ["oid", "tree", "activation_event"],
           "properties": {
             "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "activation_event": {
               "type": "object",
               "additionalProperties": false,
@@ -791,11 +1154,10 @@
         "development_d1": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["oid", "tree", "parent_oid", "scheduler_config"],
+          "required": ["oid", "tree", "scheduler_config"],
           "properties": {
             "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "scheduler_config": {
               "type": "object",
               "additionalProperties": false,
@@ -811,47 +1173,24 @@
         "publication": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "attempted_at", "state", "development", "atomic_push_exit_code"],
+          "required": ["mode", "attempted_at", "atomic_push_exit_code"],
           "properties": {
             "mode": {"const": "git-push-atomic-two-ref-exact-leases"},
             "attempted_at": {"type": "string", "minLength": 1},
-            "state": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["ref", "expected_oid", "target_oid"],
-              "properties": {
-                "ref": {"const": "refs/heads/agentops/scheduler-state"},
-                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
-              }
-            },
-            "development": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["ref", "expected_oid", "target_oid"],
-              "properties": {
-                "ref": {"const": "refs/heads/dev"},
-                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
-              }
-            },
             "atomic_push_exit_code": {"type": ["integer", "null"]}
           }
         },
         "postinspection": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["inspection_count", "retry_permitted", "state_actual_oid", "development_actual_oid", "state_exact", "development_exact", "outcome", "dispatch_permitted", "policy"],
+          "required": ["inspection_count", "retry_permitted", "state_ref", "state_actual_oid", "development_ref", "development_actual_oid"],
           "properties": {
             "inspection_count": {"const": 1},
             "retry_permitted": {"const": false},
+            "state_ref": {"const": "refs/heads/agentops/scheduler-state"},
             "state_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
-            "development_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
-            "state_exact": {"type": "boolean"},
-            "development_exact": {"type": "boolean"},
-            "outcome": {"enum": ["BOTH_EXACT", "MIXED", "NEITHER"]},
-            "dispatch_permitted": {"type": "boolean"},
-            "policy": {"const": "dispatch-only-on-both-exact-otherwise-withhold"}
+            "development_ref": {"const": "refs/heads/dev"},
+            "development_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
           }
         }
       }
