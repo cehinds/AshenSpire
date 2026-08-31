@@ -1618,7 +1618,7 @@ export function pathGrantErrors(contracts, lease) {
     }
   }
   for (const x of lease.excluded_globs || []) {
-    if (!lease.path_globs.some((g) => globCovers(g, x))) {
+    if (!lease.path_globs.some((g) => leaseGlobCovers(g, x))) {
       errors.push(`lease '${lease.id}' excludes '${x}', but no granted path covers that exclusion`);
     }
   }
@@ -1630,9 +1630,10 @@ export function computeCapsuleHash(capsule) {
   return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
 }
 
-// Lease v2 is an append-only successor: the prior lease file remains immutable
-// and the child binds its exact parent bytes. Multiple children may split one
-// parent only when their effective scopes do not overlap.
+// Lease v2 is an append-only successor: the prior lease remains as history,
+// receives only the explicit revoked transition, and the child binds those
+// exact parent bytes. Multiple children may split one parent only when their
+// effective scopes do not overlap.
 export function computeLeaseHash(lease) {
   const clone = { ...lease, current_hash: '' };
   return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
@@ -1677,7 +1678,7 @@ function ticketCustodyScope(lease, glob) {
 function effectiveLeaseOverlap(a, b) {
   for (const ga of a.path_globs) for (const gb of b.path_globs) {
     if (!globOverlap(ga, gb)) continue;
-    const narrower = globCovers(ga, gb) ? gb : globCovers(gb, ga) ? ga : null;
+    const narrower = leaseGlobCovers(ga, gb) ? gb : leaseGlobCovers(gb, ga) ? ga : null;
     if (narrower && (leaseExcludes(a, narrower) || leaseExcludes(b, narrower))) continue;
     return true;
   }
@@ -1685,8 +1686,11 @@ function effectiveLeaseOverlap(a, b) {
 }
 
 function activeRuntimeLeases(rt) {
-  const superseded = new Set(rt.leases.filter((l) => l.schema === 'agentops/lease/v2' && l.parent_lease).map((l) => l.parent_lease));
-  return rt.leases.filter((l) => !l.revoked && !superseded.has(l.id));
+  // A successor never shadows a parent merely by existing. The issuer first
+  // revokes the parent, then appends the sealed child. This prevents a
+  // malformed or revoked child from disabling otherwise-live custody in code
+  // paths that compute dispatch before a separate validation call.
+  return rt.leases.filter((l) => !l.revoked);
 }
 
 export function loadRuntime(root = ROOT) {
@@ -1837,6 +1841,7 @@ export function runtimeChecks(g, rt) {
       errors.push(`lease '${l.id}' names unknown parent_lease '${l.parent_lease}'`);
       continue;
     }
+    if (!parent.revoked) errors.push(`lease '${l.id}' cannot succeed live parent '${parent.id}'; revoke the parent first`);
     const parentRevision = parent.schema === 'agentops/lease/v2' ? parent.revision : 1;
     if (l.revision !== parentRevision + 1) errors.push(`lease '${l.id}' revision ${l.revision} is not parent revision ${parentRevision} + 1`);
     if (l.parent_hash !== computeLeaseHash(parent)) errors.push(`lease '${l.id}' parent_hash does not match '${parent.id}'`);
@@ -2008,7 +2013,7 @@ export function runtimeChecks(g, rt) {
       for (const x of lease.excluded_globs || []) if (!capExcluded.has(x)) errors.push(`capsule '${ticket}' omits writer lease exclusion '${x}'`);
       for (const x of cap.excluded_paths || []) if (!(lease.excluded_globs || []).includes(x)) errors.push(`capsule '${ticket}' excludes '${x}' without its writer lease excluding it`);
       for (const p of cap.affected_paths) {
-        const covered = lease.path_globs.some((g) => globCovers(g, p));
+        const covered = leaseCovers(lease, p);
         if (!covered) errors.push(`capsule '${ticket}' affected path '${p}' is not covered by its writer lease '${lease.id}'`);
       }
     }
@@ -3906,6 +3911,9 @@ export function runSelftest(root = ROOT) {
   expectRuntime('lease v2 stale parent hash', (rt) => { const l = appendLeaseSuccessor(rt); l.parent_hash = 'sha256:stale'; l.current_hash = computeLeaseHash(l); }, 'parent_hash does not match');
   expectRuntime('lease v2 seal mismatch', (rt) => { const l = appendLeaseSuccessor(rt); l.expiry = '2026-10-30T23:59:59Z'; }, 'lease-AS-HD-057-it-support-r2-plant\' seal mismatch');
   expectRuntime('lease exclusion outside its granted scope', (rt) => { const l = appendLeaseSuccessor(rt); l.excluded_globs = ['src/main.js']; l.current_hash = computeLeaseHash(l); }, 'no granted path covers that exclusion');
+  expectRuntime('an exact-file lease cannot exclude a sibling file', (rt) => {
+    appendLeaseSuccessor(rt, { path_globs: ['tools/ui-preview-gallery.mjs'], excluded_globs: ['tools/other.mjs'] });
+  }, 'no granted path covers that exclusion');
   expectRuntime('lease successor cannot re-grant a parent exclusion', (rt) => {
     const first = appendLeaseSuccessor(rt);
     const second = { ...first, id: 'lease-AS-HD-057-it-support-r3-plant', revision: 3, parent_lease: first.id, parent_hash: computeLeaseHash(first), excluded_globs: undefined, current_hash: '' };
@@ -3925,8 +3933,28 @@ export function runSelftest(root = ROOT) {
     const cap = rt.capsules['AS-HD-057'];
     cap.writer_lease = retained.id; cap.affected_paths = ['tools/**']; cap.excluded_paths = ['tools/ui-preview-gallery.mjs']; cap.blocker = null;
     cap.authority.may = [...retained.actions]; cap.parent_hash = cap.current_hash; cap.revision += 1; cap.current_hash = computeCapsuleHash(cap);
+    rt.leases = [...rt.leases.filter((l) => l !== retained && l !== carveout), carveout, retained];
     const errs = runtimeChecks(contracts, rt).filter((e) => e.includes(retained.id) || e.includes(carveout.id) || e.includes(parent.id) || e.includes("capsule 'AS-HD-057'"));
-    results.push({ label: 'append-only lease split preserves broad custody and grants one disjoint file', pass: errs.length === 0, errs });
+    results.push({ label: 'append-only lease split is disjoint regardless of successor order', pass: errs.length === 0, errs });
+  }
+  expectRuntime('capsule cannot claim a sibling of an exact-file lease', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-HD-057-it-support-r2');
+    l.path_globs = ['.agentops/work/AS-HD-057/CURRENT.json']; l.current_hash = computeLeaseHash(l);
+    const cap = rt.capsules['AS-HD-057']; cap.affected_paths = ['.agentops/work/AS-HD-057/OTHER.json']; cap.current_hash = computeCapsuleHash(cap);
+  }, 'affected path');
+  expectRuntime('capsule cannot claim a file excluded by its lease', (rt) => {
+    rt.leases = rt.leases.filter((l) => l.id !== 'lease-AS-HD-057-it-support-r2');
+    const l = appendLeaseSuccessor(rt);
+    const cap = rt.capsules['AS-HD-057']; cap.writer_lease = l.id; cap.affected_paths = ['tools/ui-preview-gallery.mjs'];
+    cap.excluded_paths = ['tools/ui-preview-gallery.mjs']; cap.blocker = null; cap.authority.may = [...l.actions]; cap.current_hash = computeCapsuleHash(cap);
+  }, 'affected path');
+  {
+    const rt = baseRt();
+    const parent = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support'); parent.revoked = false;
+    const child = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support-r2'); child.revoked = true;
+    const cap = rt.capsules['AS-HD-057']; cap.writer_lease = parent.id; cap.affected_paths = ['tools/**']; cap.blocker = null; cap.authority.may = [...parent.actions];
+    const wake = computeDispatch(contracts, rt).find((e) => e.ticket === 'AS-HD-057');
+    results.push({ label: 'a revoked successor cannot shadow its live parent during dispatch', pass: wake && wake.wake === 'it-support', errs: wake ? [JSON.stringify(wake)] : ['missing wake'] });
   }
   expectRuntime('an active lease on a protected ref', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-HD-057-it-support-r2'); l.ref = 'main'; l.current_hash = computeLeaseHash(l); }, 'not an isolated-continuation branch');
   expectRuntime('two seats holding the same isolated ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'claude/ashenspire-agentops-stage3-capsules'; }, 'belongs to exactly one seat');
