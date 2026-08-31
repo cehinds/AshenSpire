@@ -2120,7 +2120,7 @@ export function loadRuntime(root = ROOT) {
 // Cross-checks tying runtime artifacts to the governance contracts and to each
 // other: one-writer lease collisions, lease expiry, append-only event chains,
 // capsule seal (CAS) integrity, evidence ownership, and non-amplifying authority.
-export function runtimeChecks(g, rt) {
+export function runtimeChecks(g, rt, root = null) {
   const errors = [];
   const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
   const activeLeases = activeRuntimeLeases(rt);
@@ -2396,6 +2396,25 @@ export function runtimeChecks(g, rt) {
       if (fullOid(pr.from) && fullOid(pr.to) && pr.from === pr.to) {
         errors.push(`event '${ev.id}' promotion records the same commit as predecessor and target; a ref that did not move is not a promotion, and the rollback target it names restores nothing`);
       }
+      // Shape and equality were still only the ledger agreeing with itself:
+      // forty zeroes to forty ones is a well-formed promotion between commits
+      // that do not exist. The repository is the authority for what a commit is
+      // and what descends from what, so it is asked — where it can answer.
+      // A shallow clone genuinely cannot, and treating "cannot see" as "is
+      // fabricated" would fail every honest promotion verified in CI, so the
+      // repository-backed half runs only against complete history. That is a
+      // real limit, reported by `verify` rather than left to look like a pass.
+      if (root && fullHistory(root)) {
+        for (const k of ['from', 'to']) {
+          if (fullOid(pr[k]) && !commitExists(root, pr[k])) {
+            errors.push(`event '${ev.id}' promotion.${k} names ${pr[k].slice(0, 12)}, which is not a commit in this repository; the ledger certifies a promotion between objects that do not exist`);
+          }
+        }
+        if (fullOid(pr.from) && fullOid(pr.to) && pr.from !== pr.to
+            && commitExists(root, pr.from) && commitExists(root, pr.to) && !isAncestor(root, pr.from, pr.to)) {
+          errors.push(`event '${ev.id}' promotion records ${pr.from.slice(0, 12)} -> ${pr.to.slice(0, 12)}, but the predecessor is not an ancestor of the target; that move is not a fast-forward, whatever the event calls it`);
+        }
+      }
       const ev_ = Array.isArray(pr.evidence) ? pr.evidence : [];
       for (const item of ev_) {
         if (!declaredEvidence.has(item)) {
@@ -2620,6 +2639,15 @@ function anyLocalBranch(root) {
 
 // Does this repository carry the object, and is it a commit? Same execFileSync
 // discipline as resolveRef: the value comes from a command request.
+// Whether this checkout can answer questions about ancestry at all. CI checks
+// out PRs shallow, where an absent object proves nothing about the ledger.
+export function fullHistory(root) {
+  try {
+    const out = execFileSync('git', ['rev-parse', '--is-shallow-repository'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return out === 'false';
+  } catch { return false; }
+}
+
 function commitExists(root, oid) {
   try {
     const t = execFileSync('git', ['cat-file', '-t', oid], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
@@ -2826,6 +2854,20 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
   } else if (!p.evidence.every((x) => typeof x === 'string' && x.trim() !== '')) {
     // `[null]` is a non-empty array. Length was never the question.
     errors.push(`command 'fast-forward-test' params.evidence must be non-empty strings; an array with nothing readable in it records nothing`);
+  } else {
+    // ...and readable was never the question either. applyCommand copies these
+    // strings verbatim into the event's promotion payload, where runtimeChecks
+    // requires declared evidence ids covering the gate's requirement. Accepting
+    // free text here meant the ref moved and the event persisted before the
+    // ledger check rejected what was written — and in owner-command.yml that
+    // verification runs only AFTER the apply step, so the mutation stood.
+    // The two layers ask the same question now, and the earlier one asks first.
+    const declared = new Set(((contracts.evidence || {}).evidence || []).map((x) => x.id));
+    for (const item of p.evidence) {
+      if (!declared.has(item)) {
+        errors.push(`command 'fast-forward-test' params.evidence names '${item}', which evidence.json does not declare; the ref would move and the event persist before anything rejected it`);
+      }
+    }
   }
 
   // 1 and 5. Gate freshness and the absence of a withhold are read from the
@@ -2862,6 +2904,15 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
         if (!(gate.guards_transitions || []).some((t) => t.to === state)) continue;
         if (!prerequisites.includes(gate)) prerequisites.push(gate);
         for (const t of gate.guards_transitions || []) queue.push(t.from);
+      }
+    }
+  }
+  // The gate this command performs requires evidence of its own, and nothing
+  // checked the request against it before the mutation.
+  if (performed && Array.isArray(p.evidence)) {
+    for (const need of performed.required_evidence || []) {
+      if (!p.evidence.includes(need)) {
+        errors.push(`command 'fast-forward-test' params.evidence carries no '${need}', which Gate ${performed.id} requires to open this move; the recorded justification would be short of the gate it claims`);
       }
     }
   }
@@ -4343,7 +4394,7 @@ export function runValidate(root = ROOT) {
     // governance contracts. Zero runtime artifacts is valid (no active tickets).
     const rt = loadRuntime(root);
     all.push(...rt.errors);
-    if (rt.errors.length === 0) all.push(...runtimeChecks(contracts, rt));
+    if (rt.errors.length === 0) all.push(...runtimeChecks(contracts, rt, root));
   }
   return { contracts, errors: all };
 }
@@ -4834,6 +4885,46 @@ export function runSelftest(root = ROOT) {
   expectRuntime('promotion: a ref that did not move', (rt) => { plantPromotion(rt, (pr) => { pr.from = pr.to; }); }, 'a ref that did not move is not a promotion');
   expectRuntime('promotion: evidence nothing declares', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = ['looks-fine']; }); }, 'which evidence.json does not declare');
   expectRuntime('promotion: short of the evidence its own gate requires', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = [pr.evidence[0]]; }); }, 'short of the gate it claims to have passed');
+  // Reported round 13: shape and equality are the ledger agreeing with itself.
+  // The repository is the authority, and it can only answer where history is
+  // complete — this checkout and CI's are both shallow — so the plants build a
+  // throwaway repository with two real commits and run the check against that.
+  // Without it the repository-backed branch would be unproven everywhere it runs.
+  {
+    const repo = resolve(tmpdir(), `agentops-promotion-${process.pid}-${Date.now()}`);
+    let built = null;
+    try {
+      mkdirSync(repo, { recursive: true });
+      const git = (...args) => execFileSync('git', args, { cwd: repo, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+      git('init', '-q', '-b', 'main');
+      git('config', 'user.email', 'selftest@example.invalid');
+      git('config', 'user.name', 'selftest');
+      writeFileSync(resolve(repo, 'a.txt'), 'one\n');
+      git('add', '-A'); git('commit', '-qm', 'one');
+      const first = git('rev-parse', 'HEAD');
+      writeFileSync(resolve(repo, 'a.txt'), 'two\n');
+      git('add', '-A'); git('commit', '-qm', 'two');
+      const second = git('rev-parse', 'HEAD');
+      built = { first, second };
+    } catch (e) { built = null; }
+    if (!built) {
+      results.push({ label: 'promotion repository checks skipped — no throwaway repository could be built here', pass: true, errs: [] });
+    } else {
+      results.push({ label: 'promotion repository checks: the throwaway repository carries complete history', pass: fullHistory(repo), errs: fullHistory(repo) ? [] : ['built repository reports shallow'] });
+      const run = (mutate) => {
+        const rt = baseRt();
+        const e = plantPromotion(rt, mutate);
+        return { id: e.id, errs: runtimeChecks(contracts, rt, repo).filter((x) => x.includes(e.id)) };
+      };
+      const ctl = run((pr) => { pr.from = built.first; pr.to = built.second; pr.hosted_verified_dev_oid = built.second; });
+      results.push({ label: 'promotion control: a real ancestor-to-descendant move validates against the repository', pass: ctl.errs.length === 0, errs: ctl.errs });
+      const ghost = run((pr) => { pr.from = '0'.repeat(40); pr.to = '1'.repeat(40); pr.hosted_verified_dev_oid = '1'.repeat(40); });
+      results.push({ label: 'promotion: commits that do not exist in the repository', pass: ghost.errs.some((x) => x.includes('objects that do not exist')), errs: ghost.errs });
+      const back = run((pr) => { pr.from = built.second; pr.to = built.first; pr.hosted_verified_dev_oid = built.first; });
+      results.push({ label: 'promotion: a move that is not a fast-forward', pass: back.errs.some((x) => x.includes('not a fast-forward')), errs: back.errs });
+    }
+    try { rmSync(repo, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
   // Reported round 12, both verified against the live corpus first.
   expectRuntime('promotion: a protected action attributed to a seat that may not perform it', (rt) => { plantPromotion(rt, null).actor = 'maker'; }, 'a seat that may not perform it');
   expectRuntime('promotion: the action recorded with no payload at all', (rt) => { const e = plantPromotion(rt, null); delete e.promotion; }, 'without recording the ref, commits or evidence it was made on');
@@ -5070,7 +5161,10 @@ export function runSelftest(root = ROOT) {
   const ffHash = ffTicket ? computeCapsuleHash(rtFF.capsules[ffTicket]) : null;
   const OID = (ch) => ch.repeat(40);
   const ffReq = (params, x = {}) => ({ schema: 'agentops/owner-command-request/v1', action: 'fast-forward-test', actor: 'it-manager-iii', target: ffTicket, expected_current_hash: ffHash, params, ...x });
-  const ffEv = ['hosted smoke pass'];
+  // Derived from the gate rather than written as prose: the command now requires
+  // declared evidence ids covering what the performed gate asks for, so a plant
+  // using free text would be testing the wrong refusal.
+  const ffEv = [...((contracts['promotion-gates'].gates.find((gt) => gt.id === contracts['owner-command'].actions.find((a) => a.id === 'fast-forward-test').performs_gate) || {}).required_evidence || [])];
   if (ffTicket) {
     const good = ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv });
     const ctl = validateCommand(contracts, rtFF, good);
@@ -5100,6 +5194,10 @@ export function runSelftest(root = ROOT) {
     }
     expectFF('gate C: an evidence array with nothing readable in it', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: [null] }), 'nothing readable in it');
     expectFF('gate C: an evidence array of blank strings', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ['   '] }), 'nothing readable in it');
+    // Reported round 13: readable is not the same as valid. These must refuse
+    // BEFORE the ref moves, not after the event is already on disk.
+    expectFF('gate C: evidence nothing declares, refused before the mutation', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ['made-up-note'] }), 'evidence.json does not declare');
+    expectFF('gate C: evidence short of what the performed gate requires', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: [ffEv[0]] }), 'short of the gate it claims');
 
     // Codex P1: absence of a blocker is not evidence that gates A and B passed.
     for (const ev of gateAB) {
@@ -6039,6 +6137,14 @@ function main(argv) {
     if (r.errors && r.errors.length) { console.error('VERIFY FAIL (generated view):'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     if (r.drift) { console.error('VERIFY FAIL: stale generated artifacts; run `node .agentops/tools/opsctl.mjs render`:'); r.drifted.forEach((d) => console.error('  - ' + d)); return 1; }
     console.log('VERIFY OK: contracts + runtime valid, consistent, and all generated views in sync.');
+    // A promotion recorded in the ledger is checked against the repository —
+    // that the commits exist and that the move was a fast-forward — only where
+    // history is complete. A shallow checkout cannot tell a missing object from
+    // a fabricated one, so it does not try. Saying so is the point: an
+    // unreported skip reads exactly like a check that passed.
+    if (!fullHistory(ROOT)) {
+      console.log('NOTE: shallow checkout — recorded promotions were checked for shape and contract consistency, but not against repository history (commit existence, fast-forward ancestry). Re-run in a full clone to check those.');
+    }
     return 0;
   }
   if (cmd === 'drill') {
