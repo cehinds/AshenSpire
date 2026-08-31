@@ -1,0 +1,18 @@
+{
+  "event_id": "evt-00000046-0cea3cd5-b68d-4e6a-927e-258cf058eb14",
+  "idempotency_key": "WORK_ENTERED:480:2:2026-08-31T16:24:00.589Z",
+  "sequence": 46,
+  "previous_snapshot_hash": "516364a2b6a70ae8393d72bccf632f862c635e0135f20ff8bdb12fa9fc02fbde",
+  "issue_id": "480",
+  "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+  "machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
+  "lease_id": "lease:480:2",
+  "lease_epoch": 2,
+  "event_type": "WORK_ENTERED",
+  "exact_object": {},
+  "payload": {
+    "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
+    "next_action": "Patch the manifest value shape, verify packet integrity, run node tools/launch.mjs --build-only once, then buildversion, verify-shipped, rebuild-matches, full Node, and git diff --check."
+  },
+  "created_at": "2026-08-31T16:24:00.589Z"
+}

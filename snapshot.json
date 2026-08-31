@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 45,
-  "last_sequence": 45,
+  "revision": 46,
+  "last_sequence": 46,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -360,12 +360,12 @@
     },
     "480": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 4,
+      "revision": 5,
       "issue_id": "480",
       "title": "Rebuild shipped bundle: source-vs-build drift (tree 3543637990 vs shipped 8f546f2e1d) from 4b5793a8",
       "priority": "P2",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
       "candidate_commit": null,
       "branch": "codex/issue-480",
@@ -417,12 +417,12 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Represent the successor provenance column without falsely asserting a game release version; run exactly one source-authoritative build-only generation; verify shipped byte identity without touching continuity source.",
+      "next_action": "Patch the manifest value shape, verify packet integrity, run node tools/launch.mjs --build-only once, then buildversion, verify-shipped, rebuild-matches, full Node, and git diff --check.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000045-47779818-b0d6-4eaa-ad03-d39e0929706a",
-      "updated_at": "2026-08-31T16:23:54.175Z"
+      "updated_event": "evt-00000046-0cea3cd5-b68d-4e6a-927e-258cf058eb14",
+      "updated_at": "2026-08-31T16:24:00.589Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "516364a2b6a70ae8393d72bccf632f862c635e0135f20ff8bdb12fa9fc02fbde"
+  "snapshot_hash": "e59ff4e1e49ee1f87146a27597c2e5fbb5e9d795cf236ba3b64facae24cfb2f9"
 }
