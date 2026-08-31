@@ -21,6 +21,8 @@ export const TERMINAL_STATES = new Set(['DONE', 'SUPERSEDED', 'CANCELLED']);
 const SEAT_ID = /^seat:[a-z0-9-]+:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SYSTEM_ACTORS = new Set(['scheduler', 'recovery']);
 const SCHEMA_CACHE = new Map();
+const DEFAULT_PROCESS_TIMEOUT_MS = 30_000;
+const MAX_PROCESS_TIMEOUT_MS = 120_000;
 
 function schedulerSchema(name) {
   if (!SCHEMA_CACHE.has(name)) SCHEMA_CACHE.set(name, JSON.parse(fs.readFileSync(path.join(ROOT, 'scheduler', 'schemas', `${name}.json`), 'utf8')));
@@ -141,6 +143,10 @@ function assertExactLease(item, event, { requireActor = true } = {}) {
   if (event.lease_epoch !== item.lease_epoch) throw new Error('lease epoch fencing mismatch');
 }
 
+function leaseExpiredAt(item, instant) {
+  return item.lease_expiry && Date.parse(instant) >= Date.parse(item.lease_expiry);
+}
+
 function priorLease(item, event) {
   return item.lease_history.find((lease) => lease.actor === event.actor
     && lease.machine_id === event.machine_id
@@ -203,7 +209,7 @@ function applyEvent(snapshot, event) {
       break;
     case 'CANDIDATE_READY':
       if (!/^[0-9a-f]{40}$/.test(p.candidate_commit ?? '')) throw new Error('candidate requires an exact commit');
-      if (staleLease || (item.assigned_actor === null && priorLease(item, event))) {
+      if (staleLease || leaseExpiredAt(item, event.created_at) || (item.assigned_actor === null && priorLease(item, event))) {
         if (!priorLease(item, event)) throw new Error('late candidate does not match a previously issued lease');
         item.late_candidates.push({ actor: event.actor, machine_id: event.machine_id, lease_id: event.lease_id, lease_epoch: event.lease_epoch, candidate_commit: p.candidate_commit, evidence_pointers: p.evidence_pointers ?? [], event_id: event.event_id, created_at: event.created_at });
         break;
@@ -270,6 +276,7 @@ function applyEvent(snapshot, event) {
       if (event.actor !== 'scheduler') throw new Error('lease expiry requires scheduler actor');
       requiredString(event.machine_id, 'lease expiry machine_id');
       if (event.lease_id !== item.lease_id || event.lease_epoch !== item.lease_epoch) throw new Error('lease expiry fencing token mismatch');
+      if (!leaseExpiredAt(item, event.created_at)) throw new Error('lease expiry cannot precede the declared expiry');
       item.state = item.assignment_kind === 'qa' ? 'CANDIDATE_READY' : 'READY'; clearSeat(item); item.next_action = item.state === 'CANDIDATE_READY' ? 'Reassign independent QA for the preserved candidate.' : 'Reclaim from the last preserved candidate or worktree.';
       break;
     case 'DRIFT_DETECTED':
@@ -382,7 +389,7 @@ export function planAssignments(snapshot, config, now = new Date().toISOString()
   for (const candidate of qaBacklogItems) {
     if (qaInFlight + planned.filter((assignment) => assignment.kind === 'qa').length >= config.qa_slots) break;
     const seat = seats.find((worker) => !reservedActors.has(worker.actor) && worker.actor !== candidate.maker_actor && (worker.capabilities.includes('qa') || worker.capabilities.includes('review')));
-    if (!seat) break;
+    if (!seat) continue;
     const epoch = (candidate.lease_epoch ?? 0) + 1;
     const expiry = new Date(Date.parse(now) + config.lease_duration_seconds * 1000).toISOString();
     planned.push({ kind: 'qa', issue_id: candidate.issue_id, actor: seat.actor, lease_id: `qa-lease:${candidate.issue_id}:${epoch}`, lease_epoch: epoch, lease_expiry: expiry, base_commit: candidate.base_commit, candidate_commit: candidate.candidate_commit });
@@ -402,13 +409,15 @@ export function planAssignments(snapshot, config, now = new Date().toISOString()
 }
 
 function currentDevelopmentBase(root, config) {
-  runGit(root, ['fetch', 'origin', `+refs/heads/${config.development_branch}:refs/remotes/origin/${config.development_branch}`]);
+  validateBranchName(config.development_branch, 'development_branch');
+  runGit(root, ['fetch', 'origin', `refs/heads/${config.development_branch}:refs/remotes/origin/${config.development_branch}`]);
   const oid = refOid(root, `refs/remotes/origin/${config.development_branch}`, false);
   if (!/^[0-9a-f]{40}$/.test(oid ?? '')) throw new Error('current development base is unavailable');
   return oid;
 }
 
-export function compileWake(item, config, repository = 'https://github.com/cehinds/AshenSpire.git') {
+export function compileWake(item, config, repository = config.repository) {
+  requiredString(repository, 'scheduler repository');
   const qa = item.assignment_kind === 'qa';
   const wake = {
     IDENTITY: item.assigned_actor,
@@ -460,16 +469,66 @@ export function historyAdvanceAllowed(oldOid, newOid, isAncestor) {
   return isAncestor(oldOid, newOid) ? { allowed: true, changed: true } : { allowed: false, changed: true, reason: 'REWRITTEN_HISTORY' };
 }
 
+export function runBoundedCommand(command, args, options = {}) {
+  const timeout = options.timeoutMs ?? DEFAULT_PROCESS_TIMEOUT_MS;
+  if (!Number.isInteger(timeout) || timeout < 1 || timeout > MAX_PROCESS_TIMEOUT_MS) throw new Error(`invalid subprocess timeout ${timeout}`);
+  const result = spawnSync(command, args, {
+    encoding: 'utf8', input: options.input, env: { ...process.env, ...(options.env ?? {}) },
+    timeout, killSignal: 'SIGTERM', maxBuffer: 10 * 1024 * 1024,
+    cwd: options.cwd
+  });
+  if (result.error) {
+    const timedOut = result.error.code === 'ETIMEDOUT' || result.signal === 'SIGTERM';
+    throw new Error(timedOut
+      ? `${command} timed out after ${timeout}ms`
+      : `${command} failed to start: ${result.error.message}`);
+  }
+  const stdout = result.stdout ?? '';
+  const stderr = result.stderr ?? '';
+  if (result.status !== 0 && !options.allowFailure) throw new Error((stderr || stdout || `${command} failed`).trim());
+  return { status: result.status, stdout: stdout.trim(), stderr: stderr.trim() };
+}
+
 function runGit(root, args, options = {}) {
-  const result = spawnSync('git', ['-c', `safe.directory=${root}`, '-C', root, ...args], { encoding: 'utf8', input: options.input, env: { ...process.env, ...(options.env ?? {}) } });
-  if (result.status !== 0 && !options.allowFailure) throw new Error((result.stderr || result.stdout || `git ${args[0]} failed`).trim());
-  return { status: result.status, stdout: result.stdout.trim(), stderr: result.stderr.trim() };
+  return runBoundedCommand('git', ['-c', `safe.directory=${root}`, '-C', root, ...args], options);
 }
 
 function runGh(args, options = {}) {
-  const result = spawnSync('gh', args, { encoding: 'utf8', input: options.input, env: process.env });
-  if (result.status !== 0 && !options.allowFailure) throw new Error((result.stderr || result.stdout || `gh ${args[0]} failed`).trim());
-  return { status: result.status, stdout: result.stdout.trim(), stderr: result.stderr.trim() };
+  return runBoundedCommand('gh', args, options);
+}
+
+function validateBranchName(value, label) {
+  requiredString(value, label);
+  if (!/^[A-Za-z0-9._\/-]+$/.test(value) || value.startsWith('/') || value.endsWith('/') || value.includes('..')) throw new Error(`${label} is not a safe branch name`);
+  return value;
+}
+
+export function schedulerStateRefs(config) {
+  const local = config.state_ref;
+  if (typeof local !== 'string' || !local.startsWith('refs/heads/')) throw new Error('state_ref must be a refs/heads/ ref');
+  const branch = validateBranchName(local.slice('refs/heads/'.length), 'state_ref branch');
+  return { local, branch, remote: `refs/remotes/origin/${branch}` };
+}
+
+export function repositorySlug(repository) {
+  requiredString(repository, 'scheduler repository');
+  const match = /github\.com[/:]([^/]+)\/([^/]+?)(?:\.git)?$/.exec(repository);
+  if (!match) throw new Error('scheduler repository must identify a GitHub owner/repository');
+  return `${match[1]}/${match[2]}`;
+}
+
+export function assertSchedulerDispatchCutover(config, root = null) {
+  if (config.cutover?.scheduler_dispatch_enabled !== true || config.cutover?.legacy_watcher_authoritative !== false || !config.cutover?.authorization_evidence) {
+    throw new Error('scheduler dispatch cutover is not authorized; legacy watcher remains authoritative');
+  }
+  if (root) {
+    const activationFile = path.join(root, '.agentops', 'pipeline-pilot', 'activation.json');
+    if (fs.existsSync(activationFile)) {
+      const legacy = readJsonFile(activationFile);
+      if (legacy.enabled === true || legacy.mode === 'LIVE_ASSIGNMENT') throw new Error('scheduler dispatch cutover rejected: legacy watcher activation is still live');
+    }
+  }
+  return true;
 }
 
 function numericIssue(issueId) {
@@ -478,13 +537,15 @@ function numericIssue(issueId) {
   return Number(match[1]);
 }
 
-export function deliverCandidate(root, item) {
+export function deliverCandidate(root, item, config) {
+  const repository = repositorySlug(config.repository);
+  const developmentBranch = validateBranchName(config.development_branch, 'development_branch');
   if (item.state !== 'PR_READY') throw new Error(`delivery requires PR_READY, found ${item.state}`);
   if (!/^codex\/[A-Za-z0-9._\/-]+$/.test(item.branch ?? '')) throw new Error('delivery requires a unique codex/ branch');
   if (!/^[0-9a-f]{40}$/.test(item.candidate_commit ?? '')) throw new Error('delivery requires an exact candidate commit');
   runGit(root, ['cat-file', '-e', `${item.candidate_commit}^{commit}`]);
   runGit(root, ['push', 'origin', `${item.candidate_commit}:refs/heads/${item.branch}`]);
-  const existing = JSON.parse(runGh(['pr', 'list', '--repo', 'cehinds/AshenSpire', '--state', 'open', '--head', item.branch, '--base', 'dev', '--json', 'number,url,headRefOid']).stdout || '[]');
+  const existing = JSON.parse(runGh(['pr', 'list', '--repo', repository, '--state', 'open', '--head', item.branch, '--base', developmentBranch, '--limit', '1000', '--json', 'number,url,headRefOid']).stdout || '[]');
   if (existing.length > 1) throw new Error(`multiple open PRs for ${item.branch}`);
   if (existing.length === 1) {
     if (existing[0].headRefOid !== item.candidate_commit) throw new Error('open PR head differs from candidate');
@@ -492,8 +553,8 @@ export function deliverCandidate(root, item) {
   }
   const issue = numericIssue(item.issue_id);
   const body = `Closes #${issue}\n\nExact scheduler candidate: \`${item.candidate_commit}\`\n\nRollback: revert the merge commit; preserve the candidate branch and scheduler evidence.`;
-  const url = runGh(['pr', 'create', '--repo', 'cehinds/AshenSpire', '--base', 'dev', '--head', item.branch, '--title', item.title, '--body', body]).stdout.split(/\r?\n/).at(-1);
-  const created = JSON.parse(runGh(['pr', 'view', url, '--repo', 'cehinds/AshenSpire', '--json', 'number,url,headRefOid']).stdout);
+  const url = runGh(['pr', 'create', '--repo', repository, '--base', developmentBranch, '--head', item.branch, '--title', item.title, '--body', body]).stdout.split(/\r?\n/).at(-1);
+  const created = JSON.parse(runGh(['pr', 'view', url, '--repo', repository, '--json', 'number,url,headRefOid']).stdout);
   if (created.headRefOid !== item.candidate_commit) throw new Error('created PR head differs from candidate');
   return { created: true, ...created };
 }
@@ -516,29 +577,41 @@ export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unres
   return { ...protectedTransitionAllowed(config, 'merge-dev', gates), gates };
 }
 
-export function mergeCommandArgs(prNumber, candidateCommit) {
+export function mergeCommandArgs(prNumber, candidateCommit, config = { repository: 'https://github.com/cehinds/AshenSpire.git' }) {
   if (!/^[0-9a-f]{40}$/.test(candidateCommit ?? '')) throw new Error('merge command requires exact candidate head');
-  return ['pr', 'merge', String(prNumber), '--repo', 'cehinds/AshenSpire', '--merge', '--match-head-commit', candidateCommit];
+  return ['pr', 'merge', String(prNumber), '--repo', repositorySlug(config.repository), '--merge', '--match-head-commit', candidateCommit];
+}
+
+function unresolvedReviewThreadCount(repository, prNumber) {
+  const [owner, name] = repository.split('/');
+  const query = 'query($owner:String!,$name:String!,$number:Int!,$endCursor:String){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100,after:$endCursor){nodes{isResolved}pageInfo{hasNextPage endCursor}}}}}';
+  const pages = JSON.parse(runGh(['api', 'graphql', '--paginate', '--slurp', '-f', `query=${query}`, '-f', `owner=${owner}`, '-f', `name=${name}`, '-F', `number=${prNumber}`]).stdout);
+  return pages.flatMap((page) => page.data.repository.pullRequest.reviewThreads.nodes).filter((thread) => !thread.isResolved).length;
+}
+
+function openPullRequests(repository) {
+  const pages = JSON.parse(runGh(['api', '--paginate', '--slurp', `repos/${repository}/pulls?state=open&per_page=100`]).stdout);
+  return pages.flat();
 }
 
 export function mergeDevPr(root, config, item, prNumber, { rollbackKnown = false } = {}) {
   if (item.state !== 'PR_OPEN') throw new Error(`dev merge requires PR_OPEN, found ${item.state}`);
-  runGit(root, ['fetch', 'origin', '+refs/heads/dev:refs/remotes/origin/dev']);
-  const pr = JSON.parse(runGh(['pr', 'view', String(prNumber), '--repo', 'cehinds/AshenSpire', '--json', 'number,url,state,author,baseRefName,headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup,reviews']).stdout);
-  if (pr.state !== 'OPEN' || pr.baseRefName !== 'dev' || pr.headRefName !== item.branch) throw new Error('PR identity/base/branch mismatch');
+  const repository = repositorySlug(config.repository);
+  const developmentBranch = validateBranchName(config.development_branch, 'development_branch');
+  runGit(root, ['fetch', 'origin', `refs/heads/${developmentBranch}:refs/remotes/origin/${developmentBranch}`]);
+  const pr = JSON.parse(runGh(['pr', 'view', String(prNumber), '--repo', repository, '--json', 'number,url,state,author,baseRefName,headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup,reviews']).stdout);
+  if (pr.state !== 'OPEN' || pr.baseRefName !== developmentBranch || pr.headRefName !== item.branch) throw new Error('PR identity/base/branch mismatch');
   runGit(root, ['fetch', 'origin', `+refs/pull/${pr.number}/head:refs/remotes/origin/pr-${pr.number}`]);
-  const ancestry = runGit(root, ['merge-base', '--is-ancestor', 'origin/dev', item.candidate_commit], { allowFailure: true }).status === 0;
-  const query = 'query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100){nodes{isResolved}}}}}';
-  const threadData = JSON.parse(runGh(['api', 'graphql', '-f', `query=${query}`, '-f', 'owner=cehinds', '-f', 'name=AshenSpire', '-F', `number=${pr.number}`]).stdout);
-  const unresolvedThreads = threadData.data.repository.pullRequest.reviewThreads.nodes.filter((thread) => !thread.isResolved).length;
-  const openPrs = JSON.parse(runGh(['pr', 'list', '--repo', 'cehinds/AshenSpire', '--state', 'open', '--limit', '100', '--json', 'number,body']).stdout || '[]');
+  const ancestry = runGit(root, ['merge-base', '--is-ancestor', `origin/${developmentBranch}`, item.candidate_commit], { allowFailure: true }).status === 0;
+  const unresolvedThreads = unresolvedReviewThreadCount(repository, pr.number);
+  const openPrs = openPullRequests(repository);
   const issue = numericIssue(item.issue_id);
   const competingPrs = openPrs.filter((candidate) => candidate.number !== pr.number && new RegExp(`(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\\s+#${issue}\\b`, 'i').test(candidate.body ?? '')).length;
   const gate = mergeGateResult(config, item, pr, { currentBaseIsAncestor: ancestry, unresolvedThreads, competingPrs, rollbackKnown });
   if (!gate.allowed) throw new Error(`dev merge withheld: ${gate.reason}`);
   if (pr.mergeable !== 'MERGEABLE' || !['CLEAN', 'HAS_HOOKS', 'UNSTABLE'].includes(pr.mergeStateStatus)) throw new Error(`dev merge withheld: mergeable=${pr.mergeable} state=${pr.mergeStateStatus}`);
-  runGh(mergeCommandArgs(pr.number, item.candidate_commit));
-  const merged = JSON.parse(runGh(['pr', 'view', String(pr.number), '--repo', 'cehinds/AshenSpire', '--json', 'state,mergedAt,mergeCommit,url']).stdout);
+  runGh(mergeCommandArgs(pr.number, item.candidate_commit, config));
+  const merged = JSON.parse(runGh(['pr', 'view', String(pr.number), '--repo', repository, '--json', 'state,mergedAt,mergeCommit,url']).stdout);
   if (merged.state !== 'MERGED' || !merged.mergeCommit?.oid) throw new Error('merge command returned without an exact merge commit');
   return { pr, gate, merged };
 }
@@ -555,6 +628,12 @@ export function localRuntimeDir(root = REPOSITORY_ROOT) {
 function readJsonFile(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 export function readConfig(root = ROOT) { return readJsonFile(path.join(root, 'scheduler', 'config.json')); }
 
+function stateConfig(root, config) {
+  if (config) return config;
+  const file = path.join(root, '.agentops', 'scheduler', 'config.json');
+  return fs.existsSync(file) ? readJsonFile(file) : { state_ref: 'refs/heads/agentops/scheduler-state' };
+}
+
 function refOid(root, ref, allowMissing = true) {
   const result = runGit(root, ['rev-parse', '--verify', ref], { allowFailure: allowMissing });
   return result.status === 0 ? result.stdout : null;
@@ -565,8 +644,9 @@ function showJson(root, ref, name) {
   return result.status === 0 ? JSON.parse(result.stdout) : null;
 }
 
-export function readPortableState(root = REPOSITORY_ROOT, ref = 'refs/heads/agentops/scheduler-state') {
-  const oid = refOid(root, ref) ?? refOid(root, 'refs/remotes/origin/agentops/scheduler-state');
+export function readPortableState(root = REPOSITORY_ROOT, config = stateConfig(root)) {
+  const refs = schedulerStateRefs(stateConfig(root, config));
+  const oid = refOid(root, refs.local) ?? refOid(root, refs.remote);
   if (!oid) return { oid: null, events: [], snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' };
   const treeNames = runGit(root, ['ls-tree', '-r', '--name-only', oid]).stdout.split(/\r?\n/).filter(Boolean);
   const unexpected = treeNames.filter((name) => !['snapshot.json', 'machine-lease.json', 'STATE_VERSION'].includes(name) && !/^journal\/[0-9]{8}-[A-Za-z0-9._-]+\.json$/.test(name));
@@ -611,27 +691,28 @@ function writePortableCommit(root, state, oldOid, message) {
   }
 }
 
-export function persistPortableState(root, state, { push = false, expectedOid = state.oid, message = 'agentops scheduler state' } = {}) {
-  const local = refOid(root, 'refs/heads/agentops/scheduler-state');
-  const remote = refOid(root, 'refs/remotes/origin/agentops/scheduler-state');
+export function persistPortableState(root, state, { push = false, expectedOid = state.oid, message = 'agentops scheduler state', config = stateConfig(root) } = {}) {
+  const refs = schedulerStateRefs(config);
+  const local = refOid(root, refs.local);
+  const remote = refOid(root, refs.remote);
   const current = local ?? remote;
   if (current !== expectedOid) throw new Error(`state CAS failed: expected ${expectedOid ?? 'missing'}, found ${current ?? 'missing'}`);
-  if (!local && expectedOid) runGit(root, ['update-ref', 'refs/heads/agentops/scheduler-state', expectedOid]);
+  if (!local && expectedOid) runGit(root, ['update-ref', refs.local, expectedOid]);
   const newOid = writePortableCommit(root, state, expectedOid, message);
-  const update = ['update-ref', 'refs/heads/agentops/scheduler-state', newOid]; if (expectedOid) update.push(expectedOid);
+  const update = ['update-ref', refs.local, newOid]; if (expectedOid) update.push(expectedOid);
   runGit(root, update);
   if (push) {
-    const pushed = runGit(root, ['push', 'origin', `${newOid}:refs/heads/agentops/scheduler-state`], { allowFailure: true });
+    const pushed = runGit(root, ['push', 'origin', `${newOid}:${refs.local}`], { allowFailure: true });
     if (pushed.status !== 0) {
       const error = new Error((pushed.stderr || pushed.stdout || 'scheduler state push failed').trim());
-      const fetched = runGit(root, ['fetch', 'origin', '+refs/heads/agentops/scheduler-state:refs/remotes/origin/agentops/scheduler-state'], { allowFailure: true });
-      const authoritativeOid = fetched.status === 0 ? refOid(root, 'refs/remotes/origin/agentops/scheduler-state') : null;
+      const fetched = runGit(root, ['fetch', 'origin', `+${refs.local}:${refs.remote}`], { allowFailure: true });
+      const authoritativeOid = fetched.status === 0 ? refOid(root, refs.remote) : null;
       if (authoritativeOid && authoritativeOid !== newOid) {
         runGit(root, ['update-ref', `refs/agentops/rejected-scheduler-state/${newOid}`, newOid]);
-        runGit(root, ['update-ref', 'refs/heads/agentops/scheduler-state', authoritativeOid, newOid]);
+        runGit(root, ['update-ref', refs.local, authoritativeOid, newOid]);
         error.portableStateAuthorityLost = true;
         error.authoritativeStateOid = authoritativeOid;
-        error.authoritativeState = readPortableState(root);
+        error.authoritativeState = readPortableState(root, config);
       } else {
         // A transport failure without a conflicting authoritative ref leaves the
         // locally committed lease durable and retryable.
@@ -647,8 +728,24 @@ export function persistPortableState(root, state, { push = false, expectedOid = 
 export function localMachine(root = REPOSITORY_ROOT) {
   const runtime = localRuntimeDir(root); fs.mkdirSync(runtime, { recursive: true });
   const file = path.join(runtime, 'machine.json');
-  if (!fs.existsSync(file)) fs.writeFileSync(file, `${JSON.stringify({ schema: 'agentops/scheduler-machine/v1', machine_id: crypto.randomUUID(), created_at: new Date().toISOString() }, null, 2)}\n`, { flag: 'wx' });
-  return readJsonFile(file);
+  const identity = `${JSON.stringify({ schema: 'agentops/scheduler-machine/v1', machine_id: crypto.randomUUID(), created_at: new Date().toISOString() }, null, 2)}\n`;
+  try {
+    const descriptor = fs.openSync(file, 'wx');
+    try { fs.writeFileSync(descriptor, identity); fs.fsyncSync(descriptor); }
+    finally { fs.closeSync(descriptor); }
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+  }
+  // A concurrent creator may have won the exclusive create but not completed
+  // its bounded write yet. Retry only the local identity read, never creation.
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try { return readJsonFile(file); }
+    catch (error) {
+      if (attempt === 19 || !['ENOENT', 'EACCES'].includes(error.code) && !(error instanceof SyntaxError)) throw error;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+    }
+  }
+  throw new Error('machine identity initialization did not complete');
 }
 
 export function configuredWorkers(root = REPOSITORY_ROOT, config = readConfig(path.join(root, '.agentops'))) {
@@ -815,9 +912,10 @@ export function commitAssignmentsAfterWakeDispatch(state, assignments, machineId
 }
 
 function persistRefillAssignments(root, state, plan, machineId, createdAt, config, { push = false, message = 'scheduler refill assignments' } = {}) {
+  if (plan.assignments.length > 0) assertSchedulerDispatchCutover(config, root);
   return commitAssignmentsAfterWakeDispatch(state, plan.assignments, machineId, createdAt, {
     dispatch: (snapshot, assignments) => beginWakeDispatch(root, snapshot, assignments, config),
-    persist: (assignedState) => persistPortableState(root, assignedState, { push, message })
+    persist: (assignedState) => persistPortableState(root, assignedState, { push, message, config })
   });
 }
 
@@ -862,7 +960,7 @@ function ensureCustody(state, machine, now = Date.now()) {
   if (!state.machineLease || state.machineLease.machine_id !== machine.machine_id || Date.parse(state.machineLease.expires_at) <= now) throw new Error('active machine custody required');
 }
 
-function transitionInput(command, args, state, machine) {
+export function transitionInput(command, args, state, machine) {
   const issue = String(args.issue);
   const item = state.snapshot.work_items[issue];
   const common = { issue_id: issue, actor: args.actor ?? item?.assigned_actor ?? 'scheduler', machine_id: machine.machine_id, lease_id: args.lease_id ?? item?.lease_id ?? null, lease_epoch: args.lease_epoch ? Number(args.lease_epoch) : item?.lease_epoch ?? null, exact_object: jsonArg(args.exact_object, {}), created_at: args.at ?? new Date().toISOString(), idempotency_key: args.idempotency_key };
@@ -872,7 +970,6 @@ function transitionInput(command, args, state, machine) {
   if (command === 'candidate') return { ...common, event_type: 'CANDIDATE_READY', exact_object: { oid: args.commit }, payload: { candidate_commit: args.commit, evidence_pointers: jsonArg(args.evidence, []) } };
   if (command === 'qa') return { ...common, actor: args.actor ?? 'independent-qa', event_type: 'QA_RESULT', exact_object: { oid: args.commit }, payload: { candidate_commit: args.commit, result: args.result, evidence_pointers: jsonArg(args.evidence, []), next_action: args.next_action } };
   if (command === 'pr-open') return { ...common, event_type: 'PR_OPENED', payload: { pr_url: args.url } };
-  if (command === 'merged-dev') return { ...common, event_type: 'MERGED_DEV', exact_object: { oid: args.commit }, payload: { merge_commit: args.commit } };
   if (command === 'complete') return { ...common, event_type: 'COMPLETED', payload: {} };
   if (command === 'block') return { ...common, event_type: 'BLOCKED', payload: { blocker: args.blocker, wake_condition: args.wake, next_action: args.next_action, retained_paths: jsonArg(args.retained_paths, []), retained_resources: jsonArg(args.retained_resources, []) } };
   if (command === 'release') return { ...common, event_type: 'RESOURCE_RELEASED', payload: { requeue: args.requeue === true || args.requeue === 'true', retained_paths: jsonArg(args.retained_paths, []), retained_resources: jsonArg(args.retained_resources, []) } };
@@ -889,7 +986,7 @@ export function verifyScheduler(root = REPOSITORY_ROOT) {
   for (const name of ['event.json', 'snapshot.json', 'wake.json']) if (!fs.existsSync(path.join(root, '.agentops', 'scheduler', 'schemas', name))) problems.push(`missing schema ${name}`);
   if (config.workers.length > config.worker_slots) problems.push('configured workers exceed worker_slots');
   if (config.wake_hard_limit_tokens > 1500) problems.push('wake hard limit exceeds 1500');
-  const state = readPortableState(root);
+  const state = readPortableState(root, config);
   const rebuilt = reduceEvents(state.events);
   if (rebuilt.errors.length) problems.push(`event replay contains ${rebuilt.errors.length} error(s)`);
   try { assertSchema(rebuilt, 'snapshot'); } catch (error) { problems.push(error.message); }
@@ -908,10 +1005,10 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   config.workers = configuredWorkers(root, config);
   if (command === 'simulate') { const result = simulate(config); emit(command, result, `SIMULATE ${result.concurrent && result.conflict_rejected && result.protected_stop ? 'PASS' : 'FAIL'}: ${result.tickets} tickets, ${result.assignments} concurrent assignments.`); return 0; }
   if (command === 'verify') { const result = verifyScheduler(root); if (!result.ok) throw new Error(result.problems.join('; ')); emit(command, { state_ref_oid: result.state.oid, snapshot_hash: result.rebuilt.snapshot_hash, events: result.state.events.length }, `VERIFY PASS: ${result.state.events.length} material events replayed deterministically.`); return 0; }
-  let state = readPortableState(root); const machine = localMachine(root);
+  let state = readPortableState(root, config); const machine = localMachine(root);
   if (command === 'bootstrap') {
     if (state.oid) { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP NOOP: scheduler state already exists.'); return 0; }
-    state.machineLease = { machine_id: null, lease_epoch: 0, acquired_at: null, expires_at: null, expected_state_ref_oid: null }; const oid = persistPortableState(root, state, { push: args.push === true, message: 'agentops scheduler bootstrap' });
+    state.machineLease = { machine_id: null, lease_epoch: 0, acquired_at: null, expires_at: null, expected_state_ref_oid: null }; const oid = persistPortableState(root, state, { push: args.push === true, message: 'agentops scheduler bootstrap', config });
     emit(command, { state_ref_oid: oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP PASS: portable scheduler state initialized.'); return 0;
   }
   if (command === 'status') { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash, material_events: state.events.length, machine_lease: state.machineLease, live_worker_capacity: config.workers.length, configured_worker_slots: config.worker_slots, counts: stateCounts(state.snapshot) }, `STATUS: ${state.events.length} events; ${Object.values(state.snapshot.work_items).length} work items; ${config.workers.length}/${config.worker_slots} live workers.`); return 0; }
@@ -920,28 +1017,32 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     if (state.machineLease && Date.parse(state.machineLease.expires_at) > Date.parse(now) && state.machineLease.machine_id !== machine.machine_id) throw new Error(`machine custody held by ${state.machineLease.machine_id}`);
     const epoch = (state.machineLease?.lease_epoch ?? 0) + 1;
     state.machineLease = { machine_id: machine.machine_id, lease_epoch: epoch, acquired_at: now, expires_at: new Date(Date.parse(now) + config.lease_duration_seconds * 1000).toISOString(), expected_state_ref_oid: state.oid };
-    const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler custody ${machine.machine_id}` });
+    const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler custody ${machine.machine_id}`, config });
     emit(command, { machine_id: machine.machine_id, lease_epoch: epoch, state_ref_oid: oid }, 'ACQUIRE PASS: this machine owns dispatch custody.'); return 0;
   }
   if (command === 'release-machine') {
-    ensureCustody(state, machine); const now = new Date().toISOString(); state.machineLease = { machine_id: null, lease_epoch: state.machineLease.lease_epoch, acquired_at: state.machineLease.acquired_at, released_at: now, expires_at: now, expected_state_ref_oid: state.oid }; const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler custody release ${machine.machine_id}` });
+    ensureCustody(state, machine); const now = new Date().toISOString(); state.machineLease = { machine_id: null, lease_epoch: state.machineLease.lease_epoch, acquired_at: state.machineLease.acquired_at, released_at: now, expires_at: now, expected_state_ref_oid: state.oid }; const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler custody release ${machine.machine_id}`, config });
     emit(command, { state_ref_oid: oid }, 'RELEASE PASS: machine custody released.'); return 0;
   }
   if (command === 'sync') {
-    const remoteState = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', 'refs/heads/agentops/scheduler-state'], { allowFailure: true });
+    const refs = schedulerStateRefs(config);
+    const remoteState = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', refs.local], { allowFailure: true });
     if (remoteState.status === 0) {
-      runGit(root, ['fetch', 'origin', '+refs/heads/agentops/scheduler-state:refs/remotes/origin/agentops/scheduler-state']);
-      const remoteOid = refOid(root, 'refs/remotes/origin/agentops/scheduler-state');
-      const localOid = refOid(root, 'refs/heads/agentops/scheduler-state');
-      if (!localOid) runGit(root, ['update-ref', 'refs/heads/agentops/scheduler-state', remoteOid]);
+      runGit(root, ['fetch', 'origin', `+${refs.local}:${refs.remote}`]);
+      const remoteOid = refOid(root, refs.remote);
+      const localOid = refOid(root, refs.local);
+      if (!localOid) runGit(root, ['update-ref', refs.local, remoteOid]);
       else if (localOid !== remoteOid) {
-        runGit(root, ['update-ref', `refs/agentops/rejected-scheduler-state/${localOid}`, localOid]);
-        runGit(root, ['update-ref', 'refs/heads/agentops/scheduler-state', remoteOid, localOid]);
+        const remoteIsAncestor = runGit(root, ['merge-base', '--is-ancestor', remoteOid, localOid], { allowFailure: true }).status === 0;
+        if (!remoteIsAncestor) {
+          runGit(root, ['update-ref', `refs/agentops/rejected-scheduler-state/${localOid}`, localOid]);
+          runGit(root, ['update-ref', refs.local, remoteOid, localOid]);
+        }
       }
-      state = readPortableState(root);
+      state = readPortableState(root, config);
     }
     const before = state.snapshot.snapshot_hash; const rebuilt = reduceEvents(state.events); if (rebuilt.errors.length) throw new Error(`replay errors: ${JSON.stringify(rebuilt.errors)}`); state.snapshot = rebuilt;
-    const changed = before !== rebuilt.snapshot_hash; if (changed) persistPortableState(root, state, { push: args.push === true, message: 'scheduler deterministic sync' });
+    const changed = before !== rebuilt.snapshot_hash; if (changed) persistPortableState(root, state, { push: args.push === true, message: 'scheduler deterministic sync', config });
     emit(command, { changed, snapshot_hash: rebuilt.snapshot_hash, counts: stateCounts(rebuilt) }, changed ? 'SYNC PASS: snapshot rebuilt.' : 'SYNC NOOP: no material change.'); return 0;
   }
   if (command === 'watch') {
@@ -958,7 +1059,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const coreMaterial = reconciled || preliminary.expirations.length > 0;
     let oid = state.oid;
     if (coreMaterial) {
-      oid = persistPortableState(root, state, { push: args.push === true, message: 'scheduler watcher reconcile/expire' });
+      oid = persistPortableState(root, state, { push: args.push === true, message: 'scheduler watcher reconcile/expire', config });
       state.oid = oid;
     }
     const needsBase = Object.values(state.snapshot.work_items).some((item) => ['READY', 'REPAIR_REQUIRED'].includes(item.state)) && config.workers.some((worker) => worker.capabilities.includes('implementation'));
@@ -980,9 +1081,9 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   if (command === 'deliver') {
     const item = state.snapshot.work_items[String(args.issue)]; if (!item) throw new Error(`unknown issue ${args.issue}`);
     if (!config.authority.non_force_push_codex_branch || !config.authority.open_issue_closing_pr_to_dev) throw new Error('PR delivery authority is not enabled');
-    const delivered = deliverCandidate(root, item);
+    const delivered = deliverCandidate(root, item, config);
     state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivered.number, oid: item.candidate_commit }, payload: { pr_url: delivered.url }, created_at: new Date().toISOString(), idempotency_key: `pr-open:${delivered.number}:${item.candidate_commit}` }]);
-    const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler PR_OPENED ${item.issue_id}` });
+    const oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler PR_OPENED ${item.issue_id}`, config });
     emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], delivery: delivered }, `PR_OPENED accepted for ${item.issue_id}: ${delivered.url}`); return 0;
   }
   if (command === 'merge-dev') {
@@ -993,7 +1094,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
       { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
       { event_type: 'COMPLETED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid }, payload: {}, created_at: createdAt, idempotency_key: `completed:${item.issue_id}:${result.merged.mergeCommit.oid}` }
     ]);
-    let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}` });
+    let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}`, config });
     state.oid = oid;
     const baseCommit = currentDevelopmentBase(root, config);
     const plan = planAssignments(state.snapshot, config, createdAt, baseCommit);
@@ -1003,15 +1104,15 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
   }
   const input = transitionInput(command, args, state, machine); state = appendEvents(state, [input]);
-  let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}` });
+  let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}`, config });
   state.oid = oid;
-  const triggers = new Set(['candidate', 'qa', 'block', 'release', 'expire', 'complete', 'merged-dev']);
+  const triggers = new Set(['candidate', 'qa', 'block', 'release', 'expire', 'complete']);
   let delivery = null;
   let item = state.snapshot.work_items[input.issue_id];
   if (command === 'qa' && args.result === 'PASS' && args.no_deliver !== true && args.no_deliver !== 'true' && config.authority.non_force_push_codex_branch && config.authority.open_issue_closing_pr_to_dev) {
-    delivery = deliverCandidate(root, item);
+    delivery = deliverCandidate(root, item, config);
     state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivery.number, oid: item.candidate_commit }, payload: { pr_url: delivery.url }, created_at: input.created_at, idempotency_key: `pr-open:${delivery.number}:${item.candidate_commit}` }]);
-    oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler PR_OPENED ${item.issue_id}` });
+    oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler PR_OPENED ${item.issue_id}`, config });
     state.oid = oid;
     item = state.snapshot.work_items[input.issue_id];
   }

@@ -1,6 +1,7 @@
 {
   "schema": "agentops/scheduler-config/v1",
   "state_version": 1,
+  "repository": "https://github.com/cehinds/AshenSpire.git",
   "state_ref": "refs/heads/agentops/scheduler-state",
   "development_branch": "dev",
   "qa_branch": "test",
@@ -17,6 +18,11 @@
   "wake_target_tokens": 1200,
   "wake_hard_limit_tokens": 1500,
   "workers": [],
+  "cutover": {
+    "scheduler_dispatch_enabled": false,
+    "legacy_watcher_authoritative": true,
+    "authorization_evidence": null
+  },
   "authority": {
     "non_force_push_codex_branch": true,
     "open_issue_closing_pr_to_dev": true,

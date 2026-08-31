@@ -5,12 +5,12 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
-  appendEvents, applyAssignments, assertPortable, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
+  appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
   emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, mergeGateResult, pathsOverlap, planAssignments,
-  persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, resolveCanonicalIssue,
-  simulate, snapshotsMatch, stableStringify, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
+  localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
+  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -212,8 +212,17 @@ test('25 cross-machine custody transfer', () => {
 });
 
 test('26 quiet no-change watcher cycle', () => {
-  const run = spawnSync(process.execPath, [path.join(toolDir, 'scheduler.mjs'), 'watch'], { cwd: repoRoot, encoding: 'utf8' });
-  assert.equal(run.status, 0, run.stderr); assert.equal(run.stdout, '');
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-scheduler-quiet-'));
+  try {
+    fs.mkdirSync(path.join(temp, '.agentops', 'scheduler'), { recursive: true });
+    fs.copyFileSync(path.join(toolDir, '..', 'scheduler', 'config.json'), path.join(temp, '.agentops', 'scheduler', 'config.json'));
+    const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' });
+    assert.equal(init.status, 0, init.stderr);
+    const moduleUrl = pathToFileURL(path.join(toolDir, 'scheduler.mjs')).href;
+    const script = `import(${JSON.stringify(moduleUrl)}).then(({main}) => { process.exitCode = main(['watch'], ${JSON.stringify(temp)}); })`;
+    const run = spawnSync(process.execPath, ['--input-type=module', '--eval', script], { cwd: temp, encoding: 'utf8', timeout: 5000 });
+    assert.equal(run.status, 0, run.stderr); assert.equal(run.stdout, '');
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
 test('pipeline saturation acceptance fixture', () => {
@@ -422,6 +431,84 @@ test('claimed paths are canonical repository-relative identities', () => {
     assert.throws(() => canonicalClaimPath(invalid), /claimed path/);
   }
   assert.throws(() => intake(fresh(), 'I-PATH-ESCAPE', { paths: ['src/../../outside'] }), /claimed path/);
+});
+
+test('configured repository state ref and development branch remain portable inputs', () => {
+  const custom = {
+    ...config,
+    repository: 'https://github.com/example/portable-game.git',
+    state_ref: 'refs/heads/custom/scheduler-state',
+    development_branch: 'integration'
+  };
+  assert.deepEqual(schedulerStateRefs(custom), {
+    local: 'refs/heads/custom/scheduler-state',
+    branch: 'custom/scheduler-state',
+    remote: 'refs/remotes/origin/custom/scheduler-state'
+  });
+  assert.equal(repositorySlug(custom.repository), 'example/portable-game');
+  assert.equal(compileWake(claim(intake(fresh(), 'I-PORTABLE-CONFIG'), 'I-PORTABLE-CONFIG').snapshot.work_items['I-PORTABLE-CONFIG'], custom).wake.REPOSITORY, custom.repository);
+  assert.equal(mergeCommandArgs(461, 'e'.repeat(40), custom).includes('example/portable-game'), true);
+
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-scheduler-ref-'));
+  try {
+    const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' });
+    assert.equal(init.status, 0, init.stderr);
+    const state = fresh();
+    state.oid = persistPortableState(temp, state, { config: custom, message: 'custom state ref' });
+    assert.equal(readPortableState(temp, custom).oid, state.oid);
+    const customRef = spawnSync('git', ['rev-parse', '--verify', custom.state_ref], { cwd: temp, encoding: 'utf8' });
+    const defaultRef = spawnSync('git', ['rev-parse', '--verify', config.state_ref], { cwd: temp, encoding: 'utf8' });
+    assert.equal(customRef.status, 0, customRef.stderr);
+    assert.notEqual(defaultRef.status, 0);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('concurrent machine initialization accepts the EEXIST winner', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-machine-eexist-'));
+  try {
+    const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' });
+    assert.equal(init.status, 0, init.stderr);
+    const runtime = path.join(temp, '.git', 'agentops-scheduler');
+    fs.mkdirSync(runtime, { recursive: true });
+    const winner = { schema: 'agentops/scheduler-machine/v1', machine_id: 'winner', created_at: '2026-08-30T00:00:00Z' };
+    fs.writeFileSync(path.join(runtime, 'machine.json'), `${JSON.stringify(winner)}\n`, { flag: 'wx' });
+    assert.deepEqual(localMachine(temp), winner);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('Git and GitHub subprocesses fail closed on startup errors and timeouts', () => {
+  assert.throws(() => runBoundedCommand('ashenspire-command-that-does-not-exist', [], { timeoutMs: 100 }), /failed to start/);
+  assert.throws(() => runBoundedCommand(process.execPath, ['--eval', 'setTimeout(() => {}, 10000)'], { timeoutMs: 50 }), /timed out/);
+  assert.throws(() => runBoundedCommand(process.execPath, [], { timeoutMs: 0 }), /invalid subprocess timeout/);
+});
+
+test('scheduler dispatch remains mechanically disabled while legacy watcher is authoritative', () => {
+  assert.throws(() => assertSchedulerDispatchCutover(config), /legacy watcher remains authoritative/);
+  const authorized = { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: 'owner:cutover-1' } };
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-cutover-guard-'));
+  try {
+    const activationDir = path.join(temp, '.agentops', 'pipeline-pilot'); fs.mkdirSync(activationDir, { recursive: true });
+    fs.writeFileSync(path.join(activationDir, 'activation.json'), `${JSON.stringify({ enabled: true, mode: 'LIVE_ASSIGNMENT' })}\n`);
+    assert.throws(() => assertSchedulerDispatchCutover(authorized, temp), /legacy watcher activation is still live/);
+    fs.writeFileSync(path.join(activationDir, 'activation.json'), `${JSON.stringify({ enabled: false, mode: 'DISABLED' })}\n`);
+    assert.equal(assertSchedulerDispatchCutover(authorized, temp), true);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('raw merged-dev transition cannot bypass the protected merge handler', () => {
+  let state = intake(fresh(), 'I-RAW-MERGE'); state = claim(state, 'I-RAW-MERGE');
+  assert.throws(() => transitionInput('merged-dev', { issue: 'I-RAW-MERGE', commit: 'd'.repeat(40) }, state, { machine_id: 'machine-a' }), /unknown transition command/);
+});
+
+test('lease expiry and candidate acceptance are fenced at the declared instant', () => {
+  let state = intake(fresh(), 'I-TIME-FENCE'); state = claim(state, 'I-TIME-FENCE'); state = entered(state, 'I-TIME-FENCE');
+  const item = state.snapshot.work_items['I-TIME-FENCE'];
+  const earlyExpiry = { event_type: 'LEASE_EXPIRED', issue_id: item.issue_id, actor: 'scheduler', machine_id: item.lease_machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: {}, payload: {}, created_at: '2026-08-30T00:29:59Z', idempotency_key: 'time-fence:early-expiry' };
+  assert.throws(() => appendEvents(state, [earlyExpiry]), /cannot precede/);
+  const lateCandidate = { event_type: 'CANDIDATE_READY', issue_id: item.issue_id, actor: item.assigned_actor, machine_id: item.lease_machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: 'f'.repeat(40) }, payload: { candidate_commit: 'f'.repeat(40), evidence_pointers: ['receipt:late'] }, created_at: item.lease_expiry, idempotency_key: 'time-fence:late-candidate' };
+  state = appendEvents(state, [lateCandidate]);
+  assert.equal(state.snapshot.work_items[item.issue_id].state, 'RUNNING');
+  assert.equal(state.snapshot.work_items[item.issue_id].late_candidates[0].candidate_commit, 'f'.repeat(40));
 });
 
 if (!process.exitCode) process.stdout.write(`1..${passed}\nPASS ${passed}/${passed}\n`);
