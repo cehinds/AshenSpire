@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "GH-183-0006",
+  "ticket": "GH-183",
+  "seq": 6,
+  "parent_event": "GH-183-0005",
+  "kind": "state-change",
+  "actor": "owner",
+  "at": "2026-08-31T17:43:09.502Z",
+  "summary": "Aligned GH-183's work instructions and recorded base/tree with the narrowed four-file lease, current dev, and exact reviewed candidate; removed obsolete opsctl and old-base routing. Resealed as revision 6; parent_hash names sha256:fbd3ac3f2320f0aba96ef2872ff01b9c040f8859bb9a17508d7a1ac2b77fc465."
+}

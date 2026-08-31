@@ -1,0 +1,24 @@
+{
+  "schema": "agentops/lease/v1",
+  "id": "lease-AS-1001-project-schema-executor-maker",
+  "actor": "maker",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-1001",
+  "ref": "recovery/as-1001-project-schema-executor",
+  "path_globs": [
+    ".agentops/tools/project-schema-executor.mjs",
+    ".agentops/tools/project-schema-executor.test.mjs",
+    ".agentops/scheduler/schemas/project-schema-attempt.json",
+    ".agentops/scheduler/schemas/project-schema-receipt.json",
+    ".agentops/scheduler/project-schema-attempts/**"
+  ],
+  "base_oid": "4ac5734558982a64ccd665771d8679ee5044a63b",
+  "actions": [
+    "implement-locally-on-exclusive-paths",
+    "run-tests-and-builds",
+    "commit-on-isolated-branch"
+  ],
+  "issued": "2026-08-31T18:04:46Z",
+  "expiry": "2026-09-01T18:04:46Z",
+  "revoked": false
+}
