@@ -248,6 +248,49 @@ function check(name, cond, detail = '') {
     runCommand(box, { schema: 'agentops/owner-command-request/v1', action: 'defer', actor: 'owner', target: 'AS-1001', reason: 'not yet' }, { dryRun: false });
     check('a deferral does not clear the blocker', readCap().blocker !== null);
 
+    // Restore the valid seed before exercising a second ticket; command entry
+    // refuses the entire runtime when any capsule is schema-invalid.
+    const restored = readCap();
+    restored.blocker = null;
+    restored.current_hash = computeCapsuleHash(restored);
+    writeFileSync(capPath, JSON.stringify(restored, null, 2) + '\n');
+
+    // A capsule authority grant is a first-class owner-only action. It may add
+    // only the dev-via-PR capability already held by the target role, and it
+    // replaces the legacy bundled denial with explicit protected boundaries.
+    const deliveryPath = resolve(box, 'work/AS-HD-029/CURRENT.json');
+    const readDeliveryCap = () => strictParse(readFileSync(deliveryPath, 'utf8'));
+    const deliverySeed = readDeliveryCap();
+    deliverySeed.authority.may = deliverySeed.authority.may.filter((item) => item !== 'integrate-to-dev-via-pr');
+    deliverySeed.authority.must_not = deliverySeed.authority.must_not
+      .filter((item) => !['direct-push-to-dev', 'mutate-main-or-release', 'tag-publish-deploy-or-change-pages-source'].includes(item));
+    if (!deliverySeed.authority.must_not.includes('push-pr-merge-deploy-or-release')) deliverySeed.authority.must_not.unshift('push-pr-merge-deploy-or-release');
+    deliverySeed.current_hash = computeCapsuleHash(deliverySeed);
+    writeFileSync(deliveryPath, JSON.stringify(deliverySeed, null, 2) + '\n');
+    const beforeDelivery = readDeliveryCap();
+    const deliveryHash = computeCapsuleHash(beforeDelivery);
+    const grant = {
+      schema: 'agentops/owner-command-request/v1',
+      action: 'grant-dev-delivery-authority',
+      actor: 'owner',
+      target: 'AS-HD-029',
+      expected_current_hash: deliveryHash,
+      reason: 'Owner grant from #470; dev via normal PR only.'
+    };
+    check('dev-delivery grant remains owner-exclusive', runCommand(box, { ...grant, actor: 'it-manager-iii' }, { dryRun: true }).ok === false);
+    check('dev-delivery grant refuses a non-ITM3 capsule', runCommand(box, { ...grant, target: 'AS-1001', expected_current_hash: computeCapsuleHash(readCap()) }, { dryRun: true }).ok === false);
+    const granted = runCommand(box, grant, { dryRun: false });
+    check('owner may grant the ITM3 capsule dev-via-PR authority', granted.ok, (granted.errors || []).join(' | '));
+    const afterDelivery = readDeliveryCap();
+    check('grant adds only integrate-to-dev-via-pr and removes the bundled denial',
+      afterDelivery.authority.may.filter((item) => !beforeDelivery.authority.may.includes(item)).join(',') === 'integrate-to-dev-via-pr'
+        && !afterDelivery.authority.must_not.includes('push-pr-merge-deploy-or-release'));
+    check('grant preserves direct-dev, deploy, main/release, tag, publication, and Pages prohibitions',
+      ['direct-push-to-dev', 'mutate-main-or-release', 'tag-publish-deploy-or-change-pages-source']
+        .every((item) => afterDelivery.authority.must_not.includes(item)));
+    check('granted capsule remains sealed and the complete corpus validates',
+      afterDelivery.current_hash === computeCapsuleHash(afterDelivery) && runValidate(box).errors.length === 0);
+
     // Replaying the identical command is now stale: the CAS has moved.
     check('apply rejects a replayed (stale) command', runCommand(box, req, { dryRun: false }).ok === false);
     // Owner-exclusive actions stay owner-exclusive under apply.
