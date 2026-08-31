@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 50,
-  "last_sequence": 50,
+  "revision": 51,
+  "last_sequence": 51,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -145,22 +145,22 @@
     },
     "420": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "420",
       "title": "Fix changelog ordinal regression across prose-only date groups",
       "priority": "P2",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "CANDIDATE_READY",
       "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
-      "candidate_commit": null,
+      "candidate_commit": "fcc0fd0fb8077a1ac9b099255b9af1f7836235ad",
       "branch": "codex/issue-420-changelog-prose-gap",
-      "assigned_actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:420:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T17:26:33.8317205Z",
-      "lease_machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
-      "maker_actor": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
       "lease_history": [
         {
           "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
@@ -184,16 +184,26 @@
         "git diff --check"
       ],
       "evidence_pointers": [
-        "https://github.com/cehinds/AshenSpire/issues/420",
         "https://github.com/cehinds/AshenSpire/issues/420#issuecomment-5465166022",
-        "bounded defect: ordinal regression across prose-only date group"
+        "base:410db64246a1e948e108044d7c34d5399912900a",
+        "head:fcc0fd0fb8077a1ac9b099255b9af1f7836235ad",
+        "tree:2c8b03952c30ef6b888f8ce1da6d63ca3f5f616f",
+        "path:tools/about-changelog.mjs",
+        "blob:f0ecfeb10cd92e3e7cab953b8a6af3718e0d5107",
+        "sha256:147508F4D581E19D51E61C7DAEFDBAB8137F55028FF68C9F2D0A9FE82C9AB77B",
+        "about-changelog-selftest:64/64 PASS exit0",
+        "about-changelog-normal:43 PASS exit0",
+        "node-suite:114/114 PASS exit0",
+        "opsctl-verify:PASS",
+        "git-diff-check:PASS",
+        "independent-review:PASS"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Inspect current fold, add the failing plant, implement the narrow fix, and run acceptance.",
+      "next_action": "Bind independent QA to this exact candidate.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000050-90e35972-e963-491c-8974-0f8a5f9363c3",
-      "updated_at": "2026-08-31T16:41:43.350Z"
+      "updated_event": "evt-00000051-0ecdcccb-dc2c-4f53-ba75-58a36d604107",
+      "updated_at": "2026-08-31T17:05:32.783Z"
     },
     "422": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -469,5 +479,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "810e092e17809733fb95e6e50c505dcf15e6fb5112d7a5e4334ea1d90dce0b65"
+  "snapshot_hash": "76323e90c1ef4f451f3108ce1983b083d1df7680f29fcf99a524bf70b0e22925"
 }

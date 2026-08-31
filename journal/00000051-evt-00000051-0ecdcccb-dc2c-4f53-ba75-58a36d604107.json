@@ -1,0 +1,34 @@
+{
+  "event_id": "evt-00000051-0ecdcccb-dc2c-4f53-ba75-58a36d604107",
+  "idempotency_key": "CANDIDATE_READY:420:1:fcc0fd0fb8077a1ac9b099255b9af1f7836235ad",
+  "sequence": 51,
+  "previous_snapshot_hash": "810e092e17809733fb95e6e50c505dcf15e6fb5112d7a5e4334ea1d90dce0b65",
+  "issue_id": "420",
+  "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+  "machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
+  "lease_id": "lease:420:1",
+  "lease_epoch": 1,
+  "event_type": "CANDIDATE_READY",
+  "exact_object": {
+    "oid": "fcc0fd0fb8077a1ac9b099255b9af1f7836235ad"
+  },
+  "payload": {
+    "candidate_commit": "fcc0fd0fb8077a1ac9b099255b9af1f7836235ad",
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/issues/420#issuecomment-5465166022",
+      "base:410db64246a1e948e108044d7c34d5399912900a",
+      "head:fcc0fd0fb8077a1ac9b099255b9af1f7836235ad",
+      "tree:2c8b03952c30ef6b888f8ce1da6d63ca3f5f616f",
+      "path:tools/about-changelog.mjs",
+      "blob:f0ecfeb10cd92e3e7cab953b8a6af3718e0d5107",
+      "sha256:147508F4D581E19D51E61C7DAEFDBAB8137F55028FF68C9F2D0A9FE82C9AB77B",
+      "about-changelog-selftest:64/64 PASS exit0",
+      "about-changelog-normal:43 PASS exit0",
+      "node-suite:114/114 PASS exit0",
+      "opsctl-verify:PASS",
+      "git-diff-check:PASS",
+      "independent-review:PASS"
+    ]
+  },
+  "created_at": "2026-08-31T17:05:32.783Z"
+}
