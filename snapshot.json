@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 8,
-  "last_sequence": 8,
+  "revision": 9,
+  "last_sequence": 9,
   "work_items": {
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -61,22 +61,22 @@
     },
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "467",
       "title": "Bounded owner grant for dev delivery authority",
       "priority": "P0",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "CANDIDATE_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
-      "candidate_commit": null,
+      "candidate_commit": "4a14a6025064a03c9eeae37495d16496dcf43560",
       "branch": "codex/issue-467-authority-grant",
-      "assigned_actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:467:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T15:00:00Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
-      "maker_actor": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
       "lease_history": [
         {
           "actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
@@ -106,17 +106,18 @@
         "git diff --check"
       ],
       "evidence_pointers": [
-        "https://github.com/cehinds/AshenSpire/issues/467",
-        "https://github.com/cehinds/AshenSpire/issues/470"
+        "https://github.com/cehinds/AshenSpire/pull/472",
+        "https://github.com/cehinds/AshenSpire/issues/467#issuecomment-5479495813",
+        "sha256:55d86a4e395f8b94af54b447e171c5e0884513d19ebc03a22e4d9f1f4c687878"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Complete exact-head verification and delivery",
+      "next_action": "Bind independent QA to this exact candidate.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000003-32a5dc6d-9753-4dc7-9851-fe7b6c55d9bd",
-      "updated_at": "2026-08-31T14:02:55.042Z"
+      "updated_event": "evt-00000009-0cfc1a65-b422-4bd0-a161-96d2a691ea13",
+      "updated_at": "2026-08-31T14:06:43.824Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "915372f20f347c831db66cdbb0a165a61707b27402cec7d8270c5e3dbe48498a"
+  "snapshot_hash": "c0878a9b5b72dc8e249963071e583fa35499655760d8cbfeff88a99ca7cf51e9"
 }
