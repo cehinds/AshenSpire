@@ -503,8 +503,10 @@ function check(name, cond, detail = '') {
     check('reseating twice is a no-op', (() => { const again = runReseat(agentops, 'AS-HD-057'); return again.ok && again.unchanged === true; })());
 
     // The CI shape: a pull request is checked out as a detached merge commit.
+    // AS-HD-054 is a still-unstarted capsule on a stale base, so the refusal
+    // exercised here is the detached HEAD, not an already-started state.
     git('checkout', '-q', '--detach');
-    const det = runReseat(agentops, 'AS-HD-050');
+    const det = runReseat(agentops, 'AS-HD-054');
     check('reseat refuses a detached HEAD', !det.ok && /detached/.test(det.errors.join(' ')), JSON.stringify(det));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
