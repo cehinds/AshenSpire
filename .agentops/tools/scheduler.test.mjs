@@ -2,12 +2,14 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   appendEvents, applyAssignments, assertPortable, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
   emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, mergeGateResult, pathsOverlap, planAssignments,
-  protectedTransitionAllowed, readConfig, reduceEvents, resolveCanonicalIssue,
+  persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, resolveCanonicalIssue,
   simulate, snapshotsMatch, stableStringify, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
@@ -379,6 +381,32 @@ test('remote CAS loss revokes losing wake and reconciles authoritative assignmen
   assert.equal(rolledBack, false);
   assert.equal(reconciled.snapshot_hash, authoritative.snapshot.snapshot_hash);
   assert.equal(state.snapshot.work_items['I-CAS-LOSS'].state, 'READY');
+});
+
+test('portable state push race fetches and installs the authoritative winner', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-scheduler-cas-'));
+  const remote = path.join(temp, 'remote.git'); const first = path.join(temp, 'first'); const second = path.join(temp, 'second');
+  const git = (root, args) => {
+    const run = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr || run.stdout); return run.stdout.trim();
+  };
+  try {
+    fs.mkdirSync(first); fs.mkdirSync(second);
+    git(temp, ['init', '--bare', remote]);
+    for (const root of [first, second]) { git(root, ['init']); git(root, ['remote', 'add', 'origin', remote]); }
+    const initial = fresh(); initial.machineLease = { machine_id: null, lease_epoch: 0, acquired_at: null, expires_at: null, expected_state_ref_oid: null };
+    initial.oid = persistPortableState(first, initial, { push: true, message: 'initial' });
+    git(second, ['fetch', 'origin', '+refs/heads/agentops/scheduler-state:refs/remotes/origin/agentops/scheduler-state']);
+    let winner = readPortableState(second); winner.machineLease = { machine_id: 'winner', lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: winner.oid };
+    const winnerOid = persistPortableState(second, winner, { push: true, message: 'winner' });
+    const loser = { ...initial, machineLease: { machine_id: 'loser', lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
+    let failure;
+    try { persistPortableState(first, loser, { push: true, message: 'loser' }); } catch (error) { failure = error; }
+    assert.equal(failure?.portableStateAuthorityLost, true);
+    assert.equal(failure?.authoritativeStateOid, winnerOid);
+    assert.equal(readPortableState(first).oid, winnerOid);
+    assert.equal(readPortableState(first).machineLease.machine_id, 'winner');
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
 test('configured worker identities are unique before scheduling', () => {
