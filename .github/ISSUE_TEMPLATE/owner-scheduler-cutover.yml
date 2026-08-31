@@ -1,0 +1,274 @@
+name: Owner scheduler cutover authority
+description: Record one exact owner-authorized scheduler v2 cutover boundary.
+title: "[decision] AS-1001 scheduler cutover "
+labels: ["owner-command"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form records one exact scheduler cutover authority request.
+
+        Submitting it **only records authority**. It does not enable either
+        scheduler, acquire custody, dispatch work, mutate scheduler state, change
+        the Project, or mutate a Git ref. The executor must revalidate every
+        bound receipt, object, ref, and compare-and-swap guard before acting.
+
+  - type: dropdown
+    id: request_schema
+    attributes:
+      label: Request schema
+      description: "Required constant: agentops/scheduler-cutover-authority/v1."
+      options:
+        - agentops/scheduler-cutover-authority/v1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: action
+    attributes:
+      label: Action
+      description: "Required constant: authorize-scheduler-cutover."
+      options:
+        - authorize-scheduler-cutover
+    validations:
+      required: true
+
+  - type: input
+    id: target
+    attributes:
+      label: Target ticket
+      description: "Required ticket this authority is recorded against."
+      placeholder: AS-1001
+    validations:
+      required: true
+
+  - type: input
+    id: expected_current_hash
+    attributes:
+      label: Expected current hash
+      description: "Required compare-and-swap hash: sha256: followed by 64 lowercase hexadecimal characters."
+      placeholder: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    validations:
+      required: true
+
+  - type: input
+    id: candidate_oid
+    attributes:
+      label: Candidate OID
+      description: "Required exact scheduler commit; 40 lowercase hexadecimal characters. Must equal Scheduler head."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: scheduler_head
+    attributes:
+      label: Scheduler head
+      description: "Required exact independently reviewed scheduler commit; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: scheduler_tree
+    attributes:
+      label: Scheduler tree
+      description: "Required exact independently reviewed scheduler tree; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: qa_receipt_hash
+    attributes:
+      label: QA receipt hash
+      description: "Required independently issued exact-head QA receipt hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: migration_boundary_oid
+    attributes:
+      label: Migration boundary OID
+      description: "Required exact v2 migration boundary commit; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: state_migrated_event_hash
+    attributes:
+      label: State migrated event hash
+      description: "Required exact STATE_MIGRATED event hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: current_state_oid
+    attributes:
+      label: Current state OID
+      description: "Required exact current scheduler-state descendant commit; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: current_state_tree
+    attributes:
+      label: Current state tree
+      description: "Required exact current scheduler-state tree; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: project_schema_receipt_hash
+    attributes:
+      label: Project schema receipt hash
+      description: "Required exact Project schema-change receipt hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: project_manifest_hash
+    attributes:
+      label: Project manifest hash
+      description: "Required exact post-change Project manifest hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: quiet_window_receipt_hash
+    attributes:
+      label: Quiet window receipt hash
+      description: "Required exact no-engine quiet-window receipt hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: released_custody_hash
+    attributes:
+      label: Released custody hash
+      description: "Required exact released-custody evidence hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: dropdown
+    id: active_work_lease_count
+    attributes:
+      label: Active work lease count
+      description: "Required constant: 0."
+      options:
+        - "0"
+    validations:
+      required: true
+
+  - type: input
+    id: legacy_activation_blob_oid
+    attributes:
+      label: Legacy activation blob OID
+      description: "Required exact blob OID of the disabled legacy activation surface; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: pre_cutover_config_blob_oid
+    attributes:
+      label: Pre-cutover config blob OID
+      description: "Required exact pre-cutover scheduler config blob OID; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: activation_manifest_hash
+    attributes:
+      label: Activation manifest hash
+      description: "Required hash of the exact activation mutation manifest; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: dropdown
+    id: state_target_ref
+    attributes:
+      label: State target ref
+      description: "Required constant: refs/heads/agentops/scheduler-state."
+      options:
+        - refs/heads/agentops/scheduler-state
+    validations:
+      required: true
+
+  - type: input
+    id: expected_state_remote_oid
+    attributes:
+      label: Expected state remote OID
+      description: "Required exact scheduler-state remote OID; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: dropdown
+    id: development_ref
+    attributes:
+      label: Development ref
+      description: "Required constant: refs/heads/dev."
+      options:
+        - refs/heads/dev
+    validations:
+      required: true
+
+  - type: input
+    id: expected_development_remote_oid
+    attributes:
+      label: Expected development remote OID
+      description: "Required exact development-ref remote OID; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: dropdown
+    id: one_use
+    attributes:
+      label: One use
+      description: "Required constant: true."
+      options:
+        - "true"
+    validations:
+      required: true
+
+  - type: input
+    id: expires_at
+    attributes:
+      label: Expires at
+      description: "Required strict future UTC expiry with seconds and optional milliseconds."
+      placeholder: 2026-09-01T15:10:17Z
+    validations:
+      required: true
+
+  - type: dropdown
+    id: push_mode
+    attributes:
+      label: Push mode
+      description: "Required constant: non-force-forward-only-cas."
+      options:
+        - non-force-forward-only-cas
+    validations:
+      required: true
+
+  - type: dropdown
+    id: abort_on_remote_change
+    attributes:
+      label: Abort on remote change
+      description: "Required constant: true."
+      options:
+        - "true"
+    validations:
+      required: true

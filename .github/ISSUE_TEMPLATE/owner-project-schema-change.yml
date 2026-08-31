@@ -1,0 +1,338 @@
+name: Owner project schema change authority
+description: Record one exact, owner-authorized create-missing-only Project schema change.
+title: "[decision] AS-1001 project schema change "
+labels: ["owner-command"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form records one exact Project schema-change authority request.
+
+        Submitting it **only records authority**. It does not mutate the Project,
+        its fields, its items, scheduler state, or any Git ref. The executor must
+        independently revalidate every compare-and-swap guard before acting.
+
+  - type: dropdown
+    id: request_schema
+    attributes:
+      label: Request schema
+      description: "Required constant: agentops/project-schema-change-authority/v1."
+      options:
+        - agentops/project-schema-change-authority/v1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: action
+    attributes:
+      label: Action
+      description: "Required constant: authorize-project-schema-change."
+      options:
+        - authorize-project-schema-change
+    validations:
+      required: true
+
+  - type: input
+    id: target
+    attributes:
+      label: Target ticket
+      description: "Required ticket this authority is recorded against."
+      placeholder: AS-1001
+    validations:
+      required: true
+
+  - type: input
+    id: expected_current_hash
+    attributes:
+      label: Expected current hash
+      description: "Required compare-and-swap hash: sha256: followed by 64 lowercase hexadecimal characters."
+      placeholder: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    validations:
+      required: true
+
+  - type: input
+    id: candidate_oid
+    attributes:
+      label: Candidate OID
+      description: "Required exact executor commit; 40 lowercase hexadecimal characters. Must equal Executor head."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: executor_head
+    attributes:
+      label: Executor head
+      description: "Required exact reviewed executor commit; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: input
+    id: executor_tree
+    attributes:
+      label: Executor tree
+      description: "Required exact reviewed executor tree; 40 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+
+  - type: dropdown
+    id: project_owner
+    attributes:
+      label: Project owner
+      description: "Required constant: cehinds."
+      options:
+        - cehinds
+    validations:
+      required: true
+
+  - type: dropdown
+    id: project_owner_type
+    attributes:
+      label: Project owner type
+      description: "Required constant: user."
+      options:
+        - user
+    validations:
+      required: true
+
+  - type: dropdown
+    id: project_number
+    attributes:
+      label: Project number
+      description: "Required constant: 4."
+      options:
+        - "4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: project_id
+    attributes:
+      label: Project ID
+      description: "Required constant: PVT_kwHOCSCyJ84BgfH9."
+      options:
+        - PVT_kwHOCSCyJ84BgfH9
+    validations:
+      required: true
+
+  - type: dropdown
+    id: project_title
+    attributes:
+      label: Project title
+      description: "Required constant: Family Delivery."
+      options:
+        - Family Delivery
+    validations:
+      required: true
+
+  - type: dropdown
+    id: project_closed
+    attributes:
+      label: Project closed
+      description: "Required constant: false."
+      options:
+        - "false"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: authenticated_login
+    attributes:
+      label: Authenticated login
+      description: "Required constant: cehinds."
+      options:
+        - cehinds
+    validations:
+      required: true
+
+  - type: dropdown
+    id: required_scope
+    attributes:
+      label: Required scope
+      description: "Required constant: project."
+      options:
+        - project
+    validations:
+      required: true
+
+  - type: input
+    id: project_updated_at
+    attributes:
+      label: Project updated at
+      description: "Required exact preflight Project updatedAt value in canonical UTC form."
+      placeholder: 2026-08-31T15:57:21Z
+    validations:
+      required: true
+
+  - type: input
+    id: preflight_field_count
+    attributes:
+      label: Preflight field count
+      description: "Required non-negative base-10 field count from the exact preflight."
+      placeholder: "21"
+    validations:
+      required: true
+
+  - type: input
+    id: field_state_root
+    attributes:
+      label: Field state root
+      description: "Required preflight field-state root; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: preflight_item_count
+    attributes:
+      label: Preflight item count
+      description: "Required non-negative base-10 item count from the exact preflight."
+      placeholder: "155"
+    validations:
+      required: true
+
+  - type: input
+    id: preflight_field_value_count
+    attributes:
+      label: Preflight field value count
+      description: "Required non-negative base-10 field-value count from the exact preflight."
+      placeholder: "0"
+    validations:
+      required: true
+
+  - type: input
+    id: item_state_root
+    attributes:
+      label: Item state root
+      description: "Required preflight item-state root; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: pagination_manifest_hash
+    attributes:
+      label: Pagination manifest hash
+      description: "Required preflight pagination-manifest hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority_field_id
+    attributes:
+      label: Priority field ID
+      description: "Required constant: PVTSSF_lAHOCSCyJ84BgfH9zhfelc4."
+      options:
+        - PVTSSF_lAHOCSCyJ84BgfH9zhfelc4
+    validations:
+      required: true
+
+  - type: input
+    id: priority_contract_hash
+    attributes:
+      label: Priority contract hash
+      description: "Required exact Priority contract hash; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: input
+    id: definitions_hash
+    attributes:
+      label: Definitions hash
+      description: "Required hash of the exact ordered field definitions; 64 lowercase hexadecimal characters."
+      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      description: "Required constant: create-missing-only."
+      options:
+        - create-missing-only
+    validations:
+      required: true
+
+  - type: dropdown
+    id: allowed_mutation
+    attributes:
+      label: Allowed mutation
+      description: "Required constant: project-field-create."
+      options:
+        - project-field-create
+    validations:
+      required: true
+
+  - type: dropdown
+    id: forbid_item_mutation
+    attributes:
+      label: Forbid item mutation
+      description: "Required constant: true."
+      options:
+        - "true"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: forbid_existing_field_update
+    attributes:
+      label: Forbid existing field update
+      description: "Required constant: true."
+      options:
+        - "true"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: forbid_backfill
+    attributes:
+      label: Forbid backfill
+      description: "Required constant: true."
+      options:
+        - "true"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: abort_on_any_drift
+    attributes:
+      label: Abort on any drift
+      description: "Required constant: true."
+      options:
+        - "true"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: retry_mode
+    attributes:
+      label: Retry mode
+      description: "Required constant: never."
+      options:
+        - never
+    validations:
+      required: true
+
+  - type: dropdown
+    id: one_use
+    attributes:
+      label: One use
+      description: "Required constant: true."
+      options:
+        - "true"
+    validations:
+      required: true
+
+  - type: input
+    id: expires_at
+    attributes:
+      label: Expires at
+      description: "Required strict future UTC expiry with seconds and optional milliseconds."
+      placeholder: 2026-09-01T15:10:17Z
+    validations:
+      required: true
