@@ -994,7 +994,7 @@ export function semanticChecks(c) {
       if (ids.has(a.id)) errors.push(`owner-command: duplicate action id '${a.id}'`);
       ids.add(a.id);
       for (const r of a.authenticator_roles) if (!roles.has(r)) errors.push(`owner-command: action '${a.id}' names unknown authenticator role '${r}'`);
-      if ((a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
+      if ((a.id === 'grant-dev-delivery-authority' || a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
         errors.push(`owner-command: action '${a.id}' must be owner-exclusive`);
       }
     }
@@ -1989,6 +1989,13 @@ export function runWake(root, actor, work, { frozen = false } = {}) {
 // ===========================================================================
 
 const REQUEST_SCHEMA_FILE = 'schemas/owner-command-request.schema.json';
+const DEV_DELIVERY_ACTION = 'integrate-to-dev-via-pr';
+const LEGACY_DELIVERY_DENIAL = 'push-pr-merge-deploy-or-release';
+const DEV_DELIVERY_PROTECTED_DENIALS = Object.freeze([
+  'direct-push-to-dev',
+  'mutate-main-or-release',
+  'tag-publish-deploy-or-change-pages-source'
+]);
 
 // Validate an owner-command request against the policy: enumerated action,
 // authenticated actor, required fields, and the compare-and-swap precondition.
@@ -2005,6 +2012,18 @@ export function validateCommand(contracts, rt, request) {
   for (const f of action.required_fields) {
     const v = request[f];
     if (v === undefined || v === null || (typeof v === 'string' && v === '')) errors.push(`command '${request.action}' is missing required field '${f}'`);
+  }
+  if (action.id === 'grant-dev-delivery-authority') {
+    const cap = rt.capsules[request.target];
+    if (!cap) errors.push(`command target '${request.target}' has no work capsule`);
+    else {
+      const ownerRole = actorRole(contracts, cap.owner_actor);
+      const role = contracts.roles.roles.find((r) => r.role === ownerRole);
+      if (ownerRole !== 'it-manager-iii') errors.push(`command '${action.id}' may target only an it-manager-iii-owned capsule (target resolves to '${ownerRole}')`);
+      if (!role || !role.may.includes(DEV_DELIVERY_ACTION)) errors.push(`command '${action.id}' cannot grant '${DEV_DELIVERY_ACTION}' because the target role does not hold it`);
+      if (cap.authority.may.includes(DEV_DELIVERY_ACTION)) errors.push(`command '${action.id}' target '${request.target}' already has '${DEV_DELIVERY_ACTION}'`);
+      if (!cap.authority.must_not.includes(LEGACY_DELIVERY_DENIAL)) errors.push(`command '${action.id}' target '${request.target}' has no exact legacy delivery denial to narrow`);
+    }
   }
   let cas = 'n/a';
   if (action.requires_cas) {
@@ -2093,6 +2112,13 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     // this the capsule would keep reporting itself blocked after the answer
     // arrived, and the HUD would list a resolved decision forever.
     if (action.resolves_blocker && next.blocker) next.blocker = null;
+    if (action.id === 'grant-dev-delivery-authority') {
+      next.authority.may.push(DEV_DELIVERY_ACTION);
+      next.authority.must_not = next.authority.must_not.filter((item) => item !== LEGACY_DELIVERY_DENIAL);
+      for (const denial of DEV_DELIVERY_PROTECTED_DENIALS) {
+        if (!next.authority.must_not.includes(denial)) next.authority.must_not.push(denial);
+      }
+    }
     // The appended event is the decision's record; evidence_pointers carries
     // declared evidence types only (evidence.json), never event ids.
     delete next.current_hash;
@@ -3529,6 +3555,7 @@ export function runSelftest(root = ROOT) {
   expectCommand('owner-command: stale compare-and-swap rejected', (r) => { r.expected_current_hash = 'sha256:stale'; }, 'stale command');
   expectCommand('owner-command: missing required field rejected', (r) => { delete r.candidate_oid; }, 'missing required field');
   expectCommand('owner-command: owner-exclusive release by deputy rejected', (r) => { r.action = 'authorize-release'; }, 'not authorized');
+  expectCommand('owner-command: owner-exclusive dev-delivery grant by deputy rejected', (r) => { r.action = 'grant-dev-delivery-authority'; r.target = 'AS-HD-029'; r.expected_current_hash = computeCapsuleHash(rt0.capsules['AS-HD-029']); r.reason = 'bounded grant'; delete r.candidate_oid; }, 'not authorized');
 
   // Stage 6 migration plants — run through the same runtimeChecks the live
   // validate uses (pure over migration.json + capsules).
@@ -3701,6 +3728,9 @@ export function runSelftest(root = ROOT) {
   {
     const rtLead = baseRt();
     rtLead.capsules['AS-HD-050'].owner_actor = 'lead-game-systems';
+    // The plant tests the actor-vs-role conflation only; clear the live blocker
+    // so a blocked capsule (which wakes the blocker's owner) cannot mask it.
+    rtLead.capsules['AS-HD-050'].blocker = null;
     const d = computeDispatch(contracts, rtLead, { now: new Date().toISOString() }).find((x) => x.ticket === 'AS-HD-050');
     results.push({ label: 'dispatch wakes the lead that owns the capsule, not a role that does not', pass: !!d && d.wake === 'lead-game-systems', errs: [d ? d.wake : '(no entry)'] });
     const w = runWake(root, 'maker', 'AS-1001');
@@ -3741,7 +3771,7 @@ export function runSelftest(root = ROOT) {
     // Stage 9b — every runRender() consumer reads both failure modes.
     const consumers = renderResultConsumerErrors(src);
     results.push({ label: 'every runRender() call site checks .errors as well as .drift', pass: consumers.length === 0, errs: consumers });
-    const reverted = src.replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const reverted = src.replace(/  if \(r\.errors && r\.errors\.length\) return r\.errors;\r?\n/, '');
     const caughtC = renderResultConsumerErrors(reverted);
     results.push({ label: 'consumer check catches a call site that drops .errors', pass: caughtC.some((e) => e.includes("checking 'r.errors'")), errs: caughtC });
     // Both failure modes, or the check only half does its job.
@@ -3753,7 +3783,8 @@ export function runSelftest(root = ROOT) {
     const cut = src.lastIndexOf(needle);
     const noDrift = src.slice(0, cut) + 'const { errors, drifted, wrote } = runRender(' + src.slice(cut + needle.length);
     // A line-oriented scan missed ordinary multiline formatting entirely.
-    const multiline = src.replace('  const r = runRender(root, true);', '  const r =\n    runRender(root, true);').replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const newline = src.includes('\r\n') ? '\r\n' : '\n';
+    const multiline = src.replace('  const r = runRender(root, true);', `  const r =${newline}    runRender(root, true);`).replace(/  if \(r\.errors && r\.errors\.length\) return r\.errors;\r?\n/, '');
     const caughtM = renderResultConsumerErrors(multiline);
     results.push({ label: 'consumer check sees a call site split across lines', pass: caughtM.some((e) => e.includes("checking 'r.errors'")), errs: caughtM });
     // ...and a call shape it cannot inspect must be reported, not passed over.

@@ -239,9 +239,16 @@ if (args.includes('--selftest')) {
         replace: "document.body.classList.toggle('reduced-motion', false); // startup-gate selftest plant",
         expectRed: /RED A10\.REDUCED-MOTION/,
       },
+      {
+        name: 'Settings stops owning Escape above the expanded title',
+        file: 'src/ui/screens/settings.js',
+        find: "  document.addEventListener('keydown', onKeydown, true);",
+        replace: "  false; // startup-gate selftest plant",
+        expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
+      },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 25 plants, 25 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 26 plants, 26 caught');
   process.exit(code);
 }
 
@@ -611,6 +618,36 @@ async function assertContextualTitleBack() {
   await quit.close();
 }
 
+async function assertSettingsModalStack() {
+  const p = await page({ query: '?shot=title' });
+  await p.until("!!document.querySelector('[data-title-action=\"settings\"]')", 'expanded title before Settings');
+  await p.click('[data-title-action="settings"]');
+  await p.until("!!document.querySelector('.settings-modal')", 'Settings modal');
+
+  const semantics = await p.ev("(() => { const modal=document.querySelector('.settings-modal'); return {role:modal?.getAttribute('role')||'',ariaModal:modal?.getAttribute('aria-modal')||'',labelledBy:modal?.getAttribute('aria-labelledby')||'',activeInside:modal?.contains(document.activeElement)===true}; })()");
+  verdict(semantics.role === 'dialog' && semantics.ariaModal === 'true'
+    && semantics.labelledBy === 'settings-modal-title' && semantics.activeInside,
+  'A8.SETTINGS-MODAL-SEMANTICS',
+  'Settings identifies the active modal layer and moves focus inside it (' + JSON.stringify(semantics) + ')');
+
+  await p.ev("(() => { const nested=document.createElement('div'); nested.id='settings-nested-modal-plant'; nested.setAttribute('role','dialog'); nested.setAttribute('aria-modal','true'); document.body.appendChild(nested); const onNestedEscape=(event) => { if (event.key !== 'Escape') return; event.preventDefault(); event.stopImmediatePropagation(); nested.remove(); window.removeEventListener('keydown', onNestedEscape, true); }; window.addEventListener('keydown', onNestedEscape, true); })()");
+  const releaseNestedEscape = await p.key('Escape'); await releaseNestedEscape();
+  const stacked = await p.ev("({nested:!!document.querySelector('#settings-nested-modal-plant'),settings:!!document.querySelector('.settings-modal'),title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate')})");
+  verdict(!stacked.nested && stacked.settings && stacked.title && !stacked.startup,
+    'A8.SETTINGS-STACK-PRECEDENCE',
+    'the first Escape closes only the nested modal and leaves Settings over the expanded title (' + JSON.stringify(stacked) + ')');
+
+  const releaseSettingsEscape = await p.key('Escape'); await releaseSettingsEscape();
+  const closed = await p.ev("({settings:!!document.querySelector('.settings-modal'),title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),active:document.activeElement?.dataset?.titleAction||''})");
+  verdict(!closed.settings && closed.title && !closed.startup,
+    'A8.SETTINGS-ESCAPE-PRECEDENCE',
+    'the next Escape closes Settings without folding the title (' + JSON.stringify(closed) + ')');
+  verdict(closed.active === 'settings',
+    'A8.SETTINGS-FOCUS-RESTORE',
+    'Settings returns focus to its connected title-menu opener (' + JSON.stringify(closed) + ')');
+  await p.close();
+}
+
 async function assertLoadSlotSelection() {
   const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
     const rect = (selector) => {
@@ -822,6 +859,7 @@ async function main() {
   await assertInterruptedPresses();
   await assertReturnBypass();
   await assertContextualTitleBack();
+  await assertSettingsModalStack();
   await assertLoadSlotSelection();
   await assertCrisisPrecedence();
   await assertReducedMotion();

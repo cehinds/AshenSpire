@@ -679,6 +679,7 @@ The owner-command path accepts only enumerated actions from an authenticated act
 | revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
 | request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
 | authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
+| grant-dev-delivery-authority | owner | yes | yes | `target`, `expected_current_hash`, `reason` | grant an it-manager-iii-owned capsule normal-PR delivery authority to dev only; direct dev push, deploy, main/release, tags, publication, and Pages remain forbidden |
 | authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
 | record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
 
@@ -749,7 +750,7 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 
 - `enumerated_only` — A command whose action is not in this allowlist is rejected.
 - `authenticated_actor` — The command actor must map to a role in the action's authenticator_roles.
-- `owner_exclusive` — authorize-release and record-owner-override authenticate the owner role only.
+- `owner_exclusive` — grant-dev-delivery-authority, authorize-release, and record-owner-override authenticate the owner role only.
 - `compare_and_swap` — When requires_cas is true, expected_current_hash must equal the live sealed hash of the target; a mismatch is a stale command and fails safely.
 - `no_arbitrary_input` — The request schema forbids additional fields; there is no shell or free-form command field.
 - `dry_run_first` — The processor records a dry-run summary before any mutation; --apply performs the mutation only after the same validation passes.

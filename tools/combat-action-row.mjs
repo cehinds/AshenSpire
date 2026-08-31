@@ -2,10 +2,10 @@
 // tools/combat-action-row.mjs — #21's single-owner combat action-row gate.
 //
 // The real ?shot=combat door supplies the hand, settings, input wiring, and
-// rendered controls. This instrument measures the five action destinations as
-// one DOM/CSS grid: Energy, End Turn, Draw, Discard, and visible Exhaust. It
-// hit-tests 45 points per control, checks pairwise/card/pager separation, and
-// exercises rest, armed-card, and exhaust-visible states.
+// rendered controls. This instrument measures five persistent action
+// destinations in one DOM/CSS grid: edge-anchored Actions and Exhaust around a
+// tight Draw / End Turn / Discard centre cluster. It also proves the original
+// four-button Quick Access group remains visible.
 //
 // Usage:
 //   node tools/combat-action-row.mjs
@@ -17,7 +17,7 @@
 //
 // Exit 0 = every measured cell held; 1 = product finding; 2 = no cell/browser.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
@@ -42,8 +42,8 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the five controls lose their one semantic owner',
       file: 'src/ui/screens/combat.js',
-      find: '<div class="combat-action-row" role="group" aria-label="Combat actions">',
-      replace: '<div class="combat-action-split" role="group" aria-label="Combat actions">',
+      find: '<div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
+      replace: '<div class="combat-action-split" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -54,17 +54,17 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
     {
-      name: 'the narrow row stacks every trailing destination into End Turn',
+      name: 'the narrow row stacks its centre cluster into End Turn',
       file: 'styles/combat.css',
-      find: 'grid-template-areas: "energy end draw exhaust discard";',
-      replace: 'grid-template-areas: "energy end end end end";',
+      find: '    grid-template-areas: "energy . draw end discard . exhaust";',
+      replace: '    grid-template-areas: "energy . end end end . exhaust";',
       expectRed: /combat-action-row: RED/,
     },
     {
       name: 'pile targets shrink below the device tap floor',
       file: 'styles/combat.css',
-      find: 'width: 100%; height: max(4.2rem, var(--tap-floor)); font-size: 1.1rem;',
-      replace: 'width: 100%; height: 3.6rem; min-height: 0; font-size: 1.1rem;',
+      find: '    width: var(--action-pile-size); max-width: 100%; height: max(4.2rem, var(--tap-floor));',
+      replace: 'width: 2rem; max-width: 100%; height: 2rem; min-width: 0; min-height: 0;',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -72,6 +72,20 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       file: 'styles/combat.css',
       find: '.combat-action-row > * { pointer-events: auto; }',
       replace: '.combat-action-row > * { pointer-events: none; }',
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'Exhaust is hidden until it has content',
+      file: 'styles/combat.css',
+      find: '.combat-action-row > .pile.exhaust {\n  grid-area: exhaust; width: var(--action-edge-size);\n}',
+      replace: '.combat-action-row > .pile.exhaust {\n  grid-area: exhaust; width: var(--action-edge-size); display: none;\n}',
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'the centre cluster loses its equal close gap',
+      file: 'styles/combat.css',
+      find: '--action-cluster-gap: calc(4px / var(--ui-zoom, 1));',
+      replace: '--action-cluster-gap: 2rem;',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -89,7 +103,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       expectRed: /combat-action-row: RED/,
     },
   ];
-  const coopPlants = sourcePlants.splice(5);
+  const coopPlants = sourcePlants.splice(-2);
   let code = await doorSelftest({
     tool: 'combat-action-row.mjs',
     args: ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '8'],
@@ -192,7 +206,7 @@ function connectCdp(wsUrl) {
 }
 
 const STATES = ['rest', 'armed', 'exhaust'];
-const CONTROL_SELECTORS = ['.energy-orb', '.end-turn', '.pile.draw', '.pile.discard', '.pile.exhaust'];
+const CONTROL_SELECTORS = ['.energy-orb', '.pile.draw', '.end-turn', '.pile.discard', '.pile.exhaust'];
 
 async function main() {
   const served = standalone ? null : await serve({ root: ROOT, port: 8321, open: false });
@@ -212,6 +226,18 @@ async function main() {
     console.log(`    ${value ? 'PASS' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
     if (!value) failures++;
   };
+  if (!standalone) {
+    const combatSource = readFileSync(resolve(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+    const combatCss = readFileSync(resolve(ROOT, 'styles/combat.css'), 'utf8');
+    check(!combatSource.includes('mountArmamentRadial') && !combatSource.includes('armaments-command'),
+      'combat no longer mounts an Armaments rail control');
+    check(!combatCss.includes("data-armaments-presentation='radial'] .combat .hud-charge-flasks")
+      && !combatCss.includes("data-armaments-presentation='radial'] .combat .hud-potions"),
+    'Quick Access flasks are not hidden by the Armaments presentation setting');
+    check(combatSource.includes("const showDiscard = () => openPileModal(registries, 'Discard pile'")
+      && combatSource.includes("const showExhaust = () => openPileModal(registries, 'Exhausted pile'"),
+    'Discard and Exhausted own separate direct pile surfaces');
+  }
 
   try {
     const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -250,7 +276,6 @@ async function main() {
       await new Promise((pass) => setTimeout(pass, 140));
       return true;
     };
-
     const reading = () => evaluate(`(() => {
       const visible = (node) => {
         if (!node) return false;
@@ -271,7 +296,8 @@ async function main() {
           hits.push(!!(hit&&(hit===node||node.contains(hit))));
         }
         const centre=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);
-        return {selector,visible:true,...r,hitCount:hits.filter(Boolean).length,centreHit:!!(centre&&(centre===node||node.contains(centre))),centreNode:centre?(centre.tagName.toLowerCase()+'.'+(centre.className||'')):null,position:getComputedStyle(node).position,parent:node.parentElement?.className||''};
+        const style=getComputedStyle(node);
+        return {selector,visible:true,...r,hitCount:hits.filter(Boolean).length,centreHit:!!(centre&&(centre===node||node.contains(centre))),centreNode:centre?(centre.tagName.toLowerCase()+'.'+(centre.className||'')):null,position:style.position,boxSizing:style.boxSizing,cssWidth:style.width,transform:style.transform,parent:node.parentElement?.className||''};
       });
       const shown=controls.filter((control)=>control.visible);
       const pairs=[];
@@ -283,6 +309,12 @@ async function main() {
         ...pages.filter((item)=>intersects(control,item)).map(()=>[control.selector,'pager']),
       ]);
       const grid=owner?getComputedStyle(owner):null;
+      const bySelector=Object.fromEntries(controls.filter((control)=>control.visible).map((control)=>[control.selector,control]));
+      const energy=bySelector['.energy-orb'], draw=bySelector['.pile.draw'], end=bySelector['.end-turn'];
+      const discard=bySelector['.pile.discard'], exhaust=bySelector['.pile.exhaust'];
+      const leftGap=draw&&end?end.left-draw.right:null;
+      const rightGap=end&&discard?discard.left-end.right:null;
+      const quickAccess=[document.querySelector('#combat-armoury'),document.querySelector('#combat-menu'),...document.querySelectorAll('.hud-charge-flasks .flask-slot')];
       return {
         layout:document.documentElement.dataset.layout||null,
         composition:document.documentElement.dataset.composition||null,
@@ -292,8 +324,41 @@ async function main() {
         controls,pairs,foreign,
         onGlass:shown.every((r)=>r.left>=-0.25&&r.top>=-0.25&&r.right<=innerWidth+0.25&&r.bottom<=innerHeight+0.25),
         minTap:shown.length?Math.min(...shown.map((r)=>Math.min(r.width,r.height))):0,
+        arrangement:{
+          persistent:selectors.every((selector)=>bySelector[selector]),
+          ordered:!!(energy&&draw&&end&&discard&&exhaust&&energy.left<draw.left&&draw.left<end.left&&end.left<discard.left&&discard.left<exhaust.left),
+          edgeAnchored:!!(owner&&energy&&exhaust&&Math.abs(energy.left-rect(owner).left)<=0.5&&Math.abs(exhaust.right-rect(owner).right)<=0.5),
+          centreDelta:end?Math.abs(((end.left+end.right)/2)-(innerWidth/2)):null,
+          leftGap,rightGap,
+          symmetric:leftGap!=null&&rightGap!=null&&Math.abs(leftGap-rightGap)<=0.5,
+          tight:leftGap!=null&&rightGap!=null&&leftGap>=-0.25&&rightGap>=-0.25&&leftGap<=8&&rightGap<=8,
+          endDominant:!!(draw&&end&&discard&&end.width>draw.width&&end.width>discard.width),
+        },
+        quickAccess:{
+          count:quickAccess.filter(visible).length,
+          allVisible:quickAccess.length===4&&quickAccess.every(visible),
+          armamentsAbsent:!document.querySelector('.armaments-command, .armament-radial'),
+        },
       };
     })()`);
+    const settledReading = async (label) => {
+      const deadline = Date.now() + 3000;
+      let previous = await reading();
+      let steady = 0;
+      while (Date.now() < deadline) {
+        await new Promise((pass) => setTimeout(pass, 100));
+        const next = await reading();
+        const before = Object.fromEntries(previous.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
+        const moved = next.controls.filter((c)=>c.visible).some((c)=>{
+          const was = before[c.selector];
+          return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.25;
+        });
+        steady = moved ? 0 : steady + 1;
+        previous = next;
+        if (steady >= 2) return next;
+      }
+      throw new Error(`timed out waiting for stable ${label} geometry`);
+    };
 
     for (const shape of shapes) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -310,9 +375,7 @@ async function main() {
           await cdp.send('Page.navigate', { url }, sessionId);
           await waitFor(`document.querySelectorAll('.combat .hand .card').length===${hand}`, `${hand}-card combat`);
           await new Promise((pass) => setTimeout(pass, 240));
-
-          const beforeExhaust = await reading();
-          const stable = Object.fromEntries(beforeExhaust.controls.filter((c)=>c.visible&&c.selector!=='.pile.exhaust').map((c)=>[c.selector,c]));
+          let exhaustBaseline = null;
 
           for (const state of STATES) {
             if (state === 'armed') {
@@ -337,22 +400,34 @@ async function main() {
               await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Escape', code: 'Escape' }, sessionId);
               await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' }, sessionId);
               await new Promise((pass) => setTimeout(pass, 80));
+              // Keyboard arming may scroll its focused card. Compare the two
+              // renders from one viewport origin so scroll anchoring cannot
+              // masquerade as all five persistent cells moving together.
+              await evaluate(`document.activeElement?.blur(); scrollTo(0,0); true`);
+              const beforeExhaust = await settledReading('pre-Exhaust action-row');
+              exhaustBaseline = beforeExhaust;
               await evaluate(`(() => {
-                const pile=document.querySelector('.pile.exhaust');
-                pile.style.display=''; pile.querySelector('.n').textContent='1';
+                const combat=window.__combat;
+                const source=combat?.piles?.discard?.[0] || combat?.piles?.draw?.[0] || combat?.piles?.hand?.[0];
+                if (!combat || !source || typeof window.__renderCombatForShot!=='function') return false;
+                if (!combat.piles.exhaust.length) combat.piles.exhaust.push({...source,instanceId:'action-row-probe-exhaust'});
+                window.__renderCombatForShot();
                 document.documentElement.dataset.actionRowProbe='exhaust';
+                scrollTo(0,0);
                 return true;
               })()`);
             } else {
               await evaluate(`document.documentElement.dataset.actionRowProbe=${JSON.stringify(state)}; true`);
             }
             await new Promise((pass) => setTimeout(pass, 120));
-            const now = await reading();
+            const now = await settledReading(`${state} action-row`);
             soloRan++;
             const tag = `${shape.width}x${shape.height} Text ${text}, hand ${hand}, ${state}, ${standalone ? 'root' : 'source'}`;
             console.log(`\n  ${tag}`);
             check(now.owner.exists && now.owner.display === 'grid' && now.owned,
-              'one semantic grid owns Energy, End Turn, Draw, Discard, and Exhaust', JSON.stringify(now.owner));
+              'one semantic grid owns Actions, Draw, End Turn, Discard, and Exhaust', JSON.stringify(now.owner));
+            check((now.owner.columns?.match(/px/g)||[]).length===7,
+              'the action rail resolves to seven bounded layout tracks', JSON.stringify(now.owner));
             check(now.pairs.length === 0, 'action controls have zero pairwise hit-box intersections', JSON.stringify(now.pairs));
             check(now.foreign.length === 0, 'action controls intersect no card or pager', JSON.stringify(now.foreign));
             check(now.onGlass && now.minTap >= 43.99,
@@ -361,13 +436,52 @@ async function main() {
               'every visible action control is 45/45 and center-hittable', JSON.stringify(now.controls));
             check(now.controls.filter((control)=>control.visible).every((control)=>control.position!=='absolute'),
               'grid children do not escape through absolute positioning', JSON.stringify(now.controls.map((c)=>[c.selector,c.position])));
+            check(now.arrangement.persistent && now.arrangement.ordered,
+              'Actions, Draw, End Turn, Discard, and Exhaust remain persistently ordered', JSON.stringify(now.arrangement));
+            check(now.arrangement.edgeAnchored && now.arrangement.centreDelta<=1,
+              'Actions and Exhaust own opposite edges while End Turn stays centred', JSON.stringify(now.arrangement));
+            check(now.arrangement.symmetric && now.arrangement.tight && now.arrangement.endDominant,
+              'Draw and Discard keep equal close gaps around the larger End Turn control', JSON.stringify(now.arrangement));
+            check(now.quickAccess.allVisible && now.quickAccess.armamentsAbsent,
+              'the original four-button Quick Access panel remains visible with no Armaments rail control', JSON.stringify(now.quickAccess));
 
             if (state === 'exhaust') {
-              const moved = now.controls.filter((c)=>c.visible&&c.selector!=='.pile.exhaust').filter((c)=>{
-                const was=stable[c.selector];
-                return !was || Math.max(Math.abs(c.left-was.left),Math.abs(c.top-was.top),Math.abs(c.width-was.width),Math.abs(c.height-was.height))>0.5;
+              const baselineControls = Object.fromEntries(exhaustBaseline.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
+              const moved = now.controls.filter((c)=>c.visible).filter((c)=>{
+                const was=baselineControls[c.selector];
+                return !was || Math.max(
+                  Math.abs(c.left-was.left), Math.abs(c.top-was.top),
+                  Math.abs(c.width-was.width), Math.abs(c.height-was.height),
+                )>0.5;
               }).map((c)=>c.selector);
-              check(moved.length===0, 'showing Exhaust preserves every standing action cell', JSON.stringify(moved));
+              check(moved.length===0, 'changing the Exhausted count preserves every standing action cell', JSON.stringify(moved));
+              const exhaustControl=now.controls.find((control)=>control.selector==='.pile.exhaust');
+              check(exhaustControl?.visible, 'Exhausted remains visible when the pile is empty or populated', JSON.stringify(exhaustControl));
+              const opened=await click('.pile.exhaust');
+              const exhaustModal=await evaluate(`(() => ({
+                title:document.querySelector('.modal-veil .modal h2')?.textContent||'',
+                modalCount:document.querySelectorAll('.modal-veil .modal').length,
+              }))()`);
+              check(opened && exhaustModal.modalCount===1 && /^Exhausted pile \(1\)$/.test(exhaustModal.title),
+                'Exhausted opens its own pile surface directly', JSON.stringify(exhaustModal));
+              await evaluate(`document.querySelector('.modal-veil')?.click(); true`);
+              await new Promise((pass) => setTimeout(pass, 80));
+              const exhaustClosed = await evaluate(`!document.querySelector('.modal-veil')`);
+              check(exhaustClosed, 'the Exhausted pile surface closes from its scrim');
+
+              const discardOpened = await click('.pile.discard');
+              const discardModal = await evaluate(`(() => ({
+                title:document.querySelector('.modal-veil .modal h2')?.textContent||'',
+                modalCount:document.querySelectorAll('.modal-veil .modal').length,
+                chooserAbsent:!document.querySelector('.pile-surface-picker'),
+              }))()`);
+              check(discardOpened && discardModal.modalCount===1 && discardModal.chooserAbsent
+                && /^Discard pile \(\d+\)$/.test(discardModal.title),
+              'Discard opens its own pile surface directly', JSON.stringify(discardModal));
+              await evaluate(`document.querySelector('.modal-veil')?.click(); true`);
+              await new Promise((pass) => setTimeout(pass, 80));
+              const discardClosed = await evaluate(`!document.querySelector('.modal-veil')`);
+              check(discardClosed, 'the Discard pile surface closes from its scrim');
             }
 
             const capture = shots && (only || ((shape.width===390&&shape.height===844&&text==='XL'&&hand===8&&state==='rest')
@@ -433,8 +547,8 @@ async function main() {
           check(coop.direct && coop.ownerAbsent, 'co-op controls remain direct children outside the solo owner', JSON.stringify({direct:coop.direct,ownerAbsent:coop.ownerAbsent}));
           check(coop.fullHand, 'co-op hand keeps the full available row width', JSON.stringify({area:coop.area.width,hand:coop.hand.width}));
           check(coop.pairClear && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairClear:coop.pairClear,cardsClear:coop.cardsClear}));
-          check(coop.onGlass && coop.hitCounts[0]>=37 && coop.hitCounts[1]===45,
-            'co-op Energy keeps its circular hit area and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,hits:coop.hitCounts}));
+          check(coop.onGlass && Math.min(coop.energy.width,coop.energy.height)>=43.99 && coop.hitCounts[1]===45,
+            'co-op Energy keeps visible 44px geometry and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,energy:coop.energy,hits:coop.hitCounts}));
           check(narrow
             ? coop.areas.includes('"hand hand"') && coop.areas.includes('"orb end"') && coop.energyPosition==='static' && coop.endPosition==='static' && coop.energyArea==='orb' && coop.endArea==='end'
             : coop.energyPosition==='absolute' && coop.endPosition==='absolute',

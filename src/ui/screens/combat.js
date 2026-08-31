@@ -100,29 +100,19 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           <button class="hand-page hand-next" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
         </div>
-        <!-- One grid owns every persistent combat action destination. Keeping
-             the optional Exhaust cell in that same grid means revealing it
-             cannot shift, cover, or steal a standing control's hit box. -->
+        <!-- One grid owns every persistent combat action destination. Actions
+             and Exhaust pin the two safe-area edges while Draw, End Turn and
+             Discard form one tight, symmetric centre cluster. Exhaust stays
+             present at zero so no control appears late or shifts the row. -->
         <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          <div class="energy-orb"></div>
-          <button class="end-turn">END TURN</button>
-          <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
-          <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
-          <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
-          <!-- THE HINT STRIP IS A SIXTH DESTINATION IN THIS GRID, AND IT IS HERE
-               FOR THE REASON THE COMMENT ABOVE ALREADY GIVES. The chips became
-               real buttons (components/hints.js, Sten 15d4bca), so "every
-               persistent combat action destination" now includes them — and the
-               grid's guarantee that revealing a cell "cannot shift, cover, or
-               steal a standing control's hit box" is exactly the guarantee the
-               strip was missing. It sat outside as a centred sibling row, so at
-               Text XL and under a wide rebind it grew into END TURN: #295,
-               3368.8 px2 / 2700.3 px2, regression from f2acfc9 (#21). The empty
-               gutter column this grid already declared was the space meant for it.
-               Grid areas cannot overlap, so the clearance is now structural and
-               stops being a number anybody re-tunes when a label changes. -->
-          ${hintBarHtml('combat')}
+          <div class="energy-orb" role="status" aria-label="Actions remaining"></div>
+          <button class="pile draw" type="button"><span class="n"></span><small>DRAW</small></button>
+          <button class="end-turn" type="button">END TURN</button>
+          <button class="pile discard" type="button"><span class="n"></span><small>DISCARD</small></button>
+          <button class="pile exhaust" type="button"><span class="n"></span><small>EXHAUSTED</small></button>
         </div>
+        <!-- Context hints remain a separate auxiliary strip. -->
+        ${hintBarHtml('combat')}
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
@@ -894,6 +884,20 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       trailing,
     });
     // When a self/buff card is armed, the player is a confirmable target.
+    // Publish that temporary target through the same unified focus door as an
+    // enemy target. Without this, armSelf() asks focusFirst() for the player,
+    // focusFirst() correctly refuses the non-focusable frame, and the cursor
+    // remains on the card: a second controller Confirm then toggles the card
+    // off instead of committing it.
+    if (selfArm) {
+      const armedInst = findInst(selfArm);
+      const armedDef = armedInst ? resolveCard(registries, armedInst) : null;
+      const playerName = combatantSubject('player', p).name;
+      box.dataset.focusable = '';
+      box.tabIndex = -1;
+      box.setAttribute('role', 'button');
+      box.setAttribute('aria-label', `Confirm ${armedDef?.name || 'selected card'} on ${playerName}`);
+    }
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
@@ -1063,7 +1067,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function renderControls() {
-    $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    const energy = $('.energy-orb');
+    energy.textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    energy.setAttribute('aria-label', `Actions ${combat.player.energy} of ${combat.player.energyMax}`);
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
@@ -1076,9 +1082,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .n').textContent = combat.piles.draw.length;
     $('.pile.discard .n').textContent = combat.piles.discard.length;
-    const ex = $('.pile.exhaust');
-    ex.style.display = combat.piles.exhaust.length ? '' : 'none';
-    ex.querySelector('.n').textContent = combat.piles.exhaust.length;
+    $('.pile.exhaust .n').textContent = combat.piles.exhaust.length;
+    $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
+    $('.pile.discard').setAttribute('aria-label', `Discard pile, ${combat.piles.discard.length}`);
+    $('.pile.exhaust').setAttribute('aria-label', `Exhausted pile, ${combat.piles.exhaust.length}`);
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -1364,7 +1371,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
 
-    // Flask keys activate the numbered visible HUD control; they never auto-use.
+    // Flask keys activate the corresponding visible Quick Access control; they
+    // never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
@@ -1607,9 +1615,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
   const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  const showExhaust = () => openPileModal(registries, 'Exhausted pile', combat.piles.exhaust);
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
-  $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+  $('.pile.exhaust').addEventListener('click', showExhaust);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
