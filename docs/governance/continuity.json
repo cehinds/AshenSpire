@@ -1,7 +1,7 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-31T14:34:45Z",
+  "updatedAt": "2026-08-31T15:28:38Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
@@ -87,13 +87,6 @@
   "generatedArtifacts": {
     "status": "candidate-frozen",
     "owner": "Data Architecture & Systems Lead, single local writer",
-    "artifact": {
-      "path": "build/AshenSpire.html",
-      "bytes": 4241834,
-      "sha256": "029154D57C50B172538914081077FABB128D8B10AE55495DE280117342163A8C",
-      "buildOrdinal": 1719,
-      "sourceDigest": "8f546f2e1d"
-    },
     "command": "node tools/launch.mjs --build-only",
     "order": [
       "buildordinal.json",
