@@ -13,6 +13,7 @@ export const act2Enemies = [
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
+    levelProfile: { min: 6, max: 9 },
     tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '♞',
     moves: {
@@ -31,6 +32,7 @@ export const act2Enemies = [
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
+    levelProfile: { min: 6, max: 9 },
     tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚕',
     moves: {
@@ -55,6 +57,7 @@ export const act2Enemies = [
     name: 'Stitched Hound',
     hp: [24, 28],
     poiseMax: 8,
+    levelProfile: { min: 6, max: 8 },
     tags: ['undead', 'beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐩',
     moves: {
@@ -73,6 +76,7 @@ export const act2Enemies = [
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
+    levelProfile: { min: 6, max: 9 },
     tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪆',
     moves: {
@@ -90,6 +94,7 @@ export const act2Enemies = [
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
+    levelProfile: { min: 7, max: 10 },
     tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
@@ -118,6 +123,7 @@ export const act2Enemies = [
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
+    levelProfile: { min: 10, max: 11 },
     tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🤺',
     firstMove: 'enGarde',
@@ -140,6 +146,7 @@ export const act2Enemies = [
     name: 'The Stitched King',
     hp: [195, 195],
     poiseMax: 34,
+    levelProfile: { min: 11, max: 12 },
     tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👑',
     firstMove: 'courtlyDecree',
