@@ -1,0 +1,33 @@
+{
+  "event_id": "evt-00000002-98a008aa-605e-4da0-ad16-16b1cad5d8a8",
+  "idempotency_key": "CLAIM_ACQUIRED:467:1:2026-08-31T14:02:54.353Z",
+  "sequence": 2,
+  "previous_snapshot_hash": "9d97746d1edb3c57d4ffec9a72daca48402b553c547a5983736b7bc7746df3c9",
+  "issue_id": "467",
+  "actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:467:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-467-authority-grant",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T15:00:00Z",
+    "claimed_paths": [
+      ".agentops/governance/owner-command.json",
+      ".agentops/tools/opsctl.mjs",
+      ".agentops/tools/opsctl.test.mjs",
+      ".github/ISSUE_TEMPLATE/owner-decision.yml",
+      ".github/workflows/validate-owner-command-issue.test.mjs",
+      ".agentops/generated",
+      "hud",
+      "review-approval-hub"
+    ],
+    "claimed_resources": [
+      "owner-command-authority"
+    ],
+    "next_action": "Complete exact-head verification and delivery"
+  },
+  "created_at": "2026-08-31T14:02:54.353Z"
+}

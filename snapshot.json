@@ -1,27 +1,35 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 1,
-  "last_sequence": 1,
+  "revision": 2,
+  "last_sequence": 2,
   "work_items": {
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 1,
+      "revision": 2,
       "issue_id": "467",
       "title": "Bounded owner grant for dev delivery authority",
       "priority": "P0",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": null,
+      "state": "CLAIMED",
+      "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-467-authority-grant",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": null,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:467:1",
+      "lease_epoch": 1,
+      "lease_expiry": "2026-08-31T15:00:00Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": null,
-      "lease_history": [],
+      "lease_history": [
+        {
+          "actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "lease:467:1",
+          "lease_epoch": 1,
+          "assignment_kind": "implementation"
+        }
+      ],
       "late_candidates": [],
       "claimed_paths": [
         ".agentops/governance/owner-command.json",
@@ -47,12 +55,12 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Finish exact-head verification and delivery",
+      "next_action": "Complete exact-head verification and delivery",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000001-f615cde9-7209-461f-ba45-ef638f416ce6",
-      "updated_at": "2026-08-31T14:02:53.592Z"
+      "updated_event": "evt-00000002-98a008aa-605e-4da0-ad16-16b1cad5d8a8",
+      "updated_at": "2026-08-31T14:02:54.353Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "9d97746d1edb3c57d4ffec9a72daca48402b553c547a5983736b7bc7746df3c9"
+  "snapshot_hash": "94a4354c5a0a6fae4ce1145424ac4c68db3fef099c287e91894b49df6c86f7f7"
 }
