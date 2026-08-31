@@ -220,6 +220,9 @@ function check(name, cond, detail = '') {
     const applied = runCommand(box, req, { dryRun: false });
     check('apply accepts a declared, permitted transition', applied.ok, (applied.errors || []).join(' | '));
     check('apply reports what it wrote', !!applied.written && applied.written.length === 2, JSON.stringify(applied.written));
+    const appliedEventPath = applied.written?.find((written) => written.startsWith('events/'));
+    const appliedEvent = appliedEventPath ? strictParse(readFileSync(resolve(box, appliedEventPath), 'utf8')) : null;
+    check('applied decision records the authenticated owner-command authority path', appliedEvent?.decision?.authority_path === '.github/workflows/owner-command.yml:owner-command/v1');
 
     const after = readCap();
     check('apply advanced the lifecycle state', after.lifecycle_state === 'dev-integrated', after.lifecycle_state);

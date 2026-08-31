@@ -78,6 +78,16 @@ function validInstant(value, label) {
   if (Number.isNaN(Date.parse(value))) throw new Error(`${label} must be an ISO instant`);
 }
 
+export function canonicalIssueIdentity(value) {
+  if (!['string', 'number'].includes(typeof value)) throw new Error('issue identity must be a non-empty string or number');
+  requiredString(String(value), 'issue identity');
+  const identity = String(value).trim();
+  const url = /^https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/(0*[1-9][0-9]*)(?:[/?#].*)?$/i.exec(identity);
+  const numeric = /^#?(0*[1-9][0-9]*)$/.exec(identity);
+  if (url || numeric) return `#${(url ?? numeric)[1].replace(/^0+/, '')}`;
+  return identity;
+}
+
 export function validateMachineIdentity(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('machine identity must be an object');
   if (value.schema !== 'agentops/scheduler-machine/v1') throw new Error('machine identity schema must be agentops/scheduler-machine/v1');
@@ -136,6 +146,7 @@ export function validateEvent(event) {
   if (!event.exact_object || typeof event.exact_object !== 'object' || Array.isArray(event.exact_object)) throw new Error('exact_object must be an object');
   if (!event.payload || typeof event.payload !== 'object' || Array.isArray(event.payload)) throw new Error('payload must be an object');
   if (event.event_type === 'INTAKE_RECORDED') requiredString(event.payload.title, 'intake title');
+  if (canonicalIssueIdentity(event.issue_id) !== event.issue_id) throw new Error('issue_id must use its canonical GitHub issue identity');
   if (Number.isNaN(Date.parse(event.created_at))) throw new Error('created_at must be an ISO instant');
   assertPortable(event);
   return true;
@@ -162,11 +173,12 @@ export function sealAdmissionEvidence(body) {
 
 function validateAdmissionEvidence(evidence, issueId, instant) {
   if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence) || evidence.schema !== 'agentops/scheduler-admission/v1') throw new Error('claim requires sealed repository admission evidence');
-  for (const field of ['canonical_issue_id', 'board_sync_status', 'project_priority', 'project_owner_role', 'project_status', 'observed_at', 'fresh_until', 'reconciliation_hash']) requiredString(evidence[field], `admission ${field}`);
-  if (evidence.canonical_issue_id !== String(issueId)) throw new Error('admission evidence names a different canonical issue');
+  for (const field of ['canonical_issue_id', 'board_sync_status', 'project_priority', 'project_owner_role', 'project_status', 'project_authenticated_login', 'project_fetch_receipt_hash', 'project_response_sha256', 'observed_at', 'fresh_until', 'reconciliation_hash']) requiredString(evidence[field], `admission ${field}`);
+  if (canonicalIssueIdentity(evidence.canonical_issue_id) !== canonicalIssueIdentity(issueId)) throw new Error('admission evidence names a different canonical issue');
   if (evidence.board_sync_status !== 'OK') throw new Error('BOARD_SYNC_FAILED');
   if (evidence.project_status !== 'READY') throw new Error(`project status ${evidence.project_status} is not runnable`);
   if (!/^P[0-9]+$/i.test(evidence.project_priority)) throw new Error('admission evidence requires Project priority');
+  if (!/^[0-9a-f]{64}$/.test(evidence.project_fetch_receipt_hash) || !/^[0-9a-f]{64}$/.test(evidence.project_response_sha256)) throw new Error('admission evidence requires an authenticated GitHub Project fetch receipt');
   if (evidence.scope_complete !== true || evidence.dependencies_ready !== true || evidence.human_gate_clear !== true || evidence.external_claim_clear !== true) throw new Error('admission evidence does not prove a complete runnable scope');
   if (!Array.isArray(evidence.conflict_identities) || evidence.conflict_identities.length !== 0) throw new Error('admission evidence contains unresolved repository conflicts');
   validInstant(evidence.observed_at, 'admission observed_at'); validInstant(evidence.fresh_until, 'admission fresh_until');
@@ -182,9 +194,9 @@ function baseItem(event) {
   validateAdmissionEvidence(p.project_evidence, event.issue_id, event.created_at);
   return {
     schema: 'agentops/scheduler-work-item/v1', revision: 1,
-    issue_id: event.issue_id, canonical_issue_id: p.project_evidence.canonical_issue_id, title: p.title, priority: p.priority ?? 'P2', project_owner_role: p.project_evidence.project_owner_role,
+    issue_id: event.issue_id, canonical_issue_id: canonicalIssueIdentity(p.project_evidence.canonical_issue_id), title: p.title, priority: p.priority ?? 'P2', project_owner_role: p.project_evidence.project_owner_role,
     project_evidence: structuredClone(p.project_evidence),
-    dependencies: p.dependencies ?? [], state: 'READY', base_commit: null,
+    dependencies: (p.dependencies ?? []).map(canonicalIssueIdentity), state: 'READY', base_commit: null,
     candidate_commit: null, branch: p.branch ?? null, assigned_actor: null,
     assignment_kind: null, lease_id: null, lease_epoch: null, lease_expiry: null, lease_machine_id: null,
     maker_actor: null, lease_history: [], late_candidates: [],
@@ -450,9 +462,9 @@ function holdsExclusiveClaim(item) {
 }
 
 export function resolveCanonicalIssue(snapshot, issueId) {
-  const identity = String(issueId);
+  const identity = canonicalIssueIdentity(issueId);
   const item = Object.values(snapshot.work_items).find((candidate) => candidate.issue_id === identity || candidate.canonical_issue_id === identity) ?? null;
-  return item ? { duplicate: true, canonical_issue_id: item.issue_id, updated_event: item.updated_event } : { duplicate: false, canonical_issue_id: String(issueId) };
+  return item ? { duplicate: true, canonical_issue_id: item.issue_id, updated_event: item.updated_event } : { duplicate: false, canonical_issue_id: identity };
 }
 
 function admissionBlocked(blocker, conflictIdentity, wakeEvidence) {
@@ -469,15 +481,19 @@ function governanceMatches(pathClaim, governance) {
 
 export function assessAssignmentAdmission(item, snapshot, config, now, reconciliation) {
   const sync = reconciliation?.project_sync;
-  if (!sync || sync.status !== 'OK') return admissionBlocked('BOARD_SYNC_FAILED', sync?.source_id ?? 'github-project', 'record a fresh successful Project priority and ownership observation');
+  if (!sync || sync.status !== 'OK') return admissionBlocked('BOARD_SYNC_FAILED', sync?.error ?? sync?.source_id ?? 'github-project', sync?.wake_condition ?? 'record a fresh successful Project priority and ownership observation');
   if (Number.isNaN(Date.parse(sync.observed_at)) || Date.parse(now) - Date.parse(sync.observed_at) >= (config.project_evidence_max_age_seconds ?? 30) * 1000 || Date.parse(sync.observed_at) > Date.parse(now)) return admissionBlocked('BOARD_EVIDENCE_STALE', sync.source_id ?? 'github-project', 'refresh Project priority and ownership evidence');
-  const project = sync.issues?.[item.canonical_issue_id ?? item.issue_id];
+  if (!validateProjectFetchReceipt(sync, config, now)) return admissionBlocked('BOARD_SYNC_FAILED', sync.source_id ?? 'github-project', 'authenticate a fresh GitHub Project fetch with read:project; local JSON assertions are not admission evidence');
+  const canonicalIssue = canonicalIssueIdentity(item.canonical_issue_id ?? item.issue_id);
+  const projectMatches = Object.entries(sync.issues ?? {}).filter(([key, value]) => canonicalIssueIdentity(value?.canonical_issue_id ?? key) === canonicalIssue);
+  if (projectMatches.length > 1) return admissionBlocked('DUPLICATE_CANONICAL_PROJECT_IDENTITY', projectMatches.map(([key]) => key).join(','), 'remove every Project alias except the single canonical GitHub issue item');
+  const project = projectMatches[0]?.[1];
   if (!project) return admissionBlocked('PROJECT_ITEM_MISSING', item.canonical_issue_id ?? item.issue_id, 'add or restore the canonical issue Project item with priority and owner');
-  if (String(project.canonical_issue_id) !== String(item.canonical_issue_id ?? item.issue_id)) return admissionBlocked('CANONICAL_ISSUE_CONTRADICTION', project.canonical_issue_id, 'reconcile aliases to one canonical GitHub issue identity');
+  if (canonicalIssueIdentity(project.canonical_issue_id) !== canonicalIssue) return admissionBlocked('CANONICAL_ISSUE_CONTRADICTION', project.canonical_issue_id, 'reconcile aliases to one canonical GitHub issue identity');
   if (!/^P[0-9]+$/i.test(project.priority ?? '') || !project.owner_role) return admissionBlocked('PROJECT_PRIORITY_OR_OWNER_MISSING', sync.source_id, 'record both Project priority and accountable owner role');
   if (project.priority !== item.priority || project.owner_role !== item.project_owner_role) return admissionBlocked('PROJECT_EVIDENCE_DRIFT', sync.source_id, 'append a material intake update that matches current Project priority and ownership');
+  if (String(project.issue_state ?? '').toUpperCase() === 'CLOSED') return admissionBlocked('ISSUE_CLOSED_TERMINAL', project.issue_resolution ?? 'CLOSED', 'closed GitHub issues are terminal; do not requeue or assign them');
   if (project.status !== 'READY') return admissionBlocked(`PROJECT_STATUS_${String(project.status ?? 'UNKNOWN').toUpperCase()}`, project.status ?? 'UNKNOWN', project.wake_condition ?? 'Project status must be READY after an explicit reprioritization');
-  if (project.issue_state === 'CLOSED' && project.issue_resolution !== 'COMPLETED') return admissionBlocked('ISSUE_CLOSED_NOT_COMPLETED', project.issue_resolution ?? 'UNKNOWN', 'reopen the issue or record an explicit completed/superseded disposition');
   if (project.human_gate && project.human_gate.status !== 'RESOLVED') return admissionBlocked('HUMAN_DECISION_REQUIRED', project.human_gate.decision_id ?? 'owner-decision', project.human_gate.wake_condition ?? 'record the exact owner or human product decision');
   const dependencies = Array.isArray(project.dependencies) ? project.dependencies : [];
   const dependencyBlock = dependencies.find((dependency) => dependency.status !== 'CLOSED_COMPLETED');
@@ -486,6 +502,7 @@ export function assessAssignmentAdmission(item, snapshot, config, now, reconcili
   const claimActors = [...new Set(claims.filter((claim) => !terminalExternalClaim(claim)).map((claim) => claim.actor).filter(Boolean))];
   const assignees = Array.isArray(project.assignees) ? project.assignees : [];
   if (claimActors.length > 1 || claimActors.some((actor) => assignees.length > 0 && !assignees.includes(actor)) || (item.assigned_actor && assignees.length > 0 && !assignees.includes(item.assigned_actor))) return admissionBlocked('CONTRADICTORY_ASSIGNMENT_STATE', [...new Set([...claimActors, ...assignees, item.assigned_actor].filter(Boolean))].join(','), 'reconcile GitHub assignee, external claim, and scheduler capsule to one current actor');
+  if (assignees.length > 0) return admissionBlocked('ASSIGNEE_CUSTODY_UNMAPPED', [...new Set(assignees)].join(','), 'an assignee is existing custody; remove it only after an exact compatible RELEASED or SUPERSEDED claim or scheduler mapping is recorded');
   const unterminated = claims.find((claim) => !terminalExternalClaim(claim));
   if (unterminated) return admissionBlocked(unterminated.status === 'EXPIRED' ? 'EXPIRED_EXTERNAL_CLAIM_UNSUPERSEDED' : 'EXTERNAL_CLAIM_ACTIVE', unterminated.claim_id, 'record an explicit RELEASED or SUPERSEDED event for the external claim');
   if (project.scope_complete !== true) return admissionBlocked('INCOMPLETE_AFFECTED_SCOPE', item.issue_id, 'record the complete affected path and resource set before assignment');
@@ -493,7 +510,7 @@ export function assessAssignmentAdmission(item, snapshot, config, now, reconcili
   const projectResources = [...new Set(project.claimed_resources ?? [])];
   if (projectPaths.length + projectResources.length === 0 || stableStringify(projectPaths) !== stableStringify(canonicalClaimPaths(item.claimed_paths ?? [])) || stableStringify(projectResources) !== stableStringify([...new Set(item.claimed_resources ?? [])])) return admissionBlocked('AFFECTED_SCOPE_CONTRADICTION', item.issue_id, 'make the canonical intake and fresh Project scope evidence name the same complete paths and resources');
   if (config.simulation_mode === true) {
-    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: item.canonical_issue_id ?? item.issue_id, board_sync_status: 'OK', project_priority: project.priority, project_owner_role: project.owner_role, project_status: project.status, scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: sync.observed_at, fresh_until: new Date(Date.parse(sync.observed_at) + (config.project_evidence_max_age_seconds ?? 30) * 1000).toISOString() };
+    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: item.canonical_issue_id ?? item.issue_id, board_sync_status: 'OK', project_priority: project.priority, project_owner_role: project.owner_role, project_status: project.status, project_authenticated_login: sync.fetch_receipt.authenticated_login ?? 'simulation', project_fetch_receipt_hash: sync.fetch_receipt.receipt_hash, project_response_sha256: sync.fetch_receipt.response_sha256, scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: sync.observed_at, fresh_until: new Date(Date.parse(sync.observed_at) + (config.project_evidence_max_age_seconds ?? 30) * 1000).toISOString() };
     return { eligible: true, evidence: { ...body, reconciliation_hash: sha256(body) } };
   }
   for (const claimedPath of item.claimed_paths ?? []) {
@@ -511,12 +528,22 @@ export function assessAssignmentAdmission(item, snapshot, config, now, reconcili
   }
   for (const worktree of reconciliation.worktrees ?? []) {
     if (worktree.custody !== 'MAPPED') return admissionBlocked('WORKTREE_CUSTODY_UNKNOWN', worktree.identity ?? worktree.head ?? 'unmapped-worktree', 'map the live worktree to an exact issue/lease and claimed scope, or remove it through separately authorized cleanup');
+    const mappedPaths = Array.isArray(worktree.claimed_paths) ? worktree.claimed_paths : [];
+    const mappedResources = Array.isArray(worktree.claimed_resources) ? worktree.claimed_resources : [];
+    if (!worktree.issue_id || !worktree.claim_id || worktree.scope_complete !== true || mappedPaths.length + mappedResources.length === 0) return admissionBlocked('WORKTREE_MAPPING_INVALID', worktree.identity ?? worktree.head ?? 'mapped-worktree', 'record nonempty issue_id, claim_id, scope_complete, and the complete claimed paths/resources for the live worktree');
+    if (worktree.claim_verified !== true) return admissionBlocked('WORKTREE_MAPPING_UNVERIFIED', worktree.identity ?? worktree.claim_id, 'bind the mapping to an exact live AgentOps lease or authenticated Project claim; a local self-declaration is not custody evidence');
     const worktreeClaim = { branch: worktree.branch, claimed_paths: worktree.claimed_paths ?? [], claimed_resources: worktree.claimed_resources ?? [] };
-    if (worktree.issue_id !== item.issue_id && claimsConflict(proposed, worktreeClaim)) return admissionBlocked('WORKTREE_SCOPE_CONFLICT', worktree.identity ?? worktree.issue_id, 'release or supersede the conflicting worktree custody before assignment');
+    const sameIssue = canonicalIssueIdentity(worktree.issue_id) === canonicalIssue;
+    const exactCandidateClaim = worktree.branch === item.branch
+      && stableStringify(canonicalClaimPaths(mappedPaths)) === stableStringify(canonicalClaimPaths(item.claimed_paths ?? []))
+      && stableStringify([...new Set(mappedResources)]) === stableStringify([...new Set(item.claimed_resources ?? [])]);
+    if (sameIssue && !exactCandidateClaim) return admissionBlocked('WORKTREE_CLAIM_MISMATCH', worktree.identity ?? worktree.issue_id, 'make the mapped worktree branch and complete path/resource claim exactly match the canonical candidate claim');
+    if (sameIssue || claimsConflict(proposed, worktreeClaim)) return admissionBlocked('WORKTREE_EXISTING_CUSTODY', worktree.identity ?? worktree.issue_id, 'record an exact RELEASED or SUPERSEDED worktree claim before issuing another scheduler seat');
   }
   const body = {
     schema: 'agentops/scheduler-admission/v1', canonical_issue_id: item.canonical_issue_id ?? item.issue_id,
     board_sync_status: 'OK', project_priority: project.priority, project_owner_role: project.owner_role, project_status: project.status,
+    project_authenticated_login: sync.fetch_receipt.authenticated_login, project_fetch_receipt_hash: sync.fetch_receipt.receipt_hash, project_response_sha256: sync.fetch_receipt.response_sha256,
     scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [],
     observed_at: sync.observed_at, fresh_until: new Date(Date.parse(sync.observed_at) + (config.project_evidence_max_age_seconds ?? 30) * 1000).toISOString()
   };
@@ -531,7 +558,8 @@ function simulationReconciliation(snapshot, now) {
     dependencies: (item.dependencies ?? []).map((issue_id) => ({ issue_id: String(issue_id), status: snapshot.work_items[String(issue_id)]?.state === 'DONE' ? 'CLOSED_COMPLETED' : 'OPEN' })),
     assignees: [], external_claims: [], human_gate: null
   };
-  return { project_sync: { status: 'OK', observed_at: now, source_id: 'simulation', issues }, governance: { paths: [] }, agentops_leases: [], worktrees: [] };
+  const fetch_receipt = authenticatedProjectReceipt({ schema: 'agentops/scheduler-project-fetch-receipt/v1', simulation: true, repository: 'simulation/repository', authenticated_login: 'simulation', granted_scopes: ['read:project'], fetched_at: now, response_sha256: sha256(issues) });
+  return { project_sync: { status: 'OK', observed_at: now, source_id: 'simulation', issues, fetch_receipt }, governance: { paths: [] }, agentops_leases: [], worktrees: [] };
 }
 
 function priorityValue(value) {
@@ -586,6 +614,20 @@ export function planAssignments(snapshot, config, now = new Date().toISOString()
   return { assignments: planned, no_safe_assignment: seats.length > 0 && planned.length === 0, blocked_items, implementation_paused: implementationPaused, qa_backlog: qaBacklog, qa_in_flight: qaInFlight, pr_backlog: prBacklog };
 }
 
+export function intakeAdmissionEvidence(snapshot, issueId, draft, config, now, reconciliation) {
+  const canonical = canonicalIssueIdentity(issueId);
+  const projectMatches = Object.entries(reconciliation?.project_sync?.issues ?? {}).filter(([key, value]) => canonicalIssueIdentity(value?.canonical_issue_id ?? key) === canonical);
+  const project = projectMatches.length === 1 ? projectMatches[0][1] : null;
+  const item = {
+    issue_id: canonical, canonical_issue_id: canonical, priority: draft.priority ?? 'P2', project_owner_role: project?.owner_role ?? null,
+    dependencies: (draft.dependencies ?? []).map(canonicalIssueIdentity), state: 'READY', assigned_actor: null,
+    branch: draft.branch, claimed_paths: canonicalClaimPaths(draft.claimed_paths ?? []), claimed_resources: draft.claimed_resources ?? []
+  };
+  const assessment = assessAssignmentAdmission(item, snapshot, config, now, reconciliation);
+  if (!assessment.eligible) throw new Error(`${assessment.blocker}: ${assessment.conflict_identity ?? 'unknown'}; wake=${assessment.wake_evidence}`);
+  return assessment.evidence;
+}
+
 function currentDevelopmentBase(root, config) {
   validateBranchName(config.development_branch, 'development_branch');
   runGit(root, ['fetch', 'origin', `refs/heads/${config.development_branch}:refs/remotes/origin/${config.development_branch}`]);
@@ -603,19 +645,98 @@ function agentopsLeaseTerminal(root, lease) {
   return terminal ? 'RELEASED' : null;
 }
 
-export function reconcileAssignmentEnvironment(root, config, now = new Date().toISOString()) {
-  const runtimeFile = path.join(localRuntimeDir(root), 'project-evidence.json');
-  let runtime = null;
-  try { runtime = readJsonFile(runtimeFile); } catch { runtime = null; }
-  const project_sync = runtime?.schema === 'agentops/scheduler-project-evidence/v1'
-    ? { status: runtime.status === 'OK' ? 'OK' : 'BOARD_SYNC_FAILED', observed_at: runtime.observed_at, source_id: runtime.source_id ?? 'github-project', issues: runtime.issues ?? {} }
-    : { status: 'BOARD_SYNC_FAILED', observed_at: null, source_id: 'github-project', issues: {} };
+function projectField(item, ...names) {
+  const entries = Object.entries(item ?? {});
+  for (const name of names) {
+    const found = entries.find(([key]) => key.toLowerCase() === name.toLowerCase());
+    if (found) return found[1];
+  }
+  return undefined;
+}
+
+function jsonProjectField(value, fallback) {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch { return fallback; }
+}
+
+function authenticatedProjectReceipt(body) {
+  const unsealed = structuredClone(body); delete unsealed.receipt_hash;
+  return { ...unsealed, receipt_hash: sha256(unsealed) };
+}
+
+function validateProjectFetchReceipt(sync, config, now) {
+  const receipt = sync?.fetch_receipt;
+  if (config.simulation_mode === true && receipt?.simulation === true) return true;
+  if (!receipt || receipt.schema !== 'agentops/scheduler-project-fetch-receipt/v1') return false;
+  if (!receipt.authenticated_login || !Array.isArray(receipt.granted_scopes) || !receipt.granted_scopes.some((scope) => scope === 'read:project' || scope === 'project')) return false;
+  if (receipt.repository !== repositorySlug(config.repository) || receipt.fetched_at !== sync.observed_at || Date.parse(receipt.fetched_at) > Date.parse(now)) return false;
+  if (!/^[0-9a-f]{64}$/.test(receipt.response_sha256 ?? '') || !/^[0-9a-f]{64}$/.test(receipt.receipt_hash ?? '')) return false;
+  const unsealed = structuredClone(receipt); delete unsealed.receipt_hash;
+  return sha256(unsealed) === receipt.receipt_hash;
+}
+
+export function fetchAuthenticatedProjectEvidence(root, config, now = new Date().toISOString(), runner = runBoundedCommand) {
+  const sourceFile = path.join(localRuntimeDir(root), 'project-source.json');
+  let source;
+  try { source = readJsonFile(sourceFile); } catch { throw new Error('BOARD_SYNC_FAILED: missing .git/agentops-scheduler/project-source.json'); }
+  if (source?.schema !== 'agentops/scheduler-project-source/v1' || !/^[A-Za-z0-9-]+$/.test(source.owner ?? '') || !Number.isInteger(source.number) || source.number < 1) throw new Error('BOARD_SYNC_FAILED: invalid GitHub Project source request');
+  const repository = repositorySlug(config.repository);
+  if (source.repository !== repository) throw new Error('BOARD_SYNC_FAILED: Project source names a different repository');
+  const auth = runner('gh', ['auth', 'status', '--hostname', 'github.com', '--active'], { cwd: root, timeoutMs: 30_000 });
+  const authText = `${auth.stdout ?? ''}\n${auth.stderr ?? ''}`;
+  const login = /Logged in to github\.com account\s+([^\s(]+)/i.exec(authText)?.[1] ?? null;
+  const scopeLine = /Token scopes:\s*([^\r\n]+)/i.exec(authText)?.[1] ?? '';
+  const grantedScopes = [...scopeLine.matchAll(/['"]([^'"]+)['"]/g)].map((match) => match[1]);
+  if (!login || !grantedScopes.some((scope) => scope === 'read:project' || scope === 'project')) throw new Error('BOARD_SYNC_FAILED: authenticated GitHub identity lacks read:project scope');
+  const fetched = runner('gh', ['project', 'item-list', String(source.number), '--owner', source.owner, '--format', 'json', '--limit', '100'], { cwd: root, timeoutMs: 30_000 });
+  let response;
+  try { response = JSON.parse(fetched.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project response is not valid JSON'); }
+  if (!Array.isArray(response.items)) throw new Error('BOARD_SYNC_FAILED: GitHub Project response has no item list');
+  const issues = {};
+  for (const raw of response.items) {
+    const content = raw.content ?? {};
+    const itemRepository = typeof content.repository === 'string' ? content.repository : content.repository?.nameWithOwner;
+    if (itemRepository !== repository || !Number.isInteger(content.number)) continue;
+    const canonical = canonicalIssueIdentity(content.number);
+    if (issues[canonical]) throw new Error(`BOARD_SYNC_FAILED: duplicate canonical Project item ${canonical}`);
+    const paths = jsonProjectField(projectField(raw, 'Affected Paths', 'claimed_paths'), []);
+    const resources = jsonProjectField(projectField(raw, 'Affected Resources', 'claimed_resources'), []);
+    const dependencies = jsonProjectField(projectField(raw, 'Dependencies'), []);
+    const externalClaims = jsonProjectField(projectField(raw, 'External Claims'), []);
+    const humanGate = jsonProjectField(projectField(raw, 'Human Gate'), null);
+    const scopeComplete = projectField(raw, 'Scope Complete', 'scope_complete');
+    const assigneeValues = content.assignees?.nodes ?? content.assignees ?? [];
+    issues[canonical] = {
+      canonical_issue_id: canonical,
+      priority: projectField(raw, 'Priority'), owner_role: projectField(raw, 'Owner Role', 'Owner'), status: projectField(raw, 'Status'),
+      issue_state: content.state, issue_resolution: content.stateReason ?? projectField(raw, 'Resolution'),
+      scope_complete: scopeComplete === true || String(scopeComplete).toUpperCase() === 'TRUE',
+      claimed_paths: Array.isArray(paths) ? paths : [], claimed_resources: Array.isArray(resources) ? resources : [],
+      dependencies: Array.isArray(dependencies) ? dependencies : [], external_claims: Array.isArray(externalClaims) ? externalClaims : [],
+      human_gate: humanGate && typeof humanGate === 'object' ? humanGate : null,
+      assignees: Array.isArray(assigneeValues) ? assigneeValues.map((assignee) => typeof assignee === 'string' ? assignee : assignee.login).filter(Boolean) : []
+    };
+  }
+  const receipt = authenticatedProjectReceipt({
+    schema: 'agentops/scheduler-project-fetch-receipt/v1', repository, project_owner: source.owner, project_number: source.number,
+    authenticated_login: login, granted_scopes: grantedScopes, fetched_at: now, response_sha256: sha256(fetched.stdout)
+  });
+  return { status: 'OK', observed_at: now, source_id: `github-project:${source.owner}/${source.number}`, issues, fetch_receipt: receipt };
+}
+
+export function reconcileAssignmentEnvironment(root, config, now = new Date().toISOString(), options = {}) {
+  let project_sync;
+  try { project_sync = (options.fetchProjectEvidence ?? fetchAuthenticatedProjectEvidence)(root, config, now); }
+  catch (error) { project_sync = { status: 'BOARD_SYNC_FAILED', observed_at: null, source_id: 'github-project', issues: {}, error: error.message, wake_condition: 'authenticate gh with read:project and configure .git/agentops-scheduler/project-source.json, then fetch the Project again' }; }
   const leaseDir = path.join(root, '.agentops', 'leases');
   const agentops_leases = fs.existsSync(leaseDir) ? fs.readdirSync(leaseDir).filter((name) => name.endsWith('.json')).map((name) => {
     const lease = readJsonFile(path.join(leaseDir, name));
     return { id: lease.id, ticket: lease.ticket, ref: lease.ref, path_globs: lease.path_globs ?? [], resources: lease.resources ?? [], expiry: lease.expiry, revoked: lease.revoked, terminal_event: agentopsLeaseTerminal(root, lease) };
   }) : [];
-  const mappings = Array.isArray(runtime?.worktree_mappings) ? runtime.worktree_mappings : [];
+  let mappingDocument = null;
+  try { mappingDocument = readJsonFile(path.join(localRuntimeDir(root), 'worktree-mappings.json')); } catch { mappingDocument = null; }
+  const mappings = mappingDocument?.schema === 'agentops/scheduler-worktree-mappings/v1' && Array.isArray(mappingDocument.mappings) ? mappingDocument.mappings : [];
   const raw = runGit(root, ['worktree', 'list', '--porcelain']).stdout;
   const worktrees = raw.split(/\r?\n\r?\n/).filter(Boolean).map((block) => {
     const fields = {};
@@ -625,8 +746,14 @@ export function reconcileAssignmentEnvironment(root, config, now = new Date().to
     const mapping = mappings.find((candidate) => candidate.head === head && (candidate.branch ?? null) === branch);
     const lease = !mapping && branch ? agentops_leases.find((candidate) => candidate.ref === branch && candidate.terminal_event === null) : null;
     const identity = `worktree:${branch ?? 'detached'}:${head ?? 'unknown'}`;
-    if (mapping) return { identity, head, branch, custody: mapping.custody === 'MAPPED' ? 'MAPPED' : 'UNKNOWN', issue_id: mapping.issue_id ?? null, claim_id: mapping.claim_id ?? null, claimed_paths: mapping.claimed_paths ?? [], claimed_resources: mapping.claimed_resources ?? [] };
-    if (lease) return { identity, head, branch, custody: 'MAPPED', issue_id: lease.ticket, claim_id: lease.id, claimed_paths: lease.path_globs, claimed_resources: lease.resources };
+    if (mapping) {
+      const mappedCanonical = mapping.issue_id ? canonicalIssueIdentity(mapping.issue_id) : null;
+      const projectIssue = mappedCanonical ? Object.values(project_sync.issues ?? {}).find((item) => canonicalIssueIdentity(item.canonical_issue_id) === mappedCanonical) : null;
+      const projectClaim = projectIssue?.external_claims?.find((claim) => claim.claim_id === mapping.claim_id && !terminalExternalClaim(claim));
+      const agentopsClaim = agentops_leases.find((candidate) => candidate.id === mapping.claim_id && canonicalIssueIdentity(candidate.ticket) === mappedCanonical && candidate.terminal_event === null);
+      return { identity, head, branch, custody: mapping.custody === 'MAPPED' ? 'MAPPED' : 'UNKNOWN', issue_id: mapping.issue_id ?? null, claim_id: mapping.claim_id ?? null, claim_verified: Boolean(projectClaim || agentopsClaim), scope_complete: mapping.scope_complete === true, claimed_paths: mapping.claimed_paths ?? [], claimed_resources: mapping.claimed_resources ?? [] };
+    }
+    if (lease) return { identity, head, branch, custody: 'MAPPED', issue_id: lease.ticket, claim_id: lease.id, claim_verified: true, scope_complete: true, claimed_paths: lease.path_globs, claimed_resources: lease.resources };
     return { identity, head, branch, custody: 'UNKNOWN', issue_id: null, claim_id: null, claimed_paths: [], claimed_resources: [] };
   });
   return { observed_at: now, project_sync, agentops_leases, worktrees, governance: readJsonFile(path.join(root, '.agentops', 'governance', 'git-ownership.json')) };
@@ -750,6 +877,9 @@ export function assertSchedulerDispatchCutover(config, root = null) {
 }
 
 export function validateSchedulerCutoverAuthority(root, evidence, config) {
+  const ownerCommand = readJsonFile(path.join(root, '.agentops', 'governance', 'owner-command.json'));
+  const action = ownerCommand.actions?.find((candidate) => candidate.id === 'authorize-scheduler-cutover');
+  if (!action) throw new Error('SCHEDULER_CUTOVER_AUTHORITY_UNAVAILABLE: the authenticated owner-command form has no supported scheduler cutover target; keep legacy dispatch authoritative until that protected path is separately authorized and implemented');
   if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) throw new Error('scheduler dispatch cutover requires authenticated exact owner decision evidence');
   const allowedKeys = new Set(['event_path', 'event_id', 'event_hash']);
   if (Object.keys(evidence).some((key) => !allowedKeys.has(key))) throw new Error('scheduler cutover authority evidence contains an undeclared field');
@@ -763,14 +893,29 @@ export function validateSchedulerCutoverAuthority(root, evidence, config) {
   if (eventFile !== eventsRoot && !eventFile.startsWith(`${eventsRoot}${path.sep}`)) throw new Error('scheduler cutover authority event escaped the canonical event root');
   if (!fs.existsSync(eventFile)) throw new Error('scheduler cutover authority event does not exist');
   const event = readJsonFile(eventFile);
+  const eventSchema = readJsonFile(path.join(root, '.agentops', 'schemas', 'event.schema.json'));
+  const schemaErrors = validateSchema(event, eventSchema, '$');
+  if (schemaErrors.length) throw new Error(`scheduler cutover authority event is invalid: ${schemaErrors.join('; ')}`);
   if (sha256(event) !== evidence.event_hash) throw new Error('scheduler cutover authority event hash mismatch');
   if (event.schema !== 'agentops/event/v1' || event.id !== evidence.event_id || event.kind !== 'owner-decision' || event.actor !== 'owner') throw new Error('scheduler cutover authority is not an authenticated owner decision event');
   const decision = event.decision;
-  if (!decision || decision.action !== 'authorize-scheduler-cutover' || decision.authenticated_role !== 'owner' || !/^[0-9a-f]{40}$/.test(decision.candidate_oid ?? '')) throw new Error('scheduler cutover authority does not bind the exact owner action and state commit');
-  const ownerCommand = readJsonFile(path.join(root, '.agentops', 'governance', 'owner-command.json'));
+  if (!decision || decision.action !== 'authorize-scheduler-cutover' || decision.authenticated_role !== 'owner' || decision.authority_path !== '.github/workflows/owner-command.yml:owner-command/v1' || !/^[0-9a-f]{40}$/.test(decision.candidate_oid ?? '')) throw new Error('scheduler cutover authority does not bind the real authenticated owner-command path and exact state commit');
   const ownerIntent = readJsonFile(path.join(root, '.agentops', 'governance', 'owner-intent.json'));
-  const action = ownerCommand.actions?.find((candidate) => candidate.id === decision.action);
   if (!action?.protected || action.authenticator_roles?.length !== 1 || action.authenticator_roles[0] !== 'owner' || ownerCommand.authenticated_actors?.owner !== ownerIntent.owner?.actor_id) throw new Error('scheduler cutover authority is not owner-exclusive in the canonical contracts');
+  const capsulePath = `.agentops/work/${decision.target}/CURRENT.json`;
+  const capsuleFile = path.join(root, ...capsulePath.split('/'));
+  if (!fs.existsSync(capsuleFile)) throw new Error('scheduler cutover owner-command target has no supported work capsule');
+  const capsule = readJsonFile(capsuleFile);
+  if (capsule.parent_hash !== decision.expected_current_hash) throw new Error('scheduler cutover decision is not bound to the target capsule compare-and-swap predecessor');
+  runGit(root, ['fetch', 'origin', `refs/heads/${config.development_branch}:refs/remotes/origin/${config.development_branch}`]);
+  const authorityRef = `refs/remotes/origin/${config.development_branch}`;
+  const committedEvent = runGit(root, ['show', `${authorityRef}:${relative}`], { allowFailure: true });
+  if (committedEvent.status !== 0) throw new Error('scheduler cutover authority event is not committed on freshly fetched protected authority state');
+  let remoteEvent;
+  try { remoteEvent = JSON.parse(committedEvent.stdout); } catch { throw new Error('fresh protected authority event is not valid JSON'); }
+  if (stableStringify(remoteEvent) !== stableStringify(event)) throw new Error('local scheduler cutover event differs from freshly fetched protected authority state');
+  const committedCapsule = runGit(root, ['show', `${authorityRef}:${capsulePath}`], { allowFailure: true });
+  if (committedCapsule.status !== 0 || sha256(JSON.parse(committedCapsule.stdout)) !== sha256(capsule)) throw new Error('scheduler cutover target capsule is not the exact freshly fetched protected authority state');
   const refs = schedulerStateRefs(config);
   const currentStateOid = refOid(root, refs.local) ?? refOid(root, refs.remote);
   if (currentStateOid !== decision.candidate_oid) throw new Error('scheduler cutover authority is stale for the current scheduler-state ref');
@@ -1040,10 +1185,11 @@ export function validateWorkers(workers, workerSlots) {
 
 export function makeEvent(snapshot, input) {
   const sequence = snapshot.last_sequence + 1;
+  const issueId = canonicalIssueIdentity(input.issue_id);
   const event = {
     event_id: input.event_id ?? `evt-${String(sequence).padStart(8, '0')}-${crypto.randomUUID()}`,
-    idempotency_key: input.idempotency_key ?? `${input.event_type}:${input.issue_id}:${input.lease_epoch ?? 0}:${input.exact_object?.oid ?? input.created_at ?? 'once'}`,
-    sequence, previous_snapshot_hash: snapshot.snapshot_hash, issue_id: String(input.issue_id),
+    idempotency_key: input.idempotency_key ?? `${input.event_type}:${issueId}:${input.lease_epoch ?? 0}:${input.exact_object?.oid ?? input.created_at ?? 'once'}`,
+    sequence, previous_snapshot_hash: snapshot.snapshot_hash, issue_id: issueId,
     actor: input.actor, machine_id: input.machine_id ?? null, lease_id: input.lease_id ?? null,
     lease_epoch: input.lease_epoch ?? null, event_type: input.event_type,
     exact_object: input.exact_object ?? {}, payload: input.payload ?? {}, created_at: input.created_at ?? new Date().toISOString()
@@ -1232,7 +1378,8 @@ export function simulate(config = readConfig()) {
     claimed_resources: index === 7 ? ['generated-outputs'] : [], acceptance_commands: ['node .agentops/tools/scheduler.test.mjs']
   }));
   for (const spec of specs) {
-    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: spec.issue_id, board_sync_status: 'OK', project_priority: spec.priority, project_owner_role: 'maker', project_status: 'READY', scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: now, fresh_until: new Date(Date.parse(now) + config.project_evidence_max_age_seconds * 1000).toISOString() };
+    const simulationReceipt = authenticatedProjectReceipt({ schema: 'agentops/scheduler-project-fetch-receipt/v1', simulation: true, repository: 'simulation/repository', authenticated_login: 'simulation', granted_scopes: ['read:project'], fetched_at: now, response_sha256: sha256(spec) });
+    const body = { schema: 'agentops/scheduler-admission/v1', canonical_issue_id: spec.issue_id, board_sync_status: 'OK', project_priority: spec.priority, project_owner_role: 'maker', project_status: 'READY', project_authenticated_login: 'simulation', project_fetch_receipt_hash: simulationReceipt.receipt_hash, project_response_sha256: simulationReceipt.response_sha256, scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true, conflict_identities: [], observed_at: now, fresh_until: new Date(Date.parse(now) + config.project_evidence_max_age_seconds * 1000).toISOString() };
     state = appendEvents(state, [{ event_id: `sim-intake-${spec.issue_id}`, event_type: 'INTAKE_RECORDED', issue_id: spec.issue_id, actor: 'simulation', exact_object: { issue: spec.issue_id }, payload: { ...spec, project_evidence: sealAdmissionEvidence(body) }, created_at: now, idempotency_key: `sim-intake:${spec.issue_id}` }]);
   }
   const plan = planAssignments(state.snapshot, config, now);
@@ -1264,19 +1411,19 @@ export function ensureCustody(state, machine, now = Date.now()) {
 }
 
 export function transitionInput(command, args, state, machine) {
-  const issue = String(args.issue);
+  const issue = canonicalIssueIdentity(args.issue);
   const item = state.snapshot.work_items[issue];
   const common = { issue_id: issue, actor: args.actor ?? item?.assigned_actor ?? 'scheduler', machine_id: machine.machine_id, lease_id: args.lease_id ?? item?.lease_id ?? null, lease_epoch: args.lease_epoch ? Number(args.lease_epoch) : item?.lease_epoch ?? null, exact_object: jsonArg(args.exact_object, {}), created_at: args.at ?? new Date().toISOString(), idempotency_key: args.idempotency_key };
-  if (command === 'enqueue') return { ...common, actor: args.actor ?? 'intake', lease_id: null, lease_epoch: null, event_type: 'INTAKE_RECORDED', payload: { title: args.title, priority: args.priority ?? 'P2', dependencies: jsonArg(args.dependencies, []), branch: args.branch ?? `codex/issue-${issue}`, claimed_paths: jsonArg(args.paths, []), claimed_resources: jsonArg(args.resources, []), acceptance_commands: jsonArg(args.acceptance, []), evidence_pointers: jsonArg(args.evidence, []), next_action: args.next_action, authority_ceiling: args.authority_ceiling ?? 'dev-delivery', project_evidence: jsonArg(args.project_evidence, null) } };
-  if (command === 'claim') return { ...common, event_type: 'CLAIM_ACQUIRED', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), payload: { branch: args.branch ?? item.branch, base_commit: args.base_commit, lease_expiry: args.expiry, claimed_paths: jsonArg(args.paths, item.claimed_paths), claimed_resources: jsonArg(args.resources, item.claimed_resources), next_action: args.next_action, admission_evidence: jsonArg(args.admission_evidence, null) } };
+  if (command === 'enqueue') return { ...common, actor: args.actor ?? 'intake', lease_id: null, lease_epoch: null, event_type: 'INTAKE_RECORDED', payload: { title: args.title, priority: args.priority ?? 'P2', dependencies: jsonArg(args.dependencies, []), branch: args.branch ?? `codex/issue-${issue.replace(/^#/, '')}`, claimed_paths: jsonArg(args.paths, []), claimed_resources: jsonArg(args.resources, []), acceptance_commands: jsonArg(args.acceptance, []), evidence_pointers: jsonArg(args.evidence, []), next_action: args.next_action, authority_ceiling: args.authority_ceiling ?? 'dev-delivery', project_evidence: args.trusted_project_evidence ?? null } };
+  if (command === 'claim') return { ...common, event_type: 'CLAIM_ACQUIRED', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), payload: { branch: args.branch ?? item.branch, base_commit: args.base_commit, lease_expiry: args.expiry, claimed_paths: jsonArg(args.paths, item.claimed_paths), claimed_resources: jsonArg(args.resources, item.claimed_resources), next_action: args.next_action, admission_evidence: args.trusted_admission_evidence ?? null } };
   if (command === 'entered') return { ...common, event_type: 'WORK_ENTERED', exact_object: { oid: args.base_commit }, payload: { base_commit: args.base_commit, next_action: args.next_action } };
   if (command === 'candidate') return { ...common, event_type: 'CANDIDATE_READY', exact_object: { oid: args.commit }, payload: { candidate_commit: args.commit, evidence_pointers: jsonArg(args.evidence, []) } };
   if (command === 'qa') return { ...common, actor: args.actor ?? 'independent-qa', event_type: 'QA_RESULT', exact_object: { oid: args.commit }, payload: { candidate_commit: args.commit, result: args.result, evidence_pointers: jsonArg(args.evidence, []), next_action: args.next_action } };
   if (command === 'pr-open') return { ...common, event_type: 'PR_OPENED', payload: { pr_url: args.url } };
   if (command === 'complete') return { ...common, event_type: 'COMPLETED', payload: {} };
   if (command === 'block') return { ...common, event_type: 'BLOCKED', payload: { blocker: args.blocker, wake_condition: args.wake, next_action: args.next_action, retained_paths: jsonArg(args.retained_paths, []), retained_resources: jsonArg(args.retained_resources, []) } };
-  if (command === 'release') return { ...common, event_type: 'RESOURCE_RELEASED', payload: { requeue: args.requeue === true || args.requeue === 'true', retained_paths: jsonArg(args.retained_paths, []), retained_resources: jsonArg(args.retained_resources, []), admission_evidence: jsonArg(args.admission_evidence, null) } };
-  if (command === 'recover') return { ...common, event_type: 'RECOVERY_BOUND', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), payload: { branch: args.branch, base_commit: args.base_commit, lease_expiry: args.expiry, admission_evidence: jsonArg(args.admission_evidence, null) } };
+  if (command === 'release') return { ...common, event_type: 'RESOURCE_RELEASED', payload: { requeue: args.requeue === true || args.requeue === 'true', retained_paths: jsonArg(args.retained_paths, []), retained_resources: jsonArg(args.retained_resources, []), admission_evidence: args.trusted_admission_evidence ?? null } };
+  if (command === 'recover') return { ...common, event_type: 'RECOVERY_BOUND', lease_id: args.lease_id, lease_epoch: Number(args.lease_epoch), payload: { branch: args.branch, base_commit: args.base_commit, lease_expiry: args.expiry, admission_evidence: args.trusted_admission_evidence ?? null } };
   if (command === 'expire') return { ...common, event_type: 'LEASE_EXPIRED', payload: {} };
   if (command === 'supersede') return { ...common, event_type: 'SUPERSEDED', payload: {} };
   if (command === 'cancel') return { ...common, event_type: 'CANCELLED', payload: {} };
@@ -1322,7 +1469,8 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   if (command === 'status') {
     const reconciliation = reconcileAssignmentEnvironment(root, config);
     const plan = planAssignments(state.snapshot, config, new Date().toISOString(), null, reconciliation);
-    emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash, material_events: state.events.length, machine_lease: state.machineLease, live_worker_capacity: config.workers.length, configured_worker_slots: config.worker_slots, counts: stateCounts(state.snapshot), project_sync: reconciliation.project_sync.status, blockers: plan.blocked_items }, `STATUS: ${state.events.length} events; ${Object.values(state.snapshot.work_items).length} work items; ${config.workers.length}/${config.worker_slots} live workers; blockers=${plan.blocked_items.length}.`); return 0;
+    const projectSyncStatus = { status: reconciliation.project_sync.status, source_id: reconciliation.project_sync.source_id, error: reconciliation.project_sync.error ?? null, wake_condition: reconciliation.project_sync.wake_condition ?? null };
+    emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash, material_events: state.events.length, machine_lease: state.machineLease, live_worker_capacity: config.workers.length, configured_worker_slots: config.worker_slots, counts: stateCounts(state.snapshot), project_sync: projectSyncStatus, blockers: plan.blocked_items }, `STATUS: ${state.events.length} events; ${Object.values(state.snapshot.work_items).length} work items; ${config.workers.length}/${config.worker_slots} live workers; project_sync=${projectSyncStatus.status}; blockers=${plan.blocked_items.length}.`); return 0;
   }
   if (command === 'acquire-machine') {
     const now = new Date().toISOString();
@@ -1399,9 +1547,27 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   if (command === 'enqueue') {
     const canonical = resolveCanonicalIssue(state.snapshot, args.issue);
     if (canonical.duplicate) { emit(command, canonical, `INTAKE NOOP: linked to existing canonical issue ${canonical.canonical_issue_id}.`); return 0; }
+    const now = new Date().toISOString();
+    const reconciliation = reconcileAssignmentEnvironment(root, config, now);
+    const branch = args.branch ?? `codex/issue-${canonical.canonical_issue_id.replace(/^#/, '')}`;
+    args.trusted_project_evidence = intakeAdmissionEvidence(state.snapshot, canonical.canonical_issue_id, {
+      priority: args.priority ?? 'P2', dependencies: jsonArg(args.dependencies, []), branch,
+      claimed_paths: jsonArg(args.paths, []), claimed_resources: jsonArg(args.resources, [])
+    }, config, now, reconciliation);
+  }
+  const requiresTrustedAdmission = command === 'claim' || command === 'recover' || (command === 'release' && (args.requeue === true || args.requeue === 'true'));
+  if (requiresTrustedAdmission) {
+    const issue = canonicalIssueIdentity(args.issue);
+    const item = state.snapshot.work_items[issue];
+    if (!item) throw new Error(`unknown issue ${args.issue}`);
+    const now = new Date().toISOString();
+    const reconciliation = reconcileAssignmentEnvironment(root, config, now);
+    const assessment = assessAssignmentAdmission(item, state.snapshot, config, now, reconciliation);
+    if (!assessment.eligible) throw new Error(`${assessment.blocker}: ${assessment.conflict_identity ?? 'unknown'}; wake=${assessment.wake_evidence}`);
+    args.trusted_admission_evidence = assessment.evidence;
   }
   if (command === 'deliver') {
-    const item = state.snapshot.work_items[String(args.issue)]; if (!item) throw new Error(`unknown issue ${args.issue}`);
+    const item = state.snapshot.work_items[canonicalIssueIdentity(args.issue)]; if (!item) throw new Error(`unknown issue ${args.issue}`);
     if (!config.authority.non_force_push_codex_branch || !config.authority.open_issue_closing_pr_to_dev) throw new Error('PR delivery authority is not enabled');
     const delivered = deliverCandidate(root, item, config);
     state = appendEvents(state, [{ event_type: 'PR_OPENED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { pr_number: delivered.number, oid: item.candidate_commit }, payload: { pr_url: delivered.url }, created_at: new Date().toISOString(), idempotency_key: `pr-open:${delivered.number}:${item.candidate_commit}` }]);
@@ -1409,7 +1575,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], delivery: delivered }, `PR_OPENED accepted for ${item.issue_id}: ${delivered.url}`); return 0;
   }
   if (command === 'merge-dev') {
-    const item = state.snapshot.work_items[String(args.issue)]; if (!item) throw new Error(`unknown issue ${args.issue}`);
+    const item = state.snapshot.work_items[canonicalIssueIdentity(args.issue)]; if (!item) throw new Error(`unknown issue ${args.issue}`);
     const result = mergeDevPr(root, config, item, Number(args.pr), { rollbackKnown: args.rollback_known === true || args.rollback_known === 'true' });
     const createdAt = result.merged.mergedAt;
     state = appendEvents(state, [
