@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 27,
-  "last_sequence": 27,
+  "revision": 28,
+  "last_sequence": 28,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -144,12 +144,12 @@
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 6,
+      "revision": 7,
       "issue_id": "468",
       "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
       "priority": "P1",
       "dependencies": [],
-      "state": "PR_READY",
+      "state": "PR_OPEN",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "495bf285ac2bcdd634f46b56352d03c6bd6cc593",
       "branch": "codex/issue-468",
@@ -194,14 +194,15 @@
         "lifecycle legality per transitions.json: maker-permitted states only (040 qa-review not accepted, 050 in-progress, 056 local); no fabricated verdict/acceptance; no governance file in diff",
         "event chain: 3 new ledger events seq +1, parent seals match base current_hash, new seals match content",
         "render idempotent: only the two PR-475-owned mirrors re-dirty (deliberately kept at committed state); all committed projections current",
-        "footprint: exactly 22 files +134/-78 within contract-explained set; PR-475-owned files absent from diff; git diff --check clean"
+        "footprint: exactly 22 files +134/-78 within contract-explained set; PR-475-owned files absent from diff; git diff --check clean",
+        "https://github.com/cehinds/AshenSpire/pull/479"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Deliver an issue-closing PR to dev.",
+      "next_action": "Wait for required checks and independent exact-head review.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000027-6f1ee007-818a-41e0-b7f3-88881eda3c42",
-      "updated_at": "2026-08-31T14:46:28.084Z"
+      "updated_event": "evt-00000028-d282bd29-b732-496e-b592-470ff9049e77",
+      "updated_at": "2026-08-31T14:47:01.248Z"
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -268,5 +269,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "4ac93ef824c7984ff09c913a48790222912becb773071513463454e1cb8d91d7"
+  "snapshot_hash": "130450193f02588cfe249d89094548d1479d166e39fd19dd5dd282b1f59a3470"
 }

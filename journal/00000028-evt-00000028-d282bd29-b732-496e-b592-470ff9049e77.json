@@ -1,0 +1,17 @@
+{
+  "event_id": "evt-00000028-d282bd29-b732-496e-b592-470ff9049e77",
+  "idempotency_key": "PR_OPENED:468:2:2026-08-31T14:47:01.248Z",
+  "sequence": 28,
+  "previous_snapshot_hash": "4ac93ef824c7984ff09c913a48790222912becb773071513463454e1cb8d91d7",
+  "issue_id": "468",
+  "actor": "scheduler",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": null,
+  "lease_epoch": 2,
+  "event_type": "PR_OPENED",
+  "exact_object": {},
+  "payload": {
+    "pr_url": "https://github.com/cehinds/AshenSpire/pull/479"
+  },
+  "created_at": "2026-08-31T14:47:01.248Z"
+}
