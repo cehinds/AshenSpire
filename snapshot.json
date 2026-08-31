@@ -1,26 +1,26 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 6,
-  "last_sequence": 6,
+  "revision": 7,
+  "last_sequence": 7,
   "work_items": {
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "427",
       "title": "Repair AS-HD-040 packet aggregate digest",
       "priority": "P1",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "CANDIDATE_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
-      "candidate_commit": null,
+      "candidate_commit": "f02d9d407e0f881320e11bb176215558684be011",
       "branch": "codex/issue-427-packet-digest",
-      "assigned_actor": "seat:review-hub:21107085-cecd-4ce9-b65e-128936c1afa8",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:427:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T15:00:00Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
-      "maker_actor": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": "seat:review-hub:21107085-cecd-4ce9-b65e-128936c1afa8",
       "lease_history": [
         {
           "actor": "seat:review-hub:21107085-cecd-4ce9-b65e-128936c1afa8",
@@ -41,14 +41,16 @@
         "independent exact-head QA"
       ],
       "evidence_pointers": [
-        "https://github.com/cehinds/AshenSpire/issues/427#issuecomment-5479433672"
+        "https://github.com/cehinds/AshenSpire/pull/471",
+        "https://github.com/cehinds/AshenSpire/issues/427#issuecomment-5479433672",
+        "sha256:D834E2DD1EB24DC58AF849AE467CB68DAF59AC65832B4DDDC7CB0FE50B03B033"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Finish bounded digest repair",
+      "next_action": "Bind independent QA to this exact candidate.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000006-813ba90a-b63f-4c37-89c9-b6b4fc404e36",
-      "updated_at": "2026-08-31T14:02:57.457Z"
+      "updated_event": "evt-00000007-4dbe1346-5378-4a68-8813-3e59653bae86",
+      "updated_at": "2026-08-31T14:02:58.381Z"
     },
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -109,5 +111,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "58f8700726902310ea04def972215be79d7f664d548c224e99e667ca3c812381"
+  "snapshot_hash": "44484e48fc410ba071c4f36231b7d97f367fa5516c652279445b69b9275063ed"
 }
