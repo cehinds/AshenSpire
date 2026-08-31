@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 32,
-  "last_sequence": 32,
+  "revision": 33,
+  "last_sequence": 33,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -254,21 +254,21 @@
     },
     "467": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 9,
+      "revision": 10,
       "issue_id": "467",
       "title": "Bounded owner grant for dev delivery authority",
       "priority": "P0",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "SUPERSEDED",
       "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
       "candidate_commit": "4a14a6025064a03c9eeae37495d16496dcf43560",
       "branch": "codex/issue-467-authority-grant",
-      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:467:4",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 4,
-      "lease_expiry": "2026-08-31T15:43:25.312Z",
-      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:review-hub:79b544b0-4526-4d0b-a195-a9678f236b76",
       "lease_history": [
         {
@@ -301,19 +301,8 @@
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [
-        ".agentops/governance/owner-command.json",
-        ".agentops/tools/opsctl.mjs",
-        ".agentops/tools/opsctl.test.mjs",
-        ".github/ISSUE_TEMPLATE/owner-decision.yml",
-        ".github/workflows/validate-owner-command-issue.test.mjs",
-        ".agentops/generated",
-        "hud",
-        "review-approval-hub"
-      ],
-      "claimed_resources": [
-        "owner-command-authority"
-      ],
+      "claimed_paths": [],
+      "claimed_resources": [],
       "acceptance_commands": [
         "node .agentops/tools/opsctl.mjs verify",
         "node .agentops/tools/opsctl.mjs --selftest",
@@ -333,12 +322,12 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Reconcile candidate to the exact lease: remove the two out-of-lease paths or obtain an explicit expanded implementation lease, then return a new exact candidate for independent QA.",
+      "next_action": null,
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000032-2b0d84a5-959c-496a-853c-3eabae953235",
-      "updated_at": "2026-08-31T15:13:25.312Z"
+      "updated_event": "evt-00000033-4199d8a8-165c-4fd9-b038-3e619a454ae2",
+      "updated_at": "2026-08-31T15:16:09.549Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "252a0aa5a171906394464c5a559bf28e2a723f570f9e2c2427045bda760432e3"
+  "snapshot_hash": "beece2f482a8ebbee74d252cdf8b4983629145547f4c64b7a706b006a99d72f0"
 }

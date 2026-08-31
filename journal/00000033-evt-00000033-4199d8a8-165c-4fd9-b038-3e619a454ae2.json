@@ -1,0 +1,21 @@
+{
+  "event_id": "evt-00000033-4199d8a8-165c-4fd9-b038-3e619a454ae2",
+  "idempotency_key": "SUPERSEDED:467:4:2026-08-31T15:16:09.549Z",
+  "sequence": 33,
+  "previous_snapshot_hash": "252a0aa5a171906394464c5a559bf28e2a723f570f9e2c2427045bda760432e3",
+  "issue_id": "467",
+  "actor": "scheduler",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:467:4",
+  "lease_epoch": 4,
+  "event_type": "SUPERSEDED",
+  "exact_object": {
+    "pr": 472,
+    "head": "58ac53d0c77c6d798ae44923480d49e56d5a57a8",
+    "merge_commit": "c31c0f49201603e97a8a4dcd2f84e75ec3962ed2",
+    "merged_at": "2026-08-31T15:01:20Z",
+    "issue_state": "closed"
+  },
+  "payload": {},
+  "created_at": "2026-08-31T15:16:09.549Z"
+}
