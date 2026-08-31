@@ -2154,8 +2154,15 @@ export function runtimeChecks(g, rt) {
           if (span.length < ret.consolidation.min_range) errors.push(`event '${ev.id}' consolidates ${span.length} events, below the declared minimum ${ret.consolidation.min_range}; a summary shorter than what it replaces reads worse, not better`);
           if (span.some((e) => e.kind === ret.consolidation.kind)) errors.push(`event '${ev.id}' consolidates a range containing another consolidation; summaries of summaries lose the range they both point at`);
         }
-        if (!roles.has(actorRole(g, c.authorised_by)) && !hierarchyActors(g).has(c.authorised_by)) {
+        // Existing is not authorised. retention.authority.actor_role names who
+        // may consolidate, and checking only that the identity is known let any
+        // actor — `maker` included — claim one while the corpus still validated.
+        const authRole = actorRole(g, c.authorised_by);
+        const ownerActor = g['owner-intent'] && g['owner-intent'].owner.actor_id;
+        if (!roles.has(authRole) && !hierarchyActors(g).has(c.authorised_by)) {
           errors.push(`event '${ev.id}' names '${c.authorised_by}' as authorising the consolidation, which is not a declared actor`);
+        } else if (authRole !== ret.authority.actor_role && c.authorised_by !== ownerActor) {
+          errors.push(`event '${ev.id}' is authorised by '${c.authorised_by}' (role '${authRole}'), but retention declares '${ret.authority.actor_role}' as the consolidation authority; existing is not the same as being allowed`);
         }
       }
     }
@@ -2518,6 +2525,12 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
   if (full(p.target_oid) && full(p.hosted_verified_dev_oid) && p.target_oid !== p.hosted_verified_dev_oid) {
     errors.push(`command 'fast-forward-test' target ${p.target_oid.slice(0, 12)} is not the hosted-verified dev SHA ${p.hosted_verified_dev_oid.slice(0, 12)}; decision 0009 permits exactly that commit and no other`);
   }
+  // ...but comparing two fields of the same request is not a constraint: put the
+  // same OID in both and the check agrees with itself. The integration ref is
+  // the authority for what dev is, and git-ownership names it, so the claim is
+  // checked against the repository below rather than against its own restatement.
+  const devDecl = ((contracts['git-ownership'] || {}).refs || []).find((r) => (r.mutation || '') === 'pr-only');
+  if (!devDecl) errors.push(`git-ownership declares no pr-only integration ref, so there is nothing to check the hosted-verified SHA against`);
   // 4. The rollback target is recorded BEFORE the mutation, and is the ref's
   //    current head — a rollback to anything else does not restore what was
   //    replaced.
@@ -2533,6 +2546,22 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
   if (cap && cap.blocker) {
     errors.push(`command 'fast-forward-test' target '${request.target}' carries an unresolved blocker (${cap.blocker.escalation_class}); decision 0009 condition 5 forbids promoting past one`);
   }
+  // Condition 1: gates A and B pass and remain fresh. Absence of a blocker is
+  // not evidence that they passed — it is only the absence of a record that
+  // they did not. The evidence each gate requires is derived from
+  // promotion-gates rather than restated here, and must be present on the
+  // capsule being promoted.
+  if (cap) {
+    const held = new Set(cap.evidence_pointers || []);
+    for (const gate of ((contracts['promotion-gates'] || {}).gates || [])) {
+      if (gate.id !== 'A' && gate.id !== 'B') continue;
+      for (const need of gate.required_evidence || []) {
+        if (!held.has(need)) {
+          errors.push(`command 'fast-forward-test' target '${request.target}' does not carry '${need}', which Gate ${gate.id} requires; decision 0009 condition 1 needs gates A and B shown to have passed, not merely not recorded as failing`);
+        }
+      }
+    }
+  }
 
   if (root) {
     const current = resolveRef(root, ref);
@@ -2541,6 +2570,16 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
     } else {
       if (full(p.rollback_oid) && p.rollback_oid !== current) {
         errors.push(`command 'fast-forward-test' records rollback ${p.rollback_oid.slice(0, 12)} but '${ref}' is at ${current.slice(0, 12)}; the recorded predecessor must be what is actually being replaced`);
+      }
+      // The hosted-verified claim, checked against the ref rather than the
+      // request that makes it.
+      if (devDecl && full(p.hosted_verified_dev_oid)) {
+        const devHead = resolveRef(root, devDecl.ref);
+        if (devHead === null) {
+          errors.push(`command 'fast-forward-test' cannot resolve '${devDecl.ref}' in this checkout, so the hosted-verified claim cannot be checked against it`);
+        } else if (devHead !== p.hosted_verified_dev_oid) {
+          errors.push(`command 'fast-forward-test' claims ${p.hosted_verified_dev_oid.slice(0, 12)} as the hosted-verified '${devDecl.ref}' SHA, but '${devDecl.ref}' is at ${devHead.slice(0, 12)}; the ref is the authority for that, not the request`);
+        }
       }
       if (full(p.target_oid)) {
         if (!commitExists(root, p.target_oid)) {
@@ -2769,6 +2808,17 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   // decision taken against older state, and on a shared ref that is not a
   // formality. If the mutation is refused, nothing is appended — the event
   // would otherwise record a promotion that did not happen.
+  // Everything that can fail is done BEFORE the ref moves, and a failure after
+  // it rolls the ref back. The first version moved the ref and then checked for
+  // an event collision, so a concurrent append or an I/O error could leave
+  // `test` advanced with no event recording the promotion — a ref and a ledger
+  // disagreeing, which is the one state this whole control plane exists to
+  // prevent.
+  const evDir = resolve(root, `events/${ticket}`);
+  mkdirSync(evDir, { recursive: true });
+  const evPath = resolve(evDir, `${id}.json`);
+  if (existsSync(evPath)) return { ok: false, errors: [`event '${id}' already exists; refusing to overwrite an append-only record`], written };
+
   let refMove = null;
   if (action.id === 'fast-forward-test') {
     const bad = fastForwardTestErrors(contracts, rt, request, root);
@@ -2778,14 +2828,19 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     if (!moved.ok) return { ok: false, errors: [moved.error], written };
     refMove = { ref: decl.ref, from: request.params.rollback_oid, to: request.params.target_oid };
     written.push(`ref:refs/heads/${decl.ref}`);
+    try {
+      writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
+    } catch (e) {
+      // Put the ref back. A promotion nobody can read is worse than no
+      // promotion, and the rollback target is the value we just replaced.
+      const undo = fastForwardRef(root, decl.ref, request.params.rollback_oid, request.params.target_oid);
+      return { ok: false, errors: [`event write failed after '${decl.ref}' moved: ${String(e.message || e)}. ${undo.ok ? `'${decl.ref}' was restored to ${request.params.rollback_oid.slice(0, 12)}.` : `RESTORE ALSO FAILED — '${decl.ref}' stands at ${request.params.target_oid.slice(0, 12)} with no event: ${undo.error}`}`], written };
+    }
+    written.push(`events/${ticket}/${id}.json`);
+  } else {
+    writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
+    written.push(`events/${ticket}/${id}.json`);
   }
-
-  const evDir = resolve(root, `events/${ticket}`);
-  mkdirSync(evDir, { recursive: true });
-  const evPath = resolve(evDir, `${id}.json`);
-  if (existsSync(evPath)) return { ok: false, errors: [`event '${id}' already exists; refusing to overwrite an append-only record`], written };
-  writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
-  written.push(`events/${ticket}/${id}.json`);
 
   return { ok: true, errors: [], written, event, transition: move || null, refMove };
 }
@@ -4328,6 +4383,8 @@ export function runSelftest(root = ROOT) {
     expectRuntime('consolidation: an authoriser who is not a declared actor', (rt) => { consolidate(rt, bigTicket, 12).consolidates.authorised_by = 'someone'; }, 'not a declared actor');
     expectRuntime('consolidation: a summary of a summary', (rt) => { consolidate(rt, bigTicket, 12); const e = consolidate(rt, bigTicket, rt.events[bigTicket].length); e.id = `${bigTicket}-9101`; }, 'summaries of summaries');
   }
+  expectRuntime('consolidation: authorised by a seat that is not the declared authority', (rt) => { consolidate(rt, bigTicket, 12).consolidates.authorised_by = 'maker'; }, 'existing is not the same as being allowed');
+
   // ...and the correction of record is unreachable, which is the point.
   expectRuntime('consolidation: a ticket carrying a correction of record', (rt) => { consolidate(rt, 'AS-HD-029', 12); }, 'the history the correction exists to preserve');
 
@@ -4488,17 +4545,30 @@ export function runSelftest(root = ROOT) {
   // checkout carries no local `test` branch, and hardcoding one is the mistake
   // that turned an earlier control red. The repository-dependent refusals run
   // only where the ref is present, and that skip is a reported result.
-  const ffTicket = Object.keys(rt0.capsules).find((t) => !rt0.capsules[t].blocker);
-  const ffHash = ffTicket ? computeCapsuleHash(rt0.capsules[ffTicket]) : null;
+  // No capsule in the live corpus carries all of Gate A and B's evidence, which
+  // is the honest state: nothing is currently promotable to `test`. The control
+  // therefore constructs one rather than pretending a real capsule qualifies —
+  // the alternative is a control that passes because the check it exercises was
+  // never reached.
+  const gateAB = [...new Set(contracts['promotion-gates'].gates.filter((gt) => gt.id === 'A' || gt.id === 'B').flatMap((gt) => gt.required_evidence || []))];
+  const rtFF = baseRt();
+  const ffTicket = Object.keys(rtFF.capsules).find((t) => !rtFF.capsules[t].blocker);
+  if (ffTicket) {
+    const cp = rtFF.capsules[ffTicket];
+    cp.evidence_pointers = [...new Set([...(cp.evidence_pointers || []), ...gateAB])];
+    delete cp.current_hash;
+    cp.current_hash = computeCapsuleHash(cp);
+  }
+  const ffHash = ffTicket ? computeCapsuleHash(rtFF.capsules[ffTicket]) : null;
   const OID = (ch) => ch.repeat(40);
   const ffReq = (params, x = {}) => ({ schema: 'agentops/owner-command-request/v1', action: 'fast-forward-test', actor: 'it-manager-iii', target: ffTicket, expected_current_hash: ffHash, params, ...x });
   const ffEv = ['hosted smoke pass'];
   if (ffTicket) {
     const good = ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv });
-    const ctl = validateCommand(contracts, rt0, good);
+    const ctl = validateCommand(contracts, rtFF, good);
     results.push({ label: 'gate C control: a shape-valid fast-forward is accepted (pure)', pass: ctl.ok, errs: ctl.errors });
     const expectFF = (label, req, needle) => {
-      const res = validateCommand(contracts, rt0, req);
+      const res = validateCommand(contracts, rtFF, req);
       const hit = !res.ok && res.errors.some((e) => e.includes(needle));
       results.push({ label, pass: hit, errs: hit ? [] : res.errors });
     };
@@ -4508,13 +4578,29 @@ export function runSelftest(root = ROOT) {
     expectFF('gate C: an abbreviated target', ffReq({ target_oid: 'a72cac96', hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }), 'full 40-character commit id');
     expectFF('gate C: an unknown params field', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv, force: true }), 'unknown field');
     expectFF('gate C: an unauthenticated actor', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { actor: 'maker' }), 'not authorized');
-    const blockedTicket = Object.keys(rt0.capsules).find((t) => rt0.capsules[t].blocker);
+    const blockedTicket = Object.keys(rtFF.capsules).find((t) => rtFF.capsules[t].blocker);
     if (blockedTicket) {
-      expectFF('gate C: a target carrying an unresolved blocker', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { target: blockedTicket, expected_current_hash: computeCapsuleHash(rt0.capsules[blockedTicket]) }), 'condition 5 forbids promoting past one');
+      expectFF('gate C: a target carrying an unresolved blocker', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { target: blockedTicket, expected_current_hash: computeCapsuleHash(rtFF.capsules[blockedTicket]) }), 'condition 5 forbids promoting past one');
     }
+    // Codex P1: absence of a blocker is not evidence that gates A and B passed.
+    for (const ev of gateAB) {
+      const stripped = baseRt();
+      const cp = stripped.capsules[ffTicket];
+      cp.evidence_pointers = gateAB.filter((x) => x !== ev);
+      delete cp.current_hash; cp.current_hash = computeCapsuleHash(cp);
+      const res = validateCommand(contracts, stripped, { ...ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }), expected_current_hash: computeCapsuleHash(cp) });
+      const hit = !res.ok && res.errors.some((e) => e.includes(`does not carry '${ev}'`));
+      results.push({ label: `gate C: promoting without ${ev}`, pass: hit, errs: hit ? [] : res.errors });
+    }
+    // ...and a corpus with no pr-only integration ref has nothing to check the
+    // hosted-verified claim against.
+    const noDev = { ...contracts, 'git-ownership': { ...contracts['git-ownership'], refs: contracts['git-ownership'].refs.filter((r) => r.mutation !== 'pr-only') } };
+    const noDevRes = validateCommand(noDev, rtFF, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
+    results.push({ label: 'gate C: no pr-only integration ref to check the hosted claim against', pass: !noDevRes.ok && noDevRes.errors.some((e) => e.includes('no pr-only integration ref')), errs: noDevRes.errors });
+
     // ...and the action must not be able to name the ref it moves.
     const noRef = { ...contracts, 'git-ownership': { ...contracts['git-ownership'], refs: contracts['git-ownership'].refs.filter((r) => !/gate-c-fast-forward/i.test(r.mutation || '')) } };
-    const orphan = validateCommand(noRef, rt0, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
+    const orphan = validateCommand(noRef, rtFF, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
     results.push({ label: 'gate C: no declared gate-c ref means nothing to move', pass: !orphan.ok && orphan.errors.some((e) => e.includes('nothing this action may move')), errs: orphan.errors });
 
     // Repository-dependent refusals: the ancestor check and the live-ref checks.
@@ -4526,10 +4612,13 @@ export function runSelftest(root = ROOT) {
       // These four are the repository checks, so they must be validated WITH a
       // checkout — expectFF runs pure, which silently passed them.
       const expectFFRepo = (label, req, needle) => {
-        const res = validateCommand(contracts, rt0, req, { root });
+        const res = validateCommand(contracts, rtFF, req, { root });
         const hit = !res.ok && res.errors.some((e) => e.includes(needle));
         results.push({ label, pass: hit, errs: hit ? [] : res.errors });
       };
+      // Codex P1: the request asserting its own hosted-verified SHA proved
+      // nothing; the ref is the authority.
+      expectFFRepo('gate C: a hosted-verified claim the dev ref contradicts', ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), 'the ref is the authority for that');
       expectFFRepo('gate C: a rollback that is not the ref being replaced', ffReq({ target_oid: head, hosted_verified_dev_oid: head, rollback_oid: OID('b'), evidence: ffEv }), 'must be what is actually being replaced');
       expectFFRepo('gate C: a target this repository does not carry', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: liveRef, evidence: ffEv }), 'not a commit in this repository');
       expectFFRepo('gate C: a move to where the ref already is', ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), 'a command that moves nothing');
