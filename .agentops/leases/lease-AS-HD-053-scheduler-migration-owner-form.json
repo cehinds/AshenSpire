@@ -17,5 +17,5 @@
   ],
   "issued": "2026-08-31T15:10:17Z",
   "expiry": "2026-09-01T15:10:17Z",
-  "revoked": false
+  "revoked": true
 }
