@@ -279,8 +279,10 @@ export function resolveCard(registries, instanceOrRef) {
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
+  const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
+  if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier) return base;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -290,7 +292,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${smithingLevel}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -316,8 +318,41 @@ export function resolveCard(registries, instanceOrRef) {
       ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
     });
   }
+  // Equipment profiles author absolute values, so the generic upgrade delta is
+  // applied after profile/mod projection. This keeps actual play and previews
+  // aligned for equipment-bound basic cards.
+  for (let level = 0; level < smithingLevel; level += 1) {
+    result = applyUpgradeDelta(result, base, mergeUpgrade(base));
+  }
   cache.set(key, result);
   return result;
+}
+
+function applyUpgradeDelta(projected, base, upgraded) {
+  const effects = (projected.effects || []).map((effect) => ({ ...effect }));
+  const baseEffects = base.effects || [];
+  const upgradedEffects = upgraded.effects || [];
+  for (let index = 0; index < upgradedEffects.length; index += 1) {
+    const before = baseEffects[index];
+    const after = upgradedEffects[index];
+    const target = effects[index];
+    if (!before || !after || !target) continue;
+    for (const field of ['amount', 'stacks', 'hits']) {
+      if (typeof before[field] === 'number' && typeof after[field] === 'number' && typeof target[field] === 'number') {
+        target[field] += after[field] - before[field];
+      }
+    }
+  }
+  const result = {
+    ...projected,
+    effects,
+    name: upgraded.name !== base.name ? `${projected.name}+` : projected.name,
+  };
+  if (typeof base.cost === 'number' && typeof upgraded.cost === 'number' && typeof result.cost === 'number') {
+    result.cost += upgraded.cost - base.cost;
+  }
+  if (upgraded.keywords && upgraded.keywords !== base.keywords) result.keywords = [...upgraded.keywords];
+  return deepFreeze(result);
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */

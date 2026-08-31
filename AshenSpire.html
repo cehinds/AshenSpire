@@ -1208,17 +1208,68 @@ button.rs-reset {
 .smith-region-head span { color: var(--muted); }
 .smith-card-list {
   flex: 1 1 auto; min-height: 0; overflow: auto; padding: 18px 16px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
-  align-content: start; justify-items: center; gap: 18px 10px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 15rem));
+  align-content: start; justify-content: start; gap: 18px;
 }
 .smith-candidate-card {
-  transform: scale(0.78) !important; transform-origin: top center;
-  margin-bottom: -4rem; cursor: pointer;
+  cursor: pointer;
 }
 .smith-candidate-card.selected {
   border-color: var(--gold); outline: 3px solid color-mix(in srgb, var(--gold) 68%, transparent);
   outline-offset: 4px; box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.36);
 }
+.smith-weapon-card {
+  position: relative; width: 100%; min-width: 0; min-height: 19rem;
+  display: grid; grid-template-rows: auto minmax(9.5rem, 1fr) auto auto;
+  gap: 0.55rem; padding: 1rem 0.75rem 0.75rem;
+  border: 2px solid #5a5040; border-radius: 10px;
+  background: linear-gradient(#241e15, #1a1510); color: var(--parchment);
+  box-sizing: border-box; transition: box-shadow 140ms, border-color 140ms;
+}
+.smith-weapon-card.rarity-uncommon { border-color: var(--frost); }
+.smith-weapon-card.rarity-rare { border-color: var(--gold); }
+.smith-weapon-count {
+  position: absolute; z-index: 2; top: -0.8rem; left: -0.8rem;
+  width: 2.8rem; height: 2.8rem; display: grid; place-items: center;
+  border: 2px solid var(--gold); border-radius: 50%; background: #1c1610;
+  color: var(--parchment); font-size: 1.25rem; font-weight: 700;
+}
+.smith-weapon-name {
+  min-height: 2.5rem; padding: 0 1.35rem; display: grid; place-items: center;
+  color: var(--gold); font-family: var(--font-display); font-size: 1.15rem;
+  line-height: 1.15; text-align: center;
+}
+.smith-weapon-art {
+  min-height: 9.5rem; display: grid; place-items: center; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 6px; background: #14100c;
+}
+.smith-weapon-art img { width: 94%; height: 94%; display: block; object-fit: contain; }
+.smith-weapon-type {
+  padding: 0.3rem 0; border-radius: 4px;
+  background: color-mix(in srgb, var(--gold) 15%, #2a241c); color: var(--gold);
+  font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 3px; text-align: center;
+}
+.smith-weapon-tags {
+  min-height: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center;
+  align-content: end; gap: 0.3rem;
+}
+.smith-weapon-tags em {
+  padding: 0.15rem 0.4rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  color: var(--muted); font-size: 0.78rem; font-style: normal; line-height: 1;
+}
+.smith-preview-economy { display: flex; justify-content: space-between; gap: 8px; color: var(--parchment); }
+.smith-preview-economy b { color: var(--gold); }
+.smith-preview-delta { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+.smith-preview-delta small { color: var(--muted); text-transform: uppercase; }
+.smith-preview-delta span { grid-column: 1 / -1; color: var(--parchment); }
+.smith-preview-shortfall { padding: 8px; border: 1px solid var(--danger); border-radius: 6px; color: var(--danger); }
+.armoury-smithing-receipt, .coop-smithing-receipts {
+  display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--gold);
+  border-radius: 6px; background: color-mix(in srgb, var(--panel) 92%, transparent);
+  color: var(--parchment);
+}
+.armoury-smithing-receipt b, .coop-smithing-receipts b { color: var(--gold); }
+.coop-smithing-receipts { margin: 8px auto; width: min(92vw, 64rem); }
 .smith-preview-region {
   display: flex; align-items: center; justify-content: center; overflow: auto;
   padding: 20px; background: color-mix(in srgb, var(--panel) 72%, transparent);
@@ -1246,14 +1297,19 @@ button.rs-reset {
   .smith-upgrade-modal { width: 98%; height: 92%; max-height: 92%; }
   .smith-modal-head { padding: 10px 12px; gap: 8px; }
   .smith-modal-consequence { padding: 4px 6px; font-size: 0.68rem; }
-  .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .smith-candidate-region { border-right: 0; border-bottom: 1px solid var(--line); }
   .smith-card-list {
-    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-    padding: 14px 8px; gap: 12px 4px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 14px 10px; gap: 12px;
   }
-  .smith-candidate-card { transform: scale(0.68) !important; margin-bottom: -6rem; }
-  .smith-preview-region { max-height: 15rem; padding: 10px 12px; }
+  .smith-weapon-card { min-height: 15rem; grid-template-rows: auto minmax(7rem, 1fr) auto auto; padding: 0.75rem 0.5rem 0.55rem; }
+  .smith-weapon-name { min-height: 2.15rem; padding-inline: 1rem; font-size: 1rem; }
+  .smith-weapon-art { min-height: 7rem; }
+  .smith-weapon-count { top: -0.65rem; left: -0.65rem; width: 2.35rem; height: 2.35rem; font-size: 1.05rem; }
+  .smith-weapon-tags { min-height: 1.25rem; gap: 0.2rem; }
+  .smith-weapon-tags em { padding: 0.12rem 0.3rem; font-size: 0.68rem; }
+  .smith-preview-region { max-height: none; align-items: start; padding: 10px 12px; }
   .smith-preview-card, .smith-preview-empty { gap: 7px; padding: 10px 12px; }
   .smith-modal-footer { align-items: stretch; flex-direction: column; gap: 8px; padding: 8px 10px; }
   .smith-modal-footer p { font-size: 0.9rem; }
@@ -3495,6 +3551,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
+#cz-equipment-receipts, .armoury-equipment-receipts { font-size: max(13px, 1em); }
+#cz-equipment-receipts small, .armoury-equipment-receipts small { font-size: max(13px, 0.84em); line-height: 1.35; }
+.armoury-stats-summary > .armoury-equipment-receipts { grid-column: 1 / -1; }
+@media (max-width: 700px) {
+  .armoury-equipment-receipts, .armoury-equipment-receipts * { min-width: 0; overflow-wrap: anywhere; }
+  .armoury-equipment-receipts .equip-role-receipts > div { grid-template-columns: minmax(0, 1fr); }
+  .armoury-equipment-receipts .equip-role-receipts small { grid-column: 1; }
+  .equipmentReceiptsCard .character-info-label { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+}
 
 /* ---------- ATTRIBUTES & RESOURCES — a label and its value are a PAIR --------
    Both screens that print `model/statProjection` — the Armoury strip and the
@@ -7701,6 +7766,7 @@ const { validateContent } = require("src/model/validate.js");
 const { createRegistries } = require("src/model/registries.js");
 const { createRunState, createDeck, createIdGen } = require("src/model/state.js");
 const { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } = require("src/model/loadout.js");
+const { grantSmithingReward, smithingPlan } = require("src/model/smithing.js");
 const { recordProgress, evaluateUnlocks } = require("src/model/unlocks.js");
 const { recordArmamentDiscovery } = require("src/model/startingKits.js");
 const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
@@ -8591,7 +8657,9 @@ function resumeRun(slot = 1) {
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
-  if (run.combatEntered && run.combatEntered.encounterId) {
+  if (run.pendingReward) {
+    mountPendingReward();
+  } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
@@ -9007,9 +9075,9 @@ function collectArmament(id, source) {
       saves.saveMeta(recorded.meta);
     }
   }
-  // The reward row may say Taken only after both ownership homes and the
-  // resumable run agree. This is the production collector's commit boundary.
-  persist();
+  // The reward screen persists this mutation together with its Taken state.
+  // Saving inside this collector would create an interruption window where
+  // storage changed but the resumable reward checkpoint still said pending.
   return true;
 }
 
@@ -9236,6 +9304,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
+      armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -9385,6 +9454,16 @@ function onCombatEnd(result, combat, enc) {
 
   run.stats.fightsWon += 1;
   run.combatEntered = null;
+  const smithingStoneReceipt = grantSmithingReward(
+    registries,
+    run,
+    enc.pool,
+    `combat:${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}:${enc.pool}`,
+  );
+  // The Stone, its idempotent claim, the cleared combat receipt, every RNG
+  // counter used to roll the offer, and the offer itself cross one persistence
+  // boundary below. A reload therefore resumes the reward menu instead of
+  // losing either the Stone or the other spoils.
 
   if (enc.pool === 'boss') {
     run.bossesBeaten = run.bossesBeaten || [];
@@ -9409,17 +9488,9 @@ function onCombatEnd(result, combat, enc) {
       cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
+      smithingStoneReceipt,
     };
-    return mountRewards(app, {
-      registries,
-      run,
-      saves,
-      rng,
-      onCollectArmament: (id) => collectArmament(id, 'boss'),
-      onPersist: persist,
-      rewards: bossRewards,
-      onDone: () => { rewardDoneCount++; advanceAct(); },
-    });
+    return beginPendingReward(bossRewards, { source: 'boss', after: 'advanceAct' });
   }
 
   const rewards = {
@@ -9432,19 +9503,45 @@ function onCombatEnd(result, combat, enc) {
     // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
     // no-op there rather than a hidden 0%).
     armamentId: rollDrop(enc.pool),
+    smithingStoneReceipt,
   };
-  mountRewards(app, {
+  beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+}
+
+function beginPendingReward(rewards, { source, after }) {
+  run.pendingReward = {
+    schemaVersion: 1,
+    source,
+    after,
+    rewards: structuredClone(rewards),
+    states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
+    chosenCardId: null,
+  };
+  persist();
+  return mountPendingReward();
+}
+
+function mountPendingReward() {
+  const checkpoint = run.pendingReward;
+  if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
+  return mountRewards(app, {
     registries,
     run,
     saves,
     rng,
-    onCollectArmament: (id) => collectArmament(id, enc.pool),
+    rewards: checkpoint.rewards,
+    checkpoint,
+    onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
-    rewards,
     onDone: () => {
+      const after = checkpoint.after;
+      delete run.pendingReward;
       rewardDoneCount++;
-      persist();
-      showMap();
+      if (after === 'advanceAct') advanceAct();
+      else {
+        persist();
+        showMap();
+      }
     },
   });
 }
@@ -9732,7 +9829,36 @@ function coopRewardShot() {
   };
 }
 function coopShrineShot() {
-  return { actNumber: 1, floor: 5, seedString: 'SHOWCASE', endless: false, scene: { kind: 'shrine', done: {} }, party: coopShotParty() };
+  // A real host-authored Smithing view, not a hand-built client fixture. The
+  // ephemeral shot run crosses the same creation/stamping door as play, owns
+  // exactly one Stone, and the modal receives the host plan it would receive
+  // over the session wire. Confirm still sends intent only through the stub.
+  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
+  run.smithingStones = 1;
+  const party = coopShotParty();
+  party[0] = {
+    ...party[0],
+    classId: run.class,
+    hp: run.hp,
+    maxHp: run.maxHp,
+    cinders: run.cinders,
+    smithingStones: run.smithingStones,
+    armamentLevels: { ...run.armamentLevels },
+    deckSize: run.deck.length,
+  };
+  return {
+    actNumber: 1,
+    floor: 5,
+    seedString: 'SHOWCASE',
+    endless: false,
+    scene: {
+      kind: 'shrine',
+      done: {},
+      smithing: { p1: smithingPlan(registries, run) },
+      receipts: {},
+    },
+    party,
+  };
 }
 function coopCatchupShot() {
   const party = coopShotParty();
@@ -9782,10 +9908,12 @@ if (shotState) {
   // own loadMeta and the live run, never a copy. The map slice is the drive's
   // door finder: it needs a real treasure node to click, and the graph is run
   // state. Read-only, shot boots only; a player never has it.
-  window.__spoils = () => ({
+  window.__spoils = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    return {
     found: [...((saves.loadMeta() || {}).found || [])],
     storage: [...(((run || {}).loadout || {}).storage || [])],
-    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
+    savedStorage: [...((((saved || {}).loadout || {}).storage) || [])],
     // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
     // 'showcase', in which recordArmamentDiscovery deliberately writes no
     // receipt — so through this door the count is structurally 0 and proves
@@ -9793,12 +9921,17 @@ if (shotState) {
     // because found and receipts ride the same gated saveMeta.
     receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
     liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
-    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saved || {}).deck || [])].map((card) => card.cardId),
+    smithingStones: run?.smithingStones ?? null,
+    savedSmithingStones: saved?.smithingStones ?? null,
+    pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
+    savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
       : [],
-  });
+    };
+  };
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -10017,6 +10150,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // deck the bug was reproduced on.
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    // `?shotSmithingStones=0|1` — stand on both sides of the Smith affordability
+    // edge without writing durable storage. The accepted values are deliberately
+    // closed to the owner-approved issue #211 economy: this reach door cannot
+    // pose a purse the shipped faucet/cost table cannot currently produce.
+    const shotSmithingStonesRaw = shotParams.get('shotSmithingStones');
+    if (shotSmithingStonesRaw != null) {
+      const shotSmithingStones = Number(shotSmithingStonesRaw);
+      if (!Number.isInteger(shotSmithingStones) || ![0, 1].includes(shotSmithingStones)) {
+        throw new Error(`?shotSmithingStones=${shotSmithingStonesRaw}: expected exactly 0 or 1. A silent fallback would photograph the wrong affordability state.`);
+      }
+      run.smithingStones = shotSmithingStones;
+    }
     // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
     // already states about its own remove grid: a fresh run holds 0 cinders, so
     // the Level up panel this state now has to reach mounts LOCKED, and a
@@ -10069,6 +10214,9 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // ids came from. tools/reward-collect-drive.mjs exercises the real
     // rollDrop → mountRewards door; this pose is for photographs.
     const pose = shotParams.get('shotReward') || 'full';
+    const smithingStoneReceipt = pose === 'empty'
+      ? null
+      : grantSmithingReward(registries, run, 'elite', 'shot:reward');
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,
@@ -10076,14 +10224,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
       flaskId: 'crimsonFlask',
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
+      smithingStoneReceipt,
     };
-    mountRewards(app, {
-      registries, run, saves, rng,
-      onCollectArmament: (id) => collectArmament(id, 'showcase'),
-      onPersist: persist,
-      rewards: shotOffer,
-      onDone: () => { rewardDoneCount++; showMap(); },
-    });
+    if (pose === 'pending') {
+      beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
+      // Cross the ordinary load door in the same ephemeral shot store. This is
+      // the interruption/reload proof: the mounted row below comes from saved
+      // pendingReward bytes, not the just-rolled local object.
+      resumeRun(activeSlot);
+    } else {
+      mountRewards(app, {
+        registries, run, saves, rng,
+        onCollectArmament: (id) => collectArmament(id, 'showcase'),
+        onPersist: persist,
+        rewards: shotOffer,
+        onDone: () => { rewardDoneCount++; showMap(); },
+      });
+    }
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
     // four POOL doors (which sit above the shot branches, right after newRun,
@@ -10382,6 +10539,14 @@ const balance = {
   },
 
   shrine: { healPct: 35 },
+
+  // Smithing promotes the owned armament, not one card copy. The model owns
+  // the transaction; balance owns the tier ceiling, price, and reward faucet.
+  smithing: {
+    maxArmamentLevel: 1,
+    costByNextLevel: { 1: 1 },
+    rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
+  },
 
   // ---- canonical hidden level semantics (#237) ---------------------------
   //
@@ -16562,8 +16727,57 @@ const events = [
   },
 ];
 
+// Stable history ids live beside event content without widening the validated
+// event opcode schema. Labels may change; these ids are durable save facts.
+const eventChoiceIds = Object.freeze({
+  goldboughAvatar: ['offerCard', 'pray', 'leave'],
+  abandonedCart: ['lootStrongbox', 'leave'],
+  weepingPilgrim: ['giveCinders', 'refuse'],
+  bloodstainedAltar: ['offerBlood', 'leave'],
+  wanderingPhysician: ['procedure', 'patch', 'leave'],
+  goldenMoth: ['gatherCinders', 'keepVigil', 'leave'],
+  feralShrine: ['takeOffering', 'leave'],
+  ancientRuneStone: ['studyStone', 'smashStone', 'leave'],
+  graveOfTheNameless: ['digForCinders', 'payRespects', 'leave'],
+  sleepingSmith: ['takeBlade', 'wakeSmith', 'leave'],
+  wyrmTrial: ['enterRing', 'circleRing', 'leave'],
+  discardedReliquary: ['takeCurse', 'burnPack', 'leave'],
+  omensAltar: ['acceptGaze', 'shatterAltar', 'leave'],
+  rotPriestOffer: ['acceptBlessing', 'robPriest', 'leave'],
+  handspiderNest: ['snatchStrongbox', 'backAway'],
+  fadedGrace: ['warmYourself', 'temperBlade', 'leave'],
+  merchantsGhost: ['payInKind', 'stealRelic', 'leave'],
+  cinderbearDen: ['takeHoard', 'skimEdges', 'leave'],
+  stakeOfTheMartyr: ['makeOffering', 'leave'],
+  twoFingersRiddle: ['sharpen', 'mend', 'leave'],
+});
 
-Object.assign(module.exports, { events });
+// The merchant will not trade with a traveler who previously looted the
+// abandoned cart. Stealing remains available, and Leave is deliberately
+// requirement-free so this history branch can never trap the player.
+const eventChoiceHistoryRequirements = Object.freeze({
+  merchantsGhost: [
+    { none: [{ eventId: 'abandonedCart', choiceId: 'lootStrongbox' }] },
+    undefined,
+    undefined,
+  ],
+});
+
+/** Enrich validated event choices with their durable history contract. */
+function eventChoicesWithHistory(event) {
+  const ids = eventChoiceIds[event?.id];
+  if (!event || !Array.isArray(event.choices) || !Array.isArray(ids)
+    || ids.length !== event.choices.length) return [];
+  const requirements = eventChoiceHistoryRequirements[event.id] || [];
+  return event.choices.map((choice, index) => ({
+    ...choice,
+    id: ids[index],
+    requiresHistory: requirements[index],
+  }));
+}
+
+
+Object.assign(module.exports, { events, eventChoiceIds, eventChoiceHistoryRequirements, eventChoicesWithHistory });
 
 },
 "src/content/classes.js": function (module, exports, require) {
@@ -20740,7 +20954,7 @@ const characterCreation = {
       "id": "whetstoneMemory",
       "name": "Whetstone Memory",
       "icon": "🪨",
-      "desc": "Begin with one Strike already upgraded.",
+      "desc": "Begin with one armament already Smithed, improving all of its sourced basic cards.",
       "effects": [
         {
           "op": "upgradeCard",
@@ -20801,6 +21015,7 @@ const { startingKitProblems } = require("src/model/startingKits.js");
 const { armouryUiProblems } = require("src/model/equipmentUi.js");
 const { characterCreationProblems } = require("src/model/characterCreation.js");
 const { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } = require("src/model/levels.js");
+const { normalizeSmithingRules } = require("src/model/smithingRules.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -21022,6 +21237,11 @@ function validateContent(bundle) {
   }
   const flaskCapacity = b.balance && b.balance.flaskCapacity;
   if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
+  try {
+    normalizeSmithingRules(b.balance && b.balance.smithing);
+  } catch (error) {
+    err('balance.smithing', error?.message || 'must be a complete Smithing economy block');
+  }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
@@ -28825,6 +29045,56 @@ function levelScalingReceipt(spec) {
 Object.assign(module.exports, { ENCOUNTER_LEVEL_SEAM, LEVEL_SCALING_ROUNDING, ENEMY_SCALING_STATS, levelBandProblems, levelConfigProblems, enemyLevelProfileProblems, playerLevel, resolveEnemyLevel, levelScalingReceipt });
 
 },
+"src/model/smithingRules.js": function (module, exports, require) {
+// Dependency-free validation for the balance-owned Smithing economy.
+// Both the content boot door and the runtime transaction model consume this
+// one normalizer, so malformed authoring cannot pass boot and fail later.
+
+function ownObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} must be an object`);
+  return value;
+}
+
+function integer(value, label, { minimum = 0 } = {}) {
+  if (!Number.isInteger(value) || value < minimum) throw new Error(`${label} must be an integer >= ${minimum}`);
+  return value;
+}
+
+/** Validate and freeze the balance-owned Smithing rules. */
+function normalizeSmithingRules(raw) {
+  const source = ownObject(raw, 'smithing rules');
+  const maxArmamentLevel = integer(source.maxArmamentLevel, 'smithing.maxArmamentLevel', { minimum: 1 });
+  const costs = ownObject(source.costByNextLevel, 'smithing.costByNextLevel');
+  const rewards = ownObject(source.rewardByPool, 'smithing.rewardByPool');
+  const costByNextLevel = {};
+  for (let level = 1; level <= maxArmamentLevel; level += 1) {
+    const value = costs[level];
+    integer(value, `smithing.costByNextLevel.${level}`, { minimum: 1 });
+    costByNextLevel[level] = value;
+  }
+  for (const key of Object.keys(costs)) {
+    if (!/^\d+$/.test(key) || Number(key) < 1 || Number(key) > maxArmamentLevel) {
+      throw new Error(`smithing.costByNextLevel.${key}: level is outside 1..${maxArmamentLevel}`);
+    }
+  }
+  const rewardByPool = {};
+  for (const pool of ['normal', 'elite', 'boss', 'treasure']) {
+    rewardByPool[pool] = integer(rewards[pool], `smithing.rewardByPool.${pool}`);
+  }
+  for (const key of Object.keys(rewards)) {
+    if (!Object.hasOwn(rewardByPool, key)) throw new Error(`smithing.rewardByPool.${key}: unknown pool`);
+  }
+  return Object.freeze({
+    maxArmamentLevel,
+    costByNextLevel: Object.freeze(costByNextLevel),
+    rewardByPool: Object.freeze(rewardByPool),
+  });
+}
+
+
+Object.assign(module.exports, { normalizeSmithingRules });
+
+},
 "src/model/registries.js": function (module, exports, require) {
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -29107,8 +29377,10 @@ function resolveCard(registries, instanceOrRef) {
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
+  const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
+  if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier) return base;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -29118,7 +29390,7 @@ function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${smithingLevel}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -29144,8 +29416,41 @@ function resolveCard(registries, instanceOrRef) {
       ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
     });
   }
+  // Equipment profiles author absolute values, so the generic upgrade delta is
+  // applied after profile/mod projection. This keeps actual play and previews
+  // aligned for equipment-bound basic cards.
+  for (let level = 0; level < smithingLevel; level += 1) {
+    result = applyUpgradeDelta(result, base, mergeUpgrade(base));
+  }
   cache.set(key, result);
   return result;
+}
+
+function applyUpgradeDelta(projected, base, upgraded) {
+  const effects = (projected.effects || []).map((effect) => ({ ...effect }));
+  const baseEffects = base.effects || [];
+  const upgradedEffects = upgraded.effects || [];
+  for (let index = 0; index < upgradedEffects.length; index += 1) {
+    const before = baseEffects[index];
+    const after = upgradedEffects[index];
+    const target = effects[index];
+    if (!before || !after || !target) continue;
+    for (const field of ['amount', 'stacks', 'hits']) {
+      if (typeof before[field] === 'number' && typeof after[field] === 'number' && typeof target[field] === 'number') {
+        target[field] += after[field] - before[field];
+      }
+    }
+  }
+  const result = {
+    ...projected,
+    effects,
+    name: upgraded.name !== base.name ? `${projected.name}+` : projected.name,
+  };
+  if (typeof base.cost === 'number' && typeof upgraded.cost === 'number' && typeof result.cost === 'number') {
+    result.cost += upgraded.cost - base.cost;
+  }
+  if (upgraded.keywords && upgraded.keywords !== base.keywords) result.keywords = [...upgraded.keywords];
+  return deepFreeze(result);
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */
@@ -30753,6 +31058,17 @@ function stampDeck(registries, run, cards, {
       if (inst.equipmentRole !== 'attack') inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };
+      const sourceArmamentId = row.piece && row.piece.id;
+      if (sourceArmamentId) {
+        inst.sourceArmamentId = sourceArmamentId;
+        inst.smithingLevel = (run.armamentLevels && run.armamentLevels[sourceArmamentId]) || 0;
+        // Equipment-bound basics derive their upgrade from the source piece.
+        // Per-copy flags remain authoritative only for ordinary cards.
+        inst.upgraded = false;
+      } else {
+        delete inst.sourceArmamentId;
+        delete inst.smithingLevel;
+      }
     }
     let carrier;
     if (row && row.profile) {
@@ -31641,6 +31957,9 @@ function createRunState({
     equipmentPoolBonuses,
     equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
+    smithingStones: 0,
+    armamentLevels: {},
+    smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [startingRelic.id],
@@ -32016,6 +32335,11 @@ const RUN_SHAPE = [
   { key: 'energyMax', type: 'number', optional: true },
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
+  { key: 'smithingStones', type: 'number', optional: true },
+  { key: 'armamentLevels', type: 'object', optional: true },
+  { key: 'smithingRewardClaims', type: 'array', optional: true },
+  { key: 'lastSmithingReceipt', type: 'object', optional: true },
+  { key: 'pendingReward', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -32102,6 +32426,62 @@ function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger
   for (const key of ['levelUps', 'levelPoints']) {
     if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
       problems.push(`${key} must be a non-negative integer`);
+    }
+  }
+  if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
+    problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
+    for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
+      if (!pieceId || !Number.isInteger(level) || level < 0) {
+        problems.push(`armamentLevels.${pieceId || '<empty>'} must be a non-negative integer`);
+      }
+    }
+  }
+  if (run.smithingRewardClaims !== undefined && Array.isArray(run.smithingRewardClaims)) {
+    const seenClaims = new Set();
+    for (const rewardId of run.smithingRewardClaims) {
+      if (typeof rewardId !== 'string' || !rewardId || seenClaims.has(rewardId)) {
+        problems.push('smithingRewardClaims must contain unique non-empty strings');
+      }
+      seenClaims.add(rewardId);
+    }
+  }
+  if (run.pendingReward !== undefined) {
+    const pending = run.pendingReward;
+    if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
+      problems.push('pendingReward must be an object when present');
+    } else {
+      if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
+      if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
+      if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
+        problems.push('pendingReward.rewards must be an object');
+      }
+      if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
+        problems.push('pendingReward.states must be an object');
+      } else {
+        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
+        for (const [kind, state] of Object.entries(pending.states)) {
+          if (!rewardKinds.includes(kind) || !['taken', 'skipped'].includes(state)) {
+            problems.push(`pendingReward.states.${kind || '<empty>'} must be taken or skipped for a known reward kind`);
+          }
+        }
+      }
+      if (pending.chosenCardId !== null && pending.chosenCardId !== undefined
+          && (typeof pending.chosenCardId !== 'string' || !pending.chosenCardId)) {
+        problems.push('pendingReward.chosenCardId must be null or a non-empty string');
+      }
+      const cardIds = Array.isArray(pending.rewards?.cardIds) ? pending.rewards.cardIds : [];
+      if (pending.chosenCardId && !cardIds.includes(pending.chosenCardId)) {
+        problems.push('pendingReward.chosenCardId must belong to pendingReward.rewards.cardIds');
+      }
+      if (pending.states?.card === 'taken' && !pending.chosenCardId) {
+        problems.push('pendingReward card Taken state requires chosenCardId');
+      }
+      if (pending.chosenCardId && pending.states?.card !== 'taken') {
+        problems.push('pendingReward chosenCardId requires card Taken state');
+      }
     }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
@@ -32472,6 +32852,14 @@ function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
+  if (snapshot.armamentLevels !== undefined) {
+    if (!record(snapshot.armamentLevels)) problems.push('armamentLevels must be an object');
+    else for (const [pieceId, level] of Object.entries(snapshot.armamentLevels)) {
+      if (!nonEmptyString(pieceId) || !Number.isInteger(level) || level < 0) {
+        problems.push(`armamentLevels.${pieceId || '<empty>'} must be a non-negative integer`);
+      }
+    }
+  }
   if (!record(snapshot.equipmentPoolDeficits)) problems.push('equipmentPoolDeficits must be an object');
   if (snapshot.loadout !== null && !record(snapshot.loadout)) problems.push('loadout must be an object or null');
   if (snapshot.attributes !== null && !record(snapshot.attributes)) problems.push('attributes must be an object or null');
@@ -32625,6 +33013,276 @@ const COMBAT_SNAPSHOT_PILES = SNAPSHOT_PILES;
 
 
 Object.assign(module.exports, { COMBAT_SNAPSHOT_VERSION, combatSnapshotProblems, assertCombatSnapshot, combatSnapshotReferenceProblems, COMBAT_SNAPSHOT_PHASES, COMBAT_SNAPSHOT_RESULTS, COMBAT_SNAPSHOT_PILES });
+
+},
+"src/model/smithing.js": function (module, exports, require) {
+// Smithing is a run-owned transaction over an armament, never a card copy.
+// The caller supplies the balance block so this model does not become a second
+// home for economy tuning. Equipment projection is resolved first; the generic
+// card upgrade delta is then applied to that projection.
+
+const { resolveCard } = require("src/model/registries.js");
+const { carriedIds, equipmentRoleSource } = require("src/model/loadout.js");
+const { normalizeSmithingRules } = require("src/model/smithingRules.js");
+
+
+
+const SMITHING_ROLES = Object.freeze(['attack', 'guard', 'technique']);
+const SMITHING_SCHEMA_VERSION = 1;
+
+function ownObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} must be an object`);
+  return value;
+}
+
+function integer(value, label, { minimum = 0 } = {}) {
+  if (!Number.isInteger(value) || value < minimum) throw new Error(`${label} must be an integer >= ${minimum}`);
+  return value;
+}
+
+function rulesFor(registries, explicit) {
+  return normalizeSmithingRules(explicit || registries?.balance?.smithing);
+}
+
+function armamentById(registries, id) {
+  return (registries?.equipment?.armaments || []).find((piece) => piece && piece.id === id) || null;
+}
+
+function instanceSourceId(registries, run, instance) {
+  for (const key of ['sourceArmamentId', 'armamentId', 'weaponId']) {
+    if (instance && instance[key] != null) {
+      const id = String(instance[key]);
+      if (!armamentById(registries, id)) throw new Error(`Unknown source armament '${id}'`);
+      return id;
+    }
+  }
+  if (!instance || !SMITHING_ROLES.includes(instance.equipmentRole)) return null;
+  const row = equipmentRoleSource(registries, run.loadout, run.class, instance.equipmentRole);
+  return row.piece ? row.piece.id : null;
+}
+
+/** Return the stable armament that owns an equipment-bound basic instance. */
+function sourceArmamentId(registries, run, instance) {
+  const id = instanceSourceId(registries, run, instance);
+  return id && armamentById(registries, id) ? id : null;
+}
+
+function sourceCards(registries, run, pieceId, cards = run.deck || []) {
+  return cards.filter((instance) => sourceArmamentId(registries, run, instance) === pieceId);
+}
+
+function effectsReceipt(def) {
+  return (def.effects || []).map((effect) => ({ ...effect }));
+}
+
+/** Resolve the actual before/after values for one sourced basic card. */
+function smithingCardReceipt(registries, run, instance, nextLevel = 0) {
+  const pieceId = sourceArmamentId(registries, run, instance);
+  if (!pieceId) return null;
+  const before = resolveCard(registries, { ...instance, upgraded: false, smithingLevel: 0 });
+  const after = resolveCard(registries, { ...instance, upgraded: false, smithingLevel: nextLevel });
+  return Object.freeze({
+    instanceId: instance.instanceId,
+    cardId: instance.cardId,
+    role: instance.equipmentRole,
+    sourceArmamentId: pieceId,
+    name: after.name,
+    reference: Object.freeze({
+      ...instance,
+      ...(Array.isArray(instance.mods) ? { mods: Object.freeze([...instance.mods]) } : {}),
+      upgraded: false,
+      smithingLevel: nextLevel > 0 ? nextLevel - 1 : 0,
+    }),
+    before: effectsReceipt(before),
+    after: effectsReceipt(after),
+    changes: effectsReceipt(after).map((effect, index) => ({
+      op: effect?.op,
+      before: before.effects?.[index]?.amount ?? before.effects?.[index]?.stacks ?? null,
+      after: effect?.amount ?? effect?.stacks ?? null,
+    })),
+  });
+}
+
+function stoneBalance(run) {
+  const value = run?.smithingStones == null ? 0 : run.smithingStones;
+  return integer(value, 'run.smithingStones');
+}
+
+function levels(run) {
+  if (run?.armamentLevels == null) return {};
+  const map = ownObject(run.armamentLevels, 'run.armamentLevels');
+  for (const [id, level] of Object.entries(map)) integer(level, `run.armamentLevels.${id}`);
+  return map;
+}
+
+function validateLastReceipt(registries, run, rules) {
+  if (run.lastSmithingReceipt == null) return;
+  const receipt = ownObject(run.lastSmithingReceipt, 'run.lastSmithingReceipt');
+  if (typeof receipt.armamentId !== 'string' || !armamentById(registries, receipt.armamentId)) {
+    throw new Error(`run.lastSmithingReceipt.armamentId '${receipt.armamentId}' is unknown`);
+  }
+  for (const key of ['beforeLevel', 'afterLevel', 'cost', 'stoneBalanceBefore', 'stoneBalanceAfter']) {
+    integer(receipt[key], `run.lastSmithingReceipt.${key}`);
+  }
+  if (receipt.afterLevel !== receipt.beforeLevel + 1 || receipt.afterLevel > rules.maxArmamentLevel) {
+    throw new Error('run.lastSmithingReceipt levels do not describe one valid Smithing promotion');
+  }
+  if (typeof receipt.free !== 'boolean') throw new Error('run.lastSmithingReceipt.free must be boolean');
+  const expectedCost = receipt.free ? 0 : rules.costByNextLevel[receipt.afterLevel];
+  if (receipt.cost !== expectedCost
+      || receipt.stoneBalanceBefore - receipt.stoneBalanceAfter !== receipt.cost) {
+    throw new Error('run.lastSmithingReceipt cost/balance does not describe its Smithing transaction');
+  }
+  if (!Array.isArray(receipt.affectedCards) || !receipt.affectedCards.length) {
+    throw new Error('run.lastSmithingReceipt.affectedCards must be a non-empty array');
+  }
+}
+
+/** Stable, distinct armament choices with all affected card receipts. */
+function smithingPlan(registries, run, explicitRules = undefined) {
+  const rules = rulesFor(registries, explicitRules);
+  const levelMap = levels(run);
+  for (const [pieceId, level] of Object.entries(levelMap)) {
+    if (!armamentById(registries, pieceId)) throw new Error(`Unknown run.armamentLevels armament '${pieceId}'`);
+    if (level > rules.maxArmamentLevel) throw new Error(`run.armamentLevels.${pieceId} exceeds max level ${rules.maxArmamentLevel}`);
+  }
+  const stones = stoneBalance(run);
+  const inventory = carriedIds(run.loadout);
+  const seen = new Set();
+  const candidates = [];
+  for (const instance of run.deck || []) {
+    const pieceId = sourceArmamentId(registries, run, instance);
+    if (!pieceId || seen.has(pieceId)) continue;
+    seen.add(pieceId);
+    const piece = armamentById(registries, pieceId);
+    const currentLevel = levelMap[pieceId] || 0;
+    if (currentLevel >= rules.maxArmamentLevel) continue;
+    const nextLevel = currentLevel + 1;
+    const cost = rules.costByNextLevel[nextLevel];
+    const affectedCards = sourceCards(registries, run, pieceId)
+      .map((card) => smithingCardReceipt(registries, run, card, nextLevel))
+      .filter((card) => card.changes.some((change) => change.before !== change.after));
+    if (!affectedCards.length) continue;
+    const shortfall = Math.max(0, cost - stones);
+    candidates.push(Object.freeze({
+      armamentId: pieceId,
+      armamentName: piece.name,
+      currentLevel,
+      nextLevel,
+      cost,
+      stones,
+      shortfall,
+      affordable: shortfall === 0,
+      inventoryCount: inventory.filter((id) => id === pieceId).length,
+      affectedCards: Object.freeze(affectedCards),
+    }));
+  }
+  return Object.freeze({ schemaVersion: SMITHING_SCHEMA_VERSION, stones, candidates: Object.freeze(candidates) });
+}
+
+/** Add stable source/tier carriers to deck or hand instances after promotion. */
+function restampSmithingCards(registries, run, cards = run.deck || []) {
+  for (const instance of cards) {
+    const pieceId = sourceArmamentId(registries, run, instance);
+    if (!pieceId) continue;
+    instance.sourceArmamentId = pieceId;
+    instance.smithingLevel = levels(run)[pieceId] || 0;
+    instance.upgraded = false;
+  }
+  return cards;
+}
+
+/** Host-side, revalidated Smith commit. `free` is for event/keepsake grants. */
+function commitSmithing(registries, run, armamentId, explicitRules = undefined, { free = false, cards = undefined } = {}) {
+  const plan = smithingPlan(registries, run, explicitRules);
+  const candidate = plan.candidates.find((row) => row.armamentId === armamentId);
+  if (!candidate) throw new Error(`Armament '${armamentId}' is not an eligible Smithing candidate`);
+  if (!free && !candidate.affordable) throw new Error(`Insufficient Smithing Stones (shortfall ${candidate.shortfall})`);
+  const beforeStones = plan.stones;
+  run.smithingStones = free ? beforeStones : beforeStones - candidate.cost;
+  run.armamentLevels = { ...levels(run), [armamentId]: candidate.nextLevel };
+  restampSmithingCards(registries, run, cards || run.deck || []);
+  const receipt = Object.freeze({
+    schemaVersion: SMITHING_SCHEMA_VERSION,
+    armamentId,
+    armamentName: candidate.armamentName,
+    beforeLevel: candidate.currentLevel,
+    afterLevel: candidate.nextLevel,
+    cost: free ? 0 : candidate.cost,
+    stoneBalanceBefore: beforeStones,
+    stoneBalanceAfter: run.smithingStones,
+    free,
+    affectedCards: candidate.affectedCards,
+  });
+  // The transaction's durable read-back. Solo Armoury/map and every co-op
+  // snapshot project this same receipt; presentation never reconstructs what
+  // was spent or which cards moved from current mutable state.
+  run.lastSmithingReceipt = receipt;
+  return receipt;
+}
+
+/** Grant the balance-owned faucet exactly once for a resolved reward. */
+function grantSmithingReward(registries, run, pool, rewardId) {
+  const rules = rulesFor(registries);
+  if (!Object.hasOwn(rules.rewardByPool, pool)) throw new Error(`Unknown Smithing reward pool '${pool}'`);
+  if (typeof rewardId !== 'string' || !rewardId) throw new Error('Smithing reward id must be a non-empty string');
+  const claimed = Array.isArray(run.smithingRewardClaims) ? run.smithingRewardClaims : [];
+  if (claimed.includes(rewardId)) {
+    return Object.freeze({ pool, rewardId, amount: 0, duplicate: true, stoneBalanceAfter: stoneBalance(run) });
+  }
+  const amount = rules.rewardByPool[pool];
+  run.smithingStones = stoneBalance(run) + amount;
+  run.smithingRewardClaims = [...claimed, rewardId];
+  return Object.freeze({ pool, rewardId, amount, duplicate: false, stoneBalanceAfter: run.smithingStones });
+}
+
+/** Initialize or migrate one run in place, returning an explicit receipt. */
+function initializeRunSmithing(registries, run, explicitRules = undefined) {
+  const rules = rulesFor(registries, explicitRules);
+  validateLastReceipt(registries, run, rules);
+  const wasMissing = run.smithingStones == null || run.armamentLevels == null || run.smithingRewardClaims == null;
+  const priorLevels = levels(run);
+  for (const [pieceId, level] of Object.entries(priorLevels)) {
+    if (!armamentById(registries, pieceId) || level > rules.maxArmamentLevel) throw new Error(`Invalid legacy armament level '${pieceId}=${level}'`);
+  }
+  const armamentLevels = { ...priorLevels };
+  const promotedArmaments = new Set();
+  for (const instance of run.deck || []) {
+    const pieceId = sourceArmamentId(registries, run, instance);
+    if (!pieceId || !instance.upgraded) continue;
+    const beforeLevel = armamentLevels[pieceId] || 0;
+    armamentLevels[pieceId] = Math.max(beforeLevel, 1);
+    if (armamentLevels[pieceId] !== beforeLevel) promotedArmaments.add(pieceId);
+    instance.upgraded = false;
+  }
+  run.smithingStones = run.smithingStones == null ? 0 : stoneBalance(run);
+  run.armamentLevels = armamentLevels;
+  run.smithingRewardClaims = Array.isArray(run.smithingRewardClaims) ? [...new Set(run.smithingRewardClaims)] : [];
+  restampSmithingCards(registries, run);
+  return Object.freeze({
+    fromSchemaVersion: run.schemaVersion ?? null,
+    toSchemaVersion: SMITHING_SCHEMA_VERSION,
+    initialized: wasMissing,
+    promotedArmaments: Object.freeze([...promotedArmaments]),
+    preservedOrdinaryUpgrades: Object.freeze((run.deck || [])
+      .filter((card) => card.upgraded && !sourceArmamentId(registries, run, card))
+      .map((card) => card.instanceId)),
+  });
+}
+
+/** Pure migration helper for tools and tests that must preserve source bytes. */
+function migrateLegacySmithing(registries, legacyRun, explicitRules = undefined) {
+  const run = structuredClone(legacyRun);
+  return Object.freeze({ run, receipt: initializeRunSmithing(registries, run, explicitRules) });
+}
+
+function ownedSmithingArmaments(registries, run) {
+  return Object.freeze([...new Set((run.deck || []).map((card) => sourceArmamentId(registries, run, card)).filter(Boolean))]
+    .map((id) => armamentById(registries, id)));
+}
+
+
+Object.assign(module.exports, { normalizeSmithingRules, SMITHING_ROLES, SMITHING_SCHEMA_VERSION, sourceArmamentId, smithingCardReceipt, smithingPlan, restampSmithingCards, commitSmithing, grantSmithingReward, initializeRunSmithing, migrateLegacySmithing, ownedSmithingArmaments });
 
 },
 "src/model/unlocks.js": function (module, exports, require) {
@@ -33290,6 +33948,10 @@ function createCombat({
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
+    // Smithing belongs to the armament, but combat can recompose sourced
+    // basics after a live equipment swap. Carry the run's tier authority into
+    // the fight so that recomposition cannot silently fall back to tier zero.
+    armamentLevels: structuredClone(player.armamentLevels || {}),
     equipmentPoolDeficits: player.equipmentPoolDeficits
       ? { ...player.equipmentPoolDeficits }
       : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
@@ -33368,6 +34030,8 @@ function createCombat({
     ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
     ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
     ...(c.weaponId ? { weaponId: c.weaponId } : {}),
+    ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
+    ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
     ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
@@ -33817,7 +34481,14 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // The intent resolves before this mutation, so no in-flight card changes
   // underneath its own effects.
   const piles = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust];
-  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
+  const run = {
+    deck: [],
+    loadout: combat.loadout,
+    class: p.classId,
+    attributes: combat.attributes,
+    armamentLevels: combat.armamentLevels,
+    equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+  };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The vessel keeps telling the truth across the ONE mid-fight door equipment
@@ -34187,6 +34858,7 @@ const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
 const { damageTagIds } = require("src/content/tags.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
+const { commitSmithing, smithingPlan } = require("src/model/smithing.js");
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -34756,10 +35428,22 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'upgradeCard': {
-      const candidates = run.deck.filter((c) => !c.upgraded && (!eff.card || c.cardId === eff.card));
+      const plan = smithingPlan(ctx.registries, run);
+      const armaments = plan.candidates
+        .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
+        .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
+      const ordinary = run.deck
+        .filter((card) => !card.sourceArmamentId && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        .map((card) => ({ kind: 'card', card }));
+      const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
-      chosen.upgraded = true;
+      if (chosen.kind === 'armament') {
+        const receipt = commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        ctx.emit('armamentSmithed', receipt);
+      } else {
+        chosen.card.upgraded = true;
+      }
       break;
     }
     case 'addRelic': {
@@ -35680,6 +36364,7 @@ function serializeCombatSnapshot(combat) {
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    armamentLevels: combat.armamentLevels,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
     equipmentChanged: !!combat.equipmentChanged,
     turn: combat.turn,
@@ -35711,6 +36396,7 @@ function restoreCombatSnapshot({ registries, rng, snapshot }) {
     registries,
     rng,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
+    armamentLevels: saved.armamentLevels || {},
     equipmentPoolDeficits: saved.equipmentPoolDeficits,
     equipmentChanged: saved.equipmentChanged,
     turn: saved.turn,
@@ -36440,6 +37126,7 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 
 const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } = require("src/model/state.js");
 const { createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } = require("src/model/loadout.js");
+const { initializeRunSmithing } = require("src/model/smithing.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
 const { openLedger, closeLedger, note, readLedger } = require("src/model/healLedger.js");
@@ -36476,6 +37163,22 @@ function runKey(slot = 1) {
 
 const COMBAT_SNAPSHOT_PILE_ORDER = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
 
+function pendingRewardReferenceProblems(pending, registries) {
+  if (!pending) return [];
+  const rewards = pending.rewards || {};
+  const problems = [];
+  for (const cardId of rewards.cardIds || []) {
+    if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
+  }
+  if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
+  if (rewards.armamentId
+      && !(registries.equipment.armaments || []).some((piece) => piece.id === rewards.armamentId)) {
+    problems.push(`armament '${rewards.armamentId}' is unknown`);
+  }
+  return problems;
+}
+
 /**
  * Migrate one exact active-combat snapshot through the same weapon-package
  * composer as an ordinary run. The snapshot loadout is authoritative while a
@@ -36504,6 +37207,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     class: classId,
     loadout: snapshot.loadout,
     attributes: snapshot.attributes || run.attributes,
+    armamentLevels: run.armamentLevels || {},
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     deck: cards,
@@ -36511,6 +37215,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     adoptEquipmentBonuses: false,
     reconcileEquipmentPools: false,
   });
+  snapshot.armamentLevels = structuredClone(run.armamentLevels || {});
 
   // Commit only after validation and every pile rebind succeed. Resume then
   // observes the exact same loadout in run state and restored combat state.
@@ -36841,6 +37546,10 @@ function createSaveManager(storage) {
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
         }
+        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries);
+        if (pendingReferenceProblems.length) {
+          throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
+        }
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -36920,6 +37629,11 @@ function createSaveManager(storage) {
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
+        // Recover legacy per-copy equipment upgrade intent before stampDeck
+        // clears redundant flags and before an active-combat snapshot is
+        // rebound. The snapshot restamp must consume the promoted tier; doing
+        // this afterward would leave the resumed piles at tier zero.
+        const smithingReceipt = initializeRunSmithing(registries, run);
         migrateCombatSnapshotWeaponCards(registries, run);
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         // Every load crosses the same deterministic composition door. This is
@@ -36929,6 +37643,22 @@ function createSaveManager(storage) {
           adoptEquipmentBonuses: false,
           reconcileEquipmentPools: false,
         });
+        if (smithingReceipt.initialized || smithingReceipt.promotedArmaments.length) {
+          note(run, {
+            kind: 'heal',
+            site: 'smithing.js:initializeRunSmithing',
+            field: 'smithingStones/armamentLevels/smithingRewardClaims',
+            was: undefined,
+            now: {
+              smithingStones: run.smithingStones,
+              armamentLevels: run.armamentLevels,
+              smithingRewardClaims: run.smithingRewardClaims,
+            },
+            why: smithingReceipt.promotedArmaments.length
+              ? 'legacy equipment-card upgrade intent was promoted once to its source armament'
+              : 'pre-Smithing save received an empty purse, level map, and reward-claim ledger',
+          });
+        }
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {
@@ -41629,7 +42359,7 @@ const NODE_TYPES = {
   fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
   elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
   boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
-  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
+  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith an owned armament, or mend an ally.' },
   merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
   treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
   event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
@@ -42398,7 +43128,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a78beff19f';
+const SOURCE = '549eab63fd';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42432,7 +43162,7 @@ const SOURCE = 'a78beff19f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1760';
+const ORDINAL = '1855';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -44675,6 +45405,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-502",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Smithing upgrades an armament and every basic card it owns",
+    "detail": "Elite and boss victories award Smithing Stones; the Shrine spends one Stone to improve an owned armament for the run, with exact before-and-after card values shown before confirmation. The upgrade follows the armament through swaps, saves, active combats, legacy runs, rewards, and co-op host restoration. The picker uses the owned weapon or shield art, inventory quantity, WEAPON label, and equipment tags instead of borrowing one combat card's identity.",
+    "build": "0.4.0.1854",
+    "pullRequest": 502,
+    "url": "https://github.com/cehinds/AshenSpire/pull/502"
+  },
   {
     "id": "pr-361",
     "date": "2026-08-28",
@@ -47605,7 +48345,9 @@ const { creationModeViews, creationEquipmentSectionViews, creationRelicChoices, 
 const { pieceChip } = require("src/ui/screens/equipment.js");
 const { relicText } = require("src/ui/components/card.js");
 const { renderStatAllocationCard } = require("src/ui/components/statAllocationCard.js");
+const { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } = require("src/ui/components/equipmentReceipts.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { equipmentSurfaceReceipt } = require("src/model/equipmentPresentation.js");
 const { primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton, selectionSectionFace } = require("src/ui/components/creationCards.js");
 
 
@@ -47695,6 +48437,7 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
           <section id="cz-equipment-panel" class="cz-stage">
             <header class="cc-stage-toolbar"><h3>STARTING EQUIPMENT</h3><div class="cc-stage-tools"><div id="cz-auto-advance-toggle"></div><div id="cz-equipment-view-toggle"></div></div></header>
             <div id="cz-equipment-fold" class="cc-equipment-fold cz-disc"></div>
+            <div id="cz-equipment-receipts" class="cc-equip-group" aria-live="polite"></div>
             <p class="cc-move-note">An armament is one carried object. Choosing it for the other hand moves it.</p>
             <button type="button" class="cz-next" data-next="seed">Continue to Seed</button>
           </section>
@@ -48125,6 +48868,13 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       ? preferredOpenId
       : equipmentSectionViews[0]?.id;
     if (openId) equipmentFold.open(openId);
+
+    const surface = equipmentSurfaceReceipt(registries, previewRun());
+    $('#cz-equipment-receipts').innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
+      + renderRoleCopies(surface)
+      + '</section>'
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise);
   }
 
   function advanceEquipment(sectionId) {
@@ -49652,7 +50402,9 @@ const { equipmentSurfaceReceipt } = require("src/model/equipmentPresentation.js"
 const { inventoryRows, inventoryItemCount } = require("src/model/inventoryPresentation.js");
 const { equippedTagColor } = require("src/model/equipmentUi.js");
 const { renderCard, relicText } = require("src/ui/components/card.js");
-const { renderCandidateComparison } = require("src/ui/components/equipmentReceipts.js");
+const { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } = require("src/ui/components/equipmentReceipts.js");
+
+
 const { esc, attachTooltip, showTooltipFor, stickTooltip } = require("src/ui/components/tooltip.js");
 const { armHold, holdMs, HOLD_POINTER_SLOP } = require("src/ui/components/holdconfirm.js");
 const { refuses } = require("src/ui/components/refusal.js");
@@ -51001,7 +51753,7 @@ function mountEquipment(host, {
         + `<span class="armoury-card-row-type">${esc(type)}</span>`
         + `<span class="armoury-card-row-cost">◆ ${esc(cost)}${mana ? ` ${esc(mana.textContent.trim())}` : ''}</span>`
         + `<span class="armoury-card-row-tags">${tags ? tags.textContent.trim() : ''}</span>`
-        + `<em class="armoury-card-row-count">x${esc(String(copyCount))}</em>`;
+        + `<em class="armoury-card-row-count role-copy-count">x${esc(String(copyCount))}</em>`;
       attachTooltip(summary, () => `<div class="tt-title">${esc(def.name)}</div><p>Tap to expand the card details.</p>`);
 
       const detail = document.createElement('div');
@@ -51033,6 +51785,17 @@ function mountEquipment(host, {
     return box;
   }
 
+  function equipmentReceiptPanel(surface) {
+    const panel = document.createElement('section');
+    panel.className = 'armoury-equipment-receipts';
+    panel.innerHTML = '<section class="equip-role-receipts"><b>Equipment card packages</b>'
+      + renderRoleCopies(surface)
+      + '</section>'
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise);
+    return panel;
+  }
+
   /** A compact, separate Stats tray; Cards owns no stat receipts. */
   function statsComparison() {
     const projection = statProjection(registries, run);
@@ -51058,6 +51821,7 @@ function mountEquipment(host, {
       + `<span>Damage dealt ${esc(String(runStats.damageDealt || 0))}</span>`
       + `<span>Damage taken ${esc(String(runStats.damageTaken || 0))}</span></section>`
       + `<section class="armoury-stats-group"><b>Relics</b><span>${esc(relicNames.length ? `${relicNames.length}: ${relicNames.join(' · ')}` : '0 equipped')}</span></section>`;
+    box.appendChild(equipmentReceiptPanel(surface));
     return box;
   }
 
@@ -51102,6 +51866,7 @@ function mountEquipment(host, {
     const box = document.createElement('section');
     box.className = 'armoury-character-stats';
     const projection = statProjection(registries, run);
+    const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
 
     function informationCard({ id, label, summary, body }) {
@@ -51157,6 +51922,12 @@ function mountEquipment(host, {
       label: 'Relics',
       summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
       body: relics,
+    }));
+    box.appendChild(informationCard({
+      id: 'equipmentReceiptsCard',
+      label: 'Equipment cards',
+      summary: surface.roles.map((row) => `${row.profile.displayName} x${row.copies}`).join(' · '),
+      body: equipmentReceiptPanel(surface),
     }));
     return box;
   }
@@ -51270,6 +52041,8 @@ function mountEquipment(host, {
     const mods = modSummary(registries, item);
     const value = item.value != null ? String(item.value) : '—';
     const weight = item.weight != null ? String(item.weight) : '—';
+    const smithingLevel = Number.isInteger(run.armamentLevels?.[item.id]) ? run.armamentLevels[item.id] : 0;
+    const smithingReceipt = run.lastSmithingReceipt?.armamentId === item.id ? run.lastSmithingReceipt : null;
 
     const detail = document.createElement('section');
     detail.className = 'armoury-armament-details';
@@ -51279,8 +52052,12 @@ function mountEquipment(host, {
       + `<dl><div><dt>Type</dt><dd>${esc(summaryItem.category)} · ${esc(item.rarity || 'standard')}</dd></div>`
       + `<div><dt>Effects</dt><dd>${esc(mods.length ? mods.join(' · ') : 'No additional equipment effects authored.')}</dd></div>`
       + `<div><dt>Combat bonuses</dt><dd>${esc(summaryItem.bonus)}</dd></div>`
+      + `<div><dt>Smithing tier</dt><dd>${smithingLevel}</dd></div>`
       + `<div><dt>Value</dt><dd>${esc(value)}</dd></div>`
       + `<div><dt>Weight</dt><dd>${esc(weight)}</dd></div></dl>`
+      + (smithingReceipt
+        ? `<p class="armoury-smithing-receipt"><b>Last Smithing</b><span>Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved</span></p>`
+        : '')
       + `<div class="armoury-armament-tag-details">${tagRows.map((tag) => `<p><strong>${esc(tag.label)}</strong><span>${esc(tag.description)}</span></p>`).join('') || '<p><strong>Tags</strong><span>No tags authored.</span></p>'}</div>`;
     card.append(detail);
     attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
@@ -52410,7 +53187,7 @@ function upgradePreviewHtml(registries, ref) {
   html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
   if (baseText === upgradedText && upg.cost === base.cost) {
-    html += '<div class="tt-kw">Your current armament keeps the displayed values the same. The card still gains its permanent upgrade.</div>';
+    html += '<div class="tt-kw">The authored upgrade has no visible numeric change in this preview.</div>';
   }
   return html;
 }
@@ -59909,7 +60686,7 @@ const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
-const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -59919,7 +60696,7 @@ const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔
 // no such caller exists today; the boundary is named, not covered.
 function mountRewards(app, {
   registries, run, rewards, onDone, saves = null, rng = null,
-  onCollectArmament = null, onPersist = null,
+  onCollectArmament = null, onPersist = null, checkpoint = null,
 }) {
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
@@ -59932,8 +60709,19 @@ function mountRewards(app, {
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
   });
-  const states = {}; // kind → 'taken' (absent = pending / implicitly left in manual mode)
-  let chosenCardId = null;
+  const states = {
+    ...(checkpoint?.states || {}),
+    ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
+  }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
+  let chosenCardId = checkpoint?.chosenCardId || null;
+
+  function persistProgress() {
+    if (checkpoint) {
+      checkpoint.states = { ...states };
+      checkpoint.chosenCardId = chosenCardId;
+    }
+    if (onPersist) onPersist();
+  }
 
   // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
   const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
@@ -59962,30 +60750,27 @@ function mountRewards(app, {
   const apply = {
     cinders(row) {
       run.cinders += row.amount;
-      if (onPersist) onPersist();
       return true;
     },
+    // Smithing Stones are granted and durably claimed at combat resolution,
+    // before this presentation can be interrupted. This row is informational
+    // and begins in Taken state; reaching this function would be a contract bug.
+    smithingStone() { return false; },
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       recordSeen('card', [row.cardId]);
-      // A selected card is durable before Continue can close the offer. The
-      // caller hands in the run's one persistence door; a failed write throws
-      // before the row can claim Taken (the armament ordering, same rule).
-      if (onPersist) onPersist();
       return true;
     },
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
-      if (onPersist) onPersist();
       return true;
     },
     relic(row) {
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
-      if (onPersist) onPersist();
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
@@ -59997,6 +60782,10 @@ function mountRewards(app, {
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
     if (!apply[row.kind](row)) return false;
     states[row.kind] = 'taken';
+    // Reward state and the run mutation cross one save door. A reload can now
+    // distinguish an already-applied row from an untouched one and cannot
+    // duplicate a card, currency, flask, relic, or armament.
+    persistProgress();
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
     renderMenu(viaKind || row.kind);
     return true;
@@ -60008,6 +60797,11 @@ function mountRewards(app, {
     switch (row.kind) {
       case 'cinders':
         return { title: `${row.amount} cinders`, body: state === 'taken' ? `${run.cinders} total` : 'The climb’s coin.' };
+      case 'smithingStone':
+        return {
+          title: `${row.amount} Smithing Stone${row.amount === 1 ? '' : 's'}`,
+          body: `<b>${row.stoneBalanceAfter} total</b> · secured for the next Shrine.`,
+        };
       case 'card': {
         if (state === 'taken') {
           const def = registries.cards.get(chosenCardId);
@@ -60124,6 +60918,7 @@ function mountRewards(app, {
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
         states[btn.dataset.skip] = 'skipped';
+        persistProgress();
         renderMenu(btn.dataset.skip);
       });
     }
@@ -60139,7 +60934,10 @@ function mountRewards(app, {
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
       for (const row of toTake) {
-        if (apply[row.kind](row)) states[row.kind] = 'taken';
+        if (apply[row.kind](row)) {
+          states[row.kind] = 'taken';
+          persistProgress();
+        }
       }
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
@@ -60255,7 +61053,7 @@ Object.assign(module.exports, { mountRewards });
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-const REWARD_KIND_ORDER = Object.freeze(['cinders', 'card', 'flask', 'armament', 'relic']);
+const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic']);
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -60267,6 +61065,11 @@ const KINDS = {
   cinders: {
     present: (r) => Number.isFinite(r.cinders) && r.cinders > 0,
     row: (r) => ({ amount: r.cinders }),
+    blocked: () => null,
+  },
+  smithingStone: {
+    present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
+    row: (r) => ({ ...r.smithingStoneReceipt }),
     blocked: () => null,
   },
   card: {
@@ -60393,12 +61196,10 @@ Object.assign(module.exports, { REWARD_KIND_ORDER, rewardPlan, resolveContinue, 
 //   the other, so the mistake is a THUMB LANDING 14 px OFF — and the answer is
 //   the fill, inside the same gesture.
 //   SMITH CONFIRMS. Constantine asked for the upgrade preview to be
-//   confirmable. #105 shipped the preview as a HOVER tooltip, which on a phone
-//   is nothing at all, and then one tap committed a permanent upgrade. Holding
-//   the wrong card upgrades the wrong card; what the player needs is to SEE
-//   WHAT IT BECOMES and then say yes. So the confirm panel carries
-//   `upgradePreviewHtml` — the same preview, on the screen, where a finger can
-//   read it.
+//   confirmable. #105 shipped a per-card HOVER tooltip, which on a phone was
+//   nothing at all, and then one tap committed. Smithing now selects the source
+//   armament and shows every affected basic-card delta in a persistent panel;
+//   what the player needs is to SEE THE WHOLE PROMOTION and then say yes.
 //
 // Neither of those decisions is in this file. `model/secondbeat.js` holds the
 // characteristics; this screen names its actions.
@@ -60406,7 +61207,8 @@ Object.assign(module.exports, { REWARD_KIND_ORDER, rewardPlan, resolveContinue, 
 const { shrineHealAmount } = require("src/engine/encounters.js");
 const { levelUpPlan, applyLevelUp } = require("src/model/levelup.js");
 const { attributeCardModels } = require("src/model/creationBrief.js");
-const { passiveFlag, resolveCard } = require("src/model/registries.js");
+const { passiveFlag } = require("src/model/registries.js");
+const { commitSmithing, smithingPlan } = require("src/model/smithing.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { sfx } = require("src/ui/sfx.js");
@@ -60467,7 +61269,8 @@ function partnerName(registries, kind) {
 function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
-  const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
+  const smith = smithingPlan(registries, run);
+  const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -60506,13 +61309,15 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
             <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
-        <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt"
-             role="button" tabindex="${upgradable.length ? '0' : '-1'}"
-             aria-disabled="${upgradable.length ? 'false' : 'true'}">
+        <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
+             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
           <div class="cp-body">
             <h3>Smith</h3>
-            <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+            <p>${canInspectSmithing
+              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
+              : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>
         <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
@@ -60713,29 +61518,27 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
     };
     drawLevelCard();
   }
-  if (upgradable.length) {
+  if (canInspectSmithing) {
     // Smith is a reversible modal transaction until its explicit Confirm.
     // Opening and selecting mutate presentation state only. Back and Escape
     // return to the Shrine with the run byte-for-byte untouched; Confirm is
-    // the one permanent upgrade and the one path that leaves the Shrine.
+    // the one armament promotion and the one path that leaves the Shrine.
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
-      let selectedInstanceId = null;
-      const model = () => smithSelectionModel(registries, upgradable, selectedInstanceId);
+      let selectedArmamentId = null;
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedArmamentId);
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         returnFocusElement: smithOption,
-        onSelect: (instanceId) => {
-          selectedInstanceId = instanceId;
+        onSelect: (armamentId) => {
+          selectedArmamentId = armamentId;
           modal.update(model());
         },
         onBack: () => {},
-        onConfirm: (instanceId) => {
-          const inst = upgradable.find((candidate) => candidate.instanceId === instanceId);
-          if (!inst) return;
-          inst.upgraded = true;
+        onConfirm: (armamentId) => {
+          const receipt = commitSmithing(registries, run, armamentId);
           sfx.play('shrine');
-          onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
+          onDone(`Smithed ${esc(receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone, ${receipt.affectedCards.length} basic cards improved.`);
         },
       });
     };
@@ -61016,30 +61819,49 @@ Object.assign(module.exports, { levelCost, levelsAffordable, levelUpPlan, applyL
 
 },
 "src/ui/models/SmithSelectionModel.js": function (module, exports, require) {
-// A DOM-free read model for the Shrine Smith transaction.
+// A DOM-free read model for the Shrine armament Smith transaction.
 // Selection is reversible; only the modal's explicit Confirm command commits.
-const { resolveCard } = require("src/model/registries.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 
 const freeze = (value) => Object.freeze(value);
 
-function smithSelectionModel(registries, candidates, selectedInstanceId = null) {
-  const items = candidates.map((instance) => {
-    const card = resolveCard(registries, instance);
-    // Keep the instance's equipment-authored profile/modifier carrier. A
-    // card rewritten as Slashing Strike must not fall back to base Strike in
-    // either the candidate face or the permanent-upgrade preview.
-    const reference = freeze({
-      ...instance,
-      ...(Array.isArray(instance.mods) ? { mods: freeze([...instance.mods]) } : {}),
-      upgraded: false,
-    });
+function changeLabel(change) {
+  const labels = { damage: 'Damage', block: 'Block', draw: 'Draw', discard: 'Discard', applyStatus: 'Status' };
+  return `${labels[change.op] || change.op}: ${change.before} → ${change.after}`;
+}
+
+function groupedAffected(cards) {
+  const rows = new Map();
+  for (const card of cards) {
+    const changes = card.changes.filter((change) => change.before !== change.after).map(changeLabel);
+    const key = `${card.cardId}|${card.role}|${changes.join('|')}`;
+    const prior = rows.get(key);
+    if (prior) prior.count += 1;
+    else rows.set(key, { name: card.name.replace(/\+$/, ''), role: card.role, count: 1, changes });
+  }
+  return freeze([...rows.values()].map((row) => freeze({ ...row, changes: freeze(row.changes) })));
+}
+
+function smithSelectionModel(registries, plan, selectedArmamentId = null) {
+  const items = plan.candidates.map((candidate) => {
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === candidate.armamentId);
+    if (!piece) throw new Error(`Unknown Smithing armament '${candidate.armamentId}'`);
     return freeze({
-      instanceId: instance.instanceId,
-      cardId: instance.cardId,
-      name: card.name,
-      selected: instance.instanceId === selectedInstanceId,
-      reference,
+      armamentId: candidate.armamentId,
+      name: candidate.armamentName,
+      selected: candidate.armamentId === selectedArmamentId,
+      inventoryCount: candidate.inventoryCount,
+      artAsset: `assets/equipment/icon_${piece.artKey || piece.id}.webp`,
+      rarity: piece.rarity || 'common',
+      tags: freeze([...(piece.tags || [])]),
+      currentLevel: candidate.currentLevel,
+      nextLevel: candidate.nextLevel,
+      cost: candidate.cost,
+      stones: candidate.stones,
+      shortfall: candidate.shortfall,
+      affordable: candidate.affordable,
+      affectedCount: candidate.affectedCards.length,
+      affectedRows: groupedAffected(candidate.affectedCards),
     });
   });
   const selected = items.find((item) => item.selected) || null;
@@ -61047,19 +61869,24 @@ function smithSelectionModel(registries, candidates, selectedInstanceId = null) 
     component: UI.smithUpgradeModal,
     variant: selected ? 'review' : 'choose',
     properties: freeze({
-      title: 'Smith',
+      title: 'Smith an Armament',
       eyebrow: 'Shrine action',
-      instruction: 'Choose one card, review its permanent upgrade, then confirm.',
-      consequence: 'Confirming upgrades the selected card and leaves the Shrine.',
+      instruction: 'Choose one owned armament. Review every sourced basic card before spending.',
+      consequence: 'Confirming spends the shown Smithing Stone cost, promotes this armament for the run, and leaves the Shrine.',
+      purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`,
       candidates: freeze(items),
       selected,
-      canConfirm: Boolean(selected),
+      canConfirm: Boolean(selected?.affordable),
       backLabel: 'Back to Shrine',
-      confirmLabel: selected ? `Confirm ${selected.name}+` : 'Select a card',
+      confirmLabel: !selected
+        ? 'Select an armament'
+        : selected.affordable
+          ? `Spend ${selected.cost} · Smith ${selected.name}`
+          : `Need ${selected.shortfall} more Stone${selected.shortfall === 1 ? '' : 's'}`,
     }),
     accessibility: freeze({
-      label: 'Smith a card',
-      description: 'Select one card, review its upgrade, or return to the Shrine without changing the run.',
+      label: 'Smith an owned armament',
+      description: 'Select one armament, review every affected basic card and the exact cost, or return without changing the run.',
     }),
   });
 }
@@ -61071,7 +61898,7 @@ Object.assign(module.exports, { smithSelectionModel });
 "src/ui/components/smithUpgradeModal.js": function (module, exports, require) {
 // Dedicated Smith selection/review overlay. The component owns dialog
 // semantics, focus containment and rendering; the screen owns run mutation.
-const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
+const { assetUrl } = require("src/ui/assetmap.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
@@ -61111,10 +61938,10 @@ function mountSmithUpgradeModal(host, initialModel, {
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
         <div class="smith-region-head">
-          <h3 id="smith-candidate-title">Choose a card</h3>
+          <h3 id="smith-candidate-title">Choose an armament</h3>
           <span data-smith-count></span>
         </div>
-        <div class="smith-card-list" role="listbox" aria-label="Cards available to upgrade"></div>
+        <div class="smith-card-list" role="listbox" aria-label="Armaments available to Smith"></div>
       </section>
       <section class="smith-preview-region" aria-live="polite" aria-label="Selected upgrade preview"></section>
     </div>
@@ -61140,23 +61967,26 @@ function mountSmithUpgradeModal(host, initialModel, {
     currentModel = model;
     markUiComponent(modal, UI.smithUpgradeModal, model.variant);
     cardsHost.innerHTML = '';
-    count.textContent = `${model.properties.candidates.length} eligible`;
+    count.textContent = `${model.properties.purseLabel} · ${model.properties.candidates.length} eligible`;
     for (const item of model.properties.candidates) {
-      const card = renderCard(registries, item.reference, {
-        small: true,
-        // The modal's persistent preview owns this information. A transient
-        // card tooltip otherwise covers the modal title/instructions as soon
-        // as the pointer that opened Smith happens to land over the new grid.
-        tooltip: false,
-      });
-      card.classList.add('smith-candidate-card');
+      const card = document.createElement('div');
+      card.className = `smith-candidate-card smith-weapon-card rarity-${item.rarity}`;
       card.classList.toggle('selected', item.selected);
       card.setAttribute('role', 'option');
       card.setAttribute('aria-selected', String(item.selected));
-      card.setAttribute('aria-label', `${item.name}. Select to preview its permanent upgrade.`);
+      card.dataset.armamentId = item.armamentId;
+      card.innerHTML = `
+        <span class="smith-weapon-count" aria-label="${item.inventoryCount} in inventory">${item.inventoryCount}</span>
+        <strong class="smith-weapon-name">${esc(item.name)}</strong>
+        <span class="smith-weapon-art"><img src="${esc(assetUrl(item.artAsset))}" alt=""></span>
+        <span class="smith-weapon-type">WEAPON</span>
+        <span class="smith-weapon-tags">${item.tags.map((tag) => `<em>${esc(tag)}</em>`).join('')}</span>`;
+      const art = card.querySelector('.smith-weapon-art img');
+      art.addEventListener('error', () => art.remove());
+      card.setAttribute('aria-label', `${item.name}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone. Select to review ${item.affectedCount} affected cards.`);
       card.tabIndex = item.selected || (!model.properties.selected && cardsHost.childElementCount === 0) ? 0 : -1;
       markUiComponent(card, UI.smithCandidateCard, item.selected ? 'selected' : 'available');
-      const choose = () => onSelect(item.instanceId);
+      const choose = () => onSelect(item.armamentId);
       card.addEventListener('click', choose);
       card.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -61169,12 +61999,18 @@ function mountSmithUpgradeModal(host, initialModel, {
     const selected = model.properties.selected;
     previewHost.innerHTML = selected
       ? `<div class="smith-preview-card" data-ui-component="${UI.smithUpgradePreview}">
-          <span class="smith-preview-label">Selected upgrade</span>
-          ${upgradePreviewHtml(registries, selected.reference)}
+          <span class="smith-preview-label">Selected armament</span>
+          <div class="tt-title">${esc(selected.name)} · Tier ${selected.currentLevel} → ${selected.nextLevel}</div>
+          <div class="smith-preview-economy"><b>Cost ${selected.cost}</b><span>Purse ${selected.stones}</span></div>
+          ${selected.affectedRows.map((row) => `<div class="smith-preview-delta">
+            <b>${row.count}× ${esc(row.name)}</b><small>${esc(row.role)}</small>
+            <span>${row.changes.map(esc).join(' · ')}</span>
+          </div>`).join('')}
+          ${selected.affordable ? '' : `<div class="smith-preview-shortfall">Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.</div>`}
         </div>`
       : `<div class="smith-preview-empty" data-ui-component="${UI.smithUpgradePreview}">
           <span class="smith-preview-glyph" aria-hidden="true">⚒</span>
-          <b>Select a card to compare its current and upgraded forms.</b>
+          <b>Select an armament to compare every sourced basic card.</b>
           <span>Nothing changes until Confirm.</span>
         </div>`;
     confirm.disabled = !model.properties.canConfirm;
@@ -61225,7 +62061,7 @@ function mountSmithUpgradeModal(host, initialModel, {
   back.addEventListener('click', backOut);
   confirm.addEventListener('click', () => {
     if (!currentModel.properties.canConfirm) return;
-    const selectedId = currentModel.properties.selected.instanceId;
+    const selectedId = currentModel.properties.selected.armamentId;
     close({ restoreFocus: false });
     onConfirm(selectedId);
   });
@@ -61550,9 +62386,11 @@ Object.assign(module.exports, { mountShop });
 // launches it after the result text.
 
 const { executeRunEffects } = require("src/engine/actions.js");
+const { eventChoicesWithHistory } = require("src/content/events.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { isBindingChoice } = require("src/model/consequence.js");
+const { availableEventChoices, recordEventChoice } = require("src/model/quests.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
 function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
@@ -61591,7 +62429,8 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
     </div>`;
 
   const box = app.querySelector('#choices');
-  def.choices.forEach((choice, i) => {
+  const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);
+  visibleChoices.forEach(({ choice, index: i }, visibleIndex) => {
     const btn = document.createElement('button');
     // `ev-choice`, not a bare `.subtle`: these three bars are the only control
     // on this screen and the floor belongs to THEM, not to every subtle button
@@ -61604,7 +62443,7 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
     // that will. The size now lives in the stylesheet in rem, where the one
     // question it answers is "how big is a letter".
     btn.dataset.choice = String(i);
-    btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
+    btn.style.animationDelay = `${visibleIndex * 70}ms`; // staggered entrance
     btn.textContent = choice.label;
     // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
     // player can pay today. Vira's finding, and it is my own sentence back at
@@ -61658,6 +62497,7 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
     } else {
       const commit = () => {
         executeRunEffects({ run, registries, rng }, choice.effects);
+        recordEventChoice(run, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
       };
       // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
@@ -61910,6 +62750,168 @@ function isBindingChoice(choice, registries) {
 
 
 Object.assign(module.exports, { SAFE_OPS, BINDING_CARD_TYPES, failClosedOps, cinderPremise, bindingReasons, isBindingChoice });
+
+},
+"src/model/quests.js": function (module, exports, require) {
+// src/model/quests.js — deterministic run-history facts for quest/event chains.
+//
+// This module is intentionally headless and content-agnostic. It records only
+// stable ids and derives later availability from those records. Narrative
+// content, effects, and UI remain in their existing homes.
+
+const EVENT_CHOICE_HISTORY_KIND = 'eventChoice';
+
+const ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,79}$/;
+
+function validId(value) {
+  return typeof value === 'string' && ID_PATTERN.test(value);
+}
+
+function historyArray(subject) {
+  if (Array.isArray(subject)) return subject;
+  if (subject && Array.isArray(subject.history)) return subject.history;
+  return null;
+}
+
+function choiceRefProblems(ref, at) {
+  const out = [];
+  if (!ref || typeof ref !== 'object' || Array.isArray(ref)) return [`${at}: must be an object`];
+  if (!validId(ref.eventId)) out.push(`${at}.eventId: stable id required`);
+  if (!validId(ref.choiceId)) out.push(`${at}.choiceId: stable id required`);
+  return out;
+}
+
+/** Validate only event-choice rows; older run-history row kinds remain valid. */
+function eventChoiceHistoryProblems(subject) {
+  const history = historyArray(subject);
+  if (!history) return ['history: array required'];
+  const out = [];
+  history.forEach((row, index) => {
+    if (!row || row.kind !== EVENT_CHOICE_HISTORY_KIND) return;
+    out.push(...choiceRefProblems(row, `history[${index}]`));
+    if (!Number.isInteger(row.actNumber) || row.actNumber < 1) {
+      out.push(`history[${index}].actNumber: positive integer required`);
+    }
+    if (!Number.isInteger(row.floor) || row.floor < 0) {
+      out.push(`history[${index}].floor: non-negative integer required`);
+    }
+    if (row.mapNodeId !== null && row.mapNodeId !== undefined && !validId(row.mapNodeId)) {
+      out.push(`history[${index}].mapNodeId: stable id or null required`);
+    }
+  });
+  return out;
+}
+
+/**
+ * Append one committed event choice to the run's existing history.
+ *
+ * No wall-clock value is recorded: the receipt must replay byte-for-byte from
+ * the same run state and player choice. Repeated events are allowed because a
+ * route may legitimately encounter the same event more than once.
+ */
+function recordEventChoice(run, { eventId, choiceId } = {}) {
+  if (!run || typeof run !== 'object' || !Array.isArray(run.history)) {
+    throw new Error('recordEventChoice requires run.history');
+  }
+  const refProblems = choiceRefProblems({ eventId, choiceId }, 'choice');
+  if (refProblems.length) throw new Error(refProblems.join('; '));
+  if (!Number.isInteger(run.actNumber) || run.actNumber < 1) {
+    throw new Error('recordEventChoice requires a positive integer run.actNumber');
+  }
+  if (!Number.isInteger(run.floor) || run.floor < 0) {
+    throw new Error('recordEventChoice requires a non-negative integer run.floor');
+  }
+  if (run.mapNodeId !== null && run.mapNodeId !== undefined && !validId(run.mapNodeId)) {
+    throw new Error('recordEventChoice requires a stable run.mapNodeId or null');
+  }
+  const record = {
+    kind: EVENT_CHOICE_HISTORY_KIND,
+    eventId,
+    choiceId,
+    actNumber: run.actNumber,
+    floor: run.floor,
+    mapNodeId: run.mapNodeId ?? null,
+  };
+  run.history.push(record);
+  return record;
+}
+
+/** Exact fact lookup. Malformed event-choice history fails closed. */
+function hasEventChoice(subject, ref) {
+  const history = historyArray(subject);
+  if (!history || choiceRefProblems(ref, 'choice').length || eventChoiceHistoryProblems(history).length) return false;
+  return history.some((row) => row?.kind === EVENT_CHOICE_HISTORY_KIND
+    && row.eventId === ref.eventId
+    && row.choiceId === ref.choiceId);
+}
+
+/**
+ * Requirement shape:
+ *   { all?: [{eventId, choiceId}], any?: [...], none?: [...] }
+ *
+ * Omitted groups are neutral. An explicitly empty `any` is invalid because it
+ * can never describe a satisfiable authored branch.
+ */
+function eventChoiceRequirementProblems(requirement) {
+  if (requirement === undefined || requirement === null) return [];
+  if (typeof requirement !== 'object' || Array.isArray(requirement)) {
+    return ['requirement: object required'];
+  }
+  const allowed = new Set(['all', 'any', 'none']);
+  const out = [];
+  for (const key of Object.keys(requirement)) {
+    if (!allowed.has(key)) out.push(`requirement.${key}: unknown group`);
+  }
+  for (const group of allowed) {
+    if (!(group in requirement)) continue;
+    const refs = requirement[group];
+    if (!Array.isArray(refs)) {
+      out.push(`requirement.${group}: array required`);
+      continue;
+    }
+    if (group === 'any' && refs.length === 0) out.push('requirement.any: at least one choice required');
+    refs.forEach((ref, index) => out.push(...choiceRefProblems(ref, `requirement.${group}[${index}]`)));
+  }
+  return out;
+}
+
+/** Derive later-step availability from exact earlier-choice facts. */
+function eventChoiceRequirementMet(requirement, subject) {
+  if (eventChoiceRequirementProblems(requirement).length) return false;
+  const history = historyArray(subject);
+  if (!history || eventChoiceHistoryProblems(history).length) return false;
+  const groups = requirement || {};
+  const matches = (ref) => hasEventChoice(history, ref);
+  if ((groups.all || []).some((ref) => !matches(ref))) return false;
+  if (groups.any && !groups.any.some(matches)) return false;
+  if ((groups.none || []).some(matches)) return false;
+  return true;
+}
+
+/** Filter authored steps without mutating or reordering them. */
+function availableQuestSteps(steps, subject) {
+  if (!Array.isArray(steps)) throw new Error('availableQuestSteps requires an array');
+  return steps.filter((step) => step && typeof step === 'object'
+    && validId(step.id)
+    && eventChoiceRequirementMet(step.requiresHistory, subject));
+}
+
+/**
+ * Return visible event choices together with their original authored index.
+ * Keeping that index lets input bindings and telemetry remain stable even
+ * when a history requirement hides an earlier choice in the array.
+ */
+function availableEventChoices(choices, subject) {
+  if (!Array.isArray(choices)) throw new Error('availableEventChoices requires an array');
+  return choices
+    .map((choice, index) => ({ choice, index }))
+    .filter(({ choice }) => choice && typeof choice === 'object'
+      && validId(choice.id)
+      && eventChoiceRequirementMet(choice.requiresHistory, subject));
+}
+
+
+Object.assign(module.exports, { EVENT_CHOICE_HISTORY_KIND, eventChoiceHistoryProblems, recordEventChoice, hasEventChoice, eventChoiceRequirementProblems, eventChoiceRequirementMet, availableQuestSteps, availableEventChoices });
 
 },
 "src/ui/screens/gameover.js": function (module, exports, require) {
@@ -63677,7 +64679,9 @@ Object.assign(module.exports, { lanInfo, lanHost, lanUnhost, lanConnect });
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
-const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
+const { renderCard } = require("src/ui/components/card.js");
+const { mountSmithUpgradeModal } = require("src/ui/components/smithUpgradeModal.js");
+const { smithSelectionModel } = require("src/ui/models/SmithSelectionModel.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { anchorLocalBox, clampBox, guardHitFloatParts } = require("src/ui/fx.js");
 const { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
@@ -64289,6 +65293,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       ? `<span class="mh-stat coop-voteline">${Object.keys(votes).length ? `VOTES ${Object.keys(votes).length}/${present.length}` : 'VOTE FOR THE PATH'}</span>`
       : '';
 
+    const smithReceipts = snap.party.filter((member) => member.lastSmithingReceipt);
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
@@ -64303,6 +65308,12 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
+        ${smithReceipts.length ? `<div class="coop-smithing-receipts" aria-live="polite">
+          ${smithReceipts.map((member) => {
+            const receipt = member.lastSmithingReceipt;
+            return `<span><b>${esc(member.name)}</b> smithed ${esc(receipt.armamentName)} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards</span>`;
+          }).join('')}
+        </div>` : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -64388,7 +65399,10 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { app.innerHTML = rewardShell(`${rTitle('Spoils')}<div class="coop-note">Waiting for the others to choose…</div>`); renderPartyBar(); wireLeave(); return; }
-    app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}<div class="reward-row"></div>
+    const stone = offer.smithingStoneReceipt;
+    app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}
+      ${stone?.amount > 0 ? `<div class="coop-note">⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total</div>` : ''}
+      <div class="reward-row"></div>
       <div class="coop-choices" style="margin-top:12px">
         ${offer.relicId ? `<button class="coop-take" data-take="relic">Take relic: ${esc(registries.relics.get(offer.relicId).name)}</button>` : ''}
         ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${flaskIdentityHtml(registries.flasks.get(offer.flaskId))}</button>` : ''}
@@ -64409,28 +65423,34 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
     const done = snap.scene.done && snap.scene.done[me];
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
     const mm = myMember();
-    const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
+    const smith = snap.scene.smithing?.[me];
+    const candidates = smith?.candidates || [];
     app.innerHTML = rewardShell(`${rTitle('Shrine of Emberlight')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
-        <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
+        <button id="coop-smith" ${candidates.length ? '' : 'disabled'}>Smith an armament · ${mm?.smithingStones || 0} Stone${mm?.smithingStones === 1 ? '' : 's'}</button>
         ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
-      </div>
-      <div id="coop-smith-grid" class="reward-row" style="display:none;max-width:900px;flex-wrap:wrap"></div>`}`);
+      </div>`}`);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
-    // Smith opens a picker of your unupgraded cards; hover/focus previews the
-    // exact upgrade (changed values highlighted) before you commit.
+    // The shared modal keeps the co-op transaction identical to solo:
+    // reversible selection, every real delta, explicit affordability, then a
+    // separate Confirm. The client sends only that final stable armament id;
+    // the host still rebuilds and revalidates before committing.
     const smithBtn = app.querySelector('#coop-smith');
-    if (smithBtn && upgradable.length) smithBtn.addEventListener('click', () => {
-      const grid = app.querySelector('#coop-smith-grid');
-      if (grid.style.display !== 'none') return;
-      grid.style.display = 'flex';
-      for (const inst of upgradable) {
-        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
-        el.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'smith', targetId: inst.instanceId }));
-        grid.appendChild(el);
-      }
+    if (smithBtn && candidates.length) smithBtn.addEventListener('click', () => {
+      let selectedArmamentId = null;
+      const model = () => smithSelectionModel(registries, smith, selectedArmamentId);
+      const modal = mountSmithUpgradeModal(app, model(), {
+        registries,
+        returnFocusElement: smithBtn,
+        onSelect: (armamentId) => {
+          selectedArmamentId = armamentId;
+          modal.update(model());
+        },
+        onBack: () => {},
+        onConfirm: (armamentId) => send({ t: 'shrineChoice', choice: 'smith', targetId: armamentId }),
+      });
     });
     renderPartyBar(); wireLeave();
   }
