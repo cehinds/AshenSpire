@@ -187,6 +187,10 @@ function validateLegacyExactObjectPair(event) {
   }
 }
 
+function hasNegativeAcceptanceEvidence(pointers) {
+  return (pointers ?? []).some((pointer) => /\b(?:WITHHOLD|FAIL(?:ED|URE)?|TIMEOUT|ERROR|BLOCKED)\b/i.test(String(pointer)));
+}
+
 export function validateEvent(event, { frozenLegacy = false } = {}) {
   const version = schedulerEventVersion(event);
   assertSchema(event, version === 1 ? 'event' : 'event-v2');
@@ -207,6 +211,8 @@ export function validateEvent(event, { frozenLegacy = false } = {}) {
       assertSchema(event.payload, 'migration');
     } else if (canonicalIssueIdentity(event.issue_id) !== event.issue_id) throw new Error('v2 issue_id must use its canonical GitHub issue identity');
     validateExactObjectPair(event);
+    if (event.event_type === 'CANDIDATE_READY' && hasNegativeAcceptanceEvidence(event.payload.evidence_pointers)) throw new Error('candidate evidence contains a negative or WITHHOLD result');
+    if (event.event_type === 'QA_RESULT' && event.payload.result === 'PASS' && hasNegativeAcceptanceEvidence(event.payload.evidence_pointers)) throw new Error('QA PASS evidence contains a negative or WITHHOLD result');
   } else validateLegacyExactObjectPair(event);
   if (Number.isNaN(Date.parse(event.created_at))) throw new Error('created_at must be an ISO instant');
   assertPortable(event);
@@ -845,6 +851,38 @@ function authenticatedProjectReceipt(body) {
   return { ...unsealed, receipt_hash: sha256(unsealed) };
 }
 
+const PROJECT_ITEMS_QUERY = `query($login:String!,$number:Int!,$cursor:String){user(login:$login){projectV2(number:$number){id title number closed items(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{id content{__typename ... on Issue{number state stateReason repository{nameWithOwner} assignees(first:100){totalCount pageInfo{hasNextPage endCursor} nodes{login}}}} fieldValues(first:100){totalCount pageInfo{hasNextPage endCursor} nodes{__typename ... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2Field{id name}}} ... on ProjectV2ItemFieldSingleSelectValue{name optionId field{... on ProjectV2SingleSelectField{id name}}} ... on ProjectV2ItemFieldNumberValue{number field{... on ProjectV2Field{id name}}} ... on ProjectV2ItemFieldDateValue{date field{... on ProjectV2Field{id name}}}}}}}}}}`;
+const PROJECT_FIELDS_QUERY = `query($login:String!,$number:Int!,$cursor:String){user(login:$login){projectV2(number:$number){id title number fields(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{__typename ... on ProjectV2Field{id name dataType} ... on ProjectV2SingleSelectField{id name dataType options{id name}} ... on ProjectV2IterationField{id name dataType}}}}}}`;
+
+function fetchGraphqlConnection(runner, root, source, query, connectionName) {
+  const nodes = []; const rawPages = []; let cursor = null; let totalCount = null; let projectIdentity = null;
+  for (let page = 0; page < 1000; page += 1) {
+    const args = ['api', 'graphql', '-f', `query=${query}`, '-f', `login=${source.owner}`, '-F', `number=${source.number}`];
+    if (cursor) args.push('-f', `cursor=${cursor}`);
+    const fetched = runner('gh', args, { cwd: root, timeoutMs: 30_000 });
+    rawPages.push(fetched.stdout);
+    let response;
+    try { response = JSON.parse(fetched.stdout); } catch { throw new Error(`BOARD_SYNC_FAILED: GitHub Project ${connectionName} page is not valid JSON`); }
+    if (!Array.isArray(response.errors) ? response.errors !== undefined : response.errors.length > 0) throw new Error(`BOARD_SYNC_FAILED: GitHub Project ${connectionName} GraphQL response contains errors`);
+    const project = response.data?.user?.projectV2;
+    const connection = project?.[connectionName];
+    if (!project || !connection || !Array.isArray(connection.nodes) || !Number.isInteger(connection.totalCount) || typeof connection.pageInfo?.hasNextPage !== 'boolean') throw new Error(`BOARD_SYNC_FAILED: GitHub Project ${connectionName} connection is incomplete`);
+    const identity = { id: project.id, title: project.title, number: project.number };
+    if (projectIdentity && stableStringify(projectIdentity) !== stableStringify(identity)) throw new Error('BOARD_SYNC_FAILED: GitHub Project identity changed during pagination');
+    projectIdentity = identity;
+    if (totalCount !== null && totalCount !== connection.totalCount) throw new Error(`BOARD_SYNC_FAILED: GitHub Project ${connectionName} total changed during pagination`);
+    totalCount = connection.totalCount;
+    nodes.push(...connection.nodes);
+    if (connection.pageInfo?.hasNextPage !== true) {
+      if (nodes.length !== totalCount) throw new Error(`BOARD_SYNC_FAILED: truncated GitHub Project ${connectionName} response (${nodes.length}/${totalCount})`);
+      return { nodes, totalCount, rawPages, project: projectIdentity };
+    }
+    if (!connection.pageInfo.endCursor || connection.pageInfo.endCursor === cursor) throw new Error(`BOARD_SYNC_FAILED: GitHub Project ${connectionName} pagination did not advance`);
+    cursor = connection.pageInfo.endCursor;
+  }
+  throw new Error(`BOARD_SYNC_FAILED: GitHub Project ${connectionName} pagination exceeded the safety bound`);
+}
+
 function validateProjectFetchReceipt(sync, config, now) {
   const receipt = sync?.fetch_receipt;
   if (config.simulation_mode === true && receipt?.simulation === true) return true;
@@ -856,12 +894,22 @@ function validateProjectFetchReceipt(sync, config, now) {
   if (!Number.isInteger(receipt.project_item_count) || receipt.project_item_count !== receipt.project_total_item_count) return false;
   if (!Number.isInteger(receipt.project_field_count) || receipt.project_field_count !== receipt.project_total_field_count) return false;
   if (!Array.isArray(receipt.required_fields) || stableStringify([...receipt.required_fields].sort()) !== stableStringify([...REQUIRED_PROJECT_FIELDS].sort()) || receipt.required_fields_complete !== true) return false;
-  if (!Array.isArray(receipt.project_fields) || receipt.project_fields.length !== receipt.project_field_count || new Set(receipt.project_fields.map((field) => String(field.name).toLowerCase())).size !== receipt.project_fields.length || receipt.project_fields.some((field) => !field.id || !field.name || !field.data_type)) return false;
+  if (!Array.isArray(receipt.project_fields) || receipt.project_fields.length !== receipt.project_field_count || new Set(receipt.project_fields.map((field) => String(field.name).toLowerCase())).size !== receipt.project_fields.length || receipt.project_fields.some((field) => !field.id || !field.name || !field.kind || !field.data_type)) return false;
   if (new Set(receipt.project_fields.map((field) => field.id)).size !== receipt.project_fields.length) return false;
+  for (const field of receipt.project_fields) {
+    const options = field.options ?? [];
+    if (!Array.isArray(options) || new Set(options.map((option) => option.id)).size !== options.length || new Set(options.map((option) => String(option.name).toLowerCase())).size !== options.length || options.some((option) => !option.id || !option.name)) return false;
+    if (field.kind === 'ProjectV2SingleSelectField' && options.length === 0) return false;
+    if (field.kind !== 'ProjectV2SingleSelectField' && options.length !== 0) return false;
+  }
   for (const [name, expected] of Object.entries(contract.fields ?? {})) {
     const field = receipt.project_fields.find((candidate) => candidate.name === name);
-    if (!field || field.id !== expected.id || field.data_type !== expected.data_type) return false;
+    if (!field || !expected.id || !expected.kind || !expected.data_type || field.id !== expected.id || field.kind !== expected.kind || field.data_type !== expected.data_type) return false;
+    const expectedOptions = expected.options ?? [];
+    if (!Array.isArray(expectedOptions) || stableStringify([...field.options].sort((a, b) => a.id.localeCompare(b.id))) !== stableStringify([...expectedOptions].sort((a, b) => a.id.localeCompare(b.id)))) return false;
   }
+  if (!receipt.response_pages || !receipt.response_page_hashes || !['items', 'fields'].every((kind) => Array.isArray(receipt.response_pages[kind]) && receipt.response_pages[kind].length > 0 && receipt.response_pages[kind].every((page) => typeof page === 'string') && Array.isArray(receipt.response_page_hashes[kind]) && receipt.response_page_hashes[kind].length === receipt.response_pages[kind].length && receipt.response_page_hashes[kind].every((hash, index) => /^[0-9a-f]{64}$/.test(hash) && hash === sha256(receipt.response_pages[kind][index])))) return false;
+  if (receipt.response_sha256 !== sha256({ items: receipt.response_pages.items, fields: receipt.response_pages.fields })) return false;
   if (!/^[0-9a-f]{64}$/.test(receipt.response_sha256 ?? '') || !/^[0-9a-f]{64}$/.test(receipt.receipt_hash ?? '')) return false;
   const unsealed = structuredClone(receipt); delete unsealed.receipt_hash;
   return sha256(unsealed) === receipt.receipt_hash;
@@ -882,30 +930,45 @@ export function fetchAuthenticatedProjectEvidence(root, config, now = new Date()
   const scopeLine = /Token scopes:\s*([^\r\n]+)/i.exec(authText)?.[1] ?? '';
   const grantedScopes = [...scopeLine.matchAll(/['"]([^'"]+)['"]/g)].map((match) => match[1]);
   if (!login || !grantedScopes.some((scope) => scope === 'read:project' || scope === 'project')) throw new Error('BOARD_SYNC_FAILED: authenticated GitHub identity lacks read:project scope');
+  if (contract.owner_type !== 'user') throw new Error('BOARD_SYNC_FAILED: unsupported pinned Project owner type');
+  const itemPages = fetchGraphqlConnection(runner, root, source, PROJECT_ITEMS_QUERY, 'items');
+  const fieldPages = fetchGraphqlConnection(runner, root, source, PROJECT_FIELDS_QUERY, 'fields');
+  if (stableStringify(itemPages.project) !== stableStringify(fieldPages.project) || itemPages.project.number !== source.number || itemPages.project.id !== contract.id || itemPages.project.title !== contract.title) throw new Error('BOARD_SYNC_FAILED: GitHub Project identity does not match the pinned contract');
+  const response = { totalCount: itemPages.totalCount, items: itemPages.nodes.map((node) => {
+    if (node.content?.__typename !== 'Issue') return { id: node.id, content: null };
+    for (const [label, connection] of [['assignees', node.content?.assignees], ['fieldValues', node.fieldValues]]) {
+      if (!connection || !Array.isArray(connection.nodes) || !Number.isInteger(connection.totalCount) || connection.totalCount !== connection.nodes.length || connection.pageInfo?.hasNextPage !== false) throw new Error(`BOARD_SYNC_FAILED: Project item ${label} connection is incomplete or truncated`);
+    }
+    const raw = { id: node.id, content: node.content ? { ...node.content, repository: node.content.repository?.nameWithOwner, assignees: node.content.assignees?.nodes ?? [] } : null };
+    const valueNames = new Set(); const valueIds = new Set();
+    for (const value of node.fieldValues?.nodes ?? []) {
+      const name = value.field?.name; const fieldId = value.field?.id; if (!name || !fieldId) throw new Error('BOARD_SYNC_FAILED: Project item field value has no exact field identity');
+      if (valueNames.has(name.toLowerCase()) || valueIds.has(fieldId)) throw new Error(`BOARD_SYNC_FAILED: duplicate Project item field value ${name}`);
+      valueNames.add(name.toLowerCase()); valueIds.add(fieldId);
+      const expected = contract.fields?.[name];
+      if (!expected) continue;
+      if (fieldId !== expected.id) throw new Error(`BOARD_SYNC_FAILED: Project item field value contract mismatch for ${name}`);
+      if (expected.kind === 'ProjectV2SingleSelectField') {
+        const selected = expected.options?.find((option) => option.id === value.optionId && option.name === value.name);
+        if (value.__typename !== 'ProjectV2ItemFieldSingleSelectValue' || !selected) throw new Error(`BOARD_SYNC_FAILED: Project item select option contract mismatch for ${name}`);
+      } else if (expected.kind === 'ProjectV2Field' && value.__typename !== 'ProjectV2ItemFieldTextValue') throw new Error(`BOARD_SYNC_FAILED: Project item value type contract mismatch for ${name}`);
+      raw[name] = value.text ?? value.name ?? value.number ?? value.date ?? null;
+    }
+    return raw;
+  }) };
+  const fieldResponse = { totalCount: fieldPages.totalCount, fields: fieldPages.nodes };
+  const projectResponse = itemPages.project;
   const requiredFields = [...REQUIRED_PROJECT_FIELDS];
-  const itemArgs = ['project', 'item-list', String(source.number), '--owner', source.owner, '--format', 'json', '--limit', '1000'];
-  for (const field of requiredFields) itemArgs.push('--field', field);
-  const fetched = runner('gh', itemArgs, { cwd: root, timeoutMs: 30_000 });
-  const fetchedFields = runner('gh', ['project', 'field-list', String(source.number), '--owner', source.owner, '--format', 'json', '--limit', '1000'], { cwd: root, timeoutMs: 30_000 });
-  const fetchedProject = runner('gh', ['project', 'view', String(source.number), '--owner', source.owner, '--format', 'json'], { cwd: root, timeoutMs: 30_000 });
-  let response;
-  let fieldResponse;
-  let projectResponse;
-  try { response = JSON.parse(fetched.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project item response is not valid JSON'); }
-  try { fieldResponse = JSON.parse(fetchedFields.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project field response is not valid JSON'); }
-  try { projectResponse = JSON.parse(fetchedProject.stdout); } catch { throw new Error('BOARD_SYNC_FAILED: GitHub Project identity response is not valid JSON'); }
-  if (!Array.isArray(response.items)) throw new Error('BOARD_SYNC_FAILED: GitHub Project response has no item list');
-  if (!Number.isInteger(response.totalCount) || response.totalCount !== response.items.length || response.totalCount >= 1000) throw new Error(`BOARD_SYNC_FAILED: truncated GitHub Project item response (${response.items.length}/${response.totalCount ?? 'unknown'})`);
-  if (!Array.isArray(fieldResponse.fields) || !Number.isInteger(fieldResponse.totalCount) || fieldResponse.totalCount !== fieldResponse.fields.length || fieldResponse.totalCount >= 1000) throw new Error(`BOARD_SYNC_FAILED: truncated GitHub Project field response (${fieldResponse.fields?.length ?? 0}/${fieldResponse.totalCount ?? 'unknown'})`);
-  const projectOwner = typeof projectResponse.owner === 'string' ? projectResponse.owner : projectResponse.owner?.login;
-  if (projectResponse.number !== source.number || projectOwner !== source.owner || projectResponse.id !== contract.id || projectResponse.title !== contract.title) throw new Error('BOARD_SYNC_FAILED: GitHub Project identity does not match the pinned contract');
   const normalizedNames = fieldResponse.fields.map((field) => String(field.name ?? '').trim().toLowerCase());
   if (new Set(normalizedNames).size !== normalizedNames.length) throw new Error('BOARD_SYNC_FAILED: GitHub Project field names are not unique case-insensitively');
-  if (fieldResponse.fields.some((field) => typeof field.id !== 'string' || field.id === '' || typeof (field.dataType ?? field.type) !== 'string')) throw new Error('BOARD_SYNC_FAILED: GitHub Project field identity/type metadata is incomplete');
+  if (fieldResponse.fields.some((field) => typeof field.id !== 'string' || field.id === '' || typeof field.__typename !== 'string' || typeof field.dataType !== 'string')) throw new Error('BOARD_SYNC_FAILED: GitHub Project field identity/type metadata is incomplete');
   if (new Set(fieldResponse.fields.map((field) => field.id)).size !== fieldResponse.fields.length) throw new Error('BOARD_SYNC_FAILED: GitHub Project field IDs are not unique');
   for (const [name, expected] of Object.entries(contract.fields ?? {})) {
     const field = fieldResponse.fields.find((candidate) => candidate.name === name);
-    if (!field || field.id !== expected.id || (field.dataType ?? field.type) !== expected.data_type) throw new Error(`BOARD_SYNC_FAILED: GitHub Project field contract mismatch for ${name}`);
+    if (!field || !expected.id || !expected.kind || !expected.data_type || field.id !== expected.id || field.__typename !== expected.kind || field.dataType !== expected.data_type) throw new Error(`BOARD_SYNC_FAILED: GitHub Project field contract mismatch for ${name}`);
+    const actualOptions = (field.options ?? []).map((option) => ({ id: option.id, name: option.name })).sort((a, b) => a.id.localeCompare(b.id));
+    const expectedOptions = (expected.options ?? []).map((option) => ({ id: option.id, name: option.name })).sort((a, b) => a.id.localeCompare(b.id));
+    if ((expected.kind === 'ProjectV2SingleSelectField' && !Array.isArray(expected.options)) || new Set(actualOptions.map((option) => option.id)).size !== actualOptions.length || new Set(actualOptions.map((option) => option.name.toLowerCase())).size !== actualOptions.length || stableStringify(actualOptions) !== stableStringify(expectedOptions)) throw new Error(`BOARD_SYNC_FAILED: GitHub Project select option contract mismatch for ${name}`);
   }
   const fieldNames = new Set(fieldResponse.fields.map((field) => field.name));
   const missingFields = requiredFields.filter((name) => !fieldNames.has(name));
@@ -941,9 +1004,14 @@ export function fetchAuthenticatedProjectEvidence(root, config, now = new Date()
     project_item_count: response.items.length, project_total_item_count: response.totalCount,
     project_field_count: fieldResponse.fields.length, project_total_field_count: fieldResponse.totalCount,
     required_fields: requiredFields, required_fields_complete: true,
-    project_fields: fieldResponse.fields.map((field) => ({ id: field.id, name: field.name, data_type: field.dataType ?? field.type })).sort((left, right) => left.id.localeCompare(right.id)),
+    project_fields: fieldResponse.fields.map((field) => ({ id: field.id, name: field.name, kind: field.__typename, data_type: field.dataType, options: (field.options ?? []).map((option) => ({ id: option.id, name: option.name })).sort((left, right) => left.id.localeCompare(right.id)) })).sort((left, right) => left.id.localeCompare(right.id)),
     authenticated_login: login, granted_scopes: grantedScopes, fetched_at: now,
-    response_sha256: sha256({ items: fetched.stdout, fields: fetchedFields.stdout, project: fetchedProject.stdout })
+    response_page_hashes: {
+      items: itemPages.rawPages.map((page) => sha256(page)),
+      fields: fieldPages.rawPages.map((page) => sha256(page))
+    },
+    response_pages: { items: itemPages.rawPages, fields: fieldPages.rawPages },
+    response_sha256: sha256({ items: itemPages.rawPages, fields: fieldPages.rawPages })
   });
   return { status: 'OK', observed_at: now, source_id: `github-project:${source.owner}/${source.number}`, issues, fetch_receipt: receipt };
 }
@@ -1145,7 +1213,7 @@ export function validateSchedulerCutoverAuthority(root, evidence, config) {
   const remoteState = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', refs.local], { allowFailure: true });
   const remoteStateOid = remoteState.status === 0 ? remoteState.stdout.trim().split(/\s+/)[0] : null;
   const localStateOid = refOid(root, refs.local);
-  if (remoteStateOid !== decision.candidate_oid || localStateOid !== decision.candidate_oid) throw new Error('scheduler cutover authority is stale for the exact local and remote scheduler-state refs');
+  if (!remoteStateOid || localStateOid !== remoteStateOid || decision.candidate_oid !== remoteStateOid) throw new Error('scheduler cutover authority does not cover the exact synchronized state commit');
   return true;
 }
 
@@ -1363,9 +1431,14 @@ function writePortableCommit(root, state, oldOid, message) {
   }
 }
 
-function persistMigrationCandidate(root, state, sourceOid, message) {
+function persistMigrationCandidate(root, state, sourceOid, message, config, expectedLocalTip) {
   if (!AUTHORIZED_MIGRATION_STATES.has(state)) throw new Error('unauthorized scheduler migration candidate');
   if (state.commitParents?.[0] !== sourceOid) throw new Error('migration candidate first parent must be the canonical remote source');
+  const refs = schedulerStateRefs(config);
+  const observed = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', refs.local], { allowFailure: true });
+  const remoteOid = observed.status === 0 ? observed.stdout.trim().split(/\s+/)[0] : null;
+  if (remoteOid !== sourceOid) throw new Error('migration aborted because the canonical remote state changed');
+  if (refOid(root, refs.local) !== expectedLocalTip) throw new Error('migration aborted because the preserved local tip changed');
   const newOid = writePortableCommit(root, state, sourceOid, message);
   for (const parent of state.commitParents) {
     if (runGit(root, ['merge-base', '--is-ancestor', parent, newOid], { allowFailure: true }).status !== 0) throw new Error(`migration candidate does not preserve parent ${parent}`);
@@ -1384,6 +1457,7 @@ export function persistPortableState(root, state, { push = false, expectedOid = 
   const remote = refOid(root, refs.remote);
   const current = local ?? remote;
   if (current !== expectedOid) throw new Error(`state CAS failed: expected ${expectedOid ?? 'missing'}, found ${current ?? 'missing'}`);
+  if (!current && config.simulation_mode !== true) throw new Error('SCHEDULER_BOOTSTRAP_AUTHORITY_REQUIRED: durable state creation requires a private authorized bootstrap context');
   if (config.simulation_mode !== true && current) {
     const version = String(state.stateVersion ?? '').trim();
     if (version === '1') throw new Error('SCHEDULER_STATE_MIGRATION_REQUIRED: durable v1 writes are frozen');
@@ -1501,7 +1575,7 @@ export function appendEvents(state, inputs) {
   return appended;
 }
 
-function validateMigrationAuthority(root, config, state, expectedTree, now) {
+function validateMigrationAuthority(root, config, state, expectedTree, expectedPreservedLocalTip, now, { requireLiveCapsuleCas = true } = {}) {
   const ownerCommand = readJsonFile(path.join(root, '.agentops', 'governance', 'owner-command.json'));
   const action = ownerCommand.actions?.find((candidate) => candidate.id === 'authorize-scheduler-migration');
   if (!action) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: canonical owner-command contracts expose no scheduler migration action');
@@ -1511,25 +1585,37 @@ function validateMigrationAuthority(root, config, state, expectedTree, now) {
   const allowedKeys = new Set(['event_path', 'event_id', 'event_hash']);
   if (Object.keys(evidence).some((key) => !allowedKeys.has(key))) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority evidence contains undeclared fields');
   const relative = canonicalClaimPath(evidence.event_path);
+  if (!relative.startsWith('.agentops/events/') || !relative.endsWith('.json')) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority must name a canonical append-only event');
   const committed = runGit(root, ['show', `HEAD:${relative}`], { allowFailure: true });
   if (committed.status !== 0) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority event is not committed');
   const event = JSON.parse(committed.stdout);
+  const eventSchema = readJsonFile(path.join(root, '.agentops', 'schemas', 'event.schema.json'));
+  const eventErrors = validateSchema(event, eventSchema, '$');
+  if (eventErrors.length) throw new Error(`SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority event schema is invalid: ${eventErrors.join('; ')}`);
   if (event.id !== evidence.event_id || sha256(event) !== evidence.event_hash || event.kind !== 'owner-decision' || event.actor !== 'owner') throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority event identity/hash is invalid');
   const decision = event.decision;
   const binding = decision?.scheduler_migration;
   const refs = schedulerStateRefs(config);
-  const preservedLocalTip = refOid(root, refs.local);
+  const preservedLocalTip = expectedPreservedLocalTip;
   if (decision?.action !== 'authorize-scheduler-migration' || decision.authenticated_role !== 'owner' || !binding) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision does not contain the structured migration binding');
   if (decision.candidate_oid !== binding.scheduler_head || runGit(root, ['rev-parse', `${binding.scheduler_head}^{tree}`]).stdout !== binding.scheduler_tree || runGit(root, ['merge-base', '--is-ancestor', binding.scheduler_head, 'HEAD'], { allowFailure: true }).status !== 0) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: repaired scheduler code head/tree is not exact and committed');
   if (binding.source_state_oid !== state.oid || binding.expected_remote_oid !== state.oid || binding.source_state_tree !== expectedTree || binding.source_snapshot_sha256 !== state.snapshot.snapshot_hash || binding.source_journal_manifest_sha256 !== legacyJournalManifestHash(state.eventBlobs) || binding.source_event_count !== state.events.length) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision is not bound to the exact released source state');
   if (binding.source_state_version !== 1 || binding.target_state_version !== 2 || binding.canonical_anchor_oid !== config.migration.canonical_anchor_oid || binding.preserved_local_tip_oid !== preservedLocalTip || binding.dispatch_frozen !== true || binding.one_use !== true || binding.target_ref !== refs.local || binding.push_mode !== 'non-force-forward-only-cas' || binding.abort_on_remote_change !== true) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision migration invariants do not match the scheduler contract');
   validInstant(binding.expires_at, 'scheduler migration authority expires_at');
   if (Date.parse(now) >= Date.parse(binding.expires_at)) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision has expired');
-  const capsuleFile = path.join(root, '.agentops', 'work', decision.target, 'CURRENT.json');
-  if (!fs.existsSync(capsuleFile) || readJsonFile(capsuleFile).parent_hash !== decision.expected_current_hash) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision capsule CAS binding is stale');
-  if (!action.protected || action.authenticator_roles?.length !== 1 || action.authenticator_roles[0] !== 'owner') throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: migration action is not owner-exclusive');
+  if (requireLiveCapsuleCas) {
+    const capsuleFile = path.join(root, '.agentops', 'work', decision.target, 'CURRENT.json');
+    if (!fs.existsSync(capsuleFile) || readJsonFile(capsuleFile).parent_hash !== decision.expected_current_hash) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: owner decision capsule CAS binding is stale');
+  }
+  if (!action.protected || action.one_use !== true || action.expires !== true || action.authenticator_roles?.length !== 1 || action.authenticator_roles[0] !== 'owner' || !action.required_fields?.includes('scheduler_migration')) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: migration action is not owner-exclusive, expiring, and one-use');
+  const authorityRef = `refs/remotes/origin/${config.development_branch}`;
+  const remoteAuthority = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', `refs/heads/${config.development_branch}`], { allowFailure: true });
+  const remoteAuthorityOid = remoteAuthority.status === 0 ? remoteAuthority.stdout.trim().split(/\s+/)[0] : null;
+  if (!remoteAuthorityOid || refOid(root, authorityRef) !== remoteAuthorityOid) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: protected authority cache is not current');
+  const protectedEvent = runGit(root, ['show', `${authorityRef}:${relative}`], { allowFailure: true });
+  if (protectedEvent.status !== 0 || stableStringify(JSON.parse(protectedEvent.stdout)) !== stableStringify(event)) throw new Error('SCHEDULER_MIGRATION_AUTHORITY_UNAVAILABLE: authority event is not exact on protected authority state');
   assertPortable(evidence);
-  return structuredClone(evidence);
+  return { ...structuredClone(evidence), authority_state_oid: remoteAuthorityOid, authority_event: structuredClone(event) };
 }
 
 function planStateMigration(state, {
@@ -1670,7 +1756,7 @@ function beginWakeDispatch(root, snapshot, assignments, config) {
   };
 }
 
-export function reconcileWakeDispatch(root, snapshot, config) {
+function reconcileWakeDispatch(root, snapshot, config) {
   const dispatchRoot = path.join(localRuntimeDir(root), 'dispatch');
   fs.mkdirSync(dispatchRoot, { recursive: true });
   const byActor = new Map(Object.values(snapshot.work_items)
@@ -1684,7 +1770,7 @@ export function reconcileWakeDispatch(root, snapshot, config) {
   }
 }
 
-export function dispatchWakes(root, snapshot, assignments, config) {
+function dispatchWakes(root, snapshot, assignments, config) {
   const transaction = beginWakeDispatch(root, snapshot, assignments, config);
   transaction.commit();
   return transaction.dispatched;
@@ -1710,6 +1796,15 @@ export function commitAssignmentsAfterWakeDispatch(state, assignments, machineId
   }
 }
 
+export function assertCandidatePortable(root, item, candidateOid = item?.candidate_commit) {
+  if (!item || !/^[0-9a-f]{40}$/.test(candidateOid ?? '') || !/^codex\/[A-Za-z0-9._\/-]+$/.test(item.branch ?? '')) throw new Error('candidate portability requires an exact commit and codex branch');
+  if (runGit(root, ['cat-file', '-e', `${candidateOid}^{commit}`], { allowFailure: true }).status !== 0) throw new Error(`candidate commit ${candidateOid} is not readable in the repository`);
+  const observed = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', `refs/heads/${item.branch}`], { allowFailure: true });
+  const remoteOid = observed.status === 0 ? observed.stdout.trim().split(/\s+/)[0] : null;
+  if (remoteOid !== candidateOid) throw new Error(`candidate commit ${candidateOid} is not durably published at ${item.branch}`);
+  return true;
+}
+
 function persistRefillAssignments(root, state, plan, machineId, createdAt, config, { push = false, message = 'scheduler refill assignments' } = {}) {
   if (plan.assignments.length === 0) {
     // Once cut over, a material transition still owns one dispatch action: it
@@ -1727,6 +1822,7 @@ function persistRefillAssignments(root, state, plan, machineId, createdAt, confi
     }
     return { state, oid: state.oid, dispatched: [] };
   }
+  for (const assignment of plan.assignments.filter((candidate) => candidate.kind === 'qa')) assertCandidatePortable(root, state.snapshot.work_items[assignment.issue_id]);
   assertSchedulerDispatchCutover(config, root);
   if (push !== true) throw new Error('live scheduler wake dispatch requires remote scheduler-state confirmation via --push');
   return commitAssignmentsAfterWakeDispatch(state, plan.assignments, machineId, createdAt, {
@@ -1782,6 +1878,14 @@ export function schedulerCommandClass(command) {
   return 'UNKNOWN';
 }
 
+export function schedulerCommandsByClass(commandClass) {
+  if (commandClass === 'READ_ONLY') return [...READ_ONLY_COMMANDS];
+  if (commandClass === 'MIGRATION_ONLY') return ['migrate-state'];
+  if (commandClass === 'OPERATIONAL') return [...OPERATIONAL_COMMANDS];
+  if (commandClass === 'NEVER_RAW') return [...NEVER_RAW_COMMANDS];
+  return [];
+}
+
 export function assertSchedulerCommandAllowed(command, state, config, root = null) {
   const commandClass = schedulerCommandClass(command);
   if (commandClass === 'READ_ONLY' || commandClass === 'MIGRATION_ONLY') return true;
@@ -1835,6 +1939,31 @@ export function trustedTransitionArgs(args, now = new Date().toISOString()) {
   return { ...args, at: now };
 }
 
+function verifyCommittedMigrationAuthority(root, payload, source, sourceTree, boundary) {
+  const receipt = payload.authority_receipt;
+  if (!receipt || !/^[0-9a-f]{40}$/.test(receipt.authority_state_oid ?? '') || !receipt.authority_event) throw new Error('migration boundary lacks immutable protected authority objects');
+  const relative = canonicalClaimPath(receipt.event_path);
+  if (!relative.startsWith('.agentops/events/') || !relative.endsWith('.json')) throw new Error('migration boundary authority path is not canonical');
+  const event = receipt.authority_event;
+  if (event.id !== receipt.event_id || sha256(event) !== receipt.event_hash || event.kind !== 'owner-decision' || event.actor !== 'owner') throw new Error('migration boundary authority event identity/hash is invalid');
+  const committedEvent = runGit(root, ['show', `${receipt.authority_state_oid}:${relative}`], { allowFailure: true });
+  if (committedEvent.status !== 0 || stableStringify(JSON.parse(committedEvent.stdout)) !== stableStringify(event)) throw new Error('migration boundary authority event is not exact at its protected commit');
+  const schemaResult = runGit(root, ['show', `${receipt.authority_state_oid}:.agentops/schemas/event.schema.json`], { allowFailure: true });
+  if (schemaResult.status !== 0 || validateSchema(event, JSON.parse(schemaResult.stdout), '$').length) throw new Error('migration boundary authority event fails its committed schema');
+  const ownerCommandResult = runGit(root, ['show', `${receipt.authority_state_oid}:.agentops/governance/owner-command.json`], { allowFailure: true });
+  if (ownerCommandResult.status !== 0) throw new Error('migration boundary authority contract is absent at its protected commit');
+  const action = JSON.parse(ownerCommandResult.stdout).actions?.find((candidate) => candidate.id === 'authorize-scheduler-migration');
+  if (!action?.protected || action.one_use !== true || action.expires !== true || stableStringify(action.authenticator_roles) !== stableStringify(['owner']) || !action.required_fields?.includes('scheduler_migration')) throw new Error('migration boundary authority action was not owner-exclusive, expiring, and one-use');
+  const decision = event.decision; const binding = decision?.scheduler_migration;
+  if (decision?.action !== 'authorize-scheduler-migration' || decision.authenticated_role !== 'owner' || !binding) throw new Error('migration boundary authority event lacks a structured owner decision');
+  if (decision.candidate_oid !== binding.scheduler_head || runGit(root, ['rev-parse', `${binding.scheduler_head}^{tree}`]).stdout !== binding.scheduler_tree || runGit(root, ['merge-base', '--is-ancestor', binding.scheduler_head, receipt.authority_state_oid], { allowFailure: true }).status !== 0) throw new Error('migration boundary authority does not preserve the exact repaired scheduler head/tree');
+  if (binding.source_state_oid !== source.oid || binding.expected_remote_oid !== source.oid || binding.source_state_tree !== sourceTree || binding.source_snapshot_sha256 !== source.snapshot.snapshot_hash || binding.source_journal_manifest_sha256 !== legacyJournalManifestHash(source.eventBlobs) || binding.source_event_count !== source.events.length) throw new Error('migration boundary authority source binding is not exact');
+  if (binding.source_state_version !== 1 || binding.target_state_version !== 2 || binding.preserved_local_tip_oid !== payload.preserved_local_tip || binding.dispatch_frozen !== true || binding.one_use !== true || binding.target_ref !== 'refs/heads/agentops/scheduler-state' || binding.push_mode !== 'non-force-forward-only-cas' || binding.abort_on_remote_change !== true) throw new Error('migration boundary authority invariants are incomplete');
+  validInstant(binding.expires_at, 'scheduler migration authority expires_at');
+  if (Date.parse(boundary.created_at) >= Date.parse(binding.expires_at)) throw new Error('migration boundary consumed expired authority');
+  return true;
+}
+
 function verifyMigrationBoundary(root, config, state, rebuilt) {
   const boundaries = state.events.filter((event) => event.event_type === 'STATE_MIGRATED');
   if (boundaries.length !== 1) throw new Error('v2 verification requires exactly one migration boundary');
@@ -1846,10 +1975,12 @@ function verifyMigrationBoundary(root, config, state, rebuilt) {
   if (sourceReplay.errors.length || !snapshotsMatch(sourceReplay, source.snapshot)) throw new Error('migration source no longer replays exactly');
   if (legacyJournalManifestHash(source.eventBlobs) !== payload.legacy_journal_manifest_hash) throw new Error('migration legacy journal blob manifest mismatch');
   if (stableStringify(source.machineLease) !== stableStringify(payload.legacy_machine_lease)) throw new Error('migration legacy machine custody evidence mismatch');
-  const authorityReceipt = validateMigrationAuthority(root, config, source, sourceTree, boundary.created_at);
-  if (stableStringify(authorityReceipt) !== stableStringify(payload.authority_receipt)) throw new Error('migration boundary authority receipt differs from the committed owner decision binding');
+  verifyCommittedMigrationAuthority(root, payload, source, sourceTree, boundary);
   if (state.oid) {
-    const parents = runGit(root, ['show', '-s', '--format=%P', state.oid]).stdout.split(/\s+/).filter(Boolean);
+    const boundaryPath = `journal/${String(boundary.sequence).padStart(8, '0')}-${boundary.event_id}.json`;
+    const introducing = runGit(root, ['log', '--format=%H', '--reverse', state.oid, '--', boundaryPath]).stdout.split(/\s+/).filter(Boolean);
+    if (introducing.length !== 1 || stableStringify(showJson(root, introducing[0], boundaryPath)) !== stableStringify(boundary)) throw new Error('migration boundary does not have one immutable introducing commit');
+    const parents = runGit(root, ['show', '-s', '--format=%P', introducing[0]]).stdout.split(/\s+/).filter(Boolean);
     const expectedParents = [payload.source_state_oid, ...(payload.preserved_local_tip ? [payload.preserved_local_tip] : [])];
     if (stableStringify(parents) !== stableStringify(expectedParents)) throw new Error('migration commit parent topology mismatch');
   }
@@ -1912,11 +2043,11 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     if (args.expected_tree !== actualTree || args.expected_snapshot_hash !== state.snapshot.snapshot_hash) throw new Error('migrate-state expected old tree/snapshot CAS mismatch');
     const rebuilt = reduceEvents(state.events);
     if (rebuilt.errors.length || !snapshotsMatch(rebuilt, state.snapshot)) throw new Error('migrate-state source fails exact deterministic replay');
-    const authorityReceipt = validateMigrationAuthority(root, config, state, actualTree, now);
     const localTip = refOid(root, refs.local);
+    const authorityReceipt = validateMigrationAuthority(root, config, state, actualTree, localTip, now);
     if (args.preserved_local_tip !== undefined && args.preserved_local_tip !== localTip) throw new Error('migrate-state preserved local tip does not match the observed local scheduler ref');
     state = planStateMigration(state, { expectedOid: remoteOid, expectedTree: actualTree, expectedSnapshotHash: state.snapshot.snapshot_hash, authorityReceipt, preservedLocalTip: localTip && localTip !== remoteOid ? localTip : null, createdAt: now });
-    const candidate = persistMigrationCandidate(root, state, remoteOid, `scheduler v2 migration candidate from ${remoteOid}`);
+    const candidate = persistMigrationCandidate(root, state, remoteOid, `scheduler v2 migration candidate from ${remoteOid}`, config, localTip);
     emit(command, { candidate_state_oid: candidate.oid, candidate_ref: candidate.candidateRef, parent_state_oid: remoteOid, preserved_local_tip: localTip && localTip !== remoteOid ? localTip : null, source_snapshot_hash: args.expected_snapshot_hash, state_version: '2', dispatch_frozen: true }, 'MIGRATE-STATE CANDIDATE PASS: v1 journal preserved in a two-parent local candidate; publication remains separately authorized.'); return 0;
   }
   if (command === 'bootstrap') {
@@ -1924,6 +2055,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     throw new Error('SCHEDULER_BOOTSTRAP_AUTHORITY_REQUIRED: fresh portable state creation is a separate protected transition');
   }
   assertSchedulerCommandAllowed(command, state, config, root);
+  if (args.push !== true) throw new Error('SCHEDULER_REMOTE_CAS_REQUIRED: operational mutations require --push before any local write');
   if (command === 'deliver' || command === 'merge-dev' || (command === 'qa' && args.no_deliver !== true && args.no_deliver !== 'true')) {
     throw new Error('SCHEDULER_EXTERNAL_EFFECT_PROTOCOL_UNAVAILABLE: GitHub mutations require a separately authorized durable two-phase reservation protocol');
   }
@@ -2021,6 +2153,11 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const assessment = assessAssignmentAdmission(item, state.snapshot, config, now, reconciliation);
     if (!assessment.eligible) throw new Error(`${assessment.blocker}: ${assessment.conflict_identity ?? 'unknown'}; wake=${assessment.wake_evidence}`);
     args.trusted_admission_evidence = assessment.evidence;
+  }
+  if (command === 'candidate' || command === 'qa') {
+    const item = state.snapshot.work_items[canonicalIssueIdentity(args.issue)];
+    if (!item) throw new Error(`unknown issue ${args.issue}`);
+    assertCandidatePortable(root, item, args.commit);
   }
   if (command === 'deliver') {
     const item = state.snapshot.work_items[canonicalIssueIdentity(args.issue)]; if (!item) throw new Error(`unknown issue ${args.issue}`);

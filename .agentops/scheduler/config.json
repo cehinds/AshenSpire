@@ -18,11 +18,20 @@
   "project_evidence_max_age_seconds": 30,
   "project_contract": {
     "owner": "cehinds",
+    "owner_type": "user",
     "number": 4,
     "id": "PVT_kwHOCSCyJ84BgfH9",
     "title": "Family Delivery",
     "fields": {
-      "Priority": { "id": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4", "data_type": "ProjectV2SingleSelectField" }
+      "Scheduler Status": { "id": null, "kind": "ProjectV2SingleSelectField", "data_type": "SINGLE_SELECT", "options": null },
+      "Priority": { "id": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4", "kind": "ProjectV2SingleSelectField", "data_type": "SINGLE_SELECT", "options": null },
+      "Owner Role": { "id": null, "kind": "ProjectV2SingleSelectField", "data_type": "SINGLE_SELECT", "options": null },
+      "Affected Paths": { "id": null, "kind": "ProjectV2Field", "data_type": "TEXT" },
+      "Affected Resources": { "id": null, "kind": "ProjectV2Field", "data_type": "TEXT" },
+      "Dependencies": { "id": null, "kind": "ProjectV2Field", "data_type": "TEXT" },
+      "External Claims": { "id": null, "kind": "ProjectV2Field", "data_type": "TEXT" },
+      "Human Gate": { "id": null, "kind": "ProjectV2Field", "data_type": "TEXT" },
+      "Scope Complete": { "id": null, "kind": "ProjectV2SingleSelectField", "data_type": "SINGLE_SELECT", "options": null }
     }
   },
   "migration": {
@@ -36,7 +45,7 @@
   "workers": [],
   "cutover": {
     "scheduler_dispatch_enabled": false,
-    "legacy_watcher_authoritative": true,
+    "legacy_watcher_authoritative": false,
     "authorization_evidence": null
   },
   "authority": {

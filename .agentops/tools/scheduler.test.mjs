@@ -8,17 +8,28 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
-  appendEvents, applyAssignments, assertPortable, assertSchedulerCommandAllowed, assertSchedulerDispatchCutover, canonicalClaimPath, canonicalIssueIdentity, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
+  appendEvents, applyAssignments, assertCandidatePortable, assertPortable, assertSchedulerCommandAllowed, assertSchedulerDispatchCutover, canonicalClaimPath, canonicalIssueIdentity, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
   emptySnapshot, historyAdvanceAllowed, intakeAdmissionEvidence, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   fetchAuthenticatedProjectEvidence, legacyJournalManifestHash, localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reconcileAssignmentEnvironment, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, schedulerEventVersion, schedulerStateRefs, sealAdmissionEvidence, sha256, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validatePortableStateVersion, validateSchedulerCutoverAuthority, validateSchedulerDocument, validateWorkers, watcherPlan
+  runBoundedCommand, schedulerCommandsByClass, schedulerEventVersion, schedulerStateRefs, sealAdmissionEvidence, sha256, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validatePortableStateVersion, validateSchedulerCutoverAuthority, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 import { exactV1NumericCheckpoint169333, schedulerV1CompatFixture } from './testdata/scheduler-v1-compat.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolDir, '..', '..');
+const trackedConfig = readConfig(path.resolve(toolDir, '..'));
+const testFieldNames = ['Scheduler Status', 'Priority', 'Owner Role', 'Affected Paths', 'Affected Resources', 'Dependencies', 'External Claims', 'Human Gate', 'Scope Complete'];
 const config = {
-  ...readConfig(path.resolve(toolDir, '..')),
+  ...trackedConfig,
+  project_contract: {
+    ...trackedConfig.project_contract,
+    fields: Object.fromEntries(testFieldNames.map((name, index) => [name, {
+      id: trackedConfig.project_contract.fields[name]?.id ?? `PVTF_test_contract_${index}`,
+      kind: trackedConfig.project_contract.fields[name].kind,
+      data_type: trackedConfig.project_contract.fields[name].data_type,
+      ...(trackedConfig.project_contract.fields[name].kind === 'ProjectV2SingleSelectField' ? { options: [{ id: `option-${index}-a`, name: index === 0 ? 'READY' : index === 1 ? 'P1' : index === 2 ? 'maker' : 'TRUE' }] } : {})
+    }]))
+  },
   simulation_mode: true,
   workers: [
     { actor: 'seat:test:00000000-0000-4000-8000-000000000001', capabilities: ['implementation'] },
@@ -59,10 +70,15 @@ function testProjectReceipt(observedAt = '2026-08-30T00:00:05.000Z') {
     project_fields: requiredFields.map((name, index) => ({
       id: config.project_contract.fields[name]?.id ?? `PVTF_test_${index}`,
       name,
-      data_type: config.project_contract.fields[name]?.data_type ?? 'TEXT'
+      kind: config.project_contract.fields[name].kind,
+      data_type: config.project_contract.fields[name].data_type,
+      options: structuredClone(config.project_contract.fields[name].options ?? [])
     })),
     authenticated_login: 'test-owner', granted_scopes: ['read:project'],
-    fetched_at: observedAt, response_sha256: sha256('authenticated-project-response')
+    fetched_at: observedAt,
+    response_pages: { items: ['test-items-page-1', 'test-items-page-2'], fields: ['test-fields-page'] },
+    response_page_hashes: { items: [sha256('test-items-page-1'), sha256('test-items-page-2')], fields: [sha256('test-fields-page')] },
+    response_sha256: sha256({ items: ['test-items-page-1', 'test-items-page-2'], fields: ['test-fields-page'] })
   };
   return { ...body, receipt_hash: sha256(body) };
 }
@@ -658,8 +674,11 @@ test('Git and GitHub subprocesses fail closed on startup errors and timeouts', (
   assert.throws(() => runBoundedCommand(process.execPath, [], { timeoutMs: 0 }), /invalid subprocess timeout/);
 });
 
-test('scheduler dispatch remains mechanically disabled while legacy watcher is authoritative', () => {
-  assert.throws(() => assertSchedulerDispatchCutover(config), /legacy watcher remains authoritative/);
+test('quiet-window configuration keeps both scheduler and legacy watcher disabled', () => {
+  assert.equal(config.cutover.scheduler_dispatch_enabled, false);
+  assert.equal(config.cutover.legacy_watcher_authoritative, false);
+  assert.equal(config.cutover.authorization_evidence, null);
+  assert.throws(() => assertSchedulerDispatchCutover(config), /cutover is not authorized/);
   const localAssertion = { event_path: '.agentops/events/AS-SCHEDULER/fake.json', event_id: 'fake', event_hash: '0'.repeat(64) };
   const attempted = { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: localAssertion } };
   assert.throws(() => validateSchedulerCutoverAuthority(repoRoot, localAssertion, attempted), /SCHEDULER_CUTOVER_AUTHORITY_UNAVAILABLE/);
@@ -804,6 +823,17 @@ test('admission fails closed when Project evidence is missing, stale, or has no 
   blocked = blockedAdmission(state, 'GH-BOARD-SYNC', reconciliation);
   assert.equal(blocked.blocker, 'BOARD_SYNC_FAILED');
   assert.match(blocked.wake_evidence, /local JSON assertions are not admission evidence/);
+  for (const mutate of [
+    (receipt) => { receipt.response_pages.items[0] = 'tampered-page'; },
+    (receipt) => { delete receipt.response_pages; },
+    (receipt) => { receipt.response_pages.items.reverse(); }
+  ]) {
+    reconciliation = liveReconciliation(state, 'GH-BOARD-SYNC');
+    const receipt = reconciliation.project_sync.fetch_receipt;
+    mutate(receipt); delete receipt.receipt_hash; receipt.receipt_hash = sha256(receipt);
+    blocked = blockedAdmission(state, 'GH-BOARD-SYNC', reconciliation);
+    assert.equal(blocked.blocker, 'BOARD_SYNC_FAILED');
+  }
 });
 
 test('numeric hash and GitHub URL issue aliases collapse to one canonical work item', () => {
@@ -862,27 +892,39 @@ test('GitHub Project admission is built from an authenticated read-project fetch
     const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' }); assert.equal(init.status, 0, init.stderr);
     const runtime = path.join(temp, '.git', 'agentops-scheduler'); fs.mkdirSync(runtime, { recursive: true });
     fs.writeFileSync(path.join(runtime, 'project-source.json'), `${JSON.stringify({ schema: 'agentops/scheduler-project-source/v1', repository: repositorySlug(config.repository), owner: 'cehinds', number: 4 })}\n`);
-    const projectResponse = JSON.stringify({ totalCount: 1, items: [{
-      content: { number: 426, repository: repositorySlug(config.repository), state: 'OPEN', assignees: [] },
-       Priority: 'P1', 'Owner Role': 'maker', 'Scheduler Status': 'READY', 'Scope Complete': true,
-      'Affected Paths': JSON.stringify(['src/receipt.js']), 'Affected Resources': '[]', Dependencies: '[]', 'External Claims': '[]'
-    }] });
     const requiredFields = ['Scheduler Status', 'Priority', 'Owner Role', 'Affected Paths', 'Affected Resources', 'Dependencies', 'External Claims', 'Human Gate', 'Scope Complete'];
-    const fieldResponse = JSON.stringify({ totalCount: requiredFields.length, fields: requiredFields.map((name, index) => ({
+    const fieldNodes = requiredFields.map((name, index) => ({
       id: config.project_contract.fields[name]?.id ?? `field-${index}`,
       name,
-      dataType: config.project_contract.fields[name]?.data_type ?? 'TEXT'
-    })) });
-    const identityResponse = JSON.stringify({ id: config.project_contract.id, title: config.project_contract.title, number: 4, owner: { login: 'cehinds' } });
+      __typename: config.project_contract.fields[name].kind,
+      dataType: config.project_contract.fields[name].data_type,
+      options: structuredClone(config.project_contract.fields[name].options ?? [])
+    }));
+    const values = {
+      'Scheduler Status': 'READY', Priority: 'P1', 'Owner Role': 'maker',
+      'Affected Paths': JSON.stringify(['src/receipt.js']), 'Affected Resources': '[]', Dependencies: '[]',
+      'External Claims': '[]', 'Human Gate': '', 'Scope Complete': 'TRUE'
+    };
+    const itemNodes = [{
+      id: 'PVTI_test_426',
+      content: { __typename: 'Issue', number: 426, repository: { nameWithOwner: repositorySlug(config.repository) }, state: 'OPEN', stateReason: null, assignees: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [] } },
+      fieldValues: { totalCount: requiredFields.length, pageInfo: { hasNextPage: false, endCursor: null }, nodes: requiredFields.map((name) => {
+        const expected = config.project_contract.fields[name];
+        return expected.kind === 'ProjectV2SingleSelectField'
+          ? { __typename: 'ProjectV2ItemFieldSingleSelectValue', field: { id: expected.id, name }, name: values[name], optionId: expected.options[0].id }
+          : { __typename: 'ProjectV2ItemFieldTextValue', field: { id: expected.id, name }, text: values[name] };
+      }) }
+    }];
+    const projectIdentity = { id: config.project_contract.id, title: config.project_contract.title, number: 4 };
+    const itemResponse = () => ({ data: { user: { projectV2: { ...projectIdentity, items: { totalCount: 1, pageInfo: { hasNextPage: false, endCursor: null }, nodes: itemNodes } } } } });
+    const fieldResponse = () => ({ data: { user: { projectV2: { ...projectIdentity, fields: { totalCount: fieldNodes.length, pageInfo: { hasNextPage: false, endCursor: null }, nodes: fieldNodes } } } } });
     const runner = (command, args) => {
       assert.equal(command, 'gh');
       if (args[0] === 'auth') return { status: 0, stdout: '', stderr: "Logged in to github.com account test-owner\nToken scopes: 'repo', 'read:project'" };
-      if (args[1] === 'item-list') {
-        for (const field of requiredFields) assert.equal(args.some((value, index) => value === '--field' && args[index + 1] === field), true);
-        return { status: 0, stdout: projectResponse, stderr: '' };
+      if (args[0] === 'api' && args[1] === 'graphql') {
+        const query = args.find((value) => value.startsWith('query=')) ?? '';
+        return { status: 0, stdout: JSON.stringify(query.includes('items(first:100') ? itemResponse() : fieldResponse()), stderr: '' };
       }
-      if (args[1] === 'field-list') return { status: 0, stdout: fieldResponse, stderr: '' };
-      if (args[1] === 'view') return { status: 0, stdout: identityResponse, stderr: '' };
       throw new Error(`unexpected gh call ${args.join(' ')}`);
     };
     const sync = fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', runner);
@@ -895,20 +937,60 @@ test('GitHub Project admission is built from an authenticated read-project fetch
     assert.equal(sync.fetch_receipt.receipt_hash, sha256(Object.fromEntries(Object.entries(sync.fetch_receipt).filter(([key]) => key !== 'receipt_hash'))));
     const truncatedRunner = (command, args) => {
       const result = runner(command, args);
-      if (args[1] === 'item-list') return { ...result, stdout: JSON.stringify({ ...JSON.parse(result.stdout), totalCount: 2 }) };
+      const parsed = result.stdout ? JSON.parse(result.stdout) : null;
+      if (parsed?.data?.user?.projectV2?.items) { parsed.data.user.projectV2.items.totalCount = 2; return { ...result, stdout: JSON.stringify(parsed) }; }
       return result;
     };
-    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', truncatedRunner), /truncated GitHub Project item response/);
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', truncatedRunner), /truncated GitHub Project items response/);
     const malformedRunner = (command, args) => {
       const result = runner(command, args);
-      if (args[1] === 'item-list') {
-        const malformed = JSON.parse(result.stdout); malformed.items[0].Dependencies = '{not-json';
-        return { ...result, stdout: JSON.stringify(malformed) };
-      }
+      const malformed = result.stdout ? JSON.parse(result.stdout) : null;
+      const nodes = malformed?.data?.user?.projectV2?.items?.nodes;
+      if (nodes) { nodes[0].fieldValues.nodes.find((value) => value.field.name === 'Dependencies').text = '{not-json'; return { ...result, stdout: JSON.stringify(malformed) }; }
       return result;
     };
     assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', malformedRunner), /Dependencies is not valid JSON/);
-    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', (command, args) => args[0] === 'auth' ? { status: 0, stdout: '', stderr: 'Logged in to github.com account test-owner\nToken scopes: repo' } : { status: 0, stdout: projectResponse, stderr: '' }), /lacks read:project/);
+    const wrongTypeRunner = (command, args) => {
+      const result = runner(command, args); const parsed = result.stdout ? JSON.parse(result.stdout) : null;
+      const field = parsed?.data?.user?.projectV2?.fields?.nodes?.find((candidate) => candidate.name === 'Affected Paths');
+      if (field) field.dataType = 'NUMBER';
+      return parsed ? { ...result, stdout: JSON.stringify(parsed) } : result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', wrongTypeRunner), /field contract mismatch for Affected Paths/);
+    const alteredOptionRunner = (command, args) => {
+      const result = runner(command, args); const parsed = result.stdout ? JSON.parse(result.stdout) : null;
+      const field = parsed?.data?.user?.projectV2?.fields?.nodes?.find((candidate) => candidate.name === 'Priority');
+      if (field) field.options[0].name = 'P0';
+      return parsed ? { ...result, stdout: JSON.stringify(parsed) } : result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', alteredOptionRunner), /select option contract mismatch for Priority/);
+    const nestedTruncationRunner = (command, args) => {
+      const result = runner(command, args); const parsed = result.stdout ? JSON.parse(result.stdout) : null;
+      const assignees = parsed?.data?.user?.projectV2?.items?.nodes?.[0]?.content?.assignees;
+      if (assignees) assignees.totalCount = 1;
+      return parsed ? { ...result, stdout: JSON.stringify(parsed) } : result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', nestedTruncationRunner), /assignees connection is incomplete or truncated/);
+    const fieldValueTruncationRunner = (command, args) => {
+      const result = runner(command, args); const parsed = result.stdout ? JSON.parse(result.stdout) : null;
+      const valuesConnection = parsed?.data?.user?.projectV2?.items?.nodes?.[0]?.fieldValues;
+      if (valuesConnection) valuesConnection.pageInfo.hasNextPage = true;
+      return parsed ? { ...result, stdout: JSON.stringify(parsed) } : result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', fieldValueTruncationRunner), /fieldValues connection is incomplete or truncated/);
+    const graphqlErrorRunner = (command, args) => {
+      const result = runner(command, args); const parsed = result.stdout ? JSON.parse(result.stdout) : null;
+      if (parsed?.data?.user?.projectV2?.items) parsed.errors = [{ message: 'partial response' }];
+      return parsed ? { ...result, stdout: JSON.stringify(parsed) } : result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', graphqlErrorRunner), /GraphQL response contains errors/);
+    const missingPageInfoRunner = (command, args) => {
+      const result = runner(command, args); const parsed = result.stdout ? JSON.parse(result.stdout) : null;
+      if (parsed?.data?.user?.projectV2?.items) delete parsed.data.user.projectV2.items.pageInfo.hasNextPage;
+      return parsed ? { ...result, stdout: JSON.stringify(parsed) } : result;
+    };
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', missingPageInfoRunner), /connection is incomplete/);
+    assert.throws(() => fetchAuthenticatedProjectEvidence(temp, { ...config, simulation_mode: false }, '2026-08-30T00:00:05Z', (command, args) => args[0] === 'auth' ? { status: 0, stdout: '', stderr: 'Logged in to github.com account test-owner\nToken scopes: repo' } : runner(command, args)), /lacks read:project/);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
@@ -1090,6 +1172,9 @@ test('v2 exact-object pairs fail closed and read-only status creates no machine 
   const source = { oid: fixture.source_state_oid, events: fixture.events, eventBlobs: {}, snapshot, machineLease: null, stateVersion: '1' };
   const migrated = migrateFixture(source, fixture.source_state_tree);
   assert.throws(() => makeEvent(migrated.snapshot, { event_type: 'CLAIM_ACQUIRED', issue_id: '#422', actor: config.workers[0].actor, machine_id: 'machine-v2', lease_id: 'lease-v2', lease_epoch: 2, exact_object: { base_commit: 'a'.repeat(40) }, payload: { base_commit: 'b'.repeat(40) }, created_at: '2026-08-30T02:00:01.000Z' }), /exact object and payload disagree/);
+  assert.throws(() => makeEvent(migrated.snapshot, { event_type: 'CANDIDATE_READY', issue_id: '#422', actor: config.workers[0].actor, machine_id: 'machine-v2', lease_id: 'lease-v2', lease_epoch: 2, exact_object: { oid: 'a'.repeat(40) }, payload: { candidate_commit: 'a'.repeat(40), evidence_pointers: ['coop-hand-parity: WITHHOLD timeout'] }, created_at: '2026-08-30T02:00:01.000Z' }), /negative or WITHHOLD/);
+  assert.throws(() => makeEvent(migrated.snapshot, { event_type: 'QA_RESULT', issue_id: '#422', actor: config.workers[1].actor, machine_id: 'machine-v2', lease_id: 'qa-v2', lease_epoch: 3, exact_object: { oid: 'a'.repeat(40) }, payload: { candidate_commit: 'a'.repeat(40), result: 'PASS', evidence_pointers: ['receipt:qa:FAIL'] }, created_at: '2026-08-30T02:00:01.000Z' }), /negative or WITHHOLD/);
+  assert.doesNotThrow(() => makeEvent(migrated.snapshot, { event_type: 'QA_RESULT', issue_id: '#422', actor: config.workers[1].actor, machine_id: 'machine-v2', lease_id: 'qa-v2', lease_epoch: 3, exact_object: { oid: 'a'.repeat(40) }, payload: { candidate_commit: 'a'.repeat(40), result: 'FAIL', evidence_pointers: ['receipt:qa:FAIL'] }, created_at: '2026-08-30T02:00:01.000Z' }));
 
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-status-guard-'));
   try {
@@ -1100,11 +1185,12 @@ test('v2 exact-object pairs fail closed and read-only status creates no machine 
     assert.equal(spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' }).status, 0);
     assert.equal(main(['status'], temp), 0);
     assert.equal(fs.existsSync(path.join(temp, '.git', 'agentops-scheduler', 'machine.json')), false);
+    assert.throws(() => assertCandidatePortable(temp, { branch: 'codex/missing-candidate', candidate_commit: 'a'.repeat(40) }), /not readable/);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
 test('every operational command is side-effect-free on v1 and blocked on frozen v2', () => {
-  const commands = ['bootstrap', 'sync', 'acquire-machine', 'release-machine', 'watch', 'enqueue', 'claim', 'entered', 'candidate', 'qa', 'block', 'release', 'recover', 'deliver', 'merge-dev', 'complete', 'expire', 'supersede', 'cancel'];
+  const commands = schedulerCommandsByClass('OPERATIONAL');
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-command-matrix-'));
   try {
     fs.mkdirSync(path.join(temp, '.agentops', 'scheduler'), { recursive: true });
