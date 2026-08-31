@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 39,
-  "last_sequence": 39,
+  "revision": 40,
+  "last_sequence": 40,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 13,
+      "revision": 14,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "REPAIR_REQUIRED",
-      "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
+      "state": "CLAIMED",
+      "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
       "candidate_commit": "ba7b947c099b3379849cfdbdd116f18b3644351d",
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 5,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:257:6",
+      "lease_epoch": 6,
+      "lease_expiry": "2026-08-31T16:10:12.568Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
       "lease_history": [
         {
@@ -117,6 +117,13 @@
           "lease_id": "qa-lease:257:5",
           "lease_epoch": 5,
           "assignment_kind": "qa"
+        },
+        {
+          "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "lease:257:6",
+          "lease_epoch": 6,
+          "assignment_kind": "implementation"
         }
       ],
       "late_candidates": [],
@@ -150,7 +157,7 @@
       "wake_condition": null,
       "next_action": "Author at least one real later-event or later-choice outcome keyed to an earlier shipped choice, preserve one always-available exit, and extend the contract to prove the shipped chain through the runtime screen path.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000039-8f3f957a-52c0-4b36-a90e-aaa7da7b1b06",
+      "updated_event": "evt-00000040-61a92605-ee1d-42fe-be42-d896cecb3f7d",
       "updated_at": "2026-08-31T15:40:12.568Z"
     },
     "397": {
@@ -359,5 +366,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "9fde79710c71bc427837526211186cb80b1a862d5c52f547aef968a36d4436e4"
+  "snapshot_hash": "03fb2b1d83665a4056f28bce2c688543dbbccd67479a6f2b9c1639ae50ff2223"
 }

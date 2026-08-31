@@ -1,0 +1,29 @@
+{
+  "event_id": "evt-00000040-61a92605-ee1d-42fe-be42-d896cecb3f7d",
+  "idempotency_key": "auto-claim:257:6",
+  "sequence": 40,
+  "previous_snapshot_hash": "9fde79710c71bc427837526211186cb80b1a862d5c52f547aef968a36d4436e4",
+  "issue_id": "257",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:6",
+  "lease_epoch": 6,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {
+    "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68"
+  },
+  "payload": {
+    "branch": "codex/issue-257-quest-choice-pipeline",
+    "base_commit": "82ec1f28010eeb2f76440cba95c0814221900e68",
+    "lease_expiry": "2026-08-31T16:10:12.568Z",
+    "claimed_paths": [
+      "src/model/quests.js",
+      "tools/quest-choice-contract.mjs",
+      "src/ui/screens/event.js",
+      "src/content/events.js"
+    ],
+    "claimed_resources": [],
+    "next_action": "Author at least one real later-event or later-choice outcome keyed to an earlier shipped choice, preserve one always-available exit, and extend the contract to prove the shipped chain through the runtime screen path."
+  },
+  "created_at": "2026-08-31T15:40:12.568Z"
+}
