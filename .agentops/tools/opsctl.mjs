@@ -2377,6 +2377,99 @@ const DEV_DELIVERY_PROTECTED_DENIALS = Object.freeze([
 // base_ref that follows a branch without appending anything. What is left for a
 // COMMAND is the case those two do not cover: a base a seat did not set for
 // itself, moved by the deputy — one named target, under CAS, never a sweep.
+// B2 (#430): Gate C, as five refusals rather than five hopes.
+//
+// Decision 0009 gives the IT Manager III standing conditional authority to
+// fast-forward `test`. Every one of its conditions is checked here, and a
+// condition that cannot be SHOWN is a refusal — an unprovable precondition on a
+// shared-ref mutation is the one place "probably fine" must not be reachable.
+//
+// Repository-dependent checks run only where a checkout is available, so the
+// function stays pure for the plant harness; the apply path always passes root.
+export function fastForwardTestErrors(contracts, rt, request, root = null) {
+  const errors = [];
+  const p = (request.params && typeof request.params === 'object') ? request.params : null;
+  if (!p) return [`command 'fast-forward-test' requires params naming the target and its evidence`];
+  for (const k of Object.keys(p)) {
+    if (!['target_oid', 'hosted_verified_dev_oid', 'rollback_oid', 'evidence'].includes(k)) {
+      errors.push(`command 'fast-forward-test' params carries unknown field '${k}'`);
+    }
+  }
+  // The ref it may touch comes from git-ownership, not from the request: a
+  // command must not be able to name the ref it mutates.
+  const decl = ((contracts['git-ownership'] || {}).refs || []).find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+  if (!decl) return [`git-ownership declares no ref whose mutation is gate-c-fast-forward-only; there is nothing this action may move`];
+  const ref = decl.ref;
+
+  // 2. The target is exactly the hosted-verified dev SHA.
+  const full = (v) => typeof v === 'string' && /^[0-9a-f]{40}$/.test(v);
+  if (!full(p.target_oid)) errors.push(`command 'fast-forward-test' params.target_oid must be a full 40-character commit id`);
+  if (!full(p.hosted_verified_dev_oid)) errors.push(`command 'fast-forward-test' params.hosted_verified_dev_oid must be a full 40-character commit id`);
+  if (full(p.target_oid) && full(p.hosted_verified_dev_oid) && p.target_oid !== p.hosted_verified_dev_oid) {
+    errors.push(`command 'fast-forward-test' target ${p.target_oid.slice(0, 12)} is not the hosted-verified dev SHA ${p.hosted_verified_dev_oid.slice(0, 12)}; decision 0009 permits exactly that commit and no other`);
+  }
+  // 4. The rollback target is recorded BEFORE the mutation, and is the ref's
+  //    current head — a rollback to anything else does not restore what was
+  //    replaced.
+  if (!full(p.rollback_oid)) errors.push(`command 'fast-forward-test' params.rollback_oid must be a full 40-character commit id; a ref mutation with no recorded predecessor cannot be undone`);
+  if (!Array.isArray(p.evidence) || p.evidence.length === 0) {
+    errors.push(`command 'fast-forward-test' params.evidence must record the mutation evidence decision 0009 requires`);
+  }
+
+  // 1 and 5. Gate freshness and the absence of a withhold are read from the
+  //    capsule, never from the request: a command does not get to assert that
+  //    the gates in front of it have passed.
+  const cap = rt.capsules[request.target];
+  if (cap && cap.blocker) {
+    errors.push(`command 'fast-forward-test' target '${request.target}' carries an unresolved blocker (${cap.blocker.escalation_class}); decision 0009 condition 5 forbids promoting past one`);
+  }
+
+  if (root) {
+    const current = resolveRef(root, ref);
+    if (current === null) {
+      errors.push(`command 'fast-forward-test' cannot resolve '${ref}' in this checkout; the ref it would move must be present to be moved safely`);
+    } else {
+      if (full(p.rollback_oid) && p.rollback_oid !== current) {
+        errors.push(`command 'fast-forward-test' records rollback ${p.rollback_oid.slice(0, 12)} but '${ref}' is at ${current.slice(0, 12)}; the recorded predecessor must be what is actually being replaced`);
+      }
+      if (full(p.target_oid)) {
+        if (!commitExists(root, p.target_oid)) {
+          errors.push(`command 'fast-forward-test' target ${p.target_oid.slice(0, 12)} is not a commit in this repository`);
+        } else if (p.target_oid === current) {
+          errors.push(`command 'fast-forward-test' target is already '${ref}'; a command that moves nothing still appends an event`);
+        } else if (!isAncestor(root, current, p.target_oid)) {
+          // 3. A true fast-forward, or nothing.
+          errors.push(`command 'fast-forward-test' refused: '${ref}' at ${current.slice(0, 12)} is not an ancestor of ${p.target_oid.slice(0, 12)}, so this is not a fast-forward. Decision 0009 permits no other shape of move`);
+        }
+      }
+    }
+  }
+  return errors;
+}
+
+// Move a ref forward, atomically, refusing if it is not where we last saw it.
+// `git update-ref <ref> <new> <old>` fails when the ref has moved since
+// validation — the same compare-and-swap discipline the capsule seal uses, at
+// the level where a concurrent writer would otherwise be clobbered. No force,
+// no delete, no rewrite: this is the only ref write in the tool.
+function fastForwardRef(root, ref, newOid, oldOid) {
+  try {
+    execFileSync('git', ['update-ref', `refs/heads/${ref}`, newOid, oldOid], { cwd: root, stdio: ['ignore', 'ignore', 'pipe'] });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: `update-ref refused to move '${ref}' from ${oldOid.slice(0, 12)} to ${newOid.slice(0, 12)}: ${String((e && e.stderr) || e.message || e).trim()}` };
+  }
+}
+
+// Is `maybe` an ancestor of `of`? The exact question a fast-forward asks.
+export function isAncestorForTest(root, maybe, of) { return isAncestor(root, maybe, of); }
+function isAncestor(root, maybe, of) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', maybe, of], { cwd: root, stdio: ['ignore', 'ignore', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
 export function reseatParamErrors(rt, request, root = null) {
   const errors = [];
   const cap = rt.capsules[request.target];
@@ -2452,6 +2545,7 @@ export function validateCommand(contracts, rt, request, { root = null } = {}) {
   // holds for every field except the one that carries the payload. Checked here
   // rather than at apply so dry_run_first actually reports it.
   if (action.id === 'reseat') errors.push(...reseatParamErrors(rt, request, root));
+  if (action.id === 'fast-forward-test') errors.push(...fastForwardTestErrors(contracts, rt, request, root));
 
   const ok = errors.length === 0;
   const decision = ok ? {
@@ -2510,6 +2604,8 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
       ? `Owner-command '${request.action}' by ${request.actor}: lifecycle ${move.from} -> ${move.target}.${request.candidate_oid ? ` Exact object ${request.candidate_oid}.` : ''}`
       : request.action === 'reseat' && capsule
         ? `Owner-command 'reseat' by ${request.actor}: ${capsule.base_ref ? `base_ref ${capsule.base_ref}` : `base ${String(capsule.base_oid).slice(0, 12)}`} -> ${request.params.base_ref ? `base_ref ${request.params.base_ref} (resolved at read time)` : `base ${String(request.params.base_oid).slice(0, 12)}`}. The seat did not perform this; the authenticating actor did.`
+        : request.action === 'fast-forward-test'
+        ? `Owner-command 'fast-forward-test' by ${request.actor}: fast-forwarded '${(contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || '')) || {}).ref}' from ${String(request.params.rollback_oid).slice(0, 12)} to ${String(request.params.target_oid).slice(0, 12)}, the hosted-verified dev SHA. Rollback target is the recorded predecessor.`
         : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
     clearsBlocker ? 'Blocker cleared: the decision it was waiting on is now recorded.' : ''
   ].filter(Boolean).join(' ');
@@ -2558,6 +2654,22 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     written.push(`work/${ticket}/CURRENT.json`);
   }
 
+  // The one ref mutation in the tool. It runs AFTER the capsule write and
+  // BEFORE the event, and it re-validates first: apply must never trust a
+  // decision taken against older state, and on a shared ref that is not a
+  // formality. If the mutation is refused, nothing is appended — the event
+  // would otherwise record a promotion that did not happen.
+  let refMove = null;
+  if (action.id === 'fast-forward-test') {
+    const bad = fastForwardTestErrors(contracts, rt, request, root);
+    if (bad.length) return { ok: false, errors: bad, written };
+    const decl = contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+    const moved = fastForwardRef(root, decl.ref, request.params.target_oid, request.params.rollback_oid);
+    if (!moved.ok) return { ok: false, errors: [moved.error], written };
+    refMove = { ref: decl.ref, from: request.params.rollback_oid, to: request.params.target_oid };
+    written.push(`ref:refs/heads/${decl.ref}`);
+  }
+
   const evDir = resolve(root, `events/${ticket}`);
   mkdirSync(evDir, { recursive: true });
   const evPath = resolve(evDir, `${id}.json`);
@@ -2565,7 +2677,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
   written.push(`events/${ticket}/${id}.json`);
 
-  return { ok: true, errors: [], written, event, transition: move || null };
+  return { ok: true, errors: [], written, event, transition: move || null, refMove };
 }
 
 // Keep the capsule's key order stable so an applied decision produces a minimal,
@@ -4200,6 +4312,61 @@ export function runSelftest(root = ROOT) {
   expectReseat('reseat: a seat that has already started', { ...rsReq({ base_ref: 'dev' }), target: 'AS-1001', expected_current_hash: computeCapsuleHash(rt0.capsules['AS-1001']) }, 'work already stands on its base');
   expectReseat('reseat: an unauthenticated actor', { ...rsReq({ base_ref: 'dev' }), actor: 'maker' }, 'not authorized');
   expectReseat('reseat: a stale compare-and-swap', { ...rsReq({ base_ref: 'dev' }), expected_current_hash: 'sha256:' + '0'.repeat(64) }, 'stale command');
+
+  // B2 Gate-C plants. The accept control runs in PURE mode: a CI pull-request
+  // checkout carries no local `test` branch, and hardcoding one is the mistake
+  // that turned an earlier control red. The repository-dependent refusals run
+  // only where the ref is present, and that skip is a reported result.
+  const ffTicket = Object.keys(rt0.capsules).find((t) => !rt0.capsules[t].blocker);
+  const ffHash = ffTicket ? computeCapsuleHash(rt0.capsules[ffTicket]) : null;
+  const OID = (ch) => ch.repeat(40);
+  const ffReq = (params, x = {}) => ({ schema: 'agentops/owner-command-request/v1', action: 'fast-forward-test', actor: 'it-manager-iii', target: ffTicket, expected_current_hash: ffHash, params, ...x });
+  const ffEv = ['hosted smoke pass'];
+  if (ffTicket) {
+    const good = ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv });
+    const ctl = validateCommand(contracts, rt0, good);
+    results.push({ label: 'gate C control: a shape-valid fast-forward is accepted (pure)', pass: ctl.ok, errs: ctl.errors });
+    const expectFF = (label, req, needle) => {
+      const res = validateCommand(contracts, rt0, req);
+      const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+      results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+    };
+    expectFF('gate C: target is not the hosted-verified dev SHA', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('c'), rollback_oid: OID('b'), evidence: ffEv }), 'permits exactly that commit and no other');
+    expectFF('gate C: no mutation evidence recorded', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: [] }), 'must record the mutation evidence');
+    expectFF('gate C: no rollback target recorded', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), evidence: ffEv }), 'cannot be undone');
+    expectFF('gate C: an abbreviated target', ffReq({ target_oid: 'a72cac96', hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }), 'full 40-character commit id');
+    expectFF('gate C: an unknown params field', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv, force: true }), 'unknown field');
+    expectFF('gate C: an unauthenticated actor', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { actor: 'maker' }), 'not authorized');
+    const blockedTicket = Object.keys(rt0.capsules).find((t) => rt0.capsules[t].blocker);
+    if (blockedTicket) {
+      expectFF('gate C: a target carrying an unresolved blocker', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { target: blockedTicket, expected_current_hash: computeCapsuleHash(rt0.capsules[blockedTicket]) }), 'condition 5 forbids promoting past one');
+    }
+    // ...and the action must not be able to name the ref it moves.
+    const noRef = { ...contracts, 'git-ownership': { ...contracts['git-ownership'], refs: contracts['git-ownership'].refs.filter((r) => !/gate-c-fast-forward/i.test(r.mutation || '')) } };
+    const orphan = validateCommand(noRef, rt0, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
+    results.push({ label: 'gate C: no declared gate-c ref means nothing to move', pass: !orphan.ok && orphan.errors.some((e) => e.includes('nothing this action may move')), errs: orphan.errors });
+
+    // Repository-dependent refusals: the ancestor check and the live-ref checks.
+    const ffRefDecl = contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+    const liveRef = ffRefDecl ? resolveRef(root, ffRefDecl.ref) : null;
+    results.push({ label: 'gate C repository checks ' + (liveRef ? 'ran against ' + ffRefDecl.ref : 'skipped — this checkout carries no ' + (ffRefDecl ? ffRefDecl.ref : 'gate-c') + ' branch'), pass: true, errs: [] });
+    if (liveRef) {
+      const head = currentHead(root);
+      // These four are the repository checks, so they must be validated WITH a
+      // checkout — expectFF runs pure, which silently passed them.
+      const expectFFRepo = (label, req, needle) => {
+        const res = validateCommand(contracts, rt0, req, { root });
+        const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+        results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+      };
+      expectFFRepo('gate C: a rollback that is not the ref being replaced', ffReq({ target_oid: head, hosted_verified_dev_oid: head, rollback_oid: OID('b'), evidence: ffEv }), 'must be what is actually being replaced');
+      expectFFRepo('gate C: a target this repository does not carry', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: liveRef, evidence: ffEv }), 'not a commit in this repository');
+      expectFFRepo('gate C: a move to where the ref already is', ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), 'a command that moves nothing');
+      if (head && head !== liveRef && !isAncestorForTest(root, liveRef, head)) {
+        expectFFRepo('gate C: a move that is not a fast-forward', ffReq({ target_oid: head, hosted_verified_dev_oid: head, rollback_oid: liveRef, evidence: ffEv }), 'is not a fast-forward');
+      }
+    }
+  }
 
   // Stage 6 migration plants — run through the same runtimeChecks the live
   // validate uses (pure over migration.json + capsules).
