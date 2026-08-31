@@ -2295,6 +2295,16 @@ export function runtimeChecks(g, rt) {
   for (const [ticket, list] of Object.entries(rt.events)) {
     for (const ev of list) {
       for (const { field, kind, action } of KIND_PAYLOAD) {
+        // The pairing was one-directional: a payload had to name its action, but
+        // an action was free to arrive with no payload, and both the pairing
+        // check and the payload validator skipped it. An `owner-decision`
+        // recording 'fast-forward-test' with no `promotion` claimed a protected
+        // move while recording no ref, no source, no target and no evidence —
+        // exactly the fields the record exists to hold. A protected action and
+        // its record are one thing or neither.
+        if (action && ev.action === action && ev.kind === kind && ev[field] === undefined) {
+          errors.push(`event '${ev.id}' records action '${action}' but carries no '${field}' payload; the ledger would claim a protected move without recording the ref, commits or evidence it was made on`);
+        }
         if (ev[field] === undefined) continue;
         if (ev.kind !== kind) {
           errors.push(`event '${ev.id}' is kind '${ev.kind}' but carries a '${field}' payload, which only a '${kind}' event may carry; nothing would check it there`);
@@ -2315,6 +2325,29 @@ export function runtimeChecks(g, rt) {
   // that guards the move — so a hand-written event cannot name its own ref or
   // invent its own evidence.
   const ffDecl = ((g['git-ownership'] || {}).refs || []).find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+  // Every check above reads the payload and none read who wrote it. An
+  // `owner-decision` naming 'maker' as its actor validated a full, correct
+  // promotion, attributing a protected move to a seat with no authority to
+  // perform it. The command path authenticates the actor; the ledger did not,
+  // so a hand-authored or recovered event bypassed the one gate that decides
+  // who may act. Checked for every recorded action rather than for promotions
+  // alone — the same hole stands behind every protected command.
+  const declaredActions = new Map(((g['owner-command'] || {}).actions || []).map((a) => [a.id, a]));
+  for (const [, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      if (ev.kind !== 'owner-decision' || !ev.action) continue;
+      const act = declaredActions.get(ev.action);
+      if (!act) {
+        errors.push(`event '${ev.id}' records action '${ev.action}', which owner-command.json does not declare; nothing says who may perform it or what it may touch`);
+        continue;
+      }
+      const role = actorRole(g, ev.actor);
+      if (!(act.authenticator_roles || []).includes(role)) {
+        errors.push(`event '${ev.id}' attributes action '${ev.action}' to '${ev.actor}' (role '${role}'), which owner-command authenticates for ${(act.authenticator_roles || []).map((r) => `'${r}'`).join(', ') || 'no one'}; the ledger would record a protected move performed by a seat that may not perform it`);
+      }
+    }
+  }
+
   const ffAction = ((g['owner-command'] || {}).actions || []).find((a) => a.id === 'fast-forward-test');
   const ffGate = ffAction ? ((g['promotion-gates'] || {}).gates || []).find((x) => x.id === ffAction.performs_gate) : undefined;
   const declaredEvidence = new Set(((g.evidence || {}).evidence || []).map((x) => x.id));
@@ -4761,6 +4794,27 @@ export function runSelftest(root = ROOT) {
   expectRuntime('promotion: a ref that did not move', (rt) => { plantPromotion(rt, (pr) => { pr.from = pr.to; }); }, 'a ref that did not move is not a promotion');
   expectRuntime('promotion: evidence nothing declares', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = ['looks-fine']; }); }, 'which evidence.json does not declare');
   expectRuntime('promotion: short of the evidence its own gate requires', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = [pr.evidence[0]]; }); }, 'short of the gate it claims to have passed');
+  // Reported round 12, both verified against the live corpus first.
+  expectRuntime('promotion: a protected action attributed to a seat that may not perform it', (rt) => { plantPromotion(rt, null).actor = 'maker'; }, 'a seat that may not perform it');
+  expectRuntime('promotion: the action recorded with no payload at all', (rt) => { const e = plantPromotion(rt, null); delete e.promotion; }, 'without recording the ref, commits or evidence it was made on');
+  expectRuntime('owner-decision: an action owner-command does not declare', (rt) => { plantPromotion(rt, null).action = 'fast-forward-main'; }, 'owner-command.json does not declare');
+  // ...and the authority check must cover every action, not only promotions.
+  expectRuntime('owner-decision: an owner-reserved action attributed to the deputy', (rt) => {
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'authorize-release';
+    e.actor = 'it-manager-iii';
+  }, "which owner-command authenticates for 'owner'");
+  {
+    // Control: the same action recorded by a seat that IS an authenticator must
+    // pass, or the group above could be passing by rejecting every actor.
+    const rt = baseRt();
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'delegate'; e.actor = 'it-manager-iii';
+    const errs = runtimeChecks(contracts, rt).filter((x) => x.includes(e.id));
+    results.push({ label: 'owner-decision control: an action recorded by a declared authenticator validates', pass: errs.length === 0, errs });
+  }
   expectRuntime('consolidation: a range that is not present', (rt) => { consolidate(rt, bigTicket, 12).consolidates.from_event = `${bigTicket}-8888`; }, 'must be present to be summarised');
     expectRuntime('consolidation: a count that does not match the range', (rt) => { consolidate(rt, bigTicket, 12).consolidates.count = 3; }, 'a dangling claim');
     expectRuntime('consolidation: a range that runs backwards', (rt) => { const e = consolidate(rt, bigTicket, 12); const f = e.consolidates.from_event; e.consolidates.from_event = e.consolidates.to_event; e.consolidates.to_event = f; }, 'runs backwards');
