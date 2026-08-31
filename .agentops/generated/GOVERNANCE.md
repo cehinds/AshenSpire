@@ -102,6 +102,7 @@ Elapsed time changes routing only, never truth, evidence, or authority. FYIs rem
 ### `it-manager-iii`
 
 - **Mission:** Mandatory technical relay and deputy: own exceptions, technical scope and architecture reconciliation, sequencing, path/maker ownership, integration and delivery gates, and incident/P0 command.
+- **Seat:** P \| IT Manager III \| IT Manager and Coordination Specialist - AshenSpire
 - **May:** resolve-technical-ambiguity, assign-and-rebind-work, issue-and-revoke-lease, create-isolated-ref, integrate-to-dev-via-pr, accept-bounded-technical-risk, fast-forward-test-under-gate-c
 - **Must:** record a decision packet answer; obtain data-architecture clearance or exact exception authority before overriding a WITHHOLD
 - **Must not:** amend its own grant to reach any authority listed in owner-intent owner.reserved_authority, mutate main or release, change Pages source, self-approve protected independent review, perform owner-exclusive playtest sign-off
@@ -438,6 +439,10 @@ A seat's name states what it is, which team it serves and the project, so a rost
 
 - Persistent team lead: `P | <role> III | <team> | Ashenspire`
 - Agent seat it spins out: `A | <role> | <team> | Ashenspire`
+- Persistent display name: `P | <role and level> | <title> - AshenSpire`
+- Agent display name: `A | <role and level> | <title> - AshenSpire`
+
+A seat_name is the roster identity — kind, role level, team, project — and a display_name is the human-facing title the owner stated in #430: kind, role level, then a descriptive title and the project. They are different shapes on purpose and neither derives from the other, so a seat may carry both. Populating a display_name is naming a person's job, so it is recorded where the owner or the IT Manager III has stated the title and left absent otherwise, never guessed from the role id.
 
 The leading letter is the seat kind, never an authority code: a bare P is a persistent team lead, a bare A is an agent that lead spins out. P followed by a number is never a seat kind. P<n> is the authority tier in hierarchy.json, or an issue priority, and the subject decides which — exactly as the tier contract already says. A bare P and a P2 belong to different namespaces and must not be read as one.
 

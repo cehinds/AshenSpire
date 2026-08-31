@@ -921,6 +921,56 @@ export function semanticChecks(c) {
   // non-amplification — a directive changes what a seat MUST do, never what it
   // MAY do. Everything else here exists because a directive that claims
   // enforcement it does not have is worse than one that claims none.
+  // #430 (seat display names): both schemas were additionalProperties:false with
+  // no such field, so any display_name failed validation and the owner's naming
+  // convention could not be applied at all. The field exists now, and a
+  // populated one is checked against the template teams.json declares rather
+  // than being free text — an unchecked display field drifts into a second,
+  // contradictory naming scheme, which is how there came to be two shapes here
+  // already.
+  if (c.teams && c.teams.naming_convention) {
+    const nc = c.teams.naming_convention;
+    const shape = (tpl) => {
+      const segs = String(tpl).split('|').map((x) => x.trim());
+      return { kind: segs[0], segments: segs.length, suffix: (segs[segs.length - 1].split('-').pop() || '').trim() };
+    };
+    const persistent = shape(nc.display_name_persistent);
+    const agent = shape(nc.display_name_agent);
+    const checkDisplay = (where, id, value) => {
+      const segs = String(value).split('|').map((x) => x.trim());
+      const kind = segs[0];
+      if (kind !== persistent.kind && kind !== agent.kind) {
+        errors.push(`${where} '${id}' display_name starts with '${kind}', which is neither seat kind the convention declares ('${persistent.kind}' or '${agent.kind}')`);
+        return;
+      }
+      const tpl = kind === agent.kind ? agent : persistent;
+      const tplText = kind === agent.kind ? nc.display_name_agent : nc.display_name_persistent;
+      if (segs.length !== tpl.segments) {
+        errors.push(`${where} '${id}' display_name has ${segs.length} segments; the declared template '${tplText}' has ${tpl.segments}`);
+        return;
+      }
+      const last = segs[segs.length - 1];
+      if (!last.endsWith(`- ${tpl.suffix}`)) {
+        errors.push(`${where} '${id}' display_name ends '${last}'; the declared template closes with '- ${tpl.suffix}'`);
+      } else if (last.slice(0, -(`- ${tpl.suffix}`).length).trim() === '') {
+        errors.push(`${where} '${id}' display_name carries no title before the project; a display name without a title says less than the role id it decorates`);
+      }
+    };
+    for (const r of (c.roles ? c.roles.roles : [])) if (r.display_name) checkDisplay('roles', r.role, r.display_name);
+    for (const n of (c.hierarchy ? c.hierarchy.nodes : [])) if (n.display_name) checkDisplay('hierarchy node', n.actor_id, n.display_name);
+    // A role and its actor must not disagree about the same seat's name.
+    if (c.roles && c.hierarchy) {
+      const byRole = new Map(c.roles.roles.filter((r) => r.display_name).map((r) => [r.role, r.display_name]));
+      for (const n of c.hierarchy.nodes) {
+        if (!n.display_name) continue;
+        const rd = byRole.get(n.role);
+        if (rd && rd !== n.display_name) {
+          errors.push(`hierarchy node '${n.actor_id}' display_name differs from role '${n.role}' display_name; one seat, two names, and nothing says which is shown`);
+        }
+      }
+    }
+  }
+
   if (c.directives) {
     const ids = new Set();
     const known = new Set(Object.keys(c));
@@ -1148,6 +1198,7 @@ export function renderGovernance(c) {
     L.push(`### \`${r.role}\``);
     L.push('');
     L.push(`- **Mission:** ${r.mission}`);
+    if (r.display_name) L.push(`- **Seat:** ${mdCell(r.display_name)}`);
     if (r.archetype) L.push(`- **Derives from:** \`${r.archetype}\` — a seniority level, carrying exactly that archetype's authority and no more.`);
     L.push(`- **May:** ${r.may.join(', ') || '—'}`);
     L.push(`- **Must:** ${r.must.join('; ') || '—'}`);
@@ -1272,6 +1323,10 @@ export function renderGovernance(c) {
       L.push('');
       L.push(`- Persistent team lead: \`${nc.persistent_lead}\``);
       L.push(`- Agent seat it spins out: \`${nc.agent_seat}\``);
+      L.push(`- Persistent display name: \`${nc.display_name_persistent}\``);
+      L.push(`- Agent display name: \`${nc.display_name_agent}\``);
+      L.push('');
+      L.push(nc.display_name_is_not_the_seat_name);
       L.push('');
       L.push(`${nc.leading_letter_is_seat_kind} ${nc.not_the_tier_namespace}`);
     }
@@ -3456,13 +3511,14 @@ const VIEW_PROBES = {
     '### `' + r.role + '`',
     '',
     `- **Mission:** ${r.mission}`,
+    r.display_name ? `- **Seat:** ${mdCell(r.display_name)}` : null,
     r.archetype ? `- **Derives from:** \`${r.archetype}\` \u2014 a seniority level, carrying exactly that archetype's authority and no more.` : null,
     `- **May:** ${r.may.join(', ') || '\u2014'}`,
     `- **Must:** ${r.must.join('; ') || '\u2014'}`,
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
   ].filter((l) => l !== null).join('\n')),
-  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``, `- Persistent display name: \`${x.naming_convention.display_name_persistent}\``, `- Agent display name: \`${x.naming_convention.display_name_agent}\``, x.naming_convention.display_name_is_not_the_seat_name],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`), x.legacy_rule, ...(x.legacy_values || []).map((lv) => `| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`)],
 };
 
@@ -4543,6 +4599,15 @@ export function runSelftest(root = ROOT) {
   // B3 (#430): standing directives. The cap the routing package demands is
   // non-amplification; the rest exists because a directive claiming enforcement
   // it does not have is worse than one claiming none.
+  // #430 seat display names. The field was unusable (additionalProperties:false
+  // in both schemas); now that it exists, an unchecked one would drift into a
+  // second naming scheme, so every way of drifting is planted.
+  expectSemantic('display name: a seat kind the convention does not declare', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'X | IT Manager III | Coordination - AshenSpire'; }, 'neither seat kind the convention declares');
+  expectSemantic('display name: the wrong number of segments', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | team | Coordination - AshenSpire'; }, 'segments; the declared template');
+  expectSemantic('display name: a different project suffix', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | Coordination - SomeOtherProject'; }, 'closes with');
+  expectSemantic('display name: no title before the project', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | - AshenSpire'; }, 'carries no title before the project');
+  expectSemantic('display name: a role and its actor disagreeing', (c) => { c.hierarchy.nodes.find((n) => n.display_name).display_name = 'P | IT Manager III | Something Else - AshenSpire'; }, 'one seat, two names');
+
   expectSemantic('directives: an issuer who is nobody in particular', (c) => { c.directives.directives[0].issued_by = 'someone'; }, 'binds nobody');
   expectSemantic('directives: a duplicate id', (c) => { c.directives.directives.push({ ...c.directives.directives[0] }); }, 'is declared twice');
   expectSemantic('directives: an issued_at that is not a real instant', (c) => { c.directives.directives[0].issued_at = '2026-02-30T00:00:00Z'; }, 'not a real instant');
