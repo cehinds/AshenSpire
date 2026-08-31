@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { validateOwnerCommandIssue } from "./validate-owner-command-issue.mjs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { atomicPublishExactRefs, createProjectAuditRefOnce, validateOwnerCommandIssue } from "./validate-owner-command-issue.mjs";
 
 const workflow = fs.readFileSync(".github/workflows/owner-command.yml", "utf8");
 const parser = fs.readFileSync(".github/workflows/validate-owner-command-issue.mjs", "utf8");
@@ -13,6 +16,11 @@ const OID_E = "e".repeat(40);
 const OID_F = "f".repeat(40);
 const HASH_A = "1".repeat(64);
 const HASH_B = "2".repeat(64);
+function canonical(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
+  return JSON.stringify(value);
+}
 
 const HEADINGS = [
   "Owner-command form",
@@ -99,6 +107,10 @@ check(/umask 077/.test(workflow) && /install -m 600 \/dev\/null \/tmp\/issue-bod
 check(/mode: 0o600/.test(parser), "parsed request must be created mode 0600");
 check(!/projects:\s*write/.test(workflow), "generic owner-command workflow must not receive Project write permission");
 check(!/createProjectV2Field|gh project/.test(workflow), "Project mutation must remain a separate executor after authority recording");
+check(/--execute-cutover/.test(workflow) && /authorize-scheduler-cutover/.test(workflow), "cutover must use its special local derivation and atomic publication path");
+check(/if \[ "\$ACTION" = "authorize-scheduler-cutover" \]/.test(workflow), "generic dev publication must be excluded for cutover");
+check(!/cp \.agentops\/generated\/hud/.test(workflow), "workflow must rely on deterministic render outputs rather than a hand-copied HUD");
+check(/"push", "--atomic"/.test(parser) && (parser.match(/--force-with-lease=/g) ?? []).length >= 2, "cutover transport must be one atomic two-ref exact-lease push");
 
 const accepted = validate();
 check(accepted.ok, accepted.errors.join(" | "));
@@ -198,7 +210,8 @@ const PROJECT_HEADINGS = [
   "Preflight field count", "Field state root", "Preflight item count", "Preflight field value count",
   "Item state root", "Pagination manifest hash", "Priority field ID", "Priority contract hash", "Definitions hash",
   "Mode", "Allowed mutation", "Forbid item mutation", "Forbid existing field update", "Forbid backfill",
-  "Abort on any drift", "Retry mode", "One use", "Expires at"
+  "Abort on any drift", "Retry mode", "One use", "Expires at", "Audit ref", "Expected audit remote OID",
+  "Audit push mode", "Journal mode", "Recovery mode", "Audit paths", "Audit guards", "Audit result contract"
 ];
 const RECONCILIATION_HEADINGS = [
   ...COMMON, "Reconciler head", "Reconciler tree", "Source state OID", "Source state tree",
@@ -210,12 +223,12 @@ const RECONCILIATION_HEADINGS = [
   "Abort on remote change"
 ];
 const CUTOVER_HEADINGS = [
-  ...COMMON, "Scheduler head", "Scheduler tree", "QA receipt hash", "Migration boundary OID",
-  "State migrated event hash", "Current state OID", "Current state tree", "Project schema receipt hash",
-  "Project manifest hash", "Quiet window receipt hash", "Released custody hash", "Active work lease count",
-  "Legacy activation blob OID", "Pre-cutover config blob OID", "Activation manifest hash", "State target ref",
-  "Expected state remote OID", "Development ref", "Expected development remote OID", "One use", "Expires at",
-  "Push mode", "Abort on remote change"
+  ...COMMON, "Scheduler head", "Scheduler tree", "QA receipt", "Migration", "Current state",
+  "Project schema receipt", "Project manifest", "Quiet window receipt", "Active work lease count",
+  "Legacy activation", "Pre-cutover config", "Post-cutover config", "Activation manifest",
+  "Result receipt contract", "State target ref", "Expected state remote OID",
+  "Development ref", "Expected development remote OID", "Publication mode", "Ambiguity policy",
+  "Postcondition policy", "One use", "Expires at", "Push mode", "Abort on remote change"
 ];
 
 function renderProfile(values, headings) {
@@ -231,7 +244,7 @@ function validateProfile(values, headings, options = {}) {
 }
 
 const projectValues = Object.freeze({
-  "Request schema": "agentops/project-schema-change-authority/v1",
+  "Request schema": "agentops/project-schema-change-authority/v2",
   "Action": "authorize-project-schema-change", "Target ticket": "AS-1001",
   "Expected current hash": `sha256:${HASH_A}`, "Candidate OID": OID_A,
   "Executor head": OID_A, "Executor tree": OID_B, "Project owner": "cehinds", "Project owner type": "user",
@@ -243,7 +256,13 @@ const projectValues = Object.freeze({
   "Priority field ID": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4", "Priority contract hash": "4".repeat(64),
   "Definitions hash": "5".repeat(64), "Mode": "create-missing-only", "Allowed mutation": "project-field-create",
   "Forbid item mutation": "true", "Forbid existing field update": "true", "Forbid backfill": "true",
-  "Abort on any drift": "true", "Retry mode": "never", "One use": "true", "Expires at": "2026-09-01T15:10:17.1234567Z"
+  "Abort on any drift": "true", "Retry mode": "never", "One use": "true", "Expires at": "2026-09-01T15:10:17.1234567Z",
+  "Audit ref": "refs/heads/agentops/project-schema-audit", "Expected audit remote OID": "null",
+  "Audit push mode": "create-if-absent-then-non-force-forward-only-cas", "Journal mode": "append-only-intent-result",
+  "Recovery mode": "inspect-once-never-create",
+  "Audit paths": canonical({ root: ".agentops/scheduler/project-schema-attempts", journal_path: ".agentops/scheduler/project-schema-attempts/journal.jsonl", attempt_path_template: ".agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json", receipt_path_template: ".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json", manifest_path_template: ".agentops/scheduler/project-schema-attempts/manifests/{attempt_id}.json" }),
+  "Audit guards": canonical({ expected_absence: true, initial_commit_parent_binding: "derived-owner-authority-a", initial_creation_authorized_if_absent: true, subsequent_linear_direct_successors: true, allowed_mutation: "append-intent-result-attempt-and-receipt-records-only", intent_before_each_create: true, result_after_each_response: true, consumed_create_retry_forbidden: true, read_only_recovery: true, ref_recreation_forbidden: true, development_ref_mutation_forbidden: true }),
+  "Audit result contract": canonical({ schema: "agentops/project-schema-audit-result-contract/v1", result_schema: "agentops/project-schema-audit-result/v1", path: ".git/agentops-project-schema/audit-result.json", schema_pointer: ".agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt", construction_timing: "after-manifest-publication-and-single-postinspection", finalization_timing: "after-manifest-publication-and-single-postinspection", ambiguity_policy: "inspect-once-never-create", no_self_reference: true })
 });
 
 const machineLease = {
@@ -278,18 +297,61 @@ const reconciliationValues = Object.freeze({
   "Target ref": "refs/heads/agentops/scheduler-state", "Expected remote OID": OID_C,
   "Push mode": "non-force-forward-only-cas", "Abort on remote change": "true"
 });
+const projectIdentity = { owner: "cehinds", owner_type: "user", number: 4, id: "PVT_kwHOCSCyJ84BgfH9", title: "Family Delivery", closed: false };
+const option = (id, name, color, description) => ({ id, name, color, description });
+const statusOptions = [["READY","GREEN","Eligible for scheduler admission."],["BLOCKED","RED","Blocked by a recorded condition."],["PAUSED","GRAY","Intentionally paused and not schedulable."],["IN_PROGRESS","YELLOW","Implementation is active."],["QA_REVIEW","PURPLE","Awaiting or undergoing independent QA."],["PR_OPEN","BLUE","A pull request is open."],["DONE","GREEN","Completed and terminal."],["CANCELLED","GRAY","Cancelled and terminal."],["SUPERSEDED","PINK","Superseded by another work item or candidate."]].map(([name,color,description],i)=>option(`status-${i}`,name,color,description));
+const priorityOptions = [option("5901e7b3","P0","GRAY",""),option("c3bc1e0d","P1","GRAY",""),option("f2b023f2","P2","GRAY",""),option("f85da77c","P3","GRAY","")];
+const roleOptions = [["owner","PURPLE","Owner authority."],["it-manager-iii","RED","Technical integration and delivery authority."],["project-management-lead","BLUE","Portfolio, dependency, and sequencing stewardship."],["data-architecture-lead","PURPLE","Schema, lineage, and compatibility authority."],["help-desk","GRAY","Intake, routing, and status hygiene."],["maker","GREEN","Bounded implementation owner."],["qa-independent","YELLOW","Independent exact-head verification."],["it-support","ORANGE","Tooling and environment support."],["app-dev-i","GREEN","Application developer I."],["app-dev-ii","GREEN","Application developer II."],["app-dev-iii","GREEN","Application developer III."],["artist-i","PINK","Designer or artist I."],["artist-ii","PINK","Designer or artist II."],["artist-iii","PINK","Designer or artist III."],["qa-technician-i","YELLOW","QA technician I."],["qa-technician-ii","YELLOW","QA technician II."],["qa-technician-iii","YELLOW","QA technician III."],["team-lead","BLUE","Team staffing and capacity lead."]].map(([name,color,description],i)=>option(`role-${i}`,name,color,description));
+const scopeOptions = [option("scope-true","TRUE","GREEN","Affected scope is complete."),option("scope-false","FALSE","RED","Affected scope is incomplete.")];
+const manifestFields = [
+  ["status","Scheduler Status","ProjectV2SingleSelectField","SINGLE_SELECT",statusOptions],
+  ["PVTSSF_lAHOCSCyJ84BgfH9zhfelc4","Priority","ProjectV2SingleSelectField","SINGLE_SELECT",priorityOptions],
+  ["role","Owner Role","ProjectV2SingleSelectField","SINGLE_SELECT",roleOptions],
+  ["paths","Affected Paths","ProjectV2Field","TEXT",[]],["resources","Affected Resources","ProjectV2Field","TEXT",[]],
+  ["dependencies","Dependencies","ProjectV2Field","TEXT",[]],["claims","External Claims","ProjectV2Field","TEXT",[]],
+  ["gate","Human Gate","ProjectV2Field","TEXT",[]],["scope","Scope Complete","ProjectV2SingleSelectField","SINGLE_SELECT",scopeOptions]
+].map(([id,name,kind,data_type,options])=>({id,name,kind,data_type,created_at:"2026-08-31T15:00:00Z",updated_at:"2026-08-31T15:55:00Z",options}));
+const qaReceipt = { schema: "agentops/independent-qa-receipt/v1", path: ".agentops/scheduler/cutover/qa-receipt.json", blob_oid: OID_A, sha256: HASH_A, semantics: { schema: "agentops/independent-qa-receipt/v1", candidate: { head: OID_A, tree: OID_B }, verdict: "PASS", verifier: { actor: "qa-seat", role: "qa-independent" }, maker_actor: "maker-seat", independent_of_maker: true, tested_at: "2026-08-31T15:58:00Z", tests: [{ id: "suite", command: "node test", exit_code: 0, outcome: "PASS", output_sha256: HASH_B }], evidence: [] } };
+const migration = { boundary_oid: OID_C, state_migrated_event: { schema: "agentops/scheduler-event/v2", path: "journal/00000001-state-migrated.json", blob_oid: OID_B, sha256: HASH_B, semantics: { event_version: 2, event_type: "STATE_MIGRATED", issue_id: "scheduler-state", payload_schema: "agentops/scheduler-migration/v2", dispatch_frozen: true, single_migration_boundary: true, boundary_commit_binding: "migration.boundary_oid" } } };
+const currentState = { oid: OID_D, tree: OID_E, released_custody: { schema: "agentops/scheduler-machine-lease/v1", path: "machine-lease.json", blob_oid: OID_C, sha256: "3".repeat(64), semantics: { machine_id: null, acquired_at: null, released_at_required: true, expires_at_equals_released_at: true, expected_state_ref_oid_binding: "current_state.oid" } } };
+const projectReceipt = { schema: "agentops/project-schema-change-receipt/v1", path: ".agentops/scheduler/cutover/project-schema-receipt.json", blob_oid: OID_D, sha256: "4".repeat(64), semantics: { status: "COMPLETE", failure_code: null, project: projectIdentity, mutation_counts: { created_field_count: 8, mutated_item_count: 0, updated_existing_field_count: 0, backfill_count: 0 }, readback_schema: "agentops/project-field-readback/v1", audit_ref: "refs/heads/agentops/project-schema-audit" } };
+const projectManifest = { schema: "agentops/project-field-manifest/v1", path: ".agentops/scheduler/cutover/project-manifest.json", blob_oid: OID_E, sha256: "5".repeat(64), semantics: { schema: "agentops/project-field-manifest/v1", definitions_hash: "5".repeat(64), project: projectIdentity, observed_at: "2026-08-31T15:57:00Z", project_updated_at: "2026-08-31T15:56:00Z", fields: manifestFields, source_receipt_hash: "4".repeat(64) } };
+const quietReceipt = { schema: "agentops/scheduler-quiet-window-receipt/v1", path: ".agentops/scheduler/cutover/quiet-window-receipt.json", blob_oid: OID_F, sha256: "6".repeat(64), semantics: { observed_from: "2026-08-31T15:45:00Z", observed_until: "2026-08-31T15:55:00Z", source_state_oid: OID_D, state_ref: "refs/heads/agentops/scheduler-state", development_ref: "refs/heads/dev", scheduler_process_count: 0, legacy_process_count: 0, state_mutation_count: 0, dispatch_frozen: true, no_external_mutation: true } };
+const legacyActivation = { schema: "agentops/pipeline-activation/v1", path: ".agentops/pipeline-pilot/activation.json", blob_oid: OID_F, sha256: "7".repeat(64), semantics: { enabled: false, mode: "STOOD_DOWN_FOR_SCHEDULER_CUTOVER" } };
+const preConfig = { schema: "agentops/scheduler-config/v1", path: ".agentops/scheduler/config.json", blob_oid: OID_B, sha256: "8".repeat(64), semantics: { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, scheduler_authorization_evidence: null, migration_dispatch_frozen: true } };
+const postConfig = { schema: "agentops/scheduler-config/v1", path: ".agentops/scheduler/config.json", blob_oid: OID_C, sha256: "9".repeat(64), semantics: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, scheduler_authorization_evidence_binding: "canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash", migration_dispatch_frozen: true } };
+const activationTemplate = {
+  schema: "agentops/scheduler-cutover-activation-template/v1",
+  development_d0: { oid: OID_E, tree: OID_B, legacy_activation_blob_oid: OID_F, pre_cutover_config_blob_oid: OID_B, post_cutover_config_blob_oid: OID_C },
+  state_s0: { oid: OID_D, tree: OID_E },
+  authority_a_derivation: {
+    parent_binding: "expected_development_remote_oid", parent_count: 1,
+    source_paths: { owner_event_path_template: ".agentops/events/{target}/{event_id}.json", target_capsule_path_template: ".agentops/work/{target}/CURRENT.json" },
+    cutover_evidence_paths: { qa_receipt: ".agentops/scheduler/cutover/qa-receipt.json", project_schema_receipt: ".agentops/scheduler/cutover/project-schema-receipt.json", project_manifest: ".agentops/scheduler/cutover/project-manifest.json", quiet_window_receipt: ".agentops/scheduler/cutover/quiet-window-receipt.json", activation_manifest: ".agentops/scheduler/cutover/activation-manifest.json" },
+    deterministic_render_paths: { governance: ".agentops/generated/GOVERNANCE.md", hud: ".agentops/generated/hud/index.html", decisions: ".agentops/generated/hub/decisions.html", published_hud: "docs/generated/hud/index.html", published_decisions: "docs/generated/hub/decisions.html" },
+    unchanged_render_bytes_omitted: true, other_changes_forbidden: true
+  },
+  state_s1_derivation: { parent_binding: "expected_state_remote_oid", parent_count: 1, activation_event: { path_template: "journal/{sequence:08}-{event_id}.json", schema: "agentops/scheduler-event/v2", payload_schema: "agentops/scheduler-activation/v2", event_version: 2, event_type: "SCHEDULER_ACTIVATED", issue_id: "scheduler-state", actor: "it-manager-iii", machine_id: null, lease_id: null, lease_epoch: null, source_binding: "current_state", authority_binding: "canonical-owner-event-in-derived-authority-a", count: 1 }, snapshot_path: "snapshot.json", preserved_paths_policy: "all-prior-journal-machine-lease-and-state-version-blobs-byte-identical", other_changes_forbidden: true },
+  development_d1_derivation: { parent_binding: "derived-authority-a", parent_count: 1, scheduler_config_path: ".agentops/scheduler/config.json", scheduler_config_blob_binding: "post_cutover_config.blob_oid", authority_evidence_mode: "canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash", other_changes_forbidden: true },
+  all_off_precondition: { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, scheduler_authorization_evidence: null, migration_dispatch_frozen: true, legacy_activation_enabled: false, legacy_activation_mode: "STOOD_DOWN_FOR_SCHEDULER_CUTOVER" },
+  derivation_order: "build-a-from-d0-build-s1-from-s0-build-d1-from-a-record-result-then-publish-s1-d1-atomically", no_self_reference: true
+};
+const activationManifest = { schema: "agentops/scheduler-cutover-activation-manifest/v1", path: ".agentops/scheduler/cutover/activation-manifest.json", blob_oid: OID_A, sha256: "a".repeat(64), blob_parse_policy: "parse-json-and-deep-equal-inline-template", template: activationTemplate };
+const resultContract = { schema: "agentops/scheduler-cutover-result-contract/v1", result_schema: "agentops/scheduler-cutover-result/v1", path: ".git/agentops-scheduler/cutover-result.json", schema_pointer: ".agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_cutover_result_receipt", construction_timing: "after-local-derivation-before-publication", publication_gate: "prebuilt-a-s1-d1-match-derivation-template", no_self_reference: true };
 const cutoverValues = Object.freeze({
-  "Request schema": "agentops/scheduler-cutover-authority/v1", "Action": "authorize-scheduler-cutover",
+  "Request schema": "agentops/scheduler-cutover-authority/v2", "Action": "authorize-scheduler-cutover",
   "Target ticket": "AS-1001", "Expected current hash": `sha256:${HASH_A}`, "Candidate OID": OID_A,
-  "Scheduler head": OID_A, "Scheduler tree": OID_B, "QA receipt hash": HASH_A, "Migration boundary OID": OID_C,
-  "State migrated event hash": HASH_B, "Current state OID": OID_D, "Current state tree": OID_E,
-  "Project schema receipt hash": "3".repeat(64), "Project manifest hash": "4".repeat(64),
-  "Quiet window receipt hash": "5".repeat(64), "Released custody hash": "6".repeat(64),
-  "Active work lease count": "0", "Legacy activation blob OID": OID_F, "Pre-cutover config blob OID": OID_B,
-  "Activation manifest hash": "7".repeat(64), "State target ref": "refs/heads/agentops/scheduler-state",
-  "Expected state remote OID": OID_D, "Development ref": "refs/heads/dev", "Expected development remote OID": OID_E,
-  "One use": "true", "Expires at": "2026-09-01T15:10:17.1234567Z",
-  "Push mode": "non-force-forward-only-cas", "Abort on remote change": "true"
+  "Scheduler head": OID_A, "Scheduler tree": OID_B, "QA receipt": canonical(qaReceipt), "Migration": canonical(migration),
+  "Current state": canonical(currentState), "Project schema receipt": canonical(projectReceipt),
+  "Project manifest": canonical(projectManifest), "Quiet window receipt": canonical(quietReceipt),
+  "Active work lease count": "0", "Legacy activation": canonical(legacyActivation), "Pre-cutover config": canonical(preConfig),
+  "Post-cutover config": canonical(postConfig), "Activation manifest": canonical(activationManifest),
+  "Result receipt contract": canonical(resultContract),
+  "State target ref": "refs/heads/agentops/scheduler-state", "Expected state remote OID": OID_D,
+  "Development ref": "refs/heads/dev", "Expected development remote OID": OID_E,
+  "Publication mode": "atomic-two-ref-cas", "Ambiguity policy": "inspect-once-never-retry",
+  "Postcondition policy": "both-exact-or-withhold", "One use": "true", "Expires at": "2026-09-01T15:10:17.1234567Z",
+  "Push mode": "git-push-atomic-two-ref-exact-leases", "Abort on remote change": "true"
 });
 
 const acceptedProject = validateProfile(projectValues, PROJECT_HEADINGS);
@@ -297,7 +359,9 @@ check(acceptedProject.ok, acceptedProject.errors.join(" | "));
 assert.deepEqual(Object.keys(acceptedProject.request.project_schema_change), [
   "schema", "executor_head", "executor_tree", "project", "authenticated_login", "required_scope", "project_updated_at",
   "preflight", "definitions_hash", "mode", "allowed_mutation", "forbid_item_mutation", "forbid_existing_field_update",
-  "forbid_backfill", "abort_on_any_drift", "retry_mode", "one_use", "expires_at"
+  "forbid_backfill", "abort_on_any_drift", "retry_mode", "one_use", "expires_at", "audit_ref",
+  "expected_audit_remote_oid", "audit_push_mode", "journal_mode", "recovery_mode", "audit_paths", "audit_guards",
+  "audit_result_contract"
 ]);
 checks += 1;
 assert.deepEqual(acceptedProject.request.project_schema_change.project, {
@@ -327,16 +391,17 @@ checks += 1;
 const acceptedCutover = validateProfile(cutoverValues, CUTOVER_HEADINGS);
 check(acceptedCutover.ok, acceptedCutover.errors.join(" | "));
 assert.deepEqual(Object.keys(acceptedCutover.request.scheduler_cutover), [
-  "schema", "scheduler_head", "scheduler_tree", "qa_receipt_hash", "migration", "current_state",
-  "project_schema_receipt_hash", "project_manifest_hash", "quiet_window_receipt_hash", "released_custody_hash",
-  "active_work_lease_count", "legacy_activation_blob_oid", "pre_cutover_config_blob_oid", "activation_manifest_hash",
-  "state_target_ref", "expected_state_remote_oid", "development_ref", "expected_development_remote_oid", "one_use",
+  "schema", "scheduler_head", "scheduler_tree", "qa_receipt", "migration", "current_state",
+  "project_schema_receipt", "project_manifest", "quiet_window_receipt", "active_work_lease_count",
+  "legacy_activation", "pre_cutover_config", "post_cutover_config", "activation_manifest", "result_receipt_contract",
+  "state_target_ref", "expected_state_remote_oid", "development_ref",
+  "expected_development_remote_oid", "publication_mode", "ambiguity_policy", "postcondition_policy", "one_use",
   "expires_at", "push_mode", "abort_on_remote_change"
 ]);
 checks += 1;
-assert.deepEqual(acceptedCutover.request.scheduler_cutover.migration, { boundary_oid: OID_C, state_migrated_event_hash: HASH_B });
+assert.deepEqual(acceptedCutover.request.scheduler_cutover.migration, migration);
 checks += 1;
-assert.deepEqual(acceptedCutover.request.scheduler_cutover.current_state, { oid: OID_D, tree: OID_E });
+assert.deepEqual(acceptedCutover.request.scheduler_cutover.current_state, currentState);
 checks += 1;
 
 for (const [name, values, headings] of [
@@ -385,5 +450,53 @@ check(!validateProfile({ ...cutoverValues, "Active work lease count": "1" }, CUT
 check(!validateProfile({ ...cutoverValues, "State target ref": "refs/heads/dev" }, CUTOVER_HEADINGS).ok, "wrong cutover state ref must fail");
 check(!validateProfile({ ...cutoverValues, "Development ref": "refs/heads/main" }, CUTOVER_HEADINGS).ok, "wrong cutover development ref must fail");
 check(!validateProfile({ ...cutoverValues, "Abort on remote change": "false" }, CUTOVER_HEADINGS).ok, "cutover must abort on remote change");
+check(!validateProfile({ ...cutoverValues, "QA receipt": canonical({ ...qaReceipt, semantics: { ...qaReceipt.semantics, verdict: "WITHHOLD" } }) }, CUTOVER_HEADINGS).ok, "cutover QA verdict must be PASS");
+check(!validateProfile({ ...cutoverValues, "QA receipt": canonical({ ...qaReceipt, semantics: { ...qaReceipt.semantics, tests: [{ ...qaReceipt.semantics.tests[0], exit_code: 1, outcome: "FAIL" }] } }) }, CUTOVER_HEADINGS).ok, "cutover QA tests must be PASS with exit zero");
+check(!validateProfile({ ...cutoverValues, "Project manifest": canonical({ ...projectManifest, semantics: { ...projectManifest.semantics, project_updated_at: undefined } }) }, CUTOVER_HEADINGS).ok, "Project manifest updated-at is required");
+check(!validateProfile({ ...cutoverValues, "Project manifest": canonical({ ...projectManifest, semantics: { ...projectManifest.semantics, fields: [manifestFields[1], manifestFields[0], ...manifestFields.slice(2)] } }) }, CUTOVER_HEADINGS).ok, "Project manifest tuple order is exact");
+check(!validateProfile({ ...projectValues, "Request schema": "agentops/project-schema-change-authority/v1" }, PROJECT_HEADINGS).ok, "Project v1 substitution must fail");
+check(!validateProfile({ ...projectValues, "Audit paths": canonical({ ...JSON.parse(projectValues["Audit paths"]), extra: true }) }, PROJECT_HEADINGS).ok, "Project nested audit extras must fail");
+check(!validateProfile({ ...cutoverValues, "Request schema": "agentops/scheduler-cutover-authority/v1" }, CUTOVER_HEADINGS).ok, "cutover v1 substitution must fail");
+check(!validateProfile({ ...cutoverValues, "Current state": canonical({ ...currentState, extra: true }) }, CUTOVER_HEADINGS).ok, "cutover nested descriptor extras must fail");
+check(!validateProfile({ ...cutoverValues, "Activation manifest": canonical({ ...activationManifest, template: { ...activationTemplate, all_off_precondition: { ...activationTemplate.all_off_precondition, scheduler_dispatch_enabled: true } } }) }, CUTOVER_HEADINGS).ok, "cutover all-off substitution must fail");
+
+function git(cwd, args) {
+  const result = spawnSync("git", args, { cwd, encoding: "utf8" });
+  assert.equal(result.status, 0, `git ${args.join(" ")} failed: ${result.stderr}`);
+  return result.stdout.trim();
+}
+const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "agentops-owner-command-test-"));
+try {
+  const bare = path.join(fixtureRoot, "remote.git");
+  const repo = path.join(fixtureRoot, "repo");
+  fs.mkdirSync(repo);
+  git(fixtureRoot, ["init", "--bare", bare]);
+  git(repo, ["init"]);
+  git(repo, ["config", "user.name", "AgentOps Test"]); git(repo, ["config", "user.email", "test@local.invalid"]);
+  git(repo, ["remote", "add", "origin", bare]);
+  fs.writeFileSync(path.join(repo, "base.txt"), "base\n"); git(repo, ["add", "base.txt"]); git(repo, ["commit", "-m", "D0"]);
+  const d0 = git(repo, ["rev-parse", "HEAD"]);
+  fs.writeFileSync(path.join(repo, "authority.txt"), "A\n"); git(repo, ["add", "authority.txt"]); git(repo, ["commit", "-m", "A"]);
+  const authorityA = git(repo, ["rev-parse", "HEAD"]);
+  fs.writeFileSync(path.join(repo, "config.txt"), "D1\n"); git(repo, ["add", "config.txt"]); git(repo, ["commit", "-m", "D1"]);
+  const d1 = git(repo, ["rev-parse", "HEAD"]);
+  git(repo, ["checkout", "--orphan", "state"]); git(repo, ["rm", "-rf", "."]);
+  fs.writeFileSync(path.join(repo, "state.txt"), "S0\n"); git(repo, ["add", "state.txt"]); git(repo, ["commit", "-m", "S0"]);
+  const s0 = git(repo, ["rev-parse", "HEAD"]);
+  fs.writeFileSync(path.join(repo, "state.txt"), "S1\n"); git(repo, ["add", "state.txt"]); git(repo, ["commit", "-m", "S1"]);
+  const s1 = git(repo, ["rev-parse", "HEAD"]);
+  git(repo, ["push", "origin", `${d0}:refs/heads/dev`, `${s0}:refs/heads/agentops/scheduler-state`]);
+  const atomic = atomicPublishExactRefs({ repo, stateRef: "refs/heads/agentops/scheduler-state", expectedStateOid: s0, stateTargetOid: s1, developmentRef: "refs/heads/dev", expectedDevelopmentOid: d0, developmentTargetOid: d1 });
+  check(atomic.ok && atomic.receipt.postinspection.state_actual_oid === s1 && atomic.receipt.postinspection.development_actual_oid === d1 && !("outcome" in atomic.receipt.postinspection), "local bare atomic cutover must record only both observed refs");
+  check(git(repo, ["ls-remote", "origin", "refs/heads/dev"]).startsWith(d1), "cutover must publish D1, never authority A alone");
+  assert.throws(() => atomicPublishExactRefs({ repo, stateRef: "refs/heads/agentops/scheduler-state", expectedStateOid: s0, stateTargetOid: s1, developmentRef: "refs/heads/dev", expectedDevelopmentOid: d0, developmentTargetOid: d1 }), /prepublication CAS mismatch/);
+  checks += 1;
+  const auditTree = git(repo, ["show", "-s", "--format=%T", authorityA]);
+  const auditOid = git(repo, ["commit-tree", auditTree, "-p", authorityA, "-m", "audit"]);
+  const audit = createProjectAuditRefOnce({ repo, authorityOid: authorityA, auditTargetOid: auditOid });
+  check(audit.ok && audit.observation.postinspection.inspection_count === 1 && audit.observation.postinspection.retry_create_permitted === false && !("outcome" in audit.observation.postinspection), "Project audit absent-ref creation must inspect once and record observation only");
+  assert.throws(() => createProjectAuditRefOnce({ repo, authorityOid: authorityA, auditTargetOid: auditOid }), /not absent/);
+  checks += 1;
+} finally { fs.rmSync(fixtureRoot, { recursive: true, force: true }); }
 
 console.log(`PASS ${checks}/${checks}; opened-only=yes; four-exact-authority-profiles=yes; owner-exclusive=yes; cas-transport=yes; canonical-json=yes; free-form=no; edited-reexecution=no`);

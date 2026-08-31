@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import crypto from "node:crypto";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const REQUEST_SCHEMA = "agentops/owner-command-request/v1";
 const LEGACY_MARKER = "owner-decision/v1";
-const PROJECT_MARKER = "agentops/project-schema-change-authority/v1";
+const PROJECT_MARKER = "agentops/project-schema-change-authority/v2";
 const RECONCILIATION_MARKER = "agentops/scheduler-state-reconciliation-authority/v1";
-const CUTOVER_MARKER = "agentops/scheduler-cutover-authority/v1";
+const CUTOVER_MARKER = "agentops/scheduler-cutover-authority/v2";
 const OID = /^[0-9a-f]{40}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const CAPSULE_HASH = /^sha256:[0-9a-f]{64}$/;
@@ -28,7 +32,8 @@ const PROJECT_SECTIONS = Object.freeze([
   "Preflight field count", "Field state root", "Preflight item count", "Preflight field value count",
   "Item state root", "Pagination manifest hash", "Priority field ID", "Priority contract hash", "Definitions hash",
   "Mode", "Allowed mutation", "Forbid item mutation", "Forbid existing field update", "Forbid backfill",
-  "Abort on any drift", "Retry mode", "One use", "Expires at"
+  "Abort on any drift", "Retry mode", "One use", "Expires at", "Audit ref", "Expected audit remote OID",
+  "Audit push mode", "Journal mode", "Recovery mode", "Audit paths", "Audit guards", "Audit result contract"
 ]);
 const RECONCILIATION_SECTIONS = Object.freeze([
   ...COMMON_SECTIONS,
@@ -42,12 +47,12 @@ const RECONCILIATION_SECTIONS = Object.freeze([
 ]);
 const CUTOVER_SECTIONS = Object.freeze([
   ...COMMON_SECTIONS,
-  "Scheduler head", "Scheduler tree", "QA receipt hash", "Migration boundary OID", "State migrated event hash",
-  "Current state OID", "Current state tree", "Project schema receipt hash", "Project manifest hash",
-  "Quiet window receipt hash", "Released custody hash", "Active work lease count", "Legacy activation blob OID",
-  "Pre-cutover config blob OID", "Activation manifest hash", "State target ref", "Expected state remote OID",
-  "Development ref", "Expected development remote OID", "One use", "Expires at", "Push mode",
-  "Abort on remote change"
+  "Scheduler head", "Scheduler tree", "QA receipt", "Migration", "Current state", "Project schema receipt",
+  "Project manifest", "Quiet window receipt", "Active work lease count", "Legacy activation",
+  "Pre-cutover config", "Post-cutover config", "Activation manifest", "Result receipt contract",
+  "State target ref", "Expected state remote OID", "Development ref",
+  "Expected development remote OID", "Publication mode", "Ambiguity policy", "Postcondition policy",
+  "One use", "Expires at", "Push mode", "Abort on remote change"
 ]);
 
 const MIGRATION_FIELDS = Object.freeze({
@@ -72,7 +77,10 @@ const PROJECT_FIELDS = Object.freeze({
   "Definitions hash": "definitions_hash", "Mode": "mode", "Allowed mutation": "allowed_mutation",
   "Forbid item mutation": "forbid_item_mutation", "Forbid existing field update": "forbid_existing_field_update",
   "Forbid backfill": "forbid_backfill", "Abort on any drift": "abort_on_any_drift", "Retry mode": "retry_mode",
-  "One use": "one_use", "Expires at": "expires_at"
+  "One use": "one_use", "Expires at": "expires_at", "Audit ref": "audit_ref",
+  "Expected audit remote OID": "expected_audit_remote_oid", "Audit push mode": "audit_push_mode",
+  "Journal mode": "journal_mode", "Recovery mode": "recovery_mode", "Audit paths": "audit_paths",
+  "Audit guards": "audit_guards", "Audit result contract": "audit_result_contract"
 });
 const RECONCILIATION_FIELDS = Object.freeze({
   "Reconciler head": "reconciler_head", "Reconciler tree": "reconciler_tree", "Source state OID": "source_state_oid",
@@ -90,17 +98,17 @@ const RECONCILIATION_FIELDS = Object.freeze({
   "Push mode": "push_mode", "Abort on remote change": "abort_on_remote_change"
 });
 const CUTOVER_FIELDS = Object.freeze({
-  "Scheduler head": "scheduler_head", "Scheduler tree": "scheduler_tree", "QA receipt hash": "qa_receipt_hash",
-  "Migration boundary OID": "migration_boundary_oid", "State migrated event hash": "state_migrated_event_hash",
-  "Current state OID": "current_state_oid", "Current state tree": "current_state_tree",
-  "Project schema receipt hash": "project_schema_receipt_hash", "Project manifest hash": "project_manifest_hash",
-  "Quiet window receipt hash": "quiet_window_receipt_hash", "Released custody hash": "released_custody_hash",
-  "Active work lease count": "active_work_lease_count", "Legacy activation blob OID": "legacy_activation_blob_oid",
-  "Pre-cutover config blob OID": "pre_cutover_config_blob_oid", "Activation manifest hash": "activation_manifest_hash",
-  "State target ref": "state_target_ref", "Expected state remote OID": "expected_state_remote_oid",
-  "Development ref": "development_ref", "Expected development remote OID": "expected_development_remote_oid",
-  "One use": "one_use", "Expires at": "expires_at", "Push mode": "push_mode",
-  "Abort on remote change": "abort_on_remote_change"
+  "Scheduler head": "scheduler_head", "Scheduler tree": "scheduler_tree", "QA receipt": "qa_receipt",
+  "Migration": "migration", "Current state": "current_state", "Project schema receipt": "project_schema_receipt",
+  "Project manifest": "project_manifest", "Quiet window receipt": "quiet_window_receipt",
+  "Active work lease count": "active_work_lease_count", "Legacy activation": "legacy_activation",
+  "Pre-cutover config": "pre_cutover_config", "Post-cutover config": "post_cutover_config",
+  "Activation manifest": "activation_manifest", "Result receipt contract": "result_receipt_contract",
+  "State target ref": "state_target_ref",
+  "Expected state remote OID": "expected_state_remote_oid", "Development ref": "development_ref",
+  "Expected development remote OID": "expected_development_remote_oid", "Publication mode": "publication_mode",
+  "Ambiguity policy": "ambiguity_policy", "Postcondition policy": "postcondition_policy", "One use": "one_use",
+  "Expires at": "expires_at", "Push mode": "push_mode", "Abort on remote change": "abort_on_remote_change"
 });
 
 function issueSections(body) {
@@ -185,6 +193,144 @@ function exactKeys(value, keys, field, errors) {
   return true;
 }
 
+const OID_VALUE = Symbol("oid");
+const HASH_VALUE = Symbol("sha256");
+const EVENT_PATH_VALUE = Symbol("event-path");
+const QA_SEMANTICS_VALUE = Symbol("qa-semantics");
+const PROJECT_RECEIPT_SEMANTICS_VALUE = Symbol("project-receipt-semantics");
+const PROJECT_MANIFEST_SEMANTICS_VALUE = Symbol("project-manifest-semantics");
+const QUIET_SEMANTICS_VALUE = Symbol("quiet-semantics");
+function closedShape(value, shape, field, errors) {
+  if (shape === OID_VALUE) { oid(value, field, errors); return; }
+  if (shape === HASH_VALUE) { hash(value, field, errors); return; }
+  if (shape === EVENT_PATH_VALUE) {
+    if (!/^journal\/[0-9]{8}-[A-Za-z0-9._-]+\.json$/.test(value ?? "")) errors.push(`${field} must be a canonical scheduler journal path`);
+    return;
+  }
+  if (shape === QA_SEMANTICS_VALUE) { validateQaSemantics(value, field, errors); return; }
+  if (shape === PROJECT_RECEIPT_SEMANTICS_VALUE) { validateProjectReceiptSemantics(value, field, errors); return; }
+  if (shape === PROJECT_MANIFEST_SEMANTICS_VALUE) { validateProjectManifestSemantics(value, field, errors); return; }
+  if (shape === QUIET_SEMANTICS_VALUE) { validateQuietSemantics(value, field, errors); return; }
+  if (shape && typeof shape === "object" && !Array.isArray(shape)) {
+    if (!exactKeys(value, Object.keys(shape), field, errors)) return;
+    for (const [key, child] of Object.entries(shape)) closedShape(value[key], child, `${field}.${key}`, errors);
+    return;
+  }
+  if (value !== shape) errors.push(`${field} must be exactly ${JSON.stringify(shape)}`);
+}
+
+function stringValue(value, field, errors) { if (typeof value !== "string" || !value) errors.push(`${field} must be a non-empty string`); }
+function projectIdentity(value, field, errors) { closedShape(value, { owner: "cehinds", owner_type: "user", number: 4, id: "PVT_kwHOCSCyJ84BgfH9", title: "Family Delivery", closed: false }, field, errors); }
+function validateQaSemantics(value, field, errors) {
+  const keys = ["schema", "candidate", "verdict", "verifier", "maker_actor", "independent_of_maker", "tested_at", "tests", "evidence"];
+  if (!exactKeys(value, keys, field, errors)) return;
+  constant(value, "schema", "agentops/independent-qa-receipt/v1", errors);
+  closedShape(value.candidate, { head: OID_VALUE, tree: OID_VALUE }, `${field}.candidate`, errors);
+  if (value.verdict !== "PASS") errors.push(`${field}.verdict must be PASS`);
+  if (exactKeys(value.verifier, ["actor", "role"], `${field}.verifier`, errors)) { stringValue(value.verifier.actor, `${field}.verifier.actor`, errors); constant(value.verifier, "role", "qa-independent", errors); }
+  stringValue(value.maker_actor, `${field}.maker_actor`, errors); if (value.independent_of_maker !== true) errors.push(`${field}.independent_of_maker must be true`); stringValue(value.tested_at, `${field}.tested_at`, errors);
+  if (!Array.isArray(value.tests) || value.tests.length === 0) errors.push(`${field}.tests must be a nonempty array`);
+  else value.tests.forEach((test, index) => { const name = `${field}.tests[${index}]`; if (!exactKeys(test, ["id", "command", "exit_code", "outcome", "output_sha256"], name, errors)) return; stringValue(test.id, `${name}.id`, errors); stringValue(test.command, `${name}.command`, errors); if (test.exit_code !== 0) errors.push(`${name}.exit_code must be 0`); if (test.outcome !== "PASS") errors.push(`${name}.outcome must be PASS`); hash(test.output_sha256, `${name}.output_sha256`, errors); });
+  if (!Array.isArray(value.evidence)) errors.push(`${field}.evidence must be an array`);
+  else value.evidence.forEach((item, index) => { const name = `${field}.evidence[${index}]`; if (!exactKeys(item, ["kind", "path", "blob_oid", "sha256"], name, errors)) return; stringValue(item.kind, `${name}.kind`, errors); stringValue(item.path, `${name}.path`, errors); oid(item.blob_oid, `${name}.blob_oid`, errors); hash(item.sha256, `${name}.sha256`, errors); });
+}
+function validateProjectReceiptSemantics(value, field, errors) {
+  if (!exactKeys(value, ["status", "failure_code", "project", "mutation_counts", "readback_schema", "audit_ref"], field, errors)) return;
+  constant(value, "status", "COMPLETE", errors); constant(value, "failure_code", null, errors); projectIdentity(value.project, `${field}.project`, errors);
+  closedShape(value.mutation_counts, { created_field_count: 8, mutated_item_count: 0, updated_existing_field_count: 0, backfill_count: 0 }, `${field}.mutation_counts`, errors);
+  constant(value, "readback_schema", "agentops/project-field-readback/v1", errors); constant(value, "audit_ref", "refs/heads/agentops/project-schema-audit", errors);
+}
+const MANIFEST_FIELD_NAMES = Object.freeze(["Scheduler Status", "Priority", "Owner Role", "Affected Paths", "Affected Resources", "Dependencies", "External Claims", "Human Gate", "Scope Complete"]);
+const STATUS_OPTIONS = Object.freeze([
+  ["READY", "GREEN", "Eligible for scheduler admission."], ["BLOCKED", "RED", "Blocked by a recorded condition."],
+  ["PAUSED", "GRAY", "Intentionally paused and not schedulable."], ["IN_PROGRESS", "YELLOW", "Implementation is active."],
+  ["QA_REVIEW", "PURPLE", "Awaiting or undergoing independent QA."], ["PR_OPEN", "BLUE", "A pull request is open."],
+  ["DONE", "GREEN", "Completed and terminal."], ["CANCELLED", "GRAY", "Cancelled and terminal."],
+  ["SUPERSEDED", "PINK", "Superseded by another work item or candidate."]
+]);
+const PRIORITY_OPTIONS = Object.freeze([
+  ["P0", "GRAY", "", "5901e7b3"], ["P1", "GRAY", "", "c3bc1e0d"],
+  ["P2", "GRAY", "", "f2b023f2"], ["P3", "GRAY", "", "f85da77c"]
+]);
+const ROLE_OPTIONS = Object.freeze([
+  ["owner", "PURPLE", "Owner authority."], ["it-manager-iii", "RED", "Technical integration and delivery authority."],
+  ["project-management-lead", "BLUE", "Portfolio, dependency, and sequencing stewardship."], ["data-architecture-lead", "PURPLE", "Schema, lineage, and compatibility authority."],
+  ["help-desk", "GRAY", "Intake, routing, and status hygiene."], ["maker", "GREEN", "Bounded implementation owner."],
+  ["qa-independent", "YELLOW", "Independent exact-head verification."], ["it-support", "ORANGE", "Tooling and environment support."],
+  ["app-dev-i", "GREEN", "Application developer I."], ["app-dev-ii", "GREEN", "Application developer II."], ["app-dev-iii", "GREEN", "Application developer III."],
+  ["artist-i", "PINK", "Designer or artist I."], ["artist-ii", "PINK", "Designer or artist II."], ["artist-iii", "PINK", "Designer or artist III."],
+  ["qa-technician-i", "YELLOW", "QA technician I."], ["qa-technician-ii", "YELLOW", "QA technician II."], ["qa-technician-iii", "YELLOW", "QA technician III."],
+  ["team-lead", "BLUE", "Team staffing and capacity lead."]
+]);
+const SCOPE_OPTIONS = Object.freeze([["TRUE", "GREEN", "Affected scope is complete."], ["FALSE", "RED", "Affected scope is incomplete."]]);
+const MANIFEST_FIELD_CONTRACTS = Object.freeze([
+  ["ProjectV2SingleSelectField", "SINGLE_SELECT", STATUS_OPTIONS], ["ProjectV2SingleSelectField", "SINGLE_SELECT", PRIORITY_OPTIONS],
+  ["ProjectV2SingleSelectField", "SINGLE_SELECT", ROLE_OPTIONS],
+  ["ProjectV2Field", "TEXT", []], ["ProjectV2Field", "TEXT", []], ["ProjectV2Field", "TEXT", []],
+  ["ProjectV2Field", "TEXT", []], ["ProjectV2Field", "TEXT", []], ["ProjectV2SingleSelectField", "SINGLE_SELECT", SCOPE_OPTIONS]
+]);
+function validateProjectManifestSemantics(value, field, errors) {
+  const keys = ["schema", "definitions_hash", "project", "observed_at", "project_updated_at", "fields", "source_receipt_hash"];
+  if (!exactKeys(value, keys, field, errors)) return;
+  constant(value, "schema", "agentops/project-field-manifest/v1", errors); hash(value.definitions_hash, `${field}.definitions_hash`, errors); projectIdentity(value.project, `${field}.project`, errors); stringValue(value.observed_at, `${field}.observed_at`, errors); stringValue(value.project_updated_at, `${field}.project_updated_at`, errors); hash(value.source_receipt_hash, `${field}.source_receipt_hash`, errors);
+  if (!Array.isArray(value.fields) || value.fields.length !== 9) { errors.push(`${field}.fields must contain exactly nine fields`); return; }
+  value.fields.forEach((item, index) => {
+    const name = `${field}.fields[${index}]`; if (!exactKeys(item, ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"], name, errors)) return;
+    for (const key of ["id", "name", "created_at", "updated_at"]) stringValue(item[key], `${name}.${key}`, errors);
+    const [kind, dataType, expectedOptions] = MANIFEST_FIELD_CONTRACTS[index];
+    if (item.name !== MANIFEST_FIELD_NAMES[index]) errors.push(`${name}.name is out of canonical order`);
+    if (item.kind !== kind) errors.push(`${name}.kind must be ${kind}`); if (item.data_type !== dataType) errors.push(`${name}.data_type must be ${dataType}`);
+    if (index === 1 && item.id !== "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4") errors.push(`${name}.id must be the canonical Priority field ID`);
+    if (!Array.isArray(item.options) || item.options.length !== expectedOptions.length) { errors.push(`${name}.options must contain the exact ordered option contract`); return; }
+    item.options.forEach((option, optionIndex) => {
+      const optionName = `${name}.options[${optionIndex}]`; if (!exactKeys(option, ["id", "name", "color", "description"], optionName, errors)) return;
+      stringValue(option.id, `${optionName}.id`, errors); const [expectedName, expectedColor, expectedDescription, expectedId] = expectedOptions[optionIndex];
+      if (option.name !== expectedName || option.color !== expectedColor || option.description !== expectedDescription || (expectedId && option.id !== expectedId)) errors.push(`${optionName} differs from the exact ordered option contract`);
+    });
+  });
+}
+function validateQuietSemantics(value, field, errors) {
+  const keys=["observed_from","observed_until","source_state_oid","state_ref","development_ref","scheduler_process_count","legacy_process_count","state_mutation_count","dispatch_frozen","no_external_mutation"];
+  if(!exactKeys(value,keys,field,errors))return; stringValue(value.observed_from,`${field}.observed_from`,errors); stringValue(value.observed_until,`${field}.observed_until`,errors); oid(value.source_state_oid,`${field}.source_state_oid`,errors); constant(value,"state_ref","refs/heads/agentops/scheduler-state",errors); constant(value,"development_ref","refs/heads/dev",errors); for(const key of ["scheduler_process_count","legacy_process_count","state_mutation_count"])constant(value,key,0,errors); constant(value,"dispatch_frozen",true,errors); constant(value,"no_external_mutation",true,errors);
+}
+
+function canonicalClosedObject(flat, key, shape, errors) {
+  const value = canonicalJson(flat[key], key, errors);
+  closedShape(value, shape, key, errors);
+  return value;
+}
+
+const PROJECT_AUDIT_PATHS = Object.freeze({
+  root: ".agentops/scheduler/project-schema-attempts",
+  journal_path: ".agentops/scheduler/project-schema-attempts/journal.jsonl",
+  attempt_path_template: ".agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json",
+  receipt_path_template: ".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json",
+  manifest_path_template: ".agentops/scheduler/project-schema-attempts/manifests/{attempt_id}.json"
+});
+const PROJECT_AUDIT_GUARDS = Object.freeze({
+  expected_absence: true,
+  initial_commit_parent_binding: "derived-owner-authority-a",
+  initial_creation_authorized_if_absent: true,
+  subsequent_linear_direct_successors: true,
+  allowed_mutation: "append-intent-result-attempt-and-receipt-records-only",
+  intent_before_each_create: true,
+  result_after_each_response: true,
+  consumed_create_retry_forbidden: true,
+  read_only_recovery: true,
+  ref_recreation_forbidden: true,
+  development_ref_mutation_forbidden: true
+});
+const PROJECT_AUDIT_RESULT_CONTRACT = Object.freeze({
+  schema: "agentops/project-schema-audit-result-contract/v1",
+  result_schema: "agentops/project-schema-audit-result/v1",
+  path: ".git/agentops-project-schema/audit-result.json",
+  schema_pointer: ".agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt",
+  construction_timing: "after-manifest-publication-and-single-postinspection",
+  finalization_timing: "after-manifest-publication-and-single-postinspection",
+  ambiguity_policy: "inspect-once-never-create",
+  no_self_reference: true
+});
+
 function baseRequest(values, actor, errors, { requireBindings = false } = {}) {
   const request = { schema: REQUEST_SCHEMA };
   if (typeof actor !== "string" || !actor) errors.push("authenticated actor role is required outside the issue body");
@@ -230,6 +376,14 @@ function buildProjectPayload(flat, request, errors, now) {
   constant(flat, "allowed_mutation", "project-field-create", errors);
   for (const key of ["forbid_item_mutation", "forbid_existing_field_update", "forbid_backfill", "abort_on_any_drift", "one_use"]) strictTrue(flat, key, errors);
   constant(flat, "retry_mode", "never", errors);
+  constant(flat, "audit_ref", "refs/heads/agentops/project-schema-audit", errors);
+  constant(flat, "expected_audit_remote_oid", null, errors);
+  constant(flat, "audit_push_mode", "create-if-absent-then-non-force-forward-only-cas", errors);
+  constant(flat, "journal_mode", "append-only-intent-result", errors);
+  constant(flat, "recovery_mode", "inspect-once-never-create", errors);
+  const auditPaths = canonicalClosedObject(flat, "audit_paths", PROJECT_AUDIT_PATHS, errors);
+  const auditGuards = canonicalClosedObject(flat, "audit_guards", PROJECT_AUDIT_GUARDS, errors);
+  const auditResultContract = canonicalClosedObject(flat, "audit_result_contract", PROJECT_AUDIT_RESULT_CONTRACT, errors);
   timestamp(flat.project_updated_at, "project_updated_at", errors, {}, now);
   timestamp(flat.expires_at, "expires_at", errors, { future: true }, now);
   if (request.candidate_oid && flat.executor_head && request.candidate_oid !== flat.executor_head) errors.push("candidate_oid must equal project_schema_change.executor_head");
@@ -247,7 +401,10 @@ function buildProjectPayload(flat, request, errors, now) {
     definitions_hash: flat.definitions_hash, mode: flat.mode, allowed_mutation: flat.allowed_mutation,
     forbid_item_mutation: flat.forbid_item_mutation, forbid_existing_field_update: flat.forbid_existing_field_update,
     forbid_backfill: flat.forbid_backfill, abort_on_any_drift: flat.abort_on_any_drift, retry_mode: flat.retry_mode,
-    one_use: flat.one_use, expires_at: flat.expires_at
+    one_use: flat.one_use, expires_at: flat.expires_at, audit_ref: flat.audit_ref,
+    expected_audit_remote_oid: flat.expected_audit_remote_oid, audit_push_mode: flat.audit_push_mode,
+    journal_mode: flat.journal_mode, recovery_mode: flat.recovery_mode, audit_paths: auditPaths,
+    audit_guards: auditGuards, audit_result_contract: auditResultContract
   };
 }
 
@@ -344,32 +501,132 @@ function buildReconciliationPayload(flat, request, errors, now) {
   };
 }
 
+const artifactShape = (schema, path) => ({ schema, path, blob_oid: OID_VALUE, sha256: HASH_VALUE });
+const CUTOVER_SHAPES = Object.freeze({
+  qa_receipt: { ...artifactShape("agentops/independent-qa-receipt/v1", ".agentops/scheduler/cutover/qa-receipt.json"), semantics: QA_SEMANTICS_VALUE },
+  migration: {
+    boundary_oid: OID_VALUE,
+    state_migrated_event: {
+      schema: "agentops/scheduler-event/v2", path: EVENT_PATH_VALUE, blob_oid: OID_VALUE, sha256: HASH_VALUE,
+      semantics: {
+        event_version: 2, event_type: "STATE_MIGRATED", issue_id: "scheduler-state",
+        payload_schema: "agentops/scheduler-migration/v2", dispatch_frozen: true,
+        single_migration_boundary: true, boundary_commit_binding: "migration.boundary_oid"
+      }
+    }
+  },
+  current_state: {
+    oid: OID_VALUE, tree: OID_VALUE,
+    released_custody: {
+      schema: "agentops/scheduler-machine-lease/v1", path: "machine-lease.json", blob_oid: OID_VALUE, sha256: HASH_VALUE,
+      semantics: { machine_id: null, acquired_at: null, released_at_required: true, expires_at_equals_released_at: true, expected_state_ref_oid_binding: "current_state.oid" }
+    }
+  },
+  project_schema_receipt: { ...artifactShape("agentops/project-schema-change-receipt/v1", ".agentops/scheduler/cutover/project-schema-receipt.json"), semantics: PROJECT_RECEIPT_SEMANTICS_VALUE },
+  project_manifest: { ...artifactShape("agentops/project-field-manifest/v1", ".agentops/scheduler/cutover/project-manifest.json"), semantics: PROJECT_MANIFEST_SEMANTICS_VALUE },
+  quiet_window_receipt: { ...artifactShape("agentops/scheduler-quiet-window-receipt/v1", ".agentops/scheduler/cutover/quiet-window-receipt.json"), semantics: QUIET_SEMANTICS_VALUE },
+  legacy_activation: {
+    ...artifactShape("agentops/pipeline-activation/v1", ".agentops/pipeline-pilot/activation.json"),
+    semantics: { enabled: false, mode: "STOOD_DOWN_FOR_SCHEDULER_CUTOVER" }
+  },
+  pre_cutover_config: {
+    ...artifactShape("agentops/scheduler-config/v1", ".agentops/scheduler/config.json"),
+    semantics: { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, scheduler_authorization_evidence: null, migration_dispatch_frozen: true }
+  },
+  post_cutover_config: {
+    ...artifactShape("agentops/scheduler-config/v1", ".agentops/scheduler/config.json"),
+    semantics: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, scheduler_authorization_evidence_binding: "canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash", migration_dispatch_frozen: true }
+  },
+  activation_manifest: {
+    ...artifactShape("agentops/scheduler-cutover-activation-manifest/v1", ".agentops/scheduler/cutover/activation-manifest.json"),
+    blob_parse_policy: "parse-json-and-deep-equal-inline-template",
+    template: {
+      schema: "agentops/scheduler-cutover-activation-template/v1",
+      development_d0: { oid: OID_VALUE, tree: OID_VALUE, legacy_activation_blob_oid: OID_VALUE, pre_cutover_config_blob_oid: OID_VALUE, post_cutover_config_blob_oid: OID_VALUE },
+      state_s0: { oid: OID_VALUE, tree: OID_VALUE },
+      authority_a_derivation: {
+        parent_binding: "expected_development_remote_oid", parent_count: 1,
+        source_paths: { owner_event_path_template: ".agentops/events/{target}/{event_id}.json", target_capsule_path_template: ".agentops/work/{target}/CURRENT.json" },
+        cutover_evidence_paths: {
+          qa_receipt: ".agentops/scheduler/cutover/qa-receipt.json",
+          project_schema_receipt: ".agentops/scheduler/cutover/project-schema-receipt.json",
+          project_manifest: ".agentops/scheduler/cutover/project-manifest.json",
+          quiet_window_receipt: ".agentops/scheduler/cutover/quiet-window-receipt.json",
+          activation_manifest: ".agentops/scheduler/cutover/activation-manifest.json"
+        },
+        deterministic_render_paths: {
+          governance: ".agentops/generated/GOVERNANCE.md", hud: ".agentops/generated/hud/index.html",
+          decisions: ".agentops/generated/hub/decisions.html", published_hud: "docs/generated/hud/index.html",
+          published_decisions: "docs/generated/hub/decisions.html"
+        },
+        unchanged_render_bytes_omitted: true, other_changes_forbidden: true
+      },
+      state_s1_derivation: {
+        parent_binding: "expected_state_remote_oid", parent_count: 1,
+        activation_event: {
+          path_template: "journal/{sequence:08}-{event_id}.json", schema: "agentops/scheduler-event/v2",
+          payload_schema: "agentops/scheduler-activation/v2", event_version: 2, event_type: "SCHEDULER_ACTIVATED",
+          issue_id: "scheduler-state", actor: "it-manager-iii", machine_id: null, lease_id: null, lease_epoch: null,
+          source_binding: "current_state", authority_binding: "canonical-owner-event-in-derived-authority-a", count: 1
+        },
+        snapshot_path: "snapshot.json", preserved_paths_policy: "all-prior-journal-machine-lease-and-state-version-blobs-byte-identical", other_changes_forbidden: true
+      },
+      development_d1_derivation: {
+        parent_binding: "derived-authority-a", parent_count: 1, scheduler_config_path: ".agentops/scheduler/config.json",
+        scheduler_config_blob_binding: "post_cutover_config.blob_oid",
+        authority_evidence_mode: "canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash", other_changes_forbidden: true
+      },
+      all_off_precondition: {
+        scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, scheduler_authorization_evidence: null,
+        migration_dispatch_frozen: true, legacy_activation_enabled: false, legacy_activation_mode: "STOOD_DOWN_FOR_SCHEDULER_CUTOVER"
+      },
+      derivation_order: "build-a-from-d0-build-s1-from-s0-build-d1-from-a-record-result-then-publish-s1-d1-atomically",
+      no_self_reference: true
+    }
+  },
+  result_receipt_contract: {
+    schema: "agentops/scheduler-cutover-result-contract/v1", result_schema: "agentops/scheduler-cutover-result/v1",
+    path: ".git/agentops-scheduler/cutover-result.json",
+    schema_pointer: ".agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_cutover_result_receipt",
+    construction_timing: "after-local-derivation-before-publication", publication_gate: "prebuilt-a-s1-d1-match-derivation-template", no_self_reference: true
+  }
+});
+
 function buildCutoverPayload(flat, request, errors, now) {
-  for (const key of ["scheduler_head", "scheduler_tree", "migration_boundary_oid", "current_state_oid", "current_state_tree", "legacy_activation_blob_oid", "pre_cutover_config_blob_oid", "expected_state_remote_oid", "expected_development_remote_oid"]) oid(flat[key], key, errors);
-  for (const key of ["qa_receipt_hash", "state_migrated_event_hash", "project_schema_receipt_hash", "project_manifest_hash", "quiet_window_receipt_hash", "released_custody_hash", "activation_manifest_hash"]) hash(flat[key], key, errors);
+  for (const key of ["scheduler_head", "scheduler_tree", "expected_state_remote_oid", "expected_development_remote_oid"]) oid(flat[key], key, errors);
+  const nested = Object.fromEntries(Object.entries(CUTOVER_SHAPES).map(([key, shape]) => [key, canonicalClosedObject(flat, key, shape, errors)]));
   flat.active_work_lease_count = integer(flat.active_work_lease_count, "active_work_lease_count", errors);
   constant(flat, "active_work_lease_count", 0, errors);
   constant(flat, "state_target_ref", "refs/heads/agentops/scheduler-state", errors);
   constant(flat, "development_ref", "refs/heads/dev", errors);
+  constant(flat, "publication_mode", "atomic-two-ref-cas", errors);
+  constant(flat, "ambiguity_policy", "inspect-once-never-retry", errors);
+  constant(flat, "postcondition_policy", "both-exact-or-withhold", errors);
   strictTrue(flat, "one_use", errors);
   strictTrue(flat, "abort_on_remote_change", errors);
-  constant(flat, "push_mode", "non-force-forward-only-cas", errors);
+  constant(flat, "push_mode", "git-push-atomic-two-ref-exact-leases", errors);
   timestamp(flat.expires_at, "expires_at", errors, { future: true }, now);
   if (request.candidate_oid && flat.scheduler_head && request.candidate_oid !== flat.scheduler_head) errors.push("candidate_oid must equal scheduler_cutover.scheduler_head");
-  if (flat.current_state_oid && flat.expected_state_remote_oid && flat.current_state_oid !== flat.expected_state_remote_oid) errors.push("current_state_oid must equal expected_state_remote_oid");
+  if (nested.current_state?.oid !== flat.expected_state_remote_oid) errors.push("current_state.oid must equal expected_state_remote_oid");
+  const template = nested.activation_manifest?.template;
+  if (template) {
+    if (template.development_d0.oid !== flat.expected_development_remote_oid) errors.push("activation_manifest.template.development_d0.oid must equal expected_development_remote_oid");
+    if (template.state_s0.oid !== nested.current_state?.oid || template.state_s0.tree !== nested.current_state?.tree) errors.push("activation manifest S0 must equal current_state oid/tree");
+    if (template.development_d0.legacy_activation_blob_oid !== nested.legacy_activation?.blob_oid || template.development_d0.pre_cutover_config_blob_oid !== nested.pre_cutover_config?.blob_oid || template.development_d0.post_cutover_config_blob_oid !== nested.post_cutover_config?.blob_oid) errors.push("activation manifest D0 blob bindings must equal their canonical descriptors");
+  }
   return {
-    schema: CUTOVER_MARKER,
-    scheduler_head: flat.scheduler_head, scheduler_tree: flat.scheduler_tree, qa_receipt_hash: flat.qa_receipt_hash,
-    migration: { boundary_oid: flat.migration_boundary_oid, state_migrated_event_hash: flat.state_migrated_event_hash },
-    current_state: { oid: flat.current_state_oid, tree: flat.current_state_tree },
-    project_schema_receipt_hash: flat.project_schema_receipt_hash, project_manifest_hash: flat.project_manifest_hash,
-    quiet_window_receipt_hash: flat.quiet_window_receipt_hash, released_custody_hash: flat.released_custody_hash,
-    active_work_lease_count: flat.active_work_lease_count, legacy_activation_blob_oid: flat.legacy_activation_blob_oid,
-    pre_cutover_config_blob_oid: flat.pre_cutover_config_blob_oid, activation_manifest_hash: flat.activation_manifest_hash,
+    schema: CUTOVER_MARKER, scheduler_head: flat.scheduler_head, scheduler_tree: flat.scheduler_tree,
+    qa_receipt: nested.qa_receipt, migration: nested.migration, current_state: nested.current_state,
+    project_schema_receipt: nested.project_schema_receipt, project_manifest: nested.project_manifest,
+    quiet_window_receipt: nested.quiet_window_receipt, active_work_lease_count: flat.active_work_lease_count,
+    legacy_activation: nested.legacy_activation, pre_cutover_config: nested.pre_cutover_config,
+    post_cutover_config: nested.post_cutover_config, activation_manifest: nested.activation_manifest,
+    result_receipt_contract: nested.result_receipt_contract,
     state_target_ref: flat.state_target_ref, expected_state_remote_oid: flat.expected_state_remote_oid,
     development_ref: flat.development_ref, expected_development_remote_oid: flat.expected_development_remote_oid,
-    one_use: flat.one_use, expires_at: flat.expires_at, push_mode: flat.push_mode,
-    abort_on_remote_change: flat.abort_on_remote_change
+    publication_mode: flat.publication_mode, ambiguity_policy: flat.ambiguity_policy,
+    postcondition_policy: flat.postcondition_policy, one_use: flat.one_use, expires_at: flat.expires_at,
+    push_mode: flat.push_mode, abort_on_remote_change: flat.abort_on_remote_change
   };
 }
 
@@ -440,6 +697,210 @@ export function validateOwnerCommandIssue({ title, body, actor, now = new Date()
   return { ok: errors.length === 0, errors, request: errors.length === 0 ? request : null };
 }
 
+function runGit(repo, args, { input, allowFailure = false, env = {} } = {}) {
+  const result = spawnSync("git", args, { cwd: repo, input, encoding: "utf8", env: { ...process.env, ...env } });
+  if (result.error) throw result.error;
+  if (!allowFailure && result.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${(result.stderr || result.stdout).trim()}`);
+  return { status: result.status, stdout: result.stdout.trim(), rawStdout: result.stdout, stderr: result.stderr.trim() };
+}
+function objectSha256(raw) { return crypto.createHash("sha256").update(raw).digest("hex"); }
+function gitOid(repo, revision) { return runGit(repo, ["rev-parse", "--verify", revision]).stdout; }
+function gitTree(repo, revision) { return runGit(repo, ["show", "-s", "--format=%T", revision]).stdout; }
+function remoteRefs(repo, remote, refs) {
+  const output = runGit(repo, ["ls-remote", "--refs", remote, ...refs]).stdout;
+  const found = Object.fromEntries(refs.map((ref) => [ref, null]));
+  for (const line of output.split(/\r?\n/).filter(Boolean)) {
+    const [oidValue, ref] = line.split(/\s+/);
+    if (Object.prototype.hasOwnProperty.call(found, ref)) found[ref] = oidValue;
+  }
+  return found;
+}
+
+export function atomicPublishExactRefs({ repo, remote = "origin", stateRef, expectedStateOid, stateTargetOid, developmentRef, expectedDevelopmentOid, developmentTargetOid }) {
+  const refs = [stateRef, developmentRef];
+  const before = remoteRefs(repo, remote, refs);
+  if (before[stateRef] !== expectedStateOid || before[developmentRef] !== expectedDevelopmentOid) {
+    throw new Error("cutover prepublication CAS mismatch; no push attempted");
+  }
+  const attemptedAt = new Date().toISOString();
+  const push = runGit(repo, [
+    "push", "--atomic",
+    `--force-with-lease=${stateRef}:${expectedStateOid}`,
+    `--force-with-lease=${developmentRef}:${expectedDevelopmentOid}`,
+    remote, `${stateTargetOid}:${stateRef}`, `${developmentTargetOid}:${developmentRef}`
+  ], { allowFailure: true });
+  const after = remoteRefs(repo, remote, refs);
+  const ok = after[stateRef] === stateTargetOid && after[developmentRef] === developmentTargetOid;
+  const receipt = {
+    mode: "git-push-atomic-two-ref-exact-leases", attempted_at: attemptedAt,
+    atomic_push_exit_code: push.status,
+    postinspection: {
+      inspection_count: 1, retry_permitted: false,
+      state_ref: stateRef, state_actual_oid: after[stateRef], development_ref: developmentRef, development_actual_oid: after[developmentRef]
+    }
+  };
+  return { ok, receipt, stderr: push.stderr };
+}
+
+export function createProjectAuditRefOnce({ repo, authorityOid, auditTargetOid, remote = "origin", auditRef = "refs/heads/agentops/project-schema-audit" }) {
+  if (gitOid(repo, `${auditTargetOid}^`) !== authorityOid) throw new Error("initial Project audit commit must be the direct child of authority A");
+  const before = remoteRefs(repo, remote, [auditRef]);
+  if (before[auditRef] !== null) throw new Error("Project audit ref is not absent; no creation attempted");
+  const push = runGit(repo, ["push", `--force-with-lease=${auditRef}:`, remote, `${auditTargetOid}:${auditRef}`], { allowFailure: true });
+  const after = remoteRefs(repo, remote, [auditRef]);
+  const targetExact = after[auditRef] === auditTargetOid;
+  return {
+    ok: targetExact,
+    observation: { publication: { ref: auditRef, push_mode: "create-if-absent", push_exit_code: push.status }, postinspection: { inspection_count: 1, retry_create_permitted: false, ref: auditRef, actual_oid: after[auditRef] } },
+    stderr: push.stderr
+  };
+}
+
+function commitFromTree(repo, parentOid, treeOid, message, at, identity) {
+  return runGit(repo, ["commit-tree", treeOid, "-p", parentOid, "-m", message], { env: {
+    GIT_AUTHOR_NAME: identity, GIT_AUTHOR_EMAIL: "agentops@local.invalid", GIT_COMMITTER_NAME: identity,
+    GIT_COMMITTER_EMAIL: "agentops@local.invalid", GIT_AUTHOR_DATE: at, GIT_COMMITTER_DATE: at
+  } }).stdout;
+}
+function treeWithBlobs(repo, baseOid, replacements) {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "agentops-cutover-index-"));
+  const index = path.join(temp, "index");
+  try {
+    const env = { GIT_INDEX_FILE: index };
+    runGit(repo, ["read-tree", baseOid], { env });
+    for (const [file, blob] of Object.entries(replacements)) runGit(repo, ["update-index", "--add", "--cacheinfo", `100644,${blob},${file}`], { env });
+    return runGit(repo, ["write-tree"], { env }).stdout;
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+}
+function hashBlob(repo, raw) { return runGit(repo, ["hash-object", "-w", "--stdin"], { input: raw }).stdout; }
+function snapshotHash(snapshot) { const copy = structuredClone(snapshot); delete copy.snapshot_hash; return objectSha256(stableJson(copy)); }
+function artifactAt(repo, commit, descriptor, { requireSchema = true } = {}) {
+  const entry = runGit(repo, ["ls-tree", commit, "--", descriptor.path]).stdout.trim().split(/\s+/);
+  if (entry[2] !== descriptor.blob_oid) throw new Error(`artifact ${descriptor.path} Git blob binding mismatch at ${commit}`);
+  const raw = runGit(repo, ["cat-file", "blob", descriptor.blob_oid]).rawStdout;
+  if (objectSha256(raw) !== descriptor.sha256) throw new Error(`artifact ${descriptor.path} SHA-256 binding mismatch`);
+  const parsed = JSON.parse(raw);
+  if (requireSchema && parsed.schema !== descriptor.schema) throw new Error(`artifact ${descriptor.path} schema mismatch`);
+  return parsed;
+}
+function assertProjection(actual, expected, label) {
+  for (const [key, value] of Object.entries(expected)) {
+    if (!(key in actual)) throw new Error(`${label} missing semantic ${key}`);
+    if (value && typeof value === "object" && !Array.isArray(value)) assertProjection(actual[key], value, `${label}.${key}`);
+    else if (stableJson(actual[key]) !== stableJson(value)) throw new Error(`${label} semantic ${key} mismatch`);
+  }
+}
+
+export function deriveCutoverObjects({ repo, request, authorityOid = "HEAD" }) {
+  const binding = request.scheduler_cutover;
+  if (!binding || request.action !== "authorize-scheduler-cutover") throw new Error("cutover derivation requires the exact scheduler-cutover request");
+  const a = gitOid(repo, authorityOid);
+  const d0 = binding.expected_development_remote_oid;
+  if (gitOid(repo, `${a}^`) !== d0) throw new Error("authority A must be the sole direct child of D0");
+  if (gitTree(repo, d0) !== binding.activation_manifest.template.development_d0.tree) throw new Error("D0 tree binding mismatch");
+  if (gitTree(repo, binding.current_state.oid) !== binding.current_state.tree) throw new Error("S0 tree binding mismatch");
+  if (gitTree(repo, binding.scheduler_head) !== binding.scheduler_tree) throw new Error("scheduler head/tree binding mismatch");
+  const qaReceipt = artifactAt(repo, d0, binding.qa_receipt); assertProjection(qaReceipt, binding.qa_receipt.semantics, "QA receipt");
+  if (qaReceipt.candidate.head !== binding.scheduler_head || qaReceipt.candidate.tree !== binding.scheduler_tree || qaReceipt.verifier.actor === qaReceipt.maker_actor) throw new Error("QA receipt candidate or independence binding mismatch");
+  const projectReceipt = artifactAt(repo, d0, binding.project_schema_receipt); assertProjection(projectReceipt, binding.project_schema_receipt.semantics, "Project receipt");
+  const projectManifest = artifactAt(repo, d0, binding.project_manifest); assertProjection(projectManifest, binding.project_manifest.semantics, "Project manifest");
+  if (projectManifest.source_receipt_hash !== projectReceipt.receipt_hash || projectManifest.definitions_hash !== projectReceipt.definitions_hash) throw new Error("Project receipt/manifest linkage mismatch");
+  const quietReceipt = artifactAt(repo, d0, binding.quiet_window_receipt); assertProjection(quietReceipt, binding.quiet_window_receipt.semantics, "quiet-window receipt");
+  if (quietReceipt.source_state_oid !== binding.current_state.oid) throw new Error("quiet-window source state mismatch");
+  artifactAt(repo, d0, binding.activation_manifest);
+  const migrationEvent = artifactAt(repo, binding.migration.boundary_oid, binding.migration.state_migrated_event, { requireSchema: false });
+  if (migrationEvent.event_version !== 2 || migrationEvent.event_type !== "STATE_MIGRATED" || migrationEvent.issue_id !== "scheduler-state" || migrationEvent.payload?.schema !== "agentops/scheduler-migration/v2") throw new Error("migration event semantic mismatch");
+  const custody = artifactAt(repo, binding.current_state.oid, binding.current_state.released_custody);
+  if (custody.machine_id !== null || custody.acquired_at !== null || !custody.released_at || custody.expires_at !== custody.released_at || custody.expected_state_ref_oid !== binding.current_state.oid) throw new Error("released custody semantic mismatch");
+  const legacyActivation = artifactAt(repo, d0, binding.legacy_activation); assertProjection(legacyActivation, binding.legacy_activation.semantics, "legacy activation");
+  const preConfig = artifactAt(repo, d0, binding.pre_cutover_config);
+  for (const [key, expected] of Object.entries(binding.pre_cutover_config.semantics)) {
+    const actual = key === "migration_dispatch_frozen" ? preConfig.migration?.dispatch_frozen : key === "scheduler_authorization_evidence" ? preConfig.cutover?.authorization_evidence : preConfig.cutover?.[key];
+    if (actual !== expected) throw new Error(`pre-cutover config semantic ${key} mismatch`);
+  }
+  const manifestRaw = runGit(repo, ["cat-file", "blob", binding.activation_manifest.blob_oid]).rawStdout;
+  if (stableJson(JSON.parse(manifestRaw)) !== stableJson(binding.activation_manifest.template)) throw new Error("activation manifest blob must deep-equal the inline template");
+  const postRaw = runGit(repo, ["cat-file", "blob", binding.post_cutover_config.blob_oid]).rawStdout;
+  if (objectSha256(postRaw) !== binding.post_cutover_config.sha256) throw new Error("post-cutover config SHA-256 mismatch");
+  const postConfig = JSON.parse(postRaw);
+  if (postConfig.schema !== binding.post_cutover_config.schema) throw new Error("post-cutover config schema mismatch");
+  const template = binding.activation_manifest.template;
+  if (template.development_d0.oid !== d0 || template.development_d0.tree !== gitTree(repo, d0) || template.state_s0.oid !== binding.current_state.oid || template.state_s0.tree !== binding.current_state.tree) throw new Error("activation template D0/S0 binding mismatch");
+  if (template.development_d0.legacy_activation_blob_oid !== binding.legacy_activation.blob_oid || template.development_d0.pre_cutover_config_blob_oid !== binding.pre_cutover_config.blob_oid || template.development_d0.post_cutover_config_blob_oid !== binding.post_cutover_config.blob_oid) throw new Error("activation template repeated blob binding mismatch");
+  const eventFiles = runGit(repo, ["diff-tree", "--no-commit-id", "--name-only", "-r", d0, a]).stdout.split(/\r?\n/).filter((name) => new RegExp(`^\\.agentops/events/${request.target}/[^/]+\\.json$`).test(name));
+  if (eventFiles.length !== 1) throw new Error("A must contain exactly one canonical owner event for its target");
+  const ownerEvent = JSON.parse(runGit(repo, ["show", `${a}:${eventFiles[0]}`]).stdout);
+  if (ownerEvent.kind !== "owner-decision" || ownerEvent.actor !== "owner" || ownerEvent.decision?.action !== "authorize-scheduler-cutover") throw new Error("A owner event is not the exact cutover decision");
+  const at = ownerEvent.at;
+  if (Number.isNaN(Date.parse(at))) throw new Error("authority event timestamp is invalid");
+  const snapshotRaw = runGit(repo, ["show", `${binding.current_state.oid}:snapshot.json`]).stdout;
+  const snapshot = JSON.parse(snapshotRaw);
+  const sequence = snapshot.last_sequence + 1;
+  const eventId = `evt-cutover-${a.slice(0, 24)}`;
+  const activationEvent = {
+    event_version: 2, event_id: eventId, idempotency_key: `scheduler-activated:${a}:${binding.current_state.oid}`,
+    sequence, previous_snapshot_hash: snapshot.snapshot_hash, issue_id: "scheduler-state", actor: "it-manager-iii",
+    machine_id: null, lease_id: null, lease_epoch: null, event_type: "SCHEDULER_ACTIVATED",
+    exact_object: { authority_oid: a, source_state_oid: binding.current_state.oid },
+    payload: { schema: "agentops/scheduler-activation/v2", authority_event: { path: eventFiles[0], event_id: ownerEvent.id }, source_state_oid: binding.current_state.oid, source_state_tree: binding.current_state.tree },
+    created_at: at
+  };
+  const eventPath = `journal/${String(sequence).padStart(8, "0")}-${eventId}.json`;
+  const eventText = `${JSON.stringify(activationEvent, null, 2)}\n`;
+  const eventBlob = hashBlob(repo, eventText);
+  const nextSnapshot = structuredClone(snapshot); nextSnapshot.revision += 1; nextSnapshot.last_sequence = sequence; nextSnapshot.snapshot_hash = snapshotHash(nextSnapshot);
+  const snapshotText = `${JSON.stringify(nextSnapshot, null, 2)}\n`;
+  const snapshotBlob = hashBlob(repo, snapshotText);
+  const s1Tree = treeWithBlobs(repo, binding.current_state.oid, { [eventPath]: eventBlob, "snapshot.json": snapshotBlob });
+  const s1 = commitFromTree(repo, binding.current_state.oid, s1Tree, "AgentOps activate scheduler dispatch", at, "AshenSpire Scheduler");
+  const d1Tree = treeWithBlobs(repo, a, { [binding.post_cutover_config.path]: binding.post_cutover_config.blob_oid });
+  const d1 = commitFromTree(repo, a, d1Tree, "AgentOps enable scheduler dispatch", at, "AgentOps Owner Command");
+  return {
+    authorityA: { oid: a, tree: gitTree(repo, a) },
+    stateS1: { oid: s1, tree: s1Tree, activation_event: { path: eventPath, blob_oid: eventBlob, sha256: objectSha256(eventText) } },
+    developmentD1: { oid: d1, tree: d1Tree, scheduler_config: { path: binding.post_cutover_config.path, blob_oid: binding.post_cutover_config.blob_oid, sha256: binding.post_cutover_config.sha256 } }
+  };
+}
+
+export function deriveProjectAuditInitialCommit({ repo, request, authorityOid = "HEAD" }) {
+  const binding = request.project_schema_change;
+  if (!binding || request.action !== "authorize-project-schema-change" || binding.expected_audit_remote_oid !== null) throw new Error("initial Project audit derivation requires exact absent-ref v2 authority");
+  const a = gitOid(repo, authorityOid);
+  const eventFiles = runGit(repo, ["diff-tree", "--no-commit-id", "--name-only", "-r", `${a}^`, a]).stdout.split(/\r?\n/).filter((name) => new RegExp(`^\\.agentops/events/${request.target}/[^/]+\\.json$`).test(name));
+  if (eventFiles.length !== 1) throw new Error("Project authority A must contain exactly one canonical owner event");
+  const event = JSON.parse(runGit(repo, ["show", `${a}:${eventFiles[0]}`]).stdout);
+  if (event.kind !== "owner-decision" || event.actor !== "owner" || event.decision?.action !== "authorize-project-schema-change") throw new Error("Project authority A event mismatch");
+  return commitFromTree(repo, a, gitTree(repo, a), "AgentOps initialize Project schema audit", event.at, "AgentOps Project Audit");
+}
+
+function writePrivateJson(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600, flag: "wx" });
+}
+
+function executeSpecial(argv) {
+  const requestFile = option(argv, "--request-file", { required: true });
+  const repo = option(argv, "--repo") ?? process.cwd();
+  const remote = option(argv, "--remote") ?? "origin";
+  const request = JSON.parse(fs.readFileSync(requestFile, "utf8"));
+  if (argv.includes("--execute-cutover")) {
+    const objects = deriveCutoverObjects({ repo, request });
+    const binding = request.scheduler_cutover;
+    const published = atomicPublishExactRefs({
+      repo, remote, stateRef: binding.state_target_ref, expectedStateOid: binding.expected_state_remote_oid,
+      stateTargetOid: objects.stateS1.oid, developmentRef: binding.development_ref,
+      expectedDevelopmentOid: binding.expected_development_remote_oid, developmentTargetOid: objects.developmentD1.oid
+    });
+    const receipt = { schema: "agentops/scheduler-cutover-result/v1", authority_a: objects.authorityA, state_s1: objects.stateS1, development_d1: objects.developmentD1, publication: { ...published.receipt } };
+    receipt.postinspection = receipt.publication.postinspection; delete receipt.publication.postinspection;
+    writePrivateJson(path.join(repo, binding.result_receipt_contract.path), receipt);
+    console.log(JSON.stringify({ ok: published.ok, authority_a: objects.authorityA.oid, state_s1: objects.stateS1.oid, development_d1: objects.developmentD1.oid }));
+    if (!published.ok) process.exitCode = 1;
+    return;
+  }
+  throw new Error("missing special execution mode");
+}
+
 function option(argv, name, { required = false } = {}) {
   const index = argv.indexOf(name);
   if (index === -1 || !argv[index + 1]) {
@@ -449,6 +910,7 @@ function option(argv, name, { required = false } = {}) {
   return argv[index + 1];
 }
 function main(argv = process.argv) {
+  if (argv.includes("--execute-cutover")) return executeSpecial(argv);
   const bodyFile = option(argv, "--body-file", { required: true });
   const requestFile = option(argv, "--request-file", { required: true });
   const actor = option(argv, "--actor", { required: true });
