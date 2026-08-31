@@ -183,13 +183,57 @@ export function strictParse(text) {
 }
 
 // ---------------------------------------------------------------------------
-// Mini JSON-schema validator. Supported keywords: type (string or array of
-// strings), required, properties, additionalProperties (false|schema), items,
-// enum, const, pattern, minLength, minItems. Returns an array of error strings.
+// Mini JSON-schema validator. Supported keywords cover the closed contract
+// subset used by AgentOps, including local JSON pointers/composition and
+// Draft 2020-12 tuple arrays. Returns an array of error strings.
 // ---------------------------------------------------------------------------
-export function validateSchema(data, schema, path = '$') {
+export function validateSchema(data, schema, path = '$', rootSchema = schema, refStack = new Set()) {
   const errors = [];
   const typeOf = (v) => Array.isArray(v) ? 'array' : v === null ? 'null' : typeof v === 'number' ? (Number.isInteger(v) ? 'integer' : 'number') : typeof v;
+
+  if (schema === true) return errors;
+  if (schema === false) return [`${path}: forbidden by false schema`];
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return [`${path}: schema must be an object or boolean`];
+
+  if (schema.$ref !== undefined) {
+    if (typeof schema.$ref !== 'string' || !schema.$ref.startsWith('#/')) {
+      errors.push(`${path}: only local JSON-pointer $ref values are supported`);
+    } else {
+      const refKey = `${schema.$ref}@${path}`;
+      if (refStack.has(refKey)) {
+        errors.push(`${path}: circular $ref ${schema.$ref}`);
+      } else {
+        let target = rootSchema;
+        try {
+          for (const raw of schema.$ref.slice(2).split('/')) {
+            const token = raw.replace(/~1/g, '/').replace(/~0/g, '~');
+            if (!target || typeof target !== 'object' || !(token in target)) throw new Error('missing pointer token');
+            target = target[token];
+          }
+          const nextStack = new Set(refStack); nextStack.add(refKey);
+          errors.push(...validateSchema(data, target, path, rootSchema, nextStack));
+        } catch {
+          errors.push(`${path}: unresolved $ref ${schema.$ref}`);
+        }
+      }
+    }
+  }
+  if (schema.allOf !== undefined) {
+    if (!Array.isArray(schema.allOf)) errors.push(`${path}: allOf must be an array`);
+    else for (const sub of schema.allOf) errors.push(...validateSchema(data, sub, path, rootSchema, refStack));
+  }
+  for (const keyword of ['anyOf', 'oneOf']) {
+    if (schema[keyword] === undefined) continue;
+    if (!Array.isArray(schema[keyword])) {
+      errors.push(`${path}: ${keyword} must be an array`);
+      continue;
+    }
+    const branches = schema[keyword].map((sub) => validateSchema(data, sub, path, rootSchema, refStack));
+    const matches = branches.filter((branch) => branch.length === 0).length;
+    if ((keyword === 'anyOf' && matches === 0) || (keyword === 'oneOf' && matches !== 1)) {
+      errors.push(`${path}: expected ${keyword === 'anyOf' ? 'at least one' : 'exactly one'} ${keyword} branch to match, got ${matches}`);
+    }
+  }
 
   if (schema.const !== undefined && data !== schema.const) {
     errors.push(`${path}: expected const ${JSON.stringify(schema.const)}, got ${JSON.stringify(data)}`);
@@ -216,8 +260,20 @@ export function validateSchema(data, schema, path = '$') {
     if (schema.minItems !== undefined && data.length < schema.minItems) {
       errors.push(`${path}: array shorter than minItems ${schema.minItems}`);
     }
-    if (schema.items) {
-      data.forEach((el, idx) => errors.push(...validateSchema(el, schema.items, `${path}[${idx}]`)));
+    if (schema.maxItems !== undefined && data.length > schema.maxItems) {
+      errors.push(`${path}: array longer than maxItems ${schema.maxItems}`);
+    }
+    const prefix = schema.prefixItems;
+    if (prefix !== undefined && !Array.isArray(prefix)) {
+      errors.push(`${path}: prefixItems must be an array`);
+    } else if (Array.isArray(prefix)) {
+      prefix.slice(0, data.length).forEach((sub, idx) => errors.push(...validateSchema(data[idx], sub, `${path}[${idx}]`, rootSchema, refStack)));
+    }
+    const start = Array.isArray(prefix) ? Math.min(prefix.length, data.length) : 0;
+    if (schema.items === false && data.length > start) {
+      for (let idx = start; idx < data.length; idx++) errors.push(`${path}[${idx}]: additional tuple item not allowed`);
+    } else if (schema.items && typeof schema.items === 'object') {
+      for (let idx = start; idx < data.length; idx++) errors.push(...validateSchema(data[idx], schema.items, `${path}[${idx}]`, rootSchema, refStack));
     }
   }
   if (data && typeof data === 'object' && !Array.isArray(data)) {
@@ -228,12 +284,16 @@ export function validateSchema(data, schema, path = '$') {
     }
     if (schema.properties) {
       for (const [key, sub] of Object.entries(schema.properties)) {
-        if (key in data) errors.push(...validateSchema(data[key], sub, `${path}.${key}`));
+        if (key in data) errors.push(...validateSchema(data[key], sub, `${path}.${key}`, rootSchema, refStack));
       }
     }
-    if (schema.additionalProperties === false && schema.properties) {
+    if (schema.additionalProperties === false) {
       for (const key of Object.keys(data)) {
-        if (!(key in schema.properties)) errors.push(`${path}: additional property '${key}' not allowed`);
+        if (!(key in (schema.properties || {}))) errors.push(`${path}: additional property '${key}' not allowed`);
+      }
+    } else if (schema.additionalProperties && typeof schema.additionalProperties === 'object') {
+      for (const [key, value] of Object.entries(data)) {
+        if (!(key in (schema.properties || {}))) errors.push(...validateSchema(value, schema.additionalProperties, `${path}.${key}`, rootSchema, refStack));
       }
     }
   }
@@ -2278,6 +2338,29 @@ const STRUCTURED_PROTECTED_ACTIONS = Object.freeze({
 const SCHEDULER_MIGRATION_ANCHOR = 'dbd50e1656d22a72cbda43dd349e5ab7c9a46777';
 const SCHEDULER_MIGRATION_PRESERVED_TIP = '1e1ea124f879467d28962edc3b102bd6fae45b2e';
 
+export function schedulerCutoverActivationTemplate({ developmentOid, developmentTree, stateOid, stateTree, legacyBlob, preConfigBlob, postConfigBlob }) {
+  return {
+    schema: 'agentops/scheduler-cutover-activation-template/v1',
+    development_d0: { oid: developmentOid, tree: developmentTree, legacy_activation_blob_oid: legacyBlob, pre_cutover_config_blob_oid: preConfigBlob, post_cutover_config_blob_oid: postConfigBlob },
+    state_s0: { oid: stateOid, tree: stateTree },
+    authority_a_derivation: {
+      parent_binding: 'expected_development_remote_oid', parent_count: 1,
+      source_paths: { owner_event_path_template: '.agentops/events/{target}/{event_id}.json', target_capsule_path_template: '.agentops/work/{target}/CURRENT.json' },
+      cutover_evidence_paths: { qa_receipt: '.agentops/scheduler/cutover/qa-receipt.json', project_schema_receipt: '.agentops/scheduler/cutover/project-schema-receipt.json', project_manifest: '.agentops/scheduler/cutover/project-manifest.json', quiet_window_receipt: '.agentops/scheduler/cutover/quiet-window-receipt.json', activation_manifest: '.agentops/scheduler/cutover/activation-manifest.json' },
+      deterministic_render_paths: { governance: '.agentops/generated/GOVERNANCE.md', hud: '.agentops/generated/hud/index.html', decisions: '.agentops/generated/hub/decisions.html', published_hud: 'docs/generated/hud/index.html', published_decisions: 'docs/generated/hub/decisions.html' },
+      unchanged_render_bytes_omitted: true, other_changes_forbidden: true,
+    },
+    state_s1_derivation: {
+      parent_binding: 'expected_state_remote_oid', parent_count: 1,
+      activation_event: { path_template: 'journal/{sequence:08}-{event_id}.json', schema: 'agentops/scheduler-event/v2', payload_schema: 'agentops/scheduler-activation/v2', event_version: 2, event_type: 'SCHEDULER_ACTIVATED', issue_id: 'scheduler-state', actor: 'it-manager-iii', machine_id: null, lease_id: null, lease_epoch: null, source_binding: 'current_state', authority_binding: 'canonical-owner-event-in-derived-authority-a', count: 1 },
+      snapshot_path: 'snapshot.json', preserved_paths_policy: 'all-prior-journal-machine-lease-and-state-version-blobs-byte-identical', other_changes_forbidden: true,
+    },
+    development_d1_derivation: { parent_binding: 'derived-authority-a', parent_count: 1, scheduler_config_path: '.agentops/scheduler/config.json', scheduler_config_blob_binding: 'post_cutover_config.blob_oid', authority_evidence_mode: 'canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash', other_changes_forbidden: true },
+    all_off_precondition: { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, scheduler_authorization_evidence: null, migration_dispatch_frozen: true, legacy_activation_enabled: false, legacy_activation_mode: 'STOOD_DOWN_FOR_SCHEDULER_CUTOVER' },
+    derivation_order: 'build-a-from-d0-build-s1-from-s0-build-d1-from-a-record-result-then-publish-s1-d1-atomically', no_self_reference: true,
+  };
+}
+
 function protectedPacketIdentity(action, target, expectedCurrentHash, candidateOid, payload) {
   return stableStringify({ action, target, expected_current_hash: expectedCurrentHash ?? null, candidate_oid: candidateOid ?? null, payload });
 }
@@ -2307,9 +2390,9 @@ function priorActionDecisions(rt, action) {
 
 function protectedFreshnessIdentity(action, payload) {
   if (action === SCHEDULER_MIGRATION_ACTION) return stableStringify({ source_state_oid: payload?.source_state_oid, source_snapshot_sha256: payload?.source_snapshot_sha256, source_journal_manifest_sha256: payload?.source_journal_manifest_sha256, source_event_count: payload?.source_event_count });
-  if (action === PROJECT_SCHEMA_CHANGE_ACTION) return stableStringify({ project_updated_at: payload?.project_updated_at, preflight: payload?.preflight, definitions_hash: payload?.definitions_hash });
+  if (action === PROJECT_SCHEMA_CHANGE_ACTION) return stableStringify({ project_updated_at: payload?.project_updated_at, preflight: payload?.preflight, definitions_hash: payload?.definitions_hash, audit_ref: payload?.audit_ref });
   if (action === SCHEDULER_STATE_RECONCILIATION_ACTION) return stableStringify({ source: payload?.source, target: payload?.target, quiet_window_receipt_hash: payload?.quiet_window_receipt_hash });
-  if (action === SCHEDULER_CUTOVER_ACTION) return stableStringify({ migration: payload?.migration, current_state: payload?.current_state, project_schema_receipt_hash: payload?.project_schema_receipt_hash, quiet_window_receipt_hash: payload?.quiet_window_receipt_hash, released_custody_hash: payload?.released_custody_hash, activation_manifest_hash: payload?.activation_manifest_hash });
+  if (action === SCHEDULER_CUTOVER_ACTION) return stableStringify({ migration: payload?.migration, current_state: payload?.current_state, qa_receipt: payload?.qa_receipt, project_schema_receipt: payload?.project_schema_receipt, project_manifest: payload?.project_manifest, quiet_window_receipt: payload?.quiet_window_receipt, activation_manifest: payload?.activation_manifest });
   return '';
 }
 
@@ -2385,6 +2468,10 @@ export function projectSchemaChangeErrors(request) {
   for (const field of ['field_count', 'item_count', 'field_value_count']) {
     if (!Number.isInteger(pf[field]) || pf[field] < 0) errors.push(`project schema change preflight.${field} must be a non-negative integer`);
   }
+  if (p.audit_ref !== 'refs/heads/agentops/project-schema-audit' || p.expected_audit_remote_oid !== null || p.audit_push_mode !== 'create-if-absent-then-non-force-forward-only-cas') errors.push('project schema change requires an absent project-schema-audit ref followed by create-if-absent and linear CAS');
+  if (p.journal_mode !== 'append-only-intent-result' || p.recovery_mode !== 'inspect-once-never-create') errors.push('project schema change requires append-only INTENT/RESULT journaling and inspect-once recovery');
+  const guards = p.audit_guards || {};
+  if (guards.expected_absence !== true || guards.initial_creation_authorized_if_absent !== true || guards.subsequent_linear_direct_successors !== true || guards.intent_before_each_create !== true || guards.result_after_each_response !== true || guards.consumed_create_retry_forbidden !== true || guards.read_only_recovery !== true || guards.ref_recreation_forbidden !== true || guards.development_ref_mutation_forbidden !== true) errors.push('project schema change audit guards must close creation, retry, recovery, ref recreation, and dev mutation');
   return errors;
 }
 
@@ -2428,8 +2515,12 @@ export function schedulerCutoverErrors(request) {
   const errors = [];
   if (c.active_work_lease_count !== 0) errors.push('scheduler cutover requires active_work_lease_count=0');
   if (c.state_target_ref !== 'refs/heads/agentops/scheduler-state' || c.development_ref !== 'refs/heads/dev') errors.push('scheduler cutover requires the canonical scheduler-state and dev refs');
-  if (c.push_mode !== 'non-force-forward-only-cas' || c.abort_on_remote_change !== true) errors.push('scheduler cutover requires non-force forward-only CAS and abort-on-either-remote-change');
+  if (c.publication_mode !== 'atomic-two-ref-cas' || c.push_mode !== 'git-push-atomic-two-ref-exact-leases' || c.abort_on_remote_change !== true) errors.push('scheduler cutover requires one atomic two-ref push with exact leases and abort-on-either-remote-change');
+  if (c.ambiguity_policy !== 'inspect-once-never-retry' || c.postcondition_policy !== 'both-exact-or-withhold') errors.push('scheduler cutover requires inspect-once recovery and both-exact-or-withhold postconditions');
   if (c.current_state?.oid !== c.expected_state_remote_oid) errors.push('scheduler cutover current_state.oid must equal expected_state_remote_oid');
+  const t = c.activation_manifest?.template || {};
+  if (t.development_d0?.oid !== c.expected_development_remote_oid || t.state_s0?.oid !== c.current_state?.oid || t.state_s0?.tree !== c.current_state?.tree) errors.push('scheduler cutover activation template must bind exact development D0 and state S0 identities');
+  if (t.development_d0?.legacy_activation_blob_oid !== c.legacy_activation?.blob_oid || t.development_d0?.pre_cutover_config_blob_oid !== c.pre_cutover_config?.blob_oid || t.development_d0?.post_cutover_config_blob_oid !== c.post_cutover_config?.blob_oid) errors.push('scheduler cutover activation template descriptor blob parity failed');
   return errors;
 }
 
@@ -2566,6 +2657,76 @@ function remoteCasErrors(root, label, ref, expected) {
   return match[1] === expected ? [] : [`${label} remote target changed; abort_on_remote_change requires exact expected OID`];
 }
 
+function gitBuffer(root, args) {
+  try { return { ok: true, data: execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] }) }; }
+  catch (error) { return { ok: false, detail: error?.stderr?.toString().trim() || error.message }; }
+}
+
+function exactJsonBlobErrors(root, label, descriptor, { commit = null, semantics = null, parsedSchema = descriptor?.schema } = {}) {
+  const errors = [];
+  const raw = gitBuffer(root, ['cat-file', 'blob', String(descriptor?.blob_oid || '')]);
+  if (!raw.ok) return [`${label} blob_oid does not resolve to a blob`];
+  const digest = createHash('sha256').update(raw.data).digest('hex');
+  if (digest !== descriptor.sha256) errors.push(`${label} sha256 does not match exact blob bytes`);
+  if (commit) {
+    const atPath = gitText(root, ['rev-parse', `${commit}:${descriptor.path}`]);
+    if (!atPath.ok || atPath.text !== descriptor.blob_oid) errors.push(`${label} blob is not present at its bound commit and path`);
+  }
+  try {
+    const parsed = strictParse(raw.data.toString('utf8'));
+    const declaredSchema = parsed.schema ?? parsed.$id;
+    if (declaredSchema !== undefined && declaredSchema !== parsedSchema) errors.push(`${label} parsed schema does not match descriptor schema`);
+    if (semantics) errors.push(...semantics(parsed).map((e) => `${label} ${e}`));
+    if (descriptor.semantics) {
+      for (const [field, expected] of Object.entries(descriptor.semantics)) {
+        if (field.endsWith('_required') || field.endsWith('_binding') || field === 'expires_at_equals_released_at' || field === 'single_migration_boundary') continue;
+        const actual = field === 'payload_schema' ? parsed.payload?.schema
+          : field === 'dispatch_frozen' ? (parsed.payload?.dispatch_frozen ?? parsed.migration?.dispatch_frozen)
+            : field === 'single_migration_boundary' ? parsed.payload?.single_migration_boundary
+              : field === 'scheduler_dispatch_enabled' ? parsed.cutover?.scheduler_dispatch_enabled
+                : field === 'legacy_watcher_authoritative' ? parsed.cutover?.legacy_watcher_authoritative
+                  : field === 'scheduler_authorization_evidence' ? parsed.cutover?.authorization_evidence
+                    : field === 'migration_dispatch_frozen' ? parsed.migration?.dispatch_frozen
+                      : parsed[field];
+        if (actual !== expected) errors.push(`${label} parsed ${field} does not match descriptor semantics`);
+      }
+    }
+  } catch (error) { errors.push(`${label} is not strict JSON (${error.message})`); }
+  return errors;
+}
+
+function commitTopologyErrors(root, label, oid, parentOid, tree) {
+  const errors = exactCommitTreeErrors(root, label, oid, tree, { integrated: false });
+  if (errors.some((e) => e.includes('does not resolve'))) return errors;
+  const parents = gitText(root, ['show', '-s', '--format=%P', oid]);
+  const list = parents.ok && parents.text ? parents.text.split(/\s+/) : [];
+  if (list.length !== 1 || list[0] !== parentOid) errors.push(`${label} is not the exact one-parent direct successor of its bound parent`);
+  return errors;
+}
+
+function changedPaths(root, parent, child) {
+  const out = gitText(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', parent, child]);
+  return out.ok ? out.text.split(/\r?\n/).filter(Boolean).sort() : null;
+}
+
+function exactPathSetErrors(root, label, parent, child, required, allowed = required) {
+  const actual = changedPaths(root, parent, child);
+  if (!actual) return [`${label} changed path set could not be read`];
+  const missing = required.filter((p) => !actual.includes(p));
+  const extra = actual.filter((p) => !allowed.includes(p));
+  const errors = [];
+  if (missing.length) errors.push(`${label} is missing required paths: ${missing.join(', ')}`);
+  if (extra.length) errors.push(`${label} contains forbidden extra paths: ${extra.join(', ')}`);
+  return errors;
+}
+
+function schemaDefinitionErrors(root, name, value, label) {
+  try {
+    const schema = strictParse(readFileSync(resolve(root, 'schemas/owner-command-request.schema.json'), 'utf8'));
+    return validateSchema(value, schema.definitions?.[name] || {}, '$', schema).map((e) => `${label} ${e}`);
+  } catch (error) { return [`${label} schema could not be loaded (${error.message})`]; }
+}
+
 function portableStateErrors(root, label, state, { requireReleasedCustody = false } = {}) {
   const errors = exactCommitTreeErrors(root, `${label} state_oid`, state?.state_oid, state?.state_tree, { integrated: false });
   if (errors.some((e) => e.includes('does not resolve'))) return errors;
@@ -2610,7 +2771,66 @@ function portableStateErrors(root, label, state, { requireReleasedCustody = fals
 export function projectSchemaChangeGitErrors(root, request) {
   if (request.action !== PROJECT_SCHEMA_CHANGE_ACTION) return [];
   const p = request.project_schema_change || {};
-  return exactCommitTreeErrors(root, 'project schema change executor_head', p.executor_head, p.executor_tree);
+  const errors = exactCommitTreeErrors(root, 'project schema change executor_head', p.executor_head, p.executor_tree);
+  const audit = gitText(root, ['ls-remote', 'origin', String(p.audit_ref || '')]);
+  if (!audit.ok) errors.push('project schema change could not inspect the audit ref');
+  else if (audit.text !== '') errors.push('project schema change audit ref must be absent before create-if-absent');
+  return errors;
+}
+
+// Validate the executor's closed local receipt independently of command
+// admission. Future commit ids are derived after the authority event exists,
+// so accepting them inside the authority request would create a self-reference.
+export function projectSchemaAuditResultErrors(root, request, receipt, { authorityOid = null } = {}) {
+  const p = request.project_schema_change || {};
+  const errors = schemaDefinitionErrors(root, 'project_schema_audit_result_receipt', receipt, 'project audit result');
+  const parent = authorityOid || receipt?.initial_commit?.parent_oid;
+  errors.push(...commitTopologyErrors(root, 'project audit initial_commit', receipt?.initial_commit?.oid, parent, receipt?.initial_commit?.tree));
+  if (authorityOid && receipt?.initial_commit?.parent_oid !== authorityOid) errors.push('project audit initial_commit parent does not equal authority commit');
+  const prefix = `${p.audit_paths?.root || '.agentops/scheduler/project-schema-attempts'}/`;
+  const paths = changedPaths(root, parent, receipt?.initial_commit?.oid);
+  if (paths && (paths.length === 0 || paths.some((path) => !path.startsWith(prefix)))) errors.push('project audit initial_commit changes paths outside the leased audit subtree');
+  if (receipt?.publication?.target_oid !== receipt?.initial_commit?.oid) errors.push('project audit publication target does not equal initial_commit');
+  const actual = receipt?.postinspection?.actual_oid;
+  const complete = [receipt?.initial_commit?.oid, receipt?.initial_commit?.tree, receipt?.initial_commit?.parent_oid, receipt?.publication?.target_oid, actual].every((value) => /^[0-9a-f]{40}$/.test(value || ''));
+  const exact = complete && actual === receipt?.initial_commit?.oid && receipt?.publication?.target_oid === receipt?.initial_commit?.oid;
+  if (receipt?.postinspection?.target_exact !== exact) errors.push('project audit postinspection target_exact is false or forged');
+  const outcome = exact ? 'EXACT' : actual === null ? 'ABSENT' : 'OTHER';
+  if (receipt?.postinspection?.outcome !== outcome) errors.push('project audit postinspection outcome does not match inspected OID');
+  return errors;
+}
+
+export function projectSchemaAuditChainErrors(root, request, commits) {
+  const errors = [];
+  const prefix = `${request.project_schema_change?.audit_paths?.root || '.agentops/scheduler/project-schema-attempts'}/`;
+  for (let i = 1; i < commits.length; i++) {
+    errors.push(...commitTopologyErrors(root, `project audit chain commit ${i}`, commits[i], commits[i - 1], gitText(root, ['show', '-s', '--format=%T', commits[i]]).text));
+    const paths = changedPaths(root, commits[i - 1], commits[i]);
+    if (paths && (paths.length === 0 || paths.some((path) => !path.startsWith(prefix)))) errors.push(`project audit chain commit ${i} changes paths outside the leased audit subtree`);
+    const journalPath = request.project_schema_change?.audit_paths?.journal_path;
+    if (journalPath && paths?.includes(journalPath)) {
+      const journal = gitBuffer(root, ['show', `${commits[i]}:${journalPath}`]);
+      if (!journal.ok) errors.push(`project audit chain commit ${i} journal is unreadable`);
+      else {
+        const records = [];
+        for (const [lineIndex, line] of journal.data.toString('utf8').split(/\r?\n/).filter(Boolean).entries()) {
+          try { records.push(strictParse(line)); } catch (error) { errors.push(`project audit journal line ${lineIndex + 1} is invalid JSON (${error.message})`); }
+        }
+        const open = new Set();
+        for (const record of records) {
+          const phase = record.phase ?? record.kind ?? record.status;
+          const id = record.operation_id ?? record.attempt_id ?? record.id;
+          if (phase === 'INTENT') open.add(id);
+          else if (phase === 'RESULT') {
+            if (!open.has(id)) errors.push('project audit RESULT has no preceding matching INTENT');
+            open.delete(id);
+          }
+        }
+        if (records.length && records.some((record) => !['INTENT', 'RESULT'].includes(record.phase ?? record.kind ?? record.status))) errors.push('project audit journal contains a non-INTENT/RESULT record');
+      }
+    }
+  }
+  return errors;
 }
 
 export function schedulerStateReconciliationGitErrors(root, request) {
@@ -2638,13 +2858,110 @@ export function schedulerCutoverGitErrors(root, request) {
   const boundary = gitText(root, ['cat-file', '-t', String(c.migration?.boundary_oid || '')]);
   if (!boundary.ok || boundary.text !== 'commit') errors.push('scheduler cutover migration.boundary_oid does not resolve to a commit');
   else if (gitText(root, ['cat-file', '-e', `${c.current_state?.oid}^{commit}`]).ok && !gitText(root, ['merge-base', '--is-ancestor', c.migration.boundary_oid, c.current_state.oid]).ok) errors.push('scheduler cutover migration boundary is not an ancestor of current state');
-  for (const field of ['legacy_activation_blob_oid', 'pre_cutover_config_blob_oid']) {
-    const type = gitText(root, ['cat-file', '-t', String(c[field] || '')]);
-    if (!type.ok || type.text !== 'blob') errors.push(`scheduler cutover ${field} does not resolve to a blob`);
-  }
+  const descriptors = [
+    ['qa_receipt', c.qa_receipt, null, undefined],
+    ['migration.state_migrated_event', c.migration?.state_migrated_event, c.migration?.boundary_oid, undefined],
+    ['current_state.released_custody', c.current_state?.released_custody, c.current_state?.oid, undefined],
+    ['project_schema_receipt', c.project_schema_receipt, null, undefined],
+    ['project_manifest', c.project_manifest, null, undefined],
+    ['quiet_window_receipt', c.quiet_window_receipt, null, undefined],
+    ['legacy_activation', c.legacy_activation, c.expected_development_remote_oid, undefined],
+    ['pre_cutover_config', c.pre_cutover_config, c.expected_development_remote_oid, undefined],
+    ['post_cutover_config', c.post_cutover_config, null, undefined],
+    ['activation_manifest', c.activation_manifest, null, 'agentops/scheduler-cutover-activation-template/v1'],
+  ];
+  for (const [label, descriptor, commit, parsedSchema] of descriptors) errors.push(...exactJsonBlobErrors(root, `scheduler cutover ${label}`, descriptor, { commit, parsedSchema }));
+  const parsed = (descriptor) => {
+    const raw = gitBuffer(root, ['cat-file', 'blob', String(descriptor?.blob_oid || '')]);
+    try { return raw.ok ? strictParse(raw.data.toString('utf8')) : null; } catch { return null; }
+  };
+  const migrated = parsed(c.migration?.state_migrated_event);
+  if (migrated && (migrated.event_type !== 'STATE_MIGRATED' || migrated.issue_id !== 'scheduler-state' || migrated.event_version !== 2 || migrated.payload?.schema !== 'agentops/scheduler-migration/v2' || migrated.payload?.dispatch_frozen !== true || migrated.payload?.single_migration_boundary !== true)) errors.push('scheduler cutover migration event parsed semantics do not prove the single frozen migration boundary');
+  const custody = parsed(c.current_state?.released_custody);
+  const stateParents = gitText(root, ['show', '-s', '--format=%P', String(c.current_state?.oid || '')]);
+  const stateParent = stateParents.ok ? stateParents.text.split(/\s+/).filter(Boolean) : [];
+  if (custody && (custody.machine_id !== null || custody.acquired_at !== null || !custody.released_at || custody.expires_at !== custody.released_at || stateParent.length !== 1 || custody.expected_state_ref_oid !== stateParent[0])) errors.push('scheduler cutover released custody parsed semantics do not bind the exact S0 predecessor');
+  const legacy = parsed(c.legacy_activation);
+  if (legacy && (legacy.enabled !== false || legacy.mode !== 'STOOD_DOWN_FOR_SCHEDULER_CUTOVER')) errors.push('scheduler cutover legacy activation is not stood down');
+  const pre = parsed(c.pre_cutover_config);
+  if (pre && (pre.cutover?.scheduler_dispatch_enabled !== false || pre.cutover?.legacy_watcher_authoritative !== false || pre.cutover?.authorization_evidence !== null || pre.migration?.dispatch_frozen !== true)) errors.push('scheduler cutover pre-cutover config is not the exact all-off matrix');
+  const post = parsed(c.post_cutover_config);
+  const postEvidence = post?.cutover?.authorization_evidence;
+  if (post && (post.cutover?.scheduler_dispatch_enabled !== true || post.cutover?.legacy_watcher_authoritative !== false || post.migration?.dispatch_frozen !== true || !postEvidence || stableStringify(Object.keys(postEvidence).sort()) !== stableStringify(['event_id', 'event_path']))) errors.push('scheduler cutover post-cutover config does not enable only v2 dispatch with path/id authority evidence and no self-referential hash');
+  const manifest = parsed(c.activation_manifest);
+  if (manifest && stableStringify(manifest) !== stableStringify(c.activation_manifest?.template)) errors.push('scheduler cutover activation manifest blob does not deep-equal the inline template');
+  const d0Tree = gitText(root, ['show', '-s', '--format=%T', String(c.expected_development_remote_oid || '')]);
+  if (!d0Tree.ok || d0Tree.text !== c.activation_manifest?.template?.development_d0?.tree) errors.push('scheduler cutover activation template development D0 tree does not match D0');
+  if (gitText(root, ['cat-file', '-e', `${c.scheduler_head}^{commit}`]).ok && gitText(root, ['cat-file', '-e', `${c.expected_development_remote_oid}^{commit}`]).ok && !gitText(root, ['merge-base', '--is-ancestor', c.scheduler_head, c.expected_development_remote_oid]).ok) errors.push('scheduler cutover reviewed scheduler head is not an ancestor of development D0');
   errors.push(...remoteCasErrors(root, 'scheduler cutover state', c.state_target_ref, c.expected_state_remote_oid));
   errors.push(...remoteCasErrors(root, 'scheduler cutover development', c.development_ref, c.expected_development_remote_oid));
   return errors;
+}
+
+export function schedulerCutoverResultErrors(root, request, receipt) {
+  const c = request.scheduler_cutover || {};
+  const errors = schemaDefinitionErrors(root, 'scheduler_cutover_result_receipt', receipt, 'scheduler cutover result');
+  const a = receipt?.authority_a || {}, s1 = receipt?.state_s1 || {}, d1 = receipt?.development_d1 || {};
+  errors.push(...commitTopologyErrors(root, 'scheduler cutover authority A', a.oid, c.expected_development_remote_oid, a.tree));
+  errors.push(...commitTopologyErrors(root, 'scheduler cutover state S1', s1.oid, c.expected_state_remote_oid, s1.tree));
+  errors.push(...commitTopologyErrors(root, 'scheduler cutover development D1', d1.oid, a.oid, d1.tree));
+  const template = c.activation_manifest?.template || {};
+  const evidence = template.authority_a_derivation?.cutover_evidence_paths || {};
+  const renders = template.authority_a_derivation?.deterministic_render_paths || {};
+  const aPaths = changedPaths(root, c.expected_development_remote_oid, a.oid) || [];
+  const eventPaths = aPaths.filter((p) => new RegExp(`^\\.agentops/events/${request.target}/[^/]+\\.json$`).test(p));
+  const aRequired = [`.agentops/work/${request.target}/CURRENT.json`, ...Object.values(evidence), ...eventPaths];
+  const aAllowed = [...aRequired, ...Object.values(renders)];
+  if (eventPaths.length !== 1) errors.push('scheduler cutover authority A must add exactly one target owner event');
+  errors.push(...exactPathSetErrors(root, 'scheduler cutover authority A', c.expected_development_remote_oid, a.oid, aRequired, aAllowed));
+  for (const descriptor of [c.qa_receipt, c.project_schema_receipt, c.project_manifest, c.quiet_window_receipt, c.activation_manifest]) {
+    const atPath = gitText(root, ['rev-parse', `${a.oid}:${descriptor?.path}`]);
+    if (!atPath.ok || atPath.text !== descriptor?.blob_oid) errors.push(`scheduler cutover authority A does not contain exact descriptor ${descriptor?.path || '(missing)'}`);
+  }
+  if (eventPaths.length === 1) {
+    const authorityEvent = parsedJsonAt(root, a.oid, eventPaths[0]);
+    if (!authorityEvent || authorityEvent.kind !== 'owner-decision' || authorityEvent.actor !== 'owner' || authorityEvent.ticket !== request.target || authorityEvent.decision?.action !== SCHEDULER_CUTOVER_ACTION || authorityEvent.decision?.candidate_oid !== c.scheduler_head || stableStringify(authorityEvent.decision?.scheduler_cutover) !== stableStringify(c)) errors.push('scheduler cutover authority A owner event does not preserve the exact authorized packet');
+    const priorPaths = gitText(root, ['ls-tree', '-r', '--full-name', '--name-only', c.expected_development_remote_oid, '--', `:(top).agentops/events/${request.target}`]);
+    const priorEvents = priorPaths.ok ? priorPaths.text.split(/\r?\n/).filter(Boolean).map((eventPath) => parsedJsonAt(root, c.expected_development_remote_oid, eventPath)).filter(Boolean).sort((x, y) => x.seq - y.seq) : [];
+    const prior = priorEvents.at(-1);
+    const eventIdAtPath = eventPaths[0].split('/').at(-1)?.replace(/\.json$/, '');
+    if (!prior || authorityEvent?.seq !== prior.seq + 1 || authorityEvent?.parent_event !== prior.id || authorityEvent?.id !== eventIdAtPath) errors.push('scheduler cutover authority A owner event is not the exact next append-only event');
+    const capsulePath = `.agentops/work/${request.target}/CURRENT.json`;
+    const parentCapsule = parsedJsonAt(root, c.expected_development_remote_oid, capsulePath);
+    const nextCapsule = parsedJsonAt(root, a.oid, capsulePath);
+    const parentStable = structuredClone(parentCapsule || {}); const nextStable = structuredClone(nextCapsule || {});
+    for (const field of ['current_hash', 'parent_hash', 'revision', 'next_action']) { delete parentStable[field]; delete nextStable[field]; }
+    if (!parentCapsule || !nextCapsule || authorityEvent?.decision?.expected_current_hash !== parentCapsule.current_hash || nextCapsule.parent_hash !== parentCapsule.current_hash || nextCapsule.revision !== parentCapsule.revision + 1 || nextCapsule.current_hash !== computeCapsuleHash(nextCapsule) || stableStringify(parentStable) !== stableStringify(nextStable)) errors.push('scheduler cutover authority A capsule does not consume the exact parent seal');
+  }
+  const statePath = s1.activation_event?.path;
+  errors.push(...exactPathSetErrors(root, 'scheduler cutover state S1', c.expected_state_remote_oid, s1.oid, [statePath, 'snapshot.json']));
+  const activation = parsedJsonAt(root, s1.oid, statePath);
+  if (!activation || activation.event_version !== 2 || activation.event_type !== 'SCHEDULER_ACTIVATED' || activation.issue_id !== 'scheduler-state' || activation.actor !== 'it-manager-iii' || activation.machine_id !== null || activation.lease_id !== null || activation.lease_epoch !== null || activation.payload?.schema !== 'agentops/scheduler-activation/v2') errors.push('scheduler cutover state S1 activation event semantics are invalid');
+  if (activation && (activation.payload?.authority_event_path !== eventPaths[0] || activation.payload?.authority_event_id !== parsedJsonAt(root, a.oid, eventPaths[0])?.id)) errors.push('scheduler cutover state S1 activation event does not bind the exact authority A event');
+  if (activation) {
+    const raw = gitBuffer(root, ['show', `${s1.oid}:${statePath}`]);
+    const blob = gitText(root, ['rev-parse', `${s1.oid}:${statePath}`]);
+    const digest = raw.ok ? createHash('sha256').update(raw.data).digest('hex') : null;
+    if (!blob.ok || s1.activation_event?.blob_oid !== blob.text || s1.activation_event?.sha256 !== digest) errors.push('scheduler cutover result activation event blob/SHA does not match S1');
+  }
+  errors.push(...exactPathSetErrors(root, 'scheduler cutover development D1', a.oid, d1.oid, ['.agentops/scheduler/config.json']));
+  const configAtD1 = gitText(root, ['rev-parse', `${d1.oid}:.agentops/scheduler/config.json`]);
+  if (!configAtD1.ok || configAtD1.text !== c.post_cutover_config?.blob_oid || d1.scheduler_config?.blob_oid !== c.post_cutover_config?.blob_oid || d1.scheduler_config?.sha256 !== c.post_cutover_config?.sha256) errors.push('scheduler cutover D1 scheduler config does not equal the bound post-cutover blob/SHA');
+  const d1Config = parsedJsonAt(root, d1.oid, '.agentops/scheduler/config.json');
+  const d1Evidence = d1Config?.cutover?.authorization_evidence;
+  if (!d1Evidence || d1Evidence.event_path !== eventPaths[0] || d1Evidence.event_id !== parsedJsonAt(root, a.oid, eventPaths[0])?.id) errors.push('scheduler cutover D1 scheduler config does not bind the exact authority A event by path and id');
+  if (receipt?.publication?.state?.expected_oid !== c.expected_state_remote_oid || receipt?.publication?.state?.target_oid !== s1.oid || receipt?.publication?.development?.expected_oid !== c.expected_development_remote_oid || receipt?.publication?.development?.target_oid !== d1.oid) errors.push('scheduler cutover result publication tuples do not match exact two-ref leases and targets');
+  const pi = receipt?.postinspection || {};
+  const complete = [a.oid, a.tree, s1.oid, s1.tree, d1.oid, d1.tree, pi.state_actual_oid, pi.development_actual_oid].every((value) => /^[0-9a-f]{40}$/.test(value || ''));
+  const stateExact = complete && pi.state_actual_oid === s1.oid;
+  const devExact = complete && pi.development_actual_oid === d1.oid;
+  if (pi.state_exact !== stateExact || pi.development_exact !== devExact || pi.dispatch_permitted !== (stateExact && devExact) || pi.outcome !== (stateExact && devExact ? 'BOTH_EXACT' : stateExact || devExact ? 'MIXED' : 'NEITHER')) errors.push('scheduler cutover result postinspection is forged or does not enforce both-exact');
+  return errors;
+}
+
+function parsedJsonAt(root, commit, path) {
+  const raw = gitBuffer(root, ['show', `${commit}:${path}`]);
+  try { return raw.ok ? strictParse(raw.data.toString('utf8')) : null; } catch { return null; }
 }
 
 function structuredProtectedGitErrors(root, request) {
@@ -4511,7 +4828,7 @@ export function runSelftest(root = ROOT) {
     const oid = currentHead(root) || 'a'.repeat(40);
     const tree = gitText(root, ['show', '-s', '--format=%T', oid]).text || 'b'.repeat(40);
     const common = { schema: 'agentops/owner-command-request/v1', actor: 'owner', target: 'AS-1001', expected_current_hash: capHash, candidate_oid: oid };
-    const project = { schema: 'agentops/project-schema-change-authority/v1', executor_head: oid, executor_tree: tree, project: { owner: 'cehinds', owner_type: 'user', number: 4, id: 'PVT_kwHOCSCyJ84BgfH9', title: 'Family Delivery', closed: false }, authenticated_login: 'cehinds', required_scope: 'project', project_updated_at: '2026-08-31T15:00:00Z', preflight: { field_count: 21, field_state_root: '1'.repeat(64), item_count: 155, field_value_count: 50, item_state_root: '2'.repeat(64), pagination_manifest_hash: '3'.repeat(64), priority_field_id: 'PVTSSF_lAHOCSCyJ84BgfH9zhfelc4', priority_contract_hash: '4'.repeat(64) }, definitions_hash: '5'.repeat(64), mode: 'create-missing-only', allowed_mutation: 'project-field-create', forbid_item_mutation: true, forbid_existing_field_update: true, forbid_backfill: true, abort_on_any_drift: true, retry_mode: 'never', one_use: true, expires_at: '2099-01-01T00:00:00Z' };
+    const project = { schema: 'agentops/project-schema-change-authority/v2', executor_head: oid, executor_tree: tree, project: { owner: 'cehinds', owner_type: 'user', number: 4, id: 'PVT_kwHOCSCyJ84BgfH9', title: 'Family Delivery', closed: false }, authenticated_login: 'cehinds', required_scope: 'project', project_updated_at: '2026-08-31T15:00:00Z', preflight: { field_count: 21, field_state_root: '1'.repeat(64), item_count: 155, field_value_count: 50, item_state_root: '2'.repeat(64), pagination_manifest_hash: '3'.repeat(64), priority_field_id: 'PVTSSF_lAHOCSCyJ84BgfH9zhfelc4', priority_contract_hash: '4'.repeat(64) }, definitions_hash: '5'.repeat(64), mode: 'create-missing-only', allowed_mutation: 'project-field-create', forbid_item_mutation: true, forbid_existing_field_update: true, forbid_backfill: true, abort_on_any_drift: true, retry_mode: 'never', one_use: true, expires_at: '2099-01-01T00:00:00Z', audit_ref: 'refs/heads/agentops/project-schema-audit', expected_audit_remote_oid: null, audit_push_mode: 'create-if-absent-then-non-force-forward-only-cas', journal_mode: 'append-only-intent-result', recovery_mode: 'inspect-once-never-create', audit_paths: { root: '.agentops/scheduler/project-schema-attempts', journal_path: '.agentops/scheduler/project-schema-attempts/journal.jsonl', attempt_path_template: '.agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json', receipt_path_template: '.agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json' }, audit_guards: { expected_absence: true, initial_commit_parent_binding: 'derived-owner-authority-a', initial_creation_authorized_if_absent: true, subsequent_linear_direct_successors: true, allowed_mutation: 'append-intent-result-attempt-and-receipt-records-only', intent_before_each_create: true, result_after_each_response: true, consumed_create_retry_forbidden: true, read_only_recovery: true, ref_recreation_forbidden: true, development_ref_mutation_forbidden: true }, audit_result_contract: { schema: 'agentops/project-schema-audit-result-contract/v1', result_schema: 'agentops/project-schema-audit-result/v1', path: '.git/agentops-project-schema/audit-result.json', schema_pointer: '.agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt', construction_timing: 'after-local-initial-commit-before-ref-creation', ambiguity_policy: 'inspect-once-never-create', no_self_reference: true } };
     const projectReq = { ...common, action: PROJECT_SCHEMA_CHANGE_ACTION, project_schema_change: project };
     const acceptedProject = validateCommand(contracts, rt0, projectReq, { now: '2026-08-31T15:30:00Z' });
     results.push({ label: 'project schema change accepts and preserves one exact structured packet', pass: acceptedProject.ok && JSON.stringify(acceptedProject.decision?.project_schema_change) === JSON.stringify(project), errs: acceptedProject.errors });
@@ -4523,7 +4840,12 @@ export function runSelftest(root = ROOT) {
     const acceptedReconciliation = validateCommand(contracts, rt0, reconciliationReq, { now: '2026-08-31T15:30:00Z' });
     results.push({ label: 'state reconciliation accepts and preserves one exact structured packet', pass: acceptedReconciliation.ok && JSON.stringify(acceptedReconciliation.decision?.scheduler_state_reconciliation) === JSON.stringify(reconciliation), errs: acceptedReconciliation.errors });
 
-    const cutover = { schema: 'agentops/scheduler-cutover-authority/v1', scheduler_head: oid, scheduler_tree: tree, qa_receipt_hash: '1'.repeat(64), migration: { boundary_oid: source.state_oid, state_migrated_event_hash: '2'.repeat(64) }, current_state: { oid: target.state_oid, tree: target.state_tree }, project_schema_receipt_hash: '3'.repeat(64), project_manifest_hash: '4'.repeat(64), quiet_window_receipt_hash: '5'.repeat(64), released_custody_hash: '6'.repeat(64), active_work_lease_count: 0, legacy_activation_blob_oid: '7'.repeat(40), pre_cutover_config_blob_oid: '8'.repeat(40), activation_manifest_hash: '9'.repeat(64), state_target_ref: 'refs/heads/agentops/scheduler-state', expected_state_remote_oid: target.state_oid, development_ref: 'refs/heads/dev', expected_development_remote_oid: oid, one_use: true, expires_at: '2099-01-01T00:00:00Z', push_mode: 'non-force-forward-only-cas', abort_on_remote_change: true };
+    const descriptor = (schema, path, digit, semantics = undefined) => ({ schema, path, blob_oid: digit.repeat(40), sha256: digit.repeat(64), ...(semantics ? { semantics } : {}) });
+    const legacy = descriptor('agentops/pipeline-activation/v1', '.agentops/pipeline-pilot/activation.json', '7', { enabled: false, mode: 'STOOD_DOWN_FOR_SCHEDULER_CUTOVER' });
+    const pre = descriptor('agentops/scheduler-config/v1', '.agentops/scheduler/config.json', '8', { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, scheduler_authorization_evidence: null, migration_dispatch_frozen: true });
+    const post = descriptor('agentops/scheduler-config/v1', '.agentops/scheduler/config.json', '9', { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, scheduler_authorization_evidence_binding: 'canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash', migration_dispatch_frozen: true });
+    const template = schedulerCutoverActivationTemplate({ developmentOid: oid, developmentTree: tree, stateOid: target.state_oid, stateTree: target.state_tree, legacyBlob: legacy.blob_oid, preConfigBlob: pre.blob_oid, postConfigBlob: post.blob_oid });
+    const cutover = { schema: 'agentops/scheduler-cutover-authority/v2', scheduler_head: oid, scheduler_tree: tree, qa_receipt: descriptor('agentops/independent-qa-receipt/v1', '.agentops/scheduler/cutover/qa-receipt.json', '1'), migration: { boundary_oid: source.state_oid, state_migrated_event: descriptor('agentops/scheduler-event/v2', 'journal/00000001-migrated.json', '2', { event_version: 2, event_type: 'STATE_MIGRATED', issue_id: 'scheduler-state', payload_schema: 'agentops/scheduler-migration/v2', dispatch_frozen: true, single_migration_boundary: true, boundary_commit_binding: 'migration.boundary_oid' }) }, current_state: { oid: target.state_oid, tree: target.state_tree, released_custody: descriptor('agentops/scheduler-machine-lease/v1', 'machine-lease.json', '3', { machine_id: null, acquired_at: null, released_at_required: true, expires_at_equals_released_at: true, expected_state_ref_oid_binding: 'current_state.oid' }) }, project_schema_receipt: descriptor('agentops/project-schema-change-receipt/v1', '.agentops/scheduler/cutover/project-schema-receipt.json', '4'), project_manifest: descriptor('agentops/project-field-manifest/v1', '.agentops/scheduler/cutover/project-manifest.json', '5'), quiet_window_receipt: descriptor('agentops/scheduler-quiet-window-receipt/v1', '.agentops/scheduler/cutover/quiet-window-receipt.json', '6'), active_work_lease_count: 0, legacy_activation: legacy, pre_cutover_config: pre, post_cutover_config: post, activation_manifest: { ...descriptor('agentops/scheduler-cutover-activation-manifest/v1', '.agentops/scheduler/cutover/activation-manifest.json', 'a'), blob_parse_policy: 'parse-json-and-deep-equal-inline-template', template }, result_receipt_contract: { schema: 'agentops/scheduler-cutover-result-contract/v1', result_schema: 'agentops/scheduler-cutover-result/v1', path: '.git/agentops-scheduler/cutover-result.json', schema_pointer: '.agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_cutover_result_receipt', construction_timing: 'after-local-derivation-before-publication', publication_gate: 'prebuilt-a-s1-d1-match-derivation-template', no_self_reference: true }, cross_field_equalities: { development_d0_oid: 'activation_manifest.template.development_d0.oid == expected_development_remote_oid', state_s0_oid: 'activation_manifest.template.state_s0.oid == current_state.oid', state_s0_tree: 'activation_manifest.template.state_s0.tree == current_state.tree', legacy_activation_blob: 'activation_manifest.template.development_d0.legacy_activation_blob_oid == legacy_activation.blob_oid', pre_cutover_config_blob: 'activation_manifest.template.development_d0.pre_cutover_config_blob_oid == pre_cutover_config.blob_oid', post_cutover_config_blob: 'activation_manifest.template.development_d0.post_cutover_config_blob_oid == post_cutover_config.blob_oid', expected_state_remote: 'expected_state_remote_oid == current_state.oid', migration_boundary_event_blob: 'migration.state_migrated_event.blob_oid exists at migration.boundary_oid:migration.state_migrated_event.path' }, state_target_ref: 'refs/heads/agentops/scheduler-state', expected_state_remote_oid: target.state_oid, development_ref: 'refs/heads/dev', expected_development_remote_oid: oid, publication_mode: 'atomic-two-ref-cas', ambiguity_policy: 'inspect-once-never-retry', postcondition_policy: 'both-exact-or-withhold', one_use: true, expires_at: '2099-01-01T00:00:00Z', push_mode: 'git-push-atomic-two-ref-exact-leases', abort_on_remote_change: true };
     const cutoverReq = { ...common, action: SCHEDULER_CUTOVER_ACTION, scheduler_cutover: cutover };
     const acceptedCutover = validateCommand(contracts, rt0, cutoverReq, { now: '2026-08-31T15:30:00Z' });
     results.push({ label: 'scheduler cutover accepts and preserves one exact structured packet', pass: acceptedCutover.ok && JSON.stringify(acceptedCutover.decision?.scheduler_cutover) === JSON.stringify(cutover), errs: acceptedCutover.errors });
@@ -4555,7 +4877,7 @@ export function runSelftest(root = ROOT) {
     const freshCutoverReq = JSON.parse(JSON.stringify(cutoverReq));
     freshCutoverReq.expected_current_hash = refreshedCap.current_hash;
     freshCutoverReq.scheduler_cutover.expires_at = '2099-01-02T00:00:00Z';
-    freshCutoverReq.scheduler_cutover.quiet_window_receipt_hash = 'a'.repeat(64);
+    freshCutoverReq.scheduler_cutover.quiet_window_receipt.sha256 = 'b'.repeat(64);
     const fresh = validateCommand(contracts, usedRt, freshCutoverReq, { now: '2026-08-31T15:30:00Z' });
     results.push({ label: 'a distinct fresh cutover packet remains possible after a prior attempt', pass: fresh.ok, errs: fresh.errors });
   }

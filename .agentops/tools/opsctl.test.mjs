@@ -9,17 +9,39 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, applyCommand, validateCommand, schedulerMigrationErrors, schedulerMigrationGitErrors, projectSchemaChangeGitErrors, schedulerStateReconciliationGitErrors, schedulerCutoverGitErrors, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
+import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, applyCommand, validateCommand, schedulerMigrationErrors, schedulerMigrationGitErrors, projectSchemaChangeGitErrors, projectSchemaAuditResultErrors, projectSchemaAuditChainErrors, schedulerStateReconciliationGitErrors, schedulerCutoverGitErrors, schedulerCutoverResultErrors, schedulerCutoverActivationTemplate, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 
 let failures = 0;
 function check(name, cond, detail = '') {
   const ok = !!cond;
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${ok || !detail ? '' : ' — ' + detail}`);
   if (!ok) failures++;
+}
+
+function commitFiles(root, parent, files, message, at = '2026-08-31T15:00:00Z') {
+  const index = resolve(root, '.git', `opsctl-test-index-${Math.random().toString(16).slice(2)}`);
+  const env = { ...process.env, GIT_INDEX_FILE: index, GIT_AUTHOR_NAME: 'Opsctl Test', GIT_AUTHOR_EMAIL: 'test@local.invalid', GIT_COMMITTER_NAME: 'Opsctl Test', GIT_COMMITTER_EMAIL: 'test@local.invalid', GIT_AUTHOR_DATE: at, GIT_COMMITTER_DATE: at };
+  try {
+    execFileSync('git', ['read-tree', parent], { cwd: root, env });
+    for (const [name, text] of Object.entries(files)) {
+      const oid = execFileSync('git', ['hash-object', '-w', '--stdin'], { cwd: root, env, input: text }).toString().trim();
+      execFileSync('git', ['update-index', '--add', '--cacheinfo', `100644,${oid},${name}`], { cwd: root, env });
+    }
+    const tree = execFileSync('git', ['write-tree'], { cwd: root, env }).toString().trim();
+    const oid = execFileSync('git', ['commit-tree', tree, '-p', parent, '-m', message], { cwd: root, env }).toString().trim();
+    return { oid, tree };
+  } finally { try { rmSync(index, { force: true }); } catch { /* best effort */ } }
+}
+
+function jsonBlob(root, schema, path, value, semantics = undefined) {
+  const raw = `${JSON.stringify(value, null, 2)}\n`;
+  const blob_oid = execFileSync('git', ['hash-object', '-w', '--stdin'], { cwd: root, input: raw }).toString().trim();
+  return { descriptor: { schema, path, blob_oid, sha256: createHash('sha256').update(raw).digest('hex'), ...(semantics ? { semantics } : {}) }, raw };
 }
 
 // The GitHub trigger is an authority boundary, so keep its replay/provenance
@@ -176,6 +198,18 @@ function check(name, cond, detail = '') {
   check('validateSchema flags type mismatch', validateSchema(5, { type: 'string' }).length === 1);
   check('validateSchema accepts integer for number', validateSchema(5, { type: 'number' }).length === 0);
   check('validateSchema honours pattern', validateSchema('1.2', { type: 'string', pattern: '^[0-9]+\\.[0-9]+\\.[0-9]+$' }).length === 1);
+  const tupleSchema = {
+    type: 'array', minItems: 2, maxItems: 2,
+    prefixItems: [{ $ref: '#/$defs/oid' }, { allOf: [{ type: 'string' }, { const: 'EXACT' }] }],
+    items: false,
+    $defs: { oid: { type: 'string', pattern: '^[0-9a-f]{40}$' } },
+  };
+  check('validateSchema resolves local $ref and accepts an exact closed tuple', validateSchema(['a'.repeat(40), 'EXACT'], tupleSchema).length === 0);
+  check('validateSchema rejects a nonexistent local $ref', validateSchema('x', { $ref: '#/$defs/missing', $defs: {} }).some((e) => e.includes('unresolved $ref')));
+  check('validateSchema enforces allOf branches', validateSchema(['a'.repeat(40), 'OTHER'], tupleSchema).some((e) => e.includes('const')));
+  check('validateSchema enforces prefixItems positions', validateSchema(['not-an-oid', 'EXACT'], tupleSchema).some((e) => e.includes('[0]')));
+  check('validateSchema enforces maxItems', validateSchema(['a'.repeat(40), 'EXACT', 'extra'], tupleSchema).some((e) => e.includes('maxItems')));
+  check('validateSchema enforces items false', validateSchema(['a'.repeat(40), 'EXACT', 'extra'], { ...tupleSchema, maxItems: 3 }).some((e) => e.includes('additional tuple item')));
 }
 
 // 5. Sanity: loadContracts surfaces a parse error for malformed input without throwing.
@@ -410,7 +444,8 @@ function check(name, cond, detail = '') {
     execFileSync('git', ['symbolic-ref', 'HEAD', 'refs/heads/test-integrated'], { cwd: boxRepo });
     execFileSync('git', ['init', '--quiet', '--bare', boxRemote]);
     mkdirSync(resolve(boxRemote, 'objects/info'), { recursive: true });
-    writeFileSync(resolve(boxRemote, 'objects/info/alternates'), sourceObjects.replace(/\\/g, '/') + '\n');
+    const boxObjects = resolve(boxRepo, '.git/objects');
+    writeFileSync(resolve(boxRemote, 'objects/info/alternates'), `${sourceObjects.replace(/\\/g, '/')}\n${boxObjects.replace(/\\/g, '/')}\n`);
     execFileSync('git', ['update-ref', migration.target_ref, migration.expected_remote_oid], { cwd: boxRemote });
     execFileSync('git', ['remote', 'add', 'origin', boxRemote], { cwd: boxRepo });
     const box = resolve(boxRepo, '.agentops');
@@ -446,7 +481,7 @@ function check(name, cond, detail = '') {
     const projectRequest = {
       schema: 'agentops/owner-command-request/v1', action: 'authorize-project-schema-change', actor: 'owner', target: 'AS-1001',
       expected_current_hash: authorityCapsuleHash, candidate_oid: integratedHead,
-      project_schema_change: { schema: 'agentops/project-schema-change-authority/v1', executor_head: integratedHead, executor_tree: integratedTree, project: { owner: 'cehinds', owner_type: 'user', number: 4, id: 'PVT_kwHOCSCyJ84BgfH9', title: 'Family Delivery', closed: false }, authenticated_login: 'cehinds', required_scope: 'project', project_updated_at: '2026-08-31T15:00:00Z', preflight: { field_count: 21, field_state_root: '1'.repeat(64), item_count: 155, field_value_count: 50, item_state_root: '2'.repeat(64), pagination_manifest_hash: '3'.repeat(64), priority_field_id: 'PVTSSF_lAHOCSCyJ84BgfH9zhfelc4', priority_contract_hash: '4'.repeat(64) }, definitions_hash: '5'.repeat(64), mode: 'create-missing-only', allowed_mutation: 'project-field-create', forbid_item_mutation: true, forbid_existing_field_update: true, forbid_backfill: true, abort_on_any_drift: true, retry_mode: 'never', one_use: true, expires_at: '2026-08-31T17:00:00Z' }
+      project_schema_change: { schema: 'agentops/project-schema-change-authority/v2', executor_head: integratedHead, executor_tree: integratedTree, project: { owner: 'cehinds', owner_type: 'user', number: 4, id: 'PVT_kwHOCSCyJ84BgfH9', title: 'Family Delivery', closed: false }, authenticated_login: 'cehinds', required_scope: 'project', project_updated_at: '2026-08-31T15:00:00Z', preflight: { field_count: 21, field_state_root: '1'.repeat(64), item_count: 155, field_value_count: 50, item_state_root: '2'.repeat(64), pagination_manifest_hash: '3'.repeat(64), priority_field_id: 'PVTSSF_lAHOCSCyJ84BgfH9zhfelc4', priority_contract_hash: '4'.repeat(64) }, definitions_hash: '5'.repeat(64), mode: 'create-missing-only', allowed_mutation: 'project-field-create', forbid_item_mutation: true, forbid_existing_field_update: true, forbid_backfill: true, abort_on_any_drift: true, retry_mode: 'never', one_use: true, expires_at: '2026-08-31T17:00:00Z', audit_ref: 'refs/heads/agentops/project-schema-audit', expected_audit_remote_oid: null, audit_push_mode: 'create-if-absent-then-non-force-forward-only-cas', journal_mode: 'append-only-intent-result', recovery_mode: 'inspect-once-never-create', audit_paths: { root: '.agentops/scheduler/project-schema-attempts', journal_path: '.agentops/scheduler/project-schema-attempts/journal.jsonl', attempt_path_template: '.agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json', receipt_path_template: '.agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json' }, audit_guards: { expected_absence: true, initial_commit_parent_binding: 'derived-owner-authority-a', initial_creation_authorized_if_absent: true, subsequent_linear_direct_successors: true, allowed_mutation: 'append-intent-result-attempt-and-receipt-records-only', intent_before_each_create: true, result_after_each_response: true, consumed_create_retry_forbidden: true, read_only_recovery: true, ref_recreation_forbidden: true, development_ref_mutation_forbidden: true }, audit_result_contract: { schema: 'agentops/project-schema-audit-result-contract/v1', result_schema: 'agentops/project-schema-audit-result/v1', path: '.git/agentops-project-schema/audit-result.json', schema_pointer: '.agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt', construction_timing: 'after-local-initial-commit-before-ref-creation', ambiguity_policy: 'inspect-once-never-create', no_self_reference: true } }
     };
     check('project schema authority Git binding accepts exact integrated executor head and tree', projectSchemaChangeGitErrors(box, projectRequest).length === 0, projectSchemaChangeGitErrors(box, projectRequest).join(' | '));
     const badProjectTree = JSON.parse(JSON.stringify(projectRequest)); badProjectTree.project_schema_change.executor_tree = 'f'.repeat(40);
@@ -463,18 +498,76 @@ function check(name, cond, detail = '') {
     const badTarget = JSON.parse(JSON.stringify(reconciliationRequest)); badTarget.scheduler_state_reconciliation.target.snapshot_sha256 = 'f'.repeat(64);
     check('state reconciliation rejects substituted target snapshot evidence', schedulerStateReconciliationGitErrors(box, badTarget).some((e) => e.includes('snapshot_sha256')));
 
-    execFileSync('git', ['update-ref', 'refs/heads/dev', integratedHead], { cwd: boxRemote });
-    const legacyBlob = execFileSync('git', ['rev-parse', `${integratedHead}:.agentops/pipeline-pilot/activation.json`], { cwd: boxRepo }).toString().trim();
-    const configBlob = execFileSync('git', ['rev-parse', `${integratedHead}:.agentops/scheduler/config.json`], { cwd: boxRepo }).toString().trim();
+    const legacyValue = strictParse(execFileSync('git', ['show', `${integratedHead}:.agentops/pipeline-pilot/activation.json`], { cwd: boxRepo }).toString());
+    legacyValue.enabled = false; legacyValue.mode = 'STOOD_DOWN_FOR_SCHEDULER_CUTOVER';
+    const preValue = strictParse(execFileSync('git', ['show', `${integratedHead}:.agentops/scheduler/config.json`], { cwd: boxRepo }).toString());
+    preValue.cutover = { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, authorization_evidence: null }; preValue.migration.dispatch_frozen = true;
+    const postValue = structuredClone(preValue); postValue.cutover = { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: { event_path: '.agentops/events/AS-1001/cutover.json', event_id: 'cutover' } };
+    const legacyEvidence = jsonBlob(boxRepo, 'agentops/pipeline-activation/v1', '.agentops/pipeline-pilot/activation.json', legacyValue, { enabled: false, mode: 'STOOD_DOWN_FOR_SCHEDULER_CUTOVER' });
+    const preEvidence = jsonBlob(boxRepo, 'agentops/scheduler-config/v1', '.agentops/scheduler/config.json', preValue, { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: false, scheduler_authorization_evidence: null, migration_dispatch_frozen: true });
+    const postEvidence = jsonBlob(boxRepo, 'agentops/scheduler-config/v1', '.agentops/scheduler/config.json', postValue, { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, scheduler_authorization_evidence_binding: 'canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash', migration_dispatch_frozen: true });
+    const d0 = commitFiles(boxRepo, integratedHead, { '.agentops/pipeline-pilot/activation.json': legacyEvidence.raw, '.agentops/scheduler/config.json': preEvidence.raw }, 'cutover D0');
+    const migratedValue = { event_version: 2, event_id: 'state-migrated-test', idempotency_key: 'state-migrated-test', sequence: migration.source_event_count + 1, previous_snapshot_hash: migration.source_snapshot_sha256, issue_id: 'scheduler-state', actor: 'scheduler', machine_id: null, lease_id: null, lease_epoch: null, event_type: 'STATE_MIGRATED', exact_object: {}, payload: { schema: 'agentops/scheduler-migration/v2', dispatch_frozen: true, single_migration_boundary: true }, created_at: '2026-08-31T15:00:00Z' };
+    const migratedPath = `journal/${String(migratedValue.sequence).padStart(8, '0')}-state-migrated-test.json`;
+    const migratedEvidence = jsonBlob(boxRepo, 'agentops/scheduler-event/v2', migratedPath, migratedValue, { event_version: 2, event_type: 'STATE_MIGRATED', issue_id: 'scheduler-state', payload_schema: 'agentops/scheduler-migration/v2', dispatch_frozen: true, single_migration_boundary: true, boundary_commit_binding: 'migration.boundary_oid' });
+    const boundary = commitFiles(boxRepo, migration.source_state_oid, { [migratedPath]: migratedEvidence.raw }, 'migration boundary');
+    const custodyValue = { machine_id: null, lease_epoch: 9, acquired_at: null, released_at: '2026-08-31T15:00:00Z', expires_at: '2026-08-31T15:00:00Z', expected_state_ref_oid: boundary.oid };
+    const custodyEvidence = jsonBlob(boxRepo, 'agentops/scheduler-machine-lease/v1', 'machine-lease.json', custodyValue, { machine_id: null, acquired_at: null, released_at_required: true, expires_at_equals_released_at: true, expected_state_ref_oid_binding: 'current_state.oid' });
+    const s0 = commitFiles(boxRepo, boundary.oid, { 'machine-lease.json': custodyEvidence.raw }, 'released custody S0');
+    const qa = jsonBlob(boxRepo, 'agentops/independent-qa-receipt/v1', '.agentops/scheduler/cutover/qa-receipt.json', { schema: 'agentops/independent-qa-receipt/v1', verdict: 'PASS' });
+    const projectReceipt = jsonBlob(boxRepo, 'agentops/project-schema-change-receipt/v1', '.agentops/scheduler/cutover/project-schema-receipt.json', { schema: 'agentops/project-schema-change-receipt/v1', outcome: 'APPLIED' });
+    const projectManifest = jsonBlob(boxRepo, 'agentops/project-field-manifest/v1', '.agentops/scheduler/cutover/project-manifest.json', { schema: 'agentops/project-field-manifest/v1', fields: [] });
+    const quiet = jsonBlob(boxRepo, 'agentops/scheduler-quiet-window-receipt/v1', '.agentops/scheduler/cutover/quiet-window-receipt.json', { schema: 'agentops/scheduler-quiet-window-receipt/v1', quiet: true });
+    const template = schedulerCutoverActivationTemplate({ developmentOid: d0.oid, developmentTree: d0.tree, stateOid: s0.oid, stateTree: s0.tree, legacyBlob: legacyEvidence.descriptor.blob_oid, preConfigBlob: preEvidence.descriptor.blob_oid, postConfigBlob: postEvidence.descriptor.blob_oid });
+    const manifest = jsonBlob(boxRepo, 'agentops/scheduler-cutover-activation-manifest/v1', '.agentops/scheduler/cutover/activation-manifest.json', template);
+    execFileSync('git', ['update-ref', 'refs/heads/dev', d0.oid], { cwd: boxRemote });
+    execFileSync('git', ['update-ref', migration.target_ref, s0.oid], { cwd: boxRemote });
     const cutoverRequest = {
       schema: 'agentops/owner-command-request/v1', action: 'authorize-scheduler-cutover', actor: 'owner', target: 'AS-1001', expected_current_hash: authorityCapsuleHash, candidate_oid: integratedHead,
-      scheduler_cutover: { schema: 'agentops/scheduler-cutover-authority/v1', scheduler_head: integratedHead, scheduler_tree: integratedTree, qa_receipt_hash: '7'.repeat(64), migration: { boundary_oid: migration.canonical_anchor_oid, state_migrated_event_hash: '8'.repeat(64) }, current_state: { oid: migration.source_state_oid, tree: migration.source_state_tree }, project_schema_receipt_hash: '9'.repeat(64), project_manifest_hash: 'a'.repeat(64), quiet_window_receipt_hash: 'b'.repeat(64), released_custody_hash: 'c'.repeat(64), active_work_lease_count: 0, legacy_activation_blob_oid: legacyBlob, pre_cutover_config_blob_oid: configBlob, activation_manifest_hash: 'd'.repeat(64), state_target_ref: migration.target_ref, expected_state_remote_oid: migration.expected_remote_oid, development_ref: 'refs/heads/dev', expected_development_remote_oid: integratedHead, one_use: true, expires_at: '2026-08-31T17:00:00Z', push_mode: 'non-force-forward-only-cas', abort_on_remote_change: true }
+      scheduler_cutover: { schema: 'agentops/scheduler-cutover-authority/v2', scheduler_head: integratedHead, scheduler_tree: integratedTree, qa_receipt: qa.descriptor, migration: { boundary_oid: boundary.oid, state_migrated_event: migratedEvidence.descriptor }, current_state: { oid: s0.oid, tree: s0.tree, released_custody: custodyEvidence.descriptor }, project_schema_receipt: projectReceipt.descriptor, project_manifest: projectManifest.descriptor, quiet_window_receipt: quiet.descriptor, active_work_lease_count: 0, legacy_activation: legacyEvidence.descriptor, pre_cutover_config: preEvidence.descriptor, post_cutover_config: postEvidence.descriptor, activation_manifest: { ...manifest.descriptor, blob_parse_policy: 'parse-json-and-deep-equal-inline-template', template }, result_receipt_contract: { schema: 'agentops/scheduler-cutover-result-contract/v1', result_schema: 'agentops/scheduler-cutover-result/v1', path: '.git/agentops-scheduler/cutover-result.json', schema_pointer: '.agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_cutover_result_receipt', construction_timing: 'after-local-derivation-before-publication', publication_gate: 'prebuilt-a-s1-d1-match-derivation-template', no_self_reference: true }, cross_field_equalities: { development_d0_oid: 'activation_manifest.template.development_d0.oid == expected_development_remote_oid', state_s0_oid: 'activation_manifest.template.state_s0.oid == current_state.oid', state_s0_tree: 'activation_manifest.template.state_s0.tree == current_state.tree', legacy_activation_blob: 'activation_manifest.template.development_d0.legacy_activation_blob_oid == legacy_activation.blob_oid', pre_cutover_config_blob: 'activation_manifest.template.development_d0.pre_cutover_config_blob_oid == pre_cutover_config.blob_oid', post_cutover_config_blob: 'activation_manifest.template.development_d0.post_cutover_config_blob_oid == post_cutover_config.blob_oid', expected_state_remote: 'expected_state_remote_oid == current_state.oid', migration_boundary_event_blob: 'migration.state_migrated_event.blob_oid exists at migration.boundary_oid:migration.state_migrated_event.path' }, state_target_ref: migration.target_ref, expected_state_remote_oid: s0.oid, development_ref: 'refs/heads/dev', expected_development_remote_oid: d0.oid, publication_mode: 'atomic-two-ref-cas', ambiguity_policy: 'inspect-once-never-retry', postcondition_policy: 'both-exact-or-withhold', one_use: true, expires_at: '2026-08-31T17:00:00Z', push_mode: 'git-push-atomic-two-ref-exact-leases', abort_on_remote_change: true }
     };
     check('scheduler cutover Git binding accepts exact heads, trees, blobs, ancestry, and both remote CAS tuples', schedulerCutoverGitErrors(box, cutoverRequest).length === 0, schedulerCutoverGitErrors(box, cutoverRequest).join(' | '));
-    const badCutoverBlob = JSON.parse(JSON.stringify(cutoverRequest)); badCutoverBlob.scheduler_cutover.legacy_activation_blob_oid = integratedHead;
+    const badCutoverBlob = JSON.parse(JSON.stringify(cutoverRequest)); badCutoverBlob.scheduler_cutover.legacy_activation.blob_oid = integratedHead;
     check('scheduler cutover rejects a commit substituted for an activation blob', schedulerCutoverGitErrors(box, badCutoverBlob).some((e) => e.includes('does not resolve to a blob')));
     const staleDev = JSON.parse(JSON.stringify(cutoverRequest)); staleDev.scheduler_cutover.expected_development_remote_oid = migration.canonical_anchor_oid;
     check('scheduler cutover rejects a stale pre-command dev CAS OID', schedulerCutoverGitErrors(box, staleDev).some((e) => e.includes('development remote target changed')));
+    const badSha = structuredClone(cutoverRequest); badSha.scheduler_cutover.qa_receipt.sha256 = 'f'.repeat(64);
+    check('scheduler cutover rejects a substituted descriptor SHA', schedulerCutoverGitErrors(box, badSha).some((e) => e.includes('sha256')));
+    const badParity = structuredClone(cutoverRequest); badParity.scheduler_cutover.activation_manifest.template.state_s0.tree = 'f'.repeat(40);
+    check('scheduler cutover rejects inline/blob manifest parity drift', schedulerCutoverGitErrors(box, badParity).some((e) => e.includes('deep-equal') || e.includes('state S0')));
+
+    const auditInitial = commitFiles(boxRepo, integratedHead, { '.agentops/scheduler/project-schema-attempts/attempts/initial.json': '{"status":"INITIAL"}\n' }, 'project audit initial');
+    const auditResult = { schema: 'agentops/project-schema-audit-result/v1', initial_commit: { oid: auditInitial.oid, tree: auditInitial.tree, parent_oid: integratedHead }, publication: { ref: 'refs/heads/agentops/project-schema-audit', expected_absent: true, target_oid: auditInitial.oid, push_mode: 'create-if-absent', push_exit_code: 0 }, postinspection: { inspection_count: 1, retry_create_permitted: false, actual_oid: auditInitial.oid, target_exact: true, outcome: 'EXACT', policy: 'exact-target-or-withhold-never-create-again' } };
+    check('project v2 audit result binds exact initial commit, publication, and inspection', projectSchemaAuditResultErrors(box, projectRequest, auditResult, { authorityOid: integratedHead }).length === 0, projectSchemaAuditResultErrors(box, projectRequest, auditResult, { authorityOid: integratedHead }).join(' | '));
+    const forgedAudit = structuredClone(auditResult); forgedAudit.postinspection.actual_oid = integratedHead;
+    check('project v2 audit EXACT rejects a forged actual OID', projectSchemaAuditResultErrors(box, projectRequest, forgedAudit, { authorityOid: integratedHead }).some((e) => e.includes('forged') || e.includes('outcome')));
+    const auditJournal = '{"phase":"INTENT","operation_id":"create-1"}\n{"phase":"RESULT","operation_id":"create-1"}\n';
+    const auditNext = commitFiles(boxRepo, auditInitial.oid, { '.agentops/scheduler/project-schema-attempts/journal.jsonl': auditJournal }, 'project audit linear result');
+    check('project v2 audit chain accepts one direct linear INTENT/RESULT successor', projectSchemaAuditChainErrors(box, projectRequest, [auditInitial.oid, auditNext.oid]).length === 0, projectSchemaAuditChainErrors(box, projectRequest, [auditInitial.oid, auditNext.oid]).join(' | '));
+
+    const priorCutoverPaths = execFileSync('git', ['ls-tree', '-r', '--name-only', d0.oid, '--', '.agentops/events/AS-1001'], { cwd: boxRepo }).toString().trim().split(/\r?\n/).filter(Boolean);
+    const priorCutoverEvents = priorCutoverPaths.map((eventPath) => strictParse(execFileSync('git', ['show', `${d0.oid}:${eventPath}`], { cwd: boxRepo }).toString())).sort((x, y) => x.seq - y.seq);
+    const priorCutoverEvent = priorCutoverEvents.at(-1);
+    const authorityEventId = 'cutover';
+    const authorityEventPath = '.agentops/events/AS-1001/cutover.json';
+    const authorityEvent = { schema: 'agentops/event/v1', id: authorityEventId, ticket: 'AS-1001', seq: priorCutoverEvent.seq + 1, parent_event: priorCutoverEvent.id, kind: 'owner-decision', actor: 'owner', at: '2026-08-31T15:00:00Z', summary: 'Exact v2 cutover authority.', decision: { action: 'authorize-scheduler-cutover', authenticated_role: 'owner', authority_path: '.github/workflows/owner-command.yml:owner-command/v1', target: 'AS-1001', expected_current_hash: authorityCapsuleHash, candidate_oid: integratedHead, scheduler_cutover: cutoverRequest.scheduler_cutover } };
+    const authorityCapsule = strictParse(execFileSync('git', ['show', `${d0.oid}:.agentops/work/AS-1001/CURRENT.json`], { cwd: boxRepo }).toString());
+    authorityCapsule.parent_hash = authorityCapsule.current_hash; authorityCapsule.revision += 1; authorityCapsule.next_action = 'Execute exact atomic v2 cutover.'; authorityCapsule.current_hash = ''; authorityCapsule.current_hash = computeCapsuleHash(authorityCapsule);
+    const a = commitFiles(boxRepo, d0.oid, { [authorityEventPath]: `${JSON.stringify(authorityEvent, null, 2)}\n`, '.agentops/work/AS-1001/CURRENT.json': `${JSON.stringify(authorityCapsule, null, 2)}\n`, [qa.descriptor.path]: qa.raw, [projectReceipt.descriptor.path]: projectReceipt.raw, [projectManifest.descriptor.path]: projectManifest.raw, [quiet.descriptor.path]: quiet.raw, [manifest.descriptor.path]: manifest.raw }, 'derived authority A');
+    const activationPath = `journal/${String(migratedValue.sequence + 1).padStart(8, '0')}-scheduler-activated.json`;
+    const activationValue = { event_version: 2, event_id: 'scheduler-activated', idempotency_key: 'scheduler-activated', sequence: migratedValue.sequence + 1, previous_snapshot_hash: migration.source_snapshot_sha256, issue_id: 'scheduler-state', actor: 'it-manager-iii', machine_id: null, lease_id: null, lease_epoch: null, event_type: 'SCHEDULER_ACTIVATED', exact_object: {}, payload: { schema: 'agentops/scheduler-activation/v2', authority_event_path: authorityEventPath, authority_event_id: authorityEvent.id }, created_at: '2026-08-31T15:00:00Z' };
+    const activationEvidence = jsonBlob(boxRepo, 'agentops/scheduler-event/v2', activationPath, activationValue);
+    const s0Snapshot = strictParse(execFileSync('git', ['show', `${s0.oid}:snapshot.json`], { cwd: boxRepo }).toString()); s0Snapshot.last_sequence = activationValue.sequence;
+    const s1 = commitFiles(boxRepo, s0.oid, { [activationPath]: activationEvidence.raw, 'snapshot.json': `${JSON.stringify(s0Snapshot, null, 2)}\n` }, 'derived state S1');
+    const d1 = commitFiles(boxRepo, a.oid, { '.agentops/scheduler/config.json': postEvidence.raw }, 'derived development D1');
+    const cutoverResult = { schema: 'agentops/scheduler-cutover-result/v1', authority_a: { oid: a.oid, tree: a.tree, parent_oid: d0.oid }, state_s1: { oid: s1.oid, tree: s1.tree, parent_oid: s0.oid, activation_event: { path: activationPath, blob_oid: activationEvidence.descriptor.blob_oid, sha256: activationEvidence.descriptor.sha256 } }, development_d1: { oid: d1.oid, tree: d1.tree, parent_oid: a.oid, scheduler_config: { path: '.agentops/scheduler/config.json', blob_oid: postEvidence.descriptor.blob_oid, sha256: postEvidence.descriptor.sha256 } }, publication: { mode: 'git-push-atomic-two-ref-exact-leases', attempted_at: '2026-08-31T15:00:00Z', state: { ref: migration.target_ref, expected_oid: s0.oid, target_oid: s1.oid }, development: { ref: 'refs/heads/dev', expected_oid: d0.oid, target_oid: d1.oid }, atomic_push_exit_code: 0 }, postinspection: { inspection_count: 1, retry_permitted: false, state_actual_oid: s1.oid, development_actual_oid: d1.oid, state_exact: true, development_exact: true, outcome: 'BOTH_EXACT', dispatch_permitted: true, policy: 'dispatch-only-on-both-exact-otherwise-withhold' } };
+    const exactResultErrors = schedulerCutoverResultErrors(box, cutoverRequest, cutoverResult);
+    check('scheduler v2 result proves exact D0/S0/A/S1/D1 topology, manifests, leases, and both-exact inspection', exactResultErrors.length === 0, exactResultErrors.join(' | '));
+    const forgedResult = structuredClone(cutoverResult); forgedResult.postinspection.development_actual_oid = d0.oid;
+    check('scheduler v2 result rejects forged BOTH_EXACT dispatch on mixed refs', schedulerCutoverResultErrors(box, cutoverRequest, forgedResult).some((e) => e.includes('forged') || e.includes('both-exact')));
+    const extraD1 = commitFiles(boxRepo, a.oid, { '.agentops/scheduler/config.json': postEvidence.raw, '.agentops/scheduler/cutover/extra.json': '{}\n' }, 'forbidden extra D1 path');
+    const extraResult = structuredClone(cutoverResult); extraResult.development_d1.oid = extraD1.oid; extraResult.development_d1.tree = extraD1.tree; extraResult.publication.development.target_oid = extraD1.oid; extraResult.postinspection.development_actual_oid = extraD1.oid;
+    check('scheduler v2 result rejects an extra D1 path', schedulerCutoverResultErrors(box, cutoverRequest, extraResult).some((e) => e.includes('forbidden extra paths')));
 
     const boxRt = loadRuntime(box);
     const boxHash = computeCapsuleHash(boxRt.capsules['AS-1001']);
@@ -502,6 +595,10 @@ function check(name, cond, detail = '') {
     ]) {
       const nextRequest = JSON.parse(JSON.stringify(template));
       nextRequest.expected_current_hash = computeCapsuleHash(loadRuntime(box).capsules['AS-1001']);
+      if (field === 'scheduler_cutover') {
+        execFileSync('git', ['update-ref', migration.target_ref, s0.oid], { cwd: boxRemote });
+        execFileSync('git', ['update-ref', 'refs/heads/dev', d0.oid], { cwd: boxRemote });
+      }
       const result = runCommand(box, nextRequest, { dryRun: false, now: '2026-08-31T15:32:00Z' });
       const nextEventPath = result.written?.find((p) => p.startsWith('events/'));
       const nextEvent = nextEventPath ? strictParse(readFileSync(resolve(box, nextEventPath), 'utf8')) : null;
