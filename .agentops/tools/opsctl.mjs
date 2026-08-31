@@ -777,9 +777,23 @@ export function semanticChecks(c) {
 
   // 2. Git-ownership references only known roles (declared or synthetic writer).
   if (c['git-ownership']) {
+    const ledger = c['git-ownership'].ledger_serialization;
     for (const p of c['git-ownership'].paths) {
-      if (!knownRoles.has(p.owner_role)) errors.push(`git-ownership: path '${p.glob}' names unknown role '${p.owner_role}'`);
+      // A per_seat path is owned by whichever lease holds the ticket, so its
+      // owner_role is a marker rather than a declared role — the same shape
+      // refs already use for `recovery/*`.
+      if (!p.per_seat && !knownRoles.has(p.owner_role)) errors.push(`git-ownership: path '${p.glob}' names unknown role '${p.owner_role}'`);
       if (p.glob.split('/').includes('..')) errors.push(`git-ownership: path glob '${p.glob}' contains a '..' traversal segment`);
+      // per_seat is not a way out of ownership. It is only sound where a single
+      // tool is the sole writer and the lane is serialized per ticket: that is
+      // what keeps two seats holding the same glob from being a collision. A
+      // product path marked per_seat would just be unowned.
+      if (p.per_seat) {
+        if (p.owner_role !== 'per-seat') errors.push(`git-ownership: path '${p.glob}' is per_seat but names owner_role '${p.owner_role}'; a per-seat path declares the marker, not a role that does not own it`);
+        if (!ledger || p.serialized_lane !== ledger.lane) errors.push(`git-ownership: path '${p.glob}' is per_seat but its lane '${p.serialized_lane}' declares no sole writer; per-seat ownership is only safe where one tool writes and the lane serializes per ticket`);
+      } else if (p.owner_role === 'per-seat') {
+        errors.push(`git-ownership: path '${p.glob}' names owner_role 'per-seat' without the per_seat marker, so nothing checks the conditions that make per-seat ownership safe`);
+      }
     }
     for (const r of c['git-ownership'].refs) {
       // A per_seat namespace is owned by whichever lease holds the ticket, so
@@ -1112,7 +1126,7 @@ export function renderGovernance(c) {
   L.push('');
   L.push('| Path glob | Owner role | Serialized lane |');
   L.push('|---|---|---|');
-  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.owner_role} | ${p.serialized_lane} |`);
+  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.per_seat ? '`per-seat` — the ticket\u2019s lease' : p.owner_role} | ${p.serialized_lane} |`);
   if (c['git-ownership'].branch_hygiene) {
     const bh = c['git-ownership'].branch_hygiene;
     L.push('');
@@ -1124,6 +1138,11 @@ export function renderGovernance(c) {
   }
   L.push('');
     L.push(`Generated lane \`${c['git-ownership'].generated_serialization.lane}\`: ${c['git-ownership'].generated_serialization.rule}`);
+    const led = c['git-ownership'].ledger_serialization;
+    L.push('');
+    L.push(`Ledger lane \`${led.lane}\`, written solely by \`${led.writer}\`: ${led.rule}`);
+    L.push('');
+    L.push(led.actor_rule);
     L.push('');
   L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
   L.push('');
@@ -1588,6 +1607,12 @@ export function pathGrantErrors(contracts, lease) {
     const owner = decls.find((d) => globCovers(d.glob, g));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
+    } else if (owner.per_seat) {
+      // Ownership follows the ticket's writer lease, so any role may hold its
+      // own ledger. This is the A2 fix: with these globs owned by `maker`, a
+      // qa-independent or help-desk seat could not be granted its own capsule
+      // or event chain, and therefore could not record what it did.
+      continue;
     } else if (owner.owner_role !== actorRole(contracts, lease.actor)) {
       errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
     }
@@ -1935,6 +1960,22 @@ export function runtimeChecks(g, rt) {
   // Capsules: seal/CAS integrity, evidence ownership, authority, lease binding.
   for (const [ticket, cap] of Object.entries(rt.capsules)) {
     if (cap.ticket !== ticket) errors.push(`capsule for '${ticket}' has mismatched ticket field '${cap.ticket}'`);
+    // Ruling AS-HD-029-0052 point 2. A tracking pointer belongs only to a seat
+    // that has not started: once work stands on a tree, the base is that tree
+    // and following the branch would silently rebase the seat's assumptions.
+    // The freeze is what makes the pointer safe, so it is checked rather than
+    // trusted to the writer.
+    if (cap.base_ref) {
+      if (!RESEATABLE.has(cap.lifecycle_state)) {
+        errors.push(`capsule '${ticket}' is '${cap.lifecycle_state}' and still tracks '${cap.base_ref}'; work stands on a tree, so the base freezes into base_oid when the seat starts`);
+      }
+      if (/^[0-9a-f]{7,40}$/.test(cap.base_ref)) {
+        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is a commit id, not a branch; a pinned value recorded as a pointer is neither`);
+      }
+      if (cap.base_ref.split('/').includes('..') || /[\s~^:?*\[\\]/.test(cap.base_ref)) {
+        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is not a valid branch name`);
+      }
+    }
     if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
     if (cap.evidence_pointers.length > 8) errors.push(`capsule '${ticket}' has ${cap.evidence_pointers.length} evidence pointers, exceeding the max of 8`);
     for (const ep of cap.evidence_pointers) if (!evIds.has(ep)) errors.push(`capsule '${ticket}' evidence pointer '${ep}' is not a declared evidence type in evidence.json`);
@@ -2011,6 +2052,35 @@ function onBranch(root) {
 // Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
 // work, so an absent ref is normal for an unstarted seat — but wake must say so
 // rather than printing a checkout instruction that silently cannot be followed.
+// Any local branch, for fixtures that need a ref that genuinely resolves. A CI
+// pull-request checkout is detached with no local branches at all, so callers
+// must handle null rather than assume a well-known name exists: hardcoding
+// `dev` is what turned the reseat control plant red on a checkout that had none.
+function anyLocalBranch(root) {
+  try {
+    const out = execFileSync('git', ['for-each-ref', '--format=%(refname:short)', '--count=1', 'refs/heads/'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return out || null;
+  } catch { return null; }
+}
+
+// Does this repository carry the object, and is it a commit? Same execFileSync
+// discipline as resolveRef: the value comes from a command request.
+function commitExists(root, oid) {
+  try {
+    const t = execFileSync('git', ['cat-file', '-t', oid], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return t === 'commit';
+  } catch { return false; }
+}
+
+// Resolve a branch name to its current OID. Same execFileSync discipline as
+// refExists: the ref comes from capsule JSON and a shell would expand `$(...)`
+// in it. Returns null when the ref does not exist in this checkout.
+function resolveRef(root, ref) {
+  try {
+    return execFileSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${ref}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null;
+  } catch { return null; }
+}
+
 function refExists(root, ref) {
   try {
     // execFileSync, never execSync: the ref comes from capsule JSON, and a
@@ -2043,8 +2113,17 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   const lease = rt.leases.find((l) => l.id === cap.writer_lease);
   const leaseIsActive = !!lease && activeRuntimeLeases(rt).includes(lease);
   const shrt = (o) => (o && o.length > 12) ? o.slice(0, 12) : (o || '?');
+  // Ruling AS-HD-029-0052 point 2: an unstarted seat's base may TRACK a branch
+  // rather than pin a commit it never worked from. The pointer is resolved here,
+  // at read time, and nothing is appended to say so — chasing HEAD with an event
+  // per commit is what wrote 423 no-op entries. A tracking capsule is never
+  // stale, because there is no pinned value to fall behind.
   let freshness;
-  if (frozen) freshness = `as-recorded (base ${shrt(cap.base_oid)}); verify live HEAD out-of-band`;
+  const tracked = cap.base_ref ? resolveRef(root, cap.base_ref) : null;
+  if (cap.base_ref && frozen) freshness = `tracking \`${cap.base_ref}\` (as recorded); resolve the ref in this checkout`;
+  else if (cap.base_ref && tracked) freshness = `tracking \`${cap.base_ref}\` @ ${shrt(tracked)}; an unstarted seat follows the branch, so it does not go stale`;
+  else if (cap.base_ref) freshness = `UNRESOLVABLE — capsule tracks \`${cap.base_ref}\`, which this checkout does not carry; a pointer that cannot be resolved is not a base`;
+  else if (frozen) freshness = `as-recorded (base ${shrt(cap.base_oid)}); verify live HEAD out-of-band`;
   else if (!head) freshness = 'unknown (no live HEAD)';
   else if (head.startsWith(cap.base_oid) || cap.base_oid.startsWith(head)) freshness = `current (base matches HEAD ${shrt(head)})`;
   else freshness = `STALE — capsule base ${shrt(cap.base_oid)} != live HEAD ${shrt(head)}; re-seat before mutating`;
@@ -2060,7 +2139,7 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
   const refNote = frozen ? '' : (refExists(root, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
   L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
-  L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
+  L.push(`BASE       : ${cap.base_ref ? `${cap.base_ref} (tracked; last resolved ${cap.base_oid})` : cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
   // A seat at a gated state must know which gate stands in front of it, who
   // may open it, and what evidence it needs — otherwise it discovers the wall
@@ -2119,7 +2198,53 @@ const DEV_DELIVERY_PROTECTED_DENIALS = Object.freeze([
 // Validate an owner-command request against the policy: enumerated action,
 // authenticated actor, required fields, and the compare-and-swap precondition.
 // Pure over already-loaded contracts + runtime so the harness can plant defects.
-export function validateCommand(contracts, rt, request) {
+// A3 (#430): reseat as an enumerated, authenticated, compare-and-swap-checked
+// action, so the precondition a stale wake demands is satisfiable by a declared
+// path rather than only by a seat running the CLI.
+//
+// Scope is narrow by ruling, not by omission. AS-HD-029-0052 rule 1 makes reseat
+// seat-initiated at the start of work, and rule 2 gives an unstarted seat a
+// base_ref that follows a branch without appending anything. What is left for a
+// COMMAND is the case those two do not cover: a base a seat did not set for
+// itself, moved by the deputy — one named target, under CAS, never a sweep.
+export function reseatParamErrors(rt, request, root = null) {
+  const errors = [];
+  const cap = rt.capsules[request.target];
+  const p = (request.params && typeof request.params === 'object') ? request.params : null;
+  if (!p) return [`command 'reseat' requires params naming the new base`];
+  const hasOid = typeof p.base_oid === 'string' && p.base_oid !== '';
+  const hasRef = typeof p.base_ref === 'string' && p.base_ref !== '';
+  if (hasOid === hasRef) {
+    errors.push(`command 'reseat' takes exactly one of params.base_oid (pin an exact commit) or params.base_ref (track a branch); it was given ${hasOid ? 'both' : 'neither'}`);
+  }
+  for (const k of Object.keys(p)) {
+    if (k !== 'base_oid' && k !== 'base_ref') errors.push(`command 'reseat' params carries unknown field '${k}'; the action reads base_oid and base_ref only`);
+  }
+  if (cap && !RESEATABLE.has(cap.lifecycle_state)) {
+    errors.push(`command 'reseat' target '${request.target}' is '${cap.lifecycle_state}', not unstarted; work already stands on its base, and moving it would silently rebase what the seat assumed`);
+  }
+  if (hasOid && !/^[0-9a-f]{40}$/.test(p.base_oid)) {
+    errors.push(`command 'reseat' params.base_oid '${p.base_oid}' is not a full 40-character commit id; an abbreviated base is ambiguous in a growing repository`);
+  }
+  if (hasRef && /^[0-9a-f]{7,40}$/.test(p.base_ref)) {
+    errors.push(`command 'reseat' params.base_ref '${p.base_ref}' is a commit id, not a branch; a pinned value recorded as a pointer is neither`);
+  }
+  if (cap && hasOid && cap.base_oid === p.base_oid && !cap.base_ref) {
+    errors.push(`command 'reseat' would set '${request.target}' to the base it already records; a command that changes nothing still appends an event`);
+  }
+  if (cap && hasRef && cap.base_ref === p.base_ref) {
+    errors.push(`command 'reseat' would set '${request.target}' to the pointer it already records; a command that changes nothing still appends an event`);
+  }
+  // Repository-dependent checks run only where a checkout is available, so the
+  // function stays pure for the plant harness.
+  if (root) {
+    if (hasOid && !commitExists(root, p.base_oid)) errors.push(`command 'reseat' params.base_oid '${p.base_oid.slice(0, 12)}' is not a commit in this repository`);
+    if (hasRef && resolveRef(root, p.base_ref) === null) errors.push(`command 'reseat' params.base_ref '${p.base_ref}' is not a branch in this repository`);
+  }
+  return errors;
+}
+
+export function validateCommand(contracts, rt, request, { root = null } = {}) {
   const errors = [];
   const policy = contracts['owner-command'];
   if (!policy) return { ok: false, errors: ['owner-command policy not loaded'], decision: null };
@@ -2152,6 +2277,12 @@ export function validateCommand(contracts, rt, request) {
       errors.push(`stale command: expected_current_hash does not match the live state of '${request.target}' (compare-and-swap failed)`);
     } else if (request.expected_current_hash) cas = 'OK';
   }
+  // Action-specific shape. `params` is an open object in the request schema, so
+  // an action that reads it validates what it reads — otherwise no_arbitrary_input
+  // holds for every field except the one that carries the payload. Checked here
+  // rather than at apply so dry_run_first actually reports it.
+  if (action.id === 'reseat') errors.push(...reseatParamErrors(rt, request, root));
+
   const ok = errors.length === 0;
   const decision = ok ? {
     schema: 'agentops/decision-event/v1',
@@ -2207,7 +2338,9 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const summary = [
     move
       ? `Owner-command '${request.action}' by ${request.actor}: lifecycle ${move.from} -> ${move.target}.${request.candidate_oid ? ` Exact object ${request.candidate_oid}.` : ''}`
-      : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
+      : request.action === 'reseat' && capsule
+        ? `Owner-command 'reseat' by ${request.actor}: ${capsule.base_ref ? `base_ref ${capsule.base_ref}` : `base ${String(capsule.base_oid).slice(0, 12)}`} -> ${request.params.base_ref ? `base_ref ${request.params.base_ref} (resolved at read time)` : `base ${String(request.params.base_oid).slice(0, 12)}`}. The seat did not perform this; the authenticating actor did.`
+        : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
     clearsBlocker ? 'Blocker cleared: the decision it was waiting on is now recorded.' : ''
   ].filter(Boolean).join(' ');
   const event = {
@@ -2231,6 +2364,14 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     // this the capsule would keep reporting itself blocked after the answer
     // arrived, and the HUD would list a resolved decision forever.
     if (action.resolves_blocker && next.blocker) next.blocker = null;
+    // A3: move the base. Re-validated here against the same function the dry run
+    // used, because apply must never trust a decision taken against older state.
+    if (action.id === 'reseat') {
+      const bad = reseatParamErrors(rt, request, root);
+      if (bad.length) return { ok: false, errors: bad, written };
+      if (request.params.base_ref) { next.base_ref = request.params.base_ref; }
+      else { next.base_oid = request.params.base_oid; delete next.base_ref; }
+    }
     if (action.id === 'grant-dev-delivery-authority') {
       next.authority.may.push(DEV_DELIVERY_ACTION);
       next.authority.must_not = next.authority.must_not.filter((item) => item !== LEGACY_DELIVERY_DENIAL);
@@ -2315,7 +2456,7 @@ export function runCommand(root, request, { dryRun = true } = {}) {
   if (schemaErrs.length) return { ok: false, errors: schemaErrs.map((e) => `request schema: ${e}`), decision: null };
   const rt = loadRuntime(root);
   if (rt.errors.length) return { ok: false, errors: rt.errors.map((e) => `runtime: ${e}`), decision: null };
-  const res = validateCommand(contracts, rt, request);
+  const res = validateCommand(contracts, rt, request, { root });
   if (!res.ok || dryRun) return res;
 
   const applied = applyCommand(root, contracts, rt, request);
@@ -2942,7 +3083,7 @@ const VIEW_PROBES = {
     ...x.pages.switch_packet_records.map((r) => `- ${r}`)],
   escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), ...x.classes.map((cl) => `- \`${cl.id}\` \u2014 ${cl.hazard}`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.per_seat ? '\`per-seat\` \u2014 the ticket\u2019s lease' : pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, `Ledger lane \`${x.ledger_serialization.lane}\`, written solely by \`${x.ledger_serialization.writer}\`: ${x.ledger_serialization.rule}`, x.ledger_serialization.actor_rule, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
   hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.note, x.authority_tiers.namespace_note, x.authority_tiers.disambiguation.known_ambiguous_artifact, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
@@ -3505,6 +3646,10 @@ export function runDrill(root = ROOT) {
     total = Object.keys(rtNow.capsules).length;
     for (const t of Object.keys(rtNow.capsules).sort()) {
       const cap = rtNow.capsules[t];
+      // A capsule tracking a branch has no pinned value to fall behind, so it is
+      // not stale — that is the point of ruling AS-HD-029-0052's pointer. An
+      // UNRESOLVABLE pointer is a different matter and wake reports it.
+      if (cap.base_ref) continue;
       if (cap.base_oid !== head) stale.push({ ticket: t, base: cap.base_oid, state: cap.lifecycle_state });
     }
   }
@@ -3637,6 +3782,40 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'the reseat sweep is gone, not merely undocumented', pass: !new RegExp('function ' + sweepName).test(self), errs: [] });
   }
 
+  // Ruling AS-HD-029-0052 point 2. The pointer is only safe because it freezes
+  // when work starts; every way of loosening that is planted.
+  expectRuntime('a started capsule still tracking a branch', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => !RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'dev';
+  }, 'work stands on a tree, so the base freezes');
+  expectRuntime('a commit id recorded as a tracking pointer', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'a72cac9611df';
+  }, 'a pinned value recorded as a pointer is neither');
+  expectRuntime('a tracking pointer that is not a branch name', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'dev^{tree}';
+  }, 'is not a valid branch name');
+  {
+    // ...and the pointer actually removes the staleness it was ruled against:
+    // an unstarted capsule tracking a branch reads as tracking, not STALE.
+    const rt = baseRt();
+    const t = Object.keys(rt.capsules).find((k) => RESEATABLE.has(rt.capsules[k].lifecycle_state));
+    rt.capsules[t].base_ref = 'dev';
+    const built = buildCapsule(contracts, rt, t, { head: 'ffffffffffffffffffffffffffffffffffffffff', root });
+    const line = (built.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'an unstarted capsule tracking a branch never reads STALE', pass: !!line && !line.includes('STALE'), errs: [String(line)] });
+    const frozenBuilt = buildCapsule(contracts, rt, t, { frozen: true, root });
+    const fline = (frozenBuilt.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'a tracking capsule reconstructs deterministically when frozen', pass: !!fline && fline.includes('as recorded'), errs: [String(fline)] });
+    // ...and a pointer this checkout cannot resolve is reported, not silently
+    // treated as a base.
+    rt.capsules[t].base_ref = 'no-such-branch-anywhere';
+    const missing = buildCapsule(contracts, rt, t, { head: 'ffffffffffffffffffffffffffffffffffffffff', root });
+    const mline = (missing.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'an unresolvable tracking pointer is reported, not assumed', pass: !!mline && mline.includes('UNRESOLVABLE'), errs: [String(mline)] });
+  }
+
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
@@ -3723,6 +3902,50 @@ export function runSelftest(root = ROOT) {
   expectCommand('owner-command: owner-exclusive release by deputy rejected', (r) => { r.action = 'authorize-release'; }, 'not authorized');
   expectCommand('owner-command: owner-exclusive dev-delivery grant by deputy rejected', (r) => { r.action = 'grant-dev-delivery-authority'; r.target = 'AS-HD-029'; r.expected_current_hash = computeCapsuleHash(rt0.capsules['AS-HD-029']); r.reason = 'bounded grant'; delete r.candidate_oid; }, 'not authorized');
 
+  // A3 reseat plants, through the same validateCommand() the live dry run uses.
+  // The control is a real unstarted seat: AS-1001 is in-progress, so it doubles
+  // as the started-target rejection below.
+  const rsTicket = Object.keys(rt0.capsules).find((t) => RESEATABLE.has(rt0.capsules[t].lifecycle_state));
+  const rsHash = computeCapsuleHash(rt0.capsules[rsTicket]);
+  const rsReq = (params) => ({ schema: 'agentops/owner-command-request/v1', action: 'reseat', actor: 'it-manager-iii', target: rsTicket, expected_current_hash: rsHash, params });
+  // Fixtures come from the repository, never from a well-known name. The first
+  // version of this control used `dev`, which exists in a working clone and does
+  // NOT exist in a CI pull-request checkout — detached, with no local branches —
+  // so it failed there and only there.
+  const rsBranch = anyLocalBranch(root);
+  const rsHead = currentHead(root);
+  const rsPin = (rsHead && rsHead !== rt0.capsules[rsTicket].base_oid) ? rsHead : null;
+  if (rsPin) {
+    const pinned = validateCommand(contracts, rt0, rsReq({ base_oid: rsPin }), { root });
+    results.push({ label: 'reseat control: an unstarted seat pinned to a real commit is accepted', pass: pinned.ok, errs: pinned.errors });
+  }
+  // The pointer control needs a branch that resolves. Where the checkout has
+  // none, the same request runs in pure mode — the shape logic is what this
+  // asserts, and the repository check is environment-dependent by design, which
+  // is exactly why reseatParamErrors takes root as an option rather than always
+  // reaching for git.
+  const ptrReq = rsReq({ base_ref: rsBranch || 'any-branch-name' });
+  const ptr = validateCommand(contracts, rt0, ptrReq, rsBranch ? { root } : {});
+  results.push({ label: `reseat control: an unstarted seat pointed at a branch is accepted (${rsBranch ? 'resolved' : 'shape only — this checkout carries no local branch'})`, pass: ptr.ok, errs: ptr.errors });
+  const expectReseat = (label, req, needle) => {
+    const res = validateCommand(contracts, rt0, req, { root });
+    const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+    results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+  };
+  expectReseat('reseat: both a pin and a pointer', rsReq({ base_oid: 'a'.repeat(40), base_ref: 'dev' }), 'exactly one of');
+  expectReseat('reseat: neither a pin nor a pointer', rsReq({}), 'exactly one of');
+  expectReseat('reseat: an unknown params field', rsReq({ base_ref: 'dev', sweep: true }), 'unknown field');
+  expectReseat('reseat: an abbreviated commit id', rsReq({ base_oid: 'a72cac96' }), 'not a full 40-character commit id');
+  expectReseat('reseat: a commit this repository does not carry', rsReq({ base_oid: 'a'.repeat(40) }), 'not a commit in this repository');
+  expectReseat('reseat: a branch this repository does not carry', rsReq({ base_ref: 'no-such-branch-anywhere' }), 'not a branch in this repository');
+  // ...and the pin control's own fixture must have been real, or the control above proves nothing.
+  results.push({ label: 'the reseat controls ran against a real commit', pass: rsPin !== null || rsHead === null, errs: [String(rsHead)] });
+  expectReseat('reseat: a commit id recorded as a pointer', rsReq({ base_ref: 'a72cac9611df' }), 'a pinned value recorded as a pointer is neither');
+  expectReseat('reseat: a no-op that would still append an event', rsReq({ base_oid: rt0.capsules[rsTicket].base_oid }), 'a command that changes nothing still appends');
+  expectReseat('reseat: a seat that has already started', { ...rsReq({ base_ref: 'dev' }), target: 'AS-1001', expected_current_hash: computeCapsuleHash(rt0.capsules['AS-1001']) }, 'work already stands on its base');
+  expectReseat('reseat: an unauthenticated actor', { ...rsReq({ base_ref: 'dev' }), actor: 'maker' }, 'not authorized');
+  expectReseat('reseat: a stale compare-and-swap', { ...rsReq({ base_ref: 'dev' }), expected_current_hash: 'sha256:' + '0'.repeat(64) }, 'stale command');
+
   // Stage 6 migration plants — run through the same runtimeChecks the live
   // validate uses (pure over migration.json + capsules).
   const expectMigration = (label, mutate, needle) => {
@@ -3782,6 +4005,25 @@ export function runSelftest(root = ROOT) {
   expectSemantic('tiers: the ladder starting to pick models', (c) => { c.hierarchy.authority_tiers.rules.not_a_capability_ladder = 'higher tiers get better tools'; }, 'never selects model or effort');
   expectSemantic('ticket flow: a step routed straight to the owner', (c) => { c.escalation.ticket_flow.steps[0].actor = 'owner'; }, 'routes to the owner');
   expectSemantic('ticket flow: a dropped handoff event', (c) => { c.escalation.ticket_flow.handoff_events = ['SENT', 'RECEIVED']; }, "drops the 'ACKNOWLEDGED' handoff event");
+  // A2 (#430): with `.agentops/work/**` and `.agentops/events/**` owned by
+  // `maker`, no non-maker seat could be granted its own capsule or event chain,
+  // so qa-independent, help-desk and it-support seats existed but could not
+  // record what they did — the item on the AS-HD-029 P0 critical path. The fix
+  // is demonstrated positively, then fenced on every side, because a marker
+  // that exempts a path from ownership is exactly the kind of thing that grows.
+  {
+    const qaLease = { id: 'lease-probe-qa', actor: 'qa-independent', issuer: 'it-manager-iii', path_globs: ['.agentops/work/**', '.agentops/events/**'] };
+    const errs = pathGrantErrors(contracts, qaLease);
+    results.push({ label: 'a non-maker seat may hold its own capsule and event chain', pass: errs.length === 0, errs });
+    // ...and the exemption is narrow: an ordinary owned path still rejects a
+    // seat whose role does not own it.
+    const bad = pathGrantErrors(contracts, { ...qaLease, path_globs: ['src/**'] });
+    results.push({ label: 'a per-seat ledger does not exempt ordinary owned paths', pass: bad.some((e) => e.includes('git-ownership assigns that path to')), errs: bad });
+  }
+  expectSemantic('per-seat path whose owner_role is a real role', (c) => { c['git-ownership'].paths.find((pp) => pp.glob === '.agentops/events/**').owner_role = 'maker'; }, 'declares the marker, not a role that does not own it');
+  expectSemantic('per-seat path on a lane with no sole writer', (c) => { c['git-ownership'].paths.find((pp) => pp.glob === '.agentops/events/**').serialized_lane = 'product-source'; }, 'declares no sole writer');
+  expectSemantic('per-seat owner_role without the marker', (c) => { const pp = c['git-ownership'].paths.find((x) => x.glob === '.agentops/work/**'); delete pp.per_seat; }, 'without the per_seat marker');
+  expectSemantic('the ledger lane losing its sole writer', (c) => { delete c['git-ownership'].ledger_serialization; }, 'declares no sole writer');
   expectSemantic('branch hygiene: rewrite permission held by a pool', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'qa-guild'; }, 'is not a declared role');
   expectSemantic('branch hygiene: rewrite permission held by a non-standing role', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'maker'; }, 'is not a standing role');
   expectSemantic('branch hygiene: no prior head recorded', (c) => { c['git-ownership'].branch_hygiene.records = ['the branch']; }, 'cannot be undone');

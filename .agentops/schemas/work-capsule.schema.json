@@ -76,6 +76,11 @@
       "type": "string",
       "minLength": 1
     },
+    "base_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional. An unstarted seat may track a branch instead of pinning a commit it never worked from; the wake compiler resolves it at read time. Dropped when work starts."
+    },
     "tree": {
       "type": "string",
       "minLength": 1

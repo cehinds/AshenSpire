@@ -1,0 +1,88 @@
+{
+  "schema": "ashenspire/class-silhouette-rejected-inputs/v1",
+  "ticket": "AS-HD-040",
+  "purpose": "Pins every input the recorded evidence rules out as a source for the class silhouette successor. The successor contract's fails_if names these; this file gives them exact identities so a later seat cannot reuse one by accident, and so the verifier can prove none was substituted into the frozen packet.",
+  "reuse_policy": "None of these may be repaired, masked, background-removed, palette-sampled, used as a reference or input, or derived from. They are direction and diagnostic evidence only. They no longer exist at a working-tree path \u2014 the Hub rebuild removed them \u2014 but the objects are preserved and are read here by blob OID.",
+  "rejected": [
+    {
+      "id": "reaver-concept-v1",
+      "path": "review-approval-hub/evidence/classes/reaver-concept-v1.png",
+      "git_blob": "1769879947b4e9e908e6846b21047d3336386d80",
+      "sha256": "13de067b7df2e7fe9beb377fbac9ed3a85f62c487ecaa33764e94e8c35dd0093",
+      "bytes": 1701809,
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 2,
+      "class": "reaver",
+      "disposition": "WITHHOLD / direction evidence only",
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels. Cannot meet the 512-square RGBA contract."
+    },
+    {
+      "id": "starseer-concept-v1",
+      "path": "review-approval-hub/evidence/classes/starseer-concept-v1.png",
+      "git_blob": "a4f3dd20961dae978d003baea8615a46847972df",
+      "sha256": "42bd2664d8d23c23c7061cb6ccbab84a86715bef1845a37416c52aa31bd38099",
+      "bytes": 1481645,
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 2,
+      "class": "starseer",
+      "disposition": "WITHHOLD / direction evidence only",
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels."
+    },
+    {
+      "id": "rogue-concept-v1",
+      "path": "review-approval-hub/evidence/classes/rogue-concept-v1.png",
+      "git_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
+      "sha256": "ca34c3cd3131ce7110b35c2778e543bb95adb1226bbf3e7e9f72ada6509d6e1d",
+      "bytes": 1543220,
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 2,
+      "class": "rogue",
+      "disposition": "WITHHOLD / direction evidence only",
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels."
+    },
+    {
+      "id": "herald-concept-v1",
+      "path": "review-approval-hub/evidence/classes/herald-concept-v1.png",
+      "git_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
+      "sha256": "a02c051679f5460e4ddbc7f8034b082aef5a181ad6b83355a3a421c371fce280",
+      "bytes": 1529459,
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 2,
+      "class": "herald",
+      "disposition": "WITHHOLD / direction evidence only",
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels."
+    },
+    {
+      "id": "reaver-alpha-retry-rejected",
+      "path": "review-approval-hub/evidence/reaver-alpha-retry-rejected.png",
+      "git_blob": "0392d627e39437206a3f475d930be53a98101033",
+      "sha256": "7652ac2752ab40c280dbce78186766ace6811715800c107077f629eb4278df21",
+      "bytes": 1520873,
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 2,
+      "class": "reaver",
+      "disposition": "REJECTED / diagnostic evidence only",
+      "reason": "Transparency retry that produced RGB with a baked checkerboard and no alpha. The review hub records the same SHA-256 prefix 7652AC27...DF21 and the same 1,520,873 bytes; both were re-derived here from the committed file."
+    }
+  ],
+  "superseded_full_body_sources": {
+    "note": "Not rejected as art. These are the runtime equipment bodies the superseded Option B full-body path would have drawn on; the r2 census classified them UNKNOWN x3 / INELIGIBLE x1, never ELIGIBLE.",
+    "paths": [
+      "assets/equipment/body_reaver_default.webp",
+      "assets/equipment/body_starseer_default.webp",
+      "assets/equipment/body_rogue_default.webp",
+      "assets/equipment/body_herald_default.webp"
+    ],
+    "rogue_finding": "tools/equipment-blender.py maps rogue to build_reaver, so body_rogue_default.webp reuses the Reaver rig. This is the exact failure the upper-body successor does not reproduce (reaver vs rogue IoU 0.7052)."
+  },
+  "evidence_pin": {
+    "commit": "62f6867a",
+    "why": "The Hub rebuild 3e98769e removed review-approval-hub/evidence/** from the tree; origin/dev holds 0 files there. The packet bytes survive as git objects reachable from this commit. Every read below binds to a git object, never to a working-tree path, so this contract verifies the same bytes in any clone that has the objects \u2014 including one where the paths no longer exist.",
+    "read_order": "git_blob OID first (content-addressed, path-independent); 62f6867a:<path> as fallback when no OID is recorded."
+  }
+}
