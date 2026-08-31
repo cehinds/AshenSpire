@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 3,
-  "current_hash": "sha256:7694ebc0aacfbfaef1182b848180afa166ea6c58b001e5785f15bab01d1ac4d4",
-  "parent_hash": "sha256:a2da8b7d70be6ee2284292dd92605caafc5d643997852427fc056eaf591f5d3a",
+  "revision": 4,
+  "current_hash": "sha256:49b1226bc2f1277f63300480614439087c8544234893f01adcf42965d4285b1e",
+  "parent_hash": "sha256:7694ebc0aacfbfaef1182b848180afa166ea6c58b001e5785f15bab01d1ac4d4",
   "ticket": "AS-1001",
   "lifecycle_state": "in-progress",
   "objective": "Seed and validate the AgentOps runtime capsule / lease / event model and the opsctl wake compiler.",
