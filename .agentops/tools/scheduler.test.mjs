@@ -10,13 +10,14 @@ import {
   appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
   emptySnapshot, historyAdvanceAllowed, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
+  runBoundedCommand, schedulerStateRefs, sealAdmissionEvidence, sha256, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerCutoverAuthority, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolDir, '..', '..');
 const config = {
   ...readConfig(path.resolve(toolDir, '..')),
+  simulation_mode: true,
   workers: [
     { actor: 'seat:test:00000000-0000-4000-8000-000000000001', capabilities: ['implementation'] },
     { actor: 'seat:test:00000000-0000-4000-8000-000000000002', capabilities: ['implementation', 'review'] },
@@ -26,6 +27,7 @@ const config = {
 let passed = 0;
 const MACHINE_A = '11111111-1111-4111-8111-111111111111';
 const MACHINE_B = '22222222-2222-4222-8222-222222222222';
+const governance = JSON.parse(fs.readFileSync(path.join(repoRoot, '.agentops', 'governance', 'git-ownership.json'), 'utf8'));
 
 function test(name, fn) {
   try { fn(); passed += 1; process.stdout.write(`ok ${passed} - ${name}\n`); }
@@ -33,16 +35,74 @@ function test(name, fn) {
 }
 
 function fresh() { return { oid: null, events: [], snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' }; }
+function cutoverFixture(root) {
+  const git = (args) => {
+    const run = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr || run.stdout);
+    return run.stdout.trim();
+  };
+  if (!fs.existsSync(path.join(root, '.git'))) git(['init']);
+  fs.writeFileSync(path.join(root, 'state-seed'), 'state\n');
+  git(['add', 'state-seed']);
+  git(['-c', 'user.name=Scheduler Test', '-c', 'user.email=scheduler@test.invalid', 'commit', '-m', 'state seed']);
+  const stateOid = git(['rev-parse', 'HEAD']);
+  git(['update-ref', config.state_ref, stateOid]);
+  const governance = path.join(root, '.agentops', 'governance');
+  const eventDir = path.join(root, '.agentops', 'events', 'AS-SCHEDULER');
+  fs.mkdirSync(governance, { recursive: true }); fs.mkdirSync(eventDir, { recursive: true });
+  fs.copyFileSync(path.join(repoRoot, '.agentops', 'governance', 'owner-command.json'), path.join(governance, 'owner-command.json'));
+  fs.copyFileSync(path.join(repoRoot, '.agentops', 'governance', 'owner-intent.json'), path.join(governance, 'owner-intent.json'));
+  const event = {
+    schema: 'agentops/event/v1', id: 'AS-SCHEDULER-0001', ticket: 'AS-SCHEDULER', seq: 1, parent_event: null,
+    kind: 'owner-decision', actor: 'owner', at: '2026-08-30T00:00:00Z', summary: `Owner-command 'authorize-scheduler-cutover' by owner recorded for exact scheduler-state ${stateOid}.`,
+    decision: { action: 'authorize-scheduler-cutover', authenticated_role: 'owner', target: 'AS-SCHEDULER', expected_current_hash: `sha256:${'a'.repeat(64)}`, candidate_oid: stateOid }
+  };
+  const eventPath = '.agentops/events/AS-SCHEDULER/AS-SCHEDULER-0001.json';
+  fs.writeFileSync(path.join(root, ...eventPath.split('/')), `${JSON.stringify(event, null, 2)}\n`);
+  const authorization_evidence = { event_path: eventPath, event_id: event.id, event_hash: sha256(event) };
+  return { event, eventPath, stateOid, authorization_evidence, authorized: { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence } } };
+}
 function intake(state, issue, options = {}) {
+  const observedAt = options.observedAt ?? '2026-08-30T00:00:00.000Z';
+  const projectEvidence = sealAdmissionEvidence({
+    schema: 'agentops/scheduler-admission/v1', canonical_issue_id: issue, board_sync_status: 'OK',
+    project_priority: options.priority ?? 'P2', project_owner_role: options.ownerRole ?? 'maker', project_status: 'READY',
+    scope_complete: true, dependencies_ready: true, human_gate_clear: true, external_claim_clear: true,
+    conflict_identities: [], observed_at: observedAt, fresh_until: options.freshUntil ?? '2026-08-30T00:30:00.000Z'
+  });
   return appendEvents(state, [{
     event_type: 'INTAKE_RECORDED', issue_id: issue, actor: 'intake', machine_id: 'machine-a',
     exact_object: { issue }, idempotency_key: `intake:${issue}`, created_at: '2026-08-30T00:00:00.000Z',
-    payload: { title: options.title ?? issue, priority: options.priority ?? 'P2', dependencies: options.dependencies ?? [], branch: options.branch ?? `codex/${issue}`, claimed_paths: options.paths ?? [`src/${issue}`], claimed_resources: options.resources ?? [], acceptance_commands: ['node test'], evidence_pointers: [], next_action: 'work', authority_ceiling: 'dev-delivery' }
+    payload: { title: options.title ?? issue, priority: options.priority ?? 'P2', dependencies: options.dependencies ?? [], branch: options.branch ?? `codex/${issue}`, claimed_paths: options.paths ?? [`src/${issue}`], claimed_resources: options.resources ?? [], acceptance_commands: ['node test'], evidence_pointers: [], next_action: 'work', authority_ceiling: 'dev-delivery', project_evidence: projectEvidence }
   }]);
 }
 function claim(state, issue, actor = 'seat:test:00000000-0000-4000-8000-000000000001', epoch = 1) {
   const item = state.snapshot.work_items[issue];
-  return appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: issue, actor, machine_id: 'machine-a', lease_id: `lease:${issue}:${epoch}`, lease_epoch: epoch, exact_object: {}, idempotency_key: `claim:${issue}:${epoch}`, created_at: '2026-08-30T00:00:01.000Z', payload: { branch: item.branch, base_commit: 'a'.repeat(40), lease_expiry: '2026-08-30T00:30:01.000Z', claimed_paths: item.claimed_paths, claimed_resources: item.claimed_resources, next_action: 'work' } }]);
+  return appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: issue, actor, machine_id: 'machine-a', lease_id: `lease:${issue}:${epoch}`, lease_epoch: epoch, exact_object: {}, idempotency_key: `claim:${issue}:${epoch}`, created_at: '2026-08-30T00:00:01.000Z', payload: { branch: item.branch, base_commit: 'a'.repeat(40), lease_expiry: '2026-08-30T00:30:01.000Z', claimed_paths: item.claimed_paths, claimed_resources: item.claimed_resources, next_action: 'work', admission_evidence: item.project_evidence } }]);
+}
+function liveReconciliation(state, issue, projectOverrides = {}, environmentOverrides = {}) {
+  const item = state.snapshot.work_items[issue];
+  return {
+    project_sync: {
+      status: 'OK', observed_at: '2026-08-30T00:00:05.000Z', source_id: 'github-project',
+      issues: {
+        [issue]: {
+          canonical_issue_id: issue, priority: item.priority, owner_role: item.project_owner_role,
+          status: 'READY', issue_state: 'OPEN', issue_resolution: null, scope_complete: true,
+          claimed_paths: item.claimed_paths, claimed_resources: item.claimed_resources,
+          dependencies: [], assignees: [], external_claims: [], human_gate: null,
+          ...projectOverrides
+        }
+      }
+    },
+    governance, agentops_leases: [], worktrees: [], ...environmentOverrides
+  };
+}
+function blockedAdmission(state, issue, reconciliation) {
+  const liveConfig = { ...config, simulation_mode: false };
+  const plan = planAssignments(state.snapshot, liveConfig, '2026-08-30T00:00:05.000Z', null, reconciliation);
+  assert.equal(plan.assignments.length, 0);
+  return plan.blocked_items.find((entry) => entry.issue_id === issue);
 }
 function entered(state, issue) {
   const item = state.snapshot.work_items[issue];
@@ -112,7 +172,7 @@ test('8 immediate refill after completion', () => {
   state = appendEvents(state, [{ event_type: 'COMPLETED', issue_id: 'I-8A', actor: 'scheduler', machine_id: 'machine-a', lease_id: 'lease:I-8A:1', lease_epoch: 1, exact_object: {}, payload: {}, idempotency_key: 'complete:I-8A', created_at: '2026-08-30T00:00:07Z' }]);
   const refill = planAssignments(state.snapshot, config, '2026-08-30T00:00:07Z', 'c'.repeat(40)).assignments.find((a) => a.issue_id === 'I-8B');
   assert.equal(refill.base_commit, 'c'.repeat(40));
-  state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: refill.issue_id, actor: refill.actor, machine_id: 'machine-a', lease_id: refill.lease_id, lease_epoch: refill.lease_epoch, exact_object: { base_commit: refill.base_commit }, payload: { branch: state.snapshot.work_items[refill.issue_id].branch, base_commit: refill.base_commit, lease_expiry: refill.lease_expiry }, idempotency_key: 'auto-claim:I-8B:1', created_at: '2026-08-30T00:00:07Z' }]);
+  state = appendEvents(state, [{ event_type: 'CLAIM_ACQUIRED', issue_id: refill.issue_id, actor: refill.actor, machine_id: 'machine-a', lease_id: refill.lease_id, lease_epoch: refill.lease_epoch, exact_object: { base_commit: refill.base_commit }, payload: { branch: state.snapshot.work_items[refill.issue_id].branch, base_commit: refill.base_commit, lease_expiry: refill.lease_expiry, admission_evidence: refill.admission_evidence }, idempotency_key: 'auto-claim:I-8B:1', created_at: '2026-08-30T00:00:07Z' }]);
   assert.equal(state.snapshot.work_items['I-8B'].state, 'CLAIMED');
 });
 
@@ -369,6 +429,14 @@ test('refill assignment persistence waits for successful recoverable dispatch', 
   }), /state CAS failed/);
   assert.equal(rolledBack, true);
   assert.equal(state.snapshot.work_items['I-DISPATCH'].state, 'READY');
+
+  let unconfirmedRolledBack = false; let unconfirmedCommitted = false;
+  assert.throws(() => commitAssignmentsAfterWakeDispatch(state, plan.assignments, 'machine-a', '2026-08-30T00:00:01Z', {
+    dispatch: () => ({ dispatched: [{ issue_id: 'I-DISPATCH' }], commit() { unconfirmedCommitted = true; }, rollback() { unconfirmedRolledBack = true; } }),
+    persist: () => { const error = new Error('remote confirmation unavailable'); error.portableStatePersisted = true; throw error; }
+  }), /remote confirmation unavailable/);
+  assert.equal(unconfirmedRolledBack, true);
+  assert.equal(unconfirmedCommitted, false);
 });
 
 test('remote CAS loss revokes losing wake and reconciles authoritative assignments', () => {
@@ -526,14 +594,19 @@ test('Git and GitHub subprocesses fail closed on startup errors and timeouts', (
 
 test('scheduler dispatch remains mechanically disabled while legacy watcher is authoritative', () => {
   assert.throws(() => assertSchedulerDispatchCutover(config), /legacy watcher remains authoritative/);
-  const authorized = { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: 'owner:cutover-1' } };
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-cutover-guard-'));
   try {
+    const fixture = cutoverFixture(temp); const authorized = fixture.authorized;
     const activationDir = path.join(temp, '.agentops', 'pipeline-pilot'); fs.mkdirSync(activationDir, { recursive: true });
     fs.writeFileSync(path.join(activationDir, 'activation.json'), `${JSON.stringify({ enabled: true, mode: 'LIVE_ASSIGNMENT' })}\n`);
     assert.throws(() => assertSchedulerDispatchCutover(authorized, temp), /legacy watcher activation is still live/);
     fs.writeFileSync(path.join(activationDir, 'activation.json'), `${JSON.stringify({ enabled: false, mode: 'DISABLED' })}\n`);
     assert.equal(assertSchedulerDispatchCutover(authorized, temp), true);
+    assert.throws(() => validateSchedulerCutoverAuthority(temp, 'owner:any-string', authorized), /authenticated exact owner decision/);
+    assert.throws(() => validateSchedulerCutoverAuthority(temp, { ...fixture.authorization_evidence, event_hash: '0'.repeat(64) }, authorized), /hash mismatch/);
+    const wrongActor = { ...fixture.event, actor: 'it-manager-iii' };
+    fs.writeFileSync(path.join(temp, ...fixture.eventPath.split('/')), `${JSON.stringify(wrongActor, null, 2)}\n`);
+    assert.throws(() => validateSchedulerCutoverAuthority(temp, { ...fixture.authorization_evidence, event_hash: sha256(wrongActor) }, authorized), /authenticated owner decision/);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
@@ -551,6 +624,27 @@ test('lease expiry and candidate acceptance are fenced at the declared instant',
   state = appendEvents(state, [lateCandidate]);
   assert.equal(state.snapshot.work_items[item.issue_id].state, 'RUNNING');
   assert.equal(state.snapshot.work_items[item.issue_id].late_candidates[0].candidate_commit, 'f'.repeat(40));
+});
+
+test('work entry rejects expired leases and any replacement of the claimed exact base', () => {
+  let state = intake(fresh(), 'I-ENTER-FENCE'); state = claim(state, 'I-ENTER-FENCE');
+  const item = state.snapshot.work_items['I-ENTER-FENCE'];
+  const base = { event_type: 'WORK_ENTERED', issue_id: item.issue_id, actor: item.assigned_actor, machine_id: item.lease_machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, idempotency_key: 'enter:fence' };
+  assert.throws(() => appendEvents(state, [{ ...base, exact_object: { oid: item.base_commit }, payload: { base_commit: item.base_commit }, created_at: item.lease_expiry }]), /at or after lease expiry/);
+  assert.throws(() => appendEvents(state, [{ ...base, idempotency_key: 'enter:replace-payload', exact_object: { oid: item.base_commit }, payload: { base_commit: 'b'.repeat(40) }, created_at: '2026-08-30T00:00:02Z' }]), /preserve the claimed exact base/);
+  assert.throws(() => appendEvents(state, [{ ...base, idempotency_key: 'enter:replace-object', exact_object: { oid: 'b'.repeat(40) }, payload: { base_commit: item.base_commit }, created_at: '2026-08-30T00:00:02Z' }]), /preserve the claimed exact base/);
+  assert.equal(state.snapshot.work_items[item.issue_id].state, 'CLAIMED');
+  assert.equal(state.snapshot.work_items[item.issue_id].base_commit, 'a'.repeat(40));
+});
+
+test('QA result is rejected at the exact QA lease expiry', () => {
+  let state = intake(fresh(), 'I-QA-EXPIRY'); state = claim(state, 'I-QA-EXPIRY'); state = entered(state, 'I-QA-EXPIRY'); state = candidate(state, 'I-QA-EXPIRY');
+  let item = state.snapshot.work_items['I-QA-EXPIRY']; const actor = config.workers[1].actor; const epoch = item.lease_epoch + 1;
+  state = appendEvents(state, [{ event_type: 'QA_ASSIGNED', issue_id: item.issue_id, actor, machine_id: 'machine-a', lease_id: `qa:${epoch}`, lease_epoch: epoch, exact_object: { oid: item.candidate_commit }, idempotency_key: 'qa-expiry:assign', created_at: '2026-08-30T00:00:04Z', payload: { candidate_commit: item.candidate_commit, lease_expiry: '2026-08-30T00:30:04Z' } }]);
+  item = state.snapshot.work_items[item.issue_id];
+  const result = { event_type: 'QA_RESULT', issue_id: item.issue_id, actor: item.assigned_actor, machine_id: item.lease_machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: item.candidate_commit }, idempotency_key: 'qa-expiry:result', created_at: item.lease_expiry, payload: { candidate_commit: item.candidate_commit, result: 'PASS', evidence_pointers: ['receipt:late'] } };
+  assert.throws(() => appendEvents(state, [result]), /at or after QA lease expiry/);
+  assert.equal(state.snapshot.work_items[item.issue_id].state, 'QA');
 });
 
 test('canonical glob claims collide with the repository paths they cover', () => {
@@ -587,7 +681,7 @@ test('dispatch reconciliation deletes a wake after its lease is released', () =>
   try {
     const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' });
     assert.equal(init.status, 0, init.stderr);
-    const authorized = { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: 'owner:cutover-test' } };
+    const authorized = cutoverFixture(temp).authorized;
     let state = intake(fresh(), 'I-STALE-WAKE'); state = claim(state, 'I-STALE-WAKE'); state = entered(state, 'I-STALE-WAKE');
     const actor = state.snapshot.work_items['I-STALE-WAKE'].assigned_actor;
     beginWakeDispatch(temp, state.snapshot, [{ issue_id: 'I-STALE-WAKE', actor }], authorized).commit();
@@ -599,18 +693,134 @@ test('dispatch reconciliation deletes a wake after its lease is released', () =>
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
+test('unconfirmed scheduler-state push restores the prior local ref and preserves no live authority', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-unconfirmed-state-'));
+  try {
+    const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' }); assert.equal(init.status, 0, init.stderr);
+    const remote = path.join(temp, 'missing-remote.git');
+    const add = spawnSync('git', ['remote', 'add', 'origin', remote], { cwd: temp, encoding: 'utf8' }); assert.equal(add.status, 0, add.stderr);
+    let failure = null;
+    try { persistPortableState(temp, fresh(), { push: true, config, message: 'must confirm remote' }); } catch (error) { failure = error; }
+    assert.equal(failure?.portableStateAuthorityUnconfirmed, true);
+    const local = spawnSync('git', ['show-ref', '--verify', config.state_ref], { cwd: temp, encoding: 'utf8' });
+    assert.notEqual(local.status, 0);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('git ownership declares the scheduler source lane and portable state ref', () => {
+  const ownership = JSON.parse(fs.readFileSync(path.join(repoRoot, '.agentops', 'governance', 'git-ownership.json'), 'utf8'));
+  assert.equal(ownership.refs.some((entry) => entry.ref === 'agentops/scheduler-state' && entry.mutation === 'expected-old-oid-cas-only'), true);
+  assert.equal(ownership.paths.some((entry) => entry.glob === '.agentops/scheduler/**' && entry.serialized_lane === 'agentops-scheduler'), true);
+});
+
 test('live transition time ignores a caller supplied backdate and recovery must remain future', () => {
   const trusted = trustedTransitionArgs({ at: '2020-01-01T00:00:00Z' }, '2026-08-30T02:00:00Z');
   assert.equal(trusted.at, '2026-08-30T02:00:00Z');
   const state = intake(fresh(), 'I-TRUSTED-TIME');
+  const admissionEvidence = sealAdmissionEvidence({
+    ...state.snapshot.work_items['I-TRUSTED-TIME'].project_evidence,
+    observed_at: '2026-08-30T01:59:50Z', fresh_until: '2026-08-30T02:00:20Z'
+  });
   const event = transitionInput('recover', {
     ...trusted,
     issue: 'I-TRUSTED-TIME', actor: config.workers[0].actor,
     lease_id: 'recovery:expired', lease_epoch: 1,
     branch: 'codex/I-TRUSTED-TIME', base_commit: 'a'.repeat(40),
-    expiry: '2026-08-30T01:59:59Z'
+    expiry: '2026-08-30T01:59:59Z', admission_evidence: JSON.stringify(admissionEvidence)
   }, state, { machine_id: 'machine-a' });
   assert.throws(() => appendEvents(state, [event]), /later than the trusted event time/);
+});
+
+test('admission fails closed when Project evidence is missing, stale, or has no runnable priority and owner', () => {
+  const state = intake(fresh(), 'GH-BOARD-SYNC', { paths: ['src/board-sync.js'] });
+  let reconciliation = liveReconciliation(state, 'GH-BOARD-SYNC');
+  let blocked = blockedAdmission(state, 'GH-BOARD-SYNC', { ...reconciliation, project_sync: { ...reconciliation.project_sync, status: 'BOARD_SYNC_FAILED' } });
+  assert.deepEqual(
+    { blocker: blocked.blocker, conflict_identity: blocked.conflict_identity, wake_evidence: blocked.wake_evidence },
+    { blocker: 'BOARD_SYNC_FAILED', conflict_identity: 'github-project', wake_evidence: 'record a fresh successful Project priority and ownership observation' }
+  );
+  reconciliation = { ...reconciliation, project_sync: { ...reconciliation.project_sync, observed_at: '2026-08-29T00:00:00Z' } };
+  blocked = blockedAdmission(state, 'GH-BOARD-SYNC', reconciliation);
+  assert.equal(blocked.blocker, 'BOARD_EVIDENCE_STALE');
+  reconciliation = { ...liveReconciliation(state, 'GH-BOARD-SYNC'), project_sync: { ...liveReconciliation(state, 'GH-BOARD-SYNC').project_sync, observed_at: '2026-08-29T23:59:35.000Z' } };
+  blocked = blockedAdmission(state, 'GH-BOARD-SYNC', reconciliation);
+  assert.equal(blocked.blocker, 'BOARD_EVIDENCE_STALE');
+  reconciliation = liveReconciliation(state, 'GH-BOARD-SYNC', { priority: null, owner_role: null });
+  blocked = blockedAdmission(state, 'GH-BOARD-SYNC', reconciliation);
+  assert.equal(blocked.blocker, 'PROJECT_PRIORITY_OR_OWNER_MISSING');
+});
+
+test('issue 426-shaped continuity work waits for precursor termination and the live governance-docs lease', () => {
+  const issue = 'GH-426';
+  const state = intake(fresh(), issue, { ownerRole: 'project-management-lead', paths: ['docs/governance/continuity.json'] });
+  const precursor = { claim_id: 'claim:continuity-precursor', actor: 'project-management-lead', status: 'ACTIVE', terminal_event: null };
+  const lease = { id: 'lease-AS-HD-054-project-management-lead', ref: 'recovery/as-hd-054', path_globs: ['docs/governance/**'], resources: [], revoked: false, terminal_event: null };
+  let reconciliation = liveReconciliation(state, issue, { external_claims: [precursor] }, { agentops_leases: [lease] });
+  let blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'EXTERNAL_CLAIM_ACTIVE');
+  assert.equal(blocked.conflict_identity, precursor.claim_id);
+  reconciliation = liveReconciliation(state, issue, { external_claims: [{ ...precursor, terminal_event: 'SUPERSEDED' }] }, { agentops_leases: [lease] });
+  blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'AGENTOPS_LEASE_CONFLICT');
+  assert.equal(blocked.conflict_identity, lease.id);
+  assert.match(blocked.wake_evidence, /RELEASED or SUPERSEDED/);
+});
+
+test('issue 194-shaped paused work requires reprioritization, its artifact decision, and the tools lane', () => {
+  const issue = 'GH-194';
+  const state = intake(fresh(), issue, { ownerRole: 'it-support', paths: ['tools/gallery-runner.mjs'] });
+  const decision = { status: 'UNRESOLVED', decision_id: 'artifact-policy', wake_condition: 'record the exact gallery artifact policy decision' };
+  const lease = { id: 'lease:tools-current-writer', ref: 'recovery/tools-current-writer', path_globs: ['tools/**'], resources: [], revoked: false, terminal_event: null };
+  let reconciliation = liveReconciliation(state, issue, { status: 'PAUSED', wake_condition: 'explicitly reprioritize the paused issue', human_gate: decision }, { agentops_leases: [lease] });
+  let blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'PROJECT_STATUS_PAUSED');
+  assert.equal(blocked.wake_evidence, 'explicitly reprioritize the paused issue');
+  reconciliation = liveReconciliation(state, issue, { human_gate: decision }, { agentops_leases: [lease] });
+  blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'HUMAN_DECISION_REQUIRED');
+  assert.equal(blocked.conflict_identity, decision.decision_id);
+  reconciliation = liveReconciliation(state, issue, { human_gate: { ...decision, status: 'RESOLVED' } }, { agentops_leases: [lease] });
+  blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'AGENTOPS_LEASE_CONFLICT');
+  assert.equal(blocked.conflict_identity, lease.id);
+});
+
+test('issue 313-shaped work resolves contradictory identity, expired claim, complete scope, and tools custody in order', () => {
+  const issue = 'GH-313';
+  const state = intake(fresh(), issue, { ownerRole: 'it-support', paths: ['tools/targeting-probe.mjs'] });
+  const expired = { claim_id: 'claim:GH-313:old', actor: 'old-seat', status: 'EXPIRED', terminal_event: null };
+  const lease = { id: 'lease:tools-active', ref: 'recovery/tools-active', path_globs: ['tools/**'], resources: [], revoked: false, terminal_event: null };
+  let reconciliation = liveReconciliation(state, issue, { assignees: ['new-seat'], external_claims: [expired], scope_complete: false, claimed_paths: [] }, { agentops_leases: [lease] });
+  let blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'CONTRADICTORY_ASSIGNMENT_STATE');
+  assert.match(blocked.conflict_identity, /old-seat/); assert.match(blocked.conflict_identity, /new-seat/);
+  reconciliation = liveReconciliation(state, issue, { assignees: ['old-seat'], external_claims: [expired], scope_complete: false, claimed_paths: [] }, { agentops_leases: [lease] });
+  blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'EXPIRED_EXTERNAL_CLAIM_UNSUPERSEDED');
+  assert.equal(blocked.conflict_identity, expired.claim_id);
+  const released = { ...expired, terminal_event: 'RELEASED' };
+  reconciliation = liveReconciliation(state, issue, { assignees: ['old-seat'], external_claims: [released], scope_complete: false, claimed_paths: [] }, { agentops_leases: [lease] });
+  blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'INCOMPLETE_AFFECTED_SCOPE');
+  reconciliation = liveReconciliation(state, issue, { assignees: ['old-seat'], external_claims: [released], claimed_paths: ['src/targeting.js'] }, { agentops_leases: [lease] });
+  blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'AFFECTED_SCOPE_CONTRADICTION');
+  reconciliation = liveReconciliation(state, issue, { assignees: ['old-seat'], external_claims: [released] }, { agentops_leases: [lease] });
+  blocked = blockedAdmission(state, issue, reconciliation);
+  assert.equal(blocked.blocker, 'AGENTOPS_LEASE_CONFLICT');
+  assert.equal(blocked.conflict_identity, lease.id);
+});
+
+test('unmapped live worktree custody and duplicate canonical intake both fail closed', () => {
+  const issue = 'GH-CUSTODY';
+  const state = intake(fresh(), issue, { paths: ['src/custody.js'] });
+  const unknown = { identity: 'worktree:codex/unmapped:deadbeef', head: 'deadbeef', branch: 'codex/unmapped', custody: 'UNKNOWN' };
+  const blocked = blockedAdmission(state, issue, liveReconciliation(state, issue, {}, { worktrees: [unknown] }));
+  assert.equal(blocked.blocker, 'WORKTREE_CUSTODY_UNKNOWN');
+  assert.equal(blocked.conflict_identity, unknown.identity);
+  assert.match(blocked.wake_evidence, /map the live worktree/);
+  const duplicate = { ...state.events[0], event_id: null, idempotency_key: 'intake:duplicate-canonical' };
+  assert.throws(() => appendEvents(state, [duplicate]), /duplicate (canonical )?issue intake/);
 });
 
 test('sync push publishes a preserved local-ahead state commit', () => {

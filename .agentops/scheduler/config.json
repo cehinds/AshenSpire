@@ -15,6 +15,7 @@
   "refill_latency_target_seconds": 5,
   "idle_alarm_seconds": 30,
   "lease_duration_seconds": 1800,
+  "project_evidence_max_age_seconds": 30,
   "wake_target_tokens": 1200,
   "wake_hard_limit_tokens": 1500,
   "workers": [],

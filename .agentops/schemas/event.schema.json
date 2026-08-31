@@ -14,6 +14,18 @@
     "actor": {"type": "string", "minLength": 1},
     "at": {"type": "string", "minLength": 1},
     "summary": {"type": "string", "minLength": 1},
-    "evidence_pointer": {"type": "string", "minLength": 1}
+    "evidence_pointer": {"type": "string", "minLength": 1},
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "authenticated_role", "target", "expected_current_hash", "candidate_oid"],
+      "properties": {
+        "action": {"type": "string", "minLength": 1},
+        "authenticated_role": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "expected_current_hash": {"type": ["string", "null"]},
+        "candidate_oid": {"type": ["string", "null"]}
+      }
+    }
   }
 }
