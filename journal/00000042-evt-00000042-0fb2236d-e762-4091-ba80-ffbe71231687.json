@@ -1,0 +1,28 @@
+{
+  "event_id": "evt-00000042-0fb2236d-e762-4091-ba80-ffbe71231687",
+  "idempotency_key": "CANDIDATE_READY:257:6:5b113a8c1bafeda4ae0c849145dfeba557d9a853",
+  "sequence": 42,
+  "previous_snapshot_hash": "59f214afc7f4c1fe27d9fa17e2f4dbb3c7bdb41386ffb3cb2146ce9b45a7e519",
+  "issue_id": "257",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:257:6",
+  "lease_epoch": 6,
+  "event_type": "CANDIDATE_READY",
+  "exact_object": {
+    "oid": "5b113a8c1bafeda4ae0c849145dfeba557d9a853"
+  },
+  "payload": {
+    "candidate_commit": "5b113a8c1bafeda4ae0c849145dfeba557d9a853",
+    "evidence_pointers": [
+      "origin/codex/issue-257-quest-choice-pipeline@5b113a8c1bafeda4ae0c849145dfeba557d9a853",
+      "tree:0ea2ba98f8846d7af3345765d9ad2b332197de4c",
+      "node tools/quest-choice-contract.mjs:13/13",
+      "node tools/quest-choice-contract.mjs --selftest:18/18",
+      "node tests/run-node.mjs:114/114",
+      "git diff --check:PASS",
+      "shipped-chain:abandonedCart/lootStrongbox->merchantsGhost/payInKind hidden; stealRelic+leave remain"
+    ]
+  },
+  "created_at": "2026-08-31T15:44:59.438Z"
+}
