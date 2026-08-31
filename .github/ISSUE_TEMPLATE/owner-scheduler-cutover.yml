@@ -17,9 +17,9 @@ body:
     id: request_schema
     attributes:
       label: Request schema
-      description: "Required constant: agentops/scheduler-cutover-authority/v1."
+      description: "Required constant: agentops/scheduler-cutover-authority/v2."
       options:
-        - agentops/scheduler-cutover-authority/v1
+        - agentops/scheduler-cutover-authority/v2
     validations:
       required: true
 
@@ -78,84 +78,57 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: qa_receipt_hash
+  - type: textarea
+    id: qa_receipt
     attributes:
-      label: QA receipt hash
-      description: "Required independently issued exact-head QA receipt hash; 64 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      label: QA receipt
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,semantics}. Constants bind agentops/independent-qa-receipt/v1 at .agentops/scheduler/cutover/qa-receipt.json. Semantics must be independent exact-head QA with verdict PASS, independent_of_maker true, a nonempty tests array whose every exit_code is 0 and outcome is PASS, and closed evidence records.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","path":".agentops/scheduler/cutover/qa-receipt.json","schema":"agentops/independent-qa-receipt/v1","semantics":{"candidate":{"head":"40-lowercase-hex","tree":"40-lowercase-hex"},"evidence":[],"independent_of_maker":true,"maker_actor":"maker-seat","schema":"agentops/independent-qa-receipt/v1","tested_at":"UTC timestamp","tests":[{"command":"test command","exit_code":0,"id":"suite","outcome":"PASS","output_sha256":"64-lowercase-hex"}],"verdict":"PASS","verifier":{"actor":"qa-seat","role":"qa-independent"}},"sha256":"64-lowercase-hex"}'
     validations:
       required: true
 
-  - type: input
-    id: migration_boundary_oid
+  - type: textarea
+    id: migration
     attributes:
-      label: Migration boundary OID
-      description: "Required exact v2 migration boundary commit; 40 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef01234567
+      label: Migration
+      description: 'Required one-line canonical JSON closed object {boundary_oid,state_migrated_event}. The event descriptor must bind agentops/scheduler-event/v2 and closed STATE_MIGRATED semantics with issue_id scheduler-state, payload_schema agentops/scheduler-migration/v2, dispatch_frozen true, single_migration_boundary true, and boundary_commit_binding migration.boundary_oid.'
+      placeholder: '{"boundary_oid":"40-lowercase-hex","state_migrated_event":{"blob_oid":"40-lowercase-hex","path":"journal/00000001-state-migrated.json","schema":"agentops/scheduler-event/v2","semantics":{"boundary_commit_binding":"migration.boundary_oid","dispatch_frozen":true,"event_type":"STATE_MIGRATED","event_version":2,"issue_id":"scheduler-state","payload_schema":"agentops/scheduler-migration/v2","single_migration_boundary":true},"sha256":"64-lowercase-hex"}}'
     validations:
       required: true
 
-  - type: input
-    id: state_migrated_event_hash
+  - type: textarea
+    id: current_state
     attributes:
-      label: State migrated event hash
-      description: "Required exact STATE_MIGRATED event hash; 64 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      label: Current state
+      description: 'Required one-line canonical JSON closed object {oid,tree,released_custody}. released_custody binds agentops/scheduler-machine-lease/v1 at machine-lease.json and closed semantics {machine_id:null,acquired_at:null,released_at_required:true,expires_at_equals_released_at:true,expected_state_ref_oid_binding:"current_state.oid"}.'
+      placeholder: '{"oid":"40-lowercase-hex","released_custody":{"blob_oid":"40-lowercase-hex","path":"machine-lease.json","schema":"agentops/scheduler-machine-lease/v1","semantics":{"acquired_at":null,"expected_state_ref_oid_binding":"current_state.oid","expires_at_equals_released_at":true,"machine_id":null,"released_at_required":true},"sha256":"64-lowercase-hex"},"tree":"40-lowercase-hex"}'
     validations:
       required: true
 
-  - type: input
-    id: current_state_oid
+  - type: textarea
+    id: project_schema_receipt
     attributes:
-      label: Current state OID
-      description: "Required exact current scheduler-state descendant commit; 40 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef01234567
+      label: Project schema receipt
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,semantics}. Constants bind agentops/project-schema-change-receipt/v1 at .agentops/scheduler/cutover/project-schema-receipt.json. Semantics must be COMPLETE with null failure_code, exact six-key Project identity, mutation counts 8/0/0/0, readback_schema agentops/project-field-readback/v1, and audit_ref refs/heads/agentops/project-schema-audit.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","path":".agentops/scheduler/cutover/project-schema-receipt.json","schema":"agentops/project-schema-change-receipt/v1","semantics":{"audit_ref":"refs/heads/agentops/project-schema-audit","failure_code":null,"mutation_counts":{"backfill_count":0,"created_field_count":8,"mutated_item_count":0,"updated_existing_field_count":0},"project":{"closed":false,"id":"PVT_kwHOCSCyJ84BgfH9","number":4,"owner":"cehinds","owner_type":"user","title":"Family Delivery"},"readback_schema":"agentops/project-field-readback/v1","status":"COMPLETE"},"sha256":"64-lowercase-hex"}'
     validations:
       required: true
 
-  - type: input
-    id: current_state_tree
+  - type: textarea
+    id: project_manifest
     attributes:
-      label: Current state tree
-      description: "Required exact current scheduler-state tree; 40 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef01234567
+      label: Project manifest
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,semantics}. Constants bind agentops/project-field-manifest/v1 at .agentops/scheduler/cutover/project-manifest.json. Semantics require schema, definitions_hash, exact Project identity, observed_at, project_updated_at, source_receipt_hash, and exactly nine ordered closed fields: Scheduler Status, Priority, Owner Role, Affected Paths, Affected Resources, Dependencies, External Claims, Human Gate, Scope Complete; field/options IDs and option order must match the frozen contract.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","path":".agentops/scheduler/cutover/project-manifest.json","schema":"agentops/project-field-manifest/v1","semantics":{"definitions_hash":"64-lowercase-hex","fields":["exact nine frozen field records"],"observed_at":"UTC timestamp","project":{"closed":false,"id":"PVT_kwHOCSCyJ84BgfH9","number":4,"owner":"cehinds","owner_type":"user","title":"Family Delivery"},"project_updated_at":"UTC timestamp","schema":"agentops/project-field-manifest/v1","source_receipt_hash":"64-lowercase-hex"},"sha256":"64-lowercase-hex"}'
     validations:
       required: true
 
-  - type: input
-    id: project_schema_receipt_hash
+  - type: textarea
+    id: quiet_window_receipt
     attributes:
-      label: Project schema receipt hash
-      description: "Required exact Project schema-change receipt hash; 64 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-    validations:
-      required: true
-
-  - type: input
-    id: project_manifest_hash
-    attributes:
-      label: Project manifest hash
-      description: "Required exact post-change Project manifest hash; 64 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-    validations:
-      required: true
-
-  - type: input
-    id: quiet_window_receipt_hash
-    attributes:
-      label: Quiet window receipt hash
-      description: "Required exact no-engine quiet-window receipt hash; 64 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-    validations:
-      required: true
-
-  - type: input
-    id: released_custody_hash
-    attributes:
-      label: Released custody hash
-      description: "Required exact released-custody evidence hash; 64 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      label: Quiet window receipt
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,semantics}. Constants bind agentops/scheduler-quiet-window-receipt/v1 at .agentops/scheduler/cutover/quiet-window-receipt.json. Semantics require exact observation timestamps/source state, the scheduler-state/dev refs, zero scheduler/legacy processes and state mutations, dispatch_frozen true, and no_external_mutation true.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","path":".agentops/scheduler/cutover/quiet-window-receipt.json","schema":"agentops/scheduler-quiet-window-receipt/v1","semantics":{"development_ref":"refs/heads/dev","dispatch_frozen":true,"legacy_process_count":0,"no_external_mutation":true,"observed_from":"UTC timestamp","observed_until":"UTC timestamp","scheduler_process_count":0,"source_state_oid":"40-lowercase-hex","state_mutation_count":0,"state_ref":"refs/heads/agentops/scheduler-state"},"sha256":"64-lowercase-hex"}'
     validations:
       required: true
 
@@ -169,30 +142,48 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: legacy_activation_blob_oid
+  - type: textarea
+    id: legacy_activation
     attributes:
-      label: Legacy activation blob OID
-      description: "Required exact blob OID of the disabled legacy activation surface; 40 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef01234567
+      label: Legacy activation
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,semantics}. Constants bind agentops/pipeline-activation/v1 at .agentops/pipeline-pilot/activation.json with semantics {enabled:false,mode:"STOOD_DOWN_FOR_SCHEDULER_CUTOVER"}.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","path":".agentops/pipeline-pilot/activation.json","schema":"agentops/pipeline-activation/v1","semantics":{"enabled":false,"mode":"STOOD_DOWN_FOR_SCHEDULER_CUTOVER"},"sha256":"64-lowercase-hex"}'
     validations:
       required: true
 
-  - type: input
-    id: pre_cutover_config_blob_oid
+  - type: textarea
+    id: pre_cutover_config
     attributes:
-      label: Pre-cutover config blob OID
-      description: "Required exact pre-cutover scheduler config blob OID; 40 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef01234567
+      label: Pre-cutover config
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,semantics}. Constants bind agentops/scheduler-config/v1 at .agentops/scheduler/config.json with scheduler_dispatch_enabled false, legacy_watcher_authoritative false, scheduler_authorization_evidence null, and migration_dispatch_frozen true.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","path":".agentops/scheduler/config.json","schema":"agentops/scheduler-config/v1","semantics":{"legacy_watcher_authoritative":false,"migration_dispatch_frozen":true,"scheduler_authorization_evidence":null,"scheduler_dispatch_enabled":false},"sha256":"64-lowercase-hex"}'
     validations:
       required: true
 
-  - type: input
-    id: activation_manifest_hash
+  - type: textarea
+    id: post_cutover_config
     attributes:
-      label: Activation manifest hash
-      description: "Required hash of the exact activation mutation manifest; 64 lowercase hexadecimal characters."
-      placeholder: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      label: Post-cutover config
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,semantics}. Constants bind agentops/scheduler-config/v1 at .agentops/scheduler/config.json with scheduler_dispatch_enabled true, legacy_watcher_authoritative false, scheduler_authorization_evidence_binding canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash, and migration_dispatch_frozen true.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","path":".agentops/scheduler/config.json","schema":"agentops/scheduler-config/v1","semantics":{"legacy_watcher_authoritative":false,"migration_dispatch_frozen":true,"scheduler_authorization_evidence_binding":"canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash","scheduler_dispatch_enabled":true},"sha256":"64-lowercase-hex"}'
+    validations:
+      required: true
+
+  - type: textarea
+    id: activation_manifest
+    attributes:
+      label: Activation manifest
+      description: 'Required one-line canonical JSON closed descriptor {schema,path,blob_oid,sha256,blob_parse_policy,template}. Constants bind agentops/scheduler-cutover-activation-manifest/v1 at .agentops/scheduler/cutover/activation-manifest.json with blob_parse_policy parse-json-and-deep-equal-inline-template. template must be the exact closed agentops/scheduler-cutover-activation-template/v1 derivation object accepted by the frozen schema; no future result OIDs may be asserted.'
+      placeholder: '{"blob_oid":"40-lowercase-hex","blob_parse_policy":"parse-json-and-deep-equal-inline-template","path":".agentops/scheduler/cutover/activation-manifest.json","schema":"agentops/scheduler-cutover-activation-manifest/v1","sha256":"64-lowercase-hex","template":{"all_off_precondition":"exact closed all-off object","authority_a_derivation":"exact closed derivation","derivation_order":"build-a-from-d0-build-s1-from-s0-build-d1-from-a-record-result-then-publish-s1-d1-atomically","development_d0":"exact closed D0 descriptor","development_d1_derivation":"exact closed derivation","no_self_reference":true,"schema":"agentops/scheduler-cutover-activation-template/v1","state_s0":"exact closed S0 descriptor","state_s1_derivation":"exact closed derivation"}}'
+    validations:
+      required: true
+
+  - type: textarea
+    id: result_receipt_contract
+    attributes:
+      label: Result receipt contract
+      description: 'Required one-line canonical JSON closed object {schema,result_schema,path,schema_pointer,construction_timing,publication_gate,no_self_reference}. Constants bind agentops/scheduler-cutover-result-contract/v1 and observable-only agentops/scheduler-cutover-result/v1 at .git/agentops-scheduler/cutover-result.json; no outcome or future OID is authorized by this field.'
+      placeholder: '{"construction_timing":"after-local-derivation-before-publication","no_self_reference":true,"path":".git/agentops-scheduler/cutover-result.json","publication_gate":"prebuilt-a-s1-d1-match-derivation-template","result_schema":"agentops/scheduler-cutover-result/v1","schema":"agentops/scheduler-cutover-result-contract/v1","schema_pointer":".agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_cutover_result_receipt"}'
     validations:
       required: true
 
@@ -235,6 +226,36 @@ body:
       required: true
 
   - type: dropdown
+    id: publication_mode
+    attributes:
+      label: Publication mode
+      description: "Required constant: atomic-two-ref-cas."
+      options:
+        - atomic-two-ref-cas
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ambiguity_policy
+    attributes:
+      label: Ambiguity policy
+      description: "Required constant: inspect-once-never-retry."
+      options:
+        - inspect-once-never-retry
+    validations:
+      required: true
+
+  - type: dropdown
+    id: postcondition_policy
+    attributes:
+      label: Postcondition policy
+      description: "Required constant: both-exact-or-withhold."
+      options:
+        - both-exact-or-withhold
+    validations:
+      required: true
+
+  - type: dropdown
     id: one_use
     attributes:
       label: One use
@@ -257,9 +278,9 @@ body:
     id: push_mode
     attributes:
       label: Push mode
-      description: "Required constant: non-force-forward-only-cas."
+      description: "Required constant: git-push-atomic-two-ref-exact-leases."
       options:
-        - non-force-forward-only-cas
+        - git-push-atomic-two-ref-exact-leases
     validations:
       required: true
 
