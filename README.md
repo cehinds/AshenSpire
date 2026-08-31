@@ -4,23 +4,32 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-> **README content updated:** 2026-08-31T06:14:00-08:00 (Alaska)
-> **Updated by:** AshenSpire Writing — README currentness steward — task `README-UPDATE-ATTRIBUTION`
-> **Source change:** Pending pull request for this README-only update
-> **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
+> **README content updated:** 2026-08-31T08:49:13-08:00 (Alaska)
+> **Updated by:** maker — task `GH-183`
+> **Source change:** Current-build and component-catalog link clarification
+> **Scope:** Documentation currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
-## Play the current development build
+## Builds and current source
 
-**[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
+**[Play the published `main` build](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
+
+**[Download the current `dev` standalone](https://raw.githubusercontent.com/cehinds/AshenSpire/dev/AshenSpire.html)**
+or **[inspect its source and history](https://github.com/cehinds/AshenSpire/blob/dev/AshenSpire.html)**.
+The raw file is a self-contained download; save it as `AshenSpire.html` and open
+it locally. GitHub Pages does not publish `dev`, so the browser link and the
+current-development download can describe different reviewed commits.
 
 **[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
 workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
 is the readable projection, with timestamped updates and Daily Briefs.
 
-**[AshenSpire UI Component Catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** —
-the interactive reference for stable component IDs, model and renderer names,
-live visual specimens, and reuse surfaces. UI delivery summaries list the exact
-changed IDs; an origin-bound UI change updates both catalog formats in the same change.
+**[Published UI Component Catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** —
+the `main`-published interactive reference for stable component IDs, model and
+renderer names, visual specimens, and reuse surfaces. For current development,
+use the [`dev` HTML source](https://github.com/cehinds/AshenSpire/blob/dev/docs/component-catalog.html)
+or [`dev` Markdown catalog](https://github.com/cehinds/AshenSpire/blob/dev/docs/COMPONENT-CATALOG.md).
+UI delivery summaries list the exact changed IDs; an origin-bound UI change
+updates both catalog formats in the same change.
 
 **[QA Testing](docs/QA-TESTING.md)** and the
 **[feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md)** — the repeatable
@@ -48,10 +57,9 @@ snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) is refreshed automatically after
 every push to `dev` without rewriting the core contract.
 
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
-from `main` and follows the newest reviewed development build after GitHub Pages
-finishes deploying it. This is a **development preview**, not a release, tag, or
-production approval. Release status remains governed separately and is currently
-**RED**.
+from `main`. It is the published preview, not a live view of `dev` and not proof
+of a new release, tag, or production approval. Release status remains governed
+separately and is currently **RED**.
 
 Work reaches `main` only through the promotion gates in
 [decision 0009](docs/governance/DECISIONS/0009-promotion-gates-a-through-f.md);
@@ -85,6 +93,8 @@ release declaration; release status remains governed separately.
 These canonical images are captured from the exact `dev` tree by
 `node tools/screenshot.mjs`. Regenerate and review them whenever the development
 build changes; the visible build stamp ties each image to the tree that drew it.
+Their links open the published `main` build, which may trail the pictured `dev`
+receipt until an authorized promotion.
 
 > **Look at any image you regenerate before you commit it.** `tools/screenshot.mjs`
 > sizes the *window* rather than the viewport, so under Chromium 141 it writes a

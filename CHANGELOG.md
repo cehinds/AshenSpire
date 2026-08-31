@@ -10,6 +10,11 @@ These are **development builds**, not releases. Release status is governed
 separately and remains **RED**. The version stamp in-game is
 `0.4.0.<ordinal>`.
 
+Build links have distinct meanings: [current `dev` standalone source](https://github.com/cehinds/AshenSpire/blob/dev/AshenSpire.html)
+tracks integration, while the [playable GitHub Pages build](https://cehinds.github.io/AshenSpire/AshenSpire.html)
+publishes `main` and can trail `dev` until an authorized promotion. Neither link
+by itself grants or records release approval.
+
 *This file starts at `0.4.0.0777` (2026-08-17). Below that point the merge
 log's pull-request references turn intermittent — whole runs of direct
 landings on 2026-08-14 to -16 name no pull request at all — so entries there

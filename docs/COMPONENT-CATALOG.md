@@ -11,7 +11,12 @@ vertical list. In Grid view, use the **− / reset / +** controls, Ctrl/Command 
 mouse wheel, or a trackpad pinch to change card size and the number of visible
 columns. View and density preferences persist in the browser. The catalog
 header also links back to the repository, README, issue list, Daily Status, and
-the current GitHub Pages preview.
+the published GitHub Pages build. Pages publishes `main`, not live `dev`; use
+the [`dev` standalone source](https://github.com/cehinds/AshenSpire/blob/dev/AshenSpire.html)
+for current integration and the
+[`dev` catalog source](https://github.com/cehinds/AshenSpire/blob/dev/docs/component-catalog.html)
+for the current catalog. The [playable Pages build](https://cehinds.github.io/AshenSpire/AshenSpire.html)
+can trail both until an authorized promotion.
 
 Search accepts multiple terms and matches each term across the component ID,
 model, renderer/view, role, reuse surface, and cataloged children. Press `/` to
