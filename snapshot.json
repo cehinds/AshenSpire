@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 34,
-  "last_sequence": 34,
+  "revision": 35,
+  "last_sequence": 35,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,21 +66,21 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 8,
+      "revision": 9,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "READY",
+      "state": "CLAIMED",
       "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 3,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:257:4",
+      "lease_epoch": 4,
+      "lease_expiry": "2026-08-31T15:47:45.594Z",
+      "lease_machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
       "maker_actor": null,
       "lease_history": [
         {
@@ -102,6 +102,13 @@
           "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
           "lease_id": "lease:257:3",
           "lease_epoch": 3,
+          "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+          "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+          "lease_id": "lease:257:4",
+          "lease_epoch": 4,
           "assignment_kind": "implementation"
         }
       ],
@@ -125,7 +132,7 @@
       "wake_condition": null,
       "next_action": "Reclaim from the last preserved candidate or worktree.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000034-62a7bb90-8a7b-43c7-9deb-4ea2a9a78ee6",
+      "updated_event": "evt-00000035-530fd705-56ab-4092-a936-db4aaed58903",
       "updated_at": "2026-08-31T15:17:45.594Z"
     },
     "397": {
@@ -334,5 +341,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "2d664ee302bd29e77a7a34f60a630559ec4a774506d41387782c277fa59541a2"
+  "snapshot_hash": "2dd8de16af3507b5e02972a7e4ac4e661d65107dd9163ffa78c946664d726715"
 }
