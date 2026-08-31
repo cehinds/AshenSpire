@@ -263,7 +263,8 @@ const CONTRACTS = [
   { name: 'evidence', file: 'governance/evidence.json', schema: 'schemas/evidence.schema.json' },
   { name: 'owner-command', file: 'governance/owner-command.json', schema: 'schemas/owner-command.schema.json' },
   { name: 'migration', file: 'governance/migration.json', schema: 'schemas/migration.schema.json' },
-  { name: 'directives', file: 'governance/directives.json', schema: 'schemas/directives.schema.json' }
+  { name: 'directives', file: 'governance/directives.json', schema: 'schemas/directives.schema.json' },
+  { name: 'retention', file: 'governance/retention.json', schema: 'schemas/retention.schema.json' }
 ];
 
 // Derived, never restated. The test asserted a hardcoded 19 with the number
@@ -1517,6 +1518,26 @@ export function renderGovernance(c) {
     L.push('');
   }
 
+  if (c.retention) {
+    const rt2 = c.retention;
+    L.push('## Retention and consolidation');
+    L.push('');
+    L.push(rt2.principle);
+    L.push('');
+    L.push(`Authority: \`${rt2.authority.actor_role}\`, from ${rt2.authority.source}. This is ${rt2.authority.is_a_new_grant ? 'a new grant' : 'not a new grant — the authority already exists and this is its machine-readable form'}. Preconditions:`);
+    L.push('');
+    for (const pc of rt2.authority.preconditions) L.push(`- ${pc}`);
+    L.push('');
+    L.push(rt2.consolidation.rule);
+    L.push('');
+    L.push(`A \`${rt2.consolidation.kind}\` names ${rt2.consolidation.summary_must_name.join(', ')}, and covers at least ${rt2.consolidation.min_range} events.`);
+    L.push('');
+    L.push(`**Never:** ${rt2.never.join('; ')}.`);
+    L.push('');
+    L.push(rt2.corrections_are_never_consolidated.rule);
+    L.push('');
+  }
+
   if (c.directives) {
     const dv = c.directives;
     L.push('## Standing directives');
@@ -2051,6 +2072,40 @@ export function runtimeChecks(g, rt) {
   }
 
   // Append-only event chains per ticket: one genesis, contiguous seq, unbroken parent chain.
+  // B4 (#430): consolidation. The whole safety argument is that a summary ADDS
+  // a node and removes nothing, so every check here exists to keep it that way.
+  // A summary whose range has gone is not a shorter record — it is a claim about
+  // events nobody can read.
+  if (g.retention) {
+    const ret = g.retention;
+    const protectedTickets = new Set(ret.corrections_are_never_consolidated.protected_tickets || []);
+    for (const [ticket, list] of Object.entries(rt.events)) {
+      const byId = new Map(list.map((e) => [e.id, e]));
+      for (const ev of list) {
+        if (ev.kind !== ret.consolidation.kind) continue;
+        const c = ev.consolidates;
+        if (!c) { errors.push(`event '${ev.id}' is a ${ret.consolidation.kind} but names no range; a summary of nothing is not a record`); continue; }
+        if (protectedTickets.has(ticket)) {
+          errors.push(`event '${ev.id}' consolidates '${ticket}', whose chain carries a correction of record; summarising it away would remove the history the correction exists to preserve`);
+        }
+        const from = byId.get(c.from_event), to = byId.get(c.to_event);
+        if (!from) errors.push(`event '${ev.id}' consolidates from '${c.from_event}', which is not an event on '${ticket}'; the range must be present to be summarised`);
+        if (!to) errors.push(`event '${ev.id}' consolidates to '${c.to_event}', which is not an event on '${ticket}'; the range must be present to be summarised`);
+        if (from && to) {
+          if (from.seq > to.seq) errors.push(`event '${ev.id}' consolidates ${c.from_event}..${c.to_event}, which runs backwards`);
+          if (to.seq >= ev.seq) errors.push(`event '${ev.id}' consolidates a range reaching itself or later; a summary describes what is already recorded`);
+          const span = list.filter((e) => e.seq >= from.seq && e.seq <= to.seq);
+          if (span.length !== c.count) errors.push(`event '${ev.id}' claims ${c.count} events but ${span.length} are present in ${c.from_event}..${c.to_event}; a count that does not match the range is a dangling claim`);
+          if (span.length < ret.consolidation.min_range) errors.push(`event '${ev.id}' consolidates ${span.length} events, below the declared minimum ${ret.consolidation.min_range}; a summary shorter than what it replaces reads worse, not better`);
+          if (span.some((e) => e.kind === ret.consolidation.kind)) errors.push(`event '${ev.id}' consolidates a range containing another consolidation; summaries of summaries lose the range they both point at`);
+        }
+        if (!roles.has(actorRole(g, c.authorised_by)) && !hierarchyActors(g).has(c.authorised_by)) {
+          errors.push(`event '${ev.id}' names '${c.authorised_by}' as authorising the consolidation, which is not a declared actor`);
+        }
+      }
+    }
+  }
+
   // Ruling AS-HD-029-0052 point 3, enforced: a tool-initiated reseat must carry
   // the process as its actor. An event signed `maker` that no maker performed
   // binds a producer who did not produce, which is exactly what evidence.json
@@ -3375,6 +3430,11 @@ const VIEW_PROBES = {
     ...x.reporting.decision_packet.parts.map((y) => `- ${y}`),
     x.reporting.decision_packet.open_question_is_a_failure,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
+  retention: (x) => [x.principle, x.consolidation.rule, x.corrections_are_never_consolidated.rule,
+    `Authority: \`${x.authority.actor_role}\`, from ${x.authority.source}.`,
+    ...x.authority.preconditions.map((y) => `- ${y}`),
+    `A \`${x.consolidation.kind}\` names ${x.consolidation.summary_must_name.join(', ')}, and covers at least ${x.consolidation.min_range} events.`,
+    `**Never:** ${x.never.join('; ')}.`],
   directives: (x) => [x.principle, x.non_amplification, ...x.directives.map((d) => `| ${d.id} | \`${d.issued_by}\` | ${d.issued_at} | ${d.status}${d.superseded_by ? ' \u2192 \`' + d.superseded_by + '\`' : ''} | ${d.codified_in ? '\`' + d.codified_in + '.' + d.codified_as + '\`' : '\u2014 (nothing enforces it)'} | ${mdCell(d.text)} |`)],
   migration: (x) => [x.principle],
   'model-effort': (x) => [x.principle, x.assignment_record.format,
@@ -4159,6 +4219,40 @@ export function runSelftest(root = ROOT) {
     const errs = pathGrantErrors(contracts, lease);
     results.push({ label: 'a seat may hold its own ticket-scoped ledger', pass: errs.length === 0, errs });
   }
+
+  // B4 consolidation plants. Every one guards the same property: a summary adds
+  // a node and removes nothing, so a summary whose range is gone, wrong, or
+  // protected must fail rather than quietly stand in for evidence.
+  const consolidate = (rt, ticket, over) => {
+    const list = rt.events[ticket];
+    const last = list[list.length - 1];
+    const span = list.slice(0, over);
+    list.push({
+      schema: 'agentops/event/v1', id: `${ticket}-9100`, ticket, seq: last.seq + 1, parent_event: last.id,
+      kind: 'consolidation', actor: 'it-manager-iii', at: '2026-09-01T00:00:00Z',
+      summary: 'Consolidated an early range for readability.',
+      consolidates: { from_event: span[0].id, to_event: span[span.length - 1].id, count: span.length, authorised_by: 'it-manager-iii', recovery_consequence: 'the individual summaries in the range are no longer read line by line' },
+    });
+    return list[list.length - 1];
+  };
+  const bigTicket = Object.keys(rt0.events).find((t) => rt0.events[t].length > 20 && t !== 'AS-HD-029');
+  if (bigTicket) {
+    {
+      const rt = baseRt();
+      consolidate(rt, bigTicket, 12);
+      const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('-9100'));
+      results.push({ label: 'consolidation control: a well-formed summary of a present range validates', pass: errs.length === 0, errs });
+    }
+    expectRuntime('consolidation: a range that is not present', (rt) => { consolidate(rt, bigTicket, 12).consolidates.from_event = `${bigTicket}-8888`; }, 'must be present to be summarised');
+    expectRuntime('consolidation: a count that does not match the range', (rt) => { consolidate(rt, bigTicket, 12).consolidates.count = 3; }, 'a dangling claim');
+    expectRuntime('consolidation: a range that runs backwards', (rt) => { const e = consolidate(rt, bigTicket, 12); const f = e.consolidates.from_event; e.consolidates.from_event = e.consolidates.to_event; e.consolidates.to_event = f; }, 'runs backwards');
+    expectRuntime('consolidation: fewer events than the declared minimum', (rt) => { consolidate(rt, bigTicket, 3); }, 'below the declared minimum');
+    expectRuntime('consolidation: a summary naming no range at all', (rt) => { delete consolidate(rt, bigTicket, 12).consolidates; }, 'a summary of nothing is not a record');
+    expectRuntime('consolidation: an authoriser who is not a declared actor', (rt) => { consolidate(rt, bigTicket, 12).consolidates.authorised_by = 'someone'; }, 'not a declared actor');
+    expectRuntime('consolidation: a summary of a summary', (rt) => { consolidate(rt, bigTicket, 12); const e = consolidate(rt, bigTicket, rt.events[bigTicket].length); e.id = `${bigTicket}-9101`; }, 'summaries of summaries');
+  }
+  // ...and the correction of record is unreachable, which is the point.
+  expectRuntime('consolidation: a ticket carrying a correction of record', (rt) => { consolidate(rt, 'AS-HD-029', 12); }, 'the history the correction exists to preserve');
 
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
