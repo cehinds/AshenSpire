@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 18,
-  "last_sequence": 18,
+  "revision": 19,
+  "last_sequence": 19,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -113,6 +113,52 @@
       "authority_ceiling": "dev-delivery",
       "updated_event": "evt-00000018-4eb91a56-43f3-4b7b-b28c-8c276c5e50b9",
       "updated_at": "2026-08-31T14:25:11.371Z"
+    },
+    "397": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "397",
+      "title": "Durable owner asks ledger",
+      "priority": "P1",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-397-durable-asks-ledger",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        "docs/asks/asks-ledger.json",
+        "docs/asks/asks-ledger.md",
+        "tools/asks-ledger.mjs"
+      ],
+      "claimed_resources": [
+        "issue:397",
+        "owner-asks-ledger"
+      ],
+      "acceptance_commands": [
+        "node tools/asks-ledger.mjs --check",
+        "node tools/asks-ledger.mjs --check --github",
+        "node tools/asks-ledger.mjs --check --selftest",
+        "node tests/run-node.mjs",
+        "git diff --check"
+      ],
+      "evidence_pointers": [
+        "https://github.com/cehinds/AshenSpire/issues/397"
+      ],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Bind independent exact-head review to candidate 8dd59d73",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000019-b97808fa-539b-4071-81a7-c9240b5d43e3",
+      "updated_at": "2026-08-31T14:25:32.026Z"
     },
     "427": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -240,5 +286,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "75afe15c9507fa1d57fdd933ef279061f6c335fd3a7a9eb798a07faaa668fae7"
+  "snapshot_hash": "5702f03d7a52a53ed4496c808c5e566785c2a7398b683431f0ba51a5f0804bb2"
 }

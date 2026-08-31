@@ -1,0 +1,41 @@
+{
+  "event_id": "evt-00000019-b97808fa-539b-4071-81a7-c9240b5d43e3",
+  "idempotency_key": "INTAKE_RECORDED:397:0:2026-08-31T14:25:32.026Z",
+  "sequence": 19,
+  "previous_snapshot_hash": "75afe15c9507fa1d57fdd933ef279061f6c335fd3a7a9eb798a07faaa668fae7",
+  "issue_id": "397",
+  "actor": "intake",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Durable owner asks ledger",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-397-durable-asks-ledger",
+    "claimed_paths": [
+      "docs/asks/asks-ledger.json",
+      "docs/asks/asks-ledger.md",
+      "tools/asks-ledger.mjs"
+    ],
+    "claimed_resources": [
+      "issue:397",
+      "owner-asks-ledger"
+    ],
+    "acceptance_commands": [
+      "node tools/asks-ledger.mjs --check",
+      "node tools/asks-ledger.mjs --check --github",
+      "node tools/asks-ledger.mjs --check --selftest",
+      "node tests/run-node.mjs",
+      "git diff --check"
+    ],
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/issues/397"
+    ],
+    "next_action": "Bind independent exact-head review to candidate 8dd59d73",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T14:25:32.026Z"
+}
