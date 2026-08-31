@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 28,
-  "last_sequence": 28,
+  "revision": 29,
+  "last_sequence": 29,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -266,8 +266,56 @@
       "authority_ceiling": "dev-delivery",
       "updated_event": "evt-00000016-d3dadd67-3273-4d90-ae68-3c727666b8f4",
       "updated_at": "2026-08-31T14:28:22.496Z"
+    },
+    "480": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "480",
+      "title": "Rebuild shipped bundle: source-vs-build drift (tree 3543637990 vs shipped 8f546f2e1d) from 4b5793a8",
+      "priority": "P2",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-480",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        "build/AshenSpire.html",
+        "buildordinal.json",
+        "AshenSpire.html",
+        "dist/AshenSpire.html"
+      ],
+      "claimed_resources": [
+        "buildordinal.json",
+        "generated-outputs"
+      ],
+      "acceptance_commands": [
+        "node tools/buildversion.mjs --check",
+        "node tools/verify-shipped.mjs",
+        "node tools/rebuild-matches.mjs",
+        "git diff --check"
+      ],
+      "evidence_pointers": [
+        "https://github.com/cehinds/AshenSpire/issues/480",
+        "buildversion --check RED rows E+G at dev bbbc5e7: tree derives 3543637990, shipped bundle and buildordinal.json carry 8f546f2e1d",
+        "cause: 4b5793a8 changed assets/equipment/* + manifest.json with no rebuild since"
+      ],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "IT-Manager-III assigns the build lane owner to run the one serialized command per docs/governance/CONTINUITY.md: node tools/launch.mjs --build-only, then verify-shipped/rebuild-matches; never hand-edit generated files",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000029-00f2757b-6599-4606-b8f1-0c01e7a41d69",
+      "updated_at": "2026-08-31T14:51:46.191Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "130450193f02588cfe249d89094548d1479d166e39fd19dd5dd282b1f59a3470"
+  "snapshot_hash": "cefd2e7c332c90f611da296d201dc6338bb683a3ef7e764c6acf7a79f5036b60"
 }
