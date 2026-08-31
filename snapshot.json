@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 23,
-  "last_sequence": 23,
+  "revision": 24,
+  "last_sequence": 24,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -86,12 +86,12 @@
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 6,
+      "revision": 7,
       "issue_id": "426",
       "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
       "priority": "P1",
       "dependencies": [],
-      "state": "PR_READY",
+      "state": "PR_OPEN",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
       "branch": "codex/issue-426",
@@ -132,14 +132,15 @@
         "baseline red reproduced at dev bbbc5e7: continuity audit RED, 7 genuine findings (artifact size+sha drift, snapshot age, 4 branch drifts)",
         "pin independently recomputed: build/AshenSpire.html = 4241834 bytes, sha256 029154D5...163A8C, matches continuity.json; buildOrdinal 1719 + sourceDigest 8f546f2e1d match buildordinal.json",
         "candidate green: continuity check OK, audit OK, selftest 21/21; opsctl verify fails only on the two pre-existing hub mirrors (identical at base)",
-        "footprint: single file, 10+/10-, only pin quad + branch snapshot + timestamps; git diff --check clean"
+        "footprint: single file, 10+/10-, only pin quad + branch snapshot + timestamps; git diff --check clean",
+        "https://github.com/cehinds/AshenSpire/pull/478"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Deliver an issue-closing PR to dev.",
+      "next_action": "Wait for required checks and independent exact-head review.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000023-e5fb6340-971b-4a50-8645-f21e03e205fd",
-      "updated_at": "2026-08-31T14:40:39.270Z"
+      "updated_event": "evt-00000024-3237073a-79cc-4afc-b3d8-78751918eb4a",
+      "updated_at": "2026-08-31T14:41:05.088Z"
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -249,5 +250,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "d5e6f9b9c3f3357373866ff7ac67cf7620baaafe52b7648ba339115c30352a9f"
+  "snapshot_hash": "dcf289086583fcc649eb38cd9e9e2b134512b640788ab996add4b24d3b8066bf"
 }
