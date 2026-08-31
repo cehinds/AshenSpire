@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-1001-0004",
+  "ticket": "AS-1001",
+  "seq": 4,
+  "parent_event": "AS-1001-0003",
+  "kind": "state-change",
+  "actor": "it-manager-iii",
+  "at": "2026-08-31T16:05:13.586Z",
+  "summary": "Revoked the original repository-wide seed lease and bound its v2 successor only to AS-1001 capsule and event history; no new schema, tooling, or cross-ticket ledger work remains authorized. Resealed as revision 2; parent_hash names sha256:5f90465cc35dc8494e9a5e169b24a7f4c07097a6cfbf6ef0b5e65bdb0f1c2b4b."
+}

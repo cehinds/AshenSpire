@@ -1,24 +1,23 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 1,
-  "current_hash": "sha256:5f90465cc35dc8494e9a5e169b24a7f4c07097a6cfbf6ef0b5e65bdb0f1c2b4b",
-  "parent_hash": null,
+  "revision": 2,
+  "current_hash": "sha256:42a7199a76adaefa3160e3c347ba816d70467e5592c0ff8c73521a92e5599cdf",
+  "parent_hash": "sha256:5f90465cc35dc8494e9a5e169b24a7f4c07097a6cfbf6ef0b5e65bdb0f1c2b4b",
   "ticket": "AS-1001",
   "lifecycle_state": "in-progress",
-  "objective": "Seed and validate the AgentOps runtime capsule / lease / event model and the opsctl wake compiler.",
+  "objective": "Preserve the completed AgentOps seed capsule and its append-only event history without retaining a repository-wide tools or ledger claim.",
   "done_when": "Runtime schemas, one sealed work capsule, its writer lease, and an append-only event chain validate green, and opsctl wake emits a bounded capsule under the startup token limit.",
-  "next_action": "Run node .agentops/tools/opsctl.mjs verify and opsctl wake --actor maker --work AS-1001, then open the draft PR.",
+  "next_action": "Retain only this ticket's capsule and event chain; all new tooling and ticket work requires a separate exact lease.",
   "repo": "https://github.com/cehinds/AshenSpire.git",
   "ref": "claude/ashenspire-agentops-stage3-capsules",
-  "base_oid": "985664c2439c373a4d38604b8a53e223c8b8da61",
-  "tree": "seed-illustrative-tree",
+  "base_oid": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
+  "tree": "630aec4de35e7b5f58de4c4b36b38d6f5402498d",
   "expected_dirty_state": "clean",
   "owner_actor": "maker",
-  "writer_lease": "lease-AS-1001-maker",
+  "writer_lease": "lease-AS-1001-maker-r2",
   "affected_paths": [
-    ".agentops/schemas/**",
-    ".agentops/tools/**",
-    ".agentops/work/**"
+    ".agentops/work/AS-1001/**",
+    ".agentops/events/AS-1001/**"
   ],
   "evidence_pointers": [
     "test-run-receipt",
@@ -27,8 +26,6 @@
   "blocker": null,
   "authority": {
     "may": [
-      "implement-locally-on-exclusive-paths",
-      "run-tests-and-builds",
       "commit-on-isolated-branch"
     ],
     "must_not": [

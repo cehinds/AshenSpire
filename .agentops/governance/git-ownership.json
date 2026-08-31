@@ -22,6 +22,12 @@
       "note": "Exact fast-forward to hosted-verified dev SHA; non-release."
     },
     {
+      "ref": "codex/docs-current-build-links",
+      "owner_role": "maker",
+      "mutation": "isolated-continuation",
+      "note": "Exact issue #183 documentation lane; no wildcard grant or protected-ref authority."
+    },
+    {
       "ref": "claude/*",
       "owner_role": "maker",
       "mutation": "isolated-continuation",

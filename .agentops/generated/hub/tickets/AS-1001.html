@@ -11,20 +11,20 @@
 <section><h2>Assignment</h2><dl>
 <dt>Seat</dt><dd>maker</dd>
 <dt>State</dt><dd>in-progress</dd>
-<dt>Objective</dt><dd>Seed and validate the AgentOps runtime capsule / lease / event model and the opsctl wake compiler.</dd>
+<dt>Objective</dt><dd>Preserve the completed AgentOps seed capsule and its append-only event history without retaining a repository-wide tools or ledger claim.</dd>
 <dt>Done when</dt><dd>Runtime schemas, one sealed work capsule, its writer lease, and an append-only event chain validate green, and opsctl wake emits a bounded capsule under the startup token limit.</dd>
-<dt>Next action</dt><dd>Run node .agentops/tools/opsctl.mjs verify and opsctl wake --actor maker --work AS-1001, then open the draft PR.</dd>
+<dt>Next action</dt><dd>Retain only this ticket's capsule and event chain; all new tooling and ticket work requires a separate exact lease.</dd>
 <dt>Branch</dt><dd><code>claude/ashenspire-agentops-stage3-capsules</code></dd>
-<dt>Base</dt><dd><code>985664c2439c</code></dd>
-<dt>Revision</dt><dd>1 · seal <code>sha256:5f90465cc35dc849…</code></dd>
-<dt>Succeeds</dt><dd><span class="none">nothing (genesis)</span></dd>
+<dt>Base</dt><dd><code>3ad9a77b6013</code></dd>
+<dt>Revision</dt><dd>2 · seal <code>sha256:42a7199a76adaefa…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:5f90465cc35dc849…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
-<dt>May</dt><dd><span class="pill">implement-locally-on-exclusive-paths</span> <span class="pill">run-tests-and-builds</span> <span class="pill">commit-on-isolated-branch</span></dd>
+<dt>May</dt><dd><span class="pill">commit-on-isolated-branch</span></dd>
 <dt>Must not</dt><dd><span class="pill">push-pr-merge-deploy-or-release</span> <span class="pill">claim-overlapping-active-paths</span></dd>
 <dt>Expires</dt><dd>2026-09-30T23:59:59Z</dd>
-<dt>Writer lease</dt><dd><code>lease-AS-1001-maker</code> issued by it-manager-iii</dd>
-<dt>Paths</dt><dd><code>.agentops/schemas/**</code> <code>.agentops/tools/**</code> <code>.agentops/work/**</code> <code>.agentops/events/**</code></dd>
+<dt>Writer lease</dt><dd><code>lease-AS-1001-maker-r2</code> issued by it-manager-iii</dd>
+<dt>Paths</dt><dd><code>.agentops/work/AS-1001/**</code> <code>.agentops/events/AS-1001/**</code></dd>
 </dl></section>
 <section><h2>Status</h2>
 <p class="ok">Due: 'in-progress' is ready to move to local — waking maker.</p>
@@ -34,6 +34,7 @@
 <li><code>AS-1001-0001</code> · genesis · help-desk · 2026-08-28T00:00:00Z<br>Ticket AS-1001 opened: seed and validate the AgentOps runtime capsule / lease / event model.</li>
 <li><code>AS-1001-0002</code> · lease-issued · it-manager-iii · 2026-08-28T00:05:00Z<br>Writer lease lease-AS-1001-maker issued to maker over the runtime artifact paths.</li>
 <li><code>AS-1001-0003</code> · state-change · maker · 2026-08-28T00:10:00Z<br>Lifecycle assigned -&gt; in-progress; runtime schemas and opsctl wake under implementation.</li>
+<li><code>AS-1001-0004</code> · state-change · it-manager-iii · 2026-08-31T16:05:13.586Z<br>Revoked the original repository-wide seed lease and bound its v2 successor only to AS-1001 capsule and event history; no new schema, tooling, or cross-ticket ledger work remains authorized. Resealed as revision 2; parent_hash names sha256:5f90465cc35dc8494e9a5e169b24a7f4c07097a6cfbf6ef0b5e65bdb0f1c2b4b.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>
