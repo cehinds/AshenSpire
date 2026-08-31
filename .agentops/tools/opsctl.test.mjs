@@ -538,6 +538,13 @@ function check(name, cond, detail = '') {
   check('hub overview lists every ticket', Object.keys(rt.capsules).every((t) => home.includes(t)));
   check('hub overview names the seat that each ticket wakes',
     computeDispatch(contracts, rt).every((e) => home.includes(e.wake)));
+  check('hub restores the owner-facing editorial shell',
+    home.includes('class="hero"') && home.includes('class="truth-panel"') && home.includes('Review &amp; Approval Hub'));
+  check('hub ticket queue uses keyboard-native expandable cards',
+    home.includes('<details class="section-fold"') && home.includes('<details class="ticket-card">') && home.includes('<summary class="ticket-summary">'));
+  check('hub overview metrics are derived from current runtime state',
+    home.includes(`<strong>${Object.keys(rt.capsules).length}</strong><span>Tracked tickets</span>`)
+      && home.includes(`<span>Writer seats</span><small>active leases</small>`));
   const ticketPage = byRel['generated/hub/tickets/AS-HD-057.html'];
   check('a ticket page carries its live seal', ticketPage.includes(rt.capsules['AS-HD-057'].current_hash.slice(0, 23)));
   check('a ticket page replays its event chain',
