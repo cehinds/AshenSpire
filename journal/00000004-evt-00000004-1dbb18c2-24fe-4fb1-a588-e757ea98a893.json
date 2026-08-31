@@ -1,0 +1,30 @@
+{
+  "event_id": "evt-00000004-1dbb18c2-24fe-4fb1-a588-e757ea98a893",
+  "idempotency_key": "INTAKE_RECORDED:468:0:2026-08-31T13:52:00.492Z",
+  "sequence": 4,
+  "previous_snapshot_hash": "c850bd4e3e89023b2a7c7c4d10455922c9451d6f2a7a69b9cd52b07b28127abc",
+  "issue_id": "468",
+  "actor": "intake",
+  "machine_id": "28f5306c-f01b-4830-b5f8-7856e4dc8482",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-468",
+    "claimed_paths": [
+      ".agentops/work/AS-HD-040",
+      ".agentops/work/AS-HD-050",
+      ".agentops/work/AS-HD-056"
+    ],
+    "claimed_resources": [],
+    "acceptance_commands": [],
+    "evidence_pointers": [],
+    "next_action": "Re-seal capsules; record retro QA ruling",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T13:52:00.492Z"
+}

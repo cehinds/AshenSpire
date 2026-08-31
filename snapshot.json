@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 3,
-  "last_sequence": 3,
+  "revision": 4,
+  "last_sequence": 4,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -107,8 +107,43 @@
       "authority_ceiling": "dev-delivery",
       "updated_event": "evt-00000002-f7b0be8e-6080-476e-8a64-a89023eb657f",
       "updated_at": "2026-08-31T13:52:00.038Z"
+    },
+    "468": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "468",
+      "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
+      "priority": "P1",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-468",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        ".agentops/work/AS-HD-040",
+        ".agentops/work/AS-HD-050",
+        ".agentops/work/AS-HD-056"
+      ],
+      "claimed_resources": [],
+      "acceptance_commands": [],
+      "evidence_pointers": [],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Re-seal capsules; record retro QA ruling",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000004-1dbb18c2-24fe-4fb1-a588-e757ea98a893",
+      "updated_at": "2026-08-31T13:52:00.492Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "c850bd4e3e89023b2a7c7c4d10455922c9451d6f2a7a69b9cd52b07b28127abc"
+  "snapshot_hash": "1f789d0fabd5eb7b6af140c62262010cbbc81972eaee84f4d1d090fc02acaa0b"
 }
