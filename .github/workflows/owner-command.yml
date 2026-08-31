@@ -73,12 +73,14 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
 
-      - name: Verify owner-decision form shape
+      - name: Verify and transport the structured owner decision
         env:
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: >-
           node .github/workflows/validate-owner-command-issue.mjs
           --body-file /tmp/issue-body.md
+          --request-file /tmp/owner-command-request.json
+          --actor owner
 
       - name: Validate the command (dry-run first)
         id: dryrun
@@ -87,7 +89,7 @@ jobs:
         run: |
           set +e
           node .agentops/tools/opsctl.mjs command --dry-run \
-            --issue-file /tmp/issue-body.md --actor owner > /tmp/dryrun.txt 2>&1
+            --file /tmp/owner-command-request.json > /tmp/dryrun.txt 2>&1
           echo "code=$?" >> "$GITHUB_OUTPUT"
           cat /tmp/dryrun.txt
 
@@ -122,7 +124,7 @@ jobs:
       - name: Apply the command
         run: |
           node .agentops/tools/opsctl.mjs command --apply \
-            --issue-file /tmp/issue-body.md --actor owner | tee /tmp/apply.txt
+            --file /tmp/owner-command-request.json | tee /tmp/apply.txt
           node .agentops/tools/opsctl.mjs render
           node .agentops/tools/opsctl.mjs verify
 
