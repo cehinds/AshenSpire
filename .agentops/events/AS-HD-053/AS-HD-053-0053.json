@@ -1,0 +1,19 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-053-0053",
+  "ticket": "AS-HD-053",
+  "seq": 53,
+  "parent_event": "AS-HD-053-0052",
+  "kind": "owner-decision",
+  "actor": "owner",
+  "at": "2026-08-31T17:20:56.151Z",
+  "summary": "Owner-command 'revoke-lease' by owner recorded: Revoke lease-AS-HD-053-scheduler-migration-owner-form before issuing its exact replacement for four versioned owner-command forms.",
+  "decision": {
+    "action": "revoke-lease",
+    "authenticated_role": "owner",
+    "authority_path": ".github/workflows/owner-command.yml:owner-command/v1",
+    "target": "AS-HD-053",
+    "expected_current_hash": "sha256:8cefbe07bb66116b0859b6ca047382fb853116684e49f0ff7255497a9c9354b8",
+    "candidate_oid": null
+  }
+}
