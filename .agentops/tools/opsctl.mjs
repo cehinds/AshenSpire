@@ -2537,6 +2537,9 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
   if (!full(p.rollback_oid)) errors.push(`command 'fast-forward-test' params.rollback_oid must be a full 40-character commit id; a ref mutation with no recorded predecessor cannot be undone`);
   if (!Array.isArray(p.evidence) || p.evidence.length === 0) {
     errors.push(`command 'fast-forward-test' params.evidence must record the mutation evidence decision 0009 requires`);
+  } else if (!p.evidence.every((x) => typeof x === 'string' && x.trim() !== '')) {
+    // `[null]` is a non-empty array. Length was never the question.
+    errors.push(`command 'fast-forward-test' params.evidence must be non-empty strings; an array with nothing readable in it records nothing`);
   }
 
   // 1 and 5. Gate freshness and the absence of a withhold are read from the
@@ -2571,6 +2574,19 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
       if (full(p.rollback_oid) && p.rollback_oid !== current) {
         errors.push(`command 'fast-forward-test' records rollback ${p.rollback_oid.slice(0, 12)} but '${ref}' is at ${current.slice(0, 12)}; the recorded predecessor must be what is actually being replaced`);
       }
+      // A local ref move in an ephemeral checkout is not a promotion. The
+      // owner-command workflow checks out `dev` and pushes only HEAD:dev, so
+      // moving refs/heads/test there would report success while the hosted ref
+      // stood still. Refuse unless the local ref is at the published state, so
+      // the move is at least from something real — and see the publication
+      // blocker raised on this PR, which this check does not close.
+      const published = resolveRemoteRef(root, ref);
+      if (published === null) {
+        errors.push(`command 'fast-forward-test' cannot see 'origin/${ref}' in this checkout; a ref move that no one can publish is not a promotion, and this tool does not push`);
+      } else if (current !== null && published !== current) {
+        errors.push(`command 'fast-forward-test' refused: local '${ref}' at ${current.slice(0, 12)} differs from 'origin/${ref}' at ${published.slice(0, 12)}; promoting from an unpublished state would move a ref no one else has`);
+      }
+
       // The hosted-verified claim, checked against the ref rather than the
       // request that makes it.
       if (devDecl && full(p.hosted_verified_dev_oid)) {
@@ -2608,6 +2624,16 @@ function fastForwardRef(root, ref, newOid, oldOid) {
   } catch (e) {
     return { ok: false, error: `update-ref refused to move '${ref}' from ${oldOid.slice(0, 12)} to ${newOid.slice(0, 12)}: ${String((e && e.stderr) || e.message || e).trim()}` };
   }
+}
+
+// The published counterpart of a local branch, or null when this checkout has
+// none. A promotion is a statement about the hosted ref, not about a working
+// copy that will be discarded when the job ends.
+export function resolveRemoteRefForTest(root, ref) { return resolveRemoteRef(root, ref); }
+function resolveRemoteRef(root, ref) {
+  try {
+    return execFileSync('git', ['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${ref}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null;
+  } catch { return null; }
 }
 
 // Is `maybe` an ancestor of `of`? The exact question a fast-forward asks.
@@ -2739,7 +2765,8 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const capsule = rt.capsules[ticket];
   const written = [];
 
-  const move = resolveTransition(contracts, capsule, action, request.actor);
+  let pendingCapsule = null;
+    const move = resolveTransition(contracts, capsule, action, request.actor);
   if (move && move.error) return { ok: false, errors: [move.error], written };
 
   const chain = (rt.events[ticket] || []).slice().sort((a, b) => a.seq - b.seq);
@@ -2763,6 +2790,19 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     parent_event: last ? last.id : null,
     kind: 'owner-decision', actor: request.actor, at: now, summary
   };
+  // The ledger is the authoritative record of the promotion, so it carries the
+  // exact facts rather than the 12-character prefixes the summary reads with.
+  // The evidence was validated and then discarded, which left the chain unable
+  // to reconstruct what the promotion was justified by.
+  if (request.action === 'fast-forward-test' && request.params) {
+    event.promotion = {
+      ref: (contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || '')) || {}).ref,
+      from: request.params.rollback_oid,
+      to: request.params.target_oid,
+      hosted_verified_dev_oid: request.params.hosted_verified_dev_oid,
+      evidence: request.params.evidence,
+    };
+  }
 
   if (capsule) {
     // Re-check the seal immediately before writing: a capsule that changed since
@@ -2798,9 +2838,11 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     // declared evidence types only (evidence.json), never event ids.
     delete next.current_hash;
     next.current_hash = computeCapsuleHash(next);
-    const capPath = resolve(root, `work/${ticket}/CURRENT.json`);
-    writeFileSync(capPath, JSON.stringify(reorderCapsule(next), null, 2) + '\n');
-    written.push(`work/${ticket}/CURRENT.json`);
+    // Computed, NOT written. I called the earlier ordering deliberate and it was
+    // still wrong: a refusal after this point left CURRENT.json rewritten and
+    // its revision advanced with no event appended. Nothing persists until every
+    // preflight has passed.
+    pendingCapsule = { path: resolve(root, `work/${ticket}/CURRENT.json`), body: JSON.stringify(reorderCapsule(next), null, 2) + '\n' };
   }
 
   // The one ref mutation in the tool. It runs AFTER the capsule write and
@@ -2823,6 +2865,8 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   if (action.id === 'fast-forward-test') {
     const bad = fastForwardTestErrors(contracts, rt, request, root);
     if (bad.length) return { ok: false, errors: bad, written };
+    // Every refusal is now behind us; the capsule may be written.
+    if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); pendingCapsule = null; }
     const decl = contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
     const moved = fastForwardRef(root, decl.ref, request.params.target_oid, request.params.rollback_oid);
     if (!moved.ok) return { ok: false, errors: [moved.error], written };
@@ -2838,6 +2882,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     }
     written.push(`events/${ticket}/${id}.json`);
   } else {
+    if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); pendingCapsule = null; }
     writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
     written.push(`events/${ticket}/${id}.json`);
   }
@@ -4582,6 +4627,9 @@ export function runSelftest(root = ROOT) {
     if (blockedTicket) {
       expectFF('gate C: a target carrying an unresolved blocker', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { target: blockedTicket, expected_current_hash: computeCapsuleHash(rtFF.capsules[blockedTicket]) }), 'condition 5 forbids promoting past one');
     }
+    expectFF('gate C: an evidence array with nothing readable in it', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: [null] }), 'nothing readable in it');
+    expectFF('gate C: an evidence array of blank strings', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ['   '] }), 'nothing readable in it');
+
     // Codex P1: absence of a blocker is not evidence that gates A and B passed.
     for (const ev of gateAB) {
       const stripped = baseRt();
@@ -4618,6 +4666,11 @@ export function runSelftest(root = ROOT) {
       };
       // Codex P1: the request asserting its own hosted-verified SHA proved
       // nothing; the ref is the authority.
+      // Codex P1: a local ref move nobody publishes is not a promotion.
+      const pub = resolveRemoteRefForTest(root, ffRefDecl.ref);
+      if (pub === null) {
+        results.push({ label: 'gate C: refuses when the ref has no published counterpart', pass: validateCommand(contracts, rtFF, ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), { root }).errors.some((e) => e.includes('this tool does not push')), errs: [] });
+      }
       expectFFRepo('gate C: a hosted-verified claim the dev ref contradicts', ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), 'the ref is the authority for that');
       expectFFRepo('gate C: a rollback that is not the ref being replaced', ffReq({ target_oid: head, hosted_verified_dev_oid: head, rollback_oid: OID('b'), evidence: ffEv }), 'must be what is actually being replaced');
       expectFFRepo('gate C: a target this repository does not carry', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: liveRef, evidence: ffEv }), 'not a commit in this repository');
