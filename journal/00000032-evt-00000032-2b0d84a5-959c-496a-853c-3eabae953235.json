@@ -1,0 +1,35 @@
+{
+  "event_id": "evt-00000032-2b0d84a5-959c-496a-853c-3eabae953235",
+  "idempotency_key": "auto-claim:467:4",
+  "sequence": 32,
+  "previous_snapshot_hash": "ba879a1b84c9b8963654360a036bee7e3fd6a61ab794fd6455dafe9de1698d67",
+  "issue_id": "467",
+  "actor": "seat:qa-functional:457bc1cc-2908-4137-8d3f-fba0bbe321f7",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:467:4",
+  "lease_epoch": 4,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {
+    "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01"
+  },
+  "payload": {
+    "branch": "codex/issue-467-authority-grant",
+    "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
+    "lease_expiry": "2026-08-31T15:43:25.312Z",
+    "claimed_paths": [
+      ".agentops/governance/owner-command.json",
+      ".agentops/tools/opsctl.mjs",
+      ".agentops/tools/opsctl.test.mjs",
+      ".github/ISSUE_TEMPLATE/owner-decision.yml",
+      ".github/workflows/validate-owner-command-issue.test.mjs",
+      ".agentops/generated",
+      "hud",
+      "review-approval-hub"
+    ],
+    "claimed_resources": [
+      "owner-command-authority"
+    ],
+    "next_action": "Reconcile candidate to the exact lease: remove the two out-of-lease paths or obtain an explicit expanded implementation lease, then return a new exact candidate for independent QA."
+  },
+  "created_at": "2026-08-31T15:13:25.312Z"
+}
