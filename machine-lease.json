@@ -1,7 +1,7 @@
 {
   "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
-  "lease_epoch": 2,
-  "acquired_at": "2026-08-31T14:37:33.174Z",
-  "expires_at": "2026-08-31T15:07:33.174Z",
-  "expected_state_ref_oid": "798283f01dfd23971319fcc4450415a2beedbfad"
+  "lease_epoch": 3,
+  "acquired_at": "2026-08-31T15:08:11.340Z",
+  "expires_at": "2026-08-31T15:38:11.340Z",
+  "expected_state_ref_oid": "4c5f0e80744f6556280491f65f2be4e1636a8642"
 }
