@@ -4,6 +4,11 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
+> **README content updated:** 2026-08-31T06:14:00-08:00 (Alaska)
+> **Updated by:** AshenSpire Writing — README currentness steward — task `README-UPDATE-ATTRIBUTION`
+> **Source change:** Pending pull request for this README-only update
+> **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
+
 ## Play the current development build
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
