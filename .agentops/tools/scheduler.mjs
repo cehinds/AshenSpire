@@ -78,8 +78,14 @@ function validInstant(value, label) {
   if (Number.isNaN(Date.parse(value))) throw new Error(`${label} must be an ISO instant`);
 }
 
+function assertNoAdditionalKeys(value, allowed, label) {
+  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unexpected.length) throw new Error(`${label} contains undeclared keys: ${unexpected.sort().join(', ')}`);
+}
+
 export function validateMachineIdentity(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('machine identity must be an object');
+  assertNoAdditionalKeys(value, new Set(['schema', 'machine_id', 'created_at']), 'machine identity');
   if (value.schema !== 'agentops/scheduler-machine/v1') throw new Error('machine identity schema must be agentops/scheduler-machine/v1');
   if (typeof value.machine_id !== 'string' || !UUID.test(value.machine_id)) throw new Error('machine identity machine_id must be a valid UUID');
   validInstant(value.created_at, 'machine identity created_at');
@@ -90,6 +96,7 @@ export function validateMachineIdentity(value) {
 export function validateMachineLease(value) {
   if (value === null) return true;
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('machine lease must be an object or null');
+  assertNoAdditionalKeys(value, new Set(['machine_id', 'lease_epoch', 'acquired_at', 'expires_at', 'expected_state_ref_oid', 'released_at']), 'machine lease');
   if (!Number.isInteger(value.lease_epoch) || value.lease_epoch < 0) throw new Error('machine lease lease_epoch must be a non-negative integer');
   if (value.expected_state_ref_oid !== null && !/^[0-9a-f]{40}$/.test(value.expected_state_ref_oid ?? '')) throw new Error('machine lease expected_state_ref_oid must be a commit OID or null');
   if (value.machine_id === null) {
@@ -301,11 +308,21 @@ function applyEvent(snapshot, event) {
       clearSeat(item); item.claimed_resources = p.retained_resources ?? []; item.claimed_paths = canonicalClaimPaths(p.retained_paths ?? []);
       break;
     case 'RESOURCE_RELEASED':
-      if (item.state === 'WAITING_DEPENDENCY' && item.assigned_actor === null) {
-        if (event.actor !== 'scheduler' || !event.machine_id || event.lease_id !== null || event.lease_epoch !== item.lease_epoch) throw new Error('retained-claim release fencing mismatch');
-      } else assertExactLease(item, event);
-      clearSeat(item); item.claimed_paths = canonicalClaimPaths(p.retained_paths ?? []); item.claimed_resources = p.retained_resources ?? [];
-      if (p.requeue === true && !TERMINAL_STATES.has(item.state)) item.state = 'READY';
+      {
+        const releasedFrom = item.state;
+        const seatBound = ['CLAIMED', 'RUNNING', 'QA'].includes(releasedFrom);
+        if (seatBound && p.requeue !== true) throw new Error(`RESOURCE_RELEASED from ${releasedFrom} requires requeue=true`);
+        if (item.state === 'WAITING_DEPENDENCY' && item.assigned_actor === null) {
+          if (event.actor !== 'scheduler' || !event.machine_id || event.lease_id !== null || event.lease_epoch !== item.lease_epoch) throw new Error('retained-claim release fencing mismatch');
+        } else assertExactLease(item, event);
+        clearSeat(item); item.claimed_paths = canonicalClaimPaths(p.retained_paths ?? []); item.claimed_resources = p.retained_resources ?? [];
+        if (p.requeue === true && !TERMINAL_STATES.has(item.state)) {
+          item.state = releasedFrom === 'QA' ? 'CANDIDATE_READY' : 'READY';
+          item.next_action = item.state === 'CANDIDATE_READY'
+            ? 'Reassign independent QA for the preserved candidate.'
+            : 'Reclaim from the last preserved candidate or worktree.';
+        }
+      }
       break;
     case 'LEASE_EXPIRED':
       if (event.actor !== 'scheduler') throw new Error('lease expiry requires scheduler actor');

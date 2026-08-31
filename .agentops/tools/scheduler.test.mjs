@@ -486,7 +486,8 @@ test('existing machine identity fails closed on malformed and invalid plants', (
     ['wrong schema', { schema: 'agentops/scheduler-machine/v0', machine_id: MACHINE_A, created_at: '2026-08-30T00:00:00Z' }],
     ['blank machine id', { schema: 'agentops/scheduler-machine/v1', machine_id: ' ', created_at: '2026-08-30T00:00:00Z' }],
     ['non UUID machine id', { schema: 'agentops/scheduler-machine/v1', machine_id: 'machine-a', created_at: '2026-08-30T00:00:00Z' }],
-    ['invalid timestamp', { schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_A, created_at: 'not-a-time' }]
+    ['invalid timestamp', { schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_A, created_at: 'not-a-time' }],
+    ['undeclared key', { schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_A, created_at: '2026-08-30T00:00:00Z', hostname: 'must-not-be-portable' }]
   ];
   for (const [name, value] of plants) {
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-machine-invalid-'));
@@ -512,10 +513,65 @@ test('portable machine lease identity fails closed on malformed, invalid, and mi
     { ...valid, acquired_at: 'invalid' },
     { ...valid, expires_at: 'invalid' },
     { ...valid, expires_at: valid.acquired_at },
-    { ...valid, expected_state_ref_oid: 'not-an-oid' }
+    { ...valid, expected_state_ref_oid: 'not-an-oid' },
+    { ...valid, hostname: 'undeclared' }
   ]) assert.throws(() => validateMachineLease(plant));
   const machine = { schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_B, created_at: '2026-08-30T00:00:00Z' };
   assert.throws(() => ensureCustody({ machineLease: valid }, machine, Date.parse('2026-08-30T00:01:00Z')), /active machine custody required/);
+});
+
+test('resource release cannot orphan claimed, implementation, or QA work', () => {
+  let claimedState = intake(fresh(), 'I-RELEASE-CLAIMED', { paths: ['src/claimed'], resources: ['generated-outputs'] });
+  claimedState = claim(claimedState, 'I-RELEASE-CLAIMED');
+  const claimed = claimedState.snapshot.work_items['I-RELEASE-CLAIMED'];
+  const releaseClaimed = {
+    event_type: 'RESOURCE_RELEASED', issue_id: claimed.issue_id, actor: claimed.assigned_actor,
+    machine_id: claimed.lease_machine_id, lease_id: claimed.lease_id, lease_epoch: claimed.lease_epoch,
+    exact_object: {}, created_at: '2026-08-30T00:00:02Z'
+  };
+  assert.throws(() => appendEvents(claimedState, [{ ...releaseClaimed, payload: {}, idempotency_key: 'release:claimed:default' }]), /requires requeue=true/);
+  assert.throws(() => appendEvents(claimedState, [{ ...releaseClaimed, payload: { requeue: false }, idempotency_key: 'release:claimed:false' }]), /requires requeue=true/);
+  claimedState = appendEvents(claimedState, [{ ...releaseClaimed, payload: { requeue: true }, idempotency_key: 'release:claimed:true' }]);
+  const requeuedClaim = claimedState.snapshot.work_items[claimed.issue_id];
+  assert.equal(requeuedClaim.state, 'READY');
+  assert.equal(requeuedClaim.assigned_actor, null);
+  assert.equal(requeuedClaim.assignment_kind, null);
+  assert.equal(requeuedClaim.lease_id, null);
+  assert.equal(requeuedClaim.lease_expiry, null);
+  assert.equal(requeuedClaim.lease_machine_id, null);
+  assert.deepEqual(requeuedClaim.claimed_paths, []);
+  assert.deepEqual(requeuedClaim.claimed_resources, []);
+
+  let implementation = intake(fresh(), 'I-RELEASE-IMPLEMENTATION');
+  implementation = claim(implementation, 'I-RELEASE-IMPLEMENTATION');
+  implementation = entered(implementation, 'I-RELEASE-IMPLEMENTATION');
+  const running = implementation.snapshot.work_items['I-RELEASE-IMPLEMENTATION'];
+  const releaseRunning = {
+    event_type: 'RESOURCE_RELEASED', issue_id: running.issue_id, actor: running.assigned_actor,
+    machine_id: running.lease_machine_id, lease_id: running.lease_id, lease_epoch: running.lease_epoch,
+    exact_object: {}, created_at: '2026-08-30T00:00:03Z'
+  };
+  assert.throws(() => appendEvents(implementation, [{ ...releaseRunning, payload: {}, idempotency_key: 'release:implementation:default' }]), /requires requeue=true/);
+  assert.throws(() => appendEvents(implementation, [{ ...releaseRunning, payload: { requeue: false }, idempotency_key: 'release:implementation:false' }]), /requires requeue=true/);
+  implementation = appendEvents(implementation, [{ ...releaseRunning, payload: { requeue: true }, idempotency_key: 'release:implementation:true' }]);
+  assert.equal(implementation.snapshot.work_items[running.issue_id].state, 'READY');
+  assert.equal(implementation.snapshot.work_items[running.issue_id].assigned_actor, null);
+
+  let review = intake(fresh(), 'I-RELEASE-QA'); review = claim(review, 'I-RELEASE-QA'); review = entered(review, 'I-RELEASE-QA'); review = candidate(review, 'I-RELEASE-QA');
+  const reviewPlan = planAssignments(review.snapshot, config, '2026-08-30T00:00:04Z', 'c'.repeat(40));
+  review = applyAssignments(review, reviewPlan.assignments, 'machine-a', '2026-08-30T00:00:04Z');
+  const reviewing = review.snapshot.work_items['I-RELEASE-QA'];
+  const releaseQa = {
+    event_type: 'RESOURCE_RELEASED', issue_id: reviewing.issue_id, actor: reviewing.assigned_actor,
+    machine_id: reviewing.lease_machine_id, lease_id: reviewing.lease_id, lease_epoch: reviewing.lease_epoch,
+    exact_object: {}, created_at: '2026-08-30T00:00:05Z'
+  };
+  assert.throws(() => appendEvents(review, [{ ...releaseQa, payload: {}, idempotency_key: 'release:qa:default' }]), /requires requeue=true/);
+  assert.throws(() => appendEvents(review, [{ ...releaseQa, payload: { requeue: false }, idempotency_key: 'release:qa:false' }]), /requires requeue=true/);
+  review = appendEvents(review, [{ ...releaseQa, payload: { requeue: true }, idempotency_key: 'release:qa:true' }]);
+  assert.equal(review.snapshot.work_items[reviewing.issue_id].state, 'CANDIDATE_READY');
+  assert.equal(review.snapshot.work_items[reviewing.issue_id].assigned_actor, null);
+  assert.equal(review.snapshot.work_items[reviewing.issue_id].candidate_commit, 'b'.repeat(40));
 });
 
 test('Git and GitHub subprocesses fail closed on startup errors and timeouts', () => {
