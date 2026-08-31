@@ -1,0 +1,150 @@
+{
+  "note": "Known-drifted plant sites (the #498 backlog) and sites the static scan cannot read. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
+  "drifted": [
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "0afb5288f599e996"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "22cff8988b0573de"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "22cff8988b0573de"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "43f173fc9ec16b5b"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "4b6ff8eba7de38d4"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "65d13765aa325728"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "styles/ui.css",
+      "id": "a18404a52c148e69"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "a4fc76ea6879630b"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "aa6ff22d47856d37"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "b3c17aefd8d27896"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "ebb60d6e25b61c32"
+    },
+    {
+      "tool": "tools/equipment-surface-receipts.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "6ded545c56c71e3b"
+    },
+    {
+      "tool": "tools/hintstrip.mjs",
+      "target": "styles/combat.css",
+      "id": "e650bf9e7f606f81"
+    },
+    {
+      "tool": "tools/hintstrip.mjs",
+      "target": "styles/combat.css",
+      "id": "e650bf9e7f606f81"
+    },
+    {
+      "tool": "tools/hudparity.mjs",
+      "target": "src/ui/components/hudmeta.js",
+      "id": "5501fee6e6854b9b"
+    },
+    {
+      "tool": "tools/hudparity.mjs",
+      "target": "src/ui/components/hudmeta.js",
+      "id": "9bb2dad6f5b827e3"
+    },
+    {
+      "tool": "tools/hudparity.mjs",
+      "target": "src/ui/components/hudmeta.js",
+      "id": "9f84e64b94562485"
+    },
+    {
+      "tool": "tools/hudparity.mjs",
+      "target": "src/ui/components/hudmeta.js",
+      "id": "e3749adc2967a4f9"
+    },
+    {
+      "tool": "tools/hudparity.mjs",
+      "target": "src/ui/components/hudmeta.js",
+      "id": "e3749adc2967a4f9"
+    },
+    {
+      "tool": "tools/player-poise-threshold.mjs",
+      "target": "src/model/state.js",
+      "id": "07508d6927980dbb"
+    },
+    {
+      "tool": "tools/reward-collect-drive.mjs",
+      "target": "src/ui/screens/reward.js",
+      "id": "4b0d992e60ccc086"
+    },
+    {
+      "tool": "tools/reward-collect-drive.mjs",
+      "target": "src/ui/screens/reward.js",
+      "id": "810812d641aec1cc"
+    },
+    {
+      "tool": "tools/reward-collect-drive.mjs",
+      "target": "src/main.js",
+      "id": "89f4b0555cda50b3"
+    },
+    {
+      "tool": "tools/reward-collect-drive.mjs",
+      "target": "src/ui/screens/reward.js",
+      "id": "8dc418c256ebce40"
+    },
+    {
+      "tool": "tools/screenreach.mjs",
+      "target": "src/ui/screens/map.js",
+      "id": "4ad49ce69ac9bec0"
+    },
+    {
+      "tool": "tools/text-geometry.mjs",
+      "target": "src/ui/screens/settings.js",
+      "id": "d58c010523128373"
+    },
+    {
+      "tool": "tools/text-geometry.mjs",
+      "target": "AshenSpire.html",
+      "id": "fd7dd82bd2cc00bf"
+    }
+  ],
+  "unreadable": {
+    "tools/armoury-picked-up.mjs": 11,
+    "tools/card-drag-targeting.mjs": 5,
+    "tools/displayfirst.mjs": 6,
+    "tools/flask-menu-cancel.mjs": 1,
+    "tools/gatelist.mjs": 3,
+    "tools/hybrid-input-parity.mjs": 8,
+    "tools/onevocab.mjs": 1,
+    "tools/short-landscape-support.mjs": 2
+  }
+}

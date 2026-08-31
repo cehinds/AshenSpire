@@ -43,6 +43,15 @@ jobs:
       - name: Verify the surfaces match the control plane at this SHA
         run: node .agentops/tools/opsctl.mjs verify
 
+      # #498: 28 plant sites had drifted and only one gate went red — the rest
+      # stayed green while unable to fail, because the only detector was each
+      # gate's own --selftest in the dispatch-only lane. This is the cheap
+      # static detector (no execution, no browser, <1s), so it runs on every
+      # PR: any NEW drifted find-string fails here the day the refactor lands,
+      # and the checked-in baseline holds the known backlog to exactly itself.
+      - name: No plant site has drifted beyond the recorded baseline
+        run: node tools/plantsites.mjs --check
+
       - name: Collect the owner-facing surfaces
         run: |
           set -euo pipefail
