@@ -436,10 +436,9 @@ const enemyPhaseSchema = obj({
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
 });
 
-// #237 reserves the strict authored constraint shape before #238 populates it.
-// Bounds are optional during this inert phase; once present, validate.js also
-// enforces positive integers and min <= max through model/levels.js.
-const enemyLevelProfileSchema = obj({
+// #237 defined the band vocabulary; #238 makes it complete authored content.
+// validate.js additionally enforces positive integers and min <= max.
+const levelBandSchema = obj({
   min: int,
   max: int,
 });
@@ -715,7 +714,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
-    levelProfile: opt(enemyLevelProfileSchema),
+    levelProfile: levelBandSchema,
     tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
@@ -750,7 +749,9 @@ export const SCHEMAS = Object.freeze({
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),
-    act: opt(int), // defaults to 1
+    act: int,
+    floorBand: levelBandSchema,
+    targetBand: levelBandSchema,
   }),
 
   event: obj({

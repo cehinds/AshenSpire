@@ -8,11 +8,12 @@
 
 export const ENCOUNTER_LEVEL_SEAM = 'encounter-level-planning/v1';
 export const LEVEL_SCALING_ROUNDING = Object.freeze(['floor', 'round', 'ceil']);
+export const ENEMY_SCALING_STATS = Object.freeze(['hp', 'damage', 'block', 'poise']);
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isPositiveInt = (value) => Number.isSafeInteger(value) && value > 0;
 
-function bandProblems(band, path) {
+export function levelBandProblems(band, path = 'levelBand') {
   const problems = [];
   if (!isObject(band)) return [{ path, msg: 'must be an object { min, max }' }];
   for (const key of Object.keys(band)) {
@@ -28,19 +29,48 @@ function bandProblems(band, path) {
 
 export function levelConfigProblems(balance) {
   const levels = balance && balance.levels;
-  if (!isObject(levels)) return [{ path: 'balance.levels', msg: 'must be an object with playerStartingLevel' }];
+  if (!isObject(levels)) return [{ path: 'balance.levels', msg: 'must be an object with playerStartingLevel and enemyScaling' }];
   const problems = [];
   for (const key of Object.keys(levels)) {
-    if (key !== 'playerStartingLevel') problems.push({ path: `balance.levels.${key}`, msg: 'unknown field' });
+    if (!['playerStartingLevel', 'enemyScaling'].includes(key)) problems.push({ path: `balance.levels.${key}`, msg: 'unknown field' });
   }
   if (!isPositiveInt(levels.playerStartingLevel)) {
     problems.push({ path: 'balance.levels.playerStartingLevel', msg: 'must be a positive integer' });
+  }
+  if (!isObject(levels.enemyScaling)) {
+    problems.push({ path: 'balance.levels.enemyScaling', msg: `must define exactly ${ENEMY_SCALING_STATS.join(', ')}` });
+  } else {
+    for (const stat of Object.keys(levels.enemyScaling)) {
+      if (!ENEMY_SCALING_STATS.includes(stat)) problems.push({ path: `balance.levels.enemyScaling.${stat}`, msg: 'unknown stat' });
+    }
+    for (const stat of ENEMY_SCALING_STATS) {
+      const path = `balance.levels.enemyScaling.${stat}`;
+      const row = levels.enemyScaling[stat];
+      if (!isObject(row)) {
+        problems.push({ path, msg: 'must be an object with perLevel, rounding, min, max' });
+        continue;
+      }
+      for (const key of Object.keys(row)) {
+        if (!['perLevel', 'rounding', 'min', 'max'].includes(key)) problems.push({ path: `${path}.${key}`, msg: 'unknown field' });
+      }
+      if (!Number.isFinite(row.perLevel) || Math.abs(row.perLevel) > Number.MAX_SAFE_INTEGER) {
+        problems.push({ path: `${path}.perLevel`, msg: 'must be finite and within the safe arithmetic range' });
+      }
+      if (!LEVEL_SCALING_ROUNDING.includes(row.rounding)) {
+        problems.push({ path: `${path}.rounding`, msg: `must be one of ${LEVEL_SCALING_ROUNDING.join(' | ')}` });
+      }
+      if (!Number.isSafeInteger(row.min)) problems.push({ path: `${path}.min`, msg: 'must be a safe integer' });
+      if (!Number.isSafeInteger(row.max)) problems.push({ path: `${path}.max`, msg: 'must be a safe integer' });
+      if (Number.isSafeInteger(row.min) && Number.isSafeInteger(row.max) && row.min > row.max) {
+        problems.push({ path, msg: `min ${row.min} must not exceed max ${row.max}` });
+      }
+    }
   }
   return problems;
 }
 
 export function enemyLevelProfileProblems(profile, path = 'levelProfile') {
-  return bandProblems(profile, path);
+  return levelBandProblems(profile, path);
 }
 
 function requireClean(problems) {
@@ -140,7 +170,7 @@ function assertContext(context) {
   if (!Number.isSafeInteger(context.floor) || context.floor < 0) {
     throw new Error('enemy level context.floor: must be a non-negative integer');
   }
-  requireClean(bandProblems(context.targetBand, 'enemy level context.targetBand'));
+  requireClean(levelBandProblems(context.targetBand, 'enemy level context.targetBand'));
   const modifiers = context.modifiers == null ? [] : context.modifiers;
   if (!Array.isArray(modifiers)) throw new Error('enemy level context.modifiers: must be an array');
   modifiers.forEach((modifier, index) => {
