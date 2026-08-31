@@ -42264,7 +42264,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '130af7fa3c';
+const SOURCE = 'e1b494b667';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42298,7 +42298,7 @@ const SOURCE = '130af7fa3c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1704';
+const ORDINAL = '1708';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -44153,22 +44153,41 @@ function showSettingsNotice(msg) {
 
 function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
+  const opener = document.activeElement;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
-    <div class="modal settings-modal">
-      <h2>Settings</h2>
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <h2 id="settings-modal-title">Settings</h2>
       <div class="set-body"></div>
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
   renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
-  const close = () => veil.remove();
+  const modal = veil.querySelector('.settings-modal');
+  const onKeydown = (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+    const topModal = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+    if (topModal !== modal) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  };
+  const close = () => {
+    if (!veil.isConnected) return;
+    document.removeEventListener('keydown', onKeydown, true);
+    veil.remove();
+    if (opener?.isConnected && typeof opener.focus === 'function') {
+      opener.focus({ preventScroll: true });
+    }
+  };
   veil.addEventListener('click', (e) => {
     if (e.target === veil) close();
   });
   veil.querySelector('#set-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKeydown, true);
+  veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }
 
 
@@ -57930,6 +57949,20 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       trailing,
     });
     // When a self/buff card is armed, the player is a confirmable target.
+    // Publish that temporary target through the same unified focus door as an
+    // enemy target. Without this, armSelf() asks focusFirst() for the player,
+    // focusFirst() correctly refuses the non-focusable frame, and the cursor
+    // remains on the card: a second controller Confirm then toggles the card
+    // off instead of committing it.
+    if (selfArm) {
+      const armedInst = findInst(selfArm);
+      const armedDef = armedInst ? resolveCard(registries, armedInst) : null;
+      const playerName = combatantSubject('player', p).name;
+      box.dataset.focusable = '';
+      box.tabIndex = -1;
+      box.setAttribute('role', 'button');
+      box.setAttribute('aria-label', `Confirm ${armedDef?.name || 'selected card'} on ${playerName}`);
+    }
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);

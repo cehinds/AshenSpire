@@ -884,6 +884,20 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       trailing,
     });
     // When a self/buff card is armed, the player is a confirmable target.
+    // Publish that temporary target through the same unified focus door as an
+    // enemy target. Without this, armSelf() asks focusFirst() for the player,
+    // focusFirst() correctly refuses the non-focusable frame, and the cursor
+    // remains on the card: a second controller Confirm then toggles the card
+    // off instead of committing it.
+    if (selfArm) {
+      const armedInst = findInst(selfArm);
+      const armedDef = armedInst ? resolveCard(registries, armedInst) : null;
+      const playerName = combatantSubject('player', p).name;
+      box.dataset.focusable = '';
+      box.tabIndex = -1;
+      box.setAttribute('role', 'button');
+      box.setAttribute('aria-label', `Confirm ${armedDef?.name || 'selected card'} on ${playerName}`);
+    }
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
