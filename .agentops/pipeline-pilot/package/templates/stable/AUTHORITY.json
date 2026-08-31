@@ -1,0 +1,6 @@
+{
+  "schema": "task-pipeline-authority/v1",
+  "default": "reversible-local-work",
+  "allowed_without_separate_approval": ["read", "diagnose", "edit-exclusive-local-path", "test", "build-local", "commit-isolated-local-branch"],
+  "protected": ["push", "open-pr", "merge", "update-protected-branch", "destructive-change", "security-or-privacy-crossing", "override-independent-qa", "publish", "deploy", "release"]
+}

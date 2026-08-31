@@ -1,6 +1,13 @@
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
 
-.combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.combat {
+  --safe-top-local: calc(env(safe-area-inset-top, 0px) / var(--ui-zoom, 1));
+  --safe-right-local: calc(env(safe-area-inset-right, 0px) / var(--ui-zoom, 1));
+  --safe-bottom-local: calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
+  --safe-left-local: calc(env(safe-area-inset-left, 0px) / var(--ui-zoom, 1));
+  --safe-edge-local: calc(2px / var(--ui-zoom, 1));
+  flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden;
+}
 
 /* ---------- shared map/combat HUD: THREE ROWS ----------
    TOP — character/run identity left, Cinders truly centred, progress/build right.
@@ -1048,7 +1055,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    The offset and its reservation are now the same token, so they cannot drift,
    and `short-wide`'s deeper drop below overrides ONE value instead of leaving a
    6.4rem hang against a 5.2rem reservation that was never written down. */
-.combat { --action-row-drop: 5.2rem; }
+/* The row's tallest cell and the deepest fanned card need a real separation
+   band. These measured reservations keep that band intact in the portrait
+   884x1326 matrix and in the compressed short-wide composition below. */
+.combat { --action-row-drop: 6.4rem; }
 .hand-area {
   height: 23rem; flex-shrink: 0; position: relative;
   display: flex; align-items: flex-end; justify-content: center;
@@ -1140,41 +1150,23 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 
 .combat-action-row {
+  --action-edge-size: max(var(--tap-floor), clamp(4.8rem, 6vw, 5.6rem));
+  --action-pile-size: max(var(--tap-floor), clamp(4.6rem, 5.5vw, 5.2rem));
+  --action-end-size: max(var(--tap-floor), clamp(11rem, 16vw, 15rem));
+  --action-cluster-gap: calc(4px / var(--ui-zoom, 1));
   position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
   display: grid;
-  grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
-  grid-template-areas: "energy draw hints end exhaust discard";
-  align-items: end; gap: 0.8rem;
+  grid-template-columns: var(--action-edge-size) minmax(0, 1fr) var(--action-pile-size) var(--action-end-size) var(--action-pile-size) minmax(0, 1fr) var(--action-edge-size);
+  grid-template-areas: "energy . draw end discard . exhaust";
+  align-items: end; column-gap: var(--action-cluster-gap);
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
-/* #295 — THE STRIP TAKES THE GUTTER THIS GRID ALREADY DECLARED. It was `.`; it
-   is now `hints`, and no track changed width. The overlap it fixes was never a
-   near miss that got worse: END TURN's column is `minmax(15rem, auto)`, so it
-   widens with its own label, while the strip was centred on the VIEWPORT by a
-   sibling rule. Two homes for "the middle of the bottom band", agreeing only by
-   luck at the shipped text size. One home now.
-
-   `padding-block: 0` IS THE HALF THAT KEEPS H1 GREEN, AND IT DELETES A RULE
-   RATHER THAN TUNING ONE. `.hint-bar`'s `0.4rem` block padding is the padding of
-   a FLOATING PILL — the thing this element stopped being the moment it became a
-   grid cell. Left in, the strip is the tallest item in a bottom-anchored row
-   (53.2 px against 50.4 at Text S), so the row grows UPWARD into the hand and a
-   card lands on the strip by 0.69 px — measured, and the exact cost Sunna
-   recorded as open on falk/295-hintstrip-layout-sunna @ 33ebb8b. Taken out, the
-   strip is its chips' own height, the row's height is unchanged at every text
-   size, and H1's clearance goes back to what it was before this act
-   (5.70 / 6.34 / 7.61 px). The chips keep `--tap-floor`; nothing pressable
-   shrank. Inline padding is untouched — it is the pill's horizontal breathing
-   room and the grid does not supply it.
-
-   NARROW IS NOT REACHED BY ANY OF THIS: `:root[data-layout='narrow'] .hint-bar`
-   is `display: none` (styles/ui.css, #29 slice 0) and narrow re-declares this
-   grid's areas without a `hints` track, so an unplaced item there would have
-   created an implicit track — it cannot, because it renders no box. */
-.combat-action-row > .hint-bar.hint-combat {
-  grid-area: hints; justify-self: center; align-self: end;
-  margin: 0; max-width: 100%; padding-block: 0;
+/* The action row carries its own direct controls and key labels. The older
+   contextual combat strip would cover the bottom rail, so it remains retired
+   on this screen; map and other contextual strips are intact. */
+.hand-area > .hint-bar.hint-combat {
+  display: none;
 }
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
@@ -1184,7 +1176,8 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .combat-action-row > .energy-orb {
   grid-area: energy; position: relative; left: auto; bottom: auto; isolation: isolate;
-  width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor));
+  width: var(--action-edge-size); max-width: 100%; height: var(--action-edge-size);
+  font-size: clamp(1.45rem, 2.2vw, 1.9rem);
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
 .combat-action-row > .energy-orb::before {
@@ -1197,9 +1190,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   min-height: var(--tap-floor); background: #120f0c;
   border: 1px solid var(--gold); border-radius: 8px;
 }
-.combat-action-row > .end-turn { grid-area: end; position: static; right: auto; bottom: auto; }
+.combat-action-row > .end-turn {
+  grid-area: end; position: static; right: auto; bottom: auto;
+  box-sizing: border-box; width: var(--action-end-size); max-width: 100%; min-width: 0;
+  font-size: clamp(1.15rem, 2vw, 1.7rem);
+  padding-inline: clamp(0.7rem, 1.5vw, 2rem);
+}
 .end-turn .et-key {
-  font-family: var(--font-body); font-size: 1rem; margin-left: 0.7rem; vertical-align: 1px;
+  display: block; width: max-content; margin: 0.2rem auto 0; font-family: var(--font-body); font-size: 0.82rem;
   padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
@@ -1216,11 +1214,92 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .pile.discard { right: 1.6rem; }
 .pile.exhaust { right: 8.2rem; opacity: 0.85; }
 .combat-action-row > .pile {
-  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  box-sizing: border-box; position: static; inset: auto;
+  width: var(--action-pile-size); max-width: 100%; height: max(4rem, var(--tap-floor));
+  min-width: 0; min-height: var(--tap-floor); padding-inline: 0.35rem;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
 }
 .combat-action-row > .pile.draw { grid-area: draw; }
 .combat-action-row > .pile.discard { grid-area: discard; }
-.combat-action-row > .pile.exhaust { grid-area: exhaust; }
+.combat-action-row > .pile.exhaust {
+  grid-area: exhaust; width: var(--action-edge-size);
+}
+.combat-action-row > .pile.exhaust small {
+  font-size: clamp(0.66rem, 1.8vw, 0.82rem); letter-spacing: 0.04em;
+}
+
+.armament-radial {
+  position: fixed; z-index: 360; left: 1.6rem; bottom: calc(var(--action-row-drop) + 1rem);
+  width: min(32rem, calc(100vw - 3.2rem)); aspect-ratio: 1.35; pointer-events: auto;
+}
+.armament-radial-target {
+  position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: 10px;
+  background: rgba(18,15,12,.96); color: var(--parchment); display: grid; place-items: center;
+  font-size: .78rem; font-weight: 800; line-height: 1.05;
+}
+.armament-radial-target small { color: var(--muted); font-size: .68rem; }
+.armament-radial-target[data-radial-target='top'] { top: 0; left: 50%; transform: translateX(-105%); }
+.armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { transform: translateX(5%); }
+.armament-radial-target[data-radial-target='left'] { left: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='right'] { right: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='full'] { left: 50%; top: 48%; transform: translate(-50%,-50%); }
+.armament-radial-target[data-radial-target='bottom'] { bottom: 0; left: 50%; transform: translateX(-50%); }
+.armament-radial-picker {
+  position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
+  z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
+  border-radius: 9px; background: rgba(18,15,12,.98);
+  inline-size: max-content; max-inline-size: calc(100vw - 1rem); max-block-size: min(45vh, 18rem); overflow: auto;
+}
+.armament-radial-picker button,
+.pile-surface-picker button { min-width: var(--tap-floor); min-height: var(--tap-floor); }
+.armament-radial-picker button { max-inline-size: 100%; padding-inline: .7rem; overflow-wrap: anywhere; }
+.pile-surface-picker { display: grid; gap: .6rem; }
+
+/* Short-wide has desktop width but phone-like vertical pressure. Its six
+   destinations use the same collision-free semantic map as phones instead of
+   squeezing an absolute radial into the shallow space above the rail. */
+:root[data-composition='short-wide'] .armament-radial {
+  width: min(54vw, 28rem); aspect-ratio: auto;
+  bottom: calc(var(--action-row-drop) + .4rem);
+  display: grid; grid-template-columns: repeat(3, minmax(var(--tap-floor), 1fr));
+  gap: .35rem; padding: .35rem;
+}
+:root[data-composition='short-wide'] .armament-radial-target { position: static; min-width: 0; transform: none !important; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] { grid-row: 1; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+
+@media (max-width: 900px) {
+  /* Six real destinations cannot form a non-overlapping radial inside the
+     narrower phone/tablet glass. Keep the semantic placement map, but arrange
+     its responsive presentation as three compact rows: top pair,
+     left/full/right, and bottom. Wider layouts retain the spatial radial. */
+  .armament-radial {
+    width: min(92vw, 28rem); aspect-ratio: auto;
+    bottom: calc(var(--action-row-drop) + .4rem);
+    display: grid; grid-template-columns: repeat(3, minmax(var(--tap-floor), 1fr));
+    gap: .35rem; padding: .35rem;
+  }
+  .armament-radial-target { position: static; min-width: 0; transform: none !important; }
+  .armament-radial-target[data-radial-target='top'] { grid-row: 1; grid-column: 1; }
+  .armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { grid-column: 3; }
+  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }
+  .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
+  .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
+  .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+  .armament-radial-picker {
+    position: fixed; left: .5rem; right: .5rem;
+    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);
+    transform: none; inline-size: auto;
+  }
+  .armament-radial[data-placement='left'] { left: max(.4rem, var(--safe-left-local)); right: auto; }
+  .armament-radial[data-placement='center'] { left: 50%; right: auto; transform: translateX(-50%); }
+  .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, var(--safe-right-local)); }
+}
 
 /* ---------- targeting arrow ---------- */
 #target-arrow { position: fixed; z-index: 400; pointer-events: none; }
@@ -1468,7 +1547,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .hand .card.selected {
   transform: translateY(-12px) scale(1.1) !important;
 }
-:root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
+:root[data-composition='short-wide'] .combat { --action-row-drop: 11.2rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
 :root[data-composition='short-wide'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
@@ -1689,21 +1768,27 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      margin. Both halves are dropped together, in one place. */
   :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
   :root[data-layout='narrow'] .combat-action-row {
+    --action-edge-size: max(var(--tap-floor), clamp(4.6rem, 13vw, 5.6rem));
+    --action-pile-size: max(var(--tap-floor), clamp(4rem, 11.5vw, 4.8rem));
+    --action-end-size: max(var(--tap-floor), clamp(11rem, 30vw, 13rem));
     grid-area: actions; position: static; inset: auto; width: 100%;
-    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));
-    grid-template-areas: "energy end draw exhaust discard";
-    align-items: center; gap: 0.4rem;
+    grid-template-columns: var(--action-edge-size) minmax(0, 1fr) var(--action-pile-size) var(--action-end-size) var(--action-pile-size) minmax(0, 1fr) var(--action-edge-size);
+    grid-template-areas: "energy . draw end discard . exhaust";
+    align-items: center; column-gap: var(--action-cluster-gap);
   }
   :root[data-layout='narrow'] .combat-action-row > .energy-orb {
-    width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
+    width: var(--action-edge-size); max-width: 100%; height: var(--action-edge-size);
   }
   :root[data-layout='narrow'] .combat-action-row > .end-turn {
-    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    min-height: var(--action-edge-size); padding-block: 0.6rem;
     margin: 0; min-width: 0;
   }
 
   :root[data-layout='narrow'] .combat-action-row > .pile {
-    width: 100%; height: max(4.2rem, var(--tap-floor)); font-size: 1.1rem;
+    width: var(--action-pile-size); max-width: 100%; height: max(4.2rem, var(--tap-floor));
+  }
+  :root[data-layout='narrow'] .combat-action-row > .pile.exhaust {
+    width: var(--action-edge-size);
   }
 
   /* Co-op still renders Energy, the shared hand, and End Turn as direct
@@ -1722,3 +1807,61 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     margin-right: 13.8rem;
   }
+
+/* ---------- mobile safe areas -------------------------------------------------
+   iPhone browser chrome can expose the whole physical viewport when
+   viewport-fit=cover is active. Keep the interactive HUD and action rail inside
+   the resulting safe rectangle; the battlefield may still paint behind it. */
+.combat > .topbar.combat-hud.shared-hud {
+  padding-block-start: max(calc(1px / var(--ui-zoom, 1)), var(--safe-top-local));
+}
+.combat > .topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) {
+  padding-inline-start: max(1.6rem, calc(var(--safe-left-local) + var(--safe-edge-local)));
+  padding-inline-end: max(1.6rem, calc(var(--safe-right-local) + var(--safe-edge-local)));
+}
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding-inline-start: max(calc(8px / var(--ui-zoom, 1)), calc(var(--safe-left-local) + var(--safe-edge-local)));
+  padding-inline-end: max(calc(8px / var(--ui-zoom, 1)), calc(var(--safe-right-local) + var(--safe-edge-local)));
+}
+:root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud,
+:root[data-composition='short-wide'] .combat > .topbar.combat-hud.shared-hud {
+  padding-block-start: max(calc(1px / var(--ui-zoom, 1)), var(--safe-top-local));
+}
+.topbar.combat-hud.shared-hud .hud-quick-settings,
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-settings {
+  right: calc(var(--safe-right-local) + (8px / var(--ui-zoom, 1)));
+}
+:root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(var(--safe-right-local) + (9px / var(--ui-zoom, 1)));
+}
+.hand-area {
+  margin-bottom: calc(var(--action-row-drop) + var(--safe-bottom-local));
+}
+.combat-action-row {
+  inset-inline-start: max(1.6rem, calc(var(--safe-left-local) + var(--safe-edge-local)));
+  inset-inline-end: max(1.6rem, calc(var(--safe-right-local) + var(--safe-edge-local)));
+  bottom: calc(var(--safe-bottom-local) - var(--action-row-drop));
+}
+@media (max-width: 900px) {
+  .armament-radial {
+    max-width: calc(100vw - var(--safe-left-local) - var(--safe-right-local) - .8rem);
+    bottom: calc(var(--action-row-drop) + var(--safe-bottom-local) + .4rem);
+  }
+  .armament-radial-picker { bottom: calc(var(--action-row-drop) + var(--safe-bottom-local) + var(--tap-floor) + .75rem); }
+}
+@media (pointer: coarse) {
+  .combat .et-key,
+  .combat .flask-key,
+  .combat .key-hint,
+  .combat .hint-bar kbd { display: none; }
+}
+:root[data-layout='narrow'] .hand-area {
+  margin-bottom: 0;
+  padding-inline-start: max(1rem, var(--safe-left-local));
+  padding-inline-end: max(1rem, var(--safe-right-local));
+  padding-bottom: calc(1rem + var(--safe-bottom-local));
+}
+:root[data-layout='narrow'] .combat-action-row {
+  inset-inline: auto;
+  bottom: auto;
+}

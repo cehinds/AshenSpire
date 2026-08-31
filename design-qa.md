@@ -50,6 +50,39 @@ final result: passed
 
 ---
 
+# Combat Command Bar Design QA
+
+- Source visual truth: `C:\Users\const\.codex\generated_images\01a03f3d-e98a-7453-b238-1fe4ebade7c4\exec-9521fc29-1000-418d-b0df-4d5fe4c3bddd.png` (952 x 1653, SHA-256 `BF78ECEEE5024EFA85EE87662B75B9B93212D001D504AD85BBC31E755369DBB9`).
+- Primary implementation screenshot: `docs/preview/combat-command-bar-approved/action-row-approved-source-390x844-text-xl-hand-8-rest.png` (390 x 844, SHA-256 `13841D678C0C7046770857A286A6C510EE6DC1EC0F19773D2D9D5A8F40BFED5F`).
+- Combined comparison: `docs/preview/combat-command-bar-approved/qa-comparison-approved-390x844.png` (876 x 844, SHA-256 `7A2F2445E080A9B01C35146D63E5A2F75B765F26114E2D9A96D79905D7D10FF3`).
+- Responsive evidence: `action-row-approved-source-1200x730-text-m-hand-7-rest.png` and `action-row-approved-source-844x390-text-xl-hand-8-rest.png` in the same preview directory.
+- State: solo combat, original four-button Quick Access visible, eight-card portrait hand, no Armaments rail control, Exhausted at zero.
+- Normalization: the approved reference was scaled proportionally to the implementation's 844 px height and placed beside the native 390 x 844 screenshot. No crop or production asset was created from either image.
+
+## Findings
+
+No actionable P0, P1, or P2 difference remains for the requested command-bar layout.
+
+- Actions remains circular and owns the bottom-left edge.
+- Draw and Discard sit 4 px from the larger centered End Turn control; their gaps are symmetric and their labels remain bounded.
+- Exhausted remains present at zero and owns the bottom-right edge.
+- Armoury, Menu, Crimson, and Azure remain the four visible Quick Access controls; combat no longer mounts the Armaments radial or hides the flask controls.
+- Draw, Discard, and Exhausted open separate pile surfaces. Flask keyboard shortcuts continue to open menus against their visible Quick Access anchors.
+- At 390 x 844, 320 x 640, 844 x 390, and 1200 x 730, every control is on glass, at least 44 px, 45/45 hit-testable, and clear of cards and pagers. End Turn center drift is 0–0.008 px.
+- Source gate: 112 solo states and 2 co-op states passed. Independent settled standalone checks passed at 390 x 844 and 1200 x 730 in rest, armed, and exhaust states.
+- Standalone artifact: `AshenSpire.html`, 4,237,093 bytes, SHA-256 `B400068BFCBBCB6E888CBC8AE325330BE2FF88AF1D62E766E3C91FA74B6792DE`.
+
+## Comparison history
+
+1. The approved mock established the bottom-left Actions anchor, tight symmetric center cluster, bottom-right Exhausted control, and four-button Quick Access panel.
+2. The first current-base implementation exposed CSS-zoom track overflow: Draw crossed End Turn and the right edge could exceed its grid track.
+3. Shared grid/control sizing tokens, bounded padding, and edge-specific sizing removed the overflow while preserving the 4 px cluster gaps.
+4. One independent standalone sample read the first desktop frame before its geometry settled. The non-writing validator now waits for stable geometry for every state; five repeated product checks plus independent desktop/portrait reruns passed without changing the built artifact.
+
+final result: passed
+
+---
+
 # Title Menu Design QA
 
 - Source visual truth: `C:\Users\const\Documents\Codex\2026-08-23\ashenspire-asset-component-library\.codex-remote-attachments\01a03230-593b-7c31-ac0e-095f74f38b93\62753926-b830-4e31-a536-251bfa3adf41\1-Photo-1.jpg`, `2-Photo-2.jpg`, and `3-Photo-3.jpg`.

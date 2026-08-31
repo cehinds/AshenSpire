@@ -33,7 +33,7 @@
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execSync, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -3741,7 +3741,7 @@ export function runSelftest(root = ROOT) {
     // Stage 9b — every runRender() consumer reads both failure modes.
     const consumers = renderResultConsumerErrors(src);
     results.push({ label: 'every runRender() call site checks .errors as well as .drift', pass: consumers.length === 0, errs: consumers });
-    const reverted = src.replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const reverted = src.replace(/  if \(r\.errors && r\.errors\.length\) return r\.errors;\r?\n/, '');
     const caughtC = renderResultConsumerErrors(reverted);
     results.push({ label: 'consumer check catches a call site that drops .errors', pass: caughtC.some((e) => e.includes("checking 'r.errors'")), errs: caughtC });
     // Both failure modes, or the check only half does its job.
@@ -3753,7 +3753,8 @@ export function runSelftest(root = ROOT) {
     const cut = src.lastIndexOf(needle);
     const noDrift = src.slice(0, cut) + 'const { errors, drifted, wrote } = runRender(' + src.slice(cut + needle.length);
     // A line-oriented scan missed ordinary multiline formatting entirely.
-    const multiline = src.replace('  const r = runRender(root, true);', '  const r =\n    runRender(root, true);').replace('  if (r.errors && r.errors.length) return r.errors;\n', '');
+    const newline = src.includes('\r\n') ? '\r\n' : '\n';
+    const multiline = src.replace('  const r = runRender(root, true);', `  const r =${newline}    runRender(root, true);`).replace(/  if \(r\.errors && r\.errors\.length\) return r\.errors;\r?\n/, '');
     const caughtM = renderResultConsumerErrors(multiline);
     results.push({ label: 'consumer check sees a call site split across lines', pass: caughtM.some((e) => e.includes("checking 'r.errors'")), errs: caughtM });
     // ...and a call shape it cannot inspect must be reported, not passed over.
@@ -4356,6 +4357,6 @@ function main(argv) {
   return 2;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   process.exit(main(process.argv.slice(2)));
 }

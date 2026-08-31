@@ -6,10 +6,16 @@
 # re-seal only the target capsule -> commit to `dev` and report back on the issue.
 #
 # SECURITY MODEL
-# - Owner-only: the job runs only when the issue was opened by the configured
-#   human owner account. Edits are deliberately non-executable: an edited issue
-#   must never replay an already-applied command or become a new command merely
-#   because its author remains an owner.
+# - Opened only: edits never re-run a command. The owner closes and refiles a
+#   mistyped decision, producing a new immutable issue event.
+# - Owner association + form shape: the job requires OWNER association, the
+#   owner-command label, the decision title prefix, and the exact versioned
+#   issue-form body. The form marker prevents accidental hand-labelling; it is
+#   structural, not cryptographic. Separate agent identity remains the root fix
+#   when agents and the human owner share one GitHub account.
+# - Owner-login binding: the authenticated author and sender must both be the
+#   configured human owner account, so a differently-named automation identity
+#   can never satisfy the gate even with OWNER association.
 # - The actor role is resolved HERE, from the authenticated GitHub identity —
 #   never read from the issue body. Nothing an author types can escalate a role.
 # - Enumerated only: opsctl rejects any action outside owner-command.json, any
@@ -39,13 +45,16 @@ concurrency:
 jobs:
   execute:
     # Owner-authored "Owner decision" issues only. Association is necessary but
-    # not sufficient: bind the authenticated GitHub login to the configured
-    # human owner, preventing a shared agent identity from being treated as the owner.
+    # not sufficient: bind the authenticated login to the configured human owner
+    # (agents sharing the account cannot be told apart by association alone),
+    # require the label, and reject early on title shape. The body is validated
+    # by a separate step before opsctl sees it.
     if: >-
       github.event.issue.author_association == 'OWNER' &&
       github.event.issue.user.login == 'cehinds' &&
       github.event.sender.login == 'cehinds' &&
-      contains(github.event.issue.labels.*.name, 'owner-command')
+      contains(github.event.issue.labels.*.name, 'owner-command') &&
+      startsWith(github.event.issue.title, '[decision] ')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -71,6 +80,13 @@ jobs:
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
+
+      - name: Verify owner-decision form shape
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: >-
+          node .github/workflows/validate-owner-command-issue.mjs
+          --body-file /tmp/issue-body.md
 
       - name: Validate the command (dry-run first)
         id: dryrun
@@ -136,7 +152,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .agentops hud
+          git add .agentops hud review-approval-hub
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0

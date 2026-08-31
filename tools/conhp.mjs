@@ -3,13 +3,15 @@
 // Same production doors used here:
 //   content -> validateContent/createRegistries -> createRunState
 //   persisted run -> createSaveManager.loadRun -> run normalization/migration
-// The first committed form is intentionally RED against the Vigour-era tree.
+// Expectations are derived from the current resolved rule snapshot so a ruleset
+// change cannot leave this instrument permanently red for an obsolete formula.
 
 import { contentBundle } from '../src/content/index.js';
 import { RELIC_MODIFIER_TAGS } from '../src/model/schemas.js';
 import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
+import { deriveStat } from '../src/model/derivedStats.js';
 import { equipPiece, runMods, stampDeck } from '../src/model/loadout.js';
 import { createMemoryStorage, createSaveManager, RUN_KEY, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
 import { executeRunEffects } from '../src/engine/actions.js';
@@ -55,10 +57,12 @@ const resourceModifierBonus = (registries, relicIds, resource, attributes) => re
   }, 0);
 const expectedHp = (registries, run) => {
   const cls = registries.classes.get(run.class);
-  const con = run.attributes.constitution;
   const gear = runMods(registries, run.loadout, run.class).maxHp;
-  const relic = resourceModifierBonus(registries, run.relics, 'hp', run.attributes);
-  return Math.max(1, cls.maxHp + cls.hpPerConTier * Math.floor(con / 5) + relic + gear + (run.maxHpAdjustment || 0));
+  const hp = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
+    attributes: run.attributes,
+    classDef: cls,
+  });
+  return Math.max(1, hp.value + gear + (run.maxHpAdjustment || 0));
 };
 
 console.log('conhp — D22 Constitution HP formula (door: content boot + run load)\n');
@@ -74,14 +78,14 @@ check('the retired-name door migrates Vigour to Constitution, never the reverse'
   assert(!Object.hasOwn(contentBundle.attributeRules.retired, 'constitution'), 'Constitution is still marked retired');
 });
 
-check('HP and Stamina consume Constitution; HP tiers every five points', () => {
+check('HP and Stamina consume Constitution; HP follows the resolved per-point rule', () => {
   const hp = contentBundle.derivedStatRules.rules.hp;
   const stamina = contentBundle.derivedStatRules.rules.stamina;
   eq(hp.sourceStat, 'constitution', 'HP source');
-  eq(hp.pointsPerTier ?? contentBundle.derivedStatRules.defaults.pointsPerTier, 5, 'HP points per tier');
+  eq(hp.base, 30, 'HP base');
+  eq(hp.pointsPerTier ?? contentBundle.derivedStatRules.defaults.pointsPerTier, 1, 'HP points per tier');
+  eq(hp.gainPerTier, 2, 'HP gain per tier');
   eq(stamina.sourceStat, 'constitution', 'Stamina source');
-  eq(hp.gainPerTier?.strategy, 'classField', 'authored HP gain strategy');
-  eq(hp.gainPerTier?.field, 'hpPerConTier', 'authored HP class coefficient field');
 });
 
 check('every class authors one positive integer HP-per-CON-tier coefficient', () => {
@@ -159,6 +163,11 @@ check('attribute-tier relic rows must fold into their target resource rule at co
 
 check('attribute-tier relic rows reject a non-floor target rule at content boot', () => {
   const bad = cloneBundle();
+  const relic = bad.relics.find((row) => row.id === 'forsakenMedallion');
+  relic.passives.modifiers.push({
+    tag: 'resource.attributeTier', resource: 'hp', sourceStat: 'constitution',
+    pointsPerTier: 1, amountPerTier: 1,
+  });
   bad.derivedStatRules.rules.hp.rounding = 'ceil';
   const result = validateContent(bad);
   assert(!result.ok, 'validateContent accepted hp rounding=ceil with a tier-folding relic');
@@ -195,7 +204,7 @@ check('the production content door rejects a fractional class HP coefficient by 
     `fractional coefficient was not named: ${JSON.stringify(result.errors)}`);
 });
 
-check('fresh runs use class base + class coefficient × floor(CON/5) + equipment', () => {
+check('fresh runs match the resolved HP receipt plus equipment', () => {
   const registries = createRegistries(contentBundle);
   for (const cls of registries.classes.all()) {
     const run = createRunState({ seed: 0xd220 + cls.id.length, classId: cls.id, registries });
@@ -210,42 +219,40 @@ check('fresh runs declare a permanent max-HP adjustment ledger at zero', () => {
   eq(run.maxHpAdjustment, 0, 'fresh maxHpAdjustment');
 });
 
-check('CON tiers are floored: 10 and 14 match; 15 adds exactly one class coefficient', () => {
+check('each adjacent CON point adds exactly the resolved HP gain', () => {
   const atCon = (constitution) => {
     const source = cloneBundle();
-    const row = source.attributeRules.presets.standard.reaver;
+    const row = clone(source.attributeRules.presets.tuned.reaver);
     const delta = constitution - row.constitution;
     row.constitution = constitution;
     row.strength -= delta;
     const registries = createRegistries(source);
-    return { run: createRunState({ seed: 0x10 + constitution, classId: 'reaver', registries }), registries };
+    return {
+      run: createRunState({ seed: 0x10 + constitution, classId: 'reaver', registries, attributes: row }),
+      registries,
+    };
   };
   const at10 = atCon(10).run;
   const at14 = atCon(14).run;
   const { run: at15, registries } = atCon(15);
-  eq(at14.maxHp, at10.maxHp, '10 and 14 occupy the same CON tier');
-  const relicTierGain = relicModifiers(registries, at15.relics)
-    .filter((row) => row.tag === 'resource.attributeTier' && row.resource === 'hp'
-      && row.sourceStat === 'constitution' && row.pointsPerTier === 5)
-    .reduce((sum, row) => sum + row.amountPerTier, 0);
-  eq(at15.maxHp - at14.maxHp,
-    registries.classes.get('reaver').hpPerConTier + relicTierGain,
-    '15 enters one class plus starter-relic CON tier');
+  const hp = at15.derivedStatRuleSnapshot.rules.rules.hp;
+  eq(at14.maxHp - at10.maxHp, 4 * hp.gainPerTier, 'four CON points add four resolved gains');
+  eq(at15.maxHp - at14.maxHp, hp.gainPerTier, 'one CON point adds one resolved gain');
 });
 
-check('changing one class coefficient changes that class through data, not a formula literal', () => {
+check('the legacy class coefficient is not a second live HP authority', () => {
   const beforeSource = cloneBundle();
   const before = createRunState({ seed: 0x21, classId: 'reaver', registries: createRegistries(beforeSource) });
   const afterSource = cloneBundle();
   afterSource.classes.find((row) => row.id === 'reaver').hpPerConTier += 3;
   const registries = createRegistries(afterSource);
   const after = createRunState({ seed: 0x22, classId: 'reaver', registries });
-  eq(after.maxHp - before.maxHp, 3 * Math.floor(after.attributes.constitution / 5), 'authored coefficient delta');
+  eq(after.maxHp, before.maxHp, 'legacy class coefficient is documented dead data');
 });
 
 check('WIS 15 gives three Mana and the Starseer starter relic adds one flat Mana, total four', () => {
   const registries = createRegistries(contentBundle);
-  const attrs = { strength: 10, dexterity: 10, constitution: 10, wisdom: 15, intelligence: 10 };
+  const attrs = { strength: 8, dexterity: 10, constitution: 10, wisdom: 15, intelligence: 10 };
   const run = createRunState({
     seed: 0x2515, classId: 'starseer', registries, attributes: attrs,
     startingKitId: 'starseerStarstone', profileMeta: { discoveredArmaments: ['starstoneStaff'] },
@@ -289,7 +296,7 @@ check('a mixed Constitution/Vigour save is refused rather than silently choosing
   eq(loaded, null, 'mixed-vocabulary save result');
 });
 
-check('new host snapshots carry the data-owned class coefficient reference', () => {
+check('new host snapshots carry the resolved data-owned HP rule', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0xc00, classId: 'herald', registries });
   const hp = run.derivedStatRuleSnapshot.rules.rules.hp;
@@ -362,7 +369,7 @@ check('Armoury loadout change reconciles equipment HP and survives equip -> save
 // or its schemaVersion 3, which is exactly what a real save from that window
 // has. tests/fixtures/run-save-vigour-window.json is not a reconstruction — it
 // is the bytes createSaveManager.saveRun actually wrote at dev = 5f58bca and
-// dev = d7d1920, and d7d1920's bundle is the one still shipped in dist/.
+// dev = d7d1920, preserved as migration evidence from that shipped window.
 //
 // The claim: Constitution -> Vigour -> Constitution loses nothing. Not "loads",
 // not "does not throw" — the round-tripped save and its never-renamed twin
@@ -396,20 +403,19 @@ check('a REAL Vigour-window save loads, and the round trip Constitution -> Vigou
   return `maxHp ${there.maxHp}, deficit ${there.maxHp - there.hp}, curse ledger ${there.maxHpAdjustment}`;
 });
 
-check('a save written by the SHIPPED Vigour bundle keeps its own max HP across the restore', () => {
+check('a save written by the shipped Vigour bundle migrates to host HP without healing', () => {
   assert(windowFixture, 'fixture missing');
   const registries = createRegistries(contentBundle);
   const before = windowFixture.vigourEraNative;
   const after = loadThroughDoor(registries, before);
   assert(after, 'a run started on the live build was archived at the load door');
-  // A cursed in-flight run is re-derived under D22 and its permanent loss is
-  // inferred once into the ledger. The player must not notice: same max, same
-  // deficit, same everything they can see.
-  eq(after.maxHp, before.maxHp, 'in-flight max HP');
-  eq(after.hp, before.hp, 'in-flight current HP');
+  // A stale ruleset is re-derived under the current host rule. Preserve the
+  // player's deficit rather than retaining a superseded maximum.
+  eq(after.maxHp, expectedHp(registries, after), 'host-derived max HP');
+  eq(after.maxHp - after.hp, before.maxHp - before.hp, 'in-flight HP deficit');
   eq(after.maxStamina, before.maxStamina, 'in-flight stamina pool');
   eq(after.attributes.constitution, before.attributes.vigour, 'the points arrive under the live name');
-  return `maxHp ${after.maxHp} held; ledger inferred ${after.maxHpAdjustment}`;
+  return `maxHp ${before.maxHp} -> ${after.maxHp}; deficit ${after.maxHp - after.hp} preserved`;
 });
 
 check('the both-names guard fires BY NAME, across persisted homes, and stays out of other refusals', () => {
