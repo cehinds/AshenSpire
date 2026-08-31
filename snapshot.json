@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 25,
-  "last_sequence": 25,
+  "revision": 26,
+  "last_sequence": 26,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -144,21 +144,21 @@
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 4,
+      "revision": 5,
       "issue_id": "468",
       "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
       "priority": "P1",
       "dependencies": [],
-      "state": "CANDIDATE_READY",
+      "state": "QA",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "495bf285ac2bcdd634f46b56352d03c6bd6cc593",
       "branch": "codex/issue-468",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 1,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+      "assignment_kind": "qa",
+      "lease_id": "qa-lease:468:2",
+      "lease_epoch": 2,
+      "lease_expiry": "2026-08-31T15:13:13.438Z",
+      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
       "maker_actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
       "lease_history": [
         {
@@ -167,6 +167,13 @@
           "lease_id": "lease:468:1",
           "lease_epoch": 1,
           "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+          "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+          "lease_id": "qa-lease:468:2",
+          "lease_epoch": 2,
+          "assignment_kind": "qa"
         }
       ],
       "late_candidates": [],
@@ -186,9 +193,9 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Bind independent QA to this exact candidate.",
+      "next_action": "Run independent QA against the exact candidate commit.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000025-afbe2035-d21e-4020-bc24-f914961150f3",
+      "updated_event": "evt-00000026-f5bb8f51-0735-4934-acf9-a3c615d3ae20",
       "updated_at": "2026-08-31T14:43:13.438Z"
     },
     "470": {
@@ -256,5 +263,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "55b9d748f795b2e8f24835aac8a6327b1e91dde5d3cf7147fb57f5e1206c642a"
+  "snapshot_hash": "3daefc41343b84257a0f3bc4af746c5e3fe75e0b141c63769766b221cde34071"
 }
