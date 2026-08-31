@@ -584,7 +584,10 @@ function createMutationInput(definition, clientMutationId) {
 
 function assertInventoryDelta(before, after, definition, returned) {
   if (after.preflight.item_count !== before.preflight.item_count || after.preflight.field_value_count !== before.preflight.field_value_count || after.preflight.item_state_root !== before.preflight.item_state_root) throw new ExecutorError('POST_MUTATION_DRIFT', 'Project items or field values changed during field creation');
-  if (after.preflight.field_count !== before.preflight.field_count + 1) throw new ExecutorError('MUTATION_RESULT_MISMATCH', 'Project field count did not increase by exactly one');
+  if (after.preflight.field_count !== before.preflight.field_count + 1) {
+    const code = after.preflight.field_count > before.preflight.field_count + 1 ? 'POST_MUTATION_DRIFT' : 'MUTATION_RESULT_MISMATCH';
+    throw new ExecutorError(code, 'Project field count did not increase by exactly one');
+  }
   const beforeById = new Map(before.fields.map((field) => [field.id, field]));
   const afterById = new Map(after.fields.map((field) => [field.id, field]));
   for (const [id, oldField] of beforeById) if (!afterById.has(id) || stableStringify(afterById.get(id)) !== stableStringify(oldField)) throw new ExecutorError('POST_MUTATION_DRIFT', `existing Project field ${oldField.name} changed`);
@@ -647,9 +650,10 @@ function createReceipt({ status, failureCode, authorityResult, attemptReceipt, a
 }
 
 function persistReceipt(root, auditParentOid, attemptReceipt, authorityResult, receipt, runner) {
-  verifyReceipt(root, receipt);
+  verifyReceiptDocument(root, receipt, runner);
   const relative = attemptPaths(authorityResult.authority.event_hash).receipt;
   const publication = pushAuditSuccessor(root, auditParentOid, [{ relative, body: stableStringify(receipt) }], `AgentOps record Project schema attempt ${authorityResult.authority.event_id}`, receipt.completed_at, runner, 'RECEIPT_PERSIST_FAILED');
+  verifyReceipt(root, receipt, runner);
   return { path: relative, commit_oid: publication.commit_oid, receipt_hash: receipt.receipt_hash };
 }
 
@@ -743,8 +747,12 @@ export function applyProjectSchemaChange(root, authorityOptions, runner = defaul
       let created;
       try { created = assertInventoryDelta(before, after, definition, returned); }
       catch (error) {
-        mutationAttempts.push({ index, field_name: definition.name, client_mutation_id: clientMutationId, request_sha256: response.request_sha256, response_sha256: response.response_sha256, outcome: error.code === 'POST_MUTATION_DRIFT' ? 'DRIFT' : 'MISMATCH', returned_field: returned, started_at: startedAt, finished_at: now() });
-        current = after; throw error;
+        const finishedAt = now();
+        const mutationRecord = { index, field_name: definition.name, client_mutation_id: clientMutationId, request_sha256: response.request_sha256, response_sha256: response.response_sha256, outcome: error.code === 'POST_MUTATION_DRIFT' ? 'DRIFT' : 'MISMATCH', returned_field: returned, started_at: startedAt, finished_at: finishedAt };
+        mutationAttempts.push(mutationRecord); current = after;
+        const resultEntry = journalEntry({ attempt_id: authorityResult.authority.event_hash, sequence: journalEntries.length + 1, previous_entry_hash: journalEntries.at(-1).entry_hash, phase: 'RESULT', index, client_mutation_id: clientMutationId, outcome: mutationRecord.outcome, mutation_record: mutationRecord, mutation_record_hash: sha256(mutationRecord), after_preflight: after.preflight, at: finishedAt });
+        auditCursor = appendAuditJournal(root, auditCursor, resultEntry, finishedAt, runner).commit_oid; journalEntries.push(resultEntry);
+        throw error;
       }
       const finishedAt = now(); const mutationRecord = { index, field_name: definition.name, client_mutation_id: clientMutationId, request_sha256: response.request_sha256, response_sha256: response.response_sha256, outcome: 'CREATED', returned_field: fieldContractShape(created), started_at: startedAt, finished_at: finishedAt };
       mutationAttempts.push(mutationRecord);
@@ -823,7 +831,7 @@ export function recoverProjectSchemaChange(root, authorityOptions, runner = defa
   return { status, receipt, receipt_commit: receiptCommit };
 }
 
-export function verifyReceipt(root, receipt, runner = defaultRunner) {
+function verifyReceiptDocument(root, receipt, runner = defaultRunner) {
   assertDocument(root, receipt, 'project-schema-receipt');
   const copy = structuredClone(receipt); delete copy.receipt_hash;
   if (receipt.receipt_hash !== sha256(copy)) throw new ExecutorError('RECEIPT_INVALID', 'receipt hash mismatch');
@@ -870,8 +878,12 @@ export function verifyReceipt(root, receipt, runner = defaultRunner) {
   for (let index = 0; index < entries.length; index += 1) {
     const entry = entries[index]; const copyEntry = structuredClone(entry); delete copyEntry.entry_hash;
     if (entry.entry_hash !== sha256(copyEntry) || entry.sequence !== index + 1 || entry.attempt_id !== receipt.authority.event_hash || entry.previous_entry_hash !== (entries[index - 1]?.entry_hash ?? null) || entry.index !== Math.floor(index / 2) || entry.phase !== (index % 2 === 0 ? 'INTENT' : 'RESULT')) throw new ExecutorError('RECEIPT_INVALID', 'journal entry chain, phase, or seal is invalid');
-    if (entry.phase === 'RESULT' && (entry.mutation_record_hash !== sha256(receipt.mutation_attempts[entry.index]) || stableStringify(entry.mutation_record) !== stableStringify(receipt.mutation_attempts[entry.index]))) throw new ExecutorError('RECEIPT_INVALID', 'journal result does not bind the exact mutation record');
+    if (entry.phase === 'RESULT') {
+      if (entry.mutation_record_hash !== sha256(receipt.mutation_attempts[entry.index]) || stableStringify(entry.mutation_record) !== stableStringify(receipt.mutation_attempts[entry.index])) throw new ExecutorError('RECEIPT_INVALID', 'journal result does not bind the exact mutation record');
+      exactKeys(entry.after_preflight, ['field_count', 'field_state_root', 'item_count', 'field_value_count', 'item_state_root', 'pagination_manifest_hash', 'priority_field_id', 'priority_contract_hash'], `journal RESULT ${entry.index} after_preflight`);
+    }
   }
+  if (entries.length && stableStringify(entries.at(-1).after_preflight) !== stableStringify(receipt.final_preflight)) throw new ExecutorError('RECEIPT_INVALID', 'final preflight does not equal the final journal RESULT after_preflight');
   if (entries.length) {
     const commits = git(root, ['rev-list', '--first-parent', '--reverse', `${receipt.attempt.commit_oid}..${receipt.journal.head_oid}`], runner, { code: 'RECEIPT_INVALID' }).split(/\r?\n/).filter(Boolean);
     if (commits.length !== entries.length) throw new ExecutorError('RECEIPT_INVALID', 'journal commit chain length differs from entry count');
@@ -884,6 +896,37 @@ export function verifyReceipt(root, receipt, runner = defaultRunner) {
   const actualTree = git(root, ['show', '-s', '--format=%T', receipt.executor.head], runner, { code: 'RECEIPT_INVALID' });
   if (actualTree !== receipt.executor.tree) throw new ExecutorError('RECEIPT_INVALID', 'receipt executor head/tree is not a real exact commit');
   return true;
+}
+
+function verifyCommittedReceipt(root, receipt, runner) {
+  const auditHead = remoteRefOid(root, AUDIT_REF, runner, 'RECEIPT_INVALID');
+  if (!auditHead) throw new ExecutorError('RECEIPT_INVALID', 'audit ref is absent; receipt is not durably committed');
+  ensureCommitObject(root, auditHead, runner);
+  const receiptPath = attemptPaths(receipt.authority.event_hash).receipt;
+  const receiptCommits = git(root, ['log', '--first-parent', '--format=%H', '--diff-filter=A', auditHead, '--', receiptPath], runner, { code: 'RECEIPT_INVALID' }).split(/\r?\n/).filter(Boolean);
+  if (receiptCommits.length !== 1) throw new ExecutorError('RECEIPT_INVALID', 'receipt path must have exactly one introduction commit on the audit chain');
+  const receiptCommit = receiptCommits[0];
+  const committedReceipt = committedJson(root, receiptCommit, receiptPath, runner, 'RECEIPT_INVALID');
+  if (stableStringify(committedReceipt) !== stableStringify(receipt)) throw new ExecutorError('RECEIPT_INVALID', 'receipt bytes are not the exact committed receipt');
+  const receiptParent = git(root, ['show', '-s', '--format=%P', receiptCommit], runner, { code: 'RECEIPT_INVALID' });
+  const receiptPaths = git(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', receiptParent, receiptCommit], runner, { code: 'RECEIPT_INVALID' }).split(/\r?\n/).filter(Boolean);
+  if (receiptParent !== receipt.journal.head_oid || stableStringify(receiptPaths) !== stableStringify([receiptPath])) throw new ExecutorError('RECEIPT_INVALID', 'receipt commit is not the receipt-only direct successor of the journal head');
+  const manifestRelative = manifestPath(receipt.authority.event_hash);
+  if (committedPathExists(root, auditHead, manifestRelative, runner)) {
+    const manifestCommits = git(root, ['log', '--first-parent', '--format=%H', '--diff-filter=A', auditHead, '--', manifestRelative], runner, { code: 'RECEIPT_INVALID' }).split(/\r?\n/).filter(Boolean);
+    if (manifestCommits.length !== 1) throw new ExecutorError('RECEIPT_INVALID', 'manifest path must have exactly one introduction commit on the audit chain');
+    const manifestCommit = manifestCommits[0];
+    const manifestParent = git(root, ['show', '-s', '--format=%P', manifestCommit], runner, { code: 'RECEIPT_INVALID' });
+    const manifestPaths = git(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', manifestParent, manifestCommit], runner, { code: 'RECEIPT_INVALID' }).split(/\r?\n/).filter(Boolean);
+    const manifest = committedJson(root, manifestCommit, manifestRelative, runner, 'RECEIPT_INVALID');
+    if (manifestParent !== receiptCommit || stableStringify(manifestPaths) !== stableStringify([manifestRelative]) || stableStringify(manifest) !== stableStringify(deriveProjectManifest(receipt))) throw new ExecutorError('RECEIPT_INVALID', 'manifest is not the exact manifest-only direct successor of the receipt commit');
+  }
+  return true;
+}
+
+export function verifyReceipt(root, receipt, runner = defaultRunner) {
+  verifyReceiptDocument(root, receipt, runner);
+  return verifyCommittedReceipt(root, receipt, runner);
 }
 
 function parseOptions(argv) {

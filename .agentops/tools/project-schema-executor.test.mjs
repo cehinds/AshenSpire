@@ -89,6 +89,9 @@ function mockRunner(state, controls = {}) {
         ? { __typename: 'ProjectV2Field', id: `FIELD_${controls.mutationCalls}`, name: input.name, dataType: input.dataType, createdAt: stamp, updatedAt: stamp, isIssueField: false }
         : { __typename: 'ProjectV2SingleSelectField', id: `FIELD_${controls.mutationCalls}`, name: input.name, dataType: input.dataType, createdAt: stamp, updatedAt: stamp, isIssueField: false, options: input.singleSelectOptions.map((option, index) => ({ id: `OPTION_${controls.mutationCalls}_${index}`, ...option })) };
       state.fields.push(field); state.updatedAt = stamp;
+      if (controls.postCreateDriftAt === controls.mutationCalls) {
+        state.fields.push({ __typename: 'ProjectV2Field', id: `DRIFT_${controls.mutationCalls}`, name: `Unexpected ${controls.mutationCalls}`, dataType: 'TEXT', createdAt: stamp, updatedAt: stamp, isIssueField: false });
+      }
       if (controls.applyThenFailAt === controls.mutationCalls) return { status: 1, signal: null, error: null, stdout: '', stderr: 'simulated lost response after apply' };
       const data = { createProjectV2Field: { clientMutationId: input.clientMutationId, projectV2Field: field } };
       return { status: 0, signal: null, error: null, stdout: JSON.stringify({ data }), stderr: '' };
@@ -289,6 +292,23 @@ await checkAsync('lost mutation response is reconciled to one exact prefix and n
   } finally { removeFixture(fixture); }
 });
 
+await checkAsync('post-create drift appends its RESULT and persists one terminal receipt', async () => {
+  const state = projectState(); const controls = { postCreateDriftAt: 1 }; const fixture = createFixture(state, controls);
+  try {
+    let tick = 0; let caught;
+    try { applyProjectSchemaChange(fixture.repo, { authorityStateOid: fixture.authorityStateOid, eventPath: fixture.eventPath }, fixture.runner, { now: () => `2026-08-31T19:${String(50 + tick++).padStart(2, '0')}:00Z` }); }
+    catch (error) { caught = error; }
+    assert.equal(caught.code, 'POST_MUTATION_DRIFT'); assert.equal(controls.mutationCalls, 1);
+    assert.equal(caught.details.receipt.status, 'FAILED'); assert.equal(caught.details.receipt.failure_code, 'POST_MUTATION_DRIFT');
+    assert.equal(caught.details.receipt.mutation_attempts.length, 1); assert.equal(caught.details.receipt.mutation_attempts[0].outcome, 'DRIFT');
+    assert.equal(caught.details.receipt.journal.entry_count, 2);
+    const journal = run('git', ['show', `${caught.details.receipt.journal.head_oid}:.agentops/scheduler/project-schema-attempts/journal.jsonl`], fixture.repo).split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+    assert.equal(journal.at(-1).phase, 'RESULT'); assert.deepEqual(journal.at(-1).after_preflight, caught.details.receipt.final_preflight);
+    assert.equal(run('git', ['rev-parse', `${caught.details.receipt_commit.commit_oid}^`], fixture.repo), caught.details.receipt.journal.head_oid);
+    assert.equal(verifyReceipt(fixture.repo, caught.details.receipt), true);
+  } finally { removeFixture(fixture); }
+});
+
 await checkAsync('recovery resolves a durable intent after result-push crash without another create', async () => {
   const state = projectState(); const controls = {}; const fixture = createFixture(state, controls);
   try {
@@ -331,6 +351,24 @@ check('receipt verification detects any tampering', () => {
     assert.throws(() => verifyReceipt(fixture.repo, resealReceipt(invented)), (error) => error.code === 'RECEIPT_INVALID');
     const fabricated = structuredClone(result.receipt); fabricated.created_fields = []; fabricated.mutation_attempts = []; fabricated.mutation_counts.created_field_count = 0; fabricated.final_preflight = structuredClone(fabricated.initial_preflight);
     assert.throws(() => verifyReceipt(fixture.repo, resealReceipt(fabricated)), (error) => error.code === 'RECEIPT_INVALID');
+    const selfHashedUncommitted = structuredClone(result.receipt); selfHashedUncommitted.completed_at = '2026-08-31T23:59:59Z';
+    assert.throws(() => verifyReceipt(fixture.repo, resealReceipt(selfHashedUncommitted)), (error) => error.code === 'RECEIPT_INVALID' && /exact committed receipt/.test(error.message));
+    const journalPreflightMismatch = structuredClone(result.receipt); journalPreflightMismatch.final_preflight.pagination_manifest_hash = 'f'.repeat(64);
+    assert.throws(() => verifyReceipt(fixture.repo, resealReceipt(journalPreflightMismatch)), (error) => error.code === 'RECEIPT_INVALID' && /final journal RESULT/.test(error.message));
+
+    run('git', ['switch', '--detach', result.receipt.journal.head_oid], fixture.repo);
+    fs.writeFileSync(path.join(fixture.repo, 'interposed.txt'), 'not receipt-only\n'); run('git', ['add', 'interposed.txt'], fixture.repo); run('git', ['commit', '-m', 'interposed'], fixture.repo);
+    const receiptPath = `.agentops/scheduler/project-schema-attempts/receipts/${result.receipt.authority.event_hash}.json`;
+    writeJson(path.join(fixture.repo, ...receiptPath.split('/')), result.receipt); run('git', ['add', receiptPath], fixture.repo); run('git', ['commit', '-m', 'fabricated receipt publication'], fixture.repo);
+    run('git', ['push', '--force', 'origin', `HEAD:refs/heads/agentops/project-schema-audit`], fixture.repo);
+    assert.throws(() => verifyReceipt(fixture.repo, result.receipt), (error) => error.code === 'RECEIPT_INVALID' && /direct successor/.test(error.message));
+
+    run('git', ['switch', '--detach', result.receipt_commit.commit_oid], fixture.repo);
+    fs.writeFileSync(path.join(fixture.repo, 'interposed-manifest.txt'), 'not manifest-only\n'); run('git', ['add', 'interposed-manifest.txt'], fixture.repo); run('git', ['commit', '-m', 'interposed manifest parent'], fixture.repo);
+    const manifestPath = `.agentops/scheduler/project-schema-attempts/manifests/${result.receipt.authority.event_hash}.json`;
+    writeJson(path.join(fixture.repo, ...manifestPath.split('/')), result.project_manifest); run('git', ['add', manifestPath], fixture.repo); run('git', ['commit', '-m', 'fabricated manifest publication'], fixture.repo);
+    run('git', ['push', '--force', 'origin', `HEAD:refs/heads/agentops/project-schema-audit`], fixture.repo);
+    assert.throws(() => verifyReceipt(fixture.repo, result.receipt), (error) => error.code === 'RECEIPT_INVALID' && /manifest-only direct successor/.test(error.message));
   } finally { removeFixture(fixture); }
 });
 
