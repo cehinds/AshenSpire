@@ -24,9 +24,10 @@
 #   repeated immediately before the write so a concurrent change cannot be lost.
 # - Least privilege: the token is read-only at the top level; only this job gets
 #   `contents: write` (to commit the decision) and `issues: write` (to reply).
-# - Ordinary actions publish the authority commit to `dev`. Scheduler cutover
-#   never publishes that commit alone: it deterministically builds S1 and D1
-#   locally, then uses one atomic exact-lease push for state and dev.
+# - Ordinary actions publish the authority commit to `dev` with an exact lease.
+#   Project schema authority additionally initializes its dedicated audit ref;
+#   scheduler cutover never publishes A alone and uses one atomic exact-lease
+#   push for the derived state and development commits.
 
 name: owner-command
 
@@ -174,8 +175,18 @@ jobs:
               --request-file /tmp/owner-command-request.json \
               --repo "$GITHUB_WORKSPACE" \
               --remote origin | tee /tmp/publish.txt
+          elif [ "$ACTION" = "authorize-project-schema-change" ]; then
+            node .github/workflows/validate-owner-command-issue.mjs \
+              --execute-project \
+              --request-file /tmp/owner-command-request.json \
+              --repo "$GITHUB_WORKSPACE" \
+              --remote origin | tee /tmp/publish.txt
           else
-            git push origin HEAD:dev 2>&1 | tee /tmp/publish.txt
+            node .github/workflows/validate-owner-command-issue.mjs \
+              --execute-authority \
+              --request-file /tmp/owner-command-request.json \
+              --repo "$GITHUB_WORKSPACE" \
+              --remote origin | tee /tmp/publish.txt
           fi
 
       - name: Report the applied decision

@@ -716,13 +716,13 @@ function remoteRefs(repo, remote, refs) {
   return found;
 }
 
-export function atomicPublishExactRefs({ repo, remote = "origin", stateRef, expectedStateOid, stateTargetOid, developmentRef, expectedDevelopmentOid, developmentTargetOid }) {
+export function atomicPublishExactRefs({ repo, remote = "origin", stateRef, expectedStateOid, stateTargetOid, developmentRef, expectedDevelopmentOid, developmentTargetOid, attemptedAt = new Date().toISOString(), expiresAt = null, now = () => new Date() }) {
   const refs = [stateRef, developmentRef];
   const before = remoteRefs(repo, remote, refs);
   if (before[stateRef] !== expectedStateOid || before[developmentRef] !== expectedDevelopmentOid) {
     throw new Error("cutover prepublication CAS mismatch; no push attempted");
   }
-  const attemptedAt = new Date().toISOString();
+  if (expiresAt && Date.parse(expiresAt) <= now().getTime()) throw new Error("cutover authority expired immediately before atomic publication");
   const push = runGit(repo, [
     "push", "--atomic",
     `--force-with-lease=${stateRef}:${expectedStateOid}`,
@@ -742,10 +742,48 @@ export function atomicPublishExactRefs({ repo, remote = "origin", stateRef, expe
   return { ok, receipt, stderr: push.stderr };
 }
 
-export function createProjectAuditRefOnce({ repo, authorityOid, auditTargetOid, remote = "origin", auditRef = "refs/heads/agentops/project-schema-audit" }) {
+function authorityBinding(request) {
+  return request.scheduler_migration ?? request.project_schema_change ?? request.scheduler_state_reconciliation ?? request.scheduler_cutover;
+}
+
+function assertPublicationFresh(request, label, now = new Date()) {
+  const binding = authorityBinding(request);
+  const expiresAt = binding?.expires_at;
+  if (!expiresAt || !Number.isFinite(Date.parse(expiresAt)) || Date.parse(expiresAt) <= now.getTime()) throw new Error(`${label} authority expired before publication`);
+}
+
+function ownerEventAt(repo, request, authorityOid = "HEAD") {
+  const a = gitOid(repo, authorityOid);
+  const parent = gitOid(repo, `${a}^`);
+  const eventFiles = runGit(repo, ["diff-tree", "--no-commit-id", "--name-only", "-r", parent, a]).stdout.split(/\r?\n/).filter((name) => new RegExp(`^\\.agentops/events/${request.target}/[^/]+\\.json$`).test(name));
+  if (eventFiles.length !== 1) throw new Error("authority A must contain exactly one canonical owner event for its target");
+  const event = JSON.parse(runGit(repo, ["show", `${a}:${eventFiles[0]}`]).stdout);
+  if (event.kind !== "owner-decision" || event.actor !== "owner" || event.decision?.action !== request.action) throw new Error("authority A owner event does not match the exact request action");
+  return { oid: a, parent, path: eventFiles[0], event, eventHash: objectSha256(stableJson(event)) };
+}
+
+export function consumeExactPacket({ repo, request, authorityOid = "HEAD", consumedAt = new Date().toISOString() }) {
+  const authority = ownerEventAt(repo, request, authorityOid);
+  const ref = `refs/agentops/owner-command-consumed/${request.action}/${authority.eventHash}`;
+  const prior = runGit(repo, ["rev-parse", "--verify", ref], { allowFailure: true });
+  if (prior.status === 0) {
+    const record = JSON.parse(runGit(repo, ["show", `${ref}:.agentops/local-owner-command-consumption.json`]).stdout);
+    if (record.authority_oid !== authority.oid || record.event_hash !== authority.eventHash || record.action !== request.action) throw new Error("local owner-command consumption tombstone conflicts with the exact packet");
+    return { ref, oid: prior.stdout, record, recovery: true, authority };
+  }
+  const record = { schema: "agentops/local-owner-command-consumption/v1", action: request.action, authority_oid: authority.oid, event_path: authority.path, event_id: authority.event.id, event_hash: authority.eventHash, consumed_at: consumedAt, retention: "never-delete", authority_effect: "evidence-only-no-authority-expansion" };
+  const blob = hashBlob(repo, `${stableJson(record)}\n`);
+  const tree = treeWithBlobs(repo, authority.oid, { ".agentops/local-owner-command-consumption.json": blob });
+  const oidValue = commitFromTree(repo, authority.oid, tree, `AgentOps consume ${request.action}`, consumedAt, "AgentOps Owner Command");
+  runGit(repo, ["update-ref", ref, oidValue, "0".repeat(40)]);
+  return { ref, oid: oidValue, record, recovery: false, authority };
+}
+
+export function createProjectAuditRefOnce({ repo, authorityOid, auditTargetOid, remote = "origin", auditRef = "refs/heads/agentops/project-schema-audit", expiresAt = null, now = () => new Date() }) {
   if (gitOid(repo, `${auditTargetOid}^`) !== authorityOid) throw new Error("initial Project audit commit must be the direct child of authority A");
   const before = remoteRefs(repo, remote, [auditRef]);
   if (before[auditRef] !== null) throw new Error("Project audit ref is not absent; no creation attempted");
+  if (expiresAt && Date.parse(expiresAt) <= now().getTime()) throw new Error("Project schema authority expired immediately before audit-ref publication");
   const push = runGit(repo, ["push", `--force-with-lease=${auditRef}:`, remote, `${auditTargetOid}:${auditRef}`], { allowFailure: true });
   const after = remoteRefs(repo, remote, [auditRef]);
   const targetExact = after[auditRef] === auditTargetOid;
@@ -862,20 +900,93 @@ export function deriveCutoverObjects({ repo, request, authorityOid = "HEAD" }) {
   };
 }
 
-export function deriveProjectAuditInitialCommit({ repo, request, authorityOid = "HEAD" }) {
+export function deriveProjectAuditInitialCommit({ repo, request, authorityOid = "HEAD", attemptedAt }) {
   const binding = request.project_schema_change;
   if (!binding || request.action !== "authorize-project-schema-change" || binding.expected_audit_remote_oid !== null) throw new Error("initial Project audit derivation requires exact absent-ref v2 authority");
-  const a = gitOid(repo, authorityOid);
-  const eventFiles = runGit(repo, ["diff-tree", "--no-commit-id", "--name-only", "-r", `${a}^`, a]).stdout.split(/\r?\n/).filter((name) => new RegExp(`^\\.agentops/events/${request.target}/[^/]+\\.json$`).test(name));
-  if (eventFiles.length !== 1) throw new Error("Project authority A must contain exactly one canonical owner event");
-  const event = JSON.parse(runGit(repo, ["show", `${a}:${eventFiles[0]}`]).stdout);
-  if (event.kind !== "owner-decision" || event.actor !== "owner" || event.decision?.action !== "authorize-project-schema-change") throw new Error("Project authority A event mismatch");
-  return commitFromTree(repo, a, gitTree(repo, a), "AgentOps initialize Project schema audit", event.at, "AgentOps Project Audit");
+  const authority = ownerEventAt(repo, request, authorityOid);
+  const at = attemptedAt ?? authority.event.at;
+  const capsulePath = `.agentops/work/${request.target}/CURRENT.json`;
+  const parentCapsule = JSON.parse(runGit(repo, ["show", `${authority.parent}:${capsulePath}`]).stdout);
+  const currentCapsule = JSON.parse(runGit(repo, ["show", `${authority.oid}:${capsulePath}`]).stdout);
+  const attempt = {
+    schema: "agentops/project-schema-attempt/v1", status: "ATTEMPTED",
+    authority: { state_oid: authority.oid, event_path: authority.path, event_id: authority.event.id, event_hash: authority.eventHash, parent_oid: authority.parent, target_capsule_path: capsulePath, parent_capsule_hash: parentCapsule.current_hash, current_capsule_hash: currentCapsule.current_hash },
+    executor: { head: binding.executor_head, tree: binding.executor_tree },
+    project: { ...binding.project, updated_at: binding.project_updated_at }, definitions_hash: binding.definitions_hash,
+    initial_preflight: binding.preflight, attempted_at: at
+  };
+  attempt.attempt_hash = objectSha256(stableJson(attempt));
+  const relative = binding.audit_paths.attempt_path_template.replace("{attempt_id}", authority.eventHash);
+  const blob = hashBlob(repo, `${stableJson(attempt)}\n`);
+  const tree = treeWithBlobs(repo, authority.oid, { [relative]: blob });
+  const oidValue = commitFromTree(repo, authority.oid, tree, `AgentOps consume Project schema authority ${authority.event.id}`, at, "AgentOps Project Audit");
+  const changed = runGit(repo, ["diff-tree", "--no-commit-id", "--name-only", "-r", authority.oid, oidValue]).stdout.split(/\r?\n/).filter(Boolean);
+  if (stableJson(changed) !== stableJson([relative])) throw new Error("initial Project audit commit must change only its exact attempt path");
+  return { oid: oidValue, tree, path: relative, blob_oid: blob, attempt, authority };
 }
 
 function writePrivateJson(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600, flag: "wx" });
+}
+
+function persistRecoveryReceipt(file, value, identity) {
+  if (!fs.existsSync(file)) {
+    writePrivateJson(file, value);
+    return value;
+  }
+  const prior = JSON.parse(fs.readFileSync(file, "utf8"));
+  identity(prior, value);
+  return prior;
+}
+
+function observedCutoverPublication({ repo, remote, binding, attemptedAt, atomicPushExitCode }) {
+  const after = remoteRefs(repo, remote, [binding.state_target_ref, binding.development_ref]);
+  return {
+    publication: { mode: "git-push-atomic-two-ref-exact-leases", attempted_at: attemptedAt, atomic_push_exit_code: atomicPushExitCode },
+    postinspection: { inspection_count: 1, retry_permitted: false, state_ref: binding.state_target_ref, state_actual_oid: after[binding.state_target_ref], development_ref: binding.development_ref, development_actual_oid: after[binding.development_ref] }
+  };
+}
+
+export function executeProjectPublication({ repo, remote = "origin", request, authorityOid = "HEAD" }) {
+  const consumed = consumeExactPacket({ repo, request, authorityOid });
+  const initial = deriveProjectAuditInitialCommit({ repo, request, authorityOid: consumed.authority.oid, attemptedAt: consumed.record.consumed_at });
+  const devRef = "refs/heads/dev"; const auditRef = request.project_schema_change.audit_ref;
+  let devPushExitCode = null; let auditPushExitCode = null;
+  if (!consumed.recovery) {
+    assertPublicationFresh(request, "Project schema");
+    const before = remoteRefs(repo, remote, [devRef, auditRef]);
+    if (before[devRef] !== consumed.authority.parent || before[auditRef] !== null) throw new Error("Project schema publication CAS mismatch; no push attempted");
+    assertPublicationFresh(request, "Project schema");
+    const devPush = runGit(repo, ["push", `--force-with-lease=${devRef}:${consumed.authority.parent}`, remote, `${consumed.authority.oid}:${devRef}`], { allowFailure: true });
+    devPushExitCode = devPush.status;
+    const afterDev = remoteRefs(repo, remote, [devRef]);
+    if (afterDev[devRef] === consumed.authority.oid) {
+      assertPublicationFresh(request, "Project schema audit");
+      const audit = createProjectAuditRefOnce({ repo, authorityOid: consumed.authority.oid, auditTargetOid: initial.oid, remote, auditRef, expiresAt: request.project_schema_change.expires_at });
+      auditPushExitCode = audit.observation.publication.push_exit_code;
+    }
+  }
+  const observed = remoteRefs(repo, remote, [devRef, auditRef]);
+  const result = { schema: "agentops/project-schema-consumption-result/v1", authority_oid: consumed.authority.oid, tombstone_ref: consumed.ref, recovered: consumed.recovery, publication: { development_ref: devRef, development_push_exit_code: devPushExitCode, audit_ref: auditRef, audit_push_exit_code: auditPushExitCode }, initial_audit: { oid: initial.oid, tree: initial.tree, path: initial.path, blob_oid: initial.blob_oid }, postinspection: { inspection_count: 1, retry_permitted: false, development_actual_oid: observed[devRef], audit_actual_oid: observed[auditRef] } };
+  const output = path.join(repo, ".git", "agentops-project-schema", "consumption-result.json");
+  persistRecoveryReceipt(output, result, (prior, current) => {
+    if (prior.schema !== current.schema || prior.authority_oid !== current.authority_oid || prior.tombstone_ref !== current.tombstone_ref || stableJson(prior.initial_audit) !== stableJson(current.initial_audit) || prior.postinspection?.retry_permitted !== false) throw new Error("existing Project consumption receipt does not bind the recovered exact packet");
+  });
+  const ok = observed[devRef] === consumed.authority.oid && observed[auditRef] === initial.oid;
+  return { ok, result, consumed, initial };
+}
+
+export function executeAuthorityPublication({ repo, remote = "origin", request, authorityOid = "HEAD", now = () => new Date() }) {
+  assertPublicationFresh(request, request.action, now());
+  const authority = ownerEventAt(repo, request, authorityOid);
+  const devRef = "refs/heads/dev";
+  const before = remoteRefs(repo, remote, [devRef]);
+  if (before[devRef] !== authority.parent) throw new Error("authority publication CAS mismatch; no push attempted");
+  assertPublicationFresh(request, request.action, now());
+  const push = runGit(repo, ["push", `--force-with-lease=${devRef}:${authority.parent}`, remote, `${authority.oid}:${devRef}`], { allowFailure: true });
+  const after = remoteRefs(repo, remote, [devRef]);
+  return { ok: after[devRef] === authority.oid, authority, observation: { publication: { push_exit_code: push.status }, postinspection: { inspection_count: 1, retry_permitted: false, development_ref: devRef, development_actual_oid: after[devRef] } } };
 }
 
 function executeSpecial(argv) {
@@ -884,17 +995,35 @@ function executeSpecial(argv) {
   const remote = option(argv, "--remote") ?? "origin";
   const request = JSON.parse(fs.readFileSync(requestFile, "utf8"));
   if (argv.includes("--execute-cutover")) {
+    const consumed = consumeExactPacket({ repo, request });
     const objects = deriveCutoverObjects({ repo, request });
     const binding = request.scheduler_cutover;
-    const published = atomicPublishExactRefs({
-      repo, remote, stateRef: binding.state_target_ref, expectedStateOid: binding.expected_state_remote_oid,
-      stateTargetOid: objects.stateS1.oid, developmentRef: binding.development_ref,
-      expectedDevelopmentOid: binding.expected_development_remote_oid, developmentTargetOid: objects.developmentD1.oid
+    let facts;
+    if (consumed.recovery) facts = observedCutoverPublication({ repo, remote, binding, attemptedAt: consumed.record.consumed_at, atomicPushExitCode: null });
+    else {
+      assertPublicationFresh(request, "scheduler cutover");
+      const published = atomicPublishExactRefs({ repo, remote, stateRef: binding.state_target_ref, expectedStateOid: binding.expected_state_remote_oid, stateTargetOid: objects.stateS1.oid, developmentRef: binding.development_ref, expectedDevelopmentOid: binding.expected_development_remote_oid, developmentTargetOid: objects.developmentD1.oid, attemptedAt: consumed.record.consumed_at, expiresAt: binding.expires_at });
+      facts = { publication: { ...published.receipt }, postinspection: published.receipt.postinspection }; delete facts.publication.postinspection;
+    }
+    const receipt = { schema: "agentops/scheduler-cutover-result/v1", authority_a: objects.authorityA, state_s1: objects.stateS1, development_d1: objects.developmentD1, publication: facts.publication, postinspection: facts.postinspection };
+    const receiptPath = path.join(repo, binding.result_receipt_contract.path);
+    persistRecoveryReceipt(receiptPath, receipt, (prior, current) => {
+      if (prior.schema !== current.schema || stableJson(prior.authority_a) !== stableJson(current.authority_a) || stableJson(prior.state_s1) !== stableJson(current.state_s1) || stableJson(prior.development_d1) !== stableJson(current.development_d1) || prior.postinspection?.retry_permitted !== false) throw new Error("existing cutover receipt does not bind the recovered exact packet");
     });
-    const receipt = { schema: "agentops/scheduler-cutover-result/v1", authority_a: objects.authorityA, state_s1: objects.stateS1, development_d1: objects.developmentD1, publication: { ...published.receipt } };
-    receipt.postinspection = receipt.publication.postinspection; delete receipt.publication.postinspection;
-    writePrivateJson(path.join(repo, binding.result_receipt_contract.path), receipt);
-    console.log(JSON.stringify({ ok: published.ok, authority_a: objects.authorityA.oid, state_s1: objects.stateS1.oid, development_d1: objects.developmentD1.oid }));
+    const ok = facts.postinspection.state_actual_oid === objects.stateS1.oid && facts.postinspection.development_actual_oid === objects.developmentD1.oid;
+    console.log(JSON.stringify({ ok, recovered: consumed.recovery, authority_a: objects.authorityA.oid, state_s1: objects.stateS1.oid, development_d1: objects.developmentD1.oid }));
+    if (!ok) process.exitCode = 1;
+    return;
+  }
+  if (argv.includes("--execute-project")) {
+    const published = executeProjectPublication({ repo, remote, request });
+    console.log(JSON.stringify({ ok: published.ok, recovered: published.consumed.recovery, authority_a: published.consumed.authority.oid, audit_oid: published.initial.oid }));
+    if (!published.ok) process.exitCode = 1;
+    return;
+  }
+  if (argv.includes("--execute-authority")) {
+    const published = executeAuthorityPublication({ repo, remote, request });
+    console.log(JSON.stringify({ ok: published.ok, authority_a: published.authority.oid }));
     if (!published.ok) process.exitCode = 1;
     return;
   }
@@ -910,7 +1039,7 @@ function option(argv, name, { required = false } = {}) {
   return argv[index + 1];
 }
 function main(argv = process.argv) {
-  if (argv.includes("--execute-cutover")) return executeSpecial(argv);
+  if (argv.includes("--execute-cutover") || argv.includes("--execute-project") || argv.includes("--execute-authority")) return executeSpecial(argv);
   const bodyFile = option(argv, "--body-file", { required: true });
   const requestFile = option(argv, "--request-file", { required: true });
   const actor = option(argv, "--actor", { required: true });
