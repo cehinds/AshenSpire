@@ -42,6 +42,14 @@ standing organizations. Existing bounded tasks keep their makers and paths
 until closure or explicit reassignment. New work routes through Feature /
 Architecture or Incident / Defect and a temporary pod.
 
+These legacy task names are distinct from the standing **`it-support` delivery
+seat** defined in `.agentops/governance/roles.json` — a p4 delivery seat, peer to
+`maker`, that repairs tooling, environment, routing, and access blockers and
+holds no push/PR/merge/deploy/release authority (its authority-matrix row is in
+[AUTHORITY.md](AUTHORITY.md); see decision
+[0011](DECISIONS/0011-it-support-plane-reconciliation.md)). Retiring the
+`IT Support2/3` task names does not retire that seat.
+
 No standing Audio, Localization, Telemetry, Security, or Community department
 exists absent a later product-scope decision supported by sustained volume and
 an explicit ownership/authority migration. Tickets draw those capabilities
