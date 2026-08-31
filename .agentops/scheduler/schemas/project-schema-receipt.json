@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentops/project-schema-change-receipt/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "failure_code", "authority", "attempt", "executor", "project", "definitions_hash", "initial_preflight", "mutation_attempts", "created_fields", "final_preflight", "project_readback", "project_readback_hash", "config_pin", "journal", "mutation_counts", "completed_at", "receipt_hash"],
+  "properties": {
+    "schema": { "const": "agentops/project-schema-change-receipt/v1" },
+    "status": { "enum": ["COMPLETE", "FAILED", "AMBIGUOUS", "PARTIAL"] },
+    "failure_code": { "type": ["string", "null"] },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_oid", "event_path", "event_id", "event_hash", "parent_oid", "target_capsule_path", "parent_capsule_hash", "current_capsule_hash"],
+      "properties": {
+        "state_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "event_path": { "type": "string", "pattern": "^\\.agentops/events/.+\\.json$" },
+        "event_id": { "type": "string", "minLength": 1 },
+        "event_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "parent_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "target_capsule_path": { "type": "string", "pattern": "^\\.agentops/work/.+/CURRENT\\.json$" },
+        "parent_capsule_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "current_capsule_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "commit_oid", "attempt_hash"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "commit_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "attempt_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["head", "tree"],
+      "properties": {
+        "head": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "tree": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "owner_type", "number", "id", "title", "closed", "initial_updated_at", "final_updated_at"],
+      "properties": {
+        "owner": { "const": "cehinds" },
+        "owner_type": { "const": "user" },
+        "number": { "const": 4 },
+        "id": { "const": "PVT_kwHOCSCyJ84BgfH9" },
+        "title": { "const": "Family Delivery" },
+        "closed": { "const": false },
+        "initial_updated_at": { "type": "string", "format": "date-time" },
+        "final_updated_at": { "type": ["string", "null"] }
+      }
+    },
+    "definitions_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "initial_preflight": {
+      "type": "object", "additionalProperties": false,
+      "required": ["field_count", "field_state_root", "item_count", "field_value_count", "item_state_root", "pagination_manifest_hash", "priority_field_id", "priority_contract_hash"],
+      "properties": {
+        "field_count": { "type": "integer", "minimum": 0 }, "field_state_root": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "item_count": { "type": "integer", "minimum": 0 }, "field_value_count": { "type": "integer", "minimum": 0 },
+        "item_state_root": { "type": "string", "pattern": "^[0-9a-f]{64}$" }, "pagination_manifest_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "priority_field_id": { "const": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4" }, "priority_contract_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "mutation_attempts": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["index", "field_name", "client_mutation_id", "request_sha256", "response_sha256", "outcome", "returned_field", "started_at", "finished_at"],
+        "properties": {
+          "index": { "type": "integer", "minimum": 0, "maximum": 7 },
+          "field_name": { "type": "string", "minLength": 1 },
+          "client_mutation_id": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "request_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "response_sha256": { "type": ["string", "null"] },
+          "outcome": { "enum": ["CREATED", "REJECTED", "AMBIGUOUS", "AMBIGUOUS_APPLIED", "MISMATCH", "DRIFT"] },
+          "returned_field": {
+            "type": ["object", "null"], "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 }, "name": { "type": "string", "minLength": 1 },
+              "kind": { "enum": ["ProjectV2Field", "ProjectV2SingleSelectField"] }, "data_type": { "enum": ["TEXT", "SINGLE_SELECT"] },
+              "created_at": { "type": "string", "format": "date-time" }, "updated_at": { "type": "string", "format": "date-time" },
+              "options": { "type": "array", "items": { "type": "object" } }
+            }
+          },
+          "started_at": { "type": "string", "format": "date-time" },
+          "finished_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "created_fields": {
+      "type": "array", "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "name", "kind", "data_type", "created_at", "updated_at", "options"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 }, "name": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["ProjectV2Field", "ProjectV2SingleSelectField"] }, "data_type": { "enum": ["TEXT", "SINGLE_SELECT"] },
+          "created_at": { "type": "string", "format": "date-time" }, "updated_at": { "type": "string", "format": "date-time" },
+          "options": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    },
+    "final_preflight": {
+      "type": ["object", "null"], "additionalProperties": false,
+      "properties": {
+        "field_count": { "type": "integer", "minimum": 0 }, "field_state_root": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "item_count": { "type": "integer", "minimum": 0 }, "field_value_count": { "type": "integer", "minimum": 0 },
+        "item_state_root": { "type": "string", "pattern": "^[0-9a-f]{64}$" }, "pagination_manifest_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "priority_field_id": { "const": "PVTSSF_lAHOCSCyJ84BgfH9zhfelc4" }, "priority_contract_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "project_readback": { "type": ["object", "null"] },
+    "project_readback_hash": { "type": ["string", "null"] },
+    "config_pin": { "type": ["object", "null"] },
+    "journal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "path", "entry_count", "last_entry_hash", "journal_sha256", "head_oid"],
+      "properties": {
+        "ref": { "const": "refs/heads/agentops/project-schema-audit" },
+        "path": { "const": ".agentops/scheduler/project-schema-attempts/journal.jsonl" },
+        "entry_count": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "last_entry_hash": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "journal_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "head_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "mutation_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_field_count", "mutated_item_count", "updated_existing_field_count", "backfill_count"],
+      "properties": {
+        "created_field_count": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "mutated_item_count": { "const": 0 },
+        "updated_existing_field_count": { "const": 0 },
+        "backfill_count": { "const": 0 }
+      }
+    },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "receipt_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
