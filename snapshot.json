@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 49,
-  "last_sequence": 49,
+  "revision": 50,
+  "last_sequence": 50,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -145,12 +145,12 @@
     },
     "420": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "420",
       "title": "Fix changelog ordinal regression across prose-only date groups",
       "priority": "P2",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
       "candidate_commit": null,
       "branch": "codex/issue-420-changelog-prose-gap",
@@ -190,10 +190,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Add a discriminating prose-gap regression plant and repair numeric-boundary comparison in tools/about-changelog.mjs.",
+      "next_action": "Inspect current fold, add the failing plant, implement the narrow fix, and run acceptance.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000049-b5f54746-7f7c-4722-bab2-96fb85263074",
-      "updated_at": "2026-08-31T16:41:35.607Z"
+      "updated_event": "evt-00000050-90e35972-e963-491c-8974-0f8a5f9363c3",
+      "updated_at": "2026-08-31T16:41:43.350Z"
     },
     "422": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -469,5 +469,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "31556e8722b9b8e6d16ad6a97c746c6ed270995988ab9f12441251280fbb74b7"
+  "snapshot_hash": "810e092e17809733fb95e6e50c505dcf15e6fb5112d7a5e4334ea1d90dce0b65"
 }
