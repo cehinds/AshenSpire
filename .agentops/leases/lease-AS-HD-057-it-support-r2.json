@@ -9,7 +9,7 @@
     ".agentops/work/AS-HD-057/**",
     ".agentops/events/AS-HD-057/**"
   ],
-  "base_oid": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
+  "base_oid": "7c85bb2106969c4fbb449dc8c279045755340f2e",
   "actions": [
     "restore-routing-and-access",
     "return-exact-support-evidence"
@@ -20,5 +20,5 @@
   "revision": 2,
   "parent_lease": "lease-AS-HD-057-it-support",
   "parent_hash": "sha256:c753cc79c107a450d907dda6c5059e4f3c04342eb899c0ca8552acf5ae2d803e",
-  "current_hash": "sha256:bfec1e815f65406ada3de1e5a5353a358c56bc420cb38b866889cd8ae3c21a29"
+  "current_hash": "sha256:f3b5363d292876e8d74b97e4ac209d92095d6a3840c0cf763631cfe3b69b2f20"
 }
