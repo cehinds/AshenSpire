@@ -57,11 +57,6 @@
       "id": "ebb60d6e25b61c32"
     },
     {
-      "tool": "tools/equipment-surface-receipts.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "6ded545c56c71e3b"
-    },
-    {
       "tool": "tools/hintstrip.mjs",
       "target": "styles/combat.css",
       "id": "e650bf9e7f606f81"
@@ -70,71 +65,6 @@
       "tool": "tools/hintstrip.mjs",
       "target": "styles/combat.css",
       "id": "e650bf9e7f606f81"
-    },
-    {
-      "tool": "tools/hudparity.mjs",
-      "target": "src/ui/components/hudmeta.js",
-      "id": "5501fee6e6854b9b"
-    },
-    {
-      "tool": "tools/hudparity.mjs",
-      "target": "src/ui/components/hudmeta.js",
-      "id": "9bb2dad6f5b827e3"
-    },
-    {
-      "tool": "tools/hudparity.mjs",
-      "target": "src/ui/components/hudmeta.js",
-      "id": "9f84e64b94562485"
-    },
-    {
-      "tool": "tools/hudparity.mjs",
-      "target": "src/ui/components/hudmeta.js",
-      "id": "e3749adc2967a4f9"
-    },
-    {
-      "tool": "tools/hudparity.mjs",
-      "target": "src/ui/components/hudmeta.js",
-      "id": "e3749adc2967a4f9"
-    },
-    {
-      "tool": "tools/player-poise-threshold.mjs",
-      "target": "src/model/state.js",
-      "id": "07508d6927980dbb"
-    },
-    {
-      "tool": "tools/reward-collect-drive.mjs",
-      "target": "src/ui/screens/reward.js",
-      "id": "4b0d992e60ccc086"
-    },
-    {
-      "tool": "tools/reward-collect-drive.mjs",
-      "target": "src/ui/screens/reward.js",
-      "id": "810812d641aec1cc"
-    },
-    {
-      "tool": "tools/reward-collect-drive.mjs",
-      "target": "src/main.js",
-      "id": "89f4b0555cda50b3"
-    },
-    {
-      "tool": "tools/reward-collect-drive.mjs",
-      "target": "src/ui/screens/reward.js",
-      "id": "8dc418c256ebce40"
-    },
-    {
-      "tool": "tools/screenreach.mjs",
-      "target": "src/ui/screens/map.js",
-      "id": "4ad49ce69ac9bec0"
-    },
-    {
-      "tool": "tools/text-geometry.mjs",
-      "target": "src/ui/screens/settings.js",
-      "id": "d58c010523128373"
-    },
-    {
-      "tool": "tools/text-geometry.mjs",
-      "target": "AshenSpire.html",
-      "id": "fd7dd82bd2cc00bf"
     }
   ],
   "unreadable": {
