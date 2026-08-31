@@ -1008,7 +1008,7 @@ export function semanticChecks(c) {
       if (ids.has(a.id)) errors.push(`owner-command: duplicate action id '${a.id}'`);
       ids.add(a.id);
       for (const r of a.authenticator_roles) if (!roles.has(r)) errors.push(`owner-command: action '${a.id}' names unknown authenticator role '${r}'`);
-      if ((a.id === 'grant-dev-delivery-authority' || a.id === 'authorize-scheduler-migration' || a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
+      if ((a.id === 'grant-dev-delivery-authority' || a.id === 'authorize-scheduler-migration' || a.id === 'authorize-project-schema-change' || a.id === 'authorize-scheduler-state-reconciliation' || a.id === 'authorize-scheduler-cutover' || a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
         errors.push(`owner-command: action '${a.id}' must be owner-exclusive`);
       }
     }
@@ -1673,6 +1673,14 @@ function globPrefix(glob) {
 }
 
 function globOverlap(a, b) {
+  const wildA = /[*?[]/.test(a), wildB = /[*?[]/.test(b);
+  if (!wildA && !wildB) return a === b;
+  if (!wildA) return leaseGlobCovers(b, a);
+  if (!wildB) return leaseGlobCovers(a, b);
+  if (a.endsWith('/**') && b.endsWith('/**')) {
+    const pa = a.slice(0, -2), pb = b.slice(0, -2);
+    return pa.startsWith(pb) || pb.startsWith(pa);
+  }
   const pa = globPrefix(a), pb = globPrefix(b);
   return pa.startsWith(pb) || pb.startsWith(pa);
 }
@@ -1934,16 +1942,15 @@ export function runtimeChecks(g, rt) {
     if (li !== null && lx !== null && lx <= li) errors.push(`lease '${l.id}' expiry is at or before issued (already expired)`);
     for (const p of l.path_globs) if (p.split('/').includes('..')) errors.push(`lease '${l.id}' path glob '${p}' contains a '..' traversal segment`);
   }
-  // One writer per overlapping path/ref: two active leases on the same ref with
-  // overlapping globs held by different actors are a collision.
+  // One writer per overlapping path or ref. Path custody is repository-wide:
+  // changing the branch or reusing the same actor cannot make a second writer
+  // safe because both worktrees still edit the same logical file. The separate
+  // isolated-ref invariant below remains stricter for branch custody.
   for (let a = 0; a < activeLeases.length; a++) for (let b = a + 1; b < activeLeases.length; b++) {
     const la = activeLeases[a], lb = activeLeases[b];
-    if (la.ref !== lb.ref || la.actor === lb.actor) continue;
-    const overlap = la.path_globs.some((ga) => lb.path_globs.some((gb) => {
-      const pa = globPrefix(ga), pb = globPrefix(gb);
-      return pa.startsWith(pb) || pb.startsWith(pa);
-    }));
-    if (overlap) errors.push(`lease collision: '${la.id}' and '${lb.id}' hold overlapping paths on ref '${la.ref}' for different actors ('${la.actor}' vs '${lb.actor}')`);
+    if (effectiveLeaseOverlap(la, lb)) {
+      errors.push(`lease collision: '${la.id}' and '${lb.id}' hold overlapping effective paths (refs '${la.ref}' and '${lb.ref}', actors '${la.actor}' and '${lb.actor}')`);
+    }
   }
 
   // Append-only event chains per ticket: one genesis, contiguous seq, unbroken parent chain.
@@ -2259,15 +2266,90 @@ const DEV_DELIVERY_PROTECTED_DENIALS = Object.freeze([
   'tag-publish-deploy-or-change-pages-source'
 ]);
 const SCHEDULER_MIGRATION_ACTION = 'authorize-scheduler-migration';
+const PROJECT_SCHEMA_CHANGE_ACTION = 'authorize-project-schema-change';
+const SCHEDULER_STATE_RECONCILIATION_ACTION = 'authorize-scheduler-state-reconciliation';
+const SCHEDULER_CUTOVER_ACTION = 'authorize-scheduler-cutover';
+const STRUCTURED_PROTECTED_ACTIONS = Object.freeze({
+  [SCHEDULER_MIGRATION_ACTION]: { field: 'scheduler_migration', head: 'scheduler_head', tree: 'scheduler_tree', label: 'scheduler migration' },
+  [PROJECT_SCHEMA_CHANGE_ACTION]: { field: 'project_schema_change', head: 'executor_head', tree: 'executor_tree', label: 'project schema change' },
+  [SCHEDULER_STATE_RECONCILIATION_ACTION]: { field: 'scheduler_state_reconciliation', head: 'reconciler_head', tree: 'reconciler_tree', label: 'scheduler state reconciliation' },
+  [SCHEDULER_CUTOVER_ACTION]: { field: 'scheduler_cutover', head: 'scheduler_head', tree: 'scheduler_tree', label: 'scheduler cutover' },
+});
 const SCHEDULER_MIGRATION_ANCHOR = 'dbd50e1656d22a72cbda43dd349e5ab7c9a46777';
 const SCHEDULER_MIGRATION_PRESERVED_TIP = '1e1ea124f879467d28962edc3b102bd6fae45b2e';
 
-function priorSchedulerMigration(rt) {
+function protectedPacketIdentity(action, target, expectedCurrentHash, candidateOid, payload) {
+  return stableStringify({ action, target, expected_current_hash: expectedCurrentHash ?? null, candidate_oid: candidateOid ?? null, payload });
+}
+
+function priorProtectedAction(rt, request) {
+  const meta = STRUCTURED_PROTECTED_ACTIONS[request.action];
+  if (!meta) return null;
+  const wanted = protectedPacketIdentity(request.action, request.target, request.expected_current_hash, request.candidate_oid, request[meta.field]);
   for (const events of Object.values(rt.events || {})) {
-    const found = events.find((event) => event.kind === 'owner-decision' && event.decision?.action === SCHEDULER_MIGRATION_ACTION);
+    const found = events.find((event) => {
+      const d = event.decision;
+      if (event.kind !== 'owner-decision' || d?.action !== request.action || d[meta.field] === undefined) return false;
+      return protectedPacketIdentity(d.action, d.target, d.expected_current_hash, d.candidate_oid, d[meta.field]) === wanted;
+    });
     if (found) return found;
   }
   return null;
+}
+
+function priorActionDecisions(rt, action) {
+  const out = [];
+  for (const events of Object.values(rt.events || {})) {
+    for (const event of events) if (event.kind === 'owner-decision' && event.decision?.action === action) out.push({ event, decision: event.decision });
+  }
+  return out;
+}
+
+function protectedFreshnessIdentity(action, payload) {
+  if (action === SCHEDULER_MIGRATION_ACTION) return stableStringify({ source_state_oid: payload?.source_state_oid, source_snapshot_sha256: payload?.source_snapshot_sha256, source_journal_manifest_sha256: payload?.source_journal_manifest_sha256, source_event_count: payload?.source_event_count });
+  if (action === PROJECT_SCHEMA_CHANGE_ACTION) return stableStringify({ project_updated_at: payload?.project_updated_at, preflight: payload?.preflight, definitions_hash: payload?.definitions_hash });
+  if (action === SCHEDULER_STATE_RECONCILIATION_ACTION) return stableStringify({ source: payload?.source, target: payload?.target, quiet_window_receipt_hash: payload?.quiet_window_receipt_hash });
+  if (action === SCHEDULER_CUTOVER_ACTION) return stableStringify({ migration: payload?.migration, current_state: payload?.current_state, project_schema_receipt_hash: payload?.project_schema_receipt_hash, quiet_window_receipt_hash: payload?.quiet_window_receipt_hash, released_custody_hash: payload?.released_custody_hash, activation_manifest_hash: payload?.activation_manifest_hash });
+  return '';
+}
+
+function structuredProtectedPayload(request) {
+  const meta = STRUCTURED_PROTECTED_ACTIONS[request.action];
+  return meta ? request[meta.field] : undefined;
+}
+
+function structuredProtectedBaseErrors(request, rt, { now = new Date().toISOString() } = {}) {
+  const errors = [];
+  const active = STRUCTURED_PROTECTED_ACTIONS[request.action];
+  for (const [action, meta] of Object.entries(STRUCTURED_PROTECTED_ACTIONS)) {
+    if (action !== request.action && request[meta.field] !== undefined) {
+      errors.push(`${meta.field} is reserved for action '${action}'`);
+    }
+  }
+  if (!active) return errors;
+  const payload = request[active.field];
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    errors.push(`${request.action} requires the structured '${active.field}' object`);
+    return errors;
+  }
+  if ('reason' in request || 'params' in request) errors.push(`${active.label} authority is structured only; free-form reason or params fields are forbidden`);
+  if (request.candidate_oid !== payload[active.head]) errors.push(`${active.label} candidate_oid must equal ${active.field}.${active.head}`);
+  if (payload.one_use !== true) errors.push(`${active.label} requires one_use=true`);
+  const nowMs = Date.parse(now);
+  const expiryMs = Date.parse(payload.expires_at);
+  if (!Number.isFinite(nowMs)) errors.push(`${active.label} validator received invalid trusted time '${now}'`);
+  else if (!Number.isFinite(expiryMs) || expiryMs <= nowMs) errors.push(`${active.label} authority is expired; expires_at must be in the future`);
+  const prior = priorProtectedAction(rt, request);
+  if (prior) errors.push(`${active.label} exact authority packet is one-attempt and was already recorded by event '${prior.id}'`);
+  else {
+    const previous = priorActionDecisions(rt, request.action);
+    if (previous.length) {
+      if (previous.some(({ decision }) => decision.expected_current_hash === request.expected_current_hash)) errors.push(`${active.label} recovery after an earlier attempt requires a fresh capsule CAS`);
+      const freshness = protectedFreshnessIdentity(request.action, payload);
+      if (previous.some(({ decision }) => protectedFreshnessIdentity(request.action, decision[active.field]) === freshness)) errors.push(`${active.label} recovery after an earlier attempt requires fresh bound state or evidence`);
+    }
+  }
+  return errors;
 }
 
 // Semantic checks that cannot be expressed by the request schema. The action is
@@ -2275,31 +2357,89 @@ function priorSchedulerMigration(rt) {
 // mode are exact values, while object/tree ancestry is checked separately
 // against Git by schedulerMigrationGitErrors().
 export function schedulerMigrationErrors(request, rt, { now = new Date().toISOString() } = {}) {
-  if (request.action !== SCHEDULER_MIGRATION_ACTION) {
-    return request.scheduler_migration === undefined ? [] : [`scheduler_migration is reserved for action '${SCHEDULER_MIGRATION_ACTION}'`];
-  }
-  const errors = [];
+  const errors = structuredProtectedBaseErrors(request, rt, { now });
+  if (request.action !== SCHEDULER_MIGRATION_ACTION) return errors;
   const m = request.scheduler_migration;
-  if (!m || typeof m !== 'object' || Array.isArray(m)) return ["authorize-scheduler-migration requires the structured 'scheduler_migration' object"];
-  if ('reason' in request || 'params' in request) errors.push('scheduler migration authority is structured only; free-form reason or params fields are forbidden');
-  if (request.candidate_oid !== m.scheduler_head) errors.push('scheduler migration candidate_oid must equal scheduler_migration.scheduler_head');
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return errors;
   if (m.source_state_oid !== m.expected_remote_oid) errors.push('scheduler migration source_state_oid must equal expected_remote_oid');
   if (m.canonical_anchor_oid !== SCHEDULER_MIGRATION_ANCHOR) errors.push(`scheduler migration canonical_anchor_oid must equal ${SCHEDULER_MIGRATION_ANCHOR}`);
   if (m.preserved_local_tip_oid !== SCHEDULER_MIGRATION_PRESERVED_TIP) errors.push(`scheduler migration preserved_local_tip_oid must equal ${SCHEDULER_MIGRATION_PRESERVED_TIP}`);
   if (m.dispatch_frozen !== true) errors.push('scheduler migration requires dispatch_frozen=true');
-  if (m.one_use !== true) errors.push('scheduler migration requires one_use=true');
   if (m.target_ref !== 'refs/heads/agentops/scheduler-state') errors.push('scheduler migration target_ref must be refs/heads/agentops/scheduler-state');
   if (m.push_mode !== 'non-force-forward-only-cas') errors.push('scheduler migration push_mode must be non-force-forward-only-cas');
   if (m.abort_on_remote_change !== true) errors.push('scheduler migration requires abort_on_remote_change=true');
   if (m.source_state_version !== 1 || m.target_state_version !== 2) errors.push('scheduler migration requires source_state_version=1 and target_state_version=2');
   if (!Number.isInteger(m.source_event_count) || m.source_event_count < 0) errors.push('scheduler migration source_event_count must be a non-negative integer');
-  const nowMs = Date.parse(now);
-  const expiryMs = Date.parse(m.expires_at);
-  if (!Number.isFinite(nowMs)) errors.push(`scheduler migration validator received invalid trusted time '${now}'`);
-  else if (!Number.isFinite(expiryMs) || expiryMs <= nowMs) errors.push('scheduler migration authority is expired; expires_at must be in the future');
-  const prior = priorSchedulerMigration(rt);
-  if (prior) errors.push(`scheduler migration authority is one-use and was already recorded by event '${prior.id}'`);
   return errors;
+}
+
+export function projectSchemaChangeErrors(request) {
+  if (request.action !== PROJECT_SCHEMA_CHANGE_ACTION) return [];
+  const p = request.project_schema_change || {};
+  const errors = [];
+  if (p.mode !== 'create-missing-only' || p.allowed_mutation !== 'project-field-create') errors.push('project schema change permits project-field-create in create-missing-only mode only');
+  if (p.forbid_item_mutation !== true || p.forbid_existing_field_update !== true || p.forbid_backfill !== true) errors.push('project schema change must forbid item mutation, existing-field update, and backfill');
+  if (p.abort_on_any_drift !== true || p.retry_mode !== 'never') errors.push('project schema change must abort on any drift and never retry');
+  if (p.required_scope !== 'project' || p.authenticated_login !== 'cehinds') errors.push('project schema change requires the authenticated cehinds project scope');
+  const pf = p.preflight || {};
+  for (const field of ['field_count', 'item_count', 'field_value_count']) {
+    if (!Number.isInteger(pf[field]) || pf[field] < 0) errors.push(`project schema change preflight.${field} must be a non-negative integer`);
+  }
+  return errors;
+}
+
+export function schedulerStateReconciliationErrors(request, { now = new Date().toISOString() } = {}) {
+  if (request.action !== SCHEDULER_STATE_RECONCILIATION_ACTION) return [];
+  const r = request.scheduler_state_reconciliation || {};
+  const errors = [];
+  if (r.source?.state_oid !== r.expected_remote_oid) errors.push('scheduler state reconciliation source.state_oid must equal expected_remote_oid');
+  if (r.machine_lease?.expected_state_ref_oid !== r.source?.state_oid) errors.push('scheduler state reconciliation machine_lease.expected_state_ref_oid must equal source.state_oid');
+  if (r.machine_lease?.machine_id !== null || !r.machine_lease?.released_at || r.machine_lease?.expires_at !== r.machine_lease?.released_at) errors.push('scheduler state reconciliation requires exact released machine custody');
+  if (r.mode !== 'release-custody-and-reconcile-work-leases') errors.push('scheduler state reconciliation mode must be release-custody-and-reconcile-work-leases');
+  if (r.dispatch_frozen !== true || r.no_refill !== true || r.no_assignment !== true || r.no_dispatch !== true || r.no_external_mutation !== true) errors.push('scheduler state reconciliation requires frozen dispatch and forbids refill, assignment, dispatch, and external mutation');
+  if (r.target_ref !== 'refs/heads/agentops/scheduler-state' || r.push_mode !== 'non-force-forward-only-cas' || r.abort_on_remote_change !== true) errors.push('scheduler state reconciliation requires the scheduler-state ref and non-force forward-only CAS with abort-on-change');
+  if (!Number.isInteger(r.source?.event_count) || r.source.event_count < 0 || !Number.isInteger(r.target?.event_count) || r.target.event_count < 0 || !Number.isInteger(r.expected_event_count_delta) || r.expected_event_count_delta < 0) errors.push('scheduler state reconciliation event counts and delta must be non-negative integers');
+  else if (r.target.event_count - r.source.event_count !== r.expected_event_count_delta) errors.push('scheduler state reconciliation target event count must equal source plus expected_event_count_delta');
+  const notBefore = Date.parse(r.not_before);
+  const nowMs = Date.parse(now);
+  if (!Number.isFinite(notBefore)) errors.push('scheduler state reconciliation not_before is not a real instant');
+  else if (Number.isFinite(nowMs) && nowMs < notBefore) errors.push('scheduler state reconciliation quiet window has not reached not_before');
+  const seen = new Set();
+  let priorKey = null;
+  for (const item of r.work_leases || []) {
+    const issue = Number(String(item.issue_id || '').slice(1));
+    const epoch = item.lease_epoch === null ? -1 : item.lease_epoch;
+    const lease = item.lease_id === null ? '' : item.lease_id;
+    const key = [issue, epoch, lease];
+    const encoded = JSON.stringify(key);
+    if (seen.has(encoded)) errors.push(`scheduler state reconciliation work_leases contains duplicate '${item.issue_id}' lease disposition`);
+    seen.add(encoded);
+    if (priorKey && (issue < priorKey[0] || (issue === priorKey[0] && (epoch < priorKey[1] || (epoch === priorKey[1] && lease.localeCompare(priorKey[2]) < 0))))) {
+      errors.push('scheduler state reconciliation work_leases must be sorted by numeric issue_id, lease_epoch, then lease_id');
+    }
+    priorKey = key;
+  }
+  return errors;
+}
+
+export function schedulerCutoverErrors(request) {
+  if (request.action !== SCHEDULER_CUTOVER_ACTION) return [];
+  const c = request.scheduler_cutover || {};
+  const errors = [];
+  if (c.active_work_lease_count !== 0) errors.push('scheduler cutover requires active_work_lease_count=0');
+  if (c.state_target_ref !== 'refs/heads/agentops/scheduler-state' || c.development_ref !== 'refs/heads/dev') errors.push('scheduler cutover requires the canonical scheduler-state and dev refs');
+  if (c.push_mode !== 'non-force-forward-only-cas' || c.abort_on_remote_change !== true) errors.push('scheduler cutover requires non-force forward-only CAS and abort-on-either-remote-change');
+  if (c.current_state?.oid !== c.expected_state_remote_oid) errors.push('scheduler cutover current_state.oid must equal expected_state_remote_oid');
+  return errors;
+}
+
+function structuredProtectedActionErrors(request, rt, options = {}) {
+  return [
+    ...schedulerMigrationErrors(request, rt, options),
+    ...projectSchemaChangeErrors(request),
+    ...schedulerStateReconciliationErrors(request, options),
+    ...schedulerCutoverErrors(request),
+  ];
 }
 
 function gitText(root, args) {
@@ -2407,6 +2547,115 @@ export function schedulerMigrationGitErrors(root, request) {
   return errors;
 }
 
+function exactCommitTreeErrors(root, label, oid, tree, { integrated = true } = {}) {
+  const errors = [];
+  const type = gitText(root, ['cat-file', '-t', String(oid || '')]);
+  if (!type.ok || type.text !== 'commit') return [`${label} does not resolve to a commit`];
+  const actualTree = gitText(root, ['show', '-s', '--format=%T', oid]);
+  if (!actualTree.ok || actualTree.text !== tree) errors.push(`${label} tree does not match its commit`);
+  if (integrated && !gitText(root, ['merge-base', '--is-ancestor', oid, 'HEAD']).ok) errors.push(`${label} is not reachable from the integrated HEAD`);
+  return errors;
+}
+
+function remoteCasErrors(root, label, ref, expected) {
+  const remote = gitText(root, ['ls-remote', '--exit-code', 'origin', String(ref || '')]);
+  if (!remote.ok) return [`${label} could not read remote target ${ref || '(missing)'}`];
+  const rows = remote.text.split(/\r?\n/).filter(Boolean);
+  const match = rows.length === 1 ? /^([0-9a-f]{40})\t(.+)$/.exec(rows[0]) : null;
+  if (!match || match[2] !== ref) return [`${label} remote target lookup was ambiguous or malformed`];
+  return match[1] === expected ? [] : [`${label} remote target changed; abort_on_remote_change requires exact expected OID`];
+}
+
+function portableStateErrors(root, label, state, { requireReleasedCustody = false } = {}) {
+  const errors = exactCommitTreeErrors(root, `${label} state_oid`, state?.state_oid, state?.state_tree, { integrated: false });
+  if (errors.some((e) => e.includes('does not resolve'))) return errors;
+  const snapshotRaw = gitText(root, ['show', `${state.state_oid}:snapshot.json`]);
+  if (!snapshotRaw.ok) errors.push(`${label} has no readable snapshot.json`);
+  else {
+    try {
+      const snapshot = strictParse(snapshotRaw.text);
+      const canonical = JSON.parse(JSON.stringify(snapshot));
+      delete canonical.snapshot_hash;
+      const digest = createHash('sha256').update(stableStringify(canonical)).digest('hex');
+      if (snapshot.snapshot_hash !== state.snapshot_sha256 || digest !== state.snapshot_sha256) errors.push(`${label} snapshot_sha256 does not match stored and recomputed snapshot hash`);
+      if (snapshot.last_sequence !== state.event_count) errors.push(`${label} snapshot last_sequence does not match event_count`);
+      if (requireReleasedCustody) {
+        for (const [issue, item] of Object.entries(snapshot.work_items || {})) {
+          if (item.lease_id !== null || item.lease_expiry !== null) errors.push(`${label} work item '${issue}' retains live lease custody`);
+        }
+      }
+    } catch (error) { errors.push(`${label} snapshot is invalid JSON (${error.message})`); }
+  }
+  const journalTree = gitText(root, ['ls-tree', '-r', '--full-tree', state.state_oid, '--', 'journal']);
+  if (!journalTree.ok) errors.push(`${label} journal tree could not be read`);
+  else {
+    const entries = [];
+    for (const line of journalTree.text ? journalTree.text.split(/\r?\n/) : []) {
+      const match = /^100644 blob ([0-9a-f]{40})\t(journal\/[0-9]{8}-[A-Za-z0-9._-]+\.json)$/.exec(line);
+      if (!match) errors.push(`${label} journal has an invalid tree entry '${line}'`);
+      else entries.push([match[2], match[1]]);
+    }
+    entries.sort(([a], [b]) => a.localeCompare(b));
+    const digest = createHash('sha256').update(entries.map(([name, oid]) => `${name}:${oid}`).join('\n')).digest('hex');
+    if (entries.length !== state.event_count) errors.push(`${label} event_count does not match exact journal tree`);
+    if (digest !== state.journal_manifest_sha256) errors.push(`${label} journal_manifest_sha256 does not match exact journal tree`);
+  }
+  if (state.state_version !== undefined) {
+    const version = gitText(root, ['show', `${state.state_oid}:STATE_VERSION`]);
+    if (!version.ok || version.text !== String(state.state_version)) errors.push(`${label} STATE_VERSION does not match state_version`);
+  }
+  return errors;
+}
+
+export function projectSchemaChangeGitErrors(root, request) {
+  if (request.action !== PROJECT_SCHEMA_CHANGE_ACTION) return [];
+  const p = request.project_schema_change || {};
+  return exactCommitTreeErrors(root, 'project schema change executor_head', p.executor_head, p.executor_tree);
+}
+
+export function schedulerStateReconciliationGitErrors(root, request) {
+  if (request.action !== SCHEDULER_STATE_RECONCILIATION_ACTION) return [];
+  const r = request.scheduler_state_reconciliation || {};
+  const errors = [
+    ...exactCommitTreeErrors(root, 'scheduler state reconciliation reconciler_head', r.reconciler_head, r.reconciler_tree),
+    ...portableStateErrors(root, 'scheduler state reconciliation source', r.source || {}),
+    ...portableStateErrors(root, 'scheduler state reconciliation target', r.target || {}, { requireReleasedCustody: true }),
+  ];
+  if (gitText(root, ['cat-file', '-e', `${r.source?.state_oid}^{commit}`]).ok && gitText(root, ['cat-file', '-e', `${r.target?.state_oid}^{commit}`]).ok) {
+    if (!gitText(root, ['merge-base', '--is-ancestor', r.source.state_oid, r.target.state_oid]).ok) errors.push('scheduler state reconciliation target state is not a descendant of source state');
+  }
+  errors.push(...remoteCasErrors(root, 'scheduler state reconciliation', r.target_ref, r.expected_remote_oid));
+  return errors;
+}
+
+export function schedulerCutoverGitErrors(root, request) {
+  if (request.action !== SCHEDULER_CUTOVER_ACTION) return [];
+  const c = request.scheduler_cutover || {};
+  const errors = [
+    ...exactCommitTreeErrors(root, 'scheduler cutover scheduler_head', c.scheduler_head, c.scheduler_tree),
+    ...exactCommitTreeErrors(root, 'scheduler cutover current_state.oid', c.current_state?.oid, c.current_state?.tree, { integrated: false }),
+  ];
+  const boundary = gitText(root, ['cat-file', '-t', String(c.migration?.boundary_oid || '')]);
+  if (!boundary.ok || boundary.text !== 'commit') errors.push('scheduler cutover migration.boundary_oid does not resolve to a commit');
+  else if (gitText(root, ['cat-file', '-e', `${c.current_state?.oid}^{commit}`]).ok && !gitText(root, ['merge-base', '--is-ancestor', c.migration.boundary_oid, c.current_state.oid]).ok) errors.push('scheduler cutover migration boundary is not an ancestor of current state');
+  for (const field of ['legacy_activation_blob_oid', 'pre_cutover_config_blob_oid']) {
+    const type = gitText(root, ['cat-file', '-t', String(c[field] || '')]);
+    if (!type.ok || type.text !== 'blob') errors.push(`scheduler cutover ${field} does not resolve to a blob`);
+  }
+  errors.push(...remoteCasErrors(root, 'scheduler cutover state', c.state_target_ref, c.expected_state_remote_oid));
+  errors.push(...remoteCasErrors(root, 'scheduler cutover development', c.development_ref, c.expected_development_remote_oid));
+  return errors;
+}
+
+function structuredProtectedGitErrors(root, request) {
+  return [
+    ...schedulerMigrationGitErrors(root, request),
+    ...projectSchemaChangeGitErrors(root, request),
+    ...schedulerStateReconciliationGitErrors(root, request),
+    ...schedulerCutoverGitErrors(root, request),
+  ];
+}
+
 // Validate an owner-command request against the policy: enumerated action,
 // authenticated actor, required fields, and the compare-and-swap precondition.
 // Pure over already-loaded contracts + runtime so the harness can plant defects.
@@ -2494,14 +2743,16 @@ export function validateCommand(contracts, rt, request, { root = null, now = new
   // holds for every field except the one that carries the payload. Checked here
   // rather than at apply so dry_run_first actually reports it.
   if (action.id === 'reseat') errors.push(...reseatParamErrors(rt, request, root));
-  errors.push(...schedulerMigrationErrors(request, rt, { now }));
+  errors.push(...structuredProtectedActionErrors(request, rt, { now }));
+  if (root) errors.push(...structuredProtectedGitErrors(root, request));
   const ok = errors.length === 0;
+  const protectedMeta = STRUCTURED_PROTECTED_ACTIONS[request.action];
   const decision = ok ? {
     schema: 'agentops/decision-event/v1',
     action: request.action, actor: request.actor, target: request.target,
     protected: action.protected, requires_cas: action.requires_cas, cas_precondition: cas,
     affects: action.affects,
-    ...(request.action === SCHEDULER_MIGRATION_ACTION ? { scheduler_migration: JSON.parse(JSON.stringify(request.scheduler_migration)) } : {}),
+    ...(protectedMeta ? { [protectedMeta.field]: JSON.parse(JSON.stringify(request[protectedMeta.field])) } : {}),
     result: 'DRY-RUN — would append this decision event and CAS-update only the affected state; no repository mutation performed'
   } : null;
   return { ok, errors, decision };
@@ -2543,10 +2794,10 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const liveRt = loadRuntime(root);
   if (liveRt.errors.length) return { ok: false, errors: liveRt.errors.map((e) => `runtime changed before apply: ${e}`), written };
   const capsule = liveRt.capsules[ticket];
-  const migrationErrs = schedulerMigrationErrors(request, liveRt, { now });
-  if (migrationErrs.length) return { ok: false, errors: migrationErrs, written };
-  const migrationGitErrs = schedulerMigrationGitErrors(root, request);
-  if (migrationGitErrs.length) return { ok: false, errors: migrationGitErrs, written };
+  const protectedErrs = structuredProtectedActionErrors(request, liveRt, { now });
+  if (protectedErrs.length) return { ok: false, errors: protectedErrs, written };
+  const protectedGitErrs = structuredProtectedGitErrors(root, request);
+  if (protectedGitErrs.length) return { ok: false, errors: protectedGitErrs, written };
 
   const move = resolveTransition(contracts, capsule, action, request.actor);
   if (move && move.error) return { ok: false, errors: [move.error], written };
@@ -2565,6 +2816,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
         : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
     clearsBlocker ? 'Blocker cleared: the decision it was waiting on is now recorded.' : ''
   ].filter(Boolean).join(' ');
+  const protectedMeta = STRUCTURED_PROTECTED_ACTIONS[request.action];
   const event = {
     schema: 'agentops/event/v1', id, ticket, seq,
     parent_event: last ? last.id : null,
@@ -2576,7 +2828,7 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
       target: request.target,
       expected_current_hash: request.expected_current_hash ?? null,
       candidate_oid: request.candidate_oid ?? null,
-      ...(request.action === SCHEDULER_MIGRATION_ACTION ? { scheduler_migration: JSON.parse(JSON.stringify(request.scheduler_migration)) } : {})
+      ...(protectedMeta ? { [protectedMeta.field]: JSON.parse(JSON.stringify(request[protectedMeta.field])) } : {})
     }
   };
 
@@ -3990,6 +4242,25 @@ export function runSelftest(root = ROOT) {
     results.push({ label, pass: hit, errs: hit ? [] : errs });
   };
   expectRuntime('overlapping active lease (two writers)', (rt) => { rt.leases.push({ ...rt.leases[0], id: 'lease-collide', actor: 'data-architecture-lead' }); }, 'lease collision');
+  expectRuntime('exact path collision crosses refs even for the same actor', (rt) => {
+    const source = rt.leases.find((l) => l.id === 'lease-AS-1001-scheduler-migration-command-maker');
+    rt.leases.push({ ...source, id: 'lease-exact-cross-ref-plant', ref: 'recovery/exact-cross-ref-plant' });
+  }, 'overlapping effective paths');
+  expectRuntime('broad and exact path collision crosses refs and actors', (rt) => {
+    const source = rt.leases.find((l) => l.id === 'lease-AS-1001-scheduler-migration-command-maker');
+    rt.leases.push({ ...source, id: 'lease-broad-cross-ref-plant', actor: 'app-dev-iii', ref: 'recovery/broad-cross-ref-plant', path_globs: ['.agentops/tools/**'] });
+  }, 'overlapping effective paths');
+  {
+    const rt = baseRt();
+    const source = rt.leases.find((l) => l.id === 'lease-AS-1001-scheduler-migration-command-maker');
+    rt.leases.push({ ...source, id: 'lease-revoked-overlap-control', ref: 'recovery/revoked-overlap-control', revoked: true });
+    rt.leases.push({ ...source, id: 'lease-disjoint-cross-ref-control', ref: 'recovery/disjoint-cross-ref-control', path_globs: ['.agentops/tools/disjoint-control.mjs'] });
+    // The revoked GH-183 v1 parent is also an explicit superseded-parent
+    // control: its sealed v2 child is active, while its old broad tools scope
+    // must not collide with this lane's exact opsctl custody.
+    const collisions = runtimeChecks(contracts, rt).filter((e) => e.includes('lease collision') && (e.includes('lease-revoked-overlap-control') || e.includes('lease-disjoint-cross-ref-control') || e.includes("'lease-GH-183-current-build-links'")));
+    results.push({ label: 'revoked, superseded-parent, and disjoint cross-ref leases remain non-colliding controls', pass: collisions.length === 0, errs: collisions });
+  }
   expectRuntime('expired lease', (rt) => { rt.leases[0].expiry = '2019-01-01T00:00:00Z'; }, 'already expired');
   expectRuntime('lease window naming a day that does not exist', (rt) => { rt.leases[0].expiry = '2026-11-31T00:00:00Z'; }, "is not a real instant");
   expectRuntime('lease issued at a minute that does not exist', (rt) => { rt.leases[0].issued = '2026-01-01T00:60:00Z'; }, "is not a real instant");
@@ -4232,6 +4503,62 @@ export function runSelftest(root = ROOT) {
   expectCommand('owner-command: missing required field rejected', (r) => { delete r.candidate_oid; }, 'missing required field');
   expectCommand('owner-command: owner-exclusive release by deputy rejected', (r) => { r.action = 'authorize-release'; }, 'not authorized');
   expectCommand('owner-command: owner-exclusive dev-delivery grant by deputy rejected', (r) => { r.action = 'grant-dev-delivery-authority'; r.target = 'AS-HD-029'; r.expected_current_hash = computeCapsuleHash(rt0.capsules['AS-HD-029']); r.reason = 'bounded grant'; delete r.candidate_oid; }, 'not authorized');
+
+  // The three cutover support actions are independent, structured, owner-only,
+  // expiring one-attempt packets. These controls exercise the shared guard and
+  // each action's distinct semantic binding without requiring network access.
+  {
+    const oid = currentHead(root) || 'a'.repeat(40);
+    const tree = gitText(root, ['show', '-s', '--format=%T', oid]).text || 'b'.repeat(40);
+    const common = { schema: 'agentops/owner-command-request/v1', actor: 'owner', target: 'AS-1001', expected_current_hash: capHash, candidate_oid: oid };
+    const project = { schema: 'agentops/project-schema-change-authority/v1', executor_head: oid, executor_tree: tree, project: { owner: 'cehinds', owner_type: 'user', number: 4, id: 'PVT_kwHOCSCyJ84BgfH9', title: 'Family Delivery', closed: false }, authenticated_login: 'cehinds', required_scope: 'project', project_updated_at: '2026-08-31T15:00:00Z', preflight: { field_count: 21, field_state_root: '1'.repeat(64), item_count: 155, field_value_count: 50, item_state_root: '2'.repeat(64), pagination_manifest_hash: '3'.repeat(64), priority_field_id: 'PVTSSF_lAHOCSCyJ84BgfH9zhfelc4', priority_contract_hash: '4'.repeat(64) }, definitions_hash: '5'.repeat(64), mode: 'create-missing-only', allowed_mutation: 'project-field-create', forbid_item_mutation: true, forbid_existing_field_update: true, forbid_backfill: true, abort_on_any_drift: true, retry_mode: 'never', one_use: true, expires_at: '2099-01-01T00:00:00Z' };
+    const projectReq = { ...common, action: PROJECT_SCHEMA_CHANGE_ACTION, project_schema_change: project };
+    const acceptedProject = validateCommand(contracts, rt0, projectReq, { now: '2026-08-31T15:30:00Z' });
+    results.push({ label: 'project schema change accepts and preserves one exact structured packet', pass: acceptedProject.ok && JSON.stringify(acceptedProject.decision?.project_schema_change) === JSON.stringify(project), errs: acceptedProject.errors });
+
+    const source = { state_oid: '6'.repeat(40), state_tree: '7'.repeat(40), snapshot_sha256: '8'.repeat(64), journal_manifest_sha256: '9'.repeat(64), event_count: 10, state_version: 1 };
+    const target = { state_oid: 'a'.repeat(40), state_tree: 'b'.repeat(40), snapshot_sha256: 'c'.repeat(64), journal_manifest_sha256: 'd'.repeat(64), event_count: 11 };
+    const reconciliation = { schema: 'agentops/scheduler-state-reconciliation-authority/v1', reconciler_head: oid, reconciler_tree: tree, source, target, canonical_anchor_oid: 'e'.repeat(40), machine_lease: { machine_id: null, lease_epoch: 8, acquired_at: '2026-08-31T15:00:00Z', released_at: '2026-08-31T15:01:00Z', expires_at: '2026-08-31T15:01:00Z', expected_state_ref_oid: source.state_oid }, work_leases: [{ issue_id: '#256', state: 'RUNNING', assigned_actor: 'maker', assignment_kind: 'implementation', lease_id: 'lease:256:1', lease_epoch: 1, lease_expiry: '2026-08-31T16:00:00Z', lease_machine_id: 'machine', base_commit: oid }], mode: 'release-custody-and-reconcile-work-leases', not_before: '2026-08-31T15:00:00Z', quiet_window_receipt_hash: 'f'.repeat(64), expected_event_count_delta: 1, dispatch_frozen: true, no_refill: true, no_assignment: true, no_dispatch: true, no_external_mutation: true, one_use: true, expires_at: '2099-01-01T00:00:00Z', target_ref: 'refs/heads/agentops/scheduler-state', expected_remote_oid: source.state_oid, push_mode: 'non-force-forward-only-cas', abort_on_remote_change: true };
+    const reconciliationReq = { ...common, action: SCHEDULER_STATE_RECONCILIATION_ACTION, scheduler_state_reconciliation: reconciliation };
+    const acceptedReconciliation = validateCommand(contracts, rt0, reconciliationReq, { now: '2026-08-31T15:30:00Z' });
+    results.push({ label: 'state reconciliation accepts and preserves one exact structured packet', pass: acceptedReconciliation.ok && JSON.stringify(acceptedReconciliation.decision?.scheduler_state_reconciliation) === JSON.stringify(reconciliation), errs: acceptedReconciliation.errors });
+
+    const cutover = { schema: 'agentops/scheduler-cutover-authority/v1', scheduler_head: oid, scheduler_tree: tree, qa_receipt_hash: '1'.repeat(64), migration: { boundary_oid: source.state_oid, state_migrated_event_hash: '2'.repeat(64) }, current_state: { oid: target.state_oid, tree: target.state_tree }, project_schema_receipt_hash: '3'.repeat(64), project_manifest_hash: '4'.repeat(64), quiet_window_receipt_hash: '5'.repeat(64), released_custody_hash: '6'.repeat(64), active_work_lease_count: 0, legacy_activation_blob_oid: '7'.repeat(40), pre_cutover_config_blob_oid: '8'.repeat(40), activation_manifest_hash: '9'.repeat(64), state_target_ref: 'refs/heads/agentops/scheduler-state', expected_state_remote_oid: target.state_oid, development_ref: 'refs/heads/dev', expected_development_remote_oid: oid, one_use: true, expires_at: '2099-01-01T00:00:00Z', push_mode: 'non-force-forward-only-cas', abort_on_remote_change: true };
+    const cutoverReq = { ...common, action: SCHEDULER_CUTOVER_ACTION, scheduler_cutover: cutover };
+    const acceptedCutover = validateCommand(contracts, rt0, cutoverReq, { now: '2026-08-31T15:30:00Z' });
+    results.push({ label: 'scheduler cutover accepts and preserves one exact structured packet', pass: acceptedCutover.ok && JSON.stringify(acceptedCutover.decision?.scheduler_cutover) === JSON.stringify(cutover), errs: acceptedCutover.errors });
+
+    const semanticReject = (label, req, mutate, needle) => {
+      const planted = JSON.parse(JSON.stringify(req)); mutate(planted);
+      const out = validateCommand(contracts, rt0, planted, { now: '2026-08-31T15:30:00Z' });
+      const hit = !out.ok && out.errors.some((e) => e.includes(needle));
+      results.push({ label, pass: hit, errs: hit ? [] : out.errors });
+    };
+    semanticReject('structured Project authority cannot be replaced with reason text', projectReq, (r) => { r.reason = 'blanket authority'; }, 'structured only');
+    semanticReject('Project authority binds candidate_oid to executor_head', projectReq, (r) => { r.candidate_oid = '0'.repeat(40); }, 'candidate_oid');
+    semanticReject('Project authority forbids item mutation', projectReq, (r) => { r.project_schema_change.forbid_item_mutation = false; }, 'must forbid');
+    semanticReject('reconciliation authority rejects an unsorted exact lease list', reconciliationReq, (r) => { r.scheduler_state_reconciliation.work_leases.unshift({ ...r.scheduler_state_reconciliation.work_leases[0], issue_id: '#999' }); }, 'must be sorted');
+    semanticReject('reconciliation authority binds source state to remote CAS', reconciliationReq, (r) => { r.scheduler_state_reconciliation.expected_remote_oid = '0'.repeat(40); }, 'source.state_oid');
+    semanticReject('reconciliation authority rejects a false event delta', reconciliationReq, (r) => { r.scheduler_state_reconciliation.expected_event_count_delta = 2; }, 'source plus');
+    semanticReject('cutover authority requires exact current state remote CAS', cutoverReq, (r) => { r.scheduler_cutover.expected_state_remote_oid = '0'.repeat(40); }, 'current_state.oid');
+    semanticReject('cutover authority cannot be used by the deputy', cutoverReq, (r) => { r.actor = 'it-manager-iii'; }, 'not authorized');
+    semanticReject('cutover authority expires fail-closed', cutoverReq, (r) => { r.scheduler_cutover.expires_at = '2026-08-31T15:30:00Z'; }, 'expired');
+    semanticReject('a different protected payload cannot ride a cutover action', cutoverReq, (r) => { r.project_schema_change = project; }, 'reserved for action');
+    const usedRt = baseRt();
+    const list = usedRt.events['AS-1001'];
+    const last = list[list.length - 1];
+    list.push({ ...last, id: 'AS-1001-9999', seq: last.seq + 1, parent_event: last.id, kind: 'owner-decision', decision: { action: SCHEDULER_CUTOVER_ACTION, target: cutoverReq.target, expected_current_hash: cutoverReq.expected_current_hash, candidate_oid: cutoverReq.candidate_oid, scheduler_cutover: JSON.parse(JSON.stringify(cutover)) } });
+    const replay = validateCommand(contracts, usedRt, cutoverReq, { now: '2026-08-31T15:30:00Z' });
+    results.push({ label: 'a recorded exact cutover packet is consumed and cannot be replayed', pass: !replay.ok && replay.errors.some((e) => e.includes('one-attempt')), errs: replay.errors });
+    const refreshedCap = usedRt.capsules['AS-1001'];
+    refreshedCap.parent_hash = refreshedCap.current_hash; refreshedCap.revision += 1; delete refreshedCap.current_hash; refreshedCap.current_hash = computeCapsuleHash(refreshedCap);
+    const freshCutoverReq = JSON.parse(JSON.stringify(cutoverReq));
+    freshCutoverReq.expected_current_hash = refreshedCap.current_hash;
+    freshCutoverReq.scheduler_cutover.expires_at = '2099-01-02T00:00:00Z';
+    freshCutoverReq.scheduler_cutover.quiet_window_receipt_hash = 'a'.repeat(64);
+    const fresh = validateCommand(contracts, usedRt, freshCutoverReq, { now: '2026-08-31T15:30:00Z' });
+    results.push({ label: 'a distinct fresh cutover packet remains possible after a prior attempt', pass: fresh.ok, errs: fresh.errors });
+  }
 
   // A3 reseat plants, through the same validateCommand() the live dry run uses.
   // The control is a real unstarted seat: AS-1001 is in-progress, so it doubles
