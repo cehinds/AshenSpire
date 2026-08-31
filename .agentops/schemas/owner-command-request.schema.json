@@ -94,10 +94,18 @@
         "abort_on_any_drift",
         "retry_mode",
         "one_use",
-        "expires_at"
+        "expires_at",
+        "audit_ref",
+        "expected_audit_remote_oid",
+        "audit_push_mode",
+        "journal_mode",
+        "recovery_mode",
+        "audit_paths",
+        "audit_guards",
+        "audit_result_contract"
       ],
       "properties": {
-        "schema": {"const": "agentops/project-schema-change-authority/v1"},
+        "schema": {"const": "agentops/project-schema-change-authority/v2"},
         "executor_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "executor_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "project": {
@@ -140,7 +148,55 @@
         "abort_on_any_drift": {"const": true},
         "retry_mode": {"const": "never"},
         "one_use": {"const": true},
-        "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"}
+        "expires_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"},
+        "audit_ref": {"const": "refs/heads/agentops/project-schema-audit"},
+        "expected_audit_remote_oid": {"const": null},
+        "audit_push_mode": {"const": "create-if-absent-then-non-force-forward-only-cas"},
+        "journal_mode": {"const": "append-only-intent-result"},
+        "recovery_mode": {"const": "inspect-once-never-create"},
+        "audit_paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root", "journal_path", "attempt_path_template", "receipt_path_template"],
+          "properties": {
+            "root": {"const": ".agentops/scheduler/project-schema-attempts"},
+            "journal_path": {"const": ".agentops/scheduler/project-schema-attempts/journal.jsonl"},
+            "attempt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/attempts/{attempt_id}.json"},
+            "receipt_path_template": {"const": ".agentops/scheduler/project-schema-attempts/receipts/{attempt_id}.json"}
+          }
+        },
+        "audit_guards": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expected_absence", "initial_commit_parent_binding", "initial_creation_authorized_if_absent", "subsequent_linear_direct_successors", "allowed_mutation", "intent_before_each_create", "result_after_each_response", "consumed_create_retry_forbidden", "read_only_recovery", "ref_recreation_forbidden", "development_ref_mutation_forbidden"],
+          "properties": {
+            "expected_absence": {"const": true},
+            "initial_commit_parent_binding": {"const": "derived-owner-authority-a"},
+            "initial_creation_authorized_if_absent": {"const": true},
+            "subsequent_linear_direct_successors": {"const": true},
+            "allowed_mutation": {"const": "append-intent-result-attempt-and-receipt-records-only"},
+            "intent_before_each_create": {"const": true},
+            "result_after_each_response": {"const": true},
+            "consumed_create_retry_forbidden": {"const": true},
+            "read_only_recovery": {"const": true},
+            "ref_recreation_forbidden": {"const": true},
+            "development_ref_mutation_forbidden": {"const": true}
+          }
+        },
+        "audit_result_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "ambiguity_policy", "no_self_reference"],
+          "properties": {
+            "schema": {"const": "agentops/project-schema-audit-result-contract/v1"},
+            "result_schema": {"const": "agentops/project-schema-audit-result/v1"},
+            "path": {"const": ".git/agentops-project-schema/audit-result.json"},
+            "schema_pointer": {"const": ".agentops/schemas/owner-command-request.schema.json#/definitions/project_schema_audit_result_receipt"},
+            "construction_timing": {"const": "after-local-initial-commit-before-ref-creation"},
+            "ambiguity_policy": {"const": "inspect-once-never-create"},
+            "no_self_reference": {"const": true}
+          }
+        }
       }
     },
     "scheduler_state_reconciliation": {
@@ -264,10 +320,12 @@
         "project_manifest",
         "quiet_window_receipt",
         "active_work_lease_count",
-        "legacy_activation_blob_oid",
-        "pre_cutover_config_blob_oid",
+        "legacy_activation",
+        "pre_cutover_config",
+        "post_cutover_config",
         "activation_manifest",
         "result_receipt_contract",
+        "cross_field_equalities",
         "state_target_ref",
         "expected_state_remote_oid",
         "development_ref",
@@ -298,20 +356,66 @@
         "migration": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["boundary_oid", "state_migrated_event_hash"],
+          "required": ["boundary_oid", "state_migrated_event"],
           "properties": {
             "boundary_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "state_migrated_event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            "state_migrated_event": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
+              "properties": {
+                "schema": {"const": "agentops/scheduler-event/v2"},
+                "path": {"type": "string", "pattern": "^journal/[0-9]{8}-[A-Za-z0-9._-]+\\.json$"},
+                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "semantics": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["event_version", "event_type", "issue_id", "payload_schema", "dispatch_frozen", "single_migration_boundary", "boundary_commit_binding"],
+                  "properties": {
+                    "event_version": {"const": 2},
+                    "event_type": {"const": "STATE_MIGRATED"},
+                    "issue_id": {"const": "scheduler-state"},
+                    "payload_schema": {"const": "agentops/scheduler-migration/v2"},
+                    "dispatch_frozen": {"const": true},
+                    "single_migration_boundary": {"const": true},
+                    "boundary_commit_binding": {"const": "migration.boundary_oid"}
+                  }
+                }
+              }
+            }
           }
         },
         "current_state": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["oid", "tree", "released_custody_hash"],
+          "required": ["oid", "tree", "released_custody"],
           "properties": {
             "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "released_custody_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            "released_custody": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
+              "properties": {
+                "schema": {"const": "agentops/scheduler-machine-lease/v1"},
+                "path": {"const": "machine-lease.json"},
+                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "semantics": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["machine_id", "acquired_at", "released_at_required", "expires_at_equals_released_at", "expected_state_ref_oid_binding"],
+                  "properties": {
+                    "machine_id": {"const": null},
+                    "acquired_at": {"const": null},
+                    "released_at_required": {"const": true},
+                    "expires_at_equals_released_at": {"const": true},
+                    "expected_state_ref_oid_binding": {"const": "current_state.oid"}
+                  }
+                }
+              }
+            }
           }
         },
         "project_schema_receipt": {
@@ -348,17 +452,80 @@
           }
         },
         "active_work_lease_count": {"const": 0},
-        "legacy_activation_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "pre_cutover_config_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "legacy_activation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
+          "properties": {
+            "schema": {"const": "agentops/pipeline-activation/v1"},
+            "path": {"const": ".agentops/pipeline-pilot/activation.json"},
+            "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["enabled", "mode"],
+              "properties": {
+                "enabled": {"const": false},
+                "mode": {"const": "STOOD_DOWN_FOR_SCHEDULER_CUTOVER"}
+              }
+            }
+          }
+        },
+        "pre_cutover_config": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
+          "properties": {
+            "schema": {"const": "agentops/scheduler-config/v1"},
+            "path": {"const": ".agentops/scheduler/config.json"},
+            "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["scheduler_dispatch_enabled", "legacy_watcher_authoritative", "scheduler_authorization_evidence", "migration_dispatch_frozen"],
+              "properties": {
+                "scheduler_dispatch_enabled": {"const": false},
+                "legacy_watcher_authoritative": {"const": false},
+                "scheduler_authorization_evidence": {"const": null},
+                "migration_dispatch_frozen": {"const": true}
+              }
+            }
+          }
+        },
+        "post_cutover_config": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "path", "blob_oid", "sha256", "semantics"],
+          "properties": {
+            "schema": {"const": "agentops/scheduler-config/v1"},
+            "path": {"const": ".agentops/scheduler/config.json"},
+            "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "semantics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["scheduler_dispatch_enabled", "legacy_watcher_authoritative", "scheduler_authorization_evidence_binding", "migration_dispatch_frozen"],
+              "properties": {
+                "scheduler_dispatch_enabled": {"const": true},
+                "legacy_watcher_authoritative": {"const": false},
+                "scheduler_authorization_evidence_binding": {"const": "canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash"},
+                "migration_dispatch_frozen": {"const": true}
+              }
+            }
+          }
+        },
         "activation_manifest": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "blob_oid", "sha256", "template"],
+          "required": ["schema", "path", "blob_oid", "sha256", "blob_parse_policy", "template"],
           "properties": {
             "schema": {"const": "agentops/scheduler-cutover-activation-manifest/v1"},
             "path": {"const": ".agentops/scheduler/cutover/activation-manifest.json"},
             "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
             "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "blob_parse_policy": {"const": "parse-json-and-deep-equal-inline-template"},
             "template": {
               "type": "object",
               "additionalProperties": false,
@@ -368,12 +535,13 @@
                 "development_d0": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["oid", "tree", "legacy_activation_blob_oid", "pre_cutover_config_blob_oid"],
+                  "required": ["oid", "tree", "legacy_activation_blob_oid", "pre_cutover_config_blob_oid", "post_cutover_config_blob_oid"],
                   "properties": {
                     "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
                     "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
                     "legacy_activation_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                    "pre_cutover_config_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+                    "pre_cutover_config_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                    "post_cutover_config_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
                   }
                 },
                 "state_s0": {
@@ -388,34 +556,89 @@
                 "authority_a_derivation": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["parent_binding", "parent_count", "source_path_policy", "rendered_path_policy", "other_changes_forbidden"],
+                  "required": ["parent_binding", "parent_count", "source_paths", "cutover_evidence_paths", "deterministic_render_paths", "unchanged_render_bytes_omitted", "other_changes_forbidden"],
                   "properties": {
                     "parent_binding": {"const": "expected_development_remote_oid"},
                     "parent_count": {"const": 1},
-                    "source_path_policy": {"const": "canonical-owner-event-and-target-capsule-only"},
-                    "rendered_path_policy": {"const": "opsctl-deterministic-generated-projections-only"},
+                    "source_paths": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["owner_event_path_template", "target_capsule_path_template"],
+                      "properties": {
+                        "owner_event_path_template": {"const": ".agentops/events/{target}/{event_id}.json"},
+                        "target_capsule_path_template": {"const": ".agentops/work/{target}/CURRENT.json"}
+                      }
+                    },
+                    "cutover_evidence_paths": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["qa_receipt", "project_schema_receipt", "project_manifest", "quiet_window_receipt", "activation_manifest"],
+                      "properties": {
+                        "qa_receipt": {"const": ".agentops/scheduler/cutover/qa-receipt.json"},
+                        "project_schema_receipt": {"const": ".agentops/scheduler/cutover/project-schema-receipt.json"},
+                        "project_manifest": {"const": ".agentops/scheduler/cutover/project-manifest.json"},
+                        "quiet_window_receipt": {"const": ".agentops/scheduler/cutover/quiet-window-receipt.json"},
+                        "activation_manifest": {"const": ".agentops/scheduler/cutover/activation-manifest.json"}
+                      }
+                    },
+                    "deterministic_render_paths": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["governance", "hud", "decisions", "published_hud", "published_decisions"],
+                      "properties": {
+                        "governance": {"const": ".agentops/generated/GOVERNANCE.md"},
+                        "hud": {"const": ".agentops/generated/hud/index.html"},
+                        "decisions": {"const": ".agentops/generated/hub/decisions.html"},
+                        "published_hud": {"const": "docs/generated/hud/index.html"},
+                        "published_decisions": {"const": "docs/generated/hub/decisions.html"}
+                      }
+                    },
+                    "unchanged_render_bytes_omitted": {"const": true},
                     "other_changes_forbidden": {"const": true}
                   }
                 },
                 "state_s1_derivation": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["parent_binding", "parent_count", "change_policy", "other_changes_forbidden"],
+                  "required": ["parent_binding", "parent_count", "activation_event", "snapshot_path", "preserved_paths_policy", "other_changes_forbidden"],
                   "properties": {
                     "parent_binding": {"const": "expected_state_remote_oid"},
                     "parent_count": {"const": 1},
-                    "change_policy": {"const": "append-exactly-one-derived-scheduler-activated-event"},
+                    "activation_event": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["path_template", "schema", "payload_schema", "event_version", "event_type", "issue_id", "actor", "machine_id", "lease_id", "lease_epoch", "source_binding", "authority_binding", "count"],
+                      "properties": {
+                        "path_template": {"const": "journal/{sequence:08}-{event_id}.json"},
+                        "schema": {"const": "agentops/scheduler-event/v2"},
+                        "payload_schema": {"const": "agentops/scheduler-activation/v2"},
+                        "event_version": {"const": 2},
+                        "event_type": {"const": "SCHEDULER_ACTIVATED"},
+                        "issue_id": {"const": "scheduler-state"},
+                        "actor": {"const": "it-manager-iii"},
+                        "machine_id": {"const": null},
+                        "lease_id": {"const": null},
+                        "lease_epoch": {"const": null},
+                        "source_binding": {"const": "current_state"},
+                        "authority_binding": {"const": "canonical-owner-event-in-derived-authority-a"},
+                        "count": {"const": 1}
+                      }
+                    },
+                    "snapshot_path": {"const": "snapshot.json"},
+                    "preserved_paths_policy": {"const": "all-prior-journal-machine-lease-and-state-version-blobs-byte-identical"},
                     "other_changes_forbidden": {"const": true}
                   }
                 },
                 "development_d1_derivation": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["parent_binding", "parent_count", "change_policy", "other_changes_forbidden"],
+                  "required": ["parent_binding", "parent_count", "scheduler_config_path", "scheduler_config_blob_binding", "authority_evidence_mode", "other_changes_forbidden"],
                   "properties": {
                     "parent_binding": {"const": "derived-authority-a"},
                     "parent_count": {"const": 1},
-                    "change_policy": {"const": "derived-scheduler-config-and-canonical-cutover-evidence-only"},
+                    "scheduler_config_path": {"const": ".agentops/scheduler/config.json"},
+                    "scheduler_config_blob_binding": {"const": "post_cutover_config.blob_oid"},
+                    "authority_evidence_mode": {"const": "canonical-owner-event-in-direct-parent-a-by-path-and-id-no-hash"},
                     "other_changes_forbidden": {"const": true}
                   }
                 },
@@ -441,14 +664,30 @@
         "result_receipt_contract": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "construction_timing", "records", "publication_gate", "no_self_reference"],
+          "required": ["schema", "result_schema", "path", "schema_pointer", "construction_timing", "publication_gate", "no_self_reference"],
           "properties": {
-            "schema": {"const": "agentops/scheduler-cutover-result/v1"},
+            "schema": {"const": "agentops/scheduler-cutover-result-contract/v1"},
+            "result_schema": {"const": "agentops/scheduler-cutover-result/v1"},
             "path": {"const": ".git/agentops-scheduler/cutover-result.json"},
+            "schema_pointer": {"const": ".agentops/schemas/owner-command-request.schema.json#/definitions/scheduler_cutover_result_receipt"},
             "construction_timing": {"const": "after-local-derivation-before-publication"},
-            "records": {"const": "derived-a-s1-d1-oids-trees-atomic-push-and-single-postcondition-inspection"},
             "publication_gate": {"const": "prebuilt-a-s1-d1-match-derivation-template"},
             "no_self_reference": {"const": true}
+          }
+        },
+        "cross_field_equalities": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["development_d0_oid", "state_s0_oid", "state_s0_tree", "legacy_activation_blob", "pre_cutover_config_blob", "post_cutover_config_blob", "expected_state_remote", "migration_boundary_event_blob"],
+          "properties": {
+            "development_d0_oid": {"const": "activation_manifest.template.development_d0.oid == expected_development_remote_oid"},
+            "state_s0_oid": {"const": "activation_manifest.template.state_s0.oid == current_state.oid"},
+            "state_s0_tree": {"const": "activation_manifest.template.state_s0.tree == current_state.tree"},
+            "legacy_activation_blob": {"const": "activation_manifest.template.development_d0.legacy_activation_blob_oid == legacy_activation.blob_oid"},
+            "pre_cutover_config_blob": {"const": "activation_manifest.template.development_d0.pre_cutover_config_blob_oid == pre_cutover_config.blob_oid"},
+            "post_cutover_config_blob": {"const": "activation_manifest.template.development_d0.post_cutover_config_blob_oid == post_cutover_config.blob_oid"},
+            "expected_state_remote": {"const": "expected_state_remote_oid == current_state.oid"},
+            "migration_boundary_event_blob": {"const": "migration.state_migrated_event.blob_oid exists at migration.boundary_oid:migration.state_migrated_event.path"}
           }
         },
         "state_target_ref": {"const": "refs/heads/agentops/scheduler-state"},
@@ -466,5 +705,154 @@
     },
     "reason": {"type": "string", "minLength": 1},
     "params": {"type": "object"}
+  },
+  "definitions": {
+    "project_schema_audit_result_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "initial_commit", "publication", "postinspection"],
+      "properties": {
+        "schema": {"const": "agentops/project-schema-audit-result/v1"},
+        "initial_commit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree", "parent_oid"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "publication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ref", "expected_absent", "target_oid", "push_mode", "push_exit_code"],
+          "properties": {
+            "ref": {"const": "refs/heads/agentops/project-schema-audit"},
+            "expected_absent": {"const": true},
+            "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "push_mode": {"const": "create-if-absent"},
+            "push_exit_code": {"type": ["integer", "null"]}
+          }
+        },
+        "postinspection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inspection_count", "retry_create_permitted", "actual_oid", "target_exact", "outcome", "policy"],
+          "properties": {
+            "inspection_count": {"const": 1},
+            "retry_create_permitted": {"const": false},
+            "actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+            "target_exact": {"type": "boolean"},
+            "outcome": {"enum": ["EXACT", "ABSENT", "OTHER"]},
+            "policy": {"const": "exact-target-or-withhold-never-create-again"}
+          }
+        }
+      }
+    },
+    "scheduler_cutover_result_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "authority_a", "state_s1", "development_d1", "publication", "postinspection"],
+      "properties": {
+        "schema": {"const": "agentops/scheduler-cutover-result/v1"},
+        "authority_a": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree", "parent_oid"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        },
+        "state_s1": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree", "parent_oid", "activation_event"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "activation_event": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "blob_oid", "sha256"],
+              "properties": {
+                "path": {"type": "string", "pattern": "^journal/[0-9]{8}-[A-Za-z0-9._-]+\\.json$"},
+                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              }
+            }
+          }
+        },
+        "development_d1": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oid", "tree", "parent_oid", "scheduler_config"],
+          "properties": {
+            "oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "parent_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "scheduler_config": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "blob_oid", "sha256"],
+              "properties": {
+                "path": {"const": ".agentops/scheduler/config.json"},
+                "blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              }
+            }
+          }
+        },
+        "publication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "attempted_at", "state", "development", "atomic_push_exit_code"],
+          "properties": {
+            "mode": {"const": "git-push-atomic-two-ref-exact-leases"},
+            "attempted_at": {"type": "string", "minLength": 1},
+            "state": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["ref", "expected_oid", "target_oid"],
+              "properties": {
+                "ref": {"const": "refs/heads/agentops/scheduler-state"},
+                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+              }
+            },
+            "development": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["ref", "expected_oid", "target_oid"],
+              "properties": {
+                "ref": {"const": "refs/heads/dev"},
+                "expected_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "target_oid": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+              }
+            },
+            "atomic_push_exit_code": {"type": ["integer", "null"]}
+          }
+        },
+        "postinspection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inspection_count", "retry_permitted", "state_actual_oid", "development_actual_oid", "state_exact", "development_exact", "outcome", "dispatch_permitted", "policy"],
+          "properties": {
+            "inspection_count": {"const": 1},
+            "retry_permitted": {"const": false},
+            "state_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+            "development_actual_oid": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+            "state_exact": {"type": "boolean"},
+            "development_exact": {"type": "boolean"},
+            "outcome": {"enum": ["BOTH_EXACT", "MIXED", "NEITHER"]},
+            "dispatch_permitted": {"type": "boolean"},
+            "policy": {"const": "dispatch-only-on-both-exact-otherwise-withhold"}
+          }
+        }
+      }
+    }
   }
 }
