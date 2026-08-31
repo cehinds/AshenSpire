@@ -1,0 +1,33 @@
+{
+  "event_id": "evt-00000042-5a690d37-81f8-453d-9754-c886df9affc9",
+  "idempotency_key": "INTAKE_RECORDED:256:0:2026-08-31T16:08:41.997Z",
+  "sequence": 42,
+  "previous_snapshot_hash": "fd83c659f53a18d7d0b5ada88cb0e7fa11d21a115c446aa5eb1fcb1f575190f7",
+  "issue_id": "256",
+  "actor": "intake",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "E11 regression: render armament reward effects as player-facing copy",
+    "priority": "P1",
+    "dependencies": [],
+    "branch": "codex/issue-256-armament-reward-copy",
+    "claimed_paths": [
+      "src/model/equipmentPresentation.js",
+      "src/ui/screens/reward.js"
+    ],
+    "claimed_resources": [],
+    "acceptance_commands": [
+      "node tools/e11-reward-correction.mjs",
+      "node tests/run-node.mjs",
+      "git diff --check"
+    ],
+    "evidence_pointers": [],
+    "next_action": "Replace raw armament modifier keys with shared player-facing labels and preserve reward behavior.",
+    "authority_ceiling": "local-candidate"
+  },
+  "created_at": "2026-08-31T16:08:41.997Z"
+}
