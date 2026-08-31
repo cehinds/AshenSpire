@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 24,
-  "last_sequence": 24,
+  "revision": 25,
+  "last_sequence": 25,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -144,22 +144,22 @@
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "468",
       "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
       "priority": "P1",
       "dependencies": [],
-      "state": "RUNNING",
+      "state": "CANDIDATE_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
-      "candidate_commit": null,
+      "candidate_commit": "495bf285ac2bcdd634f46b56352d03c6bd6cc593",
       "branch": "codex/issue-468",
-      "assigned_actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
-      "assignment_kind": "implementation",
-      "lease_id": "lease:468:1",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 1,
-      "lease_expiry": "2026-08-31T14:56:58.717Z",
-      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
-      "maker_actor": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
       "lease_history": [
         {
           "actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
@@ -177,13 +177,19 @@
       ],
       "claimed_resources": [],
       "acceptance_commands": [],
-      "evidence_pointers": [],
+      "evidence_pointers": [
+        "three capsules moved to provable lifecycle states (040 qa-review, 050 in-progress, 056 local) with ungated integration recorded as blocker facts, never claimed lifecycle",
+        "RESEAL OK x3 via opsctl reseal, chain intact, revisions 51->52, ledger events AS-HD-040-0053/050-0054/056-0053",
+        "opsctl verify: only the two pre-existing stale hub mirrors (byte-identical at base); VALIDATE OK 19 contracts",
+        "footprint 22 files +134/-78: capsule dirs plus contract-required tool-written events and regenerated projections; the two PR-475-owned mirror files restored untouched",
+        "retro QA ruling NOT fabricated: requires qa-independent verdict + ITM3/owner CAS-guarded approve; ready-to-sign packet with live seal hashes prepared"
+      ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Re-seal capsules; record retro QA ruling",
+      "next_action": "Bind independent QA to this exact candidate.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000019-e7d58f4a-4337-4c72-9558-050fe4f8bb10",
-      "updated_at": "2026-08-31T14:32:02.645Z"
+      "updated_event": "evt-00000025-afbe2035-d21e-4020-bc24-f914961150f3",
+      "updated_at": "2026-08-31T14:43:13.438Z"
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -250,5 +256,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "dcf289086583fcc649eb38cd9e9e2b134512b640788ab996add4b24d3b8066bf"
+  "snapshot_hash": "55b9d748f795b2e8f24835aac8a6327b1e91dde5d3cf7147fb57f5e1206c642a"
 }

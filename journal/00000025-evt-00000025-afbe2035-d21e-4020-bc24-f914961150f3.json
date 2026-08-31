@@ -1,0 +1,26 @@
+{
+  "event_id": "evt-00000025-afbe2035-d21e-4020-bc24-f914961150f3",
+  "idempotency_key": "CANDIDATE_READY:468:1:495bf285ac2bcdd634f46b56352d03c6bd6cc593",
+  "sequence": 25,
+  "previous_snapshot_hash": "dcf289086583fcc649eb38cd9e9e2b134512b640788ab996add4b24d3b8066bf",
+  "issue_id": "468",
+  "actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "lease:468:1",
+  "lease_epoch": 1,
+  "event_type": "CANDIDATE_READY",
+  "exact_object": {
+    "oid": "495bf285ac2bcdd634f46b56352d03c6bd6cc593"
+  },
+  "payload": {
+    "candidate_commit": "495bf285ac2bcdd634f46b56352d03c6bd6cc593",
+    "evidence_pointers": [
+      "three capsules moved to provable lifecycle states (040 qa-review, 050 in-progress, 056 local) with ungated integration recorded as blocker facts, never claimed lifecycle",
+      "RESEAL OK x3 via opsctl reseal, chain intact, revisions 51->52, ledger events AS-HD-040-0053/050-0054/056-0053",
+      "opsctl verify: only the two pre-existing stale hub mirrors (byte-identical at base); VALIDATE OK 19 contracts",
+      "footprint 22 files +134/-78: capsule dirs plus contract-required tool-written events and regenerated projections; the two PR-475-owned mirror files restored untouched",
+      "retro QA ruling NOT fabricated: requires qa-independent verdict + ITM3/owner CAS-guarded approve; ready-to-sign packet with live seal hashes prepared"
+    ]
+  },
+  "created_at": "2026-08-31T14:43:13.438Z"
+}
