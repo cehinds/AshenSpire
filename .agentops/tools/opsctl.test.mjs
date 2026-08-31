@@ -440,7 +440,10 @@ function check(name, cond, detail = '') {
   // The bug that froze six of seven seat-holding roles: dispatch woke `maker`
   // for every seat because no other role was permitted to leave 'assigned'.
   const byTicket = Object.fromEntries(d.map((e) => [e.ticket, e]));
-  check('an it-support seat wakes it-support, not maker', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake === 'it-support', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake);
+  const rtSupport = loadRuntime();
+  rtSupport.capsules['AS-HD-057'].blocker = null;
+  const support = computeDispatch(contracts, rtSupport).find((e) => e.ticket === 'AS-HD-057');
+  check('an unblocked it-support seat wakes it-support, not maker', support && support.wake === 'it-support', support && support.wake);
   check('a qa seat wakes qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake === 'qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake);
   check('every unblocked seat wakes its own capsule owner',
     d.filter((e) => !e.escalation_class).every((e) => e.wake === rt.capsules[e.ticket].owner_actor),
@@ -449,6 +452,7 @@ function check(name, cond, detail = '') {
   // seat that would stop the moment it read its own capsule.
   const rtDead = loadRuntime();
   const victim = rtDead.capsules['AS-HD-057'];
+  victim.blocker = null;
   rtDead.leases.find((l) => l.id === victim.writer_lease).revoked = true;
   const dead = computeDispatch(contracts, rtDead).find((e) => e.ticket === 'AS-HD-057');
   check('a revoked lease escalates instead of waking the seat', !!dead && dead.escalation_class === 'technical-blocker' && /revoked/.test(dead.reason), JSON.stringify(dead));

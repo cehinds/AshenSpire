@@ -4217,6 +4217,8 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
     const cap = rt.capsules[ticket];
     const lease = rt.leases.find((l) => l.id === cap.writer_lease);
     const leaseIsActive = !!lease && activeRuntimeLeases(rt).includes(lease);
+    const outgoing = moves.filter((m) => m.from === cap.lifecycle_state);
+    if (!outgoing.length) continue;                       // terminal: wakes nobody
 
     if (cap.blocker) {
       entries.push(escalate(cap, cap.blocker.escalation_class, cap.blocker.summary));
@@ -4240,8 +4242,6 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
       : null;
     if (dead) { entries.push(escalate(cap, 'technical-blocker', dead)); continue; }
 
-    const outgoing = moves.filter((m) => m.from === cap.lifecycle_state);
-    if (!outgoing.length) continue;                       // terminal: wakes nobody
     const open = outgoing.filter((m) => !m.protected);
     if (!open.length) {
       entries.push({
