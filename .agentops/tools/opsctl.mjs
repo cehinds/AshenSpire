@@ -1934,6 +1934,17 @@ function onBranch(root) {
 // Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
 // work, so an absent ref is normal for an unstarted seat — but wake must say so
 // rather than printing a checkout instruction that silently cannot be followed.
+// Any local branch, for fixtures that need a ref that genuinely resolves. A CI
+// pull-request checkout is detached with no local branches at all, so callers
+// must handle null rather than assume a well-known name exists: hardcoding
+// `dev` is what turned the reseat control plant red on a checkout that had none.
+function anyLocalBranch(root) {
+  try {
+    const out = execFileSync('git', ['for-each-ref', '--format=%(refname:short)', '--count=1', 'refs/heads/'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return out || null;
+  } catch { return null; }
+}
+
 // Does this repository carry the object, and is it a commit? Same execFileSync
 // discipline as resolveRef: the value comes from a command request.
 function commitExists(root, oid) {
@@ -3731,7 +3742,25 @@ export function runSelftest(root = ROOT) {
   const rsTicket = Object.keys(rt0.capsules).find((t) => RESEATABLE.has(rt0.capsules[t].lifecycle_state));
   const rsHash = computeCapsuleHash(rt0.capsules[rsTicket]);
   const rsReq = (params) => ({ schema: 'agentops/owner-command-request/v1', action: 'reseat', actor: 'it-manager-iii', target: rsTicket, expected_current_hash: rsHash, params });
-  results.push({ label: 'reseat control: an unstarted seat pointed at a branch is accepted', pass: validateCommand(contracts, rt0, rsReq({ base_ref: 'dev' }), { root }).ok, errs: validateCommand(contracts, rt0, rsReq({ base_ref: 'dev' }), { root }).errors });
+  // Fixtures come from the repository, never from a well-known name. The first
+  // version of this control used `dev`, which exists in a working clone and does
+  // NOT exist in a CI pull-request checkout — detached, with no local branches —
+  // so it failed there and only there.
+  const rsBranch = anyLocalBranch(root);
+  const rsHead = currentHead(root);
+  const rsPin = (rsHead && rsHead !== rt0.capsules[rsTicket].base_oid) ? rsHead : null;
+  if (rsPin) {
+    const pinned = validateCommand(contracts, rt0, rsReq({ base_oid: rsPin }), { root });
+    results.push({ label: 'reseat control: an unstarted seat pinned to a real commit is accepted', pass: pinned.ok, errs: pinned.errors });
+  }
+  // The pointer control needs a branch that resolves. Where the checkout has
+  // none, the same request runs in pure mode — the shape logic is what this
+  // asserts, and the repository check is environment-dependent by design, which
+  // is exactly why reseatParamErrors takes root as an option rather than always
+  // reaching for git.
+  const ptrReq = rsReq({ base_ref: rsBranch || 'any-branch-name' });
+  const ptr = validateCommand(contracts, rt0, ptrReq, rsBranch ? { root } : {});
+  results.push({ label: `reseat control: an unstarted seat pointed at a branch is accepted (${rsBranch ? 'resolved' : 'shape only — this checkout carries no local branch'})`, pass: ptr.ok, errs: ptr.errors });
   const expectReseat = (label, req, needle) => {
     const res = validateCommand(contracts, rt0, req, { root });
     const hit = !res.ok && res.errors.some((e) => e.includes(needle));
@@ -3743,6 +3772,8 @@ export function runSelftest(root = ROOT) {
   expectReseat('reseat: an abbreviated commit id', rsReq({ base_oid: 'a72cac96' }), 'not a full 40-character commit id');
   expectReseat('reseat: a commit this repository does not carry', rsReq({ base_oid: 'a'.repeat(40) }), 'not a commit in this repository');
   expectReseat('reseat: a branch this repository does not carry', rsReq({ base_ref: 'no-such-branch-anywhere' }), 'not a branch in this repository');
+  // ...and the pin control's own fixture must have been real, or the control above proves nothing.
+  results.push({ label: 'the reseat controls ran against a real commit', pass: rsPin !== null || rsHead === null, errs: [String(rsHead)] });
   expectReseat('reseat: a commit id recorded as a pointer', rsReq({ base_ref: 'a72cac9611df' }), 'a pinned value recorded as a pointer is neither');
   expectReseat('reseat: a no-op that would still append an event', rsReq({ base_oid: rt0.capsules[rsTicket].base_oid }), 'a command that changes nothing still appends');
   expectReseat('reseat: a seat that has already started', { ...rsReq({ base_ref: 'dev' }), target: 'AS-1001', expected_current_hash: computeCapsuleHash(rt0.capsules['AS-1001']) }, 'work already stands on its base');
