@@ -1,0 +1,29 @@
+{
+  "event_id": "evt-00000020-d1131f2c-d00c-43af-b437-9a2a5208f3bc",
+  "idempotency_key": "CLAIM_ACQUIRED:397:1:2026-08-31T14:25:45.863Z",
+  "sequence": 20,
+  "previous_snapshot_hash": "5702f03d7a52a53ed4496c808c5e566785c2a7398b683431f0ba51a5f0804bb2",
+  "issue_id": "397",
+  "actor": "seat:review-hub:2f6633d9-1dc6-4c35-8f7f-b2f6d11aa51d",
+  "machine_id": "97d0e34e-194a-4bca-ace1-ad66903e39c4",
+  "lease_id": "lease:397:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-397-durable-asks-ledger",
+    "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
+    "lease_expiry": "2026-08-31T15:30:00Z",
+    "claimed_paths": [
+      "docs/asks/asks-ledger.json",
+      "docs/asks/asks-ledger.md",
+      "tools/asks-ledger.mjs"
+    ],
+    "claimed_resources": [
+      "issue:397",
+      "owner-asks-ledger"
+    ],
+    "next_action": "Finish deterministic asks ledger candidate"
+  },
+  "created_at": "2026-08-31T14:25:45.863Z"
+}
