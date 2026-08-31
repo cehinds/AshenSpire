@@ -9,12 +9,10 @@
 //   the other, so the mistake is a THUMB LANDING 14 px OFF — and the answer is
 //   the fill, inside the same gesture.
 //   SMITH CONFIRMS. Constantine asked for the upgrade preview to be
-//   confirmable. #105 shipped the preview as a HOVER tooltip, which on a phone
-//   is nothing at all, and then one tap committed a permanent upgrade. Holding
-//   the wrong card upgrades the wrong card; what the player needs is to SEE
-//   WHAT IT BECOMES and then say yes. So the confirm panel carries
-//   `upgradePreviewHtml` — the same preview, on the screen, where a finger can
-//   read it.
+//   confirmable. #105 shipped a per-card HOVER tooltip, which on a phone was
+//   nothing at all, and then one tap committed. Smithing now selects the source
+//   armament and shows every affected basic-card delta in a persistent panel;
+//   what the player needs is to SEE THE WHOLE PROMOTION and then say yes.
 //
 // Neither of those decisions is in this file. `model/secondbeat.js` holds the
 // characteristics; this screen names its actions.
@@ -22,7 +20,8 @@
 import { shrineHealAmount } from '../../engine/encounters.js';
 import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
-import { passiveFlag, resolveCard } from '../../model/registries.js';
+import { passiveFlag } from '../../model/registries.js';
+import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { sfx } from '../sfx.js';
@@ -83,7 +82,8 @@ function partnerName(registries, kind) {
 export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
-  const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
+  const smith = smithingPlan(registries, run);
+  const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -122,13 +122,15 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
-        <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt"
-             role="button" tabindex="${upgradable.length ? '0' : '-1'}"
-             aria-disabled="${upgradable.length ? 'false' : 'true'}">
+        <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
+             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
           <div class="cp-body">
             <h3>Smith</h3>
-            <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+            <p>${canInspectSmithing
+              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
+              : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>
         <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
@@ -329,29 +331,27 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     };
     drawLevelCard();
   }
-  if (upgradable.length) {
+  if (canInspectSmithing) {
     // Smith is a reversible modal transaction until its explicit Confirm.
     // Opening and selecting mutate presentation state only. Back and Escape
     // return to the Shrine with the run byte-for-byte untouched; Confirm is
-    // the one permanent upgrade and the one path that leaves the Shrine.
+    // the one armament promotion and the one path that leaves the Shrine.
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
-      let selectedInstanceId = null;
-      const model = () => smithSelectionModel(registries, upgradable, selectedInstanceId);
+      let selectedArmamentId = null;
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedArmamentId);
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         returnFocusElement: smithOption,
-        onSelect: (instanceId) => {
-          selectedInstanceId = instanceId;
+        onSelect: (armamentId) => {
+          selectedArmamentId = armamentId;
           modal.update(model());
         },
         onBack: () => {},
-        onConfirm: (instanceId) => {
-          const inst = upgradable.find((candidate) => candidate.instanceId === instanceId);
-          if (!inst) return;
-          inst.upgraded = true;
+        onConfirm: (armamentId) => {
+          const receipt = commitSmithing(registries, run, armamentId);
           sfx.play('shrine');
-          onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
+          onDone(`Smithed ${esc(receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone, ${receipt.affectedCards.length} basic cards improved.`);
         },
       });
     };

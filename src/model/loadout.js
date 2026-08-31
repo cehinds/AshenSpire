@@ -1584,6 +1584,17 @@ export function stampDeck(registries, run, cards, {
       if (inst.equipmentRole !== 'attack') inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };
+      const sourceArmamentId = row.piece && row.piece.id;
+      if (sourceArmamentId) {
+        inst.sourceArmamentId = sourceArmamentId;
+        inst.smithingLevel = (run.armamentLevels && run.armamentLevels[sourceArmamentId]) || 0;
+        // Equipment-bound basics derive their upgrade from the source piece.
+        // Per-copy flags remain authoritative only for ordinary cards.
+        inst.upgraded = false;
+      } else {
+        delete inst.sourceArmamentId;
+        delete inst.smithingLevel;
+      }
     }
     let carrier;
     if (row && row.profile) {

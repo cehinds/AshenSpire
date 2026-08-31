@@ -64,6 +64,14 @@ export function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
+  if (snapshot.armamentLevels !== undefined) {
+    if (!record(snapshot.armamentLevels)) problems.push('armamentLevels must be an object');
+    else for (const [pieceId, level] of Object.entries(snapshot.armamentLevels)) {
+      if (!nonEmptyString(pieceId) || !Number.isInteger(level) || level < 0) {
+        problems.push(`armamentLevels.${pieceId || '<empty>'} must be a non-negative integer`);
+      }
+    }
+  }
   if (!record(snapshot.equipmentPoolDeficits)) problems.push('equipmentPoolDeficits must be an object');
   if (snapshot.loadout !== null && !record(snapshot.loadout)) problems.push('loadout must be an object or null');
   if (snapshot.attributes !== null && !record(snapshot.attributes)) problems.push('attributes must be an object or null');

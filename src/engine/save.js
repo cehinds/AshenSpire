@@ -29,6 +29,7 @@
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } from '../model/loadout.js';
+import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
@@ -65,6 +66,22 @@ function runKey(slot = 1) {
 
 const COMBAT_SNAPSHOT_PILE_ORDER = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
 
+function pendingRewardReferenceProblems(pending, registries) {
+  if (!pending) return [];
+  const rewards = pending.rewards || {};
+  const problems = [];
+  for (const cardId of rewards.cardIds || []) {
+    if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
+  }
+  if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
+  if (rewards.armamentId
+      && !(registries.equipment.armaments || []).some((piece) => piece.id === rewards.armamentId)) {
+    problems.push(`armament '${rewards.armamentId}' is unknown`);
+  }
+  return problems;
+}
+
 /**
  * Migrate one exact active-combat snapshot through the same weapon-package
  * composer as an ordinary run. The snapshot loadout is authoritative while a
@@ -93,6 +110,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     class: classId,
     loadout: snapshot.loadout,
     attributes: snapshot.attributes || run.attributes,
+    armamentLevels: run.armamentLevels || {},
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     deck: cards,
@@ -100,6 +118,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     adoptEquipmentBonuses: false,
     reconcileEquipmentPools: false,
   });
+  snapshot.armamentLevels = structuredClone(run.armamentLevels || {});
 
   // Commit only after validation and every pile rebind succeed. Resume then
   // observes the exact same loadout in run state and restored combat state.
@@ -430,6 +449,10 @@ export function createSaveManager(storage) {
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
         }
+        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries);
+        if (pendingReferenceProblems.length) {
+          throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
+        }
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -509,6 +532,11 @@ export function createSaveManager(storage) {
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
+        // Recover legacy per-copy equipment upgrade intent before stampDeck
+        // clears redundant flags and before an active-combat snapshot is
+        // rebound. The snapshot restamp must consume the promoted tier; doing
+        // this afterward would leave the resumed piles at tier zero.
+        const smithingReceipt = initializeRunSmithing(registries, run);
         migrateCombatSnapshotWeaponCards(registries, run);
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         // Every load crosses the same deterministic composition door. This is
@@ -518,6 +546,22 @@ export function createSaveManager(storage) {
           adoptEquipmentBonuses: false,
           reconcileEquipmentPools: false,
         });
+        if (smithingReceipt.initialized || smithingReceipt.promotedArmaments.length) {
+          note(run, {
+            kind: 'heal',
+            site: 'smithing.js:initializeRunSmithing',
+            field: 'smithingStones/armamentLevels/smithingRewardClaims',
+            was: undefined,
+            now: {
+              smithingStones: run.smithingStones,
+              armamentLevels: run.armamentLevels,
+              smithingRewardClaims: run.smithingRewardClaims,
+            },
+            why: smithingReceipt.promotedArmaments.length
+              ? 'legacy equipment-card upgrade intent was promoted once to its source armament'
+              : 'pre-Smithing save received an empty purse, level map, and reward-claim ledger',
+          });
+        }
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {

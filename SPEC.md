@@ -512,7 +512,8 @@ dmg = floor(dmg); if dmg < 0 → 0
 
 - Types: **Attack, Skill, Power, Curse, Status**. Powers are removed from play when played (not exhausted — they don't hit the exhaust pile). Curses/Statuses are unplayable unless stated.
 - Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all energy; effect scales via `{f:'energySpent'}`).
-- Upgrades: every non-curse card has exactly one upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Upgrading is permanent for the run.
+- Upgrades: every non-curse card has exactly one authored upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Ordinary cards retain a permanent per-copy run upgrade. Equipment-sourced basic cards instead resolve that authored upgrade from their source armament's run-owned Smithing tier, so every current and future copy from the same armament changes together.
+- Smithing: a run owns `smithingStones`, an `armamentLevels` map, and idempotent reward claims. The shipped tier cap is 1 and promoting an armament to tier 1 costs 1 Smithing Stone. Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the corresponding source armament tier without granting Stones.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
 
 ### 4.4 Status effects
@@ -941,11 +942,14 @@ keeps the same state and focus contract without meaningful animation.
   Smith, Flask Allocation, and Level Up. Its viewport-relative width and height are data-owned by
   `balance.ui.shrinePresentation`; expanding a disclosure adds its content below the uniform face.
   Smith opens the dedicated `smith-upgrade-modal`, composed from
-  `smith-candidate-card` and `smith-upgrade-preview`. Opening the modal and
-  choosing a candidate are presentation-only operations. `Back to Shrine` and
-  Escape close it without changing the run; only enabled `Confirm` upgrades one
-  selected card and leaves the Shrine. The DOM-free `SmithSelectionModel` owns
-  the choose/review state and player-facing consequence copy.
+  `smith-candidate-card` and `smith-upgrade-preview`. Each candidate is one distinct owned
+  armament below the run's tier cap, never an individual deck copy. Choosing a candidate is a
+  presentation-only operation that shows its current and next tier, cost, Stone purse,
+  shortfall, and every grouped sourced-basic-card delta. `Back to Shrine` and Escape close the
+  modal without changing the run; only an affordable enabled `Confirm` spends the shown cost,
+  promotes the selected armament, updates all of its sourced basic cards, and leaves the Shrine.
+  The DOM-free `SmithSelectionModel` owns the choose/review state and player-facing consequence
+  copy.
 - **Combatant Component Model.** `combatant-frame` may compose `component-background`,
   `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`,
   `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar`, and
