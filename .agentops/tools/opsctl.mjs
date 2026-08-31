@@ -1587,6 +1587,16 @@ export function globCovers(declGlob, glob) {
   return dirG.startsWith(dirD);
 }
 
+// The ticket a ledger glob is scoped to, or null when it grants the whole root.
+// `.agentops/events/AS-HD-055/**` under root `.agentops/events/**` is AS-HD-055's.
+export function ledgerTicketOf(rootGlob, granted) {
+  const root = rootGlob.replace(/\*+$/, '');
+  if (!granted.startsWith(root)) return null;
+  const rest = granted.slice(root.length).replace(/^\/+/, '');
+  const first = rest.split('/')[0];
+  return first && !first.includes('*') ? first : null;
+}
+
 export function pathGrantErrors(contracts, lease) {
   const errors = [];
   // An exception covers only the globs it names. A lease carrying one is still
@@ -1604,6 +1614,21 @@ export function pathGrantErrors(contracts, lease) {
       // own ledger. This is the A2 fix: with these globs owned by `maker`, a
       // qa-independent or help-desk seat could not be granted its own capsule
       // or event chain, and therefore could not record what it did.
+      //
+      // "Follows the ticket's lease" is the whole safety argument, and the first
+      // version of this branch did not check it: an unconditional `continue`
+      // accepted `.agentops/work/**` and authorized the holder for EVERY
+      // ticket's ledger. `ledger_serialization` claimed the per-ticket lane kept
+      // two seats off one ticket while nothing enforced it — the same
+      // self-consistency defect this work keeps finding.
+      //
+      // A glob scoped to a ticket must name the lease's own; a broad root grant
+      // stays legal (AS-1001 holds one) but authorizes only that subtree, which
+      // ledgerScopeErrors enforces where the writes actually are.
+      const scoped = ledgerTicketOf(owner.glob, g);
+      if (scoped && lease.ticket && scoped !== lease.ticket) {
+        errors.push(`lease '${lease.id}' is issued for '${lease.ticket}' but grants '${g}', which is ${scoped}'s ledger; a seat records what it did, not what another seat did`);
+      }
       continue;
     } else if (owner.owner_role !== actorRole(contracts, lease.actor)) {
       errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
@@ -1892,6 +1917,17 @@ export function runtimeChecks(g, rt) {
       for (const p of cap.affected_paths) {
         const covered = lease.path_globs.some((g) => globPrefix(p).startsWith(globPrefix(g)));
         if (!covered) errors.push(`capsule '${ticket}' affected path '${p}' is not covered by its writer lease '${lease.id}'`);
+        // A broad ledger grant is legal but authorizes only this seat's own
+        // subtree. Without this, holding `.agentops/work/**` let a capsule
+        // declare another ticket's ledger among its affected paths, which is
+        // what the per-ticket lane was supposed to prevent.
+        for (const decl of (g['git-ownership'] || {}).paths || []) {
+          if (!decl.per_seat || !globCovers(decl.glob, p)) continue;
+          const scoped = ledgerTicketOf(decl.glob, p);
+          if (scoped && scoped !== ticket) {
+            errors.push(`capsule '${ticket}' claims affected path '${p}', which is ${scoped}'s ledger; a per-seat grant authorizes the lease's own ticket, not the whole root`);
+          }
+        }
       }
     }
   }
@@ -3757,6 +3793,26 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'a pinned capsule still stops when its base moves', pass: pStop.includes('base_oid moved from HEAD'), errs: [pStop] });
   }
 
+  // Codex P1: a per-seat grant authorizes the lease's OWN ticket. The first
+  // version accepted `.agentops/work/**` unconditionally, so every holder was
+  // authorized for every seat's ledger while the contract claimed otherwise.
+  expectRuntime('a lease granting another ticket\'s ledger', (rt) => {
+    rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent').path_globs.push('.agentops/events/AS-HD-040/**');
+  }, "is AS-HD-040's ledger");
+  expectRuntime('a capsule claiming another ticket\'s ledger as an affected path', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker');
+    l.path_globs.push('.agentops/events/**');
+    rt.capsules['AS-1001'].affected_paths.push('.agentops/events/AS-HD-055/**');
+  }, "is AS-HD-055's ledger");
+  {
+    // ...and a seat's own ticket-scoped ledger grant stays legal.
+    const rt = baseRt();
+    const lease = rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent');
+    lease.path_globs.push('.agentops/events/AS-HD-055/**', '.agentops/work/AS-HD-055/**');
+    const errs = pathGrantErrors(contracts, lease);
+    results.push({ label: 'a seat may hold its own ticket-scoped ledger', pass: errs.length === 0, errs });
+  }
+
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
@@ -4502,15 +4558,30 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   if (!onBranch(root)) {
     return { ok: false, errors: [`HEAD is detached at ${head.slice(0, 12)}; reseating would pin the capsule to a commit no branch carries`] };
   }
-  if (cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
+  // A tracking capsule freezes here. runtimeChecks rejects a started capsule
+  // that still carries base_ref, and the first version of this branch shipped
+  // that check with no action that clears it — so a capsule that adopted the
+  // pointer could never start. The freeze and its check now exist together, and
+  // the early return below must not pre-empt it: a tracking capsule whose
+  // recorded base already equals HEAD still has a pointer to drop.
+  const freezing = !!cap.base_ref;
+  if (!freezing && cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
 
   const from = cap.base_oid;
-  cap.base_oid = head;
+  const tracked = freezing ? resolveRef(root, cap.base_ref) : null;
+  if (freezing && tracked === null) {
+    return { ok: false, errors: [`capsule ${ticket} tracks '${cap.base_ref}', which this checkout does not carry; a pointer that cannot be resolved cannot be frozen into a base`] };
+  }
+  const frozenRef = cap.base_ref;
+  cap.base_oid = freezing ? tracked : head;
+  if (freezing) delete cap.base_ref;
   writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
   const r = runReseal(root, ticket, {
     actor: actor || TOOL_ACTOR,
     now,
-    reason: `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
+    reason: freezing
+      ? `Froze tracked base '${frozenRef}' to ${tracked.slice(0, 12)}; the seat is starting work, so the branch it followed becomes the tree it works from and the pointer is dropped.`
+      : `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
   });
   if (!r.ok) return r;
   return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
