@@ -38,9 +38,11 @@ Pools are not standing delivery teams and do not own a backlog, decision stream,
 or source path merely because the path fits their specialty.
 
 `App Team2`, `IT Support2`, and `IT Support3` are legacy task names, not
-standing organizations. Existing bounded tasks keep their makers and paths
-until closure or explicit reassignment. New work routes through Feature /
-Architecture or Incident / Defect and a temporary pod.
+standing organizations; the standing capability-restoration role `it-support`
+defined in [AUTHORITY.md](AUTHORITY.md) and `.agentops/governance/roles.json`
+is distinct from those labels and remains in force. Existing bounded tasks
+keep their makers and paths until closure or explicit reassignment. New work
+routes through Feature / Architecture or Incident / Defect and a temporary pod.
 
 No standing Audio, Localization, Telemetry, Security, or Community department
 exists absent a later product-scope decision supported by sustained volume and

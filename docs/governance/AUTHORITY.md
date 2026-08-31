@@ -27,6 +27,12 @@ and [0009 — Promotion Gates A–F](DECISIONS/0009-promotion-gates-a-through-f.
   architecture reconciliation, technical sequencing, path/maker ownership,
   contested ownership, unresolved technical blockers, incident/P0 command,
   integration and delivery gates, and questions for Constantine.
+- **IT Support** owns capability restoration: repairing local tooling,
+  environment, routing, and access blockers with exact evidence of the repair.
+  It reproduces a blocker before repairing it and escalates any repair that
+  would change what the work produces, or that needs a protected transition,
+  to the IT Manager III. It does not become implementation, product,
+  integration, publication, or release authority.
 - **Constantine** retains every authority reserved by repository policy,
   including `main`/`release`, tags, publication, Pages, final release readiness,
   and the release actions listed below.
@@ -44,6 +50,7 @@ or product, board, promotion, publication, or release authority.
 | Recommend portfolio/milestone sequencing, expose dependencies/WIP/capacity, convene completion councils, or summarize stakeholders | Project Management Lead | Current ticket/Project evidence, risk/decision log, and recommendation; no technical assignment or integration mutation. |
 | Review a cross-domain data contract or withhold an unsafe one | Data Architecture & Systems Lead | Exact invariant, schema/ID/lineage/version/compatibility evidence, affected paths, and smallest safe correction. |
 | Resolve technical ambiguity, scope, exception, ownership, architecture, assignment, sequencing, or integration | IT Manager III | Decision packet and recorded answer, including Data Architecture clearance or exact authority for an exception to any `WITHHOLD`. |
+| Repair local tooling, environment, routing, or access blockers | IT Support | Reproduced blocker, exact repair evidence, and escalation of any repair changing work output or needing a protected transition. |
 | Perform independent QA | Assigned non-maker QA | Frozen exact head and applicable gate contract. |
 | Sequence competing QA lanes | Temporary QA Coordination Pool chaired by IT Manager III | Recorded collision, serialized resource, reviewer availability, and order; reviewers retain sole verdict authorship. |
 | Perform Delivery Systems Review | IT Manager III with CQM, Data Architecture, and Platform consultation | Exact lineage, generated-lane, tooling/dependency, integration/deployment, evidence, and rollback findings; no remote mutation follows automatically. |
