@@ -62,15 +62,17 @@
     },
     {
       "glob": ".agentops/work/**",
-      "owner_role": "maker",
+      "owner_role": "per-seat",
       "serialized_lane": "per-ticket",
-      "note": "One current work capsule per ticket; the ticket's writer lease owns it."
+      "note": "One current work capsule per ticket. Ownership follows the ticket's writer lease, so any role may hold its own capsule; opsctl is the sole writer and the per-ticket lane keeps two seats off one ticket.",
+      "per_seat": true
     },
     {
       "glob": ".agentops/events/**",
-      "owner_role": "maker",
+      "owner_role": "per-seat",
       "serialized_lane": "per-ticket",
-      "note": "Append-only event chain per ticket; written behind the same per-ticket lane as the capsule it records."
+      "note": "Append-only event chain per ticket. Ownership follows the ticket's writer lease, so any role may record what it did; opsctl is the sole writer and the per-ticket lane keeps two seats off one ticket.",
+      "per_seat": true
     },
     {
       "glob": ".agentops/leases/**",
@@ -175,9 +177,15 @@
     "lane": "governance",
     "rule": "A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift."
   },
+  "ledger_serialization": {
+    "lane": "per-ticket",
+    "writer": "opsctl",
+    "rule": "A work capsule and its event chain are written only by an opsctl command, never by hand: the command seals the capsule, appends the event and checks the chain, so a hand-edited ledger fails its own seal. The path is therefore owned per seat rather than by one role — any seat drives the command for its own ticket, and a role that cannot be granted the ledger cannot record what it did.",
+    "actor_rule": "The ledger records the seat as the actor of what the seat did, and opsctl as the actor of what the tool did on its own account. A process appending on a seat’s behalf never carries that seat’s actor."
+  },
   "collision_rule": "Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.",
   "branch_hygiene": {
-    "principle": "A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard \u2014 so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.",
+    "principle": "A branch is brought forward by rebase so its history stays linear and its diff keeps meaning what it said. Rebase rewrites history, and history that someone else may already hold is not the rewriter's to discard — so rewriting a branch that is not the actor's own needs the team lead's permission, recorded.",
     "default_update_method": "rebase",
     "alternative_when_permission_is_absent": "merge the base branch in, which leaves every existing checkout valid",
     "rewrite_requires_permission_when": "the branch is not the acting role's own",

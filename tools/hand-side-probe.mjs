@@ -13,14 +13,13 @@
 //     hand === 'right'  ->  ink centroid must be LEFT of the body's centre
 //     hand === 'left'   ->  ink centroid must be RIGHT of the body's centre
 //
-// WHAT IS MEASURED, AND WHY IT IS THE ASSET. The three views Constantine names
-// do not each position a limb. `equippedFigure` (src/ui/assets.js) stacks
-// FULL-FRAME pre-rendered layers — `body_<class>_<set>.webp` with
-// `weapon_<id>.webp` absolutely positioned over it at inset:0 — both drawn on
-// one shared camera (tools/equipment-blender.py). NOTHING AT RUNTIME DECIDES A
-// SIDE. The side is baked into the PNG, every caller inherits it, and measuring
-// the asset measures every view at once. That claim is itself checked: arm 2
-// asserts the runtime composes layers rather than placing them.
+// WHAT IS MEASURED. The producer bakes each full-frame layer at a TYPE-DEFAULT
+// socket: shields at LX, everything else at RX. That is not the weapon row's
+// `hand` value. `hand` is eligibility; figureSpec() reads the actual slot and
+// supplies a per-layer mirror when the piece is moved away from its authored
+// socket. ARM 2 exercises every legal slot placement, including BOTH placements
+// for `hand=either`, through the same global and per-layer mirrors the player
+// receives.
 //
 // THE READING IS AN ALPHA-WEIGHTED CENTROID, not a bounding box. A bounding box
 // is decided by the single most extreme pixel, so one stray anti-aliased texel
@@ -33,10 +32,8 @@
 // hunted, which is the one confusion this probe must not ship.
 //
 // TWO ARMS, AND ONLY ONE OF THEM IS THE GATE.
-//   ARM 1 (diagnostic) reads the RAW ASSET and reports the convention the art
-//     was baked with. It is expected to stay wrong until the art is re-rendered
-//     from corrected producers, so it REPORTS and never decides the exit code.
-//     A gate that is permanently red is a gate everybody learns to skip.
+//   ARM 1 (diagnostic) reads each RAW ASSET once and reports its type-default
+//     socket. It REPORTS and never decides the exit code.
 //   ARM 2 (the gate) measures THE RENDERED FIGURE through the shipped
 //     stylesheet — the pixels a player actually receives, CSS transform and
 //     all. This is what must be green, and it is what goes red the moment the
@@ -133,29 +130,6 @@ function centroidOf(png) {
   return { centroid: wx / sum, min, max, pixels: n, w, h };
 }
 
-// A RECORDED EXCEPTION, NEVER A SUPPRESSION — and it is guarded in BOTH
-// directions below: a carried row that starts passing is a FAILURE, because it
-// means this ledger is lying about the tree and nobody would otherwise notice.
-//
-// `parryDagger` is declared `hand=left` in weapons.csv and drawn from the
-// `dagger` archetype, and tools/equipment-blender.py dispatches on `geom`
-// ALONE (`build = GEOM.get(w["geom"])`, line 358) — it never reads the `hand`
-// column the row declares. So a left-hand item is built at the right hand's
-// position. That is a different defect from the one this PR fixes: the mirror
-// is a compositing correction and cannot reach a piece that is in the wrong
-// place relative to its own family.
-//
-// It is also a Law 0 breach in miniature — the entry DESCRIBES (`hand=left`)
-// and the machinery derives the position from a different column entirely. The
-// fix is in the producer, needs Blender to re-render, and is carded.
-//
-// REMOVAL CONDITION: delete the row the day the art is re-rendered from a
-// producer that derives hand position from the `hand` column. The both-way
-// guard makes leaving it here after that a red, not a shrug.
-const CARRIED = new Map([
-  ['parryDagger', 'hand=left, built from the `dagger` archetype at the RIGHT hand position — equipment-blender.py dispatches on `geom` and never reads `hand`'],
-]);
-
 // weapons.csv QUOTES ANY FIELD CONTAINING A COMMA — `blurb` does it repeatedly
 // ("Slow, and it does not care."). A positional `line.split(',')` shifts every
 // column after that field, so the one column this function must read correctly
@@ -181,7 +155,7 @@ function csvFields(line) {
 
 // weapons.csv carries no machine-readable header row (line 1 is a comment), so
 // the column contract is positional. Named here rather than counted inline.
-const COL = { id: 0, hand: 3, artKey: 17 };
+const COL = { id: 0, kind: 2, hand: 3, artKey: 17 };
 
 // THE ASSET IS DERIVED THE WAY THE RUNTIME DERIVES IT — that is now this
 // function's whole job. `src/model/loadout.js:962` reads `piece.artKey ||
@@ -197,12 +171,9 @@ const COL = { id: 0, hand: 3, artKey: 17 };
 // screen and every number looked reproducible. Law 0 clause 5 exactly: the
 // silent plausible derivation is the dangerous one, not the loud missing one.
 //
-// SO A HANDED ROW IS NEVER SUBTRACTED IN SILENCE. Every row with
-// `hand ∈ {left,right}` enters the population. One whose asset is absent is
-// carried in as `missing`, PRINTED BY NAME, and it fails the gate — a dropped
-// row is either measured or named, never quietly gone. There is deliberately
-// NO `continue` on a missing asset in this function; reintroducing one is the
-// regression P6 plants.
+// Every armament enters once per legal slot. `either` therefore enters TWICE;
+// turning it into one convenient default would recreate the issue as a test
+// omission. One whose asset is absent is named and fails the gate.
 function armaments() {
   const csv = readFileSync(resolve(ROOT, 'content/source/weapons.csv'), 'utf8');
   const rows = [];
@@ -210,12 +181,26 @@ function armaments() {
     if (!line.trim() || line.startsWith('#')) continue;
     const f = csvFields(line);
     const id = f[COL.id];
+    const kind = f[COL.kind];
     const hand = f[COL.hand];
-    if (!id || (hand !== 'left' && hand !== 'right')) continue;
+    if (!id || !['left', 'right', 'either'].includes(hand)) continue;
     // The runtime's own rule, `loadout.js:962`.
     const art = (f[COL.artKey] || '').trim() || id;
     const url = `assets/equipment/weapon_${art}.webp`;
-    rows.push({ id, hand, art, url, missing: !existsSync(resolve(ROOT, url)) });
+    const authoredHand = kind === 'shield' ? 'left' : 'right';
+    const hands = hand === 'either' ? ['left', 'right'] : [hand];
+    for (const slotHand of hands) {
+      rows.push({
+        id: `${id}@${slotHand}`,
+        pieceId: id,
+        hand: slotHand,
+        declaredHand: hand,
+        authoredHand,
+        art,
+        url,
+        missing: !existsSync(resolve(ROOT, url)),
+      });
+    }
   }
   return rows;
 }
@@ -310,13 +295,19 @@ async function renderedMeasure(cdp, S, port, pieces) {
   };
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 400, height: 500, deviceScaleFactor: 1, mobile: false }, S);
 
-  const HARNESS = `(() => {
+  const HARNESS = `(async () => {
+    const [{ equippedFigure }, { figureSpec }, { ARMAMENTS, ARMOUR, SLOTS }] = await Promise.all([
+      import('/src/ui/assets.js'),
+      import('/src/model/loadout.js'),
+      import('/src/content/equipment.js'),
+    ]);
+    const registries = { equipment: { armaments: ARMAMENTS, armour: ARMOUR, slots: SLOTS } };
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:#ff00ff;width:400px;height:500px;overflow:hidden';
     const host = document.createElement('div');
     host.style.cssText = 'position:absolute;left:0;top:0;width:400px;height:500px;background:#ff00ff;';
     document.body.appendChild(host);
-    window.__probeShow = (wrapper, srcs) => new Promise((done) => {
+    window.__probeShow = async (wrapper, piece) => {
       host.innerHTML = '';
       let outer = host;
       if (wrapper === 'nested') {
@@ -326,28 +317,34 @@ async function renderedMeasure(cdp, S, port, pieces) {
         host.appendChild(cs);
         outer = cs;
       }
-      const fig = document.createElement('div');
-      fig.className = 'equipped-figure';
-      fig.style.cssText = 'position:absolute;inset:0;';
+      const slotId = piece && piece.hand === 'left' ? 'leftHand' : 'rightHand';
+      const loadout = piece ? {
+        sets: { [slotId]: [piece.pieceId] },
+        active: { [slotId]: 0 },
+      } : { sets: {}, active: {} };
+      const spec = figureSpec(registries, loadout, 'reaver');
+      const fig = equippedFigure({ classId: 'reaver', ...spec });
+      if (!fig) throw new Error('equippedFigure returned no Reaver figure');
+      fig.style.position = 'absolute';
+      fig.style.inset = '0';
       outer.appendChild(fig);
-      let left = srcs.length;
-      const settle = () => requestAnimationFrame(() => requestAnimationFrame(() => done(true)));
-      if (!left) return settle();
-      for (const s of srcs) {
-        const img = document.createElement('img');
-        img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;';
-        img.onload = () => { if (--left === 0) settle(); };
-        img.onerror = () => { img.remove(); if (--left === 0) settle(); };
-        img.src = s;
-        fig.appendChild(img);
+      const images = [...fig.querySelectorAll('img')];
+      await Promise.all(images.map((img) => img.decode().catch(() => null)));
+      // Piece readings exclude body pixels, but preserve the exact element,
+      // layer transform and enclosing shipped CSS produced by the runtime.
+      if (piece) {
+        const body = images.find((img) => img.getAttribute('src').includes('/body_'));
+        if (body) body.style.visibility = 'hidden';
       }
-    });
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      return true;
+    };
     return true;
   })()`;
   await mount(HARNESS);
-  const show = (wrapper, srcs) => mount(`window.__probeShow(${JSON.stringify(wrapper)}, ${JSON.stringify(srcs)})`);
+  const show = (wrapper, piece) => mount(`window.__probeShow(${JSON.stringify(wrapper)}, ${JSON.stringify(piece)})`);
 
-  await show('bare', [BODY]);
+  await show('bare', null);
   const bodyBare = await shoot();
 
   // THE NESTING PROBE MUST BE ASYMMETRIC, and the first version of it was not.
@@ -358,19 +355,19 @@ async function renderedMeasure(cdp, S, port, pieces) {
   // side: bare and nested must put it on the SAME side, or the mirror count
   // differs between the Armoury and the combat board.
   const witness = pieces.find((p) => p.hand === 'right') || pieces[0];
-  await show('bare', [BODY, witness.url]);
+  await show('bare', witness);
   const witnessBare = await shoot();
-  await show('nested', [BODY, witness.url]);
+  await show('nested', witness);
   const witnessNested = await shoot();
   // REPEATABILITY CONTROL. A difference between two SHAPES means nothing until
   // the same shape twice means nothing — otherwise noise in the harness is read
   // as a finding about the page. Measured before the shapes are compared.
-  await show('bare', [BODY, witness.url]);
+  await show('bare', witness);
   const witnessBareAgain = await shoot();
 
   const rows = [];
   for (const p of pieces) {
-    await show('bare', [p.url]);
+    await show('bare', p);
     rows.push({ ...p, piece: await shoot() });
   }
   return { bodyBare, witnessBare, witnessNested, witnessBareAgain, witness, rows };
@@ -381,18 +378,18 @@ if (process.argv.includes('--selftest')) {
   // `assets` is NOT in doorplant's COPY_SET and this probe reads nothing else:
   // without it every plant would fail to load an image and go red for a reason
   // that has nothing to do with handedness — a catch that proves nothing.
-  process.exit(await doorSelftest({
+  const selftestCode = await doorSelftest({
     tool: 'hand-side-probe.mjs',
     extraCopy: ['assets'],
-    env: { CHROME: process.env.CHROME || '/usr/bin/chromium' },
+    env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
     plants: [
       {
         // DIRECTION 1 — the correction is gone. This is the shipped defect.
         name: 'P1 the mirror is removed — the reported bug, restored',
         file: 'styles/ui.css',
-        find: '.class-sprite,\n.equipped-figure { transform: scaleX(-1); }',
-        replace: '.class-sprite,\n.equipped-figure { transform: none; }',
-        expectRed: /WRONG straightSword.*drawn viewer-right/,
+        find: '.equipped-figure { transform: scaleX(-1); }',
+        replace: '.equipped-figure { transform: none; }',
+        expectRed: /WRONG straightSword@right.*drawn viewer-right/,
       },
       {
         // DIRECTION 2 — mirrored the WRONG WAY: applied TWICE on the nested
@@ -407,46 +404,32 @@ if (process.argv.includes('--selftest')) {
         expectRed: /WRONG ONE MIRROR PER FIGURE/,
       },
       {
-        // The ledger may not silently SHRINK.
-        name: 'P3 the carried row is deleted — a known-wrong piece loses its reason',
-        file: 'tools/hand-side-probe.mjs',
-        find: "  ['parryDagger', 'hand=left, built from the `dagger` archetype",
-        replace: "  // ['parryDagger', 'hand=left, built from the `dagger` archetype",
-        expectRed: /WRONG parryDagger/,
+        name: 'P3 a slot correction is removed — either-hand pieces collapse to their authored socket',
+        file: 'src/model/loadout.js',
+        find: "      spec.leftMirror = piece.kind !== 'shield';",
+        replace: "      spec.leftMirror = false;",
+        expectRed: /WRONG .*@(left|right)/,
       },
       {
-        // The ledger may not go STALE — a carried row that starts passing means
-        // the ledger no longer describes the tree, and that is a red, not a win.
-        name: 'P4 the carried piece starts rendering correctly — the ledger is stale',
-        file: 'content/source/weapons.csv',
-        find: 'parryDagger,Parrying Dagger,shield,left,',
-        replace: 'parryDagger,Parrying Dagger,shield,right,',
-        expectRed: /STALE parryDagger|renders correctly — delete the ledger row/,
-      },
-      {
-        // The ledger may not name something that is not there.
-        name: 'P5 the ledger names an armament that does not exist',
-        file: 'tools/hand-side-probe.mjs',
-        find: "const CARRIED = new Map([",
-        replace: "const CARRIED = new Map([\n  ['ghostBlade', 'a piece that does not exist'],",
-        expectRed: /FINDING ghostBlade: carried in CARRIED but no such armament was measured/,
-      },
-      {
-        // THE MEASURED SET MAY NOT SILENTLY SHRINK — the fourth failure
-        // direction, and the one that got past a real review. This restores
-        // the exact regression: derive the asset from `id` alone instead of
-        // the runtime's `artKey || id`, and `shortbow` (artKey=dagger) loses
-        // its asset. The old code answered that with a bare `continue` and
-        // printed a full-looking count over a population one row smaller than
-        // the file's. Now the row is named and the gate is red.
-        name: 'P6 the asset is derived from `id` alone — a handed row drops out of the population',
+        name: 'P4 the asset is derived from `id` alone — an artKey borrower is named missing',
         file: 'tools/hand-side-probe.mjs',
         find: "    const art = (f[COL.artKey] || '').trim() || id;",
         replace: "    const art = id;",
-        expectRed: /MISSING shortbow.*declared handed, never measured/,
+        expectRed: /MISSING shortbow@.*never measured/,
+      },
+      {
+        name: 'P5 hand=either is collapsed to one convenient slot',
+        file: 'tools/hand-side-probe.mjs',
+        find: "    const hands = hand === 'either' ? ['left', 'right'] : [hand];",
+        replace: "    const hands = [authoredHand];",
+        expectRed: /POPULATION WRONG.*hand=either.*both left and right/,
       },
     ],
-  }));
+  });
+  if (selftestCode === 0) {
+    console.log('hand-side-probe --selftest: OK — 5/5 known-bads observed red');
+  }
+  process.exit(selftestCode);
 }
 
 async function run(port, pieces) {
@@ -460,8 +443,11 @@ async function run(port, pieces) {
     await cdp.send('Runtime.enable', {}, S);
     await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
     await new Promise((r) => setTimeout(r, 1200));
+    const sources = [...new Map(pieces.map((piece) => [piece.pieceId, {
+      ...piece, id: piece.pieceId, hand: piece.authoredHand,
+    }])).values()];
     const res = await cdp.send('Runtime.evaluate',
-      { expression: MEASURE(BODY, pieces), awaitPromise: true, returnByValue: true }, S);
+      { expression: MEASURE(BODY, sources), awaitPromise: true, returnByValue: true }, S);
     if (res.exceptionDetails) throw new Error(res.exceptionDetails.text || 'evaluate threw');
     const asset = res.result.value;
     const rendered = await renderedMeasure(cdp, S, port, pieces);
@@ -476,16 +462,30 @@ function sideOf(dx, band) {
   return Math.abs(dx) <= band ? 'centre' : (dx < 0 ? 'viewer-left' : 'viewer-right');
 }
 const wantFor = (hand) => (hand === 'right' ? 'viewer-left' : 'viewer-right');
+// Raw producer coordinates predate the viewer-facing correction: RX appears on
+// the viewer's right and LX on the viewer's left. The global CSS mirror converts
+// those authored sockets into the model-hand convention used by wantFor().
+const rawWantFor = (hand) => (hand === 'right' ? 'viewer-right' : 'viewer-left');
 
 async function main() {
-  // THE POPULATION IS EVERY HANDED ROW IN THE FILE — the number this tool
-  // reports and the number it measured are now the same number, and where they
-  // cannot be, the difference is named row by row rather than subtracted.
+  // The population is every legal armament-to-slot placement. Every `either`
+  // row contributes two named cases.
   const population = armaments();
+  const eitherByPiece = new Map();
+  for (const row of population.filter((candidate) => candidate.declaredHand === 'either')) {
+    const hands = eitherByPiece.get(row.pieceId) || new Set();
+    hands.add(row.hand);
+    eitherByPiece.set(row.pieceId, hands);
+  }
+  const populationFindings = [...eitherByPiece]
+    .filter(([, hands]) => !hands.has('left') || !hands.has('right'))
+    .map(([id]) => `${id}: hand=either must exercise both left and right slots`);
+  for (const reason of populationFindings) console.log(`POPULATION WRONG — ${reason}`);
+  if (populationFindings.length) return 1;
   const absent = population.filter((r) => r.missing);
   const pieces = population.filter((r) => !r.missing);
-  if (!population.length) throw new Error('no handed armament was found in weapons.csv — an empty corpus is not a pass');
-  if (!pieces.length) throw new Error('every handed armament is missing its asset — nothing could be measured at all');
+  if (!population.length) throw new Error('no legal armament placement was found in weapons.csv — an empty corpus is not a pass');
+  if (!pieces.length) throw new Error('every armament is missing its asset — nothing could be measured at all');
   const served = await serve({ root: ROOT, port: 8471, open: false });
   try {
     const { asset, rendered } = await run(served.port, pieces);
@@ -496,12 +496,11 @@ async function main() {
     let bakedWrong = 0;
     for (const r of asset.out) {
       if (!r.piece) continue;
-      if (sideOf(r.piece.centroid - asset.body.centroid, band1) !== wantFor(r.hand)) bakedWrong++;
+      if (sideOf(r.piece.centroid - asset.body.centroid, band1) !== rawWantFor(r.hand)) bakedWrong++;
     }
     console.log(`\nARM 1 · the baked art (DIAGNOSTIC — does not decide the exit code)`);
-    console.log(`  ${bakedWrong} of ${asset.out.length} MEASURED armaments are baked into the model's opposite hand`
-      + `${absent.length ? ` (of ${population.length} handed rows in weapons.csv; ${absent.length} unmeasurable, named below)` : ` — the file's full handed population of ${population.length}`}.`);
-    console.log(`  Expected to stay wrong until the art is re-rendered from corrected producers.`);
+    console.log(`  ${asset.out.length - bakedWrong} of ${asset.out.length} MEASURED armament assets occupy their documented type-default socket.`);
+    console.log(`  This is diagnostic only: actual placement belongs to the slot and is measured below.`);
 
     // ---- ARM 2 · what the player receives (THE GATE) ----
     if (!rendered.bodyBare || !rendered.witnessBare || !rendered.witnessNested) throw new Error('the rendered figure produced no ink — the harness did not draw');
@@ -510,7 +509,6 @@ async function main() {
     console.log(`\nARM 2 · the RENDERED figure, through styles/ui.css (THE GATE)`);
     console.log(`  body ink centre x=${rendered.bodyBare.centroid.toFixed(1)} width=${rbw}px · neutral band ±${band2.toFixed(1)}px\n`);
     const bad = [];
-    const carriedSeen = [];
     const rows = rendered.rows.slice().sort((a, b) => a.hand.localeCompare(b.hand) || a.id.localeCompare(b.id));
     for (const r of rows) {
       if (!r.piece) { console.log(`  UNREADABLE ${r.id}`); bad.push(r); continue; }
@@ -518,17 +516,8 @@ async function main() {
       const side = sideOf(dx, band2);
       const want = wantFor(r.hand);
       const ok = side === want;
-      const carried = CARRIED.has(r.id);
-      // BOTH DIRECTIONS. A carried row that is wrong is expected and reported.
-      // A carried row that is RIGHT means the ledger no longer describes the
-      // tree, and a ledger nobody re-derives is the thing it was written against.
-      let mark;
-      if (carried && !ok) mark = 'CARR';
-      else if (carried && ok) mark = 'STALE';
-      else mark = ok ? 'ok  ' : 'WRONG';
+      const mark = ok ? 'ok  ' : 'WRONG';
       console.log(`  ${mark.padEnd(5)} ${r.id.padEnd(20)} hand=${r.hand.padEnd(5)} dx=${((dx >= 0 ? '+' : '') + dx.toFixed(1)).padStart(7)}  drawn ${side.padEnd(12)} wanted ${want}`);
-      if (carried && !ok) { carriedSeen.push(r.id); continue; }
-      if (carried && ok) { bad.push({ id: r.id, reason: 'carried in CARRIED but renders correctly — delete the ledger row' }); continue; }
       if (!ok) bad.push({ ...r, dx, side, want });
     }
 
@@ -536,8 +525,8 @@ async function main() {
     // of P6: the measured set may not silently shrink. The row cannot be
     // measured, so it cannot be called correct — it is printed and it is red.
     for (const m of absent) {
-      console.log(`  MISSING ${m.id.padEnd(20)} hand=${m.hand.padEnd(5)} art=${m.art} — declared handed, never measured`);
-      bad.push({ id: m.id, reason: `declared hand=${m.hand} but ${m.url} does not exist — a handed row was dropped from the measured set` });
+      console.log(`  MISSING ${m.id.padEnd(20)} hand=${m.hand.padEnd(5)} art=${m.art} — legal placement never measured`);
+      bad.push({ id: m.id, reason: `declared hand=${m.declaredHand} permits slot=${m.hand} but ${m.url} does not exist` });
     }
 
     // ---- ARM 2b · EXACTLY ONE MIRROR ----
@@ -554,13 +543,6 @@ async function main() {
     console.log(`        (bare = the Armoury's shape, nested = combat's; a double mirror shows up here as a mismatch)`);
     if (!nestOk) bad.push({ id: 'nesting', reason: 'bare and nested figures do not render alike' });
 
-    if (carriedSeen.length) {
-      console.log(`\n  CARRIED (${carriedSeen.length}) — wrong at SOURCE, out of this correction's reach, each with a named reason:`);
-      for (const id of carriedSeen) console.log(`      ${id}: ${CARRIED.get(id)}`);
-    }
-    for (const id of CARRIED.keys()) {
-      if (!rows.some((r) => r.id === id)) bad.push({ id, reason: 'carried in CARRIED but no such armament was measured — the ledger names something that is not there' });
-    }
     if (bad.length) {
       console.log(`\nhand-side-probe: RED — ${bad.length} finding(s).`);
       // EVERY finding prints its own line. The first cut pushed ledger findings
@@ -573,17 +555,14 @@ async function main() {
       // `population.length`, not `rows.length`: the denominator is what the
       // FILE holds, so the count cannot quietly shrink to the size of whatever
       // this run happened to manage to measure.
-      const right = rows.length - carriedSeen.length;
-      console.log(`\nhand-side-probe: OK — ${right} of ${population.length} handed armaments reach the player on the model's own correct side, `
-        + `with exactly one mirror; ${carriedSeen.length} carried above and still wrong.`);
-      console.log(`  Denominator is every hand=left|right row in weapons.csv, each row's asset derived`);
+      console.log(`\nhand-side-probe: OK — ${rows.length} of ${population.length} legal armament-slot placement checks ran.`);
+      console.log(`  Every measured placement reaches the player's correct side with exactly one global mirror.`);
+      console.log(`  Every hand=either row is measured in both slots; each asset is derived`);
       console.log(`  as artKey || id — the runtime's own rule (src/model/loadout.js:962).`);
-      console.log(`  This is NOT "all ${population.length} are right" and must not be quoted as one.`);
     }
     console.log('\nBOUNDARY — what a green here does NOT mean:');
-    console.log('  · nothing about the ART being right. Arm 1 is still red by design: the fix is a');
-    console.log('    compositing correction, so the baked convention is untouched and a re-render');
-    console.log('    from corrected producers must delete the CSS rule in the same act.');
+    console.log('  · nothing about a future slot-neutral ART protocol. The current assets keep');
+    console.log('    type-default sockets; a re-render must delete the CSS correction in the same act.');
     console.log('  · nothing about the three SCREENS individually. It renders the two CONTAINER');
     console.log('    shapes every view uses, not the views; a screen that stopped using them is');
     console.log('    invisible here.');

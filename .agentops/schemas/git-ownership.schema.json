@@ -11,7 +11,8 @@
     "paths",
     "generated_serialization",
     "collision_rule",
-    "branch_hygiene"
+    "branch_hygiene",
+    "ledger_serialization"
   ],
   "properties": {
     "schema": {
@@ -82,6 +83,9 @@
             "type": "string",
             "minLength": 1
           },
+          "per_seat": {
+            "type": "boolean"
+          },
           "note": {
             "type": "string"
           }
@@ -101,6 +105,34 @@
           "minLength": 1
         },
         "rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ledger_serialization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane",
+        "writer",
+        "rule",
+        "actor_rule"
+      ],
+      "properties": {
+        "lane": {
+          "type": "string",
+          "minLength": 1
+        },
+        "writer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actor_rule": {
           "type": "string",
           "minLength": 1
         }

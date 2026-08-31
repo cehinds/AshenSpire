@@ -106,7 +106,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
 | `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Player card hand. |
-| `combat-action-rail` | `componentModel` | `combat.js` | Combat | End-turn/action controls. |
+| `combat-action-rail` | `componentModel` | `combat.js` | Combat | Edge-anchored Actions and Exhaust around a tight Draw / End Turn / Discard cluster. |
 
 ## Composition at a glance
 

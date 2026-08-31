@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentops/scheduler-snapshot/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "revision", "last_sequence", "work_items", "errors", "snapshot_hash"],
+  "properties": {
+    "schema": { "const": "agentops/scheduler-snapshot/v1" },
+    "revision": { "type": "integer", "minimum": 0 },
+    "last_sequence": { "type": "integer", "minimum": 0 },
+    "work_items": { "type": "object" },
+    "errors": { "type": "array" },
+    "snapshot_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

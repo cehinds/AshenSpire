@@ -16,12 +16,12 @@
 <dt>Next action</dt><dd>Establish which gates already hold a lease and which do not. Issue or rebind only leases; the implementation behind each gate belongs to a maker seat and is outside this grant.</dd>
 <dt>Branch</dt><dd><code>recovery/as-hd-029</code></dd>
 <dt>Base</dt><dd><code>7bcc9ed08d3a</code></dd>
-<dt>Revision</dt><dd>55 · seal <code>sha256:b0b4ae493dcd6ce6…</code></dd>
-<dt>Succeeds</dt><dd><code>sha256:549d3c30e52f9298…</code></dd>
+<dt>Revision</dt><dd>57 · seal <code>sha256:55d86a4e395f8b94…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:66f0866c95ed0261…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
-<dt>May</dt><dd><span class="pill">resolve-technical-ambiguity</span> <span class="pill">assign-and-rebind-work</span> <span class="pill">issue-and-revoke-lease</span> <span class="pill">create-isolated-ref</span></dd>
-<dt>Must not</dt><dd><span class="pill">push-pr-merge-deploy-or-release</span> <span class="pill">claim-overlapping-active-paths</span></dd>
+<dt>May</dt><dd><span class="pill">resolve-technical-ambiguity</span> <span class="pill">assign-and-rebind-work</span> <span class="pill">issue-and-revoke-lease</span> <span class="pill">create-isolated-ref</span> <span class="pill">integrate-to-dev-via-pr</span></dd>
+<dt>Must not</dt><dd><span class="pill">claim-overlapping-active-paths</span> <span class="pill">direct-push-to-dev</span> <span class="pill">mutate-main-or-release</span> <span class="pill">tag-publish-deploy-or-change-pages-source</span></dd>
 <dt>Expires</dt><dd>2026-10-31T23:59:59Z</dd>
 <dt>Writer lease</dt><dd><code>lease-AS-HD-029-it-manager-iii</code> issued by it-manager-iii</dd>
 <dt>Paths</dt><dd><code>.agentops/leases/**</code></dd>
@@ -87,6 +87,8 @@
 <li><code>AS-HD-029-0054</code> · owner-decision · it-manager-iii · 2026-08-30T05:07:56.972Z<br>Owner-command 'delegate' by it-manager-iii recorded.</li>
 <li><code>AS-HD-029-0055</code> · owner-decision · it-manager-iii · 2026-08-30T05:07:57.070Z<br>Owner-command 'delegate' by it-manager-iii recorded.</li>
 <li><code>AS-HD-029-0056</code> · owner-decision · it-manager-iii · 2026-08-30T05:07:57.174Z<br>Owner-command 'delegate' by it-manager-iii recorded.</li>
+<li><code>AS-HD-029-0057</code> · owner-decision · owner · 2026-08-31T13:29:30.912Z<br>Owner-command 'record-owner-override' by owner recorded: Owner grants it-manager-iii push and PR authority: lift the AS-HD-029 capsule's must_not push-pr-merge-deploy-or-release so the seat may deliver to dev via the normal reviewable PR process at its discretion under DECISIONS/0005. Does not authorize direct push to dev, or anything on main, release, tags, publication, or Pages source. Supersedes #469 (rejected on form shape); context in #467.</li>
+<li><code>AS-HD-029-0058</code> · owner-decision · owner · 2026-08-31T13:51:16.157Z<br>Owner-command 'grant-dev-delivery-authority' by owner recorded: Apply the authenticated owner grant from #470: IT Manager III may push immutable topic heads and open or merge normal reviewed PRs to dev under decision 0005. Direct push to dev, deploy, main or release mutation, tags, publication, and Pages changes remain forbidden.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>

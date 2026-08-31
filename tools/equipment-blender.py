@@ -94,8 +94,11 @@ def clear():
 
 
 # ---- armament archetypes -----------------------------------------------------
-# Each builds at the right hand (x=+0.62) or left (x=-0.52), matching where the
-# class bodies hold things in tools/sprites-blender.py.
+# These are type-default authoring sockets, not the weapon row's `hand` value.
+# `hand` is equip eligibility; the slot is the only authority for where a held
+# piece is.  Until a slot-neutral asset format is specified and re-rendered,
+# figureSpec() mirrors a layer from its type default (non-shields at RX, shields
+# at LX) onto the actual slot.  Do not collapse `hand=either` to one socket here.
 RX, LX = 0.62, -0.52
 
 
@@ -273,6 +276,14 @@ GEOM = {
     "staffFlame": st_flame, "staffBranch": st_branch, "staffHorn": st_horn,
 }
 
+# Geometry names describe shape, not the type-default authoring socket.  Most
+# shapes have one kind, but the parrying dagger is a shield that deliberately
+# reuses the dagger geometry.  Route that pair to the existing off-hand builder;
+# `hand=either` remains eligibility and never becomes a guessed fixed location.
+GEOM_BY_KIND = {
+    ("dagger", "shield"): s_dagger_off,
+}
+
 # ---- stage -------------------------------------------------------------------
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -350,7 +361,7 @@ def render_icon(path):
 #
 # Only render-relevant fields go in. A balance tweak to `mods` must not
 # invalidate art it cannot affect.
-RENDER_FIELDS = ("geom", "scale", "metal", "accent")
+RENDER_FIELDS = ("kind", "geom", "scale", "metal", "accent")
 manifest = {"armaments": {}, "armour": {}}
 
 count = 0
@@ -359,7 +370,7 @@ for w in rows("weapons.csv"):
     art_key = w.get("artKey") or w["id"]
     if art_key in rendered_armament_keys:
         continue
-    build = GEOM.get(w["geom"])
+    build = GEOM_BY_KIND.get((w["geom"], w["kind"])) or GEOM.get(w["geom"])
     if not build:
         print("SKIP (no geometry):", w["id"], w["geom"])
         continue
