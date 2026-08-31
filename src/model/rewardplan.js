@@ -28,7 +28,7 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'card', 'flask', 'armament', 'relic']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic']);
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -40,6 +40,11 @@ const KINDS = {
   cinders: {
     present: (r) => Number.isFinite(r.cinders) && r.cinders > 0,
     row: (r) => ({ amount: r.cinders }),
+    blocked: () => null,
+  },
+  smithingStone: {
+    present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
+    row: (r) => ({ ...r.smithingStoneReceipt }),
     blocked: () => null,
   },
   card: {

@@ -244,10 +244,10 @@ const SCREENS = [
   },
   { name: 'profile-crisis', query: '?shot=crisis', landmark: '.profile-notice .fresh', state: 'crisis' },
   {
-    // AND THE GRID OPEN, driven, because the closed Shrine FITS. A baseline of
-    // the screen in the state that never overflowed could not have caught the
-    // defect it was created for — it would have gone green through the whole
-    // bug. The overflow only exists once the Smith grid is on screen.
+    // AND THE ARMAMENT REVIEW OPEN, driven, because the closed Shrine FITS. A
+    // baseline of the screen in the state that never overflowed could not have
+    // caught the defect it was created for — it would have gone green through
+    // the whole bug. The overflow only exists once the Smith modal is open.
     //
     // `#smith-grid .card`, and the first version of this line said
     // `.deck-strip .mini` — WHICH NOTHING ON THIS SCREEN EMITS. renderCard()
@@ -265,8 +265,8 @@ const SCREENS = [
     // whose landmark never resolved is Bjorn's animated-title finding pointed
     // the other way, and the instrument that catches it has to assert the
     // landmark RESOLVED before it is allowed to hash anything.
-    name: 'shrine-smith', query: '?shot=rest', landmark: '#smith-grid .card',
-    drive: `document.querySelector('#smith-opt').click()`,
+    name: 'shrine-smith', query: '?shot=rest&shotSmithingStones=1', landmark: '.smith-preview-card',
+    drive: `(()=>{const smith=document.querySelector('#smith-opt');if(!smith)return 'Smith option missing';smith.click();const card=document.querySelector('.smith-candidate-card');if(!card)return 'Smith armament candidate missing';card.click();return true})()`,
   },
   // THE COMPENDIUM — photographed in the act that creates it (Marina's condition
   // carried from #78's first commit), and at BOTH EDGES, because this screen's

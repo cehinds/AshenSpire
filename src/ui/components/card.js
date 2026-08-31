@@ -177,7 +177,7 @@ export function upgradePreviewHtml(registries, ref) {
   html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
   if (baseText === upgradedText && upg.cost === base.cost) {
-    html += '<div class="tt-kw">Your current armament keeps the displayed values the same. The card still gains its permanent upgrade.</div>';
+    html += '<div class="tt-kw">The authored upgrade has no visible numeric change in this preview.</div>';
   }
   return html;
 }

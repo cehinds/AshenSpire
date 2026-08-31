@@ -30,6 +30,7 @@ import { evalPredicate, checkPhases } from './triggers.js';
 import { damageTagIds } from '../content/tags.js';
 import { flaskSlotCap } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
+import { commitSmithing, smithingPlan } from '../model/smithing.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -599,10 +600,22 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'upgradeCard': {
-      const candidates = run.deck.filter((c) => !c.upgraded && (!eff.card || c.cardId === eff.card));
+      const plan = smithingPlan(ctx.registries, run);
+      const armaments = plan.candidates
+        .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
+        .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
+      const ordinary = run.deck
+        .filter((card) => !card.sourceArmamentId && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        .map((card) => ({ kind: 'card', card }));
+      const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
-      chosen.upgraded = true;
+      if (chosen.kind === 'armament') {
+        const receipt = commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        ctx.emit('armamentSmithed', receipt);
+      } else {
+        chosen.card.upgraded = true;
+      }
       break;
     }
     case 'addRelic': {

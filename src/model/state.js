@@ -145,6 +145,9 @@ export function createRunState({
     equipmentPoolBonuses,
     equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
+    smithingStones: 0,
+    armamentLevels: {},
+    smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [startingRelic.id],
@@ -520,6 +523,11 @@ export const RUN_SHAPE = [
   { key: 'energyMax', type: 'number', optional: true },
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
+  { key: 'smithingStones', type: 'number', optional: true },
+  { key: 'armamentLevels', type: 'object', optional: true },
+  { key: 'smithingRewardClaims', type: 'array', optional: true },
+  { key: 'lastSmithingReceipt', type: 'object', optional: true },
+  { key: 'pendingReward', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -606,6 +614,62 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   for (const key of ['levelUps', 'levelPoints']) {
     if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
       problems.push(`${key} must be a non-negative integer`);
+    }
+  }
+  if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
+    problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
+    for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
+      if (!pieceId || !Number.isInteger(level) || level < 0) {
+        problems.push(`armamentLevels.${pieceId || '<empty>'} must be a non-negative integer`);
+      }
+    }
+  }
+  if (run.smithingRewardClaims !== undefined && Array.isArray(run.smithingRewardClaims)) {
+    const seenClaims = new Set();
+    for (const rewardId of run.smithingRewardClaims) {
+      if (typeof rewardId !== 'string' || !rewardId || seenClaims.has(rewardId)) {
+        problems.push('smithingRewardClaims must contain unique non-empty strings');
+      }
+      seenClaims.add(rewardId);
+    }
+  }
+  if (run.pendingReward !== undefined) {
+    const pending = run.pendingReward;
+    if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
+      problems.push('pendingReward must be an object when present');
+    } else {
+      if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
+      if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
+      if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
+        problems.push('pendingReward.rewards must be an object');
+      }
+      if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
+        problems.push('pendingReward.states must be an object');
+      } else {
+        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
+        for (const [kind, state] of Object.entries(pending.states)) {
+          if (!rewardKinds.includes(kind) || !['taken', 'skipped'].includes(state)) {
+            problems.push(`pendingReward.states.${kind || '<empty>'} must be taken or skipped for a known reward kind`);
+          }
+        }
+      }
+      if (pending.chosenCardId !== null && pending.chosenCardId !== undefined
+          && (typeof pending.chosenCardId !== 'string' || !pending.chosenCardId)) {
+        problems.push('pendingReward.chosenCardId must be null or a non-empty string');
+      }
+      const cardIds = Array.isArray(pending.rewards?.cardIds) ? pending.rewards.cardIds : [];
+      if (pending.chosenCardId && !cardIds.includes(pending.chosenCardId)) {
+        problems.push('pendingReward.chosenCardId must belong to pendingReward.rewards.cardIds');
+      }
+      if (pending.states?.card === 'taken' && !pending.chosenCardId) {
+        problems.push('pendingReward card Taken state requires chosenCardId');
+      }
+      if (pending.chosenCardId && pending.states?.card !== 'taken') {
+        problems.push('pendingReward chosenCardId requires card Taken state');
+      }
     }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape

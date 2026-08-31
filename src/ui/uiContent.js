@@ -68,7 +68,7 @@ export const NODE_TYPES = {
   fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
   elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
   boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
-  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
+  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith an owned armament, or mend an ally.' },
   merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
   treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
   event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },

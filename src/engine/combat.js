@@ -78,6 +78,10 @@ export function createCombat({
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
+    // Smithing belongs to the armament, but combat can recompose sourced
+    // basics after a live equipment swap. Carry the run's tier authority into
+    // the fight so that recomposition cannot silently fall back to tier zero.
+    armamentLevels: structuredClone(player.armamentLevels || {}),
     equipmentPoolDeficits: player.equipmentPoolDeficits
       ? { ...player.equipmentPoolDeficits }
       : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
@@ -156,6 +160,8 @@ export function createCombat({
     ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
     ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
     ...(c.weaponId ? { weaponId: c.weaponId } : {}),
+    ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
+    ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
     ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
@@ -605,7 +611,14 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // The intent resolves before this mutation, so no in-flight card changes
   // underneath its own effects.
   const piles = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust];
-  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
+  const run = {
+    deck: [],
+    loadout: combat.loadout,
+    class: p.classId,
+    attributes: combat.attributes,
+    armamentLevels: combat.armamentLevels,
+    equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+  };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The vessel keeps telling the truth across the ONE mid-fight door equipment

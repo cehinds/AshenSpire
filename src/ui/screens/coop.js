@@ -36,7 +36,9 @@
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
-import { renderCard, upgradePreviewHtml } from '../components/card.js';
+import { renderCard } from '../components/card.js';
+import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
@@ -648,6 +650,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ? `<span class="mh-stat coop-voteline">${Object.keys(votes).length ? `VOTES ${Object.keys(votes).length}/${present.length}` : 'VOTE FOR THE PATH'}</span>`
       : '';
 
+    const smithReceipts = snap.party.filter((member) => member.lastSmithingReceipt);
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
@@ -662,6 +665,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
+        ${smithReceipts.length ? `<div class="coop-smithing-receipts" aria-live="polite">
+          ${smithReceipts.map((member) => {
+            const receipt = member.lastSmithingReceipt;
+            return `<span><b>${esc(member.name)}</b> smithed ${esc(receipt.armamentName)} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards</span>`;
+          }).join('')}
+        </div>` : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -747,7 +756,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { app.innerHTML = rewardShell(`${rTitle('Spoils')}<div class="coop-note">Waiting for the others to choose…</div>`); renderPartyBar(); wireLeave(); return; }
-    app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}<div class="reward-row"></div>
+    const stone = offer.smithingStoneReceipt;
+    app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}
+      ${stone?.amount > 0 ? `<div class="coop-note">⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total</div>` : ''}
+      <div class="reward-row"></div>
       <div class="coop-choices" style="margin-top:12px">
         ${offer.relicId ? `<button class="coop-take" data-take="relic">Take relic: ${esc(registries.relics.get(offer.relicId).name)}</button>` : ''}
         ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${flaskIdentityHtml(registries.flasks.get(offer.flaskId))}</button>` : ''}
@@ -768,28 +780,34 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const done = snap.scene.done && snap.scene.done[me];
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
     const mm = myMember();
-    const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
+    const smith = snap.scene.smithing?.[me];
+    const candidates = smith?.candidates || [];
     app.innerHTML = rewardShell(`${rTitle('Shrine of Emberlight')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
-        <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
+        <button id="coop-smith" ${candidates.length ? '' : 'disabled'}>Smith an armament · ${mm?.smithingStones || 0} Stone${mm?.smithingStones === 1 ? '' : 's'}</button>
         ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
-      </div>
-      <div id="coop-smith-grid" class="reward-row" style="display:none;max-width:900px;flex-wrap:wrap"></div>`}`);
+      </div>`}`);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
-    // Smith opens a picker of your unupgraded cards; hover/focus previews the
-    // exact upgrade (changed values highlighted) before you commit.
+    // The shared modal keeps the co-op transaction identical to solo:
+    // reversible selection, every real delta, explicit affordability, then a
+    // separate Confirm. The client sends only that final stable armament id;
+    // the host still rebuilds and revalidates before committing.
     const smithBtn = app.querySelector('#coop-smith');
-    if (smithBtn && upgradable.length) smithBtn.addEventListener('click', () => {
-      const grid = app.querySelector('#coop-smith-grid');
-      if (grid.style.display !== 'none') return;
-      grid.style.display = 'flex';
-      for (const inst of upgradable) {
-        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
-        el.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'smith', targetId: inst.instanceId }));
-        grid.appendChild(el);
-      }
+    if (smithBtn && candidates.length) smithBtn.addEventListener('click', () => {
+      let selectedArmamentId = null;
+      const model = () => smithSelectionModel(registries, smith, selectedArmamentId);
+      const modal = mountSmithUpgradeModal(app, model(), {
+        registries,
+        returnFocusElement: smithBtn,
+        onSelect: (armamentId) => {
+          selectedArmamentId = armamentId;
+          modal.update(model());
+        },
+        onBack: () => {},
+        onConfirm: (armamentId) => send({ t: 'shrineChoice', choice: 'smith', targetId: armamentId }),
+      });
     });
     renderPartyBar(); wireLeave();
   }
