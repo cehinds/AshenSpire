@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 21,
-  "last_sequence": 21,
+  "revision": 22,
+  "last_sequence": 22,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -86,21 +86,21 @@
     },
     "426": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 4,
+      "revision": 5,
       "issue_id": "426",
       "title": "Re-pin continuity generated-artifact identity for AshenSpire.html",
       "priority": "P1",
       "dependencies": [],
-      "state": "CANDIDATE_READY",
+      "state": "QA",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
       "branch": "codex/issue-426",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 1,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+      "assignment_kind": "qa",
+      "lease_id": "qa-lease:426:2",
+      "lease_epoch": 2,
+      "lease_expiry": "2026-08-31T15:07:16.485Z",
+      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
       "maker_actor": "seat:worker-a:f31f99ed-c468-4823-8afb-92cc1f528f79",
       "lease_history": [
         {
@@ -109,6 +109,13 @@
           "lease_id": "lease:426:1",
           "lease_epoch": 1,
           "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+          "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+          "lease_id": "qa-lease:426:2",
+          "lease_epoch": 2,
+          "assignment_kind": "qa"
         }
       ],
       "late_candidates": [],
@@ -125,10 +132,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Bind independent QA to this exact candidate.",
+      "next_action": "Run independent QA against the exact candidate commit.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000020-3a775ed4-cebb-47bf-95ed-1543bccb8bbe",
-      "updated_at": "2026-08-31T14:36:29.942Z"
+      "updated_event": "evt-00000022-73e9fd1e-e934-4df1-9b89-02f4c1062f4c",
+      "updated_at": "2026-08-31T14:37:16.485Z"
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -238,5 +245,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "91596b96bf95f2ffff9c3cc0b4540956628b07be0b10945003561f422df37dd1"
+  "snapshot_hash": "19b2ea87e1b0dc6d0ec4197a7e86741fbd5411915a13241af73da59f92fc2a07"
 }

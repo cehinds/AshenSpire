@@ -1,0 +1,20 @@
+{
+  "event_id": "evt-00000022-73e9fd1e-e934-4df1-9b89-02f4c1062f4c",
+  "idempotency_key": "qa-assign:426:2",
+  "sequence": 22,
+  "previous_snapshot_hash": "91596b96bf95f2ffff9c3cc0b4540956628b07be0b10945003561f422df37dd1",
+  "issue_id": "426",
+  "actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
+  "machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+  "lease_id": "qa-lease:426:2",
+  "lease_epoch": 2,
+  "event_type": "QA_ASSIGNED",
+  "exact_object": {
+    "oid": "26d0e8df193b4d354a50a936e7db958855bf029e"
+  },
+  "payload": {
+    "candidate_commit": "26d0e8df193b4d354a50a936e7db958855bf029e",
+    "lease_expiry": "2026-08-31T15:07:16.485Z"
+  },
+  "created_at": "2026-08-31T14:37:16.485Z"
+}
