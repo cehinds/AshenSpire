@@ -1,0 +1,52 @@
+{
+  "schema": "agentops/work-capsule/v1",
+  "revision": 1,
+  "current_hash": "sha256:a9342b2e17916c275863e9ac09f6d0938725d043cfece1e90d140718b055b6a1",
+  "parent_hash": null,
+  "ticket": "GH-183",
+  "lifecycle_state": "assigned",
+  "objective": "Refresh current-build links and component-catalog documentation for GitHub issue #183 while keeping generated Hub projections derived from validated AgentOps state.",
+  "done_when": "README, CHANGELOG, both component-catalog documents, and any strictly necessary opsctl source/tests are committed on the exact isolated lane; AgentOps tests and render checks pass; generated Hub projections match sources; no product, promotion, deployment, or release state is changed.",
+  "next_action": "Task 01a02bc1-1611-7a22-9803-8c5e617ab711 enters C:\\repos\\AshenSpire-docs-build-links-current, confirms base 3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0 and clean status, then updates the exact leased files. Serialize resources current-branch-build-links, component-catalog-docs, and owner-hub-render; use opsctl render for generated projections.",
+  "repo": "https://github.com/cehinds/AshenSpire.git",
+  "ref": "codex/docs-current-build-links",
+  "base_oid": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
+  "tree": "630aec4de35e7b5f58de4c4b36b38d6f5402498d",
+  "expected_dirty_state": "clean",
+  "owner_actor": "maker",
+  "writer_lease": "lease-GH-183-current-build-links",
+  "affected_paths": [
+    "README.md",
+    "CHANGELOG.md",
+    "docs/COMPONENT-CATALOG.md",
+    "docs/component-catalog.html",
+    ".agentops/tools/opsctl.mjs",
+    ".agentops/tools/opsctl.test.mjs"
+  ],
+  "evidence_pointers": [
+    "test-run-receipt",
+    "generated-view-drift-check"
+  ],
+  "blocker": null,
+  "authority": {
+    "may": [
+      "implement-locally-on-exclusive-paths",
+      "run-tests-and-builds",
+      "commit-on-isolated-branch"
+    ],
+    "must_not": [
+      "claim-overlapping-active-paths",
+      "hand-edit-generated-views",
+      "push-pr-merge-deploy-or-release"
+    ],
+    "expiry": "2026-09-01T04:00:00Z"
+  },
+  "runtime_residue": "none",
+  "rollback": "Preserve the current dev base; revert only the isolated #183 documentation commit or abandon its unpublished branch. Generated views are regenerated from the validated source state, never hand-restored.",
+  "invalidation_keys": [
+    "base_oid",
+    "tree",
+    "writer_lease",
+    "affected_paths"
+  ]
+}
