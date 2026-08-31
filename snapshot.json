@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 35,
-  "last_sequence": 35,
+  "revision": 36,
+  "last_sequence": 36,
   "work_items": {
     "238": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -66,12 +66,12 @@
     },
     "257": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 9,
+      "revision": 10,
       "issue_id": "257",
       "title": "Quests and earlier choices influence later events",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
       "candidate_commit": null,
       "branch": "codex/issue-257-quest-choice-pipeline",
@@ -130,10 +130,10 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Reclaim from the last preserved candidate or worktree.",
+      "next_action": "Rebase preserved candidate and implement stable choice IDs plus runtime record/gating.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000035-530fd705-56ab-4092-a936-db4aaed58903",
-      "updated_at": "2026-08-31T15:17:45.594Z"
+      "updated_event": "evt-00000036-c16b2922-c407-4d0e-9ef5-b01deccf2969",
+      "updated_at": "2026-08-31T15:18:49.302Z"
     },
     "397": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -341,5 +341,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "2dd8de16af3507b5e02972a7e4ac4e661d65107dd9163ffa78c946664d726715"
+  "snapshot_hash": "7b08323a677e7200c4e5b6f1ccfbc3e218e852c1393c6aff5134bccc43e7811d"
 }
