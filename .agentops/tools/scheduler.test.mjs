@@ -49,7 +49,8 @@ function test(name, fn) {
 
 function fresh() { return { oid: null, events: [], eventBlobs: {}, snapshot: emptySnapshot(), machineLease: null, stateVersion: '1' }; }
 function migrateFixture(source, sourceTree, createdAt = '2026-08-30T02:00:00.000Z') {
-  const authorityReceipt = { event_path: '.agentops/events/test-owner-decision.json', event_id: 'test-owner-decision', event_hash: 'f'.repeat(64) };
+  const authorityEvent = { id: 'test-owner-decision' };
+  const authorityReceipt = { event_path: '.agentops/events/test-owner-decision.json', event_id: authorityEvent.id, event_hash: sha256(authorityEvent), authority_state_oid: 'e'.repeat(40), authority_event: authorityEvent };
   const payload = {
     from_state_version: 1, to_state_version: 2,
     source_state_oid: source.oid, source_state_tree: sourceTree,
@@ -915,6 +916,8 @@ test('GitHub Project admission is built from an authenticated read-project fetch
           : { __typename: 'ProjectV2ItemFieldTextValue', field: { id: expected.id, name }, text: values[name] };
       }) }
     }];
+    itemNodes[0].fieldValues.nodes.push({ __typename: 'ProjectV2ItemFieldRepositoryValue' });
+    itemNodes[0].fieldValues.totalCount += 1;
     const projectIdentity = { id: config.project_contract.id, title: config.project_contract.title, number: 4 };
     const itemResponse = () => ({ data: { user: { projectV2: { ...projectIdentity, items: { totalCount: 1, pageInfo: { hasNextPage: false, endCursor: null }, nodes: itemNodes } } } } });
     const fieldResponse = () => ({ data: { user: { projectV2: { ...projectIdentity, fields: { totalCount: fieldNodes.length, pageInfo: { hasNextPage: false, endCursor: null }, nodes: fieldNodes } } } } });

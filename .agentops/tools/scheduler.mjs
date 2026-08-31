@@ -325,7 +325,7 @@ function applyStateMigration(snapshot, event) {
   if (p.source_snapshot_hash !== snapshot.snapshot_hash || p.source_last_sequence !== snapshot.last_sequence) throw new Error('STATE_MIGRATED source snapshot does not match the exact v1 replay');
   if (event.exact_object.oid !== p.source_state_oid || event.exact_object.snapshot_hash !== p.source_snapshot_hash) throw new Error('STATE_MIGRATED exact object does not match its source state');
   const authorityKeys = Object.keys(p.authority_receipt ?? {}).sort();
-  if (stableStringify(authorityKeys) !== stableStringify(['event_hash', 'event_id', 'event_path']) || !/^[0-9a-f]{64}$/.test(p.authority_receipt.event_hash ?? '')) throw new Error('STATE_MIGRATED authority receipt is not canonical owner-decision evidence');
+  if (stableStringify(authorityKeys) !== stableStringify(['authority_event', 'authority_state_oid', 'event_hash', 'event_id', 'event_path']) || !/^[0-9a-f]{64}$/.test(p.authority_receipt.event_hash ?? '') || !/^[0-9a-f]{40}$/.test(p.authority_receipt.authority_state_oid ?? '') || p.authority_receipt.authority_event?.id !== p.authority_receipt.event_id || sha256(p.authority_receipt.authority_event) !== p.authority_receipt.event_hash) throw new Error('STATE_MIGRATED authority receipt is not canonical immutable owner-decision evidence');
   const groups = new Map();
   for (const item of Object.values(snapshot.work_items)) {
     const canonical = canonicalIssueIdentity(item.canonical_issue_id ?? item.issue_id);
@@ -942,11 +942,12 @@ export function fetchAuthenticatedProjectEvidence(root, config, now = new Date()
     const raw = { id: node.id, content: node.content ? { ...node.content, repository: node.content.repository?.nameWithOwner, assignees: node.content.assignees?.nodes ?? [] } : null };
     const valueNames = new Set(); const valueIds = new Set();
     for (const value of node.fieldValues?.nodes ?? []) {
-      const name = value.field?.name; const fieldId = value.field?.id; if (!name || !fieldId) throw new Error('BOARD_SYNC_FAILED: Project item field value has no exact field identity');
+      const name = value.field?.name;
+      if (!name || !contract.fields?.[name]) continue;
+      const fieldId = value.field?.id; if (!fieldId) throw new Error('BOARD_SYNC_FAILED: required Project item field value has no exact field identity');
       if (valueNames.has(name.toLowerCase()) || valueIds.has(fieldId)) throw new Error(`BOARD_SYNC_FAILED: duplicate Project item field value ${name}`);
       valueNames.add(name.toLowerCase()); valueIds.add(fieldId);
       const expected = contract.fields?.[name];
-      if (!expected) continue;
       if (fieldId !== expected.id) throw new Error(`BOARD_SYNC_FAILED: Project item field value contract mismatch for ${name}`);
       if (expected.kind === 'ProjectV2SingleSelectField') {
         const selected = expected.options?.find((option) => option.id === value.optionId && option.name === value.name);
@@ -1446,6 +1447,10 @@ function persistMigrationCandidate(root, state, sourceOid, message, config, expe
   const candidateRef = `refs/agentops/scheduler-migration-candidates/${sourceOid}`;
   const prior = refOid(root, candidateRef);
   if (prior && prior !== newOid) throw new Error(`migration candidate ref already binds a different commit ${prior}`);
+  const finalObserved = runGit(root, ['ls-remote', '--exit-code', '--heads', 'origin', refs.local], { allowFailure: true });
+  const finalRemoteOid = finalObserved.status === 0 ? finalObserved.stdout.trim().split(/\s+/)[0] : null;
+  if (finalRemoteOid !== sourceOid) throw new Error('migration aborted because the canonical remote state changed during candidate construction');
+  if (refOid(root, refs.local) !== expectedLocalTip) throw new Error('migration aborted because the preserved local tip changed during candidate construction');
   if (!prior) runGit(root, ['update-ref', candidateRef, newOid, '0'.repeat(40)]);
   return { oid: newOid, candidateRef };
 }

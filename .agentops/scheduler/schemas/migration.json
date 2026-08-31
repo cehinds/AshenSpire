@@ -15,6 +15,17 @@
     "legacy_machine_lease": { "type": ["object", "null"] },
     "preserved_local_tip": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
     "dispatch_frozen": { "const": true },
-    "authority_receipt": { "type": "object" }
+    "authority_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_path", "event_id", "event_hash", "authority_state_oid", "authority_event"],
+      "properties": {
+        "event_path": { "type": "string", "pattern": "^\\.agentops/events/.+\\.json$" },
+        "event_id": { "type": "string", "minLength": 1 },
+        "event_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "authority_state_oid": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "authority_event": { "type": "object" }
+      }
+    }
   }
 }
