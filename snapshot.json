@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 44,
-  "last_sequence": 44,
+  "revision": 45,
+  "last_sequence": 45,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -360,21 +360,21 @@
     },
     "480": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 3,
+      "revision": 4,
       "issue_id": "480",
       "title": "Rebuild shipped bundle: source-vs-build drift (tree 3543637990 vs shipped 8f546f2e1d) from 4b5793a8",
       "priority": "P2",
       "dependencies": [],
-      "state": "READY",
-      "base_commit": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
+      "state": "CLAIMED",
+      "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
       "candidate_commit": null,
       "branch": "codex/issue-480",
-      "assigned_actor": null,
-      "assignment_kind": null,
-      "lease_id": null,
-      "lease_epoch": 1,
-      "lease_expiry": null,
-      "lease_machine_id": null,
+      "assigned_actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+      "assignment_kind": "implementation",
+      "lease_id": "lease:480:2",
+      "lease_epoch": 2,
+      "lease_expiry": "2026-08-31T16:53:52.676Z",
+      "lease_machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
       "maker_actor": null,
       "lease_history": [
         {
@@ -383,11 +383,27 @@
           "lease_id": "lease:480:1",
           "lease_epoch": 1,
           "assignment_kind": "implementation"
+        },
+        {
+          "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+          "machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
+          "lease_id": "lease:480:2",
+          "lease_epoch": 2,
+          "assignment_kind": "implementation"
         }
       ],
       "late_candidates": [],
-      "claimed_paths": [],
-      "claimed_resources": [],
+      "claimed_paths": [
+        "assets/classes/successor-packet.manifest.json",
+        "build/AshenSpire.html",
+        "buildordinal.json",
+        "AshenSpire.html",
+        "dist/**"
+      ],
+      "claimed_resources": [
+        "buildordinal.json",
+        "generated-outputs"
+      ],
       "acceptance_commands": [
         "node tools/buildversion.mjs --check",
         "node tools/verify-shipped.mjs",
@@ -401,12 +417,12 @@
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Reclaim from the last preserved candidate or worktree.",
+      "next_action": "Represent the successor provenance column without falsely asserting a game release version; run exactly one source-authoritative build-only generation; verify shipped byte identity without touching continuity source.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000041-5b7dc409-b63e-4bf4-996a-5b9bab83db0d",
-      "updated_at": "2026-08-31T16:05:59.503Z"
+      "updated_event": "evt-00000045-47779818-b0d6-4eaa-ad03-d39e0929706a",
+      "updated_at": "2026-08-31T16:23:54.175Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "a80f31cf1e2818c2e44522eb43bfea8edd951c537e9cc69b7caa0b2f15088bc5"
+  "snapshot_hash": "516364a2b6a70ae8393d72bccf632f862c635e0135f20ff8bdb12fa9fc02fbde"
 }

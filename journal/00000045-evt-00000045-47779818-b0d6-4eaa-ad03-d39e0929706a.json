@@ -1,0 +1,31 @@
+{
+  "event_id": "evt-00000045-47779818-b0d6-4eaa-ad03-d39e0929706a",
+  "idempotency_key": "CLAIM_ACQUIRED:480:2:2026-08-31T16:23:54.175Z",
+  "sequence": 45,
+  "previous_snapshot_hash": "a80f31cf1e2818c2e44522eb43bfea8edd951c537e9cc69b7caa0b2f15088bc5",
+  "issue_id": "480",
+  "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+  "machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
+  "lease_id": "lease:480:2",
+  "lease_epoch": 2,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {},
+  "payload": {
+    "branch": "codex/issue-480",
+    "base_commit": "dab07b7411239558cb156fbe43dc9a319824cdef",
+    "lease_expiry": "2026-08-31T16:53:52.676Z",
+    "claimed_paths": [
+      "assets/classes/successor-packet.manifest.json",
+      "build/AshenSpire.html",
+      "buildordinal.json",
+      "AshenSpire.html",
+      "dist/**"
+    ],
+    "claimed_resources": [
+      "buildordinal.json",
+      "generated-outputs"
+    ],
+    "next_action": "Represent the successor provenance column without falsely asserting a game release version; run exactly one source-authoritative build-only generation; verify shipped byte identity without touching continuity source."
+  },
+  "created_at": "2026-08-31T16:23:54.175Z"
+}
