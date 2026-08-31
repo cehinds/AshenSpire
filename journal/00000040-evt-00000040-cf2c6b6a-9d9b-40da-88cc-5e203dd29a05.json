@@ -1,0 +1,32 @@
+{
+  "event_id": "evt-00000040-cf2c6b6a-9d9b-40da-88cc-5e203dd29a05",
+  "idempotency_key": "auto-claim:480:1",
+  "sequence": 40,
+  "previous_snapshot_hash": "1eb87ef8ec91c67c80e9b445608cfe0d733664fb174ec1d0e1150ead67aac7e1",
+  "issue_id": "480",
+  "actor": "seat:codex:7a4b2c10-9d31-4a85-8f62-3e17c5b94d20",
+  "machine_id": "10cca6df-33f5-4d95-b30b-2f805e576310",
+  "lease_id": "lease:480:1",
+  "lease_epoch": 1,
+  "event_type": "CLAIM_ACQUIRED",
+  "exact_object": {
+    "base_commit": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0"
+  },
+  "payload": {
+    "branch": "codex/issue-480",
+    "base_commit": "3ad9a77b60136b12c7c6e989fd8bbf7084b5b2f0",
+    "lease_expiry": "2026-08-31T16:35:25.064Z",
+    "claimed_paths": [
+      "build/AshenSpire.html",
+      "buildordinal.json",
+      "AshenSpire.html",
+      "dist/AshenSpire.html"
+    ],
+    "claimed_resources": [
+      "buildordinal.json",
+      "generated-outputs"
+    ],
+    "next_action": "IT-Manager-III assigns the build lane owner to run the one serialized command per docs/governance/CONTINUITY.md: node tools/launch.mjs --build-only, then verify-shipped/rebuild-matches; never hand-edit generated files"
+  },
+  "created_at": "2026-08-31T16:05:25.064Z"
+}
