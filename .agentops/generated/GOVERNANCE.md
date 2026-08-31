@@ -283,8 +283,8 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/schemas/**` | it-manager-iii | governance |
 | `.agentops/tools/**` | maker | agentops-tooling |
 | `.agentops/generated/**` | generator | governance |
-| `.agentops/work/**` | maker | per-ticket |
-| `.agentops/events/**` | maker | per-ticket |
+| `.agentops/work/**` | `per-seat` — the ticket’s lease | per-ticket |
+| `.agentops/events/**` | `per-seat` — the ticket’s lease | per-ticket |
 | `.agentops/leases/**` | it-manager-iii | governance |
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
 | `src/**` | maker | product-source |
@@ -308,6 +308,10 @@ A branch is brought forward by rebase so its history stays linear and its diff k
 Default: `rebase`. Rewriting needs `it-manager-iii` when the branch is not the acting role's own; absent that, merge the base branch in, which leaves every existing checkout valid. Records: the branch, the prior head, the new head, the role that authorized the rewrite, why the rebase was preferred to a merge. Never: rewriting a protected or pr-only ref; discarding a commit that carries evidence without recording where that evidence now lives.
 
 Generated lane `governance`: A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift.
+
+Ledger lane `per-ticket`, written solely by `opsctl`: A work capsule and its event chain are written only by an opsctl command, never by hand: the command seals the capsule, appends the event and checks the chain, so a hand-edited ledger fails its own seal. The path is therefore owned per seat rather than by one role — any seat drives the command for its own ticket, and a role that cannot be granted the ledger cannot record what it did.
+
+The ledger records the seat as the actor of what the seat did, and opsctl as the actor of what the tool did on its own account. A process appending on a seat’s behalf never carries that seat’s actor.
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 

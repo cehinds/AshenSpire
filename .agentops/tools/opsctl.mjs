@@ -777,9 +777,23 @@ export function semanticChecks(c) {
 
   // 2. Git-ownership references only known roles (declared or synthetic writer).
   if (c['git-ownership']) {
+    const ledger = c['git-ownership'].ledger_serialization;
     for (const p of c['git-ownership'].paths) {
-      if (!knownRoles.has(p.owner_role)) errors.push(`git-ownership: path '${p.glob}' names unknown role '${p.owner_role}'`);
+      // A per_seat path is owned by whichever lease holds the ticket, so its
+      // owner_role is a marker rather than a declared role — the same shape
+      // refs already use for `recovery/*`.
+      if (!p.per_seat && !knownRoles.has(p.owner_role)) errors.push(`git-ownership: path '${p.glob}' names unknown role '${p.owner_role}'`);
       if (p.glob.split('/').includes('..')) errors.push(`git-ownership: path glob '${p.glob}' contains a '..' traversal segment`);
+      // per_seat is not a way out of ownership. It is only sound where a single
+      // tool is the sole writer and the lane is serialized per ticket: that is
+      // what keeps two seats holding the same glob from being a collision. A
+      // product path marked per_seat would just be unowned.
+      if (p.per_seat) {
+        if (p.owner_role !== 'per-seat') errors.push(`git-ownership: path '${p.glob}' is per_seat but names owner_role '${p.owner_role}'; a per-seat path declares the marker, not a role that does not own it`);
+        if (!ledger || p.serialized_lane !== ledger.lane) errors.push(`git-ownership: path '${p.glob}' is per_seat but its lane '${p.serialized_lane}' declares no sole writer; per-seat ownership is only safe where one tool writes and the lane serializes per ticket`);
+      } else if (p.owner_role === 'per-seat') {
+        errors.push(`git-ownership: path '${p.glob}' names owner_role 'per-seat' without the per_seat marker, so nothing checks the conditions that make per-seat ownership safe`);
+      }
     }
     for (const r of c['git-ownership'].refs) {
       // A per_seat namespace is owned by whichever lease holds the ticket, so
@@ -1112,7 +1126,7 @@ export function renderGovernance(c) {
   L.push('');
   L.push('| Path glob | Owner role | Serialized lane |');
   L.push('|---|---|---|');
-  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.owner_role} | ${p.serialized_lane} |`);
+  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.per_seat ? '`per-seat` — the ticket\u2019s lease' : p.owner_role} | ${p.serialized_lane} |`);
   if (c['git-ownership'].branch_hygiene) {
     const bh = c['git-ownership'].branch_hygiene;
     L.push('');
@@ -1124,6 +1138,11 @@ export function renderGovernance(c) {
   }
   L.push('');
     L.push(`Generated lane \`${c['git-ownership'].generated_serialization.lane}\`: ${c['git-ownership'].generated_serialization.rule}`);
+    const led = c['git-ownership'].ledger_serialization;
+    L.push('');
+    L.push(`Ledger lane \`${led.lane}\`, written solely by \`${led.writer}\`: ${led.rule}`);
+    L.push('');
+    L.push(led.actor_rule);
     L.push('');
   L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
   L.push('');
@@ -1580,6 +1599,12 @@ export function pathGrantErrors(contracts, lease) {
     const owner = decls.find((d) => globCovers(d.glob, g));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
+    } else if (owner.per_seat) {
+      // Ownership follows the ticket's writer lease, so any role may hold its
+      // own ledger. This is the A2 fix: with these globs owned by `maker`, a
+      // qa-independent or help-desk seat could not be granted its own capsule
+      // or event chain, and therefore could not record what it did.
+      continue;
     } else if (owner.owner_role !== actorRole(contracts, lease.actor)) {
       errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
     }
@@ -2797,7 +2822,7 @@ const VIEW_PROBES = {
     ...x.pages.switch_packet_records.map((r) => `- ${r}`)],
   escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), ...x.classes.map((cl) => `- \`${cl.id}\` \u2014 ${cl.hazard}`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.per_seat ? '\`per-seat\` \u2014 the ticket\u2019s lease' : pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, `Ledger lane \`${x.ledger_serialization.lane}\`, written solely by \`${x.ledger_serialization.writer}\`: ${x.ledger_serialization.rule}`, x.ledger_serialization.actor_rule, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
   hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.note, x.authority_tiers.namespace_note, x.authority_tiers.disambiguation.known_ambiguous_artifact, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
@@ -3589,6 +3614,25 @@ export function runSelftest(root = ROOT) {
   expectSemantic('tiers: the ladder starting to pick models', (c) => { c.hierarchy.authority_tiers.rules.not_a_capability_ladder = 'higher tiers get better tools'; }, 'never selects model or effort');
   expectSemantic('ticket flow: a step routed straight to the owner', (c) => { c.escalation.ticket_flow.steps[0].actor = 'owner'; }, 'routes to the owner');
   expectSemantic('ticket flow: a dropped handoff event', (c) => { c.escalation.ticket_flow.handoff_events = ['SENT', 'RECEIVED']; }, "drops the 'ACKNOWLEDGED' handoff event");
+  // A2 (#430): with `.agentops/work/**` and `.agentops/events/**` owned by
+  // `maker`, no non-maker seat could be granted its own capsule or event chain,
+  // so qa-independent, help-desk and it-support seats existed but could not
+  // record what they did — the item on the AS-HD-029 P0 critical path. The fix
+  // is demonstrated positively, then fenced on every side, because a marker
+  // that exempts a path from ownership is exactly the kind of thing that grows.
+  {
+    const qaLease = { id: 'lease-probe-qa', actor: 'qa-independent', issuer: 'it-manager-iii', path_globs: ['.agentops/work/**', '.agentops/events/**'] };
+    const errs = pathGrantErrors(contracts, qaLease);
+    results.push({ label: 'a non-maker seat may hold its own capsule and event chain', pass: errs.length === 0, errs });
+    // ...and the exemption is narrow: an ordinary owned path still rejects a
+    // seat whose role does not own it.
+    const bad = pathGrantErrors(contracts, { ...qaLease, path_globs: ['src/**'] });
+    results.push({ label: 'a per-seat ledger does not exempt ordinary owned paths', pass: bad.some((e) => e.includes('git-ownership assigns that path to')), errs: bad });
+  }
+  expectSemantic('per-seat path whose owner_role is a real role', (c) => { c['git-ownership'].paths.find((pp) => pp.glob === '.agentops/events/**').owner_role = 'maker'; }, 'declares the marker, not a role that does not own it');
+  expectSemantic('per-seat path on a lane with no sole writer', (c) => { c['git-ownership'].paths.find((pp) => pp.glob === '.agentops/events/**').serialized_lane = 'product-source'; }, 'declares no sole writer');
+  expectSemantic('per-seat owner_role without the marker', (c) => { const pp = c['git-ownership'].paths.find((x) => x.glob === '.agentops/work/**'); delete pp.per_seat; }, 'without the per_seat marker');
+  expectSemantic('the ledger lane losing its sole writer', (c) => { delete c['git-ownership'].ledger_serialization; }, 'declares no sole writer');
   expectSemantic('branch hygiene: rewrite permission held by a pool', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'qa-guild'; }, 'is not a declared role');
   expectSemantic('branch hygiene: rewrite permission held by a non-standing role', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'maker'; }, 'is not a standing role');
   expectSemantic('branch hygiene: no prior head recorded', (c) => { c['git-ownership'].branch_hygiene.records = ['the branch']; }, 'cannot be undone');
