@@ -41,6 +41,7 @@ or product, board, promotion, publication, or release authority.
 |---|---|---|
 | Record, triage, route, or report status | Help Desk | Complete ticket and truthful Project readback. |
 | Implement locally | Named maker/pod lead | `CONTRACT READY`, explicit implementation scope, fresh base, exclusive paths. |
+| Repair local tooling, environment, routing, or access without changing what the work produces | `it-support` delivery seat | Reproduced blocker and exact repair evidence; escalate to IT Manager III for any protected transition or product-behaviour change. Restores capability only; holds no push/PR/merge/deploy/release. |
 | Recommend portfolio/milestone sequencing, expose dependencies/WIP/capacity, convene completion councils, or summarize stakeholders | Project Management Lead | Current ticket/Project evidence, risk/decision log, and recommendation; no technical assignment or integration mutation. |
 | Review a cross-domain data contract or withhold an unsafe one | Data Architecture & Systems Lead | Exact invariant, schema/ID/lineage/version/compatibility evidence, affected paths, and smallest safe correction. |
 | Resolve technical ambiguity, scope, exception, ownership, architecture, assignment, sequencing, or integration | IT Manager III | Decision packet and recorded answer, including Data Architecture clearance or exact authority for an exception to any `WITHHOLD`. |
