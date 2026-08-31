@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "GH-183-0005",
+  "ticket": "GH-183",
+  "seq": 5,
+  "parent_event": "GH-183-0004",
+  "kind": "state-change",
+  "actor": "owner",
+  "at": "2026-08-31T17:22:55.332Z",
+  "summary": "Narrowed GH-183 custody to its four independently reviewed documentation paths after revoking the unused opsctl grant. Resealed as revision 5; parent_hash names sha256:42e0b04b165b94b7937c69d4520cd287409a600b15e518f19c5a6a0b18bdb3e9."
+}

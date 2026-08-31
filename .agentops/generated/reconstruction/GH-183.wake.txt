@@ -1,5 +1,5 @@
 === AGENTOPS WAKE CAPSULE ===
-IDENTITY   : actor=maker role=maker ticket=GH-183 lease=lease-GH-183-current-build-links (active until 2026-09-01T04:00:00Z)
+IDENTITY   : actor=maker role=maker ticket=GH-183 lease=lease-GH-183-current-build-links-r2 (active until 2026-09-01T04:00:00Z)
 MISSION    : Build and ship AshenSpire as a repository-native, provider-neutral, token-efficient multi-agent game-development project under centralized control and decentralized execution.
 WORK       : Refresh current-build links and component-catalog documentation for GitHub issue #183 while keeping generated Hub projections derived from validated AgentOps state.
 DONE-WHEN  : README, CHANGELOG, both component-catalog documents, and any strictly necessary opsctl source/tests are committed on the exact isolated lane; AgentOps tests and render checks pass; generated Hub projections match sources; no product, promotion, deployment, or release state is changed.

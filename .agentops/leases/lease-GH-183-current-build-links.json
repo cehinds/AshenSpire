@@ -21,7 +21,7 @@
   ],
   "issued": "2026-08-31T16:02:06Z",
   "expiry": "2026-09-01T04:00:00Z",
-  "revoked": false,
+  "revoked": true,
   "path_grant_exception": {
     "reason": "Constantine's exact issue #183 documentation grant covers four previously undeclared top-level/catalog paths; the exception is path-exact, short-lived, and grants no generated or product-source wildcard.",
     "globs": [

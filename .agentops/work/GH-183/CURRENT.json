@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 4,
-  "current_hash": "sha256:42e0b04b165b94b7937c69d4520cd287409a600b15e518f19c5a6a0b18bdb3e9",
-  "parent_hash": "sha256:8f1c27e67e5c1f0edefddf8ddfc697cd4f1509bb59116bfbf1654127ac48f7b9",
+  "revision": 5,
+  "current_hash": "sha256:fbd3ac3f2320f0aba96ef2872ff01b9c040f8859bb9a17508d7a1ac2b77fc465",
+  "parent_hash": "sha256:42e0b04b165b94b7937c69d4520cd287409a600b15e518f19c5a6a0b18bdb3e9",
   "ticket": "GH-183",
   "lifecycle_state": "assigned",
   "objective": "Refresh current-build links and component-catalog documentation for GitHub issue #183 while keeping generated Hub projections derived from validated AgentOps state.",
@@ -14,14 +14,12 @@
   "tree": "bb00eb748d1549097f261ca18ed5dea1f91fa6f9",
   "expected_dirty_state": "clean",
   "owner_actor": "maker",
-  "writer_lease": "lease-GH-183-current-build-links",
+  "writer_lease": "lease-GH-183-current-build-links-r2",
   "affected_paths": [
     "README.md",
     "CHANGELOG.md",
     "docs/COMPONENT-CATALOG.md",
-    "docs/component-catalog.html",
-    ".agentops/tools/opsctl.mjs",
-    ".agentops/tools/opsctl.test.mjs"
+    "docs/component-catalog.html"
   ],
   "evidence_pointers": [
     "test-run-receipt",
