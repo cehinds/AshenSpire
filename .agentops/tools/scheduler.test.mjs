@@ -520,7 +520,28 @@ test('portable machine lease identity fails closed on malformed, invalid, and mi
   assert.throws(() => ensureCustody({ machineLease: valid }, machine, Date.parse('2026-08-30T00:01:00Z')), /active machine custody required/);
 });
 
-test('resource release cannot orphan implementation or QA work', () => {
+test('resource release cannot orphan claimed, implementation, or QA work', () => {
+  let claimedState = intake(fresh(), 'I-RELEASE-CLAIMED', { paths: ['src/claimed'], resources: ['generated-outputs'] });
+  claimedState = claim(claimedState, 'I-RELEASE-CLAIMED');
+  const claimed = claimedState.snapshot.work_items['I-RELEASE-CLAIMED'];
+  const releaseClaimed = {
+    event_type: 'RESOURCE_RELEASED', issue_id: claimed.issue_id, actor: claimed.assigned_actor,
+    machine_id: claimed.lease_machine_id, lease_id: claimed.lease_id, lease_epoch: claimed.lease_epoch,
+    exact_object: {}, created_at: '2026-08-30T00:00:02Z'
+  };
+  assert.throws(() => appendEvents(claimedState, [{ ...releaseClaimed, payload: {}, idempotency_key: 'release:claimed:default' }]), /requires requeue=true/);
+  assert.throws(() => appendEvents(claimedState, [{ ...releaseClaimed, payload: { requeue: false }, idempotency_key: 'release:claimed:false' }]), /requires requeue=true/);
+  claimedState = appendEvents(claimedState, [{ ...releaseClaimed, payload: { requeue: true }, idempotency_key: 'release:claimed:true' }]);
+  const requeuedClaim = claimedState.snapshot.work_items[claimed.issue_id];
+  assert.equal(requeuedClaim.state, 'READY');
+  assert.equal(requeuedClaim.assigned_actor, null);
+  assert.equal(requeuedClaim.assignment_kind, null);
+  assert.equal(requeuedClaim.lease_id, null);
+  assert.equal(requeuedClaim.lease_expiry, null);
+  assert.equal(requeuedClaim.lease_machine_id, null);
+  assert.deepEqual(requeuedClaim.claimed_paths, []);
+  assert.deepEqual(requeuedClaim.claimed_resources, []);
+
   let implementation = intake(fresh(), 'I-RELEASE-IMPLEMENTATION');
   implementation = claim(implementation, 'I-RELEASE-IMPLEMENTATION');
   implementation = entered(implementation, 'I-RELEASE-IMPLEMENTATION');
