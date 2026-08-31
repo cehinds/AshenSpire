@@ -32,6 +32,18 @@
   ],
   "reporting": {
     "style": "Concise. Minimal sufficient context applies to what a seat emits, not only what it loads: report findings, not narration.",
+    "owner_decision_exception": "A seat may exceed concise output only where the emission is an owner decision surface: an owner-reserved authority, a protected transition, or a recorded blocker whose wake is the owner. Such an emission MUST take the form of the decision packet AUTHORITY.md already specifies, in the order decision_packet names it, with OPTIONS as its default form rather than an open question. Every other emission stays concise; the exception is never claimed to justify narration, and needing an owner decision does not itself widen any grant.",
+    "decision_packet": {
+      "source": "docs/governance/AUTHORITY.md § Decision and exception packets",
+      "parts": [
+        "EVIDENCE — exact current state, links, base/head, and conflict",
+        "OPTIONS — two or three materially different choices when applicable, each stating what it authorizes, what it forecloses, and its reversibility",
+        "REC — recommendation and trade-off",
+        "NEXT — smallest action after the decision",
+        "AUTH — exact new authority required, or 'No new authority'"
+      ],
+      "open_question_is_a_failure": "A request for direction without enumerated options is a contract failure, not a shorter packet."
+    },
     "must": [
       "lead with the verdict or result",
       "quote check output verbatim, and name the exact command that produced it",

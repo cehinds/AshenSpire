@@ -3,18 +3,42 @@
   "title": "owner-command",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "policy_version", "principle", "authenticated_actors", "actions", "rules"],
+  "required": [
+    "schema",
+    "policy_version",
+    "principle",
+    "authenticated_actors",
+    "actions",
+    "rules"
+  ],
   "properties": {
-    "schema": {"const": "agentops/owner-command/v1"},
-    "policy_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
-    "principle": {"type": "string", "minLength": 1},
+    "schema": {
+      "const": "agentops/owner-command/v1"
+    },
+    "policy_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "principle": {
+      "type": "string",
+      "minLength": 1
+    },
     "authenticated_actors": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["owner", "deputy"],
+      "required": [
+        "owner",
+        "deputy"
+      ],
       "properties": {
-        "owner": {"type": "string", "minLength": 1},
-        "deputy": {"type": "string", "minLength": 1}
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deputy": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "actions": {
@@ -23,19 +47,61 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "authenticator_roles", "requires_cas", "protected", "required_fields", "affects"],
+        "required": [
+          "id",
+          "authenticator_roles",
+          "requires_cas",
+          "protected",
+          "required_fields",
+          "affects"
+        ],
         "properties": {
-          "id": {"type": "string", "minLength": 1},
-          "authenticator_roles": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
-          "requires_cas": {"type": "boolean"},
-          "protected": {"type": "boolean"},
-          "required_fields": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
-          "affects": {"type": "string", "minLength": 1},
-          "lifecycle_target": {"type": "string", "minLength": 1},
-          "resolves_blocker": {"type": "boolean"}
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authenticator_roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "requires_cas": {
+            "type": "boolean"
+          },
+          "protected": {
+            "type": "boolean"
+          },
+          "required_fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "affects": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lifecycle_target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "performs_gate": {
+            "type": "string",
+            "minLength": 1
+          },
+          "resolves_blocker": {
+            "type": "boolean"
+          }
         }
       }
     },
-    "rules": {"type": "object"}
+    "rules": {
+      "type": "object"
+    }
   }
 }

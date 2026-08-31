@@ -77,12 +77,45 @@
       "required": [
         "style",
         "must",
-        "must_not"
+        "must_not",
+        "owner_decision_exception",
+        "decision_packet"
       ],
       "properties": {
         "style": {
           "type": "string",
           "minLength": 1
+        },
+        "owner_decision_exception": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_packet": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "parts",
+            "open_question_is_a_failure"
+          ],
+          "properties": {
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "parts": {
+              "type": "array",
+              "minItems": 5,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "open_question_is_a_failure": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         },
         "must": {
           "type": "array",
