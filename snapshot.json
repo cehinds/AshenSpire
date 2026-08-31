@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 15,
-  "last_sequence": 15,
+  "revision": 16,
+  "last_sequence": 16,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -173,12 +173,12 @@
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 6,
+      "revision": 7,
       "issue_id": "470",
       "title": "Repair dev verify drift from #470 decision: commit dropped review-approval-hub mirror; widen owner-command git add",
       "priority": "P0",
       "dependencies": [],
-      "state": "PR_READY",
+      "state": "PR_OPEN",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "83f628925c211abe1afa8bd44cba946b04369fdb",
       "branch": "codex/issue-470",
@@ -224,16 +224,17 @@
         "VERIFY OK + clean git diff --check at candidate 83f6289",
         "render idempotent at candidate: RENDER OK, git status --porcelain empty (no hand edits)",
         "owner-command.yml parses as YAML; diff is single-line git add widening only",
-        "no security regression: 3-file footprint; no changes to triggers, permissions, secrets, or steps"
+        "no security regression: 3-file footprint; no changes to triggers, permissions, secrets, or steps",
+        "https://github.com/cehinds/AshenSpire/pull/475"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Deliver an issue-closing PR to dev.",
+      "next_action": "Wait for required checks and independent exact-head review.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000014-20b07cd1-78b7-4c21-ae32-67a54853eb0b",
-      "updated_at": "2026-08-31T14:26:58.717Z"
+      "updated_event": "evt-00000016-d3dadd67-3273-4d90-ae68-3c727666b8f4",
+      "updated_at": "2026-08-31T14:28:22.496Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "1621378a6e52208b314b524f3bcf98c37b9795c002b805964d55f9519f3b60f3"
+  "snapshot_hash": "6f46306eafeb9469492cdb8f669bcd2f050a7030c7339ad925f08511f0f7eac8"
 }
