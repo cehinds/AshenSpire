@@ -13,6 +13,9 @@
 #   issue-form body. The form marker prevents accidental hand-labelling; it is
 #   structural, not cryptographic. Separate agent identity remains the root fix
 #   when agents and the human owner share one GitHub account.
+# - Owner-login binding: the authenticated author and sender must both be the
+#   configured human owner account, so a differently-named automation identity
+#   can never satisfy the gate even with OWNER association.
 # - The actor role is resolved HERE, from the authenticated GitHub identity —
 #   never read from the issue body. Nothing an author types can escalate a role.
 # - Enumerated only: opsctl rejects any action outside owner-command.json, any
@@ -41,10 +44,15 @@ concurrency:
 
 jobs:
   execute:
-    # Owner-associated "Owner decision" issues only. The body is validated by a
-    # separate step before opsctl sees it; the title check is an early reject.
+    # Owner-authored "Owner decision" issues only. Association is necessary but
+    # not sufficient: bind the authenticated login to the configured human owner
+    # (agents sharing the account cannot be told apart by association alone),
+    # require the label, and reject early on title shape. The body is validated
+    # by a separate step before opsctl sees it.
     if: >-
       github.event.issue.author_association == 'OWNER' &&
+      github.event.issue.user.login == 'cehinds' &&
+      github.event.sender.login == 'cehinds' &&
       contains(github.event.issue.labels.*.name, 'owner-command') &&
       startsWith(github.event.issue.title, '[decision] ')
     runs-on: ubuntu-latest

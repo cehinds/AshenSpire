@@ -1,8 +1,8 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 56,
-  "current_hash": "sha256:66f0866c95ed026185f949389d0e7524ae49e73849d9ff74a12451383c384686",
-  "parent_hash": "sha256:b0b4ae493dcd6ce6dac8b9252769174ff53779333b19313d9023de2c4bffd387",
+  "revision": 57,
+  "current_hash": "sha256:55d86a4e395f8b94af54b447e171c5e0884513d19ebc03a22e4d9f1f4c687878",
+  "parent_hash": "sha256:66f0866c95ed026185f949389d0e7524ae49e73849d9ff74a12451383c384686",
   "ticket": "AS-HD-029",
   "lifecycle_state": "assigned",
   "objective": "Sequence the P0 NO_SAFE_ASSIGNMENT chain at Application by issuing and rebinding the writer leases each gate needs.",
@@ -25,11 +25,14 @@
       "resolve-technical-ambiguity",
       "assign-and-rebind-work",
       "issue-and-revoke-lease",
-      "create-isolated-ref"
+      "create-isolated-ref",
+      "integrate-to-dev-via-pr"
     ],
     "must_not": [
-      "push-pr-merge-deploy-or-release",
-      "claim-overlapping-active-paths"
+      "claim-overlapping-active-paths",
+      "direct-push-to-dev",
+      "mutate-main-or-release",
+      "tag-publish-deploy-or-change-pages-source"
     ],
     "expiry": "2026-10-31T23:59:59Z"
   },
