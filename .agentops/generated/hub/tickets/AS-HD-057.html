@@ -13,21 +13,21 @@
 <dt>State</dt><dd>assigned</dd>
 <dt>Objective</dt><dd>Keep the repository workable: repair tooling, environment, routing and access blockers, and return exact evidence of each repair.</dd>
 <dt>Done when</dt><dd>Every reported blocker is either reproduced and repaired with exact evidence, or escalated with the reason it cannot be repaired without changing what the work produces.</dd>
-<dt>Next action</dt><dd>Take the open tooling defects from the AS-HD-053 continuity audit (issue #392) that fall inside tools/**: reproduce each before repairing it, and escalate any that would need .agentops/tools/**, which AS-1001 holds.</dd>
+<dt>Next action</dt><dd>Maintain only the AS-HD-057 capsule and event chain; before any tools write, bind the exact issue #392 paths in a separate non-overlapping lease.</dd>
 <dt>Branch</dt><dd><code>recovery/as-hd-057</code></dd>
-<dt>Base</dt><dd><code>7bcc9ed08d3a</code></dd>
-<dt>Revision</dt><dd>50 · seal <code>sha256:90bdc464c865c378…</code></dd>
-<dt>Succeeds</dt><dd><code>sha256:28fd91d0e1b4a38c…</code></dd>
+<dt>Base</dt><dd><code>4976bcb3c1b9</code></dd>
+<dt>Revision</dt><dd>51 · seal <code>sha256:ac7ea5084e390d2e…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:90bdc464c865c378…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
-<dt>May</dt><dd><span class="pill">repair-local-tooling-and-environment</span> <span class="pill">restore-routing-and-access</span> <span class="pill">return-exact-support-evidence</span></dd>
+<dt>May</dt><dd><span class="pill">restore-routing-and-access</span> <span class="pill">return-exact-support-evidence</span></dd>
 <dt>Must not</dt><dd><span class="pill">push-pr-merge-deploy-or-release</span> <span class="pill">claim-overlapping-active-paths</span> <span class="pill">change-product-behaviour-to-clear-a-blocker</span></dd>
 <dt>Expires</dt><dd>2026-10-31T23:59:59Z</dd>
-<dt>Writer lease</dt><dd><code>lease-AS-HD-057-it-support</code> issued by it-manager-iii</dd>
-<dt>Paths</dt><dd><code>tools/**</code></dd>
+<dt>Writer lease</dt><dd><code>lease-AS-HD-057-it-support-r2</code> issued by it-manager-iii</dd>
+<dt>Paths</dt><dd><code>.agentops/work/AS-HD-057/**</code> <code>.agentops/events/AS-HD-057/**</code></dd>
 </dl></section>
 <section><h2>Status</h2>
-<p class="ok">Due: 'assigned' is ready to move to in-progress — waking it-support.</p>
+<p class="warn">Blocked — unnamed-tool-scope, escalating as <code>technical-blocker</code>.</p><p>Issue #392 does not yet name exact tools paths; no tools write is authorized until a disjoint path-specific lease is issued.</p>
 </section>
 <section><h2>Event chain</h2>
 <ol class="chain">
@@ -82,6 +82,7 @@
 <li><code>AS-HD-057-0049</code> · state-change · it-support · 2026-08-30T01:34:03.319Z<br>Reseated from 3fc7a24104bf to live HEAD 0b47f2b15467; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 48; parent_hash names sha256:9b8575d0b551312117f3f277e4606b1b3cea3f616f3bba394ad8fb172d542f15.</li>
 <li><code>AS-HD-057-0050</code> · state-change · it-support · 2026-08-30T01:39:29.441Z<br>Reseated from 0b47f2b15467 to live HEAD d1e3352b2746; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 49; parent_hash names sha256:4e44e2c4039bfdb155249e2c956dfce862ed029e1333f380bffea0394e32a9dd.</li>
 <li><code>AS-HD-057-0051</code> · state-change · it-support · 2026-08-30T01:40:29.535Z<br>Reseated from d1e3352b2746 to live HEAD 7bcc9ed08d3a; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 50; parent_hash names sha256:28fd91d0e1b4a38c93bbccd2bc86baaae7360e5b49300d95249259f5e5c628e7.</li>
+<li><code>AS-HD-057-0052</code> · lease-revoked · it-manager-iii · 2026-08-31T15:23:35Z<br>Revoked unused broad tools/** lease lease-AS-HD-057-it-support and issued sealed successor lease-AS-HD-057-it-support-r2 for only this ticket's capsule and event chain. Issue #392 tool writes require a later exact non-overlapping path lease.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>

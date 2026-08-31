@@ -1,0 +1,24 @@
+{
+  "schema": "agentops/lease/v2",
+  "id": "lease-AS-HD-057-it-support-r2",
+  "actor": "it-support",
+  "issuer": "it-manager-iii",
+  "ticket": "AS-HD-057",
+  "ref": "recovery/as-hd-057",
+  "path_globs": [
+    ".agentops/work/AS-HD-057/**",
+    ".agentops/events/AS-HD-057/**"
+  ],
+  "base_oid": "4976bcb3c1b980aee1160e77ed52f94313c25a01",
+  "actions": [
+    "restore-routing-and-access",
+    "return-exact-support-evidence"
+  ],
+  "issued": "2026-08-31T15:23:35Z",
+  "expiry": "2026-10-31T23:59:59Z",
+  "revoked": false,
+  "revision": 2,
+  "parent_lease": "lease-AS-HD-057-it-support",
+  "parent_hash": "sha256:c753cc79c107a450d907dda6c5059e4f3c04342eb899c0ca8552acf5ae2d803e",
+  "current_hash": "sha256:bfec1e815f65406ada3de1e5a5353a358c56bc420cb38b866889cd8ae3c21a29"
+}

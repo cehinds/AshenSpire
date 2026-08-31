@@ -3657,6 +3657,7 @@ export function runSelftest(root = ROOT) {
       current_hash: '',
       excluded_globs: ['tools/ui-preview-gallery.mjs'],
       issued: '2026-08-31T15:11:18Z',
+      revoked: false,
       ...overrides,
     };
     child.current_hash = computeLeaseHash(child);
@@ -3677,19 +3678,24 @@ export function runSelftest(root = ROOT) {
   }, 'lease successor collision');
   {
     const rt = baseRt();
+    rt.leases = rt.leases.filter((l) => l.id !== 'lease-AS-HD-057-it-support-r2');
     const parent = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support');
     const retained = appendLeaseSuccessor(rt, { id: 'lease-AS-HD-057-retained-positive' });
     const carveout = appendLeaseSuccessor(rt, { id: 'lease-GH-194-ui-preview-gallery-positive', ref: 'recovery/gh-194-ui-preview-gallery-plant', path_globs: ['tools/ui-preview-gallery.mjs'], excluded_globs: undefined });
     delete carveout.excluded_globs; carveout.current_hash = computeLeaseHash(carveout);
     const cap = rt.capsules['AS-HD-057'];
-    cap.writer_lease = retained.id; cap.excluded_paths = ['tools/ui-preview-gallery.mjs']; cap.parent_hash = cap.current_hash; cap.revision += 1; cap.current_hash = computeCapsuleHash(cap);
+    cap.writer_lease = retained.id; cap.affected_paths = ['tools/**']; cap.excluded_paths = ['tools/ui-preview-gallery.mjs']; cap.blocker = null;
+    cap.authority.may = [...retained.actions]; cap.parent_hash = cap.current_hash; cap.revision += 1; cap.current_hash = computeCapsuleHash(cap);
     const errs = runtimeChecks(contracts, rt).filter((e) => e.includes(retained.id) || e.includes(carveout.id) || e.includes(parent.id) || e.includes("capsule 'AS-HD-057'"));
     results.push({ label: 'append-only lease split preserves broad custody and grants one disjoint file', pass: errs.length === 0, errs });
   }
-  expectRuntime('a second active lease on a protected ref', (rt) => { const base = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support'); rt.leases.push({ ...base, id: 'lease-AS-HD-057-shadow', ref: 'main' }); }, 'not an isolated-continuation branch');
+  expectRuntime('an active lease on a protected ref', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-HD-057-it-support-r2'); l.ref = 'main'; l.current_hash = computeLeaseHash(l); }, 'not an isolated-continuation branch');
   expectRuntime('two seats holding the same isolated ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'claude/ashenspire-agentops-stage3-capsules'; }, 'belongs to exactly one seat');
   expectRuntime('capsule ref that git cannot create', (rt) => { rt.capsules['AS-HD-040'].ref = 'recovery/foo..bar'; rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'recovery/foo..bar'; }, 'not a valid git branch name');
-  expectRuntime('two seats holding the same per-seat ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support').ref = 'recovery/as-hd-029'; }, 'belongs to exactly one seat');
+  expectRuntime('two seats holding the same per-seat ref', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-HD-057-it-support-r2'); l.ref = 'recovery/as-hd-029'; l.current_hash = computeLeaseHash(l);
+    const cap = rt.capsules['AS-HD-057']; cap.ref = l.ref; cap.parent_hash = cap.current_hash; cap.revision += 1; cap.current_hash = computeCapsuleHash(cap);
+  }, 'belongs to exactly one seat');
   expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'not an isolated-continuation branch');
   expectRuntime('capsule claiming the pr-only integration ref', (rt) => { rt.capsules['AS-HD-029'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-HD-029'].writer_lease).ref = 'dev'; }, 'not an isolated-continuation branch');
 
