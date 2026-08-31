@@ -162,7 +162,13 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
     focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' || ev.key === 'Backspace') { ev.preventDefault(); close({ cancelled: true, restoreFocus: true }); }
+    if (ev.key === 'Escape' || ev.key === 'Backspace') {
+      ev.preventDefault();
+      // The child owns Cancel. Do not let the same physical key continue to
+      // the parent radial after focus has been restored into it.
+      ev.stopPropagation();
+      close({ cancelled: true, restoreFocus: true });
+    }
     else if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') { ev.preventDefault(); move(1); }
     else if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') { ev.preventDefault(); move(-1); }
     else if (ev.key === 'Home') {

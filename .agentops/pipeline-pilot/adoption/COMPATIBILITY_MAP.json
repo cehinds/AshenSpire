@@ -1,0 +1,28 @@
+{
+  "schema": "agentops/pipeline-compatibility-map/v1",
+  "authoritative_source": "agentops/work/<ticket>/CURRENT.json plus referenced lease",
+  "pipeline_mode": "read-only-shadow",
+  "lifecycle": {
+    "proposed": "intake",
+    "assigned": "ready",
+    "in-progress": "executing",
+    "local": "review",
+    "qa-review": "review",
+    "accepted": "integrate",
+    "pushed": "integrate",
+    "pr-open": "integrate",
+    "dev-integrated": "delivered",
+    "hosted-verified": "delivered",
+    "resolved": "closed",
+    "released": "closed"
+  },
+  "rules": {
+    "ready_base_oid": null,
+    "ready_writer": null,
+    "ready_resource_locks": [],
+    "released_remains_separate_fact": true,
+    "unknown_state": "DRIFT_NO_RECOMMENDATION",
+    "missing_or_revoked_lease": "DRIFT_NO_RECOMMENDATION",
+    "reverse_write_to_agentops": false
+  }
+}

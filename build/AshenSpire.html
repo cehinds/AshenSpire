@@ -5413,7 +5413,14 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
 
-.combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.combat {
+  --safe-top-local: calc(env(safe-area-inset-top, 0px) / var(--ui-zoom, 1));
+  --safe-right-local: calc(env(safe-area-inset-right, 0px) / var(--ui-zoom, 1));
+  --safe-bottom-local: calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
+  --safe-left-local: calc(env(safe-area-inset-left, 0px) / var(--ui-zoom, 1));
+  --safe-edge-local: calc(2px / var(--ui-zoom, 1));
+  flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden;
+}
 
 /* ---------- shared map/combat HUD: THREE ROWS ----------
    TOP — character/run identity left, Cinders truly centred, progress/build right.
@@ -6461,7 +6468,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    The offset and its reservation are now the same token, so they cannot drift,
    and `short-wide`'s deeper drop below overrides ONE value instead of leaving a
    6.4rem hang against a 5.2rem reservation that was never written down. */
-.combat { --action-row-drop: 5.2rem; }
+/* The row's tallest cell and the deepest fanned card need a real separation
+   band. These measured reservations keep that band intact in the portrait
+   884x1326 matrix and in the compressed short-wide composition below. */
+.combat { --action-row-drop: 6.4rem; }
 .hand-area {
   height: 23rem; flex-shrink: 0; position: relative;
   display: flex; align-items: flex-end; justify-content: center;
@@ -6553,41 +6563,23 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 
 .combat-action-row {
+  --action-edge-size: max(var(--tap-floor), clamp(4.8rem, 6vw, 5.6rem));
+  --action-pile-size: max(var(--tap-floor), clamp(4.6rem, 5.5vw, 5.2rem));
+  --action-end-size: max(var(--tap-floor), clamp(11rem, 16vw, 15rem));
+  --action-cluster-gap: calc(4px / var(--ui-zoom, 1));
   position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
   display: grid;
-  grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
-  grid-template-areas: "energy draw hints end exhaust discard";
-  align-items: end; gap: 0.8rem;
+  grid-template-columns: var(--action-edge-size) minmax(0, 1fr) var(--action-pile-size) var(--action-end-size) var(--action-pile-size) minmax(0, 1fr) var(--action-edge-size);
+  grid-template-areas: "energy . draw end discard . exhaust";
+  align-items: end; column-gap: var(--action-cluster-gap);
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
-/* #295 — THE STRIP TAKES THE GUTTER THIS GRID ALREADY DECLARED. It was `.`; it
-   is now `hints`, and no track changed width. The overlap it fixes was never a
-   near miss that got worse: END TURN's column is `minmax(15rem, auto)`, so it
-   widens with its own label, while the strip was centred on the VIEWPORT by a
-   sibling rule. Two homes for "the middle of the bottom band", agreeing only by
-   luck at the shipped text size. One home now.
-
-   `padding-block: 0` IS THE HALF THAT KEEPS H1 GREEN, AND IT DELETES A RULE
-   RATHER THAN TUNING ONE. `.hint-bar`'s `0.4rem` block padding is the padding of
-   a FLOATING PILL — the thing this element stopped being the moment it became a
-   grid cell. Left in, the strip is the tallest item in a bottom-anchored row
-   (53.2 px against 50.4 at Text S), so the row grows UPWARD into the hand and a
-   card lands on the strip by 0.69 px — measured, and the exact cost Sunna
-   recorded as open on falk/295-hintstrip-layout-sunna @ 33ebb8b. Taken out, the
-   strip is its chips' own height, the row's height is unchanged at every text
-   size, and H1's clearance goes back to what it was before this act
-   (5.70 / 6.34 / 7.61 px). The chips keep `--tap-floor`; nothing pressable
-   shrank. Inline padding is untouched — it is the pill's horizontal breathing
-   room and the grid does not supply it.
-
-   NARROW IS NOT REACHED BY ANY OF THIS: `:root[data-layout='narrow'] .hint-bar`
-   is `display: none` (styles/ui.css, #29 slice 0) and narrow re-declares this
-   grid's areas without a `hints` track, so an unplaced item there would have
-   created an implicit track — it cannot, because it renders no box. */
-.combat-action-row > .hint-bar.hint-combat {
-  grid-area: hints; justify-self: center; align-self: end;
-  margin: 0; max-width: 100%; padding-block: 0;
+/* The action row carries its own direct controls and key labels. The older
+   contextual combat strip would cover the bottom rail, so it remains retired
+   on this screen; map and other contextual strips are intact. */
+.hand-area > .hint-bar.hint-combat {
+  display: none;
 }
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
@@ -6597,7 +6589,8 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .combat-action-row > .energy-orb {
   grid-area: energy; position: relative; left: auto; bottom: auto; isolation: isolate;
-  width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor));
+  width: var(--action-edge-size); max-width: 100%; height: var(--action-edge-size);
+  font-size: clamp(1.45rem, 2.2vw, 1.9rem);
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
 .combat-action-row > .energy-orb::before {
@@ -6610,9 +6603,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   min-height: var(--tap-floor); background: #120f0c;
   border: 1px solid var(--gold); border-radius: 8px;
 }
-.combat-action-row > .end-turn { grid-area: end; position: static; right: auto; bottom: auto; }
+.combat-action-row > .end-turn {
+  grid-area: end; position: static; right: auto; bottom: auto;
+  box-sizing: border-box; width: var(--action-end-size); max-width: 100%; min-width: 0;
+  font-size: clamp(1.15rem, 2vw, 1.7rem);
+  padding-inline: clamp(0.7rem, 1.5vw, 2rem);
+}
 .end-turn .et-key {
-  font-family: var(--font-body); font-size: 1rem; margin-left: 0.7rem; vertical-align: 1px;
+  display: block; width: max-content; margin: 0.2rem auto 0; font-family: var(--font-body); font-size: 0.82rem;
   padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
@@ -6629,11 +6627,92 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .pile.discard { right: 1.6rem; }
 .pile.exhaust { right: 8.2rem; opacity: 0.85; }
 .combat-action-row > .pile {
-  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  box-sizing: border-box; position: static; inset: auto;
+  width: var(--action-pile-size); max-width: 100%; height: max(4rem, var(--tap-floor));
+  min-width: 0; min-height: var(--tap-floor); padding-inline: 0.35rem;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
 }
 .combat-action-row > .pile.draw { grid-area: draw; }
 .combat-action-row > .pile.discard { grid-area: discard; }
-.combat-action-row > .pile.exhaust { grid-area: exhaust; }
+.combat-action-row > .pile.exhaust {
+  grid-area: exhaust; width: var(--action-edge-size);
+}
+.combat-action-row > .pile.exhaust small {
+  font-size: clamp(0.66rem, 1.8vw, 0.82rem); letter-spacing: 0.04em;
+}
+
+.armament-radial {
+  position: fixed; z-index: 360; left: 1.6rem; bottom: calc(var(--action-row-drop) + 1rem);
+  width: min(32rem, calc(100vw - 3.2rem)); aspect-ratio: 1.35; pointer-events: auto;
+}
+.armament-radial-target {
+  position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: 10px;
+  background: rgba(18,15,12,.96); color: var(--parchment); display: grid; place-items: center;
+  font-size: .78rem; font-weight: 800; line-height: 1.05;
+}
+.armament-radial-target small { color: var(--muted); font-size: .68rem; }
+.armament-radial-target[data-radial-target='top'] { top: 0; left: 50%; transform: translateX(-105%); }
+.armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { transform: translateX(5%); }
+.armament-radial-target[data-radial-target='left'] { left: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='right'] { right: 0; top: 48%; transform: translateY(-50%); }
+.armament-radial-target[data-radial-target='full'] { left: 50%; top: 48%; transform: translate(-50%,-50%); }
+.armament-radial-target[data-radial-target='bottom'] { bottom: 0; left: 50%; transform: translateX(-50%); }
+.armament-radial-picker {
+  position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
+  z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
+  border-radius: 9px; background: rgba(18,15,12,.98);
+  inline-size: max-content; max-inline-size: calc(100vw - 1rem); max-block-size: min(45vh, 18rem); overflow: auto;
+}
+.armament-radial-picker button,
+.pile-surface-picker button { min-width: var(--tap-floor); min-height: var(--tap-floor); }
+.armament-radial-picker button { max-inline-size: 100%; padding-inline: .7rem; overflow-wrap: anywhere; }
+.pile-surface-picker { display: grid; gap: .6rem; }
+
+/* Short-wide has desktop width but phone-like vertical pressure. Its six
+   destinations use the same collision-free semantic map as phones instead of
+   squeezing an absolute radial into the shallow space above the rail. */
+:root[data-composition='short-wide'] .armament-radial {
+  width: min(54vw, 28rem); aspect-ratio: auto;
+  bottom: calc(var(--action-row-drop) + .4rem);
+  display: grid; grid-template-columns: repeat(3, minmax(var(--tap-floor), 1fr));
+  gap: .35rem; padding: .35rem;
+}
+:root[data-composition='short-wide'] .armament-radial-target { position: static; min-width: 0; transform: none !important; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] { grid-row: 1; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
+:root[data-composition='short-wide'] .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+
+@media (max-width: 900px) {
+  /* Six real destinations cannot form a non-overlapping radial inside the
+     narrower phone/tablet glass. Keep the semantic placement map, but arrange
+     its responsive presentation as three compact rows: top pair,
+     left/full/right, and bottom. Wider layouts retain the spatial radial. */
+  .armament-radial {
+    width: min(92vw, 28rem); aspect-ratio: auto;
+    bottom: calc(var(--action-row-drop) + .4rem);
+    display: grid; grid-template-columns: repeat(3, minmax(var(--tap-floor), 1fr));
+    gap: .35rem; padding: .35rem;
+  }
+  .armament-radial-target { position: static; min-width: 0; transform: none !important; }
+  .armament-radial-target[data-radial-target='top'] { grid-row: 1; grid-column: 1; }
+  .armament-radial-target[data-radial-target='top'] + [data-radial-target='top'] { grid-column: 3; }
+  .armament-radial-target[data-radial-target='left'] { grid-row: 2; grid-column: 1; }
+  .armament-radial-target[data-radial-target='full'] { grid-row: 2; grid-column: 2; }
+  .armament-radial-target[data-radial-target='right'] { grid-row: 2; grid-column: 3; }
+  .armament-radial-target[data-radial-target='bottom'] { grid-row: 3; grid-column: 2; }
+  .armament-radial-picker {
+    position: fixed; left: .5rem; right: .5rem;
+    bottom: calc(var(--action-row-drop) + var(--tap-floor) + .75rem);
+    transform: none; inline-size: auto;
+  }
+  .armament-radial[data-placement='left'] { left: max(.4rem, var(--safe-left-local)); right: auto; }
+  .armament-radial[data-placement='center'] { left: 50%; right: auto; transform: translateX(-50%); }
+  .armament-radial[data-placement='right'] { left: auto; right: max(.4rem, var(--safe-right-local)); }
+}
 
 /* ---------- targeting arrow ---------- */
 #target-arrow { position: fixed; z-index: 400; pointer-events: none; }
@@ -6881,7 +6960,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .hand .card.selected {
   transform: translateY(-12px) scale(1.1) !important;
 }
-:root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
+:root[data-composition='short-wide'] .combat { --action-row-drop: 11.2rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
 :root[data-composition='short-wide'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
@@ -7102,21 +7181,27 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      margin. Both halves are dropped together, in one place. */
   :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
   :root[data-layout='narrow'] .combat-action-row {
+    --action-edge-size: max(var(--tap-floor), clamp(4.6rem, 13vw, 5.6rem));
+    --action-pile-size: max(var(--tap-floor), clamp(4rem, 11.5vw, 4.8rem));
+    --action-end-size: max(var(--tap-floor), clamp(11rem, 30vw, 13rem));
     grid-area: actions; position: static; inset: auto; width: 100%;
-    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));
-    grid-template-areas: "energy end draw exhaust discard";
-    align-items: center; gap: 0.4rem;
+    grid-template-columns: var(--action-edge-size) minmax(0, 1fr) var(--action-pile-size) var(--action-end-size) var(--action-pile-size) minmax(0, 1fr) var(--action-edge-size);
+    grid-template-areas: "energy . draw end discard . exhaust";
+    align-items: center; column-gap: var(--action-cluster-gap);
   }
   :root[data-layout='narrow'] .combat-action-row > .energy-orb {
-    width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
+    width: var(--action-edge-size); max-width: 100%; height: var(--action-edge-size);
   }
   :root[data-layout='narrow'] .combat-action-row > .end-turn {
-    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    min-height: var(--action-edge-size); padding-block: 0.6rem;
     margin: 0; min-width: 0;
   }
 
   :root[data-layout='narrow'] .combat-action-row > .pile {
-    width: 100%; height: max(4.2rem, var(--tap-floor)); font-size: 1.1rem;
+    width: var(--action-pile-size); max-width: 100%; height: max(4.2rem, var(--tap-floor));
+  }
+  :root[data-layout='narrow'] .combat-action-row > .pile.exhaust {
+    width: var(--action-edge-size);
   }
 
   /* Co-op still renders Energy, the shared hand, and End Turn as direct
@@ -7135,6 +7220,64 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     margin-right: 13.8rem;
   }
+
+/* ---------- mobile safe areas -------------------------------------------------
+   iPhone browser chrome can expose the whole physical viewport when
+   viewport-fit=cover is active. Keep the interactive HUD and action rail inside
+   the resulting safe rectangle; the battlefield may still paint behind it. */
+.combat > .topbar.combat-hud.shared-hud {
+  padding-block-start: max(calc(1px / var(--ui-zoom, 1)), var(--safe-top-local));
+}
+.combat > .topbar.combat-hud.shared-hud:not([data-hud-mode='compact']) {
+  padding-inline-start: max(1.6rem, calc(var(--safe-left-local) + var(--safe-edge-local)));
+  padding-inline-end: max(1.6rem, calc(var(--safe-right-local) + var(--safe-edge-local)));
+}
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding-inline-start: max(calc(8px / var(--ui-zoom, 1)), calc(var(--safe-left-local) + var(--safe-edge-local)));
+  padding-inline-end: max(calc(8px / var(--ui-zoom, 1)), calc(var(--safe-right-local) + var(--safe-edge-local)));
+}
+:root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud,
+:root[data-composition='short-wide'] .combat > .topbar.combat-hud.shared-hud {
+  padding-block-start: max(calc(1px / var(--ui-zoom, 1)), var(--safe-top-local));
+}
+.topbar.combat-hud.shared-hud .hud-quick-settings,
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-settings {
+  right: calc(var(--safe-right-local) + (8px / var(--ui-zoom, 1)));
+}
+:root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(var(--safe-right-local) + (9px / var(--ui-zoom, 1)));
+}
+.hand-area {
+  margin-bottom: calc(var(--action-row-drop) + var(--safe-bottom-local));
+}
+.combat-action-row {
+  inset-inline-start: max(1.6rem, calc(var(--safe-left-local) + var(--safe-edge-local)));
+  inset-inline-end: max(1.6rem, calc(var(--safe-right-local) + var(--safe-edge-local)));
+  bottom: calc(var(--safe-bottom-local) - var(--action-row-drop));
+}
+@media (max-width: 900px) {
+  .armament-radial {
+    max-width: calc(100vw - var(--safe-left-local) - var(--safe-right-local) - .8rem);
+    bottom: calc(var(--action-row-drop) + var(--safe-bottom-local) + .4rem);
+  }
+  .armament-radial-picker { bottom: calc(var(--action-row-drop) + var(--safe-bottom-local) + var(--tap-floor) + .75rem); }
+}
+@media (pointer: coarse) {
+  .combat .et-key,
+  .combat .flask-key,
+  .combat .key-hint,
+  .combat .hint-bar kbd { display: none; }
+}
+:root[data-layout='narrow'] .hand-area {
+  margin-bottom: 0;
+  padding-inline-start: max(1rem, var(--safe-left-local));
+  padding-inline-end: max(1rem, var(--safe-right-local));
+  padding-bottom: calc(1rem + var(--safe-bottom-local));
+}
+:root[data-layout='narrow'] .combat-action-row {
+  inset-inline: auto;
+  bottom: auto;
+}
 
   </style>
   <style data-src="styles/map.css">
@@ -7593,7 +7736,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { mountCompendium } = require("src/ui/screens/compendium.js");
-const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } = require("src/ui/screens/settings.js");
 const { mountEquipment, resetArmouryTraySession } = require("src/ui/screens/equipment.js");
 const { openOverlay, closeOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -8154,6 +8297,8 @@ function applyDisplaySettings(settings) {
     console.warn(msg);
   }
   document.documentElement.dataset.handLayout = handLayout;
+  document.documentElement.dataset.armamentsPresentation = resolveArmamentsPresentation(settings);
+  document.documentElement.dataset.armamentsPhonePlacement = resolveArmamentsPhonePlacement(settings);
   const strengths = UI.cardMotifStrength;
   const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
   document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
@@ -10237,6 +10382,20 @@ const balance = {
   },
 
   shrine: { healPct: 35 },
+
+  // ---- canonical hidden level semantics (#237) ---------------------------
+  //
+  // Player level begins at one authored value and advances once per shrine
+  // purchase (`run.levelUps`). `run.levelPoints` is deliberately absent from
+  // this rule: it records how many attribute points those purchases granted,
+  // and the configurable points-per-level dial means it is not a level count.
+  //
+  // Enemy bounds and act/floor target bands are authored by #238. The pure
+  // resolver in model/levels.js accepts those rows without activating them in
+  // encounter creation, saves, co-op, or the UI.
+  levels: {
+    playerStartingLevel: 1,
+  },
 
   // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
   //
@@ -20612,6 +20771,7 @@ const { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttribute
 const { startingKitProblems } = require("src/model/startingKits.js");
 const { armouryUiProblems } = require("src/model/equipmentUi.js");
 const { characterCreationProblems } = require("src/model/characterCreation.js");
+const { enemyLevelProfileProblems, levelConfigProblems } = require("src/model/levels.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -21156,6 +21316,13 @@ function validateContent(bundle) {
 
   if (b.balance != null && (typeof b.balance !== 'object' || Array.isArray(b.balance))) {
     err('balance', 'balance must be a plain object of constants');
+  }
+  for (const problem of levelConfigProblems(b.balance)) err(problem.path, problem.msg);
+  for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
+    if (!enemy || enemy.levelProfile == null) continue;
+    for (const problem of enemyLevelProfileProblems(enemy.levelProfile, `enemies.${enemy.id || '?'}.levelProfile`)) {
+      err(problem.path, problem.msg);
+    }
   }
   // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS
   // WRONG, so it is the last thing that may fail quiet. Vira's finding: it
@@ -24912,6 +25079,14 @@ const enemyPhaseSchema = obj({
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
 });
 
+// #237 reserves the strict authored constraint shape before #238 populates it.
+// Bounds are optional during this inert phase; once present, validate.js also
+// enforces positive integers and min <= max through model/levels.js.
+const enemyLevelProfileSchema = obj({
+  min: int,
+  max: int,
+});
+
 // SFX layer schemas (#46), keyed by `kind` — validate.js discriminates on the
 // kind first so an error lands on the field, not on "matched no variant".
 // Field semantics are documented where the data lives (content/sfx.js);
@@ -25183,6 +25358,7 @@ const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
+    levelProfile: opt(enemyLevelProfileSchema),
     tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
@@ -28267,6 +28443,317 @@ function equipmentPositionCardState({ slot, index, modelState, item, activeIndex
 
 
 Object.assign(module.exports, { normalizeArmouryLayout, trayPresentationState, inventorySelectionAction, orderArmourySlots, equipmentPositionCardState });
+
+},
+"src/model/levels.js": function (module, exports, require) {
+// src/model/levels.js — canonical hidden player/enemy level semantics (#237)
+//
+// Pure and inert: no UI, save, encounter, combat, or co-op activation. #238
+// authors enemy constraints and act/floor target bands; #241 decides when the
+// resulting receipts become persisted runtime state.
+//
+// Headless: no document/window/localStorage/timers.
+
+const ENCOUNTER_LEVEL_SEAM = 'encounter-level-planning/v1';
+const LEVEL_SCALING_ROUNDING = Object.freeze(['floor', 'round', 'ceil']);
+
+const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const isPositiveInt = (value) => Number.isSafeInteger(value) && value > 0;
+
+function bandProblems(band, path) {
+  const problems = [];
+  if (!isObject(band)) return [{ path, msg: 'must be an object { min, max }' }];
+  for (const key of Object.keys(band)) {
+    if (!['min', 'max'].includes(key)) problems.push({ path: `${path}.${key}`, msg: 'unknown field' });
+  }
+  if (!isPositiveInt(band.min)) problems.push({ path: `${path}.min`, msg: 'must be a positive integer' });
+  if (!isPositiveInt(band.max)) problems.push({ path: `${path}.max`, msg: 'must be a positive integer' });
+  if (isPositiveInt(band.min) && isPositiveInt(band.max) && band.min > band.max) {
+    problems.push({ path, msg: `min ${band.min} must not exceed max ${band.max}` });
+  }
+  return problems;
+}
+
+function levelConfigProblems(balance) {
+  const levels = balance && balance.levels;
+  if (!isObject(levels)) return [{ path: 'balance.levels', msg: 'must be an object with playerStartingLevel' }];
+  const problems = [];
+  for (const key of Object.keys(levels)) {
+    if (key !== 'playerStartingLevel') problems.push({ path: `balance.levels.${key}`, msg: 'unknown field' });
+  }
+  if (!isPositiveInt(levels.playerStartingLevel)) {
+    problems.push({ path: 'balance.levels.playerStartingLevel', msg: 'must be a positive integer' });
+  }
+  return problems;
+}
+
+function enemyLevelProfileProblems(profile, path = 'levelProfile') {
+  return bandProblems(profile, path);
+}
+
+function requireClean(problems) {
+  if (!problems.length) return;
+  const first = problems[0];
+  throw new Error(`${first.path}: ${first.msg}`);
+}
+
+/**
+ * playerLevel(registries, run) -> hidden whole-number player level.
+ *
+ * Missing `levelUps` is the legacy-save shape and means zero purchases. A
+ * present malformed count fails loudly. `levelPoints` never participates.
+ */
+function playerLevel(registries, run) {
+  requireClean(levelConfigProblems(registries && registries.balance));
+  const starting = registries.balance.levels.playerStartingLevel;
+  const purchases = run && run.levelUps;
+  if (purchases == null) return starting;
+  if (!Number.isSafeInteger(purchases) || purchases < 0) {
+    throw new Error(`run.levelUps: must be a non-negative integer, got ${JSON.stringify(purchases)}`);
+  }
+  const result = starting + purchases;
+  if (!Number.isSafeInteger(result)) throw new Error('player level: exceeds the safe integer range');
+  return result;
+}
+
+function hashString(value) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function gcdBigInt(a, b) {
+  let left = a < 0n ? -a : a;
+  let right = b < 0n ? -b : b;
+  while (right) [left, right] = [right, left % right];
+  return left || 1n;
+}
+
+function decimalFraction(value) {
+  const [mantissa, exponentText = '0'] = Math.abs(value).toString().toLowerCase().split('e');
+  const [whole, fraction = ''] = mantissa.split('.');
+  const exponent = Number(exponentText);
+  let numerator = BigInt(`${whole}${fraction}` || '0');
+  let denominator = 10n ** BigInt(fraction.length);
+  if (exponent > 0) numerator *= 10n ** BigInt(exponent);
+  if (exponent < 0) denominator *= 10n ** BigInt(-exponent);
+  if (value < 0) numerator = -numerator;
+  const divisor = gcdBigInt(numerator, denominator);
+  return { numerator: numerator / divisor, denominator: denominator / divisor };
+}
+
+function floorFraction(numerator, denominator) {
+  let quotient = numerator / denominator;
+  if (numerator < 0n && numerator % denominator) quotient -= 1n;
+  return quotient;
+}
+
+function roundFraction(numerator, denominator, rounding) {
+  if (rounding === 'floor') return floorFraction(numerator, denominator);
+  if (rounding === 'ceil') return -floorFraction(-numerator, denominator);
+  return floorFraction(2n * numerator + denominator, 2n * denominator);
+}
+
+function exactNumberFromFraction(numerator, denominator) {
+  const value = Number(numerator) / Number(denominator);
+  if (!Number.isFinite(value)) throw new Error('level scaling result: must remain finite');
+  const represented = decimalFraction(value);
+  if (represented.numerator * denominator !== numerator * represented.denominator) {
+    throw new Error('level scaling result: cannot represent the exact authored value');
+  }
+  return value;
+}
+
+function assertContext(context) {
+  if (!isObject(context)) throw new Error('enemy level context: must be an object');
+  for (const key of Object.keys(context)) {
+    if (!['seed', 'contextKey', 'act', 'floor', 'targetBand', 'modifiers'].includes(key)) {
+      throw new Error(`enemy level context.${key}: unknown field`);
+    }
+  }
+  if (!Number.isSafeInteger(context.seed) || context.seed < 0 || context.seed > 0xffffffff) {
+    throw new Error(`enemy level context.seed: must be a uint32, got ${JSON.stringify(context.seed)}`);
+  }
+  if (typeof context.contextKey !== 'string' || !context.contextKey.trim()) {
+    throw new Error('enemy level context.contextKey: must be a non-empty stable encounter/slot key');
+  }
+  if (!isPositiveInt(context.act)) throw new Error('enemy level context.act: must be a positive integer');
+  if (!Number.isSafeInteger(context.floor) || context.floor < 0) {
+    throw new Error('enemy level context.floor: must be a non-negative integer');
+  }
+  requireClean(bandProblems(context.targetBand, 'enemy level context.targetBand'));
+  const modifiers = context.modifiers == null ? [] : context.modifiers;
+  if (!Array.isArray(modifiers)) throw new Error('enemy level context.modifiers: must be an array');
+  modifiers.forEach((modifier, index) => {
+    if (!isObject(modifier)) throw new Error(`enemy level context.modifiers[${index}]: must be an object { id, delta }`);
+    if (typeof modifier.id !== 'string' || !modifier.id) {
+      throw new Error(`enemy level context.modifiers[${index}].id: must be a non-empty string`);
+    }
+    if (!Number.isSafeInteger(modifier.delta)) {
+      throw new Error(`enemy level context.modifiers[${index}].delta: must be an integer`);
+    }
+    for (const key of Object.keys(modifier)) {
+      if (!['id', 'delta'].includes(key)) throw new Error(`enemy level context.modifiers[${index}].${key}: unknown field`);
+    }
+  });
+  return modifiers;
+}
+
+/**
+ * resolveEnemyLevel(profile, context) -> deterministic planning receipt.
+ *
+ * `profile` is the enemy's authored { min, max } constraint. `targetBand` is
+ * the act/floor planning band supplied by later content. A stable hash of the
+ * run seed plus the explicit encounter/slot key chooses inside their overlap.
+ * This dedicated, stateless seam consumes no `enemyAI` or other run RNG draw.
+ * Integer modifiers apply afterward and the authored profile is the final
+ * clamp, so no caller can push an instance outside its declared bounds.
+ */
+function resolveEnemyLevel(profile, context) {
+  requireClean(enemyLevelProfileProblems(profile, 'enemy level profile'));
+  const modifiers = assertContext(context);
+
+  const sourceBand = { min: profile.min, max: profile.max };
+  const targetBand = { min: context.targetBand.min, max: context.targetBand.max };
+  const overlapMin = Math.max(sourceBand.min, targetBand.min);
+  const overlapMax = Math.min(sourceBand.max, targetBand.max);
+  const planningKey = JSON.stringify([
+    ENCOUNTER_LEVEL_SEAM,
+    context.seed >>> 0,
+    context.contextKey,
+    context.act,
+    context.floor,
+    sourceBand.min,
+    sourceBand.max,
+    targetBand.min,
+    targetBand.max,
+  ]);
+  const keyHash = hashString(planningKey);
+
+  let rolledLevel;
+  if (overlapMin <= overlapMax) {
+    rolledLevel = overlapMin + (keyHash % (overlapMax - overlapMin + 1));
+  } else {
+    const targetMidpoint = Math.round((targetBand.min + targetBand.max) / 2);
+    rolledLevel = clamp(targetMidpoint, sourceBand.min, sourceBand.max);
+  }
+
+  const exactModifierTotal = modifiers.reduce((sum, modifier) => sum + BigInt(modifier.delta), 0n);
+  if (exactModifierTotal < BigInt(Number.MIN_SAFE_INTEGER)
+    || exactModifierTotal > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('enemy level modifier total: exceeds the safe integer range');
+  }
+  const modifierTotal = Number(exactModifierTotal);
+  const unclamped = rolledLevel + modifierTotal;
+  if (!Number.isSafeInteger(unclamped)) throw new Error('enemy level result: exceeds the safe integer range');
+  const result = clamp(unclamped, sourceBand.min, sourceBand.max);
+
+  return {
+    seam: ENCOUNTER_LEVEL_SEAM,
+    sourceBand,
+    actFloorTarget: {
+      act: context.act,
+      floor: context.floor,
+      band: targetBand,
+    },
+    planning: {
+      seed: context.seed >>> 0,
+      contextKey: context.contextKey,
+      keyHash,
+      overlap: overlapMin <= overlapMax ? { min: overlapMin, max: overlapMax } : null,
+    },
+    modifiers: modifiers.map(({ id, delta }) => ({ id, delta })),
+    rolledLevel,
+    modifierTotal,
+    unclamped,
+    clamped: result !== unclamped,
+    result,
+  };
+}
+
+/**
+ * levelScalingReceipt(spec) -> one exact, pure stat-scaling receipt.
+ *
+ * #237 owns the arithmetic vocabulary, not any live enemy values. #238 authors
+ * the per-stat base level, coefficient, rounding, and optional caps. Keeping
+ * rounding explicit prevents HP, damage, block, and poise from silently using
+ * whichever Math function a later caller happened to choose.
+ */
+function levelScalingReceipt(spec) {
+  if (!isObject(spec)) throw new Error('level scaling spec: must be an object');
+  for (const key of Object.keys(spec)) {
+    if (!['stat', 'base', 'baselineLevel', 'resolvedLevel', 'perLevel', 'rounding', 'min', 'max'].includes(key)) {
+      throw new Error(`level scaling spec.${key}: unknown field`);
+    }
+  }
+  const {
+    stat,
+    base,
+    baselineLevel,
+    resolvedLevel,
+    perLevel,
+    rounding,
+    min = null,
+    max = null,
+  } = spec;
+  if (typeof stat !== 'string' || !stat) throw new Error('level scaling stat: must be a non-empty string');
+  if (!Number.isFinite(base) || Math.abs(base) > Number.MAX_SAFE_INTEGER) {
+    throw new Error('level scaling base: must be finite and within the safe arithmetic range');
+  }
+  if (!Number.isSafeInteger(baselineLevel) || baselineLevel < 1) {
+    throw new Error('level scaling baselineLevel: must be a positive safe integer');
+  }
+  if (!Number.isSafeInteger(resolvedLevel) || resolvedLevel < 1) {
+    throw new Error('level scaling resolvedLevel: must be a positive safe integer');
+  }
+  if (!Number.isFinite(perLevel) || Math.abs(perLevel) > Number.MAX_SAFE_INTEGER) {
+    throw new Error('level scaling perLevel: must be finite and within the safe arithmetic range');
+  }
+  if (!LEVEL_SCALING_ROUNDING.includes(rounding)) {
+    throw new Error(`level scaling rounding: must be one of ${LEVEL_SCALING_ROUNDING.join(' | ')}`);
+  }
+  if (min != null && !Number.isSafeInteger(min)) throw new Error('level scaling min: must be a safe integer when present');
+  if (max != null && !Number.isSafeInteger(max)) throw new Error('level scaling max: must be a safe integer when present');
+  if (min != null && max != null && min > max) throw new Error(`level scaling cap: min ${min} must not exceed max ${max}`);
+
+  const levelDelta = resolvedLevel - baselineLevel;
+  const baseFraction = decimalFraction(base);
+  const perLevelFraction = decimalFraction(perLevel);
+  const exactNumerator = baseFraction.numerator * perLevelFraction.denominator
+    + BigInt(levelDelta) * perLevelFraction.numerator * baseFraction.denominator;
+  const exactDenominator = baseFraction.denominator * perLevelFraction.denominator;
+  const unrounded = exactNumberFromFraction(exactNumerator, exactDenominator);
+  const roundedExact = roundFraction(exactNumerator, exactDenominator, rounding);
+  if (roundedExact < BigInt(Number.MIN_SAFE_INTEGER) || roundedExact > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('level scaling rounded result: exceeds the safe integer range');
+  }
+  const rounded = Number(roundedExact);
+  const result = clamp(rounded, min == null ? -Infinity : min, max == null ? Infinity : max);
+  return {
+    stat,
+    base,
+    baselineLevel,
+    resolvedLevel,
+    levelDelta,
+    perLevel,
+    rounding,
+    unrounded,
+    rounded,
+    cap: { min, max },
+    clamped: result !== rounded,
+    result,
+  };
+}
+
+
+Object.assign(module.exports, { ENCOUNTER_LEVEL_SEAM, LEVEL_SCALING_ROUNDING, levelConfigProblems, enemyLevelProfileProblems, playerLevel, resolveEnemyLevel, levelScalingReceipt });
 
 },
 "src/model/registries.js": function (module, exports, require) {
@@ -41842,7 +42329,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b528329672';
+const SOURCE = '8f546f2e1d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41876,7 +42363,7 @@ const SOURCE = 'b528329672';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1454';
+const ORDINAL = '1719';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41903,7 +42390,7 @@ const ORDINAL = '1454';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-28';
+const BUILT = '2026-08-31';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -42410,6 +42897,13 @@ const ROWS = [
     choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
 
+  { cat: 'Display', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+    choices: ['radial', 'fixed'], label: 'Combat Armaments',
+    note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
+  { cat: 'Display', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+    choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
+    note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
+
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
@@ -42724,6 +43218,16 @@ function musicEnabledCondition(settings = {}) {
     ? settings.musicVolume
     : AUDIO_DEFAULTS.musicVolume;
   return `Music on · volume ${volume}%.`;
+}
+
+function resolveArmamentsPresentation(settings = {}) {
+  return ['radial', 'fixed'].includes(settings.armamentsPresentation)
+    ? settings.armamentsPresentation : 'radial';
+}
+
+function resolveArmamentsPhonePlacement(settings = {}) {
+  return ['left', 'center', 'right'].includes(settings.armamentsPhonePlacement)
+    ? settings.armamentsPhonePlacement : 'left';
 }
 
 function rowNote(settings, row) {
@@ -43714,26 +44218,45 @@ function showSettingsNotice(msg) {
 
 function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
+  const opener = document.activeElement;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
-    <div class="modal settings-modal">
-      <h2>Settings</h2>
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <h2 id="settings-modal-title">Settings</h2>
       <div class="set-body"></div>
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
   renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
-  const close = () => veil.remove();
+  const modal = veil.querySelector('.settings-modal');
+  const onKeydown = (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+    const topModal = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+    if (topModal !== modal) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  };
+  const close = () => {
+    if (!veil.isConnected) return;
+    document.removeEventListener('keydown', onKeydown, true);
+    veil.remove();
+    if (opener?.isConnected && typeof opener.focus === 'function') {
+      opener.focus({ preventScroll: true });
+    }
+  };
   veil.addEventListener('click', (e) => {
     if (e.target === veil) close();
   });
   veil.querySelector('#set-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKeydown, true);
+  veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, musicEnabledCondition, settingOn, settingsRowHtml, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement, settingOn, settingsRowHtml, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/about.js": function (module, exports, require) {
@@ -44083,6 +44606,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-361",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The Review & Approval Hub refreshes its owner decisions and adds Context Rotation",
+    "detail": "The owner-facing hub promotes the two bounded Art decisions into cards that need Constantine without approving either, adds the #053 Context Rotation dashboard and its 13-team / 52-seat report, and separates registration and cold-start acceptance from execution, rotation, and successor-resume proof. Local-only evidence URLs now resolve to the explicit unavailable page instead of leaking author-local file paths. Evidence and hub only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.",
+    "build": "0.4.0.1454",
+    "pullRequest": 361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/361"
+  },
   {
     "id": "pr-350",
     "date": "2026-08-26",
@@ -52063,7 +52596,13 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
     focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' || ev.key === 'Backspace') { ev.preventDefault(); close({ cancelled: true, restoreFocus: true }); }
+    if (ev.key === 'Escape' || ev.key === 'Backspace') {
+      ev.preventDefault();
+      // The child owns Cancel. Do not let the same physical key continue to
+      // the parent radial after focus has been restored into it.
+      ev.stopPropagation();
+      close({ cancelled: true, restoreFocus: true });
+    }
     else if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') { ev.preventDefault(); move(1); }
     else if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') { ev.preventDefault(); move(-1); }
     else if (ev.key === 'Home') {
@@ -55800,6 +56339,11 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendCont
     // a reachable node before this debounce fires; reading it in the callback
     // would mislabel the detached board's old camera as belonging to that node.
     pendingViewCommit = viewSnapshot();
+    // Keep the in-memory run camera current synchronously. Save & Quit may
+    // arrive before this debounce fires; the non-committing handoff updates
+    // the run without adding a durable write. The timer remains the sole
+    // settled-board commit.
+    emitViewState(false, pendingViewCommit);
     viewCommitTimer = setTimeout(() => {
       viewCommitTimer = null;
       const snapshot = pendingViewCommit;
@@ -56686,29 +57230,19 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           <button class="hand-page hand-next" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
         </div>
-        <!-- One grid owns every persistent combat action destination. Keeping
-             the optional Exhaust cell in that same grid means revealing it
-             cannot shift, cover, or steal a standing control's hit box. -->
+        <!-- One grid owns every persistent combat action destination. Actions
+             and Exhaust pin the two safe-area edges while Draw, End Turn and
+             Discard form one tight, symmetric centre cluster. Exhaust stays
+             present at zero so no control appears late or shifts the row. -->
         <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          <div class="energy-orb"></div>
-          <button class="end-turn">END TURN</button>
-          <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
-          <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
-          <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
-          <!-- THE HINT STRIP IS A SIXTH DESTINATION IN THIS GRID, AND IT IS HERE
-               FOR THE REASON THE COMMENT ABOVE ALREADY GIVES. The chips became
-               real buttons (components/hints.js, Sten 15d4bca), so "every
-               persistent combat action destination" now includes them — and the
-               grid's guarantee that revealing a cell "cannot shift, cover, or
-               steal a standing control's hit box" is exactly the guarantee the
-               strip was missing. It sat outside as a centred sibling row, so at
-               Text XL and under a wide rebind it grew into END TURN: #295,
-               3368.8 px2 / 2700.3 px2, regression from f2acfc9 (#21). The empty
-               gutter column this grid already declared was the space meant for it.
-               Grid areas cannot overlap, so the clearance is now structural and
-               stops being a number anybody re-tunes when a label changes. -->
-          ${hintBarHtml('combat')}
+          <div class="energy-orb" role="status" aria-label="Actions remaining"></div>
+          <button class="pile draw" type="button"><span class="n"></span><small>DRAW</small></button>
+          <button class="end-turn" type="button">END TURN</button>
+          <button class="pile discard" type="button"><span class="n"></span><small>DISCARD</small></button>
+          <button class="pile exhaust" type="button"><span class="n"></span><small>EXHAUSTED</small></button>
         </div>
+        <!-- Context hints remain a separate auxiliary strip. -->
+        ${hintBarHtml('combat')}
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
@@ -57480,6 +58014,20 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       trailing,
     });
     // When a self/buff card is armed, the player is a confirmable target.
+    // Publish that temporary target through the same unified focus door as an
+    // enemy target. Without this, armSelf() asks focusFirst() for the player,
+    // focusFirst() correctly refuses the non-focusable frame, and the cursor
+    // remains on the card: a second controller Confirm then toggles the card
+    // off instead of committing it.
+    if (selfArm) {
+      const armedInst = findInst(selfArm);
+      const armedDef = armedInst ? resolveCard(registries, armedInst) : null;
+      const playerName = combatantSubject('player', p).name;
+      box.dataset.focusable = '';
+      box.tabIndex = -1;
+      box.setAttribute('role', 'button');
+      box.setAttribute('aria-label', `Confirm ${armedDef?.name || 'selected card'} on ${playerName}`);
+    }
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
@@ -57649,7 +58197,9 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   }
 
   function renderControls() {
-    $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    const energy = $('.energy-orb');
+    energy.textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    energy.setAttribute('aria-label', `Actions ${combat.player.energy} of ${combat.player.energyMax}`);
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
@@ -57662,9 +58212,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .n').textContent = combat.piles.draw.length;
     $('.pile.discard .n').textContent = combat.piles.discard.length;
-    const ex = $('.pile.exhaust');
-    ex.style.display = combat.piles.exhaust.length ? '' : 'none';
-    ex.querySelector('.n').textContent = combat.piles.exhaust.length;
+    $('.pile.exhaust .n').textContent = combat.piles.exhaust.length;
+    $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
+    $('.pile.discard').setAttribute('aria-label', `Discard pile, ${combat.piles.discard.length}`);
+    $('.pile.exhaust').setAttribute('aria-label', `Exhausted pile, ${combat.piles.exhaust.length}`);
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -57950,7 +58501,8 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       return;
     }
 
-    // Flask keys activate the numbered visible HUD control; they never auto-use.
+    // Flask keys activate the corresponding visible Quick Access control; they
+    // never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
@@ -58193,9 +58745,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
   const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  const showExhaust = () => openPileModal(registries, 'Exhausted pile', combat.piles.exhaust);
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
-  $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+  $('.pile.exhaust').addEventListener('click', showExhaust);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.

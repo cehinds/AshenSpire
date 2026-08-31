@@ -288,7 +288,7 @@ const V = {
   guardedDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-guard">8</span></div><div class="mini-label">damage absorbed by guard</div></div>',
   healthDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-direct">−12</span></div><div class="mini-label">damage reaching health</div></div>',
   playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">fanned player hand tray</div></div>',
-  actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">DECK</div><div class="mini-btn">END</div><div class="mini-btn">RELIC</div><div class="mini-btn">?</div></div>',
+  actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">3/3</div><div class="mini-btn">DRAW</div><div class="mini-btn">END</div><div class="mini-btn">DISCARD</div><div class="mini-btn">EXHAUSTED</div></div>',
   characterDisclosure:'<div class="mini mini-stack"><div class="menu-demo" style="width:230px"><div class="row"><span>PRIMARY STATS</span><b>Standard</b></div><div class="row"><span>SPRITE</span><b>Rendered</b></div><div class="row"><span>KEEPSAKE</span><b>Old Cinder</b></div></div></div>',
   classPreviewPane:'<div class="mini mini-stack"><div class="mini-title">REAVER</div><div class="sprite-demo">CLASS ART</div><div class="mini-label">resources + relic</div></div>',
   classResourceGrid:'<div class="mini"><div class="mini-header" style="grid-template-columns:repeat(5,1fr)"><b>HP<br>90</b><b>MP<br>2</b><b>SP<br>2</b><b>ACT<br>3</b><b>DRAW<br>5</b></div></div>',
@@ -472,7 +472,7 @@ const SEMANTIC_COMPONENTS = [
  ['guarded-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Amount absorbed by Guard.','guardedDamage'],
  ['health-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Residual damage applied to HP.','healthDamage'],
  ['player-hand-tray','componentModel','combat.js + hand.js','combat','Combat','Player card hand.','playerHand'],
- ['combat-action-rail','componentModel','combat.js','combat','Combat','End-turn/action controls.','actionRail']
+ ['combat-action-rail','componentModel','combat.js','combat','Combat','Edge-anchored Actions and Exhaust around a tight Draw / End Turn / Discard cluster.','actionRail']
 ].map(([id,model,owner,group,reuse,purpose,visual]) => ({id,model,owner,group,reuse,purpose,visual}));
 const RENDERED_ARMOURY_COMPONENTS = [
  ["armoury.shell",".armoury[data-composition='character-equipment']","Armoury shell and view routing","responsive shared shell","armouryPanel"],

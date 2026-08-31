@@ -226,6 +226,13 @@ const ROWS = [
     choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
 
+  { cat: 'Display', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+    choices: ['radial', 'fixed'], label: 'Combat Armaments',
+    note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
+  { cat: 'Display', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+    choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
+    note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
+
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
@@ -540,6 +547,16 @@ export function musicEnabledCondition(settings = {}) {
     ? settings.musicVolume
     : AUDIO_DEFAULTS.musicVolume;
   return `Music on · volume ${volume}%.`;
+}
+
+export function resolveArmamentsPresentation(settings = {}) {
+  return ['radial', 'fixed'].includes(settings.armamentsPresentation)
+    ? settings.armamentsPresentation : 'radial';
+}
+
+export function resolveArmamentsPhonePlacement(settings = {}) {
+  return ['left', 'center', 'right'].includes(settings.armamentsPhonePlacement)
+    ? settings.armamentsPhonePlacement : 'left';
 }
 
 function rowNote(settings, row) {
@@ -1530,20 +1547,39 @@ export function showSettingsNotice(msg) {
 
 export function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
+  const opener = document.activeElement;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
-    <div class="modal settings-modal">
-      <h2>Settings</h2>
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <h2 id="settings-modal-title">Settings</h2>
       <div class="set-body"></div>
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
   renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
-  const close = () => veil.remove();
+  const modal = veil.querySelector('.settings-modal');
+  const onKeydown = (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+    const topModal = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+    if (topModal !== modal) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  };
+  const close = () => {
+    if (!veil.isConnected) return;
+    document.removeEventListener('keydown', onKeydown, true);
+    veil.remove();
+    if (opener?.isConnected && typeof opener.focus === 'function') {
+      opener.focus({ preventScroll: true });
+    }
+  };
   veil.addEventListener('click', (e) => {
     if (e.target === veil) close();
   });
   veil.querySelector('#set-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKeydown, true);
+  veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }

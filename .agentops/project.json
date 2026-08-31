@@ -14,7 +14,7 @@
   "pages_owner_hud": "ENABLED",
   "owner_command_path": "WORKFLOW_FORMS",
   "control_plane_root": ".agentops",
-  "installed_stage": "migration-tooling",
+  "installed_stage": "migration-tooling+pipeline-live-assignment",
   "installed_contracts": [
     "governance/owner-intent.json",
     "governance/hierarchy.json",

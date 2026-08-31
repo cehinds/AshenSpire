@@ -43,7 +43,7 @@
     "role": "it-manager-iii",
     "display_name": "IT Manager III, Integration & Delivery",
     "former_name": "Main",
-    "grant_summary": "Near-owner operational authority to translate owner intent into execution within these explicit, machine-readable grants.",
+    "grant_summary": "Near-owner operational authority to translate owner intent into execution within these explicit, machine-readable grants. Extended 2026-08-29 by owner direction: the deputy may amend its own grant within the non-reserved envelope. Owner reserved authority is unchanged and remains unreachable by self-amendment.",
     "included_actions": [
       "assign or rebind bounded reversible work",
       "issue or revoke writer leases",
@@ -52,10 +52,11 @@
       "accept bounded technical risk with recorded evidence",
       "integrate to dev through the normal reviewable PR process at its discretion",
       "chair a temporary QA Coordination Pool while a collision holds",
-      "escalate genuine owner decisions"
+      "escalate genuine owner decisions",
+      "amend its own grant within the non-reserved envelope, provided each amendment is a separate commit that cites this owner grant and never reaches owner.reserved_authority"
     ],
     "excluded_actions": [
-      "amend its own grant",
+      "amend its own grant to reach any authority listed in owner.reserved_authority",
       "silently change owner intent",
       "suppress an owner override",
       "self-approve protected independent review",
@@ -66,7 +67,7 @@
     ],
     "effective": "governed-by-source-commit",
     "expiry": "until-superseded-by-a-later-owner-intent-record",
-    "supersession": "A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record.",
+    "supersession": "A later owner-intent commit supersedes this grant; the source commit is the Git commit that introduced the record. The self-amendment extension was granted by the owner on 2026-08-29 and is revoked by any later owner-intent commit that removes it.",
     "non_amplifying_rule": "effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time"
   },
   "protected_decision_classes": [

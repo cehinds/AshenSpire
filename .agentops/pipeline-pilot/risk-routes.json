@@ -1,0 +1,21 @@
+{
+  "schema": "agentops/pipeline-risk-routes/v1",
+  "routes": {
+    "analysis": ["intake", "ready", "executing", "closed"],
+    "reversible-docs": ["intake", "ready", "executing", "review", "integrate", "closed"],
+    "isolated-fix": ["intake", "ready", "executing", "review", "integrate", "closed"],
+    "player-ui": ["intake", "ready", "executing", "review", "integrate", "delivered", "closed"],
+    "protected": ["intake", "ready", "executing", "review", "integrate", "delivered", "closed"]
+  },
+  "protected_actions": [
+    "push",
+    "open-pr",
+    "merge",
+    "deploy",
+    "publish",
+    "release",
+    "destructive-change",
+    "security-or-privacy-crossing",
+    "override-independent-qa"
+  ]
+}

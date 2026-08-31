@@ -6,9 +6,13 @@
 # re-seal only the target capsule -> commit to `dev` and report back on the issue.
 #
 # SECURITY MODEL
-# - Owner-only: the job runs only when the issue's author_association is OWNER,
-#   so a command filed by anyone else is never executed. Comments cannot trigger
-#   it, and an issue edited by a non-owner cannot re-run it as someone else.
+# - Opened only: edits never re-run a command. The owner closes and refiles a
+#   mistyped decision, producing a new immutable issue event.
+# - Owner association + form shape: the job requires OWNER association, the
+#   owner-command label, the decision title prefix, and the exact versioned
+#   issue-form body. The form marker prevents accidental hand-labelling; it is
+#   structural, not cryptographic. Separate agent identity remains the root fix
+#   when agents and the human owner share one GitHub account.
 # - The actor role is resolved HERE, from the authenticated GitHub identity —
 #   never read from the issue body. Nothing an author types can escalate a role.
 # - Enumerated only: opsctl rejects any action outside owner-command.json, any
@@ -26,7 +30,7 @@ name: owner-command
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
 
 permissions:
   contents: read
@@ -37,11 +41,12 @@ concurrency:
 
 jobs:
   execute:
-    # Owner-authored "Owner decision" issues only. Both conditions matter: the
-    # label selects the form, author_association proves who filed it.
+    # Owner-associated "Owner decision" issues only. The body is validated by a
+    # separate step before opsctl sees it; the title check is an early reject.
     if: >-
       github.event.issue.author_association == 'OWNER' &&
-      contains(github.event.issue.labels.*.name, 'owner-command')
+      contains(github.event.issue.labels.*.name, 'owner-command') &&
+      startsWith(github.event.issue.title, '[decision] ')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -67,6 +72,13 @@ jobs:
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
+
+      - name: Verify owner-decision form shape
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: >-
+          node .github/workflows/validate-owner-command-issue.mjs
+          --body-file /tmp/issue-body.md
 
       - name: Validate the command (dry-run first)
         id: dryrun

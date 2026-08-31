@@ -135,6 +135,18 @@
       "note": "Intake and routing records surfaced to design."
     },
     {
+      "glob": ".github/workflows/**",
+      "owner_role": "app-dev-iii",
+      "serialized_lane": "ci",
+      "note": "CI and automation. Declared 2026-08-30 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet owner-command.yml executes owner authority from here. A change to owner-command.yml additionally requires it-manager-iii review, because that file is the authority gate rather than ordinary CI."
+    },
+    {
+      "glob": ".github/ISSUE_TEMPLATE/**",
+      "owner_role": "help-desk",
+      "serialized_lane": "intake-docs",
+      "note": "Intake forms. Help Desk owns intake, and owner-decision.yml applies the owner-command label that the execution gate selects on."
+    },
+    {
       "glob": "tools/**",
       "owner_role": "it-support",
       "serialized_lane": "support-tooling",
