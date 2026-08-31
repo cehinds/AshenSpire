@@ -164,6 +164,7 @@
       ],
       "requires_cas": true,
       "protected": false,
+      "lifecycle_target": "hosted-verified",
       "required_fields": [
         "target",
         "expected_current_hash",

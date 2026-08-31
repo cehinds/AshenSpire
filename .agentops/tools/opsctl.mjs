@@ -547,6 +547,21 @@ export function semanticChecks(c) {
   // and — the part that matters most — what each explicitly does NOT grant.
   // It lived only as a decision record, so nothing stopped a transition guard
   // paraphrasing a gate wrongly, or a gate quietly claiming release authority.
+  // An action that performs a gate must move the lifecycle that gate guards.
+  // fast-forward-test advanced `test` and left the capsule at dev-integrated,
+  // so Gate D's declared hosted-verified -> resolved transition was unreachable:
+  // the ref said promoted and the authoritative lifecycle did not.
+  if (c['owner-command'] && c['promotion-gates']) {
+    const gateC = c['promotion-gates'].gates.find((g) => (g.guards_transitions || []).length && /fast-forward/i.test(g.entry || ''));
+    const ffAction = c['owner-command'].actions.find((a) => a.id === 'fast-forward-test');
+    if (gateC && ffAction) {
+      const to = (gateC.guards_transitions[0] || {}).to;
+      if (to && ffAction.lifecycle_target !== to) {
+        errors.push(`owner-command: action 'fast-forward-test' performs Gate ${gateC.id}, which guards the move to '${to}', but declares lifecycle_target '${ffAction.lifecycle_target || 'none'}'; the ref would advance while the capsule stood still`);
+      }
+    }
+  }
+
   // A gate requiring evidence nobody declares is a gate nothing can pass.
   // Gate B required 'hosted-evidence-url' while evidence.json declares
   // 'hosted-verification-receipt' — the same concept under a name the manifest
@@ -1773,7 +1788,12 @@ export function globCovers(declGlob, glob) {
 export function contractFieldAt(contract, path) {
   let node = contract;
   for (const key of String(path).split('.')) {
+    // Own properties only. Parsed JSON inherits from Object.prototype, so plain
+    // access made `constructor`, `__proto__` and `toString` resolve to defined
+    // values — a codification claim naming no field in the contract passed as
+    // though it named one.
     if (node === null || node === undefined || typeof node !== 'object') return undefined;
+    if (!Object.hasOwn(node, key)) return undefined;
     node = node[key];
   }
   return node;
@@ -2586,6 +2606,15 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
         if (!held.has(need)) {
           errors.push(`command 'fast-forward-test' target '${request.target}' does not carry '${need}', which Gate ${gate.id} requires; decision 0009 condition 1 needs gates A and B shown to have passed, not merely not recorded as failing`);
         }
+      }
+      // ...and carrying the type name is still not proof. evidence_pointers
+      // name TYPES; nothing in this corpus records a receipt bound to an exact
+      // object, so freshness cannot be evaluated for this candidate. Condition 1
+      // asks for fresh gate results, and a condition that cannot be shown is a
+      // refusal. Declared in evidence.rules.pointers_are_types_not_receipts and
+      // raised on #430 rather than papered over with a membership test.
+      if ((gate.required_evidence || []).length && contracts.evidence && contracts.evidence.rules.pointers_are_types_not_receipts) {
+        errors.push(`command 'fast-forward-test' cannot show Gate ${gate.id} evidence is FRESH for this candidate: evidence_pointers name types, and no receipt is recorded against an exact object anywhere in the corpus. Decision 0009 condition 1 asks for fresh gate results, so this refuses until a per-candidate receipt exists`);
       }
     }
   }
@@ -4662,7 +4691,15 @@ export function runSelftest(root = ROOT) {
   if (ffTicket) {
     const good = ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv });
     const ctl = validateCommand(contracts, rtFF, good);
-    results.push({ label: 'gate C control: a shape-valid fast-forward is accepted (pure)', pass: ctl.ok, errs: ctl.errors });
+    // The control cannot be "accepted" any more, and saying so is the point.
+    // Gate C refuses every request until a per-candidate receipt exists, which
+    // no artifact in this corpus records. So the control asserts the honest
+    // property instead: a shape-valid request is refused ONLY for the declared
+    // structural gap, and for nothing else. If a shape defect ever slips in,
+    // this fails because a second, different reason appears.
+    const structural = (e) => e.includes('cannot show Gate') && e.includes('no receipt is recorded');
+    const other = ctl.errors.filter((e) => !structural(e));
+    results.push({ label: 'gate C control: a shape-valid request fails only on the declared receipt gap', pass: !ctl.ok && ctl.errors.some(structural) && other.length === 0, errs: other });
     const expectFF = (label, req, needle) => {
       const res = validateCommand(contracts, rtFF, req);
       const hit = !res.ok && res.errors.some((e) => e.includes(needle));
@@ -4827,6 +4864,12 @@ export function runSelftest(root = ROOT) {
   expectSemantic('directives: an issued_at that is not a real instant', (c) => { c.directives.directives[0].issued_at = '2026-02-30T00:00:00Z'; }, 'not a real instant');
   expectSemantic('directives: a directive that grants an action', (c) => { c.directives.directives[0].grants_actions = ['integrate-to-dev']; }, 'never what it may do');
   expectSemantic('directives: a directive reaching for owner-reserved authority', (c) => { const d = c.directives.directives[0]; d.issued_by = 'it-manager-iii'; d.grants_actions = [c['owner-intent'].owner.reserved_authority[0]]; }, 'it does not empower one');
+  // Parsed JSON inherits from Object.prototype, so a plain lookup made these
+  // resolve to defined values and a codification claim naming no field passed.
+  for (const ghost of ['constructor', 'toString', 'reporting.__proto__', 'reporting.toString']) {
+    expectSemantic(`directives: an inherited codification path (${ghost})`, (c) => { const d = c.directives.directives[0]; d.codified_in = 'information-access'; d.codified_as = ghost; }, 'which does not exist');
+  }
+  expectSemantic('gate C: the action no longer moves the lifecycle its gate guards', (c) => { delete c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').lifecycle_target; }, 'the ref would advance while the capsule stood still');
   expectSemantic('directives: a contract named with no field named', (c) => { delete c.directives.directives[0].codified_as; }, 'names the contract AND the exact field');
   expectSemantic('directives: a field named with no contract named', (c) => { delete c.directives.directives[0].codified_in; }, 'names the contract AND the exact field');
   expectSemantic('directives: codification in a contract that does not exist', (c) => { c.directives.directives[0].codified_in = 'ghost-contract'; }, 'not a declared contract');

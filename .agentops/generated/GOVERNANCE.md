@@ -790,6 +790,7 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 
 - `producer_exists` — every evidence type names a producer_role that is a declared role or the generator writer.
 - `bound_to_exact_object` — every evidence type binds to an exact object and lists invalidation keys.
+- `pointers_are_types_not_receipts` — A capsule's evidence_pointers name evidence TYPES, not receipts. Listing a type says the capsule is expected to carry that kind of evidence; it does not say a receipt exists, nor that one binds to the current head. No artifact in this corpus records a receipt against an exact object, so freshness_rule and invalidation_keys are stated and unenforceable per candidate. A gate that must prove fresh evidence therefore cannot be satisfied from the corpus as it stands, and must refuse rather than accept a type name as proof.
 
 **`information-access`**
 
