@@ -7,8 +7,7 @@
 // snapshot with the remote. Maintenance modes only report; they never edit Git,
 // delete records, commit, push, or mutate dev.
 
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +22,13 @@ const EXPECTED_GENERATED_ORDER = [
   'AshenSpire.html',
   'dist/AshenSpire.html',
 ];
+// The shipped artifact whose identity is checked. DERIVED at check time from
+// the tree it sits in, never pinned in the packet: a pinned size/SHA-256 made
+// every legitimate rebuild strand this check RED until a hand re-pinned the
+// numbers (#482), which is the exact drift class the packet exists to prevent.
+const SHIPPED_ARTIFACT = 'build/AshenSpire.html';
+// Written by the same bundle run that writes the artifact; the pair must agree.
+const ORDINAL_HOME = 'buildordinal.json';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -217,8 +223,8 @@ export function invariantErrors(doc, raw) {
   if (doc.authority?.directDevMutationAllowed !== false) errors.push('$.authority.directDevMutationAllowed: direct dev mutation is forbidden');
   if (doc.authority?.remoteActionsRequireSeparateAuthority !== true) errors.push('$.authority: remote actions must require separate authority');
   if (doc.generatedArtifacts?.directEditsAllowed !== false) errors.push('$.generatedArtifacts.directEditsAllowed: generated files cannot be hand edited');
-  if (doc.generatedArtifacts?.status === 'candidate-frozen' && !doc.generatedArtifacts.artifact) {
-    errors.push('$.generatedArtifacts: candidate-frozen status needs exact artifact identity');
+  if (doc.generatedArtifacts?.artifact !== undefined) {
+    errors.push('$.generatedArtifacts.artifact: identity is derived from the tree at check time, never pinned — pinned bytes strand every legitimate rebuild RED until a hand re-pins them (#482)');
   }
   for (const tombstone of doc.tombstones || []) if (tombstone.deletionAuthorized !== false) errors.push(`$.tombstones.${tombstone.id}: packet cannot authorize deletion`);
 
@@ -290,13 +296,35 @@ export function repositoryErrors(doc, adapter) {
       errors.push(`composition replay: ${lane.id} replay commit is not an ancestor of ${replay.compositionHead}`);
     }
   }
-  const artifact = doc.generatedArtifacts.artifact;
-  if (artifact && adapter.fileIdentity) {
-    const actual = adapter.fileIdentity(artifact.path);
-    if (!actual) errors.push(`generated artifact: missing ${artifact.path}`);
-    else {
-      if (actual.bytes !== artifact.bytes) errors.push(`generated artifact: size drift ${artifact.bytes} -> ${actual.bytes}`);
-      if (actual.sha256 !== artifact.sha256.toUpperCase()) errors.push(`generated artifact: SHA-256 drift ${artifact.sha256.toUpperCase()} -> ${actual.sha256}`);
+  // The shipped artifact is generated, so its expected identity is DERIVED
+  // from the tree at check time — the repo's regenerate-and-compare pattern
+  // (tools/bundle.mjs writes it, tools/buildversion.mjs --check derives what
+  // it must carry) — never read from the packet. Two relationships say
+  // "not hand-edited, not a torn rebuild" without a pin:
+  //   1. the working copy of build/AshenSpire.html is byte-identical to the
+  //      copy HEAD commits — a hand edit or corrupted build output breaks it,
+  //      while a rebuild committed with its source keeps it green with no
+  //      packet edit;
+  //   2. the SOURCE digest stamped inside the artifact equals the digest
+  //      buildordinal.json records — one bundle run writes both files, so a
+  //      lone refresh or a hand edit of either splits the pair.
+  // Freshness against the SOURCE itself stays in its own homes and is not
+  // restated here: buildversion --check rows E/G (stamp vs derived digest)
+  // and tools/rebuild-matches.mjs (generative and total).
+  if (doc.generatedArtifacts && adapter.headBlob && adapter.hashFile) {
+    const working = adapter.hashFile(SHIPPED_ARTIFACT);
+    const committed = adapter.headBlob(SHIPPED_ARTIFACT);
+    if (!working) errors.push(`generated artifact: missing ${SHIPPED_ARTIFACT}`);
+    else if (!committed) errors.push(`generated artifact: HEAD does not commit ${SHIPPED_ARTIFACT} — no committed artifact to hold the shipped file to`);
+    else if (working !== committed) {
+      errors.push(`generated artifact: ${SHIPPED_ARTIFACT} differs from the copy HEAD commits (${committed} -> ${working}) — hand edit or corrupted build output; rebuild with node tools/launch.mjs --build-only and commit it, or restore`);
+    }
+  }
+  if (doc.generatedArtifacts && adapter.generatedStamp && adapter.ordinalDigest) {
+    const stamp = adapter.generatedStamp(SHIPPED_ARTIFACT);
+    const recorded = adapter.ordinalDigest();
+    if (stamp != null && recorded != null && stamp !== recorded) {
+      errors.push(`generated artifact: torn pair — ${SHIPPED_ARTIFACT} carries SOURCE '${stamp}' while ${ORDINAL_HOME} records '${recorded}'; one bundle run writes both, so one of them was refreshed or edited alone`);
     }
   }
   if (adapter.documentationErrors) errors.push(...adapter.documentationErrors());
@@ -365,14 +393,23 @@ function realAdapter(root) {
       });
       return result.status === 0 ? result.stdout.trim().split(/\s+/)[0] || null : null;
     },
-    fileIdentity(path) {
+    headBlob(path) {
+      const result = git(root, ['rev-parse', `HEAD:${path}`]);
+      return result.status === 0 ? result.stdout : null;
+    },
+    generatedStamp(path) {
       const absolute = resolve(root, path);
       const rel = relative(root, absolute);
       if (rel.startsWith('..') || isAbsolute(rel) || !existsSync(absolute)) return null;
-      return {
-        bytes: statSync(absolute).size,
-        sha256: createHash('sha256').update(readFileSync(absolute)).digest('hex').toUpperCase(),
-      };
+      // Exactly-one is buildversion --check row E's claim; here anything other
+      // than one literal is "no stamp to compare", not a second report of E.
+      const stamps = [...readFileSync(absolute, 'utf8').matchAll(/const SOURCE = '([^']*)'/g)];
+      return stamps.length === 1 ? stamps[0][1] : null;
+    },
+    ordinalDigest() {
+      const absolute = resolve(root, ORDINAL_HOME);
+      if (!existsSync(absolute)) return null;
+      try { return JSON.parse(readFileSync(absolute, 'utf8')).digest ?? null; } catch { return null; }
     },
     documentationErrors() {
       if (!existsSync(DEFAULT_DOC)) return [`documentation ${relative(root, DEFAULT_DOC)}: file missing`];
@@ -476,17 +513,27 @@ async function selftest(doc, raw, schema) {
     }
   }
   const remoteHeads = new Map(doc.repository.branches.map((row) => [row.name, row.sha]));
-  const adapter = {
+  // The generated-artifact facts the fixture adapter answers from. The derived
+  // identity check has no packet field to plant on — that is the point of
+  // #482 — so its known-bad cases corrupt this world instead, a fresh copy per
+  // plant exactly like the packet clone.
+  const cleanWorld = () => ({
+    artifactWorkingBlob: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    artifactHeadBlob: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    artifactStamp: 'abcdef0123',
+    ordinalDigest: 'abcdef0123',
+  });
+  const adapterFor = (world) => ({
     objectExists: (sha) => expectedObjects.has(sha),
-    hashFile: (path) => expectedHashes.get(path) || null,
+    hashFile: (path) => (path === SHIPPED_ARTIFACT ? world.artifactWorkingBlob : expectedHashes.get(path) || null),
+    headBlob: (path) => (path === SHIPPED_ARTIFACT ? world.artifactHeadBlob : null),
+    generatedStamp: (path) => (path === SHIPPED_ARTIFACT ? world.artifactStamp : null),
+    ordinalDigest: () => world.ordinalDigest,
     commitTree: (sha) => expectedTrees.get(sha) || null,
     isAncestor: (ancestor, descendant) => expectedAncestors.has(`${ancestor}|${descendant}`),
     patchId: (sha) => expectedPatchIds.get(sha) || null,
-    fileIdentity: () => doc.generatedArtifacts.artifact
-      ? { bytes: doc.generatedArtifacts.artifact.bytes, sha256: doc.generatedArtifacts.artifact.sha256.toUpperCase() }
-      : null,
     documentationErrors: () => [],
-  };
+  });
   const now = new Date(doc.repository.observedAt);
   const plants = [
     ['clean packet', (x) => x, null],
@@ -514,14 +561,20 @@ async function selftest(doc, raw, schema) {
     ['required collision removed', (x) => { x.collisions = x.collisions.filter((row) => !(row.lanes.includes('k15-content-door') && row.lanes.includes('controls-gates'))); }, 'undeclared claimed-path collision'],
     ['remote branch drift', (x) => { x.repository.branches[0].sha = '3333333333333333333333333333333333333333'; }, 'currentness: dev drift'],
     ['stale snapshot', (x) => x, 'snapshot age', new Date(now.getTime() + (doc.budgets.maxSnapshotAgeHours + 1) * 3_600_000)],
+    ['hand-edited shipped artifact', (x, w) => { w.artifactWorkingBlob = '9999999999999999999999999999999999999999'; }, 'differs from the copy HEAD commits'],
+    ['torn generated pair', (x, w) => { w.artifactStamp = '9876543210'; }, 'torn pair'],
+    ['pinned artifact identity', (x) => {
+      x.generatedArtifacts.artifact = { path: 'build/AshenSpire.html', bytes: 1, sha256: 'A'.repeat(64), buildOrdinal: 1, sourceDigest: 'aaaaaaaaaa' };
+    }, 'never pinned'],
   ];
 
   let passed = 0;
   for (const [name, plant, expected, plantNow = now] of plants) {
     const candidate = clone(doc);
-    plant(candidate);
+    const world = cleanWorld();
+    plant(candidate, world);
     const candidateRaw = `${JSON.stringify(candidate, null, 2)}\n`;
-    const errors = evaluate(candidate, candidateRaw, schema, { adapter, audit: true, remoteHeads, now: plantNow });
+    const errors = evaluate(candidate, candidateRaw, schema, { adapter: adapterFor(world), audit: true, remoteHeads, now: plantNow });
     const ok = expected === null ? errors.length === 0 : errors.some((error) => error.includes(expected));
     console.log(`  ${ok ? 'PASS' : 'FAIL'} ${name}${expected ? ` -> ${expected}` : ''}`);
     if (!ok) {
