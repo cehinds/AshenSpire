@@ -1,8 +1,47 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 0,
-  "last_sequence": 0,
-  "work_items": {},
+  "revision": 1,
+  "last_sequence": 1,
+  "work_items": {
+    "396": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "396",
+      "title": "Decommission orphan Hub: redirect /review-approval-hub/ to the generated hub (owner decision)",
+      "priority": "P0",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-396",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        "review-approval-hub/index.html",
+        "review-approval-hub/reviews/as-hd-20260826-050-decision-debt.html",
+        "review-approval-hub/reviews/as-hd-20260826-053-context-rotation.html"
+      ],
+      "claimed_resources": [],
+      "acceptance_commands": [
+        "node .agentops/tools/opsctl.mjs verify",
+        "git diff --check"
+      ],
+      "evidence_pointers": [],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Replace orphan hub index and the two broken reviews pages with redirect stubs to .agentops/generated/hub/",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000001-4be75473-09aa-41a9-a044-ce37127e07cf",
+      "updated_at": "2026-08-31T13:51:59.846Z"
+    }
+  },
   "errors": [],
-  "snapshot_hash": "34dce31f701420375b3d62c46ae2ddcb86162769cff2c18635f25e5219d7db6b"
+  "snapshot_hash": "096f6c5620b50c862bdf32c452b23d336cdb4ef7a7d234aee3bd3a312a7e3ab1"
 }
