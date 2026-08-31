@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 13,
-  "last_sequence": 13,
+  "revision": 14,
+  "last_sequence": 14,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -165,21 +165,21 @@
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 5,
+      "revision": 6,
       "issue_id": "470",
       "title": "Repair dev verify drift from #470 decision: commit dropped review-approval-hub mirror; widen owner-command git add",
       "priority": "P0",
       "dependencies": [],
-      "state": "QA",
+      "state": "PR_READY",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": "83f628925c211abe1afa8bd44cba946b04369fdb",
       "branch": "codex/issue-470",
-      "assigned_actor": "seat:worker-b:2d0fd7a8-233d-447a-b78d-b8e0883f0670",
-      "assignment_kind": "qa",
-      "lease_id": "qa-lease:470:2",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
       "lease_epoch": 2,
-      "lease_expiry": "2026-08-31T14:55:02.325Z",
-      "lease_machine_id": "5fc7793e-d763-4875-a238-e89e69e0c1ca",
+      "lease_expiry": null,
+      "lease_machine_id": null,
       "maker_actor": "seat:worker-c:913ae4a5-15d7-40ea-a622-55324f0fe48e",
       "lease_history": [
         {
@@ -211,16 +211,21 @@
       "evidence_pointers": [
         "VERIFY OK at head",
         "render idempotent",
-        "3-file footprint"
+        "3-file footprint",
+        "baseline red reproduced via git archive of dev bbbc5e7: VERIFY FAIL names exactly the two stale hub mirrors",
+        "VERIFY OK + clean git diff --check at candidate 83f6289",
+        "render idempotent at candidate: RENDER OK, git status --porcelain empty (no hand edits)",
+        "owner-command.yml parses as YAML; diff is single-line git add widening only",
+        "no security regression: 3-file footprint; no changes to triggers, permissions, secrets, or steps"
       ],
       "blocker": null,
       "wake_condition": null,
-      "next_action": "Run independent QA against the exact candidate commit.",
+      "next_action": "Deliver an issue-closing PR to dev.",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000011-b8a1e170-7bcd-4342-895b-8b2aeef05d96",
-      "updated_at": "2026-08-31T14:25:02.325Z"
+      "updated_event": "evt-00000014-20b07cd1-78b7-4c21-ae32-67a54853eb0b",
+      "updated_at": "2026-08-31T14:26:58.717Z"
     }
   },
   "errors": [],
-  "snapshot_hash": "6e4838e99cc5fa7a8a6334582be60fa377bb7f10861a71cddd9fa1b9c25e5154"
+  "snapshot_hash": "f00b97d5977d0e3df708cf4bd39e676150e3c532b240ad19e53bdc35507b5612"
 }
