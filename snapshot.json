@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 47,
-  "last_sequence": 47,
+  "revision": 48,
+  "last_sequence": 48,
   "work_items": {
     "256": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -142,6 +142,50 @@
       "authority_ceiling": "dev-delivery",
       "updated_event": "evt-00000009-bd34e452-bb62-42c7-a391-eb047122b969",
       "updated_at": "2026-08-31T13:57:48.616Z"
+    },
+    "420": {
+      "schema": "agentops/scheduler-work-item/v1",
+      "revision": 1,
+      "issue_id": "420",
+      "title": "Fix changelog ordinal regression across prose-only date groups",
+      "priority": "P2",
+      "dependencies": [],
+      "state": "READY",
+      "base_commit": null,
+      "candidate_commit": null,
+      "branch": "codex/issue-420-changelog-prose-gap",
+      "assigned_actor": null,
+      "assignment_kind": null,
+      "lease_id": null,
+      "lease_epoch": null,
+      "lease_expiry": null,
+      "lease_machine_id": null,
+      "maker_actor": null,
+      "lease_history": [],
+      "late_candidates": [],
+      "claimed_paths": [
+        "tools/about-changelog.mjs"
+      ],
+      "claimed_resources": [
+        "tools/about-changelog.mjs"
+      ],
+      "acceptance_commands": [
+        "node tools/about-changelog.mjs --selftest",
+        "node tools/about-changelog.mjs",
+        "node tests/run-node.mjs",
+        "git diff --check"
+      ],
+      "evidence_pointers": [
+        "https://github.com/cehinds/AshenSpire/issues/420",
+        "https://github.com/cehinds/AshenSpire/issues/420#issuecomment-5465166022",
+        "bounded defect: ordinal regression across prose-only date group"
+      ],
+      "blocker": null,
+      "wake_condition": null,
+      "next_action": "Add a discriminating prose-gap regression plant and repair numeric-boundary comparison in tools/about-changelog.mjs.",
+      "authority_ceiling": "dev-delivery",
+      "updated_event": "evt-00000048-afc4b3e2-6b46-470e-a2cc-afb2019e6026",
+      "updated_at": "2026-08-31T16:40:46.090Z"
     },
     "422": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -417,5 +461,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "3b4e9aa0e0a2444a2cb3e402238dca5109c247239e869c4fd7da3a416ebeae14"
+  "snapshot_hash": "501f4c8fc4eca1327b2f683afcb302dbc5786e5387e88455ac1a26f8f70950d5"
 }

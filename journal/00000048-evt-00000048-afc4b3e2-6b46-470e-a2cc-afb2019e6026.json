@@ -1,0 +1,39 @@
+{
+  "event_id": "evt-00000048-afc4b3e2-6b46-470e-a2cc-afb2019e6026",
+  "idempotency_key": "INTAKE_RECORDED:420:0:2026-08-31T16:40:46.090Z",
+  "sequence": 48,
+  "previous_snapshot_hash": "3b4e9aa0e0a2444a2cb3e402238dca5109c247239e869c4fd7da3a416ebeae14",
+  "issue_id": "420",
+  "actor": "intake",
+  "machine_id": "e43d6cf5-cac8-4084-a747-b5e2d21aeb72",
+  "lease_id": null,
+  "lease_epoch": null,
+  "event_type": "INTAKE_RECORDED",
+  "exact_object": {},
+  "payload": {
+    "title": "Fix changelog ordinal regression across prose-only date groups",
+    "priority": "P2",
+    "dependencies": [],
+    "branch": "codex/issue-420-changelog-prose-gap",
+    "claimed_paths": [
+      "tools/about-changelog.mjs"
+    ],
+    "claimed_resources": [
+      "tools/about-changelog.mjs"
+    ],
+    "acceptance_commands": [
+      "node tools/about-changelog.mjs --selftest",
+      "node tools/about-changelog.mjs",
+      "node tests/run-node.mjs",
+      "git diff --check"
+    ],
+    "evidence_pointers": [
+      "https://github.com/cehinds/AshenSpire/issues/420",
+      "https://github.com/cehinds/AshenSpire/issues/420#issuecomment-5465166022",
+      "bounded defect: ordinal regression across prose-only date group"
+    ],
+    "next_action": "Add a discriminating prose-gap regression plant and repair numeric-boundary comparison in tools/about-changelog.mjs.",
+    "authority_ceiling": "dev-delivery"
+  },
+  "created_at": "2026-08-31T16:40:46.090Z"
+}
