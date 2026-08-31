@@ -1,13 +1,13 @@
 // src/content/encounters/act1.js — Act 1 encounter pools
 
 export const act1Encounters = [
-  { id: 'loneSoldier', enemies: ['wanderingSoldier'], weight: 20, pool: 'normal' },
-  { id: 'patrol', enemies: ['wanderingSoldier', 'blightHound'], weight: 25, pool: 'normal' },
-  { id: 'packHunt', enemies: ['blightHound', 'blightHound', 'graveWisp'], weight: 25, pool: 'normal' },
-  { id: 'twinPatrol', enemies: ['wanderingSoldier', 'wanderingSoldier'], weight: 15, pool: 'normal' },
-  { id: 'bruiser', enemies: ['huskBrute', 'graveWisp'], weight: 15, pool: 'normal' },
-  { id: 'eliteWyrm', enemies: ['wyrmAspirant'], weight: 1, pool: 'elite' },
-  { id: 'bossOmen', enemies: ['fellWarden'], weight: 1, pool: 'boss' },
+  { id: 'loneSoldier', enemies: ['wanderingSoldier'], weight: 20, pool: 'normal', act: 1, floorBand: { min: 1, max: 4 }, targetBand: { min: 1, max: 4 } },
+  { id: 'patrol', enemies: ['wanderingSoldier', 'blightHound'], weight: 25, pool: 'normal', act: 1, floorBand: { min: 1, max: 4 }, targetBand: { min: 1, max: 4 } },
+  { id: 'packHunt', enemies: ['blightHound', 'blightHound', 'graveWisp'], weight: 25, pool: 'normal', act: 1, floorBand: { min: 1, max: 4 }, targetBand: { min: 1, max: 4 } },
+  { id: 'twinPatrol', enemies: ['wanderingSoldier', 'wanderingSoldier'], weight: 15, pool: 'normal', act: 1, floorBand: { min: 1, max: 4 }, targetBand: { min: 1, max: 4 } },
+  { id: 'bruiser', enemies: ['huskBrute', 'graveWisp'], weight: 15, pool: 'normal', act: 1, floorBand: { min: 1, max: 4 }, targetBand: { min: 1, max: 4 } },
+  { id: 'eliteWyrm', enemies: ['wyrmAspirant'], weight: 1, pool: 'elite', act: 1, floorBand: { min: 5, max: 5 }, targetBand: { min: 4, max: 6 } },
+  { id: 'bossOmen', enemies: ['fellWarden'], weight: 1, pool: 'boss', act: 1, floorBand: { min: 6, max: 6 }, targetBand: { min: 5, max: 7 } },
 ];
 
 // (`M1_GAUNTLET = ['patrol','packHunt','eliteWyrm','bossOmen']` — the M1

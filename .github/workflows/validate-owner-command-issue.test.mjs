@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { validateOwnerCommandIssue } from "./validate-owner-command-issue.mjs";
 
 const workflow = fs.readFileSync(".github/workflows/owner-command.yml", "utf8");
+const template = fs.readFileSync(".github/ISSUE_TEMPLATE/owner-decision.yml", "utf8");
 const NOW = new Date("2026-08-31T16:00:00Z");
 const OID_A = "a".repeat(40);
 const OID_B = "b".repeat(40);
@@ -174,6 +175,13 @@ for (const heading of ["Source snapshot SHA-256", "Source journal manifest SHA-2
   check(!validate({ ...migrationValues, [heading]: "0".repeat(63) }).ok, `malformed ${heading} must fail`);
 }
 
+assert.match(workflow, /types:\s*\[opened\]/);
+assert.doesNotMatch(workflow, /types:\s*\[[^\]]*edited/);
+assert.match(workflow, /startsWith\(github\.event\.issue\.title, '\[decision\] '\)/);
+assert.match(workflow, /validate-owner-command-issue\.mjs/);
+assert.match(template, /id: owner_command_form[\s\S]*owner-decision\/v1/);
+assert.match(template, /grant-dev-delivery-authority/);
+
 const approveValues = Object.fromEntries(HEADINGS.map((heading) => [heading, "_No response_"]));
 Object.assign(approveValues, {
   "Owner-command form": "owner-decision/v1",
@@ -184,5 +192,19 @@ Object.assign(approveValues, {
 });
 check(validate(approveValues).ok, "existing structured actions must remain accepted");
 check(!validate({ ...approveValues, "Scheduler HEAD": OID_A }).ok, "migration fields on another action must fail");
+
+const grantValues = Object.fromEntries(HEADINGS.map((heading) => [heading, "_No response_"]));
+Object.assign(grantValues, {
+  "Owner-command form": "owner-decision/v1",
+  "Action": "grant-dev-delivery-authority",
+  "Target ticket": "AS-HD-029",
+  "Expected current hash": `sha256:${HASH_A}`,
+  "Reason": "Bounded normal-PR delivery grant."
+});
+const grantBody = renderBody(grantValues);
+check(validate(grantValues, { title: "[decision] AS-HD-029" }).ok, "dev-delivery grant remains accepted");
+check(!validate(grantValues, { title: "ordinary ticket" }).ok, "ordinary title must fail");
+check(!validate(grantValues, { title: "[decision] AS-HD-029", body: grantBody.replace("owner-decision/v1", "owner-decision/v0") }).ok, "old form version must fail");
+check(!validate(grantValues, { title: "[decision] AS-HD-029", body: `${grantBody}\n### Extra\n\nNo.\n` }).ok, "extra heading must fail");
 
 console.log(`PASS ${checks}/${checks}; opened-only=yes; exact-structured-migration=yes; owner-exclusive=yes; cas-transport=yes; free-form=no; edited-reexecution=no`);

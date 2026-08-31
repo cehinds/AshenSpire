@@ -86,6 +86,16 @@ export const balance = {
   // encounter creation, saves, co-op, or the UI.
   levels: {
     playerStartingLevel: 1,
+    // Inert #238 content. The pure level planner consumes these coefficients
+    // only when a later activation story supplies a resolved enemy level.
+    // Every row states its rounding and hard result caps; hits, statuses,
+    // delays, phases, and move order are deliberately absent.
+    enemyScaling: {
+      hp: { perLevel: 2, rounding: 'round', min: 1, max: 9999 },
+      damage: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
+      block: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
+      poise: { perLevel: 1, rounding: 'round', min: 0, max: 999 },
+    },
   },
 
   // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------

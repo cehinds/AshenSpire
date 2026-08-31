@@ -14,6 +14,8 @@ record that names what it supersedes; do not silently rewrite history.
 | [0007](0007-standing-coordination-roles-and-completion-council.md) | Standing coordination roles and completion council | Approved | Active under the same branch-containment rule; maps historical `Main` to IT Manager III |
 | [0008](0008-capability-pool-and-review-station-raci.md) | Capability-pool and review-station RACI | Approved | Active under the same branch-containment rule; preserves bounded legacy tasks while routing new work through capability pools |
 | [0009](0009-promotion-gates-a-through-f.md) | Promotion Gates A–F | Approved | Active under the same branch-containment rule; conditionally delegates exact `test` fast-forward while retaining Constantine-only main/release authority |
+| [0010](0010-self-certification-withdrawn-pending-authenticated-approval.md) | Maker self-certification: directive accepted, mechanism withdrawn | Approved | Owner directive stands; the self-certification mechanism is withdrawn and `qa.rules.independence_is_not_self_recorded` recorded, pending a separately authenticated approval path |
+| [0011](0011-it-support-plane-reconciliation.md) | `it-support` two-plane reconciliation | Approved | Active under the same branch-containment rule; keeps the `it-support` delivery seat and adds its AUTHORITY.md matrix row + TEAM-CHARTERS.md disambiguation (Option A of #422) |
 
 Approval, local preparation, canonical merge, policy activation, and release
 are separate facts. Decision status remains historical; policy activation is

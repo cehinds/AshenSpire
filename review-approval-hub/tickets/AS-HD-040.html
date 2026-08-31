@@ -10,14 +10,14 @@
 </header><main>
 <section><h2>Assignment</h2><dl>
 <dt>Seat</dt><dd>maker</dd>
-<dt>State</dt><dd>assigned</dd>
+<dt>State</dt><dd>qa-review</dd>
 <dt>Objective</dt><dd>Close the component-card silhouette successor contract for the class facelift (Art D1).</dd>
 <dt>Done when</dt><dd>One owner-selected successor path is recorded and the frozen four-crop desktop/mobile packet either satisfies the full-class-silhouette clause or is superseded by an approved successor.</dd>
-<dt>Next action</dt><dd>Await the owner decision recorded on this ticket; do not generate new art until D1 selects proof-only upper-body successor or new full-body inputs.</dd>
+<dt>Next action</dt><dd>Hold. Frozen candidate a72cac9689cfb3b7e302cbcaa4d0a88f4e9ab7ff sits on dev without a verdict (Gate A skipped, #468). Await the retrospective ruling: qa-independent (AS-HD-055) verdicts the candidate in place on dev at an exact head, or it-manager-iii records acceptance/waiver through the owner-command approve path. This seat must not override or self-certify an independent QA verdict.</dd>
 <dt>Branch</dt><dd><code>recovery/as-hd-040</code></dd>
 <dt>Base</dt><dd><code>7bcc9ed08d3a</code></dd>
-<dt>Revision</dt><dd>51 · seal <code>sha256:a0e678447bc1dfaf…</code></dd>
-<dt>Succeeds</dt><dd><code>sha256:102e25743e379642…</code></dd>
+<dt>Revision</dt><dd>52 · seal <code>sha256:8d3160b2e1295cb9…</code></dd>
+<dt>Succeeds</dt><dd><code>sha256:a0e678447bc1dfaf…</code></dd>
 </dl></section>
 <section><h2>Authority</h2><dl>
 <dt>May</dt><dd><span class="pill">implement-locally-on-exclusive-paths</span> <span class="pill">run-tests-and-builds</span> <span class="pill">commit-on-isolated-branch</span> <span class="pill">record-blocker-and-continue-collision-free-work</span></dd>
@@ -27,7 +27,7 @@
 <dt>Paths</dt><dd><code>assets/classes/**</code></dd>
 </dl></section>
 <section><h2>Status</h2>
-<p class="ok">Due: 'assigned' is ready to move to in-progress — waking maker.</p>
+<p class="warn">Blocked — qa-verdict-missing, escalating as <code>technical-blocker</code>.</p><p>Frozen candidate a72cac9689cfb3b7e302cbcaa4d0a88f4e9ab7ff (sent to qa-independent on #427) was integrated to dev via PR #423 (merge 3695e26f) and PR #432 (merge 9cd09b0b) before any verdict existed; Gate A was skipped (#468). assets/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md on dev has since drifted from the frozen head, and a changed candidate reopens verification. Requires a retroactive independent QA verdict at an exact head, or an it-manager-iii acceptance/waiver recorded through the owner-command path; neither is this seat’s to record.</p>
 </section>
 <section><h2>Event chain</h2>
 <ol class="chain">
@@ -83,6 +83,7 @@
 <li><code>AS-HD-040-0050</code> · state-change · maker · 2026-08-30T01:34:03.319Z<br>Reseated from 3fc7a24104bf to live HEAD 0b47f2b15467; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 49; parent_hash names sha256:5c9a572f8d8471de7d638de304d00144b1453563b24d33a3a6152a6f6a64d1b3.</li>
 <li><code>AS-HD-040-0051</code> · state-change · maker · 2026-08-30T01:39:29.441Z<br>Reseated from 0b47f2b15467 to live HEAD d1e3352b2746; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 50; parent_hash names sha256:7e727bdae2bffd07b265a9142911928c46b2c612e2aeadb6f689330b5d0a6933.</li>
 <li><code>AS-HD-040-0052</code> · state-change · maker · 2026-08-30T01:40:29.535Z<br>Reseated from d1e3352b2746 to live HEAD 7bcc9ed08d3a; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from. Resealed as revision 51; parent_hash names sha256:102e25743e37964215f45053bc8de3e32a4da372fb02ade4cf40ea45bbe49511.</li>
+<li><code>AS-HD-040-0053</code> · state-change · maker · 2026-08-31T14:40:13.152Z<br>Reconcile with integrated state per #468: the maker's typed transitions assigned-&gt;in-progress-&gt;local-&gt;qa-review did occur (maker receipt #395; freeze receipt #427, candidate a72cac9689cf), and that candidate then reached dev via PR #423/#432 with Gate A skipped and no independent QA verdict. Lifecycle now records qa-review — the last state this seat's typed owner can prove — with a blocker holding for the retrospective QA ruling; dev integration is a git fact this seat may not claim as lifecycle. Resealed as revision 52; parent_hash names sha256:a0e678447bc1dfaf529ab86a9d3af451d5fdb091a7a36ba8eebb852a618144fa.</li>
 </ol>
 <p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>
 </main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>

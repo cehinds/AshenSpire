@@ -1,13 +1,13 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-28T18:45:28Z",
+  "updatedAt": "2026-08-31T14:34:45Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
     "defaultBranch": "dev",
     "baseSha": "5af802e619ec5093a058c50511e14e97ea99bf12",
-    "observedAt": "2026-08-28T18:45:28Z",
+    "observedAt": "2026-08-31T14:34:45Z",
     "governance": [
       {
         "path": "docs/governance/README.md",
@@ -38,7 +38,7 @@
       {
         "name": "dev",
         "role": "integration",
-        "sha": "3e4bf419d78f1807ff3b2790d4ac8af70dfcc1ca",
+        "sha": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
         "policyProtected": true,
         "githubProtectionObserved": false,
         "currentness": "must-match-remote"
@@ -46,7 +46,7 @@
       {
         "name": "test",
         "role": "playtest",
-        "sha": "d163fd2c53e72705d12f78f8652bf93acd9fc0e8",
+        "sha": "91c8d5e01404bc39cdd7a6436d28593fa7a2e477",
         "policyProtected": true,
         "githubProtectionObserved": false,
         "currentness": "must-match-remote"
@@ -54,7 +54,7 @@
       {
         "name": "release",
         "role": "release-staging",
-        "sha": "c0713d34d1777c2719bb780b3f7c4b1715bb2dc5",
+        "sha": "91c8d5e01404bc39cdd7a6436d28593fa7a2e477",
         "policyProtected": true,
         "githubProtectionObserved": false,
         "currentness": "must-match-remote"
@@ -62,7 +62,7 @@
       {
         "name": "main",
         "role": "stable",
-        "sha": "ab9dd4bf51ae99569c0b11484b25649097d28ee2",
+        "sha": "91c8d5e01404bc39cdd7a6436d28593fa7a2e477",
         "policyProtected": true,
         "githubProtectionObserved": false,
         "currentness": "must-match-remote"
@@ -89,10 +89,10 @@
     "owner": "Data Architecture & Systems Lead, single local writer",
     "artifact": {
       "path": "build/AshenSpire.html",
-      "bytes": 4206957,
-      "sha256": "56AA0206BA2A8662D284BCA80E0C493D17838177DC7BCCFCB9A19405B7FF7D31",
-      "buildOrdinal": 1407,
-      "sourceDigest": "62920f5895"
+      "bytes": 4241834,
+      "sha256": "029154D57C50B172538914081077FABB128D8B10AE55495DE280117342163A8C",
+      "buildOrdinal": 1719,
+      "sourceDigest": "8f546f2e1d"
     },
     "command": "node tools/launch.mjs --build-only",
     "order": [

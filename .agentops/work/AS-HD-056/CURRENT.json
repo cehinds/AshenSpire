@@ -1,13 +1,13 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 51,
-  "current_hash": "sha256:17393a35fa693bd4beecc0b1e03301f06fcca2678b3954811abe6ef16ead0bca",
-  "parent_hash": "sha256:54900eccbc83507955b1815122161a33040638b4b1d17140ff0d61252954ed50",
+  "revision": 52,
+  "current_hash": "sha256:ba4706d6c0d9a1f0f6c1a5af09a4da2f47941b3cf364b66c7e4f44cf921ef4db",
+  "parent_hash": "sha256:17393a35fa693bd4beecc0b1e03301f06fcca2678b3954811abe6ef16ead0bca",
   "ticket": "AS-HD-056",
-  "lifecycle_state": "assigned",
+  "lifecycle_state": "local",
   "objective": "Establish whether the owner-facing Review & Approval Hub can be maintained, and specify a regenerable replacement projected from the control plane.",
   "done_when": "A specification exists for an owner-facing view generated deterministically from validated .agentops state (as the Owner HUD already is), covering which Hub sections carry real signal, which depend on evidence that no longer exists, and what the migration costs.",
-  "next_action": "Audit the committed Hub output against live control-plane state, record exactly which sections are stale and which are unrecoverable, then specify the regenerable replacement. Do not edit review-approval-hub/** - it is build output with no source in this repository and would be clobbered by any rebuild.",
+  "next_action": "Hold. docs/hub/OWNER-VIEW-SPEC.md and docs/hub/BRANCH-REWRITE-RECORD.md reached dev ungated (#468). Await the retrospective ruling on #468 and the it-manager-iii disposition of this ticket’s scope, held since #427 recorded it as superseded by PR #401 shipping renderHubSite (#396).",
   "repo": "https://github.com/cehinds/AshenSpire.git",
   "ref": "recovery/as-hd-056",
   "base_oid": "7bcc9ed08d3a5cc3bc77238851309d27308a78e9",
@@ -20,9 +20,9 @@
   ],
   "evidence_pointers": [],
   "blocker": {
-    "kind": "evidence-loss",
+    "kind": "ungated-integration",
     "escalation_class": "technical-blocker",
-    "summary": "review-approval-hub/ is committed build output (1457 files) with no source on any branch: no package.json, no next.config, no app directory. It cannot be rebuilt or safely edited. Its content has already drifted from the control plane, which now records 8 tickets and 0 owner decisions pending."
+    "summary": "docs/hub/OWNER-VIEW-SPEC.md and docs/hub/BRANCH-REWRITE-RECORD.md were integrated to dev via PR #423 (merge 3695e26f) and PR #432 (merge 9cd09b0b) while this capsule read assigned. No candidate was frozen and no QA verdict exists; the freeze was deliberately withheld pending an it-manager-iii disposition ruling after PR #401 shipped renderHubSite (#427, #396). Requires the retrospective ruling on #468 plus that disposition ruling. Supersedes the prior evidence-loss blocker: its substance (the committed Hub is unrebuildable build output that has drifted from the control plane) is preserved in the integrated docs and in this ticket’s event chain, and the opsctl hub renderer now addresses regeneration."
   },
   "authority": {
     "may": [
