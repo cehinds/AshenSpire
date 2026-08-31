@@ -340,8 +340,27 @@ export function reduceEvents(events) {
 }
 
 export function pathsOverlap(left, right) {
-  const a = canonicalClaimPath(left).toLowerCase(); const b = canonicalClaimPath(right).toLowerCase();
-  return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+  function scope(value) {
+    const claim = canonicalClaimPath(value).toLowerCase();
+    const stars = [...claim].filter((character) => character === '*').length;
+    if (claim.endsWith('/**') && stars === 2) return { kind: 'tree', value: claim.slice(0, -3) };
+    const rootWildcard = /^\*\.([a-z0-9_-]+)$/.exec(claim);
+    if (rootWildcard) return { kind: 'root-extension', value: `.${rootWildcard[1]}` };
+    if (stars > 0) throw new Error(`claimed path uses an unsupported glob: ${value}`);
+    return { kind: 'exact', value: claim };
+  }
+  const a = scope(left); const b = scope(right);
+  if (a.kind === 'root-extension' || b.kind === 'root-extension') {
+    if (a.kind === 'root-extension' && b.kind === 'root-extension') return a.value === b.value;
+    const wildcard = a.kind === 'root-extension' ? a : b;
+    const other = a.kind === 'root-extension' ? b : a;
+    return other.kind === 'exact' && !other.value.includes('/') && other.value.endsWith(wildcard.value);
+  }
+  const aPath = a.value; const bPath = b.value;
+  if (a.kind === 'tree' && b.kind === 'tree') return aPath === bPath || aPath.startsWith(`${bPath}/`) || bPath.startsWith(`${aPath}/`);
+  if (a.kind === 'tree') return bPath === aPath || bPath.startsWith(`${aPath}/`);
+  if (b.kind === 'tree') return aPath === bPath || aPath.startsWith(`${bPath}/`);
+  return aPath === bPath || aPath.startsWith(`${bPath}/`) || bPath.startsWith(`${aPath}/`);
 }
 
 export function claimsConflict(left, right) {
@@ -594,13 +613,28 @@ function openPullRequests(repository) {
   return pages.flat();
 }
 
+export function mergedPrRecovery(config, item, pr) {
+  const developmentBranch = validateBranchName(config.development_branch, 'development_branch');
+  if (pr.baseRefName !== developmentBranch || pr.headRefName !== item.branch || pr.headRefOid !== item.candidate_commit) throw new Error('PR identity/base/branch/head mismatch');
+  if (pr.state !== 'MERGED') return null;
+  if (!pr.mergedAt || !/^[0-9a-f]{40}$/.test(pr.mergeCommit?.oid ?? '')) throw new Error('merged PR lacks an exact recovery identity');
+  return {
+    pr,
+    gate: { allowed: true, reason: 'RECOVER_GITHUB_MERGE', gates: { github_already_merged: true, head_unchanged: true } },
+    merged: { state: 'MERGED', mergedAt: pr.mergedAt, mergeCommit: pr.mergeCommit, url: pr.url },
+    recovered: true
+  };
+}
+
 export function mergeDevPr(root, config, item, prNumber, { rollbackKnown = false } = {}) {
   if (item.state !== 'PR_OPEN') throw new Error(`dev merge requires PR_OPEN, found ${item.state}`);
   const repository = repositorySlug(config.repository);
   const developmentBranch = validateBranchName(config.development_branch, 'development_branch');
   runGit(root, ['fetch', 'origin', `refs/heads/${developmentBranch}:refs/remotes/origin/${developmentBranch}`]);
-  const pr = JSON.parse(runGh(['pr', 'view', String(prNumber), '--repo', repository, '--json', 'number,url,state,author,baseRefName,headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup,reviews']).stdout);
-  if (pr.state !== 'OPEN' || pr.baseRefName !== developmentBranch || pr.headRefName !== item.branch) throw new Error('PR identity/base/branch mismatch');
+  const pr = JSON.parse(runGh(['pr', 'view', String(prNumber), '--repo', repository, '--json', 'number,url,state,author,baseRefName,headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup,reviews,mergedAt,mergeCommit']).stdout);
+  const recovery = mergedPrRecovery(config, item, pr);
+  if (recovery) return recovery;
+  if (pr.state !== 'OPEN') throw new Error(`PR is neither open nor recoverably merged: ${pr.state}`);
   runGit(root, ['fetch', 'origin', `+refs/pull/${pr.number}/head:refs/remotes/origin/pr-${pr.number}`]);
   const ancestry = runGit(root, ['merge-base', '--is-ancestor', `origin/${developmentBranch}`, item.candidate_commit], { allowFailure: true }).status === 0;
   const unresolvedThreads = unresolvedReviewThreadCount(repository, pr.number);
@@ -837,24 +871,36 @@ function restoreWakeFiles(backups) {
 export function beginWakeDispatch(root, snapshot, assignments, config) {
   const dispatchRoot = path.join(localRuntimeDir(root), 'dispatch');
   fs.mkdirSync(dispatchRoot, { recursive: true });
-  // Compile the complete batch before touching any live wake. One malformed
-  // capsule must leave every seat available for the next scheduler cycle.
-  const prepared = assignments.map((assignment) => {
-    const item = snapshot.work_items[assignment.issue_id];
-    if (!item || item.assigned_actor !== assignment.actor) throw new Error(`dispatch assignment drift for ${assignment.issue_id}`);
+  // Compile the complete desired dispatch set before touching any live wake.
+  // This both stages new assignments and revokes stale wakes for seats whose
+  // lease was released by the transition that triggered this refill.
+  const assignmentActors = new Set(assignments.map((assignment) => assignment.actor));
+  const byActor = new Map(Object.values(snapshot.work_items)
+    .filter((item) => item.assigned_actor && ['CLAIMED', 'RUNNING', 'QA'].includes(item.state))
+    .map((item) => [item.assigned_actor, item]));
+  for (const assignment of assignments) {
+    const item = byActor.get(assignment.actor);
+    if (!item || item.issue_id !== assignment.issue_id) throw new Error(`dispatch assignment drift for ${assignment.issue_id}`);
+  }
+  const prepared = config.workers.map((worker) => {
+    const file = path.join(dispatchRoot, `${worker.actor.replaceAll(':', '_')}.json`);
+    const item = byActor.get(worker.actor);
+    if (!item) return { file, contents: null, receipt: null };
     const compiled = compileWake(item, config);
-    const file = path.join(dispatchRoot, `${assignment.actor.replaceAll(':', '_')}.json`);
     return {
       file,
       contents: `${JSON.stringify(compiled, null, 2)}\n`,
-      receipt: { issue_id: item.issue_id, actor: assignment.actor, wake_file: path.relative(root, file).replaceAll('\\', '/'), estimated_tokens: compiled.estimated_tokens }
+      receipt: assignmentActors.has(worker.actor)
+        ? { issue_id: item.issue_id, actor: worker.actor, wake_file: path.relative(root, file).replaceAll('\\', '/'), estimated_tokens: compiled.estimated_tokens }
+        : null
     };
   });
   const backups = new Map();
   try {
     for (const entry of prepared) {
       backups.set(entry.file, fs.existsSync(entry.file) ? fs.readFileSync(entry.file) : null);
-      fs.writeFileSync(entry.file, entry.contents, { flag: 'w' });
+      if (entry.contents === null) fs.rmSync(entry.file, { force: true });
+      else fs.writeFileSync(entry.file, entry.contents, { flag: 'w' });
     }
   } catch (error) {
     try { restoreWakeFiles(backups); }
@@ -863,7 +909,7 @@ export function beginWakeDispatch(root, snapshot, assignments, config) {
   }
   let open = true;
   return {
-    dispatched: prepared.map((entry) => entry.receipt),
+    dispatched: prepared.map((entry) => entry.receipt).filter(Boolean),
     commit() { open = false; },
     rollback() { if (open) { restoreWakeFiles(backups); open = false; } },
     reconcile(authoritativeSnapshot) { if (open) { reconcileWakeDispatch(root, authoritativeSnapshot, config); open = false; } }
@@ -874,7 +920,7 @@ export function reconcileWakeDispatch(root, snapshot, config) {
   const dispatchRoot = path.join(localRuntimeDir(root), 'dispatch');
   fs.mkdirSync(dispatchRoot, { recursive: true });
   const byActor = new Map(Object.values(snapshot.work_items)
-    .filter((item) => item.assigned_actor && ['CLAIMED', 'QA'].includes(item.state))
+    .filter((item) => item.assigned_actor && ['CLAIMED', 'RUNNING', 'QA'].includes(item.state))
     .map((item) => [item.assigned_actor, item]));
   for (const worker of config.workers) {
     const file = path.join(dispatchRoot, `${worker.actor.replaceAll(':', '_')}.json`);
@@ -912,7 +958,18 @@ export function commitAssignmentsAfterWakeDispatch(state, assignments, machineId
 }
 
 function persistRefillAssignments(root, state, plan, machineId, createdAt, config, { push = false, message = 'scheduler refill assignments' } = {}) {
-  if (plan.assignments.length > 0) assertSchedulerDispatchCutover(config, root);
+  if (plan.assignments.length === 0) {
+    // Once cut over, a material transition still owns one dispatch action: it
+    // removes wakes whose leases are no longer present. Before cutover, leave
+    // the authoritative legacy watcher's files entirely untouched.
+    if (config.cutover?.scheduler_dispatch_enabled === true) {
+      assertSchedulerDispatchCutover(config, root);
+      const transaction = beginWakeDispatch(root, state.snapshot, [], config);
+      transaction.commit();
+    }
+    return { state, oid: state.oid, dispatched: [] };
+  }
+  assertSchedulerDispatchCutover(config, root);
   return commitAssignmentsAfterWakeDispatch(state, plan.assignments, machineId, createdAt, {
     dispatch: (snapshot, assignments) => beginWakeDispatch(root, snapshot, assignments, config),
     persist: (assignedState) => persistPortableState(root, assignedState, { push, message, config })

@@ -7,8 +7,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
-  appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
-  emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, mergeGateResult, pathsOverlap, planAssignments,
+  appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
+  emptySnapshot, historyAdvanceAllowed, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
   runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
@@ -509,6 +509,52 @@ test('lease expiry and candidate acceptance are fenced at the declared instant',
   state = appendEvents(state, [lateCandidate]);
   assert.equal(state.snapshot.work_items[item.issue_id].state, 'RUNNING');
   assert.equal(state.snapshot.work_items[item.issue_id].late_candidates[0].candidate_commit, 'f'.repeat(40));
+});
+
+test('canonical glob claims collide with the repository paths they cover', () => {
+  assert.equal(pathsOverlap('src/**', 'src/file.js'), true);
+  assert.equal(pathsOverlap('src/**', 'src/nested/file.js'), true);
+  assert.equal(pathsOverlap('src/**', 'assets/file.js'), false);
+  assert.equal(pathsOverlap('*.html', 'AshenSpire.html'), true);
+  assert.equal(pathsOverlap('*.html', 'build/AshenSpire.html'), false);
+  assert.throws(() => pathsOverlap('src/*/file.js', 'src/ui/file.js'), /unsupported glob/);
+});
+
+test('an already merged exact PR is a recoverable persistence fact', () => {
+  const item = { branch: 'codex/recovery', candidate_commit: 'a'.repeat(40) };
+  const pr = {
+    number: 461,
+    url: 'https://github.com/example/portable-game/pull/461',
+    state: 'MERGED',
+    baseRefName: 'integration',
+    headRefName: item.branch,
+    headRefOid: item.candidate_commit,
+    mergedAt: '2026-08-30T01:00:00Z',
+    mergeCommit: { oid: 'b'.repeat(40) }
+  };
+  const custom = { ...config, development_branch: 'integration' };
+  const recovery = mergedPrRecovery(custom, item, pr);
+  assert.equal(recovery.recovered, true);
+  assert.equal(recovery.merged.mergeCommit.oid, 'b'.repeat(40));
+  assert.throws(() => mergedPrRecovery(custom, item, { ...pr, headRefOid: 'c'.repeat(40) }), /identity/);
+  assert.throws(() => mergedPrRecovery(custom, item, { ...pr, mergeCommit: null }), /exact recovery identity/);
+});
+
+test('dispatch reconciliation deletes a wake after its lease is released', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-stale-wake-'));
+  try {
+    const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' });
+    assert.equal(init.status, 0, init.stderr);
+    const authorized = { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: 'owner:cutover-test' } };
+    let state = intake(fresh(), 'I-STALE-WAKE'); state = claim(state, 'I-STALE-WAKE'); state = entered(state, 'I-STALE-WAKE');
+    const actor = state.snapshot.work_items['I-STALE-WAKE'].assigned_actor;
+    beginWakeDispatch(temp, state.snapshot, [{ issue_id: 'I-STALE-WAKE', actor }], authorized).commit();
+    const wakeFile = path.join(temp, '.git', 'agentops-scheduler', 'dispatch', `${actor.replaceAll(':', '_')}.json`);
+    assert.equal(fs.existsSync(wakeFile), true);
+    state = candidate(state, 'I-STALE-WAKE');
+    beginWakeDispatch(temp, state.snapshot, [], authorized).commit();
+    assert.equal(fs.existsSync(wakeFile), false);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
 if (!process.exitCode) process.stdout.write(`1..${passed}\nPASS ${passed}/${passed}\n`);
