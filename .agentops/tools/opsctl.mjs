@@ -547,6 +547,23 @@ export function semanticChecks(c) {
   // and — the part that matters most — what each explicitly does NOT grant.
   // It lived only as a decision record, so nothing stopped a transition guard
   // paraphrasing a gate wrongly, or a gate quietly claiming release authority.
+  // A gate requiring evidence nobody declares is a gate nothing can pass.
+  // Gate B required 'hosted-evidence-url' while evidence.json declares
+  // 'hosted-verification-receipt' — the same concept under a name the manifest
+  // never had — so a capsule could neither hold it (runtimeChecks rejects an
+  // undeclared pointer) nor omit it. Nothing caught that until a check depended
+  // on it, which is the point of checking it here.
+  if (c['promotion-gates'] && c.evidence) {
+    const declared = new Set(c.evidence.evidence.map((e) => e.id));
+    for (const g of c['promotion-gates'].gates) {
+      for (const need of g.required_evidence || []) {
+        if (!declared.has(need)) {
+          errors.push(`promotion-gates: gate ${g.id} requires evidence '${need}', which evidence.json does not declare; a capsule can neither hold it nor pass without it`);
+        }
+      }
+    }
+  }
+
   if (c['promotion-gates'] && c.roles && c.transitions) {
     const pg = c['promotion-gates'];
     const roleSet = new Set(c.roles.roles.map((r) => r.role));
@@ -994,6 +1011,13 @@ export function semanticChecks(c) {
         errors.push(`directives: '${d.id}' grants action '${a}'; a directive changes what a seat must do, never what it may do — grants belong in authority.json or a delegation envelope`);
       }
       // A claimed codification is checked against the corpus, not trusted.
+      // Half a codification claim is still a claim. `codified_in` alone skipped
+      // the field check entirely, so a directive could name a contract without
+      // naming what in it enforces the directive — which is the invariant this
+      // contract was written to hold.
+      if (!!d.codified_in !== !!d.codified_as) {
+        errors.push(`directives: '${d.id}' names ${d.codified_in ? 'codified_in without codified_as' : 'codified_as without codified_in'}; a codification claim names the contract AND the exact field, or it names neither`);
+      }
       if (d.codified_in) {
         if (!known.has(d.codified_in)) {
           errors.push(`directives: '${d.id}' claims codification in '${d.codified_in}', which is not a declared contract`);
@@ -2612,6 +2636,16 @@ export function fastForwardTestErrors(contracts, rt, request, root = null) {
   return errors;
 }
 
+// writeFileSync truncates before it writes, so a failure part-way leaves an
+// empty or half-written event on disk. That file is not a record of anything —
+// it is a malformed entry the next loadRuntime chokes on, and the next attempt
+// at the same sequence number would collide with it. Removing a file this call
+// created moments ago is not a history rewrite; it is not letting a failed write
+// become history in the first place.
+function discardPartialEvent(evPath) {
+  try { if (existsSync(evPath)) rmSync(evPath, { force: true }); return true; } catch { return false; }
+}
+
 // Move a ref forward, atomically, refusing if it is not where we last saw it.
 // `git update-ref <ref> <new> <old>` fails when the ref has moved since
 // validation — the same compare-and-swap discipline the capsule seal uses, at
@@ -2885,9 +2919,10 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
       if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); }
       writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
     } catch (e) {
+      const evGone = discardPartialEvent(evPath);
       const capBack = restoreCapsule();
       const undo = undoRef();
-      return { ok: false, errors: [`promotion failed after '${decl.ref}' moved: ${String(e.message || e)}. ${undo.ok ? `'${decl.ref}' was restored to ${request.params.rollback_oid.slice(0, 12)}` : `RESTORE FAILED — '${decl.ref}' stands at ${request.params.target_oid.slice(0, 12)}: ${undo.error}`}; ${capBack ? 'the capsule was restored to its prior revision' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event'}.`], written };
+      return { ok: false, errors: [`promotion failed after '${decl.ref}' moved: ${String(e.message || e)}. ${undo.ok ? `'${decl.ref}' was restored to ${request.params.rollback_oid.slice(0, 12)}` : `RESTORE FAILED — '${decl.ref}' stands at ${request.params.target_oid.slice(0, 12)}: ${undo.error}`}; ${capBack ? 'the capsule was restored to its prior revision' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event'}${evGone ? '' : `; A PARTIAL EVENT REMAINS AT ${evPath} and must be removed before the next run`}.`], written };
     }
     written.push(`events/${ticket}/${id}.json`);
   } else {
@@ -2895,8 +2930,9 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
       if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); }
       writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
     } catch (e) {
+      const evGone = discardPartialEvent(evPath);
       const capBack = restoreCapsule();
-      return { ok: false, errors: [`decision write failed: ${String(e.message || e)}. ${capBack ? 'The capsule was restored to its prior revision.' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event.'}`], written };
+      return { ok: false, errors: [`decision write failed: ${String(e.message || e)}. ${capBack ? 'The capsule was restored to its prior revision.' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event.'}${evGone ? '' : ` A PARTIAL EVENT REMAINS AT ${evPath} and must be removed before the next run.`}`], written };
     }
     written.push(`events/${ticket}/${id}.json`);
   }
@@ -4791,6 +4827,8 @@ export function runSelftest(root = ROOT) {
   expectSemantic('directives: an issued_at that is not a real instant', (c) => { c.directives.directives[0].issued_at = '2026-02-30T00:00:00Z'; }, 'not a real instant');
   expectSemantic('directives: a directive that grants an action', (c) => { c.directives.directives[0].grants_actions = ['integrate-to-dev']; }, 'never what it may do');
   expectSemantic('directives: a directive reaching for owner-reserved authority', (c) => { const d = c.directives.directives[0]; d.issued_by = 'it-manager-iii'; d.grants_actions = [c['owner-intent'].owner.reserved_authority[0]]; }, 'it does not empower one');
+  expectSemantic('directives: a contract named with no field named', (c) => { delete c.directives.directives[0].codified_as; }, 'names the contract AND the exact field');
+  expectSemantic('directives: a field named with no contract named', (c) => { delete c.directives.directives[0].codified_in; }, 'names the contract AND the exact field');
   expectSemantic('directives: codification in a contract that does not exist', (c) => { c.directives.directives[0].codified_in = 'ghost-contract'; }, 'not a declared contract');
   expectSemantic('directives: codification at a field that does not exist', (c) => { c.directives.directives[0].codified_as = 'reporting.imaginary_clause'; }, 'claiming enforcement it does not have');
   expectSemantic('directives: superseded with no successor named', (c) => { c.directives.directives[0].status = 'superseded'; }, 'names no successor');
@@ -4829,6 +4867,12 @@ export function runSelftest(root = ROOT) {
   expectSemantic('gates: a gate claiming owner-reserved authority', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'C').grants = ['release']; }, 'owner-reserved and belongs to Gate F alone');
   expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
   expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
+  // A gate requiring evidence nobody declares is a gate nothing can pass. Gate B
+  // required 'hosted-evidence-url' against a manifest that declares
+  // 'hosted-verification-receipt', and four more gates named types that existed
+  // nowhere; nothing caught it until a runtime check depended on one.
+  expectSemantic('gates: a gate requiring evidence the manifest does not declare', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'B').required_evidence = ['hosted-evidence-url']; }, 'evidence.json does not declare');
+
   expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
   // Team-lead roster. These checks lost their plants when the self-certification
   // withdrawal removed the surrounding block; the checks survived, so the proof

@@ -328,8 +328,8 @@ Promotion is a sequence of separately evidenced gates against one frozen head, n
 | Gate | Name | Who acts | Guards | Required evidence | Grants |
 |---|---|---|---|---|---|
 | **A** | Exact candidate QA | `qa-independent` | `accepted` → `pushed` | test-run-receipt, generated-view-drift-check | nothing |
-| **B** | Dev integration and hosted verification | `it-manager-iii` | `pushed` → `pr-open`<br>`pr-open` → `dev-integrated` | hosted-evidence-url | nothing |
-| **C** | Exact fast-forward to test | `it-manager-iii` | `dev-integrated` → `hosted-verified` | hosted-evidence-url, rollback-procedure | nothing |
+| **B** | Dev integration and hosted verification | `it-manager-iii` | `pushed` → `pr-open`<br>`pr-open` → `dev-integrated` | hosted-verification-receipt | nothing |
+| **C** | Exact fast-forward to test | `it-manager-iii` | `dev-integrated` → `hosted-verified` | hosted-verification-receipt, rollback-procedure | nothing |
 | **D** | Five-role exact-test acceptance | `project-management-lead` | `hosted-verified` → `resolved` | acceptance-ledger | nothing |
 | **E** | Owner playtest | `owner` | — | playtest-receipt | nothing |
 | **F** | Separate main and release actions | `owner` | `resolved` → `released` | promotion-packet, rollback-procedure | nothing |
@@ -752,6 +752,10 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 | security-scan-receipt | qa-independent | commit OID | it-manager-iii | head_oid | valid only for the scanned commit |
 | data-lineage-receipt | data-architecture-lead | schema/id/lineage manifest hash | it-manager-iii | schema_version, manifest_hash | valid only for the manifested schema version |
 | hosted-verification-receipt | qa-independent | deployed commit SHA + hosted URL | it-manager-iii | hosted_sha | valid only for the exact hosted SHA |
+| rollback-procedure | it-manager-iii | rollback target and procedure for the exact promoted head | owner | promoted_sha | valid only for the exact head it was recorded against |
+| acceptance-ledger | project-management-lead | five-role acceptance recommendations at the unchanged exact test SHA | it-manager-iii | test_sha | valid only for the exact test SHA it was recorded against |
+| playtest-receipt | owner | build and artifact identity, flows, result and known accepted defects at the exact test SHA | it-manager-iii | test_sha | valid only for the exact test SHA played |
+| promotion-packet | it-manager-iii | the fresh exact-SHA promotion packet delivery.promotion_packet enumerates | owner | candidate_sha | valid only for the exact SHA it was assembled against |
 
 ## Enforced invariants
 
