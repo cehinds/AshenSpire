@@ -187,4 +187,3 @@ ONE OF THE THIRTEEN. Read at a05d071: ZERO matches for `statPoint`, `pointPool` 
 **Preserved issue context:**
 
 ONE OF THE THIRTEEN. Read at a05d071: the Fullscreen row exists (settings.js:165) and the FIRST `Display` row is `useSprites` (settings.js:72) — the toggle is there and the ordering he asked for is not. The look-and-feel half is unowned. Two halves in one sentence; neither is done.
-

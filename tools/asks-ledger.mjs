@@ -7,6 +7,7 @@
 //   node tools/asks-ledger.mjs --selftest prove the local validator catches drift
 
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -81,12 +82,20 @@ function render(data) {
       '',
     );
   }
-  return `${lines.join('\n')}\n`;
+  return `${lines.join('\n').replace(/\n+$/, '')}\n`;
 }
 
 async function checkGitHub(data) {
   const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'AshenSpire-asks-ledger-check' };
-  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  let token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  if (!token) {
+    try {
+      token = execFileSync('gh', ['auth', 'token'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    } catch {
+      // Public repositories remain checkable without authentication until the
+      // public REST limit is exhausted; a non-2xx response is still a hard red.
+    }
+  }
   if (token) headers.Authorization = `Bearer ${token}`;
   for (const entry of data.entries) {
     const response = await fetch(`https://api.github.com/repos/${data.repository}/issues/${entry.issue}`, { headers });
