@@ -19,6 +19,7 @@ export const EVENT_TYPES = new Set([
 export const ACTIVE_STATES = new Set(['CLAIMED', 'RUNNING', 'CANDIDATE_READY', 'QA', 'PR_READY', 'PR_OPEN']);
 export const TERMINAL_STATES = new Set(['DONE', 'SUPERSEDED', 'CANCELLED']);
 const SEAT_ID = /^seat:[a-z0-9-]+:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SYSTEM_ACTORS = new Set(['scheduler', 'recovery']);
 const SCHEMA_CACHE = new Map();
 const DEFAULT_PROCESS_TIMEOUT_MS = 30_000;
@@ -70,6 +71,40 @@ export function emptySnapshot() {
 
 function requiredString(value, label) {
   if (typeof value !== 'string' || value.trim() === '') throw new Error(`${label} must be a non-empty string`);
+}
+
+function validInstant(value, label) {
+  requiredString(value, label);
+  if (Number.isNaN(Date.parse(value))) throw new Error(`${label} must be an ISO instant`);
+}
+
+export function validateMachineIdentity(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('machine identity must be an object');
+  if (value.schema !== 'agentops/scheduler-machine/v1') throw new Error('machine identity schema must be agentops/scheduler-machine/v1');
+  if (typeof value.machine_id !== 'string' || !UUID.test(value.machine_id)) throw new Error('machine identity machine_id must be a valid UUID');
+  validInstant(value.created_at, 'machine identity created_at');
+  assertPortable(value);
+  return true;
+}
+
+export function validateMachineLease(value) {
+  if (value === null) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('machine lease must be an object or null');
+  if (!Number.isInteger(value.lease_epoch) || value.lease_epoch < 0) throw new Error('machine lease lease_epoch must be a non-negative integer');
+  if (value.expected_state_ref_oid !== null && !/^[0-9a-f]{40}$/.test(value.expected_state_ref_oid ?? '')) throw new Error('machine lease expected_state_ref_oid must be a commit OID or null');
+  if (value.machine_id === null) {
+    for (const key of ['acquired_at', 'expires_at']) {
+      if (value[key] !== null) validInstant(value[key], `machine lease ${key}`);
+    }
+    if (value.released_at !== undefined && value.released_at !== null) validInstant(value.released_at, 'machine lease released_at');
+  } else {
+    if (typeof value.machine_id !== 'string' || !UUID.test(value.machine_id)) throw new Error('machine lease machine_id must be a valid UUID or null');
+    validInstant(value.acquired_at, 'machine lease acquired_at');
+    validInstant(value.expires_at, 'machine lease expires_at');
+    if (Date.parse(value.expires_at) <= Date.parse(value.acquired_at)) throw new Error('machine lease expires_at must be later than acquired_at');
+  }
+  assertPortable(value);
+  return true;
 }
 
 export function canonicalClaimPath(value) {
@@ -690,6 +725,7 @@ export function readPortableState(root = REPOSITORY_ROOT, config = stateConfig(r
   const events = namesResult.stdout ? namesResult.stdout.split(/\r?\n/).filter(Boolean).map((name) => showJson(root, oid, name)) : [];
   const snapshot = showJson(root, oid, 'snapshot.json') ?? reduceEvents(events);
   const machineLease = showJson(root, oid, 'machine-lease.json');
+  validateMachineLease(machineLease);
   const version = runGit(root, ['show', `${oid}:STATE_VERSION`], { allowFailure: true });
   return { oid, events, snapshot, machineLease, stateVersion: version.status === 0 ? version.stdout : null };
 }
@@ -699,6 +735,7 @@ function hashObject(root, text) {
 }
 
 function writePortableCommit(root, state, oldOid, message) {
+  validateMachineLease(state.machineLease);
   const runtime = localRuntimeDir(root); fs.mkdirSync(runtime, { recursive: true });
   const index = path.join(runtime, `index-${process.pid}-${crypto.randomUUID()}`);
   const env = { GIT_INDEX_FILE: index };
@@ -774,7 +811,11 @@ export function localMachine(root = REPOSITORY_ROOT) {
   // A concurrent creator may have won the exclusive create but not completed
   // its bounded write yet. Retry only the local identity read, never creation.
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    try { return readJsonFile(file); }
+    try {
+      const machine = readJsonFile(file);
+      validateMachineIdentity(machine);
+      return machine;
+    }
     catch (error) {
       if (attempt === 19 || !['ENOENT', 'EACCES'].includes(error.code) && !(error instanceof SyntaxError)) throw error;
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
@@ -1014,7 +1055,9 @@ function stateCounts(snapshot) {
   const counts = {}; for (const item of Object.values(snapshot.work_items)) counts[item.state] = (counts[item.state] ?? 0) + 1; return counts;
 }
 
-function ensureCustody(state, machine, now = Date.now()) {
+export function ensureCustody(state, machine, now = Date.now()) {
+  validateMachineIdentity(machine);
+  validateMachineLease(state.machineLease);
   if (!state.machineLease || state.machineLease.machine_id !== machine.machine_id || Date.parse(state.machineLease.expires_at) <= now) throw new Error('active machine custody required');
 }
 

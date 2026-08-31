@@ -7,10 +7,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
-  appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake,
+  appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
   emptySnapshot, historyAdvanceAllowed, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateSchedulerDocument, validateWorkers, watcherPlan
+  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +24,8 @@ const config = {
   ]
 };
 let passed = 0;
+const MACHINE_A = '11111111-1111-4111-8111-111111111111';
+const MACHINE_B = '22222222-2222-4222-8222-222222222222';
 
 function test(name, fn) {
   try { fn(); passed += 1; process.stdout.write(`ok ${passed} - ${name}\n`); }
@@ -406,15 +408,15 @@ test('portable state push race fetches and installs the authoritative winner', (
     const initial = fresh(); initial.machineLease = { machine_id: null, lease_epoch: 0, acquired_at: null, expires_at: null, expected_state_ref_oid: null };
     initial.oid = persistPortableState(first, initial, { push: true, message: 'initial' });
     git(second, ['fetch', 'origin', '+refs/heads/agentops/scheduler-state:refs/remotes/origin/agentops/scheduler-state']);
-    let winner = readPortableState(second); winner.machineLease = { machine_id: 'winner', lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: winner.oid };
+    let winner = readPortableState(second); winner.machineLease = { machine_id: MACHINE_A, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: winner.oid };
     const winnerOid = persistPortableState(second, winner, { push: true, message: 'winner' });
-    const loser = { ...initial, machineLease: { machine_id: 'loser', lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
+    const loser = { ...initial, machineLease: { machine_id: MACHINE_B, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
     let failure;
     try { persistPortableState(first, loser, { push: true, message: 'loser' }); } catch (error) { failure = error; }
     assert.equal(failure?.portableStateAuthorityLost, true);
     assert.equal(failure?.authoritativeStateOid, winnerOid);
     assert.equal(readPortableState(first).oid, winnerOid);
-    assert.equal(readPortableState(first).machineLease.machine_id, 'winner');
+    assert.equal(readPortableState(first).machineLease.machine_id, MACHINE_A);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
@@ -470,10 +472,50 @@ test('concurrent machine initialization accepts the EEXIST winner', () => {
     assert.equal(init.status, 0, init.stderr);
     const runtime = path.join(temp, '.git', 'agentops-scheduler');
     fs.mkdirSync(runtime, { recursive: true });
-    const winner = { schema: 'agentops/scheduler-machine/v1', machine_id: 'winner', created_at: '2026-08-30T00:00:00Z' };
+    const winner = { schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_A, created_at: '2026-08-30T00:00:00Z' };
     fs.writeFileSync(path.join(runtime, 'machine.json'), `${JSON.stringify(winner)}\n`, { flag: 'wx' });
     assert.deepEqual(localMachine(temp), winner);
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('existing machine identity fails closed on malformed and invalid plants', () => {
+  const plants = [
+    ['malformed JSON', '{'],
+    ['array', []],
+    ['empty object', {}],
+    ['wrong schema', { schema: 'agentops/scheduler-machine/v0', machine_id: MACHINE_A, created_at: '2026-08-30T00:00:00Z' }],
+    ['blank machine id', { schema: 'agentops/scheduler-machine/v1', machine_id: ' ', created_at: '2026-08-30T00:00:00Z' }],
+    ['non UUID machine id', { schema: 'agentops/scheduler-machine/v1', machine_id: 'machine-a', created_at: '2026-08-30T00:00:00Z' }],
+    ['invalid timestamp', { schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_A, created_at: 'not-a-time' }]
+  ];
+  for (const [name, value] of plants) {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-machine-invalid-'));
+    try {
+      const init = spawnSync('git', ['init'], { cwd: temp, encoding: 'utf8' });
+      assert.equal(init.status, 0, init.stderr);
+      const runtime = path.join(temp, '.git', 'agentops-scheduler');
+      fs.mkdirSync(runtime, { recursive: true });
+      fs.writeFileSync(path.join(runtime, 'machine.json'), typeof value === 'string' ? value : `${JSON.stringify(value)}\n`);
+      assert.throws(() => localMachine(temp), undefined, name);
+    } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+  }
+});
+
+test('portable machine lease identity fails closed on malformed, invalid, and mismatched plants', () => {
+  const valid = { machine_id: MACHINE_A, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: 'a'.repeat(40) };
+  assert.equal(validateMachineIdentity({ schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_A, created_at: '2026-08-30T00:00:00Z' }), true);
+  assert.equal(validateMachineLease(valid), true);
+  for (const plant of [
+    [], {},
+    { ...valid, machine_id: '' },
+    { ...valid, machine_id: 'machine-a' },
+    { ...valid, acquired_at: 'invalid' },
+    { ...valid, expires_at: 'invalid' },
+    { ...valid, expires_at: valid.acquired_at },
+    { ...valid, expected_state_ref_oid: 'not-an-oid' }
+  ]) assert.throws(() => validateMachineLease(plant));
+  const machine = { schema: 'agentops/scheduler-machine/v1', machine_id: MACHINE_B, created_at: '2026-08-30T00:00:00Z' };
+  assert.throws(() => ensureCustody({ machineLease: valid }, machine, Date.parse('2026-08-30T00:01:00Z')), /active machine custody required/);
 });
 
 test('Git and GitHub subprocesses fail closed on startup errors and timeouts', () => {
@@ -583,7 +625,7 @@ test('sync push publishes a preserved local-ahead state commit', () => {
     const configDir = path.join(work, '.agentops', 'scheduler'); fs.mkdirSync(configDir, { recursive: true });
     fs.writeFileSync(path.join(configDir, 'config.json'), `${JSON.stringify(config, null, 2)}\n`);
     const initial = fresh(); initial.oid = persistPortableState(work, initial, { push: true, config, message: 'initial' });
-    const advanced = { ...initial, machineLease: { machine_id: 'local', lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
+    const advanced = { ...initial, machineLease: { machine_id: MACHINE_A, lease_epoch: 1, acquired_at: '2026-08-30T00:00:00Z', expires_at: '2026-08-30T00:30:00Z', expected_state_ref_oid: initial.oid } };
     const localOid = persistPortableState(work, advanced, { push: false, config, message: 'local ahead' });
     assert.equal(main(['sync', '--push'], work), 0);
     const remoteOid = git(work, ['ls-remote', 'origin', config.state_ref]).split(/\s+/)[0];
