@@ -659,7 +659,7 @@ jobs:
           echo "    arrives COLLAPSED on every shape, and ONE click expands it to a box with"
           echo "    AREA above the fold and folds it back — at 1440x860 and 390x844, with"
           echo "    #305's single compositing mirror required as a literal transform, so a"
-          echo "    mirror that is DOUBLED or GONE both fail. RENDERED GEOMETRY, second of two."
+          echo "    mirror that is DOUBLED or GONE both fail. THIS IS RENDERED GEOMETRY."
           echo "    Its known-bads were hand-planted and are NOT re-run here: this step proves"
           echo "    the tree passes and proves NOTHING about whether the check can still fail."
           echo ""
