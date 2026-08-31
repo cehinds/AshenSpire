@@ -23,6 +23,41 @@ const rejected = JSON.parse(readFileSync(join(here, 'rejected-inputs.json'), 'ut
 
 const PIN = manifest.evidence_pin.commit;
 
+// The contract's universe is fixed here, NOT derived from the manifest. Every
+// loop below iterates manifest entries, so a manifest that simply omits an
+// entry would stop checking it and still report intact — the Rogue crop is the
+// one that matters most, since proving it distinct from Reaver is the whole
+// point of AC6.
+const REQUIRED = {
+  classes: ['reaver', 'starseer', 'rogue', 'herald'],
+  proofSurfaces: { desktop: 1, mobile: 3 },
+  rejectedIds: [
+    'reaver-concept-v1', 'starseer-concept-v1', 'rogue-concept-v1',
+    'herald-concept-v1', 'reaver-alpha-retry-rejected',
+  ],
+};
+
+// Dimensions straight from the bytes. PNG carries them in IHDR; JPEG needs the
+// SOF marker, because the context proofs are JPEG and their recorded viewport
+// is a claim like any other.
+function imageSize(buf) {
+  if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) {
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+  }
+  if (buf.length > 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+    let i = 2;
+    while (i < buf.length - 9) {
+      if (buf[i] !== 0xff) { i++; continue; }
+      const m = buf[i + 1];
+      if (m === 0xd8 || m === 0xd9 || (m >= 0xd0 && m <= 0xd7)) { i += 2; continue; }
+      const isSOF = m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc;
+      if (isSOF) return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+  }
+  return null;
+}
+
 // Read packet bytes from git objects, never from the working tree. The Hub
 // rebuild removed review-approval-hub/evidence/** from the tree, so a
 // path-based read passes only in a stale clone and fails everywhere else. A
@@ -130,6 +165,22 @@ function run(manifest, rejected, { quiet = false } = {}) {
 const fails = [];
 const check = (ok, label) => { if (!quiet) console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}`); if (!ok) fails.push(label); };
 
+// AC12 — the packet is complete before anything iterates it.
+const haveClasses = manifest.successor_packet.crops.map((c) => c.class).sort();
+check(
+  REQUIRED.classes.slice().sort().join(',') === haveClasses.join(','),
+  `AC12 all four class crops present (${haveClasses.join(', ') || 'none'})`,
+);
+for (const [surface, want] of Object.entries(REQUIRED.proofSurfaces)) {
+  const got = manifest.successor_packet.context_proofs.filter((p) => p.surface === surface).length;
+  check(got === want, `AC12 ${want} ${surface} context proof(s) present (found ${got})`);
+}
+const haveRejected = rejected.rejected.map((r) => r.id).sort();
+check(
+  REQUIRED.rejectedIds.slice().sort().join(',') === haveRejected.join(','),
+  `AC12 all five rejected inputs present (found ${haveRejected.length})`,
+);
+
 const masks = new Map();
 for (const crop of manifest.successor_packet.crops) {
   const bytes = readPinned(crop);
@@ -199,11 +250,31 @@ for (let i = 0; i < names.length; i++) {
 
 // AC7 — the desktop/mobile context proofs are present and unchanged.
 for (const proof of manifest.successor_packet.context_proofs) {
+  const name = proof.path.split('/').pop();
   const bytes = readPinned(proof);
-  const sha = bytes && createHash('sha256').update(bytes).digest('hex');
+  if (!bytes) {
+    check(false, `AC7 ${proof.surface} proof ${name} resolves at the pin`);
+    continue;
+  }
+  const sha = createHash('sha256').update(bytes).digest('hex');
   check(
-    bytes !== null && sha === proof.sha256 && bytes.length === proof.bytes,
-    `AC7 ${proof.surface} proof ${proof.path.split('/').pop()} unchanged at the pin`,
+    sha === proof.sha256 && bytes.length === proof.bytes,
+    `AC7 ${proof.surface} proof ${name} unchanged at the pin`,
+  );
+
+  // The recorded viewport is a claim; decode it rather than trusting it.
+  const size = imageSize(bytes);
+  check(
+    size !== null && size.width === proof.width && size.height === proof.height,
+    `AC7 ${proof.surface} proof ${name} viewport: decoded ${size ? `${size.width}x${size.height}` : 'unreadable'}, recorded ${proof.width}x${proof.height}`,
+  );
+
+  // Same OID-vs-path agreement the crops get: git_blob wins at read time, so
+  // without this a stale proof path is never noticed.
+  const viaPath = readPinned({ path: proof.path });
+  check(
+    viaPath !== null && viaPath.equals(bytes),
+    `AC7 ${proof.surface} proof ${name}: git_blob and ${PIN}:<path> agree`,
   );
 }
 
@@ -262,6 +333,11 @@ if (process.argv.includes('--selftest')) {
     ['AC9 rejected input OID unresolvable', (_m, r) => { r.rejected[1].git_blob = '0'.repeat(40); }],
     ['AC11 git_blob names different bytes than the path', (m) => { m.successor_packet.crops[0].git_blob = m.successor_packet.crops[1].git_blob; }],
     ['crop OID unresolvable at the pin', (m) => { m.successor_packet.crops[3].git_blob = 'f'.repeat(40); }],
+    ['AC12 Rogue crop omitted from the manifest', (m) => { m.successor_packet.crops = m.successor_packet.crops.filter((c) => c.class !== 'rogue'); }],
+    ['AC12 a context proof omitted', (m) => { m.successor_packet.context_proofs.pop(); }],
+    ['AC12 a rejected input omitted', (_m, r) => { r.rejected.pop(); }],
+    ['AC7 proof viewport misrecorded', (m) => { m.successor_packet.context_proofs[0].width = 1; }],
+    ['AC7 proof path stale while OID still resolves', (m) => { m.successor_packet.context_proofs[0].path = 'review-approval-hub/evidence/look-switcher/proofs/not-a-real-proof.jpg'; }],
     ['AC9 rejected input claimed to have alpha', (_m, r) => { r.rejected[2].png_color_type = 6; }],
   ];
   let bad = 0;

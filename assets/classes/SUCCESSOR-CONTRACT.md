@@ -3,8 +3,8 @@
 STATUS | CLOSED BY SUPERSESSION · PROOF-ONLY · NOT ADOPTED
 DECISION | `AS-HD-040-0003` (owner D1, 2026-08-29, issue #389)
 BASE | `284fd6e2dcf0` on `recovery/as-hd-040`
-CHECK | `node assets/classes/verify-successor-packet.mjs` → `PACKET INTACT — 0 failing check(s)` (75/75)
-KNOWN-BAD | `node assets/classes/verify-successor-packet.mjs --selftest` → `SELFTEST OK: all 15 negative plants correctly caught.`
+CHECK | `node assets/classes/verify-successor-packet.mjs` → `PACKET INTACT — 0 failing check(s)` (87/87)
+KNOWN-BAD | `node assets/classes/verify-successor-packet.mjs --selftest` → `SELFTEST OK: all 20 negative plants correctly caught.`
 QA | Requested. Candidate frozen and handed to an independent non-maker reviewer; agenda in §7. No verdict exists yet.
 
 ## 1. The clause this closes
@@ -64,11 +64,12 @@ repaired, masked or reused. It cannot meet §3.
 | AC4 | Figure never contacts a canvas edge | edge contact 0 px, 4/4 |
 | AC5 | Upper-body/torso framing: one shared deterministic bottom cut | all four end at y=359 (soft final row, max alpha 136–140; zero at y≥360); bottom margin 152 px |
 | AC6 | Every class silhouette distinct; Rogue must not reuse Reaver | no two alpha≥128 masks identical; pairwise IoU 0.6533–0.7990; **reaver vs rogue 0.7052** |
-| AC7 | Deterministic desktop and mobile context proofs | 1× 1440×900, 3× 390×844, all hash-unchanged |
+| AC7 | Deterministic desktop and mobile context proofs | 1× 1440×900, 3× 390×844; each hash-unchanged, **decoded** to confirm the recorded viewport, and its `git_blob` agreeing with its path |
 | AC8 | Stays proof-only and disabled | hub records *Not Adopted*; no repository code path reads `assets/classes/**` |
 | AC9 | No rejected input substituted into the packet, and none silently altered | 5/5 resolve at the pin, hash-unchanged, still PNG color type 2 — none ever gained an alpha channel that would let it pass as a successor; none matches any packet hash |
 | AC10 | The recorded anchor keeps measuring true, and the four crops share one layout frame | alpha-weighted centroids within 0.7 px of x=256 on a 512-wide canvas (offsets −0.43 to +0.13); recorded `baseline_y` equals the measured bottom cut in 4/4 |
-| AC11 | The recorded blob OID and the recorded path name the same bytes | `git_blob` and `62f6867a:<path>` resolve identically in 4/4, so neither pin can drift into decoration |
+| AC11 | The recorded blob OID and the recorded path name the same bytes | `git_blob` and `62f6867a:<path>` resolve identically for all four crops and all four proofs, so neither pin can drift into decoration |
+| AC12 | The packet is complete before anything iterates it | the four class ids, 1 desktop + 3 mobile proofs, and the five rejected inputs are required by the checker itself, not derived from the manifest |
 
 AC5 is the evidence that these are the "upper-body/torso canvases" D1 names: a full-body
 figure would be grounded at or near the canvas floor, and these four are cut at a common
@@ -131,11 +132,11 @@ may not author a verdict on its own object, so nothing below is a finding — it
 is what the reviewer is asked to test.
 
 1. **Re-derive, don't trust.** `node assets/classes/verify-successor-packet.mjs`
-   should print `PACKET INTACT — 0 failing check(s)` (75) — in any clone holding the
+   should print `PACKET INTACT — 0 failing check(s)` (87) — in any clone holding the
    objects, including one where `review-approval-hub/evidence/**` does not exist. Every number in the
    manifest is re-measured from the frozen bytes by that run; if the reviewer's
    own tooling disagrees with any of them, the manifest is wrong, not the tool.
-2. **Test the tester.** `--selftest` runs 15 plants and should report all caught.
+2. **Test the tester.** `--selftest` runs 20 plants and should report all caught.
    A verifier that cannot fail is not evidence. Adding a fourteenth plant that
    the reviewer expects to be caught, and finding it is not, is a valid finding.
 3. **Challenge the supersession.** §1 claims the clause is *superseded*, not
