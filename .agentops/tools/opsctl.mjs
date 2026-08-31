@@ -2845,47 +2845,62 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     pendingCapsule = { path: resolve(root, `work/${ticket}/CURRENT.json`), body: JSON.stringify(reorderCapsule(next), null, 2) + '\n' };
   }
 
-  // The one ref mutation in the tool. It runs AFTER the capsule write and
-  // BEFORE the event, and it re-validates first: apply must never trust a
-  // decision taken against older state, and on a shared ref that is not a
-  // formality. If the mutation is refused, nothing is appended — the event
-  // would otherwise record a promotion that did not happen.
-  // Everything that can fail is done BEFORE the ref moves, and a failure after
-  // it rolls the ref back. The first version moved the ref and then checked for
-  // an event collision, so a concurrent append or an I/O error could leave
-  // `test` advanced with no event recording the promotion — a ref and a ledger
-  // disagreeing, which is the one state this whole control plane exists to
-  // prevent.
+  // Three rounds of review landed on this block, each time on a narrower window,
+  // because each fix moved the fallible step rather than removing the window.
+  // The rule now, stated once: NOTHING that another reader can see is written
+  // until every step that can still refuse has passed, and every write after
+  // that point has an undo. The order is preflight, ref, capsule, event; a
+  // failure at any point restores what came before it, in reverse.
   const evDir = resolve(root, `events/${ticket}`);
   mkdirSync(evDir, { recursive: true });
   const evPath = resolve(evDir, `${id}.json`);
   if (existsSync(evPath)) return { ok: false, errors: [`event '${id}' already exists; refusing to overwrite an append-only record`], written };
 
+  // The capsule's prior bytes, so a later failure can put them back. A capsule
+  // whose revision advanced with no ledger entry is a seal mismatch the next
+  // verify reports and nobody asked for.
+  const capPath = pendingCapsule ? pendingCapsule.path : null;
+  let priorCapsule = null;
+  if (capPath) { try { priorCapsule = readFileSync(capPath, 'utf8'); } catch { priorCapsule = null; } }
+  const restoreCapsule = () => {
+    if (capPath && priorCapsule !== null) { try { writeFileSync(capPath, priorCapsule); return true; } catch { return false; } }
+    return true;
+  };
+
   let refMove = null;
   if (action.id === 'fast-forward-test') {
     const bad = fastForwardTestErrors(contracts, rt, request, root);
     if (bad.length) return { ok: false, errors: bad, written };
-    // Every refusal is now behind us; the capsule may be written.
-    if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); pendingCapsule = null; }
     const decl = contracts['git-ownership'].refs.find((r) => /gate-c-fast-forward/i.test(r.mutation || ''));
+    // The ref moves FIRST among the writes, because it is the only one whose
+    // failure mode is a lost race rather than an I/O error, and losing it must
+    // cost nothing. The previous version wrote the capsule immediately before
+    // this call, so a lost CAS left a resealed capsule with no event.
     const moved = fastForwardRef(root, decl.ref, request.params.target_oid, request.params.rollback_oid);
     if (!moved.ok) return { ok: false, errors: [moved.error], written };
     refMove = { ref: decl.ref, from: request.params.rollback_oid, to: request.params.target_oid };
     written.push(`ref:refs/heads/${decl.ref}`);
+    const undoRef = () => fastForwardRef(root, decl.ref, request.params.rollback_oid, request.params.target_oid);
     try {
+      if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); }
       writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
     } catch (e) {
-      // Put the ref back. A promotion nobody can read is worse than no
-      // promotion, and the rollback target is the value we just replaced.
-      const undo = fastForwardRef(root, decl.ref, request.params.rollback_oid, request.params.target_oid);
-      return { ok: false, errors: [`event write failed after '${decl.ref}' moved: ${String(e.message || e)}. ${undo.ok ? `'${decl.ref}' was restored to ${request.params.rollback_oid.slice(0, 12)}.` : `RESTORE ALSO FAILED — '${decl.ref}' stands at ${request.params.target_oid.slice(0, 12)} with no event: ${undo.error}`}`], written };
+      const capBack = restoreCapsule();
+      const undo = undoRef();
+      return { ok: false, errors: [`promotion failed after '${decl.ref}' moved: ${String(e.message || e)}. ${undo.ok ? `'${decl.ref}' was restored to ${request.params.rollback_oid.slice(0, 12)}` : `RESTORE FAILED — '${decl.ref}' stands at ${request.params.target_oid.slice(0, 12)}: ${undo.error}`}; ${capBack ? 'the capsule was restored to its prior revision' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event'}.`], written };
     }
     written.push(`events/${ticket}/${id}.json`);
   } else {
-    if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); pendingCapsule = null; }
-    writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
+    try {
+      if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); }
+      writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
+    } catch (e) {
+      const capBack = restoreCapsule();
+      return { ok: false, errors: [`decision write failed: ${String(e.message || e)}. ${capBack ? 'The capsule was restored to its prior revision.' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event.'}`], written };
+    }
     written.push(`events/${ticket}/${id}.json`);
   }
+  pendingCapsule = null;
 
   return { ok: true, errors: [], written, event, transition: move || null, refMove };
 }
