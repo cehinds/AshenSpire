@@ -1,7 +1,7 @@
 {
   "schema": "agentops/scheduler-snapshot/v1",
-  "revision": 18,
-  "last_sequence": 18,
+  "revision": 19,
+  "last_sequence": 19,
   "work_items": {
     "396": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -130,12 +130,12 @@
     },
     "468": {
       "schema": "agentops/scheduler-work-item/v1",
-      "revision": 2,
+      "revision": 3,
       "issue_id": "468",
       "title": "Reconcile AS-HD-040/050/056 capsules with integrated state (Gate-A skip)",
       "priority": "P1",
       "dependencies": [],
-      "state": "CLAIMED",
+      "state": "RUNNING",
       "base_commit": "bbbc5e7526f2be34ab2e044c3533647c46930a6e",
       "candidate_commit": null,
       "branch": "codex/issue-468",
@@ -168,8 +168,8 @@
       "wake_condition": null,
       "next_action": "Re-seal capsules; record retro QA ruling",
       "authority_ceiling": "dev-delivery",
-      "updated_event": "evt-00000015-09aca773-3027-4fe6-8016-4fa1fd544f86",
-      "updated_at": "2026-08-31T14:26:58.717Z"
+      "updated_event": "evt-00000019-e7d58f4a-4337-4c72-9558-050fe4f8bb10",
+      "updated_at": "2026-08-31T14:32:02.645Z"
     },
     "470": {
       "schema": "agentops/scheduler-work-item/v1",
@@ -236,5 +236,5 @@
     }
   },
   "errors": [],
-  "snapshot_hash": "7fbb19ea41afbcc434eef8340b92147e7a20e875382888da59ca9594ee0b81ce"
+  "snapshot_hash": "6fe28a80fe668990a25c4b3e5efc680d0055cebf3079da7ddac5a9a98078c15e"
 }
