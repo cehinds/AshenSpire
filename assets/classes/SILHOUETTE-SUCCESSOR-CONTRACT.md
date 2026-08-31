@@ -73,6 +73,12 @@ formatted as lowercase SHA-256, two ASCII spaces, repository-relative path, then
 Packet digest (SHA-256 over those exact canonical manifest bytes):
 `D834E2DD1EB24DC58AF849AE467CB68DAF59AC65832B4DDDC7CB0FE50B03B033`
 
+> **Digest correction, Issue #427.** Independent Functional QA proved that the earlier
+> `BB43990F…58BA` declaration was not reproducible from the stated rows. The 12 individual
+> file identities remained 12/12 exact. This correction defines the canonical manifest bytes
+> above and replaces only the aggregate digest; it changes no packet blob, role, path, byte
+> count, per-file SHA-256, semantic contract, eligibility, or adoption state.
+
 **Explicitly excluded.** `review-approval-hub/evidence/reaver-alpha-retry-rejected.png` is rejected
 diagnostic evidence, not packet content and not a candidate.
 
