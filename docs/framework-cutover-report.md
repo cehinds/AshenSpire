@@ -83,9 +83,13 @@ sweep: a framework JSON without its generated mirror in
 `src/framework/data/` still fails by name.
 
 Still legacy-decided (next tranches): status/stance semantics, every
-screen's presentation components, and cost/keyword DISPLAY strings on card
-faces (the decisions are ported; the formatting is the presentation
-tranche's).
+screen's presentation components — including the option-decision
+INTERACTION router (`src/ui/components/optionDecision.js` +
+`holdconfirm.js`, the tap-to-review vs hold-to-commit surface the smith
+modal and every routed action use), which stays in cutover scope under
+shared presentation even though its LEVEL rule is the reconciliation item
+below — and cost/keyword DISPLAY strings on card faces (the decisions are
+ported; the formatting is the presentation tranche's).
 
 ### Two systems the port deliberately does NOT bridge (owner decision needed)
 
@@ -116,7 +120,7 @@ bridge would add risk without adding authority:
    omitted them would silently drop contract mechanics. Until that ruling,
    bridging one composer through the other would be motion, not authority.
 
-2. **The option-decision confirmation router.** `src/model/consequence.js`
+2. **The option-decision confirmation LEVEL rule.** `src/model/consequence.js`
    derives bindingness from an effect list's ops, FAIL-CLOSED over a
    positively-known-safe set — a designed safety property ("a hand-kept
    list cannot know what it was not told"). Mapping its dynamic decisions
@@ -124,6 +128,11 @@ bridge would add risk without adding authority:
    recommended reconciliation: the registry keeps owning STATIC surfaces
    (load/quit — ported), and the fail-closed derivation is adopted as the
    framework's confirmation-level rule for effect-carrying choices.
+   Scope note: this covers the CLASSIFICATION only. The interaction router
+   itself (`optionDecision.js`/`holdconfirm.js` — tap-to-review vs
+   hold-to-commit) is presentation behavior and remains in the shared
+   presentation tranche above; adopting the derivation does not discharge
+   porting that surface.
 
 ## Unresolved contradictions (reported before cutover, per the contract)
 
