@@ -54,7 +54,11 @@ export const reaverCards = [
     keywords: [], icon: '💨',
     effects: [{ op: 'dodgeRoll', target: 'self' }],
     textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 2 Stamina, 1 Energy. Heavy: 3 Stamina, 2 Energy.',
-    upgrade: { effects: [{ op: 'dodgeRoll', target: 'self' }] },
+    // No `upgrade`: the pure dodge has nothing of its own to improve — its
+    // check is Dexterity and the Weight Class, its guard is the framework
+    // rule's, its price is the class's. An upgrade that changed none of them
+    // would spend an upgrade for nothing, so the card offers none and the
+    // upgrade opcode never lists a composed instance (see actions.js).
   },
   {
     id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',

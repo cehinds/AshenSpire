@@ -1065,12 +1065,15 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
-      const def = resolveCard(registries, inst);
-      if (registries.framework.isUnplayable(def)) return false;
-      // Base profile, no live modifiers — this pulse always read the raw cost.
-      const pools = registries.framework.costProfile(def);
-      return combat.player.energy >= (pools.variable ? 0 : pools.action)
-        && combat.player.mana >= pools.mana;
+      if (registries.framework.isUnplayable(resolveCard(registries, inst))) return false;
+      // The live preview — class-priced dodge costs, Power reductions — the
+      // same numbers the badge shows and the engine charges, in all three
+      // pools. A card the preview cannot resolve is not a playable card.
+      let pv = null;
+      try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
+        && combat.player.mana >= pv.manaCost
+        && combat.player.stamina >= (pv.staminaCost || 0);
     });
     return combat.player.energy > 0 && anyPlayable;
   }

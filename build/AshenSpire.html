@@ -12833,7 +12833,11 @@ const reaverCards = [
     keywords: [], icon: '💨',
     effects: [{ op: 'dodgeRoll', target: 'self' }],
     textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 2 Stamina, 1 Energy. Heavy: 3 Stamina, 2 Energy.',
-    upgrade: { effects: [{ op: 'dodgeRoll', target: 'self' }] },
+    // No `upgrade`: the pure dodge has nothing of its own to improve — its
+    // check is Dexterity and the Weight Class, its guard is the framework
+    // rule's, its price is the class's. An upgrade that changed none of them
+    // would spend an upgrade for nothing, so the card offers none and the
+    // upgrade opcode never lists a composed instance (see actions.js).
   },
   {
     id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
@@ -40827,8 +40831,13 @@ function runRunOpcode(ctx, action, eff) {
         // Equipment-composed instances are excluded like sourceArmamentId
         // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
         // package on every reconcile, so a per-copy upgraded flag would not
-        // survive an unequip/re-equip — its upgrade rides the armament.
-        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        // survive an unequip/re-equip — its upgrade rides the armament. The
+        // same holds for every composed role instance (equipmentRole): the
+        // unarmed package's Evasive Guard / Dodge Roll are rebuilt the moment
+        // a hand is filled, and the pure dodge authors no upgrade at all. A
+        // card whose upgrade is not authored is never a candidate either.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.equipmentRole && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
@@ -49066,7 +49075,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5e44545620';
+const SOURCE = '3721f06f97';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49100,7 +49109,7 @@ const SOURCE = '5e44545620';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1906';
+const ORDINAL = '1907';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -65065,12 +65074,15 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
-      const def = resolveCard(registries, inst);
-      if (registries.framework.isUnplayable(def)) return false;
-      // Base profile, no live modifiers — this pulse always read the raw cost.
-      const pools = registries.framework.costProfile(def);
-      return combat.player.energy >= (pools.variable ? 0 : pools.action)
-        && combat.player.mana >= pools.mana;
+      if (registries.framework.isUnplayable(resolveCard(registries, inst))) return false;
+      // The live preview — class-priced dodge costs, Power reductions — the
+      // same numbers the badge shows and the engine charges, in all three
+      // pools. A card the preview cannot resolve is not a playable card.
+      let pv = null;
+      try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
+        && combat.player.mana >= pv.manaCost
+        && combat.player.stamina >= (pv.staminaCost || 0);
     });
     return combat.player.energy > 0 && anyPlayable;
   }

@@ -638,8 +638,13 @@ function runRunOpcode(ctx, action, eff) {
         // Equipment-composed instances are excluded like sourceArmamentId
         // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
         // package on every reconcile, so a per-copy upgraded flag would not
-        // survive an unequip/re-equip — its upgrade rides the armament.
-        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        // survive an unequip/re-equip — its upgrade rides the armament. The
+        // same holds for every composed role instance (equipmentRole): the
+        // unarmed package's Evasive Guard / Dodge Roll are rebuilt the moment
+        // a hand is filled, and the pure dodge authors no upgrade at all. A
+        // card whose upgrade is not authored is never a candidate either.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.equipmentRole && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
