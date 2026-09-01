@@ -28,7 +28,10 @@
 //      for lost.
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
-import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } from '../model/loadout.js';
+import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
+// Every composition step — plan, apply, restamp — through the ONE framework
+// door (owner ruling), so the save/load path cannot split across the boundary.
+import { stampDeck, WeaponDeckCompositionService } from '../framework/deckComposition.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';

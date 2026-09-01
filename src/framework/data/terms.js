@@ -104,6 +104,10 @@ export const terms = {
       "pluralText": "Actions"
     },
     {
+      "id": "term.energy",
+      "canonicalText": "Energy"
+    },
+    {
       "id": "term.stamina",
       "canonicalText": "Stamina"
     },

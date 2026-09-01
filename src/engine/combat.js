@@ -21,7 +21,9 @@ import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
-import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+// Deck restamping goes through the framework's adopted composition door.
+import { stampDeck } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 
 const QUEUE_GUARD = 10000;
