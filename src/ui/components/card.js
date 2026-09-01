@@ -192,10 +192,10 @@ function cardTooltip(registries, def, tokens) {
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
-    if (registries.keywords.has(kw)) {
-      const k = registries.keywords.get(kw);
-      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
-    }
+    // Words resolve through the framework TermRegistry (one vocabulary home);
+    // an id outside the keyword vocabulary is skipped, as before.
+    const k = registries.framework.keywordDisplay(kw);
+    if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
   }
   for (const eff of def.effects || []) {
     if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {

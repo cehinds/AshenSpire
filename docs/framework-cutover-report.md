@@ -54,6 +54,36 @@ not passed every gate — no mixed old/new authority.
 | full regression suite | **PASS** | `tests/framework.test.mjs` 43/43 green; `tests/run-node.mjs` green (the one baseline red, test 19, was fixed upstream by the item-upgrade redesign merged in #507) |
 | proof that legacy runtime authority is unreachable | **FAIL** (by design, honestly) | cutover has not been performed; legacy consumers still read `src/content`/`src/engine` directly |
 
+## Port progress (legacy consumers now deciding through the framework)
+
+The port runs behind the legacy interfaces via `src/framework/bridge.js`
+(attached to every `createRegistries()` result as `registries.framework`).
+Decisions run on the RESOLVED card def — upgrades and mods can change
+keywords — mapped through the importer's one card-mechanics mapping, and a
+framework test sweeps every card, base and upgraded, proving bridge
+decisions equal the legacy keyword rules.
+
+| Decision | Legacy home | Now decided by |
+|---|---|---|
+| Innate draw-pile ordering | `engine/combat.js`, `engine/coopCombat.js` | `lifecycle.innate` via bridge `isInnate` |
+| Unplayable play-legality | both engines + `ui/screens/combat.js` (×2) | `internal.unplayable` via bridge `isUnplayable` |
+| After-play placement (exhaust / power removal / discard) | both engines | `destinationAfterPlay` via bridge |
+| End-turn fate (retain / ethereal / discard) | both engines | `endTurnCleanup` via bridge |
+| Keyword names + tooltips | `ui/components/card.js` | TermRegistry via bridge `keywordDisplay` |
+
+Two legacy rules the contract does not name are preserved in the framework
+lifecycle explicitly: an Ethereal card in hand Exhausts at end of turn
+(Retain wins on a card carrying both), and a played Power is removed from
+play (Exhaust still wins on a Power that carries it).
+
+`content/framework/` is registered with the content pipeline's stray-source
+sweep: a framework JSON without its generated mirror in
+`src/framework/data/` still fails by name.
+
+Still legacy-decided (next tranches): card costs and legality beyond
+Unplayable, deck composition, status/stance semantics, every screen's
+presentation components, confirmation flows.
+
 ## Unresolved contradictions (reported before cutover, per the contract)
 
 1. **Legacy armour ids are not globally unique.** `outfits.csv` ids are unique

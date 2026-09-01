@@ -30671,6 +30671,7 @@ const { applyCardMods } = require("src/model/loadout.js");
 const { deriveStat, resolveDerivedStatRules } = require("src/model/derivedStats.js");
 const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 const { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } = require("src/model/itemUpgrades.js");
+const { sharedFrameworkBridge } = require("src/framework/bridge.js");
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -30861,6 +30862,13 @@ function createRegistries(contentBundle) {
 
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
+
+  // The framework bridge — the decision authority for card lifecycle
+  // vocabulary and keyword terminology (src/framework/bridge.js). It reads
+  // only canonical framework data (never this bundle), so the process-wide
+  // instance serves every registries object, and a plain property keeps it
+  // visible to fixtures that clone registries with spread.
+  registries.framework = sharedFrameworkBridge();
 
   return Object.freeze(registries);
 }
@@ -33405,6 +33413,2396 @@ function resolveRelicModifiers(registries, relicIds, { attributes = {}, tierSize
 Object.assign(module.exports, { RELIC_RESOURCE_IDS, resolveRelicModifiers });
 
 },
+"src/framework/bridge.js": function (module, exports, require) {
+// src/framework/bridge.js — the runtime seam between the legacy engine/UI and
+// the framework (cutover path, step "port the legacy consumers": the
+// framework becomes the DECISION authority for card lifecycle vocabulary and
+// keyword terminology while legacy modules keep their interfaces).
+//
+// Decisions run on the RESOLVED card def — upgrades, mods, profiles and
+// smithing can change keywords (an upgrade may remove Exhaust), so a base-row
+// lookup would be wrong. The def is mapped through the importer's ONE
+// card-mechanics mapping (never display text) and cached by def identity
+// (resolved defs are frozen and cached upstream in resolveCard).
+
+const { properties: propertiesData } = require("src/framework/data/properties.js");
+const { relations: relationsData } = require("src/framework/data/relations.js");
+const { terms: termsData } = require("src/framework/data/terms.js");
+const { PropertyRegistry, TermRegistry } = require("src/framework/registries.js");
+const { cardPropertyInstances, KEYWORD_PROPERTY } = require("src/framework/importer.js");
+const { destinationAfterPlay, endTurnCleanup } = require("src/framework/lifecycle.js");
+const { hasProperty } = require("src/framework/compiler.js");
+
+let sharedBridge = null;
+
+/**
+ * The bridge reads only canonical framework data (never the content bundle),
+ * so one instance serves every registries object; created on first use.
+ * Plain-property assignment in createRegistries keeps it visible to tests
+ * that clone registries with spread.
+ */
+function sharedFrameworkBridge() {
+  if (!sharedBridge) sharedBridge = createFrameworkBridge();
+  return sharedBridge;
+}
+
+function createFrameworkBridge() {
+  const props = new PropertyRegistry(propertiesData.properties, relationsData.relations);
+  const terms = new TermRegistry(termsData.terms);
+  const viewCache = new WeakMap();
+
+  /** Property view of a resolved legacy card def, cached by def identity. */
+  function viewFor(def) {
+    let view = viewCache.get(def);
+    if (!view) {
+      view = Object.freeze({
+        id: def.id,
+        properties: Object.freeze(cardPropertyInstances(def).map((p) => Object.freeze({
+          propertyId: p.propertyId,
+          parameters: p.parameters || {},
+        }))),
+      });
+      viewCache.set(def, view);
+    }
+    return view;
+  }
+
+  return Object.freeze({
+    viewFor,
+
+    /** After-play placement (framework contract: Card lifecycle). */
+    afterPlayDestination(def) {
+      return destinationAfterPlay(viewFor(def), { cancelled: false, legal: true });
+    },
+
+    /** End-of-turn fate of one card in hand: 'keep' | 'exhaust' | 'discard'. */
+    endTurnFate(def) {
+      const { keep, exhaust } = endTurnCleanup([viewFor(def)]);
+      if (keep.length) return 'keep';
+      if (exhaust.length) return 'exhaust';
+      return 'discard';
+    },
+
+    isInnate(def) {
+      return hasProperty(viewFor(def), 'lifecycle.innate');
+    },
+
+    isUnplayable(def) {
+      return hasProperty(viewFor(def), 'internal.unplayable');
+    },
+
+    /**
+     * Canonical display for a legacy keyword id — words resolved only through
+     * TermRegistry. Returns null for an id outside the keyword vocabulary
+     * (the caller skips it, as the legacy keyword registry lookup did).
+     */
+    keywordDisplay(keywordId) {
+      const propertyId = KEYWORD_PROPERTY[keywordId];
+      if (!propertyId) return null;
+      const prop = props.require(propertyId);
+      return {
+        name: terms.displayTerm(prop.playerTermId),
+        tooltip: terms.displayTerm(prop.tooltipTermId),
+      };
+    },
+  });
+}
+
+
+Object.assign(module.exports, { sharedFrameworkBridge, createFrameworkBridge });
+
+},
+"src/framework/data/properties.js": function (module, exports, require) {
+// GENERATED by tools/framework-data-build.mjs from content/framework/properties.json
+// Do not edit by hand — edit the source file and re-run the build.
+
+const properties = {
+  "comment": "Canonical PropertyDefinition rows (framework contract: Canonical relational model). Family roots carry INTERNAL visibility; children carry the player-facing terms. Legacy card types (attack/skill/power/curse/status) are preserved as classification properties so import never rewrites mechanics from display text.",
+  "properties": [
+    {
+      "id": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "classification.attack",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.attack",
+      "tooltipTermId": "term.tooltip.attack",
+      "priority": 10
+    },
+    {
+      "id": "classification.strike",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.strike",
+      "tooltipTermId": "term.tooltip.strike",
+      "priority": 11
+    },
+    {
+      "id": "classification.guard",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.guard",
+      "tooltipTermId": "term.tooltip.guard",
+      "priority": 12
+    },
+    {
+      "id": "classification.weaponArt",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.weaponArt",
+      "tooltipTermId": "term.tooltip.weaponArt",
+      "priority": 13
+    },
+    {
+      "id": "classification.skill",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.skill",
+      "tooltipTermId": "term.tooltip.skill",
+      "priority": 14
+    },
+    {
+      "id": "classification.power",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.power",
+      "tooltipTermId": "term.tooltip.power",
+      "priority": 15
+    },
+    {
+      "id": "classification.curse",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.curse",
+      "tooltipTermId": "term.tooltip.curse",
+      "priority": 16
+    },
+    {
+      "id": "classification.statusCard",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.statusCard",
+      "tooltipTermId": "term.tooltip.statusCard",
+      "priority": 17
+    },
+    {
+      "id": "damage",
+      "domain": "DAMAGE",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "damage.physical",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.physical",
+      "tooltipTermId": "term.tooltip.physical",
+      "priority": 10
+    },
+    {
+      "id": "damage.magic",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.magic",
+      "tooltipTermId": "term.tooltip.magic",
+      "priority": 11
+    },
+    {
+      "id": "damage.arcane",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.arcane",
+      "tooltipTermId": "term.tooltip.arcane",
+      "priority": 12
+    },
+    {
+      "id": "damage.blade",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.blade",
+      "tooltipTermId": "term.tooltip.blade",
+      "priority": 13
+    },
+    {
+      "id": "damage.blunt",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.blunt",
+      "tooltipTermId": "term.tooltip.blunt",
+      "priority": 14
+    },
+    {
+      "id": "damage.piercing",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.piercing",
+      "tooltipTermId": "term.tooltip.piercing",
+      "priority": 15
+    },
+    {
+      "id": "scaling",
+      "domain": "SCALING",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "scaling.strength",
+      "parentId": "scaling",
+      "domain": "SCALING",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.strength",
+      "tooltipTermId": "term.tooltip.strength",
+      "priority": 10
+    },
+    {
+      "id": "scaling.dexterity",
+      "parentId": "scaling",
+      "domain": "SCALING",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.dexterity",
+      "tooltipTermId": "term.tooltip.dexterity",
+      "priority": 11
+    },
+    {
+      "id": "scaling.constitution",
+      "parentId": "scaling",
+      "domain": "SCALING",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.constitution",
+      "tooltipTermId": "term.tooltip.constitution",
+      "priority": 12
+    },
+    {
+      "id": "scaling.intelligence",
+      "parentId": "scaling",
+      "domain": "SCALING",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.intelligence",
+      "tooltipTermId": "term.tooltip.intelligence",
+      "priority": 13
+    },
+    {
+      "id": "scaling.wisdom",
+      "parentId": "scaling",
+      "domain": "SCALING",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.wisdom",
+      "tooltipTermId": "term.tooltip.wisdom",
+      "priority": 14
+    },
+    {
+      "id": "cost",
+      "domain": "COST",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "cost.action",
+      "parentId": "cost",
+      "domain": "COST",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.action",
+      "tooltipTermId": "term.tooltip.action",
+      "priority": 10,
+      "defaultParameters": {
+        "amount": 1
+      }
+    },
+    {
+      "id": "cost.stamina",
+      "parentId": "cost",
+      "domain": "COST",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.stamina",
+      "tooltipTermId": "term.tooltip.stamina",
+      "priority": 11,
+      "defaultParameters": {
+        "amount": 1
+      }
+    },
+    {
+      "id": "cost.mana",
+      "parentId": "cost",
+      "domain": "COST",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.mana",
+      "tooltipTermId": "term.tooltip.mana",
+      "priority": 12,
+      "defaultParameters": {
+        "amount": 1
+      }
+    },
+    {
+      "id": "cost.alternative",
+      "parentId": "cost",
+      "domain": "COST",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.alternativeCost",
+      "tooltipTermId": "term.tooltip.alternativeCost",
+      "priority": 13
+    },
+    {
+      "id": "lifecycle",
+      "domain": "LIFECYCLE",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "lifecycle.innate",
+      "parentId": "lifecycle",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.innate",
+      "tooltipTermId": "term.tooltip.innate",
+      "priority": 10
+    },
+    {
+      "id": "lifecycle.retain",
+      "parentId": "lifecycle",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.retain",
+      "tooltipTermId": "term.tooltip.retain",
+      "priority": 11
+    },
+    {
+      "id": "lifecycle.recall",
+      "parentId": "lifecycle",
+      "domain": "LIFECYCLE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.recall",
+      "tooltipTermId": "term.tooltip.recall",
+      "priority": 12
+    },
+    {
+      "id": "lifecycle.recall.afterUse",
+      "parentId": "lifecycle.recall",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.recallAfterUse",
+      "tooltipTermId": "term.tooltip.recallAfterUse",
+      "priority": 13
+    },
+    {
+      "id": "lifecycle.recall.afterTurnDraw",
+      "parentId": "lifecycle.recall",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.recallAfterTurnDraw",
+      "tooltipTermId": "term.tooltip.recallAfterTurnDraw",
+      "priority": 14
+    },
+    {
+      "id": "lifecycle.recall.afterCardPlay",
+      "parentId": "lifecycle.recall",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.recallAfterCardPlay",
+      "tooltipTermId": "term.tooltip.recallAfterCardPlay",
+      "priority": 15
+    },
+    {
+      "id": "lifecycle.exhaust",
+      "parentId": "lifecycle",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.exhaust",
+      "tooltipTermId": "term.tooltip.exhaust",
+      "priority": 16
+    },
+    {
+      "id": "lifecycle.seal",
+      "parentId": "lifecycle",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.seal",
+      "tooltipTermId": "term.tooltip.seal",
+      "priority": 17
+    },
+    {
+      "id": "lifecycle.ethereal",
+      "parentId": "lifecycle",
+      "domain": "LIFECYCLE",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.ethereal",
+      "tooltipTermId": "term.tooltip.ethereal",
+      "priority": 18
+    },
+    {
+      "id": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "equipment.bound",
+      "parentId": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "PRIMARY",
+      "playerTermId": "term.equipmentBound",
+      "tooltipTermId": "term.tooltip.equipmentBound",
+      "priority": 10
+    },
+    {
+      "id": "equipment.mainHand",
+      "parentId": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.mainHand",
+      "tooltipTermId": "term.tooltip.mainHand",
+      "priority": 11
+    },
+    {
+      "id": "equipment.offHand",
+      "parentId": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.offHand",
+      "tooltipTermId": "term.tooltip.offHand",
+      "priority": 12
+    },
+    {
+      "id": "equipment.twoHanded",
+      "parentId": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.twoHanded",
+      "tooltipTermId": "term.tooltip.twoHanded",
+      "priority": 13
+    },
+    {
+      "id": "equipment.shield",
+      "parentId": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.shield",
+      "tooltipTermId": "term.tooltip.shield",
+      "priority": 14
+    },
+    {
+      "id": "equipment.parryTool",
+      "parentId": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.parryTool",
+      "tooltipTermId": "term.tooltip.parryTool",
+      "priority": 15
+    },
+    {
+      "id": "utility",
+      "domain": "ACTION_ROLE",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "utility.evasion",
+      "parentId": "utility",
+      "domain": "ACTION_ROLE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.evasion",
+      "tooltipTermId": "term.tooltip.evasion",
+      "priority": 10
+    },
+    {
+      "id": "utility.conduit",
+      "parentId": "utility",
+      "domain": "ACTION_ROLE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.conduit",
+      "tooltipTermId": "term.tooltip.conduit",
+      "priority": 11
+    },
+    {
+      "id": "utility.manaCharge",
+      "parentId": "utility",
+      "domain": "ACTION_ROLE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.manaCharge",
+      "tooltipTermId": "term.tooltip.manaCharge",
+      "priority": 12
+    },
+    {
+      "id": "targeting",
+      "domain": "TARGETING",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "targeting.self",
+      "parentId": "targeting",
+      "domain": "TARGETING",
+      "visibility": "CONTEXTUAL",
+      "playerTermId": "term.targetSelf",
+      "tooltipTermId": "term.tooltip.targetSelf",
+      "priority": 10
+    },
+    {
+      "id": "targeting.enemy",
+      "parentId": "targeting",
+      "domain": "TARGETING",
+      "visibility": "CONTEXTUAL",
+      "playerTermId": "term.targetEnemy",
+      "tooltipTermId": "term.tooltip.targetEnemy",
+      "priority": 11
+    },
+    {
+      "id": "targeting.allEnemies",
+      "parentId": "targeting",
+      "domain": "TARGETING",
+      "visibility": "CONTEXTUAL",
+      "playerTermId": "term.targetAllEnemies",
+      "tooltipTermId": "term.tooltip.targetAllEnemies",
+      "priority": 12
+    },
+    {
+      "id": "targeting.randomEnemy",
+      "parentId": "targeting",
+      "domain": "TARGETING",
+      "visibility": "CONTEXTUAL",
+      "playerTermId": "term.targetRandomEnemy",
+      "tooltipTermId": "term.tooltip.targetRandomEnemy",
+      "priority": 13
+    },
+    {
+      "id": "targeting.ally",
+      "parentId": "targeting",
+      "domain": "TARGETING",
+      "visibility": "CONTEXTUAL",
+      "playerTermId": "term.targetAlly",
+      "tooltipTermId": "term.tooltip.targetAlly",
+      "priority": 14
+    },
+    {
+      "id": "internal",
+      "domain": "INTERNAL",
+      "visibility": "INTERNAL",
+      "priority": 0
+    },
+    {
+      "id": "internal.unplayable",
+      "parentId": "internal",
+      "domain": "INTERNAL",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.unplayable",
+      "tooltipTermId": "term.tooltip.unplayable",
+      "priority": 10
+    },
+    {
+      "id": "internal.upgraded",
+      "parentId": "internal",
+      "domain": "INTERNAL",
+      "visibility": "DEBUG",
+      "priority": 11
+    },
+    {
+      "id": "presentation",
+      "domain": "PRESENTATION",
+      "visibility": "INTERNAL",
+      "priority": 0
+    }
+  ]
+};
+
+
+Object.assign(module.exports, { properties });
+
+},
+"src/framework/data/relations.js": function (module, exports, require) {
+// GENERATED by tools/framework-data-build.mjs from content/framework/relations.json
+// Do not edit by hand — edit the source file and re-run the build.
+
+const relations = {
+  "comment": "Canonical PropertyRelation rows. CONFLICTS_WITH is symmetric; REQUIRES/PERMITS/INHERITS/REPLACES/SUPPRESSES read source->target. PERMITS rows from classification properties to family roots ARE the inheritance allowlist (framework contract: Whitelisted inheritance) — a family absent from a classification's PERMITS set never crosses equipment inheritance onto that card.",
+  "relations": [
+    {
+      "sourcePropertyId": "classification.attack",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.skill",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.attack",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.power",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.attack",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.curse",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.attack",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.statusCard",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.skill",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.power",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.skill",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.curse",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.skill",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.statusCard",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.power",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.curse",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.power",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.statusCard",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.curse",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.statusCard",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.strike",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "classification.guard",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.strike",
+      "relation": "INHERITS",
+      "targetPropertyId": "classification.attack",
+      "precedence": 20
+    },
+    {
+      "sourcePropertyId": "lifecycle.exhaust",
+      "relation": "SUPPRESSES",
+      "targetPropertyId": "lifecycle.recall.afterUse",
+      "precedence": 100
+    },
+    {
+      "sourcePropertyId": "equipment.mainHand",
+      "relation": "REQUIRES",
+      "targetPropertyId": "equipment.bound",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "equipment.offHand",
+      "relation": "REQUIRES",
+      "targetPropertyId": "equipment.bound",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "equipment.twoHanded",
+      "relation": "REQUIRES",
+      "targetPropertyId": "equipment.bound",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "equipment.twoHanded",
+      "relation": "CONFLICTS_WITH",
+      "targetPropertyId": "equipment.offHand",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.attack",
+      "relation": "PERMITS",
+      "targetPropertyId": "damage",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.attack",
+      "relation": "PERMITS",
+      "targetPropertyId": "scaling",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.guard",
+      "relation": "PERMITS",
+      "targetPropertyId": "scaling",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.guard",
+      "relation": "PERMITS",
+      "targetPropertyId": "utility.evasion",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.skill",
+      "relation": "PERMITS",
+      "targetPropertyId": "scaling",
+      "precedence": 10
+    },
+    {
+      "sourcePropertyId": "classification.skill",
+      "relation": "PERMITS",
+      "targetPropertyId": "utility",
+      "precedence": 10
+    }
+  ]
+};
+
+
+Object.assign(module.exports, { relations });
+
+},
+"src/framework/data/terms.js": function (module, exports, require) {
+// GENERATED by tools/framework-data-build.mjs from content/framework/terms.json
+// Do not edit by hand — edit the source file and re-run the build.
+
+const terms = {
+  "comment": "Canonical TermDefinition rows — the single home for mechanical vocabulary. Legacy keyword tooltips (exhaust/ethereal/innate/retain/unplayable) are carried verbatim from src/content/keywords.js; changing a canonicalText here changes every valid surface. aliasesForImportOnly lets the importer match legacy spellings without keeping them alive.",
+  "terms": [
+    {
+      "id": "term.armament",
+      "canonicalText": "Armament",
+      "pluralText": "Armaments"
+    },
+    {
+      "id": "term.attack",
+      "canonicalText": "Attack",
+      "pluralText": "Attacks"
+    },
+    {
+      "id": "term.strike",
+      "canonicalText": "Strike",
+      "pluralText": "Strikes"
+    },
+    {
+      "id": "term.guard",
+      "canonicalText": "Guard",
+      "pluralText": "Guards"
+    },
+    {
+      "id": "term.weaponArt",
+      "canonicalText": "Weapon Art",
+      "pluralText": "Weapon Arts"
+    },
+    {
+      "id": "term.skill",
+      "canonicalText": "Skill",
+      "pluralText": "Skills"
+    },
+    {
+      "id": "term.power",
+      "canonicalText": "Power",
+      "pluralText": "Powers"
+    },
+    {
+      "id": "term.curse",
+      "canonicalText": "Curse",
+      "pluralText": "Curses"
+    },
+    {
+      "id": "term.statusCard",
+      "canonicalText": "Status",
+      "pluralText": "Statuses"
+    },
+    {
+      "id": "term.physical",
+      "canonicalText": "Physical"
+    },
+    {
+      "id": "term.magic",
+      "canonicalText": "Magic"
+    },
+    {
+      "id": "term.arcane",
+      "canonicalText": "Arcane"
+    },
+    {
+      "id": "term.blade",
+      "canonicalText": "Blade"
+    },
+    {
+      "id": "term.blunt",
+      "canonicalText": "Blunt"
+    },
+    {
+      "id": "term.piercing",
+      "canonicalText": "Piercing"
+    },
+    {
+      "id": "term.strength",
+      "canonicalText": "Strength",
+      "shortText": "STR"
+    },
+    {
+      "id": "term.dexterity",
+      "canonicalText": "Dexterity",
+      "shortText": "DEX"
+    },
+    {
+      "id": "term.constitution",
+      "canonicalText": "Constitution",
+      "shortText": "CON"
+    },
+    {
+      "id": "term.intelligence",
+      "canonicalText": "Intelligence",
+      "shortText": "INT"
+    },
+    {
+      "id": "term.wisdom",
+      "canonicalText": "Wisdom",
+      "shortText": "WIS"
+    },
+    {
+      "id": "term.action",
+      "canonicalText": "Action",
+      "pluralText": "Actions"
+    },
+    {
+      "id": "term.stamina",
+      "canonicalText": "Stamina"
+    },
+    {
+      "id": "term.mana",
+      "canonicalText": "Mana"
+    },
+    {
+      "id": "term.alternativeCost",
+      "canonicalText": "Alternative Cost",
+      "pluralText": "Alternative Costs"
+    },
+    {
+      "id": "term.innate",
+      "canonicalText": "Innate"
+    },
+    {
+      "id": "term.retain",
+      "canonicalText": "Retain"
+    },
+    {
+      "id": "term.recall",
+      "canonicalText": "Recall"
+    },
+    {
+      "id": "term.recallAfterUse",
+      "canonicalText": "Recall After Use"
+    },
+    {
+      "id": "term.recallAfterTurnDraw",
+      "canonicalText": "Recall After Turn Draw"
+    },
+    {
+      "id": "term.recallAfterCardPlay",
+      "canonicalText": "Recall After Card Play"
+    },
+    {
+      "id": "term.exhaust",
+      "canonicalText": "Exhaust"
+    },
+    {
+      "id": "term.seal",
+      "canonicalText": "Seal",
+      "pluralText": "Seals"
+    },
+    {
+      "id": "term.ethereal",
+      "canonicalText": "Ethereal"
+    },
+    {
+      "id": "term.unplayable",
+      "canonicalText": "Unplayable"
+    },
+    {
+      "id": "term.equipmentBound",
+      "canonicalText": "Equipment-Bound",
+      "aliasesForImportOnly": [
+        "bounded",
+        "Bounded"
+      ]
+    },
+    {
+      "id": "term.mainHand",
+      "canonicalText": "Main Hand"
+    },
+    {
+      "id": "term.offHand",
+      "canonicalText": "Off Hand"
+    },
+    {
+      "id": "term.twoHanded",
+      "canonicalText": "Two-Handed"
+    },
+    {
+      "id": "term.shield",
+      "canonicalText": "Shield",
+      "pluralText": "Shields"
+    },
+    {
+      "id": "term.parryTool",
+      "canonicalText": "Parry Tool",
+      "pluralText": "Parry Tools"
+    },
+    {
+      "id": "term.evasion",
+      "canonicalText": "Evasion"
+    },
+    {
+      "id": "term.conduit",
+      "canonicalText": "Conduit"
+    },
+    {
+      "id": "term.manaCharge",
+      "canonicalText": "Mana Charge"
+    },
+    {
+      "id": "term.targetSelf",
+      "canonicalText": "Self"
+    },
+    {
+      "id": "term.targetEnemy",
+      "canonicalText": "Enemy",
+      "pluralText": "Enemies"
+    },
+    {
+      "id": "term.targetAllEnemies",
+      "canonicalText": "All Enemies"
+    },
+    {
+      "id": "term.targetRandomEnemy",
+      "canonicalText": "Random Enemy"
+    },
+    {
+      "id": "term.targetAlly",
+      "canonicalText": "Ally",
+      "pluralText": "Allies"
+    },
+    {
+      "id": "term.weightLight",
+      "canonicalText": "Light"
+    },
+    {
+      "id": "term.weightMedium",
+      "canonicalText": "Medium"
+    },
+    {
+      "id": "term.weightHeavy",
+      "canonicalText": "Heavy"
+    },
+    {
+      "id": "term.dodgeRoll",
+      "canonicalText": "Dodge Roll"
+    },
+    {
+      "id": "term.temporaryGuard",
+      "canonicalText": "Temporary Guard"
+    },
+    {
+      "id": "term.unarmedStrike",
+      "canonicalText": "Unarmed Strike"
+    },
+    {
+      "id": "term.evasiveGuard",
+      "canonicalText": "Evasive Guard"
+    },
+    {
+      "id": "term.restSpot",
+      "canonicalText": "Rest Spot",
+      "pluralText": "Rest Spots"
+    },
+    {
+      "id": "term.blacksmith",
+      "canonicalText": "Blacksmith"
+    },
+    {
+      "id": "term.confirm",
+      "canonicalText": "Confirm"
+    },
+    {
+      "id": "term.cancel",
+      "canonicalText": "Cancel"
+    },
+    {
+      "id": "term.close",
+      "canonicalText": "Close",
+      "accessibilityText": "Close dialog"
+    },
+    {
+      "id": "term.tooltip.attack",
+      "canonicalText": "A card that deals damage when played."
+    },
+    {
+      "id": "term.tooltip.strike",
+      "canonicalText": "A basic attacking card. Equipped armaments replace your basic Strikes."
+    },
+    {
+      "id": "term.tooltip.guard",
+      "canonicalText": "A basic defending card. Equipped armaments replace your basic Guards."
+    },
+    {
+      "id": "term.tooltip.weaponArt",
+      "canonicalText": "A real card granted by an armament. It counts toward hand size and follows every card rule."
+    },
+    {
+      "id": "term.tooltip.skill",
+      "canonicalText": "A card with a non-attack effect."
+    },
+    {
+      "id": "term.tooltip.power",
+      "canonicalText": "A lasting effect for the rest of this combat."
+    },
+    {
+      "id": "term.tooltip.curse",
+      "canonicalText": "A card that hinders you while it is in your deck."
+    },
+    {
+      "id": "term.tooltip.statusCard",
+      "canonicalText": "A temporary junk card added during combat."
+    },
+    {
+      "id": "term.tooltip.physical",
+      "canonicalText": "Physical damage. Independent of what the card costs to play."
+    },
+    {
+      "id": "term.tooltip.magic",
+      "canonicalText": "Magic damage. Independent of what the card costs to play."
+    },
+    {
+      "id": "term.tooltip.arcane",
+      "canonicalText": "Arcane damage. Builds Arcane Exposure on enemies that track it."
+    },
+    {
+      "id": "term.tooltip.blade",
+      "canonicalText": "Damage dealt with an edge."
+    },
+    {
+      "id": "term.tooltip.blunt",
+      "canonicalText": "Damage dealt with mass and impact."
+    },
+    {
+      "id": "term.tooltip.piercing",
+      "canonicalText": "Damage dealt with a point."
+    },
+    {
+      "id": "term.tooltip.strength",
+      "canonicalText": "This card scales with Strength."
+    },
+    {
+      "id": "term.tooltip.dexterity",
+      "canonicalText": "This card scales with Dexterity."
+    },
+    {
+      "id": "term.tooltip.constitution",
+      "canonicalText": "This card scales with Constitution."
+    },
+    {
+      "id": "term.tooltip.intelligence",
+      "canonicalText": "This card scales with Intelligence."
+    },
+    {
+      "id": "term.tooltip.wisdom",
+      "canonicalText": "This card scales with Wisdom."
+    },
+    {
+      "id": "term.tooltip.action",
+      "canonicalText": "Costs Actions to play."
+    },
+    {
+      "id": "term.tooltip.stamina",
+      "canonicalText": "Costs Stamina to play. Spend no Stamina for a full turn to recover 1."
+    },
+    {
+      "id": "term.tooltip.mana",
+      "canonicalText": "Costs Mana to play. Mana refills at Rest Spots, not between turns."
+    },
+    {
+      "id": "term.tooltip.alternativeCost",
+      "canonicalText": "May be paid with a complete alternative option instead of its listed cost."
+    },
+    {
+      "id": "term.tooltip.innate",
+      "canonicalText": "Starts each combat on top of your draw pile."
+    },
+    {
+      "id": "term.tooltip.retain",
+      "canonicalText": "Not discarded at the end of your turn."
+    },
+    {
+      "id": "term.tooltip.recall",
+      "canonicalText": "Returns to your hand after the named moment instead of being discarded."
+    },
+    {
+      "id": "term.tooltip.recallAfterUse",
+      "canonicalText": "Returns to your hand after being played. A forced discard is not a use."
+    },
+    {
+      "id": "term.tooltip.recallAfterTurnDraw",
+      "canonicalText": "Returns to your hand after your turn's draw."
+    },
+    {
+      "id": "term.tooltip.recallAfterCardPlay",
+      "canonicalText": "Returns to your hand after you play another card."
+    },
+    {
+      "id": "term.tooltip.exhaust",
+      "canonicalText": "Removed from your deck for the rest of this combat after being played."
+    },
+    {
+      "id": "term.tooltip.seal",
+      "canonicalText": "Set aside in the Sealed zone when its seal condition is met."
+    },
+    {
+      "id": "term.tooltip.ethereal",
+      "canonicalText": "If this card is in your hand at the end of your turn, it Exhausts."
+    },
+    {
+      "id": "term.tooltip.unplayable",
+      "canonicalText": "This card cannot be played."
+    },
+    {
+      "id": "term.tooltip.equipmentBound",
+      "canonicalText": "Granted by an equipped armament. It leaves your deck when the armament does."
+    },
+    {
+      "id": "term.tooltip.mainHand",
+      "canonicalText": "Bound to the armament in your main hand."
+    },
+    {
+      "id": "term.tooltip.offHand",
+      "canonicalText": "Bound to the armament in your off hand."
+    },
+    {
+      "id": "term.tooltip.twoHanded",
+      "canonicalText": "Bound to an armament held in both hands."
+    },
+    {
+      "id": "term.tooltip.shield",
+      "canonicalText": "Bound to an equipped shield."
+    },
+    {
+      "id": "term.tooltip.parryTool",
+      "canonicalText": "Bound to an equipped parry tool."
+    },
+    {
+      "id": "term.tooltip.evasion",
+      "canonicalText": "Contributes to Dodge Rolls and avoiding damage."
+    },
+    {
+      "id": "term.tooltip.conduit",
+      "canonicalText": "Channels magic through an equipped armament."
+    },
+    {
+      "id": "term.tooltip.manaCharge",
+      "canonicalText": "Recovers the stated amount of Mana."
+    },
+    {
+      "id": "term.tooltip.targetSelf",
+      "canonicalText": "Affects you."
+    },
+    {
+      "id": "term.tooltip.targetEnemy",
+      "canonicalText": "Affects one chosen enemy."
+    },
+    {
+      "id": "term.tooltip.targetAllEnemies",
+      "canonicalText": "Affects every enemy."
+    },
+    {
+      "id": "term.tooltip.targetRandomEnemy",
+      "canonicalText": "Affects a random enemy."
+    },
+    {
+      "id": "term.tooltip.targetAlly",
+      "canonicalText": "Affects one ally."
+    },
+    {
+      "id": "term.desc.unarmedStrike",
+      "canonicalText": "A last resort, still yours. Strikes with bare hands; scales with Strength and grants no attack-rating bonus."
+    },
+    {
+      "id": "term.desc.evasiveGuard",
+      "canonicalText": "Guard by not being there. Scales with Dexterity."
+    },
+    {
+      "id": "term.desc.dodgeRoll",
+      "canonicalText": "Roll clear of the next blow. On success, gain Temporary Guard against the next damage tick."
+    }
+  ]
+};
+
+
+Object.assign(module.exports, { terms });
+
+},
+"src/framework/registries.js": function (module, exports, require) {
+// src/framework/registries.js — the canonical registries (framework contract:
+// Canonical relational model, Terminology and assets).
+//
+// A registry's require() throws with the offending id — an unknown ID is never
+// silently accepted. Registries are built once from checked rows and frozen;
+// nothing downstream mutates them.
+
+const { checkPropertyDefinition, checkPropertyRelation, checkContentEntity, checkTermDefinition, checkAssetDefinition, checkConfirmationPolicy, checkConfirmationAction, SchemaError } = require("src/framework/schema.js");
+
+
+
+
+
+class Registry {
+  constructor(label, rows, check) {
+    this.label = label;
+    this.map = new Map();
+    this.duplicates = [];
+    for (const row of rows) {
+      check(row);
+      if (this.map.has(row.id)) this.duplicates.push(row.id);
+      else this.map.set(row.id, Object.freeze({ ...row }));
+    }
+  }
+
+  has(id) { return this.map.has(id); }
+
+  get(id) { return this.map.get(id) || null; }
+
+  require(id) {
+    const row = this.map.get(id);
+    if (!row) throw new SchemaError(this.label, `unknown id ${JSON.stringify(id)}`);
+    return row;
+  }
+
+  all() { return [...this.map.values()]; }
+
+  get size() { return this.map.size; }
+}
+
+class TermRegistry extends Registry {
+  constructor(rows) { super('TermRegistry', rows, checkTermDefinition); }
+
+  /**
+   * The one word source (authority boundary: ALWAYS resolve words through
+   * TermRegistry). context: 'default' | 'short' | 'plural' | 'accessibility'.
+   */
+  displayTerm(termId, context = 'default') {
+    const term = this.require(termId);
+    if (context === 'short') return term.shortText || term.canonicalText;
+    if (context === 'plural') return term.pluralText || term.canonicalText;
+    if (context === 'accessibility') return term.accessibilityText || term.canonicalText;
+    return term.canonicalText;
+  }
+
+  /** Import-only alias lookup — canonical id for a legacy spelling, or null. */
+  idForAlias(alias) {
+    for (const term of this.map.values()) {
+      if ((term.aliasesForImportOnly || []).includes(alias)) return term.id;
+    }
+    return null;
+  }
+}
+
+class AssetRegistry extends Registry {
+  constructor(rows, { assetLoads = null } = {}) {
+    super('AssetRegistry', rows, checkAssetDefinition);
+    // Injected existence/load probe (node: fs check; browser: loader cache).
+    // Absent probe = trust the path; validation supplies the real one.
+    this.assetLoads = assetLoads;
+    this.systemMissingId = 'asset.system.missing';
+  }
+
+  /** Typed fallback resolution (framework contract: resolveAsset). */
+  resolveAsset(assetId) {
+    const seen = new Set();
+    let id = assetId;
+    while (id && !seen.has(id)) {
+      seen.add(id);
+      const asset = this.get(id);
+      if (!asset) break;
+      const loads = this.assetLoads ? this.assetLoads(asset.sourcePath) : true;
+      if (loads) return asset;
+      id = asset.fallbackAssetId;
+    }
+    return this.get(this.systemMissingId);
+  }
+}
+
+class PropertyRegistry extends Registry {
+  constructor(rows, relations) {
+    super('PropertyRegistry', rows, checkPropertyDefinition);
+    this.relations = relations.map((r, i) => Object.freeze({ ...checkPropertyRelation(r, i) }));
+  }
+
+  /** The parent chain from a property up to its family root, excluding self. */
+  ancestorsOf(id) {
+    const out = [];
+    const seen = new Set([id]);
+    let current = this.require(id);
+    while (current.parentId) {
+      if (seen.has(current.parentId)) break; // cycle — validation reports it
+      seen.add(current.parentId);
+      current = this.require(current.parentId);
+      out.push(current.id);
+    }
+    return out;
+  }
+
+  /** Whether candidate is propertyId or descends from it (parent chain or INHERITS). */
+  isA(candidateId, propertyId) {
+    if (candidateId === propertyId) return true;
+    if (this.ancestorsOf(candidateId).includes(propertyId)) return true;
+    for (const rel of this.relations) {
+      if (rel.relation === 'INHERITS' && rel.sourcePropertyId === candidateId) {
+        if (this.isA(rel.targetPropertyId, propertyId)) return true;
+      }
+    }
+    return false;
+  }
+
+  relationsOfKind(kind) {
+    return this.relations.filter((r) => r.relation === kind);
+  }
+
+  relationsFrom(sourceId, kind = null) {
+    return this.relations.filter((r) => r.sourcePropertyId === sourceId && (kind == null || r.relation === kind));
+  }
+}
+
+class ContentRegistry extends Registry {
+  constructor(rows) {
+    super('ContentRegistry', rows, checkContentEntity);
+  }
+
+  ofKind(kind) { return this.all().filter((e) => e.kind === kind); }
+}
+
+class ConfirmationRegistry {
+  constructor({ policies, actions }) {
+    this.policies = new Registry('ConfirmationRegistry.policies', policies, checkConfirmationPolicy);
+    this.actions = new Registry('ConfirmationRegistry.actions', actions, checkConfirmationAction);
+  }
+
+  require(policyId) { return this.policies.require(policyId); }
+
+  policyForAction(actionId) {
+    const action = this.actions.require(actionId);
+    return this.policies.require(action.policyId);
+  }
+
+  get duplicates() { return [...this.policies.duplicates, ...this.actions.duplicates]; }
+}
+
+class ThemeRegistry {
+  constructor(theme) {
+    if (!theme || typeof theme !== 'object') throw new SchemaError('ThemeRegistry', 'theme data missing');
+    for (const section of ['colors', 'spacing', 'typography', 'radius', 'interactionStates', 'layout']) {
+      if (!theme[section]) throw new SchemaError('ThemeRegistry', `missing section ${section}`);
+    }
+    this.data = theme;
+    this.rolesById = new Map(theme.typography.roles.map((r) => [r.id, Object.freeze({ ...r })]));
+  }
+
+  color(name) {
+    const value = this.data.colors[name];
+    if (!value) throw new SchemaError('ThemeRegistry', `unknown color ${JSON.stringify(name)}`);
+    return value;
+  }
+
+  role(id) {
+    const role = this.rolesById.get(id);
+    if (!role) throw new SchemaError('ThemeRegistry', `unknown typography role ${JSON.stringify(id)}`);
+    return role;
+  }
+
+  get contrastPairs() { return this.data.contrastPairs || []; }
+}
+
+/**
+ * Build every registry from one data bag (the generated framework data plus
+ * imported rows). Duplicate ids are collected, not thrown, so validation can
+ * report the complete list; require() still refuses unknowns immediately.
+ */
+function createFrameworkRegistries({ properties, relations, terms, assets, entities, confirmation, theme, assetLoads = null }) {
+  return Object.freeze({
+    properties: new PropertyRegistry(properties, relations),
+    terms: new TermRegistry(terms),
+    assets: new AssetRegistry(assets, { assetLoads }),
+    content: new ContentRegistry(entities),
+    confirmation: new ConfirmationRegistry(confirmation),
+    theme: new ThemeRegistry(theme),
+  });
+}
+
+
+Object.assign(module.exports, { TermRegistry, AssetRegistry, PropertyRegistry, ContentRegistry, ConfirmationRegistry, ThemeRegistry, createFrameworkRegistries });
+
+},
+"src/framework/schema.js": function (module, exports, require) {
+// src/framework/schema.js — closed vocabularies and row-shape checks for the
+// canonical relational model (framework contract: Canonical relational model).
+//
+// Every enum here is CLOSED: an unknown domain, relation, kind, source, or
+// visibility is rejected by name, never silently accepted (authority boundary:
+// NEVER silently accept an unknown ID).
+
+const PROPERTY_DOMAINS = Object.freeze([
+  'CLASSIFICATION', 'DAMAGE', 'ACTION_ROLE', 'COST', 'TARGETING',
+  'LIFECYCLE', 'SCALING', 'EQUIPMENT', 'STATUS', 'PRESENTATION', 'INTERNAL',
+]);
+
+const PROPERTY_VISIBILITIES = Object.freeze([
+  'PRIMARY', 'SECONDARY', 'CONTEXTUAL', 'INTERNAL', 'DEBUG',
+]);
+
+const RELATION_KINDS = Object.freeze([
+  'REQUIRES', 'CONFLICTS_WITH', 'PERMITS', 'INHERITS', 'REPLACES', 'SUPPRESSES',
+]);
+
+const ENTITY_KINDS = Object.freeze([
+  'CARD', 'EQUIPMENT', 'CLASS', 'ENEMY', 'STATUS', 'EFFECT', 'LOCATION',
+  'RELIC', 'CONSUMABLE', 'UI_SURFACE',
+]);
+
+const PROPERTY_SOURCES = Object.freeze([
+  'AUTHORED', 'EQUIPMENT', 'RUNE', 'STATUS', 'CLASS', 'RELIC', 'SYSTEM_DEFAULT',
+]);
+
+const ASSET_KINDS = Object.freeze([
+  'PORTRAIT', 'CARD_ART', 'ICON', 'BACKGROUND', 'AUDIO',
+]);
+
+const CONFIRMATION_LEVELS = Object.freeze([
+  'NONE', 'REVERSIBLE', 'COMMITMENT', 'DESTRUCTIVE',
+]);
+
+const EQUIPMENT_CATEGORIES = Object.freeze([
+  'WEAPON', 'SHIELD', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
+]);
+
+const EQUIPMENT_RARITIES = Object.freeze([
+  'BASIC', 'COMMON', 'RARE', 'LEGENDARY', 'MYTHIC',
+]);
+
+const COST_MODES = Object.freeze(['ALL_REQUIRED', 'CHOOSE_ONE']);
+
+const ID_RE = /^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)*$/;
+
+class SchemaError extends Error {
+  constructor(where, message) {
+    super(`${where}: ${message}`);
+    this.name = 'SchemaError';
+    this.where = where;
+  }
+}
+
+function assertStableId(id, where) {
+  if (typeof id !== 'string' || !ID_RE.test(id)) {
+    throw new SchemaError(where, `invalid stable id ${JSON.stringify(id)}`);
+  }
+  return id;
+}
+
+function assertEnum(value, allowed, field, where) {
+  if (!allowed.includes(value)) {
+    throw new SchemaError(where, `${field} ${JSON.stringify(value)} is not one of [${allowed.join(', ')}]`);
+  }
+  return value;
+}
+
+function assertOptional(value, kind, field, where) {
+  if (value == null) return undefined;
+  if (kind === 'string' && typeof value !== 'string') throw new SchemaError(where, `${field} must be a string`);
+  if (kind === 'integer' && !Number.isInteger(value)) throw new SchemaError(where, `${field} must be an integer`);
+  if (kind === 'object' && (typeof value !== 'object' || Array.isArray(value))) throw new SchemaError(where, `${field} must be an object`);
+  return value;
+}
+
+function checkPropertyDefinition(row) {
+  const where = `property ${row && row.id}`;
+  assertStableId(row.id, 'property');
+  if (row.parentId != null) assertStableId(row.parentId, where);
+  assertEnum(row.domain, PROPERTY_DOMAINS, 'domain', where);
+  assertEnum(row.visibility, PROPERTY_VISIBILITIES, 'visibility', where);
+  assertOptional(row.defaultParameters, 'object', 'defaultParameters', where);
+  assertOptional(row.playerTermId, 'string', 'playerTermId', where);
+  assertOptional(row.tooltipTermId, 'string', 'tooltipTermId', where);
+  if (!Number.isInteger(row.priority)) throw new SchemaError(where, 'priority must be an integer');
+  return row;
+}
+
+function checkPropertyRelation(row, index) {
+  const where = `relation #${index} (${row && row.sourcePropertyId} ${row && row.relation} ${row && row.targetPropertyId})`;
+  assertStableId(row.sourcePropertyId, where);
+  assertStableId(row.targetPropertyId, where);
+  assertEnum(row.relation, RELATION_KINDS, 'relation', where);
+  if (!Number.isInteger(row.precedence)) throw new SchemaError(where, 'precedence must be an integer');
+  assertOptional(row.condition, 'string', 'condition', where);
+  return row;
+}
+
+function checkPropertyInstance(row, where) {
+  assertStableId(row.propertyId, where);
+  assertEnum(row.source, PROPERTY_SOURCES, 'source', where);
+  assertOptional(row.parameters, 'object', 'parameters', where);
+  assertOptional(row.sourceEntityId, 'string', 'sourceEntityId', where);
+  return row;
+}
+
+function checkContentEntity(row) {
+  const where = `entity ${row && row.id}`;
+  assertStableId(row.id, 'entity');
+  assertEnum(row.kind, ENTITY_KINDS, 'kind', where);
+  assertStableId(row.nameTermId, where);
+  assertOptional(row.descriptionTermId, 'string', 'descriptionTermId', where);
+  assertOptional(row.artId, 'string', 'artId', where);
+  assertOptional(row.rarityId, 'string', 'rarityId', where);
+  assertOptional(row.explicitOverrides, 'object', 'explicitOverrides', where);
+  if (!Array.isArray(row.properties)) throw new SchemaError(where, 'properties must be a list');
+  row.properties.forEach((p, i) => checkPropertyInstance(p, `${where} properties[${i}]`));
+  return row;
+}
+
+function checkTermDefinition(row) {
+  const where = `term ${row && row.id}`;
+  assertStableId(row.id, 'term');
+  if (typeof row.canonicalText !== 'string' || row.canonicalText.length === 0) {
+    throw new SchemaError(where, 'canonicalText must be a non-empty string');
+  }
+  for (const field of ['shortText', 'pluralText', 'accessibilityText']) {
+    assertOptional(row[field], 'string', field, where);
+  }
+  if (row.aliasesForImportOnly != null && !Array.isArray(row.aliasesForImportOnly)) {
+    throw new SchemaError(where, 'aliasesForImportOnly must be a list');
+  }
+  return row;
+}
+
+function checkAssetDefinition(row) {
+  const where = `asset ${row && row.id}`;
+  assertStableId(row.id, 'asset');
+  assertEnum(row.kind, ASSET_KINDS, 'kind', where);
+  if (typeof row.sourcePath !== 'string' || row.sourcePath.length === 0) {
+    throw new SchemaError(where, 'sourcePath must be a non-empty string');
+  }
+  assertStableId(row.fallbackAssetId, where);
+  assertOptional(row.altTermId, 'string', 'altTermId', where);
+  return row;
+}
+
+function checkConfirmationPolicy(row) {
+  const where = `policy ${row && row.id}`;
+  assertStableId(row.id, 'policy');
+  assertEnum(row.level, CONFIRMATION_LEVELS, 'level', where);
+  return row;
+}
+
+function checkConfirmationAction(row) {
+  const where = `action ${row && row.id}`;
+  assertStableId(row.id, 'action');
+  assertStableId(row.policyId, where);
+  if (typeof row.destructive !== 'boolean') throw new SchemaError(where, 'destructive must be a boolean');
+  return row;
+}
+
+
+Object.assign(module.exports, { PROPERTY_DOMAINS, PROPERTY_VISIBILITIES, RELATION_KINDS, ENTITY_KINDS, PROPERTY_SOURCES, ASSET_KINDS, CONFIRMATION_LEVELS, EQUIPMENT_CATEGORIES, EQUIPMENT_RARITIES, COST_MODES, SchemaError, assertStableId, checkPropertyDefinition, checkPropertyRelation, checkPropertyInstance, checkContentEntity, checkTermDefinition, checkAssetDefinition, checkConfirmationPolicy, checkConfirmationAction });
+
+},
+"src/framework/importer.js": function (module, exports, require) {
+// src/framework/importer.js — importEveryExistingContentEntity (framework
+// contract: One-shot replacement and atomic cutover).
+//
+// Maps the legacy content bundle into the canonical relational model WITHOUT
+// inventing mechanics: every mapping below reads a mechanical field the engine
+// already honors (type, cost, manaCost, keywords, damageSchool, effect
+// targets), never display text or artwork (authority boundary: NEVER derive
+// mechanics from display text). Legacy stable ids are preserved verbatim; the
+// one exception is armour, whose legacy id is only unique per class — the
+// import key is `armor.<classId>.<id>` and the original pair rides in
+// explicitOverrides so save identity is untouched.
+//
+// Unknown ids and vocabulary members THROW by name. A silent skip here would
+// be a silently-accepted unknown, which the authority boundaries forbid.
+
+const { EQUIPMENT_CATEGORIES, EQUIPMENT_RARITIES } = require("src/framework/schema.js");
+
+class ImportError extends Error {
+  constructor(message) { super(`import: ${message}`); this.name = 'ImportError'; }
+}
+
+function checkCategory(category, where) {
+  if (!EQUIPMENT_CATEGORIES.includes(category)) {
+    throw new ImportError(`${where}: unknown equipment category ${JSON.stringify(category)}`);
+  }
+  return category;
+}
+
+const CARD_TYPE_PROPERTY = Object.freeze({
+  attack: 'classification.attack',
+  skill: 'classification.skill',
+  power: 'classification.power',
+  curse: 'classification.curse',
+  status: 'classification.statusCard',
+});
+
+const KEYWORD_PROPERTY = Object.freeze({
+  exhaust: 'lifecycle.exhaust',
+  ethereal: 'lifecycle.ethereal',
+  innate: 'lifecycle.innate',
+  retain: 'lifecycle.retain',
+  unplayable: 'internal.unplayable',
+});
+
+const DAMAGE_SCHOOL_PROPERTY = Object.freeze({
+  physical: 'damage.physical',
+  magic: 'damage.magic',
+  arcane: 'damage.arcane',
+});
+
+const TARGET_PROPERTY = Object.freeze({
+  self: 'targeting.self',
+  enemy: 'targeting.enemy',
+  allEnemies: 'targeting.allEnemies',
+  randomEnemy: 'targeting.randomEnemy',
+  ally: 'targeting.ally',
+});
+
+const SCALING_PROPERTY = Object.freeze({
+  strength: 'scaling.strength',
+  dexterity: 'scaling.dexterity',
+  constitution: 'scaling.constitution',
+  intelligence: 'scaling.intelligence',
+  wisdom: 'scaling.wisdom',
+});
+
+const PROFILE_ROLE_PROPERTY = Object.freeze({
+  attack: 'classification.strike',
+  guard: 'classification.guard',
+  technique: 'classification.skill',
+});
+
+// The union of the legacy rarity vocabularies ('starter'/'special'/'boss' are
+// legacy pool markers) and the contract's equipment ladder, lowercased at import.
+const RARITIES = Object.freeze([
+  'starter', 'special', 'boss', 'uncommon',
+  ...EQUIPMENT_RARITIES.map((r) => r.toLowerCase()),
+]);
+
+function mapped(table, key, what) {
+  const value = table[key];
+  if (!value) throw new ImportError(`unknown ${what} ${JSON.stringify(key)}`);
+  return value;
+}
+
+function checkRarity(value, where) {
+  const rarity = value == null || value === '' ? 'basic' : value;
+  if (!RARITIES.includes(rarity)) throw new ImportError(`${where}: unknown rarity ${JSON.stringify(value)}`);
+  return rarity;
+}
+
+/**
+ * cardPropertyInstances(card) — the ONE mapping from a legacy card def's
+ * mechanics fields (type, cost, manaCost, keywords, damageSchool, effect
+ * targets) to canonical PropertyInstances. The import loop uses it for
+ * authored cards; the runtime bridge uses it for RESOLVED defs (upgrades and
+ * mods can change keywords, so live decisions must map the resolved def,
+ * never the base row). Unknown vocabulary throws by name.
+ */
+function cardPropertyInstances(card) {
+  const properties = [
+    { propertyId: mapped(CARD_TYPE_PROPERTY, card.type, `card ${card.id} type`), source: 'AUTHORED' },
+  ];
+  if (card.cost !== undefined) {
+    properties.push({
+      propertyId: 'cost.action',
+      parameters: card.cost === 'X' ? { amount: 0, variable: true } : { amount: card.cost },
+      source: 'AUTHORED',
+    });
+  }
+  if (card.manaCost != null) {
+    properties.push({ propertyId: 'cost.mana', parameters: { amount: card.manaCost }, source: 'AUTHORED' });
+  }
+  for (const keyword of card.keywords || []) {
+    properties.push({ propertyId: mapped(KEYWORD_PROPERTY, keyword, `card ${card.id} keyword`), source: 'AUTHORED' });
+  }
+  if (card.damageSchool) {
+    properties.push({ propertyId: mapped(DAMAGE_SCHOOL_PROPERTY, card.damageSchool, `card ${card.id} damageSchool`), source: 'AUTHORED' });
+  }
+  const targets = [...new Set((card.effects || []).map((e) => e.target).filter(Boolean))].sort();
+  for (const target of targets) {
+    properties.push({ propertyId: mapped(TARGET_PROPERTY, target, `card ${card.id} effect target`), source: 'AUTHORED' });
+  }
+  return properties;
+}
+
+/**
+ * importLegacyContent(bundle) → {entities, terms, assets, counts, drift}
+ * Pure data out; the caller merges with the authored framework rows and
+ * builds registries. `drift` lists canonical-vs-legacy wording mismatches for
+ * assertNoTerminologyDrift.
+ */
+function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
+  const entities = [];
+  const terms = [];
+  const assets = [];
+  const termIds = new Set();
+  const entityIds = new Set();
+
+  const addTerm = (id, canonicalText, extra = {}) => {
+    if (termIds.has(id)) throw new ImportError(`duplicate term id ${id}`);
+    if (typeof canonicalText !== 'string' || !canonicalText) throw new ImportError(`term ${id}: empty text`);
+    termIds.add(id);
+    terms.push({ id, canonicalText, ...extra });
+    return id;
+  };
+
+  const addEntity = (entity) => {
+    if (entityIds.has(entity.id)) throw new ImportError(`duplicate stable id ${entity.id} (kind ${entity.kind})`);
+    entityIds.add(entity.id);
+    entities.push(entity);
+    return entity;
+  };
+
+  const addAsset = (id, kind, sourcePath, fallbackAssetId) => {
+    assets.push({ id, kind, sourcePath, fallbackAssetId });
+    return id;
+  };
+
+  // Legacy ids are unique per pool but not across pools; entity ids must be
+  // globally unique, so every import key is namespaced by kind. The legacy id
+  // stays verbatim in explicitOverrides.legacyId — save identity is the
+  // legacy id and is never rewritten (ALWAYS preserve stable content IDs).
+  const key = (kind, id) => `${kind}.${id}`;
+
+  // ---- cards ---------------------------------------------------------------
+  for (const card of bundle.cards) {
+    const id = key('card', card.id);
+    const properties = cardPropertyInstances(card);
+    addEntity({
+      id,
+      kind: 'CARD',
+      nameTermId: addTerm(`term.entity.${id}.name`, card.name),
+      descriptionTermId: card.textTemplate
+        ? addTerm(`term.entity.${id}.text`, card.textTemplate)
+        : undefined,
+      properties,
+      explicitOverrides: {
+        legacyId: card.id,
+        legacyClass: card.class,
+        rarity: checkRarity(card.rarity, `card ${card.id}`),
+        icon: card.icon,
+        effects: card.effects,
+        upgrade: card.upgrade,
+        exposureBuildupPerHit: card.exposureBuildupPerHit,
+      },
+    });
+  }
+
+  // ---- equipment-granted basic card profiles -------------------------------
+  // These ARE the equipment-bound replacement cards (framework contract:
+  // Equipment contract / Deck composition): each profile row already carries
+  // role, damage school and scaling stat as mechanics fields.
+  for (const profile of bundle.equipment.basicCardProfiles) {
+    const id = key('profile', profile.id);
+    const properties = [
+      { propertyId: mapped(PROFILE_ROLE_PROPERTY, profile.role, `profile ${profile.id} role`), source: 'AUTHORED' },
+      { propertyId: 'equipment.bound', source: 'AUTHORED' },
+      { propertyId: 'cost.action', parameters: { amount: 1 }, source: 'AUTHORED' },
+    ];
+    if (profile.damageSchool) {
+      properties.push({ propertyId: mapped(DAMAGE_SCHOOL_PROPERTY, profile.damageSchool, `profile ${profile.id} damageSchool`), source: 'AUTHORED' });
+    }
+    if (profile.scalingStat) {
+      properties.push({ propertyId: mapped(SCALING_PROPERTY, profile.scalingStat, `profile ${profile.id} scalingStat`), source: 'AUTHORED' });
+    }
+    addEntity({
+      id,
+      kind: 'CARD',
+      nameTermId: addTerm(`term.entity.${id}.name`, profile.displayName),
+      descriptionTermId: profile.flavor ? addTerm(`term.entity.${id}.text`, profile.flavor) : undefined,
+      properties,
+      explicitOverrides: {
+        legacyId: profile.id,
+        baseCardId: profile.baseCardId,
+        role: profile.role,
+        baseValue: profile.baseValue,
+        pointsPerTier: profile.pointsPerTier,
+        gainPerTier: profile.gainPerTier,
+        rounding: profile.rounding,
+        cap: profile.cap,
+        icon: profile.icon,
+        tags: profile.tags,
+        compatibility: profile.compatibility,
+      },
+    });
+  }
+
+  // ---- armaments and armour ------------------------------------------------
+  for (const piece of bundle.equipment.armaments) {
+    const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
+    addEntity({
+      id,
+      kind: 'EQUIPMENT',
+      nameTermId: addTerm(`term.entity.${id}.name`, piece.name),
+      descriptionTermId: piece.blurb ? addTerm(`term.entity.${id}.text`, piece.blurb) : undefined,
+      properties: [],
+      explicitOverrides: {
+        legacyId: piece.id,
+        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : 'WEAPON', `armament ${piece.id}`),
+        hand: piece.hand,
+        rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
+        tags: piece.tags,
+        mods: piece.mods,
+        requirements: piece.requirements,
+        poiseThreshold: piece.poiseThreshold,
+        dropWeight: piece.dropWeight,
+        unlock: piece.unlock,
+        artKey: piece.artKey,
+        cardPackage: {
+          strikeCardId: piece.attackProfile ? key('profile', piece.attackProfile) : undefined,
+          guardCardId: piece.guardProfile ? key('profile', piece.guardProfile) : undefined,
+          techniqueCardId: piece.techniqueProfile ? key('profile', piece.techniqueProfile) : undefined,
+        },
+        // Contract fields the legacy tables do not author yet — imported as
+        // inert defaults, listed in the cutover report as open authoring work.
+        itemWeight: 0,
+        attackRatingBonus: 0,
+        defenseRating: 0,
+      },
+    });
+  }
+  for (const outfit of bundle.equipment.armour) {
+    const id = key('armor', `${outfit.classId}.${outfit.id}`);
+    addEntity({
+      id,
+      kind: 'EQUIPMENT',
+      nameTermId: addTerm(`term.entity.${id}.name`, outfit.name),
+      properties: [],
+      explicitOverrides: {
+        legacyId: outfit.id,
+        legacyClassId: outfit.classId,
+        category: checkCategory('ARMOR', `armour ${outfit.classId}/${outfit.id}`),
+        rarity: checkRarity(outfit.rarity, `armour ${outfit.classId}/${outfit.id}`),
+        tags: outfit.tags,
+        mods: outfit.mods,
+        artKey: outfit.artKey,
+        itemWeight: 0,
+        defenseRating: 0,
+      },
+    });
+  }
+
+  // ---- statuses ------------------------------------------------------------
+  for (const status of bundle.statuses) {
+    const id = key('status', status.id);
+    addEntity({
+      id,
+      kind: 'STATUS',
+      nameTermId: addTerm(`term.entity.${id}.name`, status.name),
+      descriptionTermId: status.tooltip ? addTerm(`term.entity.${id}.tooltip`, status.tooltip) : undefined,
+      properties: [],
+      explicitOverrides: {
+        legacyId: status.id,
+        stackMode: status.stackMode,
+        decay: status.decay,
+        modifiers: status.modifiers,
+        hooks: status.hooks,
+        icon: status.icon,
+        tint: status.tint,
+      },
+    });
+  }
+
+  // ---- enemies -------------------------------------------------------------
+  for (const enemy of bundle.enemies) {
+    const id = key('enemy', enemy.id);
+    addEntity({
+      id,
+      kind: 'ENEMY',
+      nameTermId: addTerm(`term.entity.${id}.name`, enemy.name),
+      properties: [],
+      explicitOverrides: {
+        legacyId: enemy.id,
+        hp: enemy.hp,
+        poiseMax: enemy.poiseMax,
+        levelProfile: enemy.levelProfile,
+        moves: enemy.moves,
+        tags: enemy.tags,
+        arcaneExposure: enemy.arcaneExposure,
+        art: enemy.art,
+        size: enemy.size,
+      },
+    });
+  }
+
+  // ---- classes -------------------------------------------------------------
+  for (const klass of bundle.classes) {
+    const id = key('class', klass.id);
+    addEntity({
+      id,
+      kind: 'CLASS',
+      nameTermId: addTerm(`term.entity.${id}.name`, klass.name),
+      descriptionTermId: klass.description ? addTerm(`term.entity.${id}.text`, klass.description) : undefined,
+      properties: [],
+      explicitOverrides: {
+        legacyId: klass.id,
+        maxHp: klass.maxHp,
+        hpPerConTier: klass.hpPerConTier,
+        startingFlaskAllocation: klass.startingFlaskAllocation,
+        startingRelic: klass.startingRelic,
+        startingSignatureCard: klass.startingSignatureCard,
+        eligibleStartingKitIds: klass.eligibleStartingKitIds,
+        cardPool: klass.cardPool,
+        glyph: klass.glyph,
+        cardTint: klass.cardTint,
+      },
+    });
+  }
+
+  // ---- relics --------------------------------------------------------------
+  for (const relic of bundle.relics) {
+    const id = key('relic', relic.id);
+    addEntity({
+      id,
+      kind: 'RELIC',
+      nameTermId: addTerm(`term.entity.${id}.name`, relic.name),
+      descriptionTermId: relic.tooltip ? addTerm(`term.entity.${id}.tooltip`, relic.tooltip) : undefined,
+      properties: [],
+      explicitOverrides: {
+        legacyId: relic.id,
+        rarity: checkRarity(relic.rarity, `relic ${relic.id}`),
+        passives: relic.passives,
+        triggers: relic.triggers,
+        icon: relic.icon,
+      },
+    });
+  }
+
+  // ---- flasks (consumables) ------------------------------------------------
+  for (const flask of bundle.flasks) {
+    const id = key('flask', flask.id);
+    const artId = flask.artAsset
+      ? addAsset(`asset.entity.${id}`, 'ICON', flask.artAsset, 'asset.fallback.icon')
+      : undefined;
+    addEntity({
+      id,
+      kind: 'CONSUMABLE',
+      nameTermId: addTerm(`term.entity.${id}.name`, flask.name),
+      descriptionTermId: flask.textTemplate ? addTerm(`term.entity.${id}.text`, flask.textTemplate) : undefined,
+      artId,
+      properties: [],
+      explicitOverrides: {
+        legacyId: flask.id,
+        rarity: checkRarity(flask.rarity, `flask ${flask.id}`),
+        effects: flask.effects,
+        icon: flask.icon,
+        tint: flask.tint,
+        artKey: flask.artKey,
+      },
+    });
+  }
+
+  // ---- events (map locations) ----------------------------------------------
+  for (const event of bundle.events) {
+    const id = key('event', event.id);
+    addEntity({
+      id,
+      kind: 'LOCATION',
+      nameTermId: addTerm(`term.entity.${id}.name`, event.name),
+      properties: [],
+      explicitOverrides: { legacyId: event.id, text: event.text, choices: event.choices, art: event.art },
+    });
+  }
+
+  // ---- the armoury screen (UI surface) -------------------------------------
+  if (bundle.equipment.armouryUi) {
+    addEntity({
+      id: 'uiSurface.armoury',
+      kind: 'UI_SURFACE',
+      nameTermId: addTerm('term.entity.uiSurface.armoury.name', 'Armoury'),
+      properties: [],
+      explicitOverrides: { legacyId: 'armoury', config: bundle.equipment.armouryUi },
+    });
+  }
+
+  // ---- terminology drift check inputs --------------------------------------
+  // Legacy keyword tooltips vs the canonical framework terms: any wording
+  // mismatch is drift, reported by assertNoTerminologyDrift rather than fixed
+  // silently here.
+  const canonicalById = new Map(canonicalTerms.map((t) => [t.id, t]));
+  const drift = [];
+  const KEYWORD_TERM = { exhaust: 'term.tooltip.exhaust', ethereal: 'term.tooltip.ethereal', innate: 'term.tooltip.innate', retain: 'term.tooltip.retain', unplayable: 'term.tooltip.unplayable' };
+  for (const keyword of bundle.keywords) {
+    const termId = KEYWORD_TERM[keyword.id];
+    if (!termId) { drift.push({ id: keyword.id, reason: 'legacy keyword with no canonical term' }); continue; }
+    const canonical = canonicalById.get(termId);
+    if (!canonical) drift.push({ id: keyword.id, reason: `canonical term ${termId} missing` });
+    else if (canonical.canonicalText !== keyword.tooltip) {
+      drift.push({ id: keyword.id, reason: `tooltip drift: legacy ${JSON.stringify(keyword.tooltip)} vs canonical ${JSON.stringify(canonical.canonicalText)}` });
+    }
+  }
+
+  const counts = {};
+  for (const entity of entities) counts[entity.kind] = (counts[entity.kind] || 0) + 1;
+
+  return { entities, terms, assets, counts, drift };
+}
+
+/** The expected per-kind entity counts, derived from the bundle itself. */
+function expectedCounts(bundle) {
+  return {
+    CARD: bundle.cards.length + bundle.equipment.basicCardProfiles.length,
+    EQUIPMENT: bundle.equipment.armaments.length + bundle.equipment.armour.length,
+    STATUS: bundle.statuses.length,
+    ENEMY: bundle.enemies.length,
+    CLASS: bundle.classes.length,
+    RELIC: bundle.relics.length,
+    CONSUMABLE: bundle.flasks.length,
+    LOCATION: bundle.events.length,
+    UI_SURFACE: bundle.equipment.armouryUi ? 1 : 0,
+  };
+}
+
+
+Object.assign(module.exports, { ImportError, KEYWORD_PROPERTY, cardPropertyInstances, importLegacyContent, expectedCounts });
+
+},
+"src/framework/lifecycle.js": function (module, exports, require) {
+// src/framework/lifecycle.js — card zones and after-play destinations
+// (framework contract: Card lifecycle).
+//
+// Every card instance occupies exactly one zone. Recall never duplicates a
+// card. Cancelled and illegal plays spend nothing and go nowhere.
+
+const { hasProperty } = require("src/framework/compiler.js");
+
+const ZONES = Object.freeze([
+  'DRAW_PILE', 'HAND', 'DISCARD_PILE', 'EXHAUST_PILE', 'SEALED', 'REMOVED_FROM_PLAY',
+]);
+
+function destinationAfterPlay(card, result, { sealConditionMet = () => false } = {}) {
+  if (result.cancelled || !result.legal) return 'HAND';
+  if (hasProperty(card, 'lifecycle.seal') && sealConditionMet(card)) return 'SEALED';
+  if (hasProperty(card, 'lifecycle.exhaust')) return 'EXHAUST_PILE';
+  if (hasProperty(card, 'lifecycle.recall.afterUse')) return 'HAND';
+  // Preserved legacy rule (SPEC §4.3): a played Power leaves play entirely —
+  // it is not exhausted and not discarded. Exhaust above still wins on a
+  // Power that carries it, exactly as the legacy engine ordered the checks.
+  if (hasProperty(card, 'classification.power')) return 'REMOVED_FROM_PLAY';
+  return 'DISCARD_PILE';
+}
+
+function endTurnCleanup(hand) {
+  const keep = [];
+  const discard = [];
+  const exhaust = [];
+  for (const card of hand) {
+    if (hasProperty(card, 'lifecycle.retain')) keep.push(card);
+    // Preserved legacy rule: an Ethereal card still in hand Exhausts instead
+    // of discarding; Retain wins when a card carries both.
+    else if (hasProperty(card, 'lifecycle.ethereal')) exhaust.push(card);
+    else discard.push(card);
+  }
+  return { keep, discard, exhaust };
+}
+
+/** Forced discard is not use; Recall After Use does not trigger. */
+function forcedDiscardDestination() {
+  return 'DISCARD_PILE';
+}
+
+/**
+ * Zone ledger: one instance, one zone, enforced on every move. Instances are
+ * tracked by instance id (a deck can hold several copies of one card id).
+ */
+class ZoneLedger {
+  constructor(instanceIds) {
+    this.zoneByInstance = new Map(instanceIds.map((id) => [id, 'DRAW_PILE']));
+  }
+
+  zoneOf(instanceId) {
+    const zone = this.zoneByInstance.get(instanceId);
+    if (!zone) throw new Error(`zone ledger: unknown card instance ${JSON.stringify(instanceId)}`);
+    return zone;
+  }
+
+  move(instanceId, zone) {
+    if (!ZONES.includes(zone)) throw new Error(`zone ledger: unknown zone ${JSON.stringify(zone)}`);
+    this.zoneOf(instanceId); // throws on unknown instance
+    this.zoneByInstance.set(instanceId, zone);
+  }
+
+  inZone(zone) {
+    return [...this.zoneByInstance.entries()].filter(([, z]) => z === zone).map(([id]) => id);
+  }
+
+  /** The single-zone invariant, checkable at any time. */
+  assertExactlyOneZoneEach() {
+    const counts = new Map();
+    for (const [id] of this.zoneByInstance) counts.set(id, (counts.get(id) || 0) + 1);
+    for (const [id, n] of counts) {
+      if (n !== 1) throw new Error(`zone ledger: instance ${id} occupies ${n} zones`);
+    }
+    return true;
+  }
+}
+
+
+Object.assign(module.exports, { ZONES, destinationAfterPlay, endTurnCleanup, forcedDiscardDestination, ZoneLedger });
+
+},
+"src/framework/compiler.js": function (module, exports, require) {
+// src/framework/compiler.js — the deterministic property compiler (framework
+// contract: Deterministic compiler).
+//
+// Precedence is temporary combat restriction, explicit card exception, rune or
+// upgrade, equipment, class or relic, property default, then system fallback.
+// A conflict never resolves by incidental file order: every merge point sorts
+// on (sourcePrecedence, propertyPriority, propertyId, sourceEntityId) and an
+// unresolved CONFLICTS_WITH throws rather than picking a survivor.
+
+const { SchemaError } = require("src/framework/schema.js");
+
+class CompileError extends Error {
+  constructor(entityId, message) {
+    super(`compile ${entityId}: ${message}`);
+    this.name = 'CompileError';
+    this.entityId = entityId;
+  }
+}
+
+// PropertyInstance.source → precedence band. Lower rank wins a same-property
+// merge. STATUS carries temporary combat restrictions; AUTHORED rows on the
+// entity are its explicit exceptions; defaultParameters sit below every
+// instance (PROPERTY_DEFAULT) and the kind's systemDefaults at the bottom.
+const SOURCE_RANK = Object.freeze({
+  STATUS: 0, // TEMPORARY_COMBAT_RESTRICTION
+  AUTHORED: 1, // EXPLICIT_CARD_EXCEPTION
+  RUNE: 2,
+  EQUIPMENT: 3,
+  CLASS: 4,
+  RELIC: 4,
+  SYSTEM_DEFAULT: 6,
+});
+
+// Closed predicate table for PropertyRelation.condition. An unknown predicate
+// name is a schema defect, not a silent pass.
+const PREDICATES = Object.freeze({
+  always: () => true,
+  hasRepeatLimiter: (instances) => instances.some((p) => p.propertyId.startsWith('cost.')
+    || p.propertyId === 'lifecycle.exhaust' || p.propertyId === 'lifecycle.seal'),
+});
+
+function rankOf(instance, entityId) {
+  const rank = SOURCE_RANK[instance.source];
+  if (rank == null) throw new CompileError(entityId, `unknown property source ${JSON.stringify(instance.source)}`);
+  return rank;
+}
+
+function instanceSortKey(a, b, entityId) {
+  const byRank = rankOf(a, entityId) - rankOf(b, entityId);
+  if (byRank) return byRank;
+  if (a._priority !== b._priority) return a._priority - b._priority;
+  if (a.propertyId !== b.propertyId) return a.propertyId < b.propertyId ? -1 : 1;
+  const sa = a.sourceEntityId || '';
+  const sb = b.sourceEntityId || '';
+  return sa < sb ? -1 : sa > sb ? 1 : 0;
+}
+
+function deepFreeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const key of Object.keys(value)) deepFreeze(value[key]);
+  }
+  return value;
+}
+
+/**
+ * compileEntity(registries, entityId, context) — deterministic, side-effect
+ * free, returns a deep-frozen CompiledEntity.
+ *
+ * context (all optional):
+ *   classProperties / equipmentProperties / runeProperties / relicProperties /
+ *   statusProperties: List<PropertyInstance> from the live run state.
+ *   systemDefaults(kind): List<PropertyInstance> for the entity kind.
+ *   runtimeModifiers: List<{op:'set'|'add', path, value}> applied last, in order.
+ */
+function compileEntity(registries, entityId, context = {}) {
+  const { properties: props } = registries;
+  const entity = registries.content.require(entityId);
+
+  // 1. collect — every contributing source, tagged and checked.
+  let instances = [];
+  const add = (list, fallbackSource) => {
+    for (const row of list || []) {
+      if (!props.has(row.propertyId)) {
+        throw new CompileError(entityId, `unknown property ${JSON.stringify(row.propertyId)} from ${row.source || fallbackSource}`);
+      }
+      const def = props.require(row.propertyId);
+      instances.push({
+        propertyId: row.propertyId,
+        parameters: row.parameters ? { ...row.parameters } : undefined,
+        source: row.source || fallbackSource,
+        sourceEntityId: row.sourceEntityId,
+        _priority: def.priority,
+        _implied: false,
+      });
+    }
+  };
+  add(context.systemDefaults ? context.systemDefaults(entity.kind) : [], 'SYSTEM_DEFAULT');
+  add(context.classProperties, 'CLASS');
+  add(entity.properties, 'AUTHORED');
+  add(context.equipmentProperties, 'EQUIPMENT');
+  add(context.runeProperties, 'RUNE');
+  add(context.relicProperties, 'RELIC');
+  add(context.statusProperties, 'STATUS');
+
+  // 2. expandParents — a property implies its whole parent chain, carried at
+  // the child's source so family checks (REQUIRES on a root) see it.
+  const present = new Set(instances.map((p) => p.propertyId));
+  for (const inst of [...instances]) {
+    for (const ancestorId of props.ancestorsOf(inst.propertyId)) {
+      if (!present.has(ancestorId)) {
+        present.add(ancestorId);
+        const def = props.require(ancestorId);
+        instances.push({
+          propertyId: ancestorId, source: inst.source, sourceEntityId: inst.sourceEntityId,
+          _priority: def.priority, _implied: true,
+        });
+      }
+    }
+  }
+
+  // 3. replacement and suppression — relation-driven, precedence-ordered so
+  // the outcome is a function of the data, never of row order.
+  const orderedRelations = [...props.relations].sort((a, b) => b.precedence - a.precedence
+    || (a.sourcePropertyId < b.sourcePropertyId ? -1 : 1));
+  const removed = new Map(); // propertyId -> byPropertyId
+  const has = (id) => instances.some((p) => p.propertyId === id);
+  for (const rel of orderedRelations) {
+    if (rel.relation !== 'REPLACES' && rel.relation !== 'SUPPRESSES') continue;
+    if (has(rel.sourcePropertyId) && has(rel.targetPropertyId)) {
+      instances = instances.filter((p) => p.propertyId !== rel.targetPropertyId);
+      removed.set(rel.targetPropertyId, { by: rel.sourcePropertyId, relation: rel.relation });
+    }
+  }
+
+  // 4. requirements and conflicts — an unresolved defect throws by name.
+  const idsPresent = new Set(instances.map((p) => p.propertyId));
+  for (const rel of props.relations) {
+    if (rel.relation === 'REQUIRES' && idsPresent.has(rel.sourcePropertyId)) {
+      const predicate = rel.condition ? PREDICATES[rel.condition] : null;
+      if (rel.condition && !predicate) throw new CompileError(entityId, `unknown predicate ${JSON.stringify(rel.condition)}`);
+      const satisfied = predicate
+        ? predicate(instances)
+        : instances.some((p) => props.isA(p.propertyId, rel.targetPropertyId));
+      if (!satisfied) {
+        throw new CompileError(entityId, `${rel.sourcePropertyId} requires ${rel.targetPropertyId}`);
+      }
+    }
+    if (rel.relation === 'CONFLICTS_WITH'
+      && idsPresent.has(rel.sourcePropertyId) && idsPresent.has(rel.targetPropertyId)) {
+      throw new CompileError(entityId, `unresolved conflict ${rel.sourcePropertyId} vs ${rel.targetPropertyId}`);
+    }
+  }
+
+  // 5. deterministic order, then same-property dedupe: the best-ranked
+  // instance survives with lower-ranked parameters showing through beneath it.
+  instances.sort((a, b) => instanceSortKey(a, b, entityId));
+  const byProperty = new Map();
+  for (const inst of instances) {
+    const existing = byProperty.get(inst.propertyId);
+    if (!existing) byProperty.set(inst.propertyId, { ...inst });
+    else if (inst.parameters) existing.parameters = { ...inst.parameters, ...existing.parameters };
+  }
+
+  // 6. deriveDefaults — PROPERTY_DEFAULT parameters sit under every instance.
+  const compiledProperties = [...byProperty.values()].map((inst) => {
+    const def = props.require(inst.propertyId);
+    const parameters = { ...(def.defaultParameters || {}), ...(inst.parameters || {}) };
+    return {
+      propertyId: inst.propertyId,
+      source: inst.source,
+      sourceEntityId: inst.sourceEntityId,
+      implied: inst._implied,
+      visibility: def.visibility,
+      playerTermId: def.playerTermId,
+      tooltipTermId: def.tooltipTermId,
+      parameters,
+    };
+  });
+
+  let compiled = {
+    id: entity.id,
+    kind: entity.kind,
+    nameTermId: entity.nameTermId,
+    descriptionTermId: entity.descriptionTermId,
+    artId: entity.artId,
+    rarityId: entity.rarityId,
+    properties: compiledProperties,
+    suppressed: Object.fromEntries(removed),
+    overrides: {},
+  };
+
+  // 7. explicit overrides, then runtime modifiers, in that order and each
+  // deterministic (a modifier is data, not a function).
+  if (entity.explicitOverrides) compiled.overrides = { ...entity.explicitOverrides };
+  for (const mod of context.runtimeModifiers || []) {
+    if (mod.op === 'set') compiled.overrides[mod.path] = mod.value;
+    else if (mod.op === 'add') compiled.overrides[mod.path] = (compiled.overrides[mod.path] || 0) + mod.value;
+    else throw new CompileError(entityId, `unknown runtime modifier op ${JSON.stringify(mod.op)}`);
+  }
+
+  return deepFreeze(validateCompiledResult(compiled, entityId));
+}
+
+function validateCompiledResult(compiled, entityId) {
+  const seen = new Set();
+  for (const p of compiled.properties) {
+    if (seen.has(p.propertyId)) throw new CompileError(entityId, `duplicate compiled property ${p.propertyId}`);
+    seen.add(p.propertyId);
+  }
+  if (!compiled.nameTermId) throw new CompileError(entityId, 'compiled entity lost its name term');
+  return compiled;
+}
+
+/** Convenience predicate on a compiled entity (or any property list holder). */
+function hasProperty(compiled, propertyId) {
+  return compiled.properties.some((p) => p.propertyId === propertyId);
+}
+
+function propertyParameters(compiled, propertyId) {
+  const found = compiled.properties.find((p) => p.propertyId === propertyId);
+  return found ? found.parameters : null;
+}
+
+
+
+
+Object.assign(module.exports, { CompileError, deepFreeze, compileEntity, hasProperty, propertyParameters, SchemaError });
+
+},
 "src/model/state.js": function (module, exports, require) {
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
@@ -35928,7 +38326,7 @@ function createCombat({
   const rest = [];
   for (const card of shuffled) {
     const def = resolveCard(registries, card);
-    ((def.keywords || []).includes('innate') ? innate : rest).push(card);
+    (registries.framework.isInnate(def) ? innate : rest).push(card);
   }
   combat.piles.draw = [...innate, ...rest];
 
@@ -36033,15 +38431,17 @@ function endPlayerTurn(combat) {
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
-  // …then discard hand except Retain; Ethereal cards exhaust instead.
+  // …then discard hand except Retain; Ethereal cards exhaust instead. The
+  // fate of each card is the framework's call (src/framework/lifecycle.js);
+  // this engine only moves the card and emits the receipt.
   const keep = [];
   const toDiscard = [];
   const toExhaust = [];
   for (const card of combat.piles.hand) {
     const def = resolveCard(combat.registries, card);
-    const kws = def.keywords || [];
-    if (kws.includes('retain')) keep.push(card);
-    else if (kws.includes('ethereal')) toExhaust.push(card);
+    const fate = combat.registries.framework.endTurnFate(def);
+    if (fate === 'keep') keep.push(card);
+    else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
   combat.piles.hand = keep;
@@ -36418,7 +38818,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const def = resolveCard(combat.registries, inst);
   const kws = def.keywords || [];
 
-  if (kws.includes('unplayable')) throw new Error(`'${def.name}' is unplayable`);
+  if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
@@ -36488,11 +38888,15 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   // Placement after resolution (SPEC §4.3): Exhaust → exhaust pile;
   // Powers are removed from play (NOT exhausted); everything else → discard.
+  // The destination is the framework's call; this engine moves the card.
   if (!combat.result) {
-    if (kws.includes('exhaust')) {
+    const destination = combat.registries.framework.afterPlayDestination(def);
+    if (destination === 'EXHAUST_PILE') {
       combat.piles.exhaust.push(inst);
       combat.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
-    } else if (def.type !== 'power') {
+    } else if (destination === 'HAND') {
+      combat.piles.hand.push(inst); // Recall After Use (no shipped card carries it yet)
+    } else if (destination !== 'REMOVED_FROM_PLAY') {
       combat.piles.discard.push(inst);
     }
     drainQueue(combat);
@@ -37325,7 +39729,11 @@ function runRunOpcode(ctx, action, eff) {
     }
     case 'upgradeCard': {
       const plan = smithingPlan(ctx.registries, run);
+      // Since the item-upgrade redesign the plan also offers non-armament
+      // items (no armamentId, no affectedCards); a card upgrade can only ride
+      // an armament, so only those become candidates here.
       const armaments = plan.candidates
+        .filter((candidate) => candidate.itemKind === 'armament')
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck
@@ -45294,7 +47702,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'bd9598d5fc';
+const SOURCE = 'dcbf9232af';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -45328,7 +47736,7 @@ const SOURCE = 'bd9598d5fc';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1888';
+const ORDINAL = '1892';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -45355,7 +47763,7 @@ const ORDINAL = '1888';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-31';
+const BUILT = '2026-09-01';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -47572,6 +49980,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 
 const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-508",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "The data-driven property framework lands as a complete, validated replacement candidate",
+    "detail": "Nothing a player sees changes: the framework — canonical registries, a deterministic property compiler, gameplay services, shared presentation rules, an importer carrying all 392 existing entities with their exact identities, and a cutover gate that refuses to switch until every check passes — ships alongside the running game without touching it. Evidence and groundwork only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.",
+    "build": "0.4.0.1888",
+    "pullRequest": 508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/508"
+  },
+  {
     "id": "pr-502",
     "date": "2026-08-31",
     "group": "2026-08-31",
@@ -48777,6 +51195,7 @@ const ASSET_MAP = {
   "assets/equipment/weapon_twinblade.webp": "data:image/webp;base64,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",
   "assets/equipment/weapon_warhammer.webp": "data:image/webp;base64,UklGRuwEAABXRUJQVlA4WAoAAAAQAAAAwQEAOQIAQUxQSP4AAAABgGJt27Low7VZ0kym6QbIzhpIHHZAtc4anH1AhWTZbXymYV/65cwdERMg8D/+x//4H//jf/yP//E//sf/+B//43/VrkFWBcEQLZXlzPmVA2P17VPObUpBqP1Jekr/S6mylWQdVw6Ev3yUYpZ2KwgitpNi6hH4D//hP/yH//T3NlJMlIVAvfHAzv6mWbvxwJpTUTCYHhlZ3DR2mx4pFM/QbSOHUGLxH/7Df/gP/+E//If/8B/+w3/4D//hP/yH//Af/sN/+A//4T/8h//wH/7Df/gP/714cP5+a9euyDgy2VtTJkVGGG4W+B//43/8j//xP/7H//gf/+N//K99BVZQOCDIAwAAUEsAnQEqwgE6Aj49HopFIiGIjFgQAeJaW7hdj4CtzYA/EB6bLaW02Cnpw24JNPkd1Q9NdhV95qh6a7Cr7zVD012FX3mqHprsKvvNUPTXYVfeaoemuwq+81Q9NdhV95qiA3JJptNptNptNptNptNprFpGb5vw2TTcsHJJptNptNYk+R3VD012FX3mqHprsKvvNUPTXYVfeaoemy73nN834bJpuWDkkaiqP88F3+M821J4vgnwFXYVfeaoemuwq+A6EsHdgtDGhFv1smm5YOSTTabTabPCCc/VHhC0Zvm/DZNNywckmeKmfXGv2ssuqo78nyO6oemuwq+4AicubNEyBKaHtlPuPNUPTXYVfeaoelLA8kEnRSr7zVD012FX3mp+zkCTopV95qh6a7Cr7zU/ZyBJ0Uq+81Q9NdhV95qfs5Ak6KVfeaoemuwq+81P2cgSdFKvvNUPTXYVfean7OQJOilX3mqHprsKvvNT9nIEniLYjfN+Gyablg5JNNps7TGnHbcRFuwxuWDkk02m02m02mzwctAob7zVD012FX3mqHpUOWgUN95qh6a7Cr7zVD0qHLQKR7jNUPTXYVfeaoelQ5aBSPcZqh6a7Cr7zVD0qHLQKR7jNUPTXYVfeaoelQ5aBSPcZqh6a7Cr7zVD0qHLQKG+81Q9NdhV95qh6VDjCBPuX6FnlnNUPTXYVfeaoemuEPWRTT5HdUPTXYVfeaoemuwq+81Q9NdhV95qh6a7Cr7zVD012FX3mqHprsKvvNUPTXYVfeaoemuwq+81Q9NdhV95qh6a7Cr7zVD012FX3mqHlAAA/v/jd4AAAASk1i2MAAAlIGUX//zENbz4PQk/tawebfbCIc9foL7/Tm/+MX/k7n/n/68/fx/w3mzj9dt5U34nTCQvwb0ShIg1Ri72MzUN0JzUNMT9lyr+IDr8qxv1SemD/5Bhb+fyZKUBsv+7av+Tuvv/1JOx/EN1jSJ/NbWpID5MgtMB/HNoFyhhAUEIACABKFBA7JB+K/2LNV7N8zxKhr4iEAeG6xl0QGqXT3MRZCiM1cqenZNDP0yiTt0tEEWb1jic4UHCzMlgpN66Q2XsJgkNPmx9h9ZiwfSPu5H/lXeJhkwMBi2nmi1tlBBYzoHgADCWpZmklU0gPqOO2QIeb1EAksWYFGqgCjVQz+rvCCnVDEx6GclPUswIT6oAo1UM/CDGVCMCUCoVgSgVDEgVSoAktN71tAAjew11Gk3CJ7QipZbZr5Bq3ZsBa9iIKmgn7wFVI6hx1FZ1YAAAAAAAAAAAAAA=",
   "assets/equipment/weapon_wyrmhornStaff.webp": "data:image/webp;base64,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",
+  "assets/framework/missing.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJNaXNzaW5nIGFzc2V0Ij4KICA8cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIGZpbGw9IiMyNDFkMTUiIHN0cm9rZT0iI2M5YTIyNyIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHRleHQgeD0iMTYiIHk9IjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjYzlhMjI3Ij4/PC90ZXh0Pgo8L3N2Zz4K",
   "assets/map/parchment_act1.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4KPHRpdGxlPkFjdCBwbGF0ZSAxIOKAlCB1bmRpc2NvdmVyZWQgZ3JvdW5kLiBHZW5lcmF0ZWQgYnkgdG9vbHMvcGFyY2htZW50Lm1qczsgZG8gbm90IGhhbmQtZWRpdC48L3RpdGxlPgo8ZGVmcz4KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iOTciIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+CjxmaWx0ZXIgaWQ9ImZpYnJlIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDA0IDAuMjgiIG51bU9jdGF2ZXM9IjMiIHNlZWQ9Ijk4IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPgo8ZmlsdGVyIGlkPSJncmFpbiIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjg1IiBudW1PY3RhdmVzPSI0IiBzZWVkPSI5OSIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIyMDQ4IiBmaWxsPSIjODA4MDgwIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNibG90Y2gpIiBvcGFjaXR5PSIwLjYyIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2dyYWluKSIgb3BhY2l0eT0iMC4zMCIvPgo8L3N2Zz4K",
   "assets/map/parchment_act2.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4KPHRpdGxlPkFjdCBwbGF0ZSAyIOKAlCB1bmRpc2NvdmVyZWQgZ3JvdW5kLiBHZW5lcmF0ZWQgYnkgdG9vbHMvcGFyY2htZW50Lm1qczsgZG8gbm90IGhhbmQtZWRpdC48L3RpdGxlPgo8ZGVmcz4KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMTk0IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPgo8ZmlsdGVyIGlkPSJmaWJyZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjAwNCAwLjI4IiBudW1PY3RhdmVzPSIzIiBzZWVkPSIxOTUiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+CjxmaWx0ZXIgaWQ9ImdyYWluIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuODUiIG51bU9jdGF2ZXM9IjQiIHNlZWQ9IjE5NiIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIyMDQ4IiBmaWxsPSIjODA4MDgwIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNibG90Y2gpIiBvcGFjaXR5PSIwLjYyIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2dyYWluKSIgb3BhY2l0eT0iMC4zMCIvPgo8L3N2Zz4K",
   "assets/map/parchment_act3.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4KPHRpdGxlPkFjdCBwbGF0ZSAzIOKAlCB1bmRpc2NvdmVyZWQgZ3JvdW5kLiBHZW5lcmF0ZWQgYnkgdG9vbHMvcGFyY2htZW50Lm1qczsgZG8gbm90IGhhbmQtZWRpdC48L3RpdGxlPgo8ZGVmcz4KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMjkxIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPgo8ZmlsdGVyIGlkPSJmaWJyZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjAwNCAwLjI4IiBudW1PY3RhdmVzPSIzIiBzZWVkPSIyOTIiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+CjxmaWx0ZXIgaWQ9ImdyYWluIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuODUiIG51bU9jdGF2ZXM9IjQiIHNlZWQ9IjI5MyIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIyMDQ4IiBmaWxsPSIjODA4MDgwIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNibG90Y2gpIiBvcGFjaXR5PSIwLjYyIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2dyYWluKSIgb3BhY2l0eT0iMC4zMCIvPgo8L3N2Zz4K",
@@ -55402,10 +57821,10 @@ function cardTooltip(registries, def, tokens) {
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
-    if (registries.keywords.has(kw)) {
-      const k = registries.keywords.get(kw);
-      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
-    }
+    // Words resolve through the framework TermRegistry (one vocabulary home);
+    // an id outside the keyword vocabulary is skipped, as before.
+    const k = registries.framework.keywordDisplay(kw);
+    if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
   }
   for (const eff of def.effects || []) {
     if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
@@ -61235,14 +63654,14 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   }
 
   function isUnplayable(inst) {
-    return (resolveCard(registries, inst).keywords || []).includes('unplayable');
+    return registries.framework.isUnplayable(resolveCard(registries, inst));
   }
 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
       const def = resolveCard(registries, inst);
-      if ((def.keywords || []).includes('unplayable')) return false;
+      if (registries.framework.isUnplayable(def)) return false;
       return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost)
         && combat.player.mana >= (def.manaCost || 0);
     });

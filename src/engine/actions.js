@@ -601,7 +601,11 @@ function runRunOpcode(ctx, action, eff) {
     }
     case 'upgradeCard': {
       const plan = smithingPlan(ctx.registries, run);
+      // Since the item-upgrade redesign the plan also offers non-armament
+      // items (no armamentId, no affectedCards); a card upgrade can only ride
+      // an armament, so only those become candidates here.
       const armaments = plan.candidates
+        .filter((candidate) => candidate.itemKind === 'armament')
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck

@@ -163,13 +163,23 @@ test('destinationAfterPlay follows the contract order', () => {
   eq(destinationAfterPlay(card([]), legal), 'DISCARD_PILE', 'default discard');
 });
 
-test('endTurnCleanup keeps Retain; forced discard never recalls', () => {
+test('endTurnCleanup keeps Retain; Ethereal exhausts; forced discard never recalls', () => {
   const retain = { id: 'a', properties: [{ propertyId: 'lifecycle.retain' }] };
   const recall = { id: 'b', properties: [{ propertyId: 'lifecycle.recall.afterUse' }] };
-  const { keep, discard } = endTurnCleanup([retain, recall]);
-  eq(keep.map((c) => c.id), ['a'], 'retain kept');
+  const ethereal = { id: 'c', properties: [{ propertyId: 'lifecycle.ethereal' }] };
+  const both = { id: 'd', properties: [{ propertyId: 'lifecycle.retain' }, { propertyId: 'lifecycle.ethereal' }] };
+  const { keep, discard, exhaust } = endTurnCleanup([retain, recall, ethereal, both]);
+  eq(keep.map((c) => c.id), ['a', 'd'], 'retain kept, and retain beats ethereal');
   eq(discard.map((c) => c.id), ['b'], 'recall does not survive cleanup');
+  eq(exhaust.map((c) => c.id), ['c'], 'ethereal exhausts instead of discarding');
   eq(forcedDiscardDestination(), 'DISCARD_PILE', 'forced discard is not a use');
+});
+
+test('a played Power leaves play; an Exhaust Power still exhausts', () => {
+  const card = (ids) => ({ id: 'c', properties: ids.map((propertyId) => ({ propertyId, parameters: {} })) });
+  const legal = { cancelled: false, legal: true };
+  eq(destinationAfterPlay(card(['classification.power']), legal), 'REMOVED_FROM_PLAY', 'power removal preserved');
+  eq(destinationAfterPlay(card(['classification.power', 'lifecycle.exhaust']), legal), 'EXHAUST_PILE', 'exhaust wins on a power');
 });
 
 test('ZoneLedger enforces exactly one zone per instance', () => {
@@ -508,6 +518,50 @@ test('compiled tooltips resolve every word through TermRegistry', () => {
   eq(tooltip.title, 'Gorefire Slash', 'name from term');
   assert(tooltip.accessibleFallback.length > 0, 'accessible fallback always present');
   assert(tooltip.lines.some((l) => l.name === 'Mana'), 'mana cost surfaces canonically');
+});
+
+// ---- the runtime bridge (ported legacy consumers) ---------------------------
+
+const { createRegistries, resolveCard } = await import('../src/model/registries.js');
+const LEGACY_REG = createRegistries(contentBundle);
+
+test('bridge decisions match the legacy keyword rules for every card, base and upgraded', () => {
+  const bridge = LEGACY_REG.framework;
+  let checked = 0;
+  for (const card of contentBundle.cards) {
+    for (const upgraded of card.upgrade ? [false, true] : [false]) {
+      const def = resolveCard(LEGACY_REG, { cardId: card.id, upgraded });
+      const kws = def.keywords || [];
+      const where = `${card.id}${upgraded ? '+' : ''}`;
+      eq(bridge.isInnate(def), kws.includes('innate'), `${where} innate`);
+      eq(bridge.isUnplayable(def), kws.includes('unplayable'), `${where} unplayable`);
+      const legacyFate = kws.includes('retain') ? 'keep' : kws.includes('ethereal') ? 'exhaust' : 'discard';
+      eq(bridge.endTurnFate(def), legacyFate, `${where} end-turn fate`);
+      const legacyDest = kws.includes('exhaust') ? 'EXHAUST_PILE'
+        : def.type === 'power' ? 'REMOVED_FROM_PLAY' : 'DISCARD_PILE';
+      eq(bridge.afterPlayDestination(def), legacyDest, `${where} after-play destination`);
+      checked += 1;
+    }
+  }
+  assert(checked >= contentBundle.cards.length, `swept ${checked} defs`);
+});
+
+test('bridge keyword display equals the legacy keyword registry, word for word', () => {
+  const bridge = LEGACY_REG.framework;
+  for (const kw of contentBundle.keywords) {
+    const display = bridge.keywordDisplay(kw.id);
+    eq(display, { name: kw.name, tooltip: kw.tooltip }, `keyword ${kw.id}`);
+  }
+  eq(bridge.keywordDisplay('notAKeyword'), null, 'unknown ids are skipped, not invented');
+});
+
+test('the bridge decides through the same mapping the importer uses', () => {
+  const bridge = LEGACY_REG.framework;
+  const upgradedGorefire = resolveCard(LEGACY_REG, { cardId: 'strike', upgraded: true });
+  const view = bridge.viewFor(upgradedGorefire);
+  assert(view.properties.some((p) => p.propertyId === 'classification.attack'), 'type maps to classification');
+  assert(Object.isFrozen(view) && Object.isFrozen(view.properties), 'views are frozen');
+  eq(bridge.viewFor(upgradedGorefire), view, 'views are cached by def identity');
 });
 
 console.log(`\nframework: ${passed} passed, ${failed} failed`);
