@@ -9,6 +9,7 @@
     { "id": "policy.blacksmithUpgrade", "level": "COMMITMENT" },
     { "id": "policy.purchase", "level": "COMMITMENT" },
     { "id": "policy.cardRemove", "level": "DESTRUCTIVE" },
+    { "id": "policy.discardUnsavedProgress", "level": "DESTRUCTIVE" },
     { "id": "policy.saveOverwrite", "level": "DESTRUCTIVE" },
     { "id": "policy.abandonRun", "level": "DESTRUCTIVE" },
     { "id": "policy.deleteSave", "level": "DESTRUCTIVE" }
@@ -26,6 +27,8 @@
     { "id": "action.installRune", "policyId": "policy.blacksmithUpgrade", "destructive": false },
     { "id": "action.purchase", "policyId": "policy.purchase", "destructive": false },
     { "id": "action.removeCard", "policyId": "policy.cardRemove", "destructive": true },
+    { "id": "action.loadSlot", "policyId": "policy.discardUnsavedProgress", "destructive": true },
+    { "id": "action.quitWithoutSaving", "policyId": "policy.discardUnsavedProgress", "destructive": true },
     { "id": "action.overwriteSave", "policyId": "policy.saveOverwrite", "destructive": true },
     { "id": "action.abandonRun", "policyId": "policy.abandonRun", "destructive": true },
     { "id": "action.deleteSave", "policyId": "policy.deleteSave", "destructive": true }

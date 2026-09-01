@@ -555,6 +555,40 @@ test('bridge keyword display equals the legacy keyword registry, word for word',
   eq(bridge.keywordDisplay('notAKeyword'), null, 'unknown ids are skipped, not invented');
 });
 
+test('bridge cost profiles match the legacy cost fields for every card, base and upgraded', () => {
+  const bridge = LEGACY_REG.framework;
+  for (const card of contentBundle.cards) {
+    for (const upgraded of card.upgrade ? [false, true] : [false]) {
+      const def = resolveCard(LEGACY_REG, { cardId: card.id, upgraded });
+      const where = `${card.id}${upgraded ? '+' : ''}`;
+      const profile = bridge.costProfile(def);
+      eq(profile.variable, def.cost === 'X', `${where} variable`);
+      eq(profile.action, def.cost === 'X' ? 0 : def.cost, `${where} action`);
+      eq(profile.mana, def.manaCost || 0, `${where} mana`);
+      eq(profile.stamina, def.staminaCost || 0, `${where} stamina`);
+    }
+  }
+});
+
+test('the Power cost reduction applies only to Powers, clamped at zero', () => {
+  const bridge = LEGACY_REG.framework;
+  const power = contentBundle.cards.find((c) => c.type === 'power' && typeof c.cost === 'number' && c.cost > 0);
+  const attack = contentBundle.cards.find((c) => c.type === 'attack' && typeof c.cost === 'number');
+  const powerDef = resolveCard(LEGACY_REG, { cardId: power.id, upgraded: false });
+  const attackDef = resolveCard(LEGACY_REG, { cardId: attack.id, upgraded: false });
+  eq(bridge.costProfile(powerDef, { powerCostReduction: 1 }).action, Math.max(0, power.cost - 1), 'power reduced');
+  eq(bridge.costProfile(powerDef, { powerCostReduction: 99 }).action, 0, 'clamped at zero');
+  eq(bridge.costProfile(attackDef, { powerCostReduction: 99 }).action, attack.cost, 'non-power untouched');
+});
+
+test('confirmation tones resolve through the registry, destructive reads danger', () => {
+  const bridge = LEGACY_REG.framework;
+  eq(bridge.confirmationTone('action.loadSlot'), 'danger', 'loading over unsaved progress is destructive');
+  eq(bridge.confirmationTone('action.quitWithoutSaving'), 'danger', 'quitting without saving is destructive');
+  eq(bridge.confirmationTone('action.equip'), 'normal', 'reversible actions read normal');
+  assertThrows(() => bridge.confirmationTone('action.ghost'), /unknown id/, 'unregistered actions refuse');
+});
+
 test('the bridge decides through the same mapping the importer uses', () => {
   const bridge = LEGACY_REG.framework;
   const upgradedGorefire = resolveCard(LEGACY_REG, { cardId: 'strike', upgraded: true });

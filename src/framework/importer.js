@@ -111,6 +111,9 @@ export function cardPropertyInstances(card) {
   if (card.manaCost != null) {
     properties.push({ propertyId: 'cost.mana', parameters: { amount: card.manaCost }, source: 'AUTHORED' });
   }
+  if (card.staminaCost != null) {
+    properties.push({ propertyId: 'cost.stamina', parameters: { amount: card.staminaCost }, source: 'AUTHORED' });
+  }
   for (const keyword of card.keywords || []) {
     properties.push({ propertyId: mapped(KEYWORD_PROPERTY, keyword, `card ${card.id} keyword`), source: 'AUTHORED' });
   }

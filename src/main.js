@@ -932,7 +932,8 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     message: 'The saved run will replace changes made since your last save.',
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
-    tone: 'danger',
+    // Whether this reads as destructive is the ConfirmationRegistry's call.
+    tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
@@ -957,7 +958,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
     confirmLabel: 'Quit without saving',
     consequence: 'LEAVES THE RUN',
-    tone: 'danger',
+    tone: registries.framework.confirmationTone('action.quitWithoutSaving'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
