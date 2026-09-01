@@ -51,7 +51,7 @@ not passed every gate — no mixed old/new authority.
 | unchanged-gameplay equivalence | **PASS** (data level) | all 180 legacy cards round-trip: type, cost, manaCost, keywords, damage school, targets reconstruct exactly from compiled properties. Runtime replay equivalence is gated by the regression suite. |
 | approved new-mechanics acceptance | **NOT_RUN** | stamina/weight/dodge/seal/recall/alternative-cost services implemented and unit-tested; acceptance sign-off is a human decision, not this tool's |
 | responsive UI and accessibility | **PASS** (component level) | accessible-name/tooltip-fallback walks and measured contrast pairs; browser-level responsive proof stays with the existing shot tooling |
-| full regression suite | **PASS** | `tests/framework.test.mjs` 43/43 green; `tests/run-node.mjs` green after correcting one stale baseline assertion (test 19 — see below) |
+| full regression suite | **PASS** | `tests/framework.test.mjs` 43/43 green; `tests/run-node.mjs` green (the one baseline red, test 19, was fixed upstream by the item-upgrade redesign merged in #507) |
 | proof that legacy runtime authority is unreachable | **FAIL** (by design, honestly) | cutover has not been performed; legacy consumers still read `src/content`/`src/engine` directly |
 
 ## Unresolved contradictions (reported before cutover, per the contract)
@@ -79,11 +79,11 @@ not passed every gate — no mixed old/new authority.
    explicit balance validation." The services are implemented and tested;
    the balance validation over real class loadouts is future work with the
    balance owner.
-7. **Stale baseline assertion (fixed in this change):** legacy test 19
-   asserted Whetstone Memory flags a deck Strike as upgraded, but
-   `upgradeCard` has since (correctly, per the keepsake's own description)
-   preferred smithing the armament that sources Strikes. The red predated
-   this candidate on `dev`; the assertion now checks `run.smithing`.
+7. **Baseline red resolved upstream:** legacy test 19 (Whetstone Memory)
+   was red on `dev` when this candidate was built; the item-upgrade
+   redesign (#507) rewrote both the mechanic and the assertion, and this
+   branch carries that fix via merge. This candidate's tree diffs against
+   `dev` as pure additions.
 
 ## What cutover will take (in order)
 
