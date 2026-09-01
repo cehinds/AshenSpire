@@ -12,7 +12,6 @@ const visibleFocusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
 export function mountSmithUpgradeModal(host, initialModel, {
-  multiUse = false, // Multi-use Shrines: a confirmed upgrade stays at the Shrine
 
   registries,
   meta,
@@ -41,7 +40,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
         <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
       </div>
-      <span class="smith-modal-consequence">${multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE'}</span>
+      <span class="smith-modal-consequence">${esc(initialModel.properties.consequenceBadge)}</span>
     </header>
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
@@ -233,7 +232,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         registries,
         id: 'smithUpgrade',
         title: `Upgrade ${selected.name}?`,
-        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${multiUse ? '; you stay at the Shrine' : ' and leaves the Shrine'}.`,
+        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${model.properties.staysAtShrine ? '; ' : ' '}${model.properties.decisionConsequence}.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
         confirmLabel: `Upgrade (${selected.cost})`,

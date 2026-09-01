@@ -357,11 +357,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
       let selectedItemRef = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef);
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
-        multiUse,
         returnFocusElement: smithOption,
         onSelect: (itemRef) => {
           selectedItemRef = itemRef;

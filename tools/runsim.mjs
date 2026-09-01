@@ -42,7 +42,11 @@ const argv = process.argv.slice(2);
 const LEVEL_COST = (argv.find((a) => a.startsWith('--level-cost=')) || '').slice('--level-cost='.length);
 const levelBundle = LEVEL_COST
   ? (() => {
-    const [firstCost, costStep] = LEVEL_COST.split(',').map(Number);
+    // Exactly two non-empty fields: `20,` would read as 20/0 (Number('') is 0)
+    // and `20,4,999` would silently drop its tail — both mislabel a fleet.
+    const fields = LEVEL_COST.split(',');
+    if (fields.length !== 2 || fields.some((f) => f.trim() === '')) throw new Error(`--level-cost expects exactly first,step — got '${LEVEL_COST}'`);
+    const [firstCost, costStep] = fields.map(Number);
     if (!Number.isFinite(firstCost) || !Number.isFinite(costStep)) throw new Error(`--level-cost expects first,step — got '${LEVEL_COST}'`);
     // A ladder the shrine could not price: a first purchase that is free or
     // negative, or a step that walks the price DOWN, is a typo, not an
