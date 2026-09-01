@@ -10,6 +10,7 @@ import {
   createFrameworkRegistries, TermRegistry, AssetRegistry,
 } from '../src/framework/registries.js';
 import { compileEntity, CompileError, hasProperty, propertyParameters } from '../src/framework/compiler.js';
+import { mechanics as mechanicsData } from '../src/framework/data/mechanics.js';
 import {
   destinationAfterPlay, endTurnCleanup, forcedDiscardDestination, ZoneLedger,
 } from '../src/framework/lifecycle.js';
@@ -292,7 +293,8 @@ test('stamina: idle turns recover 1; a refund does not erase the spend', () => {
 // ---- weight and dodge -------------------------------------------------------
 
 test('weight class thresholds sit at 49/79 load percent', () => {
-  const at = (load, capacity) => computeWeightClass({ constitution: 0, strength: 0, bonuses: capacity - 50, weights: { armorWeight: load } }).weightClass.id;
+  // bonuses lifts the capacity to exactly `capacity` whatever the authored base is
+  const at = (load, capacity) => computeWeightClass({ constitution: 0, strength: 0, bonuses: capacity - mechanicsData.weight.capacityBase, weights: { armorWeight: load } }).weightClass.id;
   eq(at(49, 100), 'light', '49% light');
   eq(at(50, 100), 'medium', '50% medium');
   eq(at(79, 100), 'medium', '79% medium');
@@ -714,6 +716,7 @@ test('the router door serves the whole routed-interaction surface, identically',
 // ---- contract-new composition outputs (dormant until authored) --------------
 
 const { createRunState } = await import('../src/model/state.js');
+const mechanicsHome = await import('../src/framework/data/mechanics.js');
 const actionsHome = await import('../src/engine/actions.js');
 
 function grantFixtureRegistries(packagesById) {
@@ -860,7 +863,8 @@ test('the bridge decides Weight Class through the framework service, with the Te
   eq(decided.capacity, expected.capacity, 'capacity is the service\'s');
   eq(decided.load, expected.load, 'load is the service\'s');
   eq(decided.weightClass.id, expected.weightClass.id, 'class row is the service\'s');
-  eq(decided.word, 'Light', 'the class word comes from TermRegistry');
+  eq(decided.word, decided.weightClass.id === 'medium' ? 'Medium' : decided.weightClass.id === 'heavy' ? 'Heavy' : 'Light', 'the class word comes from TermRegistry');
+  eq(decided.weightClass.id, 'medium', 'CON 11 / STR 13 carrying 20 stands Medium (capacity 5 + 22 + 13 = 40, 50%)');
 });
 
 test('the Armoury equip-load receipt counts authored armament weights and the armour rule, and is a readout only', () => {
@@ -870,8 +874,8 @@ test('the Armoury equip-load receipt counts authored armament weights and the ar
   eq(r.hands, 12, 'hands weigh their authored weight');
   eq(r.armour, 8, 'armour weighs its poiseThreshold under the A-side rule');
   eq(r.load, 20, 'load sums both');
-  eq(r.capacity, 50 + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
-  eq(r.classId, 'light', 'the reaver starts Light');
+  eq(r.capacity, mechanicsHome.mechanics.weight.capacityBase + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
+  eq(r.classId, 'medium', 'the sword-and-shield reaver start stands Medium (20 of 40) — the class exists for the player');
   eq(r.active, false, 'no combat rule consumes the class yet');
 });
 

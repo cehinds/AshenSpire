@@ -59,7 +59,27 @@ for (const cls of contentBundle.classes) {
     }
   }
 }
+// THE REACHABILITY LINES: the heaviest kit each class could ever wear at its
+// tuned attributes (heaviest right hand, heaviest left hand, heaviest outfit).
+// If even that stays Light, no loadout can leave Light and the class does not
+// exist for the player — the contract's own feasibility flag, answered here.
+const heaviest = [];
+const armaments = contentBundle.equipment.armaments;
+const heaviestHand = (hand) => armaments.filter((a) => a.hand === hand || a.hand === 'either').sort((a, b) => b.weight - a.weight)[0];
+for (const cls of contentBundle.classes) {
+  const attributes = attributeRules.presets.tuned[cls.id];
+  if (!attributes) continue;
+  const outfit = contentBundle.equipment.armour.filter((o) => o.classId === cls.id).sort((a, b) => b.poiseThreshold - a.poiseThreshold)[0];
+  const right = heaviestHand('right'); const left = heaviestHand('left');
+  const decided = REG.framework.weightClass({
+    attributes, bonuses: capacityBonus,
+    weights: { mainHandWeight: right.weight + left.weight, offHandWeight: 0, armorWeight: ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? outfit.poiseThreshold : 0, otherCountedWeight: 0 },
+  });
+  checks += 1;
+  heaviest.push(`${cls.id.padEnd(9)} heaviest ${right.id}+${left.id}+${outfit.id}: load ${decided.load}/${decided.capacity} ${decided.percent}% → ${decided.word}`);
+}
 console.log(`weightclass-census — armour weight rule: ${ARMOUR_WEIGHT_RULE} · capacity base ${capacityBase}${capacityBonus ? ` (shipped ${mechanics.weight.capacityBase}; delta ${capacityBonus} as a bonus)` : ''}`);
 for (const row of rows) console.log('  ' + row);
-console.log(`  distribution: ${Object.entries(tally).map(([k, v]) => `${k} ${v}`).join(' · ')} (of ${checks})`);
+console.log(`  distribution of shipped starts: ${Object.entries(tally).map(([k, v]) => `${k} ${v}`).join(' · ')} (of ${checks - heaviest.length})`);
+for (const row of heaviest) console.log('  ' + row);
 console.log(`weightclass-census: OK — ${checks} checks passed`);
