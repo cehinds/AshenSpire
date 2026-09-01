@@ -70,8 +70,11 @@ if (process.argv.includes('--selftest')) {
         name: 'the Armoury stops handing its live settings to the receipt',
         edits: [csvRow, {
           file: 'src/ui/screens/equipment.js',
-          find: '        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },\n        meta,',
-          replace: '        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },',
+          // #498: the call site moved into comparisonFor() with shorthand
+          // destructuring and the plant died. Same intent at the current site:
+          // the receipt loses the live settings bag.
+          find: '      candidate: { slotId, setIndex, pieceId },\n      meta,',
+          replace: '      candidate: { slotId, setIndex, pieceId },',
         }],
         prep: REBUILD,
         expectRed: /FAIL the Armoury hands its live settings to the receipt/,

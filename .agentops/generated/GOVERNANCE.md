@@ -245,9 +245,18 @@ Elapsed time changes routing only, never truth, evidence, or authority. FYIs rem
 - **Must not:** approve-its-own-implementation, waive-independent-qa, push-pr-merge-deploy-or-release, amend-its-own-grant
 - **Approval ceiling:** Forms and staffs its own team. Holds no waiver over independent QA: decision 0010 withdrew that mechanism pending an authenticated approval path.
 
+### Identifiers that are not seats
+
+These identifiers appear where a role identifier does, and nothing holds them. They are declared so a reference naming one is checked rather than waved through, and so a typo in a role field cannot pass as one of them. Each names the fields it may appear in — the ownership and writer fields whose semantics support an unheld owner — and outside those fields it is refused: a field that names someone who must ACT (a gate actor, a reviewer, a verifier, an authority) cannot be satisfied by an identifier nobody holds.
+
+- `generator` (permitted in `owner_role`, `producer_role`) — The generated-artifact lane’s single writer. `opsctl render` is the only thing that writes those paths, so the owner is a tool rather than a seat, and no one holds it.
+- `per-seat` (permitted in `owner_role`) — Ownership follows the ticket’s writer lease rather than a fixed seat, so the owner is whichever role currently holds that ticket. Used where a path or ref is one lane per seat and can therefore be owned by any role in turn.
+
 ## Authority matrix
 
-| Action | Routine owner role | Scope | Protected | Required evidence |
+What a grant expects before it is exercised, written for a person to read. It is deliberately NOT called required_evidence: that name means a list of evidence.json ids everywhere else in this corpus (promotion-gates, qa), and one name carrying two types is how a check that reads it generically ends up skipping the contract it cannot parse. A grant that should demand a specific receipt names it in the gate that guards the move, not here.
+
+| Action | Routine owner role | Scope | Protected | Evidence expected |
 |---|---|---|---|---|
 | record-triage-route-report-status | help-desk | ticket-intake-and-status | no | Complete ticket and truthful Project readback. |
 | implement-locally | maker | assigned-exclusive-paths | no | CONTRACT READY, explicit implementation scope, fresh base, exclusive paths, and a held writer lease. |
@@ -469,6 +478,7 @@ Idle capacity: Read-only audits, modernization-register refreshes, documentation
 | `qa-functional` | `qa-guild` | Independent functional and regression evidence. |
 | `review-approval-hub` | `platform-release` | The Hub is now generated output under the generated-artifact lane; approval gates themselves live in transitions.json and authority.json, not a team. |
 | `writing` | `experience-design` | Narrative, copy and documentation clarity. |
+| `delivery-systems-review` | `platform-release` | Named as a Gate D conditional reviewer in promotion-gates while no role, pool or alias declared it, so that condition could never be routed to anyone. Routed here because platform-release is the declared pool for CI, packaging, deployment and release staging — the surfaces the gate condition names. This is a routing decision recorded where routing decisions live; the IT Manager III or the owner may rebind it. |
 
 
 ## RACI (exactly one Accountable per item)
@@ -793,6 +803,7 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 - `producer_exists` — every evidence type names a producer_role that is a declared role or the generator writer.
 - `bound_to_exact_object` — every evidence type binds to an exact object and lists invalidation keys.
 - `pointers_are_types_not_receipts` — A capsule's evidence_pointers name evidence TYPES, not receipts. Listing a type says the capsule is expected to carry that kind of evidence; it does not say a receipt exists, nor that one binds to the current head. No artifact in this corpus records a receipt against an exact object, so freshness_rule and invalidation_keys are stated and unenforceable per candidate. A gate that must prove fresh evidence therefore cannot be satisfied from the corpus as it stands, and must refuse rather than accept a type name as proof.
+- `invalidation_keys_are_not_the_capsule_vocabulary` — An evidence declaration's invalidation_keys name properties of the exact object a receipt binds to — head_oid, tree_oid, candidate_sha and the like. A work capsule carries a field of the same name holding a different vocabulary: the capsule's own fields whose change makes its wake stale. They are one keystroke apart in places (tree against tree_oid, base_oid against head_oid) and neither is valid in the other's place. The capsule side is checked against the capsule schema; this side has no declared vocabulary to check against, so a key here is only as good as the reader.
 
 **`information-access`**
 

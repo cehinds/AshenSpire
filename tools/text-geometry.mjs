@@ -67,9 +67,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /quick-nav button clips its Text XL glyph/,
       },
       {
+        // #498: the Settings copy was rewritten (browser-baseline wording) and
+        // both copy plants died patching the old sentence. Same intent at the
+        // current copy: plant the overclaiming promise, expect the gate red.
         name: 'the Text size help copy promises a completed non-text sweep',
         file: 'src/ui/screens/settings.js',
-        find: "    note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.' },",
+        find: "    note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },",
         replace: "    note: 'Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.' },",
         expectRed: /text size setting overclaims non-text stability/,
       },
@@ -110,7 +113,7 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the shipped Settings copy restores the broad non-text promise',
         file: 'AshenSpire.html',
-        find: "    note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.' },",
+        find: "note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },",
         replace: "    note: 'Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.' },",
         expectRed: /text size setting overclaims non-text stability/,
       },
@@ -323,10 +326,16 @@ async function main() {
     if (!assets.includes('const px = (value) => `${value}px`;')) failures.push(`${ownershipKind} ownership seam missing: sprite px emitter`);
     if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: class sprite fixed px geometry`);
     if (!assets.includes("width:150px;height:190px;flex:0 0 auto;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: equipped player sprite fixed px geometry`);
-    const honestTextSizeNote = "note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.'";
+    // #498: this pinned the pre-rework copy after the Text-size rework shipped
+    // the browser-baseline wording in both settings.js and the built artifact,
+    // so the check could only fail — masked in CI because the `tests` job died
+    // at the music-parity step before reaching this gate. It pins the CURRENT
+    // shipped copy now, with the same shape as before: the exact honest note,
+    // and a refusal of the overclaiming promise however the rest is worded.
+    const honestTextSizeNote = "note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.'";
     if (!settings.includes(honestTextSizeNote)
       || /Scale interface text without resizing controls or artwork/.test(settings)) {
-      failures.push('text size setting overclaims non-text stability: name only the migrated art and action floors, and keep legacy spacing explicit');
+      failures.push('text size setting overclaims non-text stability: state only what the setting does, and never promise untouched controls or artwork');
     }
 
     for (const [viewport, profile] of Object.entries(rows)) {

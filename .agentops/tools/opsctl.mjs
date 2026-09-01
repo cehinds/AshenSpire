@@ -566,6 +566,78 @@ export function semanticChecks(c) {
   // fast-forward-test advanced `test` and left the capsule at dev-integrated,
   // so Gate D's declared hosted-verified -> resolved transition was unreachable:
   // the ref said promoted and the authoritative lifecycle did not.
+  // `required_evidence` was validated against evidence.json in promotion-gates
+  // and in qa, each by its own loop, and nowhere else. authority.json carried a
+  // field of the same name holding prose — one name, two types — so a generic
+  // check would either have failed on it or been written to skip it, and
+  // skipping is how a check stops firing. The prose field is `evidence_expected`
+  // now, and this sweeps every `required_evidence` in the corpus instead of the
+  // two contracts someone thought of.
+  if (c.evidence) {
+    const evIds = new Set(c.evidence.evidence.map((e) => e.id));
+    const sweepEvidence = (node, where) => {
+      if (Array.isArray(node)) { node.forEach((v, i) => sweepEvidence(v, `${where}[${i}]`)); return; }
+      if (!node || typeof node !== 'object') return;
+      for (const [k, v] of Object.entries(node)) {
+        if (k === 'required_evidence') {
+          if (!Array.isArray(v)) {
+            errors.push(`${where}.${k} is not a list of evidence ids; that name means a list of evidence.json ids everywhere in this corpus, and prose under it would be read as one`);
+          } else {
+            for (const need of v) {
+              if (!evIds.has(need)) errors.push(`${where}.${k} requires '${need}', which evidence.json does not declare; nothing can produce it and nothing can pass by holding it`);
+            }
+          }
+        }
+        sweepEvidence(v, `${where}.${k}`);
+      }
+    };
+    for (const [name, contract] of Object.entries(c)) sweepEvidence(contract, name);
+  }
+
+  // Role-valued fields were checked one at a time, where someone remembered.
+  // A sweep found four references nothing declared: three were deliberate
+  // non-seat writers with no declaration to point at, and one — Gate D's
+  // 'delivery-systems-review' conditional reviewer — was dangling outright, so
+  // that condition could never be routed to anyone. A role field naming
+  // something nobody holds is the same defect as a status string nothing
+  // matches: the check that reads it compares against a value that never
+  // appears, and passes by never running. Every such field is swept now, and
+  // the vocabulary it may draw from is declared rather than remembered.
+  if (c.roles && c.teams) {
+    const roleIds = new Set(c.roles.roles.map((r) => r.role));
+    // A non-seat writer is valid only in the fields its declaration names —
+    // the ownership/writer fields whose semantics support an unheld owner.
+    // One flat vocabulary let Gate D's conditional reviewer be 'generator':
+    // a protected gate requiring a recommendation nobody can author, with
+    // verify green. The declaration carries its own scope now.
+    const nonSeat = new Map((c.roles.non_seat_writers || []).map((w) => [w.id, new Set(w.appears_in || [])]));
+    const pools = new Set((c.teams.capability_pools || []).map((pp) => pp.id));
+    const aliases = new Set((c.teams.legacy_aliases || []).map((a) => a.legacy));
+    const overlap = [...nonSeat.keys()].filter((id) => roleIds.has(id));
+    for (const id of overlap) {
+      errors.push(`roles: '${id}' is declared both as a role and as a non-seat writer; a reference naming it would mean two different things`);
+    }
+    const sweep = (node, where) => {
+      if (Array.isArray(node)) { node.forEach((v, i) => sweep(v, `${where}[${i}]`)); return; }
+      if (!node || typeof node !== 'object') return;
+      for (const [k, v] of Object.entries(node)) {
+        if (typeof v === 'string' && (k === 'role' || k.endsWith('_role'))) {
+          if (roleIds.has(v) || pools.has(v) || aliases.has(v)) {
+            // a declared seat, review lane, or routed alias — someone acts
+          } else if (nonSeat.has(v)) {
+            if (!nonSeat.get(v).has(k)) {
+              errors.push(`${where}.${k} names '${v}', a non-seat writer that nothing holds; its declaration permits it in ${[...nonSeat.get(v)].map((f) => `'${f}'`).join(', ')} only, and a field naming someone who must act cannot be satisfied by an identifier nobody holds`);
+            }
+          } else {
+            errors.push(`${where}.${k} names '${v}', which is not a declared role, capability pool, legacy alias or non-seat writer; a reference nobody holds routes to no one and every check reading it passes by never matching`);
+          }
+        }
+        sweep(v, `${where}.${k}`);
+      }
+    };
+    for (const [name, contract] of Object.entries(c)) sweep(contract, name);
+  }
+
   // A ref naming the command that may move it is a grant, so it is checked like
   // one: the action must exist, must be a protected one (moving a shared ref is
   // never ordinary), and no two refs may claim the same command — two refs
@@ -1373,12 +1445,24 @@ export function renderGovernance(c) {
     L.push('');
   }
 
+  // Identifiers that stand where a role does and are held by no one. They are
+  // rendered because a reader hitting `generator` or `per-seat` in the ref and
+  // path tables has no other place to find out what they mean.
+  L.push('### Identifiers that are not seats');
+  L.push('');
+  L.push(c.roles.non_seat_writers_are_not_roles);
+  L.push('');
+  for (const w of c.roles.non_seat_writers) L.push(`- \`${w.id}\` (permitted in ${w.appears_in.map((f) => '\`' + f + '\`').join(', ')}) — ${w.means}`);
+  L.push('');
+
   L.push('## Authority matrix');
   L.push('');
-  L.push('| Action | Routine owner role | Scope | Protected | Required evidence |');
+  L.push(c.authority.evidence_expected_is_prose);
+  L.push('');
+  L.push('| Action | Routine owner role | Scope | Protected | Evidence expected |');
   L.push('|---|---|---|---|---|');
   for (const g of c.authority.grants) {
-    L.push(`| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`);
+    L.push(`| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${mdCell(g.evidence_expected)} |`);
   }
   L.push('');
 
@@ -2114,7 +2198,7 @@ export function loadRuntime(root = ROOT) {
       events[ticket] = list;
     }
   }
-  return { capsules, leases, events, errors };
+  return { capsules, leases, events, errors, schemas };
 }
 
 // Cross-checks tying runtime artifacts to the governance contracts and to each
@@ -2334,6 +2418,26 @@ export function runtimeChecks(g, rt, root = null) {
           errors.push(`event '${ev.id}' is kind '${ev.kind}' but carries a '${field}' payload, which only a '${kind}' event may carry; nothing would check it there`);
         } else if (action && ev.action !== action) {
           errors.push(`event '${ev.id}' carries a '${field}' payload but records action '${ev.action || 'none'}', not '${action}'; the ledger would claim a promotion no command performed`);
+        }
+      }
+    }
+  }
+
+  // A capsule's `invalidation_keys` name the capsule's OWN fields — the ones
+  // whose change makes the wake stale. Nothing checked them, so a key naming no
+  // field watched nothing and the capsule reported freshness rules it did not
+  // have. The near-miss risk is real and already visible in the corpus: evidence
+  // declarations carry a field of the same name holding a DIFFERENT vocabulary
+  // (`tree_oid`, `head_oid`, `candidate_sha` — properties of the object a
+  // receipt binds to), and `tree` against `tree_oid`, `base_oid` against
+  // `head_oid` are one keystroke apart. Only the capsule side is derivable
+  // without inventing a vocabulary, so only that side is checked here.
+  const capsuleFields = new Set(Object.keys((((rt.schemas || {}).capsule || {}).properties) || {}));
+  if (capsuleFields.size) {
+    for (const [ticket, cap] of Object.entries(rt.capsules)) {
+      for (const key of cap.invalidation_keys || []) {
+        if (!capsuleFields.has(key)) {
+          errors.push(`capsule '${ticket}' invalidates on '${key}', which is not a field of a work capsule; a key naming nothing is watched by nothing, and the capsule reports a freshness rule it does not have`);
         }
       }
     }
@@ -3983,7 +4087,7 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // escalation classes), and probeStrengthErrors below proves each one still fails
 // when its block is removed.
 const VIEW_PROBES = {
-  authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
+  authority: (x) => [x.evidence_expected_is_prose, ...x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${mdCell(g.evidence_expected)} |`)],
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '\`' + mdCell(g) + '\`').join(', ') || '\u2014 (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
@@ -4028,7 +4132,7 @@ const VIEW_PROBES = {
   'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => gateDetailLines(g).length ? [`#### Gate ${g.id} \u2014 ${g.name}`, '', ...gateDetailLines(g)].join('\n') : null).filter((y) => y !== null), ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
-  roles: (x) => x.roles.map((r) => [
+  roles: (x) => [x.non_seat_writers_are_not_roles, ...x.non_seat_writers.map((w) => `- \`${w.id}\` (permitted in ${w.appears_in.map((f) => '\`' + f + '\`').join(', ')}) \u2014 ${w.means}`), ...x.roles.map((r) => [
     '### `' + r.role + '`',
     '',
     `- **Mission:** ${r.mission}`,
@@ -4038,7 +4142,7 @@ const VIEW_PROBES = {
     `- **Must:** ${r.must.join('; ') || '\u2014'}`,
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
-  ].filter((l) => l !== null).join('\n')),
+  ].filter((l) => l !== null).join('\n'))],
   teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``, `- Persistent display name: \`${x.naming_convention.display_name_persistent}\``, `- Agent display name: \`${x.naming_convention.display_name_agent}\``, x.naming_convention.display_name_is_not_the_seat_name, x.naming_convention.display_name_kind_is_not_a_choice],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`), x.legacy_rule, ...(x.legacy_values || []).map((lv) => `| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`)],
 };
@@ -4837,6 +4941,18 @@ export function runSelftest(root = ROOT) {
       results.push({ label: 'consolidation control: a well-formed summary of a present range validates', pass: errs.length === 0, errs });
     }
     // A payload on the wrong kind is never checked, so it must never be accepted.
+  // Invalidation keys name capsule fields. The near-miss is the point: `tree_oid`
+  // and `head_oid` are real keys in the evidence contract's field of the same
+  // name, and both are wrong here.
+  expectRuntime('capsule: an invalidation key that names no capsule field', (rt) => { const t = Object.keys(rt.capsules)[0]; rt.capsules[t].invalidation_keys = ['tree_oid']; }, 'watched by nothing');
+  expectRuntime('capsule: an invalidation key borrowed from the evidence vocabulary', (rt) => { const t = Object.keys(rt.capsules)[0]; rt.capsules[t].invalidation_keys = ['base_oid', 'head_oid']; }, "invalidates on 'head_oid'");
+  {
+    // Control: the keys the live capsules actually use must all resolve, or the
+    // pair above could be passing because every key fails.
+    const rt = baseRt();
+    const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('watched by nothing'));
+    results.push({ label: 'capsule control: the invalidation keys in the live corpus all name real fields', pass: errs.length === 0, errs });
+  }
   expectRuntime('a consolidation payload on a genesis event', (rt) => {
     const t = Object.keys(rt.events)[0];
     const g = rt.events[t].find((e) => e.kind === 'genesis') || rt.events[t][0];
@@ -5385,6 +5501,42 @@ export function runSelftest(root = ROOT) {
     const errs = validateSchema(c['git-ownership'], schema);
     const hit = errs.some((e) => e.includes('not in enum'));
     results.push({ label: 'ref binding: a mutation value outside the declared vocabulary', pass: hit, errs: hit ? [] : errs });
+  }
+  // The role sweep. Three plants put a typo at a different depth, and three more
+  // remove one arm of the declared vocabulary each — if an arm is never the
+  // reason something resolves, it is dead permission widening the check for
+  // nothing, and these say which arm carries which reference.
+  // The evidence sweep, now that one name means one type corpus-wide.
+  expectSemantic('evidence sweep: a gate requiring evidence nothing declares', (c) => { c.qa.gates[0].required_evidence = ['smoke-receipt']; }, 'nothing can produce it and nothing can pass by holding it');
+  expectSemantic('evidence sweep: prose under the name that means a list of ids', (c) => { c['promotion-gates'].gates[0].required_evidence = 'the usual checks'; }, 'prose under it would be read as one');
+  expectSemantic('role sweep: a typo in a nested authority role', (c) => { c.retention.authority.actor_role = 'it-manager-ii'; }, 'is not a declared role, capability pool, legacy alias or non-seat writer');
+  expectSemantic('role sweep: a typo inside an array of arrays', (c) => { c['promotion-gates'].gates.find((g) => g.conditional_roles).conditional_roles[0].role = 'data-architecture-leed'; }, 'routes to no one');
+  expectSemantic('role sweep: a typo in a path owner', (c) => { c['git-ownership'].paths[0].owner_role = 'makerr'; }, 'is not a declared role');
+  expectSemantic('role sweep: the non-seat writers undeclared', (c) => { c.roles.non_seat_writers = [{ id: 'unused-writer', means: 'nothing references this' }]; }, "names 'generator'");
+  expectSemantic('role sweep: the capability pools undeclared', (c) => { c.teams.capability_pools = []; }, "names 'experience-accessibility-review'");
+  expectSemantic('role sweep: the legacy aliases undeclared', (c) => { c.teams.legacy_aliases = []; }, "names 'delivery-systems-review'");
+  expectSemantic('role sweep: an identifier declared as both a role and a non-seat writer', (c) => { c.roles.non_seat_writers.push({ id: 'maker', appears_in: ['owner_role'], means: 'ambiguous on purpose' }); }, 'two different things');
+  // A non-seat writer outside its declared fields. The reported case exactly:
+  // Gate D requiring a recommendation nobody can author, with verify green.
+  // The allowlist must not be able to widen itself: appears_in is data the
+  // sweep trusts, so the schema pins it to the writer-field vocabulary and a
+  // widened declaration fails validation before the sweep ever reads it.
+  {
+    const c = base();
+    c.roles.non_seat_writers.find((w) => w.id === 'generator').appears_in.push('role');
+    const schema = JSON.parse(readFileSync(resolve(root, CONTRACTS.find((x) => x.name === 'roles').schema), 'utf8'));
+    const errs = validateSchema(c.roles, schema);
+    const hit = errs.some((e) => e.includes('not in enum'));
+    results.push({ label: 'role sweep: a non-seat writer widening its own allowlist', pass: hit, errs: hit ? [] : errs });
+  }
+  expectSemantic('role sweep: a gate reviewer that nothing holds', (c) => { c['promotion-gates'].gates.find((g) => g.conditional_roles).conditional_roles[0].role = 'generator'; }, 'cannot be satisfied by an identifier nobody holds');
+  expectSemantic('role sweep: a lease-follower where a producer must act', (c) => { c.evidence.evidence[0].producer_role = 'per-seat'; }, "permits it in 'owner_role' only");
+  {
+    // Control: the corpus's real writer-field uses of both identifiers must
+    // still pass, or the scoping could be rejecting the fields it exists for.
+    const c = base();
+    const errs = semanticChecks(c).filter((e) => e.includes('non-seat writer'));
+    results.push({ label: 'role sweep control: generator and per-seat pass in their declared writer fields', pass: errs.length === 0, errs });
   }
   expectSemantic('ref binding: a ref moved by a command nothing declares', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'fast-forward-anything'; }, 'which owner-command.json does not declare');
   expectSemantic('ref binding: a shared ref moved by an unprotected command', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'delegate'; }, 'moving a shared ref is never an ordinary command');
