@@ -30,7 +30,7 @@ Everything under `src/framework/` plus the authored data in
 | Weight Class & Dodge Roll | `src/framework/weight.js` | Weight Class and Dodge Roll |
 | Whitelisted inheritance (PERMITS relations) | `src/framework/inheritance.js` | Whitelisted inheritance |
 | Shared presentation (components, tooltip engine, confirmation grammar, fitText) | `src/framework/presentation/` | Shared presentation system, Modal grammar, Tooltip behavior, Theme and layout data |
-| Legacy importer (all 392 entities) | `src/framework/importer.js` | One-shot replacement |
+| Legacy importer (every legacy entity — 393 at this commit) | `src/framework/importer.js` | One-shot replacement |
 | Complete validation + known-bad corpus | `src/framework/validate.js`, `tests/framework.test.mjs` | Complete validation |
 | Cutover gate | `src/framework/candidate.js`, `tools/framework-gate.mjs` | Cutover gate |
 
@@ -45,7 +45,7 @@ not passed every gate — no mixed old/new authority.
 |---|---|---|
 | schema and reference validation | **PASS** | `validateAllContent` — zero failures over authored + imported rows |
 | property-conflict and cycle validation | **PASS** | every entity compiles; conflicts/requirements/cycles checked; known-bads observed red |
-| complete entity counts | **PASS** | 392/392 legacy entities imported (195 cards, 41 equipment, 50 statuses, 19 enemies, 4 classes, 55 relics, 7 flasks, 20 locations, 1 UI surface) |
+| complete entity counts | **PASS** | 393/393 legacy entities imported (196 cards, 41 equipment, 50 statuses, 19 enemies, 4 classes, 55 relics, 7 flasks, 20 locations, 1 UI surface — read from `importLegacyContent(contentBundle).counts` on 2026-09-01; the card count moved from 195 when the smithing branch authored a card) |
 | asset and terminology validation | **PASS** | typed fallback chains terminate; zero terminology drift against legacy keywords |
 | save compatibility | **PASS** (data level) | every imported entity carries its legacy id verbatim; the candidate never reads or writes a save |
 | unchanged-gameplay equivalence | **PASS** (data level) | all 180 legacy cards round-trip: type, cost, manaCost, keywords, damage school, targets reconstruct exactly from compiled properties. Runtime replay equivalence is gated by the regression suite. |
