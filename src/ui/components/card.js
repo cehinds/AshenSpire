@@ -185,7 +185,14 @@ export function upgradePreviewHtml(registries, ref) {
 }
 
 function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}${def.staminaCost ? ` + ${esc(def.staminaCost)} Stamina` : ''}</div>`;
+  // Cost numbers come from the framework profile and the resource words from
+  // TermRegistry — same rendered string, one authority for both.
+  const pools = registries.framework.costProfile(def);
+  const word = (resource) => registries.framework.resourceWord(resource);
+  const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
+    + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
+    + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${costText}</div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;

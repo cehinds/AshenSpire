@@ -25,6 +25,7 @@
     { "id": "term.wisdom", "canonicalText": "Wisdom", "shortText": "WIS" },
 
     { "id": "term.action", "canonicalText": "Action", "pluralText": "Actions" },
+    { "id": "term.energy", "canonicalText": "Energy" },
     { "id": "term.stamina", "canonicalText": "Stamina" },
     { "id": "term.mana", "canonicalText": "Mana" },
     { "id": "term.alternativeCost", "canonicalText": "Alternative Cost", "pluralText": "Alternative Costs" },

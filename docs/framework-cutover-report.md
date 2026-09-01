@@ -91,11 +91,27 @@ shared presentation even though its LEVEL rule is the reconciliation item
 below — and cost/keyword DISPLAY strings on card faces (the decisions are
 ported; the formatting is the presentation tranche's).
 
-### Two systems the port deliberately does NOT bridge (owner decision needed)
+### Two reconciliation rulings — DECIDED (owner, 2026-09-01)
 
-Surveyed for tranche 3 and left in place on purpose — both are cases where
-the legacy design already satisfies the contract's intent, and a mechanical
-bridge would add risk without adding authority:
+Surveyed for tranche 3, decided by the owner, and executed in tranche 4.
+Both rulings adopt the legacy design as the framework's implementation, with
+the authority boundary moved to a framework door module:
+
+- **Deck composition — ADOPTED.** `src/framework/deckComposition.js` is the
+  framework door; it re-exports the shipped composition
+  (`WeaponDeckCompositionService` + the role-plan functions) as the
+  framework's implementation, and consumers outside `loadout.js`
+  (`engine/save.js`, `model/equipmentPresentation.js`) compose through it.
+  The contract-new outputs (granted cards, installed weapon arts, the
+  unarmed Evasive Guard / Dodge Roll package) remain open build work on top
+  of this adoption; `src/framework/deck.js` stays their specification.
+- **Confirmation level rule — ADOPTED.** `src/framework/confirmationRule.js`
+  re-exports `consequence.js`'s fail-closed derivation as the framework's
+  level rule for effect-carrying choices; `ui/screens/event.js` resolves
+  through it. The ConfirmationRegistry keeps the static surfaces; the
+  tap/hold interaction router still ports under shared presentation.
+
+The original findings, kept for the record:
 
 1. **Deck composition.** The shipped composition splits across the legacy
    homes: `WeaponDeckCompositionService` (`src/model/loadout.js`) composes
@@ -172,11 +188,10 @@ bridge would add risk without adding authority:
 
 ## What cutover will take (in order)
 
-1. Owner rulings on contradictions 1–5 AND the two reconciliation
-   decisions above (deck composition adopt-vs-rewrite with the
-   contract-new outputs carried either way; the fail-closed consequence
-   derivation as the framework's rule for effect-carrying choices); author
-   the missing equipment data.
+1. Owner rulings on contradictions 1–5 (the two reconciliation decisions
+   are DECIDED and executed — see above; the contract-new composition
+   outputs they gate remain open build work); author the missing
+   equipment data.
 2. Port the legacy engine/UI consumers to the framework services and shared
    components (the candidate's services are drop-in shaped; the port is
    mechanical but wide).

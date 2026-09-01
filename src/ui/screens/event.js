@@ -8,7 +8,9 @@ import { executeRunEffects } from '../../engine/actions.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { isBindingChoice } from '../../model/consequence.js';
+// The fail-closed level rule goes through the framework's adopted door
+// (owner ruling; the derivation itself still lives in model/consequence.js).
+import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
 import { beatArmer } from '../components/holdconfirm.js';
 

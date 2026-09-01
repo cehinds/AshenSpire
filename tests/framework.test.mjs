@@ -598,5 +598,43 @@ test('the bridge decides through the same mapping the importer uses', () => {
   eq(bridge.viewFor(upgradedGorefire), view, 'views are cached by def identity');
 });
 
+// ---- the adopted implementations (owner rulings, 2026-09-01) ---------------
+
+const compositionDoor = await import('../src/framework/deckComposition.js');
+const loadoutHome = await import('../src/model/loadout.js');
+const ruleDoor = await import('../src/framework/confirmationRule.js');
+const consequenceHome = await import('../src/model/consequence.js');
+
+test('the framework composition door serves the shipped composer, identically', () => {
+  eq(compositionDoor.WeaponDeckCompositionService === loadoutHome.WeaponDeckCompositionService, true, 'one service, one home');
+  eq(compositionDoor.buildEquippedWeaponCardPlan === loadoutHome.buildEquippedWeaponCardPlan, true, 'plan builder identical');
+  eq(compositionDoor.applyEquippedWeaponCardPlan === loadoutHome.applyEquippedWeaponCardPlan, true, 'applier identical');
+  eq(compositionDoor.stampDeck === loadoutHome.stampDeck, true, 'restamp identical');
+});
+
+test('the framework confirmation-rule door serves the fail-closed derivation, identically', () => {
+  eq(ruleDoor.isBindingChoice === consequenceHome.isBindingChoice, true, 'one derivation, one home');
+  eq(ruleDoor.SAFE_OPS === consequenceHome.SAFE_OPS, true, 'safe set identical');
+  const unknownOp = ruleDoor.failClosedOps(['summonEldritchDebt']);
+  assert(unknownOp.length === 1, 'an unruled op is still binding through the door');
+});
+
+test('the tooltip cost line renders identically through the framework for every card', () => {
+  const bridge = LEGACY_REG.framework;
+  for (const card of contentBundle.cards) {
+    for (const upgraded of card.upgrade ? [false, true] : [false]) {
+      const def = resolveCard(LEGACY_REG, { cardId: card.id, upgraded });
+      const pools = bridge.costProfile(def);
+      const rendered = `${pools.variable ? 'X' : pools.action} ${bridge.resourceWord('action')}`
+        + (pools.mana ? ` + ${pools.mana} ${bridge.resourceWord('mana')}` : '')
+        + (pools.stamina ? ` + ${pools.stamina} ${bridge.resourceWord('stamina')}` : '');
+      const legacy = `${def.cost} Energy`
+        + (def.manaCost ? ` + ${def.manaCost} Mana` : '')
+        + (def.staminaCost ? ` + ${def.staminaCost} Stamina` : '');
+      eq(rendered, legacy, `${card.id}${upgraded ? '+' : ''} cost line`);
+    }
+  }
+});
+
 console.log(`\nframework: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

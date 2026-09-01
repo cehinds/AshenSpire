@@ -1,20 +1,17 @@
 // src/framework/deck.js — deterministic, idempotent combat-deck composition
 // (framework contract: Deck composition, Unarmed fallback).
 //
-// THE CONTRACT MODEL, NOT THE LIVE COMPOSER. The running game composes attack
-// slots through WeaponDeckCompositionService in src/model/loadout.js (which
-// realizes that half of this contract — ceil/floor hand split, two-handed
-// conflicts, unarmed attack fallback, deterministic fingerprints — with the
-// richer shield/priority-ref rules the 67-check weapon-package suite proves)
-// and guard/technique slots through the role plan (equipmentKitPlan →
-// startingDeckRefs at creation, re-resolved by stampDeck on swap/load). The
-// contract-NEW outputs this module composes — granted cards, installed
-// weapon arts, the unarmed Evasive Guard / Dodge Roll fallback package —
-// exist in no legacy path yet. Which
-// implementation the cutover adopts, and how those new outputs ride along,
-// is an owner decision recorded in docs/framework-cutover-report.md; until
-// then this module is the contract's executable specification and the
-// candidate gate's subject.
+// THE CONTRACT MODEL — THE SPECIFICATION, NOT THE COMPOSER. By owner ruling
+// (2026-09-01, docs/framework-cutover-report.md) the framework ADOPTED the
+// shipped composition as its implementation: src/framework/deckComposition.js
+// is the door, re-exporting WeaponDeckCompositionService (attack slots —
+// ceil/floor hand split, two-handed conflicts, unarmed attack fallback,
+// deterministic fingerprints, shield/priority-ref rules) and the role plan
+// (equipmentKitPlan → startingDeckRefs at creation, re-resolved by stampDeck
+// on swap/load) for guard/technique replacement. The contract-NEW outputs
+// this module specifies — granted cards, installed weapon arts, the unarmed
+// Evasive Guard / Dodge Roll fallback package — exist in no legacy path yet
+// and are the open build work on top of that adoption.
 //
 // Recomposition runs on equip, unequip, hand swap, character creation, load,
 // continue, and save restoration — always from the run deck plus the loadout,

@@ -28,7 +28,9 @@
 //      for lost.
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
-import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } from '../model/loadout.js';
+import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations, stampDeck } from '../model/loadout.js';
+// Deck composition goes through the framework's adopted door (owner ruling).
+import { WeaponDeckCompositionService } from '../framework/deckComposition.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';

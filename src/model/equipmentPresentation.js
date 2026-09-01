@@ -5,7 +5,6 @@
 import {
   equipmentKitReceipt,
   armamentIntrinsicStatProblems,
-  buildEquippedWeaponCardPlan,
   equipmentRequirementReceipt,
   applyEquipTransition,
   equippedIn,
@@ -15,6 +14,8 @@ import {
   runMods,
   swapCostFor,
 } from './loadout.js';
+// Deck composition goes through the framework's adopted door (owner ruling).
+import { buildEquippedWeaponCardPlan } from '../framework/deckComposition.js';
 import { passiveSum } from './registries.js';
 import { playerPoiseThresholdReceipt } from './statProjection.js';
 

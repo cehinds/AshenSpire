@@ -98,6 +98,17 @@ export function createFrameworkBridge() {
     },
 
     /**
+     * The canonical display word for a cost resource — the shipped
+     * vocabulary ('Energy' is the in-game word for the action cost),
+     * resolved only through TermRegistry.
+     */
+    resourceWord(resource) {
+      const termId = { action: 'term.energy', mana: 'term.mana', stamina: 'term.stamina' }[resource];
+      if (!termId) throw new Error(`bridge: unknown cost resource ${JSON.stringify(resource)}`);
+      return terms.displayTerm(termId);
+    },
+
+    /**
      * The confirmation level for a registered action, as the tone the shared
      * modal wears: DESTRUCTIVE reads 'danger', every other level 'normal'.
      * An unknown action id throws — a destructive surface with no registered
