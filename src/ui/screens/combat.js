@@ -1057,14 +1057,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function isUnplayable(inst) {
-    return (resolveCard(registries, inst).keywords || []).includes('unplayable');
+    return registries.framework.isUnplayable(resolveCard(registries, inst));
   }
 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
       const def = resolveCard(registries, inst);
-      if ((def.keywords || []).includes('unplayable')) return false;
+      if (registries.framework.isUnplayable(def)) return false;
       return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost)
         && combat.player.mana >= (def.manaCost || 0);
     });

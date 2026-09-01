@@ -169,7 +169,7 @@ export function createCombat({
   const rest = [];
   for (const card of shuffled) {
     const def = resolveCard(registries, card);
-    ((def.keywords || []).includes('innate') ? innate : rest).push(card);
+    (registries.framework.isInnate(def) ? innate : rest).push(card);
   }
   combat.piles.draw = [...innate, ...rest];
 
@@ -274,15 +274,17 @@ function endPlayerTurn(combat) {
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
-  // …then discard hand except Retain; Ethereal cards exhaust instead.
+  // …then discard hand except Retain; Ethereal cards exhaust instead. The
+  // fate of each card is the framework's call (src/framework/lifecycle.js);
+  // this engine only moves the card and emits the receipt.
   const keep = [];
   const toDiscard = [];
   const toExhaust = [];
   for (const card of combat.piles.hand) {
     const def = resolveCard(combat.registries, card);
-    const kws = def.keywords || [];
-    if (kws.includes('retain')) keep.push(card);
-    else if (kws.includes('ethereal')) toExhaust.push(card);
+    const fate = combat.registries.framework.endTurnFate(def);
+    if (fate === 'keep') keep.push(card);
+    else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
   combat.piles.hand = keep;
@@ -659,7 +661,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const def = resolveCard(combat.registries, inst);
   const kws = def.keywords || [];
 
-  if (kws.includes('unplayable')) throw new Error(`'${def.name}' is unplayable`);
+  if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
@@ -729,11 +731,15 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   // Placement after resolution (SPEC §4.3): Exhaust → exhaust pile;
   // Powers are removed from play (NOT exhausted); everything else → discard.
+  // The destination is the framework's call; this engine moves the card.
   if (!combat.result) {
-    if (kws.includes('exhaust')) {
+    const destination = combat.registries.framework.afterPlayDestination(def);
+    if (destination === 'EXHAUST_PILE') {
       combat.piles.exhaust.push(inst);
       combat.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
-    } else if (def.type !== 'power') {
+    } else if (destination === 'HAND') {
+      combat.piles.hand.push(inst); // Recall After Use (no shipped card carries it yet)
+    } else if (destination !== 'REMOVED_FROM_PLAY') {
       combat.piles.discard.push(inst);
     }
     drainQueue(combat);

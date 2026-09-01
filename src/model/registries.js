@@ -11,6 +11,7 @@ import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
+import { sharedFrameworkBridge } from '../framework/bridge.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -201,6 +202,13 @@ export function createRegistries(contentBundle) {
 
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
+
+  // The framework bridge — the decision authority for card lifecycle
+  // vocabulary and keyword terminology (src/framework/bridge.js). It reads
+  // only canonical framework data (never this bundle), so the process-wide
+  // instance serves every registries object, and a plain property keeps it
+  // visible to fixtures that clone registries with spread.
+  registries.framework = sharedFrameworkBridge();
 
   return Object.freeze(registries);
 }

@@ -34,7 +34,7 @@ const CARD_TYPE_PROPERTY = Object.freeze({
   status: 'classification.statusCard',
 });
 
-const KEYWORD_PROPERTY = Object.freeze({
+export const KEYWORD_PROPERTY = Object.freeze({
   exhaust: 'lifecycle.exhaust',
   ethereal: 'lifecycle.ethereal',
   innate: 'lifecycle.innate',
@@ -90,6 +90,41 @@ function checkRarity(value, where) {
 }
 
 /**
+ * cardPropertyInstances(card) — the ONE mapping from a legacy card def's
+ * mechanics fields (type, cost, manaCost, keywords, damageSchool, effect
+ * targets) to canonical PropertyInstances. The import loop uses it for
+ * authored cards; the runtime bridge uses it for RESOLVED defs (upgrades and
+ * mods can change keywords, so live decisions must map the resolved def,
+ * never the base row). Unknown vocabulary throws by name.
+ */
+export function cardPropertyInstances(card) {
+  const properties = [
+    { propertyId: mapped(CARD_TYPE_PROPERTY, card.type, `card ${card.id} type`), source: 'AUTHORED' },
+  ];
+  if (card.cost !== undefined) {
+    properties.push({
+      propertyId: 'cost.action',
+      parameters: card.cost === 'X' ? { amount: 0, variable: true } : { amount: card.cost },
+      source: 'AUTHORED',
+    });
+  }
+  if (card.manaCost != null) {
+    properties.push({ propertyId: 'cost.mana', parameters: { amount: card.manaCost }, source: 'AUTHORED' });
+  }
+  for (const keyword of card.keywords || []) {
+    properties.push({ propertyId: mapped(KEYWORD_PROPERTY, keyword, `card ${card.id} keyword`), source: 'AUTHORED' });
+  }
+  if (card.damageSchool) {
+    properties.push({ propertyId: mapped(DAMAGE_SCHOOL_PROPERTY, card.damageSchool, `card ${card.id} damageSchool`), source: 'AUTHORED' });
+  }
+  const targets = [...new Set((card.effects || []).map((e) => e.target).filter(Boolean))].sort();
+  for (const target of targets) {
+    properties.push({ propertyId: mapped(TARGET_PROPERTY, target, `card ${card.id} effect target`), source: 'AUTHORED' });
+  }
+  return properties;
+}
+
+/**
  * importLegacyContent(bundle) → {entities, terms, assets, counts, drift}
  * Pure data out; the caller merges with the authored framework rows and
  * builds registries. `drift` lists canonical-vs-legacy wording mismatches for
@@ -131,29 +166,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   // ---- cards ---------------------------------------------------------------
   for (const card of bundle.cards) {
     const id = key('card', card.id);
-    const properties = [
-      { propertyId: mapped(CARD_TYPE_PROPERTY, card.type, `card ${card.id} type`), source: 'AUTHORED' },
-    ];
-    if (card.cost !== undefined) {
-      properties.push({
-        propertyId: 'cost.action',
-        parameters: card.cost === 'X' ? { amount: 0, variable: true } : { amount: card.cost },
-        source: 'AUTHORED',
-      });
-    }
-    if (card.manaCost != null) {
-      properties.push({ propertyId: 'cost.mana', parameters: { amount: card.manaCost }, source: 'AUTHORED' });
-    }
-    for (const keyword of card.keywords || []) {
-      properties.push({ propertyId: mapped(KEYWORD_PROPERTY, keyword, `card ${card.id} keyword`), source: 'AUTHORED' });
-    }
-    if (card.damageSchool) {
-      properties.push({ propertyId: mapped(DAMAGE_SCHOOL_PROPERTY, card.damageSchool, `card ${card.id} damageSchool`), source: 'AUTHORED' });
-    }
-    const targets = [...new Set((card.effects || []).map((e) => e.target).filter(Boolean))].sort();
-    for (const target of targets) {
-      properties.push({ propertyId: mapped(TARGET_PROPERTY, target, `card ${card.id} effect target`), source: 'AUTHORED' });
-    }
+    const properties = cardPropertyInstances(card);
     addEntity({
       id,
       kind: 'CARD',

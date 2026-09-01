@@ -157,7 +157,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
   const innate = [];
   const rest = [];
   for (const card of shuffled) {
-    ((resolveCard(C.registries, card).keywords || []).includes('innate') ? innate : rest).push(card);
+    (C.registries.framework.isInnate(resolveCard(C.registries, card)) ? innate : rest).push(card);
   }
   const P = {
     id: p.id,
@@ -326,7 +326,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const inst = C.piles.hand[idx];
   const def = resolveCard(C.registries, inst);
   const kws = def.keywords || [];
-  if (kws.includes('unplayable')) throw new Error(`'${def.name}' is unplayable`);
+  if (C.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(C, def);
@@ -395,10 +395,14 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   drainQueue(C);
 
   if (!C.result) {
-    if (kws.includes('exhaust')) {
+    // Same framework placement authority as the solo engine (hand parity).
+    const destination = C.registries.framework.afterPlayDestination(def);
+    if (destination === 'EXHAUST_PILE') {
       C.piles.exhaust.push(inst);
       C.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
-    } else if (def.type !== 'power') {
+    } else if (destination === 'HAND') {
+      C.piles.hand.push(inst);
+    } else if (destination !== 'REMOVED_FROM_PLAY') {
       C.piles.discard.push(inst);
     }
     drainQueue(C);
@@ -472,9 +476,9 @@ function endOnePlayerTurn(C, P) {
   S.decayAtTurnEnd(C, p);
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {
-    const kws = resolveCard(C.registries, card).keywords || [];
-    if (kws.includes('retain')) keep.push(card);
-    else if (kws.includes('ethereal')) toExhaust.push(card);
+    const fate = C.registries.framework.endTurnFate(resolveCard(C.registries, card));
+    if (fate === 'keep') keep.push(card);
+    else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
   C.piles.hand = keep;

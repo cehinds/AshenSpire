@@ -7,7 +7,7 @@
 import { hasProperty } from './compiler.js';
 
 export const ZONES = Object.freeze([
-  'DRAW_PILE', 'HAND', 'DISCARD_PILE', 'EXHAUST_PILE', 'SEALED',
+  'DRAW_PILE', 'HAND', 'DISCARD_PILE', 'EXHAUST_PILE', 'SEALED', 'REMOVED_FROM_PLAY',
 ]);
 
 export function destinationAfterPlay(card, result, { sealConditionMet = () => false } = {}) {
@@ -15,17 +15,25 @@ export function destinationAfterPlay(card, result, { sealConditionMet = () => fa
   if (hasProperty(card, 'lifecycle.seal') && sealConditionMet(card)) return 'SEALED';
   if (hasProperty(card, 'lifecycle.exhaust')) return 'EXHAUST_PILE';
   if (hasProperty(card, 'lifecycle.recall.afterUse')) return 'HAND';
+  // Preserved legacy rule (SPEC §4.3): a played Power leaves play entirely —
+  // it is not exhausted and not discarded. Exhaust above still wins on a
+  // Power that carries it, exactly as the legacy engine ordered the checks.
+  if (hasProperty(card, 'classification.power')) return 'REMOVED_FROM_PLAY';
   return 'DISCARD_PILE';
 }
 
 export function endTurnCleanup(hand) {
   const keep = [];
   const discard = [];
+  const exhaust = [];
   for (const card of hand) {
     if (hasProperty(card, 'lifecycle.retain')) keep.push(card);
+    // Preserved legacy rule: an Ethereal card still in hand Exhausts instead
+    // of discarding; Retain wins when a card carries both.
+    else if (hasProperty(card, 'lifecycle.ethereal')) exhaust.push(card);
     else discard.push(card);
   }
-  return { keep, discard };
+  return { keep, discard, exhaust };
 }
 
 /** Forced discard is not use; Recall After Use does not trigger. */
