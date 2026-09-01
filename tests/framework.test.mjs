@@ -636,5 +636,51 @@ test('the tooltip cost line renders identically through the framework for every 
   }
 });
 
+// ---- contract-new composition outputs (dormant until authored) --------------
+
+test('grantedCards: dormant on every shipped armament, live and validated on a fixture', () => {
+  const { WeaponCardPackageModel, startingDeckRefs } = compositionDoor;
+  const { createLoadout } = loadoutHome;
+  // Dormancy: no shipped armament grants anything, and no starting deck
+  // carries a granted ref.
+  for (const piece of contentBundle.equipment.armaments) {
+    const pkg = WeaponCardPackageModel.fromPiece(LEGACY_REG, piece);
+    if (pkg) eq(pkg.grantedCards.length, 0, `${piece.id} grants nothing`);
+  }
+  for (const cls of contentBundle.classes) {
+    for (const kitId of cls.eligibleStartingKitIds || []) {
+      const kit = contentBundle.equipment.startingKits.find((k) => k.id === kitId);
+      const loadout = createLoadout(LEGACY_REG, cls.id, kit);
+      const refs = startingDeckRefs(LEGACY_REG, loadout, cls.id);
+      eq(refs.filter((r) => r.equipmentRole === 'granted').length, 0, `${cls.id}/${kitId} composes no grants`);
+    }
+  }
+
+  // Live fixture: a sword whose explicit package grants two Quicksteps.
+  const granted = contentBundle.equipment.armaments.map((piece) => (piece.id === 'straightSword'
+    ? { ...piece, weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: piece.attackProfile, grantedCards: [{ cardId: 'quickstep', count: 2 }] } }
+    : piece));
+  const bundle2 = { ...contentBundle, equipment: { ...contentBundle.equipment, armaments: granted } };
+  const REG2 = createRegistries(bundle2);
+  const kit = contentBundle.equipment.startingKits.find((k) => k.id === 'reaverBaseline');
+  const loadout2 = createLoadout(REG2, 'reaver', kit);
+  const refs2 = startingDeckRefs(REG2, loadout2, 'reaver');
+  const grants = refs2.filter((r) => r.equipmentRole === 'granted');
+  eq(grants.map((g) => g.cardId), ['quickstep', 'quickstep'], 'two granted Quicksteps composed');
+  eq(grants[0].grantedBy, 'straightSword', 'grant names its source armament');
+  // And the non-granted refs are unchanged by the grant's presence.
+  const baseRefs = startingDeckRefs(LEGACY_REG, createLoadout(LEGACY_REG, 'reaver', kit), 'reaver');
+  eq(refs2.filter((r) => r.equipmentRole !== 'granted').map((r) => r.cardId), baseRefs.map((r) => r.cardId), 'grants are purely additive');
+
+  // Validation refuses bad grants by name.
+  const bad = (grantedCards) => () => WeaponCardPackageModel.fromPiece(LEGACY_REG, {
+    ...contentBundle.equipment.armaments.find((p) => p.id === 'straightSword'),
+    weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', grantedCards },
+  });
+  assertThrows(bad([{ cardId: 'notACard' }]), /granted card 'notACard' is unknown/);
+  assertThrows(bad([{ cardId: 'quickstep', count: 0 }]), /count must be a positive integer/);
+  assertThrows(bad([{ cardId: 'quickstep' }, 'quickstep']), /duplicate granted card/);
+});
+
 console.log(`\nframework: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

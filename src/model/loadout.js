@@ -1048,6 +1048,25 @@ export const WeaponCardPackageModel = Object.freeze({
     const filler = attackProfileFor(registries, fillerAttackProfileId, piece.id);
     const priorityAttackRefs = source.priorityAttackRefs == null ? [] : source.priorityAttackRefs;
     if (!Array.isArray(priorityAttackRefs)) throw new Error(`${piece.id}: priorityAttackRefs must be an array`);
+    // Contract-new output (framework contract: Equipment contract,
+    // grantedCards; adoption ruling 2026-09-01): extra real cards a package
+    // adds to the starting deck. No shipped armament authors any yet — the
+    // mechanism validates and composes, and stays dormant until data exists.
+    const grantedCardsRaw = source.grantedCards == null ? [] : source.grantedCards;
+    if (!Array.isArray(grantedCardsRaw)) throw new Error(`${piece.id}: grantedCards must be an array`);
+    const grantedSeen = new Set();
+    const grantedCards = grantedCardsRaw.map((raw, index) => {
+      const ref = typeof raw === 'string' ? { cardId: raw } : raw;
+      if (!ref || typeof ref !== 'object' || Array.isArray(ref) || !ref.cardId) {
+        throw new Error(`${piece.id}: grantedCards[${index}] must name cardId`);
+      }
+      if (!registries.cards.has(ref.cardId)) throw new Error(`${piece.id}: granted card '${ref.cardId}' is unknown`);
+      const count = ref.count == null ? 1 : ref.count;
+      if (!Number.isInteger(count) || count < 1) throw new Error(`${piece.id}: grantedCards[${index}].count must be a positive integer`);
+      if (grantedSeen.has(ref.cardId)) throw new Error(`${piece.id}: duplicate granted card '${ref.cardId}'`);
+      grantedSeen.add(ref.cardId);
+      return { cardId: ref.cardId, count };
+    });
     const seen = new Set();
     const priorities = priorityAttackRefs.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -1066,6 +1085,7 @@ export const WeaponCardPackageModel = Object.freeze({
       weaponId: piece.id,
       handsRequired,
       priorityAttackRefs: Object.freeze(priorities),
+      grantedCards: Object.freeze(grantedCards),
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
     });
@@ -1191,6 +1211,18 @@ export function startingDeckRefs(registries, loadout, classId) {
     }
   }
   for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+  // Granted cards ride each equipped hand's package after the role slots
+  // (contract-new output on the adopted composer). Dormant today: no shipped
+  // armament authors grantedCards, so this appends nothing. `grantedBy` marks
+  // the source armament for the future swap-time recomposition of grants.
+  for (const hand of ['right', 'left']) {
+    const source = handSource(registries, loadout, classId, hand);
+    for (const grant of source.package ? source.package.grantedCards : []) {
+      for (let i = 0; i < grant.count; i++) {
+        refs.push({ cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId });
+      }
+    }
+  }
   return refs;
 }
 

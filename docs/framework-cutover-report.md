@@ -102,9 +102,14 @@ the authority boundary moved to a framework door module:
   (`WeaponDeckCompositionService` + the role-plan functions) as the
   framework's implementation, and consumers outside `loadout.js`
   (`engine/save.js`, `model/equipmentPresentation.js`) compose through it.
-  The contract-new outputs (granted cards, installed weapon arts, the
-  unarmed Evasive Guard / Dodge Roll package) remain open build work on top
-  of this adoption; `src/framework/deck.js` stays their specification.
+  Contract-new outputs on top of the adoption: **grantedCards is built and
+  dormant** — `WeaponCardPackageModel` validates an explicit package's
+  `grantedCards` rows by name, `startingDeckRefs` composes them additively
+  with `grantedBy` provenance, and tests prove no shipped armament grants
+  anything (composition byte-identical) while a fixture grant composes
+  live. Still open: swap-time add/remove of granted instances, installed
+  weapon arts, and the unarmed Evasive Guard / Dodge Roll package;
+  `src/framework/deck.js` stays their specification.
 - **Confirmation level rule — ADOPTED.** `src/framework/confirmationRule.js`
   re-exports `consequence.js`'s fail-closed derivation as the framework's
   level rule for effect-carrying choices; `ui/screens/event.js` resolves
