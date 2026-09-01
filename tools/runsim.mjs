@@ -47,8 +47,11 @@ const levelBundle = LEVEL_COST
     // A ladder the shrine could not price: a first purchase that is free or
     // negative, or a step that walks the price DOWN, is a typo, not an
     // experiment. Refuse it at the door, before a fleet reports on it.
-    if (firstCost <= 0) throw new Error(`--level-cost: first must be a positive cinder cost — got ${firstCost}`);
-    if (costStep < 0) throw new Error(`--level-cost: step must be zero or more — got ${costStep}`);
+    // Integers, because the shrine rounds its price: a fractional first cost
+    // below one half (`0.1,0`) passed the sign check and still priced every
+    // level at zero — the same endless loop by another door.
+    if (!Number.isInteger(firstCost) || firstCost < 1) throw new Error(`--level-cost: first must be a whole cinder cost of at least 1 — got ${firstCost}`);
+    if (!Number.isInteger(costStep) || costStep < 0) throw new Error(`--level-cost: step must be a whole number of zero or more — got ${costStep}`);
     return { ...contentBundle, balance: { ...contentBundle.balance, levelUp: { ...contentBundle.balance.levelUp, firstCost, costStep } } };
   })()
   : contentBundle;
@@ -269,6 +272,10 @@ function simulateRun(classId, seed, ds = null) {
   run.seenEvents = [];
   const rng = createRng(seed);
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null };
+  // ONE exit for every path out of a run, win or death: the purse a run ends
+  // with is part of the cinder economy whichever way it ended, and the report
+  // divides by every run — a death that skipped this line underreported it.
+  const finish = () => { cinderLeftAtEnd += run.cinders; return result; };
   // The death book: act, the run's maxHp, and the HP it walked into the fatal
   // node with. On a lost fight botFight does NOT write hp back, so run.hp
   // still holds the entering value at the moment of the record.
@@ -310,11 +317,11 @@ function simulateRun(classId, seed, ds = null) {
           const choice = ev.choices.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || ev.choices[ev.choices.length - 1];
           const hpBeforeEvent = run.hp;
           executeRunEffects({ run, registries: REG, rng }, choice.effects);
-          if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; recordDeath(ds, act, hpBeforeEvent); return result; }
+          if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; recordDeath(ds, act, hpBeforeEvent); return finish(); }
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
-            if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `ambush:${encId}`; recordDeath(ds, act, run.hp); return result; }
+            if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `ambush:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
             afterVictory(run, rng, 'normal');
           }
           kind = null;
@@ -324,7 +331,7 @@ function simulateRun(classId, seed, ds = null) {
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
         const encId = rollEncounter(REG, rng, { pool, act: contentAct });
-        if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return result; }
+        if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
@@ -372,9 +379,8 @@ function simulateRun(classId, seed, ds = null) {
     run.hp = run.maxHp; // between acts, like main.js
   }
   result.victory = true;
-  cinderLeftAtEnd += run.cinders;
   levelUpsInWins += result.levelUps || 0;
-  return result;
+  return finish();
 }
 
 // ---- fleet -------------------------------------------------------------------
