@@ -1434,7 +1434,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rn.flaskCharges.capacity, 5, "Traveler's Flask raises fixed charge capacity");
     eq(rn.flaskCharges.hp, 4, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
-    assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
+    // upgradeCard prefers an armament whose sourced basics include the named
+    // card (its desc row: "Begin with one armament already Smithed") — the
+    // Strike improves through the smithed armament, not a deck-card flag.
+    eq(rn.armamentLevels.straightSword, 1, 'Whetstone Memory smiths the starting armament that sources Strikes');
+    assert(!rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'the deck Strike itself stays unflagged — the armament carries the upgrade');
   });
 
   // ---- 20. M3 phase 1: Starseer + Herald class mechanics ---------------------------------
