@@ -160,7 +160,7 @@ export function statProjection(registries, run) {
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };

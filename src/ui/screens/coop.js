@@ -144,13 +144,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return true;
   }
 
+  // A co-op client reads a snapshot, not the engine, so it prices the card the
+  // way the host will charge it: the framework cost profile with this seat's
+  // Power reduction and its live Weight Class (the pure dodge is class-priced),
+  // in every pool the host checks — Energy, Mana AND Stamina.
+  function snapshotCosts(def, player) {
+    const pools = registries.framework.costProfile(def, {
+      powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
+      weightClass: player.weightClass || null,
+    });
+    return { energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0 };
+  }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
-    let energyCost = def.cost === 'X' ? 1 : def.cost;
-    if (def.type === 'power') {
-      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}));
-    }
-    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
+    const costs = snapshotCosts(def, player);
+    return player.energy >= costs.energy && player.mana >= costs.mana && (player.stamina || 0) >= costs.stamina;
   }
 
   function armFriendlyTargeting(cardInstanceId) {
@@ -292,8 +300,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const card = player?.hand.find((entry) => {
         const def = cardDef(entry);
         return (def.effects || []).some((effect) => effect.target === 'enemy')
-          && player.energy >= (def.cost === 'X' ? 1 : def.cost)
-          && player.mana >= (def.manaCost || 0);
+          && cardAffordableFromSnapshot(def, player);
       });
       const enemy = sc?.enemies.find((entry) => entry.alive);
       if (!card || !enemy) return null;
@@ -561,14 +568,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       handStrip.render({
         cards: meP.hand.map((c) => {
           const def = cardDef(c);
-          const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
-          const manaAffordable = meP.mana >= (def.manaCost || 0);
+          const costs = snapshotCosts(def, meP);
+          const energyAffordable = meP.energy >= costs.energy;
+          const manaAffordable = meP.mana >= costs.mana;
+          const staminaAffordable = (meP.stamina || 0) >= costs.stamina;
           const affordable = cardAffordableFromSnapshot(def, meP);
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
-            : !manaAffordable ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
-              : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+            : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
+              : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
+                : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,

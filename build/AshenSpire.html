@@ -22043,13 +22043,14 @@ const derivedStatRules = {
   //   sense       ONE player sentence, no numbers in it (Law 1 clause 2).
   //
   // STAMINA IS 'reveal' ON PURPOSE and it is the honest half of this table:
-  // nothing in the engine spends it yet. The old panel said so in engine words
-  // ("No current consumer") on the first screen of the game. It now says so in
-  // player words, one tap down, where a stat that does nothing belongs.
+  // the dodge roll (and any Stamina-cost card) spends it and an idle turn
+  // recovers some (framework Mana & Stamina rule). The old panel once said
+  // "No current consumer" in engine words on the first screen of the game; the
+  // sense line below is the player's words, one tap down.
   presentation: {
     hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'What you have left before the climb ends.' },
     mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Spent by the cards that ask for more than effort.' },
-    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Carried, and nothing spends it yet.' },
+    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Spent by cards that ask for it — the dodge roll among them. An idle turn recovers some.' },
     // ACTIONS, NOT ENERGY — his rename, D17 message 3: "energy (which we
     // should call actions going forward)", confirmed by D21 as needing no
     // re-ask. The ENGINE ids are untouched here (`energyMax`, `balance.energy`,
@@ -41848,7 +41849,7 @@ function statProjection(registries, run) {
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };
@@ -49065,7 +49066,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e637ad11c9';
+const SOURCE = '5e44545620';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49099,7 +49100,7 @@ const SOURCE = 'e637ad11c9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1905';
+const ORDINAL = '1906';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -70910,13 +70911,21 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
     return true;
   }
 
+  // A co-op client reads a snapshot, not the engine, so it prices the card the
+  // way the host will charge it: the framework cost profile with this seat's
+  // Power reduction and its live Weight Class (the pure dodge is class-priced),
+  // in every pool the host checks — Energy, Mana AND Stamina.
+  function snapshotCosts(def, player) {
+    const pools = registries.framework.costProfile(def, {
+      powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
+      weightClass: player.weightClass || null,
+    });
+    return { energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0 };
+  }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
-    let energyCost = def.cost === 'X' ? 1 : def.cost;
-    if (def.type === 'power') {
-      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}));
-    }
-    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
+    const costs = snapshotCosts(def, player);
+    return player.energy >= costs.energy && player.mana >= costs.mana && (player.stamina || 0) >= costs.stamina;
   }
 
   function armFriendlyTargeting(cardInstanceId) {
@@ -71058,8 +71067,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       const card = player?.hand.find((entry) => {
         const def = cardDef(entry);
         return (def.effects || []).some((effect) => effect.target === 'enemy')
-          && player.energy >= (def.cost === 'X' ? 1 : def.cost)
-          && player.mana >= (def.manaCost || 0);
+          && cardAffordableFromSnapshot(def, player);
       });
       const enemy = sc?.enemies.find((entry) => entry.alive);
       if (!card || !enemy) return null;
@@ -71327,14 +71335,17 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       handStrip.render({
         cards: meP.hand.map((c) => {
           const def = cardDef(c);
-          const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
-          const manaAffordable = meP.mana >= (def.manaCost || 0);
+          const costs = snapshotCosts(def, meP);
+          const energyAffordable = meP.energy >= costs.energy;
+          const manaAffordable = meP.mana >= costs.mana;
+          const staminaAffordable = (meP.stamina || 0) >= costs.stamina;
           const affordable = cardAffordableFromSnapshot(def, meP);
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
-            : !manaAffordable ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
-              : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+            : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
+              : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
+                : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
