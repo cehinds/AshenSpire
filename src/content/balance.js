@@ -166,8 +166,16 @@ export const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 800,
-    costStep: 200,
+    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
+    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
+    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
+    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
+    // every cinder on levels and nothing at merchants, so its number is the
+    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
+    // merchant-spending player at the low edge. Two numbers, one home, and
+    // the sweep flag reruns the measurement for any other pair.
+    firstCost: 20,
+    costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
