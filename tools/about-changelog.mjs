@@ -659,7 +659,13 @@ export function flattenInline(text, where, labels = new Set()) {
 // build cited by an older group is never newer than one a newer group cites
 // (ties allowed — docs/evidence merges share an ordinal); nothing cites a build
 // that does not exist yet (`currentOrdinal`, from buildordinal.json).
-const STAMP = /^(\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?)\.(\d+)$/;
+// The pre-release tag is exactly `-<word>.<n>` (docs/versioning.md: `rc.<n>`),
+// so the ordinal is always the segment AFTER it: `0.5.0-rc.1.1905` parses as
+// release `0.5.0-rc.1`, ordinal 1905, and `0.5.0-rc.1` — a stamp with no
+// ordinal — matches nothing (the tag swallows `.1` and no segment is left).
+// A looser tag pattern let `0.5.0-rc.1` parse as release `0.5.0-rc` with
+// ordinal 1 (#517 review); the shape is pinned by the selftest corpus.
+const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
 export function parseChangelog(markdown, { currentOrdinal } = {}) {
   const entries = [];
@@ -945,6 +951,8 @@ async function selftest() {
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
     ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
+    ['pre-release stamp with no ordinal (the tag must not be read as one)', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1')}\n`, { currentOrdinal: 5 }],
+    ['pre-release stamp whose ordinal is missing after the tag', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1905')}\n`, { currentOrdinal: 5 }],
     ['ordinal rising into an older group', `## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.9')}\n`, {}],
     ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
     ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
@@ -954,7 +962,7 @@ async function selftest() {
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
   try {
-    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
     caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
