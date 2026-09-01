@@ -40831,12 +40831,13 @@ function runRunOpcode(ctx, action, eff) {
         // Equipment-composed instances are excluded like sourceArmamentId
         // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
         // package on every reconcile, so a per-copy upgraded flag would not
-        // survive an unequip/re-equip — its upgrade rides the armament. The
-        // same holds for every composed role instance (equipmentRole): the
-        // unarmed package's Evasive Guard / Dodge Roll are rebuilt the moment
-        // a hand is filled, and the pure dodge authors no upgrade at all. A
-        // card whose upgrade is not authored is never a candidate either.
-        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.equipmentRole && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        // survive an unequip/re-equip — its upgrade rides the armament. An
+        // UNARMED role instance (equipmentRole without a source piece — the
+        // unarmed Strikes and Evasive Guards) keeps its per-copy flag through
+        // reconcile (loadout.js resets it only when a piece takes the slot),
+        // so it stays a candidate. A card whose upgrade is not authored — the
+        // pure Dodge Roll — is never one: the event would spend for nothing.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
         .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
@@ -49075,7 +49076,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '3721f06f97';
+const SOURCE = '8e85950ac2';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49109,7 +49110,7 @@ const SOURCE = '3721f06f97';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1907';
+const ORDINAL = '1908';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -70932,7 +70933,12 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
       weightClass: player.weightClass || null,
     });
-    return { energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0 };
+    return {
+      energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
+      // The same numbers as a live preview, so the card face and its tooltip
+      // show what the host will charge (renderCard reads opts.preview).
+      preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
+    };
   }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
@@ -71361,6 +71367,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
+            preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
           };
         }),

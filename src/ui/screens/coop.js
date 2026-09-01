@@ -153,7 +153,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
       weightClass: player.weightClass || null,
     });
-    return { energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0 };
+    return {
+      energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
+      // The same numbers as a live preview, so the card face and its tooltip
+      // show what the host will charge (renderCard reads opts.preview).
+      preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
+    };
   }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
@@ -582,6 +587,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
+            preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
           };
         }),
