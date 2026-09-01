@@ -93,20 +93,26 @@ Surveyed for tranche 3 and left in place on purpose — both are cases where
 the legacy design already satisfies the contract's intent, and a mechanical
 bridge would add risk without adding authority:
 
-1. **Deck composition.** `WeaponDeckCompositionService`
-   (`src/model/loadout.js`) already implements the contract's scheme as
-   shipped, data-driven code: ceil/floor right/left split of authored
-   attack slots, two-handed offhand conflicts, shield-fallback rules, the
-   unarmed fallback profile from balance data, and deterministic
-   fingerprinted plans — proven by the 67-check weapon-package suite. The
-   framework's `src/framework/deck.js` is the contract-model twin built for
-   the candidate. Cutover needs ONE reconciliation decision: adopt the
-   legacy service as the framework's composition implementation (recommended
-   — it is richer and battle-tested; the contract model then serves as its
-   specification), or rewrite the service onto the contract model (loses
-   shield/priority-ref behavior unless every rule is re-authored). Until
-   that ruling, bridging one through the other would be motion, not
-   authority.
+1. **Deck composition.** The shipped composition splits across two legacy
+   homes: `WeaponDeckCompositionService` (`src/model/loadout.js`) composes
+   the ATTACK slots — ceil/floor right/left split, two-handed offhand
+   conflicts, shield-fallback rules, the unarmed attack profile from
+   balance data, deterministic fingerprinted plans (the 67-check
+   weapon-package suite proves it) — while guard and technique slots come
+   from `startingDeckRefs`' role-copies loop. The framework's
+   `src/framework/deck.js` covers that attack-slot half of the contract AND
+   the contract-NEW outputs no legacy path composes at all: guard-card
+   replacement from equipment packages, granted cards, installed weapon
+   arts, and the unarmed Evasive Guard / Dodge Roll fallback. Cutover needs
+   ONE reconciliation decision — adopt the legacy service as the
+   framework's attack-slot implementation (recommended: richer and
+   battle-tested, with the contract model as its specification), or rewrite
+   it onto the contract model (loses shield/priority-ref behavior unless
+   every rule is re-authored) — and EITHER ruling must explicitly carry the
+   contract-new outputs forward: they are approved-new-mechanics work that
+   no adoption of existing code delivers by itself, and a cutover that
+   omitted them would silently drop contract mechanics. Until that ruling,
+   bridging one composer through the other would be motion, not authority.
 
 2. **The option-decision confirmation router.** `src/model/consequence.js`
    derives bindingness from an effect list's ops, FAIL-CLOSED over a
@@ -150,7 +156,11 @@ bridge would add risk without adding authority:
 
 ## What cutover will take (in order)
 
-1. Owner rulings on contradictions 1–5; author the missing equipment data.
+1. Owner rulings on contradictions 1–5 AND the two reconciliation
+   decisions above (deck composition adopt-vs-rewrite with the
+   contract-new outputs carried either way; the fail-closed consequence
+   derivation as the framework's rule for effect-carrying choices); author
+   the missing equipment data.
 2. Port the legacy engine/UI consumers to the framework services and shared
    components (the candidate's services are drop-in shaped; the port is
    mechanical but wide).
