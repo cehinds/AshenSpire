@@ -32074,6 +32074,25 @@ const WeaponCardPackageModel = Object.freeze({
     const filler = attackProfileFor(registries, fillerAttackProfileId, piece.id);
     const priorityAttackRefs = source.priorityAttackRefs == null ? [] : source.priorityAttackRefs;
     if (!Array.isArray(priorityAttackRefs)) throw new Error(`${piece.id}: priorityAttackRefs must be an array`);
+    // Contract-new output (framework contract: Equipment contract,
+    // grantedCards; adoption ruling 2026-09-01): extra real cards a package
+    // adds to the starting deck. No shipped armament authors any yet — the
+    // mechanism validates and composes, and stays dormant until data exists.
+    const grantedCardsRaw = source.grantedCards == null ? [] : source.grantedCards;
+    if (!Array.isArray(grantedCardsRaw)) throw new Error(`${piece.id}: grantedCards must be an array`);
+    const grantedSeen = new Set();
+    const grantedCards = grantedCardsRaw.map((raw, index) => {
+      const ref = typeof raw === 'string' ? { cardId: raw } : raw;
+      if (!ref || typeof ref !== 'object' || Array.isArray(ref) || !ref.cardId) {
+        throw new Error(`${piece.id}: grantedCards[${index}] must name cardId`);
+      }
+      if (!registries.cards.has(ref.cardId)) throw new Error(`${piece.id}: granted card '${ref.cardId}' is unknown`);
+      const count = ref.count == null ? 1 : ref.count;
+      if (!Number.isInteger(count) || count < 1) throw new Error(`${piece.id}: grantedCards[${index}].count must be a positive integer`);
+      if (grantedSeen.has(ref.cardId)) throw new Error(`${piece.id}: duplicate granted card '${ref.cardId}'`);
+      grantedSeen.add(ref.cardId);
+      return { cardId: ref.cardId, count };
+    });
     const seen = new Set();
     const priorities = priorityAttackRefs.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -32092,6 +32111,7 @@ const WeaponCardPackageModel = Object.freeze({
       weaponId: piece.id,
       handsRequired,
       priorityAttackRefs: Object.freeze(priorities),
+      grantedCards: Object.freeze(grantedCards),
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
     });
@@ -32217,6 +32237,18 @@ function startingDeckRefs(registries, loadout, classId) {
     }
   }
   for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+  // Granted cards ride each equipped hand's package after the role slots
+  // (contract-new output on the adopted composer). Dormant today: no shipped
+  // armament authors grantedCards, so this appends nothing. `grantedBy` marks
+  // the source armament for the future swap-time recomposition of grants.
+  for (const hand of ['right', 'left']) {
+    const source = handSource(registries, loadout, classId, hand);
+    for (const grant of source.package ? source.package.grantedCards : []) {
+      for (let i = 0; i < grant.count; i++) {
+        refs.push({ cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId });
+      }
+    }
+  }
   return refs;
 }
 
@@ -38491,7 +38523,9 @@ const { evaluate } = require("src/model/formulas.js");
 const { computeTokenBindings } = require("src/model/validate.js");
 const { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } = require("src/model/state.js");
 const { playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
-const { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } = require("src/model/loadout.js");
+const { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } = require("src/model/loadout.js");
+// Deck restamping goes through the framework's adopted composition door.
+const { stampDeck } = require("src/framework/deckComposition.js");
 const { chargeFlaskId } = require("src/model/gracerefill.js");
 
 const QUEUE_GUARD = 10000;
@@ -40966,6 +41000,45 @@ function statProjection(registries, run) {
 Object.assign(module.exports, { playerPoiseThresholdReceipt, statProjection });
 
 },
+"src/framework/deckComposition.js": function (module, exports, require) {
+// src/framework/deckComposition.js — the framework's ADOPTED deck composer
+// (owner ruling, 2026-09-01, recorded in docs/framework-cutover-report.md).
+//
+// The ruling: the shipped composition — WeaponDeckCompositionService for the
+// attack slots, the role plan (equipmentKitPlan → startingDeckRefs, restamped
+// by stampDeck) for guard/technique replacement — IS the framework's
+// composition implementation. src/framework/deck.js remains its executable
+// SPECIFICATION and the home of the contract-new outputs still to be built on
+// top of this adoption (granted cards, installed weapon arts, the unarmed
+// Evasive Guard / Dodge Roll package).
+//
+// This module is the framework door consumers compose through. It re-exports
+// the adopted service rather than copying it: one implementation, one home,
+// with the authority boundary (which module consumers may import) moved to
+// the framework.
+
+// (Plain import-then-export consts: the standalone bundler rewrites modules
+// and does not handle the `export { … } from` re-export form.)
+const { WeaponDeckCompositionService: adoptedService, buildEquippedWeaponCardPlan: adoptedBuildPlan, applyEquippedWeaponCardPlan: adoptedApplyPlan, WeaponCardPackageModel: adoptedPackageModel, startingDeckRefs: adoptedStartingDeckRefs, stampDeck: adoptedStampDeck } = require("src/model/loadout.js");
+
+
+
+
+
+
+
+
+const WeaponDeckCompositionService = adoptedService;
+const buildEquippedWeaponCardPlan = adoptedBuildPlan;
+const applyEquippedWeaponCardPlan = adoptedApplyPlan;
+const WeaponCardPackageModel = adoptedPackageModel;
+const startingDeckRefs = adoptedStartingDeckRefs;
+const stampDeck = adoptedStampDeck;
+
+
+Object.assign(module.exports, { WeaponDeckCompositionService, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponCardPackageModel, startingDeckRefs, stampDeck });
+
+},
 "src/engine/combatSnapshot.js": function (module, exports, require) {
 // src/engine/combatSnapshot.js — CombatSnapshotService.
 //
@@ -41750,9 +41823,10 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 //      for lost.
 
 const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } = require("src/model/state.js");
-const { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations, stampDeck } = require("src/model/loadout.js");
-// Deck composition goes through the framework's adopted door (owner ruling).
-const { WeaponDeckCompositionService } = require("src/framework/deckComposition.js");
+const { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } = require("src/model/loadout.js");
+// Every composition step — plan, apply, restamp — through the ONE framework
+// door (owner ruling), so the save/load path cannot split across the boundary.
+const { stampDeck, WeaponDeckCompositionService } = require("src/framework/deckComposition.js");
 const { initializeRunSmithing } = require("src/model/smithing.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
@@ -42661,45 +42735,6 @@ function createMemoryStorage() {
 
 
 Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, SLOTS, META_SCHEMA_VERSION, createSaveManager, createMemoryStorage });
-
-},
-"src/framework/deckComposition.js": function (module, exports, require) {
-// src/framework/deckComposition.js — the framework's ADOPTED deck composer
-// (owner ruling, 2026-09-01, recorded in docs/framework-cutover-report.md).
-//
-// The ruling: the shipped composition — WeaponDeckCompositionService for the
-// attack slots, the role plan (equipmentKitPlan → startingDeckRefs, restamped
-// by stampDeck) for guard/technique replacement — IS the framework's
-// composition implementation. src/framework/deck.js remains its executable
-// SPECIFICATION and the home of the contract-new outputs still to be built on
-// top of this adoption (granted cards, installed weapon arts, the unarmed
-// Evasive Guard / Dodge Roll package).
-//
-// This module is the framework door consumers compose through. It re-exports
-// the adopted service rather than copying it: one implementation, one home,
-// with the authority boundary (which module consumers may import) moved to
-// the framework.
-
-// (Plain import-then-export consts: the standalone bundler rewrites modules
-// and does not handle the `export { … } from` re-export form.)
-const { WeaponDeckCompositionService: adoptedService, buildEquippedWeaponCardPlan: adoptedBuildPlan, applyEquippedWeaponCardPlan: adoptedApplyPlan, WeaponCardPackageModel: adoptedPackageModel, startingDeckRefs: adoptedStartingDeckRefs, stampDeck: adoptedStampDeck } = require("src/model/loadout.js");
-
-
-
-
-
-
-
-
-const WeaponDeckCompositionService = adoptedService;
-const buildEquippedWeaponCardPlan = adoptedBuildPlan;
-const applyEquippedWeaponCardPlan = adoptedApplyPlan;
-const WeaponCardPackageModel = adoptedPackageModel;
-const startingDeckRefs = adoptedStartingDeckRefs;
-const stampDeck = adoptedStampDeck;
-
-
-Object.assign(module.exports, { WeaponDeckCompositionService, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponCardPackageModel, startingDeckRefs, stampDeck });
 
 },
 "src/ui/screens/title.js": function (module, exports, require) {
@@ -48058,7 +48093,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9c1330f810';
+const SOURCE = 'a52dc2595a';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48092,7 +48127,7 @@ const SOURCE = '9c1330f810';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1895';
+const ORDINAL = '1896';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58174,7 +58209,8 @@ function cardTooltip(registries, def, tokens) {
   // Cost numbers come from the framework profile and the resource words from
   // TermRegistry — same rendered string, one authority for both.
   const pools = registries.framework.costProfile(def);
-  const word = (resource) => registries.framework.resourceWord(resource);
+  // Terms are data; escape them like every other field before innerHTML.
+  const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
     + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');

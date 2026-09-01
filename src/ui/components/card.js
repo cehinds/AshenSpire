@@ -188,7 +188,8 @@ function cardTooltip(registries, def, tokens) {
   // Cost numbers come from the framework profile and the resource words from
   // TermRegistry — same rendered string, one authority for both.
   const pools = registries.framework.costProfile(def);
-  const word = (resource) => registries.framework.resourceWord(resource);
+  // Terms are data; escape them like every other field before innerHTML.
+  const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
     + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');
