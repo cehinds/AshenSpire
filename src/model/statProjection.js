@@ -76,7 +76,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
  */
 export const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
 
-export function playerLoadReceipt(registries, run) {
+export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
   if (!run || !run.loadout) throw new Error('playerLoadReceipt requires a run loadout');
   if (!run.attributes) throw new Error('playerLoadReceipt requires run attributes');
   const levels = run.itemUpgradeLevels || {};
@@ -95,6 +95,7 @@ export function playerLoadReceipt(registries, run) {
   const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
   const decided = registries.framework.weightClass({
     attributes: run.attributes,
+    bonuses: capacityBonus,
     weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
   });
   return {
