@@ -247,10 +247,10 @@ Elapsed time changes routing only, never truth, evidence, or authority. FYIs rem
 
 ### Identifiers that are not seats
 
-These identifiers appear where a role identifier does, and nothing holds them. They are declared so a reference naming one is checked rather than waved through, and so a typo in a role field cannot pass as one of them.
+These identifiers appear where a role identifier does, and nothing holds them. They are declared so a reference naming one is checked rather than waved through, and so a typo in a role field cannot pass as one of them. Each names the fields it may appear in — the ownership and writer fields whose semantics support an unheld owner — and outside those fields it is refused: a field that names someone who must ACT (a gate actor, a reviewer, a verifier, an authority) cannot be satisfied by an identifier nobody holds.
 
-- `generator` — The generated-artifact lane’s single writer. `opsctl render` is the only thing that writes those paths, so the owner is a tool rather than a seat, and no one holds it.
-- `per-seat` — Ownership follows the ticket’s writer lease rather than a fixed seat, so the owner is whichever role currently holds that ticket. Used where a path or ref is one lane per seat and can therefore be owned by any role in turn.
+- `generator` (permitted in `owner_role`, `producer_role`) — The generated-artifact lane’s single writer. `opsctl render` is the only thing that writes those paths, so the owner is a tool rather than a seat, and no one holds it.
+- `per-seat` (permitted in `owner_role`) — Ownership follows the ticket’s writer lease rather than a fixed seat, so the owner is whichever role currently holds that ticket. Used where a path or ref is one lane per seat and can therefore be owned by any role in turn.
 
 ## Authority matrix
 
