@@ -780,6 +780,28 @@ test('a granted instance is never a per-copy upgrade candidate', () => {
     'an equipment-granted instance upgrades through its armament, never per copy — reconcile would silently drop the flag');
 });
 
+test('a granted instance is never a removal candidate', () => {
+  const { executeAction } = actionsHome;
+  const REG2 = grantFixtureRegistries({ straightSword: {
+    compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack',
+    grantedCards: [{ cardId: 'quickstep', count: 2 }],
+  } });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
+  run.deck = run.deck.filter((c) => c.grantedBy || c.cardId !== 'quickstep');
+  const grantedCount = () => run.deck.filter((c) => c.grantedBy).length;
+
+  // Targeted by cardId: only the granted copies carry quickstep — nothing removable.
+  executeAction({ registries: REG2, run, emit: () => {} }, { effect: { op: 'removeCardFromDeck', card: 'quickstep' } });
+  eq(grantedCount(), 2, 'a targeted removal never takes an equipment-granted instance');
+
+  // Random with an rng landing on the tail, where the granted instances sit:
+  // the candidate pool excludes them, so an ordinary card leaves instead.
+  const before = run.deck.length;
+  executeAction({ registries: REG2, run, rng: { float: () => 0.999 }, emit: () => {} }, { effect: { op: 'removeCardFromDeck', random: true } });
+  eq(grantedCount(), 2, 'a random removal never takes an equipment-granted instance');
+  eq(run.deck.length, before - 1, 'the random removal still removes an ordinary card');
+});
+
 test('grant and weapon-art authoring is validated by name', () => {
   const { WeaponCardPackageModel } = compositionDoor;
   const bad = (extra) => () => WeaponCardPackageModel.fromPiece(LEGACY_REG, {

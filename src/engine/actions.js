@@ -593,9 +593,15 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
+      // Equipment-granted instances (grantedBy) are package outputs: the next
+      // authoritative reconcile would recreate the same deterministic id, so
+      // a removal here could never persist — they are not candidates.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card);
-      else if (eff.random) idx = run.deck.length ? Math.floor(ctx.rng.float('misc') * run.deck.length) : -1;
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !c.grantedBy);
+      else if (eff.random) {
+        const candidates = run.deck.map((c, i) => i).filter((i) => !run.deck[i].grantedBy);
+        idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
+      }
       if (idx >= 0) run.deck.splice(idx, 1);
       break;
     }
