@@ -542,6 +542,14 @@ test('importer refuses an armament whose weight is missing, non-numeric, negativ
   const ok = importLegacyContent(contentBundle);
   const imported = ok.entities.find((e) => e.explicitOverrides && e.explicitOverrides.legacyId === first.id);
   assert(imported && imported.explicitOverrides.itemWeight === first.weight, 'the well-formed row still imports its weight');
+  // The armour path has the same boundary: its poise threshold IS its weight.
+  const withArmour = (patch) => {
+    const [outfit, ...others] = contentBundle.equipment.armour;
+    return { ...contentBundle, equipment: { ...contentBundle.equipment, armour: [{ ...outfit, ...patch }, ...others] } };
+  };
+  assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: undefined })), /poiseThreshold must be a non-negative integer/, 'missing armour poise');
+  assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: -1 })), /poiseThreshold must be a non-negative integer/, 'negative armour poise');
+  assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: 'plate' })), /poiseThreshold must be a non-negative integer/, 'non-numeric armour poise');
 });
 
 test('bridge decisions match the legacy keyword rules for every card, base and upgraded', () => {

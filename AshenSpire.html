@@ -35916,6 +35916,13 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   }
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
+    // The outfit's poise threshold is its weight under the A-side rule, so it
+    // is validated here for the same reason the armament numbers are: nothing
+    // downstream inspects explicitOverrides, and a malformed value would ride
+    // into the equip load as NaN or as a silently weightless outfit.
+    if (!Number.isInteger(outfit.poiseThreshold) || outfit.poiseThreshold < 0) {
+      throw new Error(`importer: armour '${outfit.classId}.${outfit.id}' poiseThreshold must be a non-negative integer, got ${JSON.stringify(outfit.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -48728,7 +48735,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'df8d081abb';
+const SOURCE = 'afbb96e012';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48762,7 +48769,7 @@ const SOURCE = 'df8d081abb';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1910';
+const ORDINAL = '1911';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

@@ -286,6 +286,13 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   }
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
+    // The outfit's poise threshold is its weight under the A-side rule, so it
+    // is validated here for the same reason the armament numbers are: nothing
+    // downstream inspects explicitOverrides, and a malformed value would ride
+    // into the equip load as NaN or as a silently weightless outfit.
+    if (!Number.isInteger(outfit.poiseThreshold) || outfit.poiseThreshold < 0) {
+      throw new Error(`importer: armour '${outfit.classId}.${outfit.id}' poiseThreshold must be a non-negative integer, got ${JSON.stringify(outfit.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
