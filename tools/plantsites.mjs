@@ -125,6 +125,25 @@ export function scanPlantSites(root = ROOT) {
   return { sites, unreadable };
 }
 
+// The whole readable population, pinned per tool as a count and a digest over
+// the sorted site ids. The drifted list alone pinned only the SICK sites:
+// deleting a healthy resolving plant — or breaking its file: key so the
+// scanner no longer recognises the shape — shrank the scanned set and --check
+// stayed green while regression coverage disappeared. The count catches
+// additions and removals; the digest catches a same-count swap, where one
+// healthy plant replaces a different one and the coverage is no longer the
+// coverage the baseline was written against.
+function sitePopulation(sites) {
+  const byTool = {};
+  for (const s of sites) (byTool[s.tool] = byTool[s.tool] || []).push(s.id);
+  const out = {};
+  for (const tool of Object.keys(byTool).sort()) {
+    const ids = byTool[tool].sort();
+    out[tool] = { count: ids.length, digest: createHash('sha256').update(ids.join('\n')).digest('hex').slice(0, 16) };
+  }
+  return out;
+}
+
 function unreadableCounts(unreadable) {
   const byTool = {};
   for (const u of unreadable) byTool[u.tool] = (byTool[u.tool] || 0) + 1;
@@ -138,9 +157,10 @@ function main() {
 
   if (args.includes('--write-baseline')) {
     const baseline = {
-      note: 'Known-drifted plant sites (the #498 backlog) and sites the static scan cannot read. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.',
+      note: 'Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.',
       drifted: bad.map(({ tool, target, id }) => ({ tool, target, id })).sort((a, b) => (a.tool + a.id).localeCompare(b.tool + b.id)),
       unreadable: unreadableCounts(unreadable),
+      sites: sitePopulation(sites),
     };
     writeFileSync(BASELINE, JSON.stringify(baseline, null, 2) + '\n');
     console.log(`plantsites: baseline written — ${baseline.drifted.length} drifted site(s), ${unreadable.length} unreadable site(s) across ${Object.keys(baseline.unreadable).length} tool(s)`);
@@ -174,6 +194,18 @@ function main() {
       if (k > n) {
         const d = baseline.drifted.find((x) => x.id === id);
         errors.push(`STALE BASELINE: ${d.tool} -> ${d.target} (${d.id}: ${k} in baseline, ${n} still drifted).\n  Good — but the baseline must say so, or the freed slack hides the next regression. Re-run with --write-baseline in the same change.`);
+      }
+    }
+    const livePop = sitePopulation(sites);
+    const basePop = baseline.sites || {};
+    for (const tool of new Set([...Object.keys(livePop), ...Object.keys(basePop)])) {
+      const a = livePop[tool], b = basePop[tool];
+      if (!b) { errors.push(`NEW PLANT TOOL: ${tool} now carries ${a.count} readable site(s) the baseline has never seen. Record it with --write-baseline in the same change.`); continue; }
+      if (!a) { errors.push(`PLANT TOOL GONE: ${tool} carried ${b.count} readable site(s) in the baseline and now scans as none. Deleting a healthy plant deletes the coverage it proved; record it with --write-baseline in the same change, and say where the coverage went.`); continue; }
+      if (a.count !== b.count) {
+        errors.push(`SITE COUNT CHANGED: ${tool} has ${a.count} readable site(s); the baseline says ${b.count}. A missing healthy plant is coverage that silently disappeared; an unrecorded new one is coverage the baseline cannot vouch for. Record the change with --write-baseline and say why.`);
+      } else if (a.digest !== b.digest) {
+        errors.push(`SITE SET CHANGED: ${tool} still has ${a.count} readable site(s) but not the same ones the baseline was written against. A swap keeps the count while replacing what is actually covered; record it with --write-baseline and say why.`);
       }
     }
     const liveCounts = unreadableCounts(unreadable);
