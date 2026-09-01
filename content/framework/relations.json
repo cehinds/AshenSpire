@@ -1,0 +1,32 @@
+{
+  "comment": "Canonical PropertyRelation rows. CONFLICTS_WITH is symmetric; REQUIRES/PERMITS/INHERITS/REPLACES/SUPPRESSES read source->target. PERMITS rows from classification properties to family roots ARE the inheritance allowlist (framework contract: Whitelisted inheritance) — a family absent from a classification's PERMITS set never crosses equipment inheritance onto that card.",
+  "relations": [
+    { "sourcePropertyId": "classification.attack", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.skill", "precedence": 10 },
+    { "sourcePropertyId": "classification.attack", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.power", "precedence": 10 },
+    { "sourcePropertyId": "classification.attack", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.curse", "precedence": 10 },
+    { "sourcePropertyId": "classification.attack", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.statusCard", "precedence": 10 },
+    { "sourcePropertyId": "classification.skill", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.power", "precedence": 10 },
+    { "sourcePropertyId": "classification.skill", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.curse", "precedence": 10 },
+    { "sourcePropertyId": "classification.skill", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.statusCard", "precedence": 10 },
+    { "sourcePropertyId": "classification.power", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.curse", "precedence": 10 },
+    { "sourcePropertyId": "classification.power", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.statusCard", "precedence": 10 },
+    { "sourcePropertyId": "classification.curse", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.statusCard", "precedence": 10 },
+    { "sourcePropertyId": "classification.strike", "relation": "CONFLICTS_WITH", "targetPropertyId": "classification.guard", "precedence": 10 },
+
+    { "sourcePropertyId": "classification.strike", "relation": "INHERITS", "targetPropertyId": "classification.attack", "precedence": 20 },
+
+    { "sourcePropertyId": "lifecycle.exhaust", "relation": "SUPPRESSES", "targetPropertyId": "lifecycle.recall.afterUse", "precedence": 100 },
+
+    { "sourcePropertyId": "equipment.mainHand", "relation": "REQUIRES", "targetPropertyId": "equipment.bound", "precedence": 10 },
+    { "sourcePropertyId": "equipment.offHand", "relation": "REQUIRES", "targetPropertyId": "equipment.bound", "precedence": 10 },
+    { "sourcePropertyId": "equipment.twoHanded", "relation": "REQUIRES", "targetPropertyId": "equipment.bound", "precedence": 10 },
+    { "sourcePropertyId": "equipment.twoHanded", "relation": "CONFLICTS_WITH", "targetPropertyId": "equipment.offHand", "precedence": 10 },
+
+    { "sourcePropertyId": "classification.attack", "relation": "PERMITS", "targetPropertyId": "damage", "precedence": 10 },
+    { "sourcePropertyId": "classification.attack", "relation": "PERMITS", "targetPropertyId": "scaling", "precedence": 10 },
+    { "sourcePropertyId": "classification.guard", "relation": "PERMITS", "targetPropertyId": "scaling", "precedence": 10 },
+    { "sourcePropertyId": "classification.guard", "relation": "PERMITS", "targetPropertyId": "utility.evasion", "precedence": 10 },
+    { "sourcePropertyId": "classification.skill", "relation": "PERMITS", "targetPropertyId": "scaling", "precedence": 10 },
+    { "sourcePropertyId": "classification.skill", "relation": "PERMITS", "targetPropertyId": "utility", "precedence": 10 }
+  ]
+}

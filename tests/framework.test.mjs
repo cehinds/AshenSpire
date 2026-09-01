@@ -1,0 +1,514 @@
+// tests/framework.test.mjs — the replacement candidate's own suite:
+// `node tests/framework.test.mjs`. One line per test, exit 1 on any failure.
+//
+// Covers the framework contract's behavioral rules AND the known-bad corpus
+// (Complete validation: "Known-bad tests must reject…") — every rejection is
+// observed red by name, never assumed.
+
+import { contentBundle } from '../src/content/index.js';
+import {
+  createFrameworkRegistries, TermRegistry, AssetRegistry,
+} from '../src/framework/registries.js';
+import { compileEntity, CompileError, hasProperty, propertyParameters } from '../src/framework/compiler.js';
+import {
+  destinationAfterPlay, endTurnCleanup, forcedDiscardDestination, ZoneLedger,
+} from '../src/framework/lifecycle.js';
+import { compileCosts, payAlternativeCost, CostError } from '../src/framework/costs.js';
+import { composeCombatDeck, buildEquippedWeaponCardPlan } from '../src/framework/deck.js';
+import {
+  maximumMana, createResourceState, onTurnStartMana, onRestSpot, spendStamina,
+  refundStamina, onTurnEndStamina,
+} from '../src/framework/resources.js';
+import { computeWeightClass, dodgeRollCheck } from '../src/framework/weight.js';
+import { filterInheritable } from '../src/framework/inheritance.js';
+import { validateAllContent, contrastRatio } from '../src/framework/validate.js';
+import { buildReplacementCandidate, createReplacementCandidate, compareBaseline, captureCurrentBehavior } from '../src/framework/candidate.js';
+import { placeTooltip, compileTooltip, TOOLTIP_INPUT_RULES } from '../src/framework/presentation/tooltip.js';
+import { requestAction } from '../src/framework/presentation/confirmation.js';
+import { fitText } from '../src/framework/presentation/fitText.js';
+import { SharedMenu, SharedTooltip, ComponentError } from '../src/framework/presentation/components.js';
+
+import { properties as propertiesData } from '../src/framework/data/properties.js';
+import { relations as relationsData } from '../src/framework/data/relations.js';
+import { terms as termsData } from '../src/framework/data/terms.js';
+import { assets as assetsData } from '../src/framework/data/assets.js';
+import { confirmationPolicies } from '../src/framework/data/confirmationPolicies.js';
+import { theme as themeData } from '../src/framework/data/theme.js';
+
+let passed = 0;
+let failed = 0;
+function test(name, body) {
+  try {
+    body();
+    passed += 1;
+    console.log(`  ok  ${name}`);
+  } catch (e) {
+    failed += 1;
+    console.log(`FAIL  ${name}\n      ${e.message}`);
+  }
+}
+function assert(cond, message) { if (!cond) throw new Error(message || 'assertion failed'); }
+function assertThrows(fn, re, message) {
+  try { fn(); } catch (e) {
+    if (re && !re.test(e.message)) throw new Error(`${message || 'threw'} but wrong message: ${e.message}`);
+    return e;
+  }
+  throw new Error(message || 'expected a throw');
+}
+const eq = (a, b, msg) => assert(JSON.stringify(a) === JSON.stringify(b), `${msg}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`);
+
+// A small fixture registry factory: canonical framework data plus test rows.
+function fixtureRegistries({ entities = [], extraProperties = [], extraRelations = [], extraTerms = [], extraAssets = [], confirmation = confirmationPolicies, theme = themeData } = {}) {
+  return createFrameworkRegistries({
+    properties: [...propertiesData.properties, ...extraProperties],
+    relations: [...relationsData.relations, ...extraRelations],
+    terms: [...termsData.terms, ...extraTerms],
+    assets: [...assetsData.assets, ...extraAssets],
+    entities,
+    confirmation,
+    theme,
+  });
+}
+const namedEntity = (id, kind, props, overrides) => ({
+  id, kind, nameTermId: 'term.strike', properties: props, explicitOverrides: overrides,
+});
+
+// ---- registries -------------------------------------------------------------
+
+test('registry require() refuses an unknown id by name', () => {
+  const regs = fixtureRegistries();
+  assertThrows(() => regs.properties.require('damage.emotional'), /unknown id "damage.emotional"/);
+  assertThrows(() => regs.terms.require('term.nope'), /unknown id/);
+  assertThrows(() => regs.content.require('card.nope'), /unknown id/);
+});
+
+test('TermRegistry serves short/plural/accessibility contexts and import aliases', () => {
+  const terms = new TermRegistry(termsData.terms);
+  eq(terms.displayTerm('term.strength', 'short'), 'STR', 'short');
+  eq(terms.displayTerm('term.action', 'plural'), 'Actions', 'plural');
+  eq(terms.displayTerm('term.close', 'accessibility'), 'Close dialog', 'accessibility');
+  eq(terms.displayTerm('term.equipmentBound'), 'Equipment-Bound', 'canonical');
+  eq(terms.idForAlias('bounded'), 'term.equipmentBound', 'legacy alias maps to Equipment-Bound');
+});
+
+test('AssetRegistry walks the typed fallback ladder and never loops', () => {
+  const loads = (path) => path === 'assets/framework/missing.svg';
+  const assets = new AssetRegistry([
+    ...assetsData.assets,
+    { id: 'asset.test.broken', kind: 'CARD_ART', sourcePath: 'assets/nope.png', fallbackAssetId: 'asset.fallback.cardArt' },
+  ], { assetLoads: loads });
+  eq(assets.resolveAsset('asset.test.broken').id, 'asset.fallback.cardArt', 'typed fallback');
+  eq(assets.resolveAsset('asset.never.registered').id, 'asset.system.missing', 'unknown id lands on system missing');
+});
+
+// ---- compiler ---------------------------------------------------------------
+
+test('compileEntity is deterministic under authored row order', () => {
+  const props = [
+    { propertyId: 'lifecycle.retain', source: 'AUTHORED' },
+    { propertyId: 'classification.attack', source: 'AUTHORED' },
+    { propertyId: 'cost.action', parameters: { amount: 2 }, source: 'AUTHORED' },
+  ];
+  const a = compileEntity(fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', props)] }), 'card.t');
+  const b = compileEntity(fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [...props].reverse())] }), 'card.t');
+  eq(a.properties.map((p) => p.propertyId), b.properties.map((p) => p.propertyId), 'order-independent');
+  assert(Object.isFrozen(a) && Object.isFrozen(a.properties), 'deep-frozen');
+});
+
+test('expandParents implies the family root and priority ordering holds', () => {
+  const regs = fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [{ propertyId: 'lifecycle.recall.afterUse', source: 'AUTHORED' }, { propertyId: 'cost.action', source: 'AUTHORED' }])] });
+  const compiled = compileEntity(regs, 'card.t');
+  assert(hasProperty(compiled, 'lifecycle.recall'), 'recall parent implied');
+  assert(hasProperty(compiled, 'lifecycle'), 'lifecycle root implied');
+  assert(compiled.properties.find((p) => p.propertyId === 'lifecycle').implied, 'root marked implied');
+});
+
+test('SUPPRESSES resolves Exhaust vs Recall After Use deterministically', () => {
+  const regs = fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [{ propertyId: 'lifecycle.exhaust', source: 'AUTHORED' }, { propertyId: 'lifecycle.recall.afterUse', source: 'AUTHORED' }])] });
+  const compiled = compileEntity(regs, 'card.t');
+  assert(hasProperty(compiled, 'lifecycle.exhaust'), 'exhaust survives');
+  assert(!hasProperty(compiled, 'lifecycle.recall.afterUse'), 'recall suppressed');
+  eq(compiled.suppressed['lifecycle.recall.afterUse'].relation, 'SUPPRESSES', 'suppression recorded');
+});
+
+test('REQUIRES violations and unresolved conflicts throw by name', () => {
+  assertThrows(() => compileEntity(
+    fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [{ propertyId: 'equipment.mainHand', source: 'AUTHORED' }])] }), 'card.t',
+  ), /equipment.mainHand requires equipment.bound/);
+  assertThrows(() => compileEntity(
+    fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [{ propertyId: 'classification.attack', source: 'AUTHORED' }, { propertyId: 'classification.skill', source: 'AUTHORED' }])] }), 'card.t',
+  ), /unresolved conflict/);
+});
+
+test('precedence: a STATUS restriction outranks the card author; defaults show through', () => {
+  const regs = fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [{ propertyId: 'cost.action', parameters: { amount: 2 }, source: 'AUTHORED' }])] });
+  const compiled = compileEntity(regs, 'card.t', {
+    statusProperties: [{ propertyId: 'cost.action', parameters: { amount: 3 }, source: 'STATUS', sourceEntityId: 'status.chains' }],
+  });
+  eq(propertyParameters(compiled, 'cost.action').amount, 3, 'temporary combat restriction wins');
+  const defaulted = compileEntity(regs, 'card.t', {});
+  eq(propertyParameters(defaulted, 'cost.action').amount, 2, 'authored beats property default');
+});
+
+// ---- lifecycle --------------------------------------------------------------
+
+test('destinationAfterPlay follows the contract order', () => {
+  const card = (ids) => ({ id: 'c', properties: ids.map((propertyId) => ({ propertyId, parameters: {} })) });
+  const legal = { cancelled: false, legal: true };
+  eq(destinationAfterPlay(card([]), { cancelled: true, legal: true }), 'HAND', 'cancelled spends nothing');
+  eq(destinationAfterPlay(card([]), { cancelled: false, legal: false }), 'HAND', 'illegal spends nothing');
+  eq(destinationAfterPlay(card(['lifecycle.seal', 'lifecycle.exhaust']), legal, { sealConditionMet: () => true }), 'SEALED', 'seal first');
+  eq(destinationAfterPlay(card(['lifecycle.seal', 'lifecycle.exhaust']), legal, { sealConditionMet: () => false }), 'EXHAUST_PILE', 'unmet seal falls to exhaust');
+  eq(destinationAfterPlay(card(['lifecycle.recall.afterUse']), legal), 'HAND', 'recall after use');
+  eq(destinationAfterPlay(card([]), legal), 'DISCARD_PILE', 'default discard');
+});
+
+test('endTurnCleanup keeps Retain; forced discard never recalls', () => {
+  const retain = { id: 'a', properties: [{ propertyId: 'lifecycle.retain' }] };
+  const recall = { id: 'b', properties: [{ propertyId: 'lifecycle.recall.afterUse' }] };
+  const { keep, discard } = endTurnCleanup([retain, recall]);
+  eq(keep.map((c) => c.id), ['a'], 'retain kept');
+  eq(discard.map((c) => c.id), ['b'], 'recall does not survive cleanup');
+  eq(forcedDiscardDestination(), 'DISCARD_PILE', 'forced discard is not a use');
+});
+
+test('ZoneLedger enforces exactly one zone per instance', () => {
+  const ledger = new ZoneLedger(['strike#1', 'strike#2']);
+  ledger.move('strike#1', 'HAND');
+  eq(ledger.zoneOf('strike#1'), 'HAND', 'moved');
+  eq(ledger.zoneOf('strike#2'), 'DRAW_PILE', 'sibling untouched');
+  assert(ledger.assertExactlyOneZoneEach(), 'invariant holds');
+  assertThrows(() => ledger.move('strike#1', 'POCKET'), /unknown zone/);
+  assertThrows(() => ledger.move('ghost#1', 'HAND'), /unknown card instance/);
+});
+
+// ---- costs ------------------------------------------------------------------
+
+test('damage properties never imply costs; cost rows compile to entries', () => {
+  const card = { id: 'c', properties: [
+    { propertyId: 'damage.physical', parameters: {} },
+    { propertyId: 'cost.mana', parameters: { amount: 2 } },
+  ], overrides: {} };
+  const profile = compileCosts(card, {});
+  eq(profile.entries, [{ resource: 'mana', amount: 2 }], 'physical did not add stamina');
+});
+
+test('Recall After Use demands a repeat limiter', () => {
+  const bare = { id: 'c', properties: [{ propertyId: 'lifecycle.recall.afterUse', parameters: {} }], overrides: {} };
+  assertThrows(() => compileCosts(bare, {}), /repeat limiter/);
+  const limited = { ...bare, properties: [...bare.properties, { propertyId: 'cost.action', parameters: { amount: 1 } }] };
+  assert(compileCosts(limited, {}).entries.length === 1, 'action cost is a limiter');
+});
+
+test('incomplete alternative costs are rejected; payment is atomic', () => {
+  const noOptions = { id: 'c', properties: [{ propertyId: 'cost.alternative', parameters: {} }], overrides: {} };
+  assertThrows(() => compileCosts(noOptions, {}), /no complete option/);
+  const card = { id: 'c', properties: [], overrides: {} };
+  const option = { entries: [{ resource: 'hp', amount: 3 }, { resource: 'mana', amount: 1 }] };
+  const wallet = { hp: 10, mana: 0 };
+  assertThrows(() => payAlternativeCost(card, option, wallet), /cannot pay 1 mana/);
+  eq(wallet, { hp: 10, mana: 0 }, 'failed payment spends nothing');
+  const vetoed = payAlternativeCost(card, option, { hp: 10, mana: 2 }, { confirmTarget: () => false });
+  assert(!vetoed.paid && vetoed.wallet.hp === 10, 'veto spends nothing');
+  const paid = payAlternativeCost(card, option, { hp: 10, mana: 2 });
+  eq(paid.wallet, { hp: 7, mana: 1 }, 'commit is atomic and complete');
+});
+
+// ---- deck composition -------------------------------------------------------
+
+const PKGS = {
+  sword: { strikeCardId: 'profile.bladeAttack', guardCardId: 'profile.weaponGuard', grantedCards: [], weaponArtDefaults: ['art.cleave'] },
+  dagger: { strikeCardId: 'profile.daggerPierceAttack', guardCardId: 'profile.weaponGuard', grantedCards: [], weaponArtDefaults: ['art.cleave', 'art.fan'] },
+};
+const helpers = {
+  packageFor: (id) => PKGS[id],
+  isBasicStrike: (id) => id === 'strike',
+  isBasicGuard: (id) => id === 'defend',
+};
+const runDeck = [
+  { instanceId: 's1', cardId: 'strike' }, { instanceId: 's2', cardId: 'strike' },
+  { instanceId: 'g1', cardId: 'defend' }, { instanceId: 'e1', cardId: 'crimsonCleave', upgraded: true },
+];
+
+test('no weapons → the unarmed package, Dodge Roll in the empty slot', () => {
+  const plan = buildEquippedWeaponCardPlan({}, helpers);
+  eq(plan.strikes, ['framework.unarmedStrike'], 'unarmed strike');
+  eq(plan.guards, ['framework.evasiveGuard'], 'evasive guard');
+  eq(plan.weaponArts, ['framework.dodgeRoll'], 'dodge roll fallback');
+});
+
+test('a left-hand-only weapon receives the complete package', () => {
+  const left = buildEquippedWeaponCardPlan({ leftHand: 'sword' }, helpers);
+  const right = buildEquippedWeaponCardPlan({ rightHand: 'sword' }, helpers);
+  eq(left, right, 'hand does not change a solo package');
+});
+
+test('dual wield splits slots ceil/floor with RIGHT_THEN_LEFT unique preference', () => {
+  const plan = buildEquippedWeaponCardPlan({ rightHand: 'sword', leftHand: 'dagger' }, helpers);
+  eq(plan.weaponArts[0], 'art.cleave', 'right picks first');
+  assert(!plan.weaponArts.filter((a, i) => plan.weaponArts.indexOf(a) !== i).length, 'no duplicate art');
+  eq(plan.weaponArts.includes('art.fan'), true, 'left contributes its unique art');
+});
+
+test('composition is deterministic, idempotent, and preserves earned cards', () => {
+  const once = composeCombatDeck(runDeck, { rightHand: 'sword' }, helpers);
+  const twice = composeCombatDeck(runDeck, { rightHand: 'sword' }, helpers);
+  eq(once, twice, 'same inputs, same deck');
+  const earned = once.cards.find((c) => c.instanceId === 'e1');
+  eq(earned.cardId, 'crimsonCleave', 'earned card untouched');
+  assert(earned.upgraded, 'permanent upgrade preserved');
+  eq(once.cards.find((c) => c.instanceId === 's1').cardId, 'profile.bladeAttack', 'basic strike replaced');
+});
+
+// ---- resources --------------------------------------------------------------
+
+test('mana: formula weights, zero natural recovery, full rest refill', () => {
+  eq(maximumMana({ classBase: 10, wisdom: 4, intelligence: 3 }), 15, 'wisdom + smaller intelligence contribution');
+  let state = createResourceState({ maxMana: 5, maxStamina: 3, mana: 1 });
+  state = onTurnStartMana(state);
+  eq(state.currentMana, 1, 'no natural recovery');
+  eq(onRestSpot(state).currentMana, 5, 'rest refills to maximum');
+});
+
+test('stamina: idle turns recover 1; a refund does not erase the spend', () => {
+  let state = createResourceState({ maxMana: 0, maxStamina: 5, stamina: 3 });
+  eq(onTurnEndStamina(state).currentStamina, 4, 'idle turn recovers');
+  state = spendStamina(state, 2);
+  state = refundStamina(state, 2);
+  eq(state.currentStamina, 3, 'refund returns points');
+  eq(onTurnEndStamina(state).currentStamina, 3, 'but the spend still blocks recovery');
+});
+
+// ---- weight and dodge -------------------------------------------------------
+
+test('weight class thresholds sit at 49/79 load percent', () => {
+  const at = (load, capacity) => computeWeightClass({ constitution: 0, strength: 0, bonuses: capacity - 50, weights: { armorWeight: load } }).weightClass.id;
+  eq(at(49, 100), 'light', '49% light');
+  eq(at(50, 100), 'medium', '50% medium');
+  eq(at(79, 100), 'medium', '79% medium');
+  eq(at(80, 100), 'heavy', '80% heavy');
+});
+
+test('dodge roll: check math, temporary guard, and weight-class costs', () => {
+  const { weightClass } = computeWeightClass({ constitution: 10, strength: 10, weights: {} });
+  eq(weightClass.id, 'light', 'unburdened is light');
+  const win = dodgeRollCheck({ roll: 12, dexterity: 14, weightClass });
+  // 12 + 2 (DEX) + 3 (light) = 17 > 10
+  assert(win.success && win.check === 17, `check ${win.check}`);
+  eq(win.temporaryGuard, 3 + 2 + 3, 'guard = base + DEX mod + class guard');
+  eq(win.cost, { stamina: 1, actions: 0 }, 'light dodge costs');
+  const lose = dodgeRollCheck({ roll: 5, dexterity: 10, weightClass, incomingAttackModifier: 3 });
+  assert(!lose.success && lose.temporaryGuard === 0, 'failed roll grants nothing');
+  assertThrows(() => dodgeRollCheck({ roll: 21, dexterity: 10, weightClass }), /not a d20/);
+});
+
+// ---- whitelisted inheritance ------------------------------------------------
+
+test('inheritance is an allowlist: attacks take damage, guards refuse it', () => {
+  const regs = fixtureRegistries();
+  const candidates = [
+    { propertyId: 'damage.blade', source: 'EQUIPMENT' },
+    { propertyId: 'scaling.strength', source: 'EQUIPMENT' },
+    { propertyId: 'presentation', source: 'EQUIPMENT' },
+    { propertyId: 'utility.evasion', source: 'EQUIPMENT' },
+  ];
+  const ontoAttack = filterInheritable(regs, ['classification.attack'], candidates).map((c) => c.propertyId);
+  eq(ontoAttack, ['damage.blade', 'scaling.strength'], 'attack whitelist');
+  const ontoStrike = filterInheritable(regs, ['classification.strike'], candidates).map((c) => c.propertyId);
+  eq(ontoStrike, ['damage.blade', 'scaling.strength'], 'strike inherits the attack whitelist');
+  const ontoGuard = filterInheritable(regs, ['classification.guard'], candidates).map((c) => c.propertyId);
+  eq(ontoGuard, ['scaling.strength', 'utility.evasion'], 'guard whitelist has no damage, never presentation');
+});
+
+// ---- presentation -----------------------------------------------------------
+
+test('fitText never shrinks below the role minimum', () => {
+  const role = { id: 'r', minimumRem: 0.8, preferredRem: 1.0, maximumRem: 1.2, overflowPolicy: 'scroll' };
+  eq(fitText({ role, fits: () => true }).sizeRem, 1.0, 'preferred fits');
+  const shrunk = fitText({ role, fits: (s) => s <= 0.9 });
+  eq(shrunk.sizeRem, 0.9, 'steps down to fit');
+  const overflow = fitText({ role, fits: () => false });
+  eq(overflow.sizeRem, 0.8, 'stops at minimum');
+  eq(overflow.overflow, 'scroll', 'hands off to the component policy');
+});
+
+test('tooltip placement prefers the contract sides and honors exclusions', () => {
+  const viewport = { w: 800, h: 600 };
+  const content = { w: 200, h: 100 };
+  const top = placeTooltip({ owner: { x: 300, y: 10, w: 100, h: 40 }, content, viewport });
+  eq(top.placement.side, 'below', 'top control places below');
+  const bottom = placeTooltip({ owner: { x: 300, y: 550, w: 100, h: 40 }, content, viewport });
+  eq(bottom.placement.side, 'above', 'bottom control places above');
+  const everything = [{ x: 0, y: 0, w: 800, h: 600 }];
+  const blocked = placeTooltip({ owner: { x: 300, y: 10, w: 100, h: 40 }, content, viewport, exclusions: everything });
+  assert(blocked.compactSummary, 'no zero-intersection candidate → compact accessible summary');
+});
+
+test('every input mode carries explicit open, dismiss, and focus-return rules', () => {
+  eq(Object.keys(TOOLTIP_INPUT_RULES).sort(), ['controller', 'keyboard', 'pointer', 'touch'], 'four input modes');
+  for (const [mode, rules] of Object.entries(TOOLTIP_INPUT_RULES)) {
+    for (const field of ['open', 'dismiss', 'focusReturn']) {
+      assert(typeof rules[field] === 'string' && rules[field].length > 0, `${mode}.${field} declared`);
+    }
+  }
+});
+
+test('requestAction: NONE skips dialogs; others confirm exactly once; cancel restores focus', async () => {
+  const regs = fixtureRegistries();
+  const log = [];
+  const hooks = {
+    preserveFocus: () => (log.push('preserve'), 'token'),
+    restoreFocus: (t) => log.push(`restore:${t}`),
+    openConfirmation: () => (log.push('open'), Promise.resolve('CONFIRM')),
+  };
+  const free = await requestAction(regs, { id: 'action.playCard', subject: {}, execute: () => log.push('exec') }, hooks);
+  eq([free.executed, free.confirmations], [true, 0], 'NONE executes with zero dialogs');
+  const destructive = await requestAction(regs, { id: 'action.abandonRun', subject: {}, execute: () => log.push('exec') }, hooks);
+  eq([destructive.executed, destructive.confirmations, destructive.level], [true, 1, 'DESTRUCTIVE'], 'exactly one destructive confirmation');
+  hooks.openConfirmation = () => Promise.resolve('CANCEL');
+  const cancelled = await requestAction(regs, { id: 'action.deleteSave', subject: {}, execute: () => log.push('exec-cancelled') }, hooks);
+  assert(!cancelled.executed && log.includes('restore:token'), 'cancel restores prior focus');
+  assert(!log.includes('exec-cancelled'), 'cancel executes nothing');
+  const stale = await requestAction(regs, { id: 'action.removeCard', subject: {}, revalidate: () => false, execute: () => log.push('exec-stale') }, { ...hooks, openConfirmation: () => Promise.resolve('CONFIRM') });
+  assert(!stale.executed && stale.stale, 'stale revalidation blocks execution');
+});
+
+test('interactive components without accessible names refuse to build', () => {
+  assertThrows(() => SharedMenu({ items: [{ text: 'Open' }] }), /accessible name/);
+  assertThrows(() => SharedTooltip({ model: { lines: [] } }), /accessible fallback/);
+});
+
+// ---- known-bad corpus (Complete validation) ---------------------------------
+
+function failuresOf(check, result) {
+  return result.failures.filter((f) => f.check === check);
+}
+
+test('known-bad: duplicate stable ids are rejected', () => {
+  const regs = fixtureRegistries({ entities: [namedEntity('card.dup', 'CARD', []), namedEntity('card.dup', 'CARD', [])] });
+  assert(failuresOf('assertUniqueStableIds', validateAllContent(regs)).length, 'duplicate reported');
+});
+
+test('known-bad: an unknown property on an entity is rejected', () => {
+  const regs = fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [{ propertyId: 'damage.vibes', source: 'AUTHORED' }])] });
+  assert(failuresOf('assertNoUnknownTargetOrEffectType', validateAllContent(regs)).length, 'unknown property reported');
+});
+
+test('known-bad: a property parent cycle is rejected', () => {
+  const regs = fixtureRegistries({ extraProperties: [
+    { id: 'loop.a', parentId: 'loop.b', domain: 'INTERNAL', visibility: 'INTERNAL', priority: 0 },
+    { id: 'loop.b', parentId: 'loop.a', domain: 'INTERNAL', visibility: 'INTERNAL', priority: 0 },
+  ] });
+  assert(failuresOf('assertNoPropertyCycles', validateAllContent(regs)).length, 'cycle reported');
+});
+
+test('known-bad: an unresolved Recall/Exhaust conflict is rejected', () => {
+  // A relation set where the conflict is declared but nothing suppresses it.
+  const regs = createFrameworkRegistries({
+    properties: propertiesData.properties,
+    relations: [{ sourcePropertyId: 'lifecycle.exhaust', relation: 'CONFLICTS_WITH', targetPropertyId: 'lifecycle.recall.afterUse', precedence: 10 }],
+    terms: termsData.terms,
+    assets: assetsData.assets,
+    entities: [namedEntity('card.t', 'CARD', [
+      { propertyId: 'lifecycle.exhaust', source: 'AUTHORED' },
+      { propertyId: 'lifecycle.recall.afterUse', source: 'AUTHORED' },
+      { propertyId: 'cost.action', source: 'AUTHORED' },
+    ])],
+    confirmation: confirmationPolicies,
+    theme: themeData,
+  });
+  assert(failuresOf('assertNoUnresolvedPropertyConflicts', validateAllContent(regs)).length, 'unresolved conflict reported');
+});
+
+test('known-bad: broken asset references and dead paths are rejected', () => {
+  const regs = fixtureRegistries({ extraAssets: [
+    { id: 'asset.test.orphan', kind: 'ICON', sourcePath: 'assets/nope.png', fallbackAssetId: 'asset.test.gone' },
+  ] });
+  const result = validateAllContent(regs, { assetExists: (p) => p !== 'assets/nope.png' });
+  const rows = failuresOf('assertEveryAssetHasValidFallbackPolicy', result);
+  assert(rows.some((r) => /chain leaves the registry/.test(r.detail)), 'dangling fallback reported');
+  assert(rows.some((r) => /does not exist/.test(r.detail)), 'dead path reported');
+});
+
+test('known-bad: a missing term reference is rejected', () => {
+  const regs = fixtureRegistries({ entities: [{ id: 'card.t', kind: 'CARD', nameTermId: 'term.ghost', properties: [] }] });
+  assert(failuresOf('assertEveryReferenceResolves', validateAllContent(regs)).length, 'missing term reported');
+});
+
+test('known-bad: an incomplete alternative cost is rejected', () => {
+  const regs = fixtureRegistries({ entities: [namedEntity('card.t', 'CARD', [{ propertyId: 'cost.alternative', source: 'AUTHORED' }])] });
+  assert(failuresOf('assertCostProfilesComplete', validateAllContent(regs)).length, 'incomplete alternative reported');
+});
+
+test('known-bad: duplicate card instances after composition are rejected', () => {
+  const regs = fixtureRegistries();
+  const result = validateAllContent(regs, { composedDecks: [{ cards: [{ instanceId: 'x' }, { instanceId: 'x' }] }] });
+  assert(failuresOf('assertNoDuplicateCardInstancesAfterCompilation', result).length, 'duplicate instance reported');
+});
+
+test('known-bad: confirmation-count errors are rejected both ways', () => {
+  const regs = fixtureRegistries({ confirmation: {
+    policies: [{ id: 'policy.soft', level: 'REVERSIBLE' }, { id: 'policy.hard', level: 'DESTRUCTIVE' }],
+    actions: [
+      { id: 'action.nuke', policyId: 'policy.soft', destructive: true },
+      { id: 'action.stroll', policyId: 'policy.hard', destructive: false },
+    ],
+  } });
+  eq(failuresOf('assertEveryDestructiveActionHasExactlyOneConfirmationPolicy', validateAllContent(regs)).length, 2, 'both directions reported');
+});
+
+test('known-bad: unreadable text is rejected by measured contrast', () => {
+  const badTheme = JSON.parse(JSON.stringify(themeData));
+  badTheme.contrastPairs = [{ id: 'pair.bad', fg: 'muted', bg: 'panel', minimumRatio: 4.5 }];
+  const regs = fixtureRegistries({ theme: badTheme });
+  assert(failuresOf('assertReadableText', validateAllContent(regs)).length, 'low contrast reported');
+  assert(contrastRatio('#ffffff', '#000000') > 20, 'ratio sanity');
+});
+
+test('known-bad: terminology drift is rejected by name', () => {
+  const regs = fixtureRegistries();
+  const result = validateAllContent(regs, { drift: [{ id: 'exhaust', reason: 'tooltip drift' }] });
+  assert(failuresOf('assertNoTerminologyDrift', result).length, 'drift reported');
+});
+
+// ---- the real candidate -----------------------------------------------------
+
+test('the real bundle imports completely and validates clean', () => {
+  const { registries, imported } = createReplacementCandidate(contentBundle);
+  const result = validateAllContent(registries, { drift: imported.drift });
+  eq(result.failures, [], 'zero validation failures on real content');
+  assert(registries.content.size >= 392 + 3, 'all legacy entities plus the unarmed package');
+});
+
+test('baseline equivalence: every legacy card round-trips through the compiler', () => {
+  const { registries } = createReplacementCandidate(contentBundle);
+  const baseline = captureCurrentBehavior(contentBundle);
+  const compiledById = new Map();
+  for (const entity of registries.content.all()) {
+    if (entity.kind === 'CARD') compiledById.set(entity.id, compileEntity(registries, entity.id, {}));
+  }
+  const mismatches = compareBaseline(baseline, registries, compiledById);
+  eq(mismatches, [], 'no behavior drift against the legacy bundle');
+});
+
+test('the cutover gate refuses cutover while legacy authority is reachable', () => {
+  const result = buildReplacementCandidate(contentBundle, { regressionSuite: true, newMechanicsAccepted: true });
+  eq(result.status, 'FAILURE', 'no cutover without the authority proof');
+  const authority = result.gates.find((g) => g.name.includes('legacy runtime authority'));
+  eq(authority.status, 'FAIL', 'authority gate reports honestly');
+  for (const g of result.gates) {
+    if (g.name !== authority.name) eq(g.status, 'PASS', `gate ${g.name}`);
+  }
+});
+
+test('compiled tooltips resolve every word through TermRegistry', () => {
+  const { registries } = createReplacementCandidate(contentBundle);
+  const compiled = compileEntity(registries, 'card.gorefireSlash', {});
+  const tooltip = compileTooltip(registries, compiled);
+  eq(tooltip.title, 'Gorefire Slash', 'name from term');
+  assert(tooltip.accessibleFallback.length > 0, 'accessible fallback always present');
+  assert(tooltip.lines.some((l) => l.name === 'Mana'), 'mana cost surfaces canonically');
+});
+
+console.log(`\nframework: ${passed} passed, ${failed} failed`);
+process.exit(failed ? 1 : 0);
