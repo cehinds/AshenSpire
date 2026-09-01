@@ -31,7 +31,7 @@ import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
-import { statProjection } from '../../model/statProjection.js';
+import { statProjection, pieceWeight } from '../../model/statProjection.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
@@ -1580,7 +1580,10 @@ export function mountEquipment(host, {
     const bonus = item
       ? [...roleBonuses, ...authoredBonuses, poise].filter(Boolean).slice(0, 2).join(' · ') || 'No combat bonus authored'
       : 'Empty socket';
-    const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
+    // One rule for the item and the total (model/statProjection.pieceWeight):
+    // an armour piece weighs its poise threshold, so its card can never say
+    // "Weight —" while the Equip load counts it.
+    const weight = item ? `Weight ${pieceWeight(item)}` : 'Weight —';
     return {
       item,
       intrinsic: item && !slot.kinds.includes('armor') ? armamentIntrinsicReceipt(item) : null,

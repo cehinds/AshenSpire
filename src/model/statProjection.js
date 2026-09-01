@@ -76,20 +76,28 @@ export function playerPoiseThresholdReceipt(registries, run) {
  */
 export const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
 
+/**
+ * The weight ONE piece contributes to the equip load — the single home of the
+ * rule, so the Armoury's item card and the load total can never disagree:
+ * armour weighs its poise threshold (the A-side rule above), an armament its
+ * authored weight, anything else nothing.
+ */
+export function pieceWeight(piece) {
+  if (!piece) return 0;
+  if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
+  return Number.isInteger(piece.weight) ? piece.weight : 0;
+}
+
 export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
   if (!run || !run.loadout) throw new Error('playerLoadReceipt requires a run loadout');
   if (!run.attributes) throw new Error('playerLoadReceipt requires run attributes');
   const levels = run.itemUpgradeLevels || {};
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
-  const weightOf = (piece) => {
-    if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
-    return Number.isInteger(piece.weight) ? piece.weight : 0;
-  };
   const sources = pieces.map((piece) => ({
     kind: 'equipment',
     id: piece.id,
     classId: piece.kind === 'armor' ? piece.classId : null,
-    value: weightOf(piece),
+    value: pieceWeight(piece),
   }));
   const armour = sources.filter((s) => s.classId != null).reduce((sum, s) => sum + s.value, 0);
   const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
