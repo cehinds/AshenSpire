@@ -371,6 +371,9 @@ export function createSession({ registries, seedString, endless = false, restore
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
+      // The seat's loadout rides into the co-op engine so the framework Weight
+      // Class (dodge check and pricing) is this player's, not a Light default.
+      loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
     };

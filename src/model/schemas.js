@@ -124,6 +124,8 @@ export const EVENTS = Object.freeze([
   'manaRestored',
   'manaSpent',
   'staminaSpent',
+  'staminaRecovered', // framework Mana & Stamina rule: an idle turn's recovery
+  'dodgeRolled', // framework Weight Class & Dodge Roll: the roll's receipt
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',

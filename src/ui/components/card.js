@@ -154,7 +154,13 @@ export function renderCard(registries, ref, opts = {}) {
   // opts.tooltipFn overrides the default tooltip. A parent that already owns a
   // persistent detail region may suppress the transient tooltip entirely.
   if (opts.tooltip !== false) {
-    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+    // A combat card's preview already resolved its live costs (Weight Class
+    // pricing, Power reductions); the tooltip must say the same numbers the
+    // badge and the engine do, so it takes them instead of re-deriving.
+    const liveCosts = opts.preview
+      ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost }
+      : null;
+    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
   }
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
@@ -189,10 +195,11 @@ export function upgradePreviewHtml(registries, ref) {
   return html;
 }
 
-function cardTooltip(registries, def, tokens) {
-  // Cost numbers come from the framework profile and the resource words from
+function cardTooltip(registries, def, tokens, liveCosts = null) {
+  // Cost numbers come from the framework profile (or the preview's already
+  // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
-  const pools = registries.framework.costProfile(def);
+  const pools = liveCosts || registries.framework.costProfile(def);
   // Terms are data; escape them like every other field before innerHTML.
   const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
