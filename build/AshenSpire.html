@@ -33659,7 +33659,7 @@ const mechanics = {
     "refundErasesSpend": false
   },
   "weight": {
-    "capacityBase": 50,
+    "capacityBase": 5,
     "capacityPerConstitution": 2,
     "capacityPerStrength": 1,
     "classes": [
@@ -33696,7 +33696,8 @@ const mechanics = {
         "dodgeStaminaCost": 3,
         "dodgeActionCost": 2
       }
-    ]
+    ],
+    "capacityBaseNote": "Was 50. Validated by tools/weightclass-census.mjs (2026-09-01): with the authored loads (armaments 2-12, armour 8-13) a base of 50 left even the heaviest reachable kit at 34-40% — Light — so no loadout could leave Light and the class did not exist for the player. At 5 the classes are reachable: nimble kits Light, sword-and-shield Medium, tower-shield kits Heavy, and Constitution/Strength move the line (capacity = 5 + 2*CON + STR)."
   },
   "dodgeRoll": {
     "die": 20,
@@ -41761,7 +41762,7 @@ function playerPoiseThresholdReceipt(registries, run) {
  */
 const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
 
-function playerLoadReceipt(registries, run) {
+function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
   if (!run || !run.loadout) throw new Error('playerLoadReceipt requires a run loadout');
   if (!run.attributes) throw new Error('playerLoadReceipt requires run attributes');
   const levels = run.itemUpgradeLevels || {};
@@ -41780,6 +41781,7 @@ function playerLoadReceipt(registries, run) {
   const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
   const decided = registries.framework.weightClass({
     attributes: run.attributes,
+    bonuses: capacityBonus,
     weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
   });
   return {
@@ -49044,7 +49046,11 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
+<<<<<<< HEAD
 const SOURCE = 'efda6131df';
+=======
+const SOURCE = '4ddfc5c5f0';
+>>>>>>> claude/refactored-dev-branch-3v23r5-weight-class-a
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------

@@ -14,7 +14,7 @@ export const mechanics = {
     "refundErasesSpend": false
   },
   "weight": {
-    "capacityBase": 50,
+    "capacityBase": 5,
     "capacityPerConstitution": 2,
     "capacityPerStrength": 1,
     "classes": [
@@ -51,7 +51,8 @@ export const mechanics = {
         "dodgeStaminaCost": 3,
         "dodgeActionCost": 2
       }
-    ]
+    ],
+    "capacityBaseNote": "Was 50. Validated by tools/weightclass-census.mjs (2026-09-01): with the authored loads (armaments 2-12, armour 8-13) a base of 50 left even the heaviest reachable kit at 34-40% — Light — so no loadout could leave Light and the class did not exist for the player. At 5 the classes are reachable: nimble kits Light, sword-and-shield Medium, tower-shield kits Heavy, and Constitution/Strength move the line (capacity = 5 + 2*CON + STR)."
   },
   "dodgeRoll": {
     "die": 20,
