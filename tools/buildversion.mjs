@@ -218,6 +218,47 @@ function isDerived(value) {
 }
 
 /**
+ * CONTRACT COLUMNS THAT END IN `version` AND ARE NOT VERSION SITES.
+ *
+ * Arm 2 finds a SITE by its key. One key on this tree ends in `version` because
+ * a documented table contract names its column so, not because it declares the
+ * build: the successor packet's `source_export_recipe_and_tool_version`, one of
+ * the twelve columns the art runbook requires by name
+ * (docs/governance/RUNBOOKS/art.md §3). The key cannot be renamed away — the
+ * contract owns the name — so the exemption is written HERE, one site at a
+ * time, with the file, the key and the reason, and it holds only while the
+ * value is prose: a sentence (two or more words) with no version-shaped number
+ * in it. Type `0.4.0` or `9.9.z` into that column and arm 2 sees the site again
+ * (the selftest plants exactly that).
+ *
+ * WHY NOT A SHAPE RULE FOR EVERY SITE, measured rather than argued: the first
+ * cut of this exemption cleared any digitless value anywhere — and a second
+ * copy that drifts to a LABEL (`const SHOWN_VERSION = 'latest'`) walked through
+ * it, reproduced in a copied tree. A version site that has drifted to a word
+ * is still a second home for the version, so a value-shape rule alone cannot
+ * be the boundary; the site must be named. (An earlier cut, "no digit at all",
+ * failed on the column's own sentence, whose `open_items_not_closed_by_d1`
+ * carries a digit — recorded so nobody re-derives either.)
+ */
+const CONTRACT_COLUMN_SITES = Object.freeze([
+  {
+    file: 'assets/classes/successor-packet.manifest.json',
+    key: 'source_export_recipe_and_tool_version',
+    why: 'art runbook §3 twelve-column manifest contract; the value is the column\'s prose answer, not a build version',
+  },
+]);
+
+/** True when a captured value is a SENTENCE with no version-shaped number. */
+function isProse(value) {
+  return /\S\s+\S/.test(value.trim()) && !/\d+\.\d+/.test(value) && !/^\s*v?\d+\s*$/.test(value);
+}
+
+/** True for a named contract column whose value is prose — the only clearance. */
+function isContractColumn(file, key, value) {
+  return CONTRACT_COLUMN_SITES.some((c) => c.file === file && c.key === key) && isProse(value);
+}
+
+/**
  * SECOND VERSION SITES THAT ARE KNOWN, STATED AND OPEN — not clean, not fresh.
  *
  * A site listed here resolves row B to UNKNOWN, which blocks exactly as red
@@ -613,7 +654,7 @@ export function check(root = REPO_ROOT) {
         // captures (quote, key, quote, value) — hence the index shift.
         const [ki, vi] = n === 0 ? [1, 3] : [2, 4];
         for (const m of line.matchAll(re)) {
-          if (!/version$/i.test(m[ki]) || isDerived(m[vi])) continue;
+          if (!/version$/i.test(m[ki]) || isDerived(m[vi]) || isContractColumn(f, m[ki], m[vi])) continue;
           sites.push({ file: f, line: i + 1, key: m[ki], value: m[vi] });
         }
       }
@@ -643,7 +684,7 @@ export function check(root = REPO_ROOT) {
     add(true, 'B NO SECOND COPY',
       `no second home for the release under ${INPUT_ROOTS.join(', ')}: no file re-types '${rel}'`
       + ` outside ${RELEASE_HOME} (arm 1), and no other site declares a version at all (arm 2,`
-      + ` which does not read the value, so it does not go quiet when the value drifts).`
+      + ` which never compares the value to the release, so it does not go quiet when the value drifts).`
       + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
   }
 
