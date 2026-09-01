@@ -113,8 +113,13 @@ bridge would add risk without adding authority:
    ONE reconciliation decision — adopt the legacy service as the
    framework's attack-slot implementation (recommended: richer and
    battle-tested, with the contract model as its specification), or rewrite
-   it onto the contract model (loses shield/priority-ref behavior unless
-   every rule is re-authored) — and EITHER ruling must explicitly carry the
+   it onto the contract model (loses behavior unless every legacy rule is
+   re-authored: shield/priority-ref handling, AND the data-owned
+   role-source priorities — `roleSources.guard` resolves ONE source
+   left-before-right where the contract model cycles both hands' guards,
+   `roleSources.technique` resolves right-before-left and the contract
+   model never consumes a technique card at all, and each role has its own
+   unarmed profile) — and EITHER ruling must explicitly carry the
    contract-new outputs forward: they are approved-new-mechanics work that
    no adoption of existing code delivers by itself, and a cutover that
    omitted them would silently drop contract mechanics. Until that ruling,
