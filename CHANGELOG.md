@@ -17,6 +17,10 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
+## 2026-09-01
+
+- **The data-driven property framework lands as a complete, validated replacement candidate** ([#508](https://github.com/cehinds/AshenSpire/pull/508), `0.4.0.1888`). Nothing a player sees changes: the framework — canonical registries, a deterministic property compiler, gameplay services, shared presentation rules, an importer carrying all 392 existing entities with their exact identities, and a cutover gate that refuses to switch until every check passes — ships alongside the running game without touching it. Evidence and groundwork only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.
+
 ## 2026-08-31
 
 - **Smithing upgrades an armament and every basic card it owns** ([#502](https://github.com/cehinds/AshenSpire/pull/502), `0.4.0.1854`). Elite and boss victories award Smithing Stones; the Shrine spends one Stone to improve an owned armament for the run, with exact before-and-after card values shown before confirmation. The upgrade follows the armament through swaps, saves, active combats, legacy runs, rewards, and co-op host restoration. The picker uses the owned weapon or shield art, inventory quantity, WEAPON label, and equipment tags instead of borrowing one combat card's identity.

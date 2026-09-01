@@ -39729,7 +39729,11 @@ function runRunOpcode(ctx, action, eff) {
     }
     case 'upgradeCard': {
       const plan = smithingPlan(ctx.registries, run);
+      // Since the item-upgrade redesign the plan also offers non-armament
+      // items (no armamentId, no affectedCards); a card upgrade can only ride
+      // an armament, so only those become candidates here.
       const armaments = plan.candidates
+        .filter((candidate) => candidate.itemKind === 'armament')
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck
@@ -47698,7 +47702,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'ab98cdaffa';
+const SOURCE = 'dcbf9232af';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -47732,7 +47736,7 @@ const SOURCE = 'ab98cdaffa';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1890';
+const ORDINAL = '1892';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -49975,6 +49979,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-508",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "The data-driven property framework lands as a complete, validated replacement candidate",
+    "detail": "Nothing a player sees changes: the framework — canonical registries, a deterministic property compiler, gameplay services, shared presentation rules, an importer carrying all 392 existing entities with their exact identities, and a cutover gate that refuses to switch until every check passes — ships alongside the running game without touching it. Evidence and groundwork only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.",
+    "build": "0.4.0.1888",
+    "pullRequest": 508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/508"
+  },
   {
     "id": "pr-502",
     "date": "2026-08-31",

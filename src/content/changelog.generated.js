@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-508",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "The data-driven property framework lands as a complete, validated replacement candidate",
+    "detail": "Nothing a player sees changes: the framework — canonical registries, a deterministic property compiler, gameplay services, shared presentation rules, an importer carrying all 392 existing entities with their exact identities, and a cutover gate that refuses to switch until every check passes — ships alongside the running game without touching it. Evidence and groundwork only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.",
+    "build": "0.4.0.1888",
+    "pullRequest": 508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/508"
+  },
+  {
     "id": "pr-502",
     "date": "2026-08-31",
     "group": "2026-08-31",
