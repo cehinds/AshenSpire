@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-520",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Your equipment now has a weight, and the Armoury says what it costs you",
+    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, and every item card shows the same Weight number the total counts, smithed or not. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load, and a sheet that pulls its points out of Constitution and Strength can start Heavy — the readout shows it before the first fight.",
+    "build": "0.5.0-rc.1.1914",
+    "pullRequest": 520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/520"
+  },
+  {
     "id": "pr-516",
     "date": "2026-09-01",
     "group": "2026-09-01",

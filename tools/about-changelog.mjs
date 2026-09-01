@@ -667,7 +667,7 @@ export function flattenInline(text, where, labels = new Set()) {
 // ordinal 1 (#517 review); the shape is pinned by the selftest corpus.
 const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
-export function parseChangelog(markdown, { currentOrdinal } = {}) {
+export function parseChangelog(markdown, { currentOrdinal, projecting = false } = {}) {
   const entries = [];
   const receipts = [];
   const labels = linkDefinitionLabels(markdown);
@@ -723,9 +723,18 @@ export function parseChangelog(markdown, { currentOrdinal } = {}) {
     }
   }
   if (typeof currentOrdinal === 'number') {
+    // A receipt shipped IN ITS OWN PR names the build its projection will
+    // produce: `--write` projects it, the rebuild that must follow bumps the
+    // ordinal by exactly one, and from then on the receipt is ≤ the ordinal
+    // like every other. So while PROJECTING, and only then, one build ahead is
+    // the receipt for the rebuild about to happen; two ahead is still a build
+    // that has not happened. The plain check never allows the extra one — a
+    // merged tree whose receipt outruns its buildordinal is a receipt with no
+    // build behind it, which is exactly what #310 refuses.
+    const ceiling = currentOrdinal + (projecting ? 1 : 0);
     for (const r of receipts) {
-      if (r.ordinal !== null && r.ordinal > currentOrdinal) {
-        throw new Error(`${r.where}: cites build ${r.ordinal}, but buildordinal.json says only ${currentOrdinal} builds exist — a receipt cannot name a build that has not happened`);
+      if (r.ordinal !== null && r.ordinal > ceiling) {
+        throw new Error(`${r.where}: cites build ${r.ordinal}, but buildordinal.json says only ${currentOrdinal} builds exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
       }
     }
   }
@@ -956,6 +965,7 @@ async function selftest() {
     ['ordinal rising into an older group', `## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.9')}\n`, {}],
     ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
     ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
+    ['receipt two builds ahead even while projecting (one is the rebuild to come; two is not)', `## 2026-08-20\n\n${receipt(1, '0.4.0.102')}\n`, { currentOrdinal: 100, projecting: true }],
   ];
   for (const [name, body, opts] of ordinalPlants) {
     try { parseChangelog(`# Test\n\n${body}`, opts); console.error(`MISS ${name}`); process.exitCode = 1; }
@@ -963,6 +973,8 @@ async function selftest() {
   }
   try {
     parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    // The in-PR receipt shape: one build ahead is legal while projecting.
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.8')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n`, { currentOrdinal: 7, projecting: true });
     caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
@@ -1470,7 +1482,7 @@ async function selftest() {
 // a boundary they cannot is how a narrow check gets cited as a wide one.
 try {
   if (process.argv.includes('--write')) {
-    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
+    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), projecting: true });
     writeFileSync(GENERATED, generatedText(entries));
     console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
   } else if (process.argv.includes('--selftest')) {

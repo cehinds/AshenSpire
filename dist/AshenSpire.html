@@ -33673,7 +33673,7 @@ const mechanics = {
         "dodgeActionCost": 2
       }
     ],
-    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01), which measures every creatable start (each hand chosen independently, empty allowed) and, for reachability, every ordered pair of DISTINCT armaments through a real run loadout with the outfit at its highest Smithing tier (+1 poise threshold, so +1 weight). Base 50 left even the heaviest reachable kit at 34-40% (Light): no loadout could leave Light and the class did not exist for the player. Base 5 (the first retune) leaves the Rogue unable to reach Heavy (72% with warhammer + tower shield + Shadow+1; Reaver 80%, Starseer 81%, Herald 84% just reach it). Bases 0 and 1 are the only ones at which every class can reach Heavy; 0 is chosen because capacity is then exactly 2*CON + STR with no free constant (Reaver 91%, Starseer 96%, Rogue 83%, Herald 100%). At 0, 290 of 336 creatable starts are Light, 46 Medium, none Heavy."
+    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01). The census covers the creator's space: the two VISIBLE creation modes (standard, pointbuy), and for each not only the class preset but the two allocation boundaries that bracket capacity (Constitution and Strength at their legal minimum, and at their legal maximum), every armour choice, and each hand chosen independently (empty allowed, the same armament twice refused) — 224 starts per sheet; reachability is every ordered pair of distinct armaments through a real loadout with the outfit at its highest Smithing tier, at the standard preset. Base 50 left even the heaviest reachable kit Light: the class did not exist for the player. Base 5 (the first retune) leaves no class able to reach Heavy at the standard preset (Reaver 76%, Starseer 74%, Rogue 74%, Herald 71%). Bases 0 and 1 are the only ones at which every class reaches Heavy (base 0: Reaver 86%, Starseer 86%, Rogue 86%, Herald 82%; base 2 already loses the Herald at 77%); 0 is chosen because capacity is then exactly 2*CON + STR with no free constant. At 0 the preset starts are 200 Light and 24 Medium; a player who pulls every point out of Constitution and Strength can start Heavy (12 of the 224 min-capacity starts, all sword-and-shield or greatsword kits at capacity 24), and one who pours every point in starts 210 Light / 14 Medium. That a dumped sheet can start Heavy is the Weight Class doing its job, not a defect: the load readout shows it before the first fight."
   },
   "dodgeRoll": {
     "die": 20,
@@ -48846,7 +48846,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'ee17c9cc18';
+const SOURCE = 'd72ef30ef9';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48880,7 +48880,7 @@ const SOURCE = 'ee17c9cc18';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1912';
+const ORDINAL = '1914';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -51123,6 +51123,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-520",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Your equipment now has a weight, and the Armoury says what it costs you",
+    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, and every item card shows the same Weight number the total counts, smithed or not. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load, and a sheet that pulls its points out of Constitution and Strength can start Heavy — the readout shows it before the first fight.",
+    "build": "0.5.0-rc.1.1914",
+    "pullRequest": 520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/520"
+  },
   {
     "id": "pr-516",
     "date": "2026-09-01",
