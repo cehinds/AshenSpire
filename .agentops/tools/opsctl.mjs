@@ -5518,6 +5518,17 @@ export function runSelftest(root = ROOT) {
   expectSemantic('role sweep: an identifier declared as both a role and a non-seat writer', (c) => { c.roles.non_seat_writers.push({ id: 'maker', appears_in: ['owner_role'], means: 'ambiguous on purpose' }); }, 'two different things');
   // A non-seat writer outside its declared fields. The reported case exactly:
   // Gate D requiring a recommendation nobody can author, with verify green.
+  // The allowlist must not be able to widen itself: appears_in is data the
+  // sweep trusts, so the schema pins it to the writer-field vocabulary and a
+  // widened declaration fails validation before the sweep ever reads it.
+  {
+    const c = base();
+    c.roles.non_seat_writers.find((w) => w.id === 'generator').appears_in.push('role');
+    const schema = JSON.parse(readFileSync(resolve(root, CONTRACTS.find((x) => x.name === 'roles').schema), 'utf8'));
+    const errs = validateSchema(c.roles, schema);
+    const hit = errs.some((e) => e.includes('not in enum'));
+    results.push({ label: 'role sweep: a non-seat writer widening its own allowlist', pass: hit, errs: hit ? [] : errs });
+  }
   expectSemantic('role sweep: a gate reviewer that nothing holds', (c) => { c['promotion-gates'].gates.find((g) => g.conditional_roles).conditional_roles[0].role = 'generator'; }, 'cannot be satisfied by an identifier nobody holds');
   expectSemantic('role sweep: a lease-follower where a producer must act', (c) => { c.evidence.evidence[0].producer_role = 'per-seat'; }, "permits it in 'owner_role' only");
   {

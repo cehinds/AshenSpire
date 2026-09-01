@@ -39,7 +39,10 @@
             "minItems": 1,
             "items": {
               "type": "string",
-              "minLength": 1
+              "enum": [
+                "owner_role",
+                "producer_role"
+              ]
             }
           },
           "means": {
