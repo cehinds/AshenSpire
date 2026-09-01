@@ -127,11 +127,20 @@ const PLANTS = [
       (t) => t.replace('export function', `const SHOWN_VERSION = '9.9.z';\n\nexport function`)),
   },
   {
-    // The prose exemption's own falsifier: the successor packet's manifest
+    // A second copy that drifted to a LABEL, not a number. Arm 1 cannot see it
+    // (the value differs) and a value-shape exemption cleared it once — this
+    // plant is the record that the clearance is by NAMED SITE, never by shape.
+    name: 'a second copy that has drifted to a WORD — `latest` — and is still a second home',
+    row: 'B NO SECOND COPY',
+    plant: (root) => edit(root, 'src/ui/screens/about.js',
+      (t) => t.replace('export function', `const SHOWN_VERSION = 'latest';\n\nexport function`)),
+  },
+  {
+    // The contract-column clearance's own falsifier: the successor packet's
     // column `source_export_recipe_and_tool_version` is cleared by arm 2 only
-    // because its value has no version-shaped number. Type a `digit.digit`
-    // version into that same key and arm 2 must see the site again — if this
-    // plant is ever "not caught", the exemption has widened into a hole.
+    // while its value is prose. Type a `digit.digit` version into that same
+    // key and arm 2 must see the site again — if this plant is ever "not
+    // caught", the clearance has widened into a hole.
     name: 'a version TYPED into the manifest column arm 2 clears only while it is prose',
     row: 'B NO SECOND COPY',
     plant: (root) => edit(root, 'assets/classes/successor-packet.manifest.json',

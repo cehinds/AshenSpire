@@ -218,31 +218,44 @@ function isDerived(value) {
 }
 
 /**
- * True when a captured value is PROSE — a sentence, a placeholder, an
- * `UNKNOWN` — rather than a version typed at a second site. A typed version
- * carries a version-shaped number: `digit.digit` (`0.4.0`, `9.9.z`, `0.5.0-rc.1`)
- * or a bare number. Prose can mention a digit (`d1`, `four`, a count) and still
- * hold nothing a stamp could agree with or drift from, so neither arm's
- * question applies to it.
+ * CONTRACT COLUMNS THAT END IN `version` AND ARE NOT VERSION SITES.
  *
- * This is NOT the value-equality proxy arm 2 was rebuilt to remove: a drifted
- * version still has its `digit.digit` shape, so a copy can never turn into
- * prose by drifting, and the predicate cannot go quiet at the moment of harm.
- * It is also not the 37-hit shape predicate rejected above — that one SEARCHED
- * for shapes; this one only clears a site the key predicate already found.
+ * Arm 2 finds a SITE by its key. One key on this tree ends in `version` because
+ * a documented table contract names its column so, not because it declares the
+ * build: the successor packet's `source_export_recipe_and_tool_version`, one of
+ * the twelve columns the art runbook requires by name
+ * (docs/governance/RUNBOOKS/art.md §3). The key cannot be renamed away — the
+ * contract owns the name — so the exemption is written HERE, one site at a
+ * time, with the file, the key and the reason, and it holds only while the
+ * value is prose: a sentence (two or more words) with no version-shaped number
+ * in it. Type `0.4.0` or `9.9.z` into that column and arm 2 sees the site again
+ * (the selftest plants exactly that).
  *
- * MEASURED, AND THE FIRST CUT WAS WRONG: I first wrote this as "carries no
- * digit at all", and the one standing hit it exists to clear — the successor
- * packet's `source_export_recipe_and_tool_version` column
- * (assets/classes/successor-packet.manifest.json), whose value is the sentence
- * "UNKNOWN. No generation or export receipt … (see open_items_not_closed_by_d1)"
- * — stayed red on `d1`. The column is one the art runbook's twelve-column
- * manifest contract requires by that name (docs/governance/RUNBOOKS/art.md §3),
- * so the key cannot be renamed away; the value's SHAPE is the honest boundary.
- * The selftest plants `9.9.z` under that same key and expects arm 2 to see it.
+ * WHY NOT A SHAPE RULE FOR EVERY SITE, measured rather than argued: the first
+ * cut of this exemption cleared any digitless value anywhere — and a second
+ * copy that drifts to a LABEL (`const SHOWN_VERSION = 'latest'`) walked through
+ * it, reproduced in a copied tree. A version site that has drifted to a word
+ * is still a second home for the version, so a value-shape rule alone cannot
+ * be the boundary; the site must be named. (An earlier cut, "no digit at all",
+ * failed on the column's own sentence, whose `open_items_not_closed_by_d1`
+ * carries a digit — recorded so nobody re-derives either.)
  */
+const CONTRACT_COLUMN_SITES = Object.freeze([
+  {
+    file: 'assets/classes/successor-packet.manifest.json',
+    key: 'source_export_recipe_and_tool_version',
+    why: 'art runbook §3 twelve-column manifest contract; the value is the column\'s prose answer, not a build version',
+  },
+]);
+
+/** True when a captured value is a SENTENCE with no version-shaped number. */
 function isProse(value) {
-  return !/\d+\.\d+/.test(value) && !/^\s*v?\d+\s*$/.test(value);
+  return /\S\s+\S/.test(value.trim()) && !/\d+\.\d+/.test(value) && !/^\s*v?\d+\s*$/.test(value);
+}
+
+/** True for a named contract column whose value is prose — the only clearance. */
+function isContractColumn(file, key, value) {
+  return CONTRACT_COLUMN_SITES.some((c) => c.file === file && c.key === key) && isProse(value);
 }
 
 /**
@@ -641,7 +654,7 @@ export function check(root = REPO_ROOT) {
         // captures (quote, key, quote, value) — hence the index shift.
         const [ki, vi] = n === 0 ? [1, 3] : [2, 4];
         for (const m of line.matchAll(re)) {
-          if (!/version$/i.test(m[ki]) || isDerived(m[vi]) || isProse(m[vi])) continue;
+          if (!/version$/i.test(m[ki]) || isDerived(m[vi]) || isContractColumn(f, m[ki], m[vi])) continue;
           sites.push({ file: f, line: i + 1, key: m[ki], value: m[vi] });
         }
       }

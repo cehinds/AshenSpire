@@ -75,6 +75,18 @@ The answer is semver's own pre-release segment, not a bent ladder:
 - **`rc.<n>` advances at each `dev → test` promotion** — every candidate QA
   receives is distinguishable by its stamp, and the ordinal keeps ordering
   builds between promotions exactly as before.
+- **Ordering is by ordinal, never by the stamp string.** The ordinal is the
+  one monotonic key: it never resets, so any two builds — across candidates,
+  across the release cut — sort by it alone, and every tool that orders
+  builds (`about-changelog`, `buildversion` row H) reads the ordinal column.
+  The candidate counter is a label inside the stamp, not an ordering key, and
+  semver forbids zero-padding it (`rc.01` is not a valid numeric identifier).
+  So that the dist filenames ALSO sort in a directory listing, the counter has
+  a stated ceiling of **`rc.9`** within one release line: a tenth promotion
+  before a release cut is not a bigger number, it is the signal that the
+  candidate line has outlived its milestone — the owner cuts the release or
+  the triple moves. `0.5.0-rc.10.0001` therefore never exists to sort ahead
+  of `0.5.0-rc.9.9999`.
 - **The `-rc` suffix is dropped by the owner's release cut** (`dev → release`,
   owner-exclusive per `governance/delivery.json`), which is the MINOR bump
   the ladder already names. Nothing else removes it.
