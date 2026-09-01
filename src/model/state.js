@@ -925,6 +925,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
       cardsPlayedThisTurn: 0,
       cardsPlayedThisCombat: 0,
       attacksPlayedThisCombat: 0,
+      staminaSpentThisTurn: 0,
     },
     alive: true,
   };

@@ -714,6 +714,7 @@ test('the router door serves the whole routed-interaction surface, identically',
 // ---- contract-new composition outputs (dormant until authored) --------------
 
 const { createRunState } = await import('../src/model/state.js');
+const mechanicsHome = await import('../src/framework/data/mechanics.js');
 const actionsHome = await import('../src/engine/actions.js');
 
 function grantFixtureRegistries(packagesById) {
@@ -873,6 +874,76 @@ test('the Armoury equip-load receipt counts authored armament weights and the ar
   eq(r.capacity, 50 + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
   eq(r.classId, 'light', 'the reaver starts Light');
   eq(r.active, false, 'no combat rule consumes the class yet');
+});
+
+// ---- the unarmed package, stamina and the dodge — LIVE ------------------------
+
+const { createCombat, dispatch, playerWeightClass } = await import('../src/engine/combat.js');
+const { createRng } = await import('../src/engine/rng.js');
+
+test('the pure dodge is priced by the Weight Class; a guard that dodges keeps its authored price', () => {
+  const bridge = LEGACY_REG.framework;
+  const dodge = LEGACY_REG.cards.get('dodgeRoll');
+  const guard = LEGACY_REG.cards.get('evasiveGuard');
+  const rows = Object.fromEntries(mechanicsHome.mechanics.weight.classes.map((row) => [row.id, row]));
+  eq(bridge.costProfile(dodge).stamina, 1, 'outside a fight the authored cost shows (Light\'s)');
+  eq(bridge.costProfile(dodge, { weightClass: rows.light }).stamina, 1, 'Light: 1 stamina');
+  eq(bridge.costProfile(dodge, { weightClass: rows.light }).action, 0, 'Light: no action');
+  eq(bridge.costProfile(dodge, { weightClass: rows.medium }).stamina, 2, 'Medium: 2 stamina');
+  eq(bridge.costProfile(dodge, { weightClass: rows.medium }).action, 1, 'Medium: 1 action');
+  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).stamina, 3, 'Heavy: 3 stamina');
+  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).action, 2, 'Heavy: 2 actions');
+  eq(bridge.costProfile(guard, { weightClass: rows.heavy }).action, 1, 'Evasive Guard keeps its authored action cost');
+  eq(bridge.viewFor(dodge).properties.some((p) => p.propertyId === 'utility.evasion'), true, 'a dodge effect compiles to utility.evasion');
+  eq(bridge.viewFor(guard).properties.some((p) => p.propertyId === 'utility.evasion'), true, 'the guard that dodges carries utility.evasion too');
+});
+
+test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed profiles', () => {
+  const { stampDeck } = compositionDoor;
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
+  run.loadout.sets.leftHand = run.loadout.sets.leftHand.map(() => null);
+  stampDeck(LEGACY_REG, run);
+  const guards = run.deck.filter((c) => c.equipmentRole === 'guard').map((c) => c.cardId);
+  const techniques = run.deck.filter((c) => c.equipmentRole === 'technique').map((c) => c.cardId);
+  eq(guards.length > 0 && guards.every((id) => id === 'evasiveGuard'), true, `every unarmed guard slot is Evasive Guard (${guards.join(',')})`);
+  eq(techniques.length > 0 && techniques.every((id) => id === 'dodgeRoll'), true, `every unarmed technique slot is Dodge Roll (${techniques.join(',')})`);
+});
+
+test('the dodge roll lands as Block through the framework check, priced by the class, and idle turns recover stamina', () => {
+  const enemyId = contentBundle.enemies[0].id;
+  const rng = createRng(0xd0d6e);
+  const combat = createCombat({
+    registries: LEGACY_REG, rng,
+    player: {
+      classId: 'reaver', maxHp: 60, hp: 60, mana: 0, maxMana: 0, maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 5,
+      deck: [{ instanceId: 'd1', cardId: 'dodgeRoll', upgraded: false }, { instanceId: 'd2', cardId: 'dodgeRoll', upgraded: false }],
+      relicIds: [], flasks: [],
+    },
+    enemyIds: [enemyId],
+  });
+  eq(playerWeightClass(combat).weightClass.id, 'light', 'a fixture with no loadout stands Light');
+  const p = combat.player;
+  const inHand = combat.piles.hand.find((c) => c.cardId === 'dodgeRoll');
+  eq(!!inHand, true, 'a dodge is in hand');
+  const before = { block: p.block, stamina: p.stamina, energy: p.energy };
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: inHand.instanceId });
+  const rolled = events.find((e) => e.type === 'dodgeRolled');
+  eq(!!rolled, true, 'the dodge emits its receipt');
+  eq(rolled.weightClass, 'light', 'the receipt names the class');
+  eq(p.stamina, before.stamina - 1, 'Light: one stamina spent');
+  eq(p.energy, before.energy, 'Light: no action spent');
+  // d20 + DEX mod (10 → 0) + Light evasion 3 > difficulty 10 ⇒ roll ≥ 8 succeeds; guard 3 + 0 + 3 = 6
+  eq(rolled.success, rolled.roll >= 8, 'success is the framework check');
+  eq(p.block - before.block, rolled.success ? 6 : 0, 'temporary guard lands as Block only on success');
+  // The turn spent stamina, so its end recovers nothing …
+  const staminaAfterPlay = p.stamina;
+  dispatch(combat, { type: 'endTurn' });
+  eq(p.stamina, staminaAfterPlay, 'a spending turn recovers no stamina at its end');
+  // … and an idle turn recovers one, to the maximum.
+  const idleStart = p.stamina;
+  dispatch(combat, { type: 'endTurn' });
+  eq(p.stamina, Math.min(p.maxStamina, idleStart + 1), 'an idle turn recovers one stamina');
 });
 
 test('grant and weapon-art authoring is validated by name', () => {

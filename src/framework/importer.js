@@ -124,7 +124,23 @@ export function cardPropertyInstances(card) {
   for (const target of targets) {
     properties.push({ propertyId: mapped(TARGET_PROPERTY, target, `card ${card.id} effect target`), source: 'AUTHORED' });
   }
+  // A dodge effect is the contract's utility.evasion (the framework entities
+  // framework.evasiveGuard / framework.dodgeRoll author it the same way).
+  if ((card.effects || []).some((e) => e.op === 'dodgeRoll')) {
+    properties.push({ propertyId: 'utility.evasion', source: 'AUTHORED' });
+  }
   return properties;
+}
+
+/**
+ * The PURE dodge — a card whose whole action is the dodge roll (the contract's
+ * framework.dodgeRoll: classification.weaponArt + utility.evasion). Its price
+ * is the Weight Class's dodge cost, not the authored one; a guard that also
+ * dodges (framework.evasiveGuard) keeps its authored price.
+ */
+export function isPureDodge(card) {
+  const effects = card.effects || [];
+  return effects.length > 0 && effects.every((e) => e.op === 'dodgeRoll');
 }
 
 /**

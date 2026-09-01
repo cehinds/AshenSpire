@@ -12816,6 +12816,25 @@ const reaverCards = [
     textTemplate: 'Gain {block} Block. Draw {draw} card.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'draw', amount: 1 }] },
   },
+  // THE UNARMED PACKAGE (framework contract: Unarmed fallback — the entities
+  // framework.evasiveGuard and framework.dodgeRoll, authored here as the base
+  // cards the unarmed guard and technique profiles resolve to). Evasive Guard
+  // is a guard that also dodges; Dodge Roll is the pure dodge, priced by the
+  // Weight Class the player stands in (mechanics.json), not by this cost.
+  {
+    id: 'evasiveGuard', name: 'Evasive Guard', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
+    keywords: [], icon: '🌀',
+    effects: [{ op: 'block', target: 'self', amount: 1 }, { op: 'dodgeRoll', target: 'self' }],
+    textTemplate: 'Gain {block} Block, then roll to evade: on a success, gain Block equal to the dodge.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'dodgeRoll', target: 'self' }] },
+  },
+  {
+    id: 'dodgeRoll', name: 'Dodge Roll', class: 'colorless', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
+    keywords: [], icon: '💨',
+    effects: [{ op: 'dodgeRoll', target: 'self' }],
+    textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 2 Stamina, 1 Energy. Heavy: 3 Stamina, 2 Energy.',
+    upgrade: { effects: [{ op: 'dodgeRoll', target: 'self' }] },
+  },
   {
     id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🗡',
@@ -19544,9 +19563,9 @@ const basicCardProfiles = [
   {
     "id": "unarmedGuard",
     "role": "guard",
-    "baseCardId": "defend",
-    "displayName": "Defend",
-    "icon": "🛡",
+    "baseCardId": "evasiveGuard",
+    "displayName": "Evasive Guard",
+    "icon": "🌀",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "baseValue": 1,
@@ -19556,7 +19575,7 @@ const basicCardProfiles = [
     "gainPerTier": 1,
     "cap": "",
     "tags": "guard",
-    "flavor": "Brace with what you have.",
+    "flavor": "Nothing in your hands but the ground under your feet.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -19639,9 +19658,9 @@ const basicCardProfiles = [
   {
     "id": "unarmedTechnique",
     "role": "technique",
-    "baseCardId": "technique",
-    "displayName": "Footwork",
-    "icon": "✧",
+    "baseCardId": "dodgeRoll",
+    "displayName": "Dodge Roll",
+    "icon": "💨",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "baseValue": 0,
@@ -19651,7 +19670,7 @@ const basicCardProfiles = [
     "gainPerTier": 0,
     "cap": "",
     "tags": "flourish",
-    "flavor": "Position is an armament too.",
+    "flavor": "The empty hand's art is not being there.",
     "mods": "",
     "compatibility": "technique-v1"
   },
@@ -26291,6 +26310,7 @@ const { DISCLOSURE_TIERS } = require("src/model/disclosure.js");
 const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
+  'dodgeRoll',
   'applyStatus',
   'removeStatus',
   'draw',
@@ -26587,6 +26607,10 @@ const EFFECT_SPECS = Object.freeze({
   // two carriers — card chips for display, effect tags for combat).
   damage: { allowed: ['hits', 'tags'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
+  // The dodge roll (framework contract: Weight Class and Dodge Roll): a
+  // target and nothing else — the check, the die and the guard are the
+  // framework's, and the price is the Weight Class's.
+  dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
@@ -33821,11 +33845,13 @@ const { relations: relationsData } = require("src/framework/data/relations.js");
 const { terms: termsData } = require("src/framework/data/terms.js");
 const { confirmationPolicies } = require("src/framework/data/confirmationPolicies.js");
 const { PropertyRegistry, TermRegistry, ConfirmationRegistry } = require("src/framework/registries.js");
-const { cardPropertyInstances, KEYWORD_PROPERTY } = require("src/framework/importer.js");
+const { cardPropertyInstances, KEYWORD_PROPERTY, isPureDodge } = require("src/framework/importer.js");
 const { destinationAfterPlay, endTurnCleanup } = require("src/framework/lifecycle.js");
 const { compileCosts } = require("src/framework/costs.js");
 const { hasProperty, propertyParameters } = require("src/framework/compiler.js");
-const { computeWeightClass } = require("src/framework/weight.js");
+const { computeWeightClass, dodgeRollCheck } = require("src/framework/weight.js");
+const { onTurnEndStamina } = require("src/framework/resources.js");
+const { mechanics } = require("src/framework/data/mechanics.js");
 
 let sharedBridge = null;
 
@@ -33889,7 +33915,14 @@ function createFrameworkBridge() {
      * decision lives here, not at the call site. `variable` marks X costs;
      * their numeric action amount is the caller's to substitute.
      */
-    costProfile(def, { powerCostReduction = 0 } = {}) {
+    costProfile(def, { powerCostReduction = 0, weightClass = null } = {}) {
+      // The pure dodge is priced by the Weight Class (framework contract:
+      // Weight Class and Dodge Roll — Light 1 stamina / 0 actions, Medium 2/1,
+      // Heavy 3/2 from mechanics.json). The caller passes the class it stands
+      // in; without one (card faces outside a fight) the authored cost shows.
+      if (weightClass && isPureDodge(def)) {
+        return Object.freeze({ action: weightClass.dodgeActionCost, mana: 0, stamina: weightClass.dodgeStaminaCost, variable: false, classPriced: true });
+      }
       const view = viewFor(def);
       const modifiers = powerCostReduction && hasProperty(view, 'classification.power')
         ? [{ resource: 'action', delta: -powerCostReduction }]
@@ -33957,6 +33990,29 @@ function createFrameworkBridge() {
         constitution: attributes.constitution, strength: attributes.strength, bonuses, weights,
       });
       return { ...result, word: terms.displayTerm(result.weightClass.termId) };
+    },
+
+    /** The dodge die, from mechanics.json — the engine rolls it on its own stream. */
+    dodgeDie() {
+      return mechanics.dodgeRoll.die;
+    },
+
+    /**
+     * The dodge roll (framework contract: Weight Class and Dodge Roll): the
+     * already-rolled die, Dexterity, and the class the player stands in decide
+     * success and the temporary guard; randomness stays the engine's.
+     */
+    dodgeRoll({ roll, dexterity, weightClass, otherEvasionModifiers = 0, incomingAttackModifier = 0 }) {
+      return dodgeRollCheck({ roll, dexterity, weightClass, otherEvasionModifiers, incomingAttackModifier });
+    },
+
+    /**
+     * End-of-turn stamina (framework contract: Mana and Stamina): an IDLE turn
+     * — no stamina spent — recovers mechanics.stamina.idleRecoveryPerTurn, to
+     * the maximum; a turn that spent any recovers nothing.
+     */
+    staminaTurnEnd({ currentStamina, maxStamina, staminaSpentThisTurn }) {
+      return onTurnEndStamina({ currentStamina, maxStamina, staminaSpentThisTurn });
     },
   });
 }
@@ -35762,7 +35818,23 @@ function cardPropertyInstances(card) {
   for (const target of targets) {
     properties.push({ propertyId: mapped(TARGET_PROPERTY, target, `card ${card.id} effect target`), source: 'AUTHORED' });
   }
+  // A dodge effect is the contract's utility.evasion (the framework entities
+  // framework.evasiveGuard / framework.dodgeRoll author it the same way).
+  if ((card.effects || []).some((e) => e.op === 'dodgeRoll')) {
+    properties.push({ propertyId: 'utility.evasion', source: 'AUTHORED' });
+  }
   return properties;
+}
+
+/**
+ * The PURE dodge — a card whose whole action is the dodge roll (the contract's
+ * framework.dodgeRoll: classification.weaponArt + utility.evasion). Its price
+ * is the Weight Class's dodge cost, not the authored one; a guard that also
+ * dodges (framework.evasiveGuard) keeps its authored price.
+ */
+function isPureDodge(card) {
+  const effects = card.effects || [];
+  return effects.length > 0 && effects.every((e) => e.op === 'dodgeRoll');
 }
 
 /**
@@ -36094,7 +36166,7 @@ function expectedCounts(bundle) {
 }
 
 
-Object.assign(module.exports, { ImportError, KEYWORD_PROPERTY, cardPropertyInstances, importLegacyContent, expectedCounts });
+Object.assign(module.exports, { ImportError, KEYWORD_PROPERTY, cardPropertyInstances, isPureDodge, importLegacyContent, expectedCounts });
 
 },
 "src/framework/lifecycle.js": function (module, exports, require) {
@@ -36590,6 +36662,77 @@ function dodgeRollCheck({
 
 
 Object.assign(module.exports, { carryCapacity, equipLoad, loadPercent, weightClassFor, computeWeightClass, attributeModifier, dodgeRollCheck });
+
+},
+"src/framework/resources.js": function (module, exports, require) {
+// src/framework/resources.js — Mana and Stamina rules (framework contract:
+// Mana and Stamina). Every constant comes from content/framework/mechanics.json.
+
+const { mechanics } = require("src/framework/data/mechanics.js");
+
+function maximumMana({ classBase, wisdom, intelligence, bonuses = 0 }) {
+  return Math.floor(
+    classBase
+    + wisdom * mechanics.mana.wisdomWeight
+    + intelligence * mechanics.mana.intelligenceWeight
+    + bonuses,
+  );
+}
+
+function createResourceState({ maxMana, maxStamina, mana = maxMana, stamina = maxStamina }) {
+  return {
+    maxMana, currentMana: mana,
+    maxStamina, currentStamina: stamina,
+    staminaSpentThisTurn: 0,
+  };
+}
+
+/** Natural mana recovery per turn is zero; only rest and explicit effects refill. */
+function onTurnStartMana(state) {
+  return { ...state, currentMana: state.currentMana + mechanics.mana.naturalRecoveryPerTurn };
+}
+
+function onRestSpot(state) {
+  return { ...state, currentMana: state.maxMana };
+}
+
+function recoverMana(state, amount) {
+  return { ...state, currentMana: Math.min(state.maxMana, state.currentMana + amount) };
+}
+
+function spendStamina(state, amount) {
+  if (amount > state.currentStamina) throw new Error(`stamina: cannot spend ${amount} of ${state.currentStamina}`);
+  return {
+    ...state,
+    currentStamina: state.currentStamina - amount,
+    staminaSpentThisTurn: state.staminaSpentThisTurn + amount,
+  };
+}
+
+/** A refund returns the points but does not erase the spend (contract rule). */
+function refundStamina(state, amount, { erasesSpend = false } = {}) {
+  return {
+    ...state,
+    currentStamina: Math.min(state.maxStamina, state.currentStamina + amount),
+    staminaSpentThisTurn: erasesSpend
+      ? Math.max(0, state.staminaSpentThisTurn - amount)
+      : state.staminaSpentThisTurn,
+  };
+}
+
+function onTurnEndStamina(state) {
+  const idle = state.staminaSpentThisTurn === 0;
+  return {
+    ...state,
+    currentStamina: idle
+      ? Math.min(state.maxStamina, state.currentStamina + mechanics.stamina.idleRecoveryPerTurn)
+      : state.currentStamina,
+    staminaSpentThisTurn: 0,
+  };
+}
+
+
+Object.assign(module.exports, { maximumMana, createResourceState, onTurnStartMana, onRestSpot, recoverMana, spendStamina, refundStamina, onTurnEndStamina });
 
 },
 "src/framework/termOverlay.js": function (module, exports, require) {
@@ -37590,6 +37733,7 @@ function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamin
       cardsPlayedThisTurn: 0,
       cardsPlayedThisCombat: 0,
       attacksPlayedThisCombat: 0,
+      staminaSpentThisTurn: 0,
     },
     alive: true,
   };
@@ -39036,7 +39180,7 @@ const { resolveCard, passiveSum, passiveMult } = require("src/model/registries.j
 const { evaluate } = require("src/model/formulas.js");
 const { computeTokenBindings } = require("src/model/validate.js");
 const { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } = require("src/model/state.js");
-const { playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
+const { playerPoiseThresholdReceipt, playerLoadReceipt } = require("src/model/statProjection.js");
 const { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } = require("src/model/loadout.js");
 // Deck restamping goes through the framework's adopted composition door.
 const { stampDeck, reconcileGrantedCardsInCombat } = require("src/framework/deckComposition.js");
@@ -39291,6 +39435,20 @@ function endPlayerTurn(combat) {
 
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
+
+  // …then stamina (framework contract: Mana and Stamina): an idle turn recovers,
+  // a spending turn does not — the framework decides, this engine moves the pool.
+  if (Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
+    const next = combat.registries.framework.staminaTurnEnd({
+      currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
+    });
+    if (next.currentStamina !== p.stamina) {
+      const amount = next.currentStamina - p.stamina;
+      p.stamina = next.currentStamina;
+      combat.emit('staminaRecovered', { amount, reason: 'idle' });
+    }
+  }
+  p.counters.staminaSpentThisTurn = 0;
 
   // …then discard hand except Retain; Ethereal cards exhaust instead. The
   // fate of each card is the framework's call (src/framework/lifecycle.js);
@@ -39665,6 +39823,31 @@ function needsEnemyTarget(def) {
   return (def.effects || []).some((eff) => eff.target === 'enemy');
 }
 
+/**
+ * The Weight Class the player fights in — derived, never stored: the loadout
+ * this fight holds (the SAME object the run holds, so a mid-fight swap moves
+ * it) and the run attributes, decided by the framework (bridge.weightClass
+ * over playerLoadReceipt). A fixture with no loadout or attributes carries no
+ * load and stands Light, the contract's zero-load class.
+ */
+function playerWeightClass(combat) {
+  const registries = combat.registries;
+  if (combat.loadout && combat.attributes) {
+    const receipt = playerLoadReceipt(registries, {
+      loadout: combat.loadout, attributes: combat.attributes, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels || {},
+    });
+    return registries.framework.weightClass({
+      attributes: combat.attributes,
+      weights: { mainHandWeight: receipt.hands, offHandWeight: 0, armorWeight: receipt.armour, otherCountedWeight: 0 },
+    });
+  }
+  return registries.framework.weightClass({
+    attributes: { constitution: 10, strength: 10, ...(combat.attributes || {}) },
+    weights: { mainHandWeight: 0, offHandWeight: 0, armorWeight: 0, otherCountedWeight: 0 },
+  });
+}
+
 // Effective numeric cost after relic passives (powerCostReduction, min 0).
 // X-cost is unaffected (it always consumes all energy).
 function effectiveCost(combat, def) {
@@ -39674,6 +39857,7 @@ function effectiveCost(combat, def) {
   // classification permits (Powers).
   return combat.registries.framework.costProfile(def, {
     powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}),
+    weightClass: playerWeightClass(combat).weightClass,
   }).action;
 }
 
@@ -39690,7 +39874,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
-  const pools = combat.registries.framework.costProfile(def);
+  const pools = combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass });
   const manaCost = pools.mana;
   const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
@@ -39712,7 +39896,10 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   p.mana -= manaCost;
   if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
   p.stamina -= staminaCost;
-  if (staminaCost > 0) combat.emit('staminaSpent', { amount: staminaCost });
+  if (staminaCost > 0) {
+    p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
+    combat.emit('staminaSpent', { amount: staminaCost });
+  }
 
   // Remove from hand; bump counters (used by predicates + formulas).
   combat.piles.hand.splice(idx, 1);
@@ -39944,7 +40131,8 @@ function previewCard(combat, cardInstanceId, targetId) {
     cost: shownCost,
     costIsX: isX,
     manaCost: def.manaCost || 0,
-    staminaCost: def.staminaCost || 0,
+    // The stamina badge in a fight is the class-priced one for the pure dodge.
+    staminaCost: combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass }).stamina,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,
@@ -39991,7 +40179,7 @@ function previewIntent(combat, enemyInstanceId) {
 }
 
 
-Object.assign(module.exports, { createCombat, dispatch, getEntity, previewCard, previewIntent });
+Object.assign(module.exports, { createCombat, dispatch, playerWeightClass, getEntity, previewCard, previewIntent });
 
 },
 "src/engine/actions.js": function (module, exports, require) {
@@ -40024,6 +40212,7 @@ const { COMBAT_OPCODES, RUN_OPCODES } = require("src/model/schemas.js");
 const { evaluate, isFormula } = require("src/model/formulas.js");
 const statuses = require("src/framework/statusSemantics.js");
 const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
+const { playerWeightClass } = require("src/engine/combat.js");
 const { damageTagIds } = require("src/content/tags.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
@@ -40450,6 +40639,25 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
       }
+      break;
+    }
+    case 'dodgeRoll': {
+      // The dodge (framework contract: Weight Class and Dodge Roll). Player
+      // only — the class, Dexterity and the die live on the player's side of
+      // the board. The engine rolls on its own stream; the framework decides
+      // the check, the difficulty and the temporary guard, which lands as
+      // Block through the same door every block does.
+      const p = ctx.player;
+      if (!action.source || action.source.id !== p.id) break;
+      const roll = ctx.rng.int('misc', 1, ctx.registries.framework.dodgeDie());
+      const dexterity = (ctx.attributes && ctx.attributes.dexterity) || 10;
+      const stance = playerWeightClass(ctx);
+      const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
+      ctx.emit('dodgeRolled', {
+        sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
+        success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
+      });
+      if (receipt.success && receipt.temporaryGuard > 0) gainBlock(ctx, p, receipt.temporaryGuard);
       break;
     }
     case 'applyStatus': {
@@ -48836,7 +49044,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5ed34b3eea';
+const SOURCE = 'efda6131df';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48870,7 +49078,7 @@ const SOURCE = '5ed34b3eea';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1904';
+const ORDINAL = '1905';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
