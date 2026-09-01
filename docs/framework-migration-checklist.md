@@ -19,10 +19,10 @@ no shipped content or screen yet · **PARTIAL** · **NOT BUILT**.
 | 3 | Card lifecycle & zones (innate, unplayable, exhaust, retain, ethereal, power removal, seal, recall) | LIVE for every legacy rule; seal/recall BUILT, DORMANT | `lifecycle.js` via bridge | No shipped card authors `lifecycle.seal` / `recall.afterUse`. Fix: content authoring (a design act — first cards proposed in the D-branch below). |
 | 4 | Cost compilation incl. Power reduction, X costs, atomic alternative costs | LIVE; alternative costs BUILT, DORMANT | `costs.js`; card faces, tooltips, both engines (#510, #516) | No shipped card authors `cost.alternative`. Fix: content authoring. |
 | 5 | Deck composition (attack/guard/technique slots, dual-wield split, unarmed fallback) | ADOPTED (owner ruling) + contract-new outputs BUILT, DORMANT | `deckComposition.js` door; `deck.js` is the spec | grantedCards + weaponArtDefaults compose, reconcile on equip/swap/load (#513) but no armament authors either. Unarmed Evasive Guard / Dodge Roll package: see A-9. |
-| 6 | Weapon-art SLOT management (install/replace at the blacksmith) | NOT BUILT | — | Needs authored slot counts and install/replace costs the contract does not give. Fix: A/B branches with candidate rules (see C). |
-| 7 | Mana & Stamina rules (Wisdom/Intelligence weights, idle stamina recovery, refund rule) | BUILT, DORMANT | `resources.js`; `mechanics.json` | Legacy pools exist and cards spend stamina, but idle recovery (+1/turn) and the refund rule are not wired into `startPlayerTurn`. Fix: wire in the stamina-dodge branch (see C). |
-| 8 | Weight Class & Dodge Roll (capacity from CON/STR, Light/Medium/Heavy, dodge d20) | BUILT, DORMANT | `weight.js`; `mechanics.json` | Was "unauthored weights" — **no longer true**: `weapons.csv` authors weight/attackRating/defenseRating for all 25 armaments and the importer now carries them (this PR). Armour has no weight column: A-side maps `poiseThreshold` (the legacy weight identity rule), B-side leaves armour weightless. Fix: wire capacity/load/class into run state + Armoury readout, then the dodge card (see C). |
-| 9 | Unarmed fallback package (Unarmed Strike, Evasive Guard, Dodge Roll) | PARTIAL | legacy unarmed strike/guard profiles are live; `framework.evasiveGuard` / `framework.dodgeRoll` exist only as framework data | Enabling changes the shipped unarmed fallback (owner-gated until now; now authorized). Depends on A-7/A-8 being live. Fix: stamina-dodge branch. |
+| 6 | Weapon-art SLOT management (install/replace at the blacksmith) | ADOPTED (ruling) | the technique role: every armament's `techniqueProfile` card IS its installed weapon art; Dodge Roll is the unarmed art (#523) | The contract authors no weapon-art cards beyond the unarmed one and no slot counts or install costs, so there is nothing described to install or replace. Ruling: the technique role is the weapon-art slot; install/replace opens the day art cards are authored. |
+| 7 | Mana & Stamina rules (Wisdom/Intelligence weights, idle stamina recovery, refund rule) | **LIVE** (#523) | `bridge.staminaTurnEnd` over `resources.js` at the end of the player turn; `staminaSpentThisTurn` counter | Idle turns recover `idleRecoveryPerTurn`; spending turns do not; refunds never erase a spend (no refund source exists yet). |
+| 8 | Weight Class & Dodge Roll (capacity from CON/STR, Light/Medium/Heavy, dodge d20) | **LIVE** (#520 readout, #523 combat) | `bridge.weightClass` / `playerLoadReceipt` (Armoury), `playerWeightClass(combat)` + the `dodgeRoll` opcode (fights) | Weights come from `weapons.csv`; armour weighs its `poiseThreshold` (A-side). The census (`tools/weightclass-census.mjs`) found the contract's capacity base 50 left every reachable kit Light; base 5 makes the three classes reachable (recorded at the number). The pure dodge is priced by the class. |
+| 9 | Unarmed fallback package (Unarmed Strike, Evasive Guard, Dodge Roll) | **LIVE** (#523) | base cards `evasiveGuard` / `dodgeRoll` authored as the contract's entities; the unarmed guard and technique profiles resolve to them | A run with empty hands composes Evasive Guard in every guard slot and Dodge Roll in every technique slot. Armed play unchanged. |
 | 10 | Whitelisted inheritance (PERMITS relations) | LIVE (compiler) | `inheritance.js` | — |
 | 11 | Terminology through TermRegistry (keywords, statuses, stances, resources) | LIVE | bridge `keywordDisplay`/`resourceWord`; `termOverlay.js` everywhere status/stance words render (#511–#514) | — |
 | 12 | Status-effect semantics | ADOPTED | `statusSemantics.js` door (#516) | — |
@@ -31,7 +31,7 @@ no shipped content or screen yet · **PARTIAL** · **NOT BUILT**.
 | 15 | Shared presentation system (components, tooltip engine, modal grammar, fitText, theme data) | PARTIAL | `presentation/` components exist; card faces/tooltips read framework decisions; screens still render through legacy components | The port moved decisions and words; the DOM renderers are legacy. Fix: not a behavior change — a renderer-by-renderer adoption, lowest value, last. |
 | 16 | Legacy importer of all 392 entities with stable ids | LIVE (data) | `importer.js` | — |
 | 17 | Complete validation + known-bad corpus | LIVE | `validate.js`, 65 framework tests + legacy 114 | — |
-| 18 | Cutover gate + "legacy authority unreachable" proof | NOT PASSED (honestly) | `candidate.js`, `tools/framework-gate.mjs` | Every consumer-facing DECISION routes through a framework home, but the implementations are adopted legacy modules imported through doors, so legacy authority is reachable by design. Passing needs A-6/7/8/9 live and the acceptance pass (B). The stamp says so: `0.5.0-rc.1`, final `0.5.0` on gate SUCCESS. |
+| 18 | Cutover gate + "legacy authority unreachable" proof | NOT PASSED (honestly) | `candidate.js`, `tools/framework-gate.mjs` | Every consumer-facing DECISION routes through a framework home and A-6/7/8/9 are live (#520, #523), but the implementations are adopted legacy modules imported through doors, so legacy authority is reachable BY THE RULINGS' DESIGN — the proof as worded cannot pass without un-adopting them. What remains is the human acceptance pass on the new mechanics (gate row "approved new-mechanics acceptance"). The stamp says so: `0.5.0-rc.1`; `0.5.0` is the owner's release cut. |
 
 ## B. The contract's "report before cutover" contradictions — rulings
 
@@ -42,7 +42,7 @@ no shipped content or screen yet · **PARTIAL** · **NOT BUILT**.
 | 3 | Rarity ladder omits `uncommon`/`starter`/`special`/`boss` | ADOPT the union as the canonical ladder (`schema.js`): STARTER, BASIC, COMMON, UNCOMMON, RARE, SPECIAL, LEGENDARY, MYTHIC, BOSS. |
 | 4 | `power`/`curse`/`status` types and `X` costs outside the contract model | ADOPT as classification properties and `{amount: 0, variable: true}` — already implemented; recorded as the ruling. |
 | 5 | `staff` armaments have no category | ADOPT `STAFF` as a category; the importer maps the kind. |
-| 6 | Starting-resource feasibility & Guard stacking need balance validation | OPEN — measured in the stamina-dodge branch's sim runs before enablement. |
+| 6 | Starting-resource feasibility & Guard stacking need balance validation | MEASURED (#520): capacity base 50 made the Weight Class unreachable for every kit; retuned to 5 with the census tables at the number. Guard stacking: unchanged legacy block rules; the dodge's temporary guard lands as Block through the same door. |
 | 7 | Baseline red (test 19) | RESOLVED upstream (#507). |
 
 Also resolved here: #484 — `hpPerConTier` was authored on every class and read by nothing; removed (the smaller act the card named), gate and tool updated.
@@ -52,10 +52,10 @@ Also resolved here: #484 — `hpPerConTier` was authored on every class and read
 | Branch | Delivers | A/B? |
 |---|---|---|
 | `-cutover-fixes` (this PR) | this checklist; rulings 1–5; authored weights into the framework; #484 | — |
-| `-weight-class` | Weight Class live: capacity from CON/STR (`mechanics.json`), load from equipped items, class readout in the Armoury; no combat effect until dodge lands | A: armour weight = poiseThreshold · B: armour weightless — both branches carry a sim readout of the class distribution across shipped kits |
-| `-stamina-dodge-unarmed` | idle stamina recovery, dodge costs by class, the Dodge Roll card and Evasive Guard card, the unarmed package switch | A: contract numbers as authored · B: dodge difficulty 8 / guard 4 (a softer roll) |
-| `-weapon-art-slots` | blacksmith install/replace of weapon arts into authored slots | A: 1 slot per armament, install cost = smith cost · B: 2 slots, second unlocks at smith level 2 |
-| `-feedback-*` | the owner's asks ledger items (section D) | per item |
+| `-weight-class-a` (#520) | Weight Class live: capacity from CON/STR, load from equipped items, class readout in the Armoury; census instrument; capacity base retuned 50 → 5 | A shipped (armour weight = poiseThreshold); B (armour weightless) is the one-line alternative `ARMOUR_WEIGHT_RULE`; `--capacity-base=N` reruns the census for any base |
+| `-stamina-dodge-unarmed` (#523, stacked on #520) | idle stamina recovery, the `dodgeRoll` opcode, class-priced dodge, Evasive Guard + Dodge Roll live as the unarmed package | contract numbers as authored (difficulty 10, guard base 3); the softer roll (8 / 4) stays a two-number change in `mechanics.json` if play asks for it |
+| `-weapon-art-slots` | not opened — ruled ADOPTED (A-6): the technique role is the slot; nothing authored to install | — |
+| `-feedback-rest` (#522) · `-issue-313-b` (#521) · `-evidence-restore` (#518) · `-cutover-fixes` (#519) | the owner's asks and the fitting issues (sections D, E) | per item |
 
 ## D. The owner's feedback ("the thirteen", `docs/asks/asks-ledger.md`)
 
@@ -63,7 +63,7 @@ Also resolved here: #484 — `hpPerConTier` was authored on every class and read
 |---|---|---|---|
 | E3 | fullscreen toggle first in Display | **DONE** — `settings.js` Display row 1 is Fullscreen; sprites moved to Advanced | ledger state is stale; regenerate |
 | E5 | two starting armour sets; assign stat points | **DONE** — `characterCreation.json` gives every class two armour sets and two hand kits; `pointbuy` mode: pool 10, floor 8, ceiling 15, fixed-total redistribution (points come back) — his numbers exactly | ledger state is stale; regenerate |
-| E13 | too much battling; level at rest sites with cinders, 1 point/level, 10–20 level-ups a run; rest-stop placement guard rails; multi-use rest toggle | **PARTIAL** — cinder leveling at shrines is live (`levelup.js`, 800 + 200/level); the top floor is always a Shrine with the Boss above it; elites/shrine floor rules exist. Missing: a multi-use rest toggle, and no instrument measures level-ups per run against his 10–20 range | `-feedback-rest`: runsim level-up metric; A: current ladder · B: 300 + 100/level; multi-use rest toggle (default off) |
+| E13 | too much battling; level at rest sites with cinders, 1 point/level, 10–20 level-ups a run; rest-stop placement guard rails; multi-use rest toggle | **DONE in #522** — the sim now measures level-ups per full run; the shipped 800 + 200 ladder gave 0.5, the calibrated 20 + 4 gives 14.8 (the greedy ceiling); multi-use Shrines toggle (default off) with LEAVE. Shrine-before-boss was already live | merge #522 |
 | E12 | questing; previous choices influence other events | **PARTIAL** — choice history is recorded and gates later event choices (`quests.js`, `event.js`); quest STEPS exist in the model but zero quests are authored | `-feedback-quests`: author the first quest chain over existing events (A: 3-step relic quest · B: 2-step merchant favour) |
 | C5/C6/C11/C18/C19/R2 | process/fleet asks | not code | — |
 
@@ -73,7 +73,7 @@ Also resolved here: #484 — `hpPerConTier` was authored on every class and read
 |---|---|---|
 | #515 evidence restore | fits | PR #518 (restore, hash-verified) |
 | #484 hpPerConTier | fits | this PR (remove) |
-| #313 drag default for `ally`/`mixed` | fits, rule unwritten | A: declared-mode default (self only) · B: board-set default when exactly one legal target |
+| #313 drag default for `ally`/`mixed` | fits, rule unwritten | **B shipped in #521**: the board's legal set at drag start, lit only when it is exactly the player (solo `self` and `mixed`); A (declared mode) is the behaviour it replaces |
 | #233 poise/status buildup plates | fits UI direction | after the plate model lands; not this pass |
 | #239/#240/#241 enemy action cards, encounter budgets, deterministic plans | fits the data-driven direction | design-sized; sequence after the framework gate |
 | #61 Reaver bleed pilot | human playtest | owner |
