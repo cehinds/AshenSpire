@@ -9763,9 +9763,6 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
-    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
-    // leaving it, and the screen carries its own LEAVE.
-    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -10579,7 +10576,7 @@ const cards = authoredCards.map((card) => {
 });
 
 const contentBundle = {
-  version: '0.4.0',
+  version: '0.5.0-rc.1',
   balance,
   cards,
   relics,
@@ -10809,16 +10806,8 @@ const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
-    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
-    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
-    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
-    // every cinder on levels and nothing at merchants, so its number is the
-    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
-    // merchant-spending player at the low edge. Two numbers, one home, and
-    // the sweep flag reruns the measurement for any other pair.
-    firstCost: 20,
-    costStep: 4,
+    firstCost: 800,
+    costStep: 200,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -48704,7 +48693,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '3e8af7f885';
+const SOURCE = 'fcf64b419d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48738,7 +48727,7 @@ const SOURCE = '3e8af7f885';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1905';
+const ORDINAL = '1908';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -49193,13 +49182,6 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
-  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
-  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
-  // Shrine open: Rest once, Smith while you have Stones, Level while you have
-  // cinders, and leave when you choose. Conservative default, as his own
-  // data-driven instruction for an unsettled 'maybe' asks.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
-    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -50988,6 +50970,66 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-516",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Status-effect rules and the cost badges on card faces now come from the framework",
+    "detail": "Behavior-preserving: the ninth port tranche moves status semantics (stacks, meters, decay, procs, resists) behind a framework door and reads the card-face cost, mana and stamina badges from the framework cost profile. Every card's badges are proven identical. Release remains RED.",
+    "build": "0.4.0.1903",
+    "pullRequest": 516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/516"
+  },
+  {
+    "id": "pr-514",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Every status and stance word, and the whole hold-to-confirm surface, route through the framework",
+    "detail": "Behavior-preserving: the eighth port tranche resolves the remaining status/stance names and tooltips (combat rows, proc bars, stance chips, stagger tooltips, co-op board, arcane exposure) through the framework term registry, verbatim, and moves the tap/hold/inspect interaction surface behind the framework door for all ten screens that use it.",
+    "build": "0.4.0.1902",
+    "pullRequest": 514,
+    "url": "https://github.com/cehinds/AshenSpire/pull/514"
+  },
+  {
+    "id": "pr-513",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Armaments can grant cards and install default weapon arts, dormant until authored",
+    "detail": "Nothing a player sees changes: no shipped armament authors a grant or a weapon art yet. The mechanism composes them with save-stable ids at creation and on equip, reconciles them across the combat piles on a mid-fight swap and on loading a fight, dedupes a shared weapon art across two hands, and keeps them out of per-copy upgrade and removal offers — all proven by fixture. Status and stance words on card faces now resolve through the framework term registry.",
+    "build": "0.4.0.1901",
+    "pullRequest": 513,
+    "url": "https://github.com/cehinds/AshenSpire/pull/513"
+  },
+  {
+    "id": "pr-512",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Deck composition and confirmation rules adopted as the framework's own",
+    "detail": "Behavior-preserving: the shipped weapon-deck composer and the fail-closed confirmation derivation become the framework's implementations behind framework doors; the smith upgrade modal routes through the option-decision door. Rides along: the about-changelog instrument's selftest census and verdict lines (#498).",
+    "build": "0.4.0.1896",
+    "pullRequest": 512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/512"
+  },
+  {
+    "id": "pr-511",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Two owner rulings recorded and executed for the framework port",
+    "detail": "Behavior-preserving: the owner adopted the legacy deck composition and the fail-closed confirmation derivation as the framework's rules; status and stance tooltips on card faces resolve through framework terms.",
+    "build": "0.4.0.1893",
+    "pullRequest": 511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/511"
+  },
+  {
+    "id": "pr-510",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Card costs and load/quit confirmation severity decided by the framework",
+    "detail": "Behavior-preserving: the second port tranche compiles every card's cost profile (action, mana, stamina, X, Power reduction) through the framework and reads the load/quit dialog tone from the confirmation registry; every card's costs are proven identical, base and upgraded.",
+    "build": "0.4.0.1893",
+    "pullRequest": 510,
+    "url": "https://github.com/cehinds/AshenSpire/pull/510"
+  },
   {
     "id": "pr-508",
     "date": "2026-09-01",
@@ -66938,19 +66980,9 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
-  // E13's multi-use Shrine: an action re-opens the same screen (with what was
-  // already taken recorded) instead of leaving; LEAVE is the one way out.
-  const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
-  });
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
-  const noRest = relicNoRest || (multiUse && rested);
-  // The locked copy names the real reason: a relic that forbids rest, or a
-  // rest already taken at this Shrine under Multi-use — never a relic the
-  // player does not carry.
-  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
+  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -66988,7 +67020,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -67098,27 +67130,21 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           </div>
         </details>
       </div>
-      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
   ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
-  const leave = app.querySelector('#shrine-leave');
-  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: multiUse
-        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
-        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      question: `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
       confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
-        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -67160,7 +67186,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      remount({ openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // The same allocation component used by character creation, with shrine
@@ -67202,7 +67228,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          remount({ openPanel: 'level' });
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
         },
       });
     };
@@ -67220,7 +67246,6 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
-        multiUse,
         returnFocusElement: smithOption,
         onSelect: (itemRef) => {
           selectedItemRef = itemRef;
@@ -67230,7 +67255,6 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
-          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
           onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
@@ -67678,8 +67702,6 @@ const visibleFocusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
 function mountSmithUpgradeModal(host, initialModel, {
-  multiUse = false, // Multi-use Shrines: a confirmed upgrade stays at the Shrine
-
   registries,
   meta,
   onSelect,
@@ -67707,7 +67729,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
         <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
       </div>
-      <span class="smith-modal-consequence">${multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE'}</span>
+      <span class="smith-modal-consequence">LEAVES SHRINE</span>
     </header>
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
@@ -67899,7 +67921,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         registries,
         id: 'smithUpgrade',
         title: `Upgrade ${selected.name}?`,
-        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${multiUse ? '; you stay at the Shrine' : ' and leaves the Shrine'}.`,
+        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost and leaves the Shrine.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
         confirmLabel: `Upgrade (${selected.cost})`,
