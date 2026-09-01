@@ -82,11 +82,40 @@ play (Exhaust still wins on a Power that carries it).
 sweep: a framework JSON without its generated mirror in
 `src/framework/data/` still fails by name.
 
-Still legacy-decided (next tranches): deck composition, status/stance
-semantics, every screen's presentation components, the generic
-option-decision confirmation router (`holdconfirm`/`optionDecision`), and
-cost/keyword DISPLAY strings on card faces (the decisions are ported; the
-formatting is the presentation tranche's).
+Still legacy-decided (next tranches): status/stance semantics, every
+screen's presentation components, and cost/keyword DISPLAY strings on card
+faces (the decisions are ported; the formatting is the presentation
+tranche's).
+
+### Two systems the port deliberately does NOT bridge (owner decision needed)
+
+Surveyed for tranche 3 and left in place on purpose — both are cases where
+the legacy design already satisfies the contract's intent, and a mechanical
+bridge would add risk without adding authority:
+
+1. **Deck composition.** `WeaponDeckCompositionService`
+   (`src/model/loadout.js`) already implements the contract's scheme as
+   shipped, data-driven code: ceil/floor right/left split of authored
+   attack slots, two-handed offhand conflicts, shield-fallback rules, the
+   unarmed fallback profile from balance data, and deterministic
+   fingerprinted plans — proven by the 67-check weapon-package suite. The
+   framework's `src/framework/deck.js` is the contract-model twin built for
+   the candidate. Cutover needs ONE reconciliation decision: adopt the
+   legacy service as the framework's composition implementation (recommended
+   — it is richer and battle-tested; the contract model then serves as its
+   specification), or rewrite the service onto the contract model (loses
+   shield/priority-ref behavior unless every rule is re-authored). Until
+   that ruling, bridging one through the other would be motion, not
+   authority.
+
+2. **The option-decision confirmation router.** `src/model/consequence.js`
+   derives bindingness from an effect list's ops, FAIL-CLOSED over a
+   positively-known-safe set — a designed safety property ("a hand-kept
+   list cannot know what it was not told"). Mapping its dynamic decisions
+   to static ConfirmationRegistry rows would weaken that property. The
+   recommended reconciliation: the registry keeps owning STATIC surfaces
+   (load/quit — ported), and the fail-closed derivation is adopted as the
+   framework's confirmation-level rule for effect-carrying choices.
 
 ## Unresolved contradictions (reported before cutover, per the contract)
 

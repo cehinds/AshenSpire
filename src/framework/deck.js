@@ -1,6 +1,15 @@
 // src/framework/deck.js — deterministic, idempotent combat-deck composition
 // (framework contract: Deck composition, Unarmed fallback).
 //
+// THE CONTRACT MODEL, NOT THE LIVE COMPOSER. The running game composes decks
+// through WeaponDeckCompositionService in src/model/loadout.js, which already
+// realizes this contract's scheme (ceil/floor hand split, two-handed
+// conflicts, unarmed fallback, deterministic fingerprints) with the richer
+// shield/priority-ref rules the 67-check weapon-package suite proves. Which
+// implementation the cutover adopts is an owner decision recorded in
+// docs/framework-cutover-report.md; until then this module is the contract's
+// executable specification and the candidate gate's subject.
+//
 // Recomposition runs on equip, unequip, hand swap, character creation, load,
 // continue, and save restoration — always from the run deck plus the loadout,
 // never from a previous composition, which is what makes it idempotent.
