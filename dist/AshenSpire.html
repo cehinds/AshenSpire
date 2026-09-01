@@ -10576,7 +10576,7 @@ const cards = authoredCards.map((card) => {
 });
 
 const contentBundle = {
-  version: '0.4.0',
+  version: '0.5.0-rc.1',
   balance,
   cards,
   relics,
@@ -48693,7 +48693,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9dbe8dd1fb';
+const SOURCE = '19de42a78b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48727,7 +48727,7 @@ const SOURCE = '9dbe8dd1fb';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1903';
+const ORDINAL = '1905';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -50970,6 +50970,66 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-516",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Status-effect rules and the cost badges on card faces now come from the framework",
+    "detail": "Behavior-preserving: the ninth port tranche moves status semantics (stacks, meters, decay, procs, resists) behind a framework door and reads the card-face cost, mana and stamina badges from the framework cost profile. Every card's badges are proven identical. Release remains RED.",
+    "build": "0.4.0.1903",
+    "pullRequest": 516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/516"
+  },
+  {
+    "id": "pr-514",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Every status and stance word, and the whole hold-to-confirm surface, route through the framework",
+    "detail": "Behavior-preserving: the eighth port tranche resolves the remaining status/stance names and tooltips (combat rows, proc bars, stance chips, stagger tooltips, co-op board, arcane exposure) through the framework term registry, verbatim, and moves the tap/hold/inspect interaction surface behind the framework door for all ten screens that use it.",
+    "build": "0.4.0.1902",
+    "pullRequest": 514,
+    "url": "https://github.com/cehinds/AshenSpire/pull/514"
+  },
+  {
+    "id": "pr-513",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Armaments can grant cards and install default weapon arts, dormant until authored",
+    "detail": "Nothing a player sees changes: no shipped armament authors a grant or a weapon art yet. The mechanism composes them with save-stable ids at creation and on equip, reconciles them across the combat piles on a mid-fight swap and on loading a fight, dedupes a shared weapon art across two hands, and keeps them out of per-copy upgrade and removal offers — all proven by fixture. Status and stance words on card faces now resolve through the framework term registry.",
+    "build": "0.4.0.1901",
+    "pullRequest": 513,
+    "url": "https://github.com/cehinds/AshenSpire/pull/513"
+  },
+  {
+    "id": "pr-512",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Deck composition and confirmation rules adopted as the framework's own",
+    "detail": "Behavior-preserving: the shipped weapon-deck composer and the fail-closed confirmation derivation become the framework's implementations behind framework doors; the smith upgrade modal routes through the option-decision door. Rides along: the about-changelog instrument's selftest census and verdict lines (#498).",
+    "build": "0.4.0.1896",
+    "pullRequest": 512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/512"
+  },
+  {
+    "id": "pr-511",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Two owner rulings recorded and executed for the framework port",
+    "detail": "Behavior-preserving: the owner adopted the legacy deck composition and the fail-closed confirmation derivation as the framework's rules; status and stance tooltips on card faces resolve through framework terms.",
+    "build": "0.4.0.1893",
+    "pullRequest": 511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/511"
+  },
+  {
+    "id": "pr-510",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Card costs and load/quit confirmation severity decided by the framework",
+    "detail": "Behavior-preserving: the second port tranche compiles every card's cost profile (action, mana, stamina, X, Power reduction) through the framework and reads the load/quit dialog tone from the confirmation registry; every card's costs are proven identical, base and upgraded.",
+    "build": "0.4.0.1893",
+    "pullRequest": 510,
+    "url": "https://github.com/cehinds/AshenSpire/pull/510"
+  },
   {
     "id": "pr-508",
     "date": "2026-09-01",
