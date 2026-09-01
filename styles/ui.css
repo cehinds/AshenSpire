@@ -3419,6 +3419,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+.player-load-receipt { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
+.player-load-receipt span, .player-load-receipt small { color: var(--muted); }
+.player-load-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
 #cz-equipment-receipts, .armoury-equipment-receipts { font-size: max(13px, 1em); }
 #cz-equipment-receipts small, .armoury-equipment-receipts small { font-size: max(13px, 0.84em); line-height: 1.35; }

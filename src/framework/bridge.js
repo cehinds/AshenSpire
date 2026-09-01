@@ -18,6 +18,7 @@ import { cardPropertyInstances, KEYWORD_PROPERTY } from './importer.js';
 import { destinationAfterPlay, endTurnCleanup } from './lifecycle.js';
 import { compileCosts } from './costs.js';
 import { hasProperty, propertyParameters } from './compiler.js';
+import { computeWeightClass } from './weight.js';
 
 let sharedBridge = null;
 
@@ -135,6 +136,20 @@ export function createFrameworkBridge() {
         name: terms.displayTerm(prop.playerTermId),
         tooltip: terms.displayTerm(prop.tooltipTermId),
       };
+    },
+
+    /**
+     * Weight Class (framework contract: Weight Class and Dodge Roll): capacity
+     * from Constitution/Strength, load from the equipped weights, the class
+     * row from mechanics.json, and the class WORD from TermRegistry. The
+     * caller supplies the weights — which items count, and what an armour
+     * piece weighs, is the model's ruling (statProjection.playerLoadReceipt).
+     */
+    weightClass({ attributes, weights, bonuses = 0 }) {
+      const result = computeWeightClass({
+        constitution: attributes.constitution, strength: attributes.strength, bonuses, weights,
+      });
+      return { ...result, word: terms.displayTerm(result.weightClass.termId) };
     },
   });
 }

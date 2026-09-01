@@ -23,7 +23,7 @@ import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresenta
 import { equippedTagColor } from '../../model/equipmentUi.js';
 import { renderCard, relicText } from '../components/card.js';
 import {
-  renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies,
+  renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
 import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
@@ -1412,7 +1412,8 @@ export function mountEquipment(host, {
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
-      + renderPlayerPoise(surface.poise);
+      + renderPlayerPoise(surface.poise)
+      + renderPlayerLoad(surface.load);
     return panel;
   }
 

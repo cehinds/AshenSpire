@@ -849,6 +849,32 @@ test('a granted instance is never a removal candidate', () => {
   eq(run.deck.length, before - 1, 'the random removal still removes an ordinary card');
 });
 
+const { playerLoadReceipt } = await import('../src/model/statProjection.js');
+const weightHome = await import('../src/framework/weight.js');
+
+test('the bridge decides Weight Class through the framework service, with the TermRegistry word', () => {
+  const attributes = { strength: 13, dexterity: 11, constitution: 11, wisdom: 8, intelligence: 10 };
+  const weights = { mainHandWeight: 12, offHandWeight: 0, armorWeight: 8, otherCountedWeight: 0 };
+  const decided = LEGACY_REG.framework.weightClass({ attributes, weights });
+  const expected = weightHome.computeWeightClass({ constitution: 11, strength: 13, weights });
+  eq(decided.capacity, expected.capacity, 'capacity is the service\'s');
+  eq(decided.load, expected.load, 'load is the service\'s');
+  eq(decided.weightClass.id, expected.weightClass.id, 'class row is the service\'s');
+  eq(decided.word, 'Light', 'the class word comes from TermRegistry');
+});
+
+test('the Armoury equip-load receipt counts authored armament weights and the armour rule, and is a readout only', () => {
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const r = playerLoadReceipt(LEGACY_REG, run);
+  // reaver start: straightSword 5 + roundShield 7 in hand, default armour poiseThreshold 8 (A-side rule)
+  eq(r.hands, 12, 'hands weigh their authored weight');
+  eq(r.armour, 8, 'armour weighs its poiseThreshold under the A-side rule');
+  eq(r.load, 20, 'load sums both');
+  eq(r.capacity, 50 + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
+  eq(r.classId, 'light', 'the reaver starts Light');
+  eq(r.active, false, 'no combat rule consumes the class yet');
+});
+
 test('grant and weapon-art authoring is validated by name', () => {
   const { WeaponCardPackageModel } = compositionDoor;
   const bad = (extra) => () => WeaponCardPackageModel.fromPiece(LEGACY_REG, {

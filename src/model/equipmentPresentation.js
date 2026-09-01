@@ -17,7 +17,7 @@ import {
 // Deck composition goes through the framework's adopted door (owner ruling).
 import { buildEquippedWeaponCardPlan } from '../framework/deckComposition.js';
 import { passiveSum } from './registries.js';
-import { playerPoiseThresholdReceipt } from './statProjection.js';
+import { playerPoiseThresholdReceipt, playerLoadReceipt } from './statProjection.js';
 
 function pieceFor(registries, classId, pieceId, slot) {
   if (!pieceId) return null;
@@ -403,6 +403,7 @@ export function equipmentSurfaceReceipt(registries, run, { candidate = null, met
       .filter((piece) => piece.kind !== 'armor')
       .map(armamentIntrinsicReceipt),
     poise: playerPoiseThresholdReceipt(registries, run),
+    load: playerLoadReceipt(registries, run),
   };
   if (candidate) receipt.candidate = candidateReceipt(registries, run, candidate, roles, meta);
   return receipt;

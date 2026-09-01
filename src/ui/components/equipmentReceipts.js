@@ -17,6 +17,16 @@ export function renderPlayerPoise(receipt) {
     + `<small>${esc(receipt.note)}</small></section>`;
 }
 
+export function renderPlayerLoad(receipt) {
+  const sources = receipt.sources.length
+    ? `<ul>${receipt.sources.map((source) => `<li data-source-kind="${esc(source.kind)}">${esc(source.id)} <strong>${source.value}</strong></li>`).join('')}</ul>`
+    : '<p>Nothing equipped weighs anything.</p>';
+  return `<section class="player-load-receipt" data-weight-class="${esc(receipt.classId)}"><b>${esc(receipt.label)}</b>`
+    + sources
+    + `<span>Hands ${receipt.hands} + armour ${receipt.armour} = <strong>${receipt.load}</strong> of ${receipt.capacity} · <strong>${esc(receipt.word)}</strong></span>`
+    + `<small>${esc(receipt.note)}</small></section>`;
+}
+
 export function renderRoleCopies(surface) {
   return surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
     + `<span>${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier}`

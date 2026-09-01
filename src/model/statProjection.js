@@ -59,6 +59,60 @@ export function playerPoiseThresholdReceipt(registries, run) {
   };
 }
 
+/**
+ * Pure equip-load projection (framework contract: Weight Class). The
+ * DECISION — capacity, load percent, class row and word — is the framework's
+ * (bridge.weightClass over framework/weight.js and mechanics.json). This
+ * model owns only WHICH weights count:
+ *   - armaments: the authored `weight` column (weapons.csv; bound to the
+ *     authored poiseThreshold by armamentIntrinsicStatProblems)
+ *   - armour: no weight column is authored. This branch adopts the same
+ *     identity for armour — weight = poiseThreshold — as the A-SIDE of the
+ *     Weight Class A/B (docs/framework-migration-checklist.md §C). The
+ *     B-side treats armour as weightless.
+ *   - talismans/relics: nothing authored; 0.
+ * `active` stays false until a combat rule consumes the class (the dodge
+ * roll) — today this is a readout on the Armoury, and nothing else.
+ */
+export const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
+
+export function playerLoadReceipt(registries, run) {
+  if (!run || !run.loadout) throw new Error('playerLoadReceipt requires a run loadout');
+  if (!run.attributes) throw new Error('playerLoadReceipt requires run attributes');
+  const levels = run.itemUpgradeLevels || {};
+  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
+  const weightOf = (piece) => {
+    if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
+    return Number.isInteger(piece.weight) ? piece.weight : 0;
+  };
+  const sources = pieces.map((piece) => ({
+    kind: 'equipment',
+    id: piece.id,
+    classId: piece.kind === 'armor' ? piece.classId : null,
+    value: weightOf(piece),
+  }));
+  const armour = sources.filter((s) => s.classId != null).reduce((sum, s) => sum + s.value, 0);
+  const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
+  const decided = registries.framework.weightClass({
+    attributes: run.attributes,
+    weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
+  });
+  return {
+    id: 'equipLoad',
+    label: 'Equip load',
+    sources,
+    hands,
+    armour,
+    load: decided.load,
+    capacity: decided.capacity,
+    percent: decided.percent,
+    classId: decided.weightClass.id,
+    word: decided.word,
+    active: false,
+    note: `Capacity ${decided.capacity} = base + Constitution and Strength; ${decided.percent}% loaded — ${decided.word}. Readout only until the dodge roll consumes the class.`,
+  };
+}
+
 export function statProjection(registries, run) {
   const snapshot = run && run.derivedStatRuleSnapshot;
   if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
