@@ -41554,20 +41554,28 @@ function playerPoiseThresholdReceipt(registries, run) {
  */
 const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
 
+/**
+ * The weight ONE piece contributes to the equip load — the single home of the
+ * rule, so the Armoury's item card and the load total can never disagree:
+ * armour weighs its poise threshold (the A-side rule above), an armament its
+ * authored weight, anything else nothing.
+ */
+function pieceWeight(piece) {
+  if (!piece) return 0;
+  if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
+  return Number.isInteger(piece.weight) ? piece.weight : 0;
+}
+
 function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
   if (!run || !run.loadout) throw new Error('playerLoadReceipt requires a run loadout');
   if (!run.attributes) throw new Error('playerLoadReceipt requires run attributes');
   const levels = run.itemUpgradeLevels || {};
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
-  const weightOf = (piece) => {
-    if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
-    return Number.isInteger(piece.weight) ? piece.weight : 0;
-  };
   const sources = pieces.map((piece) => ({
     kind: 'equipment',
     id: piece.id,
     classId: piece.kind === 'armor' ? piece.classId : null,
-    value: weightOf(piece),
+    value: pieceWeight(piece),
   }));
   const armour = sources.filter((s) => s.classId != null).reduce((sum, s) => sum + s.value, 0);
   const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
@@ -41628,7 +41636,7 @@ function statProjection(registries, run) {
 }
 
 
-Object.assign(module.exports, { playerPoiseThresholdReceipt, ARMOUR_WEIGHT_RULE, playerLoadReceipt, statProjection });
+Object.assign(module.exports, { playerPoiseThresholdReceipt, ARMOUR_WEIGHT_RULE, pieceWeight, playerLoadReceipt, statProjection });
 
 },
 "src/framework/deckComposition.js": function (module, exports, require) {
@@ -48838,7 +48846,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '4ddfc5c5f0';
+const SOURCE = '01ba87b780';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48872,7 +48880,7 @@ const SOURCE = '4ddfc5c5f0';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1905';
+const ORDINAL = '1906';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -56132,7 +56140,7 @@ const { refuses } = require("src/ui/components/refusal.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
-const { statProjection } = require("src/model/statProjection.js");
+const { statProjection, pieceWeight } = require("src/model/statProjection.js");
 const { attributeCardModels } = require("src/model/creationBrief.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
@@ -57681,7 +57689,10 @@ function mountEquipment(host, {
     const bonus = item
       ? [...roleBonuses, ...authoredBonuses, poise].filter(Boolean).slice(0, 2).join(' · ') || 'No combat bonus authored'
       : 'Empty socket';
-    const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
+    // One rule for the item and the total (model/statProjection.pieceWeight):
+    // an armour piece weighs its poise threshold, so its card can never say
+    // "Weight —" while the Equip load counts it.
+    const weight = item ? `Weight ${pieceWeight(item)}` : 'Weight —';
     return {
       item,
       intrinsic: item && !slot.kinds.includes('armor') ? armamentIntrinsicReceipt(item) : null,

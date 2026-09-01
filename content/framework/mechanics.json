@@ -11,7 +11,7 @@
     "refundErasesSpend": false
   },
   "weight": {
-    "capacityBase": 5,
+    "capacityBase": 0,
     "capacityPerConstitution": 2,
     "capacityPerStrength": 1,
     "classes": [
@@ -49,7 +49,7 @@
         "dodgeActionCost": 2
       }
     ],
-    "capacityBaseNote": "Was 50. Validated by tools/weightclass-census.mjs (2026-09-01): with the authored loads (armaments 2-12, armour 8-13) a base of 50 left even the heaviest reachable kit at 34-40% \u2014 Light \u2014 so no loadout could leave Light and the class did not exist for the player. At 5 the classes are reachable: nimble kits Light, sword-and-shield Medium, tower-shield kits Heavy, and Constitution/Strength move the line (capacity = 5 + 2*CON + STR)."
+    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01), which measures every creatable start (each hand chosen independently, empty allowed) and, for reachability, every ordered pair of DISTINCT armaments through a real loadout. Base 50 left even the heaviest reachable kit at 34-40% (Light): no loadout could leave Light and the class did not exist for the player. Base 5 (the first retune) still left three of four classes unable to reach Heavy at tuned attributes (Reaver 77%, Starseer 78%, Rogue 69%; only Herald 81%) once the double-tower-shield error in the first census was removed. At 0 — capacity is exactly 2*CON + STR — every class can reach Heavy (Reaver 88%, Starseer 92%, Rogue 80%, Herald 96% with warhammer + tower shield + heaviest outfit) and 290 of 336 creatable starts are Light, 46 Medium, none Heavy."
   },
   "dodgeRoll": {
     "die": 20,

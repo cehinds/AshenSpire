@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // tools/weightclass-census.mjs — the Weight Class A/B evidence instrument.
 //
-// For every class x attribute preset x starting armour set x starting hand
-// kit the character creator can produce, compute the equip-load receipt the
+// For every class x attribute preset x starting armour set x (right hand x
+// left hand) choice the character creator can produce — each hand offered
+// independently, empty allowed, the same armament in both hands refused — compute the equip-load receipt the
 // Armoury shows (model/statProjection.playerLoadReceipt, decided by the
 // framework's Weight Class service) and print the class each combination
 // lands in. The A/B question this answers: under the armour-weight rule
@@ -22,6 +23,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRunState } from '../src/model/state.js';
 import { playerLoadReceipt, ARMOUR_WEIGHT_RULE } from '../src/model/statProjection.js';
 import { attributeRules } from '../src/content/attributes.js';
+import { creationHandChoices } from '../src/model/characterCreation.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -38,48 +40,83 @@ const capacityBonus = capacityBase - mechanics.weight.capacityBase;
 let checks = 0;
 const tally = {};
 const rows = [];
+// THE CREATOR'S OWN SPACE, not the paired kit rows: the Starting Equipment
+// disclosure offers every configured `handIds` choice for EACH hand
+// independently (model/characterCreation.creationEquipmentSectionViews +
+// selectStartingHand), and a hand may also be left empty. So the census is the
+// Cartesian product of the legal per-hand choices — an armament in both hands
+// is refused by the creator (resolveCreationHands) and is not a row here.
+const creatorHands = (classId, slotId) => [null, ...creationHandChoices(REG, classId, slotId).map((piece) => piece.id)];
+const handLabel = (id) => id || '—';
 for (const cls of contentBundle.classes) {
-  const kits = contentBundle.equipment.startingKits.filter((k) => k.classId === cls.id);
   const armours = (creation.classes[cls.id] || {}).armourIds || ['default'];
+  const rights = creatorHands(cls.id, 'rightHand');
+  const lefts = creatorHands(cls.id, 'leftHand');
   for (const [mode, presets] of Object.entries(attributeRules.presets)) {
     const attributes = presets[cls.id];
     if (!attributes) continue;
     for (const armourId of armours) {
-      for (const kit of kits) {
-        // startingHands rather than startingKitId: alternate kits are gated on
-        // profile discovery, and a census counts every kit the creator can offer.
-        const run = createRunState({ seed: 7, classId: cls.id, registries: REG, attributes, attributeMode: mode, startingHands: { rightHand: kit.rightHand || null, leftHand: kit.leftHand || null } });
-        run.loadout.sets.armor = [armourId];
-        run.loadout.active.armor = 0;
-        const r = playerLoadReceipt(REG, run, { capacityBonus });
-        checks += 1;
-        tally[r.classId] = (tally[r.classId] || 0) + 1;
-        rows.push(`${cls.id.padEnd(9)} ${mode.padEnd(9)} ${armourId.padEnd(10)} ${kit.id.padEnd(20)} load ${String(r.load).padStart(3)}/${String(r.capacity).padStart(3)} ${String(r.percent).padStart(3)}%  ${r.word}`);
+      for (const rightHand of rights) {
+        for (const leftHand of lefts) {
+          if (rightHand && leftHand && rightHand === leftHand) continue;
+          // startingHands rather than startingKitId: the creator's choice is a
+          // pair of hands, and the run is born through the same resolver the
+          // creator uses (resolveCreationHands inside createRunState).
+          const run = createRunState({ seed: 7, classId: cls.id, registries: REG, attributes, attributeMode: mode, startingHands: { rightHand, leftHand } });
+          run.loadout.sets.armor = [armourId];
+          run.loadout.active.armor = 0;
+          const r = playerLoadReceipt(REG, run, { capacityBonus });
+          checks += 1;
+          tally[r.classId] = (tally[r.classId] || 0) + 1;
+          rows.push(`${cls.id.padEnd(9)} ${mode.padEnd(9)} ${armourId.padEnd(10)} ${`${handLabel(rightHand)} + ${handLabel(leftHand)}`.padEnd(30)} load ${String(r.load).padStart(3)}/${String(r.capacity).padStart(3)} ${String(r.percent).padStart(3)}%  ${r.word}`);
+        }
       }
     }
   }
 }
-// THE REACHABILITY LINES: the heaviest kit each class could ever wear at its
-// tuned attributes (heaviest right hand, heaviest left hand, heaviest outfit).
-// If even that stays Light, no loadout can leave Light and the class does not
-// exist for the player — the contract's own feasibility flag, answered here.
+// THE REACHABILITY LINES: the heaviest loadout each class could ever wear at
+// its tuned attributes. Not "the heaviest item, twice": a run holds ONE copy of
+// an armament in one hand (applyEquipTransition moves it, and the weapon-card
+// plan refuses a duplicate id), so the candidates are every ORDERED PAIR OF
+// DISTINCT armaments, each hand may also be empty, and each pair is measured
+// through a real run loadout and the same receipt the Armoury shows — not by
+// adding two numbers. If even the heaviest stays Light, no loadout can leave
+// Light and the class does not exist for the player: the contract's own
+// feasibility flag, answered here.
 const heaviest = [];
 const armaments = contentBundle.equipment.armaments;
-const heaviestHand = (hand) => armaments.filter((a) => a.hand === hand || a.hand === 'either').sort((a, b) => b.weight - a.weight)[0];
 for (const cls of contentBundle.classes) {
   const attributes = attributeRules.presets.tuned[cls.id];
   if (!attributes) continue;
   const outfit = contentBundle.equipment.armour.filter((o) => o.classId === cls.id).sort((a, b) => b.poiseThreshold - a.poiseThreshold)[0];
-  const right = heaviestHand('right'); const left = heaviestHand('left');
-  const decided = REG.framework.weightClass({
-    attributes, bonuses: capacityBonus,
-    weights: { mainHandWeight: right.weight + left.weight, offHandWeight: 0, armorWeight: ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? outfit.poiseThreshold : 0, otherCountedWeight: 0 },
-  });
+  const run = createRunState({ seed: 7, classId: cls.id, registries: REG, attributes, attributeMode: 'tuned' });
+  run.loadout.sets.armor = [outfit.id];
+  run.loadout.active.armor = 0;
+  let best = null;
+  let pairs = 0;
+  const handIds = [null, ...armaments.map((a) => a.id)];
+  for (const rightId of handIds) {
+    for (const leftId of handIds) {
+      if (rightId && leftId && rightId === leftId) continue;
+      run.loadout.sets.rightHand = [rightId];
+      run.loadout.sets.leftHand = [leftId];
+      run.loadout.active.rightHand = 0;
+      run.loadout.active.leftHand = 0;
+      const r = playerLoadReceipt(REG, run, { capacityBonus });
+      pairs += 1;
+      if (!best || r.load > best.receipt.load) best = { rightId, leftId, receipt: r };
+    }
+  }
+  // The receipt must have counted exactly the two distinct hands and the
+  // outfit — a third source, or a hand counted twice, is the defect this
+  // enumeration replaced.
+  const expectedSources = [best.rightId, best.leftId, outfit.id].filter(Boolean).length;
+  if (best.receipt.sources.length !== expectedSources) throw new Error(`${cls.id}: heaviest loadout counted ${best.receipt.sources.length} sources, expected ${expectedSources}`);
   checks += 1;
-  heaviest.push(`${cls.id.padEnd(9)} heaviest ${right.id}+${left.id}+${outfit.id}: load ${decided.load}/${decided.capacity} ${decided.percent}% → ${decided.word}`);
+  heaviest.push(`${cls.id.padEnd(9)} heaviest of ${pairs} distinct hand pairs: ${handLabel(best.rightId)}+${handLabel(best.leftId)}+${outfit.id}: load ${best.receipt.load}/${best.receipt.capacity} ${best.receipt.percent}% → ${best.receipt.word}`);
 }
 console.log(`weightclass-census — armour weight rule: ${ARMOUR_WEIGHT_RULE} · capacity base ${capacityBase}${capacityBonus ? ` (shipped ${mechanics.weight.capacityBase}; delta ${capacityBonus} as a bonus)` : ''}`);
 for (const row of rows) console.log('  ' + row);
-console.log(`  distribution of shipped starts: ${Object.entries(tally).map(([k, v]) => `${k} ${v}`).join(' · ')} (of ${checks - heaviest.length})`);
+console.log(`  distribution of creatable starts: ${Object.entries(tally).map(([k, v]) => `${k} ${v}`).join(' · ')} (of ${checks - heaviest.length})`);
 for (const row of heaviest) console.log('  ' + row);
 console.log(`weightclass-census: OK — ${checks} checks passed`);
