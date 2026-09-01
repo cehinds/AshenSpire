@@ -48704,7 +48704,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '1bcd89ffa6';
+const SOURCE = 'f8969a63cf';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48738,7 +48738,7 @@ const SOURCE = '1bcd89ffa6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1904';
+const ORDINAL = '1905';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -67143,7 +67143,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      remount({ openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // The same allocation component used by character creation, with shrine
@@ -67185,7 +67185,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
+          remount({ openPanel: 'level' });
         },
       });
     };

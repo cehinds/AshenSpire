@@ -44,6 +44,11 @@ const levelBundle = LEVEL_COST
   ? (() => {
     const [firstCost, costStep] = LEVEL_COST.split(',').map(Number);
     if (!Number.isFinite(firstCost) || !Number.isFinite(costStep)) throw new Error(`--level-cost expects first,step — got '${LEVEL_COST}'`);
+    // A ladder the shrine could not price: a first purchase that is free or
+    // negative, or a step that walks the price DOWN, is a typo, not an
+    // experiment. Refuse it at the door, before a fleet reports on it.
+    if (firstCost <= 0) throw new Error(`--level-cost: first must be a positive cinder cost — got ${firstCost}`);
+    if (costStep < 0) throw new Error(`--level-cost: step must be zero or more — got ${costStep}`);
     return { ...contentBundle, balance: { ...contentBundle.balance, levelUp: { ...contentBundle.balance.levelUp, firstCost, costStep } } };
   })()
   : contentBundle;
@@ -112,6 +117,13 @@ let levelUps = 0;
 let cinderSpentOnLevels = 0;
 let cinderLeftAtEnd = 0;
 let levelUpsInWins = 0;
+// Every per-fleet counter, zeroed together: the A/B runs fleet() twice and a
+// counter that survived the first fleet would report the OFF side's level-ups
+// and cinders inside the ON side's lines.
+function resetFleetCounters() {
+  poured = 0; graces = 0;
+  levelUps = 0; cinderSpentOnLevels = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0;
+}
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 
@@ -436,10 +448,10 @@ if (!GRACE_AB) {
   // the index, not from a global rng), so the delta is the refill and nothing
   // else. Reported as counts, never as a verdict: whether this is the right
   // difficulty is Marina's and Sunna's, not a simulator's.
-  GRACE_ON = false; graces = 0; poured = 0;
+  GRACE_ON = false; resetFleetCounters();
   const off = fleet();
   console.log('\n' + '-'.repeat(72) + '\n');
-  GRACE_ON = true; graces = 0; poured = 0;
+  GRACE_ON = true; resetFleetCounters();
   const on = fleet();
   const pct = (t) => `${((t.wins / t.runs) * 100).toFixed(1)}%`;
   console.log('\nGRACE REFILL A/B — same seeds, refill the only difference');
