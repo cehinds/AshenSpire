@@ -59,25 +59,44 @@ export function scanPlantSites(root = ROOT) {
     if (!name.endsWith('.mjs') || name === 'plantsites.mjs') continue;
     const tool = `tools/${name}`;
     const src = readFileSync(resolve(root, tool), 'utf8');
-    const re = /\bfile:\s*(['"`])/g;
+    // Any value after `file:`, not only a quote. Requiring a quote meant a
+    // plant whose file is an expression (`file: TOOL_PATH`) was not merely
+    // unreadable — it was invisible: outside the site set AND outside the
+    // unreadable counts, so nothing pinned its existence at all.
+    const re = /\bfile:\s*/g;
     let m;
     while ((m = re.exec(src))) {
-      const fileStr = readString(src, m.index + m[0].length - 1);
-      if (!fileStr || fileStr.interpolated) { unreadable.push({ tool, why: 'file: is not a plain string literal' }); continue; }
+      const at = m.index + m[0].length;
+      const quoted = src[at] === "'" || src[at] === '"' || src[at] === '`';
+      const fileStr = quoted ? readString(src, at) : null;
+      if (quoted && !fileStr) { unreadable.push({ tool, why: 'file: literal could not be read' }); continue; }
       // `find:` must sit in the SAME object literal as `file:`. Pairing by
       // nearest match crossed object boundaries and reported JS strings as
       // drifted against .css targets, so this walks brace depth instead and
       // stops at the `}` closing this object or at the next `file:`.
-      let depth = 0, k = fileStr.end + 1, abs = -1, nonLiteral = false;
+      // A `file:` with no `find:` beside it is not a plant site — that is also
+      // what keeps ordinary `{ file: f, line: n }` objects out of the counts.
+      let depth = 0, k = fileStr ? fileStr.end + 1 : at, abs = -1, nonLiteral = false, sawFind = false;
       while (k < src.length) {
         const ch = src[k];
-        if (ch === '{' || ch === '[' || ch === '(') depth++;
-        else if (ch === '}' || ch === ']' || ch === ')') { if (depth === 0) break; depth--; }
-        else if (depth === 0 && (ch === "'" || ch === '"' || ch === '`')) {
+        // Comments first: they are prose, and prose carries apostrophes,
+        // backticks and brackets that are not syntax. Skipping strings before
+        // skipping comments turned `#294's` inside a comment into a phantom
+        // string that swallowed the real find: below it, and the site was
+        // silently not a plant any more.
+        if (ch === '/' && src[k + 1] === '/') { const nl = src.indexOf('\n', k); k = nl < 0 ? src.length : nl + 1; continue; }
+        if (ch === '/' && src[k + 1] === '*') { const end = src.indexOf('*/', k + 2); k = end < 0 ? src.length : end + 2; continue; }
+        if (ch === "'" || ch === '"' || ch === '`') {
+          // Skip strings at ANY depth: a brace inside a nested string would
+          // corrupt the depth count.
           const skip = readString(src, k);
           if (skip) { k = skip.end + 1; continue; }
-        } else if (depth === 0 && src.startsWith('file:', k)) break;
+        }
+        if (ch === '{' || ch === '[' || ch === '(') depth++;
+        else if (ch === '}' || ch === ']' || ch === ')') { if (depth === 0) break; depth--; }
+        else if (depth === 0 && src.startsWith('file:', k) && k !== m.index) break;
         else if (depth === 0 && src.startsWith('find:', k)) {
+          sawFind = true;
           // The quote must IMMEDIATELY follow. Unanchored, `find: someVar`
           // matched the next property's quote and reported that property's
           // text as the find-string.
@@ -87,8 +106,10 @@ export function scanPlantSites(root = ROOT) {
         }
         k++;
       }
+      if (!sawFind) continue; // a file: with no find: beside it is not a plant site
+      if (!fileStr || fileStr.interpolated) { unreadable.push({ tool, why: 'file: is a variable or expression — the target cannot be known statically' }); continue; }
       if (nonLiteral) { unreadable.push({ tool, why: 'find: is a variable or expression' }); continue; }
-      if (abs < 0) continue; // a bare file: with no find: is not a plant site
+      if (abs < 0) { unreadable.push({ tool, why: 'find: literal could not be read' }); continue; }
       const findStr = readString(src, abs);
       if (!findStr) { unreadable.push({ tool, why: 'find: literal could not be read' }); continue; }
       if (findStr.interpolated) { unreadable.push({ tool, why: 'find: is an interpolated template' }); continue; }

@@ -69,12 +69,13 @@
   ],
   "unreadable": {
     "tools/armoury-picked-up.mjs": 11,
-    "tools/card-drag-targeting.mjs": 5,
+    "tools/card-drag-targeting.mjs": 6,
     "tools/displayfirst.mjs": 6,
+    "tools/doorplant.mjs": 1,
     "tools/flask-menu-cancel.mjs": 1,
-    "tools/gatelist.mjs": 3,
-    "tools/hybrid-input-parity.mjs": 8,
-    "tools/onevocab.mjs": 1,
+    "tools/gatelist.mjs": 4,
+    "tools/hybrid-input-parity.mjs": 10,
+    "tools/onevocab.mjs": 2,
     "tools/short-landscape-support.mjs": 2
   }
 }
