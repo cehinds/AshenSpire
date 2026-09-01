@@ -77,9 +77,27 @@ function planFromPackages(primaryList, secondary) {
   const leftPkg = secondary.pkg;
   const strikes = [rightPkg.strikeCardId, leftPkg.strikeCardId].filter(Boolean);
   const guards = [rightPkg.guardCardId, leftPkg.guardCardId].filter(Boolean);
+  const arts = splitAuthoredWeaponArts(rightPkg.weaponArtDefaults || [], leftPkg.weaponArtDefaults || []);
+  return {
+    strikes: strikes.length ? strikes : [mechanics.unarmedPackage.strikeCardId],
+    guards: guards.length ? guards : [mechanics.unarmedPackage.guardCardId],
+    granted: [...(rightPkg.grantedCards || []), ...(leftPkg.grantedCards || [])],
+    weaponArts: arts.map((art) => art.id),
+    source: 'dual',
+  };
+}
+
+/**
+ * The dual-wield weapon-art split, kept in one home: ceil/floor slot quotas
+ * with unique preference RIGHT_THEN_LEFT — right picks first, so a duplicate
+ * art deterministically survives on the right. Returns [{id, hand}] in
+ * installed order (right's picks, then left's), so callers that attribute an
+ * instance to the armament that owns it get the winning hand.
+ */
+export function splitAuthoredWeaponArts(rightArtIds, leftArtIds) {
   const pool = [
-    ...(rightPkg.weaponArtDefaults || []).map((id) => ({ id, hand: 'right' })),
-    ...(leftPkg.weaponArtDefaults || []).map((id) => ({ id, hand: 'left' })),
+    ...rightArtIds.map((id) => ({ id, hand: 'right' })),
+    ...leftArtIds.map((id) => ({ id, hand: 'left' })),
   ];
   const totalSlots = pool.length;
   const rightQuota = Math.ceil(totalSlots / 2);
@@ -91,21 +109,11 @@ function planFromPackages(primaryList, secondary) {
       if (taken.length >= quota) break;
       if (art.hand !== hand || seen.has(art.id)) continue;
       seen.add(art.id);
-      taken.push(art.id);
+      taken.push({ id: art.id, hand });
     }
     return taken;
   };
-  // uniquePreference RIGHT_THEN_LEFT: right picks first, so a duplicate art
-  // deterministically survives on the right.
-  const rightArts = take('right', rightQuota);
-  const leftArts = take('left', leftQuota);
-  return {
-    strikes: strikes.length ? strikes : [mechanics.unarmedPackage.strikeCardId],
-    guards: guards.length ? guards : [mechanics.unarmedPackage.guardCardId],
-    granted: [...(rightPkg.grantedCards || []), ...(leftPkg.grantedCards || [])],
-    weaponArts: [...rightArts, ...leftArts],
-    source: 'dual',
-  };
+  return [...take('right', rightQuota), ...take('left', leftQuota)];
 }
 
 export function validEquippedWeapons(loadout) {

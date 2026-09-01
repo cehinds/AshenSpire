@@ -6,6 +6,7 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 // stampDeck calls that fire all climb long cost nothing.
 import { note } from './healLedger.js';
 import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
+import { splitAuthoredWeaponArts } from '../framework/deck.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -1235,25 +1236,7 @@ export function startingDeckRefs(registries, loadout, classId) {
  * an instance whose armament left the hands leaves the deck with it.
  */
 export function reconcileGrantedCards(registries, run) {
-  const desired = [];
-  for (const hand of ['right', 'left']) {
-    const source = handSource(registries, run.loadout, run.class, hand);
-    if (!source.package) continue;
-    for (const grant of source.package.grantedCards) {
-      for (let i = 0; i < grant.count; i++) {
-        desired.push({
-          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
-          cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId,
-        });
-      }
-    }
-    for (const artId of source.package.weaponArtDefaults) {
-      desired.push({
-        instanceId: `weaponArt:${source.package.weaponId}:${artId}`,
-        cardId: artId, equipmentRole: 'weaponArt', grantedBy: source.package.weaponId,
-      });
-    }
-  }
+  const desired = desiredGrantInstances(registries, run);
   const wanted = new Set(desired.map((d) => d.instanceId));
   const present = new Set();
   run.deck = (run.deck || []).filter((inst) => {
@@ -1263,6 +1246,71 @@ export function reconcileGrantedCards(registries, run) {
   });
   for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
   return run.deck;
+}
+
+/**
+ * The desired granted/weaponArt instances for the CURRENTLY equipped hands.
+ * Grants concatenate right then left (the contract model authors no dedup for
+ * them); weapon arts with both hands armed go through the framework's
+ * splitAuthoredWeaponArts — quota split, unique preference RIGHT_THEN_LEFT —
+ * so an art both weapons author installs once, attributed to the winning hand.
+ */
+function desiredGrantInstances(registries, run) {
+  const sources = { right: null, left: null };
+  for (const hand of ['right', 'left']) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    if (source.package) sources[hand] = source;
+  }
+  const desired = [];
+  for (const hand of ['right', 'left']) {
+    const source = sources[hand];
+    if (!source) continue;
+    for (const grant of source.package.grantedCards) {
+      for (let i = 0; i < grant.count; i++) {
+        desired.push({
+          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
+          cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+        });
+      }
+    }
+  }
+  const arts = sources.right && sources.left
+    ? splitAuthoredWeaponArts(sources.right.package.weaponArtDefaults, sources.left.package.weaponArtDefaults)
+    : ['right', 'left'].flatMap((hand) => (sources[hand]
+      ? sources[hand].package.weaponArtDefaults.map((id) => ({ id, hand }))
+      : []));
+  for (const art of arts) {
+    const weaponId = sources[art.hand].package.weaponId;
+    desired.push({
+      instanceId: `weaponArt:${weaponId}:${art.id}`,
+      cardId: art.id, equipmentRole: 'weaponArt', grantedBy: weaponId,
+    });
+  }
+  return desired;
+}
+
+/**
+ * The same reconcile at the ONE mid-fight door equipment moves through: the
+ * combat piles are the deck while a fight is on, so a swap sweeps stale
+ * granted/weaponArt instances out of every pile (hand included — an instance
+ * whose armament left the hands leaves with it) and lands missing ones in the
+ * discard pile, where the engine's addCard effect puts mid-combat additions.
+ * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
+ */
+export function reconcileGrantedCardsInCombat(registries, run, piles) {
+  const desired = desiredGrantInstances(registries, run);
+  const wanted = new Set(desired.map((d) => d.instanceId));
+  const present = new Set();
+  for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
+    const kept = pile.filter((inst) => {
+      if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+      if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
+      return false;
+    });
+    pile.length = 0;
+    pile.push(...kept);
+  }
+  for (const d of desired) if (!present.has(d.instanceId)) piles.discard.push(d);
 }
 
 /** The piece in a slot's active set, or null. Armour resolves per class. */

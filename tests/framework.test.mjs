@@ -668,9 +668,9 @@ test('the option-decision router door serves the shipped router, identically', (
 
 const { createRunState } = await import('../src/model/state.js');
 
-function grantFixtureRegistries(weaponCardPackage) {
-  const armaments = contentBundle.equipment.armaments.map((piece) => (piece.id === 'straightSword'
-    ? { ...piece, weaponCardPackage }
+function grantFixtureRegistries(packagesById) {
+  const armaments = contentBundle.equipment.armaments.map((piece) => (packagesById[piece.id]
+    ? { ...piece, weaponCardPackage: packagesById[piece.id] }
     : piece));
   return createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments } });
 }
@@ -692,10 +692,10 @@ test('grantedCards + weaponArtDefaults: dormant on every shipped armament', () =
 
 test('grants and weapon arts compose at creation and reconcile through equip transitions', () => {
   const { reconcileGrantedCards, stampDeck } = compositionDoor;
-  const REG2 = grantFixtureRegistries({
+  const REG2 = grantFixtureRegistries({ straightSword: {
     compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack',
     grantedCards: [{ cardId: 'quickstep', count: 2 }], weaponArtDefaults: ['crimsonCleave'],
-  });
+  } });
   const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
   const composed = () => run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt')
     .map((c) => c.instanceId).sort();
@@ -716,6 +716,45 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
   run.loadout.sets.rightHand = savedSets.rightHand;
   reconcileGrantedCards(REG2, run);
   eq(composed(), before, 're-equip restores them exactly');
+});
+
+test('dual-wield weapon arts reconcile through the RIGHT_THEN_LEFT split — a shared art installs once, on the right', () => {
+  // Reaver starts straightSword (right) + roundShield (left): both author
+  // crimsonCleave, the left adds quickstep. The framework split (quota
+  // ceil/floor, unique preference RIGHT_THEN_LEFT) keeps the duplicate on the
+  // right only — never one instance per authoring weapon.
+  const REG3 = grantFixtureRegistries({
+    straightSword: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', weaponArtDefaults: ['crimsonCleave'] },
+    roundShield: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', weaponArtDefaults: ['crimsonCleave', 'quickstep'] },
+  });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: REG3 });
+  const arts = run.deck.filter((c) => c.equipmentRole === 'weaponArt').map((c) => c.instanceId).sort();
+  eq(arts, ['weaponArt:roundShield:quickstep', 'weaponArt:straightSword:crimsonCleave'],
+    'the shared art survives on the right; the left contributes only its unique art');
+});
+
+test('a mid-combat swap reconciles granted instances across the combat piles', () => {
+  const { reconcileGrantedCardsInCombat } = compositionDoor;
+  const REG2 = grantFixtureRegistries({ straightSword: {
+    compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack',
+    grantedCards: [{ cardId: 'quickstep', count: 1 }], weaponArtDefaults: ['crimsonCleave'],
+  } });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
+  // Combat holds the deck as piles: a stale grant from an unequipped weapon
+  // sits in hand, one wanted grant is already in draw, the art is missing.
+  const piles = {
+    hand: [{ instanceId: 'granted:dagger:quickstep:0', cardId: 'quickstep', equipmentRole: 'granted', grantedBy: 'dagger' }],
+    draw: [{ instanceId: 'i1', cardId: 'strikeBasic' },
+      { instanceId: 'granted:straightSword:quickstep:0', cardId: 'quickstep', equipmentRole: 'granted', grantedBy: 'straightSword' }],
+    discard: [], exhaust: [],
+  };
+  reconcileGrantedCardsInCombat(REG2, run, piles);
+  eq(piles.hand.length, 0, 'the stale grant leaves the hand with its armament');
+  eq(piles.draw.map((c) => c.instanceId), ['i1', 'granted:straightSword:quickstep:0'], 'a present wanted grant stays put, not duplicated');
+  eq(piles.discard.map((c) => c.instanceId), ['weaponArt:straightSword:crimsonCleave'], 'the missing art lands in the discard pile');
+  const snapshot = structuredClone(piles);
+  reconcileGrantedCardsInCombat(REG2, run, piles);
+  eq(piles, snapshot, 'the combat reconcile is idempotent');
 });
 
 test('grant and weapon-art authoring is validated by name', () => {

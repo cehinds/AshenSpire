@@ -23,7 +23,7 @@ import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax 
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
-import { stampDeck } from '../framework/deckComposition.js';
+import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 
 const QUEUE_GUARD = 10000;
@@ -624,6 +624,11 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
   };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
+  // Pile stamps are subset calls, so granted/weaponArt instances reconcile
+  // here explicitly: the swapped-out armament's leave every pile, the swapped-
+  // in armament's land in the discard pile (dormant while no shipped armament
+  // authors either).
+  reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
 
   // The vessel keeps telling the truth across the ONE mid-fight door equipment
   // moves through: re-derive the stagger threshold from the loadout this swap

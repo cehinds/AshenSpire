@@ -24,6 +24,7 @@ import {
   startingDeckRefs as adoptedStartingDeckRefs,
   stampDeck as adoptedStampDeck,
   reconcileGrantedCards as adoptedReconcileGrantedCards,
+  reconcileGrantedCardsInCombat as adoptedReconcileGrantedCardsInCombat,
 } from '../model/loadout.js';
 
 export const WeaponDeckCompositionService = adoptedService;
@@ -33,3 +34,4 @@ export const WeaponCardPackageModel = adoptedPackageModel;
 export const startingDeckRefs = adoptedStartingDeckRefs;
 export const stampDeck = adoptedStampDeck;
 export const reconcileGrantedCards = adoptedReconcileGrantedCards;
+export const reconcileGrantedCardsInCombat = adoptedReconcileGrantedCardsInCombat;
