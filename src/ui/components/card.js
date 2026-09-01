@@ -206,13 +206,16 @@ function cardTooltip(registries, def, tokens) {
     if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
   }
   for (const eff of def.effects || []) {
-    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
-      const s = registries.statuses.get(eff.status);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    // Status/stance WORDS resolve through the per-bundle framework term
+    // overlay — verbatim text, framework authority. Unknown ids and
+    // tooltip-less entities keep their existing skip behavior.
+    if (eff.op === 'applyStatus') {
+      const s = registries.frameworkTerms.statusDisplay(eff.status);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
-    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
-      const s = registries.stances.get(eff.stance);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    if (eff.op === 'enterStance') {
+      const s = registries.frameworkTerms.stanceDisplay(eff.stance);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
   }
   if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);

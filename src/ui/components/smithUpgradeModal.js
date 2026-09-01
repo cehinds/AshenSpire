@@ -3,7 +3,8 @@
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { renderCard } from './card.js';
-import { armOptionDecision } from './optionDecision.js';
+// The interaction router goes through the framework's adopted door.
+import { armOptionDecision } from '../../framework/optionDecision.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(

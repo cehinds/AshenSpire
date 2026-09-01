@@ -636,50 +636,99 @@ test('the tooltip cost line renders identically through the framework for every 
   }
 });
 
+// ---- per-bundle entity term authority (presentation tranche) ----------------
+
+test('the term overlay serves every shipped status and stance word verbatim, and is probe-safe', () => {
+  const overlay = LEGACY_REG.frameworkTerms;
+  for (const status of contentBundle.statuses) {
+    const shown = overlay.statusDisplay(status.id);
+    eq(shown.name, status.name, `status ${status.id} name`);
+    eq(shown.tooltip, status.tooltip || undefined, `status ${status.id} tooltip`);
+  }
+  for (const stance of contentBundle.stances) {
+    const shown = overlay.stanceDisplay(stance.id);
+    eq(shown.name, stance.name, `stance ${stance.id} name`);
+    eq(shown.tooltip, stance.tooltip || undefined, `stance ${stance.id} tooltip`);
+  }
+  eq(overlay.statusDisplay('notAStatus'), null, 'unknown ids read null, callers skip');
+  // Probe-safety: a fixture bundle's own statuses resolve through its overlay.
+  const probeBundle = { ...contentBundle, statuses: [...contentBundle.statuses, { id: 'probeMeter', name: 'Probe Meter', tooltip: 'A fixture status.', stackMode: 'add', decay: 'none', icon: '?' }] };
+  const probeReg = createRegistries(probeBundle);
+  eq(probeReg.frameworkTerms.statusDisplay('probeMeter'), { name: 'Probe Meter', tooltip: 'A fixture status.' }, 'probe status served');
+});
+
+const routerDoor = await import('../src/framework/optionDecision.js');
+const routerHome = await import('../src/ui/components/optionDecision.js');
+
+test('the option-decision router door serves the shipped router, identically', () => {
+  eq(routerDoor.armOptionDecision === routerHome.armOptionDecision, true, 'one router, one home');
+});
+
 // ---- contract-new composition outputs (dormant until authored) --------------
 
-test('grantedCards: dormant on every shipped armament, live and validated on a fixture', () => {
-  const { WeaponCardPackageModel, startingDeckRefs } = compositionDoor;
-  const { createLoadout } = loadoutHome;
-  // Dormancy: no shipped armament grants anything, and no starting deck
-  // carries a granted ref.
+const { createRunState } = await import('../src/model/state.js');
+
+function grantFixtureRegistries(weaponCardPackage) {
+  const armaments = contentBundle.equipment.armaments.map((piece) => (piece.id === 'straightSword'
+    ? { ...piece, weaponCardPackage }
+    : piece));
+  return createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments } });
+}
+
+test('grantedCards + weaponArtDefaults: dormant on every shipped armament', () => {
+  const { WeaponCardPackageModel } = compositionDoor;
   for (const piece of contentBundle.equipment.armaments) {
     const pkg = WeaponCardPackageModel.fromPiece(LEGACY_REG, piece);
-    if (pkg) eq(pkg.grantedCards.length, 0, `${piece.id} grants nothing`);
-  }
-  for (const cls of contentBundle.classes) {
-    for (const kitId of cls.eligibleStartingKitIds || []) {
-      const kit = contentBundle.equipment.startingKits.find((k) => k.id === kitId);
-      const loadout = createLoadout(LEGACY_REG, cls.id, kit);
-      const refs = startingDeckRefs(LEGACY_REG, loadout, cls.id);
-      eq(refs.filter((r) => r.equipmentRole === 'granted').length, 0, `${cls.id}/${kitId} composes no grants`);
+    if (pkg) {
+      eq(pkg.grantedCards.length, 0, `${piece.id} grants nothing`);
+      eq(pkg.weaponArtDefaults.length, 0, `${piece.id} installs no arts`);
     }
   }
+  // And no shipped run composes any: a fresh reaver deck has no granted or
+  // weapon-art instances.
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  eq(run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').length, 0, 'no shipped grants compose');
+});
 
-  // Live fixture: a sword whose explicit package grants two Quicksteps.
-  const granted = contentBundle.equipment.armaments.map((piece) => (piece.id === 'straightSword'
-    ? { ...piece, weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: piece.attackProfile, grantedCards: [{ cardId: 'quickstep', count: 2 }] } }
-    : piece));
-  const bundle2 = { ...contentBundle, equipment: { ...contentBundle.equipment, armaments: granted } };
-  const REG2 = createRegistries(bundle2);
-  const kit = contentBundle.equipment.startingKits.find((k) => k.id === 'reaverBaseline');
-  const loadout2 = createLoadout(REG2, 'reaver', kit);
-  const refs2 = startingDeckRefs(REG2, loadout2, 'reaver');
-  const grants = refs2.filter((r) => r.equipmentRole === 'granted');
-  eq(grants.map((g) => g.cardId), ['quickstep', 'quickstep'], 'two granted Quicksteps composed');
-  eq(grants[0].grantedBy, 'straightSword', 'grant names its source armament');
-  // And the non-granted refs are unchanged by the grant's presence.
-  const baseRefs = startingDeckRefs(LEGACY_REG, createLoadout(LEGACY_REG, 'reaver', kit), 'reaver');
-  eq(refs2.filter((r) => r.equipmentRole !== 'granted').map((r) => r.cardId), baseRefs.map((r) => r.cardId), 'grants are purely additive');
-
-  // Validation refuses bad grants by name.
-  const bad = (grantedCards) => () => WeaponCardPackageModel.fromPiece(LEGACY_REG, {
-    ...contentBundle.equipment.armaments.find((p) => p.id === 'straightSword'),
-    weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', grantedCards },
+test('grants and weapon arts compose at creation and reconcile through equip transitions', () => {
+  const { reconcileGrantedCards, stampDeck } = compositionDoor;
+  const REG2 = grantFixtureRegistries({
+    compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack',
+    grantedCards: [{ cardId: 'quickstep', count: 2 }], weaponArtDefaults: ['crimsonCleave'],
   });
-  assertThrows(bad([{ cardId: 'notACard' }]), /granted card 'notACard' is unknown/);
-  assertThrows(bad([{ cardId: 'quickstep', count: 0 }]), /count must be a positive integer/);
-  assertThrows(bad([{ cardId: 'quickstep' }, 'quickstep']), /duplicate granted card/);
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
+  const composed = () => run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt')
+    .map((c) => c.instanceId).sort();
+  eq(composed(), [
+    'granted:straightSword:quickstep:0', 'granted:straightSword:quickstep:1',
+    'weaponArt:straightSword:crimsonCleave',
+  ], 'creation composes grants and the default art with deterministic ids');
+
+  const before = composed();
+  stampDeck(REG2, run);
+  eq(composed(), before, 'restamp is idempotent');
+
+  // Unequip the granting sword: its grants leave the deck with it.
+  const savedSets = structuredClone(run.loadout.sets);
+  run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
+  reconcileGrantedCards(REG2, run);
+  eq(composed(), [], 'unequip removes every granted instance');
+  run.loadout.sets.rightHand = savedSets.rightHand;
+  reconcileGrantedCards(REG2, run);
+  eq(composed(), before, 're-equip restores them exactly');
+});
+
+test('grant and weapon-art authoring is validated by name', () => {
+  const { WeaponCardPackageModel } = compositionDoor;
+  const bad = (extra) => () => WeaponCardPackageModel.fromPiece(LEGACY_REG, {
+    ...contentBundle.equipment.armaments.find((p) => p.id === 'straightSword'),
+    weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', ...extra },
+  });
+  assertThrows(bad({ grantedCards: [{ cardId: 'notACard' }] }), /granted card 'notACard' is unknown/);
+  assertThrows(bad({ grantedCards: [{ cardId: 'quickstep', count: 0 }] }), /count must be a positive integer/);
+  assertThrows(bad({ grantedCards: [{ cardId: 'quickstep' }, 'quickstep'] }), /duplicate granted card/);
+  assertThrows(bad({ weaponArtDefaults: ['notACard'] }), /weapon art 'notACard' is unknown/);
+  assertThrows(bad({ weaponArtDefaults: ['crimsonCleave', 'crimsonCleave'] }), /duplicate weapon art/);
 });
 
 console.log(`\nframework: ${passed} passed, ${failed} failed`);

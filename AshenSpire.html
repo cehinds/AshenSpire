@@ -30673,6 +30673,7 @@ const { deriveStat, resolveDerivedStatRules } = require("src/model/derivedStats.
 const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 const { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } = require("src/model/itemUpgrades.js");
 const { sharedFrameworkBridge } = require("src/framework/bridge.js");
+const { createEntityTermOverlay } = require("src/framework/termOverlay.js");
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -30870,6 +30871,11 @@ function createRegistries(contentBundle) {
   // instance serves every registries object, and a plain property keeps it
   // visible to fixtures that clone registries with spread.
   registries.framework = sharedFrameworkBridge();
+
+  // Entity words (status/stance names and tooltips) resolve through a
+  // per-bundle framework TermRegistry — the same text verbatim, with the
+  // resolution authority moved to the framework (src/framework/termOverlay.js).
+  registries.frameworkTerms = createEntityTermOverlay(bundle);
 
   return Object.freeze(registries);
 }
@@ -32093,6 +32099,18 @@ const WeaponCardPackageModel = Object.freeze({
       grantedSeen.add(ref.cardId);
       return { cardId: ref.cardId, count };
     });
+    // Default weapon arts: real cards the armament installs (contract-new,
+    // dormant — no shipped armament authors any). Validated like grants.
+    const weaponArtsRaw = source.weaponArtDefaults == null ? [] : source.weaponArtDefaults;
+    if (!Array.isArray(weaponArtsRaw)) throw new Error(`${piece.id}: weaponArtDefaults must be an array`);
+    const artSeen = new Set();
+    const weaponArtDefaults = weaponArtsRaw.map((artId, index) => {
+      if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: weaponArtDefaults[${index}] must name a card id`);
+      if (!registries.cards.has(artId)) throw new Error(`${piece.id}: weapon art '${artId}' is unknown`);
+      if (artSeen.has(artId)) throw new Error(`${piece.id}: duplicate weapon art '${artId}'`);
+      artSeen.add(artId);
+      return artId;
+    });
     const seen = new Set();
     const priorities = priorityAttackRefs.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -32112,6 +32130,7 @@ const WeaponCardPackageModel = Object.freeze({
       handsRequired,
       priorityAttackRefs: Object.freeze(priorities),
       grantedCards: Object.freeze(grantedCards),
+      weaponArtDefaults: Object.freeze(weaponArtDefaults),
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
     });
@@ -32237,19 +32256,45 @@ function startingDeckRefs(registries, loadout, classId) {
     }
   }
   for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
-  // Granted cards ride each equipped hand's package after the role slots
-  // (contract-new output on the adopted composer). Dormant today: no shipped
-  // armament authors grantedCards, so this appends nothing. `grantedBy` marks
-  // the source armament for the future swap-time recomposition of grants.
+  return refs;
+}
+
+/**
+ * Granted cards and default weapon arts reconcile against the EQUIPPED
+ * packages on every authoritative restamp (contract-new outputs on the
+ * adopted composer; dormant while no shipped armament authors either).
+ * Deterministic instance ids make the reconcile idempotent and save-stable;
+ * an instance whose armament left the hands leaves the deck with it.
+ */
+function reconcileGrantedCards(registries, run) {
+  const desired = [];
   for (const hand of ['right', 'left']) {
-    const source = handSource(registries, loadout, classId, hand);
-    for (const grant of source.package ? source.package.grantedCards : []) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    if (!source.package) continue;
+    for (const grant of source.package.grantedCards) {
       for (let i = 0; i < grant.count; i++) {
-        refs.push({ cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId });
+        desired.push({
+          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
+          cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+        });
       }
     }
+    for (const artId of source.package.weaponArtDefaults) {
+      desired.push({
+        instanceId: `weaponArt:${source.package.weaponId}:${artId}`,
+        cardId: artId, equipmentRole: 'weaponArt', grantedBy: source.package.weaponId,
+      });
+    }
   }
-  return refs;
+  const wanted = new Set(desired.map((d) => d.instanceId));
+  const present = new Set();
+  run.deck = (run.deck || []).filter((inst) => {
+    if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+    if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
+    return false;
+  });
+  for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
+  return run.deck;
 }
 
 /** The piece in a slot's active set, or null. Armour resolves per class. */
@@ -32674,6 +32719,9 @@ function stampDeck(registries, run, cards, {
     }
   }
   applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
+  // Only the authoritative full-deck restamp reconciles granted/weapon-art
+  // instances — a pile subset must never mint or drop them.
+  if (cards == null) reconcileGrantedCards(registries, run);
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
@@ -33342,7 +33390,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckRefs, reconcileGrantedCards, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
 
 },
 "src/model/relicModifiers.js": function (module, exports, require) {
@@ -36146,6 +36194,63 @@ function payAlternativeCost(card, option, wallet, { confirmTarget = () => true }
 
 
 Object.assign(module.exports, { CostError, repeatLimiters, compileCosts, payAlternativeCost });
+
+},
+"src/framework/termOverlay.js": function (module, exports, require) {
+// src/framework/termOverlay.js — per-bundle term authority for entity words
+// (framework contract: Terminology and assets — ALWAYS resolve words through
+// TermRegistry).
+//
+// The shared bridge reads only canonical framework data, so entity NAMES and
+// TOOLTIPS (statuses, stances) need a registry built from the same bundle the
+// legacy registries were built from — that is what keeps probe/fixture
+// bundles working and keeps one authority per registries instance. Rows use
+// the importer's naming scheme (term.entity.<kind>.<id>.<field>) with the
+// bundle's text VERBATIM, so display strings cannot drift from the shipped
+// content while the resolution authority moves to the framework.
+
+const { TermRegistry } = require("src/framework/registries.js");
+
+function entityTermRows(kind, rows) {
+  const terms = [];
+  for (const row of rows || []) {
+    if (!row || !row.id || typeof row.name !== 'string' || !row.name) continue;
+    terms.push({ id: `term.entity.${kind}.${row.id}.name`, canonicalText: row.name });
+    if (typeof row.tooltip === 'string' && row.tooltip) {
+      terms.push({ id: `term.entity.${kind}.${row.id}.tooltip`, canonicalText: row.tooltip });
+    }
+  }
+  return terms;
+}
+
+/**
+ * createEntityTermOverlay(bundle) → frozen display resolvers for the bundle's
+ * statuses and stances. A display returns null for an unknown id and omits
+ * `tooltip` where the entity authored none — callers keep their existing
+ * skip behavior.
+ */
+function createEntityTermOverlay(bundle) {
+  const terms = new TermRegistry([
+    ...entityTermRows('status', bundle.statuses),
+    ...entityTermRows('stance', bundle.stances),
+  ]);
+  const display = (kind) => (id) => {
+    const nameId = `term.entity.${kind}.${id}.name`;
+    if (!terms.has(nameId)) return null;
+    const tooltipId = `term.entity.${kind}.${id}.tooltip`;
+    return {
+      name: terms.displayTerm(nameId),
+      ...(terms.has(tooltipId) ? { tooltip: terms.displayTerm(tooltipId) } : {}),
+    };
+  };
+  return Object.freeze({
+    statusDisplay: display('status'),
+    stanceDisplay: display('stance'),
+  });
+}
+
+
+Object.assign(module.exports, { createEntityTermOverlay });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -41019,7 +41124,8 @@ Object.assign(module.exports, { playerPoiseThresholdReceipt, statProjection });
 
 // (Plain import-then-export consts: the standalone bundler rewrites modules
 // and does not handle the `export { … } from` re-export form.)
-const { WeaponDeckCompositionService: adoptedService, buildEquippedWeaponCardPlan: adoptedBuildPlan, applyEquippedWeaponCardPlan: adoptedApplyPlan, WeaponCardPackageModel: adoptedPackageModel, startingDeckRefs: adoptedStartingDeckRefs, stampDeck: adoptedStampDeck } = require("src/model/loadout.js");
+const { WeaponDeckCompositionService: adoptedService, buildEquippedWeaponCardPlan: adoptedBuildPlan, applyEquippedWeaponCardPlan: adoptedApplyPlan, WeaponCardPackageModel: adoptedPackageModel, startingDeckRefs: adoptedStartingDeckRefs, stampDeck: adoptedStampDeck, reconcileGrantedCards: adoptedReconcileGrantedCards } = require("src/model/loadout.js");
+
 
 
 
@@ -41034,9 +41140,10 @@ const applyEquippedWeaponCardPlan = adoptedApplyPlan;
 const WeaponCardPackageModel = adoptedPackageModel;
 const startingDeckRefs = adoptedStartingDeckRefs;
 const stampDeck = adoptedStampDeck;
+const reconcileGrantedCards = adoptedReconcileGrantedCards;
 
 
-Object.assign(module.exports, { WeaponDeckCompositionService, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponCardPackageModel, startingDeckRefs, stampDeck });
+Object.assign(module.exports, { WeaponDeckCompositionService, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponCardPackageModel, startingDeckRefs, stampDeck, reconcileGrantedCards });
 
 },
 "src/engine/combatSnapshot.js": function (module, exports, require) {
@@ -48093,7 +48200,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a52dc2595a';
+const SOURCE = '37a6c2f333';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48127,7 +48234,7 @@ const SOURCE = 'a52dc2595a';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1896';
+const ORDINAL = '1897';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58227,13 +58334,16 @@ function cardTooltip(registries, def, tokens) {
     if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
   }
   for (const eff of def.effects || []) {
-    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
-      const s = registries.statuses.get(eff.status);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    // Status/stance WORDS resolve through the per-bundle framework term
+    // overlay — verbatim text, framework authority. Unknown ids and
+    // tooltip-less entities keep their existing skip behavior.
+    if (eff.op === 'applyStatus') {
+      const s = registries.frameworkTerms.statusDisplay(eff.status);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
-    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
-      const s = registries.stances.get(eff.stance);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    if (eff.op === 'enterStance') {
+      const s = registries.frameworkTerms.stanceDisplay(eff.stance);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
   }
   if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
@@ -67013,7 +67123,8 @@ Object.assign(module.exports, { smithSelectionModel });
 const { assetUrl } = require("src/ui/assetmap.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { renderCard } = require("src/ui/components/card.js");
-const { armOptionDecision } = require("src/ui/components/optionDecision.js");
+// The interaction router goes through the framework's adopted door.
+const { armOptionDecision } = require("src/framework/optionDecision.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
@@ -67310,6 +67421,26 @@ function mountSmithUpgradeModal(host, initialModel, {
 
 
 Object.assign(module.exports, { mountSmithUpgradeModal });
+
+},
+"src/framework/optionDecision.js": function (module, exports, require) {
+// src/framework/optionDecision.js — the framework's ADOPTED option-decision
+// interaction router (shared presentation tranche; same adoption pattern as
+// deckComposition.js and confirmationRule.js).
+//
+// The tap-to-review vs hold-to-commit surface every routed action uses lives
+// in src/ui/components/optionDecision.js; this door makes the framework the
+// authority boundary consumers import it through. One implementation, one
+// home. Its LEVEL rule for effect-carrying choices is the adopted fail-closed
+// derivation (src/framework/confirmationRule.js); its static severities come
+// from the ConfirmationRegistry.
+
+const { armOptionDecision: adoptedArmOptionDecision } = require("src/ui/components/optionDecision.js");
+
+const armOptionDecision = adoptedArmOptionDecision;
+
+
+Object.assign(module.exports, { armOptionDecision });
 
 },
 "src/ui/components/optionDecision.js": function (module, exports, require) {

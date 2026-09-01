@@ -72,6 +72,8 @@ decisions equal the legacy keyword rules.
 | Keyword names + tooltips | `ui/components/card.js` | TermRegistry via bridge `keywordDisplay` |
 | Card cost profile (action/mana/stamina, X, Power reduction) | both engines + the end-turn playability pulse | `compileCosts` via bridge `costProfile` |
 | Load/quit confirmation severity | `main.js` (both dialogs) | ConfirmationRegistry via bridge `confirmationTone` |
+| Status/stance names + tooltips on card faces | `ui/components/card.js` | per-bundle framework TermRegistry (`registries.frameworkTerms`) |
+| Option-decision interaction router | `ui/components/smithUpgradeModal.js` (first consumer) | adopted behind `src/framework/optionDecision.js` |
 
 Two legacy rules the contract does not name are preserved in the framework
 lifecycle explicitly: an Ethereal card in hand Exhausts at end of turn
@@ -102,14 +104,18 @@ the authority boundary moved to a framework door module:
   (`WeaponDeckCompositionService` + the role-plan functions) as the
   framework's implementation, and consumers outside `loadout.js`
   (`engine/save.js`, `model/equipmentPresentation.js`) compose through it.
-  Contract-new outputs on top of the adoption: **grantedCards is built and
-  dormant** — `WeaponCardPackageModel` validates an explicit package's
-  `grantedCards` rows by name, `startingDeckRefs` composes them additively
-  with `grantedBy` provenance, and tests prove no shipped armament grants
-  anything (composition byte-identical) while a fixture grant composes
-  live. Still open: swap-time add/remove of granted instances, installed
-  weapon arts, and the unarmed Evasive Guard / Dodge Roll package;
-  `src/framework/deck.js` stays their specification.
+  Contract-new outputs on top of the adoption: **grantedCards and
+  weaponArtDefaults are built and dormant** — `WeaponCardPackageModel`
+  validates both by name, and `reconcileGrantedCards` (exposed through the
+  door, run by every authoritative `stampDeck`) composes them with
+  deterministic, save-stable instance ids: they appear at creation and on
+  equip, and leave the deck with their armament on unequip, idempotently.
+  Tests prove no shipped armament authors either (composition unchanged)
+  while a fixture composes, unequips, and re-equips exactly. Still open:
+  the unarmed Evasive Guard / Dodge Roll package (an enablement decision —
+  it changes the shipped unarmed fallback), and weapon-art SLOT management
+  (blacksmith install/replace); `src/framework/deck.js` stays their
+  specification.
 - **Confirmation level rule — ADOPTED.** `src/framework/confirmationRule.js`
   re-exports `consequence.js`'s fail-closed derivation as the framework's
   level rule for effect-carrying choices; `ui/screens/event.js` resolves

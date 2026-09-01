@@ -1067,6 +1067,18 @@ export const WeaponCardPackageModel = Object.freeze({
       grantedSeen.add(ref.cardId);
       return { cardId: ref.cardId, count };
     });
+    // Default weapon arts: real cards the armament installs (contract-new,
+    // dormant — no shipped armament authors any). Validated like grants.
+    const weaponArtsRaw = source.weaponArtDefaults == null ? [] : source.weaponArtDefaults;
+    if (!Array.isArray(weaponArtsRaw)) throw new Error(`${piece.id}: weaponArtDefaults must be an array`);
+    const artSeen = new Set();
+    const weaponArtDefaults = weaponArtsRaw.map((artId, index) => {
+      if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: weaponArtDefaults[${index}] must name a card id`);
+      if (!registries.cards.has(artId)) throw new Error(`${piece.id}: weapon art '${artId}' is unknown`);
+      if (artSeen.has(artId)) throw new Error(`${piece.id}: duplicate weapon art '${artId}'`);
+      artSeen.add(artId);
+      return artId;
+    });
     const seen = new Set();
     const priorities = priorityAttackRefs.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -1086,6 +1098,7 @@ export const WeaponCardPackageModel = Object.freeze({
       handsRequired,
       priorityAttackRefs: Object.freeze(priorities),
       grantedCards: Object.freeze(grantedCards),
+      weaponArtDefaults: Object.freeze(weaponArtDefaults),
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
     });
@@ -1211,19 +1224,45 @@ export function startingDeckRefs(registries, loadout, classId) {
     }
   }
   for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
-  // Granted cards ride each equipped hand's package after the role slots
-  // (contract-new output on the adopted composer). Dormant today: no shipped
-  // armament authors grantedCards, so this appends nothing. `grantedBy` marks
-  // the source armament for the future swap-time recomposition of grants.
+  return refs;
+}
+
+/**
+ * Granted cards and default weapon arts reconcile against the EQUIPPED
+ * packages on every authoritative restamp (contract-new outputs on the
+ * adopted composer; dormant while no shipped armament authors either).
+ * Deterministic instance ids make the reconcile idempotent and save-stable;
+ * an instance whose armament left the hands leaves the deck with it.
+ */
+export function reconcileGrantedCards(registries, run) {
+  const desired = [];
   for (const hand of ['right', 'left']) {
-    const source = handSource(registries, loadout, classId, hand);
-    for (const grant of source.package ? source.package.grantedCards : []) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    if (!source.package) continue;
+    for (const grant of source.package.grantedCards) {
       for (let i = 0; i < grant.count; i++) {
-        refs.push({ cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId });
+        desired.push({
+          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
+          cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+        });
       }
     }
+    for (const artId of source.package.weaponArtDefaults) {
+      desired.push({
+        instanceId: `weaponArt:${source.package.weaponId}:${artId}`,
+        cardId: artId, equipmentRole: 'weaponArt', grantedBy: source.package.weaponId,
+      });
+    }
   }
-  return refs;
+  const wanted = new Set(desired.map((d) => d.instanceId));
+  const present = new Set();
+  run.deck = (run.deck || []).filter((inst) => {
+    if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+    if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
+    return false;
+  });
+  for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
+  return run.deck;
 }
 
 /** The piece in a slot's active set, or null. Armour resolves per class. */
@@ -1648,6 +1687,9 @@ export function stampDeck(registries, run, cards, {
     }
   }
   applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
+  // Only the authoritative full-deck restamp reconciles granted/weapon-art
+  // instances — a pile subset must never mint or drop them.
+  if (cards == null) reconcileGrantedCards(registries, run);
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
