@@ -76,6 +76,8 @@ decisions equal the legacy keyword rules.
 | Option-decision interaction router | `ui/components/smithUpgradeModal.js` (first consumer) | adopted behind `src/framework/optionDecision.js` |
 | Status/stance display words everywhere else (combat subject/status rows, proc bars, stance chips, poise/stagger tooltips, coop board, arcane-exposure labels, fx `statusInfo`) | `ui/screens/combat.js`, `ui/screens/coop.js`, `ui/components/arcaneExposure.js` | overlay `withStatusWords`/`withStanceWords`/`statusDisplay` — words from the framework TermRegistry, mechanics and icon/tint fields ride through untouched |
 | Routed-interaction surface (`armHold`, `armInspect`, `beatArmer`, `holdMs`, `HOLD_POINTER_SLOP`) | `ui/components/holdconfirm.js` (all ten screen/component consumers) | same adoption behind `src/framework/optionDecision.js`; `holdconfirm.js` remains the one implementation |
+| Status-effect SEMANTICS (stacks, meters, decay, procs, resists, mult/add/flag/cap modifiers) | `engine/statuses.js` (consumers: both engines, `actions.js`, `triggers.js`) | adopted behind `src/framework/statusSemantics.js`; `statuses.js` remains the one implementation, with a full-surface door test |
+| Card-face cost/mana/stamina badges | `ui/components/card.js` (read `def.cost`/`manaCost`/`staminaCost` directly) | framework `costProfile` numbers + TermRegistry badge words (previews keep their own resolved numbers); equivalence proven by the every-card cost sweep |
 
 Two legacy rules the contract does not name are preserved in the framework
 lifecycle explicitly: an Ethereal card in hand Exhausts at end of turn
@@ -86,13 +88,14 @@ play (Exhaust still wins on a Power that carries it).
 sweep: a framework JSON without its generated mirror in
 `src/framework/data/` still fails by name.
 
-Still legacy-decided (next tranches): status/stance semantics (stack
-modes, decay, procs, resists — the mechanics fields the engines read),
-and cost/keyword DISPLAY strings on card faces (the decisions are
-ported; the formatting is the presentation tranche's). The option-decision
-INTERACTION router and its whole hold/inspect/beat surface now route
-through the framework door (rows above); its LEVEL rule remains the
-adopted fail-closed derivation per the reconciliation ruling below.
+Every consumer-facing decision surveyed for the port now routes through a
+framework home (rows above): lifecycle, costs, terminology, confirmation,
+composition, the interaction router and its hold/inspect/beat surface,
+status/stance words everywhere, status-effect semantics behind the
+adopted door, and the card-face cost badges. What remains open before the
+cutover gate can flip is not porting work: the owner-gated items below
+(unarmed package enablement, weapon-art slot management's unauthored
+mechanics, contradictions 1–5's unauthored numbers and id policy).
 
 ### Two reconciliation rulings — DECIDED (owner, 2026-09-01)
 

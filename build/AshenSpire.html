@@ -38942,7 +38942,7 @@ Object.assign(module.exports, { STREAM_NAMES, mulberry32, createRng, SEED_MAX_LE
 
 const A = require("src/engine/actions.js");
 const { emitEvent, fireOwnerHooks, findEntity } = require("src/engine/triggers.js");
-const S = require("src/engine/statuses.js");
+const S = require("src/framework/statusSemantics.js");
 const { resolveCard, passiveSum, passiveMult } = require("src/model/registries.js");
 const { evaluate } = require("src/model/formulas.js");
 const { computeTokenBindings } = require("src/model/validate.js");
@@ -39933,7 +39933,7 @@ Object.assign(module.exports, { createCombat, dispatch, getEntity, previewCard, 
 
 const { COMBAT_OPCODES, RUN_OPCODES } = require("src/model/schemas.js");
 const { evaluate, isFormula } = require("src/model/formulas.js");
-const statuses = require("src/engine/statuses.js");
+const statuses = require("src/framework/statusSemantics.js");
 const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
 const { damageTagIds } = require("src/content/tags.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
@@ -40667,6 +40667,51 @@ function executeRunEffects({ run, registries, rng }, effects) {
 Object.assign(module.exports, { computeAttackDamage, attackTagsFor, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, discardFromHand, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
 
 },
+"src/framework/statusSemantics.js": function (module, exports, require) {
+// src/framework/statusSemantics.js — the framework's ADOPTED status-effect
+// semantics (same adoption pattern as deckComposition.js, confirmationRule.js
+// and optionDecision.js: one implementation, one home, with the authority
+// boundary — which module consumers import — moved to the framework).
+//
+// src/engine/statuses.js remains the implementation: stack modes, meters,
+// decay clocks, procs, resists, and the derived combat modifiers
+// (mult/add/flag/cap) it computes from status definitions. The WORDS for
+// those same definitions already resolve through the per-bundle term overlay
+// (registries.frameworkTerms); this door moves the SEMANTICS reads of every
+// engine consumer behind the framework as well.
+//
+// (Plain import-then-export consts: the standalone bundler rewrites modules
+// and does not handle the `export { … } from` re-export form.)
+const { getStatusInstance: adoptedGetStatusInstance, getStacks: adoptedGetStacks, hasStatus: adoptedHasStatus, applyStatus: adoptedApplyStatus, removeStatus: adoptedRemoveStatus, decayAtTurnEnd: adoptedDecayAtTurnEnd, getMult: adoptedGetMult, getAdd: adoptedGetAdd, getFlag: adoptedGetFlag, getCap: adoptedGetCap, anyCombatantFlag: adoptedAnyCombatantFlag } = require("src/engine/statuses.js");
+
+
+
+
+
+
+
+
+
+
+
+
+
+const getStatusInstance = adoptedGetStatusInstance;
+const getStacks = adoptedGetStacks;
+const hasStatus = adoptedHasStatus;
+const applyStatus = adoptedApplyStatus;
+const removeStatus = adoptedRemoveStatus;
+const decayAtTurnEnd = adoptedDecayAtTurnEnd;
+const getMult = adoptedGetMult;
+const getAdd = adoptedGetAdd;
+const getFlag = adoptedGetFlag;
+const getCap = adoptedGetCap;
+const anyCombatantFlag = adoptedAnyCombatantFlag;
+
+
+Object.assign(module.exports, { getStatusInstance, getStacks, hasStatus, applyStatus, removeStatus, decayAtTurnEnd, getMult, getAdd, getFlag, getCap, anyCombatantFlag });
+
+},
 "src/engine/statuses.js": function (module, exports, require) {
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
 //
@@ -40982,7 +41027,7 @@ Object.assign(module.exports, { getStatusInstance, getStacks, hasStatus, applySt
 // Headless: no document/window/localStorage/timers.
 
 const { TRIGGER_EVENTS } = require("src/model/schemas.js");
-const { getStacks } = require("src/engine/statuses.js");
+const { getStacks } = require("src/framework/statusSemantics.js");
 
 const MAX_EMIT_DEPTH = 64;
 
@@ -48648,7 +48693,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '6d33fd0e55';
+const SOURCE = '9dbe8dd1fb';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48682,7 +48727,7 @@ const SOURCE = '6d33fd0e55';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1902';
+const ORDINAL = '1903';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58692,14 +58737,19 @@ function renderCard(registries, ref, opts = {}) {
     : tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
-  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
-  const staminaCost = opts.preview ? opts.preview.staminaCost : (def.staminaCost || 0);
+  // The badge numbers come from the framework cost profile (a preview's
+  // numbers are the preview's own — it already resolved them); the badge
+  // words come from the TermRegistry, like the tooltip's cost line.
+  const pools = opts.preview ? null : registries.framework.costProfile(def);
+  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : (pools.variable ? 'X' : pools.action);
+  const manaCost = opts.preview ? opts.preview.manaCost : pools.mana;
+  const staminaCost = opts.preview ? opts.preview.staminaCost : pools.stamina;
+  const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
   el.innerHTML =
     `<div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
-    (staminaCost ? `<div class="stamina-cost" title="Stamina cost">● ${esc(staminaCost)}</div>` : '') +
+    (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
+    (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
