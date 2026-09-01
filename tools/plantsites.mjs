@@ -131,16 +131,28 @@ function main() {
     try { baseline = JSON.parse(readFileSync(BASELINE, 'utf8')); }
     catch (e) { console.error(`plantsites: cannot read ${BASELINE}: ${e.message}`); return 1; }
     const errors = [];
-    const known = new Set(baseline.drifted.map((d) => d.id));
-    const live = new Map(bad.map((s) => [s.id, s]));
-    for (const s of bad) {
-      if (!known.has(s.id)) {
-        errors.push(`NEW ${s.state.toUpperCase()}: ${s.tool} -> ${s.target}\n  find ${JSON.stringify(s.find.slice(0, 100))}\n  The file no longer contains this plant's find-string, so the plant patches nothing and the check it proves can no longer be shown to fail. Fix the plant (and its paired assertion) to match the refactored source.`);
+    // Occurrence COUNTS per id, not membership. An id is a hash of
+    // tool+target+find, and identical plants produce identical ids — the live
+    // baseline carries two such pairs. A set collapsed them, so re-arming one
+    // of a pair while its twin stayed drifted left both sides containing the
+    // id and --check passed without the baseline update it promises; a new
+    // drift identical to a baselined one was likewise absorbed as known.
+    const knownCount = new Map();
+    for (const d of baseline.drifted) knownCount.set(d.id, (knownCount.get(d.id) || 0) + 1);
+    const liveCount = new Map();
+    for (const s of bad) liveCount.set(s.id, (liveCount.get(s.id) || 0) + 1);
+    for (const [id, n] of liveCount) {
+      const k = knownCount.get(id) || 0;
+      if (n > k) {
+        const s = bad.find((x) => x.id === id);
+        errors.push(`NEW ${s.state.toUpperCase()}: ${s.tool} -> ${s.target} (${n} site(s) live, ${k} in baseline)\n  find ${JSON.stringify(s.find.slice(0, 100))}\n  The file no longer contains this plant's find-string, so the plant patches nothing and the check it proves can no longer be shown to fail. Fix the plant (and its paired assertion) to match the refactored source.`);
       }
     }
-    for (const d of baseline.drifted) {
-      if (!live.has(d.id)) {
-        errors.push(`STALE BASELINE: ${d.tool} -> ${d.target} (${d.id}) no longer scans as drifted.\n  Good — but the baseline must say so, or the freed slack hides the next regression. Re-run with --write-baseline in the same change.`);
+    for (const [id, k] of knownCount) {
+      const n = liveCount.get(id) || 0;
+      if (k > n) {
+        const d = baseline.drifted.find((x) => x.id === id);
+        errors.push(`STALE BASELINE: ${d.tool} -> ${d.target} (${d.id}: ${k} in baseline, ${n} still drifted).\n  Good — but the baseline must say so, or the freed slack hides the next regression. Re-run with --write-baseline in the same change.`);
       }
     }
     const liveCounts = unreadableCounts(unreadable);
