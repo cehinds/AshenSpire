@@ -667,6 +667,7 @@ test('the option-decision router door serves the shipped router, identically', (
 // ---- contract-new composition outputs (dormant until authored) --------------
 
 const { createRunState } = await import('../src/model/state.js');
+const actionsHome = await import('../src/engine/actions.js');
 
 function grantFixtureRegistries(packagesById) {
   const armaments = contentBundle.equipment.armaments.map((piece) => (packagesById[piece.id]
@@ -703,6 +704,8 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
     'granted:straightSword:quickstep:0', 'granted:straightSword:quickstep:1',
     'weaponArt:straightSword:crimsonCleave',
   ], 'creation composes grants and the default art with deterministic ids');
+  const art = run.deck.find((c) => c.instanceId === 'weaponArt:straightSword:crimsonCleave');
+  eq(art.damageSchool, 'physical', 'a composed instance is carrier-stamped by the same authoritative pass, not left raw');
 
   const before = composed();
   stampDeck(REG2, run);
@@ -756,6 +759,25 @@ test('a mid-combat swap reconciles granted instances across the combat piles', (
   const snapshot = structuredClone(piles);
   reconcileGrantedCardsInCombat(REG2, run, piles);
   eq(piles, snapshot, 'the combat reconcile is idempotent');
+  // The swap door reconciles BEFORE the pile stamps, so a landed instance is
+  // carrier-stamped by the same pass as every other card.
+  compositionDoor.stampDeck(REG2, run, piles.discard);
+  eq(piles.discard[0].damageSchool, 'physical', 'the landed art is stamped by the following pile pass');
+});
+
+test('a granted instance is never a per-copy upgrade candidate', () => {
+  const { executeAction } = actionsHome;
+  const REG2 = grantFixtureRegistries({ straightSword: {
+    compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack',
+    grantedCards: [{ cardId: 'quickstep', count: 2 }],
+  } });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
+  // Keep only the granted quickstep copies so they would be the sole
+  // per-copy candidates if the exclusion were missing.
+  run.deck = run.deck.filter((c) => c.grantedBy || c.cardId !== 'quickstep');
+  executeAction({ registries: REG2, run, emit: () => {} }, { effect: { op: 'upgradeCard', card: 'quickstep' } });
+  eq(run.deck.filter((c) => c.grantedBy).every((c) => c.upgraded === false), true,
+    'an equipment-granted instance upgrades through its armament, never per copy — reconcile would silently drop the flag');
 });
 
 test('grant and weapon-art authoring is validated by name', () => {

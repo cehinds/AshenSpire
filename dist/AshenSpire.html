@@ -32268,14 +32268,20 @@ function startingDeckRefs(registries, loadout, classId) {
  * an instance whose armament left the hands leaves the deck with it.
  */
 function reconcileGrantedCards(registries, run) {
+  if (!run.deck) run.deck = [];
   const desired = desiredGrantInstances(registries, run);
   const wanted = new Set(desired.map((d) => d.instanceId));
   const present = new Set();
-  run.deck = (run.deck || []).filter((inst) => {
+  // In place, not a reassignment: stampDeck captures its stamping list before
+  // reconciling, so an appended instance must land in the SAME array to flow
+  // through the carrier/mod stamping that follows.
+  const kept = run.deck.filter((inst) => {
     if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
     if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
     return false;
   });
+  run.deck.length = 0;
+  run.deck.push(...kept);
   for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
   return run.deck;
 }
@@ -32768,7 +32774,9 @@ function stampDeck(registries, run, cards, {
   }
   applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
   // Only the authoritative full-deck restamp reconciles granted/weapon-art
-  // instances — a pile subset must never mint or drop them.
+  // instances — a pile subset must never mint or drop them. Reconciling
+  // BEFORE the stamping loop (in place — list IS run.deck here) means a
+  // newly composed instance is stamped like any other card below.
   if (cards == null) reconcileGrantedCards(registries, run);
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
@@ -39529,12 +39537,13 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
   };
-  for (const pile of piles) stampDeck(combat.registries, run, pile);
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
-  // here explicitly: the swapped-out armament's leave every pile, the swapped-
-  // in armament's land in the discard pile (dormant while no shipped armament
-  // authors either).
+  // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
+  // pile, the swapped-in armament's land in the discard pile — and then get
+  // carrier/mod-stamped by the pile pass like every other card (dormant while
+  // no shipped armament authors either).
   reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
+  for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The vessel keeps telling the truth across the ONE mid-fight door equipment
   // moves through: re-derive the stagger threshold from the loadout this swap
@@ -40495,7 +40504,11 @@ function runRunOpcode(ctx, action, eff) {
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck
-        .filter((card) => !card.sourceArmamentId && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        // Equipment-composed instances are excluded like sourceArmamentId
+        // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
+        // package on every reconcile, so a per-copy upgraded flag would not
+        // survive an unequip/re-equip — its upgrade rides the armament.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
@@ -42338,8 +42351,9 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
       throw new Error(`combat snapshot item upgrade level '${itemRef}' disagrees with the run`);
     }
   }
-  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
-  const attacks = cards.filter((card) => card.equipmentRole === 'attack');
+  const attacks = COMBAT_SNAPSHOT_PILE_ORDER
+    .flatMap((pile) => snapshot.piles[pile])
+    .filter((card) => card.equipmentRole === 'attack');
 
   if (snapshot.loadout === null) {
     if (attacks.length) throw new Error('combat snapshot has generated attack slots but no authoritative loadout');
@@ -42347,6 +42361,14 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   }
 
   const classId = snapshot.player?.classId || run.class;
+  // Reconcile granted/weaponArt instances BEFORE flattening for the stamp:
+  // the pile stamp below is a subset call, and a package whose grants or arts
+  // changed between save and load must sweep stale instances out of the
+  // resumed fight and land newly-granted ones in the discard pile — stamped
+  // by the same pass as every other card. The same door a live mid-combat
+  // swap goes through.
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
+  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
   // Full-pile order is the one legacy assignment door: draw, hand, discard,
   // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
@@ -42364,12 +42386,6 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     adoptEquipmentBonuses: false,
     reconcileEquipmentPools: false,
   });
-  // The stamp above is a subset call (cards supplied), so granted/weaponArt
-  // instances reconcile here explicitly, against the snapshot's own piles: a
-  // package change between save and load sweeps instances the equipped hands
-  // no longer grant and lands newly-granted ones in the discard pile — the
-  // same door a live mid-combat swap goes through.
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
   snapshot.itemUpgradeLevels = structuredClone(runLevels);
   delete snapshot.armamentLevels;
 
@@ -48512,7 +48528,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '299a52a40d';
+const SOURCE = 'dc00d91008';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48546,7 +48562,7 @@ const SOURCE = '299a52a40d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1899';
+const ORDINAL = '1900';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

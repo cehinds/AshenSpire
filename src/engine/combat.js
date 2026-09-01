@@ -623,12 +623,13 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
   };
-  for (const pile of piles) stampDeck(combat.registries, run, pile);
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
-  // here explicitly: the swapped-out armament's leave every pile, the swapped-
-  // in armament's land in the discard pile (dormant while no shipped armament
-  // authors either).
+  // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
+  // pile, the swapped-in armament's land in the discard pile — and then get
+  // carrier/mod-stamped by the pile pass like every other card (dormant while
+  // no shipped armament authors either).
   reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
+  for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The vessel keeps telling the truth across the ONE mid-fight door equipment
   // moves through: re-derive the stagger threshold from the loadout this swap

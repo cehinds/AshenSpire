@@ -1236,14 +1236,20 @@ export function startingDeckRefs(registries, loadout, classId) {
  * an instance whose armament left the hands leaves the deck with it.
  */
 export function reconcileGrantedCards(registries, run) {
+  if (!run.deck) run.deck = [];
   const desired = desiredGrantInstances(registries, run);
   const wanted = new Set(desired.map((d) => d.instanceId));
   const present = new Set();
-  run.deck = (run.deck || []).filter((inst) => {
+  // In place, not a reassignment: stampDeck captures its stamping list before
+  // reconciling, so an appended instance must land in the SAME array to flow
+  // through the carrier/mod stamping that follows.
+  const kept = run.deck.filter((inst) => {
     if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
     if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
     return false;
   });
+  run.deck.length = 0;
+  run.deck.push(...kept);
   for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
   return run.deck;
 }
@@ -1736,7 +1742,9 @@ export function stampDeck(registries, run, cards, {
   }
   applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
   // Only the authoritative full-deck restamp reconciles granted/weapon-art
-  // instances — a pile subset must never mint or drop them.
+  // instances — a pile subset must never mint or drop them. Reconciling
+  // BEFORE the stamping loop (in place — list IS run.deck here) means a
+  // newly composed instance is stamped like any other card below.
   if (cards == null) reconcileGrantedCards(registries, run);
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;

@@ -130,8 +130,9 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
       throw new Error(`combat snapshot item upgrade level '${itemRef}' disagrees with the run`);
     }
   }
-  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
-  const attacks = cards.filter((card) => card.equipmentRole === 'attack');
+  const attacks = COMBAT_SNAPSHOT_PILE_ORDER
+    .flatMap((pile) => snapshot.piles[pile])
+    .filter((card) => card.equipmentRole === 'attack');
 
   if (snapshot.loadout === null) {
     if (attacks.length) throw new Error('combat snapshot has generated attack slots but no authoritative loadout');
@@ -139,6 +140,14 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   }
 
   const classId = snapshot.player?.classId || run.class;
+  // Reconcile granted/weaponArt instances BEFORE flattening for the stamp:
+  // the pile stamp below is a subset call, and a package whose grants or arts
+  // changed between save and load must sweep stale instances out of the
+  // resumed fight and land newly-granted ones in the discard pile — stamped
+  // by the same pass as every other card. The same door a live mid-combat
+  // swap goes through.
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
+  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
   // Full-pile order is the one legacy assignment door: draw, hand, discard,
   // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
@@ -156,12 +165,6 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     adoptEquipmentBonuses: false,
     reconcileEquipmentPools: false,
   });
-  // The stamp above is a subset call (cards supplied), so granted/weaponArt
-  // instances reconcile here explicitly, against the snapshot's own piles: a
-  // package change between save and load sweeps instances the equipped hands
-  // no longer grant and lands newly-granted ones in the discard pile — the
-  // same door a live mid-combat swap goes through.
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
   snapshot.itemUpgradeLevels = structuredClone(runLevels);
   delete snapshot.armamentLevels;
 
