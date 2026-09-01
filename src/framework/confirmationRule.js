@@ -14,10 +14,18 @@
 // boundary moved to the framework. The tap-to-review / hold-to-commit
 // INTERACTION router is presentation behavior and ports separately.
 
-export {
-  SAFE_OPS,
-  BINDING_CARD_TYPES,
-  failClosedOps,
-  bindingReasons,
-  isBindingChoice,
+// (Plain import-then-export consts: the standalone bundler rewrites modules
+// and does not handle the `export { … } from` re-export form.)
+import {
+  SAFE_OPS as adoptedSafeOps,
+  BINDING_CARD_TYPES as adoptedBindingCardTypes,
+  failClosedOps as adoptedFailClosedOps,
+  bindingReasons as adoptedBindingReasons,
+  isBindingChoice as adoptedIsBindingChoice,
 } from '../model/consequence.js';
+
+export const SAFE_OPS = adoptedSafeOps;
+export const BINDING_CARD_TYPES = adoptedBindingCardTypes;
+export const failClosedOps = adoptedFailClosedOps;
+export const bindingReasons = adoptedBindingReasons;
+export const isBindingChoice = adoptedIsBindingChoice;

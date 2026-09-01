@@ -14,11 +14,20 @@
 // with the authority boundary (which module consumers may import) moved to
 // the framework.
 
-export {
-  WeaponDeckCompositionService,
-  buildEquippedWeaponCardPlan,
-  applyEquippedWeaponCardPlan,
-  WeaponCardPackageModel,
-  startingDeckRefs,
-  stampDeck,
+// (Plain import-then-export consts: the standalone bundler rewrites modules
+// and does not handle the `export { … } from` re-export form.)
+import {
+  WeaponDeckCompositionService as adoptedService,
+  buildEquippedWeaponCardPlan as adoptedBuildPlan,
+  applyEquippedWeaponCardPlan as adoptedApplyPlan,
+  WeaponCardPackageModel as adoptedPackageModel,
+  startingDeckRefs as adoptedStartingDeckRefs,
+  stampDeck as adoptedStampDeck,
 } from '../model/loadout.js';
+
+export const WeaponDeckCompositionService = adoptedService;
+export const buildEquippedWeaponCardPlan = adoptedBuildPlan;
+export const applyEquippedWeaponCardPlan = adoptedApplyPlan;
+export const WeaponCardPackageModel = adoptedPackageModel;
+export const startingDeckRefs = adoptedStartingDeckRefs;
+export const stampDeck = adoptedStampDeck;
