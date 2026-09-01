@@ -82,11 +82,62 @@ play (Exhaust still wins on a Power that carries it).
 sweep: a framework JSON without its generated mirror in
 `src/framework/data/` still fails by name.
 
-Still legacy-decided (next tranches): deck composition, status/stance
-semantics, every screen's presentation components, the generic
-option-decision confirmation router (`holdconfirm`/`optionDecision`), and
-cost/keyword DISPLAY strings on card faces (the decisions are ported; the
-formatting is the presentation tranche's).
+Still legacy-decided (next tranches): status/stance semantics, every
+screen's presentation components — including the option-decision
+INTERACTION router (`src/ui/components/optionDecision.js` +
+`holdconfirm.js`, the tap-to-review vs hold-to-commit surface the smith
+modal and every routed action use), which stays in cutover scope under
+shared presentation even though its LEVEL rule is the reconciliation item
+below — and cost/keyword DISPLAY strings on card faces (the decisions are
+ported; the formatting is the presentation tranche's).
+
+### Two systems the port deliberately does NOT bridge (owner decision needed)
+
+Surveyed for tranche 3 and left in place on purpose — both are cases where
+the legacy design already satisfies the contract's intent, and a mechanical
+bridge would add risk without adding authority:
+
+1. **Deck composition.** The shipped composition splits across the legacy
+   homes: `WeaponDeckCompositionService` (`src/model/loadout.js`) composes
+   the ATTACK slots — ceil/floor right/left split, two-handed offhand
+   conflicts, shield-fallback rules, the unarmed attack profile from
+   balance data, deterministic fingerprinted plans (the 67-check
+   weapon-package suite proves it) — while guard and technique slots are
+   composed and REPLACED from equipment too, through the role plan:
+   `equipmentKitPlan` → `startingDeckRefs`' role copies at creation, and
+   `stampDeck` re-resolving every non-attack role's card from the equipped
+   profile after swaps and loads. The framework's `src/framework/deck.js`
+   covers that scheme AND the contract-NEW outputs no legacy path composes
+   at all: granted cards, installed weapon arts, and the specific unarmed
+   Evasive Guard / Dodge Roll fallback package. Cutover needs
+   ONE reconciliation decision — adopt the legacy service as the
+   framework's attack-slot implementation (recommended: richer and
+   battle-tested, with the contract model as its specification), or rewrite
+   it onto the contract model (loses behavior unless every legacy rule is
+   re-authored: shield/priority-ref handling, AND the data-owned
+   role-source priorities — `roleSources.guard` resolves ONE source
+   left-before-right where the contract model cycles both hands' guards,
+   `roleSources.technique` resolves right-before-left and the contract
+   model never consumes a technique card at all, and each role has its own
+   unarmed profile) — and EITHER ruling must explicitly carry the
+   contract-new outputs forward: they are approved-new-mechanics work that
+   no adoption of existing code delivers by itself, and a cutover that
+   omitted them would silently drop contract mechanics. Until that ruling,
+   bridging one composer through the other would be motion, not authority.
+
+2. **The option-decision confirmation LEVEL rule.** `src/model/consequence.js`
+   derives bindingness from an effect list's ops, FAIL-CLOSED over a
+   positively-known-safe set — a designed safety property ("a hand-kept
+   list cannot know what it was not told"). Mapping its dynamic decisions
+   to static ConfirmationRegistry rows would weaken that property. The
+   recommended reconciliation: the registry keeps owning STATIC surfaces
+   (load/quit — ported), and the fail-closed derivation is adopted as the
+   framework's confirmation-level rule for effect-carrying choices.
+   Scope note: this covers the CLASSIFICATION only. The interaction router
+   itself (`optionDecision.js`/`holdconfirm.js` — tap-to-review vs
+   hold-to-commit) is presentation behavior and remains in the shared
+   presentation tranche above; adopting the derivation does not discharge
+   porting that surface.
 
 ## Unresolved contradictions (reported before cutover, per the contract)
 
@@ -121,7 +172,11 @@ formatting is the presentation tranche's).
 
 ## What cutover will take (in order)
 
-1. Owner rulings on contradictions 1–5; author the missing equipment data.
+1. Owner rulings on contradictions 1–5 AND the two reconciliation
+   decisions above (deck composition adopt-vs-rewrite with the
+   contract-new outputs carried either way; the fail-closed consequence
+   derivation as the framework's rule for effect-carrying choices); author
+   the missing equipment data.
 2. Port the legacy engine/UI consumers to the framework services and shared
    components (the candidate's services are drop-in shaped; the port is
    mechanical but wide).
