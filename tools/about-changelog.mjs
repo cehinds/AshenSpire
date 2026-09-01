@@ -1038,7 +1038,10 @@ async function selftest() {
     if (ticks.detail !== 'Keeps `literal` backticks.') throw new Error(`rewrote it to: ${ticks.detail}`);
     console.log('PASS escaped backticks stay literal instead of opening a code span');
   } catch (error) { console.error(`FAIL escaped backticks: ${error.message}`); process.exitCode = 1; }
-  const total = parserPlants.length + modelPlants.length;
+  // Census over EVERY family that does caught++ — the ordinal plants and the
+  // inverted legitimate-shapes control (+1) count themselves too; omitting
+  // them made the selftest exit 1 with all plants caught and zero MISS (#498).
+  const total = parserPlants.length + ordinalPlants.length + 1 + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
   // the file rather than from a string handed to the parser. All three of these
@@ -1436,7 +1439,8 @@ async function selftest() {
   }
   const grandTotal = total + treePlants.length;
   if (caught !== grandTotal || !good.length) process.exitCode = 1;
-  else if (!process.exitCode) console.log(`about-changelog selftest: ${caught} known-bads caught / 0 missed`);
+  // Terminal line in a verdict.mjs-accepted form ("label: OK — N <words>, N caught").
+  else if (!process.exitCode) console.log(`about-changelog selftest: OK — ${caught} known-bads, ${caught} caught`);
 }
 
 // EVERY exit path names the scope — the greens by printing it after their verdict,
@@ -1453,12 +1457,14 @@ try {
     const entries = await checkProjection();
     await browserCheck(entries, { sourceOnly: true });
     console.log(`about-changelog source probe: ${entries.length} receipts; real Settings route PASS`);
+    console.log(`about-changelog source probe: OK — ${entries.length} checks passed`);
   } else {
     const entries = await checkProjection();
     const shotsAt = process.argv.indexOf('--shots');
     const screenshotDir = shotsAt >= 0 && process.argv[shotsAt + 1] ? resolve(ROOT, process.argv[shotsAt + 1]) : null;
     await browserCheck(entries, { screenshotDir });
     console.log(`about-changelog: ${entries.length} receipts match CHANGELOG.md; source + selected standalone Settings routes PASS`);
+    console.log(`about-changelog: OK — ${entries.length} checks passed`);
   }
   printRefusalScope();
 } catch (error) {
