@@ -9763,9 +9763,6 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
-    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
-    // leaving it, and the screen carries its own LEAVE.
-    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -10809,16 +10806,8 @@ const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
-    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
-    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
-    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
-    // every cinder on levels and nothing at merchants, so its number is the
-    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
-    // merchant-spending player at the low edge. Two numbers, one home, and
-    // the sweep flag reruns the measurement for any other pair.
-    firstCost: 20,
-    costStep: 4,
+    firstCost: 800,
+    costStep: 200,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -48704,7 +48693,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '6a8d3b5f35';
+const SOURCE = '46b5a67346';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48738,7 +48727,7 @@ const SOURCE = '6a8d3b5f35';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1906';
+const ORDINAL = '1904';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -49193,13 +49182,6 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
-  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
-  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
-  // Shrine open: Rest once, Smith while you have Stones, Level while you have
-  // cinders, and leave when you choose. Conservative default, as his own
-  // data-driven instruction for an unsettled 'maybe' asks.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
-    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -63641,7 +63623,7 @@ const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
 const { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
 const { clearTargetSilhouettes, renderTargetSilhouette } = require("src/ui/components/friendlyTargets.js");
-const { friendlyTargetMode } = require("src/model/friendlyTargets.js");
+const { friendlyTargetMode, friendlyTargetPlan } = require("src/model/friendlyTargets.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
@@ -64732,13 +64714,23 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     // A card whose only legal target is the player has ONE destination, so the
     // drag names it instead of making him aim at it (his words: "dragging a
     // block should default highlight player character since it can only target
-    // that character"). `friendlyTargetMode` is the ONE home of "can only
-    // target X" — model/friendlyTargets.js, #209 — and `'self'` is the only
-    // mode a solo board can resolve to a single target. `'ally'` and `'mixed'`
-    // depend on who is alive and connected and are deliberately NOT wired
-    // here; solo has no allies to state that rule against.
+    // that character"). #313 asked which "can only target X" means — the
+    // card's DECLARED mode or the BOARD'S current legal set. This is the
+    // B-side of that A/B: the legal set, taken at drag start from the one
+    // home of the rule (model/friendlyTargets.js, friendlyTargetPlan). On a
+    // solo board the set is the player for `self` AND for `mixed` (a
+    // self+ally card with no ally has exactly one legal target), and the
+    // highlight lights only when the set has exactly one member and it is the
+    // player — so it can never light a target the release would refuse. The
+    // A-side (declared mode only: `self` lights, `mixed` never does) is the
+    // shipped behaviour this replaces. Co-op keeps its own aiming.
+    const dragDef = resolveCard(registries, inst);
+    const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
+      { id: combat.player.id, alive: combat.player.alive, connected: true },
+    ]).legalIds;
     const selfOnlyTarget = dragTargetMode === 'none'
-      && friendlyTargetMode(resolveCard(registries, inst)) === 'self';
+      && friendlyTargetMode(dragDef) !== 'none'
+      && friendlyLegal.length === 1 && friendlyLegal[0] === combat.player.id;
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
@@ -66928,19 +66920,9 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
-  // E13's multi-use Shrine: an action re-opens the same screen (with what was
-  // already taken recorded) instead of leaving; LEAVE is the one way out.
-  const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
-  });
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
-  const noRest = relicNoRest || (multiUse && rested);
-  // The locked copy names the real reason: a relic that forbids rest, or a
-  // rest already taken at this Shrine under Multi-use — never a relic the
-  // player does not carry.
-  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
+  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -66978,7 +66960,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -67088,27 +67070,21 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           </div>
         </details>
       </div>
-      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
   ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
-  const leave = app.querySelector('#shrine-leave');
-  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: multiUse
-        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
-        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      question: `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
       confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
-        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -67150,7 +67126,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      remount({ openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // The same allocation component used by character creation, with shrine
@@ -67192,7 +67168,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          remount({ openPanel: 'level' });
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
         },
       });
     };
@@ -67210,7 +67186,6 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
-        multiUse,
         returnFocusElement: smithOption,
         onSelect: (itemRef) => {
           selectedItemRef = itemRef;
@@ -67220,7 +67195,6 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
-          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
           onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
@@ -67668,8 +67642,6 @@ const visibleFocusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
 function mountSmithUpgradeModal(host, initialModel, {
-  multiUse = false, // Multi-use Shrines: a confirmed upgrade stays at the Shrine
-
   registries,
   meta,
   onSelect,
@@ -67697,7 +67669,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
         <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
       </div>
-      <span class="smith-modal-consequence">${multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE'}</span>
+      <span class="smith-modal-consequence">LEAVES SHRINE</span>
     </header>
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
@@ -67889,7 +67861,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         registries,
         id: 'smithUpgrade',
         title: `Upgrade ${selected.name}?`,
-        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${multiUse ? '; you stay at the Shrine' : ' and leaves the Shrine'}.`,
+        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost and leaves the Shrine.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
         confirmLabel: `Upgrade (${selected.cost})`,

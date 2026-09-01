@@ -18,7 +18,7 @@ import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
 import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
-import { friendlyTargetMode } from '../../model/friendlyTargets.js';
+import { friendlyTargetMode, friendlyTargetPlan } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
@@ -1109,13 +1109,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // A card whose only legal target is the player has ONE destination, so the
     // drag names it instead of making him aim at it (his words: "dragging a
     // block should default highlight player character since it can only target
-    // that character"). `friendlyTargetMode` is the ONE home of "can only
-    // target X" — model/friendlyTargets.js, #209 — and `'self'` is the only
-    // mode a solo board can resolve to a single target. `'ally'` and `'mixed'`
-    // depend on who is alive and connected and are deliberately NOT wired
-    // here; solo has no allies to state that rule against.
+    // that character"). #313 asked which "can only target X" means — the
+    // card's DECLARED mode or the BOARD'S current legal set. This is the
+    // B-side of that A/B: the legal set, taken at drag start from the one
+    // home of the rule (model/friendlyTargets.js, friendlyTargetPlan). On a
+    // solo board the set is the player for `self` AND for `mixed` (a
+    // self+ally card with no ally has exactly one legal target), and the
+    // highlight lights only when the set has exactly one member and it is the
+    // player — so it can never light a target the release would refuse. The
+    // A-side (declared mode only: `self` lights, `mixed` never does) is the
+    // shipped behaviour this replaces. Co-op keeps its own aiming.
+    const dragDef = resolveCard(registries, inst);
+    const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
+      { id: combat.player.id, alive: combat.player.alive, connected: true },
+    ]).legalIds;
     const selfOnlyTarget = dragTargetMode === 'none'
-      && friendlyTargetMode(resolveCard(registries, inst)) === 'self';
+      && friendlyTargetMode(dragDef) !== 'none'
+      && friendlyLegal.length === 1 && friendlyLegal[0] === combat.player.id;
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
