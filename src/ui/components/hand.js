@@ -49,7 +49,7 @@
 // on flip; the same warning rides handAxis.js.
 
 import { renderCard } from './card.js';
-import { armInspect } from './holdconfirm.js';
+import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
 

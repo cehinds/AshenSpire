@@ -23,7 +23,7 @@ import { attributeCardModels } from '../../model/creationBrief.js';
 import { passiveFlag } from '../../model/registries.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';

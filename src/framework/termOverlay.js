@@ -44,8 +44,21 @@ export function createEntityTermOverlay(bundle) {
       ...(terms.has(tooltipId) ? { tooltip: terms.displayTerm(tooltipId) } : {}),
     };
   };
+  // A display site that needs the whole def (mechanics numbers for tooltip
+  // substitution, icon/tint assets) wraps it here: the WORDS come from the
+  // TermRegistry, everything else rides through untouched. A def with no
+  // overlay row — or no def at all — passes through unchanged, so probe
+  // registries and mechanics-only callers keep their behavior.
+  const withWords = (kind) => (def) => {
+    if (!def) return def;
+    const row = display(kind)(def.id);
+    if (!row) return def;
+    return { ...def, name: row.name, ...(row.tooltip !== undefined ? { tooltip: row.tooltip } : {}) };
+  };
   return Object.freeze({
     statusDisplay: display('status'),
     stanceDisplay: display('stance'),
+    withStatusWords: withWords('status'),
+    withStanceWords: withWords('stance'),
   });
 }

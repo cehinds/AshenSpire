@@ -26,7 +26,7 @@ import {
   renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
-import { armHold, holdMs, HOLD_POINTER_SLOP } from '../components/holdconfirm.js';
+import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';

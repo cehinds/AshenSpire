@@ -12,7 +12,7 @@ import { isEngaged, focusFirst } from '../input.js';
 // (owner ruling; the derivation itself still lives in model/consequence.js).
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 
 export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);

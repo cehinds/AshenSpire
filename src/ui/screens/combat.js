@@ -27,7 +27,7 @@ import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -139,8 +139,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
     // #61: fx beats read a proc row's display data (name/tint/icon) through
-    // this accessor — one home, the status def itself.
-    statusInfo: (sid) => registries.statuses.get(sid),
+    // this accessor — one home, the status def itself, with the WORDS
+    // resolved through the framework term overlay.
+    statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
   };
 
   let selected = null; // card instanceId in click-targeting mode
@@ -305,7 +306,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (!instance) return [];
       const amount = instance.meter ? instance.meter.value : instance.stacks;
       if (!(amount > 0)) return [];
-      const def = registries.statuses.get(statusId);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(statusId));
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
       return [{ name: def.name, detail: presentation.tooltip }];
@@ -330,7 +331,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const v = dv(entity);
     if (role === 'player') {
       const classDef = registries.classes.get(run.class);
-      const stance = entity.stanceId ? registries.stances.get(entity.stanceId) : null;
+      const stance = entity.stanceId ? registries.frameworkTerms.withStanceWords(registries.stances.get(entity.stanceId)) : null;
       const skills = [];
       if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
       skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
@@ -738,7 +739,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
@@ -791,7 +792,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (kind === 'player') {
         return 'Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.';
       }
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       return `Fill it to Stagger. ${esc(stagDesc)}`;
     };
   }
@@ -836,7 +838,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         // v, not entity: the bar is the thing the drain animates, so it must
         // read the paced snapshot like every other meter on this card.
         const inst = v.statuses[sid];
-        const def = registries.statuses.get(sid);
+        const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
         const bar = document.createElement('div');
         bar.className = 'bar procbar';
         markUiComponent(bar, UI.procStatusBar, sid);
@@ -872,7 +874,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const p = combat.player;
     const trailing = [];
     if (p.stanceId) {
-      const st = registries.stances.get(p.stanceId);
+      const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
       const chip = document.createElement('div');
       chip.className = `stance-chip ${p.stanceId}`;
       chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
