@@ -127,7 +127,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
           <div class="cp-body">
-            <h3>Smith</h3>
+            <h3>Upgrade an Item</h3>
             <p>${canInspectSmithing
               ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
               : 'No owned armament has an effective tier remaining.'}</p>
@@ -238,6 +238,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
+      question: `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
@@ -335,23 +337,24 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     // Smith is a reversible modal transaction until its explicit Confirm.
     // Opening and selecting mutate presentation state only. Back and Escape
     // return to the Shrine with the run byte-for-byte untouched; Confirm is
-    // the one armament promotion and the one path that leaves the Shrine.
+    // the one item promotion and the one path that leaves the Shrine.
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
-      let selectedArmamentId = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedArmamentId);
+      let selectedItemRef = null;
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef);
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
+        meta,
         returnFocusElement: smithOption,
-        onSelect: (armamentId) => {
-          selectedArmamentId = armamentId;
+        onSelect: (itemRef) => {
+          selectedItemRef = itemRef;
           modal.update(model());
         },
         onBack: () => {},
-        onConfirm: (armamentId) => {
-          const receipt = commitSmithing(registries, run, armamentId);
+        onConfirm: (itemRef) => {
+          const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
-          onDone(`Smithed ${esc(receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone, ${receipt.affectedCards.length} basic cards improved.`);
+          onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
     };

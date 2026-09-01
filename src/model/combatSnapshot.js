@@ -4,6 +4,8 @@
 // owns what that data means and how it is validated; engine/combat.js owns the
 // runtime methods detached for storage and reattached after loading.
 
+import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
+
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
 const PHASES = Object.freeze(['player', 'enemy', 'ended']);
@@ -72,6 +74,23 @@ export function combatSnapshotProblems(snapshot) {
       }
     }
   }
+  if (snapshot.itemUpgradeLevels !== undefined) {
+    if (!record(snapshot.itemUpgradeLevels)) problems.push('itemUpgradeLevels must be an object');
+    else for (const [itemRef, level] of Object.entries(snapshot.itemUpgradeLevels)) {
+      if (!/^(armament\/[^/]+|armor\/[^/]+\/[^/]+|relic\/[^/]+)$/.test(itemRef)
+          || !Number.isInteger(level) || level < 0) {
+        problems.push(`itemUpgradeLevels.${itemRef || '<empty>'} must be a namespaced item ref with a non-negative integer tier`);
+      }
+    }
+  }
+  if (record(snapshot.armamentLevels) && record(snapshot.itemUpgradeLevels)) {
+    for (const [id, level] of Object.entries(snapshot.armamentLevels)) {
+      const itemRef = `armament/${id}`;
+      if (Object.hasOwn(snapshot.itemUpgradeLevels, itemRef) && snapshot.itemUpgradeLevels[itemRef] !== level) {
+        problems.push(`armamentLevels.${id} conflicts with itemUpgradeLevels.${itemRef}`);
+      }
+    }
+  }
   if (!record(snapshot.equipmentPoolDeficits)) problems.push('equipmentPoolDeficits must be an object');
   if (snapshot.loadout !== null && !record(snapshot.loadout)) problems.push('loadout must be an object or null');
   if (snapshot.attributes !== null && !record(snapshot.attributes)) problems.push('attributes must be an object or null');
@@ -121,6 +140,16 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
   const has = (registry, id, path) => {
     if (nonEmptyString(id) && !registry.has(id)) problems.push(`${path} '${id}' is unknown`);
   };
+  for (const [itemRef, level] of Object.entries(snapshot.itemUpgradeLevels || {})) {
+    const identity = itemRefIdentity(itemRef);
+    const known = identity?.itemKind === 'armament'
+      ? (registries.equipment.armaments || []).some((row) => row.id === identity.itemId)
+      : identity?.itemKind === 'armor'
+        ? (registries.equipment.armour || []).some((row) => row.classId === identity.classId && row.id === identity.itemId)
+        : identity?.itemKind === 'relic' && registries.relics.has(identity.itemId);
+    if (!known) problems.push(`itemUpgradeLevels.${itemRef} is unknown`);
+    else if (level > (itemUpgradeTiers(registries, itemRef).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
+  }
   has(registries.classes, snapshot.player?.classId, 'player.classId');
   for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
   for (const flask of snapshot.player?.flasks || []) has(registries.flasks, flask?.flaskId, 'player.flasks.flaskId');

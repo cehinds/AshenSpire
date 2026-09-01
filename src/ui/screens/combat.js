@@ -205,7 +205,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // the shared second-beat rule rather than inventing a screen-local rule.
       wireAction: (row, button, invoke) => {
         if (row.id !== 'use' || !row.enabled) return false;
-        arm(button, 'useFlask', { ctx: { targeted: !!def.targeted }, onConfirm: invoke });
+        arm(button, 'useFlask', {
+          ctx: { targeted: !!def.targeted },
+          question: `Use ${def.name}? ${remaining} charge${remaining === 1 ? '' : 's'} remaining.`,
+          confirmLabel: 'USE',
+          onConfirm: invoke,
+        });
         return true;
       },
     });
@@ -1586,6 +1591,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // Nothing on this line says "hold", and adding a third action to this screen
   // would say even less.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
+    question: 'End your turn and let the enemies act?',
+    confirmLabel: 'END TURN',
     onConfirm: () => {
     if (busy || combat.result || combat.phase !== 'player') {
       const why = { busy, result: combat.result, phase: combat.phase };

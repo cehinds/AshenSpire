@@ -28,7 +28,7 @@
 //      for lost.
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
-import { createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } from '../model/loadout.js';
+import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } from '../model/loadout.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
@@ -66,6 +66,25 @@ function runKey(slot = 1) {
 
 const COMBAT_SNAPSHOT_PILE_ORDER = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
 
+/**
+ * A new authored profile is additive content, not grounds to discard an older
+ * run. Adopt only missing profile rows from the current table; existing saved
+ * rows remain authoritative and unknown saved rows still fail in the ordinary
+ * snapshot validator.
+ */
+function hydrateMissingEquipmentProfiles(registries, snapshot) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)
+      || !snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) return [];
+  const live = createEquipmentProfileRuleSnapshot(registries);
+  const added = [];
+  for (const [profileId, rule] of Object.entries(live.profiles)) {
+    if (Object.hasOwn(snapshot.profiles, profileId)) continue;
+    snapshot.profiles[profileId] = structuredClone(rule);
+    added.push(profileId);
+  }
+  return added;
+}
+
 function pendingRewardReferenceProblems(pending, registries) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
@@ -92,6 +111,22 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   const stored = run.combatEntered?.snapshot;
   if (!stored) return;
   const snapshot = structuredClone(stored);
+  const hadSnapshotLevels = snapshot.itemUpgradeLevels !== undefined || snapshot.armamentLevels !== undefined;
+  const snapshotLevels = { ...(snapshot.itemUpgradeLevels || {}) };
+  for (const [id, level] of Object.entries(snapshot.armamentLevels || {})) {
+    const itemRef = `armament/${id}`;
+    if (Object.hasOwn(snapshotLevels, itemRef) && snapshotLevels[itemRef] !== level) {
+      throw new Error(`combat snapshot Smithing level conflict for '${itemRef}'`);
+    }
+    snapshotLevels[itemRef] = level;
+  }
+  const runLevels = run.itemUpgradeLevels || {};
+  if (!hadSnapshotLevels) Object.assign(snapshotLevels, runLevels);
+  for (const itemRef of new Set([...Object.keys(snapshotLevels), ...Object.keys(runLevels)])) {
+    if ((snapshotLevels[itemRef] || 0) !== (runLevels[itemRef] || 0)) {
+      throw new Error(`combat snapshot item upgrade level '${itemRef}' disagrees with the run`);
+    }
+  }
   const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   const attacks = cards.filter((card) => card.equipmentRole === 'attack');
 
@@ -110,7 +145,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     class: classId,
     loadout: snapshot.loadout,
     attributes: snapshot.attributes || run.attributes,
-    armamentLevels: run.armamentLevels || {},
+    itemUpgradeLevels: runLevels,
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     deck: cards,
@@ -118,7 +153,8 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     adoptEquipmentBonuses: false,
     reconcileEquipmentPools: false,
   });
-  snapshot.armamentLevels = structuredClone(run.armamentLevels || {});
+  snapshot.itemUpgradeLevels = structuredClone(runLevels);
+  delete snapshot.armamentLevels;
 
   // Commit only after validation and every pile rebind succeed. Resume then
   // observes the exact same loadout in run state and restored combat state.
@@ -537,6 +573,18 @@ export function createSaveManager(storage) {
         // rebound. The snapshot restamp must consume the promoted tier; doing
         // this afterward would leave the resumed piles at tier zero.
         const smithingReceipt = initializeRunSmithing(registries, run);
+        const hydratedRunProfiles = hydrateMissingEquipmentProfiles(registries, run.equipmentProfileRuleSnapshot);
+        const hydratedCombatProfiles = hydrateMissingEquipmentProfiles(registries, run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot);
+        if (hydratedRunProfiles.length || hydratedCombatProfiles.length) {
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:hydrateMissingEquipmentProfiles',
+            field: 'equipmentProfileRuleSnapshot.profiles',
+            was: { runMissing: hydratedRunProfiles, combatMissing: hydratedCombatProfiles },
+            now: { runProfiles: Object.keys(run.equipmentProfileRuleSnapshot?.profiles || {}), combatProfiles: Object.keys(run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot?.profiles || {}) },
+            why: 'new authored equipment profiles were added after this run was saved; existing saved profile rows remain authoritative',
+          });
+        }
         migrateCombatSnapshotWeaponCards(registries, run);
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         // Every load crosses the same deterministic composition door. This is
@@ -550,11 +598,11 @@ export function createSaveManager(storage) {
           note(run, {
             kind: 'heal',
             site: 'smithing.js:initializeRunSmithing',
-            field: 'smithingStones/armamentLevels/smithingRewardClaims',
+            field: 'smithingStones/itemUpgradeLevels/smithingRewardClaims',
             was: undefined,
             now: {
               smithingStones: run.smithingStones,
-              armamentLevels: run.armamentLevels,
+              itemUpgradeLevels: run.itemUpgradeLevels,
               smithingRewardClaims: run.smithingRewardClaims,
             },
             why: smithingReceipt.promotedArmaments.length

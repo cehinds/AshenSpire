@@ -77,8 +77,8 @@ export const balance = {
   // Smithing promotes the owned armament, not one card copy. The model owns
   // the transaction; balance owns the tier ceiling, price, and reward faucet.
   smithing: {
-    maxArmamentLevel: 1,
-    costByNextLevel: { 1: 1 },
+    // Item/tier costs, card changes, and requirement changes are authored in
+    // itemUpgradeChanges.csv. Balance owns only the reward faucet.
     rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
   },
 
@@ -607,11 +607,10 @@ export const balance = {
     // and on this screen the neighbour is "permanent curse", with no confirm
     // and no undo. Constantine, asked: "yes press and hold".
     //
-    // WHY A HOLD AND NOT A MODAL, because that choice is the whole design and
-    // it is not a preference: the held control FILLS, so the player watches the
-    // wrong words filling under their finger and lets go IN TIME. A modal asks
-    // "are you sure?" AFTER the commit, when the eye has already moved on. The
-    // hold puts the question in the same moment as the mistake.
+    // WHY BOTH FORMS SHIP. A short activation opens the shared review modal so
+    // the player sees the exact result and optional cost. A deliberate hold
+    // fills on the original control and commits without the modal for players
+    // who already know the result. Releasing the hold early remains an abort.
     //
     // `steps` IS THE CLOSED SET, in dial order, and `off` is first because it
     // is the A/B — the same "let me try each and decide" he asked for on the
@@ -620,15 +619,15 @@ export const balance = {
     // ELSE. That is the falsifier for Law 0 on this control, and it is the same
     // sentence tapSize above already ships.
     //
-    // `off` is the default: a card class may advertise the capability without
-    // silently changing anybody's controls. If the player enables the dial,
-    // `normal` is 600 ms because a long-press people already know is ~400-500
+    // `normal` is the default: state-changing option controls now use a short
+    // press to review and a deliberate hold to approve without the modal.
+    // 600 ms sits just past the familiar ~400-500 ms long-press threshold
     // ms (Android's own threshold) and a CONFIRM wants to sit just past reflex
     // without becoming a chore. `short` is for players who find the wait
-    // irritating, `long` for hands that need the room. `off` is 0 and means
-    // the pre-hold behaviour, byte for byte: one tap commits.
+    // irritating, `long` for hands that need the room. `off` is 0 and disables
+    // only the shortcut; the short activation still opens the review modal.
     holdConfirm: {
-      def: 'off',
+      def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
     // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
@@ -691,8 +690,8 @@ export const balance = {
     //
     // WHY THIS IS NOT holdConfirm's DIAL, though both are a stationary press
     // with a timer. Two different jobs (Law 4's shape, applied to time): the
-    // confirm hold is a SAFETY step before an irreversible act — its length is
-    // a protection preference, and `off` means "one tap commits". The inspect
+    // confirm hold is a SHORTCUT around the review modal — its length is a
+    // protection preference, and `off` means "review only". The inspect
     // hold is how a player READS a card — turning the safety dial off must not
     // take reading away, and a hand that needs a longer confirm does not
     // thereby need slower reading. One dial answering both would break the
@@ -826,7 +825,7 @@ export const balance = {
     roleSources: {
       attack: [{ slot: 'rightHand' }],
       guard: [{ slot: 'leftHand' }, { slot: 'rightHand' }],
-      technique: [{ slot: 'rightHand' }],
+      technique: [{ slot: 'rightHand' }, { slot: 'leftHand' }],
     },
     unarmedProfiles: {
       attack: 'unarmedAttack',

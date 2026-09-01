@@ -5,6 +5,7 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 // Recording only — `note` is a no-op unless a run door is open, so the
 // stampDeck calls that fire all climb long cost nothing.
 import { note } from './healLedger.js';
+import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -60,6 +61,41 @@ export function parseMod(str) {
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 export const HANDS = Object.freeze(['left', 'right']);
 export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
+export const ARMAMENT_INTRINSIC_STAT_FIELDS = Object.freeze([
+  'attackRating',
+  'defenseRating',
+  'weight',
+  'weaponArtManaCost',
+  'uniqueSkillStaminaCost',
+]);
+
+/**
+ * Validate presentation-only armament facts without folding them into card or
+ * combat math. Every field is explicit: absence is never interpreted as zero.
+ */
+export function armamentIntrinsicStatProblems(piece) {
+  const id = piece && piece.id || '?';
+  const problems = [];
+  for (const field of ARMAMENT_INTRINSIC_STAT_FIELDS) {
+    const value = piece && piece[field];
+    if (!Number.isInteger(value) || value < 0) {
+      problems.push(`${id}: ${field} must be an explicit non-negative integer`);
+    }
+  }
+  if (Number.isInteger(piece?.weight) && piece.weight !== piece.poiseThreshold) {
+    problems.push(`${id}: weight ${piece.weight} must equal authored poiseThreshold ${piece.poiseThreshold}`);
+  }
+  const isStaffTechnique = (piece?.itemTypeTags || []).includes('item:magic-focus')
+    && piece?.techniqueProfile === 'staffTechnique';
+  const expectedManaCost = isStaffTechnique ? 1 : 0;
+  if (piece?.weaponArtManaCost !== expectedManaCost) {
+    problems.push(`${id}: weaponArtManaCost must be ${expectedManaCost} for its authored item type and technique profile`);
+  }
+  if (piece?.uniqueSkillStaminaCost !== 0) {
+    problems.push(`${id}: uniqueSkillStaminaCost must remain 0 until an explicit unique-skill consumer exists`);
+  }
+  return problems;
+}
 // ---------------------------------------------------------------------------
 // The two `apply` vocabularies — one per mod scope (Viki, A8)
 // ---------------------------------------------------------------------------
@@ -139,18 +175,23 @@ export function fitsSlot(slot, piece) {
 }
 
 /** Resolve explicit item attribute minima. Missing attributes fail closed. */
-export function equipmentRequirementReceipt(registries, piece, attributes = {}) {
+export function equipmentRequirementReceipt(registries, piece, attributes = {}, { itemUpgradeLevels = {}, armamentLevels = {} } = {}) {
   if (!piece || typeof piece !== 'object') throw new Error('equipment requirement receipt needs a piece');
   const authored = (piece.requirements && piece.requirements.attributes) || {};
   const requirements = [];
   const failures = [];
+  const namespaced = itemUpgradeLevels?.[`armament/${piece.id}`];
+  const level = Number.isInteger(namespaced) ? namespaced
+    : Number.isInteger(armamentLevels?.[piece.id]) ? armamentLevels[piece.id] : 0;
   for (const [attributeId, required] of Object.entries(authored)) {
     if (!registries.attributes.has(attributeId)) throw new Error(`${piece.id}: unknown requirement attribute '${attributeId}'`);
     if (!Number.isInteger(required) || required < 0) throw new Error(`${piece.id}.${attributeId}: requirement minimum must be a non-negative integer`);
+    const delta = cumulativeRequirementDelta(registries, `armament/${piece.id}`, attributeId, level);
+    const effectiveRequired = Math.max(0, required + delta);
     const actual = attributes && attributes[attributeId];
-    const row = { attributeId, required, actual: Number.isFinite(actual) ? actual : null };
+    const row = { attributeId, baseRequired: required, reduction: -delta, required: effectiveRequired, actual: Number.isFinite(actual) ? actual : null };
     requirements.push(row);
-    if (!Number.isFinite(actual) || actual < required) failures.push(row);
+    if (!Number.isFinite(actual) || actual < effectiveRequired) failures.push(row);
   }
   return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
 }
@@ -220,6 +261,8 @@ export function validateEquipment(registries) {
   const tagIds = new Set((registries.tags || []).map((t) => t.id));
   const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
   if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
+
+  for (const piece of eq.armaments || []) problems.push(...armamentIntrinsicStatProblems(piece));
 
   if (profilesPresent) {
     if (!Array.isArray(eq.equipmentRequirements)) problems.push('equipmentRequirements.csv: missing generated table');
@@ -1067,7 +1110,12 @@ export function buildEquippedWeaponCardPlan(registries, loadout, classId, { atta
   let refs;
   if (twoHanded) refs = quotaRefs(registries, twoHanded, count);
   else if (eligible.length === 2) {
-    refs = [
+    // A shield owns a low fallback strike when it is the only armed hand, but
+    // never steals half the active attack package from a paired weapon. Two
+    // true weapons still split the authored attack slots deterministically.
+    const nonShield = eligible.filter((source) => source.piece?.kind !== 'shield');
+    if (nonShield.length === 1) refs = quotaRefs(registries, nonShield[0], count);
+    else refs = [
       ...quotaRefs(registries, right, Math.ceil(count / 2)),
       ...quotaRefs(registries, left, Math.floor(count / 2)),
     ];
@@ -1160,12 +1208,15 @@ export function equippedIn(registries, loadout, classId, slotId) {
 }
 
 /** Every currently-worn piece, in slot order — the order mods apply in. */
-export function equippedPieces(registries, loadout, classId) {
+export function equippedPieces(registries, loadout, classId, { itemUpgradeLevels = {} } = {}) {
   if (!loadout) return [];
   const out = [];
   for (const slot of (registries.equipment || {}).slots || []) {
     const piece = equippedIn(registries, loadout, classId, slot.id);
-    if (piece) out.push(piece);
+    if (piece && piece.kind === 'armor') {
+      const itemRef = `armor/${piece.classId}/${piece.id}`;
+      out.push(resolveUpgradedEquipment(registries, itemRef, itemUpgradeLevels[itemRef] || 0));
+    } else if (piece) out.push(piece);
   }
   return out;
 }
@@ -1587,7 +1638,9 @@ export function stampDeck(registries, run, cards, {
       const sourceArmamentId = row.piece && row.piece.id;
       if (sourceArmamentId) {
         inst.sourceArmamentId = sourceArmamentId;
-        inst.smithingLevel = (run.armamentLevels && run.armamentLevels[sourceArmamentId]) || 0;
+        inst.smithingLevel = run.itemUpgradeLevels?.[`armament/${sourceArmamentId}`]
+          ?? run.armamentLevels?.[sourceArmamentId]
+          ?? 0;
         // Equipment-bound basics derive their upgrade from the source piece.
         // Per-copy flags remain authoritative only for ordinary cards.
         inst.upgraded = false;
@@ -2214,7 +2267,7 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
     return false;
   }
   if (!owned.has(piece)) return false;
-  if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
+  if (!equipmentRequirementReceipt(registries, piece, ctx.attributes, { itemUpgradeLevels: ctx.itemUpgradeLevels, armamentLevels: ctx.armamentLevels }).ok) return false;
   const next = structuredClone(loadout);
   if (!applyEquipTransition(registries, next, slotId, setIndex, itemId)) return false;
   try {

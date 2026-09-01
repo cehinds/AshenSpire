@@ -6,21 +6,22 @@
 #
 # Four sets per class; exactly one per class starts unlocked (empty `unlock`).
 # plate/plateLt/leather/under  body palette (hex, no '#')
-# tags   granted while worn      mods   card rewrites (see weapons.csv)
+# tags   every row starts with item:armor; remaining tags are granted while worn
+# mods   card rewrites (see weapons.csv)
 id,classId,name,plate,plateLt,leather,under,tags,mods,unlock,blurb,poiseThreshold
-default,reaver,Wayfarer Plate,3E6157,64907F,4B3522,332A1E,guard,,,"The armour you were buried in.",8
-vigil,reaver,Ashen Vigil,302B25,4A433A,241C16,1A1712,guard|ash,defend.block=+2,beatStitchedKing,"Blackened at the court that broke.",7
-oathsworn,reaver,Gilded Oathsworn,B39C5E,E0CB8C,5A4626,3A3020,guard|oath,defend.block=+1|self.strength=+1,winAsReaver,"Kept bright by an oath unbroken.",9
-warden,reaver,Warden Mail,3F4C5A,64798E,3A3226,24272A,guard|heavy,defend.block=+3|strike.damage=-1,reachAshenCrown,"Issued, not chosen.",10
-default,starseer,Nightweave,17294F,26406E,4B3522,332A1E,starstone,,,"Dyed with the dark between stars.",3
-eclipse,starseer,Eclipse Habit,1C1A2E,2E2B47,2A2118,17151F,starstone|ritual,power.potency=+1,winAsStarseer,"Worn only when the moon is eaten.",4
-starlit,starseer,Starlit Silks,4A5E96,93AEE2,3A3226,242A40,starstone|flourish,strike.hits=+1|strike.damage=-1,beatFellWarden,"It catches light that is not there.",3
-astral,starseer,Astral Vestment,4E1747,9327A0,3A2E4A,241E33,starstone|oath,power.potency=+2|defend.block=-1,winTwice,"Cut for someone taller than you.",4
-default,herald,Rite Vestments,2E1F1F,3A2A2A,4B3522,241413,ritual,,,"Plain cloth, plainly kept.",5
-ossuary,herald,Ossuary Weave,3A3630,555047,2A2622,1E1B18,ritual|blight,strike.blight=+1,beatBlightedValkyrie,"Threaded through with quiet bone.",6
-emberhabit,herald,Emberlight Habit,6E3212,B4602A,3A2618,2A1C12,ritual|oath,power.potency=+1|self.regen=+1,beatKingAsHerald,"Warm long after the fire is out.",4
-pilgrim,herald,Pilgrim Wrap,44483A,747A5C,3A3226,2A2418,ritual|guard,defend.block=+2|self.maxHp=+4,reachStitchedCourt,"Road dust worked into the weave.",5
-default,rogue,Gutter Leathers,303A35,52665D,3C2E25,1D211F,flourish,,,"Quiet leather for a loud profession.",3
-nightveil,rogue,Nightveil Coat,20272A,3B4B4A,211F25,151719,flourish|ash,defend.block=+2,rogueBeatWarden,"Dark cloth that swallows the outline.",3
-duelist,rogue,Duelist Jerkin,46515A,78909A,43362C,25282A,flourish|pierce,strike.hits=+1|strike.damage=-1,winAsRogue,"Cut close so nothing catches the blade.",3
-shadow,rogue,Shadow Mantle,292136,534066,2A2430,17131F,flourish|venom,self.strength=+1,rogueReachCrown,"The hem remembers every alley.",4
+default,reaver,Wayfarer Plate,3E6157,64907F,4B3522,332A1E,item:armor|guard,,,"The armour you were buried in.",8
+vigil,reaver,Ashen Vigil,302B25,4A433A,241C16,1A1712,item:armor|guard|ash,defend.block=+2,beatStitchedKing,"Blackened at the court that broke.",7
+oathsworn,reaver,Gilded Oathsworn,B39C5E,E0CB8C,5A4626,3A3020,item:armor|guard|oath,defend.block=+1|self.strength=+1,winAsReaver,"Kept bright by an oath unbroken.",9
+warden,reaver,Warden Mail,3F4C5A,64798E,3A3226,24272A,item:armor|guard|heavy,defend.block=+3|strike.damage=-1,reachAshenCrown,"Issued, not chosen.",10
+default,starseer,Nightweave,17294F,26406E,4B3522,332A1E,item:armor|starstone,,,"Dyed with the dark between stars.",3
+eclipse,starseer,Eclipse Habit,1C1A2E,2E2B47,2A2118,17151F,item:armor|starstone|ritual,power.potency=+1,winAsStarseer,"Worn only when the moon is eaten.",4
+starlit,starseer,Starlit Silks,4A5E96,93AEE2,3A3226,242A40,item:armor|starstone|flourish,strike.hits=+1|strike.damage=-1,beatFellWarden,"It catches light that is not there.",3
+astral,starseer,Astral Vestment,4E1747,9327A0,3A2E4A,241E33,item:armor|starstone|oath,power.potency=+2|defend.block=-1,winTwice,"Cut for someone taller than you.",4
+default,herald,Rite Vestments,2E1F1F,3A2A2A,4B3522,241413,item:armor|ritual,,,"Plain cloth, plainly kept.",5
+ossuary,herald,Ossuary Weave,3A3630,555047,2A2622,1E1B18,item:armor|ritual|blight,strike.blight=+1,beatBlightedValkyrie,"Threaded through with quiet bone.",6
+emberhabit,herald,Emberlight Habit,6E3212,B4602A,3A2618,2A1C12,item:armor|ritual|oath,power.potency=+1|self.regen=+1,beatKingAsHerald,"Warm long after the fire is out.",4
+pilgrim,herald,Pilgrim Wrap,44483A,747A5C,3A3226,2A2418,item:armor|ritual|guard,defend.block=+2|self.maxHp=+4,reachStitchedCourt,"Road dust worked into the weave.",5
+default,rogue,Gutter Leathers,303A35,52665D,3C2E25,1D211F,item:armor|flourish,,,"Quiet leather for a loud profession.",3
+nightveil,rogue,Nightveil Coat,20272A,3B4B4A,211F25,151719,item:armor|flourish|ash,defend.block=+2,rogueBeatWarden,"Dark cloth that swallows the outline.",3
+duelist,rogue,Duelist Jerkin,46515A,78909A,43362C,25282A,item:armor|flourish|pierce,strike.hits=+1|strike.damage=-1,winAsRogue,"Cut close so nothing catches the blade.",3
+shadow,rogue,Shadow Mantle,292136,534066,2A2430,17131F,item:armor|flourish|venom,self.strength=+1,rogueReachCrown,"The hem remembers every alley.",4

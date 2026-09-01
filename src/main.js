@@ -1550,6 +1550,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
+      itemUpgradeLevels: run.itemUpgradeLevels,
       armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,
@@ -2089,6 +2090,7 @@ function coopShrineShot() {
     maxHp: run.maxHp,
     cinders: run.cinders,
     smithingStones: run.smithingStones,
+    itemUpgradeLevels: { ...(run.itemUpgradeLevels || {}) },
     armamentLevels: { ...run.armamentLevels },
     deckSize: run.deck.length,
   };

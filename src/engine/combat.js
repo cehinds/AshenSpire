@@ -73,15 +73,14 @@ export function createCombat({
   const poiseMax = Number.isInteger(player.poiseMax)
     ? player.poiseMax
     : (player.loadout
-      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId }).value
+      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {} }).value
       : 0);
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
-    // Smithing belongs to the armament, but combat can recompose sourced
-    // basics after a live equipment swap. Carry the run's tier authority into
-    // the fight so that recomposition cannot silently fall back to tier zero.
-    armamentLevels: structuredClone(player.armamentLevels || {}),
+    // Namespaced item tiers are the sole current authority. The legacy armament
+    // map is accepted only at the load/migration door, never written here.
+    itemUpgradeLevels: structuredClone(player.itemUpgradeLevels || {}),
     equipmentPoolDeficits: player.equipmentPoolDeficits
       ? { ...player.equipmentPoolDeficits }
       : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
@@ -107,6 +106,7 @@ export function createCombat({
       drawPerTurn: player.drawPerTurn,
       poiseMax,
       damageBySchoolAdd: player.damageBySchoolAdd || {},
+      itemUpgradeLevels: player.itemUpgradeLevels || {},
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
@@ -616,7 +616,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     loadout: combat.loadout,
     class: p.classId,
     attributes: combat.attributes,
-    armamentLevels: combat.armamentLevels,
+    itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
   };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
@@ -627,7 +627,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId }).value);
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {} }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
@@ -645,7 +645,7 @@ function effectiveCost(combat, def) {
   if (def.cost === 'X') return 'X';
   let cost = def.cost;
   if (def.type === 'power') {
-    cost = Math.max(0, cost - passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction'));
+    cost = Math.max(0, cost - passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}));
   }
   return cost;
 }
@@ -664,8 +664,10 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
   const manaCost = def.manaCost || 0;
+  const staminaCost = def.staminaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
+  if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
   let target = null;
   if (targetId != null) {
@@ -681,6 +683,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   if (cost > 0 || isX) combat.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
   if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
+  p.stamina -= staminaCost;
+  if (staminaCost > 0) combat.emit('staminaSpent', { amount: staminaCost });
 
   // Remove from hand; bump counters (used by predicates + formulas).
   combat.piles.hand.splice(idx, 1);
@@ -689,6 +693,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const meta = {
     energySpent: cost,
     manaSpent: manaCost,
+    staminaSpent: staminaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -718,6 +723,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisCombat: meta.ordinalThisCombat,
     energySpent: cost,
     manaSpent: manaCost,
+    staminaSpent: staminaCost,
   });
   drainQueue(combat);
 
@@ -906,6 +912,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     cost: shownCost,
     costIsX: isX,
     manaCost: def.manaCost || 0,
+    staminaCost: def.staminaCost || 0,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,

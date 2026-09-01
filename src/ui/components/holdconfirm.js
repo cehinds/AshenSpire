@@ -13,27 +13,22 @@
 //     WHICH ACTIONS TAKE A SECOND BEAT IS A CHARACTERISTIC ON THE ACTION,
 //     NEVER A LIST OF CALL SITES.
 //
-// So `applyBeat` is the door now, and no screen picks a form. A screen names
-// its action and hands over the commit; `model/secondbeat.js` says whether a
-// beat is owed and which one, and this file performs it. A screen CANNOT wire a
+// So `beatArmer` is the door now, and no screen picks an interaction. A screen
+// names its action and hands over the commit; `model/secondbeat.js` retains the
+// stakes/hazard classification, while this file applies the universal option
+// contract: tap reviews in the shared modal, deliberate hold commits directly.
+// A screen CANNOT wire a
 // hold to something the table has not ruled on — `beatFor` throws on an unknown
 // id — and it cannot quietly skip one either, because the control it draws
 // marks itself and an instrument reads the page back against the table.
 //
 // ---------------------------------------------------------------------------
-// TWO FORMS, BECAUSE THEY ANSWER TWO DIFFERENT MISTAKES.
+// TWO FORMS ON EVERY ROUTED OPTION, BECAUSE THEY SERVE TWO PLAYER INTENTS.
 //
-//   HOLD  — the finger missed. The control FILLS UNDER THE FINGER: the player
-//           reads the words that are filling, sees they are the wrong ones, and
-//           LETS GO. The correction happens inside the same gesture as the
-//           mistake. A modal asks "are you sure?" after the commit, when the
-//           eye has already moved to the next screen and the answer is always
-//           yes.
-//   CONFIRM — the finger landed where it aimed and THE OBJECT WAS WRONG.
-//           Holding is useless: a held wrong card still upgrades the wrong
-//           card. What the player needs is to SEE WHAT IT BECOMES and then say
-//           yes — which is exactly what Constantine asked for at the Smith, and
-//           what a hover-only preview never gave a phone.
+//   HOLD  — the experienced player deliberately approves without leaving the
+//           original control. The fill exposes progress and early release aborts.
+//   CONFIRM — the short activation opens the shared modal, showing the exact
+//           change and optional costs before the player approves it.
 //
 // THE FIVE THINGS THE HOLD MUST NEVER DO, each one a way this shape goes wrong:
 //
@@ -48,9 +43,9 @@
 //      same, in all instances. for ending turn, using flask, event choice,
 //      shrine rest." So `balance.ui.holdConfirm` — the dial that already
 //      existed — is the one switch, and when it is on, every one of those four
-//      actions holds on pointer, keyboard AND gamepad; when it is `off`, all
-//      four commit on one press on all three. There is no per-input rule and no
-//      per-action rule left to drift.
+//      actions holds on pointer, keyboard AND gamepad. When it is `off`, the
+//      shortcut is disabled and all three inputs still open the review modal.
+//      There is no per-input or per-action interaction rule left to drift.
 //
 //      WHAT IT REPLACED, kept because the reasoning was good and is no longer
 //      the ruling. This form used to refuse every non-pointer source on the
@@ -119,6 +114,7 @@ import { setActionControl, releaseActionControl } from '../input.js';
 import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { openConfirmationModal } from './confirmationModal.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
 export const HOLD_POINTER_SLOP = 12;
@@ -160,7 +156,7 @@ export function beatCue(phase, id, form) {
  */
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
-  feedbackHosts = null, pointerOnly = false,
+  feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -305,7 +301,8 @@ export function armHold(btn, {
             return true;
           }
           committedThisPress = true;
-          onConfirm(ev);
+          if (tapOnEarlyRelease && onTap) onTap(ev);
+          else onConfirm(ev);
           return true;
         },
       });
@@ -360,7 +357,18 @@ export function armHold(btn, {
       // thing — rule 1, inverted, which is the failure that looks exactly like
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
-      onEnd: () => { if (armed) stop('idle'); return true; },
+      onEnd: () => {
+        if (armed) {
+          stop('idle');
+          // Pointer taps finish through the browser's trailing click so the
+          // click can be swallowed in one place. Keyboard and controller
+          // releases have no click; option controls use this explicit seam to
+          // give a short press its authored tap meaning while a completed hold
+          // has already committed at full.
+          if (tapOnEarlyRelease && onTap && origin.source !== 'pointer') onTap(ev);
+        }
+        return true;
+      },
     });
     return true;
   }
@@ -386,7 +394,7 @@ export function armHold(btn, {
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
     if (ev.detail === 0) {
-      if (pointerOnly && onTap) onTap(ev);
+      if ((pointerOnly || tapOnEarlyRelease) && onTap) onTap(ev);
       else onConfirm(ev);
       return;
     }
@@ -895,26 +903,39 @@ export function beatArmer(meta, registries) {
     el.dataset.beatAction = actionId;
     const initial = beatFor(actionId, ctxOf());
     el.dataset.beat = initial.form;
+    el.dataset.optionDecision = actionId;
+    el.dataset.optionTap = 'modal';
+    el.dataset.optionHold = dialMs > 0 ? 'commit' : 'disabled';
 
-    if (initial.form === 'confirm') {
-      // A confirm is a screen-state change, not a timer, so the dial does not
-      // set its length — but `off` is still off: the player asked for one tap.
-      if (dialMs <= 0) {
-        const off = function disarmOff() { el.removeEventListener('click', onConfirm); };
-        off.refresh = () => {};
-        el.addEventListener('click', onConfirm);
-        return off;
-      }
-      const c = armConfirm(el, { question: question || `${initial.of}?`, detailHtml, confirmLabel, onConfirm, id: actionId });
-      c.refresh = () => {};
-      return c;
-    }
-
-    // HOLD and NONE share one path, because for a state-dependent action they
-    // are the SAME CONTROL at two moments. `armHold` reads the duration at
-    // pointerdown; a 0 means this press owes no beat and the click commits.
-    const ms = () => (formNow() === 'hold' ? dialMs : 0);
-    const disarm = armHold(el, { ms, onConfirm, id: actionId });
+    // Constantine's revised universal option contract: a short activation
+    // reviews, while a deliberate hold approves the exact same callback and
+    // skips the modal. The old beat classification remains published for
+    // stakes/audit context; it no longer chooses between incompatible UI
+    // forms. Every action routed through this door receives one interaction.
+    const review = () => {
+      const current = beatFor(actionId, ctxOf());
+      const authoredQuestion = typeof question === 'function' ? question() : question;
+      const authoredDetail = typeof detailHtml === 'function' ? detailHtml() : detailHtml;
+      openConfirmationModal({
+        title: authoredQuestion || `Confirm ${current.of}`,
+        message: authoredQuestion
+          ? 'Review this change before confirming, or go back without applying it.'
+          : `This action means ${current.of}. Review any visible cost or consequence before confirming.`,
+        consequence: current.undo === 'none' ? 'CANNOT BE UNDONE' : 'STATE CHANGE',
+        detailsHtml: authoredDetail || '',
+        confirmLabel: confirmLabel || 'Confirm change',
+        cancelLabel: 'Back',
+        onConfirm,
+        returnFocusElement: el,
+      });
+    };
+    const disarm = armHold(el, {
+      ms: dialMs,
+      onConfirm,
+      onTap: review,
+      tapOnEarlyRelease: true,
+      id: actionId,
+    });
     // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
     // never a list. Some actions are reached without the focus cursor at all —
     // End Turn is the shipped one: `.end-turn` matches input.js's CHROME
