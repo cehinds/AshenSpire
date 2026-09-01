@@ -12,6 +12,7 @@ import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
 import { sharedFrameworkBridge } from '../framework/bridge.js';
+import { createEntityTermOverlay } from '../framework/termOverlay.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -209,6 +210,11 @@ export function createRegistries(contentBundle) {
   // instance serves every registries object, and a plain property keeps it
   // visible to fixtures that clone registries with spread.
   registries.framework = sharedFrameworkBridge();
+
+  // Entity words (status/stance names and tooltips) resolve through a
+  // per-bundle framework TermRegistry — the same text verbatim, with the
+  // resolution authority moved to the framework (src/framework/termOverlay.js).
+  registries.frameworkTerms = createEntityTermOverlay(bundle);
 
   return Object.freeze(registries);
 }

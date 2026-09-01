@@ -593,9 +593,15 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
+      // Equipment-granted instances (grantedBy) are package outputs: the next
+      // authoritative reconcile would recreate the same deterministic id, so
+      // a removal here could never persist — they are not candidates.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card);
-      else if (eff.random) idx = run.deck.length ? Math.floor(ctx.rng.float('misc') * run.deck.length) : -1;
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !c.grantedBy);
+      else if (eff.random) {
+        const candidates = run.deck.map((c, i) => i).filter((i) => !run.deck[i].grantedBy);
+        idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
+      }
       if (idx >= 0) run.deck.splice(idx, 1);
       break;
     }
@@ -609,7 +615,11 @@ function runRunOpcode(ctx, action, eff) {
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck
-        .filter((card) => !card.sourceArmamentId && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        // Equipment-composed instances are excluded like sourceArmamentId
+        // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
+        // package on every reconcile, so a per-copy upgraded flag would not
+        // survive an unequip/re-equip — its upgrade rides the armament.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;

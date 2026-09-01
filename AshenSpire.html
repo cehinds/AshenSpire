@@ -30673,6 +30673,7 @@ const { deriveStat, resolveDerivedStatRules } = require("src/model/derivedStats.
 const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 const { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } = require("src/model/itemUpgrades.js");
 const { sharedFrameworkBridge } = require("src/framework/bridge.js");
+const { createEntityTermOverlay } = require("src/framework/termOverlay.js");
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -30871,6 +30872,11 @@ function createRegistries(contentBundle) {
   // visible to fixtures that clone registries with spread.
   registries.framework = sharedFrameworkBridge();
 
+  // Entity words (status/stance names and tooltips) resolve through a
+  // per-bundle framework TermRegistry — the same text verbatim, with the
+  // resolution authority moved to the framework (src/framework/termOverlay.js).
+  registries.frameworkTerms = createEntityTermOverlay(bundle);
+
   return Object.freeze(registries);
 }
 
@@ -31032,6 +31038,7 @@ const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
 // stampDeck calls that fire all climb long cost nothing.
 const { note } = require("src/model/healLedger.js");
 const { cumulativeRequirementDelta, resolveUpgradedEquipment } = require("src/model/itemUpgrades.js");
+const { splitAuthoredWeaponArts } = require("src/framework/deck.js");
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -32093,6 +32100,18 @@ const WeaponCardPackageModel = Object.freeze({
       grantedSeen.add(ref.cardId);
       return { cardId: ref.cardId, count };
     });
+    // Default weapon arts: real cards the armament installs (contract-new,
+    // dormant — no shipped armament authors any). Validated like grants.
+    const weaponArtsRaw = source.weaponArtDefaults == null ? [] : source.weaponArtDefaults;
+    if (!Array.isArray(weaponArtsRaw)) throw new Error(`${piece.id}: weaponArtDefaults must be an array`);
+    const artSeen = new Set();
+    const weaponArtDefaults = weaponArtsRaw.map((artId, index) => {
+      if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: weaponArtDefaults[${index}] must name a card id`);
+      if (!registries.cards.has(artId)) throw new Error(`${piece.id}: weapon art '${artId}' is unknown`);
+      if (artSeen.has(artId)) throw new Error(`${piece.id}: duplicate weapon art '${artId}'`);
+      artSeen.add(artId);
+      return artId;
+    });
     const seen = new Set();
     const priorities = priorityAttackRefs.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -32112,6 +32131,7 @@ const WeaponCardPackageModel = Object.freeze({
       handsRequired,
       priorityAttackRefs: Object.freeze(priorities),
       grantedCards: Object.freeze(grantedCards),
+      weaponArtDefaults: Object.freeze(weaponArtDefaults),
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
     });
@@ -32237,19 +32257,98 @@ function startingDeckRefs(registries, loadout, classId) {
     }
   }
   for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
-  // Granted cards ride each equipped hand's package after the role slots
-  // (contract-new output on the adopted composer). Dormant today: no shipped
-  // armament authors grantedCards, so this appends nothing. `grantedBy` marks
-  // the source armament for the future swap-time recomposition of grants.
+  return refs;
+}
+
+/**
+ * Granted cards and default weapon arts reconcile against the EQUIPPED
+ * packages on every authoritative restamp (contract-new outputs on the
+ * adopted composer; dormant while no shipped armament authors either).
+ * Deterministic instance ids make the reconcile idempotent and save-stable;
+ * an instance whose armament left the hands leaves the deck with it.
+ */
+function reconcileGrantedCards(registries, run) {
+  if (!run.deck) run.deck = [];
+  const desired = desiredGrantInstances(registries, run);
+  const wanted = new Set(desired.map((d) => d.instanceId));
+  const present = new Set();
+  // In place, not a reassignment: stampDeck captures its stamping list before
+  // reconciling, so an appended instance must land in the SAME array to flow
+  // through the carrier/mod stamping that follows.
+  const kept = run.deck.filter((inst) => {
+    if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+    if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
+    return false;
+  });
+  run.deck.length = 0;
+  run.deck.push(...kept);
+  for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
+  return run.deck;
+}
+
+/**
+ * The desired granted/weaponArt instances for the CURRENTLY equipped hands.
+ * Grants concatenate right then left (the contract model authors no dedup for
+ * them); weapon arts with both hands armed go through the framework's
+ * splitAuthoredWeaponArts — quota split, unique preference RIGHT_THEN_LEFT —
+ * so an art both weapons author installs once, attributed to the winning hand.
+ */
+function desiredGrantInstances(registries, run) {
+  const sources = { right: null, left: null };
   for (const hand of ['right', 'left']) {
-    const source = handSource(registries, loadout, classId, hand);
-    for (const grant of source.package ? source.package.grantedCards : []) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    if (source.package) sources[hand] = source;
+  }
+  const desired = [];
+  for (const hand of ['right', 'left']) {
+    const source = sources[hand];
+    if (!source) continue;
+    for (const grant of source.package.grantedCards) {
       for (let i = 0; i < grant.count; i++) {
-        refs.push({ cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId });
+        desired.push({
+          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
+          cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+        });
       }
     }
   }
-  return refs;
+  const arts = sources.right && sources.left
+    ? splitAuthoredWeaponArts(sources.right.package.weaponArtDefaults, sources.left.package.weaponArtDefaults)
+    : ['right', 'left'].flatMap((hand) => (sources[hand]
+      ? sources[hand].package.weaponArtDefaults.map((id) => ({ id, hand }))
+      : []));
+  for (const art of arts) {
+    const weaponId = sources[art.hand].package.weaponId;
+    desired.push({
+      instanceId: `weaponArt:${weaponId}:${art.id}`,
+      cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
+    });
+  }
+  return desired;
+}
+
+/**
+ * The same reconcile at the ONE mid-fight door equipment moves through: the
+ * combat piles are the deck while a fight is on, so a swap sweeps stale
+ * granted/weaponArt instances out of every pile (hand included — an instance
+ * whose armament left the hands leaves with it) and lands missing ones in the
+ * discard pile, where the engine's addCard effect puts mid-combat additions.
+ * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
+ */
+function reconcileGrantedCardsInCombat(registries, run, piles) {
+  const desired = desiredGrantInstances(registries, run);
+  const wanted = new Set(desired.map((d) => d.instanceId));
+  const present = new Set();
+  for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
+    const kept = pile.filter((inst) => {
+      if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+      if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
+      return false;
+    });
+    pile.length = 0;
+    pile.push(...kept);
+  }
+  for (const d of desired) if (!present.has(d.instanceId)) piles.discard.push(d);
 }
 
 /** The piece in a slot's active set, or null. Armour resolves per class. */
@@ -32674,6 +32773,11 @@ function stampDeck(registries, run, cards, {
     }
   }
   applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
+  // Only the authoritative full-deck restamp reconciles granted/weapon-art
+  // instances — a pile subset must never mint or drop them. Reconciling
+  // BEFORE the stamping loop (in place — list IS run.deck here) means a
+  // newly composed instance is stamped like any other card below.
+  if (cards == null) reconcileGrantedCards(registries, run);
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
@@ -33342,7 +33446,258 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckRefs, reconcileGrantedCards, reconcileGrantedCardsInCombat, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+
+},
+"src/framework/deck.js": function (module, exports, require) {
+// src/framework/deck.js — deterministic, idempotent combat-deck composition
+// (framework contract: Deck composition, Unarmed fallback).
+//
+// THE CONTRACT MODEL — THE SPECIFICATION, NOT THE COMPOSER. By owner ruling
+// (2026-09-01, docs/framework-cutover-report.md) the framework ADOPTED the
+// shipped composition as its implementation: src/framework/deckComposition.js
+// is the door, re-exporting WeaponDeckCompositionService (attack slots —
+// ceil/floor hand split, two-handed conflicts, unarmed attack fallback,
+// deterministic fingerprints, shield/priority-ref rules) and the role plan
+// (equipmentKitPlan → startingDeckRefs at creation, re-resolved by stampDeck
+// on swap/load) for guard/technique replacement. The contract-NEW outputs
+// this module specifies — granted cards, installed weapon arts, the unarmed
+// Evasive Guard / Dodge Roll fallback package — exist in no legacy path yet
+// and are the open build work on top of that adoption.
+//
+// Recomposition runs on equip, unequip, hand swap, character creation, load,
+// continue, and save restoration — always from the run deck plus the loadout,
+// never from a previous composition, which is what makes it idempotent.
+
+const { mechanics } = require("src/framework/data/mechanics.js");
+
+class DeckError extends Error {
+  constructor(message) { super(`deck: ${message}`); this.name = 'DeckError'; }
+}
+
+/**
+ * A weapon card plan: which strike/guard cards replace remaining basic slots
+ * and which weapon arts install. Weapon package shape (EquipmentCardPackage):
+ * { strikeCardId?, guardCardId?, grantedCards: [{cardId, count}], weaponArtDefaults: [cardId] }.
+ */
+function buildEquippedWeaponCardPlan(loadout, { packageFor }) {
+  const weapons = validEquippedWeapons(loadout);
+  if (weapons.length === 0) {
+    return {
+      strikes: [mechanics.unarmedPackage.strikeCardId],
+      guards: [mechanics.unarmedPackage.guardCardId],
+      granted: [],
+      weaponArts: [mechanics.unarmedPackage.emptySlotWeaponArtId],
+      source: 'unarmed',
+    };
+  }
+  if (weapons.length === 1) {
+    // A left-hand-only weapon receives the complete package exactly as it
+    // would in the right hand.
+    const pkg = requirePackage(packageFor, weapons[0].equipmentId);
+    return planFromPackages([{ hand: weapons[0].hand, pkg }], null);
+  }
+  const right = weapons.find((w) => w.hand === 'right');
+  const left = weapons.find((w) => w.hand === 'left');
+  if (!right || !left) throw new DeckError('two weapons must occupy distinct hands');
+  return planFromPackages(
+    [{ hand: 'right', pkg: requirePackage(packageFor, right.equipmentId) }],
+    { hand: 'left', pkg: requirePackage(packageFor, left.equipmentId) },
+  );
+}
+
+function requirePackage(packageFor, equipmentId) {
+  const pkg = packageFor(equipmentId);
+  if (!pkg) throw new DeckError(`equipment ${equipmentId} has no card package`);
+  return pkg;
+}
+
+function planFromPackages(primaryList, secondary) {
+  const primary = primaryList[0].pkg;
+  if (!secondary) {
+    return {
+      strikes: primary.strikeCardId ? [primary.strikeCardId] : [mechanics.unarmedPackage.strikeCardId],
+      guards: primary.guardCardId ? [primary.guardCardId] : [mechanics.unarmedPackage.guardCardId],
+      granted: [...(primary.grantedCards || [])],
+      weaponArts: [...(primary.weaponArtDefaults || [])],
+      source: 'single',
+    };
+  }
+  // Two weapons: authored slots split ceil/floor with unique preference
+  // RIGHT_THEN_LEFT (framework contract: splitAuthoredSlots).
+  const rightPkg = primary;
+  const leftPkg = secondary.pkg;
+  const strikes = [rightPkg.strikeCardId, leftPkg.strikeCardId].filter(Boolean);
+  const guards = [rightPkg.guardCardId, leftPkg.guardCardId].filter(Boolean);
+  const arts = splitAuthoredWeaponArts(rightPkg.weaponArtDefaults || [], leftPkg.weaponArtDefaults || []);
+  return {
+    strikes: strikes.length ? strikes : [mechanics.unarmedPackage.strikeCardId],
+    guards: guards.length ? guards : [mechanics.unarmedPackage.guardCardId],
+    granted: [...(rightPkg.grantedCards || []), ...(leftPkg.grantedCards || [])],
+    weaponArts: arts.map((art) => art.id),
+    source: 'dual',
+  };
+}
+
+/**
+ * The dual-wield weapon-art split, kept in one home: ceil/floor slot quotas
+ * with unique preference RIGHT_THEN_LEFT — right picks first, so a duplicate
+ * art deterministically survives on the right. Returns [{id, hand}] in
+ * installed order (right's picks, then left's), so callers that attribute an
+ * instance to the armament that owns it get the winning hand.
+ */
+function splitAuthoredWeaponArts(rightArtIds, leftArtIds) {
+  const pool = [
+    ...rightArtIds.map((id) => ({ id, hand: 'right' })),
+    ...leftArtIds.map((id) => ({ id, hand: 'left' })),
+  ];
+  const totalSlots = pool.length;
+  const rightQuota = Math.ceil(totalSlots / 2);
+  const leftQuota = Math.floor(totalSlots / 2);
+  const seen = new Set();
+  const take = (hand, quota) => {
+    const taken = [];
+    for (const art of pool) {
+      if (taken.length >= quota) break;
+      if (art.hand !== hand || seen.has(art.id)) continue;
+      seen.add(art.id);
+      taken.push({ id: art.id, hand });
+    }
+    return taken;
+  };
+  return [...take('right', rightQuota), ...take('left', leftQuota)];
+}
+
+function validEquippedWeapons(loadout) {
+  const out = [];
+  if (loadout.rightHand) out.push({ hand: 'right', equipmentId: loadout.rightHand });
+  if (loadout.leftHand) out.push({ hand: 'left', equipmentId: loadout.leftHand });
+  return out;
+}
+
+/**
+ * composeCombatDeck(runDeck, loadout, {packageFor, isBasicStrike, isBasicGuard})
+ * runDeck: [{instanceId, cardId, upgraded?}] — earned cards and permanent
+ * upgrades ride through untouched; only remaining BASIC strike/guard slots are
+ * replaced, cycling through the plan's replacements in slot order.
+ */
+function composeCombatDeck(runDeck, loadout, helpers) {
+  const { isBasicStrike, isBasicGuard } = helpers;
+  const plan = buildEquippedWeaponCardPlan(loadout, helpers);
+  let strikeIndex = 0;
+  let guardIndex = 0;
+  const cards = runDeck.map((slot) => {
+    if (isBasicStrike(slot.cardId)) {
+      const cardId = plan.strikes[strikeIndex % plan.strikes.length];
+      strikeIndex += 1;
+      return { ...slot, cardId, replacedFrom: slot.cardId };
+    }
+    if (isBasicGuard(slot.cardId)) {
+      const cardId = plan.guards[guardIndex % plan.guards.length];
+      guardIndex += 1;
+      return { ...slot, cardId, replacedFrom: slot.cardId };
+    }
+    return { ...slot }; // unrelated earned cards and permanent upgrades preserved
+  });
+  for (const grant of plan.granted) {
+    for (let i = 0; i < (grant.count || 1); i += 1) {
+      cards.push({ instanceId: `${grant.cardId}#granted${i}`, cardId: grant.cardId, granted: true });
+    }
+  }
+  return Object.freeze({
+    cards: Object.freeze(cards),
+    installedWeaponArts: Object.freeze([...plan.weaponArts]),
+    plan,
+  });
+}
+
+
+Object.assign(module.exports, { DeckError, buildEquippedWeaponCardPlan, splitAuthoredWeaponArts, validEquippedWeapons, composeCombatDeck });
+
+},
+"src/framework/data/mechanics.js": function (module, exports, require) {
+// GENERATED by tools/framework-data-build.mjs from content/framework/mechanics.json
+// Do not edit by hand — edit the source file and re-run the build.
+
+const mechanics = {
+  "comment": "Approved new-rule numbers as validated data (framework contract sections: Mana and Stamina, Weight Class and Dodge Roll, Unarmed fallback, Deck composition). No formula constant lives in code.",
+  "mana": {
+    "wisdomWeight": 1,
+    "intelligenceWeight": 0.5,
+    "naturalRecoveryPerTurn": 0,
+    "restSpotRefill": "full"
+  },
+  "stamina": {
+    "idleRecoveryPerTurn": 1,
+    "refundErasesSpend": false
+  },
+  "weight": {
+    "capacityBase": 50,
+    "capacityPerConstitution": 2,
+    "capacityPerStrength": 1,
+    "classes": [
+      {
+        "id": "light",
+        "termId": "term.weightLight",
+        "maxLoadPercent": 49,
+        "evasionModifier": 3,
+        "temporaryGuardModifier": 3,
+        "extraEligibleDexterityCards": 1,
+        "extraPhysicalAttacks": 0,
+        "dodgeStaminaCost": 1,
+        "dodgeActionCost": 0
+      },
+      {
+        "id": "medium",
+        "termId": "term.weightMedium",
+        "maxLoadPercent": 79,
+        "evasionModifier": 1,
+        "temporaryGuardModifier": 1,
+        "extraEligibleDexterityCards": 0,
+        "extraPhysicalAttacks": 0,
+        "dodgeStaminaCost": 2,
+        "dodgeActionCost": 1
+      },
+      {
+        "id": "heavy",
+        "termId": "term.weightHeavy",
+        "maxLoadPercent": 100,
+        "evasionModifier": -3,
+        "temporaryGuardModifier": 0,
+        "extraEligibleDexterityCards": 0,
+        "extraPhysicalAttacks": 1,
+        "dodgeStaminaCost": 3,
+        "dodgeActionCost": 2
+      }
+    ]
+  },
+  "dodgeRoll": {
+    "die": 20,
+    "baseDifficulty": 10,
+    "temporaryGuardBase": 3
+  },
+  "unarmedPackage": {
+    "strikeCardId": "framework.unarmedStrike",
+    "guardCardId": "framework.evasiveGuard",
+    "emptySlotWeaponArtId": "framework.dodgeRoll"
+  },
+  "deckComposition": {
+    "uniquePreference": "RIGHT_THEN_LEFT"
+  },
+  "sourcePrecedence": [
+    "TEMPORARY_COMBAT_RESTRICTION",
+    "EXPLICIT_CARD_EXCEPTION",
+    "RUNE",
+    "EQUIPMENT",
+    "CLASS",
+    "RELIC",
+    "PROPERTY_DEFAULT",
+    "SYSTEM_FALLBACK"
+  ]
+};
+
+
+Object.assign(module.exports, { mechanics });
 
 },
 "src/model/relicModifiers.js": function (module, exports, require) {
@@ -36148,6 +36503,63 @@ function payAlternativeCost(card, option, wallet, { confirmTarget = () => true }
 Object.assign(module.exports, { CostError, repeatLimiters, compileCosts, payAlternativeCost });
 
 },
+"src/framework/termOverlay.js": function (module, exports, require) {
+// src/framework/termOverlay.js — per-bundle term authority for entity words
+// (framework contract: Terminology and assets — ALWAYS resolve words through
+// TermRegistry).
+//
+// The shared bridge reads only canonical framework data, so entity NAMES and
+// TOOLTIPS (statuses, stances) need a registry built from the same bundle the
+// legacy registries were built from — that is what keeps probe/fixture
+// bundles working and keeps one authority per registries instance. Rows use
+// the importer's naming scheme (term.entity.<kind>.<id>.<field>) with the
+// bundle's text VERBATIM, so display strings cannot drift from the shipped
+// content while the resolution authority moves to the framework.
+
+const { TermRegistry } = require("src/framework/registries.js");
+
+function entityTermRows(kind, rows) {
+  const terms = [];
+  for (const row of rows || []) {
+    if (!row || !row.id || typeof row.name !== 'string' || !row.name) continue;
+    terms.push({ id: `term.entity.${kind}.${row.id}.name`, canonicalText: row.name });
+    if (typeof row.tooltip === 'string' && row.tooltip) {
+      terms.push({ id: `term.entity.${kind}.${row.id}.tooltip`, canonicalText: row.tooltip });
+    }
+  }
+  return terms;
+}
+
+/**
+ * createEntityTermOverlay(bundle) → frozen display resolvers for the bundle's
+ * statuses and stances. A display returns null for an unknown id and omits
+ * `tooltip` where the entity authored none — callers keep their existing
+ * skip behavior.
+ */
+function createEntityTermOverlay(bundle) {
+  const terms = new TermRegistry([
+    ...entityTermRows('status', bundle.statuses),
+    ...entityTermRows('stance', bundle.stances),
+  ]);
+  const display = (kind) => (id) => {
+    const nameId = `term.entity.${kind}.${id}.name`;
+    if (!terms.has(nameId)) return null;
+    const tooltipId = `term.entity.${kind}.${id}.tooltip`;
+    return {
+      name: terms.displayTerm(nameId),
+      ...(terms.has(tooltipId) ? { tooltip: terms.displayTerm(tooltipId) } : {}),
+    };
+  };
+  return Object.freeze({
+    statusDisplay: display('status'),
+    stanceDisplay: display('stance'),
+  });
+}
+
+
+Object.assign(module.exports, { createEntityTermOverlay });
+
+},
 "src/model/state.js": function (module, exports, require) {
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
@@ -38525,7 +38937,7 @@ const { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax }
 const { playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
 const { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } = require("src/model/loadout.js");
 // Deck restamping goes through the framework's adopted composition door.
-const { stampDeck } = require("src/framework/deckComposition.js");
+const { stampDeck, reconcileGrantedCardsInCombat } = require("src/framework/deckComposition.js");
 const { chargeFlaskId } = require("src/model/gracerefill.js");
 
 const QUEUE_GUARD = 10000;
@@ -39125,6 +39537,12 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
   };
+  // Pile stamps are subset calls, so granted/weaponArt instances reconcile
+  // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
+  // pile, the swapped-in armament's land in the discard pile — and then get
+  // carrier/mod-stamped by the pile pass like every other card (dormant while
+  // no shipped armament authors either).
+  reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The vessel keeps telling the truth across the ONE mid-fight door equipment
@@ -40070,9 +40488,15 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
+      // Equipment-granted instances (grantedBy) are package outputs: the next
+      // authoritative reconcile would recreate the same deterministic id, so
+      // a removal here could never persist — they are not candidates.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card);
-      else if (eff.random) idx = run.deck.length ? Math.floor(ctx.rng.float('misc') * run.deck.length) : -1;
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !c.grantedBy);
+      else if (eff.random) {
+        const candidates = run.deck.map((c, i) => i).filter((i) => !run.deck[i].grantedBy);
+        idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
+      }
       if (idx >= 0) run.deck.splice(idx, 1);
       break;
     }
@@ -40086,7 +40510,11 @@ function runRunOpcode(ctx, action, eff) {
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck
-        .filter((card) => !card.sourceArmamentId && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        // Equipment-composed instances are excluded like sourceArmamentId
+        // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
+        // package on every reconcile, so a per-copy upgraded flag would not
+        // survive an unequip/re-equip — its upgrade rides the armament.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
@@ -41019,7 +41447,9 @@ Object.assign(module.exports, { playerPoiseThresholdReceipt, statProjection });
 
 // (Plain import-then-export consts: the standalone bundler rewrites modules
 // and does not handle the `export { … } from` re-export form.)
-const { WeaponDeckCompositionService: adoptedService, buildEquippedWeaponCardPlan: adoptedBuildPlan, applyEquippedWeaponCardPlan: adoptedApplyPlan, WeaponCardPackageModel: adoptedPackageModel, startingDeckRefs: adoptedStartingDeckRefs, stampDeck: adoptedStampDeck } = require("src/model/loadout.js");
+const { WeaponDeckCompositionService: adoptedService, buildEquippedWeaponCardPlan: adoptedBuildPlan, applyEquippedWeaponCardPlan: adoptedApplyPlan, WeaponCardPackageModel: adoptedPackageModel, startingDeckRefs: adoptedStartingDeckRefs, stampDeck: adoptedStampDeck, reconcileGrantedCards: adoptedReconcileGrantedCards, reconcileGrantedCardsInCombat: adoptedReconcileGrantedCardsInCombat } = require("src/model/loadout.js");
+
+
 
 
 
@@ -41034,9 +41464,11 @@ const applyEquippedWeaponCardPlan = adoptedApplyPlan;
 const WeaponCardPackageModel = adoptedPackageModel;
 const startingDeckRefs = adoptedStartingDeckRefs;
 const stampDeck = adoptedStampDeck;
+const reconcileGrantedCards = adoptedReconcileGrantedCards;
+const reconcileGrantedCardsInCombat = adoptedReconcileGrantedCardsInCombat;
 
 
-Object.assign(module.exports, { WeaponDeckCompositionService, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponCardPackageModel, startingDeckRefs, stampDeck });
+Object.assign(module.exports, { WeaponDeckCompositionService, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponCardPackageModel, startingDeckRefs, stampDeck, reconcileGrantedCards, reconcileGrantedCardsInCombat });
 
 },
 "src/engine/combatSnapshot.js": function (module, exports, require) {
@@ -41826,7 +42258,7 @@ const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFl
 const { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } = require("src/model/loadout.js");
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
-const { stampDeck, WeaponDeckCompositionService } = require("src/framework/deckComposition.js");
+const { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } = require("src/framework/deckComposition.js");
 const { initializeRunSmithing } = require("src/model/smithing.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
@@ -41925,8 +42357,9 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
       throw new Error(`combat snapshot item upgrade level '${itemRef}' disagrees with the run`);
     }
   }
-  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
-  const attacks = cards.filter((card) => card.equipmentRole === 'attack');
+  const attacks = COMBAT_SNAPSHOT_PILE_ORDER
+    .flatMap((pile) => snapshot.piles[pile])
+    .filter((card) => card.equipmentRole === 'attack');
 
   if (snapshot.loadout === null) {
     if (attacks.length) throw new Error('combat snapshot has generated attack slots but no authoritative loadout');
@@ -41934,6 +42367,14 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   }
 
   const classId = snapshot.player?.classId || run.class;
+  // Reconcile granted/weaponArt instances BEFORE flattening for the stamp:
+  // the pile stamp below is a subset call, and a package whose grants or arts
+  // changed between save and load must sweep stale instances out of the
+  // resumed fight and land newly-granted ones in the discard pile — stamped
+  // by the same pass as every other card. The same door a live mid-combat
+  // swap goes through.
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
+  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
   // Full-pile order is the one legacy assignment door: draw, hand, discard,
   // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
@@ -48093,7 +48534,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a52dc2595a';
+const SOURCE = '8e804a8453';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48127,7 +48568,7 @@ const SOURCE = 'a52dc2595a';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1896';
+const ORDINAL = '1901';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58227,13 +58668,16 @@ function cardTooltip(registries, def, tokens) {
     if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
   }
   for (const eff of def.effects || []) {
-    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
-      const s = registries.statuses.get(eff.status);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    // Status/stance WORDS resolve through the per-bundle framework term
+    // overlay — verbatim text, framework authority. Unknown ids and
+    // tooltip-less entities keep their existing skip behavior.
+    if (eff.op === 'applyStatus') {
+      const s = registries.frameworkTerms.statusDisplay(eff.status);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
-    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
-      const s = registries.stances.get(eff.stance);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    if (eff.op === 'enterStance') {
+      const s = registries.frameworkTerms.stanceDisplay(eff.stance);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
   }
   if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
@@ -67013,7 +67457,8 @@ Object.assign(module.exports, { smithSelectionModel });
 const { assetUrl } = require("src/ui/assetmap.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { renderCard } = require("src/ui/components/card.js");
-const { armOptionDecision } = require("src/ui/components/optionDecision.js");
+// The interaction router goes through the framework's adopted door.
+const { armOptionDecision } = require("src/framework/optionDecision.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
@@ -67312,6 +67757,26 @@ function mountSmithUpgradeModal(host, initialModel, {
 Object.assign(module.exports, { mountSmithUpgradeModal });
 
 },
+"src/framework/optionDecision.js": function (module, exports, require) {
+// src/framework/optionDecision.js — the framework's ADOPTED option-decision
+// interaction router (shared presentation tranche; same adoption pattern as
+// deckComposition.js and confirmationRule.js).
+//
+// The tap-to-review vs hold-to-commit surface every routed action uses lives
+// in src/ui/components/optionDecision.js; this door makes the framework the
+// authority boundary consumers import it through. One implementation, one
+// home. Its LEVEL rule for effect-carrying choices is the adopted fail-closed
+// derivation (src/framework/confirmationRule.js); its static severities come
+// from the ConfirmationRegistry.
+
+const { armOptionDecision: adoptedArmOptionDecision } = require("src/ui/components/optionDecision.js");
+
+const armOptionDecision = adoptedArmOptionDecision;
+
+
+Object.assign(module.exports, { armOptionDecision });
+
+},
 "src/ui/components/optionDecision.js": function (module, exports, require) {
 // One interaction contract for state-changing options:
 //   short click/press -> review the exact consequence and optional cost
@@ -67580,6 +68045,10 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
         run.deck.forEach((inst, idx) => {
+          // An equipment-granted instance (grantedBy) is a package output the
+          // next authoritative reconcile would recreate under the same id —
+          // selling its removal would charge cinders for nothing.
+          if (inst.grantedBy) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
           arm(el, 'shopRemove', {

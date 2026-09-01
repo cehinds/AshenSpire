@@ -202,6 +202,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
         run.deck.forEach((inst, idx) => {
+          // An equipment-granted instance (grantedBy) is a package output the
+          // next authoritative reconcile would recreate under the same id —
+          // selling its removal would charge cinders for nothing.
+          if (inst.grantedBy) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
           arm(el, 'shopRemove', {
