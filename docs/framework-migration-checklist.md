@@ -44,7 +44,7 @@ no shipped content or screen yet · **PARTIAL** · **NOT BUILT**.
 | 3 | Rarity ladder omits `uncommon`/`starter`/`special`/`boss` | ADOPT the union as the canonical ladder (`schema.js`): STARTER, BASIC, COMMON, UNCOMMON, RARE, SPECIAL, LEGENDARY, MYTHIC, BOSS. |
 | 4 | `power`/`curse`/`status` types and `X` costs outside the contract model | ADOPT as classification properties and `{amount: 0, variable: true}` — already implemented; recorded as the ruling. |
 | 5 | `staff` armaments have no category | ADOPT `STAFF` as a category; the importer maps the kind. |
-| 6 | Starting-resource feasibility & Guard stacking need balance validation | MEASURED on #520 (not yet merged): capacity base 50 made the Weight Class unreachable for every kit; retuned to 5 with the census tables at the number. Guard stacking: unchanged legacy block rules; the dodge's temporary guard lands as Block through the same door. |
+| 6 | Starting-resource feasibility & Guard stacking need balance validation | MEASURED on #520 (not yet merged): capacity base 50 made the Weight Class unreachable for every kit; retuned — the number and its census evidence live in `mechanics.json`'s `capacityBaseNote` and `tools/weightclass-census.mjs`, not here. Guard stacking: unchanged legacy block rules; the dodge's temporary guard lands as Block through the same door. |
 | 7 | Baseline red (test 19) | RESOLVED upstream (#507). |
 
 Also resolved here: #484 — `hpPerConTier` was authored on every class and read by nothing; removed (the smaller act the card named), gate and tool updated.

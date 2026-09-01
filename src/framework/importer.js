@@ -227,8 +227,28 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   }
 
   // ---- armaments and armour ------------------------------------------------
+  // The three contract numbers an armament carries into the framework are
+  // validated HERE, at the import boundary, because the gate's schema checks
+  // never look inside explicitOverrides: a missing or non-numeric weight would
+  // otherwise pass the cutover clean and surface as NaN in the equip load.
+  const armamentInteger = (piece, field) => {
+    const value = piece[field];
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`importer: armament '${piece.id}' ${field} must be a non-negative integer, got ${JSON.stringify(value)}`);
+    }
+    return value;
+  };
   for (const piece of bundle.equipment.armaments) {
     const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
+    const weight = armamentInteger(piece, 'weight');
+    const attackRating = armamentInteger(piece, 'attackRating');
+    const defenseRating = armamentInteger(piece, 'defenseRating');
+    // The legacy identity (armamentIntrinsicStatProblems): an armament's
+    // weight IS its authored poise threshold. A row where they differ is a
+    // typo in one column, not a new rule.
+    if (piece.poiseThreshold !== weight) {
+      throw new Error(`importer: armament '${piece.id}' weight ${weight} must equal its poiseThreshold ${JSON.stringify(piece.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -258,9 +278,9 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         // poiseThreshold (armamentIntrinsicStatProblems). Nothing in the
         // running game reads these yet — the Weight Class service stays
         // dormant until it is wired — so this is data flow, not behavior.
-        itemWeight: piece.weight,
-        attackRatingBonus: piece.attackRating,
-        defenseRating: piece.defenseRating,
+        itemWeight: weight,
+        attackRatingBonus: attackRating,
+        defenseRating,
       },
     });
   }

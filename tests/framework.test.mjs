@@ -6,6 +6,7 @@
 // observed red by name, never assumed.
 
 import { contentBundle } from '../src/content/index.js';
+import { importLegacyContent } from '../src/framework/importer.js';
 import {
   createFrameworkRegistries, TermRegistry, AssetRegistry,
 } from '../src/framework/registries.js';
@@ -524,6 +525,24 @@ test('compiled tooltips resolve every word through TermRegistry', () => {
 
 const { createRegistries, resolveCard } = await import('../src/model/registries.js');
 const LEGACY_REG = createRegistries(contentBundle);
+
+// The import boundary refuses a malformed armament row instead of carrying it
+// into a candidate the gate would then call clean (review on #519).
+function withArmament(patch) {
+  const [first, ...rest] = contentBundle.equipment.armaments;
+  return { ...contentBundle, equipment: { ...contentBundle.equipment, armaments: [{ ...first, ...patch }, ...rest] } };
+}
+test('importer refuses an armament whose weight is missing, non-numeric, negative, or not its poise threshold', () => {
+  const first = contentBundle.equipment.armaments[0];
+  assertThrows(() => importLegacyContent(withArmament({ weight: undefined })), /weight must be a non-negative integer/, 'missing weight');
+  assertThrows(() => importLegacyContent(withArmament({ weight: 'heavy' })), /weight must be a non-negative integer/, 'non-numeric weight');
+  assertThrows(() => importLegacyContent(withArmament({ attackRating: -1 })), /attackRating must be a non-negative integer/, 'negative attackRating');
+  assertThrows(() => importLegacyContent(withArmament({ defenseRating: 1.5 })), /defenseRating must be a non-negative integer/, 'fractional defenseRating');
+  assertThrows(() => importLegacyContent(withArmament({ weight: first.weight + 1 })), /must equal its poiseThreshold/, 'weight off its poise threshold');
+  const ok = importLegacyContent(contentBundle);
+  const imported = ok.entities.find((e) => e.explicitOverrides && e.explicitOverrides.legacyId === first.id);
+  assert(imported && imported.explicitOverrides.itemWeight === first.weight, 'the well-formed row still imports its weight');
+});
 
 test('bridge decisions match the legacy keyword rules for every card, base and upgraded', () => {
   const bridge = LEGACY_REG.framework;
