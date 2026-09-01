@@ -48704,7 +48704,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f8969a63cf';
+const SOURCE = '6a8d3b5f35';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48738,7 +48738,7 @@ const SOURCE = 'f8969a63cf';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1905';
+const ORDINAL = '1906';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -66935,7 +66935,12 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
     registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest') || (multiUse && rested);
+  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = relicNoRest || (multiUse && rested);
+  // The locked copy names the real reason: a relic that forbids rest, or a
+  // rest already taken at this Shrine under Multi-use — never a relic the
+  // player does not carry.
+  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -66973,7 +66978,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -67095,7 +67100,9 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      question: multiUse
+        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
+        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
       confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
@@ -67203,6 +67210,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
+        multiUse,
         returnFocusElement: smithOption,
         onSelect: (itemRef) => {
           selectedItemRef = itemRef;
@@ -67660,6 +67668,8 @@ const visibleFocusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
 function mountSmithUpgradeModal(host, initialModel, {
+  multiUse = false, // Multi-use Shrines: a confirmed upgrade stays at the Shrine
+
   registries,
   meta,
   onSelect,
@@ -67687,7 +67697,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
         <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
       </div>
-      <span class="smith-modal-consequence">LEAVES SHRINE</span>
+      <span class="smith-modal-consequence">${multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE'}</span>
     </header>
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
@@ -67879,7 +67889,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         registries,
         id: 'smithUpgrade',
         title: `Upgrade ${selected.name}?`,
-        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost and leaves the Shrine.`,
+        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${multiUse ? '; you stay at the Shrine' : ' and leaves the Shrine'}.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
         confirmLabel: `Upgrade (${selected.cost})`,

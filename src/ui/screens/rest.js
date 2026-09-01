@@ -86,7 +86,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest') || (multiUse && rested);
+  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = relicNoRest || (multiUse && rested);
+  // The locked copy names the real reason: a relic that forbids rest, or a
+  // rest already taken at this Shrine under Multi-use — never a relic the
+  // player does not carry.
+  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -124,7 +129,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -246,7 +251,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      question: multiUse
+        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
+        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
       confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
@@ -354,6 +361,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
+        multiUse,
         returnFocusElement: smithOption,
         onSelect: (itemRef) => {
           selectedItemRef = itemRef;
