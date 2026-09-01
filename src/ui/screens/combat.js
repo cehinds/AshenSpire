@@ -1075,7 +1075,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         && combat.player.mana >= pv.manaCost
         && combat.player.stamina >= (pv.staminaCost || 0);
     });
-    return combat.player.energy > 0 && anyPlayable;
+    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
+    // player at 0 Energy with Stamina left still holds a playable card, and
+    // the per-card check above already prices every pool.
+    return anyPlayable;
   }
 
   function renderControls() {

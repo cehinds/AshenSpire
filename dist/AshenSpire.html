@@ -49076,7 +49076,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '8e85950ac2';
+const SOURCE = 'dfeb444e2c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49110,7 +49110,7 @@ const SOURCE = '8e85950ac2';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1908';
+const ORDINAL = '1909';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -65085,7 +65085,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         && combat.player.mana >= pv.manaCost
         && combat.player.stamina >= (pv.staminaCost || 0);
     });
-    return combat.player.energy > 0 && anyPlayable;
+    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
+    // player at 0 Energy with Stamina left still holds a playable card, and
+    // the per-card check above already prices every pool.
+    return anyPlayable;
   }
 
   function renderControls() {
