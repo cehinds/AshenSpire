@@ -9763,6 +9763,9 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
+    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
+    // leaving it, and the screen carries its own LEAVE.
+    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -10806,8 +10809,16 @@ const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 800,
-    costStep: 200,
+    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
+    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
+    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
+    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
+    // every cinder on levels and nothing at merchants, so its number is the
+    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
+    // merchant-spending player at the low edge. Two numbers, one home, and
+    // the sweep flag reruns the measurement for any other pair.
+    firstCost: 20,
+    costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -48693,7 +48704,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9dbe8dd1fb';
+const SOURCE = '1bcd89ffa6';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48727,7 +48738,7 @@ const SOURCE = '9dbe8dd1fb';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1903';
+const ORDINAL = '1904';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -49182,6 +49193,13 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
+  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
+  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
+  // Shrine open: Rest once, Smith while you have Stones, Level while you have
+  // cinders, and leave when you choose. Conservative default, as his own
+  // data-driven instruction for an unsettled 'maybe' asks.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -66910,9 +66928,14 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+  // E13's multi-use Shrine: an action re-opens the same screen (with what was
+  // already taken recorded) instead of leaving; LEAVE is the one way out.
+  const remount = (extra = {}) => mountRest(app, {
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+  });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest') || (multiUse && rested);
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -67060,12 +67083,15 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           </div>
         </details>
       </div>
+      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
   ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  const leave = app.querySelector('#shrine-leave');
+  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
@@ -67075,6 +67101,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -67185,6 +67212,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
+          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
           onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });

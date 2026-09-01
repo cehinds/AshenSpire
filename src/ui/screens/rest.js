@@ -79,9 +79,14 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+  // E13's multi-use Shrine: an action re-opens the same screen (with what was
+  // already taken recorded) instead of leaving; LEAVE is the one way out.
+  const remount = (extra = {}) => mountRest(app, {
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+  });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest') || (multiUse && rested);
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -229,12 +234,15 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           </div>
         </details>
       </div>
+      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
   ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  const leave = app.querySelector('#shrine-leave');
+  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
@@ -244,6 +252,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -354,6 +363,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
+          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
           onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
