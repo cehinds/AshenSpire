@@ -6,10 +6,11 @@
 // realizes that half of this contract — ceil/floor hand split, two-handed
 // conflicts, unarmed attack fallback, deterministic fingerprints — with the
 // richer shield/priority-ref rules the 67-check weapon-package suite proves)
-// and guard/technique slots through startingDeckRefs' role copies. The
-// contract-NEW outputs this module composes — guard replacement from
-// packages, granted cards, installed weapon arts, the unarmed Evasive
-// Guard / Dodge Roll fallback — exist in no legacy path yet. Which
+// and guard/technique slots through the role plan (equipmentKitPlan →
+// startingDeckRefs at creation, re-resolved by stampDeck on swap/load). The
+// contract-NEW outputs this module composes — granted cards, installed
+// weapon arts, the unarmed Evasive Guard / Dodge Roll fallback package —
+// exist in no legacy path yet. Which
 // implementation the cutover adopts, and how those new outputs ride along,
 // is an owner decision recorded in docs/framework-cutover-report.md; until
 // then this module is the contract's executable specification and the

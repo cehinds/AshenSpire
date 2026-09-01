@@ -93,17 +93,19 @@ Surveyed for tranche 3 and left in place on purpose — both are cases where
 the legacy design already satisfies the contract's intent, and a mechanical
 bridge would add risk without adding authority:
 
-1. **Deck composition.** The shipped composition splits across two legacy
+1. **Deck composition.** The shipped composition splits across the legacy
    homes: `WeaponDeckCompositionService` (`src/model/loadout.js`) composes
    the ATTACK slots — ceil/floor right/left split, two-handed offhand
    conflicts, shield-fallback rules, the unarmed attack profile from
    balance data, deterministic fingerprinted plans (the 67-check
-   weapon-package suite proves it) — while guard and technique slots come
-   from `startingDeckRefs`' role-copies loop. The framework's
-   `src/framework/deck.js` covers that attack-slot half of the contract AND
-   the contract-NEW outputs no legacy path composes at all: guard-card
-   replacement from equipment packages, granted cards, installed weapon
-   arts, and the unarmed Evasive Guard / Dodge Roll fallback. Cutover needs
+   weapon-package suite proves it) — while guard and technique slots are
+   composed and REPLACED from equipment too, through the role plan:
+   `equipmentKitPlan` → `startingDeckRefs`' role copies at creation, and
+   `stampDeck` re-resolving every non-attack role's card from the equipped
+   profile after swaps and loads. The framework's `src/framework/deck.js`
+   covers that scheme AND the contract-NEW outputs no legacy path composes
+   at all: granted cards, installed weapon arts, and the specific unarmed
+   Evasive Guard / Dodge Roll fallback package. Cutover needs
    ONE reconciliation decision — adopt the legacy service as the
    framework's attack-slot implementation (recommended: richer and
    battle-tested, with the contract model as its specification), or rewrite
