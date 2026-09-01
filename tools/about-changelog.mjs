@@ -649,13 +649,23 @@ export function flattenInline(text, where, labels = new Set()) {
 
 // #310: the build stamp in each receipt is derivable from buildordinal.json at
 // the merge, but it is hand-typed here — so it is checked, not trusted. A stamp
-// is either exactly `0.4.0.<ordinal>` or a prose escape carrying no leading
-// digit (the documented "dev artifact; exact BUILD in PR evidence" shape).
+// is either `<release>.<ordinal>` — a semver release triple, optionally with a
+// pre-release tag (`0.5.0-rc.1`), then the ordinal — or a prose escape carrying
+// no leading digit (the documented "dev artifact; exact BUILD in PR evidence"
+// shape). The triple is NOT pinned to the current release: receipts are history,
+// and a bump must not make every older receipt unparseable. The ordinal column
+// is what this projector enforces; the triple is the release the build wore.
 // Ordinals are receipts of real builds, so: date groups run newest-first; a
 // build cited by an older group is never newer than one a newer group cites
 // (ties allowed — docs/evidence merges share an ordinal); nothing cites a build
 // that does not exist yet (`currentOrdinal`, from buildordinal.json).
-const STAMP = /^0\.4\.0\.(\d+)$/;
+// The pre-release tag is exactly `-<word>.<n>` (docs/versioning.md: `rc.<n>`),
+// so the ordinal is always the segment AFTER it: `0.5.0-rc.1.1905` parses as
+// release `0.5.0-rc.1`, ordinal 1905, and `0.5.0-rc.1` — a stamp with no
+// ordinal — matches nothing (the tag swallows `.1` and no segment is left).
+// A looser tag pattern let `0.5.0-rc.1` parse as release `0.5.0-rc` with
+// ordinal 1 (#517 review); the shape is pinned by the selftest corpus.
+const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
 export function parseChangelog(markdown, { currentOrdinal } = {}) {
   const entries = [];
@@ -676,9 +686,9 @@ export function parseChangelog(markdown, { currentOrdinal } = {}) {
     const where = `receipt #${pullRequest}`;
     const stamp = build.match(STAMP);
     if (!stamp && /^\d/.test(build)) {
-      throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`0.4.0.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
+      throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`<release>.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
     }
-    receipts.push({ where, group, date, ordinal: stamp ? Number(stamp[1]) : null });
+    receipts.push({ where, group, date, ordinal: stamp ? Number(stamp[2]) : null });
     entries.push({
       id: `pr-${pullRequest}`,
       date,
@@ -747,8 +757,18 @@ async function browserRoute(entries, {
   screenshotDir = null,
 } = {}) {
   const { server, port } = await serve({ root: ROOT, port: 8239, open: false });
-  const browserPath = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe']
-    .find((candidate) => candidate && existsSync(candidate));
+  // The same candidate list tools/uprightgate.mjs uses (BROWSERS): env override
+  // first, then the Linux runner and container paths, then Windows and macOS.
+  // The old list was $CHROME plus two Windows paths — on a Linux runner with
+  // $CHROME unset it could never find a browser (#498, run 296).
+  const browserPath = [
+    process.env.CHROME,
+    '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+    '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ].find((candidate) => candidate && existsSync(candidate));
   if (!browserPath) { server.close(); throw new Error('UNKNOWN: no Chrome/Edge found for real-browser check'); }
   let browser;
   try {
@@ -930,7 +950,9 @@ async function selftest() {
   // shared ordinal across groups, a prose stamp) still PASS.
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
-    ['version-shaped stamp that is not 0.4.0.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.1.77')}\n`, {}],
+    ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
+    ['pre-release stamp with no ordinal (the tag must not be read as one)', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1')}\n`, { currentOrdinal: 5 }],
+    ['pre-release stamp whose ordinal is missing after the tag', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1905')}\n`, { currentOrdinal: 5 }],
     ['ordinal rising into an older group', `## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.9')}\n`, {}],
     ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
     ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
@@ -940,7 +962,7 @@ async function selftest() {
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
   try {
-    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
     caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
