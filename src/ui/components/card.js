@@ -116,14 +116,19 @@ export function renderCard(registries, ref, opts = {}) {
     : tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
-  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
-  const staminaCost = opts.preview ? opts.preview.staminaCost : (def.staminaCost || 0);
+  // The badge numbers come from the framework cost profile (a preview's
+  // numbers are the preview's own — it already resolved them); the badge
+  // words come from the TermRegistry, like the tooltip's cost line.
+  const pools = opts.preview ? null : registries.framework.costProfile(def);
+  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : (pools.variable ? 'X' : pools.action);
+  const manaCost = opts.preview ? opts.preview.manaCost : pools.mana;
+  const staminaCost = opts.preview ? opts.preview.staminaCost : pools.stamina;
+  const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
   el.innerHTML =
     `<div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
-    (staminaCost ? `<div class="stamina-cost" title="Stamina cost">● ${esc(staminaCost)}</div>` : '') +
+    (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
+    (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +

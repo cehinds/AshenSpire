@@ -15,7 +15,7 @@
 
 import * as A from './actions.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
-import * as S from './statuses.js';
+import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';

@@ -688,6 +688,21 @@ test('the option-decision router door serves the shipped router, identically', (
   eq(routerDoor.armOptionDecision === routerHome.armOptionDecision, true, 'one router, one home');
 });
 
+const semanticsDoor = await import('../src/framework/statusSemantics.js');
+const semanticsHome = await import('../src/engine/statuses.js');
+
+test('the status-semantics door serves the shipped engine semantics, identically', () => {
+  for (const name of ['getStatusInstance', 'getStacks', 'hasStatus', 'applyStatus', 'removeStatus',
+    'decayAtTurnEnd', 'getMult', 'getAdd', 'getFlag', 'getCap', 'anyCombatantFlag']) {
+    eq(semanticsDoor[name] === semanticsHome[name], true, `${name}: one home`);
+  }
+  // The door covers the implementation's whole exported surface — a symbol
+  // added to statuses.js without a door row would strand its consumers.
+  for (const name of Object.keys(semanticsHome)) {
+    eq(typeof semanticsDoor[name], 'function', `door serves ${name}`);
+  }
+});
+
 test('the router door serves the whole routed-interaction surface, identically', () => {
   eq(routerDoor.armHold === holdconfirmHome.armHold, true, 'armHold: one home');
   eq(routerDoor.armInspect === holdconfirmHome.armInspect, true, 'armInspect: one home');

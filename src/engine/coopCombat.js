@@ -32,7 +32,7 @@ import { chargeFlaskId } from '../model/gracerefill.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
-import * as S from './statuses.js';
+import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
