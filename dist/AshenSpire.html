@@ -36550,9 +36550,22 @@ function createEntityTermOverlay(bundle) {
       ...(terms.has(tooltipId) ? { tooltip: terms.displayTerm(tooltipId) } : {}),
     };
   };
+  // A display site that needs the whole def (mechanics numbers for tooltip
+  // substitution, icon/tint assets) wraps it here: the WORDS come from the
+  // TermRegistry, everything else rides through untouched. A def with no
+  // overlay row — or no def at all — passes through unchanged, so probe
+  // registries and mechanics-only callers keep their behavior.
+  const withWords = (kind) => (def) => {
+    if (!def) return def;
+    const row = display(kind)(def.id);
+    if (!row) return def;
+    return { ...def, name: row.name, ...(row.tooltip !== undefined ? { tooltip: row.tooltip } : {}) };
+  };
   return Object.freeze({
     statusDisplay: display('status'),
     stanceDisplay: display('stance'),
+    withStatusWords: withWords('status'),
+    withStanceWords: withWords('stance'),
   });
 }
 
@@ -43186,7 +43199,7 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 // art and spacing can evolve without duplicating the screen structure.
 
 const { esc } = require("src/ui/components/tooltip.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/framework/optionDecision.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { closeSaveSlotSelector, openSaveSlotSelector } = require("src/ui/components/saveSlotSelector.js");
@@ -45230,6 +45243,107 @@ function isBehaviorModel(value) {
 
 
 Object.assign(module.exports, { behaviorModel, isBehaviorModel });
+
+},
+"src/framework/optionDecision.js": function (module, exports, require) {
+// src/framework/optionDecision.js — the framework's ADOPTED option-decision
+// interaction router (shared presentation tranche; same adoption pattern as
+// deckComposition.js and confirmationRule.js).
+//
+// The tap-to-review vs hold-to-commit surface every routed action uses lives
+// in src/ui/components/optionDecision.js; this door makes the framework the
+// authority boundary consumers import it through. One implementation, one
+// home. Its LEVEL rule for effect-carrying choices is the adopted fail-closed
+// derivation (src/framework/confirmationRule.js); its static severities come
+// from the ConfirmationRegistry.
+
+const { armOptionDecision: adoptedArmOptionDecision } = require("src/ui/components/optionDecision.js");
+const { armHold: adoptedArmHold, armInspect: adoptedArmInspect, beatArmer: adoptedBeatArmer, holdMs: adoptedHoldMs, HOLD_POINTER_SLOP: ADOPTED_HOLD_POINTER_SLOP } = require("src/ui/components/holdconfirm.js");
+
+
+
+
+
+
+
+const armOptionDecision = adoptedArmOptionDecision;
+
+// The rest of the routed-interaction surface (hold-to-commit, press-to-
+// inspect, the per-screen beat armer and its timing constants) is the same
+// adoption: holdconfirm.js remains the one implementation, and consumers
+// reach it through this door. (Plain import-then-export consts: the
+// standalone bundler does not parse the `export { … } from` re-export form.)
+const armHold = adoptedArmHold;
+const armInspect = adoptedArmInspect;
+const beatArmer = adoptedBeatArmer;
+const holdMs = adoptedHoldMs;
+const HOLD_POINTER_SLOP = ADOPTED_HOLD_POINTER_SLOP;
+
+
+Object.assign(module.exports, { armOptionDecision, armHold, armInspect, beatArmer, holdMs, HOLD_POINTER_SLOP });
+
+},
+"src/ui/components/optionDecision.js": function (module, exports, require) {
+// One interaction contract for state-changing options:
+//   short click/press -> review the exact consequence and optional cost
+//   deliberate hold  -> commit the same validated action without the modal
+// Navigation and disclosure controls do not use this component.
+
+const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
+const { openConfirmationModal } = require("src/ui/components/confirmationModal.js");
+
+function armOptionDecision(control, {
+  meta,
+  registries,
+  id,
+  title,
+  message,
+  consequence = '',
+  detailsHtml = '',
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Back',
+  tone = 'normal',
+  onCommit,
+  canCommit = () => true,
+  blockedTitle = title,
+  blockedMessage = message,
+  blockedDetailsHtml = detailsHtml,
+  returnFocusElement = control,
+} = {}) {
+  if (!(control instanceof HTMLElement)) throw new Error('option decision needs a control element');
+  if (typeof onCommit !== 'function') throw new Error('option decision needs one commit callback');
+  const allowed = () => Boolean(canCommit());
+  const duration = allowed() ? holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm) : 0;
+  control.dataset.optionDecision = id || 'state-change';
+  control.dataset.optionTap = 'modal';
+  control.dataset.optionHold = duration > 0 ? 'commit' : (allowed() ? 'disabled' : 'blocked');
+
+  const commit = () => { if (allowed()) onCommit(); };
+  const review = () => openConfirmationModal({
+    title: allowed() ? title : blockedTitle,
+    message: allowed() ? message : blockedMessage,
+    consequence,
+    detailsHtml: allowed() ? detailsHtml : blockedDetailsHtml,
+    confirmLabel,
+    cancelLabel,
+    tone,
+    confirmEnabled: allowed(),
+    onConfirm: commit,
+    returnFocusElement,
+  });
+
+  const disarm = armHold(control, {
+    ms: duration,
+    id,
+    onTap: review,
+    onConfirm: commit,
+    tapOnEarlyRelease: true,
+  });
+  return Object.assign(disarm, { review });
+}
+
+
+Object.assign(module.exports, { armOptionDecision });
 
 },
 "src/ui/components/holdconfirm.js": function (module, exports, require) {
@@ -48534,7 +48648,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '8e804a8453';
+const SOURCE = '6d33fd0e55';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48568,7 +48682,7 @@ const SOURCE = '8e804a8453';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1901';
+const ORDINAL = '1902';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -52584,7 +52698,7 @@ Object.assign(module.exports, { musicQuickSettingsPlan, hudQuickSettingsModel })
 const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { focusElement } = require("src/ui/input.js");
-const { armHold, beatArmer } = require("src/ui/components/holdconfirm.js");
+const { armHold, beatArmer } = require("src/framework/optionDecision.js");
 const { esc, hideTooltip } = require("src/ui/components/tooltip.js");
 const { mountTitleSaveSlotTooltip } = require("src/ui/components/titleSaveSlotTooltip.js");
 
@@ -55823,7 +55937,7 @@ const { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPois
 
 
 const { esc, attachTooltip, showTooltipFor, stickTooltip } = require("src/ui/components/tooltip.js");
-const { armHold, holdMs, HOLD_POINTER_SLOP } = require("src/ui/components/holdconfirm.js");
+const { armHold, holdMs, HOLD_POINTER_SLOP } = require("src/framework/optionDecision.js");
 const { refuses } = require("src/ui/components/refusal.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
@@ -63468,7 +63582,7 @@ const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/framework/optionDecision.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
@@ -63580,8 +63694,9 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
     // #61: fx beats read a proc row's display data (name/tint/icon) through
-    // this accessor — one home, the status def itself.
-    statusInfo: (sid) => registries.statuses.get(sid),
+    // this accessor — one home, the status def itself, with the WORDS
+    // resolved through the framework term overlay.
+    statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
   };
 
   let selected = null; // card instanceId in click-targeting mode
@@ -63746,7 +63861,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       if (!instance) return [];
       const amount = instance.meter ? instance.meter.value : instance.stacks;
       if (!(amount > 0)) return [];
-      const def = registries.statuses.get(statusId);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(statusId));
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
       return [{ name: def.name, detail: presentation.tooltip }];
@@ -63771,7 +63886,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const v = dv(entity);
     if (role === 'player') {
       const classDef = registries.classes.get(run.class);
-      const stance = entity.stanceId ? registries.stances.get(entity.stanceId) : null;
+      const stance = entity.stanceId ? registries.frameworkTerms.withStanceWords(registries.stances.get(entity.stanceId)) : null;
       const skills = [];
       if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
       skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
@@ -64179,7 +64294,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
@@ -64232,7 +64347,8 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       if (kind === 'player') {
         return 'Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.';
       }
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       return `Fill it to Stagger. ${esc(stagDesc)}`;
     };
   }
@@ -64277,7 +64393,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         // v, not entity: the bar is the thing the drain animates, so it must
         // read the paced snapshot like every other meter on this card.
         const inst = v.statuses[sid];
-        const def = registries.statuses.get(sid);
+        const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
         const bar = document.createElement('div');
         bar.className = 'bar procbar';
         markUiComponent(bar, UI.procStatusBar, sid);
@@ -64313,7 +64429,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const p = combat.player;
     const trailing = [];
     if (p.stanceId) {
-      const st = registries.stances.get(p.stanceId);
+      const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
       const chip = document.createElement('div');
       chip.className = `stance-chip ${p.stanceId}`;
       chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
@@ -65569,7 +65685,7 @@ function arcaneExposureReceipt(registries, enemySnapshot, recentEvents = []) {
     && Boolean(vulnerable && vulnerable.stacks > 0);
   const status = vulnerable && vulnerable.stacks > 0 ? {
     id: 'magicVulnerable',
-    label: registries.statuses.get('magicVulnerable').name,
+    label: registries.frameworkTerms.withStatusWords(registries.statuses.get('magicVulnerable')).name,
     value: vulnerable.stacks,
     duration: vulnerable.duration,
   } : null;
@@ -65584,7 +65700,7 @@ function arcaneExposureReceipt(registries, enemySnapshot, recentEvents = []) {
 function eventHtml(event, registries) {
   if (!event) return '';
   if (event.type === 'arcaneBreak') {
-    const status = registries.statuses.get(event.status);
+    const status = registries.frameworkTerms.withStatusWords(registries.statuses.get(event.status));
     return `<div class="arcane-exposure-event arcane-break-receipt"><b>Break</b> · ${esc(status.name)} ${event.value}% · ${event.duration} turns</div>`;
   }
   if (event.type === 'arcaneExposureRefused') {
@@ -65674,7 +65790,7 @@ Object.assign(module.exports, { arcaneExposureReceipt, renderArcaneExposure });
 // on flip; the same warning rides handAxis.js.
 
 const { renderCard } = require("src/ui/components/card.js");
-const { armInspect } = require("src/ui/components/holdconfirm.js");
+const { armInspect } = require("src/framework/optionDecision.js");
 const { stickTooltip } = require("src/ui/components/tooltip.js");
 const { applyHandExemption } = require("src/ui/handAxis.js");
 
@@ -66158,7 +66274,7 @@ const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/framework/optionDecision.js");
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -66688,7 +66804,7 @@ const { attributeCardModels } = require("src/model/creationBrief.js");
 const { passiveFlag } = require("src/model/registries.js");
 const { commitSmithing, smithingPlan } = require("src/model/smithing.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/framework/optionDecision.js");
 const { sfx } = require("src/ui/sfx.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } = require("src/model/gracerefill.js");
@@ -67757,89 +67873,6 @@ function mountSmithUpgradeModal(host, initialModel, {
 Object.assign(module.exports, { mountSmithUpgradeModal });
 
 },
-"src/framework/optionDecision.js": function (module, exports, require) {
-// src/framework/optionDecision.js — the framework's ADOPTED option-decision
-// interaction router (shared presentation tranche; same adoption pattern as
-// deckComposition.js and confirmationRule.js).
-//
-// The tap-to-review vs hold-to-commit surface every routed action uses lives
-// in src/ui/components/optionDecision.js; this door makes the framework the
-// authority boundary consumers import it through. One implementation, one
-// home. Its LEVEL rule for effect-carrying choices is the adopted fail-closed
-// derivation (src/framework/confirmationRule.js); its static severities come
-// from the ConfirmationRegistry.
-
-const { armOptionDecision: adoptedArmOptionDecision } = require("src/ui/components/optionDecision.js");
-
-const armOptionDecision = adoptedArmOptionDecision;
-
-
-Object.assign(module.exports, { armOptionDecision });
-
-},
-"src/ui/components/optionDecision.js": function (module, exports, require) {
-// One interaction contract for state-changing options:
-//   short click/press -> review the exact consequence and optional cost
-//   deliberate hold  -> commit the same validated action without the modal
-// Navigation and disclosure controls do not use this component.
-
-const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
-const { openConfirmationModal } = require("src/ui/components/confirmationModal.js");
-
-function armOptionDecision(control, {
-  meta,
-  registries,
-  id,
-  title,
-  message,
-  consequence = '',
-  detailsHtml = '',
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Back',
-  tone = 'normal',
-  onCommit,
-  canCommit = () => true,
-  blockedTitle = title,
-  blockedMessage = message,
-  blockedDetailsHtml = detailsHtml,
-  returnFocusElement = control,
-} = {}) {
-  if (!(control instanceof HTMLElement)) throw new Error('option decision needs a control element');
-  if (typeof onCommit !== 'function') throw new Error('option decision needs one commit callback');
-  const allowed = () => Boolean(canCommit());
-  const duration = allowed() ? holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm) : 0;
-  control.dataset.optionDecision = id || 'state-change';
-  control.dataset.optionTap = 'modal';
-  control.dataset.optionHold = duration > 0 ? 'commit' : (allowed() ? 'disabled' : 'blocked');
-
-  const commit = () => { if (allowed()) onCommit(); };
-  const review = () => openConfirmationModal({
-    title: allowed() ? title : blockedTitle,
-    message: allowed() ? message : blockedMessage,
-    consequence,
-    detailsHtml: allowed() ? detailsHtml : blockedDetailsHtml,
-    confirmLabel,
-    cancelLabel,
-    tone,
-    confirmEnabled: allowed(),
-    onConfirm: commit,
-    returnFocusElement,
-  });
-
-  const disarm = armHold(control, {
-    ms: duration,
-    id,
-    onTap: review,
-    onConfirm: commit,
-    tapOnEarlyRelease: true,
-  });
-  return Object.assign(disarm, { review });
-}
-
-
-Object.assign(module.exports, { armOptionDecision });
-
-},
 "src/ui/screens/shop.js": function (module, exports, require) {
 // src/ui/screens/shop.js — the wandering merchant (SPEC §7.1; prices from
 // balance.shop via engine/encounters.js buildShopStock)
@@ -67889,7 +67922,7 @@ const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/framework/optionDecision.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
@@ -68167,7 +68200,7 @@ const { isEngaged, focusFirst } = require("src/ui/input.js");
 // (owner ruling; the derivation itself still lives in model/consequence.js).
 const { isBindingChoice } = require("src/framework/confirmationRule.js");
 const { availableEventChoices, recordEventChoice } = require("src/model/quests.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/framework/optionDecision.js");
 
 function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
@@ -70328,7 +70361,7 @@ const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
 const { mountMapBoard } = require("src/ui/components/mapboard.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskIdentityHtml, mountFlaskActionMenu } = require("src/ui/components/flask.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/framework/optionDecision.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
 const { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } = require("src/ui/input.js");
@@ -70627,7 +70660,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
     row.className = 'statuses';
     for (const [sid, inst] of Object.entries(statuses || {})) {
       if (!registries.statuses.has(sid)) continue;
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       const el = document.createElement('div');
@@ -70654,7 +70687,8 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       const poise = document.createElement('div');
       poise.className = `bar poisebar${ent.poiseMeter.value >= ent.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (ent.poiseMeter.value / ent.poiseMeter.max) * 100)}%"></div>`;
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
     }

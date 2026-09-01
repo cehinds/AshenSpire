@@ -49,7 +49,7 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
@@ -348,7 +348,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     row.className = 'statuses';
     for (const [sid, inst] of Object.entries(statuses || {})) {
       if (!registries.statuses.has(sid)) continue;
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       const el = document.createElement('div');
@@ -375,7 +375,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const poise = document.createElement('div');
       poise.className = `bar poisebar${ent.poiseMeter.value >= ent.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (ent.poiseMeter.value / ent.poiseMeter.max) * 100)}%"></div>`;
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
     }

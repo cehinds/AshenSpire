@@ -657,11 +657,43 @@ test('the term overlay serves every shipped status and stance word verbatim, and
   eq(probeReg.frameworkTerms.statusDisplay('probeMeter'), { name: 'Probe Meter', tooltip: 'A fixture status.' }, 'probe status served');
 });
 
+test('withStatusWords/withStanceWords overlay words verbatim and pass everything else through', () => {
+  const overlay = LEGACY_REG.frameworkTerms;
+  for (const status of contentBundle.statuses) {
+    const def = LEGACY_REG.statuses.get(status.id);
+    const wrapped = overlay.withStatusWords(def);
+    eq(wrapped.name, def.name, `status ${status.id} word verbatim`);
+    eq(wrapped.tooltip, def.tooltip, `status ${status.id} tooltip verbatim`);
+    for (const key of Object.keys(def)) {
+      if (key === 'name' || key === 'tooltip') continue;
+      eq(wrapped[key] === def[key], true, `status ${status.id} mechanics field '${key}' untouched`);
+    }
+  }
+  for (const stance of contentBundle.stances) {
+    const def = LEGACY_REG.stances.get(stance.id);
+    const wrapped = overlay.withStanceWords(def);
+    eq(wrapped.name, def.name, `stance ${stance.id} word verbatim`);
+    eq(wrapped.tooltip, def.tooltip, `stance ${stance.id} tooltip verbatim`);
+  }
+  eq(overlay.withStatusWords(undefined), undefined, 'no def passes through');
+  const foreign = { id: 'notAStatus', name: 'X', proc: { burstMax: 1 } };
+  eq(overlay.withStatusWords(foreign) === foreign, true, 'a def with no overlay row passes through by identity');
+});
+
 const routerDoor = await import('../src/framework/optionDecision.js');
 const routerHome = await import('../src/ui/components/optionDecision.js');
+const holdconfirmHome = await import('../src/ui/components/holdconfirm.js');
 
 test('the option-decision router door serves the shipped router, identically', () => {
   eq(routerDoor.armOptionDecision === routerHome.armOptionDecision, true, 'one router, one home');
+});
+
+test('the router door serves the whole routed-interaction surface, identically', () => {
+  eq(routerDoor.armHold === holdconfirmHome.armHold, true, 'armHold: one home');
+  eq(routerDoor.armInspect === holdconfirmHome.armInspect, true, 'armInspect: one home');
+  eq(routerDoor.beatArmer === holdconfirmHome.beatArmer, true, 'beatArmer: one home');
+  eq(routerDoor.holdMs === holdconfirmHome.holdMs, true, 'holdMs: one home');
+  eq(routerDoor.HOLD_POINTER_SLOP === holdconfirmHome.HOLD_POINTER_SLOP, true, 'HOLD_POINTER_SLOP: one home');
 });
 
 // ---- contract-new composition outputs (dormant until authored) --------------
