@@ -22,6 +22,25 @@ export const basicCardProfiles = [
     "compatibility": "attack-v1"
   },
   {
+    "id": "shieldAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Shield Strike",
+    "icon": "🛡",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0,
+    "baseValue": 2,
+    "scalingStat": "strength",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "guard",
+    "flavor": "A short iron answer when no main-hand weapon is ready.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
     "id": "bladeAttack",
     "role": "attack",
     "baseCardId": "strike",

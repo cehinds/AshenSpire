@@ -118,10 +118,12 @@ export function renderCard(registries, ref, opts = {}) {
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
   const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
+  const staminaCost = opts.preview ? opts.preview.staminaCost : (def.staminaCost || 0);
 
   el.innerHTML =
     `<div class="cost">${esc(cost)}</div>` +
     (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
+    (staminaCost ? `<div class="stamina-cost" title="Stamina cost">● ${esc(staminaCost)}</div>` : '') +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
@@ -183,7 +185,7 @@ export function upgradePreviewHtml(registries, ref) {
 }
 
 function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}</div>`;
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}${def.staminaCost ? ` + ${esc(def.staminaCost)} Stamina` : ''}</div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;

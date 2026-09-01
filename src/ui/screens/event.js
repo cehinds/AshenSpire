@@ -126,7 +126,13 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
       // position all moved into the machinery with it — a bar that cannot be
       // pressed still never gets armed, because this branch is the affordable
       // one and always was.
-      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
+      disarmers.push(arm(btn, 'eventChoice', {
+        ctx: { binding },
+        question: `Choose ${choice.label || choice.text || 'this event option'}?`,
+        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
+        confirmLabel: 'CHOOSE',
+        onConfirm: commit,
+      }));
     }
     box.appendChild(btn);
   });

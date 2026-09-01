@@ -147,6 +147,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         // ZERO commits outside that table. An action wired with a bare
         // `addEventListener` can only ever be changed by editing this line.
         arm(el, 'shopBuy', {
+          question: `Buy ${registries.cards.get(item.id).name} for ${item.cost} cinders? You have ${run.cinders}.`,
+          confirmLabel: 'BUY IT',
           onConfirm: () => {
             run.cinders -= item.cost;
             run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
@@ -281,7 +283,14 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
     el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span>`;
-    if (affordable && onBuy) el.addEventListener('click', onBuy);
+    if (affordable && onBuy) {
+      const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
+      arm(el, 'shopBuy', {
+        question: `Buy ${itemName} for ${cost} ${costWord}? You have ${run.cinders} cinders.`,
+        confirmLabel: 'BUY IT',
+        onConfirm: onBuy,
+      });
+    }
     return el;
   }
 

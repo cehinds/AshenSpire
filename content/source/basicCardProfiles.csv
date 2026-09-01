@@ -3,6 +3,7 @@
 # effects; damageSchool is presentation metadata, not an implicit mechanic.
 id,role,baseCardId,displayName,icon,damageSchool,exposureBuildupPerHit,baseValue,scalingStat,pointsPerTier,rounding,gainPerTier,cap,tags,flavor,mods,compatibility
 unarmedAttack,attack,strike,Unarmed Strike,✊,physical,0,3,strength,5,floor,1,,basic,"A last resort, still yours.",,attack-v1
+shieldAttack,attack,strike,Shield Strike,🛡,physical,0,2,strength,5,floor,1,,guard,"A short iron answer when no main-hand weapon is ready.",,attack-v1
 bladeAttack,attack,strike,Slashing Strike,⚔,physical,0,5,strength,5,floor,1,,blade,"Steel gives the motion its name.",,attack-v1
 daggerPierceAttack,attack,strike,Piercing Flurry,†,physical,0,3,dexterity,5,floor,1,,pierce|flourish,"Two precise openings in one breath.",,attack-v1
 bowPierceAttack,attack,strike,Piercing Shot,➶,physical,0,4,dexterity,5,floor,1,,pierce|ranged|precision,"Distance is presentation; the point still lands.",,attack-v1

@@ -18,7 +18,7 @@ import {
   canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
 } from '../../model/loadout.js';
-import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
+import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
 import { equippedTagColor } from '../../model/equipmentUi.js';
 import { renderCard, relicText } from '../components/card.js';
@@ -857,7 +857,7 @@ export function mountEquipment(host, {
     const hadSelection = !!picking;
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
-      { inCombat, attributes: run.attributes, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
+      { inCombat, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
     );
     if (!changed) {
       notice = `${actionLabel} was refused. The loadout was not changed.`;
@@ -1582,6 +1582,7 @@ export function mountEquipment(host, {
     const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
     return {
       item,
+      intrinsic: item && !slot.kinds.includes('armor') ? armamentIntrinsicReceipt(item) : null,
       name: item ? item.name : 'Empty socket',
       category: item ? (slot.kinds.includes('armor') ? 'Armour' : `${item.kind || 'Armament'}`.replace(/^./, (c) => c.toUpperCase())) : 'Empty',
       bonus,
@@ -1659,10 +1660,21 @@ export function mountEquipment(host, {
       return { id: tagId, label: tag?.label || tagId, description: tag?.blurb || 'Equipment classification.' };
     });
     const mods = modSummary(registries, item);
-    const value = item.value != null ? String(item.value) : '—';
-    const weight = item.weight != null ? String(item.weight) : '—';
-    const smithingLevel = Number.isInteger(run.armamentLevels?.[item.id]) ? run.armamentLevels[item.id] : 0;
-    const smithingReceipt = run.lastSmithingReceipt?.armamentId === item.id ? run.lastSmithingReceipt : null;
+    const intrinsic = summaryItem.intrinsic;
+    const intrinsicRows = intrinsic
+      ? `<div><dt>Attack rating (AR)</dt><dd>${intrinsic.attackRating}</dd></div>`
+        + `<div><dt>Defense rating (DEF)</dt><dd>${intrinsic.defenseRating}</dd></div>`
+        + `<div><dt>Weight</dt><dd>${intrinsic.weight}</dd></div>`
+        + `<div><dt>Weapon Art Mana</dt><dd>${intrinsic.weaponArtManaCost}</dd></div>`
+        + `<div><dt>Unique Skill Stamina</dt><dd>${intrinsic.uniqueSkillStaminaCost}</dd></div>`
+      : '';
+    const itemRef = `armament/${item.id}`;
+    const smithingLevel = Number.isInteger(run.itemUpgradeLevels?.[itemRef])
+      ? run.itemUpgradeLevels[itemRef]
+      : (Number.isInteger(run.armamentLevels?.[item.id]) ? run.armamentLevels[item.id] : 0);
+    const smithingReceipt = (run.lastSmithingReceipt?.itemRef === itemRef || run.lastSmithingReceipt?.armamentId === item.id)
+      ? run.lastSmithingReceipt
+      : null;
 
     const detail = document.createElement('section');
     detail.className = 'armoury-armament-details';
@@ -1673,8 +1685,7 @@ export function mountEquipment(host, {
       + `<div><dt>Effects</dt><dd>${esc(mods.length ? mods.join(' · ') : 'No additional equipment effects authored.')}</dd></div>`
       + `<div><dt>Combat bonuses</dt><dd>${esc(summaryItem.bonus)}</dd></div>`
       + `<div><dt>Smithing tier</dt><dd>${smithingLevel}</dd></div>`
-      + `<div><dt>Value</dt><dd>${esc(value)}</dd></div>`
-      + `<div><dt>Weight</dt><dd>${esc(weight)}</dd></div></dl>`
+      + `${intrinsicRows}</dl>`
       + (smithingReceipt
         ? `<p class="armoury-smithing-receipt"><b>Last Smithing</b><span>Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved</span></p>`
         : '')
