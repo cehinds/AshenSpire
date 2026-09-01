@@ -5070,7 +5070,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // door, and it is the only thing in the tree that can fail on the copy.
     const edited = { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } };
     const byHand = resolveDerivedStatRules(edited, {
-      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
     });
     eq(byHand.rules.hp.pointsPerTier, 1, 'HP keeps its authored per-CON formula when only the fallback default changes');
     eq(byHand.rules.energy.pointsPerTier, 10, 'Actions keep their authored DEX/10 formula');

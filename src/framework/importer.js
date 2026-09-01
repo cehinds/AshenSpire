@@ -72,10 +72,7 @@ const PROFILE_ROLE_PROPERTY = Object.freeze({
 
 // The union of the legacy rarity vocabularies ('starter'/'special'/'boss' are
 // legacy pool markers) and the contract's equipment ladder, lowercased at import.
-const RARITIES = Object.freeze([
-  'starter', 'special', 'boss', 'uncommon',
-  ...EQUIPMENT_RARITIES.map((r) => r.toLowerCase()),
-]);
+const RARITIES = Object.freeze(EQUIPMENT_RARITIES.map((r) => r.toLowerCase()));
 
 function mapped(table, key, what) {
   const value = table[key];
@@ -240,7 +237,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       properties: [],
       explicitOverrides: {
         legacyId: piece.id,
-        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : 'WEAPON', `armament ${piece.id}`),
+        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : piece.kind === 'staff' ? 'STAFF' : 'WEAPON', `armament ${piece.id}`),
         hand: piece.hand,
         rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
         tags: piece.tags,
@@ -255,11 +252,15 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
           guardCardId: piece.guardProfile ? key('profile', piece.guardProfile) : undefined,
           techniqueCardId: piece.techniqueProfile ? key('profile', piece.techniqueProfile) : undefined,
         },
-        // Contract fields the legacy tables do not author yet — imported as
-        // inert defaults, listed in the cutover report as open authoring work.
-        itemWeight: 0,
-        attackRatingBonus: 0,
-        defenseRating: 0,
+        // Contract fields, from the authored armament table (cutover ruling 2):
+        // weapons.csv authors weight / attackRating / defenseRating for every
+        // armament, and the legacy rule binds weight to the authored
+        // poiseThreshold (armamentIntrinsicStatProblems). Nothing in the
+        // running game reads these yet — the Weight Class service stays
+        // dormant until it is wired — so this is data flow, not behavior.
+        itemWeight: piece.weight,
+        attackRatingBonus: piece.attackRating,
+        defenseRating: piece.defenseRating,
       },
     });
   }
@@ -278,7 +279,12 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         tags: outfit.tags,
         mods: outfit.mods,
         artKey: outfit.artKey,
-        itemWeight: 0,
+        // Outfits author no weight column; the legacy identity `weight ==
+        // poiseThreshold` (the armament rule) is adopted for armour as the
+        // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
+        // The B-side — armour weightless — is `itemWeight: 0` here. No
+        // defenseRating column exists for outfits; 0 remains inert.
+        itemWeight: outfit.poiseThreshold,
         defenseRating: 0,
       },
     });
@@ -339,7 +345,6 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       explicitOverrides: {
         legacyId: klass.id,
         maxHp: klass.maxHp,
-        hpPerConTier: klass.hpPerConTier,
         startingFlaskAllocation: klass.startingFlaskAllocation,
         startingRelic: klass.startingRelic,
         startingSignatureCard: klass.startingSignatureCard,

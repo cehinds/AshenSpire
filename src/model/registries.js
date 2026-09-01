@@ -149,7 +149,7 @@ export function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {

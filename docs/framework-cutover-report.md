@@ -172,6 +172,13 @@ The original findings, kept for the record:
 
 ## Unresolved contradictions (reported before cutover, per the contract)
 
+> **Rulings (2026-09-01, owner-authorized "fix that"):** 1, 3, 4 and 5 are
+> RESOLVED BY ADOPTION and 2 is RESOLVED for armaments from the authored
+> `weapons.csv` columns (armour weight = `poiseThreshold`, A-side) — see
+> `docs/framework-migration-checklist.md` §B for each ruling and the one
+> remaining unauthored number (armour `defenseRating`). The list below is
+> kept as the record of what was reported.
+
 1. **Legacy armour ids are not globally unique.** `outfits.csv` ids are unique
    per class only. The import key is `armor.<classId>.<id>`; the legacy pair is
    preserved in `explicitOverrides` so save identity is untouched. Cutover

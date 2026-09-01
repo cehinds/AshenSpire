@@ -35,12 +35,19 @@ export const CONFIRMATION_LEVELS = Object.freeze([
   'NONE', 'REVERSIBLE', 'COMMITMENT', 'DESTRUCTIVE',
 ]);
 
+// STAFF: the legacy `staff` armament kind, adopted as its own category
+// (cutover ruling 5, docs/framework-cutover-report.md) rather than folded into
+// WEAPON with the kind hidden in an override.
 export const EQUIPMENT_CATEGORIES = Object.freeze([
-  'WEAPON', 'SHIELD', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
+  'WEAPON', 'SHIELD', 'STAFF', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
 ]);
 
+// The canonical ladder is the UNION of the contract's tiers and the live
+// legacy rarities (cutover ruling 3): STARTER/SPECIAL/BOSS are origin classes
+// (a class's own kit, an event's one-off, a boss drop), UNCOMMON is a live
+// tier between COMMON and RARE. Order is the display/sort order.
 export const EQUIPMENT_RARITIES = Object.freeze([
-  'BASIC', 'COMMON', 'RARE', 'LEGENDARY', 'MYTHIC',
+  'STARTER', 'BASIC', 'COMMON', 'UNCOMMON', 'RARE', 'SPECIAL', 'LEGENDARY', 'MYTHIC', 'BOSS',
 ]);
 
 export const COST_MODES = Object.freeze(['ALL_REQUIRED', 'CHOOSE_ONE']);
