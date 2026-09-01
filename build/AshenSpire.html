@@ -16977,7 +16977,6 @@ const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    hpPerConTier: 4,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'forsakenMedallion',
     startingSignatureCard: 'gorefireSlash',
@@ -17004,7 +17003,6 @@ const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 2, mana: 2 },
     startingRelic: 'starstoneShard',
     startingSignatureCard: 'starstonePebble',
@@ -17029,7 +17027,6 @@ const classes = [
     glyph: '🗡',
     name: 'Rogue',
     maxHp: 74,
-    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'cutpursesCoin',
     startingSignatureCard: 'ambush',
@@ -17050,7 +17047,6 @@ const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    hpPerConTier: 6,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'goldFigurine',
     startingSignatureCard: 'urgentHeal',
@@ -22818,7 +22814,7 @@ function validateContent(bundle) {
   }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'hpPerConTier'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
@@ -22889,9 +22885,6 @@ function validateContent(bundle) {
   }
 
   for (const cls of b.classes || []) {
-    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
-      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
-    }
   }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
@@ -27057,7 +27050,6 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
@@ -30821,7 +30813,7 @@ function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -35495,12 +35487,19 @@ const CONFIRMATION_LEVELS = Object.freeze([
   'NONE', 'REVERSIBLE', 'COMMITMENT', 'DESTRUCTIVE',
 ]);
 
+// STAFF: the legacy `staff` armament kind, adopted as its own category
+// (cutover ruling 5, docs/framework-cutover-report.md) rather than folded into
+// WEAPON with the kind hidden in an override.
 const EQUIPMENT_CATEGORIES = Object.freeze([
-  'WEAPON', 'SHIELD', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
+  'WEAPON', 'SHIELD', 'STAFF', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
 ]);
 
+// The canonical ladder is the UNION of the contract's tiers and the live
+// legacy rarities (cutover ruling 3): STARTER/SPECIAL/BOSS are origin classes
+// (a class's own kit, an event's one-off, a boss drop), UNCOMMON is a live
+// tier between COMMON and RARE. Order is the display/sort order.
 const EQUIPMENT_RARITIES = Object.freeze([
-  'BASIC', 'COMMON', 'RARE', 'LEGENDARY', 'MYTHIC',
+  'STARTER', 'BASIC', 'COMMON', 'UNCOMMON', 'RARE', 'SPECIAL', 'LEGENDARY', 'MYTHIC', 'BOSS',
 ]);
 
 const COST_MODES = Object.freeze(['ALL_REQUIRED', 'CHOOSE_ONE']);
@@ -35703,10 +35702,7 @@ const PROFILE_ROLE_PROPERTY = Object.freeze({
 
 // The union of the legacy rarity vocabularies ('starter'/'special'/'boss' are
 // legacy pool markers) and the contract's equipment ladder, lowercased at import.
-const RARITIES = Object.freeze([
-  'starter', 'special', 'boss', 'uncommon',
-  ...EQUIPMENT_RARITIES.map((r) => r.toLowerCase()),
-]);
+const RARITIES = Object.freeze(EQUIPMENT_RARITIES.map((r) => r.toLowerCase()));
 
 function mapped(table, key, what) {
   const value = table[key];
@@ -35861,8 +35857,28 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   }
 
   // ---- armaments and armour ------------------------------------------------
+  // The three contract numbers an armament carries into the framework are
+  // validated HERE, at the import boundary, because the gate's schema checks
+  // never look inside explicitOverrides: a missing or non-numeric weight would
+  // otherwise pass the cutover clean and surface as NaN in the equip load.
+  const armamentInteger = (piece, field) => {
+    const value = piece[field];
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`importer: armament '${piece.id}' ${field} must be a non-negative integer, got ${JSON.stringify(value)}`);
+    }
+    return value;
+  };
   for (const piece of bundle.equipment.armaments) {
     const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
+    const weight = armamentInteger(piece, 'weight');
+    const attackRating = armamentInteger(piece, 'attackRating');
+    const defenseRating = armamentInteger(piece, 'defenseRating');
+    // The legacy identity (armamentIntrinsicStatProblems): an armament's
+    // weight IS its authored poise threshold. A row where they differ is a
+    // typo in one column, not a new rule.
+    if (piece.poiseThreshold !== weight) {
+      throw new Error(`importer: armament '${piece.id}' weight ${weight} must equal its poiseThreshold ${JSON.stringify(piece.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -35871,7 +35887,7 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       properties: [],
       explicitOverrides: {
         legacyId: piece.id,
-        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : 'WEAPON', `armament ${piece.id}`),
+        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : piece.kind === 'staff' ? 'STAFF' : 'WEAPON', `armament ${piece.id}`),
         hand: piece.hand,
         rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
         tags: piece.tags,
@@ -35886,11 +35902,15 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
           guardCardId: piece.guardProfile ? key('profile', piece.guardProfile) : undefined,
           techniqueCardId: piece.techniqueProfile ? key('profile', piece.techniqueProfile) : undefined,
         },
-        // Contract fields the legacy tables do not author yet — imported as
-        // inert defaults, listed in the cutover report as open authoring work.
-        itemWeight: 0,
-        attackRatingBonus: 0,
-        defenseRating: 0,
+        // Contract fields, from the authored armament table (cutover ruling 2):
+        // weapons.csv authors weight / attackRating / defenseRating for every
+        // armament, and the legacy rule binds weight to the authored
+        // poiseThreshold (armamentIntrinsicStatProblems). Nothing in the
+        // running game reads these yet — the Weight Class service stays
+        // dormant until it is wired — so this is data flow, not behavior.
+        itemWeight: weight,
+        attackRatingBonus: attackRating,
+        defenseRating,
       },
     });
   }
@@ -35909,7 +35929,12 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         tags: outfit.tags,
         mods: outfit.mods,
         artKey: outfit.artKey,
-        itemWeight: 0,
+        // Outfits author no weight column; the legacy identity `weight ==
+        // poiseThreshold` (the armament rule) is adopted for armour as the
+        // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
+        // The B-side — armour weightless — is `itemWeight: 0` here. No
+        // defenseRating column exists for outfits; 0 remains inert.
+        itemWeight: outfit.poiseThreshold,
         defenseRating: 0,
       },
     });
@@ -35970,7 +35995,6 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       explicitOverrides: {
         legacyId: klass.id,
         maxHp: klass.maxHp,
-        hpPerConTier: klass.hpPerConTier,
         startingFlaskAllocation: klass.startingFlaskAllocation,
         startingRelic: klass.startingRelic,
         startingSignatureCard: klass.startingSignatureCard,
@@ -36800,7 +36824,7 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    classFields: ['maxHp', 'maxMana'],
     damageSchools: DAMAGE_SCHOOLS,
   };
 }
@@ -48704,7 +48728,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f81b2e4eb6';
+const SOURCE = 'df8d081abb';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48738,7 +48762,7 @@ const SOURCE = 'f81b2e4eb6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1909';
+const ORDINAL = '1910';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
