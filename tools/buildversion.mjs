@@ -218,6 +218,34 @@ function isDerived(value) {
 }
 
 /**
+ * True when a captured value is PROSE — a sentence, a placeholder, an
+ * `UNKNOWN` — rather than a version typed at a second site. A typed version
+ * carries a version-shaped number: `digit.digit` (`0.4.0`, `9.9.z`, `0.5.0-rc.1`)
+ * or a bare number. Prose can mention a digit (`d1`, `four`, a count) and still
+ * hold nothing a stamp could agree with or drift from, so neither arm's
+ * question applies to it.
+ *
+ * This is NOT the value-equality proxy arm 2 was rebuilt to remove: a drifted
+ * version still has its `digit.digit` shape, so a copy can never turn into
+ * prose by drifting, and the predicate cannot go quiet at the moment of harm.
+ * It is also not the 37-hit shape predicate rejected above — that one SEARCHED
+ * for shapes; this one only clears a site the key predicate already found.
+ *
+ * MEASURED, AND THE FIRST CUT WAS WRONG: I first wrote this as "carries no
+ * digit at all", and the one standing hit it exists to clear — the successor
+ * packet's `source_export_recipe_and_tool_version` column
+ * (assets/classes/successor-packet.manifest.json), whose value is the sentence
+ * "UNKNOWN. No generation or export receipt … (see open_items_not_closed_by_d1)"
+ * — stayed red on `d1`. The column is one the art runbook's twelve-column
+ * manifest contract requires by that name (docs/governance/RUNBOOKS/art.md §3),
+ * so the key cannot be renamed away; the value's SHAPE is the honest boundary.
+ * The selftest plants `9.9.z` under that same key and expects arm 2 to see it.
+ */
+function isProse(value) {
+  return !/\d+\.\d+/.test(value) && !/^\s*v?\d+\s*$/.test(value);
+}
+
+/**
  * SECOND VERSION SITES THAT ARE KNOWN, STATED AND OPEN — not clean, not fresh.
  *
  * A site listed here resolves row B to UNKNOWN, which blocks exactly as red
@@ -613,7 +641,7 @@ export function check(root = REPO_ROOT) {
         // captures (quote, key, quote, value) — hence the index shift.
         const [ki, vi] = n === 0 ? [1, 3] : [2, 4];
         for (const m of line.matchAll(re)) {
-          if (!/version$/i.test(m[ki]) || isDerived(m[vi])) continue;
+          if (!/version$/i.test(m[ki]) || isDerived(m[vi]) || isProse(m[vi])) continue;
           sites.push({ file: f, line: i + 1, key: m[ki], value: m[vi] });
         }
       }
@@ -643,7 +671,7 @@ export function check(root = REPO_ROOT) {
     add(true, 'B NO SECOND COPY',
       `no second home for the release under ${INPUT_ROOTS.join(', ')}: no file re-types '${rel}'`
       + ` outside ${RELEASE_HOME} (arm 1), and no other site declares a version at all (arm 2,`
-      + ` which does not read the value, so it does not go quiet when the value drifts).`
+      + ` which never compares the value to the release, so it does not go quiet when the value drifts).`
       + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
   }
 

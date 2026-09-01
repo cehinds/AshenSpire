@@ -126,6 +126,17 @@ const PLANTS = [
     plant: (root) => edit(root, 'src/ui/screens/about.js',
       (t) => t.replace('export function', `const SHOWN_VERSION = '9.9.z';\n\nexport function`)),
   },
+  {
+    // The prose exemption's own falsifier: the successor packet's manifest
+    // column `source_export_recipe_and_tool_version` is cleared by arm 2 only
+    // because its value has no version-shaped number. Type a `digit.digit`
+    // version into that same key and arm 2 must see the site again — if this
+    // plant is ever "not caught", the exemption has widened into a hole.
+    name: 'a version TYPED into the manifest column arm 2 clears only while it is prose',
+    row: 'B NO SECOND COPY',
+    plant: (root) => edit(root, 'assets/classes/successor-packet.manifest.json',
+      (t) => t.replace(/"source_export_recipe_and_tool_version": "[^"]*"/, '"source_export_recipe_and_tool_version": "9.9.z"')),
+  },
   // ---- rows F and G, THE LOCK ON A FILE THE DIGEST CANNOT SEE ---------------
   // buildordinal.json sits outside the digest roots by necessity (a fixpoint:
   // bumping on a digest change cannot itself move the digest). The whole price

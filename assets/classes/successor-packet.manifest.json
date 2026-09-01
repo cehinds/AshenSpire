@@ -263,7 +263,7 @@
       "dimensions": "FILLED \u2014 512x512, 4/4.",
       "bytes": "FILLED \u2014 crops[].bytes.",
       "sha256": "FILLED \u2014 crops[].sha256.",
-      "source_export_recipe_and_tool_receipt": "UNKNOWN. No generation or export receipt for these four files exists in this repository. This is an adoption gate (see open_items_not_closed_by_d1), not an unfilled field this seat could measure.",
+      "source_export_recipe_and_tool_version": "UNKNOWN. No generation or export receipt for these four files exists in this repository. This is an adoption gate (see open_items_not_closed_by_d1), not an unfilled field this seat could measure.",
       "pivot_anchor": "FILLED BY MEASUREMENT \u2014 crops[].anchor. All four alpha-weighted centroids fall within 0.7 px of x=256 on a 512-wide canvas, so the packet is horizontally centred, and all four share baseline_y=359. Binding one of these as the runtime pivot is an adoption-time choice D1 does not authorize; the measurement itself is a fact and is recorded.",
       "runtime_budget_optimization": "FILLED BY MEASUREMENT \u2014 crops[].bytes on disk (67,879-87,974) and crops[].decoded_rgba_bytes (1,048,576 each, 512x512x4). Setting a budget against these numbers is a UI-owner decision, not a maker one.",
       "fallback_id": "NOT APPLICABLE \u2014 reason: a fallback identity presupposes a reader mapping, and D1 authorizes no mapping, adoption or integration. Becomes required if adoption is ever approved.",

@@ -149,7 +149,7 @@ is what the reviewer is asked to test.
    twelve manifest columns and permits `Not applicable` only with a reason and
    IT Manager III acceptance. Two are marked so — `fallback_id` and `consumers`
    — with reasons in `successor-packet.manifest.json`. Two others,
-   `source_export_recipe_and_tool_receipt` and `provenance_licence`, are marked
+   `source_export_recipe_and_tool_version` and `provenance_licence`, are marked
    `UNKNOWN` rather than `Not applicable`, because they are unanswered facts and
    not inapplicable ones.
 6. **Confirm the scope determinations in §8** are the right reading of D1.
