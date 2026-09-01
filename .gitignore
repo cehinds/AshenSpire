@@ -26,3 +26,6 @@ dist/AshenSpire-*.html
 
 # Personal Claude Code settings (per-user, not committed)
 .claude/settings.local.json
+
+# assembled GitHub Pages site (tools/pages-site.mjs); published by the pages-builds workflow, never committed
+_site/
