@@ -1269,7 +1269,7 @@ function desiredGrantInstances(registries, run) {
       for (let i = 0; i < grant.count; i++) {
         desired.push({
           instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
-          cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+          cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
         });
       }
     }
@@ -1283,7 +1283,7 @@ function desiredGrantInstances(registries, run) {
     const weaponId = sources[art.hand].package.weaponId;
     desired.push({
       instanceId: `weaponArt:${weaponId}:${art.id}`,
-      cardId: art.id, equipmentRole: 'weaponArt', grantedBy: weaponId,
+      cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
     });
   }
   return desired;

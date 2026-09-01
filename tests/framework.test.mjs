@@ -752,6 +752,7 @@ test('a mid-combat swap reconciles granted instances across the combat piles', (
   eq(piles.hand.length, 0, 'the stale grant leaves the hand with its armament');
   eq(piles.draw.map((c) => c.instanceId), ['i1', 'granted:straightSword:quickstep:0'], 'a present wanted grant stays put, not duplicated');
   eq(piles.discard.map((c) => c.instanceId), ['weaponArt:straightSword:crimsonCleave'], 'the missing art lands in the discard pile');
+  eq(piles.discard[0].upgraded, false, 'a reconciled instance carries the boolean upgraded field combat saves require');
   const snapshot = structuredClone(piles);
   reconcileGrantedCardsInCombat(REG2, run, piles);
   eq(piles, snapshot, 'the combat reconcile is idempotent');

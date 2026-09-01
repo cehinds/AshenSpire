@@ -31,7 +31,7 @@ import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunF
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
-import { stampDeck, WeaponDeckCompositionService } from '../framework/deckComposition.js';
+import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
@@ -156,6 +156,12 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     adoptEquipmentBonuses: false,
     reconcileEquipmentPools: false,
   });
+  // The stamp above is a subset call (cards supplied), so granted/weaponArt
+  // instances reconcile here explicitly, against the snapshot's own piles: a
+  // package change between save and load sweeps instances the equipped hands
+  // no longer grant and lands newly-granted ones in the discard pile — the
+  // same door a live mid-combat swap goes through.
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
   snapshot.itemUpgradeLevels = structuredClone(runLevels);
   delete snapshot.armamentLevels;
 

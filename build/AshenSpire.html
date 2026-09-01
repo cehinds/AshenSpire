@@ -32301,7 +32301,7 @@ function desiredGrantInstances(registries, run) {
       for (let i = 0; i < grant.count; i++) {
         desired.push({
           instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
-          cardId: grant.cardId, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+          cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
         });
       }
     }
@@ -32315,7 +32315,7 @@ function desiredGrantInstances(registries, run) {
     const weaponId = sources[art.hand].package.weaponId;
     desired.push({
       instanceId: `weaponArt:${weaponId}:${art.id}`,
-      cardId: art.id, equipmentRole: 'weaponArt', grantedBy: weaponId,
+      cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
     });
   }
   return desired;
@@ -42239,7 +42239,7 @@ const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFl
 const { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } = require("src/model/loadout.js");
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
-const { stampDeck, WeaponDeckCompositionService } = require("src/framework/deckComposition.js");
+const { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } = require("src/framework/deckComposition.js");
 const { initializeRunSmithing } = require("src/model/smithing.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
@@ -42364,6 +42364,12 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     adoptEquipmentBonuses: false,
     reconcileEquipmentPools: false,
   });
+  // The stamp above is a subset call (cards supplied), so granted/weaponArt
+  // instances reconcile here explicitly, against the snapshot's own piles: a
+  // package change between save and load sweeps instances the equipped hands
+  // no longer grant and lands newly-granted ones in the discard pile — the
+  // same door a live mid-combat swap goes through.
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
   snapshot.itemUpgradeLevels = structuredClone(runLevels);
   delete snapshot.armamentLevels;
 
@@ -48506,7 +48512,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd58965c159';
+const SOURCE = '299a52a40d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48540,7 +48546,7 @@ const SOURCE = 'd58965c159';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1898';
+const ORDINAL = '1899';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
