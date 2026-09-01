@@ -24,6 +24,7 @@ import { createRunState } from '../src/model/state.js';
 import { playerLoadReceipt, ARMOUR_WEIGHT_RULE } from '../src/model/statProjection.js';
 import { attributeRules } from '../src/content/attributes.js';
 import { creationHandChoices } from '../src/model/characterCreation.js';
+import { itemUpgradeTiers } from '../src/model/itemUpgrades.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -75,7 +76,8 @@ for (const cls of contentBundle.classes) {
   }
 }
 // THE REACHABILITY LINES: the heaviest loadout each class could ever wear at
-// its tuned attributes. Not "the heaviest item, twice": a run holds ONE copy of
+// its tuned attributes, the outfit at its highest Smithing tier. Not "the
+// heaviest item, twice": a run holds ONE copy of
 // an armament in one hand (applyEquipTransition moves it, and the weapon-card
 // plan refuses a duplicate id), so the candidates are every ORDERED PAIR OF
 // DISTINCT armaments, each hand may also be empty, and each pair is measured
@@ -92,6 +94,12 @@ for (const cls of contentBundle.classes) {
   const run = createRunState({ seed: 7, classId: cls.id, registries: REG, attributes, attributeMode: 'tuned' });
   run.loadout.sets.armor = [outfit.id];
   run.loadout.active.armor = 0;
+  // "Could ever wear" includes the Smith: an armour tier raises the poise
+  // threshold and therefore the weight, so the outfit is worn at its highest
+  // authored tier. Armament tiers change card numbers only, never weight.
+  const armourRef = `armor/${cls.id}/${outfit.id}`;
+  const armourTier = itemUpgradeTiers(REG, armourRef).slice(-1)[0] || 0;
+  run.itemUpgradeLevels = { [armourRef]: armourTier };
   let best = null;
   let pairs = 0;
   const handIds = [null, ...armaments.map((a) => a.id)];
@@ -113,7 +121,7 @@ for (const cls of contentBundle.classes) {
   const expectedSources = [best.rightId, best.leftId, outfit.id].filter(Boolean).length;
   if (best.receipt.sources.length !== expectedSources) throw new Error(`${cls.id}: heaviest loadout counted ${best.receipt.sources.length} sources, expected ${expectedSources}`);
   checks += 1;
-  heaviest.push(`${cls.id.padEnd(9)} heaviest of ${pairs} distinct hand pairs: ${handLabel(best.rightId)}+${handLabel(best.leftId)}+${outfit.id}: load ${best.receipt.load}/${best.receipt.capacity} ${best.receipt.percent}% → ${best.receipt.word}`);
+  heaviest.push(`${cls.id.padEnd(9)} heaviest of ${pairs} distinct hand pairs: ${handLabel(best.rightId)}+${handLabel(best.leftId)}+${outfit.id}${armourTier ? `+${armourTier}` : ''}: load ${best.receipt.load}/${best.receipt.capacity} ${best.receipt.percent}% → ${best.receipt.word}`);
 }
 console.log(`weightclass-census — armour weight rule: ${ARMOUR_WEIGHT_RULE} · capacity base ${capacityBase}${capacityBonus ? ` (shipped ${mechanics.weight.capacityBase}; delta ${capacityBonus} as a bonus)` : ''}`);
 for (const row of rows) console.log('  ' + row);
