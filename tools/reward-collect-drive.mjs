@@ -234,7 +234,12 @@ const durableKinds = await ev(`(async()=>{
     const persist=()=>{ snapshot=JSON.stringify(run); };
     mountRewards(root, { registries, run, rewards:row.rewards, onDone(){}, onPersist:persist,
       saves:{loadMeta:()=>meta,saveMeta:(next)=>{meta=next;}},
-      onCollectArmament:(id)=>{run.loadout.storage.push(id);meta={...meta,found:[...meta.found,id]};persist();return true;},
+      // main.js's collectArmament writes META only and defers the run snapshot:
+      // "The reward screen persists this mutation together with its Taken
+      // state." A fixture that persisted the run inside this callback modelled
+      // a collector production deliberately does not have, and made the
+      // armament S10 red unreachable when the save door was planted away.
+      onCollectArmament:(id)=>{run.loadout.storage.push(id);meta={...meta,found:[...meta.found,id]};return true;},
     });
     row.take(root);
     const restored=snapshot&&JSON.parse(snapshot);
