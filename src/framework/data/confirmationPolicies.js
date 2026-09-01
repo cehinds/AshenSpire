@@ -37,6 +37,10 @@ export const confirmationPolicies = {
       "level": "DESTRUCTIVE"
     },
     {
+      "id": "policy.discardUnsavedProgress",
+      "level": "DESTRUCTIVE"
+    },
+    {
       "id": "policy.saveOverwrite",
       "level": "DESTRUCTIVE"
     },
@@ -108,6 +112,16 @@ export const confirmationPolicies = {
     {
       "id": "action.removeCard",
       "policyId": "policy.cardRemove",
+      "destructive": true
+    },
+    {
+      "id": "action.loadSlot",
+      "policyId": "policy.discardUnsavedProgress",
+      "destructive": true
+    },
+    {
+      "id": "action.quitWithoutSaving",
+      "policyId": "policy.discardUnsavedProgress",
       "destructive": true
     },
     {

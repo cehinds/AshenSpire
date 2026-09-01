@@ -314,9 +314,10 @@ function needsEnemyTarget(def) {
 }
 function effectiveCost(C, def) {
   if (def.cost === 'X') return 'X';
-  let cost = def.cost;
-  if (def.type === 'power') cost = Math.max(0, cost - passiveSum(C.registries, C.player.relicIds, 'powerCostReduction', C.player.itemUpgradeLevels || {}));
-  return cost;
+  // Same framework cost authority as the solo engine (hand parity).
+  return C.registries.framework.costProfile(def, {
+    powerCostReduction: passiveSum(C.registries, C.player.relicIds, 'powerCostReduction', C.player.itemUpgradeLevels || {}),
+  }).action;
 }
 
 function doPlayCard(C, { cardInstanceId, targetId }) {
@@ -330,8 +331,9 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(C, def);
-  const manaCost = def.manaCost || 0;
-  const staminaCost = def.staminaCost || 0;
+  const pools = C.registries.framework.costProfile(def);
+  const manaCost = pools.mana;
+  const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);

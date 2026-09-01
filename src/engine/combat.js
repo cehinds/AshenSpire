@@ -645,11 +645,12 @@ function needsEnemyTarget(def) {
 // X-cost is unaffected (it always consumes all energy).
 function effectiveCost(combat, def) {
   if (def.cost === 'X') return 'X';
-  let cost = def.cost;
-  if (def.type === 'power') {
-    cost = Math.max(0, cost - passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}));
-  }
-  return cost;
+  // The cost profile is the framework's call; this engine supplies the live
+  // relic reduction and the framework applies it only where the card's
+  // classification permits (Powers).
+  return combat.registries.framework.costProfile(def, {
+    powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}),
+  }).action;
 }
 
 function doPlayCard(combat, { cardInstanceId, targetId }) {
@@ -665,8 +666,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
-  const manaCost = def.manaCost || 0;
-  const staminaCost = def.staminaCost || 0;
+  const pools = combat.registries.framework.costProfile(def);
+  const manaCost = pools.mana;
+  const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);

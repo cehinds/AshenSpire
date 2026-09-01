@@ -1065,8 +1065,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const anyPlayable = combat.piles.hand.some((inst) => {
       const def = resolveCard(registries, inst);
       if (registries.framework.isUnplayable(def)) return false;
-      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost)
-        && combat.player.mana >= (def.manaCost || 0);
+      // Base profile, no live modifiers — this pulse always read the raw cost.
+      const pools = registries.framework.costProfile(def);
+      return combat.player.energy >= (pools.variable ? 0 : pools.action)
+        && combat.player.mana >= pools.mana;
     });
     return combat.player.energy > 0 && anyPlayable;
   }

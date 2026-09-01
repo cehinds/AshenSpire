@@ -12,10 +12,12 @@
 import { properties as propertiesData } from './data/properties.js';
 import { relations as relationsData } from './data/relations.js';
 import { terms as termsData } from './data/terms.js';
-import { PropertyRegistry, TermRegistry } from './registries.js';
+import { confirmationPolicies } from './data/confirmationPolicies.js';
+import { PropertyRegistry, TermRegistry, ConfirmationRegistry } from './registries.js';
 import { cardPropertyInstances, KEYWORD_PROPERTY } from './importer.js';
 import { destinationAfterPlay, endTurnCleanup } from './lifecycle.js';
-import { hasProperty } from './compiler.js';
+import { compileCosts } from './costs.js';
+import { hasProperty, propertyParameters } from './compiler.js';
 
 let sharedBridge = null;
 
@@ -33,6 +35,7 @@ export function sharedFrameworkBridge() {
 export function createFrameworkBridge() {
   const props = new PropertyRegistry(propertiesData.properties, relationsData.relations);
   const terms = new TermRegistry(termsData.terms);
+  const confirmation = new ConfirmationRegistry(confirmationPolicies);
   const viewCache = new WeakMap();
 
   /** Property view of a resolved legacy card def, cached by def identity. */
@@ -69,6 +72,39 @@ export function createFrameworkBridge() {
 
     isInnate(def) {
       return hasProperty(viewFor(def), 'lifecycle.innate');
+    },
+
+    /**
+     * The card's cost profile (framework contract: Cost compilation): base
+     * action/mana/stamina from the cost properties, with the Power cost
+     * reduction applied only when the card IS a Power — that classification
+     * decision lives here, not at the call site. `variable` marks X costs;
+     * their numeric action amount is the caller's to substitute.
+     */
+    costProfile(def, { powerCostReduction = 0 } = {}) {
+      const view = viewFor(def);
+      const modifiers = powerCostReduction && hasProperty(view, 'classification.power')
+        ? [{ resource: 'action', delta: -powerCostReduction }]
+        : [];
+      const profile = compileCosts({ ...view, overrides: {} }, { modifiers });
+      const amount = (resource) => profile.entries.find((e) => e.resource === resource)?.amount ?? 0;
+      const action = propertyParameters(view, 'cost.action');
+      return {
+        action: amount('action'),
+        mana: amount('mana'),
+        stamina: amount('stamina'),
+        variable: Boolean(action && action.variable),
+      };
+    },
+
+    /**
+     * The confirmation level for a registered action, as the tone the shared
+     * modal wears: DESTRUCTIVE reads 'danger', every other level 'normal'.
+     * An unknown action id throws — a destructive surface with no registered
+     * policy is exactly what the registry exists to prevent.
+     */
+    confirmationTone(actionId) {
+      return confirmation.policyForAction(actionId).level === 'DESTRUCTIVE' ? 'danger' : 'normal';
     },
 
     isUnplayable(def) {

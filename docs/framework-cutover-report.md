@@ -70,6 +70,8 @@ decisions equal the legacy keyword rules.
 | After-play placement (exhaust / power removal / discard) | both engines | `destinationAfterPlay` via bridge |
 | End-turn fate (retain / ethereal / discard) | both engines | `endTurnCleanup` via bridge |
 | Keyword names + tooltips | `ui/components/card.js` | TermRegistry via bridge `keywordDisplay` |
+| Card cost profile (action/mana/stamina, X, Power reduction) | both engines + the end-turn playability pulse | `compileCosts` via bridge `costProfile` |
+| Load/quit confirmation severity | `main.js` (both dialogs) | ConfirmationRegistry via bridge `confirmationTone` |
 
 Two legacy rules the contract does not name are preserved in the framework
 lifecycle explicitly: an Ethereal card in hand Exhausts at end of turn
@@ -80,9 +82,11 @@ play (Exhaust still wins on a Power that carries it).
 sweep: a framework JSON without its generated mirror in
 `src/framework/data/` still fails by name.
 
-Still legacy-decided (next tranches): card costs and legality beyond
-Unplayable, deck composition, status/stance semantics, every screen's
-presentation components, confirmation flows.
+Still legacy-decided (next tranches): deck composition, status/stance
+semantics, every screen's presentation components, the generic
+option-decision confirmation router (`holdconfirm`/`optionDecision`), and
+cost/keyword DISPLAY strings on card faces (the decisions are ported; the
+formatting is the presentation tranche's).
 
 ## Unresolved contradictions (reported before cutover, per the contract)
 
