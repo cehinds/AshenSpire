@@ -33,9 +33,15 @@ function botTurn(combat, memberId) {
       if ((def.keywords || []).includes('unplayable')) return false;
       return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
     });
-    const tgt = combat.enemies.find((e) => e.alive);
+    // A SELF-TARGETING CARD IS NOT AIMED AT AN ENEMY. The engine refuses one
+    // that is ("Invalid self target"), and a refusal here used to end the bot's
+    // turn — so a defensive card in hand (Defend, the Dodge Roll) cut the turn
+    // short and the party lost fights the harness means to walk through.
+    const def = card ? resolveCard(REG, { cardId: card.cardId, upgraded: card.upgraded }) : null;
+    const wantsEnemy = def ? (def.effects || []).some((eff) => eff.target === 'enemy') : false;
+    const tgt = wantsEnemy ? combat.enemies.find((e) => e.alive) : null;
     try {
-      if (card) playCard(combat, memberId, card.instanceId, tgt && tgt.id);
+      if (card) playCard(combat, memberId, card.instanceId, tgt ? tgt.id : undefined);
       else { endTurn(combat, memberId); break; }
     } catch { endTurn(combat, memberId); break; }
   }

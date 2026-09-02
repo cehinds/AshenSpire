@@ -255,6 +255,15 @@ test('a left-hand-only weapon receives the complete package', () => {
   eq(left, right, 'hand does not change a solo package');
 });
 
+test('one hand armed, one empty → the empty slot installs the Dodge Roll beside the armament\'s arts', () => {
+  const plan = buildEquippedWeaponCardPlan({ rightHand: 'sword' }, helpers);
+  eq(plan.source, 'single', 'a single package');
+  eq(plan.weaponArts.includes('framework.dodgeRoll'), true, `the empty slot's art rides (${plan.weaponArts.join(',')})`);
+  eq(plan.weaponArts.filter((id) => id === 'framework.dodgeRoll').length, 1, 'once');
+  const both = buildEquippedWeaponCardPlan({ rightHand: 'sword', leftHand: 'sword' }, helpers);
+  eq(both.weaponArts.includes('framework.dodgeRoll'), false, 'two armed hands install no empty-slot art');
+});
+
 test('dual wield splits slots ceil/floor with RIGHT_THEN_LEFT unique preference', () => {
   const plan = buildEquippedWeaponCardPlan({ rightHand: 'sword', leftHand: 'dagger' }, helpers);
   eq(plan.weaponArts[0], 'art.cleave', 'right picks first');
@@ -792,7 +801,9 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
   const savedSets = structuredClone(run.loadout.sets);
   run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
   reconcileGrantedCards(REG2, run);
-  eq(composed(), [], 'unequip removes every granted instance');
+  // The sword's grants leave with it; the hand it left is EMPTY beside the
+  // shield, and an empty hand carries the Dodge Roll (the owner's rule).
+  eq(composed(), ['weaponArt:unarmed:right:dodgeRoll'], 'unequip removes every granted instance; the emptied hand carries the Dodge Roll');
   run.loadout.sets.rightHand = savedSets.rightHand;
   reconcileGrantedCards(REG2, run);
   eq(composed(), before, 're-equip restores them exactly');
@@ -954,6 +965,28 @@ test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed prof
   const techniques = run.deck.filter((c) => c.equipmentRole === 'technique').map((c) => c.cardId);
   eq(guards.length > 0 && guards.every((id) => id === 'evasiveGuard'), true, `every unarmed guard slot is Evasive Guard (${guards.join(',')})`);
   eq(techniques.length > 0 && techniques.every((id) => id === 'dodgeRoll'), true, `every unarmed technique slot is Dodge Roll (${techniques.join(',')})`);
+});
+
+test('one empty hand composes the Dodge Roll beside the armed hand\'s technique, and loses it when the hand is filled', () => {
+  const { stampDeck } = compositionDoor;
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const leftBefore = run.loadout.sets.leftHand.slice();
+  run.loadout.sets.leftHand = run.loadout.sets.leftHand.map(() => null);
+  stampDeck(LEGACY_REG, run);
+  const arts = run.deck.filter((c) => c.equipmentRole === 'weaponArt');
+  const dodge = arts.filter((c) => c.cardId === 'dodgeRoll');
+  const techniques = run.deck.filter((c) => c.equipmentRole === 'technique').map((c) => c.cardId);
+  eq(dodge.length, 1, `the empty left hand carries one Dodge Roll (arts: ${arts.map((c) => c.cardId).join(',') || 'none'})`);
+  eq(dodge[0] && dodge[0].grantedBy, 'unarmed:left', 'attributed to the empty hand');
+  eq(techniques.length > 0 && techniques.every((id) => id !== 'dodgeRoll'), true, `the armed hand's technique slot stays its own (${techniques.join(',')})`);
+  run.loadout.sets.leftHand = leftBefore;
+  stampDeck(LEGACY_REG, run);
+  eq(run.deck.some((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll'), false, 'filling the hand takes the dodge away');
+  run.loadout.sets.leftHand = leftBefore.map(() => null);
+  run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
+  stampDeck(LEGACY_REG, run);
+  eq(run.deck.some((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll'), false, 'both hands empty is the unarmed package, not an extra art');
+  eq(run.deck.filter((c) => c.equipmentRole === 'technique').every((c) => c.cardId === 'dodgeRoll'), true, 'every unarmed technique slot is the Dodge Roll');
 });
 
 test('the dodge roll lands as Block through the framework check, priced by the class, and idle turns recover stamina', () => {
