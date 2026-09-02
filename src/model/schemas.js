@@ -251,13 +251,15 @@ export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 //   additive       — (mult−1) sums across additive sources, applied once.
 export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 
-// Creature tags used to be a frozen array here. They are now rows in the one
-// tag registry (content/source/tags.csv) carrying domain 'creature', and
-// model/tags.js gates them: an enemy's `tags` and a proc row's
-// `resistance.tags` may draw from that domain and no other. Still deliberately
-// distinct from card/effect tags — creature identity vs attack school, two
-// concepts — but the distinction is now a column instead of a second array, so
-// adding a kind is a spreadsheet row.
+// Creature tags used to be a frozen array here, and then a field on the enemy
+// def. They are now rows in the one tag registry (content/source/tags.csv)
+// carrying domain 'creature', authored in content/source/tagging.csv like every
+// other tag and stamped onto the enemy at boot. Nothing about them is a schema
+// field any more, which is why neither the enemy nor the profile declares one.
+// model/tags.js gates them: an enemy and a proc row's `resistance.tags` may
+// draw from that domain and no other. Still deliberately distinct from
+// card/effect tags — creature identity vs attack school, two concepts — but the
+// distinction is a column now, so adding a kind is a spreadsheet row.
 
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
@@ -513,7 +515,6 @@ export const SCHEMAS = Object.freeze({
     rounding: en('floor', 'ceil', 'round'),
     gainPerTier: num,
     cap: union(num, str),
-    tags: arr(str),
     flavor: str,
     mods: arr(str),
     compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
@@ -712,7 +713,6 @@ export const SCHEMAS = Object.freeze({
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
     levelProfile: opt(enemyLevelProfileSchema),
-    tags: opt(arr(str)), // creature tags (registry domain) — gate proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),

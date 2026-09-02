@@ -7,6 +7,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
+import { tagIndex } from './tags.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
@@ -112,57 +113,59 @@ const TYPE_SINGULAR = {
  *   registries.contentVersion       — string
  */
 /**
- * Every object in a `table` family gets its authored tags stamped ONTO it, so
- * `registries.relics.get(id).tags` is a real array for every family rather
- * than something each caller has to remember to look up elsewhere. The
- * association table is still the only home: this copies, it never merges with
- * a second source, and an `inline` family is left exactly as authored.
+ * stampTags(bundle) -> Map of source path to a copy of that collection with
+ * every object carrying its `tags` array.
+ *
+ * This is the join, resolved eagerly, exactly once, at boot — the ORM's
+ * navigation property, made concrete. content/source/tagging.csv stays the ONLY
+ * home a tag is authored in (an object arriving with its own `tags` is refused
+ * by model/tags.js), and every object comes out of here with a real array, so a
+ * mechanic reading `obj.tags` never guards for undefined and never has to know
+ * which table the tag came from.
+ *
+ * Which collections get stamped is read from the content's own tagFamilies.csv
+ * `source` column — a family joins by adding a row there, including a nested
+ * one like `equipment.armaments`. `scopeField` supplies the second half of the
+ * parent key for families whose ids repeat (armour, per class).
  */
-function stampTags(family, defs, tagging) {
-  const rows = (tagging || []).filter((row) => row && row.family === family);
-  if (!rows.length) return defs;
-  const byId = new Map(rows.map((row) => [row.id, row.tags || []]));
-  return (defs || []).map((def) => (
-    def && byId.has(def.id) ? { ...def, tags: [...byId.get(def.id)] } : def
-  ));
+function stampTags(bundle) {
+  const { families, index, keyOf } = tagIndex(bundle);
+  const stamped = new Map();
+  for (const spec of families.values()) {
+    if (!spec.source) continue;
+    let node = bundle;
+    for (const part of spec.source.split('.')) node = node && typeof node === 'object' ? node[part] : undefined;
+    if (!Array.isArray(node)) continue;
+    stamped.set(spec.source, node.map((def) => {
+      if (!def) return def;
+      const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
+      return { ...def, tags: [...(index.get(keyOf(spec.family, scope, def.id)) || [])] };
+    }));
+  }
+  return stamped;
 }
 
 export function createRegistries(contentBundle) {
   const bundle = contentBundle || {};
   const registries = {};
 
-  // Bundle collection to tag family, read from the content's own
-  // tagFamilies.csv `source` column — a family joins by adding a row there.
+  // The tag join, resolved once for every collection tagFamilies.csv names.
+  // Everything below reads a stamped collection where one exists, so `.tags` is
+  // present and correct on every tagged object no matter which door it came in.
   const tagFamilies = [...(bundle.tagFamilies || [])];
-  const familyBySource = new Map(
-    tagFamilies.filter((f) => f && f.home === 'table' && f.source).map((f) => [f.source, f.family])
-  );
-  // Inline families author tags on the object, where absent means untagged.
-  // Absent is normalised to [] so `obj.tags` is an array for EVERY tagged
-  // family — a mechanic reading tags never has to guard for undefined.
-  const inlineSources = new Set(
-    tagFamilies.filter((f) => f && f.home === 'inline' && f.source).map((f) => f.source)
-  );
+  const stamped = stampTags(bundle);
+  const collection = (source, fallback) => stamped.get(source) || fallback;
 
   for (const type of REGISTRY_TYPES) {
-    const family = familyBySource.get(type);
-    let defs = bundle[type];
-    if (family) defs = stampTags(family, defs, bundle.tagging);
-    else if (inlineSources.has(type)) {
-      defs = (defs || []).map((def) => (def && !Array.isArray(def.tags) ? { ...def, tags: [] } : def));
-    }
-    registries[type] = makeRegistry(TYPE_SINGULAR[type], defs);
+    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
-  // Keepsakes are the one `table` family that is not a top-level registry —
-  // they ride inside characterCreation — so they are stamped here rather than
-  // in the loop above. Everything else about them is untouched.
+  // Keepsakes are tagged like everything else; they just live one level down.
   const creation = { ...(bundle.characterCreation || {}) };
-  const keepsakeFamily = familyBySource.get('characterCreation.keepsakes');
-  if (keepsakeFamily && Array.isArray(creation.keepsakes)) {
-    creation.keepsakes = stampTags(keepsakeFamily, creation.keepsakes, bundle.tagging);
+  if (stamped.has('characterCreation.keepsakes')) {
+    creation.keepsakes = stamped.get('characterCreation.keepsakes');
   }
   registries.characterCreation = deepFreeze(creation);
   // One object, not a copied settings shadow. The run snapshots the resolved
@@ -180,12 +183,21 @@ export function createRegistries(contentBundle) {
   // Armaments/armour are tables, not id→def registries: pieces are looked up
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
-  registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+  // Equipment tables are stamped the same way; each is named by its own family
+  // row (equipment.armaments, equipment.armour, ...), so nothing here lists them.
+  const equipment = { ...(bundle.equipment || {}) };
+  for (const [source, rows] of stamped) {
+    const [head, tail] = source.split('.');
+    if (head === 'equipment' && tail) equipment[tail] = rows;
+  }
+  registries.equipment = deepFreeze(equipment);
   // The one tag vocabulary, plus the two tables that say who may carry it and
   // where it is authored (content/tags.js). Rules read these, never a second
   // hard-coded list — that is what makes a new tag a spreadsheet row.
   registries.tags = deepFreeze([...(bundle.tags || [])]);
+  registries.tagDomains = deepFreeze([...(bundle.tagDomains || [])]);
   registries.tagFamilies = deepFreeze(tagFamilies.map((row) => ({ ...row })));
+  registries.tagFamilyDomains = deepFreeze((bundle.tagFamilyDomains || []).map((row) => ({ ...row })));
   registries.tagging = deepFreeze((bundle.tagging || []).map((row) => ({ ...row })));
 
   // Visual scaling domains use the same derived-stat engine as run creation.
@@ -244,7 +256,7 @@ export function createRegistries(contentBundle) {
 
   // What can be earned. A table, like equipment — evaluated against saved
   // progress by model/unlocks.js, never by anything in here.
-  registries.unlocks = deepFreeze([...(bundle.unlocks || [])]);
+  registries.unlocks = deepFreeze([...collection('unlocks', bundle.unlocks || [])]);
 
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');

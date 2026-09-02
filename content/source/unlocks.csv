@@ -11,24 +11,22 @@
 #   teased  silhouette + the hint below (something to chase)
 #   hidden  does not appear at all (a genuine secret)
 #   listed  shown greyed with the hint (used for outfits)
-# `tags` draws from the run domain (tagFamilies.csv). Empty until a run tag is
-# authored that an unlock should carry; the column is the unlock's tag home.
-id,kind,ref,name,condition,param,reveal,hint,tags
-winAsReaver,outfit,oathsworn,Gilded Oathsworn,winAsClass,reaver,listed,Win a run as the Reaver.,
-winAsStarseer,outfit,eclipse,Eclipse Habit,winAsClass,starseer,listed,Win a run as the Starseer.,
-beatStitchedKing,outfit,vigil,Ashen Vigil,beatBoss,stitchedKing,listed,Defeat the Stitched King.,
-beatBlightedValkyrie,outfit,ossuary,Ossuary Weave,beatBoss,blightedValkyrie,listed,Defeat the Blighted Valkyrie.,
-graveWardenUnlock,character,graveWarden,The Grave Warden,winRuns,3,teased,Win three runs.,
-ashChildUnlock,character,ashChild,The Ash Child,beatBoss,blightedValkyrie,hidden,,
-reachAshenCrown,outfit,warden,Warden Mail,reachAct,3,listed,Reach the Ashen Crown.,
-beatFellWarden,outfit,starlit,Starlit Silks,beatBoss,fellWarden,listed,Defeat the Fell Warden.,
-winTwice,outfit,astral,Astral Vestment,winRuns,2,listed,Win two runs.,
-beatKingAsHerald,outfit,emberhabit,Emberlight Habit,beatBoss,stitchedKing,listed,Defeat the Stitched King.,
-reachStitchedCourt,outfit,pilgrim,Pilgrim Wrap,reachAct,2,listed,Reach the Stitched Court.,
-rack2Right,slot,rightHand,Second Rack Slot,reachAct,2,listed,Reach the Stitched Court.,
-rack3Right,slot,rightHand,Third Rack Slot,winRuns,1,listed,Win a run.,
-rack2Left,slot,leftHand,Second Off-hand Slot,reachAct,3,listed,Reach the Ashen Crown.,
-rack3Left,slot,leftHand,Third Off-hand Slot,winRuns,2,listed,Win two runs.,
-winAsRogue,outfit,duelist,Duelist Jerkin,winAsClass,rogue,listed,Win a run as the Rogue.,
-rogueBeatWarden,outfit,nightveil,Nightveil Coat,beatBoss,fellWarden,listed,Defeat the Fell Warden.,
-rogueReachCrown,outfit,shadow,Shadow Mantle,reachAct,3,listed,Reach the Ashen Crown.,
+id,kind,ref,name,condition,param,reveal,hint
+winAsReaver,outfit,oathsworn,Gilded Oathsworn,winAsClass,reaver,listed,Win a run as the Reaver.
+winAsStarseer,outfit,eclipse,Eclipse Habit,winAsClass,starseer,listed,Win a run as the Starseer.
+beatStitchedKing,outfit,vigil,Ashen Vigil,beatBoss,stitchedKing,listed,Defeat the Stitched King.
+beatBlightedValkyrie,outfit,ossuary,Ossuary Weave,beatBoss,blightedValkyrie,listed,Defeat the Blighted Valkyrie.
+graveWardenUnlock,character,graveWarden,The Grave Warden,winRuns,3,teased,Win three runs.
+ashChildUnlock,character,ashChild,The Ash Child,beatBoss,blightedValkyrie,hidden,
+reachAshenCrown,outfit,warden,Warden Mail,reachAct,3,listed,Reach the Ashen Crown.
+beatFellWarden,outfit,starlit,Starlit Silks,beatBoss,fellWarden,listed,Defeat the Fell Warden.
+winTwice,outfit,astral,Astral Vestment,winRuns,2,listed,Win two runs.
+beatKingAsHerald,outfit,emberhabit,Emberlight Habit,beatBoss,stitchedKing,listed,Defeat the Stitched King.
+reachStitchedCourt,outfit,pilgrim,Pilgrim Wrap,reachAct,2,listed,Reach the Stitched Court.
+rack2Right,slot,rightHand,Second Rack Slot,reachAct,2,listed,Reach the Stitched Court.
+rack3Right,slot,rightHand,Third Rack Slot,winRuns,1,listed,Win a run.
+rack2Left,slot,leftHand,Second Off-hand Slot,reachAct,3,listed,Reach the Ashen Crown.
+rack3Left,slot,leftHand,Third Off-hand Slot,winRuns,2,listed,Win two runs.
+winAsRogue,outfit,duelist,Duelist Jerkin,winAsClass,rogue,listed,Win a run as the Rogue.
+rogueBeatWarden,outfit,nightveil,Nightveil Coat,beatBoss,fellWarden,listed,Defeat the Fell Warden.
+rogueReachCrown,outfit,shadow,Shadow Mantle,reachAct,3,listed,Reach the Ashen Crown.

@@ -1,32 +1,32 @@
 // src/model/tags.js — the tag system's rules, as one validation pass.
 //
-// The vocabulary is one registry (content/source/tags.csv) and the carriers
-// are declared in one table (tagFamilies.csv), so the rules that hold them
-// together are one function rather than a check per family. Adding a family
-// or a domain is a spreadsheet row; nothing here names a family or a tag.
+// The schema is five normalised tables (content/tags.js says why), so the rules
+// that hold them together are one function rather than a check per family.
+// Adding a family or a domain is a spreadsheet row; nothing here names one.
+//
+// WHAT NORMALISING BOUGHT THIS FILE. The pre-3NF shape needed a rule for every
+// way a list-in-a-cell could go wrong, plus a rule forbidding the second home
+// (an inline `tags` column) from disagreeing with the first. Both classes of
+// rule are gone: a repeating group cannot be written, and there is only one
+// home to be wrong. What remains is ordinary referential integrity.
 //
 // What this refuses, all BY NAME:
-//   registry   a duplicate id, a malformed row, a domain no family carries,
-//              an id that collides with a frozen engine keyword
-//   families   an unknown `home`, an empty domain list, a duplicate family,
-//              a `source` that cannot be read while rows depend on it
-//   tagging    an unknown family, a row for an `inline` family (two homes for
-//              one tag is how they drift), an id no object has, an unregistered
-//              tag, a tag from a domain that family may not carry, a second row
-//              for the same object, and an empty row
-//   inline     the same tag/domain checks against the objects themselves
+//   domains    a duplicate id, a malformed row, a domain no family may carry
+//   registry   a duplicate id, a malformed row, a domain that is not a row in
+//              tagDomains, an id colliding with a frozen engine keyword
+//   families   a duplicate family, a family paired with no domain, a `source`
+//              that cannot be read while rows depend on it, a `scopeField` no
+//              object in the family carries
+//   pairs      an unknown family, an unknown domain, a duplicate pair
+//   tagging    an unknown family, an unregistered tag, a tag from a domain the
+//              family may not carry, an objectId no object has, a scope given
+//              for an unscoped family, a scope missing on a scoped one, and a
+//              duplicate (family, scope, objectId, tagId)
+//   leftovers  an object still carrying its own `tags` — the old second home,
+//              refused so it cannot come back one CSV column at a time
 //
 // The `legal:` list on a domain error is the point: the message tells the
 // author which words this family accepts instead of making them find out.
-
-/** Homes a family may declare — where its tags are authored. */
-export const TAG_HOMES = Object.freeze(['inline', 'table']);
-
-/** '' to [], 'a' to ['a'], ['a','b'] to ['a','b'] (the CSV coercion, undone). */
-function list(v) {
-  if (v === '' || v == null) return [];
-  return Array.isArray(v) ? v : [v];
-}
 
 /** Walk a dotted `source` path ('equipment.armaments') into the bundle. */
 function atPath(bundle, path) {
@@ -38,8 +38,12 @@ function atPath(bundle, path) {
   return node;
 }
 
+/** The whole parent key of one tagging row, as a string. */
+const SEP = '\u001f';
+const rowKey = (family, scope, objectId) => `${family}${SEP}${scope || ''}${SEP}${objectId}`;
+
 /**
- * tagContentProblems(bundle) -> [{ path, message }]
+ * tagContentProblems(bundle, keywordIds) -> [{ path, message }]
  *
  * Pure: reads the bundle, allocates nothing on it. `keywordIds` is the frozen
  * engine keyword set, passed in so this module stays free of engine imports.
@@ -49,17 +53,37 @@ export function tagContentProblems(bundle, keywordIds = []) {
   const err = (path, message) => problems.push({ path, message });
   const b = bundle || {};
 
-  const registry = Array.isArray(b.tags) ? b.tags : null;
-  const families = Array.isArray(b.tagFamilies) ? b.tagFamilies : null;
-  const tagging = Array.isArray(b.tagging) ? b.tagging : null;
-  if (!registry) err('tags', 'Missing required tag registry array');
-  if (!families) err('tagFamilies', 'Missing required tagFamilies array');
-  if (!tagging) err('tagging', 'Missing required tagging array');
-  if (!registry || !families || !tagging) return problems;
+  const table = (name) => (Array.isArray(b[name]) ? b[name] : null);
+  const domainRows = table('tagDomains');
+  const registry = table('tags');
+  const families = table('tagFamilies');
+  const pairs = table('tagFamilyDomains');
+  const tagging = table('tagging');
+  for (const [name, rows] of [['tagDomains', domainRows], ['tags', registry],
+    ['tagFamilies', families], ['tagFamilyDomains', pairs], ['tagging', tagging]]) {
+    if (!rows) err(name, `Missing required ${name} array`);
+  }
+  if (!domainRows || !registry || !families || !pairs || !tagging) return problems;
 
-  // ---- families -------------------------------------------------------------
+  // ---- domains (the lookup) --------------------------------------------------
+  const domainById = new Map();
+  for (const row of domainRows) {
+    const id = (row && row.id) || '?';
+    const path = `tagDomains.${id}`;
+    if (!row || typeof row.id !== 'string' || !row.id) {
+      err(path, 'every domain row needs a non-empty `id`');
+      continue;
+    }
+    if (domainById.has(row.id)) {
+      err(path, `duplicate domain '${row.id}' — one row per domain`);
+      continue;
+    }
+    if (!String(row.label || '').length) err(`${path}.label`, 'a domain needs a label');
+    domainById.set(row.id, row);
+  }
+
+  // ---- families --------------------------------------------------------------
   const familyByName = new Map();
-  const declaredDomains = new Set();
   for (const row of families) {
     const name = (row && row.family) || '?';
     const path = `tagFamilies.${name}`;
@@ -68,21 +92,50 @@ export function tagContentProblems(bundle, keywordIds = []) {
       continue;
     }
     if (familyByName.has(row.family)) {
-      err(path, `duplicate family '${row.family}' — a family declares its home and domains exactly once`);
+      err(path, `duplicate family '${row.family}' — a family declares its source and scope exactly once`);
       continue;
     }
-    if (!TAG_HOMES.includes(row.home)) {
-      err(`${path}.home`, `unknown home '${row.home}' (legal: ${TAG_HOMES.join(', ')})`);
-    }
-    const domains = list(row.domains);
-    if (!domains.length) {
-      err(`${path}.domains`, 'domain list must be non-empty — a family that may carry no tag is not in the tag system; delete the row instead');
-    }
-    for (const domain of domains) declaredDomains.add(domain);
-    familyByName.set(row.family, { ...row, domains });
+    familyByName.set(row.family, row);
   }
 
-  // ---- registry -------------------------------------------------------------
+  // ---- the family/domain join ------------------------------------------------
+  const domainsByFamily = new Map();
+  const seenPairs = new Set();
+  for (const row of pairs) {
+    const family = (row && row.family) || '?';
+    const domain = (row && row.domain) || '?';
+    const path = `tagFamilyDomains.${family}.${domain}`;
+    if (!familyByName.has(family)) {
+      err(path, `unknown family '${family}' — add it to content/source/tagFamilies.csv (known: ${[...familyByName.keys()].join(', ')})`);
+      continue;
+    }
+    if (!domainById.has(domain)) {
+      err(path, `unknown domain '${domain}' — add it to content/source/tagDomains.csv (known: ${[...domainById.keys()].join(', ')})`);
+      continue;
+    }
+    const pairKey = `${family}${SEP}${domain}`;
+    if (seenPairs.has(pairKey)) {
+      err(path, `duplicate pair — '${family}' is already permitted to carry ${domain} tags`);
+      continue;
+    }
+    seenPairs.add(pairKey);
+    const list = domainsByFamily.get(family);
+    if (list) list.push(domain);
+    else domainsByFamily.set(family, [domain]);
+  }
+  for (const family of familyByName.keys()) {
+    if (!domainsByFamily.has(family)) {
+      err(`tagFamilies.${family}`, 'this family is paired with no domain, so it may carry nothing — pair it in tagFamilyDomains.csv, or delete the row');
+    }
+  }
+  const carriedDomains = new Set([...domainsByFamily.values()].flat());
+  for (const id of domainById.keys()) {
+    if (!carriedDomains.has(id)) {
+      err(`tagDomains.${id}`, 'no family may carry this domain — every tag naming it is unwearable; pair it in tagFamilyDomains.csv or delete the row');
+    }
+  }
+
+  // ---- the registry ----------------------------------------------------------
   const byId = new Map();
   for (const row of registry) {
     const id = (row && row.id) || '?';
@@ -95,10 +148,8 @@ export function tagContentProblems(bundle, keywordIds = []) {
       err(path, `duplicate tag id '${row.id}' — one row per tag, in one registry`);
       continue;
     }
-    if (typeof row.domain !== 'string' || !row.domain) {
-      err(`${path}.domain`, 'every tag names the domain it describes — it is what keeps one registry from making every word legal everywhere');
-    } else if (!declaredDomains.has(row.domain)) {
-      err(`${path}.domain`, `no family carries domain '${row.domain}' (declared: ${[...declaredDomains].sort().join(', ')}) — this tag can never be worn by anything`);
+    if (!domainById.has(row.domain)) {
+      err(`${path}.domain`, `unknown domain ${JSON.stringify(row.domain)} — every tag names a row in tagDomains.csv (known: ${[...domainById.keys()].join(', ')})`);
     }
     if (!String(row.label || '').length) err(`${path}.label`, 'a tag needs a label — it is what the chip reads');
     if (!String(row.glyph || '').length) err(`${path}.glyph`, 'a tag needs a glyph');
@@ -113,78 +164,86 @@ export function tagContentProblems(bundle, keywordIds = []) {
     byId.set(row.id, row);
   }
 
-  /** The shared per-carrier check: registered, and in a domain this family carries. */
-  const checkTags = (family, path, ids) => {
-    const spec = familyByName.get(family);
-    const domains = spec ? spec.domains : [];
-    for (const id of ids) {
-      const tag = byId.get(id);
-      if (!tag) {
-        err(path, `unknown tag '${id}' — register it in content/source/tags.csv or fix the spelling`);
-      } else if (!domains.includes(tag.domain)) {
-        const legal = [...byId.values()].filter((t) => domains.includes(t.domain)).map((t) => t.id);
-        err(path, `tag '${id}' is a ${tag.domain} tag; ${family} carries ${domains.join('/')} tags only (legal: ${legal.join(', ')})`);
-      }
-    }
-  };
-
-  // ---- the association table ------------------------------------------------
+  // ---- the association table -------------------------------------------------
   // A family's `source` is checked HERE, against the rows that need it, rather
   // than on the family row: a bundle assembled without some collection is
-  // another door's red (tools/content-build.mjs owns several by name), and
-  // this pass must not quietly take ownership of it. What it does own is a
-  // source that cannot be read while rows depend on it — then the id check
-  // below would pass vacuously, which is worse than a missing collection.
+  // another door's red (tools/content-build.mjs owns several by name), and this
+  // pass must not quietly take ownership of it. What it does own is a source
+  // that cannot be read while rows depend on it — then the id check below would
+  // pass vacuously, which is worse than a missing collection.
   const badSource = new Set();
-  const seen = new Set();
+  const seenRows = new Set();
   for (const row of tagging) {
     const family = (row && row.family) || '?';
-    const id = (row && row.id) || '?';
-    const path = `tagging.${family}.${id}`;
+    const objectId = (row && row.objectId) || '?';
+    const scope = (row && row.scope) || '';
+    const tagId = (row && row.tagId) || '?';
+    const where = scope ? `${family}.${scope}.${objectId}` : `${family}.${objectId}`;
+    const path = `tagging.${where}`;
     const spec = familyByName.get(family);
     if (!spec) {
       err(path, `unknown family '${family}' — add it to content/source/tagFamilies.csv (known: ${[...familyByName.keys()].join(', ')})`);
       continue;
     }
-    if (spec.home !== 'table') {
-      err(path, `family '${family}' authors its tags inline, on the object itself — a row here would be a second home for the same tag, and the two would drift`);
+
+    const dupeKey = `${rowKey(family, scope, objectId)}${SEP}${tagId}`;
+    if (seenRows.has(dupeKey)) {
+      err(path, `'${objectId}' is given the tag '${tagId}' twice — the second row changes nothing; delete it`);
       continue;
     }
-    const dupeKey = `${family} ${id}`;
-    if (seen.has(dupeKey)) {
-      err(path, `'${id}' is tagged twice in family '${family}' — the second row is silently ignored; put every tag on one row`);
-      continue;
+    seenRows.add(dupeKey);
+
+    // The scope half of the parent key: present exactly when the family says so.
+    if (spec.scopeField && !scope) {
+      err(path, `family '${family}' is scoped by '${spec.scopeField}', so this row must name it — ids in this family are unique only within their scope`);
+    } else if (!spec.scopeField && scope) {
+      err(path, `family '${family}' declares no scopeField, so scope '${scope}' identifies nothing — leave the column empty`);
     }
-    seen.add(dupeKey);
+
+    // The tag half: registered, and in a domain this family may carry.
+    const tag = byId.get(tagId);
+    const domains = domainsByFamily.get(family) || [];
+    if (!tag) {
+      err(path, `unknown tag '${tagId}' — register it in content/source/tags.csv or fix the spelling`);
+    } else if (!domains.includes(tag.domain)) {
+      const legal = [...byId.values()].filter((t) => domains.includes(t.domain)).map((t) => t.id);
+      err(path, `tag '${tagId}' is a ${tag.domain} tag; ${family} carries ${domains.join('/')} tags only (legal: ${legal.join(', ')})`);
+    }
+
+    // The object half: a real row in the collection the family names.
     const collection = spec.source ? atPath(b, spec.source) : null;
     if (spec.source && !Array.isArray(collection)) {
       if (!badSource.has(family)) {
         badSource.add(family);
         err(`tagFamilies.${family}.source`, `source '${spec.source}' is not a collection in the content bundle, so the ${family} rows in tagging.csv are checked against nothing`);
       }
-    } else if (Array.isArray(collection) && !collection.some((entry) => entry && entry.id === id)) {
-      err(path, `no ${family} with id '${id}' — the row tags nothing`);
+      continue;
     }
-    const ids = list(row.tags);
-    if (!ids.length) {
-      err(path, 'tag list must be non-empty — an untagged thing simply has no row here');
+    if (!Array.isArray(collection)) {
+      err(path, `family '${family}' names no source collection, so nothing can be tagged in it — this row tags nothing`);
+      continue;
     }
-    checkTags(family, path, ids);
+    const found = collection.some((entry) => entry && entry.id === objectId
+      && (!spec.scopeField || entry[spec.scopeField] === scope));
+    if (!found) {
+      err(path, scope
+        ? `no ${family} with id '${objectId}' and ${spec.scopeField} '${scope}' — the row tags nothing`
+        : `no ${family} with id '${objectId}' — the row tags nothing`);
+    }
   }
 
-  // ---- inline carriers ------------------------------------------------------
+  // ---- no second home --------------------------------------------------------
+  // tagging.csv is the only place a tag is written. An object arriving from
+  // content with its own `tags` is the old inline column coming back, and it
+  // would be silently overwritten at materialisation — so it is refused here,
+  // where the author can see it, rather than discovered later as a lost edit.
   for (const spec of familyByName.values()) {
-    if (spec.home !== 'inline' || !spec.source) continue;
+    if (!spec.source) continue;
     const collection = atPath(b, spec.source);
     if (!Array.isArray(collection)) continue; // shape is the owning validator's red
     for (const entry of collection) {
-      if (!entry) continue;
-      const path = `${spec.source}.${entry.id || '?'}.tags`;
-      if (entry.tags != null && !Array.isArray(entry.tags)) {
-        err(path, `tags must be an array, got ${JSON.stringify(entry.tags)} — a '|'-separated cell normalises to one in the content module`);
-        continue;
-      }
-      checkTags(spec.family, path, entry.tags || []);
+      if (!entry || entry.tags === undefined) continue;
+      err(`${spec.source}.${entry.id || '?'}.tags`, 'tags are authored in content/source/tagging.csv, not on the object — this field is a second home and would be overwritten; move it to a tagging row');
     }
   }
 
@@ -202,4 +261,27 @@ export function tagIdsInDomain(bundle, domain) {
   return (Array.isArray(bundle && bundle.tags) ? bundle.tags : [])
     .filter((t) => t && t.domain === domain)
     .map((t) => t.id);
+}
+
+/**
+ * tagIndex(bundle) -> { families, index, keyOf }
+ *
+ * The materialisation index: every family's tags, folded once, keyed by the
+ * whole parent key. model/registries.js walks it to put a `tags` array on every
+ * object — the join resolved eagerly, exactly once, at boot.
+ */
+export function tagIndex(bundle) {
+  const b = bundle || {};
+  const families = new Map((Array.isArray(b.tagFamilies) ? b.tagFamilies : [])
+    .filter((row) => row && row.family)
+    .map((row) => [row.family, row]));
+  const index = new Map();
+  for (const row of (Array.isArray(b.tagging) ? b.tagging : [])) {
+    if (!row || !families.has(row.family)) continue;
+    const k = rowKey(row.family, row.scope, row.objectId);
+    const list = index.get(k);
+    if (list) list.push(row.tagId);
+    else index.set(k, [row.tagId]);
+  }
+  return { families, index, keyOf: rowKey };
 }

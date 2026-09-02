@@ -1,19 +1,19 @@
 # Equipment-bound core-card profiles. A profile projects one stable deck role
 # onto a registered base card. Tags are both presented and attached to damage
 # effects; damageSchool is presentation metadata, not an implicit mechanic.
-id,role,baseCardId,displayName,icon,damageSchool,exposureBuildupPerHit,baseValue,scalingStat,pointsPerTier,rounding,gainPerTier,cap,tags,flavor,mods,compatibility
-unarmedAttack,attack,strike,Unarmed Strike,✊,physical,0,3,strength,5,floor,1,,basic,"A last resort, still yours.",,attack-v1
-bladeAttack,attack,strike,Slashing Strike,⚔,physical,0,5,strength,5,floor,1,,blade,"Steel gives the motion its name.",,attack-v1
-daggerPierceAttack,attack,strike,Piercing Flurry,†,physical,0,3,dexterity,5,floor,1,,pierce|flourish,"Two precise openings in one breath.",,attack-v1
-bowPierceAttack,attack,strike,Piercing Shot,➶,physical,0,4,dexterity,5,floor,1,,pierce|ranged|precision,"Distance is presentation; the point still lands.",,attack-v1
-staffMagicAttack,attack,strike,Staff Magic Strike,✦,magic,1,2,intelligence,5,floor,1,,starstone,"Ash carries a small cold light.",,attack-v1
-sceptreArcaneAttack,attack,strike,Arcane Strike,◈,arcane,1,3,wisdom,5,floor,1,,ritual|blight,"The sceptre answers in a darker tongue.",,attack-v1
-unarmedGuard,guard,defend,Defend,🛡,physical,0,1,dexterity,5,floor,1,,guard,"Brace with what you have.",,guard-v1
-weaponGuard,guard,defend,Weapon Guard,🛡,physical,0,2,dexterity,5,floor,1,,guard,"Turn the haft and weather the blow.",,guard-v1
-shieldGuard,guard,defend,Shield Defend,🛡,physical,0,3,dexterity,5,floor,1,,guard,"Meet the blow on carried iron.",,guard-v1
-staffGuard,guard,defend,Arcane Ward,✦,magic,0,1,dexterity,5,floor,1,,starstone,"A thin ward drawn through the focus.",,guard-v1
-sceptreGuard,guard,defend,Ritual Ward,◈,arcane,0,1,dexterity,5,floor,1,,ritual,"A ward held together by rite.",,guard-v1
-unarmedTechnique,technique,technique,Footwork,✧,physical,0,0,dexterity,5,floor,0,,flourish,"Position is an armament too.",,technique-v1
-weaponTechnique,technique,technique,Weapon Technique,✧,physical,0,0,dexterity,5,floor,0,,blade|flourish,"Let the weapon teach the hand.",,technique-v1
-bowTechnique,technique,technique,Steady Aim,➶,physical,0,0,dexterity,5,floor,0,,ranged|precision,"Set the hand before loosing.",,technique-v1
-staffTechnique,technique,technique,Staff Channel,✦,magic,0,0,intelligence,5,floor,0,,ritual,"Set the breath behind the focus.",,technique-v1
+id,role,baseCardId,displayName,icon,damageSchool,exposureBuildupPerHit,baseValue,scalingStat,pointsPerTier,rounding,gainPerTier,cap,flavor,mods,compatibility
+unarmedAttack,attack,strike,Unarmed Strike,✊,physical,0,3,strength,5,floor,1,,"A last resort, still yours.",,attack-v1
+bladeAttack,attack,strike,Slashing Strike,⚔,physical,0,5,strength,5,floor,1,,"Steel gives the motion its name.",,attack-v1
+daggerPierceAttack,attack,strike,Piercing Flurry,†,physical,0,3,dexterity,5,floor,1,,"Two precise openings in one breath.",,attack-v1
+bowPierceAttack,attack,strike,Piercing Shot,➶,physical,0,4,dexterity,5,floor,1,,"Distance is presentation; the point still lands.",,attack-v1
+staffMagicAttack,attack,strike,Staff Magic Strike,✦,magic,1,2,intelligence,5,floor,1,,"Ash carries a small cold light.",,attack-v1
+sceptreArcaneAttack,attack,strike,Arcane Strike,◈,arcane,1,3,wisdom,5,floor,1,,"The sceptre answers in a darker tongue.",,attack-v1
+unarmedGuard,guard,defend,Defend,🛡,physical,0,1,dexterity,5,floor,1,,"Brace with what you have.",,guard-v1
+weaponGuard,guard,defend,Weapon Guard,🛡,physical,0,2,dexterity,5,floor,1,,"Turn the haft and weather the blow.",,guard-v1
+shieldGuard,guard,defend,Shield Defend,🛡,physical,0,3,dexterity,5,floor,1,,"Meet the blow on carried iron.",,guard-v1
+staffGuard,guard,defend,Arcane Ward,✦,magic,0,1,dexterity,5,floor,1,,"A thin ward drawn through the focus.",,guard-v1
+sceptreGuard,guard,defend,Ritual Ward,◈,arcane,0,1,dexterity,5,floor,1,,"A ward held together by rite.",,guard-v1
+unarmedTechnique,technique,technique,Footwork,✧,physical,0,0,dexterity,5,floor,0,,"Position is an armament too.",,technique-v1
+weaponTechnique,technique,technique,Weapon Technique,✧,physical,0,0,dexterity,5,floor,0,,"Let the weapon teach the hand.",,technique-v1
+bowTechnique,technique,technique,Steady Aim,➶,physical,0,0,dexterity,5,floor,0,,"Set the hand before loosing.",,technique-v1
+staffTechnique,technique,technique,Staff Channel,✦,magic,0,0,intelligence,5,floor,0,,"Set the breath behind the focus.",,technique-v1

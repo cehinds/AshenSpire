@@ -25,7 +25,7 @@ import { act3Encounters } from './encounters/act3.js';
 import { events } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
-import { TAGS, TAG_FAMILIES, TAGGING } from './tags.js';
+import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
@@ -34,19 +34,11 @@ import {
   EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, EQUIPMENT_GRANTS, ARMOURY_UI,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
-import { unlocks as authoredUnlocks } from './generated/unlocks.js';
+import { unlocks } from './generated/unlocks.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
 import { characterCreation } from './generated/characterCreation.js';
-
-// The CSV compiler leaves a one-value list column a string and an empty one
-// '', so every list-shaped column is forced back to an array exactly once —
-// here for unlocks, in content/equipment.js for the equipment tables.
-const unlocks = authoredUnlocks.map((row) => ({
-  ...row,
-  tags: row.tags === '' || row.tags == null ? [] : (Array.isArray(row.tags) ? row.tags : [row.tags]),
-}));
 
 const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards];
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
@@ -97,13 +89,15 @@ export const contentBundle = {
     armouryUi: ARMOURY_UI,
   },
   unlocks,
-  // The tag registry rides the bundle so every carrier — effect `tags`,
+  // The tag schema rides the bundle so every carrier — effect `tags`,
   // taggedVulnerability lists, creature kinds, equipment, relics — validates
-  // against ONE vocabulary home (#61). `tagFamilies` says who may carry which
-  // domain and where those tags are authored; `tagging` is the association
-  // table for the families authored in JS/JSON (content/tags.js says why).
+  // against ONE vocabulary home (#61). Five normalised tables: the domain
+  // lookup, the registry, what can be tagged, who may carry which domain, and
+  // the association rows themselves (content/tags.js says why five).
+  tagDomains: TAG_DOMAINS,
   tags: TAGS,
   tagFamilies: TAG_FAMILIES,
+  tagFamilyDomains: TAG_FAMILY_DOMAINS,
   tagging: TAGGING,
   attributes,
   creationModes,

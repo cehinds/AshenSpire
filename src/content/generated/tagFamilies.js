@@ -4,127 +4,106 @@
 export const tagFamilies = [
   {
     "family": "card",
-    "home": "table",
-    "domains": "card",
     "source": "cards",
+    "scopeField": "",
     "label": "Card",
-    "blurb": "Every playable card, tagged in tagging.csv."
+    "blurb": "Every playable card."
   },
   {
     "family": "class",
-    "home": "table",
-    "domains": "card",
     "source": "classes",
+    "scopeField": "",
     "label": "Class",
     "blurb": "A class's identity in card terms — what it leans toward."
   },
   {
     "family": "relic",
-    "home": "table",
-    "domains": "item",
     "source": "relics",
+    "scopeField": "",
     "label": "Relic",
     "blurb": "Permanent run pickups."
   },
   {
     "family": "flask",
-    "home": "table",
-    "domains": "item",
     "source": "flasks",
+    "scopeField": "",
     "label": "Flask",
     "blurb": "Consumables, refilled at Grace."
   },
   {
     "family": "keepsake",
-    "home": "table",
-    "domains": "item",
     "source": "characterCreation.keepsakes",
+    "scopeField": "",
     "label": "Keepsake",
     "blurb": "The boon you start the run holding."
   },
   {
     "family": "event",
-    "home": "table",
-    "domains": "run",
     "source": "events",
+    "scopeField": "",
     "label": "Event",
     "blurb": "Unknown-node encounters."
   },
   {
     "family": "encounter",
-    "home": "table",
-    "domains": "run",
     "source": "encounters",
+    "scopeField": "",
     "label": "Encounter",
     "blurb": "Authored fights."
   },
   {
     "family": "enemy",
-    "home": "inline",
-    "domains": "creature",
     "source": "enemies",
+    "scopeField": "",
     "label": "Enemy",
     "blurb": "Creature identity; gates proc resistance at runtime."
   },
   {
     "family": "armament",
-    "home": "inline",
-    "domains": [
-      "card",
-      "item"
-    ],
     "source": "equipment.armaments",
+    "scopeField": "",
     "label": "Armament",
     "blurb": "Weapons, shields and staves."
   },
   {
     "family": "armour",
-    "home": "inline",
-    "domains": [
-      "card",
-      "item"
-    ],
     "source": "equipment.armour",
+    "scopeField": "classId",
     "label": "Armour",
-    "blurb": "Armour sets."
+    "blurb": "Armour sets. Ids repeat per class, so classId is part of the key."
   },
   {
     "family": "basicCardProfile",
-    "home": "inline",
-    "domains": "card",
     "source": "equipment.basicCardProfiles",
+    "scopeField": "",
     "label": "Card profile",
     "blurb": "Equipment-bound core card profiles."
   },
   {
     "family": "slot",
-    "home": "inline",
-    "domains": "item",
     "source": "equipment.slots",
+    "scopeField": "",
     "label": "Slot",
     "blurb": "What you can wear, and when you may swap."
   },
   {
     "family": "startingKit",
-    "home": "inline",
-    "domains": "item",
     "source": "equipment.startingKits",
+    "scopeField": "",
     "label": "Starting kit",
     "blurb": "A class's listed opening loadout."
   },
   {
     "family": "unlock",
-    "home": "inline",
-    "domains": "run",
     "source": "unlocks",
+    "scopeField": "",
     "label": "Unlock",
     "blurb": "What a run can earn."
   },
   {
     "family": "effect",
-    "home": "inline",
-    "domains": "card",
     "source": "",
+    "scopeField": "",
     "label": "Effect",
     "blurb": "Damage effects carry card tags; a hit inherits the card's identity."
   }

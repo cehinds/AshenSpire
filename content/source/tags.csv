@@ -5,17 +5,17 @@
 # is not. Adding a tag is a spreadsheet row; it never touches engine code.
 #
 # DOMAIN is what the tag DESCRIBES, and it is the reason one file can hold the
-# whole vocabulary without 'beast' becoming a legal card school. Each content
-# family declares which domains it may draw from in tagFamilies.csv, and the
-# validator refuses a tag from a domain that family does not carry. Add a
-# domain by naming it on a family row; a domain no family carries is dead and
-# fails loud rather than sitting here unused.
+# whole vocabulary without 'beast' becoming a legal card school. It is a foreign
+# key into tagDomains.csv; which domains a family may draw from is
+# tagFamilyDomains.csv, and the validator refuses a tag from a domain that
+# family does not carry. A domain no family carries is dead and fails loud
+# rather than sitting here unused.
 #
 # NOT the same as the mechanical keywords (exhaust/ethereal/innate/retain/
 # unplayable) — those are a frozen engine set. Tags are content, and the
 # validator refuses a tag id that collides with one.
 #
-# columns: id, domain, label, color (hex, no '#'), glyph, blurb
+# columns: id, domain (FK -> tagDomains.csv), label, color (hex, no '#'), glyph, blurb
 id,domain,label,color,glyph,blurb
 blade,card,Blade,C9502E,⚔,"Steel and edge — direct weapon work."
 guard,card,Guard,7FA8C9,🛡,"Bracing, blocking, holding the line."

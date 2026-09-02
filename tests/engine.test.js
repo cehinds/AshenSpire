@@ -50,7 +50,7 @@ import { attributeAllocationProblems, classAttributePreset, allocationTotal, def
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
-import { TAGS, TAG_FAMILIES, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain } from '../src/content/tags.js';
+import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
 import { SFX_RECIPES, resolveRecipe } from '../src/content/sfx.js';
 import { weapons } from '../src/content/generated/weapons.js';
 import { KEEPSAKES } from '../src/content/keepsakes.js';
@@ -142,8 +142,10 @@ const TEST_CARDS = [
 
 const TEST_ENEMIES = [
   { id: 'tDummy', name: 'T Dummy', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
-  // #61: tagged twin of tDummy — the resistance gate's positive arm.
-  { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, tags: ['beast'], moves: { wait: { intent: 'unknown', weight: 1 } } },
+  // #61: tagged twin of tDummy — the resistance gate's positive arm. Its tag is
+  // a TEST_TAGGING row, not a field: tags are authored in tagging.csv now, and a
+  // fixture that kept its own would be the second home the schema refuses.
+  { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
   { id: 'tRegen', name: 'T Regen', hp: [50, 50], poiseMax: 99, moves: { regen: { intent: 'buff', weight: 1, effects: [{ op: 'heal', target: 'self', amount: 4 }] } } },
@@ -154,12 +156,18 @@ const TEST_ENEMIES = [
   },
 ];
 
+// Test fixtures are tagged the way shipped content is: a junction row.
+const TEST_TAGGING = [
+  { family: 'enemy', scope: '', objectId: 'tBeast', tagId: 'beast' },
+];
+
 function testBundle() {
   return {
     ...contentBundle,
     cards: [...contentBundle.cards, ...TEST_CARDS],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
+    tagging: [...contentBundle.tagging, ...TEST_TAGGING],
   };
 }
 
@@ -192,7 +200,7 @@ const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 // test-only content that is never shipped.
 const TEST_CHARM = {
   id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '',
-  rarity: 'common', tags: [], mods: [], unlock: '',
+  rarity: 'common', mods: [], unlock: '',
 };
 const REG_CHARM = {
   ...REG,
@@ -1821,93 +1829,114 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(unlockIds.length, new Set(unlockIds).size, 'unlock ids are unique');
   });
 
-  // ---- 26. the tag system (CSV-authored, one registry) --------------------
+  // ---- 26. the tag system (CSV-authored, one registry, 3NF) ---------------
   test('26. tags resolve, stay distinct from engine keywords, and index', () => {
     // Subtypes live under the frozen attack/skill/power type. Tagging is a CSV
     // row, so these checks are what stops a spreadsheet typo from silently
     // dropping a chip or pointing at a card that does not exist.
     const tagIds = TAGS.map((t) => t.id);
+    const domainIds = TAG_DOMAINS.map((d) => d.id);
     eq(tagIds.length, new Set(tagIds).size, 'tag ids are unique');
+    eq(domainIds.length, new Set(domainIds).size, 'domain ids are unique');
     for (const t of TAGS) {
       assert(/^[0-9A-Fa-f]{6}$/.test(t.color), `tag '${t.id}' colour is a 6-digit hex`);
       assert(String(t.label).length > 0 && String(t.glyph).length > 0, `tag '${t.id}' has a label + glyph`);
-      assert(String(t.domain).length > 0, `tag '${t.id}' names the domain it describes`);
+      assert(domainIds.includes(t.domain), `tag '${t.id}' names a registered domain ('${t.domain}')`);
       // Tags are CONTENT; keywords are a frozen engine set. Overlapping names
       // would make 'exhaust' ambiguous between flavour and mechanics.
       assert(!ENGINE_KEYWORDS.includes(t.id), `tag '${t.id}' does not collide with an engine keyword`);
     }
     const cardRows = TAGGING.filter((row) => row.family === 'card');
-    const seen = new Set();
     for (const row of cardRows) {
-      assert(REG.cards.has(row.id), `tagged card '${row.id}' exists`);
-      assert(!seen.has(row.id), `card '${row.id}' is tagged only once`);
-      seen.add(row.id);
-      const ids = tagIdsFor(row.id);
-      assert(ids.length > 0, `card '${row.id}' resolves to at least one tag`);
-      for (const id of ids) assert(tagIds.includes(id), `card '${row.id}' uses a registered tag ('${id}')`);
-      // A single-value CSV cell must still come back as an array, not a string.
-      assert(Array.isArray(ids), `tags for '${row.id}' normalise to an array`);
+      assert(REG.cards.has(row.objectId), `tagged card '${row.objectId}' exists`);
+      assert(tagIds.includes(row.tagId), `card '${row.objectId}' uses a registered tag ('${row.tagId}')`);
+      assert(row.scope === '', `card rows carry no scope ('${row.objectId}')`);
     }
     // The lookups the UI and any future synergy predicate depend on.
     eq(tagsFor('gorefireSlash').length, 3, 'gorefireSlash carries three tags');
     eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
+    assert(Array.isArray(tagIdsFor('strike')), 'tag ids always come back as an array');
     assert(cardsWithTag('blade').includes('strike'), 'reverse lookup finds Blade cards');
     assert(cardsWithTag('nope').length === 0, 'reverse lookup on an unknown tag is empty');
   });
 
-  // ---- 26b. ONE vocabulary, many carriers ---------------------------------
-  test('26b. every content family carries tags from the one registry', () => {
+  // ---- 26b. ONE vocabulary, many carriers, third normal form --------------
+  test('26b. the tag schema is normalised and every family carries from it', () => {
     // The point of the tag system is that a card school, a creature kind and a
-    // weapon's identity are all rows in ONE file, kept apart by domain rather
-    // than by a second hard-coded array. These checks are what stop that from
-    // quietly becoming two vocabularies again.
+    // weapon's identity are all rows in ONE vocabulary, kept apart by domain
+    // rather than by a second hard-coded array — and that there is exactly one
+    // place any of it is authored. These checks are what stop either from
+    // quietly coming undone.
     const byId = new Map(TAGS.map((t) => [t.id, t]));
+    const domainIds = new Set(TAG_DOMAINS.map((d) => d.id));
     const families = new Map(TAG_FAMILIES.map((f) => [f.family, f]));
     eq(families.size, TAG_FAMILIES.length, 'each family is declared once');
-    for (const f of TAG_FAMILIES) {
-      assert(['inline', 'table'].includes(f.home), `family '${f.family}' declares a known home`);
-      assert(f.domains.length > 0, `family '${f.family}' may carry at least one domain`);
+
+    // 1NF: no cell anywhere in the tag schema holds a list.
+    for (const row of TAGGING) {
+      for (const cell of [row.family, row.scope, row.objectId, row.tagId]) {
+        assert(!Array.isArray(cell), `tagging cells are atomic (${row.family}/${row.objectId})`);
+      }
     }
-    // Every domain a tag claims is a domain some family actually carries — a
-    // tag nothing may wear is dead weight, and says so.
-    const carried = new Set(TAG_FAMILIES.flatMap((f) => f.domains));
-    for (const t of TAGS) assert(carried.has(t.domain), `some family carries domain '${t.domain}' (tag '${t.id}')`);
+    for (const row of TAG_FAMILY_DOMAINS) {
+      assert(!Array.isArray(row.domain), `family/domain pairs are atomic ('${row.family}')`);
+      assert(families.has(row.family), `pair names a declared family ('${row.family}')`);
+      assert(domainIds.has(row.domain), `pair names a registered domain ('${row.domain}')`);
+    }
+    for (const f of TAG_FAMILIES) {
+      assert(!Array.isArray(f.source), `family '${f.family}' names one source`);
+      assert(domainsFor(f.family).length > 0, `family '${f.family}' may carry at least one domain`);
+    }
+    // Every domain is carried by someone, and every tag names a live domain.
+    const carried = new Set(TAG_FAMILY_DOMAINS.map((r) => r.domain));
+    for (const id of domainIds) assert(carried.has(id), `some family carries domain '${id}'`);
+
+    // No duplicate junction rows: the composite key is the whole key.
+    const seen = new Set();
+    for (const row of TAGGING) {
+      const k = [row.family, row.scope, row.objectId, row.tagId].join('|');
+      assert(!seen.has(k), `no duplicate tagging row (${k})`);
+      seen.add(k);
+      const tag = byId.get(row.tagId);
+      assert(tag, `tagging row uses a registered tag ('${row.tagId}')`);
+      assert(domainsFor(row.family).includes(tag.domain),
+        `'${row.family}' may carry ${row.tagId} (a ${tag.domain} tag)`);
+    }
+
     // Creature kinds are the registry's creature domain now, not a frozen
-    // array in schemas.js: every enemy's tags must resolve there.
+    // array in schemas.js, and not a field on the enemy either.
     const creature = tagsInDomain('creature').map((t) => t.id);
     assert(creature.length >= 5, 'the creature domain holds the shipped kinds');
     for (const enemy of REG.enemies.all()) {
       assert(Array.isArray(enemy.tags), `enemy '${enemy.id}' carries a tags array`);
       for (const id of enemy.tags) assert(creature.includes(id), `enemy '${enemy.id}' uses a creature tag ('${id}')`);
     }
-    // One home per family: nothing authored inline may also hold a table row.
-    const inline = new Set(TAG_FAMILIES.filter((f) => f.home === 'inline').map((f) => f.family));
-    for (const row of TAGGING) {
-      assert(!inline.has(row.family), `'${row.family}' is not tagged in two places (row '${row.id}')`);
-      assert(families.has(row.family), `tagging row names a declared family ('${row.family}')`);
-      for (const id of row.tags) {
-        const tag = byId.get(id);
-        assert(tag, `tagging row '${row.family}/${row.id}' uses a registered tag ('${id}')`);
-        assert(families.get(row.family).domains.includes(tag.domain),
-          `'${row.family}' may carry ${id} (a ${tag.domain} tag)`);
-      }
-    }
-    // Registries STAMP a table family's tags onto the object, so a mechanic
-    // reads obj.tags whatever the authoring home was.
+
+    // Registries resolve the join onto the object, so a mechanic reads
+    // obj.tags whatever table the row was authored in.
     eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood', 'the Reaver carries its class tags');
     eq(REG.cards.get('strike').tags.join('|'), 'blade', 'a card carries its tags on the def');
     eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged', 'the table resolves by family and id');
-    // tagIdsOf reads whichever home the family declares, so a caller never
-    // has to know where the author typed it.
-    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade', 'a table family resolves through the table');
+    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
-      'blade|basic', 'an inline family resolves off the object');
+      'blade|basic', 'tagIdsOf resolves an armament');
     eq(tagIdsOf('class', { id: 'nobody' }).length, 0, 'an untagged object resolves to no tags');
-    // Every carrier the families table names really does hand back an array.
+
+    // SCOPE: outfit ids repeat per class, so the parent key is (classId, id).
+    // Four rows share the id 'default' and must not share tags.
+    const defaults = REG.equipment.armour.filter((o) => o.id === 'default');
+    eq(defaults.length, 4, 'four classes ship an outfit called default');
+    eq(defaults.map((o) => o.tags.join('+')).join(' '), 'guard starstone ritual flourish',
+      'each default outfit keeps its own tags, keyed by class');
+    eq(objectTagIds('armour', 'default', 'reaver').join('|'), 'guard', 'the scope half of the key selects one');
+    eq(objectTagIds('armour', 'default').length, 0, 'a scoped family does not resolve on the id alone');
+
+    // Every carrier the families table names hands back an array.
     for (const kit of REG.equipment.startingKits) assert(Array.isArray(kit.tags), `kit '${kit.id}' carries a tags array`);
     for (const slot of REG.equipment.slots) assert(Array.isArray(slot.tags), `slot '${slot.id}' carries a tags array`);
     for (const unlock of REG.unlocks || []) assert(Array.isArray(unlock.tags), `unlock '${unlock.id}' carries a tags array`);
+    for (const relic of REG.relics.all()) assert(Array.isArray(relic.tags), `relic '${relic.id}' carries a tags array`);
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
@@ -1949,7 +1978,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(/^[0-9A-Fa-f]{6}$/.test(w.metal), `${w.id}: metal is a 6-digit hex`);
       assert(/^[0-9A-Fa-f]{6}$/.test(w.accent), `${w.id}: accent is a 6-digit hex`);
       assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
-      checkTags(w.tags, w.id);
+      checkTags(tagIdsOf('armament', w), w.id);
       checkMods(w.mods, w.id);
       eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
     }
@@ -1961,7 +1990,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
-      checkTags(o.tags, o.id);
+      checkTags(tagIdsOf('armour', o), `${o.classId}/${o.id}`);
       checkMods(o.mods, o.id);
     }
   });

@@ -165,7 +165,17 @@ refuses('mutant: dangling baseline piece is refused by name', /notAStaff/, { kit
 refuses('mutant: unknown profile ref is refused by name', /notAProfile/, { piecePatch: { attackProfile: 'notAProfile' } });
 refuses('mutant: wrong-target profile is refused by name', /wrong|guard|attack/i, { profilePatch: { role: 'guard' } });
 refuses('mutant: unknown damage school is refused by name', /magick/, { profilePatch: { damageSchool: 'magick' } });
-refuses('mutant: unknown profile tag is refused by name', /notMagic/, { profilePatch: { tags: ['notMagic'] } });
+// A profile's tags are tagging.csv rows now, so the plant goes there and the
+// refusal comes from the boot door rather than validateEquipment — same claim,
+// the door that actually owns it since the schema was normalised.
+{
+  const planted = validateContent({
+    ...contentBundle,
+    tagging: [...contentBundle.tagging,
+      { family: 'basicCardProfile', scope: '', objectId: 'staffMagicAttack', tagId: 'notMagic' }],
+  }).errors.map((row) => `${row.path}: ${row.msg}`).join(' | ');
+  check(/notMagic/.test(planted), 'mutant: unknown profile tag is refused by name', planted);
+}
 refuses('mutant: duplicate precedence slot is refused by name', /rightHand|duplicate/i, {
   balancePatch: { equipment: { ...contentBundle.balance.equipment, roleSources: { attack: [{ slot: 'rightHand' }, { slot: 'rightHand' }], guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }], technique: [{ slot: 'rightHand' }] } } },
 });

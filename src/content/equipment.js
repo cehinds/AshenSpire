@@ -2,6 +2,7 @@
 //
 // Authored CSV/JSON content feeds this file and nothing else does:
 //
+//   content/source/tagging.csv       every tag any of these carries
 //   content/source/weapons.csv       every armament (weapon / shield / staff)
 //   content/source/outfits.csv       every armour set (an outfit IS a set)
 //   content/source/equipSlots.csv    what you can wear, and when you may swap
@@ -42,7 +43,6 @@ function normPiece(row) {
   return {
     ...row,
     artKey: row.artKey || row.id,
-    tags: list(row.tags),
     mods: list(row.mods),
     ...(Object.keys(attributes).length ? { requirements: { attributes } } : {}),
   };
@@ -56,7 +56,7 @@ export const ARMOUR = outfits.map((row) => ({ ...normPiece(row), kind: 'armor' }
 
 /** Slot definitions, ordered. */
 export const SLOTS = equipSlots
-  .map((row) => ({ ...row, kinds: list(row.kinds), tags: list(row.tags) }))
+  .map((row) => ({ ...row, kinds: list(row.kinds) }))
   .sort((a, b) => a.order - b.order);
 
 /** The registered modifier fields, keyed by field name. */
@@ -113,7 +113,6 @@ export const CARD_TARGETS = [...new Set(equipTargets.map((t) => t.target))];
 /** Equipment-bound core card profiles, authored once and selected by role. */
 export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
   ...row,
-  tags: list(row.tags),
   mods: list(row.mods),
 }));
 
@@ -121,7 +120,7 @@ export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
 export const CARD_EXPOSURE = cardExposure.map((row) => ({ ...row }));
 
 /** Class-listed starting kits; hand ids stay explicit so validation can name them. */
-export const STARTING_KITS = startingKits.map((row) => ({ ...row, tags: list(row.tags) }));
+export const STARTING_KITS = startingKits.map((row) => ({ ...row }));
 
 /** Raw item/stat minima retained so validation can detect duplicate authored rows. */
 export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...row }));
@@ -131,12 +130,20 @@ export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({
 
 /**
  * Raw authored card tag ids, carried into registries for compatibility checks.
- * The card slice of the one association table (content/source/tagging.csv);
- * `cardId` is kept as the column name equipment fit has always read.
+ * The card slice of the one association table (content/source/tagging.csv),
+ * folded back to one row per card because that is the shape equipment fit reads.
+ * `cardId` keeps the name that side has always used.
  */
-export const CARD_EQUIPMENT_TAGGING = TAGGING
-  .filter((row) => row.family === 'card')
-  .map((row) => ({ cardId: row.id, tags: [...row.tags] }));
+export const CARD_EQUIPMENT_TAGGING = (() => {
+  const byCard = new Map();
+  for (const row of TAGGING) {
+    if (row.family !== 'card') continue;
+    const tags = byCard.get(row.objectId);
+    if (tags) tags.push(row.tagId);
+    else byCard.set(row.objectId, [row.tagId]);
+  }
+  return [...byCard].map(([cardId, tags]) => ({ cardId, tags }));
+})();
 
 /** The payload half of the `bound` tag: cards a piece carries with it. */
 export const EQUIPMENT_GRANTS = equipmentGrants.map((row) => ({ ...row, cards: list(row.cards) }));

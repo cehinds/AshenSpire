@@ -85,9 +85,11 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'sfx',
   'music',
+  'tagDomains', // what a tag can be about — the domain lookup
   'tags', // THE tag registry — one vocabulary for every carrier (#61)
-  'tagFamilies', // who may carry which tag domain, and where it is authored
-  'tagging', // family + id to tags, for the families authored in JS/JSON
+  'tagFamilies', // what can be tagged: its collection, and how its id is keyed
+  'tagFamilyDomains', // family x domain — which words each family may carry
+  'tagging', // family, scope, objectId, tagId — the only home a tag is written
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
@@ -328,7 +330,8 @@ export function validateContent(bundle) {
       if (!Number.isInteger(profile && profile.exposureBuildupPerHit) || profile.exposureBuildupPerHit < 0) err(`equipment.basicCardProfiles.${id}.exposureBuildupPerHit`, 'must be a non-negative integer');
       if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
       if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
-      for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
+      // A profile's tags are tagging.csv rows now, checked with every other
+      // carrier's by tagContentProblems above — one rule, one message, for all.
     }
 
     // Validate the raw authored carrier rows before their map is joined onto

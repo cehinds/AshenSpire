@@ -17,8 +17,7 @@ export const equipSlots = [
     "swap": "combat",
     "storage": true,
     "order": 1,
-    "blurb": "Your active right-hand armament. Rewrites Strike.",
-    "tags": ""
+    "blurb": "Your active right-hand armament. Rewrites Strike."
   },
   {
     "id": "leftHand",
@@ -35,8 +34,7 @@ export const equipSlots = [
     "swap": "combat",
     "storage": true,
     "order": 2,
-    "blurb": "Your active left-hand armament. Rewrites Defend.",
-    "tags": ""
+    "blurb": "Your active left-hand armament. Rewrites Defend."
   },
   {
     "id": "armor",
@@ -49,8 +47,7 @@ export const equipSlots = [
     "swap": "outOfCombat",
     "storage": false,
     "order": 3,
-    "blurb": "Your set. Repaints you and steadies the numbers.",
-    "tags": ""
+    "blurb": "Your set. Repaints you and steadies the numbers."
   },
   {
     "id": "talisman",
@@ -63,7 +60,6 @@ export const equipSlots = [
     "swap": "outOfCombat",
     "storage": false,
     "order": 4,
-    "blurb": "Small charms. Empty until talismans are authored.",
-    "tags": ""
+    "blurb": "Small charms. Empty until talismans are authored."
   }
 ];
