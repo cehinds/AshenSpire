@@ -398,6 +398,7 @@ try {
     // Without this the list could quietly describe a site that no longer exists,
     // which is the failure the typed list had and the whole reason for this pass.
     let caught2 = true;
+    let repairClean = true;
     if (discovered.length) {
       // REPAIR THE FIRST PLANT BEFORE LAYING THE SECOND. Left in place, its
       // DRIFT keeps --check red and the second plant would "pass" whether or not
@@ -407,7 +408,14 @@ try {
       writeFileSync(f, gitBuf(['show', `${victim.builds[0].sha}:AshenSpire.html`]));
       const b1 = process.exitCode;
       check(dir);
-      if (process.exitCode === 1) { console.error('MISS the repaired build still reads as drifted — plant 2 would be meaningless'); }
+      // CARRY THE FAILURE, DO NOT PRINT AND DROP IT. Restoring the exit code
+      // here threw away the very thing that had just been detected: plant 2 sets
+      // it back to 1, `caught2` reads that as the deletion being caught, and the
+      // selftest ends OK with a repair that never worked. That is the third time
+      // in this function a check has been written so it cannot fail, so the
+      // verdict below now depends on `repairClean` as well.
+      repairClean = process.exitCode !== 1;
+      if (!repairClean) console.error('MISS the repaired build still reads as drifted — plant 2 is meaningless and this selftest fails');
       process.exitCode = b1 || 0;
 
       const gone = discovered[0];
@@ -422,6 +430,7 @@ try {
       console.log('SKIP no discovered page to plant against — the tree offered none');
     }
     rmSync(dir, { recursive: true, force: true });
+    if (!repairClean) process.exitCode = 1;
     if (!process.exitCode) console.log(`pages-site selftest: OK — 2 known-bads, 2 caught (${discovered.length} page(s) discovered)`);
   } else if (has('--check')) {
     const n = check(flag('--check', '_site'));

@@ -199,9 +199,26 @@ Two things in that table need his eye rather than my assumption:
   permission for that write from the dispatch, which is the substitution this
   whole record exists to refuse, or fail to persist the pins and quietly stop
   being option A. So a ruling of A must also **name the state ref and authorize
-  its update** — the record proposes `.agentops/governance/pages-published.json`
-  on `main`, written only by the owner's dispatch, and asks him to confirm both
-  the path and the grant rather than assuming either.
+  its update**. The record proposed `.agentops/governance/pages-published.json`
+  on `main` — and Codex found that this collides with a second invariant, path
+  ownership, which is independent of the write authority above.
+  `git-ownership.json` assigns `.agentops/governance/**` to **it-manager-iii**,
+  so the owner's dispatch cannot be its sole writer there.
+
+  **Checking that turned up something larger than the collision.** No path in
+  `git-ownership.json` is owned by `owner` — not one. The contract has twenty-three
+  path entries and every one of them belongs to a working role. So there is
+  nowhere in the repository the owner's own dispatch may write, and option A
+  needs a path that does not currently exist as a concept.
+
+  So a ruling of A must settle three things about the pin file, not one: **where
+  it lives, who owns that path, and who may write it.** Two shapes are available
+  and neither is mine to pick — add an `owner`-owned path entry to
+  `git-ownership.json` for exactly this file, which introduces the first one and
+  should be done deliberately if at all; or place the file in the
+  `it-manager-iii` governance lane it already fits and have that seat write it on
+  the owner's dispatch, which keeps the ownership contract untouched but puts a
+  deputy's hand on the record of what the owner published.
 - Under option A, `main` and `release` are built from the owner's last-published
   SHAs rather than their heads — **and so is the generator.** Codex raised this
   as a second P1 and it closes a channel the content pins leave open: if `main`
