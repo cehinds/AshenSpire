@@ -316,8 +316,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-507",
     "date": "2026-09-01",
     "group": "2026-09-01",
-    "summary": "Item upgrades are described by data rather than written into code",
-    "detail": "The upgrade rules move into the same data-driven property framework the rest of the equipment work adopts.",
+    "summary": "The Smith reaches your armour and your relics, not just your armaments",
+    "detail": "What the Smith will work on is now the equipment you own — the armour you are wearing and the relics you carry — where before it was armaments alone. Their upgrades are authored as data rather than written into code: armour raises its poise threshold, and a relic improves the passive it already grants.",
     "build": "0.4.0.1888",
     "pullRequest": 507,
     "url": "https://github.com/cehinds/AshenSpire/pull/507"
