@@ -4962,6 +4962,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-slot-row.is-selected .title-slot-state { color: var(--gold); }
 .title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
 .title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
+/* THE WORD DOES NOT FIT ON AN ICON — the `.slot-delete .hold-hint` rule above
+   said it for the old title slot, and the ✕ moved into the LOAD selector
+   without it: HOLD was drawn beside the glyph again, measured by
+   tools/holdconfirm.mjs the first time its title section reached the
+   selector. The fill still runs; the native tooltip carries the sentence. */
+.title-slot-delete .hold-hint { display: none; }
 .title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
 .title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
 .title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
@@ -10507,6 +10513,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // saves.listArchives. The instrument still opens the section by the
   // player's own door: Profile on the title screen.
   saves.ensureProfile();
+  // A PROFILE THE PLAYER HAS TOUCHED, not a second fresh one. Two untouched
+  // profiles are the same bytes, and the archive de-duplicates by content
+  // (save.js archiveMeta): restoring A over an identical B set B aside INTO
+  // A's own entry — the drawer read "seen 2 times" instead of growing, and
+  // tools/holdconfirm.mjs read "entries 1 -> 1" as a restore that set nothing
+  // aside. A real outgoing profile is never byte-identical to the one it
+  // replaces (it carries its results), so the pose writes one setting through
+  // the real writer — the default value, so nothing behaves differently — and
+  // the two profiles are distinct the way two real ones are. ONLY WHEN THE
+  // PROFILE IS UNTOUCHED: ?shotSettings has already written the settings an
+  // instrument asked for (holdConfirm 'off' or 'long' on this very screen),
+  // and those bytes already make the profile distinct — overwriting them
+  // would pose the default where the caller asked for an edge (Codex, #537).
+  {
+    const posed = saves.loadMeta();
+    if (!Object.keys(posed.settings || {}).length) saves.saveMeta({ ...posed, settings: { holdConfirm: 'normal' } });
+  }
   saves.startNewProfile();
   showTitle();
   showProfile();
@@ -24823,11 +24846,23 @@ const ACTIONS = Object.freeze({
     // enough apart that the finger is not the risk — the STAT is. A point spent
     // on Wisdom by a player who meant Constitution is gone for the run, and
     // what they need first is to read what the point actually does, which is
-    // why the confirm panel carries the derived-stat sentence rather than a
+    // why the result line carries the derived-stat sentence rather than a
     // second copy of it (content/derivedStats.js `presentation.sense`).
+    //
+    // IN THE STAT CARD'S OWN HAND since the shared allocation card (Vira's
+    // level panel, components/statAllocationCard.js): `+` only PENDS the point
+    // — the row reads +1, the result line says what it does, Clear takes it
+    // back — and "Level up" is the second beat that spends it. That is the
+    // choosing form already, said in the panel instead of over it; a modal on
+    // "Level up" would be a third beat on a verb the card already asks twice.
+    // Named here for the same reason the two profile rows are: the census
+    // (tools/holdconfirm.mjs) reads `surface` and `handledBy` together, and it
+    // read this row as "not wired" for as long as the field was missing.
+    // Driven in its own idiom at ?shot=rest by that instrument.
     stakes: 'run',
     undo: 'none',
     hazard: 'choosing',
+    handledBy: 'rest.js drawLevelCard — the stat card pends the point on + and spends it on "Level up" (statAllocationCard.js)',
     note: 'five stat buttons on one panel; the point is permanent and the cinders are gone',
   },
   smithUpgrade: {
@@ -46133,6 +46168,7 @@ Object.assign(module.exports, { armOptionDecision, armHold, armInspect, beatArme
 
 const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
 const { openConfirmationModal } = require("src/ui/components/confirmationModal.js");
+const { ACTIONS, beatFor } = require("src/model/secondbeat.js");
 
 function armOptionDecision(control, {
   meta,
@@ -46151,6 +46187,7 @@ function armOptionDecision(control, {
   blockedMessage = message,
   blockedDetailsHtml = detailsHtml,
   returnFocusElement = control,
+  ctx = {},
 } = {}) {
   if (!(control instanceof HTMLElement)) throw new Error('option decision needs a control element');
   if (typeof onCommit !== 'function') throw new Error('option decision needs one commit callback');
@@ -46159,6 +46196,16 @@ function armOptionDecision(control, {
   control.dataset.optionDecision = id || 'state-change';
   control.dataset.optionTap = 'modal';
   control.dataset.optionHold = duration > 0 ? 'commit' : (allowed() ? 'disabled' : 'blocked');
+  // EVERY ARMED CONTROL MARKS ITSELF (holdconfirm.js beatArmer): a declared
+  // action that draws no `data-beat-action` reads as "not wired" to the
+  // census in tools/holdconfirm.mjs, which is what the Smith's Confirm read as
+  // for as long as this door existed ('11 claimed, 3 absent: … smithUpgrade').
+  // Marked only for an id the table declares — an undeclared id would be the
+  // other lie the census reads for, a control nobody declared.
+  if (id && Object.hasOwn(ACTIONS, id)) {
+    control.dataset.beatAction = id;
+    control.dataset.beat = beatFor(id, ctx).form;
+  }
 
   const commit = () => { if (allowed()) onCommit(); };
   const review = () => openConfirmationModal({
@@ -49302,8 +49349,22 @@ function openConfirmationModal({
       shield.afterDestinationPaint();
     }
   });
+  // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the
+  // hold dial off, a control opens this review on pointerup, and the browser
+  // then dispatches that same touch's trailing click at the point of release
+  // — which is now the scrim (the finger never moved; the veil did). Cancelling
+  // on it closed the review in the same gesture that opened it, so an
+  // off-dial tap on the title's ✕ opened nothing a player could see. Measured
+  // with real touch events (tools/holdconfirm.mjs, the title's dial-off leg):
+  // pointerdown on the ✕, MODAL-ADDED, pointerup, click on the veil, REMOVED.
+  // A press that begins on the scrim is the player's; a click that arrives
+  // without one is the opening gesture's echo.
+  let scrimPressed = false;
+  veil.addEventListener('pointerdown', (event) => { scrimPressed = event.target === veil; });
   veil.addEventListener('click', (event) => {
-    if (event.target === veil) cancel();
+    const pressedHere = scrimPressed;
+    scrimPressed = false;
+    if (event.target === veil && pressedHere) cancel();
   });
   window.addEventListener('keydown', onKeydown, true);
   // Quick-menu actions close their list after awaiting the controller result,
@@ -49543,7 +49604,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'c0098b6b66';
+const SOURCE = '7cccc602b1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49577,7 +49638,7 @@ const SOURCE = 'c0098b6b66';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1933';
+const ORDINAL = '1934';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
