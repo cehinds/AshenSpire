@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-567",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The rest below the elites is not taken out of another promise",
+    "detail": "#562 guaranteed a Shrine on some floor below every elite. Meeting that guarantee must not consume a rest the map had already promised somewhere else, and now it does not.",
+    "build": "0.5.0-rc.4.1958",
+    "pullRequest": 567,
+    "url": "https://github.com/cehinds/AshenSpire/pull/567"
+  },
+  {
     "id": "pr-563",
     "date": "2026-09-02",
     "group": "2026-09-02",
@@ -101,6 +111,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.0-rc.1.1934",
     "pullRequest": 536,
     "url": "https://github.com/cehinds/AshenSpire/pull/536"
+  },
+  {
+    "id": "pr-525",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Every branch's builds are playable at their own address",
+    "detail": "The site gains a build index across dev, test, release and main: each build sits under its own branch and ordinal, each branch keeps a latest alias, and every listed build is checked byte-for-byte against the file committed at that merge before it is served. The README shows each branch's current build number. As this shipped, a push to any of those four branches assembled and deployed the site; deploying was narrowed afterwards, by #543, to the repository owner's explicit dispatch alone.",
+    "build": "0.5.0-rc.1.1934",
+    "pullRequest": 525,
+    "url": "https://github.com/cehinds/AshenSpire/pull/525"
   },
   {
     "id": "pr-537",
@@ -293,6 +313,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/508"
   },
   {
+    "id": "pr-507",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "The Smith reaches your armour and your relics, not just your armaments",
+    "detail": "What the Smith will work on is now the equipment you own — the armour you are wearing and the relics you carry — where before it was armaments alone. Their upgrades are authored as data rather than written into code: armour raises its poise threshold, and a relic improves the passive it already grants.",
+    "build": "0.4.0.1888",
+    "pullRequest": 507,
+    "url": "https://github.com/cehinds/AshenSpire/pull/507"
+  },
+  {
+    "id": "pr-491",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Earlier event choices influence later events",
+    "detail": "What you chose at an event is remembered, and can change what a later event offers you.",
+    "build": "0.4.0.1855",
+    "pullRequest": 491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/491"
+  },
+  {
+    "id": "pr-495",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Equipment cards show their receipts",
+    "detail": "What an equipment card does to your numbers is surfaced on the card instead of being left to infer.",
+    "build": "0.4.0.1855",
+    "pullRequest": 495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/495"
+  },
+  {
     "id": "pr-502",
     "date": "2026-08-31",
     "group": "2026-08-31",
@@ -303,6 +353,106 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/502"
   },
   {
+    "id": "pr-477",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Enemies are authored in level bands, and scale within them",
+    "detail": "Enemy levels come from authored bands with scaling rather than a fixed level per encounter.",
+    "build": "0.4.0.1760",
+    "pullRequest": 477,
+    "url": "https://github.com/cehinds/AshenSpire/pull/477"
+  },
+  {
+    "id": "pr-462",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "The parry dagger is held in the shield hand",
+    "detail": "The dagger routes through the shield socket, so it is worn and drawn where a parrying off-hand belongs.",
+    "build": "0.4.0.1760",
+    "pullRequest": 462,
+    "url": "https://github.com/cehinds/AshenSpire/pull/462"
+  },
+  {
+    "id": "pr-463",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Combat controls stay inside the iPhone safe areas",
+    "detail": "The controls no longer sit under the notch or the home indicator.",
+    "build": "0.4.0.1719",
+    "pullRequest": 463,
+    "url": "https://github.com/cehinds/AshenSpire/pull/463"
+  },
+  {
+    "id": "pr-458",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Confirming a self-target on a controller keeps its focus",
+    "detail": "Choosing yourself as the target of a card no longer loses the controller's place in the confirmation.",
+    "build": "0.4.0.1708",
+    "pullRequest": 458,
+    "url": "https://github.com/cehinds/AshenSpire/pull/458"
+  },
+  {
+    "id": "pr-456",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Escape closes what is actually on top of Settings",
+    "detail": "Escape now dismisses the frontmost dialog rather than the screen behind it, and focus returns to the control that opened it.",
+    "build": "0.4.0.1708",
+    "pullRequest": 456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/456"
+  },
+  {
+    "id": "pr-459",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "The combat command bar's layout is refined",
+    "detail": "The bar is positioned by the stylesheet instead of by the combat screen's own code, which loses about 175 lines of it.",
+    "build": "0.4.0.1704",
+    "pullRequest": 459,
+    "url": "https://github.com/cehinds/AshenSpire/pull/459"
+  },
+  {
+    "id": "pr-447",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Armaments get a command rail and radial shortcuts in combat",
+    "detail": "The armaments you carry are reachable from a rail on the combat screen, with radial shortcuts to them.",
+    "build": "0.4.0.1701",
+    "pullRequest": 447,
+    "url": "https://github.com/cehinds/AshenSpire/pull/447"
+  },
+  {
+    "id": "pr-449",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Levels gain canonical hidden semantics",
+    "detail": "Nothing a player sees changes at this build: the rules for a hidden player level and for enemy level profiles are authored and validated, and deliberately wired to nothing — no UI, save, encounter, combat or co-op reads them yet. The enemy bands that stand on them arrive in #477.",
+    "build": "0.4.0.1688",
+    "pullRequest": 449,
+    "url": "https://github.com/cehinds/AshenSpire/pull/449"
+  },
+  {
+    "id": "pr-437",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Save and Quit writes the camera state with the save",
+    "detail": "Resuming puts the view back where you left it instead of at a default framing.",
+    "build": "0.4.0.1688",
+    "pullRequest": 437,
+    "url": "https://github.com/cehinds/AshenSpire/pull/437"
+  },
+  {
+    "id": "pr-371",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The title collapses when a run exits and when you cancel",
+    "detail": "Leaving a run, or cancelling out of the opening menus, returns the title to its folded state instead of leaving it open.",
+    "build": "0.4.0.1454",
+    "pullRequest": 371,
+    "url": "https://github.com/cehinds/AshenSpire/pull/371"
+  },
+  {
     "id": "pr-361",
     "date": "2026-08-28",
     "group": "2026-08-28",
@@ -311,6 +461,86 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.4.0.1454",
     "pullRequest": 361,
     "url": "https://github.com/cehinds/AshenSpire/pull/361"
+  },
+  {
+    "id": "pr-367",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "Startup components anchor to the viewport centre",
+    "detail": "The startup screen's parts are positioned against the centre of the viewport rather than drifting with the layout around them.",
+    "build": "0.4.0.1453",
+    "pullRequest": 367,
+    "url": "https://github.com/cehinds/AshenSpire/pull/367"
+  },
+  {
+    "id": "pr-366",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The startup gate is centred, and its background card is gone",
+    "detail": "Merged as pull request #366 in development build 0.4.0.1448.",
+    "build": "0.4.0.1448",
+    "pullRequest": 366,
+    "url": "https://github.com/cehinds/AshenSpire/pull/366"
+  },
+  {
+    "id": "pr-365",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "Enemy tooltips read in context, the HUD compacts, and the title is centred",
+    "detail": "An enemy's tooltip is written for the situation it appears in, the HUD takes less room, and the title's alignment is corrected.",
+    "build": "0.4.0.1432",
+    "pullRequest": 365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/365"
+  },
+  {
+    "id": "pr-356",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Escape cancels an armed rebind without leaving Controls",
+    "detail": "Pressing Escape while a key rebind is waiting for a press cancels the capture and keeps the Controls menu open, instead of closing it out from under you.",
+    "build": "0.4.0.1378",
+    "pullRequest": 356,
+    "url": "https://github.com/cehinds/AshenSpire/pull/356"
+  },
+  {
+    "id": "pr-355",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Load and Quit ask in the game's own words",
+    "detail": "The browser prompts standing in for Load and Quit are replaced with the game's own confirmations, so a misread click no longer drops the run you are in.",
+    "build": "0.4.0.1376",
+    "pullRequest": 355,
+    "url": "https://github.com/cehinds/AshenSpire/pull/355"
+  },
+  {
+    "id": "pr-354",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "A fight saved mid-combat resumes exactly",
+    "detail": "Loading a save made during a fight restores that fight as it stood.",
+    "build": "0.4.0.1371",
+    "pullRequest": 354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/354"
+  },
+  {
+    "id": "pr-353",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "New Game save-slot selection has one owner",
+    "detail": "The slot you choose is the slot the new run is written to.",
+    "build": "0.4.0.1368",
+    "pullRequest": 353,
+    "url": "https://github.com/cehinds/AshenSpire/pull/353"
+  },
+  {
+    "id": "pr-352",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Load slots activate where you press them",
+    "detail": "Slot activation is deterministic and the tap targets match what is drawn.",
+    "build": "0.4.0.1366",
+    "pullRequest": 352,
+    "url": "https://github.com/cehinds/AshenSpire/pull/352"
   },
   {
     "id": "pr-350",
