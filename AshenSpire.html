@@ -38768,6 +38768,16 @@ function ownedItemRefs(registries, run) {
     const itemRef = id && `armament/${id}`;
     if (itemRef && !refs.includes(itemRef)) refs.push(itemRef);
   }
+  // OWNED IS CARRIED, NOT COMPOSED. An armament the player holds in Inventory
+  // (loadout.storage) or in a hand set that is not the active one supplies no
+  // deck cards today, and reading ownership off the composed deck alone left
+  // it off the Smith's grid — a Greatsword found and stored could never be
+  // upgraded until it was equipped (Codex, #528). carriedIds is the same
+  // reader the inventory count below already uses.
+  for (const id of carriedIds(run.loadout)) {
+    const itemRef = armamentById(registries, id) ? `armament/${id}` : null;
+    if (itemRef && !refs.includes(itemRef)) refs.push(itemRef);
+  }
   const armourRef = activeArmourRef(registries, run);
   if (armourRef && !refs.includes(armourRef)) refs.push(armourRef);
   for (const id of run.relics || []) {
@@ -38828,8 +38838,11 @@ function smithingPlan(registries, run, explicitRules = undefined) {
       ? requirementPreview(registries, run, piece, currentLevel, nextLevel)
       : Object.freeze([]);
     const authoredChanges = upgradeRows.filter((row) => row.tag !== 'upgrade:cost:smithing-stone');
+    // A stored armament composes no live cards, so its preview is what the
+    // upgrade does to the cards it WOULD supply (the authored role previews,
+    // `used: false`), never an empty list that reads as "nothing changes".
     const changes = identity.itemKind === 'armament'
-      ? genericCardChanges(affectedCards, requirements)
+      ? genericCardChanges(affectedCards.length ? affectedCards : previewCards, requirements)
       : itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel);
     if (!authoredChanges.length || !changes.length || changes.every((row) => row.before === row.after)) continue;
     const shortfall = Math.max(0, cost - stones);
@@ -41228,8 +41241,14 @@ function runRunOpcode(ctx, action, eff) {
       // Since the item-upgrade redesign the plan also offers non-armament
       // items (no armamentId, no affectedCards); a card upgrade can only ride
       // an armament, so only those become candidates here.
+      // AND ONLY AN ARMAMENT WITH CARDS IN THE DECK TODAY. A carried armament
+      // with no live cards is a Smithing candidate (the Shrine previews it
+      // through its authored roles), but a "random card" upgrade that landed
+      // on it would set a tier and upgrade zero cards the player holds — the
+      // choice promised a card (Codex, #535).
       const armaments = plan.candidates
         .filter((candidate) => candidate.itemKind === 'armament')
+        .filter((candidate) => candidate.affectedCards.length > 0)
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck
@@ -49585,7 +49604,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '107b6a079c';
+const SOURCE = '4d38001776';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49619,7 +49638,7 @@ const SOURCE = '107b6a079c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1932';
+const ORDINAL = '1933';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
