@@ -1041,10 +1041,21 @@ export function createSession({ registries, seedString, endless = false, restore
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
-      if (pick && pick.takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) m.run.relics.push(offer.relicId);
+      // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
+      // entry can have granted the very relic the offer rolled (rolled against
+      // the relics the seat held then). The seat is owed a relic, not this
+      // one: a substitute is rolled against the relics in hand now (Codex on
+      // #548).
+      if (pick && pick.takeRelic && offer.relicId) {
+        const id = m.run.relics.includes(offer.relicId) ? rollRelicReward(registries, m.rng, m.run.relics, offer.pool === 'boss' ? { rarities: ['boss'] } : {}) : offer.relicId;
+        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+      }
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
     } else if (item.type === 'treasure') {
-      if (pick && pick.takeRelic && item.relicId && !m.run.relics.includes(item.relicId)) m.run.relics.push(item.relicId);
+      if (pick && pick.takeRelic && item.relicId) {
+        const id = m.run.relics.includes(item.relicId) ? rollRelicReward(registries, m.rng, m.run.relics) : item.relicId;
+        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+      }
     } else if (item.type === 'event') {
       // THE MISSED EVENT IS CHOSEN NOW, through the door a live choice walks
       // (eventChoice), against THE OPTIONS FROZEN IN THE ENTRY: the choices
@@ -1107,6 +1118,15 @@ export function createSession({ registries, seedString, endless = false, restore
           // the event as a leave would, or the seats that have already
           // continued wait on a button the dead cannot press (Codex on #549).
           else if (session.scene.kind === 'event') settleEvent();
+          // AND ITS LIVE REWARD OFFER IS WITHDRAWN: a seat back during a fight
+          // with its queue standing is present when the fight pays out, so the
+          // reward scene holds an offer for it; dead, it can claim nothing and
+          // must hold nobody (Codex on #548).
+          else if (session.scene.kind === 'reward' && session.scene.offers && session.scene.offers[m.id]) {
+            delete session.scene.offers[m.id]; if (session.scene.chosen) delete session.scene.chosen[m.id];
+            const waiting = Object.keys(session.scene.offers).filter((id) => { const mm = members.get(id); return mm && mm.connected && !session.scene.chosen[id]; });
+            if (!waiting.length) closeReward();
+          }
         }
         m.run.actNumber = item.act;
         m.run.floor = item.floor;
