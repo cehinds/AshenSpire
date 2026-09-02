@@ -145,14 +145,19 @@ export function openConfirmationModal({
       return;
     }
     if (event.key !== 'Tab') return;
+    // The trap wraps over the VISIBLE controls only. When the option is
+    // blocked (an unaffordable Smithing upgrade), `confirmEnabled` is false,
+    // the confirm button is hidden, and `controls` is Back alone — so Shift+Tab
+    // from Back must land on the last entry of `controls`, never on a hidden
+    // button that would leave the dialog with no visible focus.
     const controls = [cancelButton, ...(confirmEnabled ? [confirmButton] : [])];
     const at = controls.indexOf(document.activeElement);
     if (event.shiftKey && at <= 0) {
       event.preventDefault();
-      confirmButton.focus({ preventScroll: true });
+      controls[controls.length - 1].focus({ preventScroll: true });
     } else if (!event.shiftKey && at === controls.length - 1) {
       event.preventDefault();
-      cancelButton.focus({ preventScroll: true });
+      controls[0].focus({ preventScroll: true });
     }
   }
 

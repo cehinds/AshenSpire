@@ -227,6 +227,30 @@ export async function runConfirmationModalContract() {
     third.veil.dispatchEvent(fakeEvent('click', { target: third.veil }));
     check(cancelled === 2 && confirmed === 1, 'backdrop cancellation committed or failed to cancel');
     closeConfirmationModal();
+
+    // A BLOCKED option (an unaffordable Smithing upgrade) hides the confirm
+    // button: the Tab trap must wrap over the one visible control, Back, and
+    // never park focus on the hidden button.
+    const blocked = openConfirmationModal({
+      title: 'Upgrade Straight Sword?',
+      message: 'You need 3 Smithing Stones.',
+      confirmLabel: 'Upgrade',
+      cancelLabel: 'Back',
+      confirmEnabled: false,
+      onConfirm: () => { confirmed += 1; },
+      onCancel: () => { cancelled += 1; },
+    });
+    await new Promise((resolveTick) => setTimeout(resolveTick, 0));
+    check(document.activeElement === blocked.cancelButton, 'blocked confirmation does not focus Back');
+    const blockedReverse = fakeEvent('keydown', { key: 'Tab', shiftKey: true });
+    window.dispatchEvent(blockedReverse);
+    check(blockedReverse.defaultPrevented && document.activeElement === blocked.cancelButton,
+      'reverse Tab on a blocked confirmation leaves the visible Back control (focus went to the hidden confirm button)');
+    const blockedForward = fakeEvent('keydown', { key: 'Tab', shiftKey: false });
+    window.dispatchEvent(blockedForward);
+    check(blockedForward.defaultPrevented && document.activeElement === blocked.cancelButton,
+      'forward Tab on a blocked confirmation leaves the visible Back control');
+    closeConfirmationModal();
   } catch (error) {
     failures.push(error.stack || error.message || String(error));
   } finally {
