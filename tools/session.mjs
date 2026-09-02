@@ -631,14 +631,24 @@ export function createSession({ registries, seedString, endless = false, restore
     }
     live = null;
     if (c.result === 'defeat') {
-      for (const m of livingMembers()) if (m.run.hp <= 0) m.alive = false;
+      for (const m of livingMembers()) if (m.run.hp <= 0) { m.alive = false; m.catchup.length = 0; }
       // A LOST FIGHT IS THE PARTY'S DEFEAT when no fighter lives: a seat
       // standing outside the fight — held out while its catch-up queue
       // stands, or away — was not in the room the party lost, and cannot
       // turn its defeat into rewards (Codex on #549). The run ends; the seats
       // outside it fall with the party.
       const fighterLives = livingMembers().some((m) => c.players.has(m.id));
-      if (!fighterLives) { for (const m of livingMembers()) { m.run.hp = 0; m.alive = false; } session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
+      // THE FORFEIT IS PART OF FALLING. A seat held outside the fight is there
+      // BECAUSE its catch-up queue stands, and coop.js renders that queue
+      // before it reads the scene — so a queue left behind keeps drawing the
+      // reward or event it was holding over the run's own end, and only a
+      // choice `resolveCatchup` then refuses would clear it. The party's
+      // defeat forfeits the queue with the seat (Codex on #557).
+      if (!fighterLives) {
+        for (const m of livingMembers()) { m.run.hp = 0; m.alive = false; m.catchup.length = 0; }
+        session.scene = { kind: 'complete', victory: false };
+        return { ok: true, result: 'defeat' };
+      }
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
     for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
