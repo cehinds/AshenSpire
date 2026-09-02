@@ -1036,7 +1036,12 @@ async function main() {
       // open", the exact inversion the useFlask note above records. Bar faces
       // first, then the rows they reveal; a selector that matches nothing
       // still presses nothing, so non-shop surfaces are untouched.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.flask-slot', '[data-face="bar:sell"]']) {
+      // THE ✕ MOVED BEHIND LOAD (title.js → saveSlotSelector.js): the title
+      // menu is five verbs and the slot rows with their delete control open
+      // behind LOAD. Observed red without this press at dev = e5d9c981
+      // ('11 claimed, 3 absent: … deleteSave') — the census reading a closed
+      // selector as "not wired", the useFlask inversion again.
+      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.flask-slot', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1670,12 +1675,76 @@ async function main() {
 
   // ==========================================================================
   // THE BEATS IN THEIR OWN SCREENS' HANDS — the census's `handledBy` rows
-  // (profileRestore, freshProfile), watched instead of believed — plus the
-  // title's ✕, which LEFT this club on 2026-08-14: its row rides the shared
-  // machinery now, so its section drives the machinery's own hold and reads
-  // `data-beat-action` like combat's. The two `handledBy` rows are driven in
-  // their own idiom, on states posed by the real doors (see main.js); no
-  // `data-beat-action` is expected on those two.
+  // (shrineLevelUp, profileRestore, freshProfile), watched instead of believed
+  // — plus the title's ✕, which LEFT this club on 2026-08-14: its row rides
+  // the shared machinery now, so its section drives the machinery's own hold
+  // and reads `data-beat-action` like combat's. The three `handledBy` rows are
+  // driven in their own idiom, on states posed by the real doors (see
+  // main.js); no `data-beat-action` is expected on those three.
+
+  // ---- THE SHRINE: levelling — in the stat card's own hand ----------------
+  // `shrineLevelUp` is a `handledBy` row (secondbeat.js): the shared stat
+  // allocation card pends the point on `+` — the row reads +1, the result line
+  // says what the point does, Clear takes it back — and "Level up" is the beat
+  // that spends it. Driven here in the card's own idiom, on the posed shrine
+  // (cinders enough to offer the level), the same way the two profile rows
+  // are driven below: a handledBy row nobody watches is the gap the field was
+  // invented to name.
+  {
+    console.log(`\n  THE SHRINE — a point pends on +, and only "Level up" spends it`);
+    await openShot('rest');
+    const opened = await ev(`(() => { const d = document.querySelector('#level-opt'); if (!d) return 0; d.open = true; return 1; })()`);
+    await wait(150);
+    if (mutate && opened) {
+      // THE OLD DOOR: `+` spends the point on ONE click — the pend is gone,
+      // the card commits on the first press. The button keeps its glyph and
+      // its class; the original's own listener still pends, and the rewire
+      // presses "Level up" behind it in the same tick.
+      const rewired = await ev(`(() => {
+        const b = document.querySelector('#level-opt .se-step[data-stat-action="increase"]'); if (!b) return 0;
+        const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
+        c.addEventListener('click', () => { b.click(); const d = document.querySelector('#level-opt [data-stat-done]'); if (d) d.click(); });
+        return 1;
+      })()`);
+      if (!rewired) { console.error('\nholdconfirm --mutate: no + to rewire at ?shot=rest. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
+      console.log(`    (mutation rewired the first + to spend the point on ONE click)`);
+    }
+    const lState = () => ev(`(() => {
+      const rows = [...document.querySelectorAll('#level-opt .se-row')];
+      const done = document.querySelector('#level-opt [data-stat-done]');
+      const result = document.querySelector('#level-opt [data-level-cinder-result]');
+      return {
+        rows: rows.length,
+        values: rows.map((r) => Number(((r.querySelector('.se-value') || {}).textContent || '').trim())),
+        doneDisabled: done ? done.getAttribute('aria-disabled') === 'true' : null,
+        resultShown: result ? !result.hidden : null,
+      };
+    })()`);
+    const l0 = await lState();
+    if (!opened || !l0.rows) skip('shrine level-up', 'unasked', 'no Level up panel with attribute rows at ?shot=rest at this ref');
+    else {
+      ok(`the panel mounts with nothing pending — "Level up" disarmed, the result line hidden`,
+        l0.doneDisabled === true && l0.resultShown === false,
+        `${l0.rows} row(s), done disabled=${l0.doneDisabled}, result shown=${l0.resultShown}`);
+      const plus = '#level-opt .se-row .se-step[data-stat-action="increase"]';
+      await press(await pointOf(plus), 30); await wait(200);
+      const l1 = await lState();
+      ok(`+ PENDS the point and spends NOTHING — the row reads +1, "Level up" arms, the result line names what the point does`,
+        l1.values[0] === l0.values[0] + 1 && l1.doneDisabled === false && l1.resultShown === true,
+        `row 0 ${l0.values[0]} -> ${l1.values[0]}, done disabled=${l1.doneDisabled}, result shown=${l1.resultShown}`);
+      await press(await pointOf('#level-opt [data-stat-cancel]'), 30); await wait(200);
+      const l2 = await lState();
+      ok(`Clear takes it back — the row reads what it read, "Level up" disarms`,
+        l2.values[0] === l0.values[0] && l2.doneDisabled === true,
+        `row 0 ${l1.values[0]} -> ${l2.values[0]}, done disabled=${l2.doneDisabled}`);
+      await press(await pointOf(plus), 30); await wait(200);
+      await press(await pointOf('#level-opt [data-stat-done]'), 30); await wait(400);
+      const l3 = await lState();
+      ok(`"Level up" spends the point — the row keeps its +1 and the re-mounted panel has nothing pending`,
+        mutate ? true : (l3.rows > 0 && l3.values[0] === l0.values[0] + 1 && l3.doneDisabled === true),
+        `row 0 ${l0.values[0]} -> ${l3.values[0]}, done disabled=${l3.doneDisabled} — read off the re-mounted panel`);
+    }
+  }
 
   // ---- THE TITLE: deleting a run — collapsed into the shared machinery ------
   // The game's oldest second beat spent its life as a third form: a two-click,
@@ -1685,28 +1754,44 @@ async function main() {
   // exemption's honest content was "nothing could watch a rewrite run"; the
   // `?shot=title` state ended that, and the row is machinery now. The table
   // rules `hold` (stakes profile, undo none, hazard pointing — the ✕ shares
-  // `.slot-actions` with CONTINUE), so the ✕ answers exactly like End Turn:
-  // fill under the finger, release-early aborts, the dial is the one home of
-  // the duration.
+  // its row with the slot's own pick control), so the ✕ answers exactly like
+  // End Turn: fill under the finger, release-early aborts, the dial is the one
+  // home of the duration.
+  //
+  // THE ✕ LIVES BEHIND LOAD NOW (title.js → saveSlotSelector.js): the title
+  // menu is five verbs, and the slot rows with their delete control are the
+  // LOAD selector's. This section walks that door — press LOAD, read the rows
+  // — and walks it again after every commit, because a commit closes the
+  // selector and re-renders the title. Before this it asked for `.slot-delete`
+  // on the first paint, found nothing, and SKIPPED: a beat the game ships,
+  // unwatched, filed under "unasked".
   {
     console.log(`\n  THE TITLE — the ✕ holds like everything else, and the dial finally reaches it`);
+    const openLoad = async () => {
+      const lp = await pointOf('[data-title-action="load"]');
+      if (!lp) return false;
+      await press(lp, 30); await wait(300);
+      return !!(await ev(`!!document.querySelector('.title-slot-list')`));
+    };
     await openShot('title');
+    await openLoad();
     if (mutate) {
       // THE OLD DOOR: one pointer click deletes, no beat. The button keeps its
       // class and its glyph — only the wiring changes.
       const rewired = await ev(`(() => {
-        const b = document.querySelector('.slot-delete'); if (!b) return 0;
+        const b = document.querySelector('.title-slot-delete'); if (!b) return 0;
         const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
-        c.addEventListener('click', () => { c.closest('.slot').remove(); });
+        c.addEventListener('click', () => { c.closest('.title-slot-row').remove(); });
         return 1;
       })()`);
-      if (!rewired) { console.error('\nholdconfirm --mutate: no .slot-delete to rewire at ?shot=title. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
+      if (!rewired) { console.error('\nholdconfirm --mutate: no .title-slot-delete to rewire behind LOAD at ?shot=title. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
       console.log(`    (mutation rewired the slot's ✕ to delete on ONE pointer click)`);
     }
     const tState = () => ev(`(() => {
-      const d = document.querySelector('.slot-delete');
+      const d = document.querySelector('.title-slot-delete');
       return {
-        occupied: document.querySelectorAll('.slot.occupied').length,
+        selector: !!document.querySelector('.title-slot-list'),
+        occupied: document.querySelectorAll('.title-slot-pick.is-filled').length,
         del: !!d,
         action: d ? d.dataset.beatAction : null,
         beat: d ? d.dataset.beat : null,
@@ -1717,14 +1802,16 @@ async function main() {
         hint: d ? !!d.querySelector('.hold-hint') : null,
         hintShown: (() => { const h = d && d.querySelector('.hold-hint'); return h ? getComputedStyle(h).display !== 'none' : false; })(),
         tip: d ? (d.title || '') : null,
-        cont: !!document.querySelector('.slot-continue'),
+        // CONTINUE on the menu is enabled exactly when a slot is occupied —
+        // listSlots read back through the menu, not the selector.
+        cont: !!document.querySelector('.slot-continue:not([disabled])'),
       };
     })()`);
     const t0 = await tState();
-    if (!t0.del || !t0.occupied) skip('title', 'unasked', 'no occupied slot with a delete control at ?shot=title at this ref');
+    if (!t0.selector || !t0.del || !t0.occupied) skip('title', 'unasked', `no occupied slot with a delete control behind LOAD at ?shot=title at this ref (selector open=${t0.selector}, occupied=${t0.occupied}, ✕=${t0.del})`);
     else {
       ok(`the pose surfaced a REAL save through the real reader`, t0.occupied === 1 && t0.cont,
-        `${t0.occupied} occupied slot(s), CONTINUE drawn=${t0.cont} — listSlots reading the bytes newRun wrote`);
+        `${t0.occupied} occupied slot(s) behind LOAD, CONTINUE enabled=${t0.cont} — listSlots reading the bytes newRun wrote`);
       ok(`the ✕ is the machinery's control, ruled HOLD by the table`,
         t0.action === 'deleteSave' && t0.beat === 'hold' && t0.hint === true,
         `data-beat-action=${JSON.stringify(t0.action)} beat=${JSON.stringify(t0.beat)} hint=${t0.hint}`);
@@ -1736,7 +1823,7 @@ async function main() {
       // 1. THE ABORT. A release before the fill lands must not delete — under
       // --mutate this is the check that goes red, because the rewired click
       // fires on that release.
-      const dp = await pointOf('.slot-delete');
+      const dp = await pointOf('.title-slot-delete');
       await press(dp, Math.round((t0.holdMs || 600) * 0.4));
       const t1 = await tState();
       const t1Review = await ev(`!!document.querySelector('.confirmation-modal')`);
@@ -1745,27 +1832,31 @@ async function main() {
         `occupied ${t0.occupied} -> ${t1.occupied}, CONTINUE=${t1.cont}, confirmation=${t1Review}`);
       await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
       // 2. A COMPLETED HOLD DELETES — the verdict is the re-render the real
-      // reader draws from storage, not the button's own state.
-      const dp2 = await pointOf('.slot-delete');
+      // reader draws from storage: the selector closes on commit, the title
+      // re-renders, and LOAD is walked again to count the rows.
+      const dp2 = await pointOf('.title-slot-delete');
       if (dp2) { await press(dp2, (t0.holdMs || 600) + 350); await wait(400); }
+      await openLoad();
       const t2 = await tState();
       ok(`a completed hold deletes the run`,
         mutate ? true : (t2.occupied === 0 && !t2.cont),
-        `occupied ${t0.occupied} -> ${t2.occupied}, CONTINUE=${t2.cont} — read off the re-rendered slot list`);
+        `occupied ${t0.occupied} -> ${t2.occupied}, CONTINUE=${t2.cont} — read off the re-rendered title and the re-opened selector`);
       // 3. THE DIAL REACHES IT — both directions. `long` lengthens the arm;
       // `off` removes the shortcut but keeps the universal review door.
       await openShot('title', { shotSettings: JSON.stringify({ holdConfirm: 'long' }) });
+      await openLoad();
       const tl = await tState();
       ok(`the 'long' dial lengthens the ✕'s arm — derived, not hard-coded`,
         mutate ? tl.del === false || true : (tl.holdMs === 1000),
         `holdMs=${tl && tl.holdMs} under holdConfirm='long'`);
       await openShot('title', { shotSettings: JSON.stringify({ holdConfirm: 'off' }) });
+      await openLoad();
       const toff = await tState();
-      if (!toff.del || !toff.occupied) skip('title dial-off', 'unasked', 'no occupied slot at ?shot=title with the dial off');
+      if (!toff.del || !toff.occupied) skip('title dial-off', 'unasked', 'no occupied slot behind LOAD at ?shot=title with the dial off');
       else {
         ok(`Off strips the hold dressing from the ✕`, toff.holdMs === 0 && toff.hint === false,
           `holdMs=${toff.holdMs} hint=${toff.hint}`);
-        const opd = await pointOf('.slot-delete');
+        const opd = await pointOf('.title-slot-delete');
         await press(opd, 30); await wait(400);
         const toff2 = await tState();
         const toffReview = await ev(`!!document.querySelector('.confirmation-modal')`);
@@ -1773,6 +1864,7 @@ async function main() {
           toff2.occupied === toff.occupied && toff2.cont && toffReview,
           `occupied ${toff.occupied} -> ${toff2.occupied}, confirmation=${toffReview}`);
         await press(await pointOf('.confirmation-confirm'), 30); await wait(400);
+        await openLoad();
         const toff3 = await tState();
         ok(`the off-mode confirmation deletes the run`,
           mutate ? true : (toff3.occupied === 0 && !toff3.cont),
@@ -1939,6 +2031,7 @@ async function main() {
       ['the shrine', 'does NOT spend the shrine'],
       ['the Smith', 'it does not smith'],
       ['the merchant', 'it does not burn'],
+      ['the level card', 'spends NOTHING'],
       ['the title slot', 'deletes NOTHING'],
       ['the profile drawer', 'restores NOTHING'],
       ['the crisis screen', 'starts NOTHING'],
@@ -1982,13 +2075,13 @@ async function main() {
       hazard) is a design claim. This proves the derivation is applied
       consistently and reaches the page; it cannot tell you that a hold on End
       Turn is what a player wants, and NOBODY HAS WATCHED A PLAYER USE IT.
-  (h) THE TWO handledBy BEATS ARE MEASURED AS THEY ARE, NOT AS THE TABLE
-      DERIVES THEM. profileRestore and freshProfile answer in their own
-      screens' hands; this proves each hand works (arms, cancels, commits only
-      confirmed) — whether either should collapse into the shared machinery is
-      a design call a green here licenses nothing about. (deleteSave was the
-      third until 2026-08-14; its collapse is DONE and its checks above drive
-      the machinery's own hold on the dial.) The crisis pose is the corrupt
+  (h) THE THREE handledBy BEATS ARE MEASURED AS THEY ARE, NOT AS THE TABLE
+      DERIVES THEM. shrineLevelUp, profileRestore and freshProfile answer in
+      their own screens' hands; this proves each hand works (pends or arms,
+      cancels, commits only on the second beat) — whether any should collapse
+      into the shared machinery is a design call a green here licenses nothing
+      about. (deleteSave was in this club until 2026-08-14; its collapse is
+      DONE and its checks above drive the machinery's own hold on the dial.) The crisis pose is the corrupt
       state only: 'older' and 'newer' render different screens and neither is
       driven here.`);
   if (notAsked.length) {

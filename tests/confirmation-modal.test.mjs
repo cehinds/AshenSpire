@@ -224,6 +224,15 @@ export async function runConfirmationModalContract() {
       onCancel: () => { cancelled += 1; },
     });
     await new Promise((resolveTick) => setTimeout(resolveTick, 0));
+    // THE OPENING GESTURE'S ECHO: with the hold dial off a control opens the
+    // review on pointerup, and the browser then dispatches that touch's
+    // trailing click at the point of release — the scrim. No press began on
+    // the scrim, so it is not a cancel (measured with real touch events:
+    // tools/holdconfirm.mjs, the title's dial-off leg).
+    third.veil.dispatchEvent(fakeEvent('click', { target: third.veil }));
+    check(third.veil.isConnected && cancelled === 1, 'a scrim click with no press on the scrim (the opening tap\'s echo) closed the review');
+    // A press that BEGINS on the scrim is the player's cancel.
+    third.veil.dispatchEvent(fakeEvent('pointerdown', { target: third.veil }));
     third.veil.dispatchEvent(fakeEvent('click', { target: third.veil }));
     check(cancelled === 2 && confirmed === 1, 'backdrop cancellation committed or failed to cancel');
     closeConfirmationModal();

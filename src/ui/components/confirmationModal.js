@@ -179,8 +179,22 @@ export function openConfirmationModal({
       shield.afterDestinationPaint();
     }
   });
+  // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the
+  // hold dial off, a control opens this review on pointerup, and the browser
+  // then dispatches that same touch's trailing click at the point of release
+  // — which is now the scrim (the finger never moved; the veil did). Cancelling
+  // on it closed the review in the same gesture that opened it, so an
+  // off-dial tap on the title's ✕ opened nothing a player could see. Measured
+  // with real touch events (tools/holdconfirm.mjs, the title's dial-off leg):
+  // pointerdown on the ✕, MODAL-ADDED, pointerup, click on the veil, REMOVED.
+  // A press that begins on the scrim is the player's; a click that arrives
+  // without one is the opening gesture's echo.
+  let scrimPressed = false;
+  veil.addEventListener('pointerdown', (event) => { scrimPressed = event.target === veil; });
   veil.addEventListener('click', (event) => {
-    if (event.target === veil) cancel();
+    const pressedHere = scrimPressed;
+    scrimPressed = false;
+    if (event.target === veil && pressedHere) cancel();
   });
   window.addEventListener('keydown', onKeydown, true);
   // Quick-menu actions close their list after awaiting the controller result,

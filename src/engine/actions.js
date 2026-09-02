@@ -630,8 +630,14 @@ function runRunOpcode(ctx, action, eff) {
       // Since the item-upgrade redesign the plan also offers non-armament
       // items (no armamentId, no affectedCards); a card upgrade can only ride
       // an armament, so only those become candidates here.
+      // AND ONLY AN ARMAMENT WITH CARDS IN THE DECK TODAY. A carried armament
+      // with no live cards is a Smithing candidate (the Shrine previews it
+      // through its authored roles), but a "random card" upgrade that landed
+      // on it would set a tier and upgrade zero cards the player holds — the
+      // choice promised a card (Codex, #535).
       const armaments = plan.candidates
         .filter((candidate) => candidate.itemKind === 'armament')
+        .filter((candidate) => candidate.affectedCards.length > 0)
         .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
         .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
       const ordinary = run.deck
