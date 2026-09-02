@@ -63,21 +63,27 @@ Also resolved here: #484 — `hpPerConTier` was authored on every class and read
 
 ## D. The owner's feedback ("the thirteen", `docs/asks/asks-ledger.md`)
 
-| Ask | Owner's words | Status in code today | Action |
-|---|---|---|---|
-| E3 | fullscreen toggle first in Display | **DONE** — `settings.js` Display row 1 is Fullscreen; sprites moved to Advanced | ledger state is stale; regenerate |
-| E5 | two starting armour sets; assign stat points | **DONE** — `characterCreation.json` gives every class two armour sets and two hand kits; `pointbuy` mode: pool 10, floor 8, ceiling 15, fixed-total redistribution (points come back) — his numbers exactly | ledger state is stale; regenerate |
-| E13 | too much battling; level at rest sites with cinders, 1 point/level, 10–20 level-ups a run; rest-stop placement guard rails; multi-use rest toggle | **DONE in #522** — the sim now measures level-ups per full run; the shipped 800 + 200 ladder gave 0.5, the calibrated 20 + 4 gives 14.8 (the greedy ceiling); multi-use Shrines toggle (default off) with LEAVE. Shrine-before-boss was already live | merge #522 |
-| E12 | questing; previous choices influence other events | **LIVE (first chain)** — choice history is recorded and gates later event choices (`quests.js`, `event.js`); event-level quest steps gate which events an Unknown node may roll (`eventHistoryRequirements`, `resolveUnknownNode`, `buildActMap` carries `run.history`); the first 3-step chain is authored: Grave of the Nameless → The Keeper of the Nameless → The Nameless at Rest, with the Gravetender's Bell as the mourner's reward | more chains are content on the same doors; `tools/quest-choice-contract.mjs` is the instrument |
-| C5/C6/C11/C18/C19/R2 | process/fleet asks | not code | — |
+*Swept against the live issues on 2026-09-02. The ledger itself is a preservation mirror and PASSES its own
+local check 10/10 (`node tools/asks-ledger.mjs --check`); the `--github` compare needs a token this sandbox
+does not hold, so the issue states below were read one by one through the API. The mirror does not resolve,
+approve or close an ask, and neither does this table: where an ask is shipped but its issue is open, the close
+is the owner's.*
+
+| Ask | Owner's words | Status in code today | Issue today | Action |
+|---|---|---|---|---|
+| E3 | fullscreen toggle first in Display | **DONE** — `settings.js` Display row 1 is Fullscreen; sprites moved to Advanced | #248 **closed** by the owner 2026-08-30; its `state:in-flight` label was never cleared | nothing owed in code; the stale label is the owner's to clear (and C19's open question — label or board column — is what makes it stale) |
+| E5 | two starting armour sets; assign stat points | **DONE** — `characterCreation.json` gives every class two armour sets and two hand kits; `pointbuy` mode: pool 10, floor 8, ceiling 15, fixed-total redistribution (points come back) — his numbers exactly | #250 **still open**, `state:not-started` | nothing owed in code. The evidence is recorded on the issue for the owner to close; an agent does not close his asks |
+| E13 | too much battling; level at rest sites with cinders, 1 point/level, 10–20 level-ups a run; rest-stop placement guard rails; multi-use rest toggle | **DONE in #522** (merged) — the sim measures level-ups per full run; the shipped 800 + 200 ladder gave 0.5, the calibrated 20 + 4 gives 14.8 at the greedy ceiling and `runsim` reads 14.6 over the victorious runs today, inside his 10–20; multi-use Shrines toggle (default off) with LEAVE. Shrine-before-boss was already live | #258 **still open**, `state:in-flight` | nothing owed in code. The evidence is recorded on the issue for the owner to close |
+| E12 | questing; previous choices influence other events | **LIVE (first chain)** — choice history is recorded and gates later event choices (`quests.js`, `event.js`); event-level quest steps gate which events an Unknown node may roll (`eventHistoryRequirements`, `resolveUnknownNode`, `buildActMap` carries `run.history`); the first 3-step chain is authored: Grave of the Nameless → The Keeper of the Nameless → The Nameless at Rest, with the Gravetender's Bell as the mourner's reward | #257 **closed** by the owner via #491; its `state:not-started` label was never cleared | more chains are content on the same doors; `tools/quest-choice-contract.mjs` is the instrument |
+| C5/C6/C11/C18/C19/R2 | process/fleet asks | not code | #269, #270, #271, #272, #273, #267 — all open, unchanged | — |
 
 ## E. Open issues that fit the current direction
 
 | Issue | Fit | Action |
 |---|---|---|
-| #515 evidence restore | fits | PR #518 (restore, hash-verified) |
-| #484 hpPerConTier | fits | this PR (remove) |
-| #313 drag default for `ally`/`mixed` | fits, rule unwritten | **B shipped in #521**: the board's legal set at drag start, lit only when it is exactly the player (solo `self` and `mixed`); A (declared mode) is the behaviour it replaces |
+| #515 evidence restore | fits | **CLOSED** — #518 merged (restore, hash-verified) |
+| #484 hpPerConTier | fits | **CLOSED** — the field is out |
+| #313 drag default for `ally`/`mixed` | fits, rule unwritten | **CLOSED** — B shipped in #521: the board's legal set at drag start, lit only when it is exactly the player (solo `self` and `mixed`); A (declared mode) is the behaviour it replaced |
 | #233 poise/status buildup plates | fits UI direction | after the plate model lands; not this pass |
 | #239/#240/#241 enemy action cards, encounter budgets, deterministic plans | fits the data-driven direction | design-sized; sequence after the framework gate |
 | #61 Reaver bleed pilot | human playtest | owner |
@@ -102,7 +108,7 @@ The standing directive after section C: **make everything live as intended and d
 | F-11 | The owner's `release` cut for `rc.2` | DONE (OWNER) | #542 `dev → release` merged by the owner at `00330f4f` |
 | F-12 | Review findings that arrived after the owner merged #549 and #550 | DONE | #552: a lost fight with no living fighter is the party's defeat though a seat stood outside it, and a lethal replay's result is read before the seat leaves the queue. #554: the text read classifies ancestors after both scans and reads an overlapping in-flow label from what hiding it changes |
 | F-13 | CHANGELOG receipts for #543–#552 | DONE | #554: the co-op catch-up (#547, #548, #549, #552) at `0.5.0-rc.2.1941` and the review riders (#543–#546, #550, #551) at `0.5.0-rc.2.1936`, each at the ordinal `buildordinal.json` carried at its merge on `dev` |
-| F-14 | The owner's feedback file, the open-issue sweep (task 34) | PARTIAL | sections D and E stand as written; the sweep resumes after the `rc.3` close-out |
+| F-14 | The owner's feedback file, the open-issue sweep (task 34) | **SWEPT** — nothing owed in code | Section D is swept against the live issues (2026-09-02): the four code asks are all shipped — E3 (#248) and E12 (#257) closed by the owner, E5 (#250) and E13 (#258) still open with their evidence recorded on the issues for him to close; the six process asks are unchanged. Section E's three actionable issues are closed (#515 by #518, #484 by its removal, #313 by #521); the rest are deferred by design, the owner's playtest, or another lane. What remains is not code: closing two issues and clearing stale `state:` labels, which no agent does to his asks |
 | F-15 | The owner's correction to #523: the dodge rides on ONE empty hand | DONE | #554: the empty hand contributes the Dodge Roll as a weapon-art instance of its own beside the armed hand's technique; a shield is a full hand and a two-hander fills both; A-9 states the widened rule |
 | F-16 | The README names what the game now does | DONE | #555: load and Weight Class, Stamina and the class-priced dodge, the first quest chain (eligibility at Unknown nodes, not a node that opens), Forsaken Together; the attribution block names that pass |
 | F-17 | The `rc.3` stamp and its receipt | DONE | #556: `contentBundle.version = 0.5.0-rc.3`, the receipt at `0.5.0-rc.3.1947`, this checklist and `docs/versioning.md` naming `rc.3` |
