@@ -840,7 +840,14 @@ async function main() {
       if (!b) skip('the moved-away press', 'unasked', 'no held bar to press');
       else {
         const M = (t, x, y, extra = {}) => cdp.send('Input.dispatchMouseEvent', { type: t, x, y, button: t === 'mouseMoved' ? 'none' : 'left', clickCount: 1, ...extra }, sessionId);
+        // The painted-fill block above ends in a short press, and a short press
+        // on an option control REVIEWS by design — so a modal may be open here.
+        // Close it first and assert the clean start, or this case reads the
+        // previous case's modal as its own finding.
+        if ((await ev(STATE)).reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(300); }
         const before = await ev(STATE);
+        ok(`the moved-away press starts from a clean screen (no review open)`, !before.reviewing && before.bars > 0,
+          `reviewing=${before.reviewing} bars=${before.bars}`);
         await M('mousePressed', b.x, b.y, { buttons: 1 });
         await wait(120);
         // Well past HOLD_POINTER_SLOP (12 local px), in two steps like a real drag.
