@@ -872,9 +872,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // A MISSED EVENT IS CHOSEN THE WAY A LIVE ONE IS: the choices the seat's
   // history admitted when the party met it, priced ones disabled when short,
   // and the choice's result read before the next debt (DEVELOPER.md's event
-  // contract) — the pick is sent once the result has been read, and held
-  // locally across snapshots until then.
-  let catchupRead = null; // { me, eventId, act, floor, choiceIndex } the seat has picked but not yet sent — bound to the seat, so a couch seat switched to before CONTINUE does not inherit another seat's pick (Codex on #549)
+  // contract). The pick is sent the moment it is made and the host keeps the
+  // entry at the head of the queue, marked done with its result, until the
+  // seat continues — so a reload between the choice and CONTINUE shows the
+  // result again, never the choices (Codex on #549).
   function renderCatchup(mm) {
     const item = mm.catchupQueue[0];
     const remaining = mm.catchupQueue.length;
@@ -882,13 +883,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       let ev = null; try { ev = registries.events.get(item.eventId); } catch { ev = null; }
       const choices = (ev && ev.choices ? ev.choices : []).map((c, i) => ({ c, i }))
         .filter(({ i }) => !Array.isArray(item.open) || item.open.includes(i));
-      const held = catchupRead && catchupRead.me === mm.id && catchupRead.eventId === item.eventId && catchupRead.act === item.act && catchupRead.floor === item.floor ? catchupRead : null;
-      if (held && ev && ev.choices[held.choiceIndex]) {
+      if (item.done) {
         app.innerHTML = rewardShell(`${rTitle(`Ember Debt — ${remaining} missed`)}
-          <p class="coop-event-result">${esc(ev.choices[held.choiceIndex].resultText || '')}</p>
+          <p class="coop-event-result">${esc(item.done.resultText || '')}</p>
           <div class="coop-choices"><button data-cu-go="1">CONTINUE</button></div>`);
         const go = app.querySelector('[data-cu-go]');
-        if (go) go.addEventListener('click', () => { const pick = { choiceIndex: held.choiceIndex }; catchupRead = null; send({ t: 'catchupChoice', index: 0, pick }); });
+        if (go) go.addEventListener('click', () => send({ t: 'catchupChoice', index: 0, pick: { continue: true } }));
         renderPartyBar(); wireLeave();
         return;
       }
@@ -902,9 +902,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         }).join('') || '<button data-cu-ev="-1">Continue</button>'}</div>`);
       app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {
         const choiceIndex = Number(b.dataset.cuEv);
-        if (choiceIndex < 0) { send({ t: 'catchupChoice', index: 0, pick: {} }); return; }
-        catchupRead = { me: mm.id, eventId: item.eventId, act: item.act, floor: item.floor, choiceIndex };
-        renderCatchup(mm);
+        send({ t: 'catchupChoice', index: 0, pick: choiceIndex < 0 ? {} : { choiceIndex } });
       }));
       renderPartyBar(); wireLeave();
       return;
