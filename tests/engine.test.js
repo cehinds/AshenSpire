@@ -17,7 +17,7 @@ import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
 import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
@@ -1558,7 +1558,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         const playable = c.piles.hand.find((inst) => {
           const def = resolveCard(REG, inst);
           if ((def.keywords || []).includes('unplayable')) return false;
-          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost) && c.player.mana >= (def.manaCost || 0);
+          // AFFORDABLE MEANS EVERY POOL THE ENGINE CHARGES. Stamina joined the
+          // three when the dodge landed (#523), and the empty-hand rule (#554)
+          // put a stamina-priced card in a starting deck for the first time —
+          // so a bot filtering on energy and mana alone asked for a card
+          // playCard refuses, and this fixture died on the throw. The pools are
+          // read from the same cost authority the engine spends from.
+          const pools = REG.framework.costProfile(def, { weightClass: playerWeightClass(c).weightClass });
+          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost)
+            && c.player.mana >= (pools.mana || 0)
+            && c.player.stamina >= (pools.stamina || 0);
         });
         if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
         else dispatch(c, { type: 'endTurn' });
