@@ -80,7 +80,9 @@ defines `build_reaver`, `build_starseer` and `build_herald`. Two facts follow:
 
 - **There is no `build_rogue` anywhere in the repository.** `tools/equipment-blender.py:408`
   maps `"rogue": lib["build_reaver"]` — the original defect.
-- **The pipeline renders 300×380.** No file under `tools/` emits 512×512.
+- **The pipeline renders classes at 450×570 in WEBP.** (300×380 is the enemy
+  size, and the module header comment is stale.) No file under `tools/` emits
+  512×512, and none emits PNG.
 
 So the four crops in this packet were **not produced by any pipeline in this
 repository**, and the one asset the owner approved is the one with no builder at
@@ -101,13 +103,34 @@ not cover the one that is correct.**
 remodel three procedural figures — is not this seat's to do; the assignment is
 the IT Manager III's.
 
-What this seat can supply, and has: the measured target, the ranked deltas, and
-a checker that gates any candidate against the approved look.
+What this seat can supply, and has: the measured target, the ranked deltas, a
+checker that gates any candidate against the approved look, and a drafted
+builder for the missing class — `build_rogue.proposal.py`, written against the
+host module's own idiom for whoever holds `tools/**` to paste in.
+
+**`build_rogue.proposal.py` has never been rendered.** Blender is not installed
+in this environment. What was checked: it compiles, all 17 symbols it borrows
+from `tools/sprites-blender.py` exist there, it passes no unknown keyword
+arguments, and every primitive it calls is one the host already uses. What was
+*not* checked: whether the render it produces conforms. Whoever lands it must
+render and score it, and iterate the two new materials until the checker passes.
+The measured envelope in §1 is the gate — not the geometry in that file.
+
+One design tension it cannot settle: every other class carries a broad
+`ACCENT_CLOTH` sweep so "the silhouette that glows is always yours", but the
+approved look measures gold at 0.6 %. The proposal keeps the accent as a narrow
+mantle edge plus a throat clasp. Whether the hero-accent convention outranks the
+approved look is an IT Manager III call.
 
 ## 7. Reproducing
 
 ```
 node assets/classes/check-look-conformance.mjs                # all four vs rogue
 node assets/classes/check-look-conformance.mjs cand.png       # score a candidate
+```
+After landing `build_rogue` in `tools/sprites-blender.py`:
+```
+blender --background --factory-startup --python tools/sprites-blender.py -- <out>
+node assets/classes/check-look-conformance.mjs <out>/rogue_gold.webp
 ```
 Exit code is 0 only when every scored asset conforms.
