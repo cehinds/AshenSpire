@@ -9,6 +9,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard, passiveSum } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, coopHpMult } from './session.mjs';
+import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
 const REG = createRegistries(contentBundle);
@@ -243,6 +244,15 @@ try {
   }
   ok(S.scene.players.length === 2 && S.scene.enemies.length >= 1, 'combat scene exposes both players + shared enemies');
   ok(S.scene.players.every((p) => p.attributeMode && p.attributes), 'combat snapshot transports each seat\'s inert attributes');
+  // THE SEAT'S POISE THRESHOLD reaches the shared fight the way it reaches a
+  // solo one: derived from the loadout, relics and tiers, never the engine's
+  // zero default.
+  {
+    const p1m = S.session.members.get('p1');
+    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {} }).value;
+    const stamped = S.live.combat.players.get('p1').entity.poiseMax;
+    ok(owed > 0 && stamped === owed, `the seat's Poise threshold is stamped on its combat entity (owed ${owed}, stamped ${stamped})`);
+  }
   {
     const p2snap = S.scene.players.find((p) => p.id === 'p2');
     const hostSays = passiveSum(REG, p2run.relics, 'powerCostReduction', p2run.itemUpgradeLevels);

@@ -21,6 +21,7 @@ import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { playerWeightClass } from '../src/engine/combat.js';
+import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
   commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
 } from '../src/model/smithing.js';
@@ -397,6 +398,12 @@ export function createSession({ registries, seedString, endless = false, restore
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
+      // THE SEAT'S POISE THRESHOLD, derived the way the solo engine derives it
+      // (combat.js: the armour rule over the loadout, relics and tiers). The
+      // co-op engine takes poiseMax as given and defaults it to ZERO, so an
+      // upgraded armour's threshold bought at the Shrine did nothing here
+      // while its weight still priced the seat's dodge (Codex, #528).
+      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {} }).value,
     };
   }
 
