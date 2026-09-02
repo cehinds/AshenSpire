@@ -4662,6 +4662,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-slot-row.is-selected .title-slot-state { color: var(--gold); }
 .title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
 .title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
+/* THE WORD DOES NOT FIT ON AN ICON — the `.slot-delete .hold-hint` rule above
+   said it for the old title slot, and the ✕ moved into the LOAD selector
+   without it: HOLD was drawn beside the glyph again, measured by
+   tools/holdconfirm.mjs the first time its title section reached the
+   selector. The fill still runs; the native tooltip carries the sentence. */
+.title-slot-delete .hold-hint { display: none; }
 .title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
 .title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
 .title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
