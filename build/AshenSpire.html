@@ -49524,7 +49524,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '3a86dc01b6';
+const SOURCE = '3fed0dcd2d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49558,7 +49558,7 @@ const SOURCE = '3a86dc01b6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1931';
+const ORDINAL = '1932';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -72114,7 +72114,15 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
         // index, from the host); a gated choice drawn here would be refused
         // with no visible answer. No projection = every authored choice.
         .filter(({ i }) => !(snap.scene.open && Array.isArray(snap.scene.open[me])) || snap.scene.open[me].includes(i))
-        .map(({ c, i }) => `<button data-ev="${i}">${esc(c.label || c.text || 'Choose')}</button>`).join('')}</div>`}`);
+        // A PRICED CHOICE THE SEAT CANNOT AFFORD IS DRAWN DISABLED, the solo
+        // event screen's `meets` rule read off this seat's snapshot purse: the
+        // host refuses it, and a refusal only rebroadcasts the same snapshot,
+        // so an enabled button here would be one that does nothing.
+        .map(({ c, i }) => {
+          const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
+          const short = need != null && ((myMember() || {}).cinders ?? 0) < need;
+          return `<button data-ev="${i}"${short ? ' disabled data-requires="1" title="Needs ' + need + ' cinders"' : ''}>${esc(c.label || c.text || 'Choose')}</button>`;
+        }).join('')}</div>`}`);
     app.querySelectorAll('[data-ev]').forEach((b) => b.addEventListener('click', () => send({ t: 'eventChoice', choiceIndex: Number(b.dataset.ev) })));
     renderPartyBar(); wireLeave();
   }

@@ -182,9 +182,14 @@ try {
         ok(priced >= 0 && !refused.ok && (q1.run.history || []).length === 0 && U.partyHistory().length === 0 && U.scene.kind === 'event',
           `a choice the member cannot afford is refused before anything is recorded (${JSON.stringify(refused)})`);
         q1.run.cinders = pilgrim.choices[priced].requires.cinders;
+        const relicsBefore = q1.run.relics.length;
         const paid = U.eventChoice('q1', priced);
         ok(paid.ok && U.partyHistory().length === 1 && U.partyHistory()[0].choiceId === (q1.run.history[0] || {}).choiceId,
           `the same choice with the cinders in hand is recorded (${JSON.stringify(U.partyHistory()[0])})`);
+        // AND THE TRANSACTION HAPPENED: the cinders are gone and the relic is
+        // in hand — the authored effects ran before the fact was recorded.
+        ok(q1.run.cinders === 0 && q1.run.relics.length === relicsBefore + 1,
+          `the choice's authored effects ran before the record (cinders ${pilgrim.choices[priced].requires.cinders} -> ${q1.run.cinders}, relics ${relicsBefore} -> ${q1.run.relics.length})`);
       }
       ok(!fallen.ok && T.partyHistory().length === 0, `an absent seat's choice is refused (${JSON.stringify(fallen)})`);
       const r = T.eventChoice('p2', 0);

@@ -838,7 +838,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         // index, from the host); a gated choice drawn here would be refused
         // with no visible answer. No projection = every authored choice.
         .filter(({ i }) => !(snap.scene.open && Array.isArray(snap.scene.open[me])) || snap.scene.open[me].includes(i))
-        .map(({ c, i }) => `<button data-ev="${i}">${esc(c.label || c.text || 'Choose')}</button>`).join('')}</div>`}`);
+        // A PRICED CHOICE THE SEAT CANNOT AFFORD IS DRAWN DISABLED, the solo
+        // event screen's `meets` rule read off this seat's snapshot purse: the
+        // host refuses it, and a refusal only rebroadcasts the same snapshot,
+        // so an enabled button here would be one that does nothing.
+        .map(({ c, i }) => {
+          const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
+          const short = need != null && ((myMember() || {}).cinders ?? 0) < need;
+          return `<button data-ev="${i}"${short ? ' disabled data-requires="1" title="Needs ' + need + ' cinders"' : ''}>${esc(c.label || c.text || 'Choose')}</button>`;
+        }).join('')}</div>`}`);
     app.querySelectorAll('[data-ev]').forEach((b) => b.addEventListener('click', () => send({ t: 'eventChoice', choiceIndex: Number(b.dataset.ev) })));
     renderPartyBar(); wireLeave();
   }

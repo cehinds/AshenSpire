@@ -27,6 +27,7 @@ import {
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -801,6 +802,13 @@ export function createSession({ registries, seedString, endless = false, restore
       if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
         return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
       }
+      // THE TRANSACTION HAPPENS BEFORE THE FACT IS RECORDED — the same DSL
+      // and the same order as the solo event screen and runsim.mjs
+      // (executeRunEffects, then recordEventChoice). Recording "gave the
+      // cinders" with the purse untouched and no relic granted put a fact in
+      // the party's history that never occurred (Codex, #536). The member's
+      // own rng stream prices it, as their rewards are rolled.
+      executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
       // recordEventChoice reads the run's own act/floor/node for the record;
       // a member's run rides the session's cursor, so it is stamped from it.
       m.run.actNumber = session.actNumber;
