@@ -10,7 +10,7 @@ import {
   appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
   emptySnapshot, historyAdvanceAllowed, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, sameIdentityReviewAccepted, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
+  runBoundedCommand, sameIdentityReviewAccepted, sameIdentityReviewEvidence, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -363,6 +363,25 @@ test('the exception is inert without complete recorded authorization', () => {
   assert.equal(gateOf(flagOnly, item, pr([])).allowed, false);
   const complete = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { authorized_by: 'constantine (owner)', at: '2026-08-31T21:30:00Z', reason: 'single shared identity' } });
   assert.equal(sameIdentityReviewAccepted(complete), true);
+});
+
+test('evidence that records nothing does not authorize the exception', () => {
+  const { item, pr } = mergeGateFixture();
+  const good = { authorized_by: 'constantine (owner)', at: '2026-08-31T21:30:00Z', reason: 'single shared identity' };
+  // Every one of these is truthy, so a presence check would have accepted it.
+  for (const [label, bad] of [
+    ['blank approver', { ...good, authorized_by: '   ' }],
+    ['unparseable instant', { ...good, at: 'not-a-date' }],
+    ['non-string reason', { ...good, reason: ['single shared identity'] }],
+    ['non-string instant', { ...good, at: 20260831 }],
+    ['future-dated authorization', { ...good, at: '2099-01-01T00:00:00Z' }]
+  ]) {
+    const cfg = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: bad });
+    assert.equal(sameIdentityReviewAccepted(cfg), false, `${label} must not authorize the exception`);
+    assert.equal(gateOf(cfg, item, pr([])).gates.independent_review, false, `${label} must leave the strict gate in force`);
+  }
+  assert.deepEqual(sameIdentityReviewEvidence(withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: good })), good);
+  assert.equal(sameIdentityReviewEvidence(withAuthority({ same_identity_review_accepted: false, same_identity_review_evidence: good })), null);
 });
 
 test('the exception spends the independent QA seat, with no GitHub approval available', () => {

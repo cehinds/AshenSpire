@@ -637,10 +637,30 @@ export function deliverCandidate(root, item, config) {
 // flag and complete evidence must be present, so `scheduler verify` and the
 // merge event carry WHO relaxed the rule and WHY, and so restoring the rule is
 // a one-line revert rather than an archaeology exercise.
-export function sameIdentityReviewAccepted(config) {
-  if (config.authority?.same_identity_review_accepted !== true) return false;
+// Returns the exception's authorization, or null if it does not hold. Presence
+// is not enough: a whitespace approver, an `at` of 'not-a-date' and a reason
+// that is an array are all truthy, so a check for truthiness would accept an
+// evidence block that records nothing — the very state this is meant to refuse.
+// A future-dated authorization is refused too; it has not happened yet.
+//
+// What this CANNOT do is authenticate the approver. Anyone able to set the flag
+// can also type any name beside it, so matching that string against an expected
+// owner would be ceremony, not a control — the same shared-identity problem
+// (#434) one layer down. The tool refuses malformed evidence and makes the
+// exception visible in `verify`; who authorized it is a claim the ledger and
+// the config's history carry, not something this predicate can establish.
+export function sameIdentityReviewEvidence(config, now = Date.now()) {
+  if (config.authority?.same_identity_review_accepted !== true) return null;
   const evidence = config.authority?.same_identity_review_evidence;
-  return Boolean(evidence?.authorized_by && evidence?.at && evidence?.reason);
+  const filled = (value) => typeof value === 'string' && value.trim().length > 0;
+  if (!evidence || !filled(evidence.authorized_by) || !filled(evidence.reason) || !filled(evidence.at)) return null;
+  const at = Date.parse(evidence.at);
+  if (Number.isNaN(at) || at > now) return null;
+  return { authorized_by: evidence.authorized_by.trim(), at: evidence.at, reason: evidence.reason.trim() };
+}
+
+export function sameIdentityReviewAccepted(config, now = Date.now()) {
+  return sameIdentityReviewEvidence(config, now) !== null;
 }
 
 // Which rule, if any, makes this candidate independently verified. DERIVED from
@@ -1161,6 +1181,10 @@ export function verifyScheduler(root = REPOSITORY_ROOT) {
   const problems = [];
   for (const name of ['event.json', 'snapshot.json', 'wake.json']) if (!fs.existsSync(path.join(root, '.agentops', 'scheduler', 'schemas', name))) problems.push(`missing schema ${name}`);
   if (config.workers.length > config.worker_slots) problems.push('configured workers exceed worker_slots');
+  // Enabled-but-unauthorized fails verification rather than quietly reverting
+  // to the strict gate: a relaxation someone believes is active while it is not
+  // is its own defect, and so is malformed evidence nobody notices.
+  if (config.authority?.same_identity_review_accepted === true && !sameIdentityReviewAccepted(config)) problems.push('same-identity review exception is enabled but its authorization evidence is missing, malformed, or future-dated');
   if (config.wake_hard_limit_tokens > 1500) problems.push('wake hard limit exceeds 1500');
   const state = readPortableState(root, config);
   const rebuilt = reduceEvents(state.events);
@@ -1180,7 +1204,13 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   const { command, args } = parseArgs(argv); const config = readConfig(path.join(root, '.agentops'));
   config.workers = configuredWorkers(root, config);
   if (command === 'simulate') { const result = simulate(config); emit(command, result, `SIMULATE ${result.concurrent && result.conflict_rejected && result.protected_stop ? 'PASS' : 'FAIL'}: ${result.tickets} tickets, ${result.assignments} concurrent assignments.`); return 0; }
-  if (command === 'verify') { const result = verifyScheduler(root); if (!result.ok) throw new Error(result.problems.join('; ')); emit(command, { state_ref_oid: result.state.oid, snapshot_hash: result.rebuilt.snapshot_hash, events: result.state.events.length }, `VERIFY PASS: ${result.state.events.length} material events replayed deterministically.`); return 0; }
+  if (command === 'verify') {
+    const result = verifyScheduler(root); if (!result.ok) throw new Error(result.problems.join('; '));
+    // Surfaced on every verify so an active relaxation of the merge gate cannot
+    // sit unnoticed in the config: visibility is the control this can offer.
+    const exception = sameIdentityReviewEvidence(result.config);
+    emit(command, { state_ref_oid: result.state.oid, snapshot_hash: result.rebuilt.snapshot_hash, events: result.state.events.length, same_identity_review_exception: exception }, `VERIFY PASS: ${result.state.events.length} material events replayed deterministically.${exception ? ` MERGE GATE RELAXED: same-identity review exception active, authorized by ${exception.authorized_by} at ${exception.at}.` : ''}`); return 0;
+  }
   let state = readPortableState(root, config); const machine = localMachine(root);
   if (command === 'bootstrap') {
     if (state.oid) { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP NOOP: scheduler state already exists.'); return 0; }
