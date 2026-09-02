@@ -301,7 +301,7 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
-        // A PARTIAL SHEET: the same layer as a thin black band along the
+        // A PARTIAL SHEET: the same layer as a thin black band (3vh) along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
         // itself, and an absolute "enough paint remains" floor would green;
@@ -310,7 +310,7 @@ if (process.argv.includes('--selftest')) {
         edits: [{
           file: 'styles/combat.css',
           find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
-          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 2vh; background: #000; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 3vh; background: #000; pointer-events: none; z-index: 300; overflow: hidden; }',
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -584,11 +584,12 @@ const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
 const PAINT_FLOOR = 0.25;
 // The most of a control's own paint that may fail to reach the eye in situ.
 // The floor above says the control paints; this says nothing is drawn over
-// it. The shipped controls lose 0-6% (anti-aliased edges and shadows whose
-// colour over the bare canvas is not their colour in situ; printed in every
-// H3 ok line), so the tolerance is not zero; a sheet over a fifth of a
-// control, or a sheet at a fifth of opacity over all of it, loses a fifth.
-const PAINT_LOST = 0.15;
+// it. The shipped controls lose 0-11% (their change in situ is against the
+// hand-area's background, their reference against the bare canvas; printed
+// in every H3 ok line), so the tolerance is not zero; a sheet over a quarter
+// of a control, or a sheet at a quarter of opacity over all of it, loses a
+// quarter and is red.
+const PAINT_LOST = 0.2;
 const decodePng = (buf) => {
   let p = 8, w = 0, h = 0, ct = 0, bd = 0; const idat = [];
   while (p < buf.length) { const len = buf.readUInt32BE(p); const type = buf.toString('ascii', p + 4, p + 8); const d = buf.subarray(p + 8, p + 8 + len);
@@ -614,16 +615,19 @@ const decodePng = (buf) => {
 //                  made visible: the colour the control paints by itself;
 //   blank        — the page hidden and the control hidden too.
 // `own` is the share of the box where alone differs from blank: the pixels
-// the control paints at all. Over those pixels the control OWES a change of
-// |alone - inSituHidden| when it is drawn on top of what lies beneath it in
-// situ (an opaque control's own colour against the in-situ background), and
-// it DELIVERS a change of |inSitu - inSituHidden|. What it delivers over what
-// it owes is the paint reaching the eye; the LOST share is the rest, summed by
-// magnitude so a sheet at 90% opacity that leaves a tenth of every covered
-// pixel's change loses nine tenths, and a sheet over a fifth of the control
-// loses a fifth, whatever the rest still shows. Anti-aliased edge pixels,
-// whose alone colour over the bare canvas is not their in-situ colour, weigh
-// little because their owed magnitude is small.
+// the control paints at all. Over those pixels the control's UNOBSCURED
+// contribution is |alone - blank| — what it adds over the bare canvas, a
+// reference no overlay can touch (the in-situ hidden capture already carries
+// the overlay being measured, so it cannot be the denominator: a light sheet
+// over a light control would shrink both sides alike — Codex, #540) — and it
+// DELIVERS a change of |inSitu - inSituHidden| in situ. What it delivers over
+// what it contributes alone is the paint reaching the eye; the LOST share is
+// the rest, summed by magnitude so a sheet at 90% opacity that leaves a tenth
+// of every covered pixel's change loses nine tenths, and a sheet over a fifth
+// of the control loses a fifth, whatever the rest still shows. An opaque
+// control's change in situ is its colour against the in-situ background,
+// which is not the bare canvas, so the shipped controls read a small loss
+// even with nothing over them; the tolerance below is set above it.
 const decode4 = (...bufs) => { const P = bufs.map(decodePng);
   if (P.some((p) => p.w !== P[0].w || p.h !== P[0].h)) throw new Error('the captures differ in size');
   return P; };
@@ -633,7 +637,7 @@ const paintOfCaptures = (inSitu, inSituHidden, alone, blank) => {
   const n = A.w * A.h; let ownPx = 0, owed = 0, delivered = 0;
   for (let i = 0; i < n; i++) { const o = i * A.bpp;
     if (mag(D, E, o) <= 12) continue; // not a pixel the control paints (4 levels per channel of noise allowed)
-    ownPx++; const need = mag(D, B, o), got = mag(A, B, o);
+    ownPx++; const need = mag(D, E, o), got = mag(A, B, o);
     owed += need; delivered += Math.min(got, need); }
   return { own: n ? ownPx / n : 0, lost: owed ? 1 - delivered / owed : 0 }; };
 const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-action-row'); if (!row) return [];
