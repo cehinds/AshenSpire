@@ -110,6 +110,7 @@
 
 import { resolve, dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
 
@@ -271,6 +272,20 @@ if (process.argv.includes('--selftest')) {
           replace: '.end-turn .et-key {\n  display: block; width: max-content; max-width: 1rem; overflow: hidden;',
         }],
         expectRed: /BAD\s+H3 1200x730 WIDE/,
+      },
+      {
+        // An OPAQUE LAYER OVER THE RAIL THAT THE POINTER PASSES THROUGH: the
+        // effects layer made fixed, full-viewport and black. Every control
+        // keeps its box, its styles and its hit-test (pointer-events:none
+        // hands elementFromPoint the control underneath), and the eye sees
+        // black. Red by name on H3 from the paint probe, not the hit-test.
+        name: 'the effects layer paints an opaque sheet over the whole viewport with pointer-events:none, and every control still hit-tests as itself',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: 0; background: #000; pointer-events: none; z-index: 300; overflow: hidden; }',
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
       },
       {
         // THE WHOLE GAME GOES TRANSPARENT AT THE ROOT. Descendants keep a
@@ -528,6 +543,57 @@ const overlap = (a, b) => (!a || !b) ? 0
 const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
 
 // One cell: measure and judge. `label` says which binding the chips are under.
+// PAINT COVERAGE, independent of the hit-test. elementFromPoint skips a layer
+// with pointer-events:none (.fx-layer in styles/combat.css is one), so an
+// opaque effect painted over the rail leaves the hit-test answering "the
+// control" while the eye sees the effect; and one centre sample says nothing
+// about the rest of the box (Codex, #538). So each control is photographed,
+// hidden (visibility:hidden — no layout moves), photographed again and
+// restored: the pixels that CHANGE are the pixels the control paints that
+// reach the eye. A control whose box changes in almost none of its pixels is
+// painted over, whatever is drawn over it and whatever hit-tests there.
+// PAINT_FLOOR is the least share of a control's own box its paint must reach;
+// the shipped controls measure well above it (printed in every H3 ok line).
+const PAINT_FLOOR = 0.5;
+const decodePng = (buf) => {
+  let p = 8, w = 0, h = 0, ct = 0, bd = 0; const idat = [];
+  while (p < buf.length) { const len = buf.readUInt32BE(p); const type = buf.toString('ascii', p + 4, p + 8); const d = buf.subarray(p + 8, p + 8 + len);
+    if (type === 'IHDR') { w = d.readUInt32BE(0); h = d.readUInt32BE(4); bd = d[8]; ct = d[9]; if (d[12] !== 0) throw new Error('interlaced png'); }
+    else if (type === 'IDAT') idat.push(d); else if (type === 'IEND') break; p += 12 + len; }
+  if (bd !== 8 || !(ct === 6 || ct === 2)) throw new Error(`png bit depth ${bd} colour type ${ct} — the probe reads 8-bit RGB(A) only`);
+  const bpp = ct === 6 ? 4 : 3, stride = w * bpp, raw = inflateSync(Buffer.concat(idat)), out = Buffer.alloc(h * stride);
+  for (let y = 0; y < h; y++) { const ft = raw[y * (stride + 1)], src = y * (stride + 1) + 1, dst = y * stride;
+    for (let x = 0; x < stride; x++) { const a = x >= bpp ? out[dst + x - bpp] : 0, b = y > 0 ? out[dst - stride + x] : 0, c = x >= bpp && y > 0 ? out[dst - stride + x - bpp] : 0;
+      let v = raw[src + x];
+      if (ft === 1) v += a; else if (ft === 2) v += b; else if (ft === 3) v += (a + b) >> 1;
+      else if (ft === 4) { const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c; }
+      out[dst + x] = v & 255; } }
+  return { w, h, bpp, px: out };
+};
+const paintShare = (a, b) => { const A = decodePng(a), B = decodePng(b);
+  if (A.w !== B.w || A.h !== B.h) throw new Error('the two captures differ in size');
+  let changed = 0; const n = A.w * A.h;
+  for (let i = 0; i < n; i++) { const o = i * A.bpp; if (Math.abs(A.px[o] - B.px[o]) > 4 || Math.abs(A.px[o + 1] - B.px[o + 1]) > 4 || Math.abs(A.px[o + 2] - B.px[o + 2]) > 4) changed++; }
+  return n ? changed / n : 0; };
+const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-action-row'); if (!row) return [];
+  const list = [...row.children].map((c, i) => ({ sel: '.combat-action-row > :nth-child(' + (i + 1) + ')', name: (c.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) || c.className }));
+  if (document.querySelector('.combat-action-row .et-key')) list.push({ sel: '.combat-action-row .et-key', name: 'END TURN key label' });
+  return list.map((t) => { const el = document.querySelector(t.sel); const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+    return { ...t, x: r.left, y: r.top, w: r.width, h: r.height, shown: cs.display !== 'none' && cs.visibility === 'visible' && r.width >= 1 && r.height >= 1 }; }); })()`;
+async function paintOf(ev, shot) {
+  const out = [];
+  for (const t of await ev(PAINT_TARGETS)) {
+    if (!t.shown) { out.push({ name: t.name, share: null }); continue; }
+    const clip = { x: Math.floor(t.x), y: Math.floor(t.y), width: Math.ceil(t.w), height: Math.ceil(t.h), scale: 1 };
+    const before = await shot(clip);
+    await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.setAttribute('data-hintstrip-vis', el.style.visibility || ''); el.style.visibility = 'hidden'; return 1; })()`);
+    const hidden = await shot(clip);
+    await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.visibility = el.getAttribute('data-hintstrip-vis'); el.removeAttribute('data-hintstrip-vis'); return 1; })()`);
+    out.push({ name: t.name, share: paintShare(before, hidden) });
+  }
+  return out;
+}
+
 function judge(r, cell, wide, pointer) {
   // THE PREMISE FIRST. A phone cell measured under a fine pointer is not a
   // phone cell: the coarse-pointer stylesheet rules never applied, and every
@@ -594,6 +660,9 @@ function judge(r, cell, wide, pointer) {
   // END TURN, whole.
   const keyOut = !r.coarse && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
   const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
+  const paint = Array.isArray(r.paint) ? r.paint : [];
+  const obscured = paint.filter((p) => p.share !== null && p.share < PAINT_FLOOR);
+  const paintLine = paint.filter((p) => p.share !== null).map((p) => `${p.name} ${(p.share * 100).toFixed(0)}%`).join(', ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -612,6 +681,12 @@ function judge(r, cell, wide, pointer) {
       + '(no key to press on a thumb); the @media (pointer: coarse) rule stopped applying');
   } else if (!r.coarse && !r.key.rendered) {
     bad('H3', cell, `END TURN's key label "${r.key.text}" is not rendered (${r.key.why}) — the binding the row promises is invisible to the player`);
+  } else if (!paint.length) {
+    bad('H3', cell, 'no paint-coverage reading reached the judge — the probe that photographs each control did not run, so nothing says a control is not painted over');
+  } else if (obscured.length) {
+    bad('H3', cell, `${obscured.length} control(s) painted over — hiding each changes almost none of its own pixels: `
+      + obscured.map((p) => `"${p.name}" ${(p.share * 100).toFixed(0)}% of its box`).join(', ')
+      + ` (floor ${PAINT_FLOOR * 100}%; an opaque layer over the rail, pointer-events or not, is measured here rather than by the hit-test)`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (box ${JSON.stringify(r.key.box)}, text ${JSON.stringify(r.key.textBox)} vs ${JSON.stringify(r.endTurn)})` : '')
@@ -623,6 +698,7 @@ function judge(r, cell, wide, pointer) {
     ok('H3', cell, `all ${EXPECTED_CONTROLS.length} declared controls rendered, whole and inside the row (${r.chips.map((c) => c.text).join(' / ')}), `
       + (r.coarse ? `key label "${r.key.text}" withheld under the coarse pointer (${r.key.why}) as the stylesheet promises`
         : `key label "${r.key.text}" inside END TURN`)
+      + `; paint reaching the eye: ${paintLine}`
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   }
 
@@ -732,6 +808,7 @@ async function main() {
     ] }, S);
     const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
+    const shot = async (clip) => Buffer.from((await cdp.send('Page.captureScreenshot', { format: 'png', clip }, S)).data, 'base64');
     const until = async (x, w, ms = 20000) => { const t = Date.now();
       while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
 
@@ -744,6 +821,7 @@ async function main() {
       await until(`!!document.querySelector('.combat')`, `combat ${vp.tag} ${text}`);
       await wait(700);
       const r = await ev(READ(FAN_LIFT_PROP));
+      r.paint = await paintOf(ev, shot);
       reached++;
       judge(r, `${vp.tag} Text ${text}`, false, vp.pointer);
     }
@@ -764,6 +842,7 @@ async function main() {
     await until(`!!document.querySelector('.combat')`, `combat wide-label ${vp.tag}`);
     await wait(700);
     const rw = await ev(READ(FAN_LIFT_PROP));
+    rw.paint = await paintOf(ev, shot);
     reached++;
     const took = !!(rw.key && rw.key.text.includes(WIDE_KEY.label));
     if (rw.present && rw.display !== 'none' && !took) {
