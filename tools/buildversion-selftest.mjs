@@ -59,7 +59,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { check, REPO_ROOT, release, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
+import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
@@ -415,6 +415,18 @@ function ordinalHistory() {
   const shiftLast = (rel, delta) => rel.replace(/(\d+)(?!.*\d)/, (n) => String(Number(n) + delta));
   const lastNumber = Number((/(\d+)(?!.*\d)/.exec(CURRENT) || [0, '0'])[1]);
   const FORWARD = shiftLast(CURRENT, +1);
+  // TWO SHAPES THE GRAMMAR FORBIDS, DERIVED THE SAME WAY. Both are staged on
+  // the PARENT, because row F reads only the current record: an unorderable
+  // parent is visible to row H alone, and the commit that carried it is gone
+  // by the time CI looks (#579 review).
+  const [MAJOR, MINOR] = versionPrefix(CURRENT).split('.');
+  // Drop the candidate component. Always differs from CURRENT and is never a
+  // release the repo can reach, since the grammar admits three components.
+  const TRUNCATED = `${MAJOR}.${MINOR}`;
+  // Past the double's integer ceiling, where Number() folds two distinct
+  // releases onto one value. Taken from the language's own constant rather
+  // than typed, so it stays the boundary if the boundary ever moves.
+  const UNSAFE = (n) => `${MAJOR}.${MINOR}.${BigInt(Number.MAX_SAFE_INTEGER) + BigInt(n)}`;
   // A tail already at 0 cannot be decremented into a valid release, so the
   // backward case walks left to the first component it CAN lower. If every
   // component is 0 there is no earlier release to move back to, and the case
@@ -449,6 +461,21 @@ function ordinalHistory() {
     [bump, 'unknown',
       "the PARENT records an ordinal with no release — a legacy parent and a removed field look identical, so the row must not call it a pass",
       ({ release, ...rest }) => ({ ...rest, ordinal: 9999 })],
+    // An ARITY the grammar forbids is not a release, and the old form ranked it
+    // anyway: [0, 5, 2] against [0, 5, 5, 3] read the parent's ORDINAL as its
+    // candidate number and called it a rise. Watched as unknown, not red — the
+    // pair has no order, and claiming it went backwards would be its own
+    // invention.
+    [(j) => ({ ...j, release: CURRENT, ordinal: 3 }), 'unknown',
+      `the PARENT records the arity-2 release '${TRUNCATED}' — a shape the grammar forbids, and the child's candidate would otherwise be ranked against the parent's TAIL`,
+      (j) => ({ ...j, release: TRUNCATED, ordinal: 2 })],
+    // The one plant here that says something about the comparison rather than
+    // the grammar: both releases are well-formed and the move is BACKWARD, but
+    // the two candidate components are one apart across the double's integer
+    // ceiling, where Number() maps them to the same value.
+    [(j) => ({ ...j, release: UNSAFE(1), ordinal: 3 }), 'red',
+      `the candidate moves BACKWARD by one past the safe-integer ceiling (${UNSAFE(2)}.2 → ${UNSAFE(1)}.3) — two releases that Number() cannot tell apart, so only the tail would have been compared`,
+      (j) => ({ ...j, release: UNSAFE(2), ordinal: 2 })],
   ];
   if (BACKWARD === null) {
     console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);

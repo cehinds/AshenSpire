@@ -119,11 +119,27 @@ What this changes, each with the check that carries it:
   established — an ordinal recorded with no release beside it — is UNKNOWN,
   which blocks, because a missing field is not proof that the parent predates
   the field.
+
+  **Only a version the grammar admits is ordered at all, and the grammar has
+  ONE home.** The tuple builder asks `releaseSyntaxError` rather than restating
+  part of the syntax, so an arity the grammar forbids is refused with the
+  non-numeric components it always refused. It restated the shape once, and a
+  parent recording `0.5` was ranked as `[0, 5, <ordinal>]` against a `0.5.5`
+  child — the parent's TAIL compared against the child's CANDIDATE, reported as
+  a rise. Row F sees only the CURRENT record, so an unorderable parent is
+  visible to row H alone; there it is UNKNOWN, never a verdict assembled from a
+  component nobody wrote.
 - **The `rc.9` ceiling is gone with the padding that motivated it.** Padding
   bought a naive STRING sort, which the candidate cannot survive in the third
   component: `0.5.10.0` string-sorts below `0.5.9.0` however the tail is
   padded. A tenth candidate is now just `0.5.10.<n>` and sorts correctly under
-  numeric comparison.
+  numeric comparison — and that comparison has NO ceiling of its own, because
+  it reads the digits rather than converting them. Through `Number`, two
+  candidates one apart above `Number.MAX_SAFE_INTEGER` collapse onto a single
+  value and a backward move reads as a rise off the tail alone. Comparing digit
+  strings — longer is larger once leading zeroes are gone, equal lengths
+  compare lexically — holds for every length the grammar admits, so no bound
+  had to be chosen and none can be outgrown.
 - **The ordinal is no longer the commit count.** `bumpOrdinal` was
   `max(recorded + 1, rev-list --count)`; a per-candidate counter cannot be the
   commit count because it resets, so it is `recorded + 1` and nothing should

@@ -423,22 +423,53 @@ export function padOrdinal(n) {
 }
 
 /**
- * A build as a COMPARABLE TUPLE — the version's components, then the tail.
- * `0.5.4` + 2 → [0, 5, 4, 2]. Non-numeric components sort as 0 rather than
- * throwing, because this is a comparison and not a validator; row F is where a
- * malformed release is refused.
+ * A build as a COMPARABLE TUPLE — the release's three components, then the
+ * tail, each held as a DIGIT STRING. `0.5.4` + 2 → ['0', '5', '4', '2'].
+ * Returns null for anything the scheme cannot order; nothing is invented.
  */
 export function versionTuple(releaseString, ordinal) {
-  const parts = versionPrefix(releaseString).split('.');
-  // NO SUBSTITUTED ZEROES. This coerced a non-numeric component to 0 and said
-  // in its own comment that row F refused a malformed release — a guarantee I
-  // asserted without reading the row, which does not make it. Review on #579
-  // shipped `0.6.x` through all eight checks that way: F compared the two
-  // release strings and found them equal, and H read the invented `0.6.0.0` as
-  // a rise over `0.5.4.4`. An unorderable version returns null here and the
-  // callers refuse rather than rank it.
-  if (!parts.every((n) => /^\d+$/.test(n))) return null;
-  return [...parts.map(Number), ordinal];
+  // ONE HOME FOR THE GRAMMAR. This restated two thirds of the release syntax
+  // here — split on '.', test each part for digits — and so admitted every
+  // ARITY the real grammar forbids. Review on #579 found the hole: a parent
+  // recording the release `0.5` produced [0, 5, ordinal], and a valid `0.5.5`
+  // child at ordinal 3 came out as [0, 5, 5, 3] > [0, 5, 2] — a RISE assembled
+  // by reading the parent's ORDINAL as its candidate number. Row F validates
+  // only the CURRENT record, so an invalid intermediate parent is hidden by
+  // the next commit and nothing else would ever look at it. releaseSyntaxError
+  // owns the grammar; ask it rather than keep a second copy of part of it.
+  //
+  // NO SUBSTITUTED ZEROES, which is the same rule one layer down. The earlier
+  // form coerced a non-numeric component to 0 and said in its own comment that
+  // row F refused a malformed release — a guarantee asserted without reading
+  // the row, which does not make it. That shipped `0.6.x` through all eight
+  // checks: F compared the two release strings and found them equal, and H
+  // read the invented `0.6.0.0` as a rise over `0.5.4.4`.
+  if (releaseSyntaxError(releaseString) !== null) return null;
+  // The tail is subject to the same rule. Row F checks the ordinal on the
+  // CURRENT record; the parent's is read straight out of git and checked
+  // nowhere, so a record whose tail is not a counting number is unorderable
+  // here rather than ranked on whatever `String()` makes of it.
+  if (!Number.isInteger(ordinal) || ordinal < 0) return null;
+  // DIGIT STRINGS, NOT NUMBERS. `Number('9007199254740993')` is
+  // 9007199254740992: two distinct releases collapsing onto one value, so a
+  // BACKWARD move from `0.5.9007199254740993.2` to `0.5.9007199254740992.3`
+  // compared EQUAL at the candidate and rose at the tail — reported green
+  // (#579 review). The grammar admits a digit string of any length, so the
+  // comparison has to hold every length the grammar admits, not the ones that
+  // happen to fit in a double. Comparing the digits directly has no ceiling to
+  // choose, which is why it is preferred to rejecting large components.
+  return [...versionPrefix(releaseString).split('.'), String(ordinal)];
+}
+
+/**
+ * Numeric order of two digit strings, without a numeric type: more digits is
+ * larger once leading zeroes are gone, and equal lengths compare lexically.
+ */
+function compareDigits(a, b) {
+  const x = a.replace(/^0+(?=\d)/, '');
+  const y = b.replace(/^0+(?=\d)/, '');
+  if (x.length !== y.length) return x.length < y.length ? -1 : 1;
+  return x < y ? -1 : x > y ? 1 : 0;
 }
 
 /**
@@ -461,11 +492,22 @@ export function releaseSyntaxError(releaseString) {
     + ` cannot be ordered against one that is, so nothing downstream can rank this build.`;
 }
 
-/** Component-wise numeric compare of two versionTuple results. */
+/**
+ * Component-wise compare of two versionTuple results, or null when the two
+ * cannot be placed side by side at all.
+ *
+ * THE SHORTER SIDE IS NOT PADDED. It was: `(a[i] ?? 0)` filled a missing
+ * component with a zero nobody wrote, which is the same substituted zero
+ * versionTuple above spent #579 removing — and it is what let an arity-2
+ * parent be ranked against an arity-3 child instead of refused. versionTuple
+ * admits one shape, so a mismatch means a caller built a tuple some other way;
+ * that is unorderable, and unorderable is a null rather than a guess.
+ */
 export function compareVersions(a, b) {
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    const d = (a[i] ?? 0) - (b[i] ?? 0);
-    if (d !== 0) return d < 0 ? -1 : 1;
+  if (a.length !== b.length) return null;
+  for (let i = 0; i < a.length; i++) {
+    const d = compareDigits(a[i], b[i]);
+    if (d !== 0) return d;
   }
   return 0;
 }
@@ -1018,17 +1060,30 @@ export function check(root = REPO_ROOT) {
         // version answers both at once.
         const beforeV = versionTuple(before.release, before.ordinal);
         const nowV = versionTuple(now.release, now.ordinal);
-        if (beforeV === null || nowV === null) {
+        // ONE NULL CHANNEL, NOT TWO. compareVersions can also decline, so the
+        // order is read first and every way of failing to get one lands here.
+        // Reading `compareVersions(...) > 0` directly would have turned its
+        // null into a plain `false` — a RED asserting the build went backwards,
+        // on a pair nothing established an order for.
+        const order = beforeV === null || nowV === null ? null : compareVersions(nowV, beforeV);
+        if (order === null) {
           // An unorderable version is not a fallen one and not a risen one.
-          // Row F refuses the malformed release on its own account; this row
-          // declines to rank what it cannot read rather than inventing a
-          // verdict from substituted zeroes.
+          // This row declines to rank what it cannot read rather than inventing
+          // a verdict from substituted zeroes — and it must, because row F
+          // reads only the CURRENT record. A parent's release is checked
+          // nowhere else, so an unorderable one blocks here or never at all.
+          const unreadable = beforeV === null
+            ? `${parent.slice(0, 7)} records release '${before.release}' at ordinal ${before.ordinal}`
+            : nowV === null
+              ? `HEAD records release '${now.release}' at ordinal ${now.ordinal}`
+              : `${parent.slice(0, 7)} and HEAD record versions of different shapes`;
           add(null, 'H ORDINAL INCREASES',
-            `UNKNOWN — ${beforeV === null ? `${parent.slice(0, 7)} records release '${before.release}'` : `HEAD records release '${now.release}'`},`
-            + ` which has a component that is not a number. Nothing can be ordered against it; row F names the malformation.`);
+            `UNKNOWN — ${unreadable}, which the scheme cannot order: it admits three numeric components (0.5.4),`
+            + ` optionally with an rc candidate tag (0.5.0-rc.4), over a counting tail. Row F names the malformation`
+            + ` when it is on the CURRENT record; when it is on the parent's, this is the only row that can see it.`);
           return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
         }
-        const rose = compareVersions(nowV, beforeV) > 0;
+        const rose = order > 0;
         add(rose, 'H ORDINAL INCREASES',
           rose
             ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`
