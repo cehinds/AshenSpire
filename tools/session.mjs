@@ -952,13 +952,20 @@ export function createSession({ registries, seedString, endless = false, restore
       session.scene.ack = {};
       return { ok: true, pending: 'combat', combat: forced };
     }
+    // AND BEFORE THE MAP, for every other choice: the solo event screen shows
+    // the choice's resultText and moves on when the player asks; advancing
+    // here broadcast the map in place of the outcome, so a co-op party never
+    // read what its choice did (Codex on #541). The scene stays an event
+    // with the advance pending until every present seat has continued.
     for (const mm of members.values()) mm.run.combatEntered = null;
-    advanceFromNode();
-    return { ok: true };
+    session.scene.next = { kind: 'advance' };
+    session.scene.ack = {};
+    return { ok: true, pending: 'advance' };
   }
 
   // A present seat has read its result; when every present seat has, the
-  // pending fight opens on the encounter the party bought.
+  // pending fight opens on the encounter the party bought, or the party
+  // advances from the node.
   function eventContinue(memberId) {
     if (session.scene.kind !== 'event' || !session.scene.next) return { ok: false, error: 'nothing to continue from' };
     const m = members.get(memberId);

@@ -833,16 +833,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function renderEvent() {
     const done = snap.scene.done && snap.scene.done[me];
     let ev = null; try { ev = registries.events.get(snap.scene.eventId); } catch { /* unknown */ }
-    // A FIGHT FOLLOWS THE CHOICE: every seat reads its own result first and
-    // asks for it (the solo screen's STEEL YOURSELF); the host opens the
-    // shared combat once every present seat has (DEVELOPER.md's event
-    // contract — control passes to combat after resultText shows).
+    // THE RESULT SHOWS BEFORE THE ROOM MOVES ON: every seat reads its own
+    // result first and asks for what follows — STEEL YOURSELF when the
+    // choice bought a fight, CONTINUE otherwise; the host opens the shared
+    // combat, or advances, once every present seat has (DEVELOPER.md's
+    // event contract — control passes on after resultText shows).
     if (snap.scene.next) {
       const text = (snap.scene.results && snap.scene.results[me]) || '';
       const acked = !!(snap.scene.ack && snap.scene.ack[me]);
       app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
         <p class="coop-event-result">${esc(text)}</p>
-        ${acked ? '<div class="coop-note">Waiting for the party…</div>' : '<div class="coop-choices"><button data-ev-continue="1">STEEL YOURSELF</button></div>'}`);
+        ${acked ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices"><button data-ev-continue="1">${snap.scene.next.kind === 'combat' ? 'STEEL YOURSELF' : 'CONTINUE'}</button></div>`}`);
       const go = app.querySelector('[data-ev-continue]');
       if (go) go.addEventListener('click', () => send({ t: 'eventContinue' }));
       renderPartyBar(); wireLeave();

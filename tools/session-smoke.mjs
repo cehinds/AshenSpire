@@ -58,7 +58,7 @@ function walk(S, { steps = 12, healBetween = true } = {}) {
     } else if (sc.kind === 'reward') {
       for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0], takeRelic: true, flask: true });
     } else if (sc.kind === 'shrine') { for (const m of S.connectedMembers()) S.shrineChoice(m.id, 'rest'); }
-    else if (sc.kind === 'event') { for (const m of S.connectedMembers()) S.eventChoice(m.id, 0); }
+    else if (sc.kind === 'event') { for (const m of S.connectedMembers()) (sc.next ? S.eventContinue(m.id) : S.eventChoice(m.id, 0)); }
     else return sc;
     if (guard > 3 && S.scene.kind === 'map') return S.scene; // reached a fresh map after progress
   }
@@ -97,7 +97,7 @@ try {
       if (sc.kind === 'combat') S.autoResolveCombat(botTurn);
       else if (sc.kind === 'reward') for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] });
       else if (sc.kind === 'shrine') for (const m of S.connectedMembers()) S.shrineChoice(m.id, 'rest');
-      else if (sc.kind === 'event') for (const m of S.connectedMembers()) S.eventChoice(m.id, 0);
+      else if (sc.kind === 'event') for (const m of S.connectedMembers()) (sc.next ? S.eventContinue(m.id) : S.eventChoice(m.id, 0));
       else break;
     }
     for (const m of S.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp;
@@ -120,7 +120,7 @@ try {
     if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
     else if (sc.kind === 'reward') for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] });
     else if (sc.kind === 'shrine') for (const m of S.connectedMembers()) S.shrineChoice(m.id, 'rest');
-    else if (sc.kind === 'event') for (const m of S.connectedMembers()) S.eventChoice(m.id, 0);
+    else if (sc.kind === 'event') for (const m of S.connectedMembers()) (sc.next ? S.eventContinue(m.id) : S.eventChoice(m.id, 0));
   }
   ok(S.scene.kind === 'combat', 'party reaches a live shared combat');
   // A CO-OP EVENT CHOICE IS A QUEST STEP: every member who chose has the
@@ -250,6 +250,27 @@ try {
             `its victory pays the ${wantedPool} reward: relic ${offer && offer.relicId}, Smithing Stone ${offer && offer.smithingStoneReceipt && offer.smithingStoneReceipt.amount} (seat stones ${v1.run.smithingStones})`);
         }
       }
+      // THE RESULT SHOWS BEFORE THE MAP for every other choice too: a calm
+      // choice leaves the event open with its resultText and the advance
+      // pending, and CONTINUE moves the party on — the solo screen's contract,
+      // where advancing at once broadcast the map in place of the outcome
+      // (Codex on #541).
+      {
+        const N = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        N.addMember({ id: 'n1', name: 'Ash', classId: 'reaver' });
+        N.start();
+        N.session.cursorId = N.session.reachableIds[0];
+        N.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const shrine = REG.events.get('feralShrine');
+        const calmIdx = shrine.choices.findIndex((c) => !(c.effects || []).some((e) => e.op === 'startCombat'));
+        const told = shrine.choices[calmIdx].resultText || '';
+        const r = N.eventChoice('n1', calmIdx);
+        const shown = r.ok && r.pending === 'advance' && N.scene.kind === 'event' && N.scene.next && N.scene.next.kind === 'advance'
+          && N.scene.results && N.scene.results.n1 === told && told.length > 0 && N.partyHistory().length === 1;
+        const rc = N.eventContinue('n1');
+        ok(shown && rc.ok && N.scene.kind !== 'event',
+          `a calm choice leaves the event open with its result to read (pending ${r.pending}, recorded ${N.partyHistory().length}, result "${String(N.scene.results && N.scene.results.n1 || told).slice(0, 40)}…") and CONTINUE moves the party on (then scene ${N.scene.kind})`);
+      }
       // A FORCED FIGHT SURVIVES ITS CHOOSER'S DISCONNECT: the seat that chose
       // the fight drops before the room resolves; the other seat's peaceful
       // choice still opens the fight the party bought (Codex on #541).
@@ -301,8 +322,10 @@ try {
         Z.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
         const q1 = Z.eventChoice('z1', calmIdx);
         Z.setConnected('z2', false);
-        ok(q1.ok && q1.waiting === 1 && Z.scene.kind !== 'event',
-          `a seat leaving before choosing settles a room where every present seat has chosen (waited on 1, then scene ${Z.scene.kind})`);
+        const zPending = Z.scene.kind === 'event' && Z.scene.next && Z.scene.next.kind === 'advance';
+        Z.eventContinue('z1');
+        ok(q1.ok && q1.waiting === 1 && zPending && Z.scene.kind !== 'event',
+          `a seat leaving before choosing settles a room where every present seat has chosen: the result is shown (pending advance), and CONTINUE moves on (then scene ${Z.scene.kind})`);
       }
       // A SEAT RETURNING TO A ROOM EVERYONE LEFT after it had chosen settles the
       // room for itself, rather than waiting on the absent (Codex on #541).
@@ -320,10 +343,12 @@ try {
         R.eventChoice('r1', calmIdx);
         R.setConnected('r1', false);
         R.setConnected('r2', false);
-        const emptyStays = R.scene.kind === 'event';
+        const emptyStays = R.scene.kind === 'event' && !R.scene.next;
         R.setConnected('r1', true);
-        ok(emptyStays && R.scene.kind !== 'event',
-          `an emptied room stays put (scene event) and the chosen seat's return settles it (then scene ${R.scene.kind})`);
+        const rPending = R.scene.kind === 'event' && R.scene.next && R.scene.next.kind === 'advance';
+        R.eventContinue('r1');
+        ok(emptyStays && rPending && R.scene.kind !== 'event',
+          `an emptied room stays put (scene event, nothing pending) and the chosen seat's return settles it to its result (pending advance; then scene ${R.scene.kind})`);
       }
       // THE ABSENT KEEP THEIR TURN: an event the party settles while a living
       // seat is away goes into that seat's catch-up queue with the choices its
@@ -344,6 +369,7 @@ try {
         C.setConnected('c2', false);
         const q1 = C.eventChoice('c1', smashIdx);
         const queued = c2.catchup[c2.catchup.length - 1];
+        C.eventContinue('c1');
         ok(q1.ok && C.scene.kind !== 'event' && queued && queued.type === 'event' && queued.eventId === 'ancientRuneStone' && queued.act === 1,
           `the room settles without the absent seat (scene ${C.scene.kind}) and the event is queued in its catch-up (${queued ? queued.type + ' ' + queued.eventId : 'nothing queued'})`);
         const spentBefore = c2.run.cinders;
@@ -390,6 +416,7 @@ try {
         D.eventChoice('d2', smashIdx);
         D.setConnected('d2', false);
         D.eventChoice('d1', smashIdx);
+        D.eventContinue('d1');
         ok(D.scene.kind !== 'event' && D.session.members.get('d2').catchup.length === 0, 'a seat that chose and then dropped is not asked again');
       }
       // A DISK RESUME RECONNECTS EVERYONE TOGETHER: a half-answered event
@@ -409,6 +436,7 @@ try {
         Q.setConnectedMany(['p1', 'p2'], true);
         const held = Q.scene.kind === 'event' && !!Q.session.scene.done.p1 && !Q.session.scene.done.p2;
         const r2 = Q.eventChoice('p2', calmIdx);
+        Q.eventContinue('p1'); Q.eventContinue('p2');
         ok(held && r2.ok && Q.scene.kind !== 'event',
           `a resumed party reconnects together and the half-answered event waits on the second seat (held ${held}, then scene ${Q.scene.kind})`);
       }
@@ -498,7 +526,7 @@ try {
     if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
     else if (sc.kind === 'reward') { for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] }); }
     else if (sc.kind === 'shrine') S.shrineChoice('p1', 'rest');
-    else if (sc.kind === 'event') S.eventChoice('p1', 0);
+    else if (sc.kind === 'event') (sc.next ? S.eventContinue('p1') : S.eventChoice('p1', 0));
     for (const m of S.livingMembers()) if (m.run.hp < 10) m.run.hp = m.run.maxHp;
   }
   ok(S.scene.kind === 'combat', 'the solo remaining member reaches the next fight');
