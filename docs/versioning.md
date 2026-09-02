@@ -100,6 +100,13 @@ receipts keep their `0.4.0.<ordinal>` stamps — the projector accepts any
 `<release>.<ordinal>` and enforces the ordinal column, because receipts are
 history and a bump must never make them unparseable.
 
+A receipt written in the pull request that ships its change cites the ordinal
+its own projection rebuild produces (current ordinal plus one); `--write`
+allows exactly that one build ahead while projecting, the plain check never
+does, and the rebuild that follows makes the box and the receipt agree. Any
+later rebuild on the branch re-points the receipt the same way (CHANGELOG.md
+header).
+
 Saves are not invalidated by a stamp change: on load, a run whose
 `contentVersion` differs is re-stamped when every id it holds still resolves,
 and archived with a named reason only when one does not (`engine/save.js`).

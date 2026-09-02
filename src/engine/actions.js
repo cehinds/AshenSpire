@@ -27,6 +27,7 @@ import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas
 import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
+import { playerWeightClass } from './combat.js';
 import { damageTagIds } from '../content/tags.js';
 import { flaskSlotCap } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
@@ -455,6 +456,25 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'dodgeRoll': {
+      // The dodge (framework contract: Weight Class and Dodge Roll). Player
+      // only — the class, Dexterity and the die live on the player's side of
+      // the board. The engine rolls on its own stream; the framework decides
+      // the check, the difficulty and the temporary guard, which lands as
+      // Block through the same door every block does.
+      const p = ctx.player;
+      if (!action.source || action.source.id !== p.id) break;
+      const roll = ctx.rng.int('misc', 1, ctx.registries.framework.dodgeDie());
+      const dexterity = (ctx.attributes && ctx.attributes.dexterity) || 10;
+      const stance = playerWeightClass(ctx);
+      const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
+      ctx.emit('dodgeRolled', {
+        sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
+        success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
+      });
+      if (receipt.success && receipt.temporaryGuard > 0) gainBlock(ctx, p, receipt.temporaryGuard);
+      break;
+    }
     case 'applyStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const stacks = evalNum(ctx, action, eff.stacks, 1, t);
@@ -618,8 +638,14 @@ function runRunOpcode(ctx, action, eff) {
         // Equipment-composed instances are excluded like sourceArmamentId
         // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
         // package on every reconcile, so a per-copy upgraded flag would not
-        // survive an unequip/re-equip — its upgrade rides the armament.
+        // survive an unequip/re-equip — its upgrade rides the armament. An
+        // UNARMED role instance (equipmentRole without a source piece — the
+        // unarmed Strikes and Evasive Guards) keeps its per-copy flag through
+        // reconcile (loadout.js resets it only when a piece takes the slot),
+        // so it stays a candidate. A card whose upgrade is not authored — the
+        // pure Dodge Roll — is never one: the event would spend for nothing.
         .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;

@@ -1001,7 +1001,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
-        const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
+        const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm };
       }),
     });
@@ -1065,14 +1065,20 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
-      const def = resolveCard(registries, inst);
-      if (registries.framework.isUnplayable(def)) return false;
-      // Base profile, no live modifiers — this pulse always read the raw cost.
-      const pools = registries.framework.costProfile(def);
-      return combat.player.energy >= (pools.variable ? 0 : pools.action)
-        && combat.player.mana >= pools.mana;
+      if (registries.framework.isUnplayable(resolveCard(registries, inst))) return false;
+      // The live preview — class-priced dodge costs, Power reductions — the
+      // same numbers the badge shows and the engine charges, in all three
+      // pools. A card the preview cannot resolve is not a playable card.
+      let pv = null;
+      try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
+        && combat.player.mana >= pv.manaCost
+        && combat.player.stamina >= (pv.staminaCost || 0);
     });
-    return combat.player.energy > 0 && anyPlayable;
+    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
+    // player at 0 Energy with Stamina left still holds a playable card, and
+    // the per-card check above already prices every pool.
+    return anyPlayable;
   }
 
   function renderControls() {
@@ -1418,7 +1424,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const inst = combat.piles.hand[cardIdx];
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
-      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
+      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
       if (!affordable) return;
       if (pv.needsTarget) {
         const living = combat.enemies.filter((e) => e.alive);

@@ -43,6 +43,7 @@ import { DISCLOSURE_TIERS } from './disclosure.js';
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
+  'dodgeRoll',
   'applyStatus',
   'removeStatus',
   'draw',
@@ -123,6 +124,8 @@ export const EVENTS = Object.freeze([
   'manaRestored',
   'manaSpent',
   'staminaSpent',
+  'staminaRecovered', // framework Mana & Stamina rule: an idle turn's recovery
+  'dodgeRolled', // framework Weight Class & Dodge Roll: the roll's receipt
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
@@ -351,6 +354,10 @@ export const EFFECT_SPECS = Object.freeze({
   // two carriers — card chips for display, effect tags for combat).
   damage: { allowed: ['hits', 'tags'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
+  // The dodge roll (framework contract: Weight Class and Dodge Roll): a
+  // target and nothing else — the check, the die and the guard are the
+  // framework's, and the price is the Weight Class's.
+  dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },

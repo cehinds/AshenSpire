@@ -17,7 +17,7 @@ import {
 // Deck composition goes through the framework's adopted door (owner ruling).
 import { buildEquippedWeaponCardPlan } from '../framework/deckComposition.js';
 import { passiveSum } from './registries.js';
-import { playerPoiseThresholdReceipt } from './statProjection.js';
+import { playerPoiseThresholdReceipt, playerLoadReceipt } from './statProjection.js';
 
 function pieceFor(registries, classId, pieceId, slot) {
   if (!pieceId) return null;
@@ -337,6 +337,13 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   resourceChanges.push(...swapPriceChanges(registries, run, run.loadout, loadout, meta, slot.id, setIndex));
   const beforePoise = playerPoiseThresholdReceipt(registries, run);
   const afterPoise = playerPoiseThresholdReceipt(registries, comparedRun);
+  // The compared run keeps `itemUpgradeLevels` (spread from `run`), so the
+  // candidate weighs at the tier it is actually forged to — the same tier the
+  // slot summary shows (ui/screens/equipment.js) and the same `pieceWeight`
+  // rule the Armoury readout uses. Capacity cannot move in a swap (attributes
+  // and bonuses are the run's), so only load, percent and the class word can.
+  const beforeLoad = playerLoadReceipt(registries, run);
+  const afterLoad = playerLoadReceipt(registries, comparedRun);
   return {
     slotId: slot.id,
     setIndex,
@@ -376,6 +383,20 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
       active: false,
       note: afterPoise.note,
     },
+    load: {
+      before: beforeLoad.load,
+      after: afterLoad.load,
+      capacity: afterLoad.capacity,
+      beforePercent: beforeLoad.percent,
+      afterPercent: afterLoad.percent,
+      beforeClassId: beforeLoad.classId,
+      afterClassId: afterLoad.classId,
+      beforeWord: beforeLoad.word,
+      afterWord: afterLoad.word,
+      changesClass: beforeLoad.classId !== afterLoad.classId,
+      active: false,
+      note: afterLoad.note,
+    },
   };
 }
 
@@ -403,6 +424,7 @@ export function equipmentSurfaceReceipt(registries, run, { candidate = null, met
       .filter((piece) => piece.kind !== 'armor')
       .map(armamentIntrinsicReceipt),
     poise: playerPoiseThresholdReceipt(registries, run),
+    load: playerLoadReceipt(registries, run),
   };
   if (candidate) receipt.candidate = candidateReceipt(registries, run, candidate, roles, meta);
   return receipt;

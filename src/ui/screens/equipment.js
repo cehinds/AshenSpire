@@ -23,7 +23,7 @@ import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresenta
 import { equippedTagColor } from '../../model/equipmentUi.js';
 import { renderCard, relicText } from '../components/card.js';
 import {
-  renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies,
+  renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
 import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
@@ -31,7 +31,8 @@ import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
-import { statProjection } from '../../model/statProjection.js';
+import { statProjection, pieceWeight } from '../../model/statProjection.js';
+import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
@@ -1412,7 +1413,8 @@ export function mountEquipment(host, {
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
-      + renderPlayerPoise(surface.poise);
+      + renderPlayerPoise(surface.poise)
+      + renderPlayerLoad(surface.load);
     return panel;
   }
 
@@ -1563,9 +1565,15 @@ export function mountEquipment(host, {
 
   function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
     const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
-    const item = slot.kinds.includes('armor')
+    const authored = slot.kinds.includes('armor')
       ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
       : (eq.armaments || []).find((piece) => piece.id === itemId);
+    // The item AT ITS SMITHED TIER, the same resolution the load receipt
+    // uses (equippedPieces → resolveUpgradedEquipment): a tier that raises
+    // the poise threshold raises the armour's weight with it, and the card's
+    // Poise and Weight labels must say what the total counts.
+    const itemRef = authored ? (slot.kinds.includes('armor') ? `armor/${run.class}/${authored.id}` : `armament/${authored.id}`) : null;
+    const item = authored ? resolveUpgradedEquipment(registries, itemRef, (run.itemUpgradeLevels || {})[itemRef] || 0) : null;
     const surface = equipmentSurfaceReceipt(registries, run);
     const roleLabels = new Map(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const isActive = setIndex === (run.loadout.active?.[slot.id] || 0);
@@ -1579,7 +1587,10 @@ export function mountEquipment(host, {
     const bonus = item
       ? [...roleBonuses, ...authoredBonuses, poise].filter(Boolean).slice(0, 2).join(' · ') || 'No combat bonus authored'
       : 'Empty socket';
-    const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
+    // One rule for the item and the total (model/statProjection.pieceWeight):
+    // an armour piece weighs its poise threshold, so its card can never say
+    // "Weight —" while the Equip load counts it.
+    const weight = item ? `Weight ${pieceWeight(item)}` : 'Weight —';
     return {
       item,
       intrinsic: item && !slot.kinds.includes('armor') ? armamentIntrinsicReceipt(item) : null,

@@ -59,6 +59,78 @@ export function playerPoiseThresholdReceipt(registries, run) {
   };
 }
 
+/**
+ * Pure equip-load projection (framework contract: Weight Class). The
+ * DECISION — capacity, load percent, class row and word — is the framework's
+ * (bridge.weightClass over framework/weight.js and mechanics.json). This
+ * model owns only WHICH weights count:
+ *   - armaments: the authored `weight` column (weapons.csv; bound to the
+ *     authored poiseThreshold by armamentIntrinsicStatProblems)
+ *   - armour: no weight column is authored. This branch adopts the same
+ *     identity for armour — weight = poiseThreshold — as the A-SIDE of the
+ *     Weight Class A/B (docs/framework-migration-checklist.md §C). The
+ *     B-side treats armour as weightless.
+ *   - talismans/relics: nothing authored; 0.
+ * `active` is true when the composed deck holds a dodge roll — the rule that
+ * consumes the class (its check and the pure dodge's price); otherwise the
+ * Armoury shows the readout and says so.
+ */
+export const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
+
+/**
+ * The weight ONE piece contributes to the equip load — the single home of the
+ * rule, so the Armoury's item card and the load total can never disagree:
+ * armour weighs its poise threshold (the A-side rule above), an armament its
+ * authored weight, anything else nothing.
+ */
+export function pieceWeight(piece) {
+  if (!piece) return 0;
+  if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
+  return Number.isInteger(piece.weight) ? piece.weight : 0;
+}
+
+export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
+  if (!run || !run.loadout) throw new Error('playerLoadReceipt requires a run loadout');
+  if (!run.attributes) throw new Error('playerLoadReceipt requires run attributes');
+  const levels = run.itemUpgradeLevels || {};
+  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
+  const sources = pieces.map((piece) => ({
+    kind: 'equipment',
+    id: piece.id,
+    classId: piece.kind === 'armor' ? piece.classId : null,
+    value: pieceWeight(piece),
+  }));
+  const armour = sources.filter((s) => s.classId != null).reduce((sum, s) => sum + s.value, 0);
+  const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
+  const decided = registries.framework.weightClass({
+    attributes: run.attributes,
+    bonuses: capacityBonus,
+    weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
+  });
+  // The class is CONSUMED the moment the composed deck holds a dodge roll
+  // (the unarmed package's Evasive Guard / Dodge Roll, or any card authored
+  // with the opcode): the roll's check and the pure dodge's price read it.
+  const active = (run.deck || []).some((card) => {
+    const def = card && registries.cards.has(card.cardId) ? registries.cards.get(card.cardId) : null;
+    return !!def && (def.effects || []).some((eff) => eff.op === 'dodgeRoll');
+  });
+  return {
+    id: 'equipLoad',
+    label: 'Equip load',
+    sources,
+    hands,
+    armour,
+    load: decided.load,
+    capacity: decided.capacity,
+    percent: decided.percent,
+    classId: decided.weightClass.id,
+    word: decided.word,
+    active,
+    note: `Capacity ${decided.capacity} = base + Constitution and Strength; ${decided.percent}% loaded — ${decided.word}. `
+      + (active ? 'Your dodge roll is checked and priced by this class.' : 'Readout only until a dodge roll enters your deck.'),
+  };
+}
+
 export function statProjection(registries, run) {
   const snapshot = run && run.derivedStatRuleSnapshot;
   if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
@@ -88,7 +160,7 @@ export function statProjection(registries, run) {
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };

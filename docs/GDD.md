@@ -344,6 +344,15 @@ Armaments, Inventory, Cards, and Stats share one Folding Tray shell while
 retaining independent content models. Sort/view actions only appear on
 expanded trays that actually support them.
 
+The equipment receipts (Character view's Equipment cards card and the Stats
+tray) read out, in this order: the exact equipment card packages, the equip
+requirements, the Poise threshold, and the **Equip load** — load over capacity
+as a percent and the Weight Class it lands in (Light, Medium, Heavy). Capacity
+is decided by the framework's Weight Class service from Constitution and
+Strength; load counts every equipped armament's authored weight, and an
+armour piece weighs its Poise threshold, the same number its item card shows
+as Weight. The item card and the total are one rule, so they cannot disagree.
+
 ### 11.2 Ownership and receipts
 
 - Equipment instances have one authoritative location.

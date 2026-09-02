@@ -20,7 +20,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
-import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
+import { playerPoiseThresholdReceipt, playerLoadReceipt } from '../model/statProjection.js';
 import { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
@@ -275,6 +275,20 @@ function endPlayerTurn(combat) {
 
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
+
+  // …then stamina (framework contract: Mana and Stamina): an idle turn recovers,
+  // a spending turn does not — the framework decides, this engine moves the pool.
+  if (Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
+    const next = combat.registries.framework.staminaTurnEnd({
+      currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
+    });
+    if (next.currentStamina !== p.stamina) {
+      const amount = next.currentStamina - p.stamina;
+      p.stamina = next.currentStamina;
+      combat.emit('staminaRecovered', { amount, reason: 'idle' });
+    }
+  }
+  p.counters.staminaSpentThisTurn = 0;
 
   // …then discard hand except Retain; Ethereal cards exhaust instead. The
   // fate of each card is the framework's call (src/framework/lifecycle.js);
@@ -649,6 +663,31 @@ function needsEnemyTarget(def) {
   return (def.effects || []).some((eff) => eff.target === 'enemy');
 }
 
+/**
+ * The Weight Class the player fights in — derived, never stored: the loadout
+ * this fight holds (the SAME object the run holds, so a mid-fight swap moves
+ * it) and the run attributes, decided by the framework (bridge.weightClass
+ * over playerLoadReceipt). A fixture with no loadout or attributes carries no
+ * load and stands Light, the contract's zero-load class.
+ */
+export function playerWeightClass(combat) {
+  const registries = combat.registries;
+  if (combat.loadout && combat.attributes) {
+    const receipt = playerLoadReceipt(registries, {
+      loadout: combat.loadout, attributes: combat.attributes, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels || {},
+    });
+    return registries.framework.weightClass({
+      attributes: combat.attributes,
+      weights: { mainHandWeight: receipt.hands, offHandWeight: 0, armorWeight: receipt.armour, otherCountedWeight: 0 },
+    });
+  }
+  return registries.framework.weightClass({
+    attributes: { constitution: 10, strength: 10, ...(combat.attributes || {}) },
+    weights: { mainHandWeight: 0, offHandWeight: 0, armorWeight: 0, otherCountedWeight: 0 },
+  });
+}
+
 // Effective numeric cost after relic passives (powerCostReduction, min 0).
 // X-cost is unaffected (it always consumes all energy).
 function effectiveCost(combat, def) {
@@ -658,6 +697,7 @@ function effectiveCost(combat, def) {
   // classification permits (Powers).
   return combat.registries.framework.costProfile(def, {
     powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}),
+    weightClass: playerWeightClass(combat).weightClass,
   }).action;
 }
 
@@ -674,7 +714,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
-  const pools = combat.registries.framework.costProfile(def);
+  const pools = combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass });
   const manaCost = pools.mana;
   const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
@@ -696,7 +736,10 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   p.mana -= manaCost;
   if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
   p.stamina -= staminaCost;
-  if (staminaCost > 0) combat.emit('staminaSpent', { amount: staminaCost });
+  if (staminaCost > 0) {
+    p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
+    combat.emit('staminaSpent', { amount: staminaCost });
+  }
 
   // Remove from hand; bump counters (used by predicates + formulas).
   combat.piles.hand.splice(idx, 1);
@@ -928,7 +971,8 @@ export function previewCard(combat, cardInstanceId, targetId) {
     cost: shownCost,
     costIsX: isX,
     manaCost: def.manaCost || 0,
-    staminaCost: def.staminaCost || 0,
+    // The stamina badge in a fight is the class-priced one for the pure dodge.
+    staminaCost: combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass }).stamina,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,

@@ -11,14 +11,45 @@
     "refundErasesSpend": false
   },
   "weight": {
-    "capacityBase": 50,
+    "capacityBase": 0,
     "capacityPerConstitution": 2,
     "capacityPerStrength": 1,
     "classes": [
-      { "id": "light", "termId": "term.weightLight", "maxLoadPercent": 49, "evasionModifier": 3, "temporaryGuardModifier": 3, "extraEligibleDexterityCards": 1, "extraPhysicalAttacks": 0, "dodgeStaminaCost": 1, "dodgeActionCost": 0 },
-      { "id": "medium", "termId": "term.weightMedium", "maxLoadPercent": 79, "evasionModifier": 1, "temporaryGuardModifier": 1, "extraEligibleDexterityCards": 0, "extraPhysicalAttacks": 0, "dodgeStaminaCost": 2, "dodgeActionCost": 1 },
-      { "id": "heavy", "termId": "term.weightHeavy", "maxLoadPercent": 100, "evasionModifier": -3, "temporaryGuardModifier": 0, "extraEligibleDexterityCards": 0, "extraPhysicalAttacks": 1, "dodgeStaminaCost": 3, "dodgeActionCost": 2 }
-    ]
+      {
+        "id": "light",
+        "termId": "term.weightLight",
+        "maxLoadPercent": 49,
+        "evasionModifier": 3,
+        "temporaryGuardModifier": 3,
+        "extraEligibleDexterityCards": 1,
+        "extraPhysicalAttacks": 0,
+        "dodgeStaminaCost": 1,
+        "dodgeActionCost": 0
+      },
+      {
+        "id": "medium",
+        "termId": "term.weightMedium",
+        "maxLoadPercent": 79,
+        "evasionModifier": 1,
+        "temporaryGuardModifier": 1,
+        "extraEligibleDexterityCards": 0,
+        "extraPhysicalAttacks": 0,
+        "dodgeStaminaCost": 2,
+        "dodgeActionCost": 1
+      },
+      {
+        "id": "heavy",
+        "termId": "term.weightHeavy",
+        "maxLoadPercent": 100,
+        "evasionModifier": -3,
+        "temporaryGuardModifier": 0,
+        "extraEligibleDexterityCards": 0,
+        "extraPhysicalAttacks": 1,
+        "dodgeStaminaCost": 3,
+        "dodgeActionCost": 2
+      }
+    ],
+    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01). The census covers the creator's space: the two VISIBLE creation modes (standard, pointbuy), and for each not only the class preset but the two allocation boundaries that bracket capacity (Constitution and Strength at their legal minimum, and at their legal maximum), every armour choice, and each hand chosen independently (empty allowed, the same armament twice refused), with every pair passed through the creator's own requirement gate (startingHandsRequirementFailure — a sheet that cannot hold a Greatsword does not start with one; 100 pairs refused). Reachability is every ordered pair of distinct armaments through a real loadout with the outfit at its highest Smithing tier, at the standard preset. Base 50 left even the heaviest reachable kit Light: the class did not exist for the player. Base 5 (the first retune) leaves no class able to reach Heavy at the standard preset (Reaver 76%, Starseer 74%, Rogue 74%, Herald 71%). Bases 0 and 1 are the only ones at which every class reaches Heavy (base 0: Reaver 86%, Starseer 86%, Rogue 86%, Herald 82%; base 2 already loses the Herald at 77%); 0 is chosen because capacity is then exactly 2*CON + STR with no free constant. At 0 the preset starts are 200 Light and 24 Medium; the min-capacity boundary starts are 144 Light and 28 Medium and the max-capacity boundary 172 Light and 4 Medium — no creatable start is Heavy, because the same requirements that gate a heavy armament also demand the Strength that raises capacity."
   },
   "dodgeRoll": {
     "die": 20,

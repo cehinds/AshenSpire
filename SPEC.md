@@ -182,7 +182,7 @@ effects: [
 
 **Opcode list** (closed set; extending it is an engine PR):
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`.
+- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`).
 - Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`.
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
@@ -1059,6 +1059,17 @@ keeps the same state and focus contract without meaningful animation.
   hover/focus remains the comparison path. The primary combat-power term shown to players is
   **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
   **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
+
+  Equipment receipts are read models, never re-derived in a screen: the equipment receipt panel
+  (`.armoury-equipment-receipts`, mounted in the Character view's Equipment cards card and in the
+  Stats tray) renders the exact equipment card packages, the equip requirements, the Poise
+  threshold (`.player-poise-receipt`) and the **Equip load** (`.player-load-receipt`,
+  `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word
+  decided by the framework Weight Class service (`registries.framework.weightClass`, capacity from
+  Constitution and Strength plus `mechanics.weight.capacityBase`). Load counts each equipped
+  armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`), and the
+  item card's Weight label reads the same `pieceWeight` rule, so item and total agree by
+  construction.
 
   These ids and keys describe the existing data-driven Quick Menu and Armoury structures. Menu
   records are constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records

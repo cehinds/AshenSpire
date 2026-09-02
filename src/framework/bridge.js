@@ -14,10 +14,13 @@ import { relations as relationsData } from './data/relations.js';
 import { terms as termsData } from './data/terms.js';
 import { confirmationPolicies } from './data/confirmationPolicies.js';
 import { PropertyRegistry, TermRegistry, ConfirmationRegistry } from './registries.js';
-import { cardPropertyInstances, KEYWORD_PROPERTY } from './importer.js';
+import { cardPropertyInstances, KEYWORD_PROPERTY, isPureDodge } from './importer.js';
 import { destinationAfterPlay, endTurnCleanup } from './lifecycle.js';
 import { compileCosts } from './costs.js';
 import { hasProperty, propertyParameters } from './compiler.js';
+import { computeWeightClass, dodgeRollCheck } from './weight.js';
+import { onTurnEndStamina } from './resources.js';
+import { mechanics } from './data/mechanics.js';
 
 let sharedBridge = null;
 
@@ -81,7 +84,14 @@ export function createFrameworkBridge() {
      * decision lives here, not at the call site. `variable` marks X costs;
      * their numeric action amount is the caller's to substitute.
      */
-    costProfile(def, { powerCostReduction = 0 } = {}) {
+    costProfile(def, { powerCostReduction = 0, weightClass = null } = {}) {
+      // The pure dodge is priced by the Weight Class (framework contract:
+      // Weight Class and Dodge Roll — Light 1 stamina / 0 actions, Medium 2/1,
+      // Heavy 3/2 from mechanics.json). The caller passes the class it stands
+      // in; without one (card faces outside a fight) the authored cost shows.
+      if (weightClass && isPureDodge(def)) {
+        return Object.freeze({ action: weightClass.dodgeActionCost, mana: 0, stamina: weightClass.dodgeStaminaCost, variable: false, classPriced: true });
+      }
       const view = viewFor(def);
       const modifiers = powerCostReduction && hasProperty(view, 'classification.power')
         ? [{ resource: 'action', delta: -powerCostReduction }]
@@ -135,6 +145,43 @@ export function createFrameworkBridge() {
         name: terms.displayTerm(prop.playerTermId),
         tooltip: terms.displayTerm(prop.tooltipTermId),
       };
+    },
+
+    /**
+     * Weight Class (framework contract: Weight Class and Dodge Roll): capacity
+     * from Constitution/Strength, load from the equipped weights, the class
+     * row from mechanics.json, and the class WORD from TermRegistry. The
+     * caller supplies the weights — which items count, and what an armour
+     * piece weighs, is the model's ruling (statProjection.playerLoadReceipt).
+     */
+    weightClass({ attributes, weights, bonuses = 0 }) {
+      const result = computeWeightClass({
+        constitution: attributes.constitution, strength: attributes.strength, bonuses, weights,
+      });
+      return { ...result, word: terms.displayTerm(result.weightClass.termId) };
+    },
+
+    /** The dodge die, from mechanics.json — the engine rolls it on its own stream. */
+    dodgeDie() {
+      return mechanics.dodgeRoll.die;
+    },
+
+    /**
+     * The dodge roll (framework contract: Weight Class and Dodge Roll): the
+     * already-rolled die, Dexterity, and the class the player stands in decide
+     * success and the temporary guard; randomness stays the engine's.
+     */
+    dodgeRoll({ roll, dexterity, weightClass, otherEvasionModifiers = 0, incomingAttackModifier = 0 }) {
+      return dodgeRollCheck({ roll, dexterity, weightClass, otherEvasionModifiers, incomingAttackModifier });
+    },
+
+    /**
+     * End-of-turn stamina (framework contract: Mana and Stamina): an IDLE turn
+     * — no stamina spent — recovers mechanics.stamina.idleRecoveryPerTurn, to
+     * the maximum; a turn that spent any recovers nothing.
+     */
+    staminaTurnEnd({ currentStamina, maxStamina, staminaSpentThisTurn }) {
+      return onTurnEndStamina({ currentStamina, maxStamina, staminaSpentThisTurn });
     },
   });
 }
