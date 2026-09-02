@@ -532,6 +532,65 @@ const PAIR_PLANTS = [
 //               on the act we actually ship.
 const gated = (a) => a.pairs.filter((p) => BOOT_GATED_PAIRS.includes(p.id));
 const PROPERTIES = [
+  // E13 ACROSS THE SHAPES A PLAYER CAN ACTUALLY DIAL, which is where the gates
+  // did not reach. The engine suite walks the shipped act and two named
+  // configs; neither covers the GRID the Custom Climb sliders produce, and
+  // every defect this rule shipped with was found at a shape nobody had run:
+  // the rest floor with no Monster on it, the fixed rank that outranks a gate.
+  // Bounded on purpose — a few seeds over several shapes finds a structural
+  // hole, and more seeds of one shape does not.
+  // THE CASE THAT MAKES THE ROW ABOVE MEAN SOMETHING. Written second, because
+  // the grid row alone HELD with `ensureRestBeforeElite` stubbed out to return
+  // immediately — in every shape it walks, the relax path opens the rest first,
+  // so the final guarantee is never the thing keeping the promise and the row
+  // was green for a reason unrelated to its name. A fixed Elite satisfying
+  // `minElites` on its own is the shape where relax never runs, and it is the
+  // shape the defect actually shipped in: 10 of 40 maps broke the promise
+  // before the final step existed. Plant-checked both ways.
+  ['restBeforeElite survives an Elite that never touches the relax path', () => {
+    const base = mapConfigs[1];
+    const cfg = { ...base, floorRules: { ...base.floorRules, minElites: 1,
+      fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 6, type: 'elite' }] } };
+    if (resolveFloorPlan(cfg).errors.length) return false;
+    for (let i = 0; i < 24; i++) {
+      const all = Object.values(generateActMap({ config: cfg, rng: rng2(i) }).nodes);
+      const elites = all.filter((n) => n.type === 'elite');
+      if (!elites.length) return false;
+      const first = Math.min(...elites.map((n) => n.floor));
+      if (!all.some((n) => n.type === 'shrine' && n.floor < first)) return false;
+    }
+    return true;
+  }],
+  ['restBeforeElite holds across the run-shape grid, counts intact', () => {
+    const base = mapConfigs[1];
+    const shortest = minViableFloors(base).floors;
+    const dials = [
+      null,
+      { monster: 0, event: 100, shrine: 0, elite: 0, merchant: 0 },
+      { monster: 0, event: 0, shrine: 0, elite: 100, merchant: 0 },
+      { monster: 100, event: 0, shrine: 0, elite: 0, merchant: 0 },
+    ];
+    for (const floors of [shortest, base.floors]) {
+      for (const columns of [2, 7]) {
+        for (const typeWeights of dials) {
+          const shape = typeWeights ? { floors, columns, typeWeights } : { floors, columns };
+          const r = applyRunShape(base, shape, MAP_SHAPE_LIMITS);
+          if (r.errors.length) return false;
+          const plan = resolveFloorPlan(r.config).plan;
+          if (!plan) return false;
+          for (let i = 0; i < 4; i++) {
+            const all = Object.values(generateActMap({ config: r.config, rng: rng2(i) }).nodes);
+            const elites = all.filter((n) => n.type === 'elite');
+            if (elites.length < plan.minElites) return false;
+            if (!elites.length) continue;
+            const first = Math.min(...elites.map((n) => n.floor));
+            if (!all.some((n) => n.type === 'shrine' && n.floor < first)) return false;
+          }
+        }
+      }
+    }
+    return true;
+  }],
   ['spanWidth is monotone in columns', () => [1, 2, 3, 4, 5, 6, 7, 8].every((n) => spanWidth(n + 1) > spanWidth(n))],
   ['the horizontal slack IS its definition, recomputed independently', () => {
     const m = fanoutMargin(mapConfigs[1]);
