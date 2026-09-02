@@ -235,6 +235,32 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
+        // THE THIRD WAY A CONTROL GOES QUIET: opacity:0 keeps display,
+        // visibility and geometry. Only the ancestor-walking opacity read in
+        // rendered() can tell. Red by name on H3.
+        name: 'a stylesheet makes the DISCARD pile opacity:0 and the row still measures five boxes',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat-action-row > .pile.discard { grid-area: discard; }',
+          replace: '.combat-action-row > .pile.discard { grid-area: discard; opacity: 0; }',
+        }],
+        expectRed: /BAD\s+H3 /,
+      },
+      {
+        // THE COARSE-POINTER PROMISE STOPS APPLYING: the phone rule that
+        // withholds END TURN's key label loses its selector, and a thumb sees
+        // a key it cannot press. Red by name on H3 at the phone cell — and
+        // only a phone cell measured AS a phone (touch + coarse pointer
+        // emulated) can see it; under a fine pointer this plant is invisible.
+        name: 'the coarse-pointer rule stops withholding END TURN\'s key label and the phone draws a key it cannot press',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '  .combat .et-key,\n  .combat .flask-key,',
+          replace: '  .combat .flask-key,',
+        }],
+        expectRed: /BAD\s+H3 390x844/,
+      },
+      {
         // THE KEY LABEL GOES QUIET THE SAME WAY. .et-key keeps its text and
         // box under visibility:hidden, so H4 still reads the rebind and the
         // containment still holds — only rendered() can say the player sees
@@ -245,7 +271,7 @@ if (process.argv.includes('--selftest')) {
           find: '.end-turn .et-key {\n  display: block; width: max-content;',
           replace: '.end-turn .et-key {\n  visibility: hidden; display: block; width: max-content;',
         }],
-        expectRed: /BAD\s+H3 /,
+        expectRed: /BAD\s+H3 1200x730/,
       },
       {
         // A DECLARED CELL STOPS BEING REACHED. The row never renders, and every
@@ -267,9 +293,15 @@ if (process.argv.includes('--selftest')) {
   process.exit(selftestCode);
 }
 
+// POINTER MODE IS PART OF THE SHAPE. styles/combat.css hides `.combat .et-key`
+// under `@media (pointer: coarse)` — a phone's thumb has no key to press — so
+// the phone cell is measured as a phone (touch + coarse pointer emulated) and
+// the desk cell as a desk. Without the emulation the 390x844 cell ran under a
+// fine pointer, the coarse rule never applied, and H3 asserted a key label
+// "on both layouts" that a real phone never draws (Codex, #532).
 const SHAPES = [
-  { tag: '390x844', w: 390, h: 844, d: 2, mobile: true },
-  { tag: '1200x730', w: 1200, h: 730, d: 1, mobile: false },
+  { tag: '390x844', w: 390, h: 844, d: 2, mobile: true, pointer: 'coarse' },
+  { tag: '1200x730', w: 1200, h: 730, d: 1, mobile: false, pointer: 'fine' },
 ];
 
 // Text sizes walked through the game's own settings door. Law 4's subject: the
@@ -331,9 +363,13 @@ const READ = (prop) => `(() => {
   // everything by accident.
   const one = (s) => { const el = document.querySelector(s); if (!el) return null;
     if (getComputedStyle(el).display === 'none') return null; return L(el); };
+  // Effective opacity walks the ancestors: opacity:0 on the control or on any
+  // box above it leaves display, visibility and geometry intact and the
+  // player sees nothing — the third way a control goes quiet.
+  const clear = (c) => { for (let n = c; n && n !== document.documentElement; n = n.parentElement) if (getComputedStyle(n).opacity === '0') return false; return true; };
   const hiddenWhy = (c) => { const cs = getComputedStyle(c); const r = c.getBoundingClientRect();
     return cs.display === 'none' ? 'display:none' : cs.visibility !== 'visible' ? 'visibility:' + cs.visibility
-      : !(r.width > 0 && r.height > 0) ? 'no box' : 'rendered'; };
+      : !clear(c) ? 'opacity:0' : !(r.width > 0 && r.height > 0) ? 'no box' : 'rendered'; };
   const rendered = (c) => hiddenWhy(c) === 'rendered';
   const strip = document.querySelector('.combat-action-row');
   const hand = document.querySelector('.hand');
@@ -341,6 +377,9 @@ const READ = (prop) => `(() => {
   const key = endTurn ? endTurn.querySelector('.et-key') : null;
   return {
     layout: document.documentElement.dataset.layout || null,
+    // The pointer mode the STYLESHEET sees, so a cell asserts against what the
+    // page rendered under and H0 can say whether the emulation took.
+    coarse: window.matchMedia('(pointer: coarse)').matches,
     vw: window.innerWidth / z, vh: window.innerHeight / z,
     present: !!strip,
     display: strip ? getComputedStyle(strip).display : null,
@@ -394,7 +433,15 @@ const overlap = (a, b) => (!a || !b) ? 0
 const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
 
 // One cell: measure and judge. `label` says which binding the chips are under.
-function judge(r, cell, wide) {
+function judge(r, cell, wide, pointer) {
+  // THE PREMISE FIRST. A phone cell measured under a fine pointer is not a
+  // phone cell: the coarse-pointer stylesheet rules never applied, and every
+  // key-label sentence below would be about a device that does not exist.
+  if (pointer && (r.coarse !== (pointer === 'coarse'))) {
+    bad('H0', cell, `the page rendered under a ${r.coarse ? 'coarse' : 'fine'} pointer where this cell declares ${pointer} — `
+      + 'the pointer emulation did not take, so nothing below is a measurement of this shape');
+    return { counted: true };
+  }
   if (!r.present || r.display === 'none') {
     // The row renders on BOTH layouts (styles/combat.css has a narrow rule for
     // it), so an absent row is an empty population everywhere: not a pass.
@@ -445,7 +492,12 @@ function judge(r, cell, wide) {
   const inside = (c, box) => c.left >= box.left - 0.5 && c.right <= box.right + 0.5
     && c.top >= box.top - 0.5 && c.bottom <= box.bottom + 0.5;
   const outside = r.chips.filter((c) => !inside(c.box, r.strip));
-  const keyOut = r.key && r.endTurn ? !inside(r.key.box, r.endTurn) : false;
+  // THE KEY LABEL IS A FINE-POINTER PROMISE. Under a coarse pointer the
+  // stylesheet withholds it on purpose (no key to press), so there the
+  // assertion is the opposite: a drawn label is a coarse-pointer rule that
+  // stopped applying. Under a fine pointer the label must be drawn, inside
+  // END TURN, whole.
+  const keyOut = !r.coarse && r.key && r.endTurn ? !inside(r.key.box, r.endTurn) : false;
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -459,7 +511,10 @@ function judge(r, cell, wide) {
       + (r.hiddenControls.length ? ` (not rendered: ${r.hiddenControls.map((m) => `"${m}"`).join(', ')})` : ' (absent from the row)'));
   } else if (!r.key) {
     bad('H3', cell, 'END TURN carries no key label (.et-key) — the label this gate measures the width of is gone');
-  } else if (!r.key.rendered) {
+  } else if (r.coarse && r.key.rendered) {
+    bad('H3', cell, `END TURN draws its key label "${r.key.text}" under a COARSE pointer — styles/combat.css withholds it there `
+      + '(no key to press on a thumb); the @media (pointer: coarse) rule stopped applying');
+  } else if (!r.coarse && !r.key.rendered) {
     bad('H3', cell, `END TURN's key label "${r.key.text}" is not rendered (${r.key.why}) — the binding the row promises is invisible to the player`);
   } else if (outside.length || keyOut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
@@ -469,7 +524,9 @@ function judge(r, cell, wide) {
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   } else {
     ok('H3', cell, `all ${EXPECTED_CONTROLS.length} declared controls rendered, whole and inside the row (${r.chips.map((c) => c.text).join(' / ')}), `
-      + `key label "${r.key.text}" inside END TURN [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
+      + (r.coarse ? `key label "${r.key.text}" withheld under the coarse pointer (${r.key.why}) as the stylesheet promises`
+        : `key label "${r.key.text}" inside END TURN`)
+      + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   }
 
   // H5 ONSCREEN — and the height is real. WHEN THIS IS RED IT NAMES WHICH OF THE
@@ -569,6 +626,13 @@ async function main() {
     const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
     await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
+    // The pointer mode a device of this shape has, through the media-query
+    // door the stylesheet reads (and touch on the phone, for the same reason).
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: vp.pointer === 'coarse' }, S);
+    await cdp.send('Emulation.setEmulatedMedia', { features: [
+      { name: 'pointer', value: vp.pointer }, { name: 'hover', value: vp.pointer === 'coarse' ? 'none' : 'hover' },
+      { name: 'any-pointer', value: vp.pointer }, { name: 'any-hover', value: vp.pointer === 'coarse' ? 'none' : 'hover' },
+    ] }, S);
     const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
     const until = async (x, w, ms = 20000) => { const t = Date.now();
@@ -584,7 +648,7 @@ async function main() {
       await wait(700);
       const r = await ev(READ(FAN_LIFT_PROP));
       reached++;
-      judge(r, `${vp.tag} Text ${text}`, false);
+      judge(r, `${vp.tag} Text ${text}`, false, vp.pointer);
     }
 
     // H4 WIDER — THROUGH THE GAME'S OWN REBIND DOOR. `meta.settings.keyBindings`
@@ -611,9 +675,10 @@ async function main() {
         + `so this cell asserts nothing about one.`);
     } else if (rw.present && rw.display !== 'none') {
       ok('H4', `${vp.tag} WIDE`, `the row is under a real rebind (${WIDE_KEY.action} -> ${WIDE_KEY.code}) — `
-        + `END TURN's key label "${rw.key.text}" is ${rw.key.box.w} px wide, END TURN ${rw.endTurn.w}x${rw.endTurn.h}, row ${rw.strip.w}x${rw.strip.h}`);
+        + (rw.coarse ? `END TURN's key label carries "${rw.key.text}" (withheld from the eye under the coarse pointer, ${rw.key.why})`
+          : `END TURN's key label "${rw.key.text}" is ${rw.key.box.w} px wide, END TURN ${rw.endTurn.w}x${rw.endTurn.h}, row ${rw.strip.w}x${rw.strip.h}`));
     }
-    judge(rw, `${vp.tag} WIDE`, true);
+    judge(rw, `${vp.tag} WIDE`, true, vp.pointer);
     await cdp.send('Target.closeTarget', { targetId });
   }
 
