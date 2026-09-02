@@ -4432,6 +4432,30 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         `rest-victim seed ${s2}: no rest below the first elite`);
     }
 
+    // ---- AND IT DOES NOT BREAK A MINIMUM THAT WOULD OTHERWISE HOLD. Codex's
+    // second P2. The differential is the assertion: the SAME act with the rule
+    // off keeps its Merchants, so any shortfall with it on is caused by the
+    // rest. This act has no Monster anywhere — every node is Event or Merchant
+    // under the no-repeat ban — so `relaxPlace` has nothing to convert and the
+    // restore has to find a donor. Before the donor fallback: seeds 1, 2, 4, 7
+    // and 9 lost a Merchant here.
+    const noMonster = (restBeforeElite) => ({ ...base, pathCount: 1, columns: 2, floors: 7,
+      typeWeights: { monster: 0, event: 20, shrine: 0, elite: 0, merchant: 80 },
+      floorRules: { minElites: 1, minMerchants: 2, restBeforeElite,
+        noShrineBefore: { at: 'floor', index: 3 }, noEliteBefore: { at: 'floor', index: 4 },
+        noShrineOn: { at: 'last' },
+        fixed: [{ at: 'first', type: 'merchant' }, { at: 'floor', index: 5, type: 'elite' }] } });
+    const nmOn = noMonster(true), nmOff = noMonster(false);
+    assert(resolveFloorPlan(nmOn).errors.length === 0, 'the no-monster act resolves');
+    for (let s2 = 0; s2 < 12; s2++) {
+      const count = (cfg) => Object.values(generateActMap({ config: cfg, rng: createRng(sweepSeed(s2)) }).nodes)
+        .filter((n) => n.type === 'merchant').length;
+      const off = count(nmOff);
+      if (off < 2) continue; // the act could not hold two either way — not this rule's doing
+      assert(count(nmOn) >= 2,
+        `no-monster act seed ${s2}: the forced rest cost a Merchant the same act keeps without it (off ${off})`);
+    }
+
     // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.

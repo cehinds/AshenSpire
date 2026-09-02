@@ -43021,14 +43021,37 @@ function ensureRestBeforeElite(nodes, rules, rng) {
   const pool = monsters.length ? monsters : (spares.length ? spares : below);
   pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
 
-  // AND IF THE ONLY NODE LEFT WAS THE LAST OF A PROMISED TYPE, put that type
-  // back rather than ship a broken count. Elites cannot reach here — restFloors
-  // sits below the Elite gate and excludes fixed ranks — so this restores a
-  // Merchant, on the same relax path that placed it originally. Measured over
-  // 4500 maps of the acts that force the non-Monster branch: 0 counts left
-  // short, and 0 maps with no Monster anywhere for the re-place to use.
+  // AND IF THE VICTIM WAS THE LAST OF A PROMISED TYPE, put that type back.
+  //
+  // `relaxPlace` alone is not enough, and believing it was is how the first cut
+  // of this shipped: it can only convert a MONSTER, and the acts that force the
+  // non-Monster branch above are exactly the acts with no Monster anywhere to
+  // convert. My own sweep said 0 maps lacked a Monster — because every fixture
+  // it used pinned a fixed Monster on floor 1. A differential scan over 12,600
+  // (config, seed) pairs, asking where this rule turns a SATISFIED minimum into
+  // a broken one, finds it: minMerchants 2 on a 7-floor one-path act with a
+  // fixed floor-1 Merchant loses a Merchant on seeds 1, 2, 4, 7 and 9.
+  //
+  // So the restore falls back to a donor: any node that is not the type we owe,
+  // not a fixed rank, not a Shrine (which would undo the rest this just placed
+  // or the pre-boss one) and not itself the last of a promised type.
   for (const [type, min] of Object.entries(minima)) {
-    if (min > 0 && countType(nodes, type) < min) relaxPlace(nodes, type, min, rules, rng);
+    if (!(min > 0)) continue;
+    while (countType(nodes, type) < min) {
+      relaxPlace(nodes, type, min, rules, rng);
+      if (countType(nodes, type) >= min) break;
+      const held = {};
+      for (const n of Object.values(nodes)) held[n.type] = (held[n.type] || 0) + 1;
+      const donor = Object.values(nodes).find((n) =>
+        n.type !== type && n.type !== 'shrine' && n.type !== 'boss' &&
+        !rules.fixed[n.floor] &&
+        (!(minima[n.type] > 0) || held[n.type] > minima[n.type]));
+      // Nothing left to give: the act's own weights and minima cannot both be
+      // met on this graph, with or without a rest. Leaving it short is honest;
+      // eating another promise to pay this one is not.
+      if (!donor) break;
+      donor.type = type;
+    }
   }
 }
 
@@ -49883,7 +49906,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a508bb30c5';
+const SOURCE = '0d239673da';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49917,7 +49940,7 @@ const SOURCE = 'a508bb30c5';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1957';
+const ORDINAL = '1958';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
