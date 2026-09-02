@@ -194,7 +194,18 @@ const SCREENS = [
   // so excluding it here would put back the condition the gap lived in). The
   // landmarks are the controls the states were added FOR: the occupied slot's
   // ✕, the drawer's Restore, the crisis screen's fresh-profile button.
-  { name: 'title-slots', query: '?shot=title', landmark: '.slot.occupied .slot-delete', state: 'title' },
+  {
+    // THE ✕ MOVED BEHIND LOAD (title.js → saveSlotSelector.js): the title menu
+    // is five verbs and the slot rows with their delete control are the LOAD
+    // selector's, so the landmark this state was added FOR is not on the first
+    // paint any more. `.slot.occupied .slot-delete` matched nothing for as long
+    // as the menu has existed — a MISS on the release stamp, filed against the
+    // screen. The drive walks the player's door (LOAD) and the landmark is the
+    // ✕ inside the selector's own list.
+    name: 'title-slots', query: '?shot=title', state: 'title',
+    drive: `(()=>{const l=document.querySelector('[data-title-action="load"]');if(!l)return 'LOAD missing on the title menu';l.click();return true})()`,
+    landmark: '.title-slot-list .title-slot-delete',
+  },
   {
     name: 'profile-drawer',
     // THIS ENTRY MISSED FOR AS LONG AS IT HAS EXISTED, AND THE DOOR IS WHY

@@ -2581,6 +2581,19 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // saves.listArchives. The instrument still opens the section by the
   // player's own door: Profile on the title screen.
   saves.ensureProfile();
+  // A PROFILE THE PLAYER HAS TOUCHED, not a second fresh one. Two untouched
+  // profiles are the same bytes, and the archive de-duplicates by content
+  // (save.js archiveMeta): restoring A over an identical B set B aside INTO
+  // A's own entry — the drawer read "seen 2 times" instead of growing, and
+  // tools/holdconfirm.mjs read "entries 1 -> 1" as a restore that set nothing
+  // aside. A real outgoing profile is never byte-identical to the one it
+  // replaces (it carries its results), so the pose writes one setting through
+  // the real writer — the default value, so nothing behaves differently — and
+  // the two profiles are distinct the way two real ones are.
+  {
+    const posed = saves.loadMeta();
+    saves.saveMeta({ ...posed, settings: { ...(posed.settings || {}), holdConfirm: 'normal' } });
+  }
   saves.startNewProfile();
   showTitle();
   showProfile();
