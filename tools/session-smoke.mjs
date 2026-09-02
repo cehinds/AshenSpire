@@ -6,7 +6,7 @@
 //   node tools/session-smoke.mjs
 
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRegistries, resolveCard, passiveSum } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, coopHpMult } from './session.mjs';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
@@ -102,6 +102,14 @@ try {
     for (const m of S.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp;
   }
 
+  // ONE SEAT CARRIES AN UPGRADED RELIC INTO THE FIGHT. Ancestral Horn at tier
+  // 1 prices Power cards lower than the tier-0 Horn does, and a client prices
+  // from the snapshot (coop.js snapshotCosts) — so the snapshot has to carry
+  // the tier, not just the id. Written through the run the way Smithing
+  // writes it (run.relics + run.itemUpgradeLevels keyed by item ref).
+  const p2run = S.session.members.get('p2').run;
+  p2run.relics.push('ancestralHorn');
+  p2run.itemUpgradeLevels = { ...(p2run.itemUpgradeLevels || {}), 'relic/ancestralHorn': 1 };
   // First node → live shared combat, both members in one fight.
   route(S, S.session.reachableIds[0]);
   // (first node may be an event/shrine; push until a combat opens)
@@ -116,6 +124,14 @@ try {
   ok(S.scene.kind === 'combat', 'party reaches a live shared combat');
   ok(S.scene.players.length === 2 && S.scene.enemies.length >= 1, 'combat scene exposes both players + shared enemies');
   ok(S.scene.players.every((p) => p.attributeMode && p.attributes), 'combat snapshot transports each seat\'s inert attributes');
+  {
+    const p2snap = S.scene.players.find((p) => p.id === 'p2');
+    const hostSays = passiveSum(REG, p2run.relics, 'powerCostReduction', p2run.itemUpgradeLevels);
+    const tierZero = passiveSum(REG, p2run.relics, 'powerCostReduction', {});
+    const clientSays = p2snap ? passiveSum(REG, p2snap.relicIds, 'powerCostReduction', p2snap.itemUpgradeLevels || {}) : null;
+    ok(hostSays > tierZero, `the posed Horn tier prices Power cards below tier 0 on the host (reduction ${hostSays} vs ${tierZero})`);
+    ok(clientSays === hostSays, `the combat snapshot carries the seat's relic tiers, so a client prices Power cards as the host charges them (client ${clientSays} vs host ${hostSays})`);
+  }
   const hostEnemy = S.live.combat.enemies[0];
   const snapshotEnemy = S.snapshot().scene.enemies.find((enemy) => enemy.id === hostEnemy.id);
   ok(JSON.stringify(snapshotEnemy.arcaneExposure) === JSON.stringify(hostEnemy.arcaneExposure), 'combat snapshot transports the host Arcane Exposure state exactly');
