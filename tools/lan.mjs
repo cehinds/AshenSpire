@@ -345,14 +345,19 @@ export function attachLan(server, { port, root }) {
       const slot = i < socks.length ? socks[i] : socks[0];
       if (slot) assigned.get(slot[0]).push(mid);
     });
+    const resumed = [];
     for (const [sock2, cl] of socks) {
       const mids = assigned.get(sock2) || [];
       if (!mids.length) continue;
       cl.id = mids[0];
       cl.ownedIds = mids;
-      for (const mid of mids) game.setConnected(mid, true);
+      resumed.push(...mids);
       sock2.write(wsEncode(JSON.stringify({ t: 'resumed', yourId: mids[0], yourIds: mids, seedString: game.session.seedString })));
     }
+    // Everyone returns TOGETHER, then the room settles once — a saved event
+    // half answered must not advance after the first seat back while the
+    // rest are still marked absent (Codex on #547).
+    game.setConnectedMany(resumed, true);
     broadcastState();
   }
 
