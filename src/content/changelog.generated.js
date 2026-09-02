@@ -407,7 +407,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-30",
     "group": "2026-08-30",
     "summary": "The combat command bar's layout is refined",
-    "detail": "Merged as pull request #459 in development build 0.4.0.1704.",
+    "detail": "The bar is positioned by the stylesheet instead of by the combat screen's own code, which loses about 175 lines of it.",
     "build": "0.4.0.1704",
     "pullRequest": 459,
     "url": "https://github.com/cehinds/AshenSpire/pull/459"
@@ -427,7 +427,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-30",
     "group": "2026-08-30",
     "summary": "Levels gain canonical hidden semantics",
-    "detail": "Merged as pull request #449 in development build 0.4.0.1688.",
+    "detail": "Nothing a player sees changes at this build: the rules for a hidden player level and for enemy level profiles are authored and validated, and deliberately wired to nothing — no UI, save, encounter, combat or co-op reads them yet. The enemy bands that stand on them arrive in #477.",
     "build": "0.4.0.1688",
     "pullRequest": 449,
     "url": "https://github.com/cehinds/AshenSpire/pull/449"

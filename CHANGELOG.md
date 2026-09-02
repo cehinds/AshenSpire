@@ -88,9 +88,9 @@ receipt a player cannot open and see is not a receipt.*
 ## 2026-08-30
 
 - **Escape closes what is actually on top of Settings** ([#456](https://github.com/cehinds/AshenSpire/pull/456), `0.4.0.1708`). Escape now dismisses the frontmost dialog rather than the screen behind it, and focus returns to the control that opened it.
-- **The combat command bar's layout is refined** ([#459](https://github.com/cehinds/AshenSpire/pull/459), `0.4.0.1704`).
+- **The combat command bar's layout is refined** ([#459](https://github.com/cehinds/AshenSpire/pull/459), `0.4.0.1704`). The bar is positioned by the stylesheet instead of by the combat screen's own code, which loses about 175 lines of it.
 - **Armaments get a command rail and radial shortcuts in combat** ([#447](https://github.com/cehinds/AshenSpire/pull/447), `0.4.0.1701`). The armaments you carry are reachable from a rail on the combat screen, with radial shortcuts to them.
-- **Levels gain canonical hidden semantics** ([#449](https://github.com/cehinds/AshenSpire/pull/449), `0.4.0.1688`).
+- **Levels gain canonical hidden semantics** ([#449](https://github.com/cehinds/AshenSpire/pull/449), `0.4.0.1688`). Nothing a player sees changes at this build: the rules for a hidden player level and for enemy level profiles are authored and validated, and deliberately wired to nothing — no UI, save, encounter, combat or co-op reads them yet. The enemy bands that stand on them arrive in #477.
 - **Save and Quit writes the camera state with the save** ([#437](https://github.com/cehinds/AshenSpire/pull/437), `0.4.0.1688`). Resuming puts the view back where you left it instead of at a default framing.
 
 ## 2026-08-28
