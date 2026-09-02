@@ -1053,6 +1053,18 @@ export function createSession({ registries, seedString, endless = false, restore
       let def = null;
       try { def = registries.events.get(item.eventId); } catch { def = null; }
       const authored = def ? eventChoicesWithHistory(def) : [];
+      // THE CHOICE IS COMMITTED HERE, THEN ITS RESULT IS READ: the entry stays
+      // at the head of the queue, marked done with the choice and its
+      // resultText, until the seat continues — the authoritative state the
+      // client draws, so a reload between the choice and CONTINUE shows the
+      // result again rather than the choices (Codex on #549). A second
+      // choice on a done entry is refused.
+      if (item.done) {
+        if (!(pick && pick.continue)) return { ok: false, error: 'read the result first' };
+        m.catchup.splice(index, 1);
+        drained(m);
+        return { ok: true, remaining: m.catchup.length };
+      }
       if (authored.length) {
         const idx = Number(pick && pick.choiceIndex);
         const choice = authored[idx];
@@ -1097,9 +1109,9 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.actNumber = session.actNumber;
         m.run.floor = session.floor;
         m.run.mapNodeId = session.cursorId ?? null;
-        m.catchup.splice(index, 1);
-        drained(m);
-        return { ok: true, remaining: m.catchup.length, resultText: choice.resultText || '' };
+        if (!m.alive) return { ok: true, remaining: m.catchup.length, resultText: choice.resultText || '' }; // the queue is forfeit; nothing to continue
+        item.done = { choiceIndex: idx, resultText: choice.resultText || '' };
+        return { ok: true, remaining: m.catchup.length, pending: true, resultText: item.done.resultText };
       }
     }
     m.catchup.splice(index, 1);

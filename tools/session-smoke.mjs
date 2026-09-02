@@ -14,6 +14,9 @@ import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { rollRelicReward } from '../src/engine/encounters.js';
+// A missed event's replay commits the choice, then the seat reads its result
+// and continues; the proofs that expect the queue to move on do both.
+const replay = (S, id, idx, pick) => { const r = S.resolveCatchup(id, idx, pick); if (r.ok && r.pending) S.resolveCatchup(id, idx, { continue: true }); return r; };
 
 const REG = createRegistries(contentBundle);
 const fails = [];
@@ -353,7 +356,15 @@ try {
         const histBefore = (c2.run.history || []).length;
         const refused = C.resolveCatchup('c2', c2.catchup.length - 1, { choiceIndex: 99 });
         C.setConnected('c2', true);
-        const replayed = C.resolveCatchup('c2', c2.catchup.length - 1, { choiceIndex: smashIdx });
+        const chosen = C.resolveCatchup('c2', c2.catchup.length - 1, { choiceIndex: smashIdx });
+        // THE RESULT IS READ BEFORE THE QUEUE MOVES ON: the entry stays, done,
+        // with its result; a second choice is refused; CONTINUE drains it
+        // (Codex on #549).
+        const stillThere = c2.catchup.length === 1 && c2.catchup[0].done && c2.catchup[0].done.choiceIndex === smashIdx && typeof c2.catchup[0].done.resultText === 'string';
+        const again = C.resolveCatchup('c2', 0, { choiceIndex: smashIdx });
+        const cindersHeld = c2.run.cinders;
+        const replayed = chosen.ok && chosen.pending && stillThere && !again.ok ? C.resolveCatchup('c2', 0, { continue: true }) : { ok: false, error: `no pending result (chosen ${JSON.stringify(chosen)}, still there ${stillThere}, again ${JSON.stringify(again)})` };
+        ok(replayed.ok && c2.run.cinders === cindersHeld, `the choice is committed at once and its result held at the head of the queue until CONTINUE (a second choice refused: ${again.error})`);
         const recorded = (c2.run.history || []).slice(histBefore).some((h) => h.eventId === 'ancientRuneStone' && h.choiceId === 'smashStone');
         ok(!refused.ok && replayed.ok && c2.run.cinders === spentBefore + smash && recorded && c2.catchup.length === 0 && c2.run.floor === C.session.floor,
           `a bad index is refused, the replayed choice pays out (+${c2.run.cinders - spentBefore} cinders, expected +${smash}), is recorded (${recorded}), drains the queue (${c2.catchup.length} left) and the seat snaps back to the party's floor`);
@@ -383,11 +394,11 @@ try {
           const queuedBoth = e2.catchup.filter((c) => c.type === 'event').map((c) => c.eventId);
           E.setConnected('e2', true);
           const cartEntry = e2.catchup[0], ghostEntry = e2.catchup[1];
-          const first = E.resolveCatchup('e2', 0, { choiceIndex: cartIds.indexOf('leave') });
+          const first = replay(E, 'e2', 0, { choiceIndex: cartIds.indexOf('leave') });
           e2.run.actNumber = 1; e2.run.floor = E.session.floor; e2.run.mapNodeId = E.session.cursorId ?? null;
           recordEventChoice(e2.run, { eventId: 'abandonedCart', choiceId: 'lootStrongbox' }); // the history the frozen list predates
           const liveWouldRefuse = !availableEventChoices(eventChoicesWithHistory(ghost), e2.run).some((row) => row.choice.id === 'payInKind');
-          const second = e2.catchup[0] && e2.catchup[0].eventId === 'merchantsGhost' ? E.resolveCatchup('e2', 0, { choiceIndex: ghostIds.indexOf('payInKind') }) : { ok: false, error: 'ghost not next' };
+          const second = e2.catchup[0] && e2.catchup[0].eventId === 'merchantsGhost' ? replay(E, 'e2', 0, { choiceIndex: ghostIds.indexOf('payInKind') }) : { ok: false, error: 'ghost not next' };
           ok(queuedBoth.join(',') === 'abandonedCart,merchantsGhost' && cartEntry && !cartEntry.open.includes(cartIds.indexOf('lootStrongbox')) && ghostEntry && ghostEntry.open.includes(ghostIds.indexOf('payInKind'))
             && first.ok && liveWouldRefuse && second.ok && e2.catchup.length === 0 && (cart.choices.length === 2 && ghost.choices.length === 3),
             `both missed events are queued (${queuedBoth.join(', ')}; the cart's strongbox withheld, "pay in kind" frozen open), and the ghost's entry is served against its frozen list — live history would refuse it (${liveWouldRefuse}), the replay honours it (${second.ok ? 'ok' : second.error}); ${e2.catchup.length} left`);
@@ -452,8 +463,8 @@ try {
           H.setConnected('h2', true);
           const heldOut = inFight && !H.live.combat.players.has('h2') && H.connectedMembers().some((m) => m.id === 'h2');
           const maxBefore = h2.run.maxHp;
-          const r1 = H.resolveCatchup('h2', 0, { choiceIndex: studyIdx });
-          const r2 = h2.catchup.length ? H.resolveCatchup('h2', 0, { choiceIndex: 0 }) : { ok: true };
+          const r1 = replay(H, 'h2', 0, { choiceIndex: studyIdx });
+          const r2 = h2.catchup.length ? replay(H, 'h2', 0, { choiceIndex: 0 }) : { ok: true };
           const P2 = H.live && H.live.combat.players.get('h2');
           ok(inFight && heldOut && r1.ok && r2.ok && h2.catchup.length === 0 && P2 && P2.entity.maxHp === h2.run.maxHp && h2.run.maxHp < maxBefore,
             `a seat returning mid-fight is held out of it while its queue stands (held out ${heldOut}) and joins once it drains, with the replay's max HP (${maxBefore} -> ${h2.run.maxHp}; body ${P2 && P2.entity.maxHp})`);
@@ -558,7 +569,7 @@ try {
           const later = rollRelicReward(REG, b2.rng, b2.run.relics); if (later) b2.run.relics.push(later); // the later node's own draw
           B.setConnected('a2', true);
           const awayRelicsBefore = b2.run.relics.slice();
-          const rr = B.resolveCatchup('a2', 0, { choiceIndex: giveIdx });
+          const rr = replay(B, 'a2', 0, { choiceIndex: giveIdx });
           const awayRelic = b2.run.relics.find((r) => !awayRelicsBefore.includes(r));
           ok(liveRelic && rr.ok && awayRelic === liveRelic && movedPast && later && later !== liveRelic,
             `a missed choice's random relic is the one the room would have given (live ${liveRelic}, replayed after the stream was spent ${awayRelic}); the live stream moved past the entry's block (${movedPast}) and a later node's own draw (${later}) is not that relic`);
