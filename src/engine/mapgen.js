@@ -356,8 +356,25 @@ function ensureRestBeforeElite(nodes, rules, rng) {
       if (countType(nodes, type) >= min) break;
       const held = {};
       for (const n of Object.values(nodes)) held[n.type] = (held[n.type] || 0) + 1;
+      // A SURPLUS SHRINE MAY DONATE; the two that carry promises may not. The
+      // first cut excluded every Shrine, which is the blunt version of this and
+      // took the deliberate short while a safe donor sat on the map: with
+      // Shrine and Merchant both rolling, seed 67 of an 8-floor one-path act
+      // came out 3 Merchants + 3 Shrines against 4 Merchants with the rule off,
+      // and the third Shrine was surplus to both promises.
+      //
+      // Protected: the pre-boss Shrine (SPEC §6 puts it on the top floor), and
+      // — while an Elite stands — the last Shrine below it, which is the rest
+      // this function exists to guarantee. Anything above the first Elite, or
+      // any Shrine with another still beneath it, is free.
+      const shrineSpare = (n) => {
+        if (n.floor === rules.floors) return false;
+        if (!Number.isFinite(firstElite) || n.floor >= firstElite) return true;
+        return Object.values(nodes).some((o) => o !== n && o.type === 'shrine' && o.floor < firstElite);
+      };
       const donor = Object.values(nodes).find((n) =>
-        n.type !== type && n.type !== 'shrine' && n.type !== 'boss' &&
+        n.type !== type && n.type !== 'boss' &&
+        (n.type !== 'shrine' || shrineSpare(n)) &&
         !rules.fixed[n.floor] &&
         (!(minima[n.type] > 0) || held[n.type] > minima[n.type]));
       // Nothing left to give: the act's own weights and minima cannot both be
