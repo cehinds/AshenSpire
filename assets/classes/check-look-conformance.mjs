@@ -11,10 +11,15 @@
 //
 // Usage:
 //   node assets/classes/check-look-conformance.mjs                 # score all four
-//   node assets/classes/check-look-conformance.mjs <file.png> ...  # score candidates
+//   node assets/classes/check-look-conformance.mjs <file> ...      # score candidates
+//
+// Candidates may be PNG or WEBP. WEBP is converted with dwebp/ffmpeg/magick if
+// one is installed — the class renderer emits WEBP, so scoring its output
+// directly has to work.
 
-import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { inflateSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, basename } from 'node:path';
@@ -25,6 +30,48 @@ const manifest = JSON.parse(readFileSync(join(here, 'successor-packet.manifest.j
 const PIN = manifest.evidence_pin.commit;
 const CHANNELS = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
 const OPAQUE = 200; // score the figure body, not its soft antialiased rim
+
+// tools/sprites-blender.py emits WEBP, so the documented render-and-score command
+// hands this WEBP bytes. decodePng is PNG-only and used to die on them with
+// "unsupported bit depth undefined" — the gate was unusable against real
+// pipeline output. Convert first, with whatever the machine has, and say
+// exactly what to install when it has nothing.
+const WEBP_CONVERTERS = [
+  ['dwebp', (i, o) => [i, '-o', o]],
+  ['ffmpeg', (i, o) => ['-v', 'error', '-y', '-i', i, o]],
+  ['magick', (i, o) => [i, o]],
+  ['convert', (i, o) => [i, o]],
+];
+
+function isWebp(b) {
+  return b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF'
+    && b.toString('ascii', 8, 12) === 'WEBP';
+}
+
+function webpToPng(bytes, label) {
+  const dir = mkdtempSync(join(tmpdir(), 'lookconf-'));
+  const src = join(dir, 'in.webp');
+  const dst = join(dir, 'out.png');
+  try {
+    writeFileSync(src, bytes);
+    for (const [tool, args] of WEBP_CONVERTERS) {
+      const r = spawnSync(tool, args(src, dst), { stdio: 'ignore' });
+      if (r.error || r.status !== 0) continue;
+      try { return readFileSync(dst); } catch { /* tool lied about success */ }
+    }
+    throw new Error(
+      `${label} is WEBP and no converter is available. This checker decodes PNG.\n`
+      + `  Install one of: ${WEBP_CONVERTERS.map((c) => c[0]).join(', ')}\n`
+      + `  or convert first:  dwebp ${label} -o candidate.png`,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function decodeImage(bytes, label) {
+  return decodePng(isWebp(bytes) ? webpToPng(bytes, label) : bytes);
+}
 
 function decodePng(bytes) {
   let pos = 8;
@@ -124,23 +171,37 @@ function readBlob(oid) {
 
 const crops = Object.fromEntries(manifest.successor_packet.crops.map((c) => [c.class, c]));
 const REFERENCE = 'rogue';
-const ref = profile(decodePng(readBlob(crops[REFERENCE].git_blob)));
+const ref = profile(decodeImage(readBlob(crops[REFERENCE].git_blob), REFERENCE));
 
 // Tolerances are set so the reference passes every trait and the three the owner
 // rejected each fail at least one. They encode the ruling, not a preference.
+// Saturation is scored, not just measured. The approved look is high chroma held
+// at LOW value, so value and hue alone do not pin it: desaturating every pixel
+// toward its own grey preserves each value bucket and each hue bucket exactly,
+// and a candidate at 0.205 mean saturation against the reference 0.565 — barely
+// a third of the chroma, with every gold pixel gone — used to score ALL CONFORM.
+// The bound is stated rather than tuned: a candidate may lose at most 20% of the
+// reference's mean chroma, which at 0.565 is 0.113.
+const CHROMA_LOSS_ALLOWED = 0.20;
 const TRAITS = [
   ['deep shadow (v<0.3)', 'deep_shadow', 0.12, (x) => `${(100 * x).toFixed(1)}%`],
   ['highlights (v>0.5)', 'highlight', 0.05, (x) => `${(100 * x).toFixed(1)}%`],
   ['mean value', 'mean_value', 0.05, (x) => x.toFixed(3)],
+  ['mean saturation', 'mean_saturation', null, (x) => x.toFixed(3)],
   ['warm earth hue 20-80°', 'warm_earth_fraction', 0.15, (x) => `${(100 * x).toFixed(1)}%`],
-  ['gold accent restraint', 'gold_fraction', 0.010, (x) => `${(100 * x).toFixed(1)}%`],
+  // 0.005, not 0.010: at one point a candidate could lose EVERY gold pixel
+  // (0.0% against the reference 0.6%) and still pass the accent trait.
+  ['gold accent restraint', 'gold_fraction', 0.005, (x) => `${(100 * x).toFixed(1)}%`],
   ['cool rim light 200-220°', 'cool_rim_fraction', 0.030, (x) => `${(100 * x).toFixed(1)}%`],
 ];
 
 function score(name, prof) {
   const rows = [];
   let fails = 0;
-  for (const [label, key, tol, fmt] of TRAITS) {
+  for (const [label, key, fixedTol, fmt] of TRAITS) {
+    // A null tolerance is derived from the reference itself, so it tracks the
+    // asset rather than a constant that can drift away from it.
+    const tol = fixedTol === null ? ref[key] * CHROMA_LOSS_ALLOWED : fixedTol;
     const delta = Math.abs(prof[key] - ref[key]);
     const ok = delta <= tol;
     if (!ok) fails++;
@@ -156,11 +217,11 @@ function score(name, prof) {
 const targets = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 let total = 0;
 if (targets.length) {
-  for (const f of targets) total += score(basename(f), profile(decodePng(readFileSync(f))));
+  for (const f of targets) total += score(basename(f), profile(decodeImage(readFileSync(f), f)));
 } else {
   console.log(`look conformance vs ${REFERENCE} at pin ${PIN}  (opaque alpha >= ${OPAQUE})`);
   for (const cls of ['rogue', 'reaver', 'starseer', 'herald']) {
-    total += score(cls, profile(decodePng(readBlob(crops[cls].git_blob))));
+    total += score(cls, profile(decodeImage(readBlob(crops[cls].git_blob), cls)));
   }
 }
 console.log(`\n${total === 0 ? 'ALL CONFORM' : `${total} trait failure(s) across ${targets.length || 4} asset(s)`}`);

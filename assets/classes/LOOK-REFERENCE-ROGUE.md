@@ -20,7 +20,7 @@ From `8359517b` (rogue) at pin `62f6867a`, over pixels with alpha ≥ 200:
 | deep shadow, v<0.3 | **88.6 %** | the figure is overwhelmingly dark |
 | highlights, v>0.5 | **4.0 %** | light is rare and earned |
 | mean value | **0.153** | low-key throughout |
-| mean saturation | **0.565** | high chroma, but crushed dark — rich, not bright |
+| mean saturation | **0.565** | high chroma, but crushed dark — rich, not bright; a candidate may lose at most 20 % of it |
 | warm earth hue 20–80° | **78.1 %** | browns, olives, leather greens |
 | gold accent | **0.6 %** | a clasp, not a costume |
 | cool rim light 200–220° | **4.8 %** | the blue edge separating figure from ground |
@@ -36,22 +36,24 @@ to change too.
 
 Ranked by distance from the approved look:
 
-### starseer — 5 of 6 traits off (largest rework)
+### starseer — 5 of 7 traits off (largest rework)
 - **Hue family is wrong.** 13.0 % warm earth against rogue's 78.1 %; 61.9 % of the
   figure sits at 220–240° blue. This is a different palette, not a darker one.
 - Too bright: 70.0 % deep shadow vs 88.6 %; mean value 0.264 vs 0.153.
 - Rim light over-applied at 14.9 % vs 4.8 % — reads as blue body colour, not rim.
 - Gold at 1.7 %, ~3× the reference.
 
-### herald — 4 of 6 traits off
+### herald — 4 of 7 traits off
 - **Brightest of the four**: 14.4 % highlights vs 4.0 %; mean value 0.274.
 - **Gold at 3.7 %, ~6× the reference** — the halo and star sash are costume, not accent.
 - Hue is flat: 80.9 % crammed into a single 20–40° band, where rogue spreads
   across 20–80° (41 % / 27 % / 10 %). Monotone rather than layered.
 - Rim light already correct at 4.5 %.
 
-### reaver — 2 of 6 traits off (closest)
+### reaver — 3 of 7 traits off (closest)
 - Too bright: 10.8 % highlights vs 4.0 %; mean value 0.215 vs 0.153.
+- **Undersaturated**: 0.431 against the reference 0.565 — it loses 24 % of the
+  chroma, past the 20 % the gate allows. Brightening is not the only gap.
 - Hue family and gold restraint are already right (70.0 % warm earth, 0.8 % gold).
 - Missing rogue's 60–80° olive band (2.8 % vs 10.2 %) — all steel, no leather.
 - **Rim light already correct at 4.6 %.** The nearest of the three to conforming.
@@ -146,4 +148,16 @@ After landing `build_rogue` in `tools/sprites-blender.py`:
 blender --background --factory-startup --python tools/sprites-blender.py -- <out>
 node assets/classes/check-look-conformance.mjs <out>/rogue_gold.webp
 ```
+The renderer emits **WEBP**, so the checker converts it before profiling, using
+whichever of `dwebp`, `ffmpeg`, `magick` or `convert` is installed. With none of
+them it stops and names the conversion command rather than failing obscurely.
+
+### The seven traits
+
+Six are fixed tolerances. **Mean saturation is derived from the reference** —
+a candidate may lose at most 20 % of its chroma — because the approved look is
+high chroma held at low value, and value plus hue alone do not pin that. Pulling
+every pixel toward its own grey preserves each value bucket and each hue bucket
+exactly, so without this trait a candidate at 0.205 saturation against 0.565,
+with every gold pixel gone, scored `ALL CONFORM`.
 Exit code is 0 only when every scored asset conforms.
