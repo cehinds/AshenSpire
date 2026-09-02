@@ -46577,19 +46577,26 @@ function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
-    if (ev.detail === 0) {
-      if ((pointerOnly || tapOnEarlyRelease) && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
-    // A press the pointer walked away from is an abort in every form of this
-    // control — no tap meaning, no commit. The click is swallowed whole.
+    // A PRESS THE POINTER WALKED AWAY FROM IS AN ABORT IN EVERY FORM OF THIS
+    // CONTROL — no tap meaning, no commit — AND IT IS CHECKED FIRST. The native
+    // click of such a press lands on the common ancestor (the pointer went up
+    // somewhere else), so what reaches this control is the SYNTHETIC click
+    // input.js dispatches to a pressed control that got no click of its own
+    // (`detail === 0`). Read as "activation outside the press door" that click
+    // committed a binding choice under a scrolling thumb — measured, not
+    // guessed: tools/holdconfirm.mjs case 4b. So the moved flag is consumed
+    // before the detail check, and the click is swallowed whole.
     if (movedThisPress) {
       movedThisPress = false;
       heldThisPress = false;
       committedThisPress = false;
       ev.preventDefault();
       ev.stopPropagation();
+      return;
+    }
+    if (ev.detail === 0) {
+      if ((pointerOnly || tapOnEarlyRelease) && onTap) onTap(ev);
+      else onConfirm(ev);
       return;
     }
     if (!heldThisPress) {
@@ -47307,9 +47314,16 @@ function armPress(el, begin) {
 function trackGesture(startEv, { onMove, onEnd } = {}) {
   const id = startEv.pointerId;
   const el = startEv.currentTarget;
-  // Capture can throw on a detached node or an exotic target; a gesture that
-  // cannot capture still gets scoped listeners and still cleans up — weaker
-  // (off-element moves may not arrive), never leaky.
+  // Capture is asked for so a pointer that leaves the control keeps reporting
+  // to it, but the gesture is NOT trusting capture to hold: the listeners sit
+  // on the window, filtered by pointerId, so a move or a release that lands
+  // somewhere else — capture refused on an exotic target, a browser that did
+  // not honour it, a headless driver — still reaches this gesture. Measured
+  // (tools/holdconfirm.mjs case 4b): with the listeners on the element, a
+  // drag that left the bar never reported its moves or its release, the hold
+  // timer ran on unopposed, and a binding choice COMMITTED at full under a
+  // pointer that had walked away. A gesture that cannot see its own end is a
+  // hold nobody can abort.
   try { el.setPointerCapture(id); } catch { /* tracked without capture */ }
   let done = false;
   const move = (ev) => {
@@ -47319,17 +47333,17 @@ function trackGesture(startEv, { onMove, onEnd } = {}) {
   const finish = (cancelled) => (ev) => {
     if (ev.pointerId !== id || done) return;
     done = true;
-    el.removeEventListener('pointermove', move);
-    el.removeEventListener('pointerup', up);
-    el.removeEventListener('pointercancel', cancel);
+    window.removeEventListener('pointermove', move, true);
+    window.removeEventListener('pointerup', up, true);
+    window.removeEventListener('pointercancel', cancel, true);
     try { el.releasePointerCapture(id); } catch { /* already released */ }
     if (onEnd) onEnd(ev, { cancelled });
   };
   const up = finish(false);
   const cancel = finish(true);
-  el.addEventListener('pointermove', move);
-  el.addEventListener('pointerup', up);
-  el.addEventListener('pointercancel', cancel);
+  window.addEventListener('pointermove', move, true);
+  window.addEventListener('pointerup', up, true);
+  window.addEventListener('pointercancel', cancel, true);
 }
 
 
@@ -49494,7 +49508,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e5627d3e57';
+const SOURCE = '9e0f883d89';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49528,7 +49542,7 @@ const SOURCE = 'e5627d3e57';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1927';
+const ORDINAL = '1928';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
