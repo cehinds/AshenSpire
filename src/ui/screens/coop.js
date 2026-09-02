@@ -833,7 +833,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const done = snap.scene.done && snap.scene.done[me];
     let ev = null; try { ev = registries.events.get(snap.scene.eventId); } catch { /* unknown */ }
     app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
-      ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">${(ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => `<button data-ev="${i}">${esc(c.label || c.text || 'Choose')}</button>`).join('')}</div>`}`);
+      ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">${(ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => ({ c, i }))
+        // Only the choices this seat's history admits (scene.open, by authored
+        // index, from the host); a gated choice drawn here would be refused
+        // with no visible answer. No projection = every authored choice.
+        .filter(({ i }) => !(snap.scene.open && Array.isArray(snap.scene.open[me])) || snap.scene.open[me].includes(i))
+        .map(({ c, i }) => `<button data-ev="${i}">${esc(c.label || c.text || 'Choose')}</button>`).join('')}</div>`}`);
     app.querySelectorAll('[data-ev]').forEach((b) => b.addEventListener('click', () => send({ t: 'eventChoice', choiceIndex: Number(b.dataset.ev) })));
     renderPartyBar(); wireLeave();
   }

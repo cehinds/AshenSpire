@@ -116,6 +116,12 @@ export function createSession({ registries, seedString, endless = false, restore
     reachableIds: restore ? restore.reachableIds.slice() : [],
     scene: restore ? restore.scene : { kind: 'lobby' },
     started: restore ? restore.started : false,
+    // THE PARTY'S CHOICE HISTORY — the shared run's own, not any one member's.
+    // A member's run records what THEY chose (their save, their catch-up);
+    // this records what the PARTY resolved at each event, so the next act's
+    // map answers to the run the party actually walked even when the
+    // earliest-joined seat was absent or dead at the event (Codex, #536).
+    history: restore ? (Array.isArray(restore.history) ? restore.history.slice() : []) : [],
     members,
   };
 
@@ -253,20 +259,16 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- run flow ------------------------------------------------------------
-  // THE PARTY'S CHOICE HISTORY is the host's (earliest-joined member's) —
-  // the same seat fork-voting ties break toward — so a quest step the party
-  // took admits its gated event into the next act's Unknown nodes exactly as
-  // it does solo (main.js passes run.history; this passed nothing, so every
-  // co-op act was built on an empty history and the chain after Grave of the
-  // Nameless could never open — Codex, #528). Each member's own run still
-  // records what THEY chose (their save, their catch-up); the host's is the
-  // one the shared map answers to.
-  function hostMember() {
-    return [...members.values()].sort((a, b) => a.index - b.index)[0] || null;
-  }
+  // THE PARTY'S CHOICE HISTORY is the session's own record (session.history):
+  // what the party resolved at each event, written when the event advances.
+  // A quest step the party took admits its gated event into the next act's
+  // Unknown nodes exactly as it does solo (main.js passes run.history; this
+  // passed nothing, so every co-op act was built on an empty history and the
+  // chain after Grave of the Nameless could never open — Codex, #528). It is
+  // not any one member's history: the earliest-joined seat can be absent or
+  // dead at the event, and the party's run still happened (Codex, #536).
   function partyHistory() {
-    const host = hostMember();
-    return host && Array.isArray(host.run.history) ? host.run.history.slice() : [];
+    return session.history.slice();
   }
   function buildMap() {
     // The ONE boot path (#54) — same module main.js and runsim.mjs use;
@@ -750,8 +752,21 @@ export function createSession({ registries, seedString, endless = false, restore
     return { ok: true };
   }
 
+  function openChoicesFor(eventId, m) {
+    let def = null;
+    try { def = registries.events.get(eventId); } catch { def = null; }
+    const authored = def ? eventChoicesWithHistory(def) : [];
+    if (!authored.length) return null; // an event with no history contract: every authored choice
+    return availableEventChoices(authored, m.run).map((row) => row.index);
+  }
   function enterEvent(eventId) {
-    session.scene = { kind: 'event', eventId, done: {} };
+    // EACH MEMBER'S OPEN CHOICES RIDE THE SCENE, by authored index, so the
+    // client draws only what this seat's history admits instead of a choice
+    // the host will refuse with no visible answer (Codex, #536). null = no
+    // history contract on this event, every authored choice is open.
+    const open = {};
+    for (const m of members.values()) open[m.id] = openChoicesFor(eventId, m);
+    session.scene = { kind: 'event', eventId, done: {}, picks: {}, open };
     return { ok: true };
   }
   function eventChoice(memberId, choiceIndex = 0) {
@@ -778,11 +793,23 @@ export function createSession({ registries, seedString, endless = false, restore
       m.run.floor = session.floor;
       m.run.mapNodeId = session.cursorId ?? null;
       recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
+      session.scene.picks[memberId] = choice.id;
     }
     // S5: apply the real event effects per member; S2 records participation.
     session.scene.done[memberId] = true;
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
-    if (!waiting.length) advanceFromNode();
+    if (!waiting.length) {
+      // THE PARTY'S RECORD: the choice of the earliest-joined member who was
+      // PRESENT and chose (the seat fork-voting ties break toward), written to
+      // the session's own history so the next map answers to it whoever was
+      // in the room. Every member who answered keeps their own record above.
+      const picker = [...members.values()].filter((mm) => session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0];
+      if (picker && def) {
+        recordEventChoice({ history: session.history, actNumber: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null },
+          { eventId: def.id, choiceId: session.scene.picks[picker.id] });
+      }
+      advanceFromNode();
+    }
     return { ok: true };
   }
 
@@ -855,6 +882,7 @@ export function createSession({ registries, seedString, endless = false, restore
       reachableIds: session.reachableIds.slice(),
       scene: session.scene,
       started: session.started,
+      history: session.history.slice(),
       mapGraph: session.mapGraph,
       rng: rng.getCounters(),
       order,

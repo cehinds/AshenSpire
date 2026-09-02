@@ -130,6 +130,40 @@ try {
       `every member who answered an event carries the record (${withEvents.length} of ${S.connectedMembers().length}; p1 has ${p1h.length})`);
     if (p1h.length) ok(p1h.every((h) => typeof h.eventId === 'string' && typeof h.choiceId === 'string' && Number.isInteger(h.actNumber) && Number.isInteger(h.floor)),
       `each record names its event, choice, act and floor (${JSON.stringify(p1h[0])})`);
+    ok(S.serialize() === null || Array.isArray(S.serialize().history), 'the party history rides the host save (serialize)');
+  }
+  // THE PARTY'S HISTORY IS THE PARTY'S, NOT THE FIRST SEAT'S: with the
+  // earliest-joined member gone before the event, the present member's choice
+  // is the record the next map answers to, and the scene carried each seat's
+  // open choices by authored index.
+  {
+    const T = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+    T.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
+    T.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
+    T.start();
+    T.setConnected('p1', false);
+    let hops = 0; let sawOpen = null;
+    while (T.scene.kind !== 'event' && T.scene.kind !== 'complete' && hops++ < 24) {
+      for (const m of T.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp;
+      const sc = T.scene;
+      if (sc.kind === 'map') for (const m of T.connectedMembers()) T.chooseNode(m.id, T.session.reachableIds[0]);
+      else if (sc.kind === 'combat') T.autoResolveCombat(botTurn);
+      else if (sc.kind === 'reward') for (const id of Object.keys(sc.offers)) T.chooseReward(id, { cardId: sc.offers[id].cardIds[0] });
+      else if (sc.kind === 'shrine') for (const m of T.connectedMembers()) T.shrineChoice(m.id, 'rest');
+    }
+    if (T.scene.kind === 'event') {
+      sawOpen = T.scene.open;
+      const eventId = T.scene.eventId;
+      const r = T.eventChoice('p2', 0);
+      const party = T.partyHistory();
+      ok(r.ok && party.length === 1 && party[0].eventId === eventId && party[0].choiceId === (T.session.members.get('p2').run.history[0] || {}).choiceId
+        && (T.session.members.get('p1').run.history || []).length === 0,
+        `with the first seat absent, the present member's choice is the party's record (${JSON.stringify(party[0])}; p1 recorded ${(T.session.members.get('p1').run.history || []).length})`);
+      ok(sawOpen && Object.keys(sawOpen).length === 2 && (sawOpen.p2 === null || Array.isArray(sawOpen.p2)),
+        `the event scene carries each seat's open choices by authored index (${JSON.stringify(sawOpen)})`);
+    } else {
+      ok(false, `the host-absent walk did not reach an event (scene ${T.scene.kind}) — the party-record check could not be asked`);
+    }
   }
   ok(S.scene.players.length === 2 && S.scene.enemies.length >= 1, 'combat scene exposes both players + shared enemies');
   ok(S.scene.players.every((p) => p.attributeMode && p.attributes), 'combat snapshot transports each seat\'s inert attributes');
