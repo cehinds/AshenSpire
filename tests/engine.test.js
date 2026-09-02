@@ -4456,6 +4456,29 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         `no-monster act seed ${s2}: the forced rest cost a Merchant the same act keeps without it (off ${off})`);
     }
 
+    // ---- A SURPLUS SHRINE IS A LEGITIMATE DONOR. Codex's third P2. Excluding
+    // every Shrine from the donor pool took the deliberate short while a safe
+    // one sat on the map: seed 67 here came out 3 Merchants + 3 Shrines against
+    // 4 Merchants with the rule off, and the third Shrine was surplus to both
+    // the rest and the pre-boss promise. The differential is the assertion —
+    // the same act without the rule keeps its Merchants, so a shortfall here
+    // can only be this rule's doing.
+    const surplus = (restBeforeElite) => ({ ...base, pathCount: 1, columns: 2, floors: 8,
+      typeWeights: { monster: 0, event: 0, shrine: 40, elite: 0, merchant: 80 },
+      floorRules: { minElites: 1, minMerchants: 4, restBeforeElite,
+        noShrineBefore: { at: 'floor', index: 2 }, noEliteBefore: { at: 'floor', index: 3 },
+        noShrineOn: { at: 'last' },
+        fixed: [{ at: 'first', type: 'event' }, { at: 'floor', index: 3, type: 'elite' }] } });
+    assert(resolveFloorPlan(surplus(true)).errors.length === 0, 'the surplus-shrine act resolves');
+    for (const s2 of [67, 3, 11, 24]) {
+      const count = (cfg) => Object.values(generateActMap({ config: cfg, rng: createRng(sweepSeed(s2)) }).nodes)
+        .filter((n) => n.type === 'merchant').length;
+      const off = count(surplus(false));
+      if (off < 4) continue; // the act could not hold four either way
+      eq(count(surplus(true)), off,
+        `surplus-shrine act seed ${s2}: the rest cost a Merchant a spare Shrine could have paid for`);
+    }
+
     // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.
