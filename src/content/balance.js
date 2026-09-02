@@ -800,6 +800,53 @@ export const balance = {
       receiptLimit: 64,
     },
     roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+
+    // ---- Composed starting deck (togglable) ---------------------------------
+    // `roleCopies` above is a FIXED distribution that must sum to
+    // startingDeckSize by hand: grant a class one more card and the sum breaks.
+    // This block derives the same deck instead. Named cards ("grants") are
+    // dealt first — the weapon's technique, the class signature, anything
+    // global — and whatever budget remains is FILLER, split between the attack
+    // and guard roles. Filler still resolves through equipped profiles, so a
+    // sword-wielder's filler attacks are Slashing Strikes, not generic ones.
+    //
+    // With the defaults below the composed path reproduces 4/4/1/1 exactly
+    // (grants = technique 1 + signature 1; filler 8 at bias 0.5 → 4/4), which
+    // is what makes it safe to ship enabled. Set `enabled: false` to fall back
+    // to roleCopies verbatim.
+    startingDeck: {
+      enabled: true,
+
+      // WHO YIELDS WHEN GRANTS GET GREEDY. false → deck size is hard and the
+      // content author yields (validateEquipment refuses the kit). true → deck
+      // size is soft and the deck grows, so no authored grant is ever dropped;
+      // the player pays in draw consistency instead. `minFiller` holds in BOTH
+      // branches — the toggle only picks which side gives way.
+      growToFit: false,
+
+      // The floor a deck must keep in basic attacks and guards, however many
+      // cards get granted. 4 → at least 2 attack and 2 guard at bias 0.5.
+      minFiller: 4,
+
+      // Card ids every class starts with, whatever it wears. Cards named here
+      // must exist in the card registry; each is granted exactly one copy.
+      global: { grants: [] },
+
+      // Diagnostic only — nothing is ever deleted at runtime. When grants
+      // overrun the budget, the refusal names these sources in this order so
+      // the author knows what to reconsider first.
+      dropOrder: ['global', 'relic', 'armor', 'weapon', 'class'],
+
+      // Per-class filler split. `strikeBias` is the share of filler that goes
+      // to attacks; the rest are guards. Ties round toward attack. Classes
+      // absent here use `defaultStrikeBias`.
+      defaultStrikeBias: 0.5,
+      classes: {
+        reaver: { strikeBias: 0.5 },
+        starseer: { strikeBias: 0.5 },
+      },
+    },
+
     rarityBonuses: {
       common: { attack: 0, guard: 0 },
       uncommon: { attack: 1, guard: 1 },

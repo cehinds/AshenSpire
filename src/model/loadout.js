@@ -466,6 +466,7 @@ export function validateEquipment(registries) {
     if (total !== registries.balance.startingDeckSize) {
       problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
     }
+    problems.push(...startingDeckProblems(registries));
     if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
     for (const role of EQUIPMENT_ROLES) {
       const sources = (eqBal.roleSources || {})[role];
@@ -1119,14 +1120,166 @@ export const WeaponDeckCompositionService = Object.freeze({
   applyEquippedWeaponCardPlan,
 });
 
-/** The ten-card role distribution, as instance-ready refs. */
+// ---------------------------------------------------------------------------
+// Composed starting deck
+// ---------------------------------------------------------------------------
+
+/**
+ * The composed-deck half of validateEquipment.
+ *
+ * The cap rule is evaluated whatever `growToFit` says, so flipping the toggle
+ * can never turn sound content unsound behind your back. When growToFit is on
+ * the overrun is reported through `startingDeckWarnings` instead of here — one
+ * validation truth, two severities.
+ */
+export function startingDeckProblems(registries) {
+  return startingDeckFindings(registries).problems;
+}
+
+/** Overruns a growing deck absorbed. Sound content, worth seeing. */
+export function startingDeckWarnings(registries) {
+  return startingDeckFindings(registries).warnings;
+}
+
+function startingDeckFindings(registries) {
+  const problems = [];
+  const warnings = [];
+  const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
+  if (!cfg) return { problems, warnings };
+  if (typeof cfg.enabled !== 'boolean') problems.push('startingDeck.enabled must be boolean');
+  if (typeof cfg.growToFit !== 'boolean') problems.push('startingDeck.growToFit must be boolean');
+  if (!Number.isInteger(cfg.minFiller) || cfg.minFiller < 0) {
+    problems.push(`startingDeck.minFiller must be a non-negative integer (got ${cfg.minFiller})`);
+  }
+  for (const [classId, row] of Object.entries(cfg.classes || {})) {
+    if (!registries.classes.has(classId)) problems.push(`startingDeck.classes names unknown class '${classId}'`);
+    const bias = row && row.strikeBias;
+    if (!(Number.isFinite(bias) && bias >= 0 && bias <= 1)) {
+      problems.push(`startingDeck.classes.${classId}.strikeBias must be between 0 and 1 (got ${bias})`);
+    }
+  }
+  for (const cardId of ((cfg.global || {}).grants) || []) {
+    if (!registries.cards.has(cardId)) problems.push(`startingDeck.global.grants names unknown card '${cardId}'`);
+  }
+  if (cfg.enabled !== true || problems.length) return { problems, warnings };
+
+  // The budget itself, per class, against the kit each one actually starts in.
+  const order = (cfg.dropOrder || []).join(' → ');
+  for (const classId of registries.classes.ids()) {
+    let plan;
+    try {
+      plan = startingDeckPlan(registries, createLoadout(registries, classId), classId);
+    } catch (e) {
+      problems.push(`startingDeck: cannot plan '${classId}': ${e.message}`);
+      continue;
+    }
+    if (!plan || !plan.overrun) continue;
+    const detail = `class '${classId}' grants ${plan.grants.length} card(s) and minFiller is `
+      + `${plan.minFiller}, needing ${plan.grants.length + plan.minFiller} of `
+      + `startingDeckSize ${registries.balance.startingDeckSize}`;
+    if (plan.grewToFit) warnings.push(`startingDeck: ${detail}; growToFit raised the deck to ${plan.size}`);
+    else problems.push(`startingDeck: ${detail}; raise startingDeckSize, lower minFiller, or drop a grant (${order})`);
+  }
+  return { problems, warnings };
+}
+
+/** The composed-deck config, or null when the legacy roleCopies path is live. */
+function startingDeckConfig(registries) {
+  const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
+  if (!cfg || cfg.enabled !== true) return null;
+  return cfg;
+}
+
+/** Cards a source hands over outright, one copy each, before any filler. */
+function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
+  const cls = registries.classes.get(classId);
+  const grants = [];
+
+  // Weapon — the technique the equipped armament teaches. Weapon ATTACK grants
+  // (priorityAttackRefs) are not counted here: they are dealt inside the attack
+  // quota by quotaRefs, so counting them again would charge them twice.
+  if (techniqueRow && techniqueRow.profile) {
+    grants.push({
+      source: 'weapon',
+      cardId: techniqueRow.profile.baseCardId,
+      equipmentRole: 'technique',
+      profileId: techniqueRow.profile.id,
+    });
+  }
+
+  // Armour and relic — the seam is live, the data is not: no outfit or relic
+  // declares `grantsCards` today. Authoring the field is all it takes to light
+  // these up; nothing here invents a card that content has not registered.
+  for (const [source, piece] of [
+    ['armor', equippedIn(registries, loadout, classId, 'armor')],
+    ['relic', registries.relics && cls.startingRelic ? registries.relics.get(cls.startingRelic) : null],
+  ]) {
+    for (const cardId of (piece && piece.grantsCards) || []) {
+      grants.push({ source, cardId });
+    }
+  }
+
+  for (const cardId of ((cfg.global || {}).grants) || []) grants.push({ source: 'global', cardId });
+  if (cls.startingSignatureCard) grants.push({ source: 'class', cardId: cls.startingSignatureCard });
+  return grants;
+}
+
+/**
+ * startingDeckPlan(registries, loadout, classId) → the arithmetic, no cards.
+ *
+ * Grants are dealt first and are never dropped; filler is what the budget has
+ * left, split between attack and guard by the class bias. `minFiller` is the
+ * invariant in both branches of `growToFit` — the toggle only decides whether
+ * the deck size gives way (true) or the content author does (false).
+ */
+export function startingDeckPlan(registries, loadout, classId) {
+  const cfg = startingDeckConfig(registries);
+  if (!cfg) return null;
+  const authoredSize = Number(registries.balance.startingDeckSize);
+  const minFiller = Number(cfg.minFiller) || 0;
+  const rows = equipmentKitPlan(registries, loadout, classId);
+  const grants = grantRefsFor(registries, loadout, classId, cfg, rows.find((row) => row.role === 'technique'));
+
+  const needed = grants.length + minFiller;
+  const overrun = needed > authoredSize;
+  // growToFit === true buys the shortfall with deck size; false keeps the size
+  // and lets validateEquipment refuse the kit instead.
+  const size = overrun && cfg.growToFit === true ? needed : authoredSize;
+  const filler = Math.max(0, size - grants.length);
+
+  const bias = Number(
+    ((cfg.classes || {})[classId] || {}).strikeBias ?? cfg.defaultStrikeBias ?? 0.5
+  );
+  // Ties round toward attack; deterministic, and documented in balance.js.
+  const attackCount = Math.min(filler, Math.max(0, Math.round(filler * bias)));
+  return Object.freeze({
+    size,
+    grants: Object.freeze(grants.map(Object.freeze)),
+    filler,
+    attackCount,
+    guardCount: filler - attackCount,
+    bias,
+    minFiller,
+    overrun,
+    grewToFit: overrun && cfg.growToFit === true,
+  });
+}
+
+/** The starting deck as instance-ready refs. */
 export function startingDeckRefs(registries, loadout, classId) {
   const cls = registries.classes.get(classId);
+  const plan = startingDeckPlan(registries, loadout, classId);
   const copies = ((registries.balance || {}).equipment || {}).roleCopies || {};
   const refs = [];
+
+  // Composed path: attack and guard counts come from the plan, everything else
+  // is a grant. Legacy path: the authored roleCopies distribution, verbatim.
+  const attackSlotCount = plan ? plan.attackCount : undefined;
+  const guardCopies = plan ? plan.guardCount : (copies.guard || 0);
+
   for (const row of equipmentKitPlan(registries, loadout, classId)) {
     if (row.role === 'attack') {
-      const attackPlan = buildEquippedWeaponCardPlan(registries, loadout, classId);
+      const attackPlan = buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount });
       refs.push(...attackPlan.slots.map((slot) => ({
         cardId: slot.cardId,
         equipmentRole: 'attack',
@@ -1138,11 +1291,26 @@ export function startingDeckRefs(registries, loadout, classId) {
       })));
       continue;
     }
+    if (row.role === 'guard') {
+      for (let i = 0; i < guardCopies; i++) {
+        refs.push({ cardId: row.profile.baseCardId, equipmentRole: 'guard', profileId: row.profile.id });
+      }
+      continue;
+    }
+    if (plan) continue; // technique is a grant under the composed path
     for (let i = 0; i < (copies[row.role] || 0); i++) {
       refs.push({ cardId: row.profile.baseCardId, equipmentRole: row.role, profileId: row.profile.id });
     }
   }
-  for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+
+  if (!plan) {
+    for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+    return refs;
+  }
+  for (const grant of plan.grants) {
+    const { source, ...ref } = grant;
+    refs.push(ref);
+  }
   return refs;
 }
 
