@@ -9766,6 +9766,9 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
+    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
+    // leaving it, and the screen carries its own LEAVE.
+    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -10579,7 +10582,7 @@ const cards = authoredCards.map((card) => {
 });
 
 const contentBundle = {
-  version: '0.4.0',
+  version: '0.5.0-rc.1',
   balance,
   cards,
   relics,
@@ -10809,8 +10812,16 @@ const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 800,
-    costStep: 200,
+    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
+    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
+    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
+    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
+    // every cinder on levels and nothing at merchants, so its number is the
+    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
+    // merchant-spending player at the low edge. Two numbers, one home, and
+    // the sweep flag reruns the measurement for any other pair.
+    firstCost: 20,
+    costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -16992,7 +17003,6 @@ const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    hpPerConTier: 4,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'forsakenMedallion',
     startingSignatureCard: 'gorefireSlash',
@@ -17019,7 +17029,6 @@ const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 2, mana: 2 },
     startingRelic: 'starstoneShard',
     startingSignatureCard: 'starstonePebble',
@@ -17044,7 +17053,6 @@ const classes = [
     glyph: '🗡',
     name: 'Rogue',
     maxHp: 74,
-    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'cutpursesCoin',
     startingSignatureCard: 'ambush',
@@ -17065,7 +17073,6 @@ const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    hpPerConTier: 6,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'goldFigurine',
     startingSignatureCard: 'urgentHeal',
@@ -22834,7 +22841,7 @@ function validateContent(bundle) {
   }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'hpPerConTier'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
@@ -22905,9 +22912,6 @@ function validateContent(bundle) {
   }
 
   for (const cls of b.classes || []) {
-    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
-      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
-    }
   }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
@@ -27080,7 +27084,6 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
@@ -30844,7 +30847,7 @@ function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -33704,7 +33707,7 @@ const mechanics = {
         "dodgeActionCost": 2
       }
     ],
-    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01), which measures every creatable start (each hand chosen independently, empty allowed) and, for reachability, every ordered pair of DISTINCT armaments through a real loadout. Base 50 left even the heaviest reachable kit at 34-40% (Light): no loadout could leave Light and the class did not exist for the player. Base 5 (the first retune) still left three of four classes unable to reach Heavy at tuned attributes (Reaver 77%, Starseer 78%, Rogue 69%; only Herald 81%) once the double-tower-shield error in the first census was removed. At 0 — capacity is exactly 2*CON + STR — every class can reach Heavy (Reaver 88%, Starseer 92%, Rogue 80%, Herald 96% with warhammer + tower shield + heaviest outfit) and 290 of 336 creatable starts are Light, 46 Medium, none Heavy."
+    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01). The census covers the creator's space: the two VISIBLE creation modes (standard, pointbuy), and for each not only the class preset but the two allocation boundaries that bracket capacity (Constitution and Strength at their legal minimum, and at their legal maximum), every armour choice, and each hand chosen independently (empty allowed, the same armament twice refused), with every pair passed through the creator's own requirement gate (startingHandsRequirementFailure — a sheet that cannot hold a Greatsword does not start with one; 100 pairs refused). Reachability is every ordered pair of distinct armaments through a real loadout with the outfit at its highest Smithing tier, at the standard preset. Base 50 left even the heaviest reachable kit Light: the class did not exist for the player. Base 5 (the first retune) leaves no class able to reach Heavy at the standard preset (Reaver 76%, Starseer 74%, Rogue 74%, Herald 71%). Bases 0 and 1 are the only ones at which every class reaches Heavy (base 0: Reaver 86%, Starseer 86%, Rogue 86%, Herald 82%; base 2 already loses the Herald at 77%); 0 is chosen because capacity is then exactly 2*CON + STR with no free constant. At 0 the preset starts are 200 Light and 24 Medium; the min-capacity boundary starts are 144 Light and 28 Medium and the max-capacity boundary 172 Light and 4 Medium — no creatable start is Heavy, because the same requirements that gate a heavy armament also demand the Strength that raises capacity."
   },
   "dodgeRoll": {
     "die": 20,
@@ -35566,12 +35569,19 @@ const CONFIRMATION_LEVELS = Object.freeze([
   'NONE', 'REVERSIBLE', 'COMMITMENT', 'DESTRUCTIVE',
 ]);
 
+// STAFF: the legacy `staff` armament kind, adopted as its own category
+// (cutover ruling 5, docs/framework-cutover-report.md) rather than folded into
+// WEAPON with the kind hidden in an override.
 const EQUIPMENT_CATEGORIES = Object.freeze([
-  'WEAPON', 'SHIELD', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
+  'WEAPON', 'SHIELD', 'STAFF', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
 ]);
 
+// The canonical ladder is the UNION of the contract's tiers and the live
+// legacy rarities (cutover ruling 3): STARTER/SPECIAL/BOSS are origin classes
+// (a class's own kit, an event's one-off, a boss drop), UNCOMMON is a live
+// tier between COMMON and RARE. Order is the display/sort order.
 const EQUIPMENT_RARITIES = Object.freeze([
-  'BASIC', 'COMMON', 'RARE', 'LEGENDARY', 'MYTHIC',
+  'STARTER', 'BASIC', 'COMMON', 'UNCOMMON', 'RARE', 'SPECIAL', 'LEGENDARY', 'MYTHIC', 'BOSS',
 ]);
 
 const COST_MODES = Object.freeze(['ALL_REQUIRED', 'CHOOSE_ONE']);
@@ -35774,10 +35784,7 @@ const PROFILE_ROLE_PROPERTY = Object.freeze({
 
 // The union of the legacy rarity vocabularies ('starter'/'special'/'boss' are
 // legacy pool markers) and the contract's equipment ladder, lowercased at import.
-const RARITIES = Object.freeze([
-  'starter', 'special', 'boss', 'uncommon',
-  ...EQUIPMENT_RARITIES.map((r) => r.toLowerCase()),
-]);
+const RARITIES = Object.freeze(EQUIPMENT_RARITIES.map((r) => r.toLowerCase()));
 
 function mapped(table, key, what) {
   const value = table[key];
@@ -35948,8 +35955,28 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   }
 
   // ---- armaments and armour ------------------------------------------------
+  // The three contract numbers an armament carries into the framework are
+  // validated HERE, at the import boundary, because the gate's schema checks
+  // never look inside explicitOverrides: a missing or non-numeric weight would
+  // otherwise pass the cutover clean and surface as NaN in the equip load.
+  const armamentInteger = (piece, field) => {
+    const value = piece[field];
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`importer: armament '${piece.id}' ${field} must be a non-negative integer, got ${JSON.stringify(value)}`);
+    }
+    return value;
+  };
   for (const piece of bundle.equipment.armaments) {
     const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
+    const weight = armamentInteger(piece, 'weight');
+    const attackRating = armamentInteger(piece, 'attackRating');
+    const defenseRating = armamentInteger(piece, 'defenseRating');
+    // The legacy identity (armamentIntrinsicStatProblems): an armament's
+    // weight IS its authored poise threshold. A row where they differ is a
+    // typo in one column, not a new rule.
+    if (piece.poiseThreshold !== weight) {
+      throw new Error(`importer: armament '${piece.id}' weight ${weight} must equal its poiseThreshold ${JSON.stringify(piece.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -35958,7 +35985,7 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       properties: [],
       explicitOverrides: {
         legacyId: piece.id,
-        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : 'WEAPON', `armament ${piece.id}`),
+        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : piece.kind === 'staff' ? 'STAFF' : 'WEAPON', `armament ${piece.id}`),
         hand: piece.hand,
         rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
         tags: piece.tags,
@@ -35973,16 +36000,27 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
           guardCardId: piece.guardProfile ? key('profile', piece.guardProfile) : undefined,
           techniqueCardId: piece.techniqueProfile ? key('profile', piece.techniqueProfile) : undefined,
         },
-        // Contract fields the legacy tables do not author yet — imported as
-        // inert defaults, listed in the cutover report as open authoring work.
-        itemWeight: 0,
-        attackRatingBonus: 0,
-        defenseRating: 0,
+        // Contract fields, from the authored armament table (cutover ruling 2):
+        // weapons.csv authors weight / attackRating / defenseRating for every
+        // armament, and the legacy rule binds weight to the authored
+        // poiseThreshold (armamentIntrinsicStatProblems). Nothing in the
+        // running game reads these yet — the Weight Class service stays
+        // dormant until it is wired — so this is data flow, not behavior.
+        itemWeight: weight,
+        attackRatingBonus: attackRating,
+        defenseRating,
       },
     });
   }
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
+    // The outfit's poise threshold is its weight under the A-side rule, so it
+    // is validated here for the same reason the armament numbers are: nothing
+    // downstream inspects explicitOverrides, and a malformed value would ride
+    // into the equip load as NaN or as a silently weightless outfit.
+    if (!Number.isInteger(outfit.poiseThreshold) || outfit.poiseThreshold < 0) {
+      throw new Error(`importer: armour '${outfit.classId}.${outfit.id}' poiseThreshold must be a non-negative integer, got ${JSON.stringify(outfit.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -35996,7 +36034,12 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         tags: outfit.tags,
         mods: outfit.mods,
         artKey: outfit.artKey,
-        itemWeight: 0,
+        // Outfits author no weight column; the legacy identity `weight ==
+        // poiseThreshold` (the armament rule) is adopted for armour as the
+        // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
+        // The B-side — armour weightless — is `itemWeight: 0` here. No
+        // defenseRating column exists for outfits; 0 remains inert.
+        itemWeight: outfit.poiseThreshold,
         defenseRating: 0,
       },
     });
@@ -36057,7 +36100,6 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       explicitOverrides: {
         legacyId: klass.id,
         maxHp: klass.maxHp,
-        hpPerConTier: klass.hpPerConTier,
         startingFlaskAllocation: klass.startingFlaskAllocation,
         startingRelic: klass.startingRelic,
         startingSignatureCard: klass.startingSignatureCard,
@@ -37029,7 +37071,7 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    classFields: ['maxHp', 'maxMana'],
     damageSchools: DAMAGE_SCHOOLS,
   };
 }
@@ -49076,7 +49118,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '399bce7bda';
+const SOURCE = 'ac3ff2077a';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49110,7 +49152,7 @@ const SOURCE = '399bce7bda';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1910';
+const ORDINAL = '1922';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -49565,6 +49607,13 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
+  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
+  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
+  // Shrine open: Rest once, Smith while you have Stones, Level while you have
+  // cinders, and leave when you choose. Conservative default, as his own
+  // data-driven instruction for an unsettled 'maybe' asks.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -51353,6 +51402,86 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-523",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Empty hands fight with the Dodge Roll, Stamina recovers, and your Weight Class prices the dodge",
+    "detail": "A run with both hands empty now composes Evasive Guard in every guard slot and Dodge Roll in every technique slot instead of the placeholder Defend and Footwork. The Dodge Roll checks Dexterity against a d20 and, on success, lands a temporary guard as Block; the pure dodge costs what your Weight Class says — Light 1 Stamina, Medium 2 Stamina and 1 action, Heavy 3 Stamina and 2 actions — and the card face, the tooltip and the engine quote the same price. A turn in which you spend no Stamina recovers some at its end. Armed play is unchanged. Co-op seats are priced from their own Dexterity and equipment.",
+    "build": "0.5.0-rc.1.1922",
+    "pullRequest": 523,
+    "url": "https://github.com/cehinds/AshenSpire/pull/523"
+  },
+  {
+    "id": "pr-520",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Your equipment now has a weight, and the Armoury says what it costs you",
+    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, every item card shows the same Weight number the total counts, smithed or not, and comparing a piece shows the load and Weight Class the swap would leave you at. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.",
+    "build": "0.5.0-rc.1.1920",
+    "pullRequest": 520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/520"
+  },
+  {
+    "id": "pr-516",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Status-effect rules and the cost badges on card faces now come from the framework",
+    "detail": "Behavior-preserving: the ninth port tranche moves status semantics (stacks, meters, decay, procs, resists) behind a framework door and reads the card-face cost, mana and stamina badges from the framework cost profile. Every card's badges are proven identical. Release remains RED.",
+    "build": "0.4.0.1903",
+    "pullRequest": 516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/516"
+  },
+  {
+    "id": "pr-514",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Every status and stance word, and the whole hold-to-confirm surface, route through the framework",
+    "detail": "Behavior-preserving: the eighth port tranche resolves the remaining status/stance names and tooltips (combat rows, proc bars, stance chips, stagger tooltips, co-op board, arcane exposure) through the framework term registry, verbatim, and moves the tap/hold/inspect interaction surface behind the framework door for all ten screens that use it.",
+    "build": "0.4.0.1902",
+    "pullRequest": 514,
+    "url": "https://github.com/cehinds/AshenSpire/pull/514"
+  },
+  {
+    "id": "pr-513",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Armaments can grant cards and install default weapon arts, dormant until authored",
+    "detail": "Nothing a player sees changes: no shipped armament authors a grant or a weapon art yet. The mechanism composes them with save-stable ids at creation and on equip, reconciles them across the combat piles on a mid-fight swap and on loading a fight, dedupes a shared weapon art across two hands, and keeps them out of per-copy upgrade and removal offers — all proven by fixture. Status and stance words on card faces now resolve through the framework term registry.",
+    "build": "0.4.0.1901",
+    "pullRequest": 513,
+    "url": "https://github.com/cehinds/AshenSpire/pull/513"
+  },
+  {
+    "id": "pr-512",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Deck composition and confirmation rules adopted as the framework's own",
+    "detail": "Behavior-preserving: the shipped weapon-deck composer and the fail-closed confirmation derivation become the framework's implementations behind framework doors; the smith upgrade modal routes through the option-decision door. Rides along: the about-changelog instrument's selftest census and verdict lines (#498).",
+    "build": "0.4.0.1896",
+    "pullRequest": 512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/512"
+  },
+  {
+    "id": "pr-511",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Two owner rulings recorded and executed for the framework port",
+    "detail": "Behavior-preserving: the owner adopted the legacy deck composition and the fail-closed confirmation derivation as the framework's rules; status and stance tooltips on card faces resolve through framework terms.",
+    "build": "0.4.0.1893",
+    "pullRequest": 511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/511"
+  },
+  {
+    "id": "pr-510",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Card costs and load/quit confirmation severity decided by the framework",
+    "detail": "Behavior-preserving: the second port tranche compiles every card's cost profile (action, mana, stamina, X, Power reduction) through the framework and reads the load/quit dialog tone from the confirmation registry; every card's costs are proven identical, base and upgraded.",
+    "build": "0.4.0.1893",
+    "pullRequest": 510,
+    "url": "https://github.com/cehinds/AshenSpire/pull/510"
+  },
   {
     "id": "pr-508",
     "date": "2026-09-01",
@@ -56371,6 +56500,7 @@ const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
 const { statProjection, pieceWeight } = require("src/model/statProjection.js");
+const { resolveUpgradedEquipment } = require("src/model/itemUpgrades.js");
 const { attributeCardModels } = require("src/model/creationBrief.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
@@ -57903,9 +58033,15 @@ function mountEquipment(host, {
 
   function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
     const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
-    const item = slot.kinds.includes('armor')
+    const authored = slot.kinds.includes('armor')
       ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
       : (eq.armaments || []).find((piece) => piece.id === itemId);
+    // The item AT ITS SMITHED TIER, the same resolution the load receipt
+    // uses (equippedPieces → resolveUpgradedEquipment): a tier that raises
+    // the poise threshold raises the armour's weight with it, and the card's
+    // Poise and Weight labels must say what the total counts.
+    const itemRef = authored ? (slot.kinds.includes('armor') ? `armor/${run.class}/${authored.id}` : `armament/${authored.id}`) : null;
+    const item = authored ? resolveUpgradedEquipment(registries, itemRef, (run.itemUpgradeLevels || {})[itemRef] || 0) : null;
     const surface = equipmentSurfaceReceipt(registries, run);
     const roleLabels = new Map(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const isActive = setIndex === (run.loadout.active?.[slot.id] || 0);
@@ -58837,6 +58973,13 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   resourceChanges.push(...swapPriceChanges(registries, run, run.loadout, loadout, meta, slot.id, setIndex));
   const beforePoise = playerPoiseThresholdReceipt(registries, run);
   const afterPoise = playerPoiseThresholdReceipt(registries, comparedRun);
+  // The compared run keeps `itemUpgradeLevels` (spread from `run`), so the
+  // candidate weighs at the tier it is actually forged to — the same tier the
+  // slot summary shows (ui/screens/equipment.js) and the same `pieceWeight`
+  // rule the Armoury readout uses. Capacity cannot move in a swap (attributes
+  // and bonuses are the run's), so only load, percent and the class word can.
+  const beforeLoad = playerLoadReceipt(registries, run);
+  const afterLoad = playerLoadReceipt(registries, comparedRun);
   return {
     slotId: slot.id,
     setIndex,
@@ -58875,6 +59018,20 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
       after: afterPoise.value,
       active: false,
       note: afterPoise.note,
+    },
+    load: {
+      before: beforeLoad.load,
+      after: afterLoad.load,
+      capacity: afterLoad.capacity,
+      beforePercent: beforeLoad.percent,
+      afterPercent: afterLoad.percent,
+      beforeClassId: beforeLoad.classId,
+      afterClassId: afterLoad.classId,
+      beforeWord: beforeLoad.word,
+      afterWord: afterLoad.word,
+      changesClass: beforeLoad.classId !== afterLoad.classId,
+      active: false,
+      note: afterLoad.note,
     },
   };
 }
@@ -59278,6 +59435,23 @@ function renderPlayerLoad(receipt) {
     + `<small>${esc(receipt.note)}</small></section>`;
 }
 
+// The swap's load row: before → after out of the (unmoving) capacity, each
+// with its percent (the number the class thresholds are stated in — SPEC's
+// `.player-load-receipt` carries percent), and the Weight Class word on both
+// sides so a swap that crosses a boundary reads as the class change it is,
+// not as a number the player has to divide themselves.
+// `data-weight-class` carries the AFTER class, matching renderPlayerLoad's
+// attribute on the standing readout; `data-class-change` marks a crossing.
+function renderCandidateLoad(load) {
+  if (!load) return '';
+  const word = load.changesClass
+    ? `${esc(load.beforeWord)} → <strong>${esc(load.afterWord)}</strong>`
+    : `<strong>${esc(load.afterWord)}</strong>`;
+  return `<section class="player-load-receipt" data-weight-class="${esc(load.afterClassId)}" data-class-change="${load.changesClass ? 'yes' : 'no'}"><b>Equip load</b>`
+    + `<span>${load.before} (${load.beforePercent}%) → <strong>${load.after} (${load.afterPercent}%)</strong> of ${load.capacity} · ${word}</span>`
+    + `<small>${esc(load.note)}</small></section>`;
+}
+
 function renderRoleCopies(surface) {
   return surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
     + `<span>${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier}`
@@ -59304,6 +59478,7 @@ function renderCandidateComparison(candidate, { expanded = false } = {}) {
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`
     + `<section class="player-poise-receipt"><b>Poise threshold</b><span>${candidate.poise.before} → <strong>${candidate.poise.after}</strong></span><small>${esc(candidate.poise.note)}</small></section>`
+    + renderCandidateLoad(candidate.load)
     + '</details>';
 }
 
@@ -67331,9 +67506,19 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+  // E13's multi-use Shrine: an action re-opens the same screen (with what was
+  // already taken recorded) instead of leaving; LEAVE is the one way out.
+  const remount = (extra = {}) => mountRest(app, {
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+  });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = relicNoRest || (multiUse && rested);
+  // The locked copy names the real reason: a relic that forbids rest, or a
+  // rest already taken at this Shrine under Multi-use — never a relic the
+  // player does not carry.
+  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -67371,7 +67556,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -67481,21 +67666,27 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           </div>
         </details>
       </div>
+      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
   ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  const leave = app.querySelector('#shrine-leave');
+  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      question: multiUse
+        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
+        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
       confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -67537,7 +67728,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      remount({ openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // The same allocation component used by character creation, with shrine
@@ -67579,7 +67770,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
+          remount({ openPanel: 'level' });
         },
       });
     };
@@ -67593,7 +67784,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
       let selectedItemRef = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef);
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
@@ -67606,6 +67797,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
+          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
           onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
@@ -67957,7 +68149,7 @@ function genericAffected(candidate) {
   })));
 }
 
-function smithSelectionModel(registries, plan, selectedItemRef = null) {
+function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false } = {}) {
   const items = plan.candidates.map((candidate) => {
     const itemKind = candidate.itemKind || 'armament';
     const itemId = candidate.itemId || candidate.armamentId;
@@ -68012,7 +68204,13 @@ function smithSelectionModel(registries, plan, selectedItemRef = null) {
       title: 'Upgrade an Item',
       eyebrow: 'Shrine action',
       instruction: 'Choose one owned item. Review its exact changes, requirements, and Stone cost.',
-      consequence: 'Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. The upgrade leaves the Shrine.',
+      // Every stay/leave sentence the modal shows is derived HERE (SPEC: the
+      // model owns the copy; the component renders it): the footer line, the
+      // header badge, and the tail of the decision message.
+      staysAtShrine: !!multiUse,
+      consequence: `Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. ${multiUse ? 'You stay at the Shrine.' : 'The upgrade leaves the Shrine.'}`,
+      consequenceBadge: multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE',
+      decisionConsequence: multiUse ? 'you stay at the Shrine' : 'and leaves the Shrine',
       purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`,
       candidates: freeze(items),
       selected,
@@ -68053,6 +68251,7 @@ const visibleFocusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
 function mountSmithUpgradeModal(host, initialModel, {
+
   registries,
   meta,
   onSelect,
@@ -68080,7 +68279,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
         <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
       </div>
-      <span class="smith-modal-consequence">LEAVES SHRINE</span>
+      <span class="smith-modal-consequence">${esc(initialModel.properties.consequenceBadge)}</span>
     </header>
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
@@ -68272,7 +68471,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         registries,
         id: 'smithUpgrade',
         title: `Upgrade ${selected.name}?`,
-        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost and leaves the Shrine.`,
+        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${model.properties.staysAtShrine ? '; ' : ' '}${model.properties.decisionConsequence}.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
         confirmLabel: `Upgrade (${selected.cost})`,
