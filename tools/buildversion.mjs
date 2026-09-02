@@ -945,16 +945,28 @@ export function check(root = REPO_ROOT) {
       } else if (now === null) {
         add(false, 'H ORDINAL INCREASES', `HEAD changed ${BUNDLE} and has no readable ${ORDINAL_HOME} — a build shipped with no number`);
       } else if (before.release === null) {
-        // The parent predates the release-scoped counter, so the two numbers
-        // are not in the same space at all: 2259 was a position in the retired
-        // global sequence and 2 is a count within a candidate. Nothing can be
-        // ruled on, and this row says n/a out loud rather than inventing a
-        // comparison — the same answer it already gives when the parent has no
-        // ordinal file. (Caught by review on #574 AFTER it merged: the earlier
-        // form demanded a 0 tail whenever the release field moved, which made
-        // the scheme's own boundary commit red.)
-        add(true, 'H ORDINAL INCREASES',
-          `${parent.slice(0, 7)} counted its ordinal before the release was recorded beside it — the retired global sequence and a per-candidate count are not comparable (n/a, stated)`);
+        // THE TWO NUMBERS ARE NOT IN THE SAME SPACE — 2259 was a position in
+        // the retired global sequence and 2 is a count within a candidate — so
+        // no comparison can be invented here. What CANNOT be concluded from
+        // that is that everything is fine.
+        //
+        // This branch said green, and review on #579 named the hole: a missing
+        // field is not proof of provenance. After the migration a branch can
+        // drop `release` in one commit and restore it in the next alongside a
+        // changed bundle and a LOWER version; at that second commit rows F and
+        // G both pass, and a green here would wave the ordering question
+        // through entirely. The intermediate commit is red at row F, which is
+        // no help when CI reads only the head.
+        //
+        // So it resolves to UNKNOWN, which blocks. That is this file's own
+        // stated rule, ten lines below in the catch: a question we could not
+        // put ourselves in a position to ask resolves to unknown, never to a
+        // green. A branch based before the migration meets it and merges `dev`
+        // to clear it, which is the same thing it needed to do anyway.
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${parent.slice(0, 7)} records an ordinal with no release beside it, so its era cannot be established:`
+          + ` a parent that predates the release-scoped counter and one that had the field removed look identical from here,`
+          + ` and only the first is harmless. Merge a base that records its release rather than reading this as a pass.`);
       } else if (before.release !== now.release) {
         // WHAT MUST HOLD IS THAT THE VERSION WENT UP, NOT THAT THE TAIL IS 0.
         // The counter restarts at 0 on a new candidate, so a lower tail is

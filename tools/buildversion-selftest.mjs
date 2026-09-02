@@ -411,34 +411,41 @@ function ordinalHistory() {
     })();
 
   const CASES = [
-    [null, false, 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
-    [bump, true, 'the control: the same commit with the ordinal moved must go GREEN'],
+    [null, 'red', 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
+    [bump, 'green', 'the control: the same commit with the ordinal moved must go GREEN'],
     // #574 review, caught after that PR merged: demanding a 0 tail on a release
     // change was wrong in BOTH directions, so both are watched here.
-    [(j) => ({ ...j, release: FORWARD, ordinal: 3 }), true,
+    [(j) => ({ ...j, release: FORWARD, ordinal: 3 }), 'green',
       `the candidate ADVANCES after several branch builds (${CURRENT}.x → ${FORWARD}.3) — a non-zero tail is still a rise, and must go GREEN`],
-    ...(BACKWARD === null ? [] : [[(j) => ({ ...j, release: BACKWARD, ordinal: 0 }), false,
+    ...(BACKWARD === null ? [] : [[(j) => ({ ...j, release: BACKWARD, ordinal: 0 }), 'red',
       `the candidate moves BACKWARD onto a 0 tail (${CURRENT}.x → ${BACKWARD}.0) — the tail is what a new candidate starts at, and the build still went back`]]),
     // The PARENT is the one that must predate the field, so it is the first
     // commit that loses it — staged the other way round, this plant proved
     // nothing and said so.
-    [bump, true,
-      'the PARENT predates the recorded release — the retired global sequence and a per-candidate count are not comparable, so n/a is the honest answer',
+    // A missing release is UNPROVABLE provenance, not a proven-legacy parent:
+    // the field may have been removed. UNKNOWN blocks, so this is watched as
+    // its own verdict rather than folded into green or red (#579 review).
+    [bump, 'unknown',
+      "the PARENT records an ordinal with no release — a legacy parent and a removed field look identical, so the row must not call it a pass",
       ({ release, ...rest }) => ({ ...rest, ordinal: 9999 })],
   ];
   if (BACKWARD === null) {
     console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);
   }
-  for (const [second, wantGreen, label, first = null] of CASES) {
+  // THREE VERDICTS, NOT TWO. `unknown` is its own expectation because it is its
+  // own outcome: check() treats null as blocking exactly as false does, and a
+  // case watched merely "not green" could not tell the two apart.
+  const WANT = { red: false, green: true, unknown: null };
+  for (const [second, want, label, first = null] of CASES) {
     const dir = build(second, first);
     try {
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
-      if (!wantGreen) say(row && row.ok === false, label, detail);
+      const hit = row !== undefined && row.ok === WANT[want];
+      if (want === 'red') say(hit, label, detail);
       else {
-        const ok = row && row.ok === true;
-        if (!ok) failures += 1;
-        console.log(`  ${ok ? 'ok   ' : 'FAIL '} [H ORDINAL INCREASES] ${label}`);
+        if (!hit) failures += 1;
+        console.log(`  ${hit ? 'ok   ' : 'FAIL '} [H ORDINAL INCREASES] (${want}) ${label}`);
         console.log(`          ${detail}`);
       }
     } finally {
