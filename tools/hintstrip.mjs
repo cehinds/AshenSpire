@@ -301,6 +301,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // AN ANCESTOR'S OWN PAINT: the row's ::after as an opaque band over the
+        // bottom third of the row, above its controls (z-index inside the
+        // row's own stacking context). The hit-test lists the ROW above its
+        // controls there; a probe that skipped every ancestor would keep the
+        // band in both uncovered captures and read nothing lost (Codex, #540).
+        name: 'the row\'s ::after paints an opaque band over the bottom third of its own controls',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }\n.combat-action-row::after { content: ""; position: absolute; inset: auto 0 0 0; height: 34%; background: #000; z-index: 50; pointer-events: none; }',
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // A PARTIAL SHEET: the same layer as a thin black band (3vh) along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
@@ -656,24 +670,48 @@ const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-acti
   if (document.querySelector('.combat-action-row .et-key')) list.push({ sel: '.combat-action-row .et-key', name: 'END TURN key label' });
   return list.map((t) => { const el = document.querySelector(t.sel); const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
     return { ...t, x: r.left, y: r.top, w: r.width, h: r.height, shown: cs.display !== 'none' && cs.visibility === 'visible' && r.width >= 1 && r.height >= 1 }; }); })()`;
-// Marks every element drawn above the control with data-hintstrip-cover and
-// returns their names (paint order, topmost first, deduplicated).
+// Marks every element drawn above the control and returns their names (paint
+// order, topmost first, deduplicated). Two kinds: a SIBLING cover (any
+// element that is not an ancestor) is hidden whole for the uncovered
+// captures; an ANCESTOR that the hit-test lists ABOVE the control paints
+// something over it from its own box — a ::before/::after with a z-index, a
+// background in a higher layer — and cannot be hidden whole without hiding
+// the control, so its pseudo-elements are hidden instead for those captures
+// (an ancestor's own background paints below its descendants, so what an
+// ancestor can draw over a control is a ::before/::after — Codex, #540). An
+// ancestor whose paint lies below the control is listed after it and is
+// nothing to hide. Pseudo-elements are hit-testable for the read too.
 const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const r = el.getBoundingClientRect();
-  const style = document.createElement('style'); style.textContent = '* { pointer-events: auto !important; }'; document.head.appendChild(style);
-  const found = [];
+  const style = document.createElement('style'); style.textContent = '*, *::before, *::after { pointer-events: auto !important; }'; document.head.appendChild(style);
+  const found = [], above = [];
   try {
     const step = Math.max(2, Math.min(6, Math.floor(Math.min(r.width, r.height) / 8)));
     for (let y = r.top + 1; y < r.bottom; y += step) for (let x = r.left + 1; x < r.right; x += step) {
-      for (const n of document.elementsFromPoint(x, y)) {
-        if (n === el || el.contains(n)) break;
-        if (n.contains(el)) continue;
+      // Only a point the control itself is hit at says anything about what is
+      // over it: at a point of its box it does not paint (an orb's corner) the
+      // stack is its ancestors alone, none of them "above" anything.
+      const stack = document.elementsFromPoint(x, y);
+      const at = stack.findIndex((n) => n === el || el.contains(n));
+      if (at < 0) continue;
+      for (const n of stack.slice(0, at)) {
+        if (n.contains(el)) { if (!above.includes(n)) above.push(n); continue; }
         if (!found.includes(n)) found.push(n);
       }
     }
   } finally { style.remove(); }
-  return found.map((n, i) => { n.setAttribute('data-hintstrip-cover', String(i)); return (String(n.className).split(' ')[0] || n.tagName.toLowerCase()); }); })()`;
-const COVERS_HIDE = `(() => { for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { n.setAttribute('data-hintstrip-cover-vis', n.style.getPropertyValue('visibility') || ''); n.style.setProperty('visibility', 'hidden', 'important'); } return 1; })()`;
-const COVERS_RESTORE = `(() => { for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { const v = n.getAttribute('data-hintstrip-cover-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-cover'); n.removeAttribute('data-hintstrip-cover-vis'); } return 1; })()`;
+  const name = (n) => (String(n.className).split(' ')[0] || n.tagName.toLowerCase());
+  found.forEach((n, i) => n.setAttribute('data-hintstrip-cover', String(i)));
+  above.forEach((n, i) => n.setAttribute('data-hintstrip-cover-anc', String(i)));
+  return found.map(name).concat(above.map((n) => 'ancestor ' + name(n) + ' (its own paint above the control)')); })()`;
+const COVERS_HIDE = `(() => {
+  for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { n.setAttribute('data-hintstrip-cover-vis', n.style.getPropertyValue('visibility') || ''); n.style.setProperty('visibility', 'hidden', 'important'); }
+  const st = document.createElement('style'); st.id = 'hintstrip-cover-style';
+  st.textContent = '[data-hintstrip-cover-anc]::before, [data-hintstrip-cover-anc]::after { visibility: hidden !important; }';
+  document.head.appendChild(st); return 1; })()`;
+const COVERS_RESTORE = `(() => {
+  for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { const v = n.getAttribute('data-hintstrip-cover-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-cover'); n.removeAttribute('data-hintstrip-cover-vis'); }
+  for (const n of document.querySelectorAll('[data-hintstrip-cover-anc]')) n.removeAttribute('data-hintstrip-cover-anc');
+  const st = document.getElementById('hintstrip-cover-style'); if (st) st.remove(); return 1; })()`;
 async function paintOf(ev, shot) {
   const out = [];
   for (const t of await ev(PAINT_TARGETS)) {
@@ -766,7 +804,7 @@ function judge(r, cell, wide, pointer) {
   const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
   const paint = Array.isArray(r.paint) ? r.paint : [];
   const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST));
-  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost`).join('; ');
+  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost${(p.covers && p.covers.length) ? ' (over it: ' + p.covers.join(', ') + ')' : ''}`).join('; ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
