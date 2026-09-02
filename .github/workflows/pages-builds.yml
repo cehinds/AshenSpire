@@ -77,6 +77,51 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      # SAY THAT THE SITE IS BEHIND, BECAUSE NOBODY WAS BEING TOLD.
+      #
+      # #553: after #543 correctly took the deploy credential off the push path,
+      # nothing republished — and nothing SAID nothing had republished, so /dev
+      # /test /release served stale builds for hours with every run green.
+      #
+      # A first attempt at this fixed it by publishing automatically behind a
+      # repository-variable switch. Codex refused that twice and the contract is
+      # why: `.agentops/governance/promotion-gates.json` marks Pages deployment a
+      # Gate F `separate_action` with `authority_is_per_action: true`, and its
+      # rules say no gate grants Pages authority "except Gate F, and there only
+      # per individual action", and that Gate F "cannot be delegated, waived or
+      # satisfied by a deputy". A standing switch IS a delegation to every future
+      # push. So this step reports; it does not publish, and nothing here should
+      # ever grow the ability to.
+      - name: Report whether the published site is behind this build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -u
+          {
+            echo "### Assembled — not published"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Branch | \`${{ github.ref_name }}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Best effort, and its failure is REPORTED rather than swallowed: a
+          # silent no-op here would look exactly like a current site.
+          if last=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/pages/builds/latest"); then
+            echo "Last publication: $(printf '%s' "$last" | grep -o '"created_at":"[^"]*"' | head -1)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Last publication: **could not be read** (needs \`pages: read\`), so whether the site is current is UNKNOWN — treat it as behind." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+            echo
+            echo "Publishing is a Gate F action and the owner's alone, per individual act."
+            echo "To publish this assembly, the repository owner dispatches this workflow"
+            echo "with \`publish\` = \`PUBLISH\`; no push can do it and no standing setting"
+            echo "may stand in for that decision."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     needs: assemble
