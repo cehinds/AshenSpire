@@ -429,7 +429,28 @@ export function padOrdinal(n) {
  * malformed release is refused.
  */
 export function versionTuple(releaseString, ordinal) {
-  return [...versionPrefix(releaseString).split('.').map((n) => (Number.isFinite(Number(n)) ? Number(n) : 0)), ordinal];
+  const parts = versionPrefix(releaseString).split('.');
+  // NO SUBSTITUTED ZEROES. This coerced a non-numeric component to 0 and said
+  // in its own comment that row F refused a malformed release — a guarantee I
+  // asserted without reading the row, which does not make it. Review on #579
+  // shipped `0.6.x` through all eight checks that way: F compared the two
+  // release strings and found them equal, and H read the invented `0.6.0.0` as
+  // a rise over `0.5.4.4`. An unorderable version returns null here and the
+  // callers refuse rather than rank it.
+  if (!parts.every((n) => /^\d+$/.test(n))) return null;
+  return [...parts.map(Number), ordinal];
+}
+
+/**
+ * The release syntax the scheme admits: three numeric components, optionally
+ * carrying a pre-release tag. Returns null when it parses, or the reason.
+ */
+export function releaseSyntaxError(releaseString) {
+  if (/^\d+\.\d+\.\d+$/.test(releaseString)) return null;
+  if (/^\d+\.\d+\.\d+-[A-Za-z]+\.\d+$/.test(releaseString)) return null;
+  return `'${releaseString}' is not a release: the scheme admits three numeric components`
+    + ` (0.5.4), optionally with a pre-release tag (0.5.0-rc.4). A component that is not a number`
+    + ` cannot be ordered against one that is, so nothing downstream can rank this build.`;
 }
 
 /** Component-wise numeric compare of two versionTuple results. */
@@ -889,6 +910,15 @@ export function check(root = REPO_ROOT) {
     // compared to a committed fact, and this is one.
     if (recorded.release === null) problems.push(`${ORDINAL_HOME} records no release — the ordinal is a count within a release, and a count with no release named is a number with no subject`);
     else if (recorded.release !== release(root)) problems.push(`${ORDINAL_HOME} counted ordinal ${recorded.ordinal} under release '${recorded.release}', but ${RELEASE_HOME} now says '${release(root)}' — the number belongs to a different candidate`);
+    // AND THE RELEASE MUST BE A RELEASE. Agreement is not well-formedness: two
+    // homes can hold the same malformed string and this row was satisfied by
+    // that alone, which let `0.6.x` reach an ordering comparison (#579 review).
+    // This is the row that owns "the number on the box is well-formed" — it
+    // already says so of the ordinal and the date — so the release joins them.
+    else {
+      const bad = releaseSyntaxError(recorded.release);
+      if (bad) problems.push(`${ORDINAL_HOME} records release ${bad}`);
+    }
     add(problems.length === 0, 'F ORDINAL ON THE BOX',
       problems.length === 0
         ? `${BUNDLE} carries ORDINAL '${want}' and BUILT '${wantDate}', which are ${ORDINAL_HOME}'s, counted under release '${recorded.release}'`
@@ -980,6 +1010,16 @@ export function check(root = REPO_ROOT) {
         // version answers both at once.
         const beforeV = versionTuple(before.release, before.ordinal);
         const nowV = versionTuple(now.release, now.ordinal);
+        if (beforeV === null || nowV === null) {
+          // An unorderable version is not a fallen one and not a risen one.
+          // Row F refuses the malformed release on its own account; this row
+          // declines to rank what it cannot read rather than inventing a
+          // verdict from substituted zeroes.
+          add(null, 'H ORDINAL INCREASES',
+            `UNKNOWN — ${beforeV === null ? `${parent.slice(0, 7)} records release '${before.release}'` : `HEAD records release '${now.release}'`},`
+            + ` which has a component that is not a number. Nothing can be ordered against it; row F names the malformation.`);
+          return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+        }
         const rose = compareVersions(nowV, beforeV) > 0;
         add(rose, 'H ORDINAL INCREASES',
           rose

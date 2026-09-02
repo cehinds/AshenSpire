@@ -178,6 +178,19 @@ const PLANTS = [
     plant: (root) => editJson(root, (j) => ({ ...j, release: `${j.release}-planted` })),
   },
   {
+    // AGREEMENT IS NOT WELL-FORMEDNESS. Both homes carry the SAME malformed
+    // release here, so the agreement check above is satisfied and only the
+    // syntax check can fire. Review on #579 shipped exactly this through all
+    // eight rows: F saw two equal strings and H ranked an invented `0.6.0.0`
+    // over `0.5.4.4` because a non-numeric component was coerced to zero.
+    name: 'a release with a component that is not a number, agreed by BOTH homes',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => {
+      editJson(root, (j) => ({ ...j, release: '0.6.x' }));
+      edit(root, 'src/content/index.js', (t) => t.replace(/version: '[^']+'/, "version: '0.6.x'"));
+    },
+  },
+  {
     // Isolates G: the NUMBER still matches the box, so F stays green and only
     // the "was this computed for this source" question can fire.
     name: 'the recorded digest HAND-EDITED — the number belongs to another tree',
