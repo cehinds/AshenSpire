@@ -142,16 +142,24 @@ jobs:
           if last=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pages/builds/latest"); then
-            created=$(printf '%s' "$last" | jq -r '.created_at // empty')
+            # WHICH TIMESTAMP, AND WHY IT IS NOT created_at. GitHub defines
+            # created_at as when the build was CREATED — queued — and updated_at
+            # as when it reached its final status. A build that sat queued or ran
+            # for minutes therefore published LATER than its created_at says, so
+            # dating the site by it backdates the publication and understates
+            # staleness by exactly the interval an incident makes longest. The
+            # completion time is the one that answers "how old is what I am
+            # looking at".
+            finished=$(printf '%s' "$last" | jq -r '.updated_at // empty')
             # THE STATUS DECIDES, NOT THE TIMESTAMP. builds/latest returns the
             # newest ATTEMPT whatever became of it, so a build that errored, was
-            # cancelled, or is still running comes back carrying a created_at.
-            # Printing that as "Last publication" would date the site to a
+            # cancelled, or is still running comes back carrying timestamps.
+            # Printing one as "Last publication" would date the site to a
             # publication that never happened — the same misleading state this
             # summary exists to prevent. Only `built` is a publication.
             state=$(printf '%s' "$last" | jq -r '.status // empty')
-            if [ "$state" = "built" ] && [ -n "$created" ]; then
-              echo "Last publication: **$created**" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$state" = "built" ] && [ -n "$finished" ]; then
+              echo "Last publication: **$finished** (build completed)" >> "$GITHUB_STEP_SUMMARY"
             elif [ -n "$state" ]; then
               echo "Last publication: **UNKNOWN** — the newest Pages build reports status \`$state\`, not \`built\`, so it did not publish. Treat the site as behind." >> "$GITHUB_STEP_SUMMARY"
             else
