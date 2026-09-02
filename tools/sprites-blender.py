@@ -117,6 +117,15 @@ ROGUE_SCALE_LT = make_mat("rogueScaleLt", srgb(0x4A, 0x53, 0x36))  # h 78.6° v 
 # unpaintable.
 ROGUE_LEATHER = make_mat("rogueLeather", srgb(0x3A, 0x2A, 0x1C))   # h 28.0° v 0.227
 ROGUE_UNDER = make_mat("rogueUnder", srgb(0x24, 0x1E, 0x14))       # h 37.5° v 0.141
+# The hood and mantle are rogue's own too, and for a subtler reason than the
+# four above: build_rogue first borrowed HOOD_DARK and CLOTH_DARK from the
+# herald, which herald's CLASS_BODY_MATS repaints. equipment-blender renders
+# herald before rogue, so every rogue equipment body would have inherited the
+# LAST herald armour set's colours on its cowl — a leak that shows up only in
+# the generated art, never at import. Materials a builder relies on must be
+# private to it unless no other class repaints them.
+ROGUE_HOOD = make_mat("rogueHood", srgb(0x24, 0x1A, 0x12))         # h 26.7° v 0.141
+ROGUE_MANTLE = make_mat("rogueMantle", srgb(0x2E, 0x24, 0x18))     # h 32.7° v 0.180
 
 _parts = []
 
@@ -289,19 +298,19 @@ def build_rogue():
     # THE MANTLE: layered shoulder cowl falling to mid-arm. This is the shape
     # that reads as rogue at a glance and the reason its content box is the
     # widest of the four (252 px against 169-201).
-    part(cone, HOOD_DARK, loc=(0, 0.01, 1.16), vertices=10, radius1=0.42, radius2=0.24, depth=0.34)
-    part(cone, CLOTH_DARK, loc=(0, 0.01, 1.28), vertices=10, radius1=0.34, radius2=0.22, depth=0.22)
+    part(cone, ROGUE_HOOD, loc=(0, 0.01, 1.16), vertices=10, radius1=0.42, radius2=0.24, depth=0.34)
+    part(cone, ROGUE_MANTLE, loc=(0, 0.01, 1.28), vertices=10, radius1=0.34, radius2=0.22, depth=0.22)
     for side in (-1, 1):
-        part(ico, HOOD_DARK, loc=(side * 0.33, 0, 1.20), subdivisions=2, radius=0.155)
+        part(ico, ROGUE_HOOD, loc=(side * 0.33, 0, 1.20), subdivisions=2, radius=0.155)
         part(cone, ROGUE_SCALE, loc=(side * 0.35, 0.01, 0.96), vertices=8, radius1=0.105, radius2=0.058, depth=0.34)
         part(cyl, ROGUE_LEATHER, loc=(side * 0.36, -0.02, 0.80), blight=(0, side * 6, 0), vertices=8,
              radius=0.062, depth=0.22)
     # hood: outer shell, brow ridge, and a void where the face would be.
     # Unlike herald there are NO eyes — the reference reads as an empty dark.
-    part(uv, HOOD_DARK, loc=(0, 0.02, 1.46), segments=14, ring_count=10, radius=0.215)
-    part(cyl, HOOD_DARK, loc=(0, -0.10, 1.48), blight=(90, 0, 0), vertices=12, radius=0.180, depth=0.05)
+    part(uv, ROGUE_HOOD, loc=(0, 0.02, 1.46), segments=14, ring_count=10, radius=0.215)
+    part(cyl, ROGUE_HOOD, loc=(0, -0.10, 1.48), blight=(90, 0, 0), vertices=12, radius=0.180, depth=0.05)
     part(uv, NEAR_BLACK, loc=(0, -0.085, 1.43), segments=10, ring_count=6, radius=0.145)
-    part(cone, HOOD_DARK, loc=(0, 0.11, 1.63), blight=(20, 0, 0), vertices=8, radius1=0.17, radius2=0.03, depth=0.28)
+    part(cone, ROGUE_HOOD, loc=(0, 0.11, 1.63), blight=(20, 0, 0), vertices=8, radius1=0.17, radius2=0.03, depth=0.28)
     # the one gold surface: a single clasp at the throat holding the mantle shut
     part(cone, ACCENT, loc=(0, -0.215, 1.24), blight=(90, 0, 0), vertices=3, radius1=0.055, radius2=0.0, depth=0.03)
     # paired daggers, held low — reverse grip, so the blades run down past the hip
