@@ -881,6 +881,7 @@ test('a granted instance is never a removal candidate', () => {
 
 const { playerLoadReceipt } = await import('../src/model/statProjection.js');
 const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
+const { renderCandidateComparison } = await import('../src/ui/components/equipmentReceipts.js');
 const weightHome = await import('../src/framework/weight.js');
 
 test('the bridge decides Weight Class through the framework service, with the TermRegistry word', () => {
@@ -927,6 +928,10 @@ test('the Armoury comparison carries the swap\'s load and Weight Class before an
     candidate: { slotId: 'leftHand', setIndex: 0, pieceId: null },
   }).candidate;
   eq(bare.load.after, before.load - 7, 'unequipping the shield sheds exactly its weight');
+  const html = renderCandidateComparison(compared);
+  eq(html.includes(`${compared.load.before} (${compared.load.beforePercent}%) → <strong>${compared.load.after} (${compared.load.afterPercent}%)</strong> of ${compared.load.capacity}`), true,
+    'the rendered row shows both loads with their percents over the capacity');
+  eq(html.includes(`data-weight-class="${compared.load.afterClassId}"`), true, 'the row carries the after class');
 });
 
 test('grant and weapon-art authoring is validated by name', () => {

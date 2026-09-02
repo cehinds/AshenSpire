@@ -27,9 +27,11 @@ export function renderPlayerLoad(receipt) {
     + `<small>${esc(receipt.note)}</small></section>`;
 }
 
-// The swap's load row: before → after out of the (unmoving) capacity, and the
-// Weight Class word on both sides so a swap that crosses a boundary reads as
-// the class change it is, not as a number the player has to divide themselves.
+// The swap's load row: before → after out of the (unmoving) capacity, each
+// with its percent (the number the class thresholds are stated in — SPEC's
+// `.player-load-receipt` carries percent), and the Weight Class word on both
+// sides so a swap that crosses a boundary reads as the class change it is,
+// not as a number the player has to divide themselves.
 // `data-weight-class` carries the AFTER class, matching renderPlayerLoad's
 // attribute on the standing readout; `data-class-change` marks a crossing.
 function renderCandidateLoad(load) {
@@ -38,7 +40,7 @@ function renderCandidateLoad(load) {
     ? `${esc(load.beforeWord)} → <strong>${esc(load.afterWord)}</strong>`
     : `<strong>${esc(load.afterWord)}</strong>`;
   return `<section class="player-load-receipt" data-weight-class="${esc(load.afterClassId)}" data-class-change="${load.changesClass ? 'yes' : 'no'}"><b>Equip load</b>`
-    + `<span>${load.before} → <strong>${load.after}</strong> of ${load.capacity} · ${word}</span>`
+    + `<span>${load.before} (${load.beforePercent}%) → <strong>${load.after} (${load.afterPercent}%)</strong> of ${load.capacity} · ${word}</span>`
     + `<small>${esc(load.note)}</small></section>`;
 }
 
