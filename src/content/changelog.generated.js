@@ -477,8 +477,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-28",
     "group": "2026-08-28",
     "summary": "The startup gate is centred, and its background card is gone",
-    "detail": "Merged as pull request #366 in development build 0.4.0.1453.",
-    "build": "0.4.0.1453",
+    "detail": "Merged as pull request #366 in development build 0.4.0.1448.",
+    "build": "0.4.0.1448",
     "pullRequest": 366,
     "url": "https://github.com/cehinds/AshenSpire/pull/366"
   },

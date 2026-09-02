@@ -29,12 +29,16 @@ point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
 *Receipts for 2026-08-26 through 2026-08-31 were written later, from the merge
-log, in #570. Their prose stays inside what the merge subject states, so they read
-shorter than receipts written at delivery. Their build stamps name the first build
-that CONTAINS the change rather than `buildordinal.json` as committed at that
-merge: several of these merges shipped source without rebuilding, so the ordinal
-standing at the merge belongs to an earlier bundle that cannot show the change. A
-receipt a player cannot open and see is not a receipt.*
+log, in #570. Their prose stays inside what the merge subject states — and, where a
+subject proved thinner than its diff, inside the diff — so they read shorter than
+receipts written at delivery. Their build stamps name the first build that CONTAINS
+the change: several of these merges shipped source without rebuilding, so the
+ordinal standing at the merge belongs to an earlier bundle that cannot show it, and
+a receipt a player cannot open and see is not a receipt. The bundle read is
+`build/AshenSpire.html`, which the root and `dist/` copies are generated from — a
+merge can refresh it without touching either alias. A merge that rebuilds nothing,
+shipping docs or evidence only, keeps the ordinal standing at it, as the rule above
+already allows.*
 
 ## 2026-09-02
 
@@ -98,7 +102,7 @@ receipt a player cannot open and see is not a receipt.*
 - **The title collapses when a run exits and when you cancel** ([#371](https://github.com/cehinds/AshenSpire/pull/371), `0.4.0.1454`). Leaving a run, or cancelling out of the opening menus, returns the title to its folded state instead of leaving it open.
 - **The Review & Approval Hub refreshes its owner decisions and adds Context Rotation** ([#361](https://github.com/cehinds/AshenSpire/pull/361), `0.4.0.1454`). The owner-facing hub promotes the two bounded Art decisions into cards that need Constantine without approving either, adds the #053 Context Rotation dashboard and its 13-team / 52-seat report, and separates registration and cold-start acceptance from execution, rotation, and successor-resume proof. Local-only evidence URLs now resolve to the explicit unavailable page instead of leaking author-local file paths. Evidence and hub only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.
 - **Startup components anchor to the viewport centre** ([#367](https://github.com/cehinds/AshenSpire/pull/367), `0.4.0.1453`). The startup screen's parts are positioned against the centre of the viewport rather than drifting with the layout around them.
-- **The startup gate is centred, and its background card is gone** ([#366](https://github.com/cehinds/AshenSpire/pull/366), `0.4.0.1453`).
+- **The startup gate is centred, and its background card is gone** ([#366](https://github.com/cehinds/AshenSpire/pull/366), `0.4.0.1448`).
 - **Enemy tooltips read in context, the HUD compacts, and the title is centred** ([#365](https://github.com/cehinds/AshenSpire/pull/365), `0.4.0.1432`). An enemy's tooltip is written for the situation it appears in, the HUD takes less room, and the title's alignment is corrected.
 
 ## 2026-08-26
