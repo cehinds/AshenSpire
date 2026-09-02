@@ -117,7 +117,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-02",
     "group": "2026-09-02",
     "summary": "Every branch's builds are playable at their own address",
-    "detail": "This merge builds the site and its addressing: a build index across dev, test, release and main, each build under its own branch and ordinal, a latest alias per branch, and every listed build checked byte-for-byte against the file committed at that merge before it may be published. The README shows each branch's current build number. Assembling is not publishing: the deploy is a separate transition that only the repository owner's explicit dispatch performs, so nothing here put a page in front of a player by itself.",
+    "detail": "The site gains a build index across dev, test, release and main: each build sits under its own branch and ordinal, each branch keeps a latest alias, and every listed build is checked byte-for-byte against the file committed at that merge before it is served. The README shows each branch's current build number. As this shipped, a push to any of those four branches assembled and deployed the site; deploying was narrowed afterwards, by #543, to the repository owner's explicit dispatch alone.",
     "build": "0.5.0-rc.1.1934",
     "pullRequest": 525,
     "url": "https://github.com/cehinds/AshenSpire/pull/525"
