@@ -105,7 +105,7 @@ The standing directive after section C: **make everything live as intended and d
 | F-14 | The owner's feedback file, the open-issue sweep (task 34) | PARTIAL | sections D and E stand as written; the sweep resumes after the `rc.3` close-out |
 | F-15 | The owner's correction to #523: the dodge rides on ONE empty hand | DONE | #554: the empty hand contributes the Dodge Roll as a weapon-art instance of its own beside the armed hand's technique; a shield is a full hand and a two-hander fills both; A-9 states the widened rule |
 | F-16 | The README names what the game now does | DONE | #555: load and Weight Class, Stamina and the class-priced dodge, the first quest chain (eligibility at Unknown nodes, not a node that opens), Forsaken Together; the attribution block names that pass |
-| F-17 | The `rc.3` stamp and its receipt | DONE | #556: `contentBundle.version = 0.5.0-rc.3`, the receipt at `0.5.0-rc.3.1946`, this checklist and `docs/versioning.md` naming `rc.3` |
+| F-17 | The `rc.3` stamp and its receipt | DONE | #556: `contentBundle.version = 0.5.0-rc.3`, the receipt at `0.5.0-rc.3.1947`, this checklist and `docs/versioning.md` naming `rc.3` |
 | F-18 | Promote `rc.3` to `test` | OPEN | the packet names the exact `dev` head, ordinal, digest and span over `test` (#554, #555, #556); merged by an agent once Codex is clean and the board is green |
 | F-19 | The owner's `release` cut for `rc.3` | OWNER | never merged by an agent |
 
