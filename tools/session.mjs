@@ -773,6 +773,14 @@ export function createSession({ registries, seedString, endless = false, restore
     if (session.scene.kind !== 'event') return { ok: false, error: 'no event open' };
     const m = members.get(memberId);
     if (!m) return { ok: false, error: 'unknown member' };
+    // ONLY A SEAT IN THE ROOM CHOOSES: a fallen or absent member's choice
+    // would otherwise be recorded, and an earlier join index could make it
+    // the party's canonical branch over the players keeping the run alive.
+    if (!m.connected || !m.alive) return { ok: false, error: 'you are not in this event' };
+    // A SAVE FROM BEFORE picks/open EXISTED resumes paused on an event with
+    // neither; they are initialised here rather than thrown on.
+    if (!session.scene.picks) session.scene.picks = {};
+    if (!session.scene.open) { session.scene.open = {}; for (const mm of members.values()) session.scene.open[mm.id] = openChoicesFor(session.scene.eventId, mm); }
     if (session.scene.done[memberId]) return { ok: true, repeated: true };
     // THE CHOICE IS RECORDED, by its stable id, in the member's own history —
     // the same door the solo event screen walks (event.js → recordEventChoice)
@@ -787,6 +795,12 @@ export function createSession({ registries, seedString, endless = false, restore
       if (!choice) return { ok: false, error: 'bad choice index' };
       // availableEventChoices answers { choice, index } rows over the authored list.
       if (!availableEventChoices(authored, m.run).some((row) => row.choice.id === choice.id)) return { ok: false, error: 'that choice is not open to you yet' };
+      // AND AFFORDABLE: the authored `requires` (the solo event screen's
+      // `meets`) is checked before anything is recorded, or a member with no
+      // cinders could put "returned the cinders" into the party's history.
+      if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
+        return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
+      }
       // recordEventChoice reads the run's own act/floor/node for the record;
       // a member's run rides the session's cursor, so it is stamped from it.
       m.run.actNumber = session.actNumber;
@@ -803,7 +817,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // PRESENT and chose (the seat fork-voting ties break toward), written to
       // the session's own history so the next map answers to it whoever was
       // in the room. Every member who answered keeps their own record above.
-      const picker = [...members.values()].filter((mm) => session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0];
+      const picker = [...members.values()].filter((mm) => mm.connected && mm.alive && session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0];
       if (picker && def) {
         recordEventChoice({ history: session.history, actNumber: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null },
           { eventId: def.id, choiceId: session.scene.picks[picker.id] });

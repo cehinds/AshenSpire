@@ -154,6 +154,39 @@ try {
     if (T.scene.kind === 'event') {
       sawOpen = T.scene.open;
       const eventId = T.scene.eventId;
+      // A CHOICE WITH A PRICE IS REFUSED BEFORE ANYTHING IS RECORDED, and a
+      // fallen seat's choice is refused outright.
+      const priced = (REG.events.get(eventId).choices || []).findIndex((c) => c.requires && typeof c.requires.cinders === 'number');
+      if (priced >= 0) {
+        const p2 = T.session.members.get('p2'); const hadCinders = p2.run.cinders; p2.run.cinders = 0;
+        const refused = T.eventChoice('p2', priced);
+        ok(!refused.ok && (p2.run.history || []).length === 0 && T.partyHistory().length === 0,
+          `a choice the member cannot afford is refused and records nothing (${JSON.stringify(refused)})`);
+        p2.run.cinders = hadCinders;
+      }
+      const fallen = T.eventChoice('p1', 0);
+      // THE PRICED CHOICE, on an event that has one: the Weeping Pilgrim's
+      // "Give 50 cinders" is refused for a member holding none, before any
+      // record is written — posed by setting the scene directly, the way a
+      // resumed save lands on it (no picks/open, which the choice initialises).
+      {
+        const U = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        U.addMember({ id: 'q1', name: 'Ash', classId: 'reaver' });
+        U.start();
+        U.session.cursorId = U.session.reachableIds[0]; // a real node, so the event can advance from it
+        U.session.scene = { kind: 'event', eventId: 'weepingPilgrim', done: {} };
+        const pilgrim = REG.events.get('weepingPilgrim');
+        const priced = pilgrim.choices.findIndex((c) => c.requires && typeof c.requires.cinders === 'number');
+        const q1 = U.session.members.get('q1'); q1.run.cinders = 0;
+        const refused = U.eventChoice('q1', priced);
+        ok(priced >= 0 && !refused.ok && (q1.run.history || []).length === 0 && U.partyHistory().length === 0 && U.scene.kind === 'event',
+          `a choice the member cannot afford is refused before anything is recorded (${JSON.stringify(refused)})`);
+        q1.run.cinders = pilgrim.choices[priced].requires.cinders;
+        const paid = U.eventChoice('q1', priced);
+        ok(paid.ok && U.partyHistory().length === 1 && U.partyHistory()[0].choiceId === (q1.run.history[0] || {}).choiceId,
+          `the same choice with the cinders in hand is recorded (${JSON.stringify(U.partyHistory()[0])})`);
+      }
+      ok(!fallen.ok && T.partyHistory().length === 0, `an absent seat's choice is refused (${JSON.stringify(fallen)})`);
       const r = T.eventChoice('p2', 0);
       const party = T.partyHistory();
       ok(r.ok && party.length === 1 && party[0].eventId === eventId && party[0].choiceId === (T.session.members.get('p2').run.history[0] || {}).choiceId
