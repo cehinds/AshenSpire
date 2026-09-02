@@ -63,11 +63,16 @@ function requirePackage(packageFor, equipmentId) {
 function planFromPackages(primaryList, secondary) {
   const primary = primaryList[0].pkg;
   if (!secondary) {
+    // ONE HAND ARMED, ONE EMPTY: the empty slot's weapon art (the Dodge Roll)
+    // installs beside the armament's own — the dodge rides as long as one
+    // hand is empty (the owner's rule, 2026-09-02), not only when both are.
+    // A two-handed armament fills both hands and installs no empty-slot art.
+    const emptySlot = primary.handsRequired === 2 ? [] : [mechanics.unarmedPackage.emptySlotWeaponArtId];
     return {
       strikes: primary.strikeCardId ? [primary.strikeCardId] : [mechanics.unarmedPackage.strikeCardId],
       guards: primary.guardCardId ? [primary.guardCardId] : [mechanics.unarmedPackage.guardCardId],
       granted: [...(primary.grantedCards || [])],
-      weaponArts: [...(primary.weaponArtDefaults || [])],
+      weaponArts: [...(primary.weaponArtDefaults || []), ...emptySlot.filter((id) => !(primary.weaponArtDefaults || []).includes(id))],
       source: 'single',
     };
   }

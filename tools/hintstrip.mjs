@@ -384,6 +384,19 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // AN IN-FLOW BOX OVER THE TEXT: the label pulled up over the count by a
+        // negative margin alone — positioned nowhere, no z-index, no transform,
+        // no stacking context; a later box in tree order that paints above the
+        // count's text where it overlaps it (Codex, #550).
+        name: "the DRAW pile's label, pulled over its count by a negative margin and nothing else, paints an opaque block over it",
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
+          replace: ".combat-action-row > .pile.draw { grid-area: draw; }\n.combat-action-row > .pile.draw > small { background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }",
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // A PARTIAL SHEET: the same layer as a thin black band (3vh) along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
@@ -729,6 +742,10 @@ const decode4 = (...bufs) => { const P = bufs.map(decodePng);
   if (P.some((p) => p.w !== P[0].w || p.h !== P[0].h)) throw new Error('the captures differ in size');
   return P; };
 const mag = (P, Q, o) => Math.abs(P.px[o] - Q.px[o]) + Math.abs(P.px[o + 1] - Q.px[o + 1]) + Math.abs(P.px[o + 2] - Q.px[o + 2]);
+// The text's paint in one pair: the summed change, by magnitude, between a
+// capture and the same capture with the text made transparent.
+const textPaint = (withText, without) => { const [A, B] = decode4(withText, without); let sum = 0;
+  for (let i = 0, n = A.w * A.h; i < n; i++) { const d = mag(A, B, i * A.bpp); if (d > 12) sum += d; } return sum; };
 const paintOfCaptures = (inSitu, inSituHidden, uncovered, uncoveredBg) => {
   const [A, B, C, G] = decode4(inSitu, inSituHidden, uncovered, uncoveredBg);
   const n = A.w * A.h; let ownPx = 0, owed = 0, delivered = 0;
@@ -767,7 +784,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
   const prior = new Map();
   for (const n of document.querySelectorAll('*')) { prior.set(n, [n.style.getPropertyValue('pointer-events'), n.style.getPropertyPriority('pointer-events')]); n.style.setProperty('pointer-events', 'auto', 'important'); }
   const style = document.createElement('style'); style.textContent = 'html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::before, html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::after { pointer-events: auto !important; }'; document.head.appendChild(style);
-  const found = [], above = new Map(), texts = [], ownPseudo = new Map(); // ancestor -> the points it was above the control at; the control's text rects; a text ancestor -> its pseudo-element hits
+  const found = [], above = new Map(), texts = [], ownPseudo = new Map(), inflow = []; // ancestor -> the points it was above the control at; the control's text rects; a text ancestor -> its pseudo-element hits; in-flow descendants hit at a text point, for the paint read
   const overAt = (x, y) => { const stack = document.elementsFromPoint(x, y); const at = stack.findIndex((n) => n === el || el.contains(n)); return at < 0 ? null : stack.slice(0, at); };
   try {
     // THE GRID IS DENSE ENOUGH THAT NO COVER WORTH THE TOLERANCE SLIPS
@@ -787,18 +804,6 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
         if (n.contains(el)) { if (!above.has(n)) above.set(n, []); above.get(n).push([x, y]); continue; }
         if (!found.includes(n)) found.push(n);
       }
-    }
-    // WHICH PSEUDO-ELEMENT of an ancestor is the one above: hide ::after alone
-    // and look again at the points it was above at; if it is no longer above
-    // there, ::after was the paint; else ::before; else both. Only that one is
-    // hidden for the uncovered captures, so an ancestor whose OTHER pseudo-
-    // element is the control's background keeps that background in both
-    // capture pairs (Codex, #540).
-    for (const [n, pts] of above) {
-      const stillAbove = (which) => { const st = document.createElement('style'); st.textContent = '[data-hintstrip-probe]::' + which + ' { visibility: hidden !important; }';
-        n.setAttribute('data-hintstrip-probe', ''); document.head.appendChild(st);
-        try { return pts.some(([x, y]) => (overAt(x, y) || []).includes(n)); } finally { st.remove(); n.removeAttribute('data-hintstrip-probe'); } };
-      n.setAttribute('data-hintstrip-cover-anc', !stillAbove('after') ? 'after' : !stillAbove('before') ? 'before' : 'both');
     }
     // THE CONTROL'S OWN PAINT OVER ITS TEXT. A cover the hit-test reports as
     // the control itself — its own ::after with a background over its label,
@@ -852,10 +857,31 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
           for (const n of document.elementsFromPoint(x, y)) {
             if (!(n === el || el.contains(n))) continue; // outside the control: judged above, by the paint stack
             if (chain.includes(n)) { if (!ownPseudo.has(n)) ownPseudo.set(n, { t, pts: [] }); ownPseudo.get(n).pts.push([x, y]); }
-            else if (!n.contains(t) && aboveText(n, null) && !found.includes(n)) found.push(n);
+            else if (!n.contains(t) && aboveText(n, null)) { if (!found.includes(n)) found.push(n); }
+            // AN IN-FLOW DESCENDANT hit at a text point — positioned nowhere, no
+            // stacking context — paints above the text only where it overlaps
+            // it as a later box (a negative margin), which no rule of the
+            // computed style says; it is listed for the PAINT read in paintOf,
+            // which hides it alone and asks whether the text came back
+            // (Codex, #550).
+            else if (!n.contains(t) && !inflow.includes(n)) inflow.push(n);
           }
         }
       } finally { for (const n of chain) n.style.setProperty('pointer-events', 'auto', 'important'); }
+    }
+    // WHICH PSEUDO-ELEMENT of an ancestor is the one above — read after BOTH
+    // scans, since the text scan lists ancestors the box grid did not meet
+    // (Codex, #550) — is the one above: hide ::after alone
+    // and look again at the points it was above at; if it is no longer above
+    // there, ::after was the paint; else ::before; else both. Only that one is
+    // hidden for the uncovered captures, so an ancestor whose OTHER pseudo-
+    // element is the control's background keeps that background in both
+    // capture pairs (Codex, #540).
+    for (const [n, pts] of above) {
+      const stillAbove = (which) => { const st = document.createElement('style'); st.textContent = '[data-hintstrip-probe]::' + which + ' { visibility: hidden !important; }';
+        n.setAttribute('data-hintstrip-probe', ''); document.head.appendChild(st);
+        try { return pts.some(([x, y]) => (overAt(x, y) || []).includes(n)); } finally { st.remove(); n.removeAttribute('data-hintstrip-probe'); } };
+      n.setAttribute('data-hintstrip-cover-anc', !stillAbove('after') ? 'after' : !stillAbove('before') ? 'before' : 'both');
     }
     for (const [n, { pts }] of ownPseudo) {
       // WHICH of its pseudo-elements was hit (hide ::after alone, look again),
@@ -870,7 +896,8 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
   } finally { style.remove(); for (const [n, [v, p]] of prior) { if (v) n.style.setProperty('pointer-events', v, p); else n.style.removeProperty('pointer-events'); } }
   const name = (n) => (String(n.className).split(' ')[0] || n.tagName.toLowerCase());
   found.forEach((n, i) => n.setAttribute('data-hintstrip-cover', String(i)));
-  return { text: texts.length, names: found.map((n) => (el.contains(n) ? 'its ' + name(n) + ' over its text' : name(n)))
+  inflow.forEach((n, i) => n.setAttribute('data-hintstrip-inflow', String(i)));
+  return { text: texts.length, inflow: inflow.map(name), names: found.map((n) => (el.contains(n) ? 'its ' + name(n) + ' over its text' : name(n)))
     .concat([...above.keys()].map((n) => 'ancestor ' + name(n) + ' (its ::' + n.getAttribute('data-hintstrip-cover-anc') + ' above the control)'))
     .concat([...ownPseudo.keys()].filter((n) => n.hasAttribute('data-hintstrip-cover-own')).map((n) => (n === el ? 'its own ' : 'its ' + name(n) + ' ') + n.getAttribute('data-hintstrip-cover-own') + ' over its text')) }; })()`;
 const COVERS_HIDE = `(() => {
@@ -881,6 +908,7 @@ const COVERS_HIDE = `(() => {
 const COVERS_RESTORE = `(() => {
   for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { const v = n.getAttribute('data-hintstrip-cover-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-cover'); n.removeAttribute('data-hintstrip-cover-vis'); }
   for (const n of document.querySelectorAll('[data-hintstrip-cover-anc]')) { n.removeAttribute('data-hintstrip-cover-anc'); n.removeAttribute('data-hintstrip-cover-own'); }
+  for (const n of document.querySelectorAll('[data-hintstrip-inflow]')) n.removeAttribute('data-hintstrip-inflow');
   const st = document.getElementById('hintstrip-cover-style'); if (st) st.remove(); return 1; })()`;
 // THE TEXT MADE TRANSPARENT, in place: the fill, the shadow and the stroke of
 // every element in the control (inline, !important; priors put back), so the
@@ -921,7 +949,25 @@ async function paintOfFrozen(ev, shot) {
       await ev(TEXT_HIDE(t.sel));
       const inSituText = await shot(clip);
       await ev(TEXT_RESTORE);
-      const { text, names: covers } = await ev(COVERS_OF(t.sel));
+      const { text, names: covers, inflow } = await ev(COVERS_OF(t.sel));
+      // AN IN-FLOW DESCENDANT OVER THE TEXT is found by paint, not by rule:
+      // hidden alone (in place), does the text deliver more than it delivers
+      // in situ? A later box pulled over the text by a negative margin paints
+      // above it in tree order (CSS 2.1 Appendix E) and gives it back when
+      // hidden; the label laid out beside its count changes nothing of the
+      // count's paint. One that gives back more than PAINT_LOST is a cover,
+      // hidden for the uncovered captures like any other (Codex, #550).
+      for (let i = 0; i < (inflow || []).length; i++) {
+        const sel = '[data-hintstrip-inflow="' + i + '"]';
+        await ev(`(() => { const n = document.querySelector(${JSON.stringify(sel)}); n.setAttribute('data-hintstrip-inflow-vis', n.style.getPropertyValue('visibility') || ''); n.style.setProperty('visibility', 'hidden', 'important'); return 1; })()`);
+        const alone = await shot(clip);
+        await ev(TEXT_HIDE(t.sel));
+        const aloneText = await shot(clip);
+        await ev(TEXT_RESTORE);
+        await ev(`(() => { const n = document.querySelector(${JSON.stringify(sel)}); const v = n.getAttribute('data-hintstrip-inflow-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-inflow-vis'); return 1; })()`);
+        const given = textPaint(alone, aloneText), had = textPaint(inSitu, inSituText);
+        if (given > had * (1 + PAINT_LOST) + 12 * 4) { await ev(`(() => { document.querySelector(${JSON.stringify(sel)}).setAttribute('data-hintstrip-cover', 'inflow-' + ${i}); return 1; })()`); covers.push('its ' + inflow[i] + ' over its text (an in-flow box, by paint)'); }
+      }
       await ev(COVERS_HIDE);
       const uncovered = await shot(clip);
       await ev(TEXT_HIDE(t.sel));

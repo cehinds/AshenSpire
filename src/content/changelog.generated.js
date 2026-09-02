@@ -3,6 +3,66 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-558",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op: the party's defeat takes the queue with it",
+    "detail": "A seat waiting out its catch-up queue when the last fighter fell was felled with the party, but its client kept drawing the reward or event it was holding — over the end of the run — until a choice was tried and refused. The queue is now forfeited with the seat, so the defeat is what you see. The rc.3 receipt below also names the right rollback build: test carries build 1941, not 1935.",
+    "build": "0.5.0-rc.3.1948",
+    "pullRequest": 558,
+    "url": "https://github.com/cehinds/AshenSpire/pull/558"
+  },
+  {
+    "id": "pr-556",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The third 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.3.<build> from this build on: the candidate QA receives after rc.2, which was promoted to test at build 1941 (1935 is where the rc.2 stamp began; #541 promoted a later dev). Nothing else a player sees changes with the stamp itself. What the candidate carries over rc.2 is in the entries below — the Dodge Roll that rides on one empty hand (#554), the co-op catch-up queue a returning seat drains (#547, #548, #549, #552), and the README pass with the receipts owed since the second candidate (#555). Tooling rider: the layout gate judges a control covered by what its own text paints, and its known-bad corpus is 24 plants, 24 caught.",
+    "build": "0.5.0-rc.3.1947",
+    "pullRequest": 556,
+    "url": "https://github.com/cehinds/AshenSpire/pull/556"
+  },
+  {
+    "id": "pr-555",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The README names what the game now does",
+    "detail": "Nothing a player sees changes: the feature list had stopped at the M4 polish pass, and now names the four things that shipped after it — equip load and the Weight Class it lands you in, Stamina recovery with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain on event-level history, and Forsaken Together, the LAN co-op the launcher serves. The one-line description no longer calls the game single-player only. The in-game changelog is this file's projection, so the build moves with the receipt.",
+    "build": "0.5.0-rc.2.1944",
+    "pullRequest": 555,
+    "url": "https://github.com/cehinds/AshenSpire/pull/555"
+  },
+  {
+    "id": "pr-554",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The Dodge Roll rides as long as one hand is empty",
+    "detail": "A hand with nothing in it fights. With one hand armed and the other empty, the empty hand brings the Dodge Roll to your deck while the armed hand keeps the technique its armament installs; fill that hand and the dodge goes, empty it and it comes back. A shield counts as a full hand, and a two-handed armament fills both. Both hands empty is unchanged: Evasive Guard in every guard slot and Dodge Roll in every technique slot, as #523 shipped it. Tooling rider: the layout gate now judges a control covered by what its own TEXT paints, so a label that is part of the control is no longer read as something hiding it, and its known-bad corpus is 24 plants, 24 caught.",
+    "build": "0.5.0-rc.2.1943",
+    "pullRequest": 554,
+    "url": "https://github.com/cehinds/AshenSpire/pull/554"
+  },
+  {
+    "id": "pr-548",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op: drop out of a run and you come back to the events you missed",
+    "detail": "An event the party met while your seat was away is now queued for you and answered on your return: the choices are the ones your history had earned at the time, a choice you could not have afforded then is refused now, the random reward is the one the room would have given you, and you read each result before the next entry opens. A seat that returns mid-fight waits out its queue and then joins the fight already in progress; a replay that fells you fells you, and the live reward offer you were holding is withdrawn. A resumed party reconnects together before the room settles, and a fight the party loses with nobody left standing ends the run for every seat, including one held outside it. Landed over #547, #549 and #552.",
+    "build": "0.5.0-rc.2.1941",
+    "pullRequest": 548,
+    "url": "https://github.com/cehinds/AshenSpire/pull/548"
+  },
+  {
+    "id": "pr-543",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Review riders on the second candidate",
+    "detail": "Nothing new a player asks for: a fight an event starts pays from that encounter's own reward pool and survives the disconnect of the seat that chose it, the result of an event is read before the fight it opens, the Pages deploy runs only on an explicit dispatch, and the layout gate reads a control's text where it used to read its box. Landed over #544, #545, #546 and #550; the migration checklist's account of what the 0.5.0 candidates asked and what was done landed in #551.",
+    "build": "0.5.0-rc.2.1936",
+    "pullRequest": 543,
+    "url": "https://github.com/cehinds/AshenSpire/pull/543"
+  },
+  {
     "id": "pr-539",
     "date": "2026-09-02",
     "group": "2026-09-02",

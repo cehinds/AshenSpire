@@ -33,9 +33,15 @@ function botTurn(combat, memberId) {
       if ((def.keywords || []).includes('unplayable')) return false;
       return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
     });
-    const tgt = combat.enemies.find((e) => e.alive);
+    // A SELF-TARGETING CARD IS NOT AIMED AT AN ENEMY. The engine refuses one
+    // that is ("Invalid self target"), and a refusal here used to end the bot's
+    // turn — so a defensive card in hand (Defend, the Dodge Roll) cut the turn
+    // short and the party lost fights the harness means to walk through.
+    const def = card ? resolveCard(REG, { cardId: card.cardId, upgraded: card.upgraded }) : null;
+    const wantsEnemy = def ? (def.effects || []).some((eff) => eff.target === 'enemy') : false;
+    const tgt = wantsEnemy ? combat.enemies.find((e) => e.alive) : null;
     try {
-      if (card) playCard(combat, memberId, card.instanceId, tgt && tgt.id);
+      if (card) playCard(combat, memberId, card.instanceId, tgt ? tgt.id : undefined);
       else { endTurn(combat, memberId); break; }
     } catch { endTurn(combat, memberId); break; }
   }
@@ -517,9 +523,11 @@ try {
           const smashIdx = stone.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'addCinders'));
           l2.catchup.push({ type: 'event', eventId: 'ancientRuneStone', open: [0, 1, 2], act: 1, floor: L.session.floor, mapNodeId: L.session.cursorId ?? null });
           const r = L.resolveCatchup('l2', 0, { choiceIndex: hurtIdx });
+          const held = l2.catchup.length === 1 && l2.catchup[0].done && l2.catchup[0].done.choiceIndex === hurtIdx && l2.catchup[0].eventId === 'goldboughAvatar';
           const after = L.resolveCatchup('l2', 0, { choiceIndex: smashIdx });
-          ok(r.ok && l2.alive === false && l2.run.hp === 0 && L.scene.kind === 'complete' && L.scene.victory === false && l2.catchup.length === 0 && !after.ok,
-            `a lethal replay fells the last living seat and ends the run (alive ${l2.alive}, hp ${l2.run.hp}, scene ${L.scene.kind}/${L.scene.victory}); the rest of its queue is forfeit (${l2.catchup.length} left, further replay ${after.ok ? 'served' : 'refused'})`);
+          const read = L.resolveCatchup('l2', 0, { continue: true });
+          ok(r.ok && l2.alive === false && l2.run.hp === 0 && L.scene.kind === 'complete' && L.scene.victory === false && held && !after.ok && read.ok && l2.catchup.length === 0,
+            `a lethal replay fells the last living seat and ends the run (alive ${l2.alive}, hp ${l2.run.hp}, scene ${L.scene.kind}/${L.scene.victory}); its result is held for the seat to read (held ${held}), a further choice is refused (${after.error}), and CONTINUE empties the forfeit queue (${l2.catchup.length} left)`);
         }
         // A SAVE FROM BEFORE picks EXISTED, resumed with one seat answered and
         // the other absent, is settled by the presence change without a throw
@@ -651,6 +659,39 @@ try {
           const rr = O.resolveCatchup('o2', 0, { choiceIndex: hurtIdx });
           ok(waitingOnO2 && rr.ok && o2.alive === false && O.scene.kind === 'combat',
             `a seat back during the acknowledgment holds the room (waiting on it: ${waitingOnO2}); its lethal replay fells it (alive ${o2.alive}) and settles the room for the seat that continued (scene ${O.scene.kind})`);
+        }
+        // A LOST FIGHT WITH NO LIVING FIGHTER IS THE PARTY'S DEFEAT: a seat back
+        // with its queue standing is held out of the fight, and its standing
+        // outside must not turn the fighters' defeat into rewards (Codex on
+        // #549).
+        {
+          const stone = REG.events.get('ancientRuneStone');
+          const smashIdx = stone.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'addCinders'));
+          const shrine = REG.events.get('feralShrine');
+          const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+          const Hd = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          Hd.addMember({ id: 'd1', name: 'Ash', classId: 'reaver' });
+          Hd.addMember({ id: 'd2', name: 'Bel', classId: 'starseer' });
+          Hd.start();
+          Hd.session.cursorId = Hd.session.reachableIds[0];
+          Hd.setConnected('d2', false);
+          Hd.session.scene = { kind: 'event', eventId: 'ancientRuneStone', done: {} };
+          Hd.eventChoice('d1', smashIdx); Hd.eventContinue('d1'); // queued for d2
+          Hd.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+          Hd.eventChoice('d1', fightIdx); Hd.eventContinue('d1'); // the wyrm, d1 alone
+          Hd.setConnected('d2', true); // held out: the queue stands
+          const heldOut = Hd.scene.kind === 'combat' && !Hd.live.combat.players.has('d2');
+          // The lone fighter falls: every enemy blow lands on a body at 1 HP.
+          Hd.autoResolveCombat((combat, id) => { for (const P of combat.players.values()) if (P.id === 'd1') P.entity.hp = Math.min(P.entity.hp, 1); botTurn(combat, id); });
+          const d2 = Hd.session.members.get('d2');
+          ok(heldOut && Hd.scene.kind === 'complete' && Hd.scene.victory === false && d2.alive === false,
+            `a lost fight with no living fighter ends the run though a seat stood outside it (held out ${heldOut}; scene ${Hd.scene.kind}/${Hd.scene.victory}; the seat outside falls with the party: alive ${d2.alive})`);
+          // AND THE QUEUE FALLS WITH IT: coop.js draws catchupQueue before it
+          // reads the scene, so a queue left standing would keep the dead seat
+          // on the reward it was holding, over the run's own end.
+          const d2View = Hd.snapshot().party.find((p) => p.id === 'd2');
+          ok(d2.catchup.length === 0 && ((d2View && d2View.catchupQueue) || []).length === 0,
+            `the fallen seat's catch-up queue is forfeited with it, so its client draws the defeat and not the queue (queue ${d2.catchup.length}, snapshot ${((d2View && d2View.catchupQueue) || []).length})`);
         }
         // A LIVE REWARD OFFER IS WITHDRAWN when catch-up fells its seat: back
         // during the fight, the seat was present when it paid out; dead, it
@@ -801,7 +842,10 @@ try {
   ok(S.scene.kind === 'combat', 'the solo remaining member reaches the next fight');
   ok(S.live && Math.abs(S.live.combat.baseHpMult - coopHpMult(1)) < 1e-9, 'enemies rescale DOWN to solo when p2 is away');
   const p2CatchBefore = S.session.members.get('p2').catchup.length;
-  S.autoResolveCombat(botTurn);
+  // The lone fighter must WIN this one: a lost fight with no living fighter is
+  // now the party's defeat, whoever stands outside it (Codex on #549), and
+  // the catch-up reward under proof is a victory's.
+  S.autoResolveCombat((combat, id) => { for (const e of combat.enemies) if (e.alive) e.hp = Math.min(e.hp, 1); botTurn(combat, id); });
   if (S.scene.kind === 'reward') { ok(!S.scene.offers.p2, 'absent p2 gets no live reward offer'); for (const id of Object.keys(S.scene.offers)) S.chooseReward(id, { cardId: S.scene.offers[id].cardIds[0] }); }
   const p2 = S.session.members.get('p2');
   ok(p2.catchup.length === p2CatchBefore + 1, 'p2 accrued a queued catch-up reward while away');
