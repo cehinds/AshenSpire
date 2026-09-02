@@ -330,6 +330,19 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // A SHEET THAT REFUSES THE HIT-TEST BY ITS OWN RULE: the band again,
+        // with "pointer-events: none !important" under a selector more
+        // specific than any * rule. An injected * rule would lose the
+        // cascade and the band would never be listed (Codex, #540).
+        name: 'an opaque band over the rail declares pointer-events: none !important under a specific selector',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 3vh; background: #000; z-index: 300; overflow: hidden; }\n.combat .battlefield ~ .fx-layer, .combat .fx-layer { pointer-events: none !important; }',
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // A PARTIAL SHEET: the same layer as a thin black band (3vh) along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
@@ -699,11 +712,26 @@ const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-acti
 // ancestor whose paint lies below the control is listed after it and is
 // nothing to hide. Pseudo-elements are hit-testable for the read too.
 const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const r = el.getBoundingClientRect();
-  const style = document.createElement('style'); style.textContent = '*, *::before, *::after { pointer-events: auto !important; }'; document.head.appendChild(style);
+  // EVERY ELEMENT IS HIT-TESTABLE FOR THE READ, by an inline !important that
+  // no stylesheet rule can outrank (a sheet's own "pointer-events: none
+  // !important" under a specific selector beats an injected * rule, and an
+  // element the hit-test cannot see is a cover the probe never hides —
+  // Codex, #540); the prior inline value and priority are put back after.
+  // Pseudo-elements take no inline style, so their rule is given a
+  // specificity (four ids) no shipped selector reaches.
+  const prior = new Map();
+  for (const n of document.querySelectorAll('*')) { prior.set(n, [n.style.getPropertyValue('pointer-events'), n.style.getPropertyPriority('pointer-events')]); n.style.setProperty('pointer-events', 'auto', 'important'); }
+  const style = document.createElement('style'); style.textContent = 'html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::before, html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::after { pointer-events: auto !important; }'; document.head.appendChild(style);
   const found = [], above = new Map(); // ancestor -> the points it was above the control at
   const overAt = (x, y) => { const stack = document.elementsFromPoint(x, y); const at = stack.findIndex((n) => n === el || el.contains(n)); return at < 0 ? null : stack.slice(0, at); };
   try {
-    const step = Math.max(2, Math.min(6, Math.floor(Math.min(r.width, r.height) / 8)));
+    // THE GRID IS DENSE ENOUGH THAT NO COVER WORTH THE TOLERANCE SLIPS
+    // BETWEEN ITS POINTS: with a spacing of half the control's shorter side
+    // times PAINT_LOST, any band whose thickness reaches the spacing meets a
+    // sample, and a band thinner than that covers less than half the
+    // tolerance of the shorter side — under the loss that is red (Codex,
+    // #540). A 44px-tall control is scanned every 2px.
+    const step = Math.max(1, Math.floor(Math.min(r.width, r.height) * ${PAINT_LOST} / 2));
     for (let y = r.top + 1; y < r.bottom; y += step) for (let x = r.left + 1; x < r.right; x += step) {
       // Only a point the control itself is hit at says anything about what is
       // over it: at a point of its box it does not paint (an orb's corner) the
@@ -727,7 +755,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
         try { return pts.some(([x, y]) => (overAt(x, y) || []).includes(n)); } finally { st.remove(); n.removeAttribute('data-hintstrip-probe'); } };
       n.setAttribute('data-hintstrip-cover-anc', !stillAbove('after') ? 'after' : !stillAbove('before') ? 'before' : 'both');
     }
-  } finally { style.remove(); }
+  } finally { style.remove(); for (const [n, [v, p]] of prior) { if (v) n.style.setProperty('pointer-events', v, p); else n.style.removeProperty('pointer-events'); } }
   const name = (n) => (String(n.className).split(' ')[0] || n.tagName.toLowerCase());
   found.forEach((n, i) => n.setAttribute('data-hintstrip-cover', String(i)));
   return found.map(name).concat([...above.keys()].map((n) => 'ancestor ' + name(n) + ' (its ::' + n.getAttribute('data-hintstrip-cover-anc') + ' above the control)')); })()`;
