@@ -38733,6 +38733,16 @@ function ownedItemRefs(registries, run) {
     const itemRef = id && `armament/${id}`;
     if (itemRef && !refs.includes(itemRef)) refs.push(itemRef);
   }
+  // OWNED IS CARRIED, NOT COMPOSED. An armament the player holds in Inventory
+  // (loadout.storage) or in a hand set that is not the active one supplies no
+  // deck cards today, and reading ownership off the composed deck alone left
+  // it off the Smith's grid — a Greatsword found and stored could never be
+  // upgraded until it was equipped (Codex, #528). carriedIds is the same
+  // reader the inventory count below already uses.
+  for (const id of carriedIds(run.loadout)) {
+    const itemRef = armamentById(registries, id) ? `armament/${id}` : null;
+    if (itemRef && !refs.includes(itemRef)) refs.push(itemRef);
+  }
   const armourRef = activeArmourRef(registries, run);
   if (armourRef && !refs.includes(armourRef)) refs.push(armourRef);
   for (const id of run.relics || []) {
@@ -38793,8 +38803,11 @@ function smithingPlan(registries, run, explicitRules = undefined) {
       ? requirementPreview(registries, run, piece, currentLevel, nextLevel)
       : Object.freeze([]);
     const authoredChanges = upgradeRows.filter((row) => row.tag !== 'upgrade:cost:smithing-stone');
+    // A stored armament composes no live cards, so its preview is what the
+    // upgrade does to the cards it WOULD supply (the authored role previews,
+    // `used: false`), never an empty list that reads as "nothing changes".
     const changes = identity.itemKind === 'armament'
-      ? genericCardChanges(affectedCards, requirements)
+      ? genericCardChanges(affectedCards.length ? affectedCards : previewCards, requirements)
       : itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel);
     if (!authoredChanges.length || !changes.length || changes.every((row) => row.before === row.after)) continue;
     const shortfall = Math.max(0, cost - stones);
@@ -49524,7 +49537,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '357dbaa3b5';
+const SOURCE = '43c6d15efe';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49558,7 +49571,7 @@ const SOURCE = '357dbaa3b5';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1930';
+const ORDINAL = '1931';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
