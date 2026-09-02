@@ -18,8 +18,8 @@ These are **development builds**, not releases. Release status is governed
 separately and remains **RED**. The version stamp in-game is
 `<release>.<ordinal>` — `0.4.0.<ordinal>` through build 1903, and
 `0.5.0-rc.<n>.<ordinal>` from the first 0.5.0 release candidate on — `rc.1`
-from build 1908, `rc.2` from build 1935, `rc.3` from build 1947 (see
-`docs/versioning.md`, "Release candidates").
+from build 1908, `rc.2` from build 1935, `rc.3` from build 1947, `rc.4` from
+build 1956 (see `docs/versioning.md`, "Release candidates").
 
 *This file starts at `0.4.0.0777` (2026-08-17). Below that point the merge
 log's pull-request references turn intermittent — whole runs of direct
