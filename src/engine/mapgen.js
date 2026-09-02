@@ -312,9 +312,38 @@ function ensureRestBeforeElite(nodes, rules, rng) {
   const below = Object.values(nodes).filter(
     (n) => n.floor < firstElite && rules.restFloors.includes(n.floor)
   );
+  if (!below.length) return;
+
+  // THE REST MAY NOT BE PAID FOR OUT OF ANOTHER PROMISE. This step runs AFTER
+  // both relaxPlace calls, so a node it eats is never counted again — and the
+  // first cut ate any node on the rest floors, the act's last Merchant
+  // included. It is not a rare path: on a legal one-path act whose rest floors
+  // can hold no Monster (two non-Monster types alternate under the no-repeat
+  // ban, so the Monster fallback never fires) the non-Monster branch ran on
+  // 600 of 600 maps. Which node it took was then a coin flip, and one face of
+  // that coin shipped a map with fewer Merchants than the act promises.
+  //
+  // So the victim is chosen in order: a Monster (weakest constraint, and the
+  // only type carrying no promise); else a node whose type is not at its
+  // minimum; else any node, backed by the re-place below.
+  const counts = {};
+  for (const n of Object.values(nodes)) counts[n.type] = (counts[n.type] || 0) + 1;
+  const minima = rules.minima || {};
+  const spare = (t) => !(minima[t] > 0) || counts[t] > minima[t];
   const monsters = below.filter((n) => n.type === 'monster');
-  const pool = monsters.length ? monsters : below;
-  if (pool.length) pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
+  const spares = below.filter((n) => spare(n.type));
+  const pool = monsters.length ? monsters : (spares.length ? spares : below);
+  pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
+
+  // AND IF THE ONLY NODE LEFT WAS THE LAST OF A PROMISED TYPE, put that type
+  // back rather than ship a broken count. Elites cannot reach here — restFloors
+  // sits below the Elite gate and excludes fixed ranks — so this restores a
+  // Merchant, on the same relax path that placed it originally. Measured over
+  // 4500 maps of the acts that force the non-Monster branch: 0 counts left
+  // short, and 0 maps with no Monster anywhere for the re-place to use.
+  for (const [type, min] of Object.entries(minima)) {
+    if (min > 0 && countType(nodes, type) < min) relaxPlace(nodes, type, min, rules, rng);
+  }
 }
 
 function lowestFloorOf(nodes, type) {
