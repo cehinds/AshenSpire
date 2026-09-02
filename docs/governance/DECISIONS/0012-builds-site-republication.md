@@ -191,6 +191,17 @@ Two things in that table need his eye rather than my assumption:
   rebuild `_site` itself with default-branch code.** Deploying an artifact a
   branch assembled would let a push to `dev` replace root, `main` and `release`
   content whatever the credential arrangement. That is defect 2.
+- **Under option A, advancing the pins is itself a repository write, and it needs
+  its own authority.** Codex raised this as a third P1. The published-state file
+  has to be updated when the owner dispatches, which is a commit and a push —
+  a protected transition in its own right under AGENTS.md, and one this
+  amendment does not grant. An implementation would therefore either INFER
+  permission for that write from the dispatch, which is the substitution this
+  whole record exists to refuse, or fail to persist the pins and quietly stop
+  being option A. So a ruling of A must also **name the state ref and authorize
+  its update** — the record proposes `.agentops/governance/pages-published.json`
+  on `main`, written only by the owner's dispatch, and asks him to confirm both
+  the path and the grant rather than assuming either.
 - Under option A, `main` and `release` are built from the owner's last-published
   SHAs rather than their heads — **and so is the generator.** Codex raised this
   as a second P1 and it closes a channel the content pins leave open: if `main`
