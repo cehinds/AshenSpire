@@ -2589,10 +2589,14 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // aside. A real outgoing profile is never byte-identical to the one it
   // replaces (it carries its results), so the pose writes one setting through
   // the real writer — the default value, so nothing behaves differently — and
-  // the two profiles are distinct the way two real ones are.
+  // the two profiles are distinct the way two real ones are. ONLY WHEN THE
+  // PROFILE IS UNTOUCHED: ?shotSettings has already written the settings an
+  // instrument asked for (holdConfirm 'off' or 'long' on this very screen),
+  // and those bytes already make the profile distinct — overwriting them
+  // would pose the default where the caller asked for an edge (Codex, #537).
   {
     const posed = saves.loadMeta();
-    saves.saveMeta({ ...posed, settings: { ...(posed.settings || {}), holdConfirm: 'normal' } });
+    if (!Object.keys(posed.settings || {}).length) saves.saveMeta({ ...posed, settings: { holdConfirm: 'normal' } });
   }
   saves.startNewProfile();
   showTitle();
