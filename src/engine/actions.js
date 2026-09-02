@@ -23,13 +23,15 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { COMBAT_OPCODES, RUN_OPCODES } from '../model/schemas.js';
+import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { evaluate, isFormula } from '../model/formulas.js';
-import * as statuses from './statuses.js';
+import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
+import { playerWeightClass } from './combat.js';
 import { damageTagIds } from '../content/tags.js';
 import { flaskSlotCap } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
+import { commitSmithing, smithingPlan } from '../model/smithing.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -454,6 +456,25 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'dodgeRoll': {
+      // The dodge (framework contract: Weight Class and Dodge Roll). Player
+      // only — the class, Dexterity and the die live on the player's side of
+      // the board. The engine rolls on its own stream; the framework decides
+      // the check, the difficulty and the temporary guard, which lands as
+      // Block through the same door every block does.
+      const p = ctx.player;
+      if (!action.source || action.source.id !== p.id) break;
+      const roll = ctx.rng.int('misc', 1, ctx.registries.framework.dodgeDie());
+      const dexterity = (ctx.attributes && ctx.attributes.dexterity) || 10;
+      const stance = playerWeightClass(ctx);
+      const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
+      ctx.emit('dodgeRolled', {
+        sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
+        success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
+      });
+      if (receipt.success && receipt.temporaryGuard > 0) gainBlock(ctx, p, receipt.temporaryGuard);
+      break;
+    }
     case 'applyStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const stacks = evalNum(ctx, action, eff.stacks, 1, t);
@@ -592,23 +613,64 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
+      // Equipment-granted instances (grantedBy) are package outputs: the next
+      // authoritative reconcile would recreate the same deterministic id, so
+      // a removal here could never persist — they are not candidates.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card);
-      else if (eff.random) idx = run.deck.length ? Math.floor(ctx.rng.float('misc') * run.deck.length) : -1;
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !c.grantedBy);
+      else if (eff.random) {
+        const candidates = run.deck.map((c, i) => i).filter((i) => !run.deck[i].grantedBy);
+        idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
+      }
       if (idx >= 0) run.deck.splice(idx, 1);
       break;
     }
     case 'upgradeCard': {
-      const candidates = run.deck.filter((c) => !c.upgraded && (!eff.card || c.cardId === eff.card));
+      const plan = smithingPlan(ctx.registries, run);
+      // Since the item-upgrade redesign the plan also offers non-armament
+      // items (no armamentId, no affectedCards); a card upgrade can only ride
+      // an armament, so only those become candidates here.
+      // AND ONLY AN ARMAMENT WITH CARDS IN THE DECK TODAY. A carried armament
+      // with no live cards is a Smithing candidate (the Shrine previews it
+      // through its authored roles), but a "random card" upgrade that landed
+      // on it would set a tier and upgrade zero cards the player holds — the
+      // choice promised a card (Codex, #535).
+      const armaments = plan.candidates
+        .filter((candidate) => candidate.itemKind === 'armament')
+        .filter((candidate) => candidate.affectedCards.length > 0)
+        .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
+        .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
+      const ordinary = run.deck
+        // Equipment-composed instances are excluded like sourceArmamentId
+        // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
+        // package on every reconcile, so a per-copy upgraded flag would not
+        // survive an unequip/re-equip — its upgrade rides the armament. An
+        // UNARMED role instance (equipmentRole without a source piece — the
+        // unarmed Strikes and Evasive Guards) keeps its per-copy flag through
+        // reconcile (loadout.js resets it only when a piece takes the slot),
+        // so it stays a candidate. A card whose upgrade is not authored — the
+        // pure Dodge Roll — is never one: the event would spend for nothing.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
+        .map((card) => ({ kind: 'card', card }));
+      const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
-      chosen.upgraded = true;
+      if (chosen.kind === 'armament') {
+        const receipt = commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        ctx.emit('armamentSmithed', receipt);
+      } else {
+        chosen.card.upgraded = true;
+      }
       break;
     }
     case 'addRelic': {
       let relicId = eff.id || null;
       if (!relicId && eff.random) {
-        const pool = ctx.registries.relics.ids().filter((id) => !run.relics.includes(id));
+        // Quest-pool relics are never "a random relic" — they are the named
+        // reward of the choice that grants them (RELIC_POOLS, model/schemas.js).
+        const pool = ctx.registries.relics.ids()
+          .filter((id) => !run.relics.includes(id) && relicInRewardPool(ctx.registries.relics.get(id)));
         if (pool.length === 0) break;
         relicId = ctx.rng.pick('relicRewards', pool);
       }

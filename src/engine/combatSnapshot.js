@@ -16,6 +16,7 @@ export function serializeCombatSnapshot(combat) {
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
     equipmentChanged: !!combat.equipmentChanged,
     turn: combat.turn,
@@ -47,6 +48,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot }) {
     registries,
     rng,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
+    itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
+      Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
+    ),
     equipmentPoolDeficits: saved.equipmentPoolDeficits,
     equipmentChanged: saved.equipmentChanged,
     turn: saved.turn,
@@ -87,6 +91,8 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   run.flasks = structuredClone(combat.player.flasks);
   run.flaskCharges = structuredClone(combat.player.flaskCharges);
   run.equipmentPoolDeficits = structuredClone(combat.equipmentPoolDeficits);
+  run.itemUpgradeLevels = structuredClone(combat.itemUpgradeLevels || {});
+  delete run.armamentLevels;
   for (const field of ['hp', 'mana', 'stamina']) {
     run[field] = combat.player[field];
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;

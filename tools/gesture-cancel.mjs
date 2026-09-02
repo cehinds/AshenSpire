@@ -85,7 +85,12 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the pre-#22 shape returns: no pointercancel path, so a cancelled drag leaks its listeners',
         file: 'src/ui/gesture.js',
-        find: "el.addEventListener('pointercancel', cancel);",
+        // The listener moved from the element to the window (capture phase)
+        // on 2026-09-02: a press that walked away from its control was not
+        // seeing its own moves or release when capture did not hold, and a
+        // hold fired at full under a pointer that had left (#531). The plant
+        // follows the line; the defect it plants is the same one.
+        find: "window.addEventListener('pointercancel', cancel, true);",
         replace: "/* planted: the #22 defect — no pointercancel path at all */",
         expectRed: /FAIL (cancel: window listeners at baseline|five cancels: window listeners FLAT|cancel: no ghost)/,
       },

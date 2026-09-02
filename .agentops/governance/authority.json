@@ -7,86 +7,87 @@
       "action": "record-triage-route-report-status",
       "routine_owner_role": "help-desk",
       "scope": "ticket-intake-and-status",
-      "required_evidence": "Complete ticket and truthful Project readback."
+      "evidence_expected": "Complete ticket and truthful Project readback."
     },
     {
       "action": "implement-locally",
       "routine_owner_role": "maker",
       "scope": "assigned-exclusive-paths",
-      "required_evidence": "CONTRACT READY, explicit implementation scope, fresh base, exclusive paths, and a held writer lease."
+      "evidence_expected": "CONTRACT READY, explicit implementation scope, fresh base, exclusive paths, and a held writer lease."
     },
     {
       "action": "recommend-portfolio-sequencing",
       "routine_owner_role": "project-management-lead",
       "scope": "recommendation-only",
-      "required_evidence": "Current ticket/Project evidence, risk/decision log, and recommendation; no technical assignment or integration mutation."
+      "evidence_expected": "Current ticket/Project evidence, risk/decision log, and recommendation; no technical assignment or integration mutation."
     },
     {
       "action": "review-or-withhold-data-contract",
       "routine_owner_role": "data-architecture-lead",
       "scope": "cross-domain-data-contract",
-      "required_evidence": "Exact invariant, schema/ID/lineage/version/compatibility evidence, affected paths, and smallest safe correction."
+      "evidence_expected": "Exact invariant, schema/ID/lineage/version/compatibility evidence, affected paths, and smallest safe correction."
     },
     {
       "action": "resolve-technical-ambiguity-scope-exception-ownership-integration",
       "routine_owner_role": "it-manager-iii",
       "scope": "technical-and-integration",
-      "required_evidence": "Decision packet and recorded answer, including Data Architecture clearance or exact authority for an exception to any WITHHOLD."
+      "evidence_expected": "Decision packet and recorded answer, including Data Architecture clearance or exact authority for an exception to any WITHHOLD."
     },
     {
       "action": "perform-independent-qa",
       "routine_owner_role": "qa-independent",
       "scope": "frozen-exact-head",
-      "required_evidence": "Frozen exact head and applicable gate contract; reviewer is a non-maker."
+      "evidence_expected": "Frozen exact head and applicable gate contract; reviewer is a non-maker."
     },
     {
       "action": "push-independent-topic-head-and-open-pr-to-dev",
       "routine_owner_role": "it-manager-iii",
       "scope": "reviewable-pr-to-dev",
-      "required_evidence": "Itemized independence PASS, immutable exact head, required QA/gates, fresh base/head/PR/mergeability, unchanged scope, and recorded evidence.",
+      "evidence_expected": "Itemized independence PASS, immutable exact head, required QA/gates, fresh base/head/PR/mergeability, unchanged scope, and recorded evidence.",
       "protected": true
     },
     {
       "action": "integrate-to-dev-via-pr",
       "routine_owner_role": "it-manager-iii",
       "scope": "dev-branch",
-      "required_evidence": "Independence PASS plus current required review and CI. READY FOR MAIN creates no duty to deliver.",
+      "evidence_expected": "Independence PASS plus current required review and CI. READY FOR MAIN creates no duty to deliver.",
       "protected": true
     },
     {
       "action": "fast-forward-test-to-hosted-verified-dev",
       "routine_owner_role": "it-manager-iii",
       "scope": "test-branch-gate-c",
-      "required_evidence": "Gates A/B passed and fresh; exact SHA equality; true fast-forward; rollback/protection evidence; no blocking P0/P1 WITHHOLD or stale evidence. Non-release.",
+      "evidence_expected": "Gates A/B passed and fresh; exact SHA equality; true fast-forward; rollback/protection evidence; no blocking P0/P1 WITHHOLD or stale evidence. Non-release.",
       "protected": true
     },
     {
       "action": "mutate-main-or-release-change-pages-tag-publish-declare-release-readiness",
       "routine_owner_role": "owner",
       "scope": "release-and-publication",
-      "required_evidence": "Separate action-specific exact-SHA decision, complete Gate-F promotion/rollback packet, and release runbook.",
+      "evidence_expected": "Separate action-specific exact-SHA decision, complete Gate-F promotion/rollback packet, and release runbook.",
       "protected": true
     },
     {
       "action": "perform-exact-test-playtest",
       "routine_owner_role": "owner",
       "scope": "test-branch-gate-d",
-      "required_evidence": "Gate D passed at the unchanged test SHA; exact build/artifact/flow evidence and known accepted defects.",
+      "evidence_expected": "Gate D passed at the unchanged test SHA; exact build/artifact/flow evidence and known accepted defects.",
       "protected": true
     },
     {
       "action": "mutate-project-board",
       "routine_owner_role": "owner",
       "scope": "project-board",
-      "required_evidence": "Explicit action-specific authority; local readiness does not imply it.",
+      "evidence_expected": "Explicit action-specific authority; local readiness does not imply it.",
       "protected": true
     },
     {
       "action": "archive-or-delete-task-worktree-branch-artifact-or-evidence",
       "routine_owner_role": "it-manager-iii",
       "scope": "cleanup",
-      "required_evidence": "Durable capture, exact targets, recovery consequence, and explicit authority.",
+      "evidence_expected": "Durable capture, exact targets, recovery consequence, and explicit authority.",
       "protected": true
     }
-  ]
+  ],
+  "evidence_expected_is_prose": "What a grant expects before it is exercised, written for a person to read. It is deliberately NOT called required_evidence: that name means a list of evidence.json ids everywhere else in this corpus (promotion-gates, qa), and one name carrying two types is how a check that reads it generically ends up skipping the contract it cannot parse. A grant that should demand a specific receipt names it in the gate that guards the move, not here."
 }

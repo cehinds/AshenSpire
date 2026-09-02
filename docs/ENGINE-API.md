@@ -100,6 +100,9 @@ keyword; a playable status card (cost + effects) simply omits it.
 ### Relic
 ```js
 { id, name, rarity,          // starter|common|uncommon|rare|boss
+  pool?,                     // reward (default) | quest — a quest relic is
+                             // never rolled by any generic pool; only the
+                             // event choice that names it grants it (E12)
   textTemplate, triggers: [ /* trigger DSL, §5 */ ], icon?, flavor?, script? }
 ```
 
@@ -250,6 +253,7 @@ enemy-sourced effect it resolves to the player.
 | `heal` | `amount` | capped at maxHp → `healed` (amount = actual gained) |
 | `shuffleDiscardIntoDraw` | — | → `deckShuffled` |
 | `enterStance` | `stance` | no-op if already in that stance (StS); else exits previous → `stanceExited`, `stanceEntered`, then enqueues the stance's `onEnter` effects |
+| `dodgeRoll` | — (player only; ignored for any other source) | rolls `1..framework.dodgeDie()` on stream `misc`; the framework `dodgeRoll` rule (`src/framework/weight.js`, `mechanics.json`) turns roll + the player's Dexterity + the live Weight Class (`playerWeightClass`) into `{ check, difficulty, success, temporaryGuard }`; on success the guard lands as Block through `gainBlock` (→ `blockGained`) → `dodgeRolled { sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }`. A PURE dodge (a card whose every effect is `dodgeRoll`) is priced by the class: `costProfile(def, { weightClass })` returns the class's dodge Action/Stamina cost |
 | `poiseDamage` | `amount` | feeds the enemy's poise meter; on fill: skip flag set, pending delayed move cancelled, `meterFilled(meter:'poise')` + `enemyStaggered` emitted, `balance.poise.onFill` enqueued, `poiseMax ×= growthMult` (ceil) unless growth disabled |
 
 Run-level opcodes (`addCinders {amount}`, `removeCardFromDeck {card?|random?}`,
@@ -483,6 +487,8 @@ current dispatch's `events`.
 | `enemyDied` | `{ targetId, enemyId }` |
 | `enemyStaggered` | `{ targetId, enemyId, cancelledMove: moveId\|null }` |
 | `energyGained` / `energySpent` | `{ amount }` |
+| `staminaSpent` / `staminaRecovered` | `{ amount }` on a spend; `{ amount, reason: 'idle' }` (co-op adds `playerId`) when the framework Mana & Stamina rule recovers an idle turn's stamina at the player's turn end |
+| `dodgeRolled` | `{ sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }` — the `dodgeRoll` opcode's receipt |
 | `flaskUsed` | `{ flaskId, slot, targetId }` |
 | `relicTriggered` | `{ relicId }` |
 

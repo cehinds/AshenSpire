@@ -1,0 +1,37 @@
+{
+  "schema": "agentops/directives/v1",
+  "policy_version": "1.0.0",
+  "principle": "A standing directive is an owner instruction that outlives the conversation it was given in. Chat is a projection; this file is the record. A directive that has been codified names the contract that enforces it, so the enforcement is checkable rather than remembered — and a directive nothing enforces is visible as exactly that.",
+  "non_amplification": "A directive can never exceed the issuing role's own grant. It changes what a seat must do, never what a seat may do: an instruction that would confer an action its issuer does not hold is void, and delegation.non_amplification_rule governs. Needing an owner decision does not itself widen any grant.",
+  "directives": [
+    {
+      "id": "concise-by-default",
+      "issued_by": "constantine",
+      "issued_at": "2026-08-29T19:31:22Z",
+      "source": "https://github.com/cehinds/AshenSpire/issues/406#issuecomment-5464412424",
+      "text": "All teams default to concise, minimal output unless it is something the owner needs to decide on.",
+      "status": "standing",
+      "codified_in": "information-access",
+      "codified_as": "reporting.style",
+      "grants_actions": []
+    },
+    {
+      "id": "options-when-the-owner-decides",
+      "issued_by": "constantine",
+      "issued_at": "2026-08-29T19:33:07Z",
+      "source": "https://github.com/cehinds/AshenSpire/issues/406#issuecomment-5464420699",
+      "text": "Options are the default form whenever something needs owner attention, not an open question. An emission on an owner decision surface presents enumerated options, a recommendation, and the consequence of deciding nothing.",
+      "status": "standing",
+      "codified_in": "information-access",
+      "codified_as": "reporting.owner_decision_exception",
+      "grants_actions": []
+    }
+  ],
+  "rules": {
+    "chat_is_not_the_record": "A directive given in conversation is a projection until it is recorded here. Nothing enforces an uncodified directive, and this file makes that visible rather than leaving it to memory.",
+    "issuer_must_be_declared": "A directive's issuer is an actor the hierarchy declares. An instruction from nobody in particular binds nobody.",
+    "codification_is_named": "A directive marked codified names the contract and the exact field that carries it, and validation checks the field is really there. A directive that claims enforcement it does not have is worse than one that claims none.",
+    "supersession_is_explicit": "A superseded directive names the directive that replaced it and stays in the file. The record of what was once instructed is not deleted to tidy the current state.",
+    "never_amplifies": "A directive may constrain a seat and may not empower one. Any action it purports to grant must already be held by its issuer, and a directive is never a route to an owner-reserved authority."
+  }
+}

@@ -36,7 +36,9 @@
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
-import { renderCard, upgradePreviewHtml } from '../components/card.js';
+import { renderCard } from '../components/card.js';
+import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
@@ -47,7 +49,7 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
@@ -142,13 +144,26 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return true;
   }
 
+  // A co-op client reads a snapshot, not the engine, so it prices the card the
+  // way the host will charge it: the framework cost profile with this seat's
+  // Power reduction and its live Weight Class (the pure dodge is class-priced),
+  // in every pool the host checks — Energy, Mana AND Stamina.
+  function snapshotCosts(def, player) {
+    const pools = registries.framework.costProfile(def, {
+      powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
+      weightClass: player.weightClass || null,
+    });
+    return {
+      energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
+      // The same numbers as a live preview, so the card face and its tooltip
+      // show what the host will charge (renderCard reads opts.preview).
+      preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
+    };
+  }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
-    let energyCost = def.cost === 'X' ? 1 : def.cost;
-    if (def.type === 'power') {
-      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
-    }
-    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
+    const costs = snapshotCosts(def, player);
+    return player.energy >= costs.energy && player.mana >= costs.mana && (player.stamina || 0) >= costs.stamina;
   }
 
   function armFriendlyTargeting(cardInstanceId) {
@@ -290,8 +305,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const card = player?.hand.find((entry) => {
         const def = cardDef(entry);
         return (def.effects || []).some((effect) => effect.target === 'enemy')
-          && player.energy >= (def.cost === 'X' ? 1 : def.cost)
-          && player.mana >= (def.manaCost || 0);
+          && cardAffordableFromSnapshot(def, player);
       });
       const enemy = sc?.enemies.find((entry) => entry.alive);
       if (!card || !enemy) return null;
@@ -346,7 +360,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     row.className = 'statuses';
     for (const [sid, inst] of Object.entries(statuses || {})) {
       if (!registries.statuses.has(sid)) continue;
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       const el = document.createElement('div');
@@ -373,7 +387,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const poise = document.createElement('div');
       poise.className = `bar poisebar${ent.poiseMeter.value >= ent.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (ent.poiseMeter.value / ent.poiseMeter.max) * 100)}%"></div>`;
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
     }
@@ -558,17 +573,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       handStrip.render({
         cards: meP.hand.map((c) => {
           const def = cardDef(c);
-          const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
-          const manaAffordable = meP.mana >= (def.manaCost || 0);
+          const costs = snapshotCosts(def, meP);
+          const energyAffordable = meP.energy >= costs.energy;
+          const manaAffordable = meP.mana >= costs.mana;
+          const staminaAffordable = (meP.stamina || 0) >= costs.stamina;
           const affordable = cardAffordableFromSnapshot(def, meP);
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
-            : !manaAffordable ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
-              : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+            : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
+              : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
+                : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
+            preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
           };
         }),
@@ -648,6 +667,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ? `<span class="mh-stat coop-voteline">${Object.keys(votes).length ? `VOTES ${Object.keys(votes).length}/${present.length}` : 'VOTE FOR THE PATH'}</span>`
       : '';
 
+    const smithReceipts = snap.party.filter((member) => member.lastSmithingReceipt);
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
@@ -662,6 +682,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
+        ${smithReceipts.length ? `<div class="coop-smithing-receipts" aria-live="polite">
+          ${smithReceipts.map((member) => {
+            const receipt = member.lastSmithingReceipt;
+            return `<span><b>${esc(member.name)}</b> smithed ${esc(receipt.armamentName)} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards</span>`;
+          }).join('')}
+        </div>` : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -747,7 +773,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { app.innerHTML = rewardShell(`${rTitle('Spoils')}<div class="coop-note">Waiting for the others to choose…</div>`); renderPartyBar(); wireLeave(); return; }
-    app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}<div class="reward-row"></div>
+    const stone = offer.smithingStoneReceipt;
+    app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}
+      ${stone?.amount > 0 ? `<div class="coop-note">⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total</div>` : ''}
+      <div class="reward-row"></div>
       <div class="coop-choices" style="margin-top:12px">
         ${offer.relicId ? `<button class="coop-take" data-take="relic">Take relic: ${esc(registries.relics.get(offer.relicId).name)}</button>` : ''}
         ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${flaskIdentityHtml(registries.flasks.get(offer.flaskId))}</button>` : ''}
@@ -768,28 +797,35 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const done = snap.scene.done && snap.scene.done[me];
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
     const mm = myMember();
-    const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
+    const smith = snap.scene.smithing?.[me];
+    const candidates = smith?.candidates || [];
     app.innerHTML = rewardShell(`${rTitle('Shrine of Emberlight')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
-        <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
+        <button id="coop-smith" ${candidates.length ? '' : 'disabled'}>Upgrade an item · ${mm?.smithingStones || 0} Stone${mm?.smithingStones === 1 ? '' : 's'}</button>
         ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
-      </div>
-      <div id="coop-smith-grid" class="reward-row" style="display:none;max-width:900px;flex-wrap:wrap"></div>`}`);
+      </div>`}`);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
-    // Smith opens a picker of your unupgraded cards; hover/focus previews the
-    // exact upgrade (changed values highlighted) before you commit.
+    // The shared modal keeps the co-op transaction identical to solo:
+    // reversible selection, every real delta, explicit affordability, then a
+    // separate Confirm. The client sends only that final stable item ref;
+    // the host still rebuilds and revalidates before committing.
     const smithBtn = app.querySelector('#coop-smith');
-    if (smithBtn && upgradable.length) smithBtn.addEventListener('click', () => {
-      const grid = app.querySelector('#coop-smith-grid');
-      if (grid.style.display !== 'none') return;
-      grid.style.display = 'flex';
-      for (const inst of upgradable) {
-        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
-        el.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'smith', targetId: inst.instanceId }));
-        grid.appendChild(el);
-      }
+    if (smithBtn && candidates.length) smithBtn.addEventListener('click', () => {
+      let selectedItemRef = null;
+      const model = () => smithSelectionModel(registries, smith, selectedItemRef);
+      const modal = mountSmithUpgradeModal(app, model(), {
+        registries,
+        meta,
+        returnFocusElement: smithBtn,
+        onSelect: (itemRef) => {
+          selectedItemRef = itemRef;
+          modal.update(model());
+        },
+        onBack: () => {},
+        onConfirm: (itemRef) => send({ t: 'shrineChoice', choice: 'smith', targetId: itemRef }),
+      });
     });
     renderPartyBar(); wireLeave();
   }

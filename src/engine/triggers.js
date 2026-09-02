@@ -10,7 +10,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { TRIGGER_EVENTS } from '../model/schemas.js';
-import { getStacks } from './statuses.js';
+import { getStacks } from '../framework/statusSemantics.js';
 
 const MAX_EMIT_DEPTH = 64;
 

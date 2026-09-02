@@ -10,6 +10,9 @@ import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
+import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
+import { sharedFrameworkBridge } from '../framework/bridge.js';
+import { createEntityTermOverlay } from '../framework/termOverlay.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -120,6 +123,9 @@ export function createRegistries(contentBundle) {
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  // Quest steps (E12): which events an Unknown node may roll only once the
+  // run's history earns them. Keyed by event id; absent means ungated.
+  registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
   registries.characterCreation = deepFreeze({ ...(bundle.characterCreation || {}) });
   // One object, not a copied settings shadow. The run snapshots the resolved
@@ -146,7 +152,7 @@ export function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -201,6 +207,18 @@ export function createRegistries(contentBundle) {
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
 
+  // The framework bridge — the decision authority for card lifecycle
+  // vocabulary and keyword terminology (src/framework/bridge.js). It reads
+  // only canonical framework data (never this bundle), so the process-wide
+  // instance serves every registries object, and a plain property keeps it
+  // visible to fixtures that clone registries with spread.
+  registries.framework = sharedFrameworkBridge();
+
+  // Entity words (status/stance names and tooltips) resolve through a
+  // per-bundle framework TermRegistry — the same text verbatim, with the
+  // resolution authority moved to the framework (src/framework/termOverlay.js).
+  registries.frameworkTerms = createEntityTermOverlay(bundle);
+
   return Object.freeze(registries);
 }
 
@@ -236,11 +254,12 @@ export function passiveMult(registries, relicIds, key) {
 }
 
 /** Sum of an additive passive across owned relics (default 0). */
-export function passiveSum(registries, relicIds, key) {
+export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
   knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
-    const p = registries.relics.get(id).passives;
+    const itemRef = `relic/${id}`;
+    const p = resolveUpgradedRelic(registries, itemRef, itemUpgradeLevels[itemRef] || 0).passives;
     if (p && typeof p[key] === 'number') s += p[key];
   }
   return s;
@@ -279,8 +298,11 @@ export function resolveCard(registries, instanceOrRef) {
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
+  const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
+  const sourceArmamentId = instanceOrRef.sourceArmamentId || '';
+  if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier) return base;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -290,7 +312,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -315,6 +337,17 @@ export function resolveCard(registries, instanceOrRef) {
       ...(typeof instanceOrRef.damageSchool === 'string' ? { damageSchool: instanceOrRef.damageSchool } : {}),
       ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
     });
+  }
+  // Smithing changes are exact item/tier content. No source id means there is
+  // no authority for a tier and therefore nothing may be inferred.
+  if (smithingLevel > 0 && !sourceArmamentId) throw new Error('A Smithed card must carry sourceArmamentId');
+  for (let nextTier = 1; nextTier <= smithingLevel; nextTier += 1) {
+    result = applyItemCardUpgradeRows(
+      result,
+      instanceOrRef.equipmentRole || result.equipmentRole,
+      itemUpgradeRows(registries, `armament/${sourceArmamentId}`, nextTier),
+      registries.attributes.ids(),
+    );
   }
   cache.set(key, result);
   return result;

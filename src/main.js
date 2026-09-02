@@ -12,6 +12,7 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
+import { grantSmithingReward, smithingPlan } from './model/smithing.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
@@ -834,7 +835,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -891,7 +892,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -902,7 +903,9 @@ function resumeRun(slot = 1) {
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
-  if (run.combatEntered && run.combatEntered.encounterId) {
+  if (run.pendingReward) {
+    mountPendingReward();
+  } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
@@ -929,7 +932,8 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     message: 'The saved run will replace changes made since your last save.',
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
-    tone: 'danger',
+    // Whether this reads as destructive is the ConfirmationRegistry's call.
+    tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
@@ -954,7 +958,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
     confirmLabel: 'Quit without saving',
     consequence: 'LEAVES THE RUN',
-    tone: 'danger',
+    tone: registries.framework.confirmationTone('action.quitWithoutSaving'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
@@ -1318,9 +1322,9 @@ function collectArmament(id, source) {
       saves.saveMeta(recorded.meta);
     }
   }
-  // The reward row may say Taken only after both ownership homes and the
-  // resumable run agree. This is the production collector's commit boundary.
-  persist();
+  // The reward screen persists this mutation together with its Taken state.
+  // Saving inside this collector would create an interruption window where
+  // storage changed but the resumable reward checkpoint still said pending.
   return true;
 }
 
@@ -1547,6 +1551,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
+      itemUpgradeLevels: run.itemUpgradeLevels,
+      armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -1696,6 +1702,16 @@ function onCombatEnd(result, combat, enc) {
 
   run.stats.fightsWon += 1;
   run.combatEntered = null;
+  const smithingStoneReceipt = grantSmithingReward(
+    registries,
+    run,
+    enc.pool,
+    `combat:${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}:${enc.pool}`,
+  );
+  // The Stone, its idempotent claim, the cleared combat receipt, every RNG
+  // counter used to roll the offer, and the offer itself cross one persistence
+  // boundary below. A reload therefore resumes the reward menu instead of
+  // losing either the Stone or the other spoils.
 
   if (enc.pool === 'boss') {
     run.bossesBeaten = run.bossesBeaten || [];
@@ -1720,17 +1736,9 @@ function onCombatEnd(result, combat, enc) {
       cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
+      smithingStoneReceipt,
     };
-    return mountRewards(app, {
-      registries,
-      run,
-      saves,
-      rng,
-      onCollectArmament: (id) => collectArmament(id, 'boss'),
-      onPersist: persist,
-      rewards: bossRewards,
-      onDone: () => { rewardDoneCount++; advanceAct(); },
-    });
+    return beginPendingReward(bossRewards, { source: 'boss', after: 'advanceAct' });
   }
 
   const rewards = {
@@ -1743,19 +1751,45 @@ function onCombatEnd(result, combat, enc) {
     // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
     // no-op there rather than a hidden 0%).
     armamentId: rollDrop(enc.pool),
+    smithingStoneReceipt,
   };
-  mountRewards(app, {
+  beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+}
+
+function beginPendingReward(rewards, { source, after }) {
+  run.pendingReward = {
+    schemaVersion: 1,
+    source,
+    after,
+    rewards: structuredClone(rewards),
+    states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
+    chosenCardId: null,
+  };
+  persist();
+  return mountPendingReward();
+}
+
+function mountPendingReward() {
+  const checkpoint = run.pendingReward;
+  if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
+  return mountRewards(app, {
     registries,
     run,
     saves,
     rng,
-    onCollectArmament: (id) => collectArmament(id, enc.pool),
+    rewards: checkpoint.rewards,
+    checkpoint,
+    onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
-    rewards,
     onDone: () => {
+      const after = checkpoint.after;
+      delete run.pendingReward;
       rewardDoneCount++;
-      persist();
-      showMap();
+      if (after === 'advanceAct') advanceAct();
+      else {
+        persist();
+        showMap();
+      }
     },
   });
 }
@@ -1806,6 +1840,9 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
+    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
+    // leaving it, and the screen carries its own LEAVE.
+    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -2043,7 +2080,37 @@ function coopRewardShot() {
   };
 }
 function coopShrineShot() {
-  return { actNumber: 1, floor: 5, seedString: 'SHOWCASE', endless: false, scene: { kind: 'shrine', done: {} }, party: coopShotParty() };
+  // A real host-authored Smithing view, not a hand-built client fixture. The
+  // ephemeral shot run crosses the same creation/stamping door as play, owns
+  // exactly one Stone, and the modal receives the host plan it would receive
+  // over the session wire. Confirm still sends intent only through the stub.
+  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
+  run.smithingStones = 1;
+  const party = coopShotParty();
+  party[0] = {
+    ...party[0],
+    classId: run.class,
+    hp: run.hp,
+    maxHp: run.maxHp,
+    cinders: run.cinders,
+    smithingStones: run.smithingStones,
+    itemUpgradeLevels: { ...(run.itemUpgradeLevels || {}) },
+    armamentLevels: { ...run.armamentLevels },
+    deckSize: run.deck.length,
+  };
+  return {
+    actNumber: 1,
+    floor: 5,
+    seedString: 'SHOWCASE',
+    endless: false,
+    scene: {
+      kind: 'shrine',
+      done: {},
+      smithing: { p1: smithingPlan(registries, run) },
+      receipts: {},
+    },
+    party,
+  };
 }
 function coopCatchupShot() {
   const party = coopShotParty();
@@ -2093,10 +2160,12 @@ if (shotState) {
   // own loadMeta and the live run, never a copy. The map slice is the drive's
   // door finder: it needs a real treasure node to click, and the graph is run
   // state. Read-only, shot boots only; a player never has it.
-  window.__spoils = () => ({
+  window.__spoils = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    return {
     found: [...((saves.loadMeta() || {}).found || [])],
     storage: [...(((run || {}).loadout || {}).storage || [])],
-    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
+    savedStorage: [...((((saved || {}).loadout || {}).storage) || [])],
     // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
     // 'showcase', in which recordArmamentDiscovery deliberately writes no
     // receipt — so through this door the count is structurally 0 and proves
@@ -2104,12 +2173,17 @@ if (shotState) {
     // because found and receipts ride the same gated saveMeta.
     receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
     liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
-    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saved || {}).deck || [])].map((card) => card.cardId),
+    smithingStones: run?.smithingStones ?? null,
+    savedSmithingStones: saved?.smithingStones ?? null,
+    pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
+    savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
       : [],
-  });
+    };
+  };
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -2328,6 +2402,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // deck the bug was reproduced on.
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    // `?shotSmithingStones=0|1` — stand on both sides of the Smith affordability
+    // edge without writing durable storage. The accepted values are deliberately
+    // closed to the owner-approved issue #211 economy: this reach door cannot
+    // pose a purse the shipped faucet/cost table cannot currently produce.
+    const shotSmithingStonesRaw = shotParams.get('shotSmithingStones');
+    if (shotSmithingStonesRaw != null) {
+      const shotSmithingStones = Number(shotSmithingStonesRaw);
+      if (!Number.isInteger(shotSmithingStones) || ![0, 1].includes(shotSmithingStones)) {
+        throw new Error(`?shotSmithingStones=${shotSmithingStonesRaw}: expected exactly 0 or 1. A silent fallback would photograph the wrong affordability state.`);
+      }
+      run.smithingStones = shotSmithingStones;
+    }
     // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
     // already states about its own remove grid: a fresh run holds 0 cinders, so
     // the Level up panel this state now has to reach mounts LOCKED, and a
@@ -2380,6 +2466,9 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // ids came from. tools/reward-collect-drive.mjs exercises the real
     // rollDrop → mountRewards door; this pose is for photographs.
     const pose = shotParams.get('shotReward') || 'full';
+    const smithingStoneReceipt = pose === 'empty'
+      ? null
+      : grantSmithingReward(registries, run, 'elite', 'shot:reward');
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,
@@ -2387,14 +2476,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
       flaskId: 'crimsonFlask',
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
+      smithingStoneReceipt,
     };
-    mountRewards(app, {
-      registries, run, saves, rng,
-      onCollectArmament: (id) => collectArmament(id, 'showcase'),
-      onPersist: persist,
-      rewards: shotOffer,
-      onDone: () => { rewardDoneCount++; showMap(); },
-    });
+    if (pose === 'pending') {
+      beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
+      // Cross the ordinary load door in the same ephemeral shot store. This is
+      // the interruption/reload proof: the mounted row below comes from saved
+      // pendingReward bytes, not the just-rolled local object.
+      resumeRun(activeSlot);
+    } else {
+      mountRewards(app, {
+        registries, run, saves, rng,
+        onCollectArmament: (id) => collectArmament(id, 'showcase'),
+        onPersist: persist,
+        rewards: shotOffer,
+        onDone: () => { rewardDoneCount++; showMap(); },
+      });
+    }
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
     // four POOL doors (which sit above the shot branches, right after newRun,
@@ -2483,6 +2581,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // saves.listArchives. The instrument still opens the section by the
   // player's own door: Profile on the title screen.
   saves.ensureProfile();
+  // A PROFILE THE PLAYER HAS TOUCHED, not a second fresh one. Two untouched
+  // profiles are the same bytes, and the archive de-duplicates by content
+  // (save.js archiveMeta): restoring A over an identical B set B aside INTO
+  // A's own entry — the drawer read "seen 2 times" instead of growing, and
+  // tools/holdconfirm.mjs read "entries 1 -> 1" as a restore that set nothing
+  // aside. A real outgoing profile is never byte-identical to the one it
+  // replaces (it carries its results), so the pose writes one setting through
+  // the real writer — the default value, so nothing behaves differently — and
+  // the two profiles are distinct the way two real ones are. ONLY WHEN THE
+  // PROFILE IS UNTOUCHED: ?shotSettings has already written the settings an
+  // instrument asked for (holdConfirm 'off' or 'long' on this very screen),
+  // and those bytes already make the profile distinct — overwriting them
+  // would pose the default where the caller asked for an edge (Codex, #537).
+  {
+    const posed = saves.loadMeta();
+    if (!Object.keys(posed.settings || {}).length) saves.saveMeta({ ...posed, settings: { holdConfirm: 'normal' } });
+  }
   saves.startNewProfile();
   showTitle();
   showProfile();

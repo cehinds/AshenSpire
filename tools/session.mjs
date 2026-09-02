@@ -19,6 +19,11 @@ import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
+import { stampDeck } from '../src/model/loadout.js';
+import { playerWeightClass } from '../src/engine/combat.js';
+import {
+  commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
+} from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
@@ -149,6 +154,8 @@ export function createSession({ registries, seedString, endless = false, restore
         const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
         validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
         initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
+        initializeRunSmithing(registries, md.run);
+        stampDeck(registries, md.run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
         initializeRunFlaskCharges(md.run, registries);
         delete md.run.migratedFromRunSchemaVersion;
         members.set(md.id, {
@@ -173,6 +180,24 @@ export function createSession({ registries, seedString, endless = false, restore
     if (records.length && !members.size) {
       throw new Error('Session restore refused: no member survived the door — '
         + refused.map((r) => `'${r.id}': ${r.reason}`).join(' · '));
+    }
+    // Shrine plans are host projections of the migrated member runs, not
+    // trusted serialized client-facing bytes. Rebuild them on restore so an
+    // older saved Shrine cannot disable Smithing after the run itself heals.
+    if (session.scene?.kind === 'shrine') {
+      session.scene = {
+        ...session.scene,
+        done: { ...(session.scene.done || {}) },
+        smithing: Object.fromEntries([...members.values()]
+          .filter((member) => member.alive)
+          .map((member) => [member.id, smithingPlan(registries, member.run)])),
+        receipts: {
+          ...(session.scene.receipts || {}),
+          ...Object.fromEntries([...members.values()]
+            .filter((member) => member.run.lastSmithingReceipt)
+            .map((member) => [member.id, structuredClone(member.run.lastSmithingReceipt)])),
+        },
+      };
     }
   }
 
@@ -347,7 +372,11 @@ export function createSession({ registries, seedString, endless = false, restore
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
+      // The seat's loadout rides into the co-op engine so the framework Weight
+      // Class (dodge check and pricing) is this player's, not a Light default.
+      loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
+      itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
     };
   }
 
@@ -475,6 +504,15 @@ export function createSession({ registries, seedString, endless = false, restore
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
+        // AND THEIR TIERS. A client prices a card from this snapshot
+        // (coop.js snapshotCosts → passiveSum with the seat's tier map); the
+        // relic ids alone priced every upgraded relic at tier zero, so an
+        // upgraded Ancestral Horn that the host charged 0 for read 1 on the
+        // client and the card went unplayable there (Codex, #528).
+        itemUpgradeLevels: { ...(P.itemUpgradeLevels || {}) },
+        // The seat's live Weight Class row, so a client can price the pure
+        // dodge (and read its Stamina cost) exactly as the host will charge it.
+        weightClass: playerWeightClass({ registries, loadout: P.loadout, attributes: P.attributes, player: P.entity, itemUpgradeLevels: P.itemUpgradeLevels }).weightClass,
       })),
     };
   }
@@ -586,6 +624,12 @@ export function createSession({ registries, seedString, endless = false, restore
     for (const m of livingMembers()) {
       const offer = rollRewardFor(m, pool);
       m.run.cinders += offer.cinders; // gold is auto-granted; card/relic are choices
+      offer.smithingStoneReceipt = grantSmithingReward(
+        registries,
+        m.run,
+        pool,
+        `coop:${session.actNumber}:${session.floor}:${pool}:${m.id}`,
+      );
       if (m.connected) {
         pending[m.id] = offer;
       } else {
@@ -639,7 +683,12 @@ export function createSession({ registries, seedString, endless = false, restore
     // no browser to read `meta.settings` from; the counts are the authored
     // table. A per-session override is a lobby setting and a separate subject.
     for (const m of livingMembers()) applyGraceRefill(registries, m.run);
-    session.scene = { kind: 'shrine', done: {} };
+    session.scene = {
+      kind: 'shrine',
+      done: {},
+      smithing: Object.fromEntries(livingMembers().map((m) => [m.id, smithingPlan(registries, m.run)])),
+      receipts: {},
+    };
     return { ok: true };
   }
   function shrineChoice(memberId, choice, targetId) {
@@ -657,11 +706,19 @@ export function createSession({ registries, seedString, endless = false, restore
       const ally = members.get(targetId);
       if (!ally || !ally.alive) return { ok: false, error: 'no such ally' };
       ally.run.hp = Math.min(ally.run.maxHp, ally.run.hp + Math.ceil(ally.run.maxHp * (registries.balance.coop.mendHealPct / 100)));
+    } else if (choice === 'smith') {
+      // The client sends intent only. The host rebuilds the plan, validates the
+      // armament id, spends the purse, mutates every sourced basic, and places
+      // the durable receipt in the next broadcast snapshot.
+      try {
+        const receipt = commitSmithing(registries, m.run, targetId);
+        session.scene.receipts[memberId] = receipt;
+        session.scene.smithing[memberId] = smithingPlan(registries, m.run);
+      } catch (error) {
+        return { ok: false, error: error?.message || 'Smithing refused' };
+      }
     } else {
-      // Smith: the chosen card if given (validated), else first unupgraded.
-      const c = (targetId && m.run.deck.find((d) => d.instanceId === targetId && !d.upgraded))
-        || m.run.deck.find((d) => !d.upgraded);
-      if (c) c.upgraded = true;
+      return { ok: false, error: `unknown shrine choice '${choice}'` };
     }
     session.scene.done[memberId] = true;
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
@@ -722,12 +779,26 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
+      smithingStones: m.run.smithingStones,
+      itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
+      ...(m.run.lastSmithingReceipt
+        ? { lastSmithingReceipt: structuredClone(m.run.lastSmithingReceipt) }
+        : {}),
       mana: m.run.mana, maxMana: m.run.maxMana,
       stamina: m.run.stamina, maxStamina: m.run.maxStamina,
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
-      deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
+      deck: m.run.deck.map((c) => ({
+        instanceId: c.instanceId,
+        cardId: c.cardId,
+        upgraded: c.upgraded,
+        ...(c.equipmentRole ? { equipmentRole: c.equipmentRole } : {}),
+        ...(c.profileId ? { profileId: c.profileId } : {}),
+        ...(Array.isArray(c.mods) ? { mods: [...c.mods] } : {}),
+        ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
+        ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
+      })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       flaskCharges: structuredClone(m.run.flaskCharges),
       catchup: m.catchup.length,

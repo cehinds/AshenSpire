@@ -41,8 +41,16 @@ import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
+import { eventChoiceRequirementProblems } from './quests.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
+import {
+  itemRefIdentity,
+  itemUpgradeTagMatchesKind,
+  parseItemUpgradeTag,
+  UPGRADE_COST_TAG,
+} from './itemUpgrades.js';
+import { normalizeSmithingRules } from './smithingRules.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -89,6 +97,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
+  'eventHistoryRequirements', // quest steps (E12): event-level history gates
 ]);
 
 /**
@@ -234,6 +243,50 @@ export function validateContent(bundle) {
     }
   }
 
+  // Quest steps (E12): an event-level history gate must name a shipped event,
+  // carry a well-formed requirement (model/quests.js is the one grammar), and
+  // point only at shipped events. Choice ids are the events module's sidecar
+  // contract and are proven by tools/quest-choice-contract.mjs.
+  const eventGates = b.eventHistoryRequirements;
+  if (eventGates !== undefined) {
+    if (!eventGates || typeof eventGates !== 'object' || Array.isArray(eventGates)) {
+      err('eventHistoryRequirements', 'must be an object keyed by event id');
+    } else {
+      const eventIds = new Set((Array.isArray(b.events) ? b.events : []).map((e) => e && e.id));
+      for (const [eventId, requirement] of Object.entries(eventGates)) {
+        if (!eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
+        for (const problem of eventChoiceRequirementProblems(requirement)) err(`eventHistoryRequirements.${eventId}`, problem);
+        for (const group of ['all', 'any', 'none']) {
+          for (const ref of (requirement && Array.isArray(requirement[group]) ? requirement[group] : [])) {
+            if (ref && ref.eventId === eventId) err(`eventHistoryRequirements.${eventId}.${group}`, 'an event cannot be gated on its own choice');
+            if (ref && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
+          }
+        }
+      }
+    }
+  }
+
+  // A quest-pool relic (RELIC_POOLS) is withheld from every generic reward
+  // pool, so the only road to it is an event choice that grants it by id. A
+  // quest-pool relic no choice names is unreachable content, and a class's
+  // starting relic is a starter, not a quest reward.
+  {
+    const granted = new Set();
+    for (const event of (Array.isArray(b.events) ? b.events : [])) {
+      for (const choice of (event && Array.isArray(event.choices) ? event.choices : [])) {
+        for (const eff of (choice && Array.isArray(choice.effects) ? choice.effects : [])) {
+          if (eff && eff.op === 'addRelic' && typeof eff.id === 'string') granted.add(eff.id);
+        }
+      }
+    }
+    const startingRelics = new Set((Array.isArray(b.classes) ? b.classes : []).map((row) => row && row.startingRelic));
+    for (const relic of (Array.isArray(b.relics) ? b.relics : [])) {
+      if (!relic || relic.pool !== 'quest') continue;
+      if (!granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
+      if (startingRelics.has(relic.id)) err(`relics.${relic.id}.pool`, 'a class starting relic cannot be quest-pool');
+    }
+  }
+
   for (const key of Object.keys(b)) {
     if (!KNOWN_BUNDLE_KEYS.has(key)) err(key, `Unknown content bundle key '${key}'`);
   }
@@ -254,16 +307,23 @@ export function validateContent(bundle) {
     });
   }
 
-  // Mana costs are semantic bounds, not merely integer shapes. A negative
-  // cost would mint Mana when a card is played. Mana maxima are derived from
-  // the rules table; classes deliberately own no second maximum.
+  // Secondary costs are semantic bounds, not merely integer shapes. A negative
+  // cost would mint the resource when a card is played.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
     }
+    if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
+      err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');
+    }
   }
   const flaskCapacity = b.balance && b.balance.flaskCapacity;
   if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
+  try {
+    normalizeSmithingRules(b.balance && b.balance.smithing);
+  } catch (error) {
+    err('balance.smithing', error?.message || 'must be a complete Smithing economy block');
+  }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
@@ -302,6 +362,32 @@ export function validateContent(bundle) {
         if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
           err(`equipment.${table}.${id}.poiseThreshold`, `must be a finite non-negative integer, got ${JSON.stringify(value)}`);
         }
+      }
+    }
+
+    // Intrinsic armament facts are an authored presentation contract, not a
+    // second route into generated-card or combat arithmetic. Missing values
+    // fail here rather than being displayed as plausible zeroes.
+    const intrinsicFields = ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost'];
+    for (const row of Array.isArray(equipment.armaments) ? equipment.armaments : []) {
+      const id = row && row.id || '?';
+      for (const field of intrinsicFields) {
+        const value = row && row[field];
+        if (!Number.isInteger(value) || value < 0) {
+          err(`equipment.armaments.${id}.${field}`, `must be an explicit non-negative integer, got ${JSON.stringify(value)}`);
+        }
+      }
+      if (Number.isInteger(row?.weight) && row.weight !== row.poiseThreshold) {
+        err(`equipment.armaments.${id}.weight`, `must equal authored poiseThreshold ${JSON.stringify(row.poiseThreshold)}`);
+      }
+      const isStaffTechnique = (row?.itemTypeTags || []).includes('item:magic-focus')
+        && row?.techniqueProfile === 'staffTechnique';
+      const expectedManaCost = isStaffTechnique ? 1 : 0;
+      if (row?.weaponArtManaCost !== expectedManaCost) {
+        err(`equipment.armaments.${id}.weaponArtManaCost`, `must be ${expectedManaCost} for its authored item type and technique profile`);
+      }
+      if (row?.uniqueSkillStaminaCost !== 0) {
+        err(`equipment.armaments.${id}.uniqueSkillStaminaCost`, 'must remain 0 until an explicit unique-skill consumer exists');
       }
     }
 
@@ -376,6 +462,73 @@ export function validateContent(bundle) {
         const key = `${itemId}:${attributeId}`;
         if (seen.has(key)) err(path, `Duplicate item/stat requirement '${key}'`);
         seen.add(key);
+      }
+    }
+    if (!Array.isArray(equipment.itemUpgradeChanges)) {
+      err('equipment.itemUpgradeChanges', 'Missing required generated itemUpgradeChanges array');
+    } else {
+      const itemDefinitions = new Map([
+        ...(Array.isArray(equipment.armaments) ? equipment.armaments : []).filter(Boolean).map((row) => [`armament/${row.id}`, row]),
+        ...(Array.isArray(equipment.armour) ? equipment.armour : []).filter(Boolean).map((row) => [`armor/${row.classId}/${row.id}`, row]),
+        ...(Array.isArray(b.relics) ? b.relics : []).filter(Boolean).map((row) => [`relic/${row.id}`, row]),
+      ]);
+      const knownItemRefs = new Set(itemDefinitions.keys());
+      const seen = new Set();
+      const packages = new Map();
+      for (const row of equipment.itemUpgradeChanges) {
+        const itemRef = row && row.itemRef;
+        const nextTier = row && row.nextTier;
+        const tag = row && row.tag;
+        const path = `equipment.itemUpgradeChanges.${itemRef || '?'}:tier${nextTier || '?'}:${tag || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['itemRef', 'nextTier', 'tag', 'value'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        const identity = itemRefIdentity(itemRef);
+        if (!identity || !knownItemRefs.has(itemRef)) err(`${path}.itemRef`, `unknown namespaced item '${itemRef}'`);
+        if (!Number.isInteger(nextTier) || nextTier < 1) err(`${path}.nextTier`, 'must be a positive integer');
+        const descriptor = parseItemUpgradeTag(tag, [...ids.attributes]);
+        if (!descriptor) err(`${path}.tag`, `unknown upgrade tag '${tag}'`);
+        else if (!identity || !itemUpgradeTagMatchesKind(descriptor, identity.itemKind)) {
+          err(`${path}.tag`, `upgrade tag '${tag}' is invalid for item kind '${identity?.itemKind || 'unknown'}'`);
+        } else if (descriptor.kind === 'equipmentPoise') {
+          const before = itemDefinitions.get(itemRef)?.poiseThreshold;
+          if (!Number.isInteger(before) || before + row.value < 0) {
+            err(`${path}.value`, `must keep authored poiseThreshold non-negative (base ${JSON.stringify(before)})`);
+          }
+        } else if (descriptor.kind === 'relicPassive') {
+          const before = itemDefinitions.get(itemRef)?.passives?.[descriptor.passiveKey];
+          if (!Number.isInteger(before) || before + row.value < 0) {
+            err(`${path}.value`, `must target an existing non-negative integer passive '${descriptor.passiveKey}' (base ${JSON.stringify(before)})`);
+          }
+        }
+        if (!Number.isInteger(row && row.value) || row.value === 0) err(`${path}.value`, 'must be a non-zero integer');
+        if (tag === UPGRADE_COST_TAG && (!Number.isInteger(row.value) || row.value < 1)) err(`${path}.value`, 'Smithing Stone cost must be a positive integer');
+        const exact = `${itemRef}|${nextTier}|${tag}`;
+        if (seen.has(exact)) err(path, `Duplicate item/tier/tag row '${exact}'`);
+        seen.add(exact);
+        const packageKey = `${itemRef}|${nextTier}`;
+        if (!packages.has(packageKey)) packages.set(packageKey, []);
+        packages.get(packageKey).push(row);
+      }
+      const tiersByItem = new Map();
+      for (const [packageKey, rows] of packages) {
+        const split = packageKey.lastIndexOf('|');
+        const itemRef = packageKey.slice(0, split);
+        const nextTier = Number(packageKey.slice(split + 1));
+        const costs = rows.filter((row) => row.tag === UPGRADE_COST_TAG);
+        if (costs.length !== 1) err(`equipment.itemUpgradeChanges.${itemRef}:tier${nextTier}`, `must have exactly one ${UPGRADE_COST_TAG} row`);
+        if (rows.length === costs.length) err(`equipment.itemUpgradeChanges.${itemRef}:tier${nextTier}`, 'must have at least one gameplay change row');
+        const effective = rows.filter((row) => {
+          const descriptor = parseItemUpgradeTag(row.tag, [...ids.attributes]);
+          return descriptor && descriptor.kind !== 'upgradeCost' && itemUpgradeTagMatchesKind(descriptor, itemRefIdentity(itemRef)?.itemKind);
+        });
+        if (!effective.length) err(`equipment.itemUpgradeChanges.${itemRef}:tier${nextTier}`, 'must have at least one kind-compatible non-cost change');
+        if (!tiersByItem.has(itemRef)) tiersByItem.set(itemRef, []);
+        tiersByItem.get(itemRef).push(nextTier);
+      }
+      for (const [itemRef, tiers] of tiersByItem) {
+        const ordered = [...new Set(tiers)].sort((a, b) => a - b);
+        ordered.forEach((tier, index) => {
+          if (tier !== index + 1) err(`equipment.itemUpgradeChanges.${itemRef}`, `tiers must be contiguous from 1; found ${ordered.join(', ')}`);
+        });
       }
     }
     if (!Array.isArray(equipment.cardEquipmentExceptions)) {
@@ -485,7 +638,7 @@ export function validateContent(bundle) {
   }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'hpPerConTier'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
@@ -556,9 +709,6 @@ export function validateContent(bundle) {
   }
 
   for (const cls of b.classes || []) {
-    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
-      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
-    }
   }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
