@@ -99,16 +99,25 @@ export const RUN_PATH_SERVE = 'source tree';
 
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
-/** Fixed width, so eye-order and string-order agree. */
-export const ORDINAL_PAD = 4;
 /**
- * Padding buys correct string ordering only inside the decade it was chosen
- * for. `0999` sorts below `10000` because `0` < `1`; `99999` does NOT sort
- * below `100000`, because `9` > `1`. The scheme is sound to 99999 and inverts
- * at 100000, so row F refuses the ordinal AT that line rather than leaving the
- * trap armed for whoever is here in eighty thousand commits.
+ * UNPADDED, AND THE GUARANTEE IT COSTS IS NAMED RATHER THAN DROPPED QUIETLY.
+ *
+ * Constantine, 2026-09-01, re-reading the stamp he had been shipped: "I must
+ * have misunderstood the ordinal ... I thought it was going to be something
+ * like 0.5.3.2" — and then the rule, in his words: the tail "should restart the
+ * ordinal to 0.5.4.0 and increment from there". A counter that restarts per
+ * candidate is small by construction, and `0.5.4.0000` is not the string he
+ * asked for.
+ *
+ * The old scheme padded to four so that a naive STRING sort of the whole
+ * version agreed with eye order. That property is gone and cannot be recovered
+ * by padding, because the candidate now lives in the third component: `0.5.10.0`
+ * string-sorts below `0.5.9.0` no matter how the tail is padded. Version
+ * comparison is COMPONENT-WISE NUMERIC from here — split on `.`, compare as
+ * numbers — which is what every semver reader already does and what row H
+ * enforces on the one axis that can still be checked mechanically.
  */
-export const ORDINAL_CEILING = 10 ** (ORDINAL_PAD + 1);
+export const ORDINAL_PAD = 1;
 
 // 10 hex = 40 bits = 1.1e12 names. At ten thousand builds the chance any two
 // collide is about 5e-5. Stated rather than felt, because "it's a hash, it's
@@ -414,6 +423,26 @@ export function padOrdinal(n) {
 }
 
 /**
+ * The candidate-bearing prefix of a release string: `0.5.0-rc.4` → `0.5.4`.
+ *
+ * Constantine's scheme puts the CANDIDATE NUMBER in the third component, so the
+ * pre-release tag is not decoration on the patch number — it IS the third
+ * component, and the patch number a candidate carries (`0.5.0`'s `0`) is the
+ * release it is auditioning for rather than anything about this build.
+ *
+ * A release with no `-rc.N` keeps its own three components, so a shipped
+ * `0.5.0` reads `0.5.0.<n>`. THAT SORTS BELOW ITS OWN CANDIDATES and the cost
+ * is stated where the code is rather than discovered later: under this scheme a
+ * release must be numbered past its last candidate to outsort it. Raised with
+ * the owner when the directive was given; his call, recorded here.
+ */
+export function versionPrefix(releaseString) {
+  const m = /^(\d+)\.(\d+)\.(\d+)-rc\.(\d+)$/.exec(releaseString);
+  if (m) return `${m[1]}.${m[2]}.${m[4]}`;
+  return releaseString;
+}
+
+/**
  * readOrdinal(root) → { ordinal, digest, built } from its one home. Throws if
  * absent. `built` rides in this file rather than in one of its own for the
  * reason the ordinal does: it is a fact of history that the build computes once
@@ -422,7 +451,13 @@ export function padOrdinal(n) {
  */
 export function readOrdinal(root = REPO_ROOT) {
   const raw = JSON.parse(readFileSync(resolve(root, ORDINAL_HOME), 'utf8'));
-  return { ordinal: Number(raw.ordinal), digest: raw.digest ?? null, built: raw.built ?? null };
+  return {
+    ordinal: Number(raw.ordinal), digest: raw.digest ?? null, built: raw.built ?? null,
+    // The release the ordinal was counted under. Without it a reset is
+    // indistinguishable from a hand-edit that lowered the number, and row H
+    // could not tell the two apart.
+    release: raw.release ?? null,
+  };
 }
 
 /** The build date, UTC, as a build writes it. One format, one place. */
@@ -438,19 +473,26 @@ export function today(now = new Date()) {
  * rebuild of an unchanged tree finds the digests equal, writes nothing, injects
  * the same number and reproduces the committed bundle byte for byte.
  *
- * THE NEW VALUE IS `max(recorded + 1, commit count)`, AND THE `max` IS NOT
- * BELT-AND-BRACES — IT IS THE WHOLE GUARANTEE. Constantine asked for the commit
- * count, and the commit count ALONE does not increase between two builds of the
- * same commit: edit, build, edit again, build again, and `rev-list --count`
- * returns the same number twice while the source has moved. That is the defect
- * this scheme exists to remove, reintroduced one level down. So the value
- * tracks the commit count and is FLOORED to strictly increasing, and it is
- * stated plainly rather than described as "the commit count" when it is the
- * commit count raised whenever two builds would otherwise share a number.
+ * THE NEW VALUE IS `recorded + 1`, RESET TO 0 WHEN THE RELEASE STRING MOVES.
+ * Constantine, 2026-09-01: the tail "should restart the ordinal to 0.5.4.0 and
+ * increment from there". So this counts BUILDS WITHIN A CANDIDATE, and the
+ * candidate itself is the third component, read from the release home.
  *
- * IT REFUSES RATHER THAN GUESSING. Without git there is no count, and MR-263 is
- * the standing rule: when the version cannot be derived, fail loudly, never
- * emit a plausible one. `0.4.0.0000` is precisely a plausible one.
+ * IT NO LONGER CONSULTS `rev-list --count`, AND THAT IS A SIMPLIFICATION THE
+ * NEW RULE EARNS RATHER THAN A CHECK QUIETLY DROPPED. The old value was
+ * `max(recorded + 1, count)`: the count supplied Constantine's original "commit
+ * count" ask, and the `max` existed because the count ALONE does not move
+ * between two builds of one commit. Under a per-candidate counter the count
+ * cannot be the value — it does not reset — so the floor is the whole rule, and
+ * `recorded + 1` is that floor with nothing left to raise it above. One
+ * consequence, stated: the number no longer approximates the commit count, and
+ * nothing should read it as one. The digest still identifies the tree exactly,
+ * which is the job the count was never doing.
+ *
+ * THE RECORDED RELEASE IS WRITTEN IN THE SAME ACT, for the reason the date is:
+ * a reset is only legitimate if the release moved, and a reader that cannot see
+ * WHICH release the number was counted under cannot tell a reset from a
+ * hand-edit that lowered it. Row H asks exactly that question.
  */
 export function bumpOrdinal(root = REPO_ROOT) {
   const digest = sourceDigest(root).digest;
@@ -462,26 +504,22 @@ export function bumpOrdinal(root = REPO_ROOT) {
   // also the truth: the artifact was built on the day it was built.
   if (rec.digest === digest) return { ordinal: rec.ordinal, bumped: false, digest, built: rec.built };
 
-  let count;
-  try {
-    count = Number(execFileSync('git', ['-C', root, 'rev-list', '--count', 'HEAD'], { encoding: 'utf8' }).trim());
-  } catch (e) {
-    throw new Error(
-      `the build ordinal could not be derived — git could not count commits in ${root} (${e.message}).`
-      + ` Refusing to invent one: a plausible build number is worse than none.`);
-  }
-  if (!Number.isFinite(count)) throw new Error('git returned a commit count that is not a number');
-
-  const ordinal = Math.max(rec.ordinal + 1, count);
+  const rel = release(root);
+  // A release the recorded number was NOT counted under restarts the count.
+  // `rec.release === null` is the pre-scheme file: it has no release to compare,
+  // so it is treated as a different one and the counter starts where the
+  // directive says a candidate starts.
+  const ordinal = rec.release === rel ? rec.ordinal + 1 : 0;
   const built = today();
   writeFileSync(resolve(root, ORDINAL_HOME),
     `${JSON.stringify({
       _: 'DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.',
+      release: rel,
       ordinal,
       digest,
       built,
     }, null, 2)}\n`, 'utf8');
-  return { ordinal, bumped: true, digest, built };
+  return { ordinal, bumped: true, digest, built, release: rel };
 }
 
 /** The release string, read from its one home rather than re-typed. */
@@ -498,7 +536,7 @@ export function release(root = REPO_ROOT) {
  * F and G's question, not this function's.
  */
 export function buildVersion(root = REPO_ROOT) {
-  return `${release(root)}.${padOrdinal(readOrdinal(root).ordinal)}`;
+  return `${versionPrefix(release(root))}.${padOrdinal(readOrdinal(root).ordinal)}`;
 }
 
 /**
@@ -826,13 +864,15 @@ export function check(root = REPO_ROOT) {
     if (found.length !== 1) problems.push(`${BUNDLE} carries ${found.length} ORDINAL literals, expected exactly 1`);
     else if (found[0] !== want) problems.push(`${BUNDLE} carries ORDINAL '${found[0]}', ${ORDINAL_HOME} holds '${want}' — the box and the file disagree`);
     if (!Number.isInteger(recorded.ordinal) || recorded.ordinal < 0) problems.push(`${ORDINAL_HOME} ordinal is not a non-negative integer: ${JSON.stringify(recorded.ordinal)}`);
-    if (want.length < ORDINAL_PAD) problems.push(`'${want}' is narrower than the ${ORDINAL_PAD}-wide pad — an unpadded tail string-sorts wrong`);
-    // The ceiling is refused BEFORE it can invert, not after. Past 99999 a
-    // 4-wide pad puts '99999' above '100000' and the whole promise reverses.
-    if (recorded.ordinal >= ORDINAL_CEILING) problems.push(`ordinal ${recorded.ordinal} has reached ${ORDINAL_CEILING}, where a ${ORDINAL_PAD}-wide pad stops sorting: widen ORDINAL_PAD before the next build`);
+    // THE RECORDED RELEASE IS LOCKED HERE TOO, and it has to be: the counter
+    // resets when that field moves, so a hand-edit of the release alone would
+    // license a reset the tree never earned. F is where a committed fact is
+    // compared to a committed fact, and this is one.
+    if (recorded.release === null) problems.push(`${ORDINAL_HOME} records no release — the ordinal is a count within a release, and a count with no release named is a number with no subject`);
+    else if (recorded.release !== release(root)) problems.push(`${ORDINAL_HOME} counted ordinal ${recorded.ordinal} under release '${recorded.release}', but ${RELEASE_HOME} now says '${release(root)}' — the number belongs to a different candidate`);
     add(problems.length === 0, 'F ORDINAL ON THE BOX',
       problems.length === 0
-        ? `${BUNDLE} carries ORDINAL '${want}' and BUILT '${wantDate}', which are ${ORDINAL_HOME}'s; the ordinal is padded to ${ORDINAL_PAD} and below the ${ORDINAL_CEILING} sort ceiling`
+        ? `${BUNDLE} carries ORDINAL '${want}' and BUILT '${wantDate}', which are ${ORDINAL_HOME}'s, counted under release '${recorded.release}'`
         : problems.join('\n      '));
   }
 
@@ -865,7 +905,10 @@ export function check(root = REPO_ROOT) {
   // UNKNOWN in its own words does not also need git shouting between the rows.
   const g = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   const at = (rev) => {
-    try { return Number(JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`)).ordinal); } catch { return null; }
+    try {
+      const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
+      return { ordinal: Number(raw.ordinal), release: raw.release ?? null };
+    } catch { return null; }
   };
   try {
     const parents = g('rev-list', '--parents', '-n', '1', 'HEAD').trim().split(/\s+/);
@@ -882,11 +925,25 @@ export function check(root = REPO_ROOT) {
         add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
       } else if (now === null) {
         add(false, 'H ORDINAL INCREASES', `HEAD changed ${BUNDLE} and has no readable ${ORDINAL_HOME} — a build shipped with no number`);
+      } else if (before.release !== now.release) {
+        // A RESET IS LEGITIMATE ONLY WHEN THE CANDIDATE MOVED, and this is the
+        // row that says so. The counter restarts at 0 on a new candidate —
+        // Constantine's rule — so a lower number is correct here and would be
+        // the defect anywhere else. What still has to hold is that the version
+        // as a whole went UP, and it does: the third component moved, so
+        // component-wise numeric comparison orders the two builds apart even
+        // though the tail fell. The check is that the reset landed where the
+        // rule says a candidate starts, rather than anywhere lower.
+        add(now.ordinal === 0, 'H ORDINAL INCREASES',
+          now.ordinal === 0
+            ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD, and the ordinal restarted at 0 as a new candidate must`
+            : `the release moved '${before.release}' → '${now.release}' and the ordinal went ${before.ordinal} → ${now.ordinal},`
+              + ` which is neither a continuation nor the 0 a new candidate starts at.`);
       } else {
-        add(now > before, 'H ORDINAL INCREASES',
-          now > before
-            ? `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD, and the ordinal went ${before} → ${now}`
-            : `${BUNDLE} CHANGED between ${parent.slice(0, 7)} and HEAD and the ordinal went ${before} → ${now}.`
+        add(now.ordinal > before.ordinal, 'H ORDINAL INCREASES',
+          now.ordinal > before.ordinal
+            ? `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD, and the ordinal went ${before.ordinal} → ${now.ordinal} within release '${now.release}'`
+            : `${BUNDLE} CHANGED between ${parent.slice(0, 7)} and HEAD and the ordinal went ${before.ordinal} → ${now.ordinal} within one release '${now.release}'.`
               + ` Two different builds that do not sort apart is the whole defect this scheme replaced.`);
       }
     }
