@@ -10,7 +10,7 @@ import {
   appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
   emptySnapshot, historyAdvanceAllowed, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
+  runBoundedCommand, sameIdentityReviewAccepted, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -330,6 +330,57 @@ test('dev merge one-writer gate uses preserved maker lease after QA releases sea
   const gate = mergeGateResult(config, item, pr, { currentBaseIsAncestor: true, unresolvedThreads: 0, competingPrs: 0, rollbackKnown: true });
   assert.equal(gate.gates.one_writer, true);
   assert.equal(gate.allowed, true);
+  assert.equal(gate.review_independence, 'distinct-account');
+});
+
+// #434: every seat authors as one GitHub account, so the distinct-account half
+// of the review gate can never be met in-session. The owner relaxed WHO may
+// approve. These fix what that did NOT relax, so a later edit cannot quietly
+// widen it: the approval still has to exist and still has to name the exact
+// head, and the exception is inert unless its authorization is written down.
+function mergeGateFixture() {
+  let state = intake(fresh(), '434'); state = claim(state, '434'); state = entered(state, '434'); state = candidate(state, '434'); state = qa(state, '434');
+  const item = state.snapshot.work_items['434'];
+  const approval = (login, oid) => ({ state: 'APPROVED', author: { login }, commit: { oid } });
+  return { item, approval, pr: (reviews) => ({ author: { login: 'cehinds' }, headRefOid: item.candidate_commit, statusCheckRollup: [{ conclusion: 'SUCCESS' }], reviews }) };
+}
+const withAuthority = (over) => ({ ...config, authority: { ...config.authority, ...over } });
+const gateOf = (cfg, item, pr) => mergeGateResult(cfg, item, pr, { currentBaseIsAncestor: true, unresolvedThreads: 0, competingPrs: 0, rollbackKnown: true });
+
+test('same-account approval is refused while the recorded exception is off', () => {
+  const { item, approval, pr } = mergeGateFixture();
+  const gate = gateOf(withAuthority({ same_identity_review_accepted: false }), item, pr([approval('cehinds', item.candidate_commit)]));
+  assert.equal(gate.gates.independent_review, false);
+  assert.equal(gate.review_independence, 'none');
+  assert.match(gate.reason, /independent_review/);
+});
+
+test('the same-account exception is inert without complete recorded authorization', () => {
+  const { item, approval, pr } = mergeGateFixture();
+  const flagOnly = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { authorized_by: 'constantine (owner)' } });
+  assert.equal(sameIdentityReviewAccepted(flagOnly), false);
+  assert.equal(gateOf(flagOnly, item, pr([approval('cehinds', item.candidate_commit)])).allowed, false);
+  const complete = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { authorized_by: 'constantine (owner)', at: '2026-08-31T21:30:00Z', reason: 'single shared identity' } });
+  assert.equal(sameIdentityReviewAccepted(complete), true);
+});
+
+test('the recorded exception admits a same-account approval and names how it passed', () => {
+  const { item, approval, pr } = mergeGateFixture();
+  const gate = gateOf(config, item, pr([approval('cehinds', item.candidate_commit)]));
+  assert.equal(sameIdentityReviewAccepted(config), true);
+  assert.equal(gate.gates.independent_review, true);
+  assert.equal(gate.allowed, true);
+  assert.equal(gate.review_independence, 'same-account-exception');
+});
+
+test('the exception relaxes who may approve, never which commit was approved', () => {
+  const { item, approval, pr } = mergeGateFixture();
+  const stale = gateOf(config, item, pr([approval('cehinds', 'f'.repeat(40))]));
+  assert.equal(stale.gates.independent_review, false, 'an approval of another head must not authorize this one');
+  assert.equal(stale.review_independence, 'none');
+  assert.equal(gateOf(config, item, pr([])).gates.independent_review, false, 'no approval at all is still no approval');
+  const changesRequested = gateOf(config, item, pr([{ state: 'CHANGES_REQUESTED', author: { login: 'cehinds' }, commit: { oid: item.candidate_commit } }]));
+  assert.equal(changesRequested.gates.independent_review, false, 'a non-approving review is not an approval');
 });
 
 test('terminal DONE rejects lease expiry and drift regressions', () => {
@@ -581,7 +632,13 @@ test('Git and GitHub subprocesses fail closed on startup errors and timeouts', (
 });
 
 test('scheduler dispatch remains mechanically disabled while legacy watcher is authoritative', () => {
-  assert.throws(() => assertSchedulerDispatchCutover(config), /legacy watcher remains authoritative/);
+  // Both cutover postures are BUILT here rather than read from the shipped
+  // config. This line asserted the refusal against the live config until the
+  // cutover landed, at which point the fixture became a copy of production and
+  // the test went red for describing yesterday's repository — a check that
+  // reports the corpus instead of the rule.
+  const preCutover = { ...config, cutover: { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: true, authorization_evidence: null } };
+  assert.throws(() => assertSchedulerDispatchCutover(preCutover), /legacy watcher remains authoritative/);
   const authorized = { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: 'owner:cutover-1' } };
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-cutover-guard-'));
   try {

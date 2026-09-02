@@ -631,10 +631,29 @@ export function deliverCandidate(root, item, config) {
   return { created: true, ...created };
 }
 
+// A recorded owner exception to the distinct-account half of the review gate.
+// It is never inferred: the flag alone does nothing, because an exception whose
+// authorization is not written down is indistinguishable from a bug. Both the
+// flag and complete evidence must be present, so `scheduler verify` and the
+// merge event carry WHO relaxed the rule and WHY, and so restoring the rule is
+// a one-line revert rather than an archaeology exercise.
+export function sameIdentityReviewAccepted(config) {
+  if (config.authority?.same_identity_review_accepted !== true) return false;
+  const evidence = config.authority?.same_identity_review_evidence;
+  return Boolean(evidence?.authorized_by && evidence?.at && evidence?.reason);
+}
+
 export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unresolvedThreads, competingPrs, rollbackKnown }) {
   const checks = pr.statusCheckRollup ?? [];
   const checksPassed = checks.length > 0 && checks.every((check) => ['SUCCESS', 'SKIPPED', 'NEUTRAL'].includes(check.conclusion ?? check.state));
-  const independentReview = (pr.reviews ?? []).some((review) => review.state === 'APPROVED' && review.author?.login && review.author.login !== pr.author?.login && review.commit?.oid === item.candidate_commit);
+  // An approval is only evidence about the bytes it was given: it must name the
+  // exact candidate commit, so a review of an earlier head never authorizes a
+  // later one. The exception below relaxes WHO may approve, never WHAT.
+  const approvals = (pr.reviews ?? []).filter((review) => review.state === 'APPROVED' && review.author?.login && review.commit?.oid === item.candidate_commit);
+  const distinctAccountReview = approvals.some((review) => review.author.login !== pr.author?.login);
+  const sameAccountException = !distinctAccountReview && approvals.length > 0 && sameIdentityReviewAccepted(config);
+  const independentReview = distinctAccountReview || sameAccountException;
+  const reviewIndependence = distinctAccountReview ? 'distinct-account' : sameAccountException ? 'same-account-exception' : 'none';
   const makerLeaseRecorded = (item.lease_history ?? []).some((lease) => lease.assignment_kind === 'implementation' && lease.actor === item.maker_actor);
   const gates = {
     current_base: currentBaseIsAncestor,
@@ -646,7 +665,7 @@ export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unres
     no_competing_pr: competingPrs === 0,
     rollback_known: rollbackKnown === true
   };
-  return { ...protectedTransitionAllowed(config, 'merge-dev', gates), gates };
+  return { ...protectedTransitionAllowed(config, 'merge-dev', gates), gates, review_independence: reviewIndependence };
 }
 
 export function mergeCommandArgs(prNumber, candidateCommit, config = { repository: 'https://github.com/cehinds/AshenSpire.git' }) {
@@ -1232,7 +1251,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const refill = persistRefillAssignments(root, state, plan, machine.machine_id, createdAt, config, { push: args.push === true, message: `scheduler post-merge refill ${item.issue_id}` });
     state = refill.state; oid = refill.oid;
     const dispatched = refill.dispatched;
-    emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
+    emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, review_independence: result.gate.review_independence, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id} (review: ${result.gate.review_independence}); refill candidates=${plan.assignments.length}.`); return 0;
   }
   const input = transitionInput(command, trustedTransitionArgs(args), state, machine); state = appendEvents(state, [input]);
   let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}`, config });

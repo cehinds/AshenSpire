@@ -33,6 +33,16 @@
     "non_force_push_codex_branch": true,
     "open_issue_closing_pr_to_dev": true,
     "merge_eligible_pr_to_dev": true,
+    "same_identity_review_accepted": true,
+    "same_identity_review_evidence": {
+      "authorized_by": "constantine (owner)",
+      "at": "2026-08-31T21:30:00Z",
+      "reason": "Every seat authors as the single GitHub account 'cehinds' (#434), so the distinct-account half of the review gate can never be satisfied in-session and every scheduler PR stalls at merge. The owner chose this over standing up a second identity, from an explicit option set in which this option was presented as NOT recommended.",
+      "channel": "owner-authenticated Claude Code session session_01JmAe3RaCR3kSdyfLfy8Lop, interactive AskUserQuestion selection",
+      "scope": "merge-dev only. An APPROVED review at the exact candidate commit is still required; only the reviewer-is-a-different-account requirement is waived. Promotion to test/release/main, Pages, deployment, tagging and QA override remain owner-reserved and are unaffected.",
+      "residual_risk": "A seat can now approve its own candidate, because it holds the same account the review is checked against. What still holds: the approval must name the exact head being merged, the merge target is dev only, and every merge records review_independence='same-account-exception' in its event.",
+      "restore_by": "Setting same_identity_review_accepted to false once #434 fix 3 (a separate reviewing identity) exists."
+    },
     "promotion_to_test": false,
     "promotion_to_release": false,
     "promotion_to_main": false,
