@@ -313,13 +313,17 @@ const TEXTS = ['S', 'M', 'XL'];
 // key name a player can actually bind, not a stress string.
 const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 
-// THE ROW'S CONTROLS ARE DECLARED, not discovered: the five persistent combat
-// action destinations combat.js's template puts in the row (orb, DRAW, END
-// TURN, DISCARD, EXHAUSTED). H3 asserts every one of them is present AND
-// rendered, so a stylesheet that hides a pile does not shrink the population
-// into a smaller green — the same B3 hole H0 watches for cells, watched here
-// for controls. Read out of the template rather than typed: a control added
-// to or removed from the row changes this list in the same commit.
+// THE ROW'S CONTROLS ARE DECLARED HERE, BY IDENTITY, not read off the template
+// under test: the five persistent combat action destinations — the energy
+// orb, DRAW, END TURN, DISCARD, EXHAUSTED. A list derived from combat.js's
+// own template shrank with it: delete DISCARD from the row and the expected
+// set lost DISCARD too, every H3 cell stayed green, and the workflow still
+// claimed the piles were covered (Codex, #532). So the identities are typed
+// once here, and the template is CROSS-CHECKED against them: a control the
+// row no longer names, or one it names that this list does not, throws by
+// name before a single cell is measured — the change and this list move in
+// the same commit, or the gate refuses to run.
+const DECLARED_CONTROLS = Object.freeze(['energy-orb', 'pile draw', 'end-turn', 'pile discard', 'pile exhaust']);
 const EXPECTED_CONTROLS = (() => {
   const src = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
   // The row is found by its class PREFIX so the H0 plant (which renames the
@@ -327,10 +331,19 @@ const EXPECTED_CONTROLS = (() => {
   // empty-population red, not a thrown "could not read the template".
   const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<!-- Context hints/);
   if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
-  const classes = [...row[0].matchAll(/<(?:div|button) class="([^"]+)"/g)].map((m) => m[1])
-    .filter((cls) => cls !== 'combat-action-row');
-  if (classes.length < 2) throw new Error('hintstrip: the action row template names fewer than two controls');
-  return classes;
+  const named = [...row[0].matchAll(/<(?:div|button) class="([^"]+)"/g)].map((m) => m[1])
+    .filter((cls) => !cls.startsWith('combat-action-row') && cls !== 'n');
+  const sameSet = (x) => x.split(/\s+/).sort().join(' ');
+  const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));
+  const extra = named.filter((n) => !DECLARED_CONTROLS.some((d) => sameSet(n) === sameSet(d)));
+  if (missing.length || extra.length) {
+    throw new Error(`hintstrip: the action row in src/ui/screens/combat.js and DECLARED_CONTROLS disagree — `
+      + `${missing.length ? `the row no longer names ${missing.map((m) => `"${m}"`).join(', ')}` : ''}`
+      + `${missing.length && extra.length ? '; ' : ''}`
+      + `${extra.length ? `the row names ${extra.map((m) => `"${m}"`).join(', ')} that this gate does not declare` : ''}`
+      + `. Change both in one commit, or the gate measures a population that shrank with the template.`);
+  }
+  return DECLARED_CONTROLS;
 })();
 
 // The furniture the row may not touch. Named, so a fix that moves the row onto
