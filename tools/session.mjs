@@ -1006,6 +1006,9 @@ export function createSession({ registries, seedString, endless = false, restore
   function resolveCatchup(memberId, index, pick) {
     const m = members.get(memberId);
     if (!m || !m.catchup.length) return { ok: false, error: 'nothing to catch up' };
+    // A FALLEN SEAT REPLAYS NOTHING: the live flow enters a dead seat into no
+    // later node, so its queue is owed nothing either (Codex on #548).
+    if (!m.alive) { m.catchup.length = 0; return { ok: false, error: 'a fallen seat has nothing to catch up' }; }
     const item = m.catchup[index];
     if (!item) return { ok: false, error: 'bad catch-up index' };
     if (item.type === 'reward') {
@@ -1046,9 +1049,11 @@ export function createSession({ registries, seedString, endless = false, restore
         // fought while this seat was away; a returning seat fights no room
         // alone, so the flag is consumed here as settleEvent consumes it.
         m.run.combatEntered = null;
-        // A CHOICE CAN KILL here too, and a party with nobody left is over,
-        // as the live settlement says (Codex on #548).
-        if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; live = null; } }
+        // A CHOICE CAN KILL here too: the seat falls, the rest of its queue
+        // is forfeit (the live flow enters a dead seat into no later node),
+        // and a party with nobody left is over, as the live settlement says
+        // (Codex on #548).
+        if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; m.catchup.length = 0; if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; live = null; } }
         m.run.actNumber = item.act;
         m.run.floor = item.floor;
         m.run.mapNodeId = item.mapNodeId ?? null;
