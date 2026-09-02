@@ -651,9 +651,24 @@ export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unres
   // later one. The exception below relaxes WHO may approve, never WHAT.
   const approvals = (pr.reviews ?? []).filter((review) => review.state === 'APPROVED' && review.author?.login && review.commit?.oid === item.candidate_commit);
   const distinctAccountReview = approvals.some((review) => review.author.login !== pr.author?.login);
-  const sameAccountException = !distinctAccountReview && approvals.length > 0 && sameIdentityReviewAccepted(config);
-  const independentReview = distinctAccountReview || sameAccountException;
-  const reviewIndependence = distinctAccountReview ? 'distinct-account' : sameAccountException ? 'same-account-exception' : 'none';
+  // GitHub refuses to let a pull request's author approve it. So when every
+  // seat shares one account there is no obtainable GitHub approval at all, and
+  // an exception phrased in terms of one would be inert — it would read as a
+  // relaxation while stalling every merge exactly as before.
+  //
+  // Independence is therefore taken from the layer that DOES hold separate
+  // identities here: the scheduler's own seats. A QA lease is only ever issued
+  // to a seat other than the maker, and a PASS is only accepted against the
+  // exact candidate commit — so a recorded QA seat is an independent party's
+  // verdict on precisely these bytes. An item cannot return from PR_READY or
+  // PR_OPEN to candidacy, so that verdict can never be inherited by a later
+  // head. What is given up against a distinct GitHub account is that both
+  // seats authenticate as one login; what is kept is a separate actor, a
+  // separate lease, and a verdict bound to the exact commit.
+  const independentQaSeat = (item.lease_history ?? []).some((lease) => lease.assignment_kind === 'qa' && lease.actor && lease.actor !== item.maker_actor);
+  const qaSeatException = !distinctAccountReview && independentQaSeat && sameIdentityReviewAccepted(config);
+  const independentReview = distinctAccountReview || qaSeatException;
+  const reviewIndependence = distinctAccountReview ? 'distinct-account' : qaSeatException ? 'independent-qa-seat' : 'none';
   const makerLeaseRecorded = (item.lease_history ?? []).some((lease) => lease.assignment_kind === 'implementation' && lease.actor === item.maker_actor);
   const gates = {
     current_base: currentBaseIsAncestor,
@@ -1241,7 +1256,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const result = mergeDevPr(root, config, item, Number(args.pr), { rollbackKnown: args.rollback_known === true || args.rollback_known === 'true' });
     const createdAt = result.merged.mergedAt;
     state = appendEvents(state, [
-      { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
+      { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid, review_independence: result.gate?.review_independence ?? 'recovered' }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
       { event_type: 'COMPLETED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid }, payload: {}, created_at: createdAt, idempotency_key: `completed:${item.issue_id}:${result.merged.mergeCommit.oid}` }
     ]);
     let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}`, config });

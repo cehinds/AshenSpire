@@ -333,11 +333,12 @@ test('dev merge one-writer gate uses preserved maker lease after QA releases sea
   assert.equal(gate.review_independence, 'distinct-account');
 });
 
-// #434: every seat authors as one GitHub account, so the distinct-account half
-// of the review gate can never be met in-session. The owner relaxed WHO may
-// approve. These fix what that did NOT relax, so a later edit cannot quietly
-// widen it: the approval still has to exist and still has to name the exact
-// head, and the exception is inert unless its authorization is written down.
+// #434: every seat authors as one GitHub account, and GitHub will not let a PR
+// author approve their own PR — so there is no obtainable GitHub approval to
+// relax TO. The exception instead spends the scheduler's own seat identities:
+// a QA lease is only issued to a non-maker seat and a PASS only counts against
+// the exact candidate. These fix what the exception does NOT buy, so a later
+// edit cannot quietly widen it into "merge without any verdict".
 function mergeGateFixture() {
   let state = intake(fresh(), '434'); state = claim(state, '434'); state = entered(state, '434'); state = candidate(state, '434'); state = qa(state, '434');
   const item = state.snapshot.work_items['434'];
@@ -347,40 +348,49 @@ function mergeGateFixture() {
 const withAuthority = (over) => ({ ...config, authority: { ...config.authority, ...over } });
 const gateOf = (cfg, item, pr) => mergeGateResult(cfg, item, pr, { currentBaseIsAncestor: true, unresolvedThreads: 0, competingPrs: 0, rollbackKnown: true });
 
-test('same-account approval is refused while the recorded exception is off', () => {
-  const { item, approval, pr } = mergeGateFixture();
-  const gate = gateOf(withAuthority({ same_identity_review_accepted: false }), item, pr([approval('cehinds', item.candidate_commit)]));
+test('an independent QA seat does not admit a merge while the exception is off', () => {
+  const { item, pr } = mergeGateFixture();
+  const gate = gateOf(withAuthority({ same_identity_review_accepted: false }), item, pr([]));
   assert.equal(gate.gates.independent_review, false);
   assert.equal(gate.review_independence, 'none');
   assert.match(gate.reason, /independent_review/);
 });
 
-test('the same-account exception is inert without complete recorded authorization', () => {
-  const { item, approval, pr } = mergeGateFixture();
+test('the exception is inert without complete recorded authorization', () => {
+  const { item, pr } = mergeGateFixture();
   const flagOnly = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { authorized_by: 'constantine (owner)' } });
   assert.equal(sameIdentityReviewAccepted(flagOnly), false);
-  assert.equal(gateOf(flagOnly, item, pr([approval('cehinds', item.candidate_commit)])).allowed, false);
+  assert.equal(gateOf(flagOnly, item, pr([])).allowed, false);
   const complete = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { authorized_by: 'constantine (owner)', at: '2026-08-31T21:30:00Z', reason: 'single shared identity' } });
   assert.equal(sameIdentityReviewAccepted(complete), true);
 });
 
-test('the recorded exception admits a same-account approval and names how it passed', () => {
-  const { item, approval, pr } = mergeGateFixture();
-  const gate = gateOf(config, item, pr([approval('cehinds', item.candidate_commit)]));
+test('the exception spends the independent QA seat, with no GitHub approval available', () => {
+  const { item, pr } = mergeGateFixture();
+  const qaLease = item.lease_history.find((lease) => lease.assignment_kind === 'qa');
+  assert.ok(qaLease && qaLease.actor !== item.maker_actor, 'the QA verdict must come from a seat other than the maker');
+  const gate = gateOf(config, item, pr([]));
   assert.equal(sameIdentityReviewAccepted(config), true);
   assert.equal(gate.gates.independent_review, true);
   assert.equal(gate.allowed, true);
-  assert.equal(gate.review_independence, 'same-account-exception');
+  assert.equal(gate.review_independence, 'independent-qa-seat');
 });
 
-test('the exception relaxes who may approve, never which commit was approved', () => {
+test('the exception never admits a candidate that no independent seat verified', () => {
+  const { item, pr } = mergeGateFixture();
+  const unverified = { ...item, lease_history: item.lease_history.filter((lease) => lease.assignment_kind !== 'qa') };
+  assert.equal(gateOf(config, unverified, pr([])).gates.independent_review, false, 'no QA seat means no verdict to spend');
+  const selfVerified = { ...item, lease_history: [{ assignment_kind: 'qa', actor: item.maker_actor }] };
+  assert.equal(gateOf(config, selfVerified, pr([])).gates.independent_review, false, 'the maker verifying itself is not independence');
+});
+
+test('a distinct-account approval still outranks the exception and is labelled as such', () => {
   const { item, approval, pr } = mergeGateFixture();
-  const stale = gateOf(config, item, pr([approval('cehinds', 'f'.repeat(40))]));
-  assert.equal(stale.gates.independent_review, false, 'an approval of another head must not authorize this one');
-  assert.equal(stale.review_independence, 'none');
-  assert.equal(gateOf(config, item, pr([])).gates.independent_review, false, 'no approval at all is still no approval');
-  const changesRequested = gateOf(config, item, pr([{ state: 'CHANGES_REQUESTED', author: { login: 'cehinds' }, commit: { oid: item.candidate_commit } }]));
-  assert.equal(changesRequested.gates.independent_review, false, 'a non-approving review is not an approval');
+  const gate = gateOf(config, item, pr([approval('someone-else', item.candidate_commit)]));
+  assert.equal(gate.gates.independent_review, true);
+  assert.equal(gate.review_independence, 'distinct-account');
+  const staleDistinct = gateOf(withAuthority({ same_identity_review_accepted: false }), item, pr([approval('someone-else', 'f'.repeat(40))]));
+  assert.equal(staleDistinct.gates.independent_review, false, 'an approval of another head must not authorize this one');
 });
 
 test('terminal DONE rejects lease expiry and drift regressions', () => {
