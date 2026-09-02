@@ -14,18 +14,29 @@
 # from `test`. That is the whole reason the trigger is `workflow_run` and not `push`,
 # and it is why the write credential can live here when it could not live there.
 #
-# WHAT IS STILL THE OWNER'S. AGENTS.md holds publication as its own separate
-# authority, and an unattended deploy is exactly what that invariant refuses. This
-# workflow does NOT overrule it — it moves the owner's decision from "remember to
-# dispatch" to "approve or decline the publication that is waiting". The lever is a
-# repository setting, not a line in this file:
+# IT FAILS CLOSED, AND THAT IS NOT A SETTING. AGENTS.md holds publication as its
+# own separate authority that push authority never implies. A first cut of this file
+# left the owner's approval to an OPTIONAL environment setting and said both states
+# were defensible. They are not: with the setting unturned, merging to `dev` would
+# have BEEN the publication decision, which is the exact substitution the invariant
+# refuses. Codex called that a P1 on #576 and was right.
 #
-#   Settings → Environments → github-pages → Required reviewers: <owner>
+# So the gate is in this file and it is closed by default. The job does not run
+# unless a REPOSITORY VARIABLE says it may:
 #
-# With it set, every run below pauses for the owner's approval and publishes nothing
-# until it is given; without it, a successful assemble publishes on its own. Both are
-# defensible and the choice is the owner's, which is why it lives where only the
-# owner can turn it.
+#   Settings → Secrets and variables → Actions → Variables → PAGES_AUTOPUBLISH = PUBLISH
+#
+# Unset, misspelled, or removed, nothing publishes and no job holding `pages: write`
+# ever starts. A repository variable is settable only with admin on the repository,
+# so it cannot be reached by branch-controlled code, by a workflow file a push
+# carries, or by a write collaborator — which is what makes turning it on an owner
+# publication decision rather than a convenience toggle. Turning it off again is how
+# publication is withdrawn.
+#
+# On top of that, and independently, the `github-pages` environment can carry
+# required reviewers (Settings → Environments → github-pages), which makes each
+# individual publication wait for an approval instead of authorizing the standing
+# stream. The variable is the standing authority; the reviewers are the per-act one.
 #
 # The manual `deploy` job in pages-builds.yml is untouched and remains the forced
 # republish for when nothing has been pushed.
@@ -57,12 +68,17 @@ jobs:
     # push) and a failed one both stop here rather than deploying a site whose
     # drift plant was never proven.
     #
+    # THE FIRST CLAUSE IS THE AUTHORITY AND IT IS EVALUATED BEFORE ANYTHING ELSE:
+    # with PAGES_AUTOPUBLISH unset this job never starts, so the `pages: write` and
+    # OIDC grants below are never issued. Push authority alone reaches nothing.
+    #
     # AND ONLY THE PUSH PATH. workflow_run fires whatever triggered the run it
     # follows, so without this clause the owner's own dispatch would deploy twice
     # — once from pages-builds' `deploy` job and once from here. The dispatch
     # keeps its own job; this file is the push half and nothing else.
     if: >-
-      github.event.workflow_run.conclusion == 'success'
+      vars.PAGES_AUTOPUBLISH == 'PUBLISH'
+      && github.event.workflow_run.conclusion == 'success'
       && github.event.workflow_run.event == 'push'
       && contains(fromJSON('["dev", "test", "release", "main"]'), github.event.workflow_run.head_branch)
     runs-on: ubuntu-latest
