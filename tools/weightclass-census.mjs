@@ -26,6 +26,7 @@ import { attributeRules } from '../src/content/attributes.js';
 import { creationHandChoices } from '../src/model/characterCreation.js';
 import { creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, orderedAttributes } from '../src/model/attributes.js';
 import { itemUpgradeTiers } from '../src/model/itemUpgrades.js';
+import { startingHandsRequirementFailure } from '../src/model/loadout.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -61,6 +62,13 @@ const handLabel = (id) => id || '—';
 // rule the creator applies (attributeAllocationProblems) — a boundary the
 // creator would refuse is a bug in this tool, not a row.
 const visibleModeIds = creation.visibleModeIds;
+// THE CREATOR'S OWN ACCEPTANCE GATE, applied exactly as Begin applies it
+// (ui/screens/customize.js → model/loadout.startingHandsRequirementFailure):
+// a hand the sheet cannot hold (a Greatsword at Strength 10, a Straight Sword
+// at 8) is refused there, so it is not a creatable start and not a row here.
+// createRunState alone does not refuse it — customized hands inherit the
+// baseline kit flag — which is why the gate is asked by name.
+let refusedByRequirements = 0;
 const attributeIds = orderedAttributes(REG).map((a) => a.id);
 function boundarySheet(modeId, classId, want) {
   const mode = creationMode(REG, modeId);
@@ -103,6 +111,7 @@ for (const cls of contentBundle.classes) {
         for (const rightHand of rights) {
           for (const leftHand of lefts) {
             if (rightHand && leftHand && rightHand === leftHand) continue;
+            if (startingHandsRequirementFailure(REG, { rightHand, leftHand }, attributes)) { refusedByRequirements += 1; continue; }
             // startingHands rather than startingKitId: the creator's choice is a
             // pair of hands, and the run is born through the same resolver the
             // creator uses (resolveCreationHands inside createRunState).
@@ -172,6 +181,7 @@ for (const cls of contentBundle.classes) {
 }
 console.log(`weightclass-census — armour weight rule: ${ARMOUR_WEIGHT_RULE} · capacity base ${capacityBase}${capacityBonus ? ` (shipped ${mechanics.weight.capacityBase}; delta ${capacityBonus} as a bonus)` : ''}`);
 for (const row of rows) console.log('  ' + row);
+console.log(`  hand pairs the creator's requirement gate refuses (not creatable, not counted): ${refusedByRequirements}`);
 for (const [sheetName, bucket] of Object.entries(tally)) {
   console.log(`  distribution of creatable starts at the ${sheetName} sheet: ${Object.entries(bucket).map(([k, v]) => `${k} ${v}`).join(' · ')} (of ${Object.values(bucket).reduce((a, b) => a + b, 0)})`);
 }
