@@ -4426,13 +4426,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
-    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '800/200', 'five level purchases cost 6000 through the authored ramp');
+    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '20/4', 'the measured ramp (E13: 14.8 level-ups per full run for a greedy bot) — five purchases cost 140');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}`, '-6/dexterity/1', 'Defend is -6 + DEX');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 6000, 'five purchases cost 6000 and end at displayed level 6');
+    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'five purchases cost 140 on the measured 20 + 4 ramp and end at displayed level 6');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }), 'Rogue copies the exact approved tuned preset');
     eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'tuned/50/3/5', 'Rogue tuned stats reach the HP, action, and hand formulas');
@@ -4903,8 +4903,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // THE RAMP, and the only half of his acceptance test this suite can hold.
     eq(levelCost(REG, 1) - levelCost(REG, 0), REG.balance.levelUp.costStep, 'each level costs one step more');
-    eq(levelsAffordable(REG, 6000), 5, '6000 cinders buys five levels and reaches displayed level 6');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 6000, 'the authored 800 + 200 ramp totals 6000 for five purchases');
+    eq(levelsAffordable(REG, 140), 5, '140 cinders buys five levels and reaches displayed level 6');
+    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'the measured 20 + 4 ramp totals 140 for five purchases');
     eq(levelsAffordable(REG, 0), 0, 'the empty edge: no cinders, no levels');
   });
 
@@ -5070,7 +5070,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // door, and it is the only thing in the tree that can fail on the copy.
     const edited = { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } };
     const byHand = resolveDerivedStatRules(edited, {
-      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
     });
     eq(byHand.rules.hp.pointsPerTier, 1, 'HP keeps its authored per-CON formula when only the fallback default changes');
     eq(byHand.rules.energy.pointsPerTier, 10, 'Actions keep their authored DEX/10 formula');

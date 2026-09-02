@@ -72,10 +72,7 @@ const PROFILE_ROLE_PROPERTY = Object.freeze({
 
 // The union of the legacy rarity vocabularies ('starter'/'special'/'boss' are
 // legacy pool markers) and the contract's equipment ladder, lowercased at import.
-const RARITIES = Object.freeze([
-  'starter', 'special', 'boss', 'uncommon',
-  ...EQUIPMENT_RARITIES.map((r) => r.toLowerCase()),
-]);
+const RARITIES = Object.freeze(EQUIPMENT_RARITIES.map((r) => r.toLowerCase()));
 
 function mapped(table, key, what) {
   const value = table[key];
@@ -246,8 +243,28 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   }
 
   // ---- armaments and armour ------------------------------------------------
+  // The three contract numbers an armament carries into the framework are
+  // validated HERE, at the import boundary, because the gate's schema checks
+  // never look inside explicitOverrides: a missing or non-numeric weight would
+  // otherwise pass the cutover clean and surface as NaN in the equip load.
+  const armamentInteger = (piece, field) => {
+    const value = piece[field];
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`importer: armament '${piece.id}' ${field} must be a non-negative integer, got ${JSON.stringify(value)}`);
+    }
+    return value;
+  };
   for (const piece of bundle.equipment.armaments) {
     const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
+    const weight = armamentInteger(piece, 'weight');
+    const attackRating = armamentInteger(piece, 'attackRating');
+    const defenseRating = armamentInteger(piece, 'defenseRating');
+    // The legacy identity (armamentIntrinsicStatProblems): an armament's
+    // weight IS its authored poise threshold. A row where they differ is a
+    // typo in one column, not a new rule.
+    if (piece.poiseThreshold !== weight) {
+      throw new Error(`importer: armament '${piece.id}' weight ${weight} must equal its poiseThreshold ${JSON.stringify(piece.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -256,7 +273,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       properties: [],
       explicitOverrides: {
         legacyId: piece.id,
-        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : 'WEAPON', `armament ${piece.id}`),
+        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : piece.kind === 'staff' ? 'STAFF' : 'WEAPON', `armament ${piece.id}`),
         hand: piece.hand,
         rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
         tags: piece.tags,
@@ -271,16 +288,27 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
           guardCardId: piece.guardProfile ? key('profile', piece.guardProfile) : undefined,
           techniqueCardId: piece.techniqueProfile ? key('profile', piece.techniqueProfile) : undefined,
         },
-        // Contract fields the legacy tables do not author yet — imported as
-        // inert defaults, listed in the cutover report as open authoring work.
-        itemWeight: 0,
-        attackRatingBonus: 0,
-        defenseRating: 0,
+        // Contract fields, from the authored armament table (cutover ruling 2):
+        // weapons.csv authors weight / attackRating / defenseRating for every
+        // armament, and the legacy rule binds weight to the authored
+        // poiseThreshold (armamentIntrinsicStatProblems). Nothing in the
+        // running game reads these yet — the Weight Class service stays
+        // dormant until it is wired — so this is data flow, not behavior.
+        itemWeight: weight,
+        attackRatingBonus: attackRating,
+        defenseRating,
       },
     });
   }
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
+    // The outfit's poise threshold is its weight under the A-side rule, so it
+    // is validated here for the same reason the armament numbers are: nothing
+    // downstream inspects explicitOverrides, and a malformed value would ride
+    // into the equip load as NaN or as a silently weightless outfit.
+    if (!Number.isInteger(outfit.poiseThreshold) || outfit.poiseThreshold < 0) {
+      throw new Error(`importer: armour '${outfit.classId}.${outfit.id}' poiseThreshold must be a non-negative integer, got ${JSON.stringify(outfit.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -294,7 +322,12 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         tags: outfit.tags,
         mods: outfit.mods,
         artKey: outfit.artKey,
-        itemWeight: 0,
+        // Outfits author no weight column; the legacy identity `weight ==
+        // poiseThreshold` (the armament rule) is adopted for armour as the
+        // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
+        // The B-side — armour weightless — is `itemWeight: 0` here. No
+        // defenseRating column exists for outfits; 0 remains inert.
+        itemWeight: outfit.poiseThreshold,
         defenseRating: 0,
       },
     });
@@ -355,7 +388,6 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       explicitOverrides: {
         legacyId: klass.id,
         maxHp: klass.maxHp,
-        hpPerConTier: klass.hpPerConTier,
         startingFlaskAllocation: klass.startingFlaskAllocation,
         startingRelic: klass.startingRelic,
         startingSignatureCard: klass.startingSignatureCard,

@@ -25,6 +25,7 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
+import { levelUpPlan, applyLevelUp } from '../src/model/levelup.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -32,8 +33,33 @@ import {
 } from '../src/engine/encounters.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
-const REG = createRegistries(contentBundle);
 const argv = process.argv.slice(2);
+// THE LEVEL-LADDER A/B (E13, #258). Constantine's acceptance test for shrine
+// levelling is a range with a unit — "10-20 level-ups a run, scalable" — so
+// the sim counts them, and `--level-cost=first,step` reruns the fleet under a
+// different ladder without touching content: the A-side is the shipped
+// balance.levelUp, the B-side whatever the flag names.
+const LEVEL_COST = (argv.find((a) => a.startsWith('--level-cost=')) || '').slice('--level-cost='.length);
+const levelBundle = LEVEL_COST
+  ? (() => {
+    // Exactly two non-empty fields: `20,` would read as 20/0 (Number('') is 0)
+    // and `20,4,999` would silently drop its tail — both mislabel a fleet.
+    const fields = LEVEL_COST.split(',');
+    if (fields.length !== 2 || fields.some((f) => f.trim() === '')) throw new Error(`--level-cost expects exactly first,step — got '${LEVEL_COST}'`);
+    const [firstCost, costStep] = fields.map(Number);
+    if (!Number.isFinite(firstCost) || !Number.isFinite(costStep)) throw new Error(`--level-cost expects first,step — got '${LEVEL_COST}'`);
+    // A ladder the shrine could not price: a first purchase that is free or
+    // negative, or a step that walks the price DOWN, is a typo, not an
+    // experiment. Refuse it at the door, before a fleet reports on it.
+    // Integers, because the shrine rounds its price: a fractional first cost
+    // below one half (`0.1,0`) passed the sign check and still priced every
+    // level at zero — the same endless loop by another door.
+    if (!Number.isInteger(firstCost) || firstCost < 1) throw new Error(`--level-cost: first must be a whole cinder cost of at least 1 — got ${firstCost}`);
+    if (!Number.isInteger(costStep) || costStep < 0) throw new Error(`--level-cost: step must be a whole number of zero or more — got ${costStep}`);
+    return { ...contentBundle, balance: { ...contentBundle.balance, levelUp: { ...contentBundle.balance.levelUp, firstCost, costStep } } };
+  })()
+  : contentBundle;
+const REG = createRegistries(levelBundle);
 const ENDLESS = argv.includes('--endless');
 // THE GRACE REFILL A/B (Sten, 2026-08-08). Constantine flagged the cost himself
 // — "However, that would mean making combat harder" — and a nod is not an
@@ -94,6 +120,17 @@ function spendAllocation(classId) {
 // own counter, so a green win-rate cannot be read as "the refill happened".
 let poured = 0;
 let graces = 0;
+let levelUps = 0;
+let cinderSpentOnLevels = 0;
+let cinderLeftAtEnd = 0;
+let levelUpsInWins = 0;
+// Every per-fleet counter, zeroed together: the A/B runs fleet() twice and a
+// counter that survived the first fleet would report the OFF side's level-ups
+// and cinders inside the ON side's lines.
+function resetFleetCounters() {
+  poured = 0; graces = 0;
+  levelUps = 0; cinderSpentOnLevels = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0;
+}
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 
@@ -239,6 +276,10 @@ function simulateRun(classId, seed, ds = null) {
   run.seenEvents = [];
   const rng = createRng(seed);
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null };
+  // ONE exit for every path out of a run, win or death: the purse a run ends
+  // with is part of the cinder economy whichever way it ended, and the report
+  // divides by every run — a death that skipped this line underreported it.
+  const finish = () => { cinderLeftAtEnd += run.cinders; return result; };
   // The death book: act, the run's maxHp, and the HP it walked into the fatal
   // node with. On a lost fight botFight does NOT write hp back, so run.hp
   // still holds the entering value at the moment of the record.
@@ -280,11 +321,11 @@ function simulateRun(classId, seed, ds = null) {
           const choice = ev.choices.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || ev.choices[ev.choices.length - 1];
           const hpBeforeEvent = run.hp;
           executeRunEffects({ run, registries: REG, rng }, choice.effects);
-          if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; recordDeath(ds, act, hpBeforeEvent); return result; }
+          if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; recordDeath(ds, act, hpBeforeEvent); return finish(); }
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
-            if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `ambush:${encId}`; recordDeath(ds, act, run.hp); return result; }
+            if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `ambush:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
             afterVictory(run, rng, 'normal');
           }
           kind = null;
@@ -294,7 +335,7 @@ function simulateRun(classId, seed, ds = null) {
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
         const encId = rollEncounter(REG, rng, { pool, act: contentAct });
-        if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return result; }
+        if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
@@ -322,6 +363,15 @@ function simulateRun(classId, seed, ds = null) {
         }
         if (run.hp < run.maxHp * 0.6) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
+        // THE BOT LEVELS WHILE IT CAN AFFORD TO — the whole point of E13's shrine:
+        // cinders become permanent points here. Constitution every time: the
+        // greedy pilot measures how many levels the economy allows, not which.
+        for (let plan = levelUpPlan(REG, run); plan.offerable; plan = levelUpPlan(REG, run)) {
+          cinderSpentOnLevels += plan.cost;
+          applyLevelUp(REG, run, 'constitution');
+          result.levelUps = (result.levelUps || 0) + 1;
+          levelUps += 1;
+        }
       } else if (kind === 'treasure') {
         const r = rollRelicReward(REG, rng, run.relics);
         if (r) run.relics.push(r);
@@ -333,7 +383,8 @@ function simulateRun(classId, seed, ds = null) {
     run.hp = run.maxHp; // between acts, like main.js
   }
   result.victory = true;
-  return result;
+  levelUpsInWins += result.levelUps || 0;
+  return finish();
 }
 
 // ---- fleet -------------------------------------------------------------------
@@ -394,6 +445,8 @@ for (const cls of REG.classes.all()) {
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
 console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
+console.log(`level-ups bought at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run` + (LEVEL_COST ? ` (ladder ${LEVEL_COST})` : ' (shipped ladder)') + ` — E13's acceptance range is 10-20 per run; over the ${tally.wins} full (victorious) runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
+console.log(`cinder economy: ${cinderSpentOnLevels} spent on levels + ${cinderLeftAtEnd} left at run end = ${((cinderSpentOnLevels + cinderLeftAtEnd) / Math.max(1, tally.runs)).toFixed(0)} cinders per run available to a shrine (the bot buys nothing at merchants)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
 return { ...tally, graces, poured };
 }
@@ -405,10 +458,10 @@ if (!GRACE_AB) {
   // the index, not from a global rng), so the delta is the refill and nothing
   // else. Reported as counts, never as a verdict: whether this is the right
   // difficulty is Marina's and Sunna's, not a simulator's.
-  GRACE_ON = false; graces = 0; poured = 0;
+  GRACE_ON = false; resetFleetCounters();
   const off = fleet();
   console.log('\n' + '-'.repeat(72) + '\n');
-  GRACE_ON = true; graces = 0; poured = 0;
+  GRACE_ON = true; resetFleetCounters();
   const on = fleet();
   const pct = (t) => `${((t.wins / t.runs) * 100).toFixed(1)}%`;
   console.log('\nGRACE REFILL A/B — same seeds, refill the only difference');

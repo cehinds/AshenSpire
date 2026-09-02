@@ -1,7 +1,7 @@
 # Versioning — when each segment increments
 
 The in-game stamp is `BUILD <MAJOR>.<MINOR>.<PATCH>.<ordinal> · src <digest>`
-(currently `0.4.0.<ordinal>`). This document is the decision workflow for the
+(currently `0.5.0-rc.1.<ordinal>`). This document is the decision workflow for the
 three authored segments. It changes no machinery: the one home for the string
 is `src/buildversion.js`, the release triple lives only in
 `src/content/index.js` (`contentBundle.version`), and
@@ -55,6 +55,61 @@ diffstat. The framework's own milestones map ahead of time:
 - Weight Class / Stamina / Dodge Roll turning ON for players → **0.6.0** (or
   rides 0.5.0 if cutover and enablement ship together)
 - first governed release (release status leaves RED) → **1.0.0**
+
+## Release candidates — the stamp names the milestone in flight
+
+The ladder above answers "did the player's game change?" and it is why
+nine behavior-preserving framework tranches left `0.4.0` alone. It could not
+answer the other question the stamp gets asked: "which release is this build
+a candidate FOR?" A QA tester holding `0.4.0.1903` had no way to read that
+the framework port was in it, and the owner rightly asked why a change that
+size was invisible in the number.
+
+The answer is semver's own pre-release segment, not a bent ladder:
+
+- **`<next>.<minor>.<patch>-rc.<n>`** stamps a line that is a CANDIDATE for
+  the next release triple. `0.5.0-rc.1` says "the next release is 0.5.0 and
+  this is its first candidate"; it orders BELOW `0.5.0`, so the final stamp
+  still marks the milestone (the cutover gate SUCCESS) and nothing is
+  claimed early.
+- **`rc.<n>` advances at each `dev → test` promotion** — every candidate QA
+  receives is distinguishable by its stamp, and the ordinal keeps ordering
+  builds between promotions exactly as before.
+- **Ordering is by ordinal, never by the stamp string.** The ordinal is the
+  one monotonic key: it never resets, so any two builds — across candidates,
+  across the release cut — sort by it alone, and every tool that orders
+  builds (`about-changelog`, `buildversion` row H) reads the ordinal column.
+  The candidate counter is a label inside the stamp, not an ordering key, and
+  semver forbids zero-padding it (`rc.01` is not a valid numeric identifier).
+  So that the dist filenames ALSO sort in a directory listing, the counter has
+  a stated ceiling of **`rc.9`** within one release line: a tenth promotion
+  before a release cut is not a bigger number, it is the signal that the
+  candidate line has outlived its milestone — the owner cuts the release or
+  the triple moves. `0.5.0-rc.10.0001` therefore never exists to sort ahead
+  of `0.5.0-rc.9.9999`.
+- **The `-rc` suffix is dropped by the owner's release cut** (`dev → release`,
+  owner-exclusive per `governance/delivery.json`), which is the MINOR bump
+  the ladder already names. Nothing else removes it.
+- The triple in the pre-release (`0.5.0` here) is the ladder's answer for the
+  milestone in flight; it moves only when that answer changes.
+
+The one home and the checks are unchanged: `contentBundle.version` holds
+`0.5.0-rc.1`, the stamp reads `BUILD 0.5.0-rc.1.<ordinal> · src <digest>`, the
+dist file is `AshenSpire-0.5.0-rc.1.<ordinal>.html`, and older CHANGELOG
+receipts keep their `0.4.0.<ordinal>` stamps — the projector accepts any
+`<release>.<ordinal>` and enforces the ordinal column, because receipts are
+history and a bump must never make them unparseable.
+
+A receipt written in the pull request that ships its change cites the ordinal
+its own projection rebuild produces (current ordinal plus one); `--write`
+allows exactly that one build ahead while projecting, the plain check never
+does, and the rebuild that follows makes the box and the receipt agree. Any
+later rebuild on the branch re-points the receipt the same way (CHANGELOG.md
+header).
+
+Saves are not invalidated by a stamp change: on load, a run whose
+`contentVersion` differs is re-stamped when every id it holds still resolves,
+and archived with a named reason only when one does not (`engine/save.js`).
 
 ## Mechanics of a bump (one PR, one commit sequence)
 

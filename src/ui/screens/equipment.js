@@ -32,6 +32,7 @@ import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
 import { statProjection, pieceWeight } from '../../model/statProjection.js';
+import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
@@ -1564,9 +1565,15 @@ export function mountEquipment(host, {
 
   function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
     const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
-    const item = slot.kinds.includes('armor')
+    const authored = slot.kinds.includes('armor')
       ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
       : (eq.armaments || []).find((piece) => piece.id === itemId);
+    // The item AT ITS SMITHED TIER, the same resolution the load receipt
+    // uses (equippedPieces → resolveUpgradedEquipment): a tier that raises
+    // the poise threshold raises the armour's weight with it, and the card's
+    // Poise and Weight labels must say what the total counts.
+    const itemRef = authored ? (slot.kinds.includes('armor') ? `armor/${run.class}/${authored.id}` : `armament/${authored.id}`) : null;
+    const item = authored ? resolveUpgradedEquipment(registries, itemRef, (run.itemUpgradeLevels || {})[itemRef] || 0) : null;
     const surface = equipmentSurfaceReceipt(registries, run);
     const roleLabels = new Map(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const isActive = setIndex === (run.loadout.active?.[slot.id] || 0);

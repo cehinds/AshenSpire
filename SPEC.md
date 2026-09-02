@@ -627,8 +627,11 @@ formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
 
 **Level curve.** A fresh run starts at displayed level 1. A purchase increments the displayed
 level by one and grants exactly 1 configurable attribute point by default. Price purchase
-`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 800` and `costStep = 200`.
-Therefore five purchases cost `800 + 1000 + 1200 + 1400 + 1600 = 6000` and produce level 6.
+`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 20` and `costStep = 4`
+(retuned from 800 / 200 in #522: the fleet simulator measured the shipped ladder at under one
+level-up per full run against the owner's 10–20 per run; 20 / 4 measures 14.8 — see
+`docs/asks/asks-ledger.md` E13 and `tools/runsim.mjs --level-cost`).
+Therefore five purchases cost `20 + 24 + 28 + 32 + 36 = 140` and produce level 6.
 The starting level, first cost, step, points per level and any maximum are content data; the
 worked level-6 result is a curve receipt, not a second hard-coded total or an implied cap.
 

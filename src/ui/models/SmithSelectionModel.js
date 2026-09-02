@@ -68,7 +68,7 @@ function genericAffected(candidate) {
   })));
 }
 
-export function smithSelectionModel(registries, plan, selectedItemRef = null) {
+export function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false } = {}) {
   const items = plan.candidates.map((candidate) => {
     const itemKind = candidate.itemKind || 'armament';
     const itemId = candidate.itemId || candidate.armamentId;
@@ -123,7 +123,13 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null) {
       title: 'Upgrade an Item',
       eyebrow: 'Shrine action',
       instruction: 'Choose one owned item. Review its exact changes, requirements, and Stone cost.',
-      consequence: 'Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. The upgrade leaves the Shrine.',
+      // Every stay/leave sentence the modal shows is derived HERE (SPEC: the
+      // model owns the copy; the component renders it): the footer line, the
+      // header badge, and the tail of the decision message.
+      staysAtShrine: !!multiUse,
+      consequence: `Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. ${multiUse ? 'You stay at the Shrine.' : 'The upgrade leaves the Shrine.'}`,
+      consequenceBadge: multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE',
+      decisionConsequence: multiUse ? 'you stay at the Shrine' : 'and leaves the Shrine',
       purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`,
       candidates: freeze(items),
       selected,

@@ -592,7 +592,7 @@ export function validateContent(bundle) {
   }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'hpPerConTier'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
@@ -663,9 +663,6 @@ export function validateContent(bundle) {
   }
 
   for (const cls of b.classes || []) {
-    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
-      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
-    }
   }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------

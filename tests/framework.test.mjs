@@ -6,6 +6,7 @@
 // observed red by name, never assumed.
 
 import { contentBundle } from '../src/content/index.js';
+import { importLegacyContent } from '../src/framework/importer.js';
 import {
   createFrameworkRegistries, TermRegistry, AssetRegistry,
 } from '../src/framework/registries.js';
@@ -527,6 +528,32 @@ test('compiled tooltips resolve every word through TermRegistry', () => {
 const { createRegistries, resolveCard } = await import('../src/model/registries.js');
 const LEGACY_REG = createRegistries(contentBundle);
 
+// The import boundary refuses a malformed armament row instead of carrying it
+// into a candidate the gate would then call clean (review on #519).
+function withArmament(patch) {
+  const [first, ...rest] = contentBundle.equipment.armaments;
+  return { ...contentBundle, equipment: { ...contentBundle.equipment, armaments: [{ ...first, ...patch }, ...rest] } };
+}
+test('importer refuses an armament whose weight is missing, non-numeric, negative, or not its poise threshold', () => {
+  const first = contentBundle.equipment.armaments[0];
+  assertThrows(() => importLegacyContent(withArmament({ weight: undefined })), /weight must be a non-negative integer/, 'missing weight');
+  assertThrows(() => importLegacyContent(withArmament({ weight: 'heavy' })), /weight must be a non-negative integer/, 'non-numeric weight');
+  assertThrows(() => importLegacyContent(withArmament({ attackRating: -1 })), /attackRating must be a non-negative integer/, 'negative attackRating');
+  assertThrows(() => importLegacyContent(withArmament({ defenseRating: 1.5 })), /defenseRating must be a non-negative integer/, 'fractional defenseRating');
+  assertThrows(() => importLegacyContent(withArmament({ weight: first.weight + 1 })), /must equal its poiseThreshold/, 'weight off its poise threshold');
+  const ok = importLegacyContent(contentBundle);
+  const imported = ok.entities.find((e) => e.explicitOverrides && e.explicitOverrides.legacyId === first.id);
+  assert(imported && imported.explicitOverrides.itemWeight === first.weight, 'the well-formed row still imports its weight');
+  // The armour path has the same boundary: its poise threshold IS its weight.
+  const withArmour = (patch) => {
+    const [outfit, ...others] = contentBundle.equipment.armour;
+    return { ...contentBundle, equipment: { ...contentBundle.equipment, armour: [{ ...outfit, ...patch }, ...others] } };
+  };
+  assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: undefined })), /poiseThreshold must be a non-negative integer/, 'missing armour poise');
+  assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: -1 })), /poiseThreshold must be a non-negative integer/, 'negative armour poise');
+  assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: 'plate' })), /poiseThreshold must be a non-negative integer/, 'non-numeric armour poise');
+});
+
 test('bridge decisions match the legacy keyword rules for every card, base and upgraded', () => {
   const bridge = LEGACY_REG.framework;
   let checked = 0;
@@ -853,6 +880,8 @@ test('a granted instance is never a removal candidate', () => {
 });
 
 const { playerLoadReceipt } = await import('../src/model/statProjection.js');
+const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
+const { renderCandidateComparison } = await import('../src/ui/components/equipmentReceipts.js');
 const weightHome = await import('../src/framework/weight.js');
 
 test('the bridge decides Weight Class through the framework service, with the TermRegistry word', () => {
@@ -947,6 +976,32 @@ test('the dodge roll lands as Block through the framework check, priced by the c
   const idleStart = p.stamina;
   dispatch(combat, { type: 'endTurn' });
   eq(p.stamina, Math.min(p.maxStamina, idleStart + 1), 'an idle turn recovers one stamina');
+});
+
+test('the Armoury comparison carries the swap\'s load and Weight Class before and after', () => {
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const before = playerLoadReceipt(LEGACY_REG, run);
+  const slot = LEGACY_REG.equipment.slots.find((row) => row.id === 'leftHand');
+  const towerShield = contentBundle.equipment.armaments.find((p) => p.id === 'towerShield');
+  if (!towerShield || !slot) throw new Error('fixture: towerShield / leftHand missing');
+  const compared = equipmentSurfaceReceipt(LEGACY_REG, run, {
+    candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'towerShield' },
+  }).candidate;
+  eq(compared.load.before, before.load, 'before is the standing readout');
+  eq(compared.load.capacity, before.capacity, 'capacity is the run\'s and does not move in a swap');
+  eq(compared.load.after, before.load - 7 + towerShield.weight, 'after swaps the round shield\'s weight for the tower shield\'s');
+  eq(compared.load.beforeClassId, before.classId, 'before class is the standing readout\'s');
+  eq(compared.load.changesClass, compared.load.beforeClassId !== compared.load.afterClassId, 'class-change flag agrees with the ids');
+  eq(typeof compared.load.afterWord, 'string', 'the after class resolves to a word');
+  eq(compared.load.active, false, 'readout only, like the standing receipt');
+  const bare = equipmentSurfaceReceipt(LEGACY_REG, run, {
+    candidate: { slotId: 'leftHand', setIndex: 0, pieceId: null },
+  }).candidate;
+  eq(bare.load.after, before.load - 7, 'unequipping the shield sheds exactly its weight');
+  const html = renderCandidateComparison(compared);
+  eq(html.includes(`${compared.load.before} (${compared.load.beforePercent}%) → <strong>${compared.load.after} (${compared.load.afterPercent}%)</strong> of ${compared.load.capacity}`), true,
+    'the rendered row shows both loads with their percents over the capacity');
+  eq(html.includes(`data-weight-class="${compared.load.afterClassId}"`), true, 'the row carries the after class');
 });
 
 test('grant and weapon-art authoring is validated by name', () => {
