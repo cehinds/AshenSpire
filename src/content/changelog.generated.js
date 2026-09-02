@@ -463,6 +463,46 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/361"
   },
   {
+    "id": "pr-367",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "Startup components anchor to the viewport centre",
+    "detail": "The startup screen's parts are positioned against the centre of the viewport rather than drifting with the layout around them.",
+    "build": "0.4.0.1453",
+    "pullRequest": 367,
+    "url": "https://github.com/cehinds/AshenSpire/pull/367"
+  },
+  {
+    "id": "pr-366",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The startup gate is centred, and its background card is gone",
+    "detail": "Merged as pull request #366 in development build 0.4.0.1453.",
+    "build": "0.4.0.1453",
+    "pullRequest": 366,
+    "url": "https://github.com/cehinds/AshenSpire/pull/366"
+  },
+  {
+    "id": "pr-365",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "Enemy tooltips read in context, the HUD compacts, and the title is centred",
+    "detail": "An enemy's tooltip is written for the situation it appears in, the HUD takes less room, and the title's alignment is corrected.",
+    "build": "0.4.0.1432",
+    "pullRequest": 365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/365"
+  },
+  {
+    "id": "pr-356",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Escape cancels an armed rebind without leaving Controls",
+    "detail": "Pressing Escape while a key rebind is waiting for a press cancels the capture and keeps the Controls menu open, instead of closing it out from under you.",
+    "build": "0.4.0.1378",
+    "pullRequest": 356,
+    "url": "https://github.com/cehinds/AshenSpire/pull/356"
+  },
+  {
     "id": "pr-355",
     "date": "2026-08-26",
     "group": "2026-08-26",

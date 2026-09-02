@@ -97,9 +97,13 @@ receipt a player cannot open and see is not a receipt.*
 
 - **The title collapses when a run exits and when you cancel** ([#371](https://github.com/cehinds/AshenSpire/pull/371), `0.4.0.1454`). Leaving a run, or cancelling out of the opening menus, returns the title to its folded state instead of leaving it open.
 - **The Review & Approval Hub refreshes its owner decisions and adds Context Rotation** ([#361](https://github.com/cehinds/AshenSpire/pull/361), `0.4.0.1454`). The owner-facing hub promotes the two bounded Art decisions into cards that need Constantine without approving either, adds the #053 Context Rotation dashboard and its 13-team / 52-seat report, and separates registration and cold-start acceptance from execution, rotation, and successor-resume proof. Local-only evidence URLs now resolve to the explicit unavailable page instead of leaking author-local file paths. Evidence and hub only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.
+- **Startup components anchor to the viewport centre** ([#367](https://github.com/cehinds/AshenSpire/pull/367), `0.4.0.1453`). The startup screen's parts are positioned against the centre of the viewport rather than drifting with the layout around them.
+- **The startup gate is centred, and its background card is gone** ([#366](https://github.com/cehinds/AshenSpire/pull/366), `0.4.0.1453`).
+- **Enemy tooltips read in context, the HUD compacts, and the title is centred** ([#365](https://github.com/cehinds/AshenSpire/pull/365), `0.4.0.1432`). An enemy's tooltip is written for the situation it appears in, the HUD takes less room, and the title's alignment is corrected.
 
 ## 2026-08-26
 
+- **Escape cancels an armed rebind without leaving Controls** ([#356](https://github.com/cehinds/AshenSpire/pull/356), `0.4.0.1378`). Pressing Escape while a key rebind is waiting for a press cancels the capture and keeps the Controls menu open, instead of closing it out from under you.
 - **Load and Quit ask in the game's own words** ([#355](https://github.com/cehinds/AshenSpire/pull/355), `0.4.0.1376`). The browser prompts standing in for Load and Quit are replaced with the game's own confirmations, so a misread click no longer drops the run you are in.
 - **A fight saved mid-combat resumes exactly** ([#354](https://github.com/cehinds/AshenSpire/pull/354), `0.4.0.1371`). Loading a save made during a fight restores that fight as it stood.
 - **New Game save-slot selection has one owner** ([#353](https://github.com/cehinds/AshenSpire/pull/353), `0.4.0.1368`). The slot you choose is the slot the new run is written to.
