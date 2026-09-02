@@ -120,7 +120,7 @@ no artifact exists; he was told twice that one did, and he was right and we were
 
 - Source: https://github.com/cehinds/AshenSpire/issues/258
 - Said: 2026-08-15
-- Body ledger state: `not-started`
+- Body ledger state: `in-flight — the level economy is measured and calibrated to his 10–20 per run (#522: `balance.levelUp` 20 + 4, the fleet simulator prints level-ups per full run, 14.8 on the shipped ladder) and the multi-use rest-stop toggle ships (Settings → Advanced → Gameplay → Multi-use Shrines, off by default); the procedural map with rest-placement guard rails is the half still open`
 - Current preserved issue-state label: `state:in-flight`
 - Issue body SHA-256: `eaf8c26f77ca1c430d076b167dcf1984a8695820da168f7ac988e62118c6660b`
 - Legacy ledger fingerprint: `49a405b51325e378`
@@ -138,7 +138,7 @@ ONE OF THE THIRTEEN, AND NOT AN ITEM ON THE LIST — it is a lens on the list (M
 
 - Source: https://github.com/cehinds/AshenSpire/issues/257
 - Said: 2026-08-15
-- Body ledger state: `in-flight` — the first quest chain is authored (Grave of the Nameless → The Keeper of the Nameless → The Nameless at Rest) on event-level history gates (`eventHistoryRequirements`, `resolveUnknownNode`) beside the choice-level gates that were already live; more chains are content work on the same doors
+- Body ledger state: `in-flight — the first quest chain is authored (Grave of the Nameless → The Keeper of the Nameless → The Nameless at Rest) on event-level history gates (`eventHistoryRequirements`, `resolveUnknownNode`; #526) beside the choice-level gates that were already live; a completed step never rolls again and the quest relic is reserved from every generic pool; more chains are content work on the same doors`
 - Current preserved issue-state label: `state:not-started`
 - Issue body SHA-256: `1a71fd514de14ddbbb2d6bcb5e6812ea8cf5e225d93bbbd9627a40386d00020e`
 - Legacy ledger fingerprint: `d4aaf1ea25eea1e4`
@@ -156,7 +156,7 @@ ONE OF THE THIRTEEN. Read at a05d071: ZERO matches for `quest` in src/. W2 alrea
 
 - Source: https://github.com/cehinds/AshenSpire/issues/250
 - Said: 2026-08-15
-- Body ledger state: `not-started`
+- Body ledger state: `landed — the character creator offers a choice of starting armour sets per class (`startingArmourViews`, `creationEquipmentSectionViews`) and an Assign Points mode (`characterCreation` point-buy: floor 8, ceiling 15 at creation, points reclaimed when a stat is dropped, the totals and bounds authored as data); the Weight Class census (#520) measures every creatable start through both`
 - Current preserved issue-state label: `state:not-started`
 - Issue body SHA-256: `20153f281f5d5ef5cca2d7b2562d2796d1a9b53965e4183c7e7efa1aa1035221`
 - Legacy ledger fingerprint: `e5934fe6dfdd8270`
@@ -174,7 +174,7 @@ ONE OF THE THIRTEEN. Read at a05d071: ZERO matches for `statPoint`, `pointPool` 
 
 - Source: https://github.com/cehinds/AshenSpire/issues/248
 - Said: 2026-08-15
-- Body ledger state: `not-started`
+- Body ledger state: `landed — Fullscreen is the first `Display` row in Settings (settings.js) and a persistent quick control on Title, Map and Combat; the look-and-feel half of the sentence is what remains open`
 - Current preserved issue-state label: `state:in-flight`
 - Issue body SHA-256: `423de3898732236bacd6660ad85ba01c1f64e254dae6585cf58fd833ad263bfb`
 - Legacy ledger fingerprint: `69f7c2917c7cf4f0`
