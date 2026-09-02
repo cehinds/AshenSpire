@@ -354,6 +354,32 @@ try {
         const recorded = (c2.run.history || []).slice(histBefore).some((h) => h.eventId === 'ancientRuneStone' && h.choiceId === 'smashStone');
         ok(!refused.ok && replayed.ok && c2.run.cinders === spentBefore + smash && recorded && c2.catchup.length === 0 && c2.run.floor === C.session.floor,
           `a bad index is refused, the replayed choice pays out (+${c2.run.cinders - spentBefore} cinders, expected +${smash}), is recorded (${recorded}), drains the queue (${c2.catchup.length} left) and the seat snaps back to the party's floor`);
+        // THE OPTIONS FROZEN IN EACH ENTRY ARE HONOURED: a seat away for the
+        // Abandoned Cart and then the Merchant's Ghost has "pay in kind" frozen
+        // open at the ghost (its history had no strongbox then); looting the
+        // strongbox first in the replay must not turn that button inert
+        // (Codex on #548).
+        {
+          const E = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          E.addMember({ id: 'e1', name: 'Ash', classId: 'reaver' });
+          E.addMember({ id: 'e2', name: 'Bel', classId: 'starseer' });
+          E.start();
+          E.session.cursorId = E.session.reachableIds[0];
+          const e2 = E.session.members.get('e2');
+          E.setConnected('e2', false);
+          const cart = REG.events.get('abandonedCart'), ghost = REG.events.get('merchantsGhost');
+          const cartIds = ['lootStrongbox', 'leave'], ghostIds = ['payInKind', 'stealRelic', 'leave'];
+          E.session.scene = { kind: 'event', eventId: 'abandonedCart', done: {}, picks: {}, open: { e1: null, e2: [0, 1] } };
+          E.eventChoice('e1', cartIds.indexOf('leave'));
+          E.session.scene = { kind: 'event', eventId: 'merchantsGhost', done: {}, picks: {}, open: { e1: [0, 1, 2], e2: [0, 1, 2] } };
+          E.eventChoice('e1', ghostIds.indexOf('leave'));
+          const queuedBoth = e2.catchup.filter((c) => c.type === 'event').map((c) => c.eventId);
+          E.setConnected('e2', true);
+          const first = E.resolveCatchup('e2', 0, { choiceIndex: cartIds.indexOf('lootStrongbox') });
+          const second = e2.catchup[0] && e2.catchup[0].eventId === 'merchantsGhost' ? E.resolveCatchup('e2', 0, { choiceIndex: ghostIds.indexOf('payInKind') }) : { ok: false, error: 'ghost not next' };
+          ok(queuedBoth.join(',') === 'abandonedCart,merchantsGhost' && first.ok && second.ok && e2.catchup.length === 0 && (cart.choices.length === 2 && ghost.choices.length === 3),
+            `both missed events are queued (${queuedBoth.join(', ')}), the strongbox is looted (${first.ok}) and "pay in kind" frozen open at the ghost is still honoured after it (${second.ok ? 'ok' : second.error}); ${e2.catchup.length} left`);
+        }
         // A seat that chose and then dropped owes nothing.
         const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
         D.addMember({ id: 'd1', name: 'Ash', classId: 'reaver' });

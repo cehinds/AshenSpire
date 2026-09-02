@@ -986,12 +986,17 @@ export function createSession({ registries, seedString, endless = false, restore
     } else if (item.type === 'treasure') {
       if (pick && pick.takeRelic && item.relicId && !m.run.relics.includes(item.relicId)) m.run.relics.push(item.relicId);
     } else if (item.type === 'event') {
-      // THE MISSED EVENT IS CHOSEN NOW, through the same door a live choice
-      // walks (eventChoice): the choice must be one the seat's history admits
-      // (and was open when the party met it), affordable, and its effects run
-      // before the fact is recorded — stamped with the node where the party
-      // met it, so the record reads as the party's does. An event with no
-      // history contract, like a live one, applies nothing and is dropped.
+      // THE MISSED EVENT IS CHOSEN NOW, through the door a live choice walks
+      // (eventChoice), against THE OPTIONS FROZEN IN THE ENTRY: the choices
+      // the seat's history admitted when the party met the event are what
+      // the client offers, and what is honoured here — not the history as
+      // the earlier entries of this replay series have since rewritten it,
+      // which would refuse a button the entry itself put on screen (Codex on
+      // #548; MULTIPLAYER.md, "the exact options that were rolled"). Then
+      // affordable, and its effects run before the fact is recorded —
+      // stamped with the node where the party met it, so the record reads as
+      // the party's does. An event with no history contract, like a live
+      // one, applies nothing and is dropped.
       let def = null;
       try { def = registries.events.get(item.eventId); } catch { def = null; }
       const authored = def ? eventChoicesWithHistory(def) : [];
@@ -1000,7 +1005,6 @@ export function createSession({ registries, seedString, endless = false, restore
         const choice = authored[idx];
         if (!choice) return { ok: false, error: 'bad choice index' };
         if (Array.isArray(item.open) && !item.open.includes(idx)) return { ok: false, error: 'that choice was not open to you' };
-        if (!availableEventChoices(authored, m.run).some((row) => row.choice.id === choice.id)) return { ok: false, error: 'that choice is not open to you yet' };
         if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
           return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
         }
