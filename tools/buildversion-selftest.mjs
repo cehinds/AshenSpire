@@ -59,7 +59,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, ORDINAL_CEILING, BUILD_IDENTITY_FILES } from './buildversion.mjs';
+import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
@@ -160,11 +160,22 @@ const PLANTS = [
     plant: (root) => editJson(root, (j) => ({ ...j, ordinal: j.ordinal + 7 })),
   },
   {
-    // I asserted a sort ceiling in the tool; an asserted ceiling nobody has
-    // watched refuse is a sentence, not a check.
-    name: 'the ordinal reaches the width where the pad stops sorting',
+    // The pad ceiling this replaced guarded a STRING sort the scheme no longer
+    // promises (the candidate moved into the third component, where padding
+    // cannot help). What replaces it is the lock the per-candidate counter
+    // actually needs: the number is a count WITHIN a release, so the release it
+    // was counted under is part of the recorded fact, and dropping it leaves a
+    // count with no subject.
+    name: 'the recorded release is DELETED — a count with no candidate named',
     row: 'F ORDINAL ON THE BOX',
-    plant: (root) => editJson(root, (j) => ({ ...j, ordinal: ORDINAL_CEILING })),
+    plant: (root) => editJson(root, ({ release, ...rest }) => rest),
+  },
+  {
+    // The hand-edit the reset licenses. Move the release in the ordinal file
+    // alone and the tree would appear to have earned a restart it never built.
+    name: 'the recorded release HAND-EDITED — the number belongs to another candidate',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => editJson(root, (j) => ({ ...j, release: `${j.release}-planted` })),
   },
   {
     // Isolates G: the NUMBER still matches the box, so F stays green and only

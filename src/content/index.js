@@ -49,7 +49,21 @@ const cards = authoredCards.map((card) => {
 });
 
 export const contentBundle = {
-  version: '0.5.0-rc.4',
+  // THE RELEASE HALF, AND THE CANDIDATE NUMBER IS THE THIRD COMPONENT.
+  //
+  // Constantine, 2026-09-01, on reading `0.5.0-rc.4.1959`: "I thought it was
+  // going to be something like 0.5.3.2" — the candidate in slot three, and a
+  // build counter in slot four that "should restart ... to 0.5.4.0 and
+  // increment from there". So `0.5.0-rc.4` is written `0.5.4`: the fourth
+  // candidate of the 0.5 line, and tools/buildversion.mjs appends the count of
+  // builds within it.
+  //
+  // WHAT THAT COSTS, STATED HERE RATHER THAN DISCOVERED LATER: the patch number
+  // of the release being auditioned no longer appears, so a shipped `0.5.0`
+  // would sort BELOW the `0.5.4` that led to it. A release under this scheme
+  // must be numbered past its last candidate. Raised with him when the
+  // directive was given; the scheme is his call and this is the note.
+  version: '0.5.4',
   balance,
   cards,
   relics,

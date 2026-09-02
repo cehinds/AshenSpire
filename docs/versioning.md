@@ -1,7 +1,7 @@
 # Versioning — when each segment increments
 
-The in-game stamp is `BUILD <MAJOR>.<MINOR>.<PATCH>.<ordinal> · src <digest>`
-(currently `0.5.0-rc.4.<ordinal>`). This document is the decision workflow for the
+The in-game stamp is `BUILD <MAJOR>.<MINOR>.<CANDIDATE>.<BUILD> · src <digest>`
+(currently `0.5.4.<build>`; see "The candidate is the third component" below). This document is the decision workflow for the
 three authored segments. It changes no machinery: the one home for the string
 is `src/buildversion.js`, the release triple lives only in
 `src/content/index.js` (`contentBundle.version`), and
@@ -75,30 +75,63 @@ The answer is semver's own pre-release segment, not a bent ladder:
 - **`rc.<n>` advances at each `dev → test` promotion** — every candidate QA
   receives is distinguishable by its stamp, and the ordinal keeps ordering
   builds between promotions exactly as before.
-- **Ordering is by ordinal, never by the stamp string.** The ordinal is the
-  one monotonic key: it never resets, so any two builds — across candidates,
-  across the release cut — sort by it alone, and every tool that orders
-  builds (`about-changelog`, `buildversion` row H) reads the ordinal column.
-  The candidate counter is a label inside the stamp, not an ordering key, and
-  semver forbids zero-padding it (`rc.01` is not a valid numeric identifier).
-  So that the dist filenames ALSO sort in a directory listing, the counter has
-  a stated ceiling of **`rc.9`** within one release line: a tenth promotion
-  before a release cut is not a bigger number, it is the signal that the
-  candidate line has outlived its milestone — the owner cuts the release or
-  the triple moves. `0.5.0-rc.10.0001` therefore never exists to sort ahead
-  of `0.5.0-rc.9.9999`.
+- **Ordering is by the WHOLE version, component-wise numeric** — superseded
+  2026-09-01, see "The candidate is the third component" below. Until then the
+  ordinal was the one monotonic key: it never reset, so any two builds sorted
+  by it alone, and every tool that orders builds (`about-changelog`,
+  `buildversion` row H) read the ordinal column.
 - **The `-rc` suffix is dropped by the owner's release cut** (`dev → release`,
   owner-exclusive per `governance/delivery.json`), which is the MINOR bump
   the ladder already names. Nothing else removes it.
 - The triple in the pre-release (`0.5.0` here) is the ladder's answer for the
   milestone in flight; it moves only when that answer changes.
 
-The one home and the checks are unchanged: `contentBundle.version` holds
-`0.5.0-rc.4`, the stamp reads `BUILD 0.5.0-rc.4.<ordinal> · src <digest>`, the
-dist file is `AshenSpire-0.5.0-rc.4.<ordinal>.html`, and older CHANGELOG
-receipts keep their `0.4.0.<ordinal>` stamps — the projector accepts any
-`<release>.<ordinal>` and enforces the ordinal column, because receipts are
-history and a bump must never make them unparseable.
+## The candidate is the third component (2026-09-01)
+
+Constantine, reading `0.5.0-rc.4.1959`: "I must have misunderstood the ordinal
+... I thought it was going to be something like 0.5.3.2" — and then the rule,
+the tail "should restart the ordinal to 0.5.4.0 and increment from there".
+
+So the stamp is `<MAJOR>.<MINOR>.<CANDIDATE>.<BUILD>`. The candidate number
+moves into the third component and the tail counts builds WITHIN that
+candidate, restarting at `0` when the candidate advances. `0.5.3.1` is the
+second build of the third 0.5 candidate. `contentBundle.version` holds `0.5.4`
+— the same fact in his notation — so the one home and the one composition are
+unchanged; only what the components MEAN moved.
+
+What this changes, each with the check that carries it:
+
+- **The ordinal no longer orders on its own, and nothing may read it as if it
+  did.** `0.5.4.0` is newer than `0.5.3.2` with the lower tail. Comparison is
+  component-wise numeric over the whole version. `about-changelog` compares
+  stamp tuples; `buildversion` row H demands a strictly higher tail within one
+  release and a reset to exactly `0` when the release moves.
+- **The `rc.9` ceiling is gone with the padding that motivated it.** Padding
+  bought a naive STRING sort, which the candidate cannot survive in the third
+  component: `0.5.10.0` string-sorts below `0.5.9.0` however the tail is
+  padded. A tenth candidate is now just `0.5.10.<n>` and sorts correctly under
+  numeric comparison.
+- **The ordinal is no longer the commit count.** `bumpOrdinal` was
+  `max(recorded + 1, rev-list --count)`; a per-candidate counter cannot be the
+  commit count because it resets, so it is `recorded + 1` and nothing should
+  read it as an approximation of history length. The digest still identifies
+  the tree exactly.
+- **The recorded release rides in `buildordinal.json` beside the ordinal**, and
+  row F locks it: a count within a release whose release is unnamed is a number
+  with no subject, and a hand-edit of that field alone would license a restart
+  the tree never earned.
+
+**One cost, stated rather than discovered.** The patch number of the release
+being auditioned no longer appears, so a shipped `0.5.0` would sort BELOW the
+`0.5.4` that led to it. A release under this scheme must be numbered past its
+last candidate. Raised with the owner when the directive was given; his call.
+
+CHANGELOG receipts for the closed candidates `rc.1`–`rc.3` are restated in the
+new notation. The `0.4.0.<ordinal>` line keeps its ordinals — that line was
+never candidate-scoped — and `0.5.0-rc.4.1956`, the build the scheme changed
+under, keeps the stamp its artifact actually wears. The projector accepts both
+notations, because receipts are history and a scheme change must never make
+them unparseable.
 
 A receipt written in the pull request that ships its change cites the ordinal
 its own projection rebuild produces (current ordinal plus one); `--write`
