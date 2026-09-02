@@ -75,6 +75,11 @@ export function setCombatStartStateForTools(state = null) {
 // Re-export so tests/other tools share the one definition (no divergent copy).
 export { coopHpMult } from '../src/engine/coopCombat.js';
 
+// THE BLOCK OF EVERY STREAM A QUEUED EVENT KEEPS FOR ITSELF: the seat's live
+// rng is moved past it when the event is queued, so the rolls the entry will
+// replay at its frozen counters are never the rolls a later node makes live
+// (see settleEvent). No choice draws anything like this many.
+const CATCHUP_RNG_RESERVE = 256;
 /** A deterministic per-member RNG stream, independent of the shared map RNG. */
 function memberRng(seed, index, counters) {
   return createRng((seed ^ ((index + 1) * 0x9e3779b1)) >>> 0, counters || {});
@@ -947,6 +952,13 @@ export function createSession({ registries, seedString, endless = false, restore
         act: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null,
         rng: mm.rng.getCounters(), purse: mm.run.cinders,
       });
+      // AND THE LIVE STREAM MOVES PAST THE ENTRY'S BLOCK: rolled on the same
+      // counters, a later missed reward drew the very relic the event would,
+      // and the replay then lost one of the two to the duplicate (Codex on
+      // #548). The seat's rng is rebuilt on its own seed, every stream
+      // advanced by CATCHUP_RNG_RESERVE; nothing else holds the old object.
+      const reserved = {}; for (const [k, v] of Object.entries(mm.rng.getCounters())) reserved[k] = (v + CATCHUP_RNG_RESERVE) >>> 0;
+      mm.rng = memberRng(seed, mm.index, reserved);
     }
 
     // THE PARTY'S RECORD: the choice of the earliest-joined member who was

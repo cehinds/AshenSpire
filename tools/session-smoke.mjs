@@ -13,6 +13,7 @@ import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
+import { rollRelicReward } from '../src/engine/encounters.js';
 
 const REG = createRegistries(contentBundle);
 const fails = [];
@@ -576,13 +577,17 @@ try {
           const b2 = seatOf(B, 'a2'); b2.run.cinders = price;
           B.setConnected('a2', false);
           B.eventChoice('a1', giveIdx === 0 ? 1 : 0);
-          for (let i = 0; i < 5; i++) b2.rng.float('relicRewards'); // a later node spends the stream
+          // The live stream has moved past the entry's block, so a later node
+          // (an elite reward, rolled live) cannot draw the relic the event will.
+          const entry = b2.catchup[0];
+          const movedPast = b2.rng.getCounters().relicRewards === (entry.rng.relicRewards + 256) >>> 0;
+          const later = rollRelicReward(REG, b2.rng, b2.run.relics); if (later) b2.run.relics.push(later); // the later node's own draw
           B.setConnected('a2', true);
           const awayRelicsBefore = b2.run.relics.slice();
           const rr = B.resolveCatchup('a2', 0, { choiceIndex: giveIdx });
           const awayRelic = b2.run.relics.find((r) => !awayRelicsBefore.includes(r));
-          ok(liveRelic && rr.ok && awayRelic === liveRelic,
-            `a missed choice's random relic is the one the room would have given (live ${liveRelic}, replayed after the stream was spent ${awayRelic})`);
+          ok(liveRelic && rr.ok && awayRelic === liveRelic && movedPast && later && later !== liveRelic,
+            `a missed choice's random relic is the one the room would have given (live ${liveRelic}, replayed after the stream was spent ${awayRelic}); the live stream moved past the entry's block (${movedPast}) and a later node's own draw (${later}) is not that relic`);
           // Priced: 0 cinders when the party met the ghost, 100 by the replay.
           const ghost = REG.events.get('merchantsGhost');
           const payIdx = ghost.choices.findIndex((c) => c.requires && typeof c.requires.cinders === 'number');
