@@ -242,15 +242,34 @@ export function createSession({ registries, seedString, endless = false, restore
     return m;
   }
 
-  function setConnected(id, connected) {
+  function setConnected(id, connected, { settle = true } = {}) {
     const m = members.get(id);
     if (m) {
       m.connected = !!connected;
       if (live) combatPresence(id, !!connected); // rescale the live fight
-      if (!connected) maybeResolveVotes(); // a leaver may complete a map vote
-      if (!connected) settleEvent(); // … or an event's choices or acknowledgments
+      if (settle) settlePresence(!!connected);
     }
     return m;
+  }
+  // SEVERAL SEATS AT ONCE — a disk resume assigns every member to a client
+  // and reconnects them together. They are flipped first and the room asked
+  // to settle ONCE afterwards: settling after the first of them, with the
+  // rest still marked absent, would advance a half-answered event past the
+  // choices and acknowledgments the others were about to give (Codex on
+  // #547).
+  function setConnectedMany(ids, connected) {
+    const out = [];
+    for (const id of ids) out.push(setConnected(id, connected, { settle: false }));
+    settlePresence(!!connected);
+    return out;
+  }
+  function settlePresence(connected) {
+    if (!connected) maybeResolveVotes(); // a leaver may complete a map vote
+    // … or an event's choices or acknowledgments — and so may a RETURN: a
+    // room everyone left after one seat had chosen settles nothing while it
+    // is empty, and the seat that comes back alone must not wait on the
+    // absent (Codex on #541).
+    settleEvent();
   }
 
   function connectedMembers() {
@@ -1065,7 +1084,7 @@ export function createSession({ registries, seedString, endless = false, restore
     session,
     /** The restore receipts: [{ id, name, index, reason }] — never the bytes. */
     refusedMembers: () => refused.map((r) => ({ id: r.id, name: r.name, index: r.index, reason: r.reason })),
-    addMember, setConnected, connectedMembers, livingMembers,
+    addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
