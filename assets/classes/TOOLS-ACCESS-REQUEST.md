@@ -1,7 +1,8 @@
 # AS-HD-040 — decision request: who remodels three class figures
 
 **To:** IT Manager III · **From:** `lease-AS-HD-040-maker` · **Date:** 2026-09-02
-**Authority needed:** a path assignment for `tools/sprites-blender.py`.
+**Authority needed:** a path assignment for `tools/sprites-blender.py` and
+`tools/equipment-blender.py`.
 **This is a request, not a claim.** Nothing in `tools/**` has been edited.
 
 ## EVIDENCE
@@ -15,12 +16,21 @@ seat was withdrawn once before for exactly that reason.
    read as approving the look of all four.
 2. **The ruling is independently reproducible.** `check-look-conformance.mjs`
    scores each asset against an envelope re-measured from the pinned rogue blob:
-   rogue 0 traits off, reaver 2, herald 4, starseer 5. The measurement was not
+   rogue 0 traits off, reaver 3, herald 4, starseer 5. The measurement was not
    told the answer and agrees with the owner's eye.
 3. **The approved look has no builder.** `tools/sprites-blender.py` defines
    `build_reaver`, `build_starseer`, `build_herald`. There is no `build_rogue`
    anywhere in the repository, and `tools/equipment-blender.py:408` maps
    `"rogue": lib["build_reaver"]` — the original silhouette defect.
+3a. **The defect lives in two files, not one.** `equipment-blender.py` keeps its
+   own `CLASS_BUILD` map (line 404) *and* a `CLASS_BODY_MATS` entry (line 427)
+   that repaints rogue through the Reaver's `HERO_PLATE` / `HERO_PLATE_LT` /
+   `HERO_LEATHER` / `HERO_UNDER`. Landing `build_rogue` in the sprite renderer
+   alone changes nothing that ships: every regenerated `body_rogue_*.webp` keeps
+   the Reaver rig. Worse, changing `CLASS_BUILD` without `CLASS_BODY_MATS` would
+   repaint materials the new figure no longer owns — reproducing the shipped bug
+   that map's own comment documents, where eight of twelve armour sets rendered
+   pixel-identical to their class default.
 4. **The packet came from outside this repository.** The pipeline renders classes
    at 450×570 in WEBP. Nothing under `tools/` emits 512×512, and nothing emits
    PNG. The four crops are 512×512 PNG. So `SUCCESSOR-CONTRACT.md` §5.1 is not a
@@ -71,9 +81,18 @@ a lane whose own note excludes it.
 
 ## NEXT (smallest action)
 
-Extend `lease-AS-HD-040-maker` to `tools/sprites-blender.py`, scoped to adding
-`build_rogue` and its two materials plus the `builders` map entry — no edits to
-the three existing builders under this grant.
+Extend `lease-AS-HD-040-maker` to **`tools/sprites-blender.py` and
+`tools/equipment-blender.py`**, scoped to exactly three edits:
+
+1. `sprites-blender.py` — add `build_rogue`, its four materials, and the
+   `builders` map entry.
+2. `equipment-blender.py:404` — point `CLASS_BUILD["rogue"]` at `build_rogue`.
+3. `equipment-blender.py:427` — replace `CLASS_BODY_MATS["rogue"]` with the
+   rogue-specific materials.
+
+**No edits to the three existing builders under this grant.** The second file was
+missing from the first version of this request; without it the grant would not
+have fixed the defect it names.
 
 Then this seat renders, scores against `check-look-conformance.mjs`, iterates the
 materials until it passes, and returns the receipt. If it cannot be made to pass,

@@ -5,7 +5,37 @@
 # lease claims it (lease-AS-HD-057-it-support is revoked; its live replacement
 # -r2 holds only .agentops/work|events/AS-HD-057/**), but this seat is maker and
 # holds assets/classes/** only, so this is a bounded proposal under art.md §3,
-# not an edit. See TOOLS-ACCESS-REQUEST.md. Whoever holds tools/** pastes the function in beside build_herald and
+# not an edit. See TOOLS-ACCESS-REQUEST.md.
+#
+# LANDING THIS TAKES THREE EDITS IN TWO FILES. Doing only the first leaves the
+# rig-reuse defect exactly where it is.
+#
+#   1. tools/sprites-blender.py — paste the four materials and build_rogue below
+#      beside build_herald, and add "rogue": build_rogue to the builders map.
+#
+#   2. tools/equipment-blender.py:404 — CLASS_BUILD is a SECOND map, and it
+#      still reads {"rogue": lib["build_reaver"]}. equipment-blender execs the
+#      library portion of sprites-blender, so build_rogue is already in `lib`
+#      once edit 1 lands — but nothing selects it. Change that entry to
+#      lib["build_rogue"], or every regenerated body_rogue_*.webp keeps the
+#      Reaver rig and this proposal fixes nothing that ships.
+#
+#   3. tools/equipment-blender.py:427 — CLASS_BODY_MATS["rogue"] still names
+#      HERO_PLATE / HERO_PLATE_LT / ROGUE_LEATHER / HERO_UNDER, which are the
+#      REAVER's materials. Once rogue has its own geometry those are surfaces
+#      the figure no longer owns, and repainting them does nothing visible —
+#      which is precisely the shipped bug the comment block above that map
+#      documents ("eight of twelve armour sets rendered pixel-identical to
+#      their class default"). Replace it with:
+#
+#          "rogue": {"plate": "ROGUE_SCALE", "plateLt": "ROGUE_SCALE_LT",
+#                    "leather": "ROGUE_LEATHER", "under": "ROGUE_UNDER"},
+#
+#      That map's own rule is that only materials UNIQUE to one class may be
+#      listed, or the last set's colour leaks into the next class rendered.
+#      That is why the four materials below are rogue-specific rather than
+#      borrowed: reusing ROGUE_LEATHER and HERO_UNDER would have made rogue
+#      unpaintable on two of its four armour columns. Whoever holds tools/** pastes the function in beside build_herald and
 # adds "rogue": build_rogue to the builders map at the bottom, plus the two
 # materials below next to the other module-level materials.
 #
@@ -39,6 +69,11 @@
 # breaks conformance even though the hue would be right.
 ROGUE_SCALE = make_mat("rogueScale", srgb(0x3B, 0x42, 0x2A))       # h 77.5° v 0.259
 ROGUE_SCALE_LT = make_mat("rogueScaleLt", srgb(0x4A, 0x53, 0x36))  # h 78.6° v 0.325
+# Rogue-specific rather than borrowed from the reaver. CLASS_BODY_MATS may only
+# list materials unique to one class, so sharing ROGUE_LEATHER / HERO_UNDER would
+# have left two of rogue's four armour columns unpaintable.
+ROGUE_LEATHER = make_mat("rogueLeather", srgb(0x3A, 0x2A, 0x1C))   # h 28.0° v 0.227
+ROGUE_UNDER = make_mat("rogueUnder", srgb(0x24, 0x1E, 0x14))       # h 37.5° v 0.141
 
 
 def build_rogue():
@@ -54,7 +89,7 @@ def build_rogue():
     part(cone, ROGUE_SCALE_LT, loc=(0, -0.02, 1.02), vertices=9, radius1=0.32, radius2=0.20, depth=0.40)
     # legs under the coat: dark, barely lit — they carry the deep-shadow share
     for side in (-1, 1):
-        part(cyl, HERO_UNDER, loc=(side * 0.14, 0, 0.36), vertices=8, radius=0.095, depth=0.52)
+        part(cyl, ROGUE_UNDER, loc=(side * 0.14, 0, 0.36), vertices=8, radius=0.095, depth=0.52)
         part(cube, NEAR_BLACK, loc=(side * 0.15, -0.03, 0.06), scale=(0.09, 0.13, 0.06))
     # torso: scaled cuirass with the chevron running down the front
     part(cube, ROGUE_SCALE, loc=(0, 0, 1.06), scale=(0.28, 0.19, 0.23))
@@ -63,8 +98,8 @@ def build_rogue():
         part(cube, ROGUE_SCALE_LT, loc=(side * 0.085, -0.190, 1.00), blight=(0, side * 34, 0),
              scale=(0.030, 0.02, 0.13))
     # belt and cross-strap — leather, not metal; no buckle highlight
-    part(cube, HERO_LEATHER, loc=(0, -0.02, 0.84), scale=(0.29, 0.19, 0.045))
-    part(cube, HERO_LEATHER, loc=(0, -0.195, 1.06), blight=(0, 26, 0), scale=(0.035, 0.02, 0.26))
+    part(cube, ROGUE_LEATHER, loc=(0, -0.02, 0.84), scale=(0.29, 0.19, 0.045))
+    part(cube, ROGUE_LEATHER, loc=(0, -0.195, 1.06), blight=(0, 26, 0), scale=(0.035, 0.02, 0.26))
     # THE MANTLE: layered shoulder cowl falling to mid-arm. This is the shape
     # that reads as rogue at a glance and the reason its content box is the
     # widest of the four (252 px against 169-201).
@@ -73,7 +108,7 @@ def build_rogue():
     for side in (-1, 1):
         part(ico, HOOD_DARK, loc=(side * 0.33, 0, 1.20), subdivisions=2, radius=0.155)
         part(cone, ROGUE_SCALE, loc=(side * 0.35, 0.01, 0.96), vertices=8, radius1=0.105, radius2=0.058, depth=0.34)
-        part(cyl, HERO_LEATHER, loc=(side * 0.36, -0.02, 0.80), blight=(0, side * 6, 0), vertices=8,
+        part(cyl, ROGUE_LEATHER, loc=(side * 0.36, -0.02, 0.80), blight=(0, side * 6, 0), vertices=8,
              radius=0.062, depth=0.22)
     # hood: outer shell, brow ridge, and a void where the face would be.
     # Unlike herald there are NO eyes — the reference reads as an empty dark.
@@ -90,4 +125,4 @@ def build_rogue():
             part(cube, STEEL, loc=(x, 0, 0.66), scale=(0.026, 0.012, 0.20))
             part(cone, STEEL, loc=(x, 0, 0.44), blight=(180, 0, 0), vertices=4, radius1=0.026, radius2=0.0, depth=0.10)
             part(cube, ACCENT, loc=(x, 0, 0.88), scale=(0.058, 0.020, 0.018))
-            part(cyl, HERO_LEATHER, loc=(x, 0, 0.99), vertices=8, radius=0.022, depth=0.18)
+            part(cyl, ROGUE_LEATHER, loc=(x, 0, 0.99), vertices=8, radius=0.022, depth=0.18)

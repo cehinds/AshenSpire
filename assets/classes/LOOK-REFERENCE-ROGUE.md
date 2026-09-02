@@ -82,6 +82,11 @@ defines `build_reaver`, `build_starseer` and `build_herald`. Two facts follow:
 
 - **There is no `build_rogue` anywhere in the repository.** `tools/equipment-blender.py:408`
   maps `"rogue": lib["build_reaver"]` — the original defect.
+- **And it is duplicated.** `equipment-blender.py` holds a second class map
+  (`CLASS_BUILD`, line 404) plus a `CLASS_BODY_MATS` entry (line 427) that
+  repaints rogue through the Reaver's own materials. A builder added to the
+  sprite renderer alone leaves every shipped `body_rogue_*.webp` on the Reaver
+  rig.
 - **The pipeline renders classes at 450×570 in WEBP.** (300×380 is the enemy
   size, and the module header comment is stale.) No file under `tools/` emits
   512×512, and none emits PNG.
