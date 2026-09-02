@@ -45,12 +45,30 @@ const has = (name) => argv.includes(name);
 const REMOTE = flag('--remote', 'origin');
 const BRANCHES = flag('--branches', 'dev,test,release,main').split(',').map((s) => s.trim()).filter(Boolean);
 const KEEP = Math.max(1, Number(flag('--keep', '10')) || 10);
-const BRANCH_ROLE = {
-  dev: 'integration branch — where merged work lands first; not a release',
-  test: 'QA branch — the dev→test promotion under independent test',
-  release: 'release-candidate branch — awaiting the owner’s release cut',
-  main: 'stable — what the classic Play link has always served',
-};
+// A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
+// `.agentops/governance/git-ownership.json` already carries one note per ref and
+// is the thing that actually decides who may write to each; duplicating that
+// sentence in this file is how the two drift apart. A ref the contract does not
+// name says so rather than being given a description this tool invented —
+// `release` is exactly that case today, and the blank is the finding, not a bug
+// to paper over.
+const OWNERSHIP = '.agentops/governance/git-ownership.json';
+function branchRoles() {
+  const path = join(ROOT, OWNERSHIP);
+  if (!existsSync(path)) return {};
+  const refs = JSON.parse(readFileSync(path, 'utf8')).refs || [];
+  const out = {};
+  for (const r of refs) if (r.ref && !r.ref.includes('*') && r.note) out[r.ref] = r.note;
+  return out;
+}
+const BRANCH_ROLE = branchRoles();
+const NO_ROLE = 'no role recorded in git-ownership.json';
+// RULE 3'S SUBJECT, and it is not a list of site pages. These are THE BUILD and
+// the alias copies tools/launch.mjs keeps beside it. They are already on this
+// page — once per branch, per ordinal, byte-proven — so listing them again as
+// "pages" would present the same artifact twice under a worse name. The tool is
+// naming its own subject, not curating what the site may show.
+const BUILD_PATHS = new Set(['AshenSpire.html', 'build', 'dist']);
 
 function git(args, opts = {}) {
   return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28, ...opts });
@@ -124,11 +142,92 @@ function rowsTable(builds, rel) {
   }</tbody></table>`;
 }
 
-function rootIndex(branchData, generatedAt) {
+/**
+ * DISCOVER THE SITE'S OTHER PAGES INSTEAD OF LISTING THEM.
+ *
+ * The row this replaces was six links typed by hand — and it was already wrong:
+ * `docs/tray-gallery.html` and four `review-approval-hub/` sections exist in the
+ * published tree and were never named, so adding a page to the repo did not add
+ * it to the index. Meanwhile the footer claimed "nothing on this page is typed
+ * by hand", which was true of the builds and false of that row.
+ *
+ * Now the tree itself is the data. Three rules, no names:
+ *
+ *  1. DOT-DIRECTORIES ARE SKIPPED — a rule, not an exclusion list. It is what
+ *     keeps `.agentops/generated/**`, the internal mirror of the hub and HUD,
+ *     from appearing twice under a path nobody browses.
+ *  2. THIS TOOL'S OWN OUTPUT IS SKIPPED, named from what it just wrote.
+ *  3. THE BUILD AND ITS ALIASES ARE SKIPPED — see BUILD_PATHS. They are already
+ *     here, once per branch per ordinal and byte-proven.
+ *  4. A DIRECTORY WITH AN index.html IS ONE ENTRY at its directory URL, and
+ *     NOTHING BENEATH IT is listed separately. Nearest-ancestor, not
+ *     immediate-parent: the hub's ten ticket pages are the hub's business.
+ *  5. A STANDALONE .html IS AN ENTRY at depth 0 or 1 only. Deeper than that is
+ *     a fixture or an internal probe, not a page the site offers.
+ *
+ * THE LABEL IS THE PAGE'S OWN `<title>`, so a page renames itself here by
+ * renaming itself. A page with no title is listed by path and SAID to have none,
+ * because a silent fallback is how a missing title stays missing.
+ */
+function discoverPages(outDir, generatedNames) {
+  const files = [];
+  const indexed = new Set();   // every directory that carries its own index.html
+  const walk = (rel, depth) => {
+    if (depth > 4) return;
+    let entries;
+    try { entries = readdirSync(join(outDir, rel), { withFileTypes: true }); } catch { return; }
+    if (rel && entries.some((e) => e.isFile() && e.name === 'index.html')) indexed.add(rel);
+    for (const e of entries) {
+      if (e.name.startsWith('.')) continue;                              // rule 1
+      const child = rel ? `${rel}/${e.name}` : e.name;
+      if (rel === '' && generatedNames.has(e.name)) continue;            // rule 2
+      if (BUILD_PATHS.has(child)) continue;                              // rule 3
+      if (e.isDirectory()) walk(child, depth + 1);
+      else if (e.isFile() && e.name.endsWith('.html')) files.push({ rel, name: e.name, path: child, depth });
+    }
+  };
+  walk('', 0);
+
+  // Rule 4 needs the whole set first: a page is governed by the NEAREST ancestor
+  // index, not only by its own directory, or the hub's forty ticket pages each
+  // arrive here as a separate entry.
+  const governed = (dir) => {
+    for (let d = dir; d; d = d.includes('/') ? d.slice(0, d.lastIndexOf('/')) : '') if (indexed.has(d)) return d;
+    return null;
+  };
+
+  const seen = new Set();
+  const pages = [];
+  for (const f of files) {
+    if (f.name === 'index.html') {
+      if (!f.rel) continue;                       // the root index is ours
+      if (governed(f.rel) !== f.rel) continue;    // a nested index — its section already speaks
+      if (seen.has(f.rel)) continue;
+      seen.add(f.rel);
+      pages.push({ href: `${f.rel}/`, title: titleOf(join(outDir, f.path)), path: f.path });
+    } else {
+      if (governed(f.rel)) continue;              // rule 4
+      if (f.depth > 1) continue;                  // rule 5
+      pages.push({ href: f.path, title: titleOf(join(outDir, f.path)), path: f.path });
+    }
+  }
+  return pages.sort((a, b) => a.href.localeCompare(b.href));
+}
+
+function titleOf(file) {
+  try {
+    // Read a head slice: a build artifact is megabytes and its title is not ours.
+    const head = readFileSync(file).subarray(0, 8192).toString('utf8');
+    const m = head.match(/<title[^>]*>([^<]+)<\/title>/i);
+    return m ? m[1].trim().replace(/\s+/g, ' ') : null;
+  } catch { return null; }
+}
+
+function rootIndex(branchData, generatedAt, otherPages) {
   const cards = branchData.map(({ branch, builds }) => {
     const b = builds[0];
-    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || '')}</p><p class="meta">no build found on this branch</p></section>`;
-    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || '')}</p>
+    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p></section>`;
+    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
 <a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a> <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
@@ -140,14 +239,15 @@ function rootIndex(branchData, generatedAt) {
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
 <h2>All listed builds</h2>${rowsTable(all, '')}
 <h2>Other pages on this site</h2>
-<p><a href="AshenSpire.html">Stable standalone (main)</a> · <a href="index-game.html">main's source-module page</a> · <a href="hud/">Owner HUD</a> · <a href="review-approval-hub/">Review &amp; Approval Hub</a> · <a href="docs/component-catalog.html">UI component catalog</a> · <a href="${REPO_URL}">repository</a></p>
-<footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code> from git history — nothing on this page is typed by hand. Listing the newest ${KEEP} builds per branch.</footer>
+${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)}">${esc(pg.title || pg.path)}</a>${pg.title ? '' : ' <span class="meta">(no &lt;title&gt; — listed by path)</span>'} <span class="meta">${esc(pg.path)}</span></li>`).join('')}</ul>` : '<p class="meta">no other pages found in the published tree</p>'}
+<p><a href="${REPO_URL}">repository</a></p>
+<footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code> from git history and from the published tree — nothing on this page is typed by hand, this list included. Listing the newest ${KEEP} builds per branch.</footer>
 </main></body></html>`;
 }
 
 function branchIndex(branch, builds, head, generatedAt) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
-<p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || '')} · branch head <a href="${REPO_URL}/commit/${head}">${head.slice(0, 10)}</a></p>
+<p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · branch head <a href="${REPO_URL}/commit/${head}">${head.slice(0, 10)}</a></p>
 ${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a> <a class="play" href="latest/">/latest/ alias</a></p>` : '<p class="meta">no build on this branch</p>'}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
@@ -194,11 +294,15 @@ function assemble(outDir, keep) {
     checks++;
     branchData.push({ branch, head, builds });
   }
-  const root = rootIndex(branchData, generatedAt);
+  // Discovered AFTER the branch directories exist, so this tool's own output is
+  // excluded by name-of-thing-we-just-wrote rather than by a hardcoded list.
+  const generatedNames = new Set([...BRANCHES, 'index.html', 'builds.json']);
+  const otherPages = discoverPages(outDir, generatedNames);
+  const root = rootIndex(branchData, generatedAt, otherPages);
   writeFileSync(join(outDir, 'index.html'), root);
   for (const d of branchData) for (const b of d.builds) if (!root.includes(`href="${d.branch}/${b.ordinal}/"`)) throw new Error(`root index does not link ${d.branch}/${b.ordinal}`);
   checks++;
-  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
+  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
 }
 
@@ -210,6 +314,19 @@ function check(outDir) {
     const onDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'index.html'));
     if (Buffer.compare(blob, onDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}: site file differs from git blob ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
     else checks++;
+  }
+  // THE DISCOVERED PAGES GET THE SAME TREATMENT AS THE BUILDS. A list derived
+  // from the tree is only better than a typed one if something proves it still
+  // describes the tree; otherwise it is a typed list that nobody typed. Each
+  // entry must still exist on disk AND still be linked from the root index —
+  // the second half is what catches a page discovered into the manifest and
+  // then dropped from the page it was supposed to appear on.
+  const root = existsSync(join(outDir, 'index.html')) ? readFileSync(join(outDir, 'index.html'), 'utf8') : '';
+  for (const pg of manifest.otherPages || []) {
+    const target = join(outDir, pg.path);
+    if (!existsSync(target)) { console.error(`MISSING page ${pg.path}: listed on the index, not in the site`); process.exitCode = 1; continue; }
+    if (!root.includes(`href="${pg.href}"`)) { console.error(`UNLINKED page ${pg.path}: in the manifest, not linked from the root index`); process.exitCode = 1; continue; }
+    checks++;
   }
   return checks;
 }
@@ -228,15 +345,45 @@ try {
     const f = join(dir, victim.branch, String(victim.builds[0].ordinal), 'index.html');
     writeFileSync(f, Buffer.concat([readFileSync(f), Buffer.from('\n<!-- planted -->\n')]));
     const pages = branchData.reduce((n, d) => n + d.builds.length, 0);
+    const discovered = JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || [];
     const before = process.exitCode;
     const ok = check(dir);
-    const caught = process.exitCode === 1 && ok === pages - 1; // every build page but the planted one still matches
+    const caught = process.exitCode === 1 && ok === pages - 1 + discovered.length;
     process.exitCode = before || 0;
     void checks;
-    rmSync(dir, { recursive: true, force: true });
     if (!caught) { console.error(`MISS planted drift on ${victim.branch}/${victim.builds[0].ordinal} was not caught`); process.exitCode = 1; }
     else console.log(`CAUGHT planted drift on ${victim.branch}/${victim.builds[0].ordinal}`);
-    if (!process.exitCode) console.log(`pages-site selftest: OK — 1 known-bads, 1 caught`);
+
+    // SECOND PLANT: the discovery is a claim about the tree, so prove the claim
+    // can fail. Delete a page the index says it offers and --check must name it.
+    // Without this the list could quietly describe a site that no longer exists,
+    // which is the failure the typed list had and the whole reason for this pass.
+    let caught2 = true;
+    if (discovered.length) {
+      // REPAIR THE FIRST PLANT BEFORE LAYING THE SECOND. Left in place, its
+      // DRIFT keeps --check red and the second plant would "pass" whether or not
+      // the deletion is noticed at all — a known-bad that cannot fail, which is
+      // the exact defect these plants exist to catch. So the build goes back to
+      // its git blob and the deletion is then the ONLY thing wrong.
+      writeFileSync(f, gitBuf(['show', `${victim.builds[0].sha}:AshenSpire.html`]));
+      const b1 = process.exitCode;
+      check(dir);
+      if (process.exitCode === 1) { console.error('MISS the repaired build still reads as drifted — plant 2 would be meaningless'); }
+      process.exitCode = b1 || 0;
+
+      const gone = discovered[0];
+      rmSync(join(dir, gone.path), { force: true });
+      const b2 = process.exitCode;
+      check(dir);
+      caught2 = process.exitCode === 1;
+      process.exitCode = b2 || 0;
+      if (!caught2) { console.error(`MISS deleted page ${gone.path} was not caught`); process.exitCode = 1; }
+      else console.log(`CAUGHT deleted page ${gone.path}`);
+    } else {
+      console.log('SKIP no discovered page to plant against — the tree offered none');
+    }
+    rmSync(dir, { recursive: true, force: true });
+    if (!process.exitCode) console.log(`pages-site selftest: OK — 2 known-bads, 2 caught (${discovered.length} page(s) discovered)`);
   } else if (has('--check')) {
     const n = check(flag('--check', '_site'));
     if (!process.exitCode) console.log(`pages-site --check: OK — ${n} checks passed`);
