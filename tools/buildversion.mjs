@@ -449,7 +449,21 @@ export function versionTuple(releaseString, ordinal) {
   // CURRENT record; the parent's is read straight out of git and checked
   // nowhere, so a record whose tail is not a counting number is unorderable
   // here rather than ranked on whatever `String()` makes of it.
-  if (!Number.isInteger(ordinal) || ordinal < 0) return null;
+  //
+  // SAFE, NOT MERELY INTEGER — and this is the one place a ceiling is the
+  // HONEST answer rather than the lazy one. The release arrives as a STRING,
+  // so its digits survive to be compared and no bound has to be chosen; the
+  // ordinal arrives as a JSON NUMBER, so past 2^53 its digits were destroyed
+  // by the parse and there is nothing left to preserve. Refusing to order a
+  // value we can no longer read is the same rule as everywhere else here, and
+  // `Number.isInteger` was not it: `1e21` passes it, `String()` renders it
+  // `'1e+21'`, and compareDigits — which is owed decimal digits — read that
+  // 5-character string as SMALLER than a 21-digit one. Review on #579 built
+  // the transition that needs: `0.5.0-rc.4` → `0.5.4` folds to the same
+  // prefix, so the verdict fell entirely to the tail and a drop from `1e21`
+  // to `9e20` was reported as a rise. Nothing but a genuine counting number
+  // renders as digits, so the guard is the range and not a second regex.
+  if (!Number.isSafeInteger(ordinal) || ordinal < 0) return null;
   // DIGIT STRINGS, NOT NUMBERS. `Number('9007199254740993')` is
   // 9007199254740992: two distinct releases collapsing onto one value, so a
   // BACKWARD move from `0.5.9007199254740993.2` to `0.5.9007199254740992.3`
@@ -457,7 +471,9 @@ export function versionTuple(releaseString, ordinal) {
   // (#579 review). The grammar admits a digit string of any length, so the
   // comparison has to hold every length the grammar admits, not the ones that
   // happen to fit in a double. Comparing the digits directly has no ceiling to
-  // choose, which is why it is preferred to rejecting large components.
+  // choose, which is why it is preferred to rejecting large components — for
+  // the RELEASE, whose digits arrive intact. The tail is the other case, and
+  // the guard above says why it is bounded instead.
   return [...versionPrefix(releaseString).split('.'), String(ordinal)];
 }
 

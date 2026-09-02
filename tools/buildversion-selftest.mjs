@@ -412,14 +412,21 @@ function ordinalHistory() {
   // built by moving the LAST number in the current release, which works for
   // `0.5.4` and for `0.5.0-rc.4` alike.
   const CURRENT = release(REPO_ROOT);
-  const shiftLast = (rel, delta) => rel.replace(/(\d+)(?!.*\d)/, (n) => String(Number(n) + delta));
-  const lastNumber = Number((/(\d+)(?!.*\d)/.exec(CURRENT) || [0, '0'])[1]);
+  // BIGINT, NOT Number. The fixture has to be able to move any release the
+  // GRAMMAR admits, and production now orders components past 2^53 on purpose.
+  // Through Number, a current release of `0.5.9007199254740993` shifted +1
+  // came back `...992` — the "forward" case moving BACKWARD, turning the green
+  // case red and blocking every unrelated PR in CI. That is round 2's defect
+  // exactly: a fixture that cannot follow the tree it is derived from (#579
+  // review). Nothing here converts a component to a double.
+  const shiftLast = (rel, delta) => rel.replace(/(\d+)(?!.*\d)/, (n) => String(BigInt(n) + BigInt(delta)));
+  const lastNumber = BigInt((/(\d+)(?!.*\d)/.exec(CURRENT) || [0, '0'])[1]);
   const FORWARD = shiftLast(CURRENT, +1);
   // TWO SHAPES THE GRAMMAR FORBIDS, DERIVED THE SAME WAY. Both are staged on
   // the PARENT, because row F reads only the current record: an unorderable
   // parent is visible to row H alone, and the commit that carried it is gone
   // by the time CI looks (#579 review).
-  const [MAJOR, MINOR] = versionPrefix(CURRENT).split('.');
+  const [MAJOR, MINOR, CANDIDATE] = versionPrefix(CURRENT).split('.');
   // Drop the candidate component. Always differs from CURRENT and is never a
   // release the repo can reach, since the grammar admits three components.
   const TRUNCATED = `${MAJOR}.${MINOR}`;
@@ -427,16 +434,29 @@ function ordinalHistory() {
   // releases onto one value. Taken from the language's own constant rather
   // than typed, so it stays the boundary if the boundary ever moves.
   const UNSAFE = (n) => `${MAJOR}.${MINOR}.${BigInt(Number.MAX_SAFE_INTEGER) + BigInt(n)}`;
+  // TWO SPELLINGS OF ONE VERSION. The rc form and the folded form are always
+  // different STRINGS, so row H takes the release-changed branch, and they
+  // always fold to the same prefix, so the verdict falls entirely to the tail
+  // — which is what makes a tail defect visible at all. Both are derived, so
+  // the pair holds whichever form the tree currently carries.
+  const FOLDED = `${MAJOR}.${MINOR}.${CANDIDATE}`;
+  const RC_FORM = `${MAJOR}.${MINOR}.0-rc.${CANDIDATE}`;
+  // The boundary here is the LANGUAGE's, not one this fixture chose: 1e21 is
+  // where Number's own toString stops emitting digits and switches to
+  // exponential notation. 9e20 is strictly smaller and still renders as 21
+  // digits, so a comparison owed digits reads the pair backwards.
+  const EXPONENTIAL = 1e21;
+  const PLAIN_BUT_SMALLER = 9e20;
   // A tail already at 0 cannot be decremented into a valid release, so the
   // backward case walks left to the first component it CAN lower. If every
   // component is 0 there is no earlier release to move back to, and the case
   // reports itself skipped rather than planting a nonsense string.
-  const BACKWARD = lastNumber > 0 ? shiftLast(CURRENT, -1)
+  const BACKWARD = lastNumber > 0n ? shiftLast(CURRENT, -1)
     : (() => {
       const parts = CURRENT.split(/(\d+)/);
       for (let i = parts.length - 1; i >= 0; i--) {
-        if (/^\d+$/.test(parts[i]) && Number(parts[i]) > 0) {
-          parts[i] = String(Number(parts[i]) - 1);
+        if (/^\d+$/.test(parts[i]) && BigInt(parts[i]) > 0n) {
+          parts[i] = String(BigInt(parts[i]) - 1n);
           return parts.join('');
         }
       }
@@ -476,6 +496,12 @@ function ordinalHistory() {
     [(j) => ({ ...j, release: UNSAFE(1), ordinal: 3 }), 'red',
       `the candidate moves BACKWARD by one past the safe-integer ceiling (${UNSAFE(2)}.2 → ${UNSAFE(1)}.3) — two releases that Number() cannot tell apart, so only the tail would have been compared`,
       (j) => ({ ...j, release: UNSAFE(2), ordinal: 2 })],
+    // The tail's own version of the same defect, and the reason the two halves
+    // of the tuple are guarded differently: a release arrives as a STRING and
+    // keeps its digits, an ordinal arrives as a JSON NUMBER and does not.
+    [(j) => ({ ...j, release: FOLDED, ordinal: PLAIN_BUT_SMALLER }), 'unknown',
+      `the PARENT records a tail past the point Number stops rendering digits ('${String(EXPONENTIAL)}' → '${String(PLAIN_BUT_SMALLER)}', a DROP) while the release changes spelling only (${RC_FORM} → ${FOLDED}) — the verdict falls entirely to a tail that can no longer be read`,
+      (j) => ({ ...j, release: RC_FORM, ordinal: EXPONENTIAL })],
   ];
   if (BACKWARD === null) {
     console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);

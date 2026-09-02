@@ -140,6 +140,16 @@ What this changes, each with the check that carries it:
   strings — longer is larger once leading zeroes are gone, equal lengths
   compare lexically — holds for every length the grammar admits, so no bound
   had to be chosen and none can be outgrown.
+
+  **The TAIL is bounded, and the asymmetry is the point.** A release arrives
+  as a string and keeps its digits, so refusing a large one would discard
+  information the tool still has. An ordinal arrives as a JSON *number*: past
+  `2^53` its digits were destroyed by the parse, and past `1e21` `String()`
+  stops emitting digits at all — `1e+21` read as a digit string is five
+  characters, which a length-first comparison ranks BELOW a twenty-one digit
+  one. So a tail outside the safe integer range is UNKNOWN. Bounding is the
+  honest answer exactly where the digits are already gone, and the wrong one
+  everywhere they survive.
 - **The ordinal is no longer the commit count.** `bumpOrdinal` was
   `max(recorded + 1, rev-list --count)`; a per-candidate counter cannot be the
   commit count because it resets, so it is `recorded + 1` and nothing should
