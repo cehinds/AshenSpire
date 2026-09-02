@@ -59,7 +59,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
+import { check, REPO_ROOT, release, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
@@ -381,15 +381,44 @@ function ordinalHistory() {
   // edit the RECORD to stage a parent/child pair the real repo would take a
   // candidate cut to produce. Each names the version pair it stages.
   const bump = (j) => ({ ...j, ordinal: j.ordinal + 1 });
+
+  // THE CANDIDATE FIXTURES ARE DERIVED FROM THE TREE, NEVER TYPED. Hardcoding
+  // '0.5.5' and '0.5.3' made the forward case forward only while the repo sat
+  // at 0.5.4: advance the real release to 0.5.5 and that plant stops changing
+  // the release at all, then goes BACKWARD past it — and since CI runs this
+  // selftest on every change, a routine candidate cut would have started
+  // failing unrelated PRs. Caught by review on #579. The two releases are
+  // built by moving the LAST number in the current release, which works for
+  // `0.5.4` and for `0.5.0-rc.4` alike.
+  const CURRENT = release(REPO_ROOT);
+  const shiftLast = (rel, delta) => rel.replace(/(\d+)(?!.*\d)/, (n) => String(Number(n) + delta));
+  const lastNumber = Number((/(\d+)(?!.*\d)/.exec(CURRENT) || [0, '0'])[1]);
+  const FORWARD = shiftLast(CURRENT, +1);
+  // A tail already at 0 cannot be decremented into a valid release, so the
+  // backward case walks left to the first component it CAN lower. If every
+  // component is 0 there is no earlier release to move back to, and the case
+  // reports itself skipped rather than planting a nonsense string.
+  const BACKWARD = lastNumber > 0 ? shiftLast(CURRENT, -1)
+    : (() => {
+      const parts = CURRENT.split(/(\d+)/);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        if (/^\d+$/.test(parts[i]) && Number(parts[i]) > 0) {
+          parts[i] = String(Number(parts[i]) - 1);
+          return parts.join('');
+        }
+      }
+      return null;
+    })();
+
   const CASES = [
     [null, false, 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
     [bump, true, 'the control: the same commit with the ordinal moved must go GREEN'],
     // #574 review, caught after that PR merged: demanding a 0 tail on a release
     // change was wrong in BOTH directions, so both are watched here.
-    [(j) => ({ ...j, release: '0.5.5', ordinal: 3 }), true,
-      'the candidate ADVANCES after several branch builds (0.5.4.x → 0.5.5.3) — a non-zero tail is still a rise, and must go GREEN'],
-    [(j) => ({ ...j, release: '0.5.3', ordinal: 0 }), false,
-      'the candidate moves BACKWARD onto a 0 tail (0.5.4.x → 0.5.3.0) — the tail is what a new candidate starts at, and the build still went back'],
+    [(j) => ({ ...j, release: FORWARD, ordinal: 3 }), true,
+      `the candidate ADVANCES after several branch builds (${CURRENT}.x → ${FORWARD}.3) — a non-zero tail is still a rise, and must go GREEN`],
+    ...(BACKWARD === null ? [] : [[(j) => ({ ...j, release: BACKWARD, ordinal: 0 }), false,
+      `the candidate moves BACKWARD onto a 0 tail (${CURRENT}.x → ${BACKWARD}.0) — the tail is what a new candidate starts at, and the build still went back`]]),
     // The PARENT is the one that must predate the field, so it is the first
     // commit that loses it — staged the other way round, this plant proved
     // nothing and said so.
@@ -397,6 +426,9 @@ function ordinalHistory() {
       'the PARENT predates the recorded release — the retired global sequence and a per-candidate count are not comparable, so n/a is the honest answer',
       ({ release, ...rest }) => ({ ...rest, ordinal: 9999 })],
   ];
+  if (BACKWARD === null) {
+    console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);
+  }
   for (const [second, wantGreen, label, first = null] of CASES) {
     const dir = build(second, first);
     try {
