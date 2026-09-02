@@ -123,6 +123,9 @@ export function createRegistries(contentBundle) {
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  // Quest steps (E12): which events an Unknown node may roll only once the
+  // run's history earns them. Keyed by event id; absent means ungated.
+  registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
   registries.characterCreation = deepFreeze({ ...(bundle.characterCreation || {}) });
   // One object, not a copied settings shadow. The run snapshots the resolved

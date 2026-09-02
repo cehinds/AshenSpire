@@ -41,6 +41,7 @@ import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
+import { eventChoiceRequirementProblems } from './quests.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -96,6 +97,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
+  'eventHistoryRequirements', // quest steps (E12): event-level history gates
 ]);
 
 /**
@@ -238,6 +240,50 @@ export function validateContent(bundle) {
     for (const [school, multiplier] of Object.entries(schoolBuildup)) {
       if (!DAMAGE_SCHOOLS.includes(school)) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, `unknown damage school '${school}'`);
       if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
+    }
+  }
+
+  // Quest steps (E12): an event-level history gate must name a shipped event,
+  // carry a well-formed requirement (model/quests.js is the one grammar), and
+  // point only at shipped events. Choice ids are the events module's sidecar
+  // contract and are proven by tools/quest-choice-contract.mjs.
+  const eventGates = b.eventHistoryRequirements;
+  if (eventGates !== undefined) {
+    if (!eventGates || typeof eventGates !== 'object' || Array.isArray(eventGates)) {
+      err('eventHistoryRequirements', 'must be an object keyed by event id');
+    } else {
+      const eventIds = new Set((Array.isArray(b.events) ? b.events : []).map((e) => e && e.id));
+      for (const [eventId, requirement] of Object.entries(eventGates)) {
+        if (!eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
+        for (const problem of eventChoiceRequirementProblems(requirement)) err(`eventHistoryRequirements.${eventId}`, problem);
+        for (const group of ['all', 'any', 'none']) {
+          for (const ref of (requirement && Array.isArray(requirement[group]) ? requirement[group] : [])) {
+            if (ref && ref.eventId === eventId) err(`eventHistoryRequirements.${eventId}.${group}`, 'an event cannot be gated on its own choice');
+            if (ref && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
+          }
+        }
+      }
+    }
+  }
+
+  // A quest-pool relic (RELIC_POOLS) is withheld from every generic reward
+  // pool, so the only road to it is an event choice that grants it by id. A
+  // quest-pool relic no choice names is unreachable content, and a class's
+  // starting relic is a starter, not a quest reward.
+  {
+    const granted = new Set();
+    for (const event of (Array.isArray(b.events) ? b.events : [])) {
+      for (const choice of (event && Array.isArray(event.choices) ? event.choices : [])) {
+        for (const eff of (choice && Array.isArray(choice.effects) ? choice.effects : [])) {
+          if (eff && eff.op === 'addRelic' && typeof eff.id === 'string') granted.add(eff.id);
+        }
+      }
+    }
+    const startingRelics = new Set((Array.isArray(b.classes) ? b.classes : []).map((row) => row && row.startingRelic));
+    for (const relic of (Array.isArray(b.relics) ? b.relics : [])) {
+      if (!relic || relic.pool !== 'quest') continue;
+      if (!granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
+      if (startingRelics.has(relic.id)) err(`relics.${relic.id}.pool`, 'a class starting relic cannot be quest-pool');
     }
   }
 

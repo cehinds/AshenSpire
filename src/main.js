@@ -835,7 +835,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -892,7 +892,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }

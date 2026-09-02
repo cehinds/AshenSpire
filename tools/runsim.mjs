@@ -27,6 +27,8 @@ import { createRunState, createIdGen } from '../src/model/state.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
 import { levelUpPlan, applyLevelUp } from '../src/model/levelup.js';
 import { executeRunEffects } from '../src/engine/actions.js';
+import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward, shrineHealAmount, applyGraceRefill,
@@ -279,7 +281,17 @@ function simulateRun(classId, seed, ds = null) {
   // ONE exit for every path out of a run, win or death: the purse a run ends
   // with is part of the cinder economy whichever way it ended, and the report
   // divides by every run — a death that skipped this line underreported it.
-  const finish = () => { cinderLeftAtEnd += run.cinders; return result; };
+  const finish = () => {
+    cinderLeftAtEnd += run.cinders;
+    // E12 receipts: how many event choices this run recorded, and how many of
+    // them answered a GATED step (a quest step earned by an earlier choice) —
+    // zero across a fleet means gated content never entered the simulation.
+    const gates = REG.eventHistoryRequirements || {};
+    const choices = run.history.filter((row) => row && row.kind === 'eventChoice');
+    result.eventChoices = choices.length;
+    result.questSteps = choices.filter((row) => gates[row.eventId]).length;
+    return result;
+  };
   // The death book: act, the run's maxHp, and the HP it walked into the fatal
   // node with. On a lost fight botFight does NOT write hp back, so run.hp
   // still holds the entering value at the moment of the record.
@@ -300,7 +312,7 @@ function simulateRun(classId, seed, ds = null) {
       : {};
     // The ONE boot path (#54) — same module main.js and session.mjs use, so a
     // signature change lands on the game and the harnesses in the same act.
-    const map = buildActMap(REG, rng, contentAct);
+    const map = buildActMap(REG, rng, contentAct, null, { history: run.history });
 
     let currentId = null;
     let nextIds = map.startIds;
@@ -318,9 +330,17 @@ function simulateRun(classId, seed, ds = null) {
         if (res.kind === 'event') {
           run.seenEvents.push(res.eventId);
           const ev = REG.events.get(res.eventId);
-          const choice = ev.choices.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || ev.choices[ev.choices.length - 1];
+          // The same door the Event screen walks: the choices the run's history
+          // allows, then the first the purse affords — and the choice is
+          // RECORDED, so a later act's map can roll the quest step it earned
+          // (E12). Without the record no gated content ever enters a sim.
+          const offered = availableEventChoices(eventChoicesWithHistory(ev), run).map(({ choice: c }) => c);
+          const choice = offered.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || offered[offered.length - 1];
           const hpBeforeEvent = run.hp;
+          run.floor = pick.floor;
+          run.mapNodeId = pick.id;
           executeRunEffects({ run, registries: REG, rng }, choice.effects);
+          recordEventChoice(run, { eventId: res.eventId, choiceId: choice.id });
           if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; recordDeath(ds, act, hpBeforeEvent); return finish(); }
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
@@ -392,7 +412,7 @@ function fleet() {
 console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
 console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
-const tally = { wins: 0, runs: 0, acts: 0 };
+const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
@@ -408,6 +428,7 @@ for (const cls of REG.classes.all()) {
     }
     if (r.victory) wins++;
     tally.runs++; if (r.victory) tally.wins++; tally.acts += r.act;
+    tally.eventChoices += r.eventChoices || 0; tally.questSteps += r.questSteps || 0;
     acts += r.act; floors += r.floor; maxAct = Math.max(maxAct, r.act);
     if (r.deaths) deaths[r.deaths.split(':')[0]] = (deaths[r.deaths.split(':')[0]] || 0) + 1;
   }
@@ -446,6 +467,7 @@ for (const cls of REG.classes.all()) {
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
 console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
 console.log(`level-ups bought at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run` + (LEVEL_COST ? ` (ladder ${LEVEL_COST})` : ' (shipped ladder)') + ` — E13's acceptance range is 10-20 per run; over the ${tally.wins} full (victorious) runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
+console.log(`event choices recorded: ${tally.eventChoices} over ${tally.runs} runs, ${tally.questSteps} of them answering a gated quest step (E12) — 0 gated steps across a fleet means the chain never entered the simulation`);
 console.log(`cinder economy: ${cinderSpentOnLevels} spent on levels + ${cinderLeftAtEnd} left at run end = ${((cinderSpentOnLevels + cinderLeftAtEnd) / Math.max(1, tally.runs)).toFixed(0)} cinders per run available to a shrine (the bot buys nothing at merchants)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
 return { ...tally, graces, poured };

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-526",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The first quest chain: Grave of the Nameless → the Keeper → the Nameless at Rest",
+    "detail": "What you did at the grave follows you: dig for cinders and the keeper comes to collect (repay, or fight); pay your respects and the keeper thanks you with the Gravetender's Bell, a relic no shop or drop will ever hand over. A second cairn opens only after the keeper, answers the branch you took, and neither step comes twice. Under the hood, an Unknown node can now roll an event only once your run's history has earned it, so more chains are content on the same door.",
+    "build": "0.5.0-rc.1.1926",
+    "pullRequest": 526,
+    "url": "https://github.com/cehinds/AshenSpire/pull/526"
+  },
+  {
     "id": "pr-523",
     "date": "2026-09-02",
     "group": "2026-09-02",
@@ -21,6 +31,46 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.0-rc.1.1920",
     "pullRequest": 520,
     "url": "https://github.com/cehinds/AshenSpire/pull/520"
+  },
+  {
+    "id": "pr-519",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Framework cutover checklist and importer validation",
+    "detail": "Nothing a player sees changes: the migration checklist and cutover report now read the live counts (393 entities, 196 cards) and name each dormant row's missing piece; the importer refuses an armament or outfit whose weight, ratings or poise threshold are malformed, with a malformed-row test.",
+    "build": "0.5.0-rc.1.1911",
+    "pullRequest": 519,
+    "url": "https://github.com/cehinds/AshenSpire/pull/519"
+  },
+  {
+    "id": "pr-522",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Shrines level you at a measured pace, and can be multi-use",
+    "detail": "Balance change: a level at the Shrine now costs 20 cinders, rising 4 per level (was 800 + 200), calibrated so a full climb buys 10–20 level-ups. Settings → Advanced → Gameplay → Multi-use Shrines (off by default) lets you Rest, Smith and Level at one Shrine and leave when you choose; every Shrine sentence tells the truth about staying or leaving.",
+    "build": "0.5.0-rc.1.1909",
+    "pullRequest": 522,
+    "url": "https://github.com/cehinds/AshenSpire/pull/522"
+  },
+  {
+    "id": "pr-517",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Release-candidate versioning",
+    "detail": "The in-game stamp reads 0.5.0-rc.1.<build> from this build on — the first candidate of the 0.5.0 line QA tests — and the version gate clears the one named contract column that legitimately ends in \"version\". Receipts for #510–#516 landed here.",
+    "build": "0.5.0-rc.1.1908",
+    "pullRequest": 517,
+    "url": "https://github.com/cehinds/AshenSpire/pull/517"
+  },
+  {
+    "id": "pr-521",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Dragging a card lights the one legal target, self or ally",
+    "detail": "When a card's legal targets on the board come to exactly one and it is you, the drag lights you — for self cards as before, and now for self-or-ally cards when no ally is present. The set is taken once at drag start, so nothing pops in mid-drag, and the highlight never lights a drop the release would refuse. Co-op keeps its own aiming.",
+    "build": "0.5.0-rc.1.1904",
+    "pullRequest": 521,
+    "url": "https://github.com/cehinds/AshenSpire/pull/521"
   },
   {
     "id": "pr-516",

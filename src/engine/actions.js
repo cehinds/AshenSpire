@@ -23,7 +23,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { COMBAT_OPCODES, RUN_OPCODES } from '../model/schemas.js';
+import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
@@ -661,7 +661,10 @@ function runRunOpcode(ctx, action, eff) {
     case 'addRelic': {
       let relicId = eff.id || null;
       if (!relicId && eff.random) {
-        const pool = ctx.registries.relics.ids().filter((id) => !run.relics.includes(id));
+        // Quest-pool relics are never "a random relic" — they are the named
+        // reward of the choice that grants them (RELIC_POOLS, model/schemas.js).
+        const pool = ctx.registries.relics.ids()
+          .filter((id) => !run.relics.includes(id) && relicInRewardPool(ctx.registries.relics.get(id)));
         if (pool.length === 0) break;
         relicId = ctx.rng.pick('relicRewards', pool);
       }
