@@ -9,13 +9,19 @@
 # /docs/…) is still served: the whole `main` tree is the base of the artifact and the
 # only replaced file is the root index.html (main's own is kept at /index-game.html).
 #
-# ONE-TIME OWNER ACTION (publication is owner-exclusive): Settings → Pages → Build and
-# deployment → Source: "GitHub Actions". Until that is set, the deploy job fails with
-# GitHub's own message and nothing published changes. The legacy `main:/` source keeps
-# serving in the meantime.
+# PUBLICATION IS ITS OWN AUTHORITY (AGENTS.md: push and publication/Pages/deploy are
+# separate protected transitions; local readiness — or push authority — never implies
+# it). So a push to any of the four branches only ASSEMBLES and proves the site and
+# uploads it as the run's Pages artifact; nothing is deployed. The `deploy` job runs
+# only from a manual dispatch whose `publish` input spells PUBLISH — the owner's own
+# act, on the `github-pages` environment, which can additionally carry required
+# reviewers. ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
+# deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
+# own message and the legacy `main:/` source keeps serving.
 #
-# COST: one run per push to any of the four branches, cancelled if a newer push lands.
-# The site is rebuilt from git history each time (deterministic; nothing accumulates).
+# COST: one assemble run per push to any of the four branches, cancelled if a newer push
+# lands. The site is rebuilt from git history each time (deterministic; nothing
+# accumulates).
 name: pages-builds
 
 on:
@@ -26,6 +32,9 @@ on:
       keep:
         description: newest builds to publish per branch
         default: '10'
+      publish:
+        description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive; a push never deploys)"
+        default: ''
 
 concurrency:
   group: pages-builds
@@ -59,6 +68,8 @@ jobs:
 
   deploy:
     needs: assemble
+    # Only an explicit, separately authorized dispatch deploys: never a push.
+    if: github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
