@@ -13,9 +13,10 @@
 # separate protected transitions; local readiness — or push authority — never implies
 # it). So a push to any of the four branches only ASSEMBLES and proves the site and
 # uploads it as the run's Pages artifact; nothing is deployed, and the push-triggered
-# job holds no Pages or OIDC credential at all (contents: read only — the credentials
-# live on the deploy job alone, so branch-controlled code cannot call the Pages API
-# around the guard). The `deploy` job runs only from a manual dispatch BY THE
+# job holds no Pages WRITE or OIDC credential (contents: read and pages: read only —
+# configure-pages needs to read the site's configuration; the write and the token live
+# on the deploy job alone, so branch-controlled code cannot call the Pages API around
+# the guard). The `deploy` job runs only from a manual dispatch BY THE
 # REPOSITORY OWNER (github.actor AND github.triggering_actor are checked against
 # github.repository_owner, so neither a write collaborator's dispatch nor their re-run
 # of the owner's dispatch deploys) whose `publish` input spells PUBLISH, on the
@@ -53,8 +54,12 @@ permissions:
 jobs:
   assemble:
     runs-on: ubuntu-latest
+    # pages: read is what actions/configure-pages needs to read the site's
+    # configuration; it deploys nothing. The write and the OIDC token stay on
+    # the deploy job alone.
     permissions:
       contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v4
         with:
