@@ -3,7 +3,7 @@
 What the "AshenSpire Data-Driven Property Framework — one-shot rebuild"
 contract asked for, what shipped, what did not, why, and what is being done
 about each gap. Companion to `docs/framework-cutover-report.md` (the gate
-evidence) and `docs/versioning.md` (why the stamp reads `0.5.0-rc.1`).
+evidence) and `docs/versioning.md` (why the stamp reads `0.5.0-rc.<n>` — `rc.2` today).
 
 Status words (as of the commit this file ships in — a row that names a branch
 not yet merged into `dev` is dormant here until that branch lands):
@@ -33,7 +33,7 @@ no shipped content or screen yet · **PARTIAL** · **NOT BUILT**.
 | 15 | Shared presentation system (components, tooltip engine, modal grammar, fitText, theme data) | PARTIAL | `presentation/` components exist; card faces/tooltips read framework decisions; screens still render through legacy components | The port moved decisions and words; the DOM renderers are legacy. Fix: not a behavior change — a renderer-by-renderer adoption, lowest value, last. |
 | 16 | Legacy importer of every legacy entity with stable ids — 395 at this commit (196 cards, 41 equipment, 50 statuses, 19 enemies, 4 classes, 55 relics, 7 flasks, 22 locations, 1 UI surface; `importLegacyContent(contentBundle).counts` is the authority, the number here is its reading on 2026-09-02 after the first quest chain's two events) | LIVE (data) | `importer.js` | — |
 | 17 | Complete validation + known-bad corpus | LIVE | `validate.js`, 66 framework tests (`node tests/framework.test.mjs` at this commit) + legacy 114 | — |
-| 18 | Cutover gate + "legacy authority unreachable" proof | NOT PASSED (honestly) | `candidate.js`, `tools/framework-gate.mjs` | Every consumer-facing DECISION routes through a framework home and A-6/7/8/9 are live (#520 and #523 merged), but the implementations are adopted legacy modules imported through doors, so legacy authority is reachable BY THE RULINGS' DESIGN — the proof as worded cannot pass without un-adopting them. What remains is the human acceptance pass on the new mechanics (gate row "approved new-mechanics acceptance"). The stamp says so: `0.5.0-rc.1`; `0.5.0` is the owner's release cut. |
+| 18 | Cutover gate + "legacy authority unreachable" proof | NOT PASSED (honestly) | `candidate.js`, `tools/framework-gate.mjs` | Every consumer-facing DECISION routes through a framework home and A-6/7/8/9 are live (#520 and #523 merged), but the implementations are adopted legacy modules imported through doors, so legacy authority is reachable BY THE RULINGS' DESIGN — the proof as worded cannot pass without un-adopting them. What remains is the human acceptance pass on the new mechanics (gate row "approved new-mechanics acceptance"). The stamp says so: `0.5.0-rc.2`; `0.5.0` is the owner's release cut. |
 
 ## B. The contract's "report before cutover" contradictions — rulings
 

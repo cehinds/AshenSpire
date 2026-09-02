@@ -2856,6 +2856,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    rules only add the co-op-specific bits: a seat per player, turn flags, the
    party read-out, and the throw/mend affordances. */
 .coop-note { color: var(--muted); font-size: 1.3rem; padding: 1.8rem; text-align: center; }
+.coop-event-result { max-width: 56rem; margin: 0 auto; padding: 1.2rem 1.8rem; text-align: center; line-height: 1.7; color: var(--muted); font-style: italic; }
 .coop-choices { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; margin-top: 0.8rem; }
 .coop-take { border-color: var(--gold); }
 /* LAW 4 CLAUSE 4 ON EVERY REWARD CONTROL — Viki, 2026-08-14, measured before

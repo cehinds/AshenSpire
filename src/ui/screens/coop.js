@@ -185,6 +185,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (sc.kind === 'map') return !!(sc.votes && !sc.votes[id]) || !sc.votes;
     if (sc.kind === 'combat') { const p = sc.players.find((x) => x.id === id); return !!(p && p.alive && p.connected && !p.ended); }
     if (sc.kind === 'reward') return !!(sc.offers[id] && !sc.chosen[id]);
+    if (sc.kind === 'event' && sc.next) return !(sc.ack && sc.ack[id]);
     if (sc.kind === 'shrine' || sc.kind === 'event') return !(sc.done && sc.done[id]);
     return false;
   }
@@ -832,8 +833,36 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function renderEvent() {
     const done = snap.scene.done && snap.scene.done[me];
     let ev = null; try { ev = registries.events.get(snap.scene.eventId); } catch { /* unknown */ }
+    // A FIGHT FOLLOWS THE CHOICE: every seat reads its own result first and
+    // asks for it (the solo screen's STEEL YOURSELF); the host opens the
+    // shared combat once every present seat has (DEVELOPER.md's event
+    // contract — control passes to combat after resultText shows).
+    if (snap.scene.next) {
+      const text = (snap.scene.results && snap.scene.results[me]) || '';
+      const acked = !!(snap.scene.ack && snap.scene.ack[me]);
+      app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
+        <p class="coop-event-result">${esc(text)}</p>
+        ${acked ? '<div class="coop-note">Waiting for the party…</div>' : '<div class="coop-choices"><button data-ev-continue="1">STEEL YOURSELF</button></div>'}`);
+      const go = app.querySelector('[data-ev-continue]');
+      if (go) go.addEventListener('click', () => send({ t: 'eventContinue' }));
+      renderPartyBar(); wireLeave();
+      return;
+    }
     app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
-      ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">${(ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => `<button data-ev="${i}">${esc(c.label || c.text || 'Choose')}</button>`).join('')}</div>`}`);
+      ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">${(ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => ({ c, i }))
+        // Only the choices this seat's history admits (scene.open, by authored
+        // index, from the host); a gated choice drawn here would be refused
+        // with no visible answer. No projection = every authored choice.
+        .filter(({ i }) => !(snap.scene.open && Array.isArray(snap.scene.open[me])) || snap.scene.open[me].includes(i))
+        // A PRICED CHOICE THE SEAT CANNOT AFFORD IS DRAWN DISABLED, the solo
+        // event screen's `meets` rule read off this seat's snapshot purse: the
+        // host refuses it, and a refusal only rebroadcasts the same snapshot,
+        // so an enabled button here would be one that does nothing.
+        .map(({ c, i }) => {
+          const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
+          const short = need != null && ((myMember() || {}).cinders ?? 0) < need;
+          return `<button data-ev="${i}"${short ? ' disabled data-requires="1" title="Needs ' + need + ' cinders"' : ''}>${esc(c.label || c.text || 'Choose')}</button>`;
+        }).join('')}</div>`}`);
     app.querySelectorAll('[data-ev]').forEach((b) => b.addEventListener('click', () => send({ t: 'eventChoice', choiceIndex: Number(b.dataset.ev) })));
     renderPartyBar(); wireLeave();
   }

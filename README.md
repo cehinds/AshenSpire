@@ -4,14 +4,44 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-> **README content updated:** 2026-08-31T06:14:00-08:00 (Alaska)
-> **Updated by:** AshenSpire Writing — README currentness steward — task `README-UPDATE-ATTRIBUTION`
-> **Source change:** Pending pull request for this README-only update
+> **README content updated:** 2026-09-01T15:37:00-08:00 (Alaska)
+> **Updated by:** Help Desk (AS-HD-053) on the owner's instruction — playable build numbers, their source branches, and the per-branch builds site
+> **Source change:** Pull request adding `tools/pages-site.mjs` and `.github/workflows/pages-builds.yml` alongside this README update
 > **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
-## Play the current development build
+## Play a build
 
-**[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
+**[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
+build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
+index: the current `dev`, `test`, `release` and `main` builds, each playable at its own address.
+
+### Playable builds and where each comes from
+
+| Branch | Role | Build number (live, derived) | Play | Changelog |
+|---|---|---|---|---|
+| `main` | stable — the classic Play link serves this | [![main build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fmain%2Fbuildordinal.json&query=%24.ordinal&label=main%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/main/) | [play latest](https://cehinds.github.io/AshenSpire/main/latest/) · [all `main` builds](https://cehinds.github.io/AshenSpire/main/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/main/CHANGELOG.md) |
+| `release` | release candidate — awaiting the owner's release cut | [![release build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Frelease%2Fbuildordinal.json&query=%24.ordinal&label=release%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/release/) | [play latest](https://cehinds.github.io/AshenSpire/release/latest/) · [all `release` builds](https://cehinds.github.io/AshenSpire/release/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/release/CHANGELOG.md) |
+| `test` | QA — the dev→test promotion under independent test | [![test build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Ftest%2Fbuildordinal.json&query=%24.ordinal&label=test%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/test/) | [play latest](https://cehinds.github.io/AshenSpire/test/latest/) · [all `test` builds](https://cehinds.github.io/AshenSpire/test/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/test/CHANGELOG.md) |
+| `dev` | integration — merged work lands here first; unreviewed | [![dev build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fdev%2Fbuildordinal.json&query=%24.ordinal&label=dev%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/dev/) | [play latest](https://cehinds.github.io/AshenSpire/dev/latest/) · [all `dev` builds](https://cehinds.github.io/AshenSpire/dev/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/dev/CHANGELOG.md) |
+
+The badge reads each branch's committed `buildordinal.json` — the number is never typed
+here. It is the last segment of the stamp the game paints on its title screen,
+`BUILD <version>.<ordinal> · src <digest>` (for example `BUILD 0.4.0.1688 · src b258350c3d`
+on `main`), so the number on the badge, the number on the builds index and the number on
+the title screen are the same fact read from the same file.
+
+**Address scheme.** `https://cehinds.github.io/AshenSpire/<branch>/<ordinal>/` is that exact
+build — `…/dev/1908/` is dev build 1908, byte-identical to the `AshenSpire.html` of the
+commit that produced it — and `…/<branch>/latest/` is the branch's newest. Each entry on the
+index links the `CHANGELOG.md` **at that build's commit**, not at a moving branch head. The
+site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
+workflow on every push to one of the four branches; nothing on it is hand-edited. Publication
+itself is owner-exclusive and separate from pushing: a push only assembles and proves the site,
+and it is deployed only by the repository owner's own manual dispatch of that workflow, with
+its `publish` input spelling PUBLISH (a push-triggered run holds no Pages credential), once the
+repository's Pages source is set to **GitHub Actions** (Settings → Pages).
+Until then the legacy `main:/` source keeps serving the stable link above and the per-branch
+addresses are not yet live.
 
 **[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
 workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
@@ -47,9 +77,10 @@ composition/component redesign contract. The [current-`dev` architecture
 snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) is refreshed automatically after
 every push to `dev` without rewriting the core contract.
 
-That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
-from `main` and follows the newest reviewed development build after GitHub Pages
-finishes deploying it. This is a **development preview**, not a release, tag, or
+The stable Play link publishes the repository-root `AshenSpire.html` from `main`
+and follows the newest reviewed development build after GitHub Pages finishes
+deploying it; the builds index above serves the other branches' current builds
+beside it. This is a **development preview**, not a release, tag, or
 production approval. Release status remains governed separately and is currently
 **RED**.
 
