@@ -49605,7 +49605,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '6caddc188f';
+const SOURCE = '962538f901';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49639,7 +49639,7 @@ const SOURCE = '6caddc188f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1936';
+const ORDINAL = '1941';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -72260,16 +72260,17 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
   function renderEvent() {
     const done = snap.scene.done && snap.scene.done[me];
     let ev = null; try { ev = registries.events.get(snap.scene.eventId); } catch { /* unknown */ }
-    // A FIGHT FOLLOWS THE CHOICE: every seat reads its own result first and
-    // asks for it (the solo screen's STEEL YOURSELF); the host opens the
-    // shared combat once every present seat has (DEVELOPER.md's event
-    // contract — control passes to combat after resultText shows).
+    // THE RESULT SHOWS BEFORE THE ROOM MOVES ON: every seat reads its own
+    // result first and asks for what follows — STEEL YOURSELF when the
+    // choice bought a fight, CONTINUE otherwise; the host opens the shared
+    // combat, or advances, once every present seat has (DEVELOPER.md's
+    // event contract — control passes on after resultText shows).
     if (snap.scene.next) {
       const text = (snap.scene.results && snap.scene.results[me]) || '';
       const acked = !!(snap.scene.ack && snap.scene.ack[me]);
       app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
         <p class="coop-event-result">${esc(text)}</p>
-        ${acked ? '<div class="coop-note">Waiting for the party…</div>' : '<div class="coop-choices"><button data-ev-continue="1">STEEL YOURSELF</button></div>'}`);
+        ${acked ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices"><button data-ev-continue="1">${snap.scene.next.kind === 'combat' ? 'STEEL YOURSELF' : 'CONTINUE'}</button></div>`}`);
       const go = app.querySelector('[data-ev-continue]');
       if (go) go.addEventListener('click', () => send({ t: 'eventContinue' }));
       renderPartyBar(); wireLeave();
@@ -72295,9 +72296,44 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
   }
 
   // ---- catch-up + complete --------------------------------------------------
+  // A MISSED EVENT IS CHOSEN THE WAY A LIVE ONE IS: the choices the seat's
+  // history admitted when the party met it, priced ones disabled when short,
+  // and the choice's result read before the next debt (DEVELOPER.md's event
+  // contract). The pick is sent the moment it is made and the host keeps the
+  // entry at the head of the queue, marked done with its result, until the
+  // seat continues — so a reload between the choice and CONTINUE shows the
+  // result again, never the choices (Codex on #549).
   function renderCatchup(mm) {
     const item = mm.catchupQueue[0];
     const remaining = mm.catchupQueue.length;
+    if (item.type === 'event') {
+      let ev = null; try { ev = registries.events.get(item.eventId); } catch { ev = null; }
+      const choices = (ev && ev.choices ? ev.choices : []).map((c, i) => ({ c, i }))
+        .filter(({ i }) => !Array.isArray(item.open) || item.open.includes(i));
+      if (item.done) {
+        app.innerHTML = rewardShell(`${rTitle(`Ember Debt — ${remaining} missed`)}
+          <p class="coop-event-result">${esc(item.done.resultText || '')}</p>
+          <div class="coop-choices"><button data-cu-go="1">CONTINUE</button></div>`);
+        const go = app.querySelector('[data-cu-go]');
+        if (go) go.addEventListener('click', () => send({ t: 'catchupChoice', index: 0, pick: { continue: true } }));
+        renderPartyBar(); wireLeave();
+        return;
+      }
+      app.innerHTML = rewardShell(`${rTitle(`Ember Debt — ${remaining} missed`)}
+        <p class="coop-note">The party met ${esc(ev ? ev.name : 'a happening')} while you were away. Make the choice you would have made.</p>
+        ${ev && ev.text ? `<p class="coop-event-result">${esc(ev.text)}</p>` : ''}
+        <div class="coop-choices" style="margin-top:12px">${choices.map(({ c, i }) => {
+          const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
+          const short = need != null && Math.min(mm.cinders ?? 0, typeof item.purse === 'number' ? item.purse : (mm.cinders ?? 0)) < need; // the purse the seat had when the party met the event, and the one in hand
+          return `<button data-cu-ev="${i}"${short ? ' disabled data-requires="1" title="Needs ' + need + ' cinders"' : ''}>${esc(c.label || c.text || 'Choose')}</button>`;
+        }).join('') || '<button data-cu-ev="-1">Continue</button>'}</div>`);
+      app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {
+        const choiceIndex = Number(b.dataset.cuEv);
+        send({ t: 'catchupChoice', index: 0, pick: choiceIndex < 0 ? {} : { choiceIndex } });
+      }));
+      renderPartyBar(); wireLeave();
+      return;
+    }
     let inner = `${rTitle(`Ember Debt — ${remaining} missed`)}<p class="coop-note">Claim what you would have earned while away.</p>`;
     if (item.type === 'reward') inner += '<div class="reward-row"></div>';
     inner += `<div class="coop-choices" style="margin-top:12px">
