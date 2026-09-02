@@ -37,8 +37,9 @@ index links the `CHANGELOG.md` **at that build's commit**, not at a moving branc
 site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
 workflow on every push to one of the four branches; nothing on it is hand-edited. Publication
 itself is owner-exclusive and separate from pushing: a push only assembles and proves the site,
-and it is deployed only by a manual dispatch of that workflow whose `publish` input spells
-PUBLISH, once the repository's Pages source is set to **GitHub Actions** (Settings → Pages).
+and it is deployed only by the repository owner's own manual dispatch of that workflow, with
+its `publish` input spelling PUBLISH (a push-triggered run holds no Pages credential), once the
+repository's Pages source is set to **GitHub Actions** (Settings → Pages).
 Until then the legacy `main:/` source keeps serving the stable link above and the per-branch
 addresses are not yet live.
 
