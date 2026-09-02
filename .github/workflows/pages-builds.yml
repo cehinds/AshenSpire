@@ -9,13 +9,24 @@
 # /docs/…) is still served: the whole `main` tree is the base of the artifact and the
 # only replaced file is the root index.html (main's own is kept at /index-game.html).
 #
-# ONE-TIME OWNER ACTION (publication is owner-exclusive): Settings → Pages → Build and
-# deployment → Source: "GitHub Actions". Until that is set, the deploy job fails with
-# GitHub's own message and nothing published changes. The legacy `main:/` source keeps
-# serving in the meantime.
+# PUBLICATION IS ITS OWN AUTHORITY (AGENTS.md: push and publication/Pages/deploy are
+# separate protected transitions; local readiness — or push authority — never implies
+# it). So a push to any of the four branches only ASSEMBLES and proves the site and
+# uploads it as the run's Pages artifact; nothing is deployed, and the push-triggered
+# job holds no Pages or OIDC credential at all (contents: read only — the credentials
+# live on the deploy job alone, so branch-controlled code cannot call the Pages API
+# around the guard). The `deploy` job runs only from a manual dispatch BY THE
+# REPOSITORY OWNER (github.actor AND github.triggering_actor are checked against
+# github.repository_owner, so neither a write collaborator's dispatch nor their re-run
+# of the owner's dispatch deploys) whose `publish` input spells PUBLISH, on the
+# `github-pages` environment, which can additionally carry required reviewers.
+# ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
+# deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
+# own message and the legacy `main:/` source keeps serving.
 #
-# COST: one run per push to any of the four branches, cancelled if a newer push lands.
-# The site is rebuilt from git history each time (deterministic; nothing accumulates).
+# COST: one assemble run per push to any of the four branches, cancelled if a newer push
+# lands. The site is rebuilt from git history each time (deterministic; nothing
+# accumulates).
 name: pages-builds
 
 on:
@@ -26,19 +37,24 @@ on:
       keep:
         description: newest builds to publish per branch
         default: '10'
+      publish:
+        description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
+        default: ''
 
 concurrency:
   group: pages-builds
   cancel-in-progress: true
 
+# The workflow as a whole holds nothing but read: the Pages and OIDC grants are the
+# deploy job's alone (below), never the push-triggered assemble job's.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   assemble:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,7 +75,20 @@ jobs:
 
   deploy:
     needs: assemble
+    # Only the owner's own explicit dispatch deploys: never a push, and never a
+    # write collaborator's dispatch (anyone with write may run a workflow, so the
+    # typed PUBLISH alone is not authority; the actor is). A RE-RUN of the owner's
+    # dispatch by a collaborator keeps the owner as github.actor, so the actor who
+    # triggered THIS attempt (github.triggering_actor) must be the owner as well.
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
+      && github.actor == github.repository_owner
+      && github.triggering_actor == github.repository_owner
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

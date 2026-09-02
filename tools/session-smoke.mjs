@@ -215,6 +215,22 @@ try {
         const enemyIds = V.scene.kind === 'combat' ? (V.scene.enemies || []).map((e) => e.enemyId || e.id) : [];
         ok(r.ok && r.combat === wanted && V.scene.kind === 'combat' && V.session.members.get('v1').run.combatEntered == null,
           `an event's startCombat opens the shared combat on its named encounter (${wanted}) and consumes the flag (scene ${V.scene.kind}, combat=${r.combat}, enemies ${JSON.stringify(enemyIds).slice(0, 80)})`);
+        // THE FORCED ENCOUNTER BRINGS ITS OWN POOL: the wyrm is an elite, so the
+        // fight is priced as one and its victory pays the elite reward (relic,
+        // Smithing Stone), as the solo player's does (Codex on #541).
+        const wantedPool = REG.encounters.get(wanted).pool;
+        ok(V.scene.kind === 'combat' && V.scene.pool === wantedPool && wantedPool !== 'normal',
+          `the forced encounter's fight carries the encounter's own pool (${wanted} is ${wantedPool}; scene pool ${V.scene.pool})`);
+        {
+          const v1 = V.session.members.get('v1');
+          // The wyrm at 1 HP so the seat's first blow ends it through the
+          // engine's own door; the reward that follows is the fight's.
+          V.autoResolveCombat((combat, id) => { for (const e of combat.enemies) if (e.alive) e.hp = Math.min(e.hp, 1); botTurn(combat, id); });
+          const offer = V.session.scene.kind === 'reward' ? V.session.scene.offers.v1 : null;
+          ok(V.session.scene.kind === 'reward' && V.session.scene.pool === wantedPool && offer && offer.pool === wantedPool
+            && typeof offer.relicId === 'string' && offer.smithingStoneReceipt && offer.smithingStoneReceipt.amount > 0,
+            `its victory pays the ${wantedPool} reward: relic ${offer && offer.relicId}, Smithing Stone ${offer && offer.smithingStoneReceipt && offer.smithingStoneReceipt.amount} (seat stones ${v1.run.smithingStones})`);
+        }
       }
       // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
       {
