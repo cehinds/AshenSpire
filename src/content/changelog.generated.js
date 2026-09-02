@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-563",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The fourth 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.4.<build> from this build on: the candidate QA receives after rc.3, which was promoted to test at build 1948. Nothing else a player sees changes with the stamp itself. What the candidate carries over rc.3 is in the entries below, and the one a player will feel is the rest before the elites — a map that holds an elite now holds a Shrine on some floor beneath it, where most maps did not. The one rider is docs: the migration checklist's account of the owner's asks and the open issues, corrected where it had overstated what was shipped.",
+    "build": "0.5.0-rc.4.1956",
+    "pullRequest": 563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/563"
+  },
+  {
     "id": "pr-562",
     "date": "2026-09-02",
     "group": "2026-09-02",
