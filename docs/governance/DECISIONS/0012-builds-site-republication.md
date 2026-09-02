@@ -231,11 +231,22 @@ the standing rule here: protected Pages actions need their own exact authority,
 and `UNKNOWN` is never approval. A ruling that does not name a model is `WAIT`,
 not a pass.
 
-With a letter named: `.agentops/governance/promotion-gates.json` is amended to
-that model, this record's status becomes Approved **and records the letter**,
-and the workflow is written to match — in that order. No implementing code
-merges before the ruling; the two attempts that preceded this record were
-reverted in full and are not sitting on a branch waiting.
+**The three outcomes are not one procedure.** Codex raised this too: the
+paragraph that followed used to say "amend the contract, mark Approved, write
+the workflow" for whatever was ruled — including C, which declines. A protected
+Pages change could then have been inferred from a ruling that *rejected* it,
+which is the same failure as the ambiguous approval above wearing a different
+hat. So:
+
+| Ruling | What happens |
+|---|---|
+| **A** | Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A)**. Then the workflow is written to match, in that order. |
+| **B** | Amend `promotion-gates.json` to model B — republication only, and the record states plainly that `main` and `release` republish with everything else. Status becomes **Approved (B)**. Then the workflow. |
+| **C** | **Nothing is amended and no workflow is written.** Status becomes **Declined**, #553 stays open, and #578's staleness report remains the mitigation. The contract is untouched, because C is the ruling that it should be. |
+
+No implementing code merges before the ruling under any of the three; the two
+attempts that preceded this record were reverted in full and are not sitting on
+a branch waiting.
 
 ## Rollback
 
