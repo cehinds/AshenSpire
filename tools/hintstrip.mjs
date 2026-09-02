@@ -358,6 +358,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // A FLEX ITEM WITH A z-index OVER THE COUNT: the DRAW pile is a flex
+        // column, and its label — an in-flow item, positioned nowhere — is
+        // pulled up over the count with a negative margin, an opaque
+        // background and z-index: 1, which makes it a stacking context that
+        // paints in z-order above the count's in-flow text (Codex, #550).
+        name: "the DRAW pile's label, a flex item given z-index: 1, paints an opaque block over its count",
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
+          replace: ".combat-action-row > .pile.draw { grid-area: draw; }\n.combat-action-row > .pile.draw > small { z-index: 1; background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }",
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // A PARTIAL SHEET: the same layer as a thin black band (3vh) along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
@@ -785,17 +799,26 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
     // hit reported as one of them IS one of its pseudo-elements), whatever
     // the stack lists inside the control is a candidate, and it is a cover
     // of the text when CSS paint order puts it above in-flow inline content
-    // (CSS 2.1 Appendix E): positioned with z-index auto or >= 0, or a
-    // stacking context of its own. An in-flow box — the pile's label under
-    // its count, an inline ::after — is laid out beside the text, not over
-    // it; a z-index:-1 glow paints below the text; both stay in both
-    // capture pairs.
+    // (CSS 2.1 Appendix E): positioned with z-index auto or >= 0, a flex or
+    // grid item with a z-index >= 0 (which forms a stacking context and
+    // paints in z-order as a positioned box does — Codex, #550), or a
+    // stacking context of its own (transform, opacity, filter, backdrop-
+    // filter, clip-path, mask, perspective, isolation, blend mode, contain,
+    // will-change naming one of these). An in-flow box with none of these —
+    // the pile's label under its count, an inline ::after — is laid out
+    // beside the text, not over it; a z-index:-1 glow or item paints below
+    // the text; both stay in both capture pairs.
     { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim()) continue;
       const rg = document.createRange(); rg.selectNodeContents(t);
       for (const b of rg.getClientRects()) if (b.width >= 1 && b.height >= 1 && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) texts.push({ t, b }); } }
-    const stacks = (cs) => cs.transform !== 'none' || cs.opacity !== '1' || cs.filter !== 'none' || cs.isolation === 'isolate' || cs.mixBlendMode !== 'normal';
+    const stacks = (cs) => cs.transform !== 'none' || cs.opacity !== '1' || cs.filter !== 'none' || (cs.backdropFilter || 'none') !== 'none'
+      || cs.clipPath !== 'none' || (cs.maskImage || cs.webkitMaskImage || 'none') !== 'none' || cs.perspective !== 'none'
+      || cs.isolation === 'isolate' || cs.mixBlendMode !== 'normal' || /paint|layout|strict|content/.test(cs.contain || '')
+      || /transform|opacity|filter|perspective/.test(cs.willChange || '');
+    const flexOrGridItem = (n, which) => { const host = which ? n : n.parentElement; if (!host) return false; const d = getComputedStyle(host).display; return /flex|grid/.test(d); };
     const aboveText = (n, which) => { const cs = getComputedStyle(n, which ? '::' + which : null);
       if (cs.position !== 'static') return cs.zIndex === 'auto' || Number(cs.zIndex) >= 0;
+      if (cs.zIndex !== 'auto' && flexOrGridItem(n, which)) return Number(cs.zIndex) >= 0;
       return stacks(cs); };
     for (const { t, b } of texts) {
       const chain = []; for (let n = t.parentElement; n && (n === el || el.contains(n)); n = n.parentElement) chain.push(n);
