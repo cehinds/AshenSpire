@@ -374,7 +374,12 @@ test('evidence that records nothing does not authorize the exception', () => {
     ['unparseable instant', { ...good, at: 'not-a-date' }],
     ['non-string reason', { ...good, reason: ['single shared identity'] }],
     ['non-string instant', { ...good, at: 20260831 }],
-    ['future-dated authorization', { ...good, at: '2099-01-01T00:00:00Z' }]
+    ['future-dated authorization', { ...good, at: '2099-01-01T00:00:00Z' }],
+    // Relaxing a protected transition is owner authority. A role that does not
+    // hold it cannot grant it, however well-formed the rest of the block is.
+    ['a maker granting itself the exception', { ...good, authorized_by: 'maker' }],
+    ['the deputy granting owner-exclusive authority', { ...good, authorized_by: 'it-manager-iii' }],
+    ['a seat identity rather than a role', { ...good, authorized_by: 'seat:worker-a:6f24cb92-3738-42fa-862d-0c45b3936a27' }]
   ]) {
     const cfg = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: bad });
     assert.equal(sameIdentityReviewAccepted(cfg), false, `${label} must not authorize the exception`);
@@ -382,6 +387,11 @@ test('evidence that records nothing does not authorize the exception', () => {
   }
   assert.deepEqual(sameIdentityReviewEvidence(withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: good })), good);
   assert.equal(sameIdentityReviewEvidence(withAuthority({ same_identity_review_accepted: false, same_identity_review_evidence: good })), null);
+  // The role annotation is not part of the identity, and case is not identity.
+  for (const spelling of ['constantine', 'Constantine (owner)', '  constantine (Owner)  ']) {
+    const cfg = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { ...good, authorized_by: spelling } });
+    assert.ok(sameIdentityReviewEvidence(cfg), `${spelling} names the owner and must authorize`);
+  }
 });
 
 test('the exception spends the independent QA seat, with no GitHub approval available', () => {

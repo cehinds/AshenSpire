@@ -643,17 +643,30 @@ export function deliverCandidate(root, item, config) {
 // evidence block that records nothing — the very state this is meant to refuse.
 // A future-dated authorization is refused too; it has not happened yet.
 //
-// What this CANNOT do is authenticate the approver. Anyone able to set the flag
-// can also type any name beside it, so matching that string against an expected
-// owner would be ceremony, not a control — the same shared-identity problem
-// (#434) one layer down. The tool refuses malformed evidence and makes the
-// exception visible in `verify`; who authorized it is a claim the ledger and
-// the config's history carry, not something this predicate can establish.
+// The approver must also hold the authority being spent. Relaxing the gate on a
+// protected transition is owner authority — the same class as
+// grant-dev-delivery-authority, which .agentops/governance/owner-command.json
+// marks owner_exclusive — so the deputy is deliberately absent from this set,
+// as are the maker and QA roles.
+//
+// This does not stop someone who controls the config; they would simply type the
+// owner's name, and no string can prevent that while one account holds every
+// seat (#434). It is not for that. It catches the reachable failure — an
+// exception enabled and attributed to a role with no authority to grant it —
+// and it keeps the permitted set in the tooling lane, where widening it is a
+// reviewable code diff, rather than inside the config the exception lives in.
+// Declared-role checking is how this system works everywhere else; owner-command
+// authenticates its actors by declared role too.
+const EXCEPTION_APPROVERS = new Set(['constantine']);
+
 export function sameIdentityReviewEvidence(config, now = Date.now()) {
   if (config.authority?.same_identity_review_accepted !== true) return null;
   const evidence = config.authority?.same_identity_review_evidence;
   const filled = (value) => typeof value === 'string' && value.trim().length > 0;
   if (!evidence || !filled(evidence.authorized_by) || !filled(evidence.reason) || !filled(evidence.at)) return null;
+  // 'constantine' and 'constantine (owner)' are the same person naming the same
+  // authority; the parenthetical is a role annotation, not part of the identity.
+  if (!EXCEPTION_APPROVERS.has(evidence.authorized_by.trim().replace(/\s*\([^)]*\)\s*$/, '').toLowerCase())) return null;
   const at = Date.parse(evidence.at);
   if (Number.isNaN(at) || at > now) return null;
   return { authorized_by: evidence.authorized_by.trim(), at: evidence.at, reason: evidence.reason.trim() };
