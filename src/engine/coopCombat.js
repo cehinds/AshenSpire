@@ -293,6 +293,11 @@ function startPlayerPhase(C) {
     const e = P.entity;
     P.ended = false;
     e.counters.cardsPlayedThisTurn = 0;
+    // A turn's Stamina spend belongs to that turn alone. A seat that spent
+    // and then disconnected is retired by leaveCombat without reaching
+    // endOnePlayerTurn, so the counter is zeroed here, at every seat's turn
+    // start, and never survives into a later turn to suppress its recovery.
+    e.counters.staminaSpentThisTurn = 0;
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     e.energy = e.energyMax;
