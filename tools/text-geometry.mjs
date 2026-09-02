@@ -106,8 +106,12 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the shipped overview switcher restores its rem-owned floor',
         file: 'AshenSpire.html',
-        find: '  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;',
-        replace: '  min-height: 4.4rem; height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;',
+        // `8px` became `var(--r-3)` when the corner scale landed (styles/
+        // base.css). The plant's subject is the MIN-HEIGHT — the rem-owned
+        // floor this seam exists to catch — so only the neighbouring literal
+        // moved; the mutation and its assertion are unchanged.
+        find: '  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: var(--r-3); cursor: pointer;',
+        replace: '  min-height: 4.4rem; height: auto; padding: 0 1.6rem; border-radius: var(--r-3); cursor: pointer;',
         expectRed: /artifact ownership seam missing: min-height: var\(--tap-floor\); height: auto; padding: 0 1\.6rem;/,
       },
       {
