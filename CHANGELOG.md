@@ -38,7 +38,17 @@ a receipt a player cannot open and see is not a receipt. The bundle read is
 `build/AshenSpire.html`, which the root and `dist/` copies are generated from — a
 merge can refresh it without touching either alias. A merge that rebuilds nothing,
 shipping docs or evidence only, keeps the ordinal standing at it, as the rule above
-already allows.*
+already allows.
+
+What this backfill does NOT cover, stated so the gap is a decision rather than
+an omission: three landings in the same window moved the shipped bundle without
+naming a pull request, so no receipt can name one either — `bd0b8624` at build
+1407, which brought the weapon-deck composition that lets equipped and
+dual-wielded weapons decide the fixed attack-card slots; `8959738b` at 1426 and
+`52c7bc30` at 1446, which halved and then tightened the combat HUD's resource
+gaps. All three are player-visible. A receipt here names the pull request that
+landed a change, and inventing one to fit these would be the reconstruction
+this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-02
 
