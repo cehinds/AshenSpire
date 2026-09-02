@@ -18,6 +18,7 @@
     {
       "actor_id": "it-manager-iii",
       "role": "it-manager-iii",
+      "display_name": "P | IT Manager III | IT Manager and Coordination Specialist - AshenSpire",
       "escalation_parent": "constantine",
       "owns_escalations": [
         "technical-scope",
@@ -187,7 +188,7 @@
     "note": "Elapsed time changes routing only, never truth, evidence, or authority. FYIs remain dashboard-only and are not escalations."
   },
   "authority_tiers": {
-    "principle": "A P-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection \u2014 decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a P3 verdict binds P0 and P1 alike and is cleared only by a recorded waiver from the role the QA contract names.",
+    "principle": "A P-level is decision authority and nothing else. It is not seniority, not capability, not a queue position, and never an input to model or effort selection — decision 0006 forbids selection by rank. Two rules keep the ladder honest: authority is per action rather than per level, so holding a tier grants only the actions that tier names; and independence inverts the ladder, because a P3 verdict binds P0 and P1 alike and is cleared only by a recorded waiver from the role the QA contract names.",
     "levels": [
       {
         "p": 0,
@@ -211,7 +212,7 @@
       },
       {
         "p": 1,
-        "label": "Deputy \u2014 IT Manager III, Integration and Delivery",
+        "label": "Deputy — IT Manager III, Integration and Delivery",
         "actors": [
           "it-manager-iii"
         ],

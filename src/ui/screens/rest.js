@@ -23,7 +23,7 @@ import { attributeCardModels } from '../../model/creationBrief.js';
 import { passiveFlag } from '../../model/registries.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';
@@ -79,9 +79,19 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+  // E13's multi-use Shrine: an action re-opens the same screen (with what was
+  // already taken recorded) instead of leaving; LEAVE is the one way out.
+  const remount = (extra = {}) => mountRest(app, {
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+  });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = relicNoRest || (multiUse && rested);
+  // The locked copy names the real reason: a relic that forbids rest, or a
+  // rest already taken at this Shrine under Multi-use — never a relic the
+  // player does not carry.
+  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -119,7 +129,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -127,7 +137,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
           <div class="cp-body">
-            <h3>Smith</h3>
+            <h3>Upgrade an Item</h3>
             <p>${canInspectSmithing
               ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
               : 'No owned armament has an effective tier remaining.'}</p>
@@ -229,19 +239,27 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           </div>
         </details>
       </div>
+      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
   ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  const leave = app.querySelector('#shrine-leave');
+  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
+      question: multiUse
+        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
+        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -283,7 +301,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      remount({ openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // The same allocation component used by character creation, with shrine
@@ -325,7 +343,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
+          remount({ openPanel: 'level' });
         },
       });
     };
@@ -335,23 +353,25 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     // Smith is a reversible modal transaction until its explicit Confirm.
     // Opening and selecting mutate presentation state only. Back and Escape
     // return to the Shrine with the run byte-for-byte untouched; Confirm is
-    // the one armament promotion and the one path that leaves the Shrine.
+    // the one item promotion and the one path that leaves the Shrine.
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
-      let selectedArmamentId = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedArmamentId);
+      let selectedItemRef = null;
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
+        meta,
         returnFocusElement: smithOption,
-        onSelect: (armamentId) => {
-          selectedArmamentId = armamentId;
+        onSelect: (itemRef) => {
+          selectedItemRef = itemRef;
           modal.update(model());
         },
         onBack: () => {},
-        onConfirm: (armamentId) => {
-          const receipt = commitSmithing(registries, run, armamentId);
+        onConfirm: (itemRef) => {
+          const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
-          onDone(`Smithed ${esc(receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone, ${receipt.affectedCards.length} basic cards improved.`);
+          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+          onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
     };

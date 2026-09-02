@@ -146,7 +146,7 @@ export function createRunState({
     equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
     smithingStones: 0,
-    armamentLevels: {},
+    itemUpgradeLevels: {},
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
@@ -213,7 +213,7 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    classFields: ['maxHp', 'maxMana'],
     damageSchools: DAMAGE_SCHOOLS,
   };
 }
@@ -524,6 +524,7 @@ export const RUN_SHAPE = [
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'smithingStones', type: 'number', optional: true },
+  { key: 'itemUpgradeLevels', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },
@@ -623,6 +624,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
       if (!pieceId || !Number.isInteger(level) || level < 0) {
         problems.push(`armamentLevels.${pieceId || '<empty>'} must be a non-negative integer`);
+      }
+    }
+  }
+  if (run.itemUpgradeLevels !== undefined && typeOk(run.itemUpgradeLevels, 'object')) {
+    for (const [itemRef, level] of Object.entries(run.itemUpgradeLevels)) {
+      if (!/^(armament\/[^/]+|armor\/[^/]+\/[^/]+|relic\/[^/]+)$/.test(itemRef)
+          || !Number.isInteger(level) || level < 0) {
+        problems.push(`itemUpgradeLevels.${itemRef || '<empty>'} must be a namespaced item ref with a non-negative integer tier`);
       }
     }
   }
@@ -888,7 +897,7 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {} }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
@@ -908,6 +917,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],
+    itemUpgradeLevels: { ...itemUpgradeLevels },
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, damageBySchoolAdd[school] || 0])),
     flasks: flasks.map((f) => ({ ...f })),
     flaskCharges: flaskCharges ? { ...flaskCharges } : null,
@@ -915,6 +925,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
       cardsPlayedThisTurn: 0,
       cardsPlayedThisCombat: 0,
       attacksPlayedThisCombat: 0,
+      staminaSpentThisTurn: 0,
     },
     alive: true,
   };

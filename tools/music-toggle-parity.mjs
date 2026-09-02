@@ -63,8 +63,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: /restore applies the complete settings bag/,
       },
       {
+        // #498 Red 2: the site was `panelFor('settings')(body, ctx)` inline until
+        // a refactor extracted it into dispatchPanel; this plant patched nothing
+        // for the duration and the selftest said PLANT SITE DRIFTED. The find is
+        // the current call site, and the paired assertion holds the helper to
+        // reaching panel(body, ctx) so a rename cannot satisfy it again.
         name: 'overlay-settings-stale', file: 'src/ui/components/overlay.js',
-        find: "if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);",
+        find: "if (currentTab === 'settings' && result?.changed) dispatchPanel('settings');",
         replace: '/* planted: Settings panel stays stale after Quick Menu Music */',
         expectRed: /overlay refreshes Settings after a Quick Menu music change/,
       },
@@ -195,7 +200,15 @@ check(overlay.includes("ashenspire:quicknav-mode-change")
   'open overlays rebuild their Quick Menu launcher mode and stateful rows keep an owned menu role');
 check(renderer.includes("button.setAttribute('aria-checked', String(row.checked));"), 'switch renderer reflects checked state');
 check(overlay.includes('controls: {') && overlay.includes('...quickControls,'), 'overlay forwards the shared controls');
-check(overlay.includes("if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);"),
+// #498 Red 2: this asserted the pre-refactor inline call by its exact text and
+// went red when dispatchPanel replaced it, with the behaviour intact. It now
+// asserts the behaviour in three parts: the Quick Menu change still triggers a
+// settings refresh, the refresh goes through dispatchPanel, and dispatchPanel
+// actually reaches panel(body, ctx) — the third clause is what fails if the
+// refresh is removed rather than merely renamed.
+check(/currentTab === 'settings' && result\?\.changed/.test(overlay)
+  && /result\?\.changed\) dispatchPanel\('settings'\)/.test(overlay)
+  && /const dispatchPanel = \(id\) => \{[\s\S]*?panel\(body, ctx\);/.test(overlay),
   'overlay refreshes Settings after a Quick Menu music change');
 check(settingsSource.includes("document.addEventListener('fullscreenerror', onFullscreenError);")
   && settingsSource.includes('Fullscreen was refused by the browser.'),

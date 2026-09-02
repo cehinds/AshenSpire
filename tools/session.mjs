@@ -20,6 +20,7 @@ import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, m
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck } from '../src/model/loadout.js';
+import { playerWeightClass } from '../src/engine/combat.js';
 import {
   commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
 } from '../src/model/smithing.js';
@@ -371,7 +372,11 @@ export function createSession({ registries, seedString, endless = false, restore
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
+      // The seat's loadout rides into the co-op engine so the framework Weight
+      // Class (dodge check and pricing) is this player's, not a Light default.
+      loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
+      itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
     };
   }
 
@@ -499,6 +504,15 @@ export function createSession({ registries, seedString, endless = false, restore
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
+        // AND THEIR TIERS. A client prices a card from this snapshot
+        // (coop.js snapshotCosts → passiveSum with the seat's tier map); the
+        // relic ids alone priced every upgraded relic at tier zero, so an
+        // upgraded Ancestral Horn that the host charged 0 for read 1 on the
+        // client and the card went unplayable there (Codex, #528).
+        itemUpgradeLevels: { ...(P.itemUpgradeLevels || {}) },
+        // The seat's live Weight Class row, so a client can price the pure
+        // dodge (and read its Stamina cost) exactly as the host will charge it.
+        weightClass: playerWeightClass({ registries, loadout: P.loadout, attributes: P.attributes, player: P.entity, itemUpgradeLevels: P.itemUpgradeLevels }).weightClass,
       })),
     };
   }
@@ -766,7 +780,7 @@ export function createSession({ registries, seedString, endless = false, restore
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       smithingStones: m.run.smithingStones,
-      armamentLevels: { ...(m.run.armamentLevels || {}) },
+      itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
       ...(m.run.lastSmithingReceipt
         ? { lastSmithingReceipt: structuredClone(m.run.lastSmithingReceipt) }
         : {}),

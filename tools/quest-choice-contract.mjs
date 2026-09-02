@@ -12,7 +12,13 @@ import {
   hasEventChoice,
   recordEventChoice,
 } from '../src/model/quests.js';
-import { eventChoiceIds, eventChoicesWithHistory, events } from '../src/content/events.js';
+import { eventChoiceIds, eventChoicesWithHistory, eventHistoryRequirements, events } from '../src/content/events.js';
+import { createRegistries } from '../src/model/registries.js';
+import { contentBundle } from '../src/content/index.js';
+import { resolveUnknownNode, rollRelicReward, buildShopStock } from '../src/engine/encounters.js';
+import { executeRunEffects } from '../src/engine/actions.js';
+import { validateContent } from '../src/model/validate.js';
+import { createRng } from '../src/engine/rng.js';
 
 let pass = 0;
 let fail = 0;
@@ -84,7 +90,7 @@ check('same state and choice replay byte-identically', JSON.stringify(replay) ==
 
 const authoredChoices = events.flatMap((event) => eventChoicesWithHistory(event)
   .map((choice) => ({ event, choice })));
-check('all shipped event choices have stable explicit ids', authoredChoices.length === 54
+check('all shipped event choices have stable explicit ids', authoredChoices.length === 62
   && authoredChoices.every(({ choice }) => /^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(choice.id)));
 check('choice ids are unique within each event', events.every((event) => {
   const ids = eventChoiceIds[event.id] || [];
@@ -121,6 +127,101 @@ check('shipped cart choice changes the later merchant event through the runtime 
   && !merchantAfter.includes('payInKind')
   && merchantAfter.includes('stealRelic')
   && merchantAfter.includes('leave'));
+
+// ---- THE FIRST QUEST CHAIN (E12): grave → keeper → the nameless at rest ------
+const REG = createRegistries(contentBundle);
+const allChoiceRefs = new Set(events.flatMap((event) => (eventChoiceIds[event.id] || []).map((id) => `${event.id}/${id}`)));
+const refsOf = (req) => ['all', 'any', 'none'].flatMap((g) => (req && req[g]) || []);
+check('every event-level history gate names shipped events and choices',
+  Object.entries(eventHistoryRequirements).every(([eventId, req]) => events.some((e) => e.id === eventId)
+    && refsOf(req).every((ref) => allChoiceRefs.has(`${ref.eventId}/${ref.choiceId}`))));
+check('every choice-level history gate names shipped events and choices',
+  events.every((event) => eventChoicesWithHistory(event).every((choice) => refsOf(choice.requiresHistory)
+    .every((ref) => allChoiceRefs.has(`${ref.eventId}/${ref.choiceId}`)))));
+check('a gated event is never listed among its own unlock choices',
+  Object.entries(eventHistoryRequirements).every(([eventId, req]) => refsOf(req).every((ref) => ref.eventId !== eventId)));
+const stepsOf = (run) => availableQuestSteps(events.map((e) => ({ id: e.id, requiresHistory: eventHistoryRequirements[e.id] })), run)
+  .map((s) => s.id);
+const fresh = newRun();
+check('a fresh run has neither chain step available',
+  !stepsOf(fresh).includes('namelessKeeper') && !stepsOf(fresh).includes('namelessRest'));
+const digger = newRun();
+recordEventChoice(digger, { eventId: 'graveOfTheNameless', choiceId: 'digForCinders' });
+check('digging at the grave unlocks the keeper but not the second cairn',
+  stepsOf(digger).includes('namelessKeeper') && !stepsOf(digger).includes('namelessRest'));
+const keeper = events.find((e) => e.id === 'namelessKeeper');
+const diggerChoices = availableEventChoices(eventChoicesWithHistory(keeper), digger).map(({ choice }) => choice.id);
+check('the keeper offers the digger repayment or a fight, never the mourner\'s thanks, and always Leave',
+  diggerChoices.includes('returnCinders') && diggerChoices.includes('faceKeeper')
+  && !diggerChoices.includes('acceptThanks') && diggerChoices.includes('leave'));
+const mourner = newRun();
+recordEventChoice(mourner, { eventId: 'graveOfTheNameless', choiceId: 'payRespects' });
+const mournerChoices = availableEventChoices(eventChoicesWithHistory(keeper), mourner).map(({ choice }) => choice.id);
+check('the keeper thanks the mourner and offers nothing else but Leave',
+  mournerChoices.includes('acceptThanks') && !mournerChoices.includes('returnCinders')
+  && !mournerChoices.includes('faceKeeper') && mournerChoices.includes('leave'));
+recordEventChoice(mourner, { eventId: 'namelessKeeper', choiceId: 'acceptThanks' });
+const rest = events.find((e) => e.id === 'namelessRest');
+const restChoices = availableEventChoices(eventChoicesWithHistory(rest), mourner).map(({ choice }) => choice.id);
+check('the second cairn opens after the keeper and answers the branch taken',
+  stepsOf(mourner).includes('namelessRest')
+  && restChoices.includes('keepVigil') && !restChoices.includes('restAmongStones')
+  && !restChoices.includes('lootBarrow') && restChoices.includes('leave'));
+// The engine's own door: an Unknown node can roll a gated event only once the
+// run's history earned it. Force the event branch of the roll by sweeping
+// seeds until the resolver returns an event, on both sides of the gate.
+const rollEvents = (history, seeds = 400) => {
+  const seen = new Set();
+  for (let seed = 1; seed <= seeds; seed++) {
+    const r = resolveUnknownNode(REG, createRng(seed), { act: 1, history });
+    if (r.kind === 'event') seen.add(r.eventId);
+  }
+  return seen;
+};
+const ungatedRolls = rollEvents([]);
+const diggerRolls = rollEvents(digger.history);
+const mournerRolls = rollEvents(mourner.history);
+check('an Unknown node never rolls a chain step before it is earned',
+  !ungatedRolls.has('namelessKeeper') && !ungatedRolls.has('namelessRest') && ungatedRolls.size >= 10);
+check('an Unknown node rolls the earned chain step',
+  diggerRolls.has('namelessKeeper') && !diggerRolls.has('namelessRest') && mournerRolls.has('namelessRest'));
+// A gated step already answered is complete: a later act's map must not roll
+// it again (the keeper does not come twice; the Bell is handed over once). The
+// mourner's history holds a keeper choice, so the keeper is out of that pool,
+// while the grave — ungated — keeps its shipped repeatability across acts.
+check('a completed quest step never rolls again in a later act',
+  !mournerRolls.has('namelessKeeper') && mournerRolls.has('graveOfTheNameless'));
+
+// The reward is reserved: no generic pool may hand the Bell over first, or the
+// keeper's thanks would grant nothing (addRelic ignores a duplicate id). Every
+// generic roller is swept — elite and boss drops across every rarity, the
+// shop's stock, and an event's "random relic" — with nothing owned.
+const bell = REG.relics.get('gravetendersBell');
+check('the quest relic is authored quest-pool', bell.pool === 'quest');
+const allRarities = [...new Set(REG.relics.all().map((r) => r.rarity))];
+let drops = 0;
+for (let seed = 1; seed <= 600; seed++) {
+  if (rollRelicReward(REG, createRng(seed), [], { rarities: allRarities }) === 'gravetendersBell') drops++;
+}
+check('elite and boss drops never roll the quest relic', drops === 0, `${drops} drops`);
+let stocked = 0;
+for (let seed = 1; seed <= 300; seed++) {
+  const stock = buildShopStock(REG, createRng(seed), { class: 'reaver', relics: [], flasks: [], deck: [] });
+  if (stock.relics.some((row) => row.id === 'gravetendersBell')) stocked++;
+}
+check('the shop never stocks the quest relic', stocked === 0, `${stocked} stocks`);
+let randomed = 0;
+for (let seed = 1; seed <= 300; seed++) {
+  const run = { ...newRun(), relics: [], flasks: [], deck: [], cinders: 0 };
+  executeRunEffects({ registries: REG, rng: createRng(seed), run }, [{ op: 'addRelic', random: true }]);
+  if (run.relics.includes('gravetendersBell')) randomed++;
+}
+check('an event\'s random relic never hands over the quest relic', randomed === 0, `${randomed} grants`);
+const orphan = { ...contentBundle, relics: contentBundle.relics.map((r) => (r.id === 'feralEye' ? { ...r, pool: 'quest' } : r)) };
+const orphanResult = validateContent(orphan);
+check('validation refuses a quest-pool relic that no event choice grants',
+  !orphanResult.ok && orphanResult.errors.some((e) => /relics\.feralEye\.pool/.test(String(e.path || e))),
+  JSON.stringify(orphanResult.errors || []).slice(0, 200));
 
 if (process.argv.includes('--selftest')) {
   const malformedHistory = {

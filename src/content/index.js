@@ -22,7 +22,7 @@ import { act3Enemies } from './enemies/act3.js';
 import { act1Encounters } from './encounters/act1.js';
 import { act2Encounters } from './encounters/act2.js';
 import { act3Encounters } from './encounters/act3.js';
-import { events } from './events.js';
+import { events, eventHistoryRequirements } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { cardTags } from './generated/cardTags.js';
@@ -32,6 +32,7 @@ import { SCALES, BEDS } from './music.js';
 import {
   ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
   EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI,
+  ITEM_UPGRADE_CHANGES,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
@@ -48,7 +49,7 @@ const cards = authoredCards.map((card) => {
 });
 
 export const contentBundle = {
-  version: '0.4.0',
+  version: '0.5.0-rc.1',
   balance,
   cards,
   relics,
@@ -60,6 +61,7 @@ export const contentBundle = {
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
   encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
   events,
+  eventHistoryRequirements,
   flasks,
   classes,
   mapConfigs,
@@ -83,6 +85,7 @@ export const contentBundle = {
     cardExposure: CARD_EXPOSURE,
     startingKits: STARTING_KITS,
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
+    itemUpgradeChanges: ITEM_UPGRADE_CHANGES,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,
     armouryUi: ARMOURY_UI,

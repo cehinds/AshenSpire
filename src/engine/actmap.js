@@ -27,7 +27,12 @@ import { applyRunShape } from '../model/floorplan.js';
 import { MAP_SHAPE_LIMITS } from '../content/mapconfig.js';
 
 /**
- * buildActMap(registries, rng, act, mapShape) → mapGraph
+ * buildActMap(registries, rng, act, mapShape, { history }) → mapGraph
+ *
+ * `history` is the run's choice history at map birth (quest steps, E12): an
+ * event gated on an earlier choice enters this act's Unknown nodes only once
+ * that choice was made — so an act answers the acts before it. Absent ⇒ the
+ * ungated pool, byte-for-byte today's act for every existing seed.
  *
  * `act` is the CONTENT act (the caller answers Endless looping — main.js and
  * the tools pass their contentAct), required for the same reason
@@ -47,7 +52,7 @@ import { MAP_SHAPE_LIMITS } from '../content/mapconfig.js';
  * means a shape arrived from somewhere the screen does not guard — a hand-edited
  * save, a future caller. That is precisely when a loud failure is worth its cost.
  */
-export function buildActMap(registries, rng, act, mapShape = null) {
+export function buildActMap(registries, rng, act, mapShape = null, { history = [] } = {}) {
   const authored = registries.mapConfig(act);
   const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
   if (shaped.errors.length) {
@@ -58,7 +63,7 @@ export function buildActMap(registries, rng, act, mapShape = null) {
   const assigned = [];
   for (const node of Object.values(map.nodes)) {
     if (node.type === 'event') {
-      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act });
+      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act, history });
       if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
     }
   }

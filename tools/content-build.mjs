@@ -239,12 +239,24 @@ function sweepAssets(assetsRoot, bundle) {
  */
 function sweepStraySources(contentRoot) {
   const errors = [];
+  // content/framework/ is the SECOND authored tree, owned by
+  // tools/framework-data-build.mjs (its --check drift gate runs in
+  // tools/framework-gate.mjs). The protection stays real here: a framework
+  // JSON is stray unless its generated mirror src/framework/data/<name>.js
+  // exists — an authored file that compiles to nothing still fails by name.
+  const frameworkDir = join(contentRoot, 'framework');
+  const frameworkGeneratedDir = join(contentRoot, '..', 'src', 'framework', 'data');
   (function walk(dir) {
     if (!existsSync(dir)) return;
     for (const ent of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
       const abs = join(dir, ent.name);
       if (ent.isDirectory()) walk(abs);
-      else if (/\.(csv|json)$/i.test(ent.name) && dir !== join(contentRoot, 'source')) {
+      else if (/\.json$/i.test(ent.name) && dir === frameworkDir) {
+        const mirror = join(frameworkGeneratedDir, ent.name.replace(/\.json$/i, '.js'));
+        if (!existsSync(mirror)) {
+          errors.push(`content/framework/${ent.name}: STRAY SOURCE FILE — no generated mirror at src/framework/data/; run node tools/framework-data-build.mjs`);
+        }
+      } else if (/\.(csv|json)$/i.test(ent.name) && dir !== join(contentRoot, 'source')) {
         errors.push(`content/${relative(contentRoot, abs).split(sep).join('/')}: STRAY SOURCE FILE — the compile reads only the top level of content/source/; this file compiles to nothing and ships nowhere. Move it to content/source/${ent.name}`);
       }
     }
@@ -450,6 +462,7 @@ const PROBE_CARD = {
 };
 const PROBE_ENEMY = {
   id: 'smokeProbeFoe', name: 'Smoke Probe Foe', hp: [10, 10], poiseMax: 5,
+  levelProfile: { min: 1, max: 4 }, // required since enemy level content landed
   moves: { wait: { intent: 'block', block: 1, weight: 100 } },
 };
 

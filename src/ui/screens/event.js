@@ -8,9 +8,11 @@ import { executeRunEffects } from '../../engine/actions.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { isBindingChoice } from '../../model/consequence.js';
+// The fail-closed level rule goes through the framework's adopted door
+// (owner ruling; the derivation itself still lives in model/consequence.js).
+import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 
 export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
@@ -126,7 +128,13 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
       // position all moved into the machinery with it — a bar that cannot be
       // pressed still never gets armed, because this branch is the affordable
       // one and always was.
-      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
+      disarmers.push(arm(btn, 'eventChoice', {
+        ctx: { binding },
+        question: `Choose ${choice.label || choice.text || 'this event option'}?`,
+        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
+        confirmLabel: 'CHOOSE',
+        onConfirm: commit,
+      }));
     }
     box.appendChild(btn);
   });

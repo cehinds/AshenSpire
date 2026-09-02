@@ -5,7 +5,7 @@
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
-import { armHold, beatArmer } from './holdconfirm.js';
+import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { esc, hideTooltip } from './tooltip.js';
 import { mountTitleSaveSlotTooltip } from './titleSaveSlotTooltip.js';
 

@@ -48,6 +48,15 @@
           },
           "mutation": {
             "type": "string",
+            "enum": [
+              "protected",
+              "pr-only",
+              "gate-c-fast-forward-only",
+              "isolated-continuation"
+            ]
+          },
+          "mutated_by_action": {
+            "type": "string",
             "minLength": 1
           },
           "per_seat": {

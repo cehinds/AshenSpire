@@ -88,12 +88,6 @@ check('HP and Stamina consume Constitution; HP follows the resolved per-point ru
   eq(stamina.sourceStat, 'constitution', 'Stamina source');
 });
 
-check('every class authors one positive integer HP-per-CON-tier coefficient', () => {
-  for (const cls of contentBundle.classes) {
-    assert(Number.isInteger(cls.hpPerConTier) && cls.hpPerConTier > 0,
-      `${cls.id}.hpPerConTier must be a positive integer`);
-  }
-});
 
 check('starter relic bonuses use the one closed modifier-tag list, not relic-id branches', () => {
   for (const cls of contentBundle.classes) {
@@ -186,23 +180,7 @@ check('starter relic display numbers derive from modifier rows, never duplicated
   assert(!text.includes('Mana +1') && !text.includes('Magic damage +1'), `stale duplicated values survived: ${text}`);
 });
 
-check('the production content door rejects a missing class HP coefficient by name', () => {
-  const bad = cloneBundle();
-  delete bad.classes[0].hpPerConTier;
-  const result = validateContent(bad);
-  assert(!result.ok, 'validateContent accepted a missing hpPerConTier');
-  assert(result.errors.some((row) => `${row.path} ${row.msg}`.includes('hpPerConTier')),
-    `missing coefficient was not named: ${JSON.stringify(result.errors)}`);
-});
 
-check('the production content door rejects a fractional class HP coefficient by name', () => {
-  const bad = cloneBundle();
-  bad.classes[0].hpPerConTier = 1.5;
-  const result = validateContent(bad);
-  assert(!result.ok, 'validateContent accepted fractional hpPerConTier');
-  assert(result.errors.some((row) => `${row.path} ${row.msg}`.includes('hpPerConTier')),
-    `fractional coefficient was not named: ${JSON.stringify(result.errors)}`);
-});
 
 check('fresh runs match the resolved HP receipt plus equipment', () => {
   const registries = createRegistries(contentBundle);
@@ -240,14 +218,13 @@ check('each adjacent CON point adds exactly the resolved HP gain', () => {
   eq(at15.maxHp - at14.maxHp, hp.gainPerTier, 'one CON point adds one resolved gain');
 });
 
-check('the legacy class coefficient is not a second live HP authority', () => {
-  const beforeSource = cloneBundle();
-  const before = createRunState({ seed: 0x21, classId: 'reaver', registries: createRegistries(beforeSource) });
-  const afterSource = cloneBundle();
-  afterSource.classes.find((row) => row.id === 'reaver').hpPerConTier += 3;
-  const registries = createRegistries(afterSource);
-  const after = createRunState({ seed: 0x22, classId: 'reaver', registries });
-  eq(after.maxHp, before.maxHp, 'legacy class coefficient is documented dead data');
+check('the legacy class coefficient is gone from the classes, not merely unread (#484)', () => {
+  for (const cls of contentBundle.classes) {
+    assert(!('hpPerConTier' in cls), `${cls.id} still authors hpPerConTier — the field was removed because no rule read it`);
+  }
+  const registries = createRegistries(cloneBundle());
+  const run = createRunState({ seed: 0x21, classId: 'reaver', registries });
+  eq(Number.isInteger(run.maxHp) && run.maxHp > 0, true, 'HP still derives from class maxHp + the CON rule with the field gone');
 });
 
 check('WIS 15 gives three Mana and the Starseer starter relic adds one flat Mana, total four', () => {

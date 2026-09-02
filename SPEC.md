@@ -182,7 +182,7 @@ effects: [
 
 **Opcode list** (closed set; extending it is an engine PR):
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`.
+- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`).
 - Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`.
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
@@ -627,8 +627,11 @@ formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
 
 **Level curve.** A fresh run starts at displayed level 1. A purchase increments the displayed
 level by one and grants exactly 1 configurable attribute point by default. Price purchase
-`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 800` and `costStep = 200`.
-Therefore five purchases cost `800 + 1000 + 1200 + 1400 + 1600 = 6000` and produce level 6.
+`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 20` and `costStep = 4`
+(retuned from 800 / 200 in #522: the fleet simulator measured the shipped ladder at under one
+level-up per full run against the owner's 10–20 per run; 20 / 4 measures 14.8 — see
+`docs/asks/asks-ledger.md` E13 and `tools/runsim.mjs --level-cost`).
+Therefore five purchases cost `20 + 24 + 28 + 32 + 36 = 140` and produce level 6.
 The starting level, first cost, step, points per level and any maximum are content data; the
 worked level-6 result is a curve receipt, not a second hard-coded total or an implied cap.
 
@@ -802,6 +805,13 @@ Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 
 4. **Ancient Rune Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 runes) / *Leave*.
 
 Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
+
+**Quest chains (E12, #257).** Every committed choice is a run-history fact (`model/quests.js recordEventChoice`: `{ eventId, choiceId, actNumber, floor, mapNodeId }`, no wall clock). Two gates read those facts, both authored as sidecar data beside the events (`content/events.js`) so the validated event schema stays closed:
+
+- **Choice-level** — `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs; `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest. Leave stays requirement-free so a branch can never trap.
+- **Event-level (quest steps)** — `eventHistoryRequirements[eventId]`, the same grammar; `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback. `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves exactly as before.
+
+The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Nameless at Rest** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
 
 ---
 
@@ -1049,6 +1059,17 @@ keeps the same state and focus contract without meaningful animation.
   hover/focus remains the comparison path. The primary combat-power term shown to players is
   **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
   **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
+
+  Equipment receipts are read models, never re-derived in a screen: the equipment receipt panel
+  (`.armoury-equipment-receipts`, mounted in the Character view's Equipment cards card and in the
+  Stats tray) renders the exact equipment card packages, the equip requirements, the Poise
+  threshold (`.player-poise-receipt`) and the **Equip load** (`.player-load-receipt`,
+  `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word
+  decided by the framework Weight Class service (`registries.framework.weightClass`, capacity from
+  Constitution and Strength plus `mechanics.weight.capacityBase`). Load counts each equipped
+  armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`), and the
+  item card's Weight label reads the same `pieceWeight` rule, so item and total agree by
+  construction.
 
   These ids and keys describe the existing data-driven Quick Menu and Armoury structures. Menu
   records are constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records

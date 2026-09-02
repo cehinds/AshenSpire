@@ -835,7 +835,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -892,7 +892,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -932,7 +932,8 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     message: 'The saved run will replace changes made since your last save.',
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
-    tone: 'danger',
+    // Whether this reads as destructive is the ConfirmationRegistry's call.
+    tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
@@ -957,7 +958,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
     confirmLabel: 'Quit without saving',
     consequence: 'LEAVES THE RUN',
-    tone: 'danger',
+    tone: registries.framework.confirmationTone('action.quitWithoutSaving'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
@@ -1550,6 +1551,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
+      itemUpgradeLevels: run.itemUpgradeLevels,
       armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,
@@ -1838,6 +1840,9 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
+    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
+    // leaving it, and the screen carries its own LEAVE.
+    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -2089,6 +2094,7 @@ function coopShrineShot() {
     maxHp: run.maxHp,
     cinders: run.cinders,
     smithingStones: run.smithingStones,
+    itemUpgradeLevels: { ...(run.itemUpgradeLevels || {}) },
     armamentLevels: { ...run.armamentLevels },
     deckSize: run.deck.length,
   };
@@ -2575,6 +2581,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // saves.listArchives. The instrument still opens the section by the
   // player's own door: Profile on the title screen.
   saves.ensureProfile();
+  // A PROFILE THE PLAYER HAS TOUCHED, not a second fresh one. Two untouched
+  // profiles are the same bytes, and the archive de-duplicates by content
+  // (save.js archiveMeta): restoring A over an identical B set B aside INTO
+  // A's own entry — the drawer read "seen 2 times" instead of growing, and
+  // tools/holdconfirm.mjs read "entries 1 -> 1" as a restore that set nothing
+  // aside. A real outgoing profile is never byte-identical to the one it
+  // replaces (it carries its results), so the pose writes one setting through
+  // the real writer — the default value, so nothing behaves differently — and
+  // the two profiles are distinct the way two real ones are. ONLY WHEN THE
+  // PROFILE IS UNTOUCHED: ?shotSettings has already written the settings an
+  // instrument asked for (holdConfirm 'off' or 'long' on this very screen),
+  // and those bytes already make the profile distinct — overwriting them
+  // would pose the default where the caller asked for an edge (Codex, #537).
+  {
+    const posed = saves.loadMeta();
+    if (!Object.keys(posed.settings || {}).length) saves.saveMeta({ ...posed, settings: { holdConfirm: 'normal' } });
+  }
   saves.startNewProfile();
   showTitle();
   showProfile();

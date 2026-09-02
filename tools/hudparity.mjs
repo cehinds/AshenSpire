@@ -939,38 +939,56 @@ async function selftest() {
       expectRed: /FINDING P8\/top-row .*cinders-centre=/,
     },
     {
+      // #498: all five hudmeta plants died when the monolithic HUD template was
+      // split into component builders (cindersCounterHtml, buildMetadataTrailHtml).
+      // Same intents, re-pointed at the builders' own emit lines.
       name: 'the shared HUD drops Cinders',
       file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>',
-      replace: '          <!-- Cinders removed by plant -->',
+      find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
+      replace: '    <!-- Cinders removed by plant -->',
       expectRed: /FINDING P8\/top-row .*cinders-count=0/,
     },
     {
       name: 'the shared HUD duplicates Cinders',
       file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>',
-      replace: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span><span class="hud-cinders">⛁ ${esc(cinders)}</span>',
+      find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
+      replace: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span><span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
       expectRed: /FINDING P8\/top-row .*cinders-count=2/,
     },
     {
+      // The centre and the right metadata are separate builders now, so this
+      // needs one edit in each: the centre loses the class, the act field
+      // gains it.
       name: 'Cinders moves from the centre into right metadata',
-      file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>',
-      replace: '          <span>⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act hud-cinders">${esc(actText)}</span>',
+      edits: [{
+        file: 'src/ui/components/hudmeta.js',
+        find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
+        replace: '    <span>⛁ ${esc(model.properties.value)}</span>',
+      }, {
+        file: 'src/ui/components/hudmeta.js',
+        find: "    <span class=\"hud-act\" ${uiComponentAttrs(UI.metadataField, 'act')}>${progressHtml(act.value, act.total, act.label)}</span>",
+        replace: "    <span class=\"hud-act hud-cinders\" ${uiComponentAttrs(UI.metadataField, 'act')}>${progressHtml(act.value, act.total, act.label)}</span>",
+      }],
       expectRed: /FINDING P8\/top-row .*cinders-placement/,
     },
     {
       name: 'the shared HUD drops Floor',
       file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-floor">${esc(floorText)}</span>',
-      replace: '          <!-- Floor removed by plant -->',
+      find: "    <span class=\"hud-floor\" ${uiComponentAttrs(UI.metadataField, 'floor')}>${progressHtml(floor.value, floor.total, floor.label)}</span>",
+      replace: '    <!-- Floor removed by plant -->',
       expectRed: /FINDING P8\/top-row .*floor-count=0/,
     },
     {
       name: 'Floor moves from right metadata into the centre',
-      file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>\n          <span class="hud-floor">${esc(floorText)}</span>',
-      replace: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n          <span class="hud-floor">${esc(floorText)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>',
+      edits: [{
+        file: 'src/ui/components/hudmeta.js',
+        find: "    <span class=\"hud-floor\" ${uiComponentAttrs(UI.metadataField, 'floor')}>${progressHtml(floor.value, floor.total, floor.label)}</span>",
+        replace: '',
+      }, {
+        file: 'src/ui/components/hudmeta.js',
+        find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
+        replace: "    <span class=\"hud-cinders\">⛁ ${esc(model.properties.value)}</span><span class=\"hud-floor\">${esc(model.properties.value)}</span>",
+      }],
       expectRed: /FINDING P8\/top-row .*floor-placement/,
     },
     {

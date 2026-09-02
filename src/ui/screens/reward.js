@@ -50,7 +50,7 @@ import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -311,7 +311,11 @@ export function mountRewards(app, {
     // The action is registered in secondbeat's enumerable table, so native
     // keyboard/gamepad presses enter the same shared armPress door as pointer
     // and touch; the configured dial remains the one duration authority.
-    beatArmer(meta, registries)(cont, 'rewardContinue', { onConfirm: finish });
+    beatArmer(meta, registries)(cont, 'rewardContinue', {
+      question: 'Leave these rewards and continue?',
+      confirmLabel: 'CONTINUE',
+      onConfirm: finish,
+    });
 
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))

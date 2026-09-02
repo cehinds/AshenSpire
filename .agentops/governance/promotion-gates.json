@@ -41,7 +41,7 @@
       ],
       "entry": "The Gate-A head is integrated to dev through the normal reviewable PR process, and the intended hosted development artifact and player flow are verified against the exact resulting dev SHA.",
       "required_evidence": [
-        "hosted-evidence-url"
+        "hosted-verification-receipt"
       ],
       "grants": [],
       "not_satisfied_by": [
@@ -66,7 +66,7 @@
       ],
       "entry": "Gates A and B pass and remain fresh; the proposed test target is exactly the hosted-verified dev SHA; current test is an ancestor of it, so the mutation is a true fast-forward; the exact test head, rollback target and procedure, branch protections and mutation evidence are recorded; and there is no P0/P1 WITHHOLD, unresolved required reviewer, stale evidence, or scope/artifact mismatch.",
       "required_evidence": [
-        "hosted-evidence-url",
+        "hosted-verification-receipt",
         "rollback-procedure"
       ],
       "grants": [],

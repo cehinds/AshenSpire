@@ -140,7 +140,7 @@ export function findings(r) {
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || /hud-context|grid-row:\s*2/.test(r.hud + r.css.replace(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//g, ''))
+      || /(?:\.hud-run-meta|\.hud-context)[^{]*\{[^}]*grid-row:\s*2/.test(r.hud + r.css.replace(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//g, ''))
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
@@ -352,26 +352,31 @@ export function findings(r) {
   if (!/export function smithSelectionModel/.test(r.smithSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.smithSelectionModel)
       || !/function groupedAffected\(cards\)/.test(r.smithSelectionModel)
-      || !/armamentId:\s*candidate\.armamentId/.test(r.smithSelectionModel)
+      || !/itemRef,/.test(r.smithSelectionModel)
       || !/currentLevel:\s*candidate\.currentLevel[\s\S]*nextLevel:\s*candidate\.nextLevel[\s\S]*cost:\s*candidate\.cost[\s\S]*stones:\s*candidate\.stones[\s\S]*shortfall:\s*candidate\.shortfall[\s\S]*affordable:\s*candidate\.affordable/.test(r.smithSelectionModel)
-      || !/affectedRows:\s*groupedAffected\(candidate\.affectedCards\)/.test(r.smithSelectionModel)
+      || !/affectedRows:\s*itemKind === 'armament'[\s\S]*groupedAffected\(candidate\.previewCards \|\| candidate\.affectedCards\)[\s\S]*genericAffected\(candidate\)/.test(r.smithSelectionModel)
       || !/canConfirm:\s*Boolean\(selected\?\.affordable\)/.test(r.smithSelectionModel)
       || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
       || !/role', 'dialog'/.test(r.smithUpgradeModal)
       || !/aria-modal/.test(r.smithUpgradeModal)
       || !/<button[^>]+smith-back/.test(r.smithUpgradeModal)
       || !/<button[^>]+smith-confirm/.test(r.smithUpgradeModal)
-      || !/tooltip: false/.test(r.smithUpgradeModal)
-      || !/card\.dataset\.armamentId = item\.armamentId/.test(r.smithUpgradeModal)
+      || !/attachTooltip\(card/.test(r.smithUpgradeModal)
+      || !/card\.dataset\.itemRef = item\.itemRef/.test(r.smithUpgradeModal)
       || !/Tier \$\{item\.currentLevel\} → \$\{item\.nextLevel\}/.test(r.smithUpgradeModal)
       || !/selected\.affectedRows\.map/.test(r.smithUpgradeModal)
-      || !/confirm\.disabled = !model\.properties\.canConfirm/.test(r.smithUpgradeModal)
+      || !/confirm\.disabled = !selected/.test(r.smithUpgradeModal)
+      || !/confirm\.setAttribute\('aria-disabled', String\(!model\.properties\.canConfirm\)\)/.test(r.smithUpgradeModal)
+      || !/canCommit: \(\) => Boolean\(currentModel\.properties\.canConfirm\)/.test(r.smithUpgradeModal)
+      || !/blockedTitle: `Cannot upgrade \$\{selected\.name\}`/.test(r.smithUpgradeModal)
       || !/onConfirm\(selectedId\)/.test(r.smithUpgradeModal)
       || !/returnFocusElement: smithOption/.test(r.rest)
       || !/const smith = smithingPlan\(registries, run\)/.test(r.rest)
-      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedArmamentId\)/.test(r.rest)
+      // #522: the Shrine hands the model its multi-use mode, and the model —
+      // never the modal — derives every stay/leave sentence from it.
+      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse \}\)/.test(r.rest)
       || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
-      || !/commitSmithing\(registries, run, armamentId\)/.test(r.rest)
+      || !/commitSmithing\(registries, run, itemRef\)/.test(r.rest)
       || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');

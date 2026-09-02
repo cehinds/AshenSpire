@@ -89,7 +89,7 @@ function makeCombatFromRun(registries, run, seed = 0x5157) {
       deck: run.deck,
       relicIds: run.relics,
       loadout: run.loadout,
-      armamentLevels: run.armamentLevels,
+      itemUpgradeLevels: run.itemUpgradeLevels,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
     },
     enemyIds: ['fellWarden'],
@@ -128,8 +128,8 @@ function snapshotOrdinaryIdentity(snapshot) {
 
 function activeSnapshotRun(registries, snapshotRight, snapshotLeft, topRight = snapshotRight, topLeft = snapshotLeft) {
   const source = makeRun(registries, snapshotRight, snapshotLeft);
-  source.armamentLevels = Object.fromEntries(
-    [...new Set([snapshotRight, snapshotLeft].filter(Boolean))].map((armamentId) => [armamentId, 1]),
+  source.itemUpgradeLevels = Object.fromEntries(
+    [...new Set([snapshotRight, snapshotLeft].filter(Boolean))].map((armamentId) => [`armament/${armamentId}`, 1]),
   );
   stampDeck(registries, source);
   attacks(source).forEach((card, index) => {
@@ -143,7 +143,7 @@ function activeSnapshotRun(registries, snapshotRight, snapshotLeft, topRight = s
   const combat = makeCombatFromRun(registries, source);
   spreadGeneratedAttacksAcrossPiles(combat);
   const run = makeRun(registries, topRight, topLeft);
-  run.armamentLevels = { ...source.armamentLevels };
+  run.itemUpgradeLevels = { ...source.itemUpgradeLevels };
   run.combatEntered = {
     nodeId: 'weapon-snapshot-node',
     encounterId: 'weapon-snapshot-encounter',
@@ -209,6 +209,8 @@ if (process.argv.includes('--selftest')) {
 
 const empty = makeRun(baseRegistries, null, null);
 const shieldRight = makeRun(baseRegistries, 'roundShield', null);
+const shieldLeft = makeRun(baseRegistries, null, 'roundShield');
+const swordShield = makeRun(baseRegistries, 'straightSword', 'roundShield');
 const swordRight = makeRun(baseRegistries, 'straightSword', null);
 const swordLeft = makeRun(baseRegistries, null, 'straightSword');
 const daggerLeft = makeRun(baseRegistries, null, 'dagger');
@@ -221,7 +223,9 @@ const creationLeft = createRunState({
 });
 
 check(profiles(empty).every((id) => id === 'unarmedAttack'), 'zero weapons produce Unarmed in all authored attack slots', profiles(empty).join(','));
-check(profiles(shieldRight).every((id) => id === 'unarmedAttack'), 'a right-hand shield consumes zero attack slots', profiles(shieldRight).join(','));
+check(profiles(shieldRight).every((id) => id === 'shieldAttack'), 'a lone right-hand shield owns its low fallback Strike', profiles(shieldRight).join(','));
+check(profiles(shieldLeft).every((id) => id === 'shieldAttack') && hands(shieldLeft).every((hand) => hand === 'left'), 'a lone off-hand shield supplies Strike when the main hand is empty', profiles(shieldLeft).join(','));
+check(profiles(swordShield).every((id) => id === 'bladeAttack') && hands(swordShield).every((hand) => hand === 'right'), 'a paired shield does not steal basic Strikes from the main-hand weapon', profiles(swordShield).join(','));
 check(profiles(swordRight).every((id) => id === 'bladeAttack'), 'right-only Straight Sword owns all authored attack slots', profiles(swordRight).join(','));
 check(profiles(swordLeft).every((id) => id === 'bladeAttack'), 'left-only Straight Sword owns all authored attack slots', profiles(swordLeft).join(','));
 check(profiles(creationLeft).every((id) => id === 'bladeAttack'), 'run creation invokes the same left-hand composition service');
@@ -275,7 +279,7 @@ const corruptRegistries = registriesWith({ armamentPatches: { straightSword: { w
 check(throwsNamed(() => makeRun(corruptRegistries, 'straightSword', null), /missing attack profile/), 'claimed package with missing filler/profile is content-invalid, never Unarmed');
 
 const mutable = makeRun(baseRegistries, 'straightSword', null);
-mutable.armamentLevels.straightSword = 1;
+mutable.itemUpgradeLevels['armament/straightSword'] = 1;
 stampDeck(baseRegistries, mutable);
 const ordinaryMutable = mutable.deck.find((card) => !card.equipmentRole);
 ordinaryMutable.upgraded = true;
@@ -300,7 +304,7 @@ const reboundAttacks = attacks(mutable);
 check(JSON.stringify(reboundAttacks.map((card) => ({ instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, acquiredAt: card.acquiredAt }))) === JSON.stringify(attackIdentityBefore)
   && reboundAttacks.every((card, index) => card.upgraded === false
     && card.sourceArmamentId === mutablePlan.slots[index].weaponId
-    && card.smithingLevel === (mutable.armamentLevels[mutablePlan.slots[index].weaponId] || 0)),
+    && card.smithingLevel === (mutable.itemUpgradeLevels[`armament/${mutablePlan.slots[index].weaponId}`] || 0)),
 'slot/instance/acquisition identity survives while equipment upgrade identity follows source armament and tier');
 check(JSON.stringify(mutable.deck.filter((card) => !card.equipmentRole)) === ordinaryBefore,
   'ordinary-card per-copy upgrade identity survives equipment rebind unchanged');

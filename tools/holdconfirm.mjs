@@ -32,7 +32,8 @@
 //      perform a hold at all can still leave every event screen. This is the
 //      property that makes "the off switch lives on a debug page" safe, and it
 //      is checked against the content rather than assumed.
-//   4. `off` IS THE OLD BEHAVIOUR, byte for byte: one tap commits.
+//   4. `off` DISABLES THE HOLD SHORTCUT, NOT THE REVIEW. One tap still opens
+//      the same confirmation modal; only that modal may commit the action.
 //   5. IT FAILS CLOSED. `--fail-closed` hands the module an op it has never
 //      heard of and requires a hold, and prints every opcode the game declares
 //      that would now hold. Viki's gate: the first draft enumerated the
@@ -57,7 +58,7 @@
 //      is a gap. Neither is visible from a source tree.
 //   9. END TURN ALWAYS HOLDS while the dial is enabled — the literal ruling on
 //      "same with ending turn". A spent hand does not remove the beat. Off
-//      restores the old one-tap path.
+//      removes the shortcut while preserving the confirmation path.
 //  9b. AND THE DIAL IS ONE SWITCH OVER ALL THREE INPUTS. Constantine,
 //      2026-08-17: "if hold is toggled, then it should be the same, in all
 //      instances. for ending turn, using flask, event choice, shrine rest."
@@ -190,12 +191,15 @@ const STATE = `(() => {
   const bars = [...box.querySelectorAll('button.ev-choice')];
   const binding = bars.filter((b) => b.dataset.binding === '1');
   const held = bars.filter((b) => b.classList.contains('beat-hold'));
+  const optionControls = bars.filter((b) => b.dataset.optionDecision);
   return {
     bars: bars.length,
     binding: binding.length,
     held: held.length,
+    optionControls: optionControls.length,
     hints: box.querySelectorAll('.hold-hint').length,
     committed: bars.length === 0,
+    reviewing: !!document.querySelector('.confirmation-modal'),
     holdMs: held.length ? Number(held[0].dataset.holdMs) : null,
     progress: held.length ? Number(held[0].dataset.holdProgress || 0) : null,
     holdState: held.length ? held[0].dataset.hold : null,
@@ -637,13 +641,19 @@ async function main() {
       await touch('touchStart', p); await wait(40); await touch('touchEnd', p);
       await wait(220);
       const after = await ev(STATE);
-      ok(`off commits on a tap (the pre-hold behaviour)`, mutate ? true : after.committed, `committed=${after.committed}`);
+      ok(`off sends a tap to review and commits NOTHING`, !after.committed && after.reviewing,
+        `committed=${after.committed} confirmation=${after.reviewing}`);
+      const tapConfirm = await pointOf('.confirmation-confirm');
+      if (await press(tapConfirm, 30)) await wait(260);
+      const afterTapConfirm = await ev(STATE);
+      ok(`the off-mode review can commit the choice`, afterTapConfirm.committed,
+        `committed=${afterTapConfirm.committed} confirmation=${afterTapConfirm.reviewing}`);
 
       // A mobile browser may turn a stationary long press into its native
-      // context gesture and suppress the trailing click. `off` still means
-      // one press commits; it must not secretly mean "release quickly enough
-      // for WebKit/Chromium to synthesize click". Re-open the same authored
-      // state because the tap above consumed its binding choice.
+      // context gesture and suppress the trailing click. `off` still means the
+      // review opens; it must not secretly mean "release quickly enough for
+      // WebKit/Chromium to synthesize click". Re-open the same authored state
+      // because the confirmed review above consumed its binding choice.
       await open('off');
       const heldPoint = await barPoint(0);
       if (!heldPoint) {
@@ -670,13 +680,21 @@ async function main() {
       })()`);
       await wait(260);
       const afterLongPress = await ev(STATE);
-      ok(`off commits on a mobile long press too`, mutate ? true : afterLongPress.committed,
-        `committed=${afterLongPress.committed}`);
+      ok(`off sends a mobile long press to review and commits NOTHING`,
+        !afterLongPress.committed && afterLongPress.reviewing,
+        `committed=${afterLongPress.committed} confirmation=${afterLongPress.reviewing}`);
+      const longConfirm = await pointOf('.confirmation-confirm');
+      if (await press(longConfirm, 30)) await wait(260);
+      const afterLongConfirm = await ev(STATE);
+      ok(`the long-press review can commit the choice`, afterLongConfirm.committed,
+        `committed=${afterLongConfirm.committed} confirmation=${afterLongConfirm.reviewing}`);
       continue;
     }
 
-    ok(`the binding bars hold`, before.held > 0 && before.held === before.binding,
-      `${before.binding} binding, ${before.held} armed, ${before.hints} hint(s), ${before.holdMs} ms`);
+    ok(`every option bar offers the hold shortcut and every binding bar is included`,
+      before.binding > 0 && before.held >= before.binding
+        && before.held === before.optionControls && before.hints === before.held,
+      `${before.binding} binding, ${before.optionControls} option, ${before.held} armed, ${before.hints} hint(s), ${before.holdMs} ms`);
 
     // ---- 1. THE ABORT. Press the bar a low thumb finds, let go early.
     const p = await barPoint(0);
@@ -804,6 +822,45 @@ async function main() {
           mid.img === true && Number.isFinite(mid.painted) && Math.abs(mid.painted - mid.truth) <= 2,
           `painted ${Number.isFinite(mid.painted) ? mid.painted.toFixed(1) : mid.painted}% vs --hold ${mid.truth.toFixed(1)}%`
           + ` (>2 points apart means the fill is eased, or gone)`);
+        await M('mouseMoved', 5, 5);
+      }
+    }
+
+    // ---- 4b. A PRESS THE POINTER WALKS AWAY FROM IS AN ABORT, NOT A TAP.
+    //
+    // Pointer capture keeps the trailing `click` aimed at the bar even though
+    // the finger has left it, so a thumb that pressed a choice bar and then
+    // tried to scroll must land NOTHING: no commit (rule 1) and no review
+    // modal either — the tap meaning belongs to a short press that stayed put.
+    // Found by review on the promotion of dev (#528): the slop cancel stopped
+    // the hold but left the press's tap state armed, so the click it generated
+    // opened the confirmation modal under a scrolling thumb.
+    {
+      const b = await pointOf('button.ev-choice.beat-hold');
+      if (!b) skip('the moved-away press', 'unasked', 'no held bar to press');
+      else {
+        const M = (t, x, y, extra = {}) => cdp.send('Input.dispatchMouseEvent', { type: t, x, y, button: t === 'mouseMoved' ? 'none' : 'left', clickCount: 1, ...extra }, sessionId);
+        // The painted-fill block above ends in a short press, and a short press
+        // on an option control REVIEWS by design — so a modal may be open here.
+        // Close it first and assert the clean start, or this case reads the
+        // previous case's modal as its own finding.
+        if ((await ev(STATE)).reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(300); }
+        const before = await ev(STATE);
+        ok(`the moved-away press starts from a clean screen (no review open)`, !before.reviewing && before.bars > 0,
+          `reviewing=${before.reviewing} bars=${before.bars}`);
+        await M('mousePressed', b.x, b.y, { buttons: 1 });
+        await wait(120);
+        // Well past HOLD_POINTER_SLOP (12 local px), in two steps like a real drag.
+        await M('mouseMoved', b.x + 30, b.y + 30, { buttons: 1 });
+        await M('mouseMoved', b.x + 60, b.y + 60, { buttons: 1 });
+        await wait(120);
+        await M('mouseReleased', b.x + 60, b.y + 60, { buttons: 0 });
+        await wait(400);
+        const after = await ev(STATE);
+        ok(`a press the pointer walked away from opens no review and commits nothing`,
+          !after.reviewing && !after.committed && after.bars === before.bars && after.holdState !== 'holding',
+          `reviewing=${after.reviewing} committed=${after.committed} bars ${before.bars} -> ${after.bars} holdState=${after.holdState}`);
+        if (after.reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(250); }
         await M('mouseMoved', 5, 5);
       }
     }
@@ -979,7 +1036,12 @@ async function main() {
       // open", the exact inversion the useFlask note above records. Bar faces
       // first, then the rows they reveal; a selector that matches nothing
       // still presses nothing, so non-shop surfaces are untouched.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '#remove-opt', '.flask-slot', '[data-face="bar:sell"]']) {
+      // THE ✕ MOVED BEHIND LOAD (title.js → saveSlotSelector.js): the title
+      // menu is five verbs and the slot rows with their delete control open
+      // behind LOAD. Observed red without this press at dev = e5d9c981
+      // ('11 claimed, 3 absent: … deleteSave') — the census reading a closed
+      // selector as "not wired", the useFlask inversion again.
+      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.flask-slot', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1076,11 +1138,16 @@ async function main() {
         // committing would look exactly like a working feature.
         await press(p, Math.round(a.holdMs * 0.4));
         const b1 = await st();
+        const b1Review = await ev(`!!document.querySelector('.confirmation-modal')`);
         ok(`a release before the fill lands does NOT end the turn`,
-          b1.turn === a.turn && b1.phase === a.phase,
-          `turn ${a.turn} -> ${b1.turn}, phase ${a.phase} -> ${b1.phase}`);
+          b1.turn === a.turn && b1.phase === a.phase && b1Review,
+          `turn ${a.turn} -> ${b1.turn}, phase ${a.phase} -> ${b1.phase}, confirmation=${b1Review}`);
+        // A short press now has a positive meaning: REVIEW. Close that veil
+        // before testing the direct-hold shortcut, or the veil correctly owns
+        // the second press and this harness reports a false lockout.
+        await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
         // 2. A COMPLETED HOLD ENDS IT.
-        await press(p, a.holdMs + 350);
+        await press(await pointOf('.end-turn'), a.holdMs + 350);
         await wait(900);
         const b2 = await st();
         ok(`a completed hold ends the turn`, b2 && (b2.turn > a.turn || b2.phase !== 'player'),
@@ -1104,18 +1171,32 @@ async function main() {
       }
 
       // 4. OFF IS STILL OFF. The characteristic remains `hold`, but the dial
-      // removes its timer and visible hint, and a pointer tap commits once.
+      // removes its timer, visible hint and direct-commit shortcut. Review is
+      // universal and the modal's explicit answer remains the commit door.
       await openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: 'off' }) });
       const off = await st();
       ok(`Off removes End Turn's hold timer and hint`, off && off.holdMs === 0 && off.hint === false,
         off ? `beat=${off.beat} ms=${off.holdMs} hint=${off.hint}` : 'no combat state');
+      await ev(`document.querySelector('.end-turn')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const op = await pointOf('.end-turn');
       if (!off || !op) ok(`Off leaves End Turn pressable`, false, 'no button box');
       else {
-        await press(op, 30); await wait(900);
+        // Dispatch on the control itself here. The normal-dial cells above
+        // already prove viewport hit testing; this cell owns the zero-duration
+        // pointer lifecycle, which must not depend on a trailing browser click.
+        await ev(`(() => { const b = document.querySelector('.end-turn'); const r = b.getBoundingClientRect();
+          b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 91, pointerType: 'touch', isPrimary: true, button: 0, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }));
+          b.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 91, pointerType: 'touch', isPrimary: true, button: 0, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 })); return true; })()`);
+        await wait(300);
         const off2 = await st();
-        ok(`Off restores one-tap pointer End Turn`, off2 && (off2.turn > off.turn || off2.phase !== 'player'),
-          `turn ${off.turn} -> ${off2 && off2.turn}, phase ${off.phase} -> ${off2 && off2.phase}`);
+        const offReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+        ok(`Off sends one pointer press to review and does not end the turn`,
+          off2 && off2.turn === off.turn && off2.phase === off.phase && offReview,
+          `turn ${off.turn} -> ${off2 && off2.turn}, phase ${off.phase} -> ${off2 && off2.phase}, confirmation=${offReview}`);
+        await press(await pointOf('.confirmation-confirm'), 30); await wait(900);
+        const off3 = await st();
+        ok(`the off-mode confirmation ends the turn`, off3 && (off3.turn > off.turn || off3.phase !== 'player'),
+          `turn ${off.turn} -> ${off3 && off3.turn}, phase ${off.phase} -> ${off3 && off3.phase}`);
       }
 
       // 5. THE KEY THAT CANNOT BE THE CURSOR'S. `.end-turn` matches input.js's
@@ -1229,30 +1310,40 @@ async function main() {
         }
         const drive = { key: (t) => holdKey(row.key, t), pad: (t) => holdPad(row.btn, t) };
         for (const input of ['key', 'pad']) {
-          // SHORT — under the dial. On `normal` this is the ABORT and it is the
-          // cell that matters; on `off` the same short press IS the whole action.
+          // SHORT — under the dial. Review is universal: both enabled and off
+          // open the modal and commit nothing. The dial governs only whether a
+          // completed hold may take the direct-commit shortcut.
           await row.open(dial);
           if (row.sel) await focusOn(row.sel);
           const a0 = await row.read();
           await drive[input](dial === 'off' ? 60 : Math.round((ms || 600) * 0.35));
           await wait(600);
           const a1 = await row.read();
-          if (dial === 'off') {
-            ok(`${row.id}: OFF, one ${input} press does ${row.of} — the pre-hold behaviour`,
-              row.moved(a0, a1), `${a0} -> ${a1}`);
-          } else {
-            ok(`${row.id}: ON, a short ${input} press does NOT ${row.of}`, !row.moved(a0, a1), `${a0} -> ${a1}`);
-          }
+          const shortReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+          ok(`${row.id}: ${dial === 'off' ? 'OFF' : 'ON'}, a short ${input} press does NOT ${row.of} and opens review`,
+            !row.moved(a0, a1) && shortReview, `${a0} -> ${a1}, confirmation=${shortReview}`);
+          await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
           // LONG — past the dial. Without this half, a key that had simply
-          // stopped working would pass the abort cell forever.
+          // stopped working would pass the tap cell forever. Enabled commits
+          // directly; off still opens review and waits for its explicit answer.
           await row.open(dial);
           if (row.sel) await focusOn(row.sel);
           const b0 = await row.read();
           await drive[input]((ms || 600) + 400);
           await wait(700);
           const b1 = await row.read();
-          ok(`${row.id}: ${dial === 'off' ? 'OFF' : 'ON'}, a held ${input} press DOES ${row.of}`,
-            row.moved(b0, b1), `${b0} -> ${b1}`);
+          const longReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+          if (dial === 'off') {
+            ok(`${row.id}: OFF, a held ${input} press does NOT ${row.of} and opens review`,
+              !row.moved(b0, b1) && longReview, `${b0} -> ${b1}, confirmation=${longReview}`);
+            await press(await pointOf('.confirmation-confirm'), 30); await wait(700);
+            const b2 = await row.read();
+            ok(`${row.id}: OFF, the ${input}-opened confirmation DOES ${row.of}`,
+              row.moved(b0, b2), `${b0} -> ${b2}`);
+          } else {
+            ok(`${row.id}: ON, a held ${input} press DOES ${row.of}`,
+              row.moved(b0, b1) && !longReview, `${b0} -> ${b1}, confirmation=${longReview}`);
+          }
         }
       }
     }
@@ -1280,8 +1371,8 @@ async function main() {
 
   // ---- THE SHRINE: one screen, two forms -----------------------------------
   {
-    console.log(`\n  THE SHRINE — Rest holds, the Smith confirms (two mistakes, two answers)`);
-    await openShot('rest');
+    console.log(`\n  THE SHRINE — Rest holds; Smith Upgrade reviews, including when blocked`);
+    await openShot('rest', { shotSmithingStones: 0 });
     if (mutate) {
       const rewired = await ev(`(() => {
         const b = document.querySelector('#rest-opt'); if (!b) return 0;
@@ -1299,107 +1390,117 @@ async function main() {
       ok(`Rest owes a HOLD`, restBeat.beat === 'hold' && restBeat.ms > 0, `beat=${restBeat.beat} ms=${restBeat.ms}`);
       const rp = await pointOf('#rest-opt');
       await press(rp, Math.round(restBeat.ms * 0.4));
-      ok(`a release before the fill lands does NOT spend the shrine`, await onShrine(), `still on the shrine=${await onShrine()}`);
+      const restReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+      ok(`a release before the fill lands does NOT spend the shrine and opens review`,
+        await onShrine() && restReview, `still on the shrine=${await onShrine()} confirmation=${restReview}`);
+      await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
 
-      // The Smith. Reveal the grid, then press a candidate.
-      const sp = await pointOf('#smith-opt');
-      await press(sp, 30); await wait(250);
-      if (mutate) {
-        // The pre-#115 shape of THIS ask: one tap on a candidate commits.
-        await ev(`(() => { for (const el of document.querySelectorAll('#smith-grid .card')) {
-          const c = el.cloneNode(true); el.parentNode.replaceChild(c, el);
-          c.addEventListener('click', () => { document.querySelector('#smith-grid').remove(); });
-        } })()`);
-        console.log(`    (mutation rewired every Smith candidate to commit on a pointer click)`);
-      }
-      const cardP = await pointOf('#smith-grid .card');
-      if (!cardP) ok(`the Smith grid offers a candidate`, false, 'no card in #smith-grid — nothing to confirm');
+      // The Smith's unaffordable edge is deliberately native-clickable. It
+      // must explain the block through the same review modal, publish the ARIA
+      // state, and never acquire a direct hold-commit path.
+      await press(await pointOf('#smith-opt'), 30); await wait(300);
+      await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
+      const cardP = await pointOf('.smith-candidate-card');
+      if (!cardP) ok(`the Smith modal offers an armament candidate`, false, 'no .smith-candidate-card — nothing to review');
       else {
-        await press(cardP, 30); await wait(260);
-        const armed = await ev(`(() => {
-          const panel = document.querySelector('.beat-confirm');
-          return { panel: !!panel,
-                   detail: panel ? (panel.querySelector('.beat-detail') || {}).innerHTML || '' : '',
-                   yes: !!document.querySelector('.beat-confirm .beat-yes'),
-                   no: !!document.querySelector('.beat-confirm .beat-no'),
-                   stillHere: !!document.querySelector('#smith-grid'),
-                   armedCard: document.querySelectorAll('.beat-armed').length };
-        })()`);
-        ok(`one tap on a candidate ARMS, it does not smith`, armed.panel && armed.stillHere,
-          `panel=${armed.panel} still on the shrine=${armed.stillHere} armed card(s)=${armed.armedCard}`);
-        // THE ASK, LITERALLY: "the upgrade preview, confirmable." A confirm
-        // panel with no preview in it is a modal, which is the thing the hold
-        // was chosen over.
-        ok(`the panel carries the upgrade preview a phone never had`, armed.detail.length > 0,
-          `.beat-detail is ${armed.detail.length} chars`);
-        ok(`and both answers are offered`, armed.yes && armed.no, `CONFIRM=${armed.yes} CANCEL=${armed.no}`);
-        // LAW 4 AND LAW 5 ON THE THING THIS BRANCH DREW. A confirm step is a
-        // NEW pair of targets on a phone and a NEW box in a wrapped grid, so
-        // both laws land on it the moment it exists — and neither is somebody
-        // else's tool's job to notice for me. The floor is read from the page's
-        // own `--tap-floor` rather than from the number 44, because the number
-        // has a home and a second copy of it here would be the defect this
-        // house is named for. NOT A FOURTH AXIS CHECKER: it measures the ONE
-        // container this branch added, and says so.
-        const box = await ev(`(() => {
-          const p = document.querySelector('.beat-confirm'); if (!p) return null;
-          // A CUSTOM PROPERTY READ OFF :root IS THE RAW TOKEN, NOT A NUMBER.
-          // The tap floor is a calc() over the zoom variable, so parseFloat of
-          // it is NaN -- which this check first read as 0 and then compared
-          // every button against, passing on any height at all. A floor of zero
-          // is not a floor; it is an assertion that cannot fail. So the value
-          // is RESOLVED by making the browser lay a box out at it.
-          const probe = document.createElement('div');
-          probe.style.cssText = 'position:absolute;left:-9999px;top:0;height:var(--tap-floor);width:var(--tap-floor)';
-          document.body.appendChild(probe);
-          const floor = +probe.getBoundingClientRect().height.toFixed(1);
-          probe.remove();
-          const btns = [...p.querySelectorAll('.beat-actions button')].map((b) => {
-            const r = b.getBoundingClientRect(); return { w: +r.width.toFixed(1), h: +r.height.toFixed(1) };
-          });
-          // The nearest ancestor that can actually scroll sideways, which is
-          // the only container Law 5 clause 1 is measured on. A document-level
-          // read is 0 by construction here and proves nothing.
-          let sc = p.parentElement, travel = null, which = null;
-          while (sc && sc !== document.body) {
-            const cs = getComputedStyle(sc);
-            if (/(auto|scroll)/.test(cs.overflowX + cs.overflow)) {
-              travel = sc.scrollWidth - sc.clientWidth; which = sc.className || sc.tagName; break;
-            }
-            sc = sc.parentElement;
-          }
-          const r = p.getBoundingClientRect();
-          return { floor, btns, travel, which, right: +r.right.toFixed(1), docW: document.documentElement.clientWidth };
-        })()`);
-        if (!box) ok(`the confirm panel obeys the floors`, false, 'no panel to measure');
-        else {
-          ok(`both answers meet the tap floor (Law 4)`,
-            box.floor > 0 && box.btns.length === 2 && box.btns.every((b) => b.h >= box.floor - 0.5 && b.w >= box.floor - 0.5),
-            `floor ${box.floor} px${box.floor > 0 ? '' : ' — THE FLOOR DID NOT RESOLVE, so this check could not fail'}`
-            + ` · ${box.btns.map((b) => `${b.w}x${b.h}`).join(' ')}`);
-          ok(`the panel adds no sideways travel to its own scroller (Law 5)`,
-            (box.travel === null || box.travel === 0) && box.right <= box.docW + 0.5,
-            `scroller ${box.which || '(none — nothing scrolls sideways above it)'} travel=${box.travel} · panel right edge ${box.right} of ${box.docW} px`);
+        await press(cardP, 30); await wait(300);
+        if (mutate) {
+          await ev(`(() => { const el = document.querySelector('.smith-confirm'); if (!el) return 0;
+            const c = el.cloneNode(true); el.parentNode.replaceChild(c, el);
+            c.addEventListener('click', () => document.querySelector('.smith-upgrade-modal')?.remove()); return 1; })()`);
+          console.log(`    (mutation rewired Smith Upgrade to leave review on one pointer click)`);
         }
-        // CANCEL puts it back.
-        const noP = await pointOf('.beat-confirm .beat-no');
-        if (!(await press(noP, 30))) ok(`CANCEL takes it back and nothing was smithed`, false, 'no CANCEL button — the panel never opened');
-        else {
-          await wait(250);
-          const afterNo = await ev(`({ panel: !!document.querySelector('.beat-confirm'), stillHere: !!document.querySelector('#smith-grid') })`);
-          ok(`CANCEL takes it back and nothing was smithed`, !afterNo.panel && afterNo.stillHere,
-            `panel=${afterNo.panel} still on the shrine=${afterNo.stillHere}`);
-        }
-        // CONFIRM commits.
-        const c2 = await pointOf('#smith-grid .card');
-        if (await press(c2, 30)) await wait(260);
-        const yesP = await pointOf('.beat-confirm .beat-yes');
-        if (!yesP) ok(`a confirmed upgrade commits and leaves the shrine`, false, 'the panel did not re-open — there was nothing to confirm');
-        else {
-          await press(yesP, 30); await wait(500);
-          ok(`a confirmed upgrade commits and leaves the shrine`, !(await onShrine()), `still on the shrine=${await onShrine()}`);
-        }
+        const blocked = await ev(`(() => { const b = document.querySelector('.smith-confirm'); return b ? {
+          nativeDisabled: b.disabled, aria: b.getAttribute('aria-disabled'), state: b.dataset.smithActionState,
+          option: b.dataset.optionDecision, tap: b.dataset.optionTap, hold: b.dataset.optionHold,
+          holdMs: Number(b.dataset.holdMs || 0), hint: !!b.querySelector('.hold-hint'), label: b.textContent.trim()
+        } : null; })()`);
+        ok(`blocked Smith Upgrade stays native-clickable and publishes its ARIA block`,
+          blocked && !blocked.nativeDisabled && blocked.aria === 'true' && blocked.state === 'blocked',
+          JSON.stringify(blocked));
+        ok(`blocked Smith Upgrade offers review but no hold-commit shortcut`,
+          blocked && blocked.option === 'smithUpgrade' && blocked.tap === 'modal'
+            && blocked.hold === 'blocked' && blocked.holdMs === 0 && !blocked.hint && /^Upgrade \(1\)$/.test(blocked.label),
+          JSON.stringify(blocked));
+
+        // Native clickability is the contract on the blocked button: ARIA
+        // communicates the block, while an actual disabled attribute would
+        // suppress this explanatory review entirely.
+        await ev(`document.querySelector('.smith-confirm')?.click()`); await wait(300);
+        const blockedReview = await ev(`(() => { const p = document.querySelector('.confirmation-modal');
+          const y = p && p.querySelector('.confirmation-confirm'); return {
+            panel: !!p, title: (p && p.querySelector('h2')?.textContent) || '', detail: (p && p.querySelector('.confirmation-details')?.innerHTML) || '',
+            confirmVisible: !!(y && !y.hidden), smithOpen: !!document.querySelector('.smith-upgrade-modal') }; })()`);
+        ok(`one tap on blocked Smith Upgrade opens review; it does not smith`,
+          blockedReview.panel && blockedReview.smithOpen && !blockedReview.confirmVisible,
+          `panel=${blockedReview.panel} smith=${blockedReview.smithOpen} confirm-visible=${blockedReview.confirmVisible}`);
+        ok(`the blocked review explains the exact upgrade and cost`,
+          /^Cannot upgrade /.test(blockedReview.title) && blockedReview.detail.length > 0,
+          `${JSON.stringify(blockedReview.title)} detail=${blockedReview.detail.length} chars`);
+        await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
+
+        await ev(`(() => { const b = document.querySelector('.smith-confirm'); if (!b) return false; const r = b.getBoundingClientRect();
+          b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 92, pointerType: 'touch', isPrimary: true, button: 0, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 })); return true; })()`);
+        await wait(1000);
+        await ev(`(() => { const b = document.querySelector('.smith-confirm'); if (!b) return false; const r = b.getBoundingClientRect();
+          b.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 92, pointerType: 'touch', isPrimary: true, button: 0, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 })); return true; })()`);
+        await wait(300);
+        const blockedAfterHold = await ev(`(() => { const p = document.querySelector('.confirmation-modal'); return {
+          panel: !!p, confirmVisible: !!(p && p.querySelector('.confirmation-confirm') && !p.querySelector('.confirmation-confirm').hidden),
+          smithOpen: !!document.querySelector('.smith-upgrade-modal'), shrine: !!document.querySelector('#rest-opt') }; })()`);
+        ok(`blocked Smith Upgrade cannot hold-commit`,
+          blockedAfterHold.panel && !blockedAfterHold.confirmVisible && blockedAfterHold.smithOpen && blockedAfterHold.shrine,
+          JSON.stringify(blockedAfterHold));
+        await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
       }
+
+      // Affordable is the other half: one tap reviews, a deliberate hold may
+      // commit directly, and the shared modal owns the preview and target laws.
+      await openShot('rest', { shotSmithingStones: 1 });
+      await press(await pointOf('#smith-opt'), 30); await wait(300);
+      await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
+      await press(await pointOf('.smith-candidate-card'), 30); await wait(300);
+      const ready = await ev(`(() => { const b = document.querySelector('.smith-confirm'); return b ? {
+        nativeDisabled: b.disabled, aria: b.getAttribute('aria-disabled'), state: b.dataset.smithActionState,
+        hold: b.dataset.optionHold, holdMs: Number(b.dataset.holdMs || 0), hint: !!b.querySelector('.hold-hint')
+      } : null; })()`);
+      ok(`affordable Smith Upgrade publishes the live hold shortcut`,
+        ready && !ready.nativeDisabled && ready.aria === 'false' && ready.state === 'actionable'
+          && ready.hold === 'commit' && ready.holdMs > 0 && ready.hint,
+        JSON.stringify(ready));
+      await press(await pointOf('.smith-confirm'), Math.round((ready && ready.holdMs || 600) * 0.35)); await wait(300);
+      const affordableReview = await ev(`(() => { const p = document.querySelector('.confirmation-modal'); return {
+        panel: !!p, detail: (p && p.querySelector('.confirmation-details')?.innerHTML) || '',
+        yes: !!(p && p.querySelector('.confirmation-confirm') && !p.querySelector('.confirmation-confirm').hidden),
+        no: !!(p && p.querySelector('.confirmation-cancel')), smithOpen: !!document.querySelector('.smith-upgrade-modal') }; })()`);
+      ok(`one tap on affordable Smith Upgrade opens review; it does not smith`,
+        affordableReview.panel && affordableReview.smithOpen, JSON.stringify(affordableReview));
+      ok(`the shared review carries the upgrade preview and both answers`,
+        affordableReview.detail.length > 0 && affordableReview.yes && affordableReview.no,
+        `detail=${affordableReview.detail.length} CONFIRM=${affordableReview.yes} CANCEL=${affordableReview.no}`);
+
+      const box = await ev(`(() => {
+        const p = document.querySelector('.confirmation-modal'); if (!p) return null;
+        const probe = document.createElement('div');
+        probe.style.cssText = 'position:absolute;left:-9999px;top:0;height:var(--tap-floor);width:var(--tap-floor)';
+        document.body.appendChild(probe); const floor = +probe.getBoundingClientRect().height.toFixed(1); probe.remove();
+        const btns = [...p.querySelectorAll('footer button:not([hidden])')].map((b) => { const r = b.getBoundingClientRect(); return { w: +r.width.toFixed(1), h: +r.height.toFixed(1) }; });
+        const r = p.getBoundingClientRect(); return { floor, btns, right: +r.right.toFixed(1), docW: document.documentElement.clientWidth };
+      })()`);
+      ok(`both answers meet the tap floor (Law 4)`, box && box.floor > 0 && box.btns.length === 2
+        && box.btns.every((b) => b.h >= box.floor - 0.5 && b.w >= box.floor - 0.5), JSON.stringify(box));
+      ok(`the panel adds no sideways travel (Law 5)`, box && box.right <= box.docW + 0.5,
+        box ? `panel right edge ${box.right} of ${box.docW} px` : 'no panel');
+      await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
+      const afterCancel = {
+        confirmation: await ev(`!!document.querySelector('.confirmation-modal')`),
+        smith: !!(await pointOf('.smith-confirm')),
+      };
+      ok(`CANCEL takes it back and nothing was smithed`,
+        !afterCancel.confirmation && afterCancel.smith,
+        `confirmation=${afterCancel.confirmation} smith=${afterCancel.smith}`);
+      await press(await pointOf('.smith-confirm'), (ready && ready.holdMs || 600) + 350); await wait(700);
+      ok(`a deliberate Smith hold commits and leaves the shrine`, !(await onShrine()), `still on the shrine=${await onShrine()}`);
     }
   }
 
@@ -1441,7 +1542,7 @@ async function main() {
     for (const shape of [{ w: 390, h: 844 }, { w: 360, h: 640 }]) {
       await cdp.send('Emulation.setDeviceMetricsOverride',
         { width: shape.w, height: shape.h, deviceScaleFactor: 2, mobile: true }, sessionId);
-      await openShot('rest');
+      await openShot('rest', { shotSmithingStones: 1 });
       // ⚠ THE DRIVE HAS TO ANSWER FOR ITSELF BEFORE THE PANEL DOES, AND THE FIRST
       // RUN OF THIS SECTION TAUGHT ME WHY. At 360x640 both cells went red with
       // `.beat-armed present=false` — no panel at all — and read exactly like the
@@ -1487,9 +1588,15 @@ async function main() {
       const sp = await step('#smith-opt', 'the Smith opener');
       if (!sp) continue;
       await press(sp, 30); await wait(250);
-      const cp = await step('#smith-grid .card', 'the first Smith candidate');
+      await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
+      const cp = await step('.smith-candidate-card', 'the first Smith candidate');
       if (!cp) continue;
       await press(cp, 30); await wait(300);
+      await ev(`document.querySelector('.smith-confirm')?.scrollIntoView({ block: 'center' })`); await wait(120);
+      const up = await step('.smith-confirm', 'the Smith Upgrade action');
+      if (!up) continue;
+      const upMs = Number(await ev(`Number(document.querySelector('.smith-confirm')?.dataset.holdMs || 0)`)) || 600;
+      await press(up, Math.round(upMs * 0.35)); await wait(300);
       // ONE READ, THE WHOLE PANEL AND BOTH ANSWERS, off the frame the app left.
       // NOTHING HERE SCROLLS ANYTHING: if the rect is on screen it is because
       // the APP put it there. A probe that positions its own target has already
@@ -1503,9 +1610,9 @@ async function main() {
           return { present: true, top: +r.top.toFixed(2), bottom: +r.bottom.toFixed(2),
                    whole: r.top >= -0.5 && r.bottom <= vh + 0.5 && r.left >= -0.5 && r.right <= vw + 0.5,
                    pct: r.width * r.height > 0 ? +(100 * overlap / (r.width * r.height)).toFixed(2) : 0 }; };
-        return { vh, panel: box('.beat-confirm'), yes: box('.beat-confirm .beat-yes'), no: box('.beat-confirm .beat-no'),
-                 armed: !!document.querySelector('.beat-armed'),
-                 armedWhole: (() => { const e = document.querySelector('.beat-armed'); if (!e) return false;
+        return { vh, panel: box('.confirmation-modal'), yes: box('.confirmation-confirm'), no: box('.confirmation-cancel'),
+                 armed: !!document.querySelector('.smith-confirm'),
+                 armedWhole: (() => { const e = document.querySelector('.smith-confirm'); if (!e) return false;
                    const r = e.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; })() };
       })()`);
       const at = `${shape.w}x${shape.h}`;
@@ -1522,7 +1629,7 @@ async function main() {
       // armed is being asked to confirm an unnamed thing.
       ok(`and the armed card it is asking about is still visible at ${at}`,
         seen.armed && seen.armedWhole,
-        `.beat-armed present=${seen.armed} at least partly on screen=${seen.armedWhole}`);
+        `.smith-confirm present=${seen.armed} at least partly on screen=${seen.armedWhole}`);
     }
     await cdp.send('Emulation.setDeviceMetricsOverride',
       { width: SHAPE.w, height: SHAPE.h, deviceScaleFactor: 2, mobile: true }, sessionId);
@@ -1556,9 +1663,9 @@ async function main() {
       if (!cp) ok(`the brazier offers a card`, false, 'no card in #remove-grid');
       else {
         await press(cp, 30); await wait(260);
-        const armed = await ev(`(() => ({ panel: !!document.querySelector('.beat-confirm'),
-          q: (document.querySelector('.beat-confirm .beat-q') || {}).textContent || '',
-          cards: document.querySelectorAll('#remove-grid .card').length }))()`);
+        const armed = await ev(`(() => { const p = document.querySelector('.confirmation-modal'); return { panel: !!p,
+          q: p ? [p.querySelector('h2')?.textContent || '', p.querySelector('.confirmation-copy')?.textContent || ''].join(' ') : '',
+          cards: document.querySelectorAll('#remove-grid .card').length }; })()`);
         ok(`one tap ARMS the burn, it does not burn`, armed.panel && armed.cards === before.cards,
           `panel=${armed.panel} deck ${before.cards} -> ${armed.cards}`);
         ok(`and the question names the card and the price`, /cinders/.test(armed.q), JSON.stringify(armed.q.slice(0, 70)));
@@ -1568,12 +1675,76 @@ async function main() {
 
   // ==========================================================================
   // THE BEATS IN THEIR OWN SCREENS' HANDS — the census's `handledBy` rows
-  // (profileRestore, freshProfile), watched instead of believed — plus the
-  // title's ✕, which LEFT this club on 2026-08-14: its row rides the shared
-  // machinery now, so its section drives the machinery's own hold and reads
-  // `data-beat-action` like combat's. The two `handledBy` rows are driven in
-  // their own idiom, on states posed by the real doors (see main.js); no
-  // `data-beat-action` is expected on those two.
+  // (shrineLevelUp, profileRestore, freshProfile), watched instead of believed
+  // — plus the title's ✕, which LEFT this club on 2026-08-14: its row rides
+  // the shared machinery now, so its section drives the machinery's own hold
+  // and reads `data-beat-action` like combat's. The three `handledBy` rows are
+  // driven in their own idiom, on states posed by the real doors (see
+  // main.js); no `data-beat-action` is expected on those three.
+
+  // ---- THE SHRINE: levelling — in the stat card's own hand ----------------
+  // `shrineLevelUp` is a `handledBy` row (secondbeat.js): the shared stat
+  // allocation card pends the point on `+` — the row reads +1, the result line
+  // says what the point does, Clear takes it back — and "Level up" is the beat
+  // that spends it. Driven here in the card's own idiom, on the posed shrine
+  // (cinders enough to offer the level), the same way the two profile rows
+  // are driven below: a handledBy row nobody watches is the gap the field was
+  // invented to name.
+  {
+    console.log(`\n  THE SHRINE — a point pends on +, and only "Level up" spends it`);
+    await openShot('rest');
+    const opened = await ev(`(() => { const d = document.querySelector('#level-opt'); if (!d) return 0; d.open = true; return 1; })()`);
+    await wait(150);
+    if (mutate && opened) {
+      // THE OLD DOOR: `+` spends the point on ONE click — the pend is gone,
+      // the card commits on the first press. The button keeps its glyph and
+      // its class; the original's own listener still pends, and the rewire
+      // presses "Level up" behind it in the same tick.
+      const rewired = await ev(`(() => {
+        const b = document.querySelector('#level-opt .se-step[data-stat-action="increase"]'); if (!b) return 0;
+        const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
+        c.addEventListener('click', () => { b.click(); const d = document.querySelector('#level-opt [data-stat-done]'); if (d) d.click(); });
+        return 1;
+      })()`);
+      if (!rewired) { console.error('\nholdconfirm --mutate: no + to rewire at ?shot=rest. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
+      console.log(`    (mutation rewired the first + to spend the point on ONE click)`);
+    }
+    const lState = () => ev(`(() => {
+      const rows = [...document.querySelectorAll('#level-opt .se-row')];
+      const done = document.querySelector('#level-opt [data-stat-done]');
+      const result = document.querySelector('#level-opt [data-level-cinder-result]');
+      return {
+        rows: rows.length,
+        values: rows.map((r) => Number(((r.querySelector('.se-value') || {}).textContent || '').trim())),
+        doneDisabled: done ? done.getAttribute('aria-disabled') === 'true' : null,
+        resultShown: result ? !result.hidden : null,
+      };
+    })()`);
+    const l0 = await lState();
+    if (!opened || !l0.rows) skip('shrine level-up', 'unasked', 'no Level up panel with attribute rows at ?shot=rest at this ref');
+    else {
+      ok(`the panel mounts with nothing pending — "Level up" disarmed, the result line hidden`,
+        l0.doneDisabled === true && l0.resultShown === false,
+        `${l0.rows} row(s), done disabled=${l0.doneDisabled}, result shown=${l0.resultShown}`);
+      const plus = '#level-opt .se-row .se-step[data-stat-action="increase"]';
+      await press(await pointOf(plus), 30); await wait(200);
+      const l1 = await lState();
+      ok(`+ PENDS the point and spends NOTHING — the row reads +1, "Level up" arms, the result line names what the point does`,
+        l1.values[0] === l0.values[0] + 1 && l1.doneDisabled === false && l1.resultShown === true,
+        `row 0 ${l0.values[0]} -> ${l1.values[0]}, done disabled=${l1.doneDisabled}, result shown=${l1.resultShown}`);
+      await press(await pointOf('#level-opt [data-stat-cancel]'), 30); await wait(200);
+      const l2 = await lState();
+      ok(`Clear takes it back — the row reads what it read, "Level up" disarms`,
+        l2.values[0] === l0.values[0] && l2.doneDisabled === true,
+        `row 0 ${l1.values[0]} -> ${l2.values[0]}, done disabled=${l2.doneDisabled}`);
+      await press(await pointOf(plus), 30); await wait(200);
+      await press(await pointOf('#level-opt [data-stat-done]'), 30); await wait(400);
+      const l3 = await lState();
+      ok(`"Level up" spends the point — the row keeps its +1 and the re-mounted panel has nothing pending`,
+        mutate ? true : (l3.rows > 0 && l3.values[0] === l0.values[0] + 1 && l3.doneDisabled === true),
+        `row 0 ${l0.values[0]} -> ${l3.values[0]}, done disabled=${l3.doneDisabled} — read off the re-mounted panel`);
+    }
+  }
 
   // ---- THE TITLE: deleting a run — collapsed into the shared machinery ------
   // The game's oldest second beat spent its life as a third form: a two-click,
@@ -1583,28 +1754,44 @@ async function main() {
   // exemption's honest content was "nothing could watch a rewrite run"; the
   // `?shot=title` state ended that, and the row is machinery now. The table
   // rules `hold` (stakes profile, undo none, hazard pointing — the ✕ shares
-  // `.slot-actions` with CONTINUE), so the ✕ answers exactly like End Turn:
-  // fill under the finger, release-early aborts, the dial is the one home of
-  // the duration.
+  // its row with the slot's own pick control), so the ✕ answers exactly like
+  // End Turn: fill under the finger, release-early aborts, the dial is the one
+  // home of the duration.
+  //
+  // THE ✕ LIVES BEHIND LOAD NOW (title.js → saveSlotSelector.js): the title
+  // menu is five verbs, and the slot rows with their delete control are the
+  // LOAD selector's. This section walks that door — press LOAD, read the rows
+  // — and walks it again after every commit, because a commit closes the
+  // selector and re-renders the title. Before this it asked for `.slot-delete`
+  // on the first paint, found nothing, and SKIPPED: a beat the game ships,
+  // unwatched, filed under "unasked".
   {
     console.log(`\n  THE TITLE — the ✕ holds like everything else, and the dial finally reaches it`);
+    const openLoad = async () => {
+      const lp = await pointOf('[data-title-action="load"]');
+      if (!lp) return false;
+      await press(lp, 30); await wait(300);
+      return !!(await ev(`!!document.querySelector('.title-slot-list')`));
+    };
     await openShot('title');
+    await openLoad();
     if (mutate) {
       // THE OLD DOOR: one pointer click deletes, no beat. The button keeps its
       // class and its glyph — only the wiring changes.
       const rewired = await ev(`(() => {
-        const b = document.querySelector('.slot-delete'); if (!b) return 0;
+        const b = document.querySelector('.title-slot-delete'); if (!b) return 0;
         const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
-        c.addEventListener('click', () => { c.closest('.slot').remove(); });
+        c.addEventListener('click', () => { c.closest('.title-slot-row').remove(); });
         return 1;
       })()`);
-      if (!rewired) { console.error('\nholdconfirm --mutate: no .slot-delete to rewire at ?shot=title. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
+      if (!rewired) { console.error('\nholdconfirm --mutate: no .title-slot-delete to rewire behind LOAD at ?shot=title. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
       console.log(`    (mutation rewired the slot's ✕ to delete on ONE pointer click)`);
     }
     const tState = () => ev(`(() => {
-      const d = document.querySelector('.slot-delete');
+      const d = document.querySelector('.title-slot-delete');
       return {
-        occupied: document.querySelectorAll('.slot.occupied').length,
+        selector: !!document.querySelector('.title-slot-list'),
+        occupied: document.querySelectorAll('.title-slot-pick.is-filled').length,
         del: !!d,
         action: d ? d.dataset.beatAction : null,
         beat: d ? d.dataset.beat : null,
@@ -1615,14 +1802,16 @@ async function main() {
         hint: d ? !!d.querySelector('.hold-hint') : null,
         hintShown: (() => { const h = d && d.querySelector('.hold-hint'); return h ? getComputedStyle(h).display !== 'none' : false; })(),
         tip: d ? (d.title || '') : null,
-        cont: !!document.querySelector('.slot-continue'),
+        // CONTINUE on the menu is enabled exactly when a slot is occupied —
+        // listSlots read back through the menu, not the selector.
+        cont: !!document.querySelector('.slot-continue:not([disabled])'),
       };
     })()`);
     const t0 = await tState();
-    if (!t0.del || !t0.occupied) skip('title', 'unasked', 'no occupied slot with a delete control at ?shot=title at this ref');
+    if (!t0.selector || !t0.del || !t0.occupied) skip('title', 'unasked', `no occupied slot with a delete control behind LOAD at ?shot=title at this ref (selector open=${t0.selector}, occupied=${t0.occupied}, ✕=${t0.del})`);
     else {
       ok(`the pose surfaced a REAL save through the real reader`, t0.occupied === 1 && t0.cont,
-        `${t0.occupied} occupied slot(s), CONTINUE drawn=${t0.cont} — listSlots reading the bytes newRun wrote`);
+        `${t0.occupied} occupied slot(s) behind LOAD, CONTINUE enabled=${t0.cont} — listSlots reading the bytes newRun wrote`);
       ok(`the ✕ is the machinery's control, ruled HOLD by the table`,
         t0.action === 'deleteSave' && t0.beat === 'hold' && t0.hint === true,
         `data-beat-action=${JSON.stringify(t0.action)} beat=${JSON.stringify(t0.beat)} hint=${t0.hint}`);
@@ -1634,40 +1823,52 @@ async function main() {
       // 1. THE ABORT. A release before the fill lands must not delete — under
       // --mutate this is the check that goes red, because the rewired click
       // fires on that release.
-      const dp = await pointOf('.slot-delete');
+      const dp = await pointOf('.title-slot-delete');
       await press(dp, Math.round((t0.holdMs || 600) * 0.4));
       const t1 = await tState();
+      const t1Review = await ev(`!!document.querySelector('.confirmation-modal')`);
       ok(`a release before the fill lands deletes NOTHING`,
-        t1.occupied === t0.occupied && t1.cont,
-        `occupied ${t0.occupied} -> ${t1.occupied}, CONTINUE=${t1.cont}`);
+        t1.occupied === t0.occupied && t1.cont && t1Review,
+        `occupied ${t0.occupied} -> ${t1.occupied}, CONTINUE=${t1.cont}, confirmation=${t1Review}`);
+      await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
       // 2. A COMPLETED HOLD DELETES — the verdict is the re-render the real
-      // reader draws from storage, not the button's own state.
-      const dp2 = await pointOf('.slot-delete');
+      // reader draws from storage: the selector closes on commit, the title
+      // re-renders, and LOAD is walked again to count the rows.
+      const dp2 = await pointOf('.title-slot-delete');
       if (dp2) { await press(dp2, (t0.holdMs || 600) + 350); await wait(400); }
+      await openLoad();
       const t2 = await tState();
       ok(`a completed hold deletes the run`,
         mutate ? true : (t2.occupied === 0 && !t2.cont),
-        `occupied ${t0.occupied} -> ${t2.occupied}, CONTINUE=${t2.cont} — read off the re-rendered slot list`);
+        `occupied ${t0.occupied} -> ${t2.occupied}, CONTINUE=${t2.cont} — read off the re-rendered title and the re-opened selector`);
       // 3. THE DIAL REACHES IT — both directions. `long` lengthens the arm;
-      // `off` is the player's own "one tap commits", the position the old
-      // two-click arm never honored.
+      // `off` removes the shortcut but keeps the universal review door.
       await openShot('title', { shotSettings: JSON.stringify({ holdConfirm: 'long' }) });
+      await openLoad();
       const tl = await tState();
       ok(`the 'long' dial lengthens the ✕'s arm — derived, not hard-coded`,
         mutate ? tl.del === false || true : (tl.holdMs === 1000),
         `holdMs=${tl && tl.holdMs} under holdConfirm='long'`);
       await openShot('title', { shotSettings: JSON.stringify({ holdConfirm: 'off' }) });
+      await openLoad();
       const toff = await tState();
-      if (!toff.del || !toff.occupied) skip('title dial-off', 'unasked', 'no occupied slot at ?shot=title with the dial off');
+      if (!toff.del || !toff.occupied) skip('title dial-off', 'unasked', 'no occupied slot behind LOAD at ?shot=title with the dial off');
       else {
         ok(`Off strips the hold dressing from the ✕`, toff.holdMs === 0 && toff.hint === false,
           `holdMs=${toff.holdMs} hint=${toff.hint}`);
-        const opd = await pointOf('.slot-delete');
+        const opd = await pointOf('.title-slot-delete');
         await press(opd, 30); await wait(400);
         const toff2 = await tState();
-        ok(`Off restores one-tap delete — the dial position the old arm ignored`,
-          mutate ? true : (toff2.occupied === 0 && !toff2.cont),
-          `occupied ${toff.occupied} -> ${toff2.occupied}`);
+        const toffReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+        ok(`Off sends one tap to review and deletes NOTHING`,
+          toff2.occupied === toff.occupied && toff2.cont && toffReview,
+          `occupied ${toff.occupied} -> ${toff2.occupied}, confirmation=${toffReview}`);
+        await press(await pointOf('.confirmation-confirm'), 30); await wait(400);
+        await openLoad();
+        const toff3 = await tState();
+        ok(`the off-mode confirmation deletes the run`,
+          mutate ? true : (toff3.occupied === 0 && !toff3.cont),
+          `occupied ${toff.occupied} -> ${toff3.occupied}`);
       }
     }
   }
@@ -1830,6 +2031,7 @@ async function main() {
       ['the shrine', 'does NOT spend the shrine'],
       ['the Smith', 'it does not smith'],
       ['the merchant', 'it does not burn'],
+      ['the level card', 'spends NOTHING'],
       ['the title slot', 'deletes NOTHING'],
       ['the profile drawer', 'restores NOTHING'],
       ['the crisis screen', 'starts NOTHING'],
@@ -1873,13 +2075,13 @@ async function main() {
       hazard) is a design claim. This proves the derivation is applied
       consistently and reaches the page; it cannot tell you that a hold on End
       Turn is what a player wants, and NOBODY HAS WATCHED A PLAYER USE IT.
-  (h) THE TWO handledBy BEATS ARE MEASURED AS THEY ARE, NOT AS THE TABLE
-      DERIVES THEM. profileRestore and freshProfile answer in their own
-      screens' hands; this proves each hand works (arms, cancels, commits only
-      confirmed) — whether either should collapse into the shared machinery is
-      a design call a green here licenses nothing about. (deleteSave was the
-      third until 2026-08-14; its collapse is DONE and its checks above drive
-      the machinery's own hold on the dial.) The crisis pose is the corrupt
+  (h) THE THREE handledBy BEATS ARE MEASURED AS THEY ARE, NOT AS THE TABLE
+      DERIVES THEM. shrineLevelUp, profileRestore and freshProfile answer in
+      their own screens' hands; this proves each hand works (pends or arms,
+      cancels, commits only on the second beat) — whether any should collapse
+      into the shared machinery is a design call a green here licenses nothing
+      about. (deleteSave was in this club until 2026-08-14; its collapse is
+      DONE and its checks above drive the machinery's own hold on the dial.) The crisis pose is the corrupt
       state only: 'older' and 'newer' render different screens and neither is
       driven here.`);
   if (notAsked.length) {

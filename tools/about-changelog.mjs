@@ -649,15 +649,25 @@ export function flattenInline(text, where, labels = new Set()) {
 
 // #310: the build stamp in each receipt is derivable from buildordinal.json at
 // the merge, but it is hand-typed here — so it is checked, not trusted. A stamp
-// is either exactly `0.4.0.<ordinal>` or a prose escape carrying no leading
-// digit (the documented "dev artifact; exact BUILD in PR evidence" shape).
+// is either `<release>.<ordinal>` — a semver release triple, optionally with a
+// pre-release tag (`0.5.0-rc.1`), then the ordinal — or a prose escape carrying
+// no leading digit (the documented "dev artifact; exact BUILD in PR evidence"
+// shape). The triple is NOT pinned to the current release: receipts are history,
+// and a bump must not make every older receipt unparseable. The ordinal column
+// is what this projector enforces; the triple is the release the build wore.
 // Ordinals are receipts of real builds, so: date groups run newest-first; a
 // build cited by an older group is never newer than one a newer group cites
 // (ties allowed — docs/evidence merges share an ordinal); nothing cites a build
 // that does not exist yet (`currentOrdinal`, from buildordinal.json).
-const STAMP = /^0\.4\.0\.(\d+)$/;
+// The pre-release tag is exactly `-<word>.<n>` (docs/versioning.md: `rc.<n>`),
+// so the ordinal is always the segment AFTER it: `0.5.0-rc.1.1905` parses as
+// release `0.5.0-rc.1`, ordinal 1905, and `0.5.0-rc.1` — a stamp with no
+// ordinal — matches nothing (the tag swallows `.1` and no segment is left).
+// A looser tag pattern let `0.5.0-rc.1` parse as release `0.5.0-rc` with
+// ordinal 1 (#517 review); the shape is pinned by the selftest corpus.
+const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
-export function parseChangelog(markdown, { currentOrdinal } = {}) {
+export function parseChangelog(markdown, { currentOrdinal, projecting = false } = {}) {
   const entries = [];
   const receipts = [];
   const labels = linkDefinitionLabels(markdown);
@@ -676,9 +686,9 @@ export function parseChangelog(markdown, { currentOrdinal } = {}) {
     const where = `receipt #${pullRequest}`;
     const stamp = build.match(STAMP);
     if (!stamp && /^\d/.test(build)) {
-      throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`0.4.0.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
+      throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`<release>.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
     }
-    receipts.push({ where, group, date, ordinal: stamp ? Number(stamp[1]) : null });
+    receipts.push({ where, group, date, ordinal: stamp ? Number(stamp[2]) : null });
     entries.push({
       id: `pr-${pullRequest}`,
       date,
@@ -713,9 +723,18 @@ export function parseChangelog(markdown, { currentOrdinal } = {}) {
     }
   }
   if (typeof currentOrdinal === 'number') {
+    // A receipt shipped IN ITS OWN PR names the build its projection will
+    // produce: `--write` projects it, the rebuild that must follow bumps the
+    // ordinal by exactly one, and from then on the receipt is ≤ the ordinal
+    // like every other. So while PROJECTING, and only then, one build ahead is
+    // the receipt for the rebuild about to happen; two ahead is still a build
+    // that has not happened. The plain check never allows the extra one — a
+    // merged tree whose receipt outruns its buildordinal is a receipt with no
+    // build behind it, which is exactly what #310 refuses.
+    const ceiling = currentOrdinal + (projecting ? 1 : 0);
     for (const r of receipts) {
-      if (r.ordinal !== null && r.ordinal > currentOrdinal) {
-        throw new Error(`${r.where}: cites build ${r.ordinal}, but buildordinal.json says only ${currentOrdinal} builds exist — a receipt cannot name a build that has not happened`);
+      if (r.ordinal !== null && r.ordinal > ceiling) {
+        throw new Error(`${r.where}: cites build ${r.ordinal}, but buildordinal.json says only ${currentOrdinal} builds exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
       }
     }
   }
@@ -747,8 +766,18 @@ async function browserRoute(entries, {
   screenshotDir = null,
 } = {}) {
   const { server, port } = await serve({ root: ROOT, port: 8239, open: false });
-  const browserPath = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe']
-    .find((candidate) => candidate && existsSync(candidate));
+  // The same candidate list tools/uprightgate.mjs uses (BROWSERS): env override
+  // first, then the Linux runner and container paths, then Windows and macOS.
+  // The old list was $CHROME plus two Windows paths — on a Linux runner with
+  // $CHROME unset it could never find a browser (#498, run 296).
+  const browserPath = [
+    process.env.CHROME,
+    '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+    '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ].find((candidate) => candidate && existsSync(candidate));
   if (!browserPath) { server.close(); throw new Error('UNKNOWN: no Chrome/Edge found for real-browser check'); }
   let browser;
   try {
@@ -930,17 +959,22 @@ async function selftest() {
   // shared ordinal across groups, a prose stamp) still PASS.
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
-    ['version-shaped stamp that is not 0.4.0.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.1.77')}\n`, {}],
+    ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
+    ['pre-release stamp with no ordinal (the tag must not be read as one)', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1')}\n`, { currentOrdinal: 5 }],
+    ['pre-release stamp whose ordinal is missing after the tag', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1905')}\n`, { currentOrdinal: 5 }],
     ['ordinal rising into an older group', `## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.9')}\n`, {}],
     ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
     ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
+    ['receipt two builds ahead even while projecting (one is the rebuild to come; two is not)', `## 2026-08-20\n\n${receipt(1, '0.4.0.102')}\n`, { currentOrdinal: 100, projecting: true }],
   ];
   for (const [name, body, opts] of ordinalPlants) {
     try { parseChangelog(`# Test\n\n${body}`, opts); console.error(`MISS ${name}`); process.exitCode = 1; }
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
   try {
-    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    // The in-PR receipt shape: one build ahead is legal while projecting.
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.8')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n`, { currentOrdinal: 7, projecting: true });
     caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
@@ -1038,7 +1072,10 @@ async function selftest() {
     if (ticks.detail !== 'Keeps `literal` backticks.') throw new Error(`rewrote it to: ${ticks.detail}`);
     console.log('PASS escaped backticks stay literal instead of opening a code span');
   } catch (error) { console.error(`FAIL escaped backticks: ${error.message}`); process.exitCode = 1; }
-  const total = parserPlants.length + modelPlants.length;
+  // Census over EVERY family that does caught++ — the ordinal plants and the
+  // inverted legitimate-shapes control (+1) count themselves too; omitting
+  // them made the selftest exit 1 with all plants caught and zero MISS (#498).
+  const total = parserPlants.length + ordinalPlants.length + 1 + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
   // the file rather than from a string handed to the parser. All three of these
@@ -1436,7 +1473,8 @@ async function selftest() {
   }
   const grandTotal = total + treePlants.length;
   if (caught !== grandTotal || !good.length) process.exitCode = 1;
-  else if (!process.exitCode) console.log(`about-changelog selftest: ${caught} known-bads caught / 0 missed`);
+  // Terminal line in a verdict.mjs-accepted form ("label: OK — N <words>, N caught").
+  else if (!process.exitCode) console.log(`about-changelog selftest: OK — ${caught} known-bads, ${caught} caught`);
 }
 
 // EVERY exit path names the scope — the greens by printing it after their verdict,
@@ -1444,7 +1482,7 @@ async function selftest() {
 // a boundary they cannot is how a narrow check gets cited as a wide one.
 try {
   if (process.argv.includes('--write')) {
-    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
+    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), projecting: true });
     writeFileSync(GENERATED, generatedText(entries));
     console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
   } else if (process.argv.includes('--selftest')) {
@@ -1453,12 +1491,14 @@ try {
     const entries = await checkProjection();
     await browserCheck(entries, { sourceOnly: true });
     console.log(`about-changelog source probe: ${entries.length} receipts; real Settings route PASS`);
+    console.log(`about-changelog source probe: OK — ${entries.length} checks passed`);
   } else {
     const entries = await checkProjection();
     const shotsAt = process.argv.indexOf('--shots');
     const screenshotDir = shotsAt >= 0 && process.argv[shotsAt + 1] ? resolve(ROOT, process.argv[shotsAt + 1]) : null;
     await browserCheck(entries, { screenshotDir });
     console.log(`about-changelog: ${entries.length} receipts match CHANGELOG.md; source + selected standalone Settings routes PASS`);
+    console.log(`about-changelog: OK — ${entries.length} checks passed`);
   }
   printRefusalScope();
 } catch (error) {

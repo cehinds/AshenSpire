@@ -209,7 +209,7 @@ async function main() {
         await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 }, sessionId);
         await wait(160);
       };
-      const openSelected = async (stones) => {
+      const openSelected = async (stones, itemRef = 'armament/straightSword', itemName = 'Straight Sword') => {
         errors.set(sessionId, []);
         await cdp.send('Page.navigate', {
           url: `http://127.0.0.1:${served.port}/?shot=rest&shotSmithingStones=${stones}`,
@@ -218,9 +218,10 @@ async function main() {
         await evaluate('document.fonts && document.fonts.ready');
         await click('#smith-opt');
         await until(`!!document.querySelector('.smith-upgrade-modal')`, 'Smith modal');
-        await click('.smith-candidate-card[data-armament-id="straightSword"]');
-        await until(`document.querySelector('.smith-preview-card')?.textContent.includes('Straight Sword')`, 'selected Straight Sword preview');
-        await until(`[...document.querySelectorAll('.smith-weapon-art img')].every((img)=>img.complete&&img.naturalWidth>0)`, 'armament card art');
+        await until(`document.querySelector('.smith-upgrade-modal h2')?.textContent.trim()==='Upgrade an Item'`, 'generic Smith modal title');
+        await click(`.smith-candidate-card[data-item-ref="${itemRef}"]`);
+        await until(`document.querySelector('.smith-preview-card')?.textContent.includes(${JSON.stringify(itemName)})`, `selected ${itemName} preview`);
+        await until(`[...document.querySelectorAll('.smith-weapon-art img')].every((img)=>img.complete&&img.naturalWidth>0)`, 'item card art');
         await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 4, y: 4 }, sessionId);
         await evaluate('document.activeElement?.blur(); document.querySelector(".smith-preview-region").scrollTop=0');
         await wait(180);
@@ -233,28 +234,105 @@ async function main() {
         const confirm=document.querySelector('.smith-confirm');
         const targets=[...document.querySelectorAll('.smith-candidate-card,.smith-back,.smith-confirm')].filter(visible).map((node)=>{
           const r=rect(node), x=(r.left+r.right)/2, y=(r.top+r.bottom)/2, hit=document.elementFromPoint(x,y);
-          return {name:node.dataset.armamentId||node.className,...r,centreHit:!!(hit&&(hit===node||node.contains(hit)))};
+          return {name:node.dataset.itemRef||node.className,...r,centreHit:!!(hit&&(hit===node||node.contains(hit)))};
         });
         const horizontal=[modal,document.querySelector('.smith-modal-head'),document.querySelector('.smith-modal-body'),document.querySelector('.smith-candidate-region'),document.querySelector('.smith-preview-region'),document.querySelector('.smith-modal-footer')].filter(Boolean).map((node)=>({name:node.className,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
         return {
           text:(preview?.textContent||'').replace(/\\s+/g,' ').trim(),
           count:(document.querySelector('[data-smith-count]')?.textContent||'').replace(/\\s+/g,' ').trim(),
-          candidates:[...document.querySelectorAll('.smith-weapon-name')].map((node)=>node.textContent.trim()),
+          title:document.querySelector('.smith-upgrade-modal h2')?.textContent.trim()||'',
+          candidates:[...document.querySelectorAll('.smith-candidate-card')].map((node)=>({ref:node.dataset.itemRef||'',name:node.querySelector('.smith-weapon-name')?.textContent.trim()||''})),
           weaponCards:[...document.querySelectorAll('.smith-weapon-card')].map((node)=>{
             const art=node.querySelector('.smith-weapon-art'), image=art?.querySelector('img');
             const cardRect=rect(node), artRect=art?rect(art):null;
             return {
+              itemRef:node.dataset.itemRef||'',
               name:node.querySelector('.smith-weapon-name')?.textContent.trim()||'',
               count:node.querySelector('.smith-weapon-count')?.textContent.trim()||'',
               countLabel:node.querySelector('.smith-weapon-count')?.getAttribute('aria-label')||'',
-              type:node.querySelector('.smith-weapon-type')?.textContent.trim()||'',
+              types:[...node.querySelectorAll('.smith-item-type-row [data-item-type]')].map((type)=>({tag:type.dataset.itemType,label:type.textContent.trim()})),
               tags:[...node.querySelectorAll('.smith-weapon-tags em')].map((tag)=>tag.textContent.trim()),
               imageLoaded:!!(image?.complete&&image.naturalWidth>0),
               artShare:artRect?artRect.height/cardRect.height:0,
               borrowedCombatType:!!node.querySelector('.ctype,.ctext'),
             };
           }),
-          confirm:{text:confirm?.textContent?.trim()||'',disabled:!!confirm?.disabled,aria:confirm?.getAttribute('aria-disabled')},
+          confirm:{text:confirm?.textContent?.trim()||'',disabled:!!confirm?.disabled,aria:confirm?.getAttribute('aria-disabled'),state:confirm?.dataset.smithActionState||'',hold:confirm?.dataset.optionHold||''},
+          summaryHeights:[...document.querySelectorAll('.smith-summary-cell')].map((node)=>rect(node).height),
+          summaryBorders:[...document.querySelectorAll('.smith-summary-cell')].map((node)=>getComputedStyle(node).borderTopWidth),
+          summaryGrid:document.querySelector('.smith-summary-grid')?{
+            columns:getComputedStyle(document.querySelector('.smith-summary-grid')).gridTemplateColumns,
+            requirementWidth:rect(document.querySelector('.smith-requirements')).width,
+            gridWidth:rect(document.querySelector('.smith-summary-grid')).width,
+            selectedToStatsGap:document.querySelector('.smith-intrinsic-stats')
+              ? rect(document.querySelector('.smith-intrinsic-stats')).top-rect(document.querySelector('.smith-summary-grid')).bottom
+              : null,
+          }:null,
+          economy:document.querySelector('.smith-preview-economy')?{
+            reference:[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair em')].map((node)=>node.textContent.trim()).join('/'),
+            icon:document.querySelector('.smith-stone-icon')?.textContent.trim()||'',
+            label:document.querySelector('.smith-economy-values b')?.textContent.trim()||'',
+            required:document.querySelector('.smith-cost-required')?.textContent.trim()||'',
+            available:document.querySelector('.smith-cost-available')?.textContent.trim()||'',
+            availableColor:getComputedStyle(document.querySelector('.smith-cost-available')).color,
+            requiredColor:getComputedStyle(document.querySelector('.smith-cost-required')).color,
+            costColor:getComputedStyle(document.querySelector('.smith-economy-values b')).color,
+            slashXs:[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair > i')].map((node)=>{const r=rect(node);return (r.left+r.right)/2;}),
+            headerBottom:Math.max(...[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair em')].map((node)=>rect(node).bottom)),
+            numberTop:Math.min(...[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair strong')].map((node)=>rect(node).top)),
+            labelHeight:rect(document.querySelector('.smith-economy-values b')).height,
+            labelLineHeight:Number.parseFloat(getComputedStyle(document.querySelector('.smith-economy-values b')).lineHeight),
+            valuesScrollWidth:document.querySelector('.smith-economy-values').scrollWidth,
+            valuesClientWidth:document.querySelector('.smith-economy-values').clientWidth,
+          }:null,
+          selectedType:document.querySelector('.smith-candidate-card.selected .smith-item-type-row')?.textContent.trim()||'',
+          selectedNameStyle:document.querySelector('.smith-selected-head > b')?{
+            color:getComputedStyle(document.querySelector('.smith-selected-head > b')).color,
+            fontSize:getComputedStyle(document.querySelector('.smith-selected-head > b')).fontSize,
+            foldColor:getComputedStyle(document.querySelector('.smith-upgrade-row > summary > span:first-child > b')).color,
+            foldFontSize:getComputedStyle(document.querySelector('.smith-upgrade-row > summary > span:first-child > b')).fontSize,
+          }:null,
+          intrinsic:document.querySelector('.smith-intrinsic-stats')?{
+            title:document.querySelector('.smith-intrinsic-stats .smith-data-heading b')?.textContent.trim()||'',
+            text:(document.querySelector('.smith-intrinsic-stats')?.textContent||'').replace(/\\s+/g,' ').trim(),
+            overflow:document.querySelector('.smith-intrinsic-stats').scrollWidth-document.querySelector('.smith-intrinsic-stats').clientWidth,
+            borderLeft:getComputedStyle(document.querySelector('.smith-intrinsic-stats')).borderLeftWidth,
+            borderRight:getComputedStyle(document.querySelector('.smith-intrinsic-stats')).borderRightWidth,
+            radius:getComputedStyle(document.querySelector('.smith-intrinsic-stats')).borderRadius,
+          }:null,
+          affected:[...document.querySelectorAll('.smith-upgrade-folds .smith-upgrade-row')].map((node)=>({
+            title:node.querySelector('summary b')?.textContent.trim()||'',
+            role:node.querySelector('summary small')?.textContent.trim()||'',
+            unused:node.classList.contains('is-unused'),
+            opacity:Number.parseFloat(getComputedStyle(node).opacity),
+            text:(node.textContent||'').replace(/\\s+/g,' ').trim(),
+            values:[...node.querySelectorAll('.smith-fold-values span')].map((value)=>({
+              label:value.querySelector('em')?.textContent.trim()||'',
+              before:value.querySelector('b')?.textContent.trim()||'',
+              after:value.querySelector('strong')?.textContent.trim()||'',
+            })),
+          })),
+          summaryFonts:[
+            {label:getComputedStyle(document.querySelector('.smith-preview-label')).fontSize,value:getComputedStyle(document.querySelector('.smith-selected-head > b')).fontSize},
+            {label:getComputedStyle(document.querySelector('.smith-cost-pair em')).fontSize,value:getComputedStyle(document.querySelector('.smith-economy-values')).fontSize},
+          ],
+          requirementRow:document.querySelector('.smith-requirements')?{
+            border:getComputedStyle(document.querySelector('.smith-requirements')).borderTopWidth,
+            borderLeft:getComputedStyle(document.querySelector('.smith-requirements')).borderLeftWidth,
+            borderRight:getComputedStyle(document.querySelector('.smith-requirements')).borderRightWidth,
+            radius:getComputedStyle(document.querySelector('.smith-requirements')).borderRadius,
+            height:rect(document.querySelector('.smith-requirements')).height,
+            minHeight:getComputedStyle(document.querySelector('.smith-requirements')).minHeight,
+            resultHeights:[...document.querySelectorAll('.smith-upgrade-folds .smith-upgrade-row')].map((node)=>rect(node).height),
+            nestedBorder:getComputedStyle(document.querySelector('.smith-requirement')).borderTopWidth,
+            metric:document.querySelector('.smith-requirement-values em')?.textContent.trim()||'',
+            before:document.querySelector('.smith-requirement-values b')?.textContent.trim()||'',
+            after:document.querySelector('.smith-requirement-values strong')?.textContent.trim()||'',
+            detail:document.querySelector('.smith-requirement small')?.textContent.trim()||'',
+            detailRight:document.querySelector('.smith-requirement small')
+              ? Math.abs(rect(document.querySelector('.smith-requirement small')).right-rect(document.querySelector('.smith-requirement')).right)<=8
+              : true,
+          }:null,
           modal:modal?rect(modal):null,
           documentOverflowX:document.documentElement.scrollWidth-innerWidth,
           horizontal,
@@ -281,52 +359,122 @@ async function main() {
 
       await openSelected(0);
       const zero = await reading();
-      check(zero.count === '0 Smithing Stones · 2 eligible'
-          && zero.candidates.join('|') === 'Straight Sword|Round Shield',
-        `SMITH-UI-${upper}-ZERO-PICKER`, `zero-purse modal exposes two distinct owned armament choices (${JSON.stringify({ count: zero.count, candidates: zero.candidates })})`);
-      check(zero.weaponCards.length === 2
+      check(zero.title === 'Upgrade an Item' && zero.count === '0 Smithing Stones · 3 eligible'
+          && zero.candidates.map((row)=>row.ref).join('|') === 'armament/straightSword|armament/roundShield|armor/reaver/default'
+          && !zero.candidates.some((row)=>row.ref === 'relic/forsakenMedallion'),
+        `SMITH-UI-${upper}-ZERO-PICKER`, `generic picker exposes the two default armaments and equipped armor by namespaced ref without inferring an unauthored owned relic (${JSON.stringify({ title: zero.title, count: zero.count, candidates: zero.candidates })})`);
+      check(zero.weaponCards.length === 3
+          && zero.weaponCards[0]?.types.length === 1 && zero.weaponCards[0].types[0]?.tag === 'item:blade' && zero.weaponCards[0].types[0]?.label === 'Blade'
+          && zero.weaponCards[1]?.types.length === 1 && zero.weaponCards[1].types[0]?.tag === 'item:shield' && zero.weaponCards[1].types[0]?.label === 'Shield'
+          && zero.weaponCards[2]?.itemRef === 'armor/reaver/default'
           && zero.weaponCards.every((card) => card.count === '1' && card.countLabel === '1 in inventory'
-            && card.type === 'WEAPON' && card.tags.length >= 2 && card.imageLoaded
+            && card.tags.length >= (card.itemRef.startsWith('armament/') ? 2 : 1) && card.imageLoaded
             && card.artShare >= 0.45 && !card.borrowedCombatType),
-        `SMITH-UI-${upper}-WEAPON-CARD-ANATOMY`, `candidate cards use owned weapon art/count/type/tags with a dominant image box (${JSON.stringify(zero.weaponCards)})`);
-      check(zero.text.includes('Cost 1') && zero.text.includes('Purse 0')
-          && zero.text.includes('4× Slashing Strike') && zero.text.includes('Damage: 7 → 10')
-          && zero.text.includes('1× Weapon Technique') && zero.text.includes('Block: 3 → 5')
+        `SMITH-UI-${upper}-EQUIPMENT-CARD-ANATOMY`, `namespaced armament/armor candidate cards use owned equipment art/count/semantic type/tags with a dominant image box (${JSON.stringify(zero.weaponCards)})`);
+      check(zero.intrinsic?.title === 'Equipment Stats' && zero.intrinsic.text.includes('AR 5') && zero.intrinsic.text.includes('DEF 2')
+          && zero.intrinsic.text.includes('WEIGHT 5') && zero.intrinsic.text.includes('Weapon Art Mana 0')
+          && zero.intrinsic.text.includes('Unique Skill Stamina 0') && zero.intrinsic.overflow <= 0
+          && zero.intrinsic.borderLeft === '0px' && zero.intrinsic.borderRight === '0px' && zero.intrinsic.radius === '0px',
+        `SMITH-UI-${upper}-INTRINSIC-STATS`, `armament intrinsic row exposes AR/DEF/Weight/Weapon Art Mana/Unique Skill Stamina without a nested card or horizontal overflow (${JSON.stringify(zero.intrinsic)})`);
+      check(zero.selectedNameStyle?.color === zero.selectedNameStyle?.foldColor
+          && zero.selectedNameStyle?.fontSize === zero.selectedNameStyle?.foldFontSize,
+        `SMITH-UI-${upper}-SELECTED-NAME-TYPE`, `selected item name uses the same white display treatment and size as fold titles (${JSON.stringify(zero.selectedNameStyle)})`);
+      check(zero.text.includes('REQ/AVAIL') && zero.text.includes('Smithing Stone Cost REQ/AVAIL 1/0') && zero.text.includes('STR10→9')
+          && zero.text.includes('Slashing Strike') && zero.text.includes('AR 7 → 10')
+          && zero.text.includes('Weapon Guard') && zero.text.includes('not in active deck')
+          && zero.text.includes('Scales with STR') && zero.text.includes('Weapon Technique') && zero.text.includes('GUARD 3 → 5')
           && zero.text.includes('Short 1 Smithing Stone'),
-        `SMITH-UI-${upper}-ZERO-DELTAS`, `selected zero-purse preview names cost, purse, shortfall, and both real grouped deltas (${JSON.stringify(zero.text)})`);
-      check(zero.confirm.disabled && zero.confirm.aria === 'true' && zero.confirm.text === 'Need 1 more Stone',
-        `SMITH-UI-${upper}-ZERO-CONFIRM`, 'zero-purse Confirm is visibly and semantically disabled with the exact shortfall');
-      check(zero.documentOverflowX <= 0 && zero.modal?.left >= -0.5 && zero.modal?.top >= -0.5
-          && zero.modal?.right <= shape.width + 0.5 && zero.modal?.bottom <= shape.height + 0.5
+        `SMITH-UI-${upper}-ZERO-DELTAS`, `selected zero-purse preview names cost, requirement reduction, active Strike/Technique, grey unused Defense, scaling, and shortfall (${JSON.stringify(zero.text)})`);
+      check(zero.summaryHeights.length === 2 && Math.max(...zero.summaryHeights) - Math.min(...zero.summaryHeights) <= 1
+          && zero.summaryBorders.every((width) => width === '0px')
+          && zero.economy?.reference === 'REQ/AVAIL' && zero.economy?.icon === '🪨'
+          && zero.economy?.label === 'Smithing Stone Cost' && zero.economy?.required === '1' && zero.economy?.available === '0'
+          && zero.economy.headerBottom <= zero.economy.numberTop + 1
+          && zero.economy.slashXs.length === 2 && Math.abs(zero.economy.slashXs[0] - zero.economy.slashXs[1]) <= 0.5
+          && zero.economy.labelHeight <= zero.economy.labelLineHeight + 1
+          && zero.economy.valuesScrollWidth <= zero.economy.valuesClientWidth + 1
+          && zero.economy.availableColor !== zero.economy.requiredColor && zero.economy.requiredColor === zero.economy.costColor,
+        `SMITH-UI-${upper}-SUMMARY-GRID`, `Selected Item and Cost use borderless equal-height 3:1 cells; the two slash glyphs share one x anchor (${JSON.stringify({ heights: zero.summaryHeights, borders: zero.summaryBorders, economy: zero.economy })})`);
+      check(zero.summaryFonts.length === 2
+          && new Set(zero.summaryFonts.map((row) => row.label)).size === 1
+          && new Set(zero.summaryFonts.map((row) => row.value)).size === 1,
+        `SMITH-UI-${upper}-SUMMARY-TYPE`, `the two summary components share one header size and one primary-value size (${JSON.stringify(zero.summaryFonts)})`);
+      const summaryColumns = zero.summaryGrid?.columns.trim().split(/\s+/).map((value) => Number.parseFloat(value)) || [];
+      check(zero.summaryGrid && summaryColumns.length === 2 && Math.abs(summaryColumns[0] / summaryColumns[1] - 3) <= 0.05
+          && Math.abs(zero.summaryGrid.requirementWidth - zero.summaryGrid.gridWidth) <= 1
+          && Math.abs(zero.summaryGrid.selectedToStatsGap) <= 1,
+        `SMITH-UI-${upper}-SUMMARY-ORDER`, `Selected Item and Cost share the first row; Equipment Stats begins immediately below and Requirements spans the full row (${JSON.stringify(zero.summaryGrid)})`);
+      check(zero.requirementRow?.border !== '0px' && zero.requirementRow?.borderLeft === '0px'
+          && zero.requirementRow?.borderRight === '0px' && zero.requirementRow?.radius === '0px'
+          && zero.requirementRow?.nestedBorder === '0px'
+          && zero.requirementRow.metric === 'STR' && zero.requirementRow.before === '10' && zero.requirementRow.after === '9'
+          && zero.requirementRow.detail === 'You have 13' && zero.requirementRow.detailRight
+          && zero.requirementRow.resultHeights.every((height) => height >= 44),
+        `SMITH-UI-${upper}-REQUIREMENT-ROW`, `Requirements is a flat selected-item row without a nested card and right-anchors the player value (${JSON.stringify(zero.requirementRow)})`);
+      check(zero.affected.length === 3
+          && zero.affected.some((row) => row.role.includes('attack · 4 active') && !row.unused)
+          && zero.affected.some((row) => row.role.includes('guard · not in active deck') && row.unused && row.opacity < 0.6)
+          && zero.affected.some((row) => row.role.includes('technique · 1 active') && !row.unused),
+        `SMITH-UI-${upper}-ROLE-USAGE`, `basic Strike, Defense, and Technique rows publish active ownership while the displaced Defense is visibly muted (${JSON.stringify(zero.affected)})`);
+      check(!zero.confirm.disabled && zero.confirm.aria === 'true' && zero.confirm.state === 'blocked'
+          && zero.confirm.hold === 'blocked' && zero.confirm.text === 'Upgrade (1)',
+        `SMITH-UI-${upper}-ZERO-CONFIRM`, 'zero-purse Upgrade (1) remains clickable, is ARIA-blocked, and cannot arm a hold commit');
+      check(zero.documentOverflowX <= 0 && Math.abs(zero.modal?.left || 0) <= 0.5 && Math.abs(zero.modal?.top || 0) <= 0.5
+          && Math.abs((zero.modal?.width || 0) - shape.width) <= 1 && Math.abs((zero.modal?.height || 0) - shape.height) <= 1
           && zero.horizontal.every((row) => row.scrollWidth <= row.clientWidth + 1),
-        `SMITH-UI-${upper}-ZERO-FIT`, 'modal and regions stay on-glass with no horizontal overflow');
-      check(zero.targets.length === 4
+        `SMITH-UI-${upper}-ZERO-FIT`, 'Shrine action pane fills the viewport and regions have no horizontal overflow');
+      check(zero.targets.length === 5
           && zero.targets.every((target) => target.width >= 44 && target.height >= 44 && target.centreHit),
-        `SMITH-UI-${upper}-ZERO-TARGETS`, 'two armaments, Back, and Confirm each meet 44px and centre hit-testing');
+        `SMITH-UI-${upper}-ZERO-TARGETS`, 'two armaments, equipped armor, Back, and Confirm each meet 44px and centre hit-testing');
+      await click('.smith-candidate-card[data-item-ref="armor/reaver/default"]');
+      const armor = await reading();
+      check(armor.text.includes('Wayfarer Plate') && armor.selectedType === 'Armor' && !armor.intrinsic
+          && armor.affected.length === 1 && armor.affected[0].role.startsWith('armor')
+          && armor.affected[0].title === 'Poise threshold'
+          && armor.affected[0].values.some((value)=>value.label === 'Poise threshold' && value.after === '9')
+          && /\b8\b/.test(armor.affected[0].text),
+        `SMITH-UI-${upper}-TYPED-ARMOR`, `equipped armor selects by namespaced ref and renders its typed authored row without armament-only intrinsic stats (${JSON.stringify({ selectedType: armor.selectedType, intrinsic: armor.intrinsic, affected: armor.affected })})`);
+      await click('.smith-candidate-card[data-item-ref="armament/straightSword"]');
       await capture('zero');
       if (shape.mobile) {
         await evaluate('document.querySelector(".smith-preview-region").scrollTop=document.querySelector(".smith-preview-region").scrollHeight');
         await wait(100);
         await capture('zero-deltas');
       }
+      const blockedPoint = await evaluate(`(() => { const r=document.querySelector('.smith-confirm').getBoundingClientRect(); return {x:(r.left+r.right)/2,y:(r.top+r.bottom)/2}; })()`);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: blockedPoint.x, y: blockedPoint.y, button: 'left', clickCount: 1 }, sessionId);
+      await wait(700);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: blockedPoint.x, y: blockedPoint.y, button: 'left', clickCount: 1 }, sessionId);
+      await until(`!!document.querySelector('.confirmation-modal')`, 'blocked upgrade explanation');
+      const blockedReview = await evaluate(`(() => ({
+        title:document.querySelector('.confirmation-modal h2')?.textContent?.trim()||'',
+        text:(document.querySelector('.confirmation-modal')?.textContent||'').replace(/\\s+/g,' ').trim(),
+        confirmVisible:!!document.querySelector('.confirmation-confirm')?.getClientRects().length,
+        smithStillOpen:!!document.querySelector('.smith-upgrade-modal'),
+      }))()`);
+      check(blockedReview.title === 'Cannot upgrade Straight Sword' && blockedReview.text.includes('Need 1 more Smithing Stone.')
+          && !blockedReview.confirmVisible && blockedReview.smithStillOpen,
+        `SMITH-UI-${upper}-BLOCKED-REVIEW`, `blocked click/hold explains the exact shortfall and cannot commit (${JSON.stringify(blockedReview)})`);
+      await click('.confirmation-cancel');
+      await until(`!document.querySelector('.confirmation-modal') && !!document.querySelector('.smith-upgrade-modal')`, 'closed blocked upgrade explanation');
 
       await openSelected(1);
       const one = await reading();
-      check(one.count === '1 Smithing Stone · 2 eligible'
-          && one.text.includes('Tier 0 → 1') && one.text.includes('Cost 1') && one.text.includes('Purse 1')
-          && one.text.includes('4× Slashing Strike') && one.text.includes('Damage: 7 → 10')
-          && one.text.includes('1× Weapon Technique') && one.text.includes('Block: 3 → 5'),
-        `SMITH-UI-${upper}-ONE-DELTAS`, `one-purse selected review shows tier, cost, purse, and every real grouped delta (${JSON.stringify(one.text)})`);
+      check(one.count === '1 Smithing Stone · 3 eligible'
+          && one.text.includes('Tier 0 → 1') && one.text.includes('REQ/AVAIL') && one.text.includes('Smithing Stone Cost REQ/AVAIL 1/1') && one.text.includes('STR10→9')
+          && one.text.includes('Slashing Strike') && one.text.includes('AR 7 → 10')
+          && one.text.includes('Weapon Technique') && one.text.includes('GUARD 3 → 5'),
+        `SMITH-UI-${upper}-ONE-DELTAS`, `one-purse selected review shows tier, cost, requirement, scaling, and every real grouped delta (${JSON.stringify(one.text)})`);
       check(!one.confirm.disabled && one.confirm.aria === 'false'
-          && one.confirm.text === 'Spend 1 · Smith Straight Sword',
-        `SMITH-UI-${upper}-ONE-CONFIRM`, 'affordable Confirm names the exact spend and armament');
-      check(one.documentOverflowX <= 0 && one.modal?.left >= -0.5 && one.modal?.top >= -0.5
-          && one.modal?.right <= shape.width + 0.5 && one.modal?.bottom <= shape.height + 0.5
+          && one.confirm.text.includes('Upgrade (1)') && one.confirm.state === 'actionable' && one.confirm.hold === 'commit',
+        `SMITH-UI-${upper}-ONE-CONFIRM`, 'affordable Upgrade (1) is actionable and advertises the hold shortcut');
+      check(one.documentOverflowX <= 0 && Math.abs(one.modal?.left || 0) <= 0.5 && Math.abs(one.modal?.top || 0) <= 0.5
+          && Math.abs((one.modal?.width || 0) - shape.width) <= 1 && Math.abs((one.modal?.height || 0) - shape.height) <= 1
           && one.horizontal.every((row) => row.scrollWidth <= row.clientWidth + 1),
-        `SMITH-UI-${upper}-ONE-FIT`, 'affordable review stays on-glass with no horizontal overflow');
-      check(one.targets.length === 4
+        `SMITH-UI-${upper}-ONE-FIT`, 'affordable review fills the Shrine action pane with no horizontal overflow');
+      check(one.targets.length === 5
           && one.targets.every((target) => target.width >= 44 && target.height >= 44 && target.centreHit),
-        `SMITH-UI-${upper}-ONE-TARGETS`, 'affordable modal preserves four 44px centre-hit-testable controls');
+        `SMITH-UI-${upper}-ONE-TARGETS`, 'affordable modal preserves five 44px centre-hit-testable controls');
       await capture('one');
       if (shape.mobile) {
         await evaluate('document.querySelector(".smith-preview-region").scrollTop=document.querySelector(".smith-preview-region").scrollHeight');
@@ -335,10 +483,26 @@ async function main() {
       }
 
       await click('.smith-confirm');
-      await until(`!document.querySelector('.smith-upgrade-modal') && !!document.querySelector('.mapscreen')`, 'post-confirm map transition');
-      check(await evaluate(`!document.querySelector('.smith-upgrade-modal') && !!document.querySelector('.mapscreen')`),
-        `SMITH-UI-${upper}-POST-CONFIRM`, 'Confirm leaves the Shrine for the map');
+      await until(`!!document.querySelector('.confirmation-modal')`, 'upgrade confirmation modal');
+      const review = await evaluate(`(() => ({
+        title:document.querySelector('.confirmation-modal h2')?.textContent?.trim()||'',
+        text:(document.querySelector('.confirmation-modal')?.textContent||'').replace(/\\s+/g,' ').trim(),
+        smithStillOpen:!!document.querySelector('.smith-upgrade-modal'),
+      }))()`);
+      check(review.title === 'Upgrade Straight Sword?' && review.text.includes('REQ/AVAIL') && review.text.includes('Smithing Stone Cost REQ/AVAIL 1/1')
+          && review.text.includes('STR10→9') && review.text.includes('AR 7 → 10') && review.smithStillOpen,
+        `SMITH-UI-${upper}-CLICK-REVIEW`, `click opens the shared consequence/cost modal without committing (${JSON.stringify(review)})`);
+      await click('.confirmation-cancel');
+      await until(`!document.querySelector('.confirmation-modal') && !!document.querySelector('.smith-upgrade-modal')`, 'cancelled upgrade review');
+      const holdPoint = await evaluate(`(() => { const r=document.querySelector('.smith-confirm').getBoundingClientRect(); return {x:(r.left+r.right)/2,y:(r.top+r.bottom)/2}; })()`);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: holdPoint.x, y: holdPoint.y, button: 'left', clickCount: 1 }, sessionId);
+      await wait(700);
+      await until(`!document.querySelector('.smith-upgrade-modal') && !!document.querySelector('.mapscreen')`, 'post-hold map transition');
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: holdPoint.x, y: holdPoint.y, button: 'left', clickCount: 1 }, sessionId);
+      check(await evaluate(`!document.querySelector('.confirmation-modal') && !document.querySelector('.smith-upgrade-modal') && !!document.querySelector('.mapscreen')`),
+        `SMITH-UI-${upper}-HOLD-DIRECT`, 'completed hold commits once and leaves the Shrine without opening the modal');
 
+      await wait(700);
       await click('#open-armoury');
       await until(`!!document.querySelector('.armoury-overlay') && !!document.querySelector('.armoury-smithing-receipt')`, 'Armoury Smithing receipt');
       const armoury = await evaluate(`(() => {
@@ -422,18 +586,18 @@ async function main() {
           const button=document.querySelector('#coop-smith');
           return {text:button?.textContent?.trim()||'',disabled:!!button?.disabled};
         })()`);
-        check(coopDoor.text === 'Smith an armament · 1 Stone' && coopDoor.disabled === false,
+        check(coopDoor.text === 'Upgrade an item · 1 Stone' && coopDoor.disabled === false,
           'SMITH-UI-COOP-SHOT-DOOR', `co-op Shrine shot exposes the real one-Stone host plan (${JSON.stringify(coopDoor)})`);
         await click('#coop-smith');
         await until(`!!document.querySelector('.smith-upgrade-modal')`, 'co-op Smith modal');
-        await click('.smith-candidate-card[data-armament-id="straightSword"]');
+        await click('.smith-candidate-card[data-item-ref="armament/straightSword"]');
         const coopModal = await evaluate(`(() => ({
           count:(document.querySelector('[data-smith-count]')?.textContent||'').replace(/\\s+/g,' ').trim(),
           text:(document.querySelector('.smith-preview-card')?.textContent||'').replace(/\\s+/g,' ').trim(),
         }))()`);
-        check(coopModal.count === '1 Smithing Stone · 2 eligible'
-            && coopModal.text.includes('Damage: 7 → 10')
-            && coopModal.text.includes('Block: 3 → 5'),
+        check(coopModal.count === '1 Smithing Stone · 3 eligible'
+            && coopModal.text.includes('AR 7 → 10')
+            && coopModal.text.includes('GUARD 3 → 5'),
           'SMITH-UI-COOP-SHOT-MODAL', `co-op Shrine shot opens the shared real-delta review (${JSON.stringify(coopModal)})`);
 
         await cdp.send('Page.navigate', {

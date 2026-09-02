@@ -5,6 +5,8 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 // Recording only — `note` is a no-op unless a run door is open, so the
 // stampDeck calls that fire all climb long cost nothing.
 import { note } from './healLedger.js';
+import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
+import { splitAuthoredWeaponArts } from '../framework/deck.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -60,6 +62,41 @@ export function parseMod(str) {
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 export const HANDS = Object.freeze(['left', 'right']);
 export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
+export const ARMAMENT_INTRINSIC_STAT_FIELDS = Object.freeze([
+  'attackRating',
+  'defenseRating',
+  'weight',
+  'weaponArtManaCost',
+  'uniqueSkillStaminaCost',
+]);
+
+/**
+ * Validate presentation-only armament facts without folding them into card or
+ * combat math. Every field is explicit: absence is never interpreted as zero.
+ */
+export function armamentIntrinsicStatProblems(piece) {
+  const id = piece && piece.id || '?';
+  const problems = [];
+  for (const field of ARMAMENT_INTRINSIC_STAT_FIELDS) {
+    const value = piece && piece[field];
+    if (!Number.isInteger(value) || value < 0) {
+      problems.push(`${id}: ${field} must be an explicit non-negative integer`);
+    }
+  }
+  if (Number.isInteger(piece?.weight) && piece.weight !== piece.poiseThreshold) {
+    problems.push(`${id}: weight ${piece.weight} must equal authored poiseThreshold ${piece.poiseThreshold}`);
+  }
+  const isStaffTechnique = (piece?.itemTypeTags || []).includes('item:magic-focus')
+    && piece?.techniqueProfile === 'staffTechnique';
+  const expectedManaCost = isStaffTechnique ? 1 : 0;
+  if (piece?.weaponArtManaCost !== expectedManaCost) {
+    problems.push(`${id}: weaponArtManaCost must be ${expectedManaCost} for its authored item type and technique profile`);
+  }
+  if (piece?.uniqueSkillStaminaCost !== 0) {
+    problems.push(`${id}: uniqueSkillStaminaCost must remain 0 until an explicit unique-skill consumer exists`);
+  }
+  return problems;
+}
 // ---------------------------------------------------------------------------
 // The two `apply` vocabularies — one per mod scope (Viki, A8)
 // ---------------------------------------------------------------------------
@@ -139,18 +176,23 @@ export function fitsSlot(slot, piece) {
 }
 
 /** Resolve explicit item attribute minima. Missing attributes fail closed. */
-export function equipmentRequirementReceipt(registries, piece, attributes = {}) {
+export function equipmentRequirementReceipt(registries, piece, attributes = {}, { itemUpgradeLevels = {}, armamentLevels = {} } = {}) {
   if (!piece || typeof piece !== 'object') throw new Error('equipment requirement receipt needs a piece');
   const authored = (piece.requirements && piece.requirements.attributes) || {};
   const requirements = [];
   const failures = [];
+  const namespaced = itemUpgradeLevels?.[`armament/${piece.id}`];
+  const level = Number.isInteger(namespaced) ? namespaced
+    : Number.isInteger(armamentLevels?.[piece.id]) ? armamentLevels[piece.id] : 0;
   for (const [attributeId, required] of Object.entries(authored)) {
     if (!registries.attributes.has(attributeId)) throw new Error(`${piece.id}: unknown requirement attribute '${attributeId}'`);
     if (!Number.isInteger(required) || required < 0) throw new Error(`${piece.id}.${attributeId}: requirement minimum must be a non-negative integer`);
+    const delta = cumulativeRequirementDelta(registries, `armament/${piece.id}`, attributeId, level);
+    const effectiveRequired = Math.max(0, required + delta);
     const actual = attributes && attributes[attributeId];
-    const row = { attributeId, required, actual: Number.isFinite(actual) ? actual : null };
+    const row = { attributeId, baseRequired: required, reduction: -delta, required: effectiveRequired, actual: Number.isFinite(actual) ? actual : null };
     requirements.push(row);
-    if (!Number.isFinite(actual) || actual < required) failures.push(row);
+    if (!Number.isFinite(actual) || actual < effectiveRequired) failures.push(row);
   }
   return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
 }
@@ -220,6 +262,8 @@ export function validateEquipment(registries) {
   const tagIds = new Set((registries.tags || []).map((t) => t.id));
   const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
   if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
+
+  for (const piece of eq.armaments || []) problems.push(...armamentIntrinsicStatProblems(piece));
 
   if (profilesPresent) {
     if (!Array.isArray(eq.equipmentRequirements)) problems.push('equipmentRequirements.csv: missing generated table');
@@ -1005,6 +1049,37 @@ export const WeaponCardPackageModel = Object.freeze({
     const filler = attackProfileFor(registries, fillerAttackProfileId, piece.id);
     const priorityAttackRefs = source.priorityAttackRefs == null ? [] : source.priorityAttackRefs;
     if (!Array.isArray(priorityAttackRefs)) throw new Error(`${piece.id}: priorityAttackRefs must be an array`);
+    // Contract-new output (framework contract: Equipment contract,
+    // grantedCards; adoption ruling 2026-09-01): extra real cards a package
+    // adds to the starting deck. No shipped armament authors any yet — the
+    // mechanism validates and composes, and stays dormant until data exists.
+    const grantedCardsRaw = source.grantedCards == null ? [] : source.grantedCards;
+    if (!Array.isArray(grantedCardsRaw)) throw new Error(`${piece.id}: grantedCards must be an array`);
+    const grantedSeen = new Set();
+    const grantedCards = grantedCardsRaw.map((raw, index) => {
+      const ref = typeof raw === 'string' ? { cardId: raw } : raw;
+      if (!ref || typeof ref !== 'object' || Array.isArray(ref) || !ref.cardId) {
+        throw new Error(`${piece.id}: grantedCards[${index}] must name cardId`);
+      }
+      if (!registries.cards.has(ref.cardId)) throw new Error(`${piece.id}: granted card '${ref.cardId}' is unknown`);
+      const count = ref.count == null ? 1 : ref.count;
+      if (!Number.isInteger(count) || count < 1) throw new Error(`${piece.id}: grantedCards[${index}].count must be a positive integer`);
+      if (grantedSeen.has(ref.cardId)) throw new Error(`${piece.id}: duplicate granted card '${ref.cardId}'`);
+      grantedSeen.add(ref.cardId);
+      return { cardId: ref.cardId, count };
+    });
+    // Default weapon arts: real cards the armament installs (contract-new,
+    // dormant — no shipped armament authors any). Validated like grants.
+    const weaponArtsRaw = source.weaponArtDefaults == null ? [] : source.weaponArtDefaults;
+    if (!Array.isArray(weaponArtsRaw)) throw new Error(`${piece.id}: weaponArtDefaults must be an array`);
+    const artSeen = new Set();
+    const weaponArtDefaults = weaponArtsRaw.map((artId, index) => {
+      if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: weaponArtDefaults[${index}] must name a card id`);
+      if (!registries.cards.has(artId)) throw new Error(`${piece.id}: weapon art '${artId}' is unknown`);
+      if (artSeen.has(artId)) throw new Error(`${piece.id}: duplicate weapon art '${artId}'`);
+      artSeen.add(artId);
+      return artId;
+    });
     const seen = new Set();
     const priorities = priorityAttackRefs.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -1023,6 +1098,8 @@ export const WeaponCardPackageModel = Object.freeze({
       weaponId: piece.id,
       handsRequired,
       priorityAttackRefs: Object.freeze(priorities),
+      grantedCards: Object.freeze(grantedCards),
+      weaponArtDefaults: Object.freeze(weaponArtDefaults),
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
     });
@@ -1067,7 +1144,12 @@ export function buildEquippedWeaponCardPlan(registries, loadout, classId, { atta
   let refs;
   if (twoHanded) refs = quotaRefs(registries, twoHanded, count);
   else if (eligible.length === 2) {
-    refs = [
+    // A shield owns a low fallback strike when it is the only armed hand, but
+    // never steals half the active attack package from a paired weapon. Two
+    // true weapons still split the authored attack slots deterministically.
+    const nonShield = eligible.filter((source) => source.piece?.kind !== 'shield');
+    if (nonShield.length === 1) refs = quotaRefs(registries, nonShield[0], count);
+    else refs = [
       ...quotaRefs(registries, right, Math.ceil(count / 2)),
       ...quotaRefs(registries, left, Math.floor(count / 2)),
     ];
@@ -1146,6 +1228,97 @@ export function startingDeckRefs(registries, loadout, classId) {
   return refs;
 }
 
+/**
+ * Granted cards and default weapon arts reconcile against the EQUIPPED
+ * packages on every authoritative restamp (contract-new outputs on the
+ * adopted composer; dormant while no shipped armament authors either).
+ * Deterministic instance ids make the reconcile idempotent and save-stable;
+ * an instance whose armament left the hands leaves the deck with it.
+ */
+export function reconcileGrantedCards(registries, run) {
+  if (!run.deck) run.deck = [];
+  const desired = desiredGrantInstances(registries, run);
+  const wanted = new Set(desired.map((d) => d.instanceId));
+  const present = new Set();
+  // In place, not a reassignment: stampDeck captures its stamping list before
+  // reconciling, so an appended instance must land in the SAME array to flow
+  // through the carrier/mod stamping that follows.
+  const kept = run.deck.filter((inst) => {
+    if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+    if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
+    return false;
+  });
+  run.deck.length = 0;
+  run.deck.push(...kept);
+  for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
+  return run.deck;
+}
+
+/**
+ * The desired granted/weaponArt instances for the CURRENTLY equipped hands.
+ * Grants concatenate right then left (the contract model authors no dedup for
+ * them); weapon arts with both hands armed go through the framework's
+ * splitAuthoredWeaponArts — quota split, unique preference RIGHT_THEN_LEFT —
+ * so an art both weapons author installs once, attributed to the winning hand.
+ */
+function desiredGrantInstances(registries, run) {
+  const sources = { right: null, left: null };
+  for (const hand of ['right', 'left']) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    if (source.package) sources[hand] = source;
+  }
+  const desired = [];
+  for (const hand of ['right', 'left']) {
+    const source = sources[hand];
+    if (!source) continue;
+    for (const grant of source.package.grantedCards) {
+      for (let i = 0; i < grant.count; i++) {
+        desired.push({
+          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
+          cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+        });
+      }
+    }
+  }
+  const arts = sources.right && sources.left
+    ? splitAuthoredWeaponArts(sources.right.package.weaponArtDefaults, sources.left.package.weaponArtDefaults)
+    : ['right', 'left'].flatMap((hand) => (sources[hand]
+      ? sources[hand].package.weaponArtDefaults.map((id) => ({ id, hand }))
+      : []));
+  for (const art of arts) {
+    const weaponId = sources[art.hand].package.weaponId;
+    desired.push({
+      instanceId: `weaponArt:${weaponId}:${art.id}`,
+      cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
+    });
+  }
+  return desired;
+}
+
+/**
+ * The same reconcile at the ONE mid-fight door equipment moves through: the
+ * combat piles are the deck while a fight is on, so a swap sweeps stale
+ * granted/weaponArt instances out of every pile (hand included — an instance
+ * whose armament left the hands leaves with it) and lands missing ones in the
+ * discard pile, where the engine's addCard effect puts mid-combat additions.
+ * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
+ */
+export function reconcileGrantedCardsInCombat(registries, run, piles) {
+  const desired = desiredGrantInstances(registries, run);
+  const wanted = new Set(desired.map((d) => d.instanceId));
+  const present = new Set();
+  for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
+    const kept = pile.filter((inst) => {
+      if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+      if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
+      return false;
+    });
+    pile.length = 0;
+    pile.push(...kept);
+  }
+  for (const d of desired) if (!present.has(d.instanceId)) piles.discard.push(d);
+}
+
 /** The piece in a slot's active set, or null. Armour resolves per class. */
 export function equippedIn(registries, loadout, classId, slotId) {
   const ids = (loadout.sets || {})[slotId] || [];
@@ -1160,12 +1333,15 @@ export function equippedIn(registries, loadout, classId, slotId) {
 }
 
 /** Every currently-worn piece, in slot order — the order mods apply in. */
-export function equippedPieces(registries, loadout, classId) {
+export function equippedPieces(registries, loadout, classId, { itemUpgradeLevels = {} } = {}) {
   if (!loadout) return [];
   const out = [];
   for (const slot of (registries.equipment || {}).slots || []) {
     const piece = equippedIn(registries, loadout, classId, slot.id);
-    if (piece) out.push(piece);
+    if (piece && piece.kind === 'armor') {
+      const itemRef = `armor/${piece.classId}/${piece.id}`;
+      out.push(resolveUpgradedEquipment(registries, itemRef, itemUpgradeLevels[itemRef] || 0));
+    } else if (piece) out.push(piece);
   }
   return out;
 }
@@ -1565,6 +1741,11 @@ export function stampDeck(registries, run, cards, {
     }
   }
   applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
+  // Only the authoritative full-deck restamp reconciles granted/weapon-art
+  // instances — a pile subset must never mint or drop them. Reconciling
+  // BEFORE the stamping loop (in place — list IS run.deck here) means a
+  // newly composed instance is stamped like any other card below.
+  if (cards == null) reconcileGrantedCards(registries, run);
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
@@ -1587,7 +1768,9 @@ export function stampDeck(registries, run, cards, {
       const sourceArmamentId = row.piece && row.piece.id;
       if (sourceArmamentId) {
         inst.sourceArmamentId = sourceArmamentId;
-        inst.smithingLevel = (run.armamentLevels && run.armamentLevels[sourceArmamentId]) || 0;
+        inst.smithingLevel = run.itemUpgradeLevels?.[`armament/${sourceArmamentId}`]
+          ?? run.armamentLevels?.[sourceArmamentId]
+          ?? 0;
         // Equipment-bound basics derive their upgrade from the source piece.
         // Per-copy flags remain authoritative only for ordinary cards.
         inst.upgraded = false;
@@ -2214,7 +2397,7 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
     return false;
   }
   if (!owned.has(piece)) return false;
-  if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
+  if (!equipmentRequirementReceipt(registries, piece, ctx.attributes, { itemUpgradeLevels: ctx.itemUpgradeLevels, armamentLevels: ctx.armamentLevels }).ok) return false;
   const next = structuredClone(loadout);
   if (!applyEquipTransition(registries, next, slotId, setIndex, itemId)) return false;
   try {

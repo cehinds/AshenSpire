@@ -6,9 +6,19 @@ request that landed it, and the build ordinal is read from `buildordinal.json`
 as committed at that merge on `dev` — two merges can share an ordinal when one
 of them shipped evidence or docs only, which rebuild nothing.
 
+A receipt may ship in the pull request that makes the change (DEVELOPER.md
+asks it of Armoury contract changes). It then names the build its own
+projection produces: rebuild, write the receipt at that ordinal plus one, run
+`node tools/about-changelog.mjs --write` (which allows exactly that one build
+ahead while projecting), rebuild again, and the ordinal on the box equals the
+receipt. A later rebuild on the branch — a merge from `dev`, another fix —
+moves the box, so the receipt is re-pointed the same way before the merge.
+
 These are **development builds**, not releases. Release status is governed
 separately and remains **RED**. The version stamp in-game is
-`0.4.0.<ordinal>`.
+`<release>.<ordinal>` — `0.4.0.<ordinal>` through build 1903, and
+`0.5.0-rc.1.<ordinal>` from the first 0.5.0 release candidate on (see
+`docs/versioning.md`, "Release candidates").
 
 *This file starts at `0.4.0.0777` (2026-08-17). Below that point the merge
 log's pull-request references turn intermittent — whole runs of direct
@@ -16,6 +26,27 @@ landings on 2026-08-14 to -16 name no pull request at all — so entries there
 would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
+
+## 2026-09-02
+
+- **The first quest chain: Grave of the Nameless → the Keeper → the Nameless at Rest** ([#526](https://github.com/cehinds/AshenSpire/pull/526), `0.5.0-rc.1.1926`). What you did at the grave follows you: dig for cinders and the keeper comes to collect (repay, or fight); pay your respects and the keeper thanks you with the Gravetender's Bell, a relic no shop or drop will ever hand over. A second cairn opens only after the keeper, answers the branch you took, and neither step comes twice. Under the hood, an Unknown node can now roll an event only once your run's history has earned it, so more chains are content on the same door.
+- **Empty hands fight with the Dodge Roll, Stamina recovers, and your Weight Class prices the dodge** ([#523](https://github.com/cehinds/AshenSpire/pull/523), `0.5.0-rc.1.1922`). A run with both hands empty now composes Evasive Guard in every guard slot and Dodge Roll in every technique slot instead of the placeholder Defend and Footwork. The Dodge Roll checks Dexterity against a d20 and, on success, lands a temporary guard as Block; the pure dodge costs what your Weight Class says — Light 1 Stamina, Medium 2 Stamina and 1 action, Heavy 3 Stamina and 2 actions — and the card face, the tooltip and the engine quote the same price. A turn in which you spend no Stamina recovers some at its end. Armed play is unchanged. Co-op seats are priced from their own Dexterity and equipment.
+
+## 2026-09-01
+
+- **Your equipment now has a weight, and the Armoury says what it costs you** ([#520](https://github.com/cehinds/AshenSpire/pull/520), `0.5.0-rc.1.1920`). Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, every item card shows the same Weight number the total counts, smithed or not, and comparing a piece shows the load and Weight Class the swap would leave you at. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.
+- **Framework cutover checklist and importer validation** ([#519](https://github.com/cehinds/AshenSpire/pull/519), `0.5.0-rc.1.1911`). Nothing a player sees changes: the migration checklist and cutover report now read the live counts (393 entities, 196 cards) and name each dormant row's missing piece; the importer refuses an armament or outfit whose weight, ratings or poise threshold are malformed, with a malformed-row test.
+- **Shrines level you at a measured pace, and can be multi-use** ([#522](https://github.com/cehinds/AshenSpire/pull/522), `0.5.0-rc.1.1909`). Balance change: a level at the Shrine now costs 20 cinders, rising 4 per level (was 800 + 200), calibrated so a full climb buys 10–20 level-ups. Settings → Advanced → Gameplay → **Multi-use Shrines** (off by default) lets you Rest, Smith and Level at one Shrine and leave when you choose; every Shrine sentence tells the truth about staying or leaving.
+- **Release-candidate versioning** ([#517](https://github.com/cehinds/AshenSpire/pull/517), `0.5.0-rc.1.1908`). The in-game stamp reads `0.5.0-rc.1.<build>` from this build on — the first candidate of the 0.5.0 line QA tests — and the version gate clears the one named contract column that legitimately ends in "version". Receipts for #510–#516 landed here.
+- **Dragging a card lights the one legal target, self or ally** ([#521](https://github.com/cehinds/AshenSpire/pull/521), `0.5.0-rc.1.1904`). When a card's legal targets on the board come to exactly one and it is you, the drag lights you — for self cards as before, and now for self-or-ally cards when no ally is present. The set is taken once at drag start, so nothing pops in mid-drag, and the highlight never lights a drop the release would refuse. Co-op keeps its own aiming.
+- **Status-effect rules and the cost badges on card faces now come from the framework** ([#516](https://github.com/cehinds/AshenSpire/pull/516), `0.4.0.1903`). Behavior-preserving: the ninth port tranche moves status semantics (stacks, meters, decay, procs, resists) behind a framework door and reads the card-face cost, mana and stamina badges from the framework cost profile. Every card's badges are proven identical. Release remains RED.
+- **Every status and stance word, and the whole hold-to-confirm surface, route through the framework** ([#514](https://github.com/cehinds/AshenSpire/pull/514), `0.4.0.1902`). Behavior-preserving: the eighth port tranche resolves the remaining status/stance names and tooltips (combat rows, proc bars, stance chips, stagger tooltips, co-op board, arcane exposure) through the framework term registry, verbatim, and moves the tap/hold/inspect interaction surface behind the framework door for all ten screens that use it.
+- **Armaments can grant cards and install default weapon arts, dormant until authored** ([#513](https://github.com/cehinds/AshenSpire/pull/513), `0.4.0.1901`). Nothing a player sees changes: no shipped armament authors a grant or a weapon art yet. The mechanism composes them with save-stable ids at creation and on equip, reconciles them across the combat piles on a mid-fight swap and on loading a fight, dedupes a shared weapon art across two hands, and keeps them out of per-copy upgrade and removal offers — all proven by fixture. Status and stance words on card faces now resolve through the framework term registry.
+- **Deck composition and confirmation rules adopted as the framework's own** ([#512](https://github.com/cehinds/AshenSpire/pull/512), `0.4.0.1896`). Behavior-preserving: the shipped weapon-deck composer and the fail-closed confirmation derivation become the framework's implementations behind framework doors; the smith upgrade modal routes through the option-decision door. Rides along: the about-changelog instrument's selftest census and verdict lines (#498).
+- **Two owner rulings recorded and executed for the framework port** ([#511](https://github.com/cehinds/AshenSpire/pull/511), `0.4.0.1893`). Behavior-preserving: the owner adopted the legacy deck composition and the fail-closed confirmation derivation as the framework's rules; status and stance tooltips on card faces resolve through framework terms.
+- **Card costs and load/quit confirmation severity decided by the framework** ([#510](https://github.com/cehinds/AshenSpire/pull/510), `0.4.0.1893`). Behavior-preserving: the second port tranche compiles every card's cost profile (action, mana, stamina, X, Power reduction) through the framework and reads the load/quit dialog tone from the confirmation registry; every card's costs are proven identical, base and upgraded.
+
+- **The data-driven property framework lands as a complete, validated replacement candidate** ([#508](https://github.com/cehinds/AshenSpire/pull/508), `0.4.0.1888`). Nothing a player sees changes: the framework — canonical registries, a deterministic property compiler, gameplay services, shared presentation rules, an importer carrying all 392 existing entities with their exact identities, and a cutover gate that refuses to switch until every check passes — ships alongside the running game without touching it. Evidence and groundwork only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.
 
 ## 2026-08-31
 

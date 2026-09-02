@@ -84,13 +84,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL\s+S5 chooser: an unseen card wears a visible NEW badge/,
       },
       {
-        name: 'production armament collector returns success before the run is durable',
-        file: 'src/main.js',
-        find: '  // The reward row may say Taken only after both ownership homes and the\n  // resumable run agree. This is the production collector\'s commit boundary.\n  persist();\n  return true;',
-        replace: '  // planted: ownership changed, but the resumable run did not\n  return true;',
-        expectRed: /FAIL\s+S1 reload-before-Continue keeps the armament in saved run storage/,
-      },
-      {
         // The b6b7df0 P1's UI face alone: the full-bag derivation gone — the
         // ninth piece renders takeable at the cap. The collector's own gate
         // stays, so the tap stores nothing and writes nothing; what breaks is
@@ -141,25 +134,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL\s+S7 tapping claims nothing at the cap/,
       },
       {
-        name: 'cinders become Taken without a durable run snapshot',
+        // #498: four plants each removed a per-site persistence call, and all
+        // four died when persistence was centralised — apply() mutates, take()
+        // marks the row Taken, and ONE persistProgress() at the save door makes
+        // both durable together (saving inside the collector would open an
+        // interruption window; main.js says so at collectArmament). Four
+        // checks, one commit boundary — so this is one plant at that boundary,
+        // and its expectation is every red the door was holding shut, in the
+        // order the tool emits them. A regex matching only the first would
+        // prove one check of five.
+        name: 'a row becomes Taken without the one durable snapshot the save door writes',
         file: 'src/ui/screens/reward.js',
-        find: '      run.cinders += row.amount;\n      if (onPersist) onPersist();\n      return true;',
-        replace: '      run.cinders += row.amount;\n      /* planted: no durable run snapshot */\n      return true;',
-        expectRed: /FAIL\s+S10 reload-before-Continue keeps cinders/,
-      },
-      {
-        name: 'a flask becomes Taken without a durable run snapshot',
-        file: 'src/ui/screens/reward.js',
-        find: "      recordSeen('flask', [row.flaskId]);\n      if (onPersist) onPersist();\n      return true;",
-        replace: "      recordSeen('flask', [row.flaskId]);\n      /* planted: meta advances but the run is not durable */\n      return true;",
-        expectRed: /FAIL\s+S10 reload-before-Continue keeps the flask/,
-      },
-      {
-        name: 'a relic becomes Taken without a durable run snapshot',
-        file: 'src/ui/screens/reward.js',
-        find: "      recordSeen('relic', [row.relicId]);\n      if (onPersist) onPersist();\n      return true;",
-        replace: "      recordSeen('relic', [row.relicId]);\n      /* planted: meta advances but the run is not durable */\n      return true;",
-        expectRed: /FAIL\s+S10 reload-before-Continue keeps the relic/,
+        find: '    persistProgress();\n    sfx.play(',
+        replace: '    /* planted: the save door does not save */\n    sfx.play(',
+        expectRed: /FAIL\s+S10 reload-before-Continue keeps cinders[\s\S]*FAIL\s+S10 reload-before-Continue keeps the flask[\s\S]*FAIL\s+S10 reload-before-Continue keeps the relic[\s\S]*FAIL\s+S10 reload-before-Continue keeps the armament[\s\S]*FAIL\s+S1 reload-before-Continue keeps the armament in saved run storage/,
       },
     ],
   }));
@@ -246,7 +234,12 @@ const durableKinds = await ev(`(async()=>{
     const persist=()=>{ snapshot=JSON.stringify(run); };
     mountRewards(root, { registries, run, rewards:row.rewards, onDone(){}, onPersist:persist,
       saves:{loadMeta:()=>meta,saveMeta:(next)=>{meta=next;}},
-      onCollectArmament:(id)=>{run.loadout.storage.push(id);meta={...meta,found:[...meta.found,id]};persist();return true;},
+      // main.js's collectArmament writes META only and defers the run snapshot:
+      // "The reward screen persists this mutation together with its Taken
+      // state." A fixture that persisted the run inside this callback modelled
+      // a collector production deliberately does not have, and made the
+      // armament S10 red unreachable when the save door was planted away.
+      onCollectArmament:(id)=>{run.loadout.storage.push(id);meta={...meta,found:[...meta.found,id]};return true;},
     });
     row.take(root);
     const restored=snapshot&&JSON.parse(snapshot);

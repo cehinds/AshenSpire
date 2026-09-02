@@ -147,6 +147,13 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
+  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
+  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
+  // Shrine open: Rest once, Smith while you have Stones, Level while you have
+  // cinders, and leave when you choose. Conservative default, as his own
+  // data-driven instruction for an unsettled 'maybe' asks.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
