@@ -9,6 +9,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard, passiveSum } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, coopHpMult } from './session.mjs';
+import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
 const REG = createRegistries(contentBundle);
@@ -122,8 +123,139 @@ try {
     else if (sc.kind === 'event') for (const m of S.connectedMembers()) S.eventChoice(m.id, 0);
   }
   ok(S.scene.kind === 'combat', 'party reaches a live shared combat');
+  // A CO-OP EVENT CHOICE IS A QUEST STEP: every member who chose has the
+  // record in their own run's history, by stable event and choice id, and the
+  // shared map is built on the host's (S.partyHistory()) — the door main.js
+  // walks with run.history, which this session never walked before.
+  {
+    const withEvents = S.connectedMembers().filter((m) => (m.run.history || []).some((h) => h.kind === 'event-choice' || h.eventId));
+    const p1h = S.session.members.get('p1').run.history || [];
+    // GOLDBOUGH's first stretch reaches an event before its first combat, so a
+    // walk that recorded nothing is the defect, not a vacuous green.
+    ok(p1h.length >= 1, `the walk answered an event before its first combat and the host recorded it (${p1h.length} record(s))`);
+    ok(S.partyHistory().length === p1h.length && S.partyHistory().every((h, i) => h.eventId === p1h[i].eventId && h.choiceId === p1h[i].choiceId),
+      `the party's choice history is the host's (${S.partyHistory().length} record(s) for p1)`);
+    ok(withEvents.length === (p1h.length ? S.connectedMembers().length : 0),
+      `every member who answered an event carries the record (${withEvents.length} of ${S.connectedMembers().length}; p1 has ${p1h.length})`);
+    if (p1h.length) ok(p1h.every((h) => typeof h.eventId === 'string' && typeof h.choiceId === 'string' && Number.isInteger(h.actNumber) && Number.isInteger(h.floor)),
+      `each record names its event, choice, act and floor (${JSON.stringify(p1h[0])})`);
+    ok(S.serialize() === null || Array.isArray(S.serialize().history), 'the party history rides the host save (serialize)');
+  }
+  // THE PARTY'S HISTORY IS THE PARTY'S, NOT THE FIRST SEAT'S: with the
+  // earliest-joined member gone before the event, the present member's choice
+  // is the record the next map answers to, and the scene carried each seat's
+  // open choices by authored index.
+  {
+    const T = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+    T.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
+    T.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
+    T.start();
+    T.setConnected('p1', false);
+    let hops = 0; let sawOpen = null;
+    while (T.scene.kind !== 'event' && T.scene.kind !== 'complete' && hops++ < 24) {
+      for (const m of T.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp;
+      const sc = T.scene;
+      if (sc.kind === 'map') for (const m of T.connectedMembers()) T.chooseNode(m.id, T.session.reachableIds[0]);
+      else if (sc.kind === 'combat') T.autoResolveCombat(botTurn);
+      else if (sc.kind === 'reward') for (const id of Object.keys(sc.offers)) T.chooseReward(id, { cardId: sc.offers[id].cardIds[0] });
+      else if (sc.kind === 'shrine') for (const m of T.connectedMembers()) T.shrineChoice(m.id, 'rest');
+    }
+    if (T.scene.kind === 'event') {
+      sawOpen = T.scene.open;
+      const eventId = T.scene.eventId;
+      // A CHOICE WITH A PRICE IS REFUSED BEFORE ANYTHING IS RECORDED, and a
+      // fallen seat's choice is refused outright.
+      const priced = (REG.events.get(eventId).choices || []).findIndex((c) => c.requires && typeof c.requires.cinders === 'number');
+      if (priced >= 0) {
+        const p2 = T.session.members.get('p2'); const hadCinders = p2.run.cinders; p2.run.cinders = 0;
+        const refused = T.eventChoice('p2', priced);
+        ok(!refused.ok && (p2.run.history || []).length === 0 && T.partyHistory().length === 0,
+          `a choice the member cannot afford is refused and records nothing (${JSON.stringify(refused)})`);
+        p2.run.cinders = hadCinders;
+      }
+      const fallen = T.eventChoice('p1', 0);
+      // THE PRICED CHOICE, on an event that has one: the Weeping Pilgrim's
+      // "Give 50 cinders" is refused for a member holding none, before any
+      // record is written — posed by setting the scene directly, the way a
+      // resumed save lands on it (no picks/open, which the choice initialises).
+      {
+        const U = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        U.addMember({ id: 'q1', name: 'Ash', classId: 'reaver' });
+        U.start();
+        U.session.cursorId = U.session.reachableIds[0]; // a real node, so the event can advance from it
+        U.session.scene = { kind: 'event', eventId: 'weepingPilgrim', done: {} };
+        const pilgrim = REG.events.get('weepingPilgrim');
+        const priced = pilgrim.choices.findIndex((c) => c.requires && typeof c.requires.cinders === 'number');
+        const q1 = U.session.members.get('q1'); q1.run.cinders = 0;
+        const refused = U.eventChoice('q1', priced);
+        ok(priced >= 0 && !refused.ok && (q1.run.history || []).length === 0 && U.partyHistory().length === 0 && U.scene.kind === 'event',
+          `a choice the member cannot afford is refused before anything is recorded (${JSON.stringify(refused)})`);
+        q1.run.cinders = pilgrim.choices[priced].requires.cinders;
+        const relicsBefore = q1.run.relics.length;
+        const paid = U.eventChoice('q1', priced);
+        ok(paid.ok && U.partyHistory().length === 1 && U.partyHistory()[0].choiceId === (q1.run.history[0] || {}).choiceId,
+          `the same choice with the cinders in hand is recorded (${JSON.stringify(U.partyHistory()[0])})`);
+        // AND THE TRANSACTION HAPPENED: the cinders are gone and the relic is
+        // in hand — the authored effects ran before the fact was recorded.
+        ok(q1.run.cinders === 0 && q1.run.relics.length === relicsBefore + 1,
+          `the choice's authored effects ran before the record (cinders ${pilgrim.choices[priced].requires.cinders} -> ${q1.run.cinders}, relics ${relicsBefore} -> ${q1.run.relics.length})`);
+      }
+      // AN EVENT THAT STARTS A FIGHT opens the shared combat on the named
+      // encounter (the Feral Shrine's keeper), and the flag is consumed.
+      {
+        const V = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        V.addMember({ id: 'v1', name: 'Ash', classId: 'reaver' });
+        V.start();
+        V.session.cursorId = V.session.reachableIds[0];
+        V.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const shrine = REG.events.get('feralShrine');
+        const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+        const wanted = shrine.choices[fightIdx].effects.find((e) => e.op === 'startCombat').encounterId;
+        const r = V.eventChoice('v1', fightIdx);
+        const enemyIds = V.scene.kind === 'combat' ? (V.scene.enemies || []).map((e) => e.enemyId || e.id) : [];
+        ok(r.ok && r.combat === wanted && V.scene.kind === 'combat' && V.session.members.get('v1').run.combatEntered == null,
+          `an event's startCombat opens the shared combat on its named encounter (${wanted}) and consumes the flag (scene ${V.scene.kind}, combat=${r.combat}, enemies ${JSON.stringify(enemyIds).slice(0, 80)})`);
+      }
+      // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
+      {
+        const W = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        W.addMember({ id: 'w1', name: 'Ash', classId: 'reaver' });
+        W.start();
+        W.session.cursorId = W.session.reachableIds[0];
+        W.session.scene = { kind: 'event', eventId: 'goldboughAvatar', done: {} };
+        const avatar = REG.events.get('goldboughAvatar');
+        const hurtIdx = avatar.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'damage' && e.target === 'self'));
+        const w1 = W.session.members.get('w1'); w1.run.hp = 1;
+        const r = W.eventChoice('w1', hurtIdx);
+        ok(r.ok && r.result === 'defeat' && w1.alive === false && w1.run.hp === 0 && W.scene.kind === 'complete' && W.scene.victory === false,
+          `a choice that kills fells the seat and ends a party with nobody left (alive=${w1.alive}, hp=${w1.run.hp}, scene ${W.scene.kind}/${W.scene.victory})`);
+      }
+      ok(!fallen.ok && T.partyHistory().length === 0, `an absent seat's choice is refused (${JSON.stringify(fallen)})`);
+      const r = T.eventChoice('p2', 0);
+      const party = T.partyHistory();
+      ok(r.ok && party.length === 1 && party[0].eventId === eventId && party[0].choiceId === (T.session.members.get('p2').run.history[0] || {}).choiceId
+        && (T.session.members.get('p1').run.history || []).length === 0,
+        `with the first seat absent, the present member's choice is the party's record (${JSON.stringify(party[0])}; p1 recorded ${(T.session.members.get('p1').run.history || []).length})`);
+      ok(sawOpen && Object.keys(sawOpen).length === 2 && (sawOpen.p2 === null || Array.isArray(sawOpen.p2)),
+        `the event scene carries each seat's open choices by authored index (${JSON.stringify(sawOpen)})`);
+    } else {
+      ok(false, `the host-absent walk did not reach an event (scene ${T.scene.kind}) — the party-record check could not be asked`);
+    }
+  }
   ok(S.scene.players.length === 2 && S.scene.enemies.length >= 1, 'combat scene exposes both players + shared enemies');
   ok(S.scene.players.every((p) => p.attributeMode && p.attributes), 'combat snapshot transports each seat\'s inert attributes');
+  // THE SEAT'S POISE THRESHOLD reaches the shared fight the way it reaches a
+  // solo one: derived from the loadout, relics and tiers, never the engine's
+  // zero default.
+  {
+    const p1m = S.session.members.get('p1');
+    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {} }).value;
+    // The entity carries it as its poise METER's max (state.js stampPlayerPoiseMax);
+    // an absent meter is the engine's "no vessel" — the zero this fix removes.
+    const meter = S.live.combat.players.get('p1').entity.poiseMeter;
+    const stamped = meter ? meter.max : null;
+    ok(owed > 0 && stamped === owed, `the seat's Poise threshold is stamped on its combat entity (owed ${owed}, meter max ${stamped})`);
+  }
   {
     const p2snap = S.scene.players.find((p) => p.id === 'p2');
     const hostSays = passiveSum(REG, p2run.relics, 'powerCostReduction', p2run.itemUpgradeLevels);
