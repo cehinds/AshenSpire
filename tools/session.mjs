@@ -246,7 +246,13 @@ export function createSession({ registries, seedString, endless = false, restore
     const m = members.get(id);
     if (m) {
       m.connected = !!connected;
-      if (live) combatPresence(id, !!connected); // rescale the live fight
+      // A RETURN INTO A LIVE FIGHT WAITS ON THE SEAT'S CATCH-UP: what the
+      // queue pays out or costs — a missed event's healing, damage or lost
+      // max HP, a relic — is written to the run, and a body already in the
+      // fight would carry the old numbers and write them back over the run
+      // when the fight settles (Codex on #548). The seat joins when its
+      // queue drains (resolveCatchup); a leave is always a leave.
+      if (live && (!connected || !m.catchup.length)) combatPresence(id, !!connected); // rescale the live fight
       if (settle) settlePresence(!!connected);
     }
     return m;
@@ -894,17 +900,32 @@ export function createSession({ registries, seedString, endless = false, restore
     let def = null;
     try { def = registries.events.get(session.scene.eventId); } catch { def = null; }
 
+    // THE FIGHT THE PARTY BOUGHT, named first (startCombat sets
+    // run.combatEntered, the door main.js and runsim.mjs consume): the
+    // earliest-joined LIVING seat whose committed pick started a fight names
+    // the party's encounter (one fight, one room) — connected or not: a seat
+    // that chose the fight, kept the choice's reward and then dropped does
+    // not spare the party the encounter it bought (Codex on #541).
+    const fighter = livingMembers().sort((a, b) => a.index - b.index).find((mm) => mm.run.combatEntered);
+    const forced = fighter ? (typeof fighter.run.combatEntered === 'string' ? fighter.run.combatEntered : fighter.run.combatEntered.encounterId) : null;
     // THE ABSENT KEEP THEIR TURN. A living seat away from the room while it
     // settled chose nothing here; the node is logged into its catch-up queue
     // with the choices its history admitted, to be made on return the way a
     // missed reward is — MULTIPLAYER.md's "retroactive catch-up as a series"
     // (Codex on #541). A seat that chose and then dropped keeps its choice
-    // and owes nothing; the queue is served by resolveCatchup.
+    // and owes nothing; the queue is served by resolveCatchup. A CHOICE THAT
+    // STARTS A FIGHT is withheld from the entry unless the party fought that
+    // very encounter: replayed alone, the Feral Shrine's offering would pay
+    // its relic with no fight behind it — the free power the catch-up rule
+    // forbids (Codex on #548). Behind the party's fight it is open: the
+    // fight was fought, and the seat's combat reward rides its own entry.
+    const authoredNow = def ? eventChoicesWithHistory(def) : [];
+    const fightless = (idx) => { const c = authoredNow[idx]; return !c || !(c.effects || []).some((e) => e.op === 'startCombat' && e.encounterId !== forced); };
     for (const mm of livingMembers()) {
       if (mm.connected || session.scene.picks[mm.id] || session.scene.done[mm.id]) continue;
       mm.catchup.push({
         type: 'event', eventId: session.scene.eventId,
-        open: session.scene.open && Array.isArray(session.scene.open[mm.id]) ? [...session.scene.open[mm.id]] : null,
+        open: session.scene.open && Array.isArray(session.scene.open[mm.id]) ? session.scene.open[mm.id].filter(fightless) : null,
         act: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null,
       });
     }
@@ -925,16 +946,9 @@ export function createSession({ registries, seedString, endless = false, restore
     // EVERYONE FELL TO THE CHOICE: the run is over, the same sentence the
     // combat path says.
     if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
-    // AN EVENT THAT STARTS A FIGHT (startCombat sets run.combatEntered, the
-    // door main.js and runsim.mjs consume) opens the SHARED combat on the
-    // named encounter before the party advances; the flag is consumed on
-    // every member so no save carries a stale one. The earliest-joined LIVING
-    // seat whose committed pick started a fight names the party's encounter
-    // (one fight, one room) — connected or not: a seat that chose the fight,
-    // kept the choice's reward and then dropped does not spare the party
-    // the encounter it bought (Codex on #541).
-    const fighter = livingMembers().sort((a, b) => a.index - b.index).find((mm) => mm.run.combatEntered);
-    const forced = fighter ? (typeof fighter.run.combatEntered === 'string' ? fighter.run.combatEntered : fighter.run.combatEntered.encounterId) : null;
+    // AN EVENT THAT STARTS A FIGHT opens the SHARED combat on the named
+    // encounter (`forced`, above) before the party advances; the flag is
+    // consumed on every member so no save carries a stale one.
     if (forced) {
       // THE RESULT SHOWS BEFORE THE FIGHT. DEVELOPER.md's event contract
       // hands control to combat only after the choice's resultText has been
@@ -971,6 +985,11 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- catch-up replay (S4 foundation) -------------------------------------
   // On reconnect, hand back the member's queued missed choices as a series.
+  // THE QUEUE DRAINED INTO A LIVE FIGHT: the seat joins it now, with the run
+  // the replay wrote (its join was held back in setConnected).
+  function drained(m) {
+    if (!m.catchup.length && live && m.connected && m.alive) combatPresence(m.id, true);
+  }
   function resolveCatchup(memberId, index, pick) {
     const m = members.get(memberId);
     if (!m || !m.catchup.length) return { ok: false, error: 'nothing to catch up' };
@@ -1009,11 +1028,14 @@ export function createSession({ registries, seedString, endless = false, restore
           return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
         }
         executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
-        // THE FIGHT THE CHOICE WOULD HAVE STARTED was the party's, met (or
-        // not) while this seat was away; a returning seat fights no room
+        // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
+        // the party did not meet is not in the entry (settleEvent) — and was
+        // fought while this seat was away; a returning seat fights no room
         // alone, so the flag is consumed here as settleEvent consumes it.
         m.run.combatEntered = null;
-        if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; }
+        // A CHOICE CAN KILL here too, and a party with nobody left is over,
+        // as the live settlement says (Codex on #548).
+        if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; live = null; } }
         m.run.actNumber = item.act;
         m.run.floor = item.floor;
         m.run.mapNodeId = item.mapNodeId ?? null;
@@ -1023,10 +1045,12 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.floor = session.floor;
         m.run.mapNodeId = session.cursorId ?? null;
         m.catchup.splice(index, 1);
+        drained(m);
         return { ok: true, remaining: m.catchup.length, resultText: choice.resultText || '' };
       }
     }
     m.catchup.splice(index, 1);
+    drained(m);
     return { ok: true, remaining: m.catchup.length };
   }
 
