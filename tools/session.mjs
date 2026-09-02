@@ -929,9 +929,16 @@ export function createSession({ registries, seedString, endless = false, restore
     const fightless = (idx) => { const c = authoredNow[idx]; return !c || !(c.effects || []).some((e) => e.op === 'startCombat' && e.encounterId !== forced); };
     for (const mm of livingMembers()) {
       if (mm.connected || session.scene.picks[mm.id] || session.scene.done[mm.id]) continue;
+      // A SAVE FROM BEFORE scene.open EXISTED carries no open list for the
+      // seat; it is rebuilt from the seat's history here (openChoicesFor,
+      // as enterEvent builds it) rather than stored as "every choice", which
+      // would let the fight filter be bypassed by the old save shape
+      // (Codex on #549). null is only an event with no history contract,
+      // whose replay applies nothing.
+      const openNow = session.scene.open && Array.isArray(session.scene.open[mm.id]) ? session.scene.open[mm.id] : openChoicesFor(session.scene.eventId, mm);
       mm.catchup.push({
         type: 'event', eventId: session.scene.eventId,
-        open: session.scene.open && Array.isArray(session.scene.open[mm.id]) ? session.scene.open[mm.id].filter(fightless) : null,
+        open: Array.isArray(openNow) ? openNow.filter(fightless) : null,
         act: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null,
       });
     }
