@@ -261,6 +261,39 @@ try {
         ok(r1.ok && r2.ok && r2.combat === wanted && r3.ok && r3.combat === wanted && X.scene.kind === 'combat' && X.session.members.get('x1').run.combatEntered == null,
           `the fight a seat chose before dropping still opens for the party once the present seat has read its result (pending ${r2.combat}, opened ${r3.combat}, scene ${X.scene.kind}; the flag is consumed)`);
       }
+      // A SEAT THAT LEAVES DURING THE ACKNOWLEDGMENT does not strand the
+      // others on "Waiting for the party…": presence changes re-settle the
+      // event, as they re-settle a map vote (Codex on #545).
+      {
+        const Y = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        Y.addMember({ id: 'y1', name: 'Ash', classId: 'reaver' });
+        Y.addMember({ id: 'y2', name: 'Bel', classId: 'starseer' });
+        Y.start();
+        Y.session.cursorId = Y.session.reachableIds[0];
+        Y.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const shrine = REG.events.get('feralShrine');
+        const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+        const calmIdx = shrine.choices.findIndex((c) => !(c.effects || []).some((e) => e.op === 'startCombat'));
+        const wanted = shrine.choices[fightIdx].effects.find((e) => e.op === 'startCombat').encounterId;
+        Y.eventChoice('y1', fightIdx); const r2 = Y.eventChoice('y2', calmIdx);
+        const r3 = Y.eventContinue('y1');
+        const stillWaiting = Y.scene.kind === 'event' && r3.waiting === 1;
+        Y.setConnected('y2', false);
+        ok(r2.pending === 'combat' && stillWaiting && Y.scene.kind === 'combat' && Y.session.members.get('y1').run.combatEntered == null,
+          `a seat leaving mid-acknowledgment settles the room for the seats still in it (waited on 1, then scene ${Y.scene.kind} on ${wanted})`);
+        // AND A SEAT THAT LEAVES BEFORE CHOOSING settles a room where everyone
+        // present has chosen.
+        const Z = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        Z.addMember({ id: 'z1', name: 'Ash', classId: 'reaver' });
+        Z.addMember({ id: 'z2', name: 'Bel', classId: 'starseer' });
+        Z.start();
+        Z.session.cursorId = Z.session.reachableIds[0];
+        Z.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const q1 = Z.eventChoice('z1', calmIdx);
+        Z.setConnected('z2', false);
+        ok(q1.ok && q1.waiting === 1 && Z.scene.kind !== 'event',
+          `a seat leaving before choosing settles a room where every present seat has chosen (waited on 1, then scene ${Z.scene.kind})`);
+      }
       // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
       {
         const W = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
