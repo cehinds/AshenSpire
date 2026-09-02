@@ -231,6 +231,7 @@ export function attachLan(server, { port, root }) {
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
       case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
       case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
+      case 'eventContinue': g.eventContinue(id); break;
       case 'catchupChoice': g.resolveCatchup(id, msg.index, msg.pick || {}); break;
       default: return;
     }
