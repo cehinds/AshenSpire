@@ -48888,7 +48888,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5dc92641d5';
+const SOURCE = '3f16c72c03';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48922,7 +48922,7 @@ const SOURCE = '5dc92641d5';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1916';
+const ORDINAL = '1918';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -51177,8 +51177,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-01",
     "group": "2026-09-01",
     "summary": "Your equipment now has a weight, and the Armoury says what it costs you",
-    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, and every item card shows the same Weight number the total counts, smithed or not. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.",
-    "build": "0.5.0-rc.1.1916",
+    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, every item card shows the same Weight number the total counts, smithed or not, and comparing a piece shows the load and Weight Class the swap would leave you at. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.",
+    "build": "0.5.0-rc.1.1918",
     "pullRequest": 520,
     "url": "https://github.com/cehinds/AshenSpire/pull/520"
   },
@@ -58733,6 +58733,13 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   resourceChanges.push(...swapPriceChanges(registries, run, run.loadout, loadout, meta, slot.id, setIndex));
   const beforePoise = playerPoiseThresholdReceipt(registries, run);
   const afterPoise = playerPoiseThresholdReceipt(registries, comparedRun);
+  // The compared run keeps `itemUpgradeLevels` (spread from `run`), so the
+  // candidate weighs at the tier it is actually forged to — the same tier the
+  // slot summary shows (ui/screens/equipment.js) and the same `pieceWeight`
+  // rule the Armoury readout uses. Capacity cannot move in a swap (attributes
+  // and bonuses are the run's), so only load, percent and the class word can.
+  const beforeLoad = playerLoadReceipt(registries, run);
+  const afterLoad = playerLoadReceipt(registries, comparedRun);
   return {
     slotId: slot.id,
     setIndex,
@@ -58771,6 +58778,20 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
       after: afterPoise.value,
       active: false,
       note: afterPoise.note,
+    },
+    load: {
+      before: beforeLoad.load,
+      after: afterLoad.load,
+      capacity: afterLoad.capacity,
+      beforePercent: beforeLoad.percent,
+      afterPercent: afterLoad.percent,
+      beforeClassId: beforeLoad.classId,
+      afterClassId: afterLoad.classId,
+      beforeWord: beforeLoad.word,
+      afterWord: afterLoad.word,
+      changesClass: beforeLoad.classId !== afterLoad.classId,
+      active: false,
+      note: afterLoad.note,
     },
   };
 }
@@ -59167,6 +59188,21 @@ function renderPlayerLoad(receipt) {
     + `<small>${esc(receipt.note)}</small></section>`;
 }
 
+// The swap's load row: before → after out of the (unmoving) capacity, and the
+// Weight Class word on both sides so a swap that crosses a boundary reads as
+// the class change it is, not as a number the player has to divide themselves.
+// `data-weight-class` carries the AFTER class, matching renderPlayerLoad's
+// attribute on the standing readout; `data-class-change` marks a crossing.
+function renderCandidateLoad(load) {
+  if (!load) return '';
+  const word = load.changesClass
+    ? `${esc(load.beforeWord)} → <strong>${esc(load.afterWord)}</strong>`
+    : `<strong>${esc(load.afterWord)}</strong>`;
+  return `<section class="player-load-receipt" data-weight-class="${esc(load.afterClassId)}" data-class-change="${load.changesClass ? 'yes' : 'no'}"><b>Equip load</b>`
+    + `<span>${load.before} → <strong>${load.after}</strong> of ${load.capacity} · ${word}</span>`
+    + `<small>${esc(load.note)}</small></section>`;
+}
+
 function renderRoleCopies(surface) {
   return surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
     + `<span>${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier}`
@@ -59193,6 +59229,7 @@ function renderCandidateComparison(candidate, { expanded = false } = {}) {
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`
     + `<section class="player-poise-receipt"><b>Poise threshold</b><span>${candidate.poise.before} → <strong>${candidate.poise.after}</strong></span><small>${esc(candidate.poise.note)}</small></section>`
+    + renderCandidateLoad(candidate.load)
     + '</details>';
 }
 

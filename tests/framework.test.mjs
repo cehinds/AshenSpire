@@ -880,6 +880,7 @@ test('a granted instance is never a removal candidate', () => {
 });
 
 const { playerLoadReceipt } = await import('../src/model/statProjection.js');
+const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
 const weightHome = await import('../src/framework/weight.js');
 
 test('the bridge decides Weight Class through the framework service, with the TermRegistry word', () => {
@@ -904,6 +905,28 @@ test('the Armoury equip-load receipt counts authored armament weights and the ar
   eq(r.capacity, mechanicsHome.mechanics.weight.capacityBase + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
   eq(r.classId, 'medium', 'the sword-and-shield reaver start stands Medium (20 of 40) — the class exists for the player');
   eq(r.active, false, 'no combat rule consumes the class yet');
+});
+
+test('the Armoury comparison carries the swap\'s load and Weight Class before and after', () => {
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const before = playerLoadReceipt(LEGACY_REG, run);
+  const slot = LEGACY_REG.equipment.slots.find((row) => row.id === 'leftHand');
+  const towerShield = contentBundle.equipment.armaments.find((p) => p.id === 'towerShield');
+  if (!towerShield || !slot) throw new Error('fixture: towerShield / leftHand missing');
+  const compared = equipmentSurfaceReceipt(LEGACY_REG, run, {
+    candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'towerShield' },
+  }).candidate;
+  eq(compared.load.before, before.load, 'before is the standing readout');
+  eq(compared.load.capacity, before.capacity, 'capacity is the run\'s and does not move in a swap');
+  eq(compared.load.after, before.load - 7 + towerShield.weight, 'after swaps the round shield\'s weight for the tower shield\'s');
+  eq(compared.load.beforeClassId, before.classId, 'before class is the standing readout\'s');
+  eq(compared.load.changesClass, compared.load.beforeClassId !== compared.load.afterClassId, 'class-change flag agrees with the ids');
+  eq(typeof compared.load.afterWord, 'string', 'the after class resolves to a word');
+  eq(compared.load.active, false, 'readout only, like the standing receipt');
+  const bare = equipmentSurfaceReceipt(LEGACY_REG, run, {
+    candidate: { slotId: 'leftHand', setIndex: 0, pieceId: null },
+  }).candidate;
+  eq(bare.load.after, before.load - 7, 'unequipping the shield sheds exactly its weight');
 });
 
 test('grant and weapon-art authoring is validated by name', () => {
