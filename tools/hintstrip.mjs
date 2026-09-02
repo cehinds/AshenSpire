@@ -405,9 +405,9 @@ const unk = (id, cell, msg) => { unknowns++; console.log(`  unk  ${id} ${cell} �
 
 const READ = (prop) => `(() => {
   const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  const L = (el) => { const r = el.getBoundingClientRect();
-    return { left: +(r.left/z).toFixed(2), top: +(r.top/z).toFixed(2), right: +(r.right/z).toFixed(2),
-             bottom: +(r.bottom/z).toFixed(2), w: +(r.width/z).toFixed(2), h: +(r.height/z).toFixed(2) }; };
+  const Lr = (r) => ({ left: +(r.left/z).toFixed(2), top: +(r.top/z).toFixed(2), right: +(r.right/z).toFixed(2),
+             bottom: +(r.bottom/z).toFixed(2), w: +(r.width/z).toFixed(2), h: +(r.height/z).toFixed(2) });
+  const L = (el) => Lr(el.getBoundingClientRect());
   // A furniture box counts only when the element renders: a display:none
   // element has an empty rect at 0,0 and would otherwise overlap nothing or
   // everything by accident.
@@ -427,8 +427,12 @@ const READ = (prop) => `(() => {
   // veil or a sibling drawn over it is a control the player cannot reach.
   // Both are the geometry the eye sees, not the geometry the DOM reports
   // (Codex, #532).
-  const clippedBy = (c) => { let r = c.getBoundingClientRect();
-    for (let n = c.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+  // clipOf judges any rect against the clipping boxes from "from" upward, so
+  // the same walk serves a control (from its parent) and a label's TEXT (from
+  // the label itself, whose own overflow:hidden is the first box that can cut
+  // its text).
+  const clipOf = (r, from) => {
+    for (let n = from; n && n !== document.documentElement; n = n.parentElement) {
       const cs = getComputedStyle(n);
       const clips = (v) => v !== 'visible';
       if (!clips(cs.overflowX) && !clips(cs.overflowY)) continue;
@@ -438,6 +442,12 @@ const READ = (prop) => `(() => {
       if (x2 - x1 < r.width - 1 || y2 - y1 < r.height - 1) return (String(n.className).split(' ')[0] || n.tagName.toLowerCase()) + ' clips it to ' + Math.max(0, x2 - x1).toFixed(0) + 'x' + Math.max(0, y2 - y1).toFixed(0) + ' of ' + r.width.toFixed(0) + 'x' + r.height.toFixed(0);
     }
     return null; };
+  const clippedBy = (c) => clipOf(c.getBoundingClientRect(), c.parentElement);
+  // The rect the TEXT paints, not the box its element reports: a Range over
+  // the element's contents. scrollWidth > clientWidth said only that the text
+  // is wider than its box, which under overflow:visible spills in full view
+  // and is no clipping at all (Codex, #538).
+  const textRect = (el) => { const rg = document.createRange(); rg.selectNodeContents(el); return rg.getBoundingClientRect(); };
   const coveredBy = (c, within = c) => { const r = c.getBoundingClientRect();
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     if (!hit) return 'nothing hit-tests at its centre';
@@ -478,11 +488,14 @@ const READ = (prop) => `(() => {
     // satisfy H3's containment and H4's rebind read while the player sees no
     // key at all.
     // The label's hit-test is answered by END TURN (a kbd inside a button is
-    // the button's to the pointer); its own scroll box says whether the text
-    // fits inside it — a width-constrained overflow:hidden label keeps a box
-    // inside END TURN while most of "Backspace" is cut off.
+    // the button's to the pointer). Whether the TEXT is whole is read from the
+    // rect the text paints: cut off by a clipping box from the label itself
+    // upward (a width-capped overflow:hidden label keeps a box inside END TURN
+    // while most of "Backspace" is gone), or spilled outside END TURN under
+    // overflow:visible. Text wider than its own box but drawn in full inside
+    // END TURN is whole.
     key: key ? { text: key.textContent.trim(), box: L(key), rendered: rendered(key, endTurn), why: hiddenWhy(key, endTurn),
-      scrollW: key.scrollWidth, clientW: key.clientWidth } : null,
+      textBox: Lr(textRect(key)), textClipped: clipOf(textRect(key), key) } : null,
     cards: [...document.querySelectorAll('.hand .card')].map(L),
     hand: one('.hand'),
     handBox: hand ? { clientH: hand.clientHeight, scrollH: hand.scrollHeight, padTop: getComputedStyle(hand).paddingTop } : null,
@@ -579,8 +592,8 @@ function judge(r, cell, wide, pointer) {
   // assertion is the opposite: a drawn label is a coarse-pointer rule that
   // stopped applying. Under a fine pointer the label must be drawn, inside
   // END TURN, whole.
-  const keyOut = !r.coarse && r.key && r.endTurn ? !inside(r.key.box, r.endTurn) : false;
-  const keyCut = !r.coarse && r.key ? r.key.scrollW > r.key.clientW + 1 : false;
+  const keyOut = !r.coarse && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
+  const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -601,8 +614,8 @@ function judge(r, cell, wide, pointer) {
     bad('H3', cell, `END TURN's key label "${r.key.text}" is not rendered (${r.key.why}) — the binding the row promises is invisible to the player`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
-      + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (${JSON.stringify(r.key.box)} vs ${JSON.stringify(r.endTurn)})` : '')
-      + (keyCut ? ` and END TURN's key label "${r.key.text}" is cut off inside its own box (text ${r.key.scrollW}px in a ${r.key.clientW}px box)` : '')
+      + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (box ${JSON.stringify(r.key.box)}, text ${JSON.stringify(r.key.textBox)} vs ${JSON.stringify(r.endTurn)})` : '')
+      + (keyCut ? ` and END TURN's key label "${r.key.text}" is cut off (its text: ${keyCut})` : '')
       + (over ? ` and the row overflows its own box (scroll ${r.stripFlow.scrollW}x${r.stripFlow.scrollH} vs client ${r.stripFlow.clientW}x${r.stripFlow.clientH})` : '')
       + (outside.length ? ` — first: "${outside[0].text}" at ${JSON.stringify(outside[0].box)}` : '')
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
