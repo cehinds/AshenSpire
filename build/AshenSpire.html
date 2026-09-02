@@ -9766,6 +9766,9 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
+    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
+    // leaving it, and the screen carries its own LEAVE.
+    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -10809,8 +10812,16 @@ const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 800,
-    costStep: 200,
+    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
+    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
+    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
+    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
+    // every cinder on levels and nothing at merchants, so its number is the
+    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
+    // merchant-spending player at the low edge. Two numbers, one home, and
+    // the sweep flag reruns the measurement for any other pair.
+    firstCost: 20,
+    costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -16969,7 +16980,6 @@ const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    hpPerConTier: 4,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'forsakenMedallion',
     startingSignatureCard: 'gorefireSlash',
@@ -16996,7 +17006,6 @@ const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 2, mana: 2 },
     startingRelic: 'starstoneShard',
     startingSignatureCard: 'starstonePebble',
@@ -17021,7 +17030,6 @@ const classes = [
     glyph: '🗡',
     name: 'Rogue',
     maxHp: 74,
-    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'cutpursesCoin',
     startingSignatureCard: 'ambush',
@@ -17042,7 +17050,6 @@ const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    hpPerConTier: 6,
     startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'goldFigurine',
     startingSignatureCard: 'urgentHeal',
@@ -22810,7 +22817,7 @@ function validateContent(bundle) {
   }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'hpPerConTier'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
@@ -22881,9 +22888,6 @@ function validateContent(bundle) {
   }
 
   for (const cls of b.classes || []) {
-    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
-      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
-    }
   }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
@@ -27049,7 +27053,6 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
@@ -30813,7 +30816,7 @@ function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -33673,7 +33676,7 @@ const mechanics = {
         "dodgeActionCost": 2
       }
     ],
-    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01). The census covers the creator's space: the two VISIBLE creation modes (standard, pointbuy), and for each not only the class preset but the two allocation boundaries that bracket capacity (Constitution and Strength at their legal minimum, and at their legal maximum), every armour choice, and each hand chosen independently (empty allowed, the same armament twice refused) — 224 starts per sheet; reachability is every ordered pair of distinct armaments through a real loadout with the outfit at its highest Smithing tier, at the standard preset. Base 50 left even the heaviest reachable kit Light: the class did not exist for the player. Base 5 (the first retune) leaves no class able to reach Heavy at the standard preset (Reaver 76%, Starseer 74%, Rogue 74%, Herald 71%). Bases 0 and 1 are the only ones at which every class reaches Heavy (base 0: Reaver 86%, Starseer 86%, Rogue 86%, Herald 82%; base 2 already loses the Herald at 77%); 0 is chosen because capacity is then exactly 2*CON + STR with no free constant. At 0 the preset starts are 200 Light and 24 Medium; a player who pulls every point out of Constitution and Strength can start Heavy (12 of the 224 min-capacity starts, all sword-and-shield or greatsword kits at capacity 24), and one who pours every point in starts 210 Light / 14 Medium. That a dumped sheet can start Heavy is the Weight Class doing its job, not a defect: the load readout shows it before the first fight."
+    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01). The census covers the creator's space: the two VISIBLE creation modes (standard, pointbuy), and for each not only the class preset but the two allocation boundaries that bracket capacity (Constitution and Strength at their legal minimum, and at their legal maximum), every armour choice, and each hand chosen independently (empty allowed, the same armament twice refused), with every pair passed through the creator's own requirement gate (startingHandsRequirementFailure — a sheet that cannot hold a Greatsword does not start with one; 100 pairs refused). Reachability is every ordered pair of distinct armaments through a real loadout with the outfit at its highest Smithing tier, at the standard preset. Base 50 left even the heaviest reachable kit Light: the class did not exist for the player. Base 5 (the first retune) leaves no class able to reach Heavy at the standard preset (Reaver 76%, Starseer 74%, Rogue 74%, Herald 71%). Bases 0 and 1 are the only ones at which every class reaches Heavy (base 0: Reaver 86%, Starseer 86%, Rogue 86%, Herald 82%; base 2 already loses the Herald at 77%); 0 is chosen because capacity is then exactly 2*CON + STR with no free constant. At 0 the preset starts are 200 Light and 24 Medium; the min-capacity boundary starts are 144 Light and 28 Medium and the max-capacity boundary 172 Light and 4 Medium — no creatable start is Heavy, because the same requirements that gate a heavy armament also demand the Strength that raises capacity."
   },
   "dodgeRoll": {
     "die": 20,
@@ -35503,12 +35506,19 @@ const CONFIRMATION_LEVELS = Object.freeze([
   'NONE', 'REVERSIBLE', 'COMMITMENT', 'DESTRUCTIVE',
 ]);
 
+// STAFF: the legacy `staff` armament kind, adopted as its own category
+// (cutover ruling 5, docs/framework-cutover-report.md) rather than folded into
+// WEAPON with the kind hidden in an override.
 const EQUIPMENT_CATEGORIES = Object.freeze([
-  'WEAPON', 'SHIELD', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
+  'WEAPON', 'SHIELD', 'STAFF', 'PARRY_TOOL', 'ARMOR', 'RELIC', 'ITEM',
 ]);
 
+// The canonical ladder is the UNION of the contract's tiers and the live
+// legacy rarities (cutover ruling 3): STARTER/SPECIAL/BOSS are origin classes
+// (a class's own kit, an event's one-off, a boss drop), UNCOMMON is a live
+// tier between COMMON and RARE. Order is the display/sort order.
 const EQUIPMENT_RARITIES = Object.freeze([
-  'BASIC', 'COMMON', 'RARE', 'LEGENDARY', 'MYTHIC',
+  'STARTER', 'BASIC', 'COMMON', 'UNCOMMON', 'RARE', 'SPECIAL', 'LEGENDARY', 'MYTHIC', 'BOSS',
 ]);
 
 const COST_MODES = Object.freeze(['ALL_REQUIRED', 'CHOOSE_ONE']);
@@ -35711,10 +35721,7 @@ const PROFILE_ROLE_PROPERTY = Object.freeze({
 
 // The union of the legacy rarity vocabularies ('starter'/'special'/'boss' are
 // legacy pool markers) and the contract's equipment ladder, lowercased at import.
-const RARITIES = Object.freeze([
-  'starter', 'special', 'boss', 'uncommon',
-  ...EQUIPMENT_RARITIES.map((r) => r.toLowerCase()),
-]);
+const RARITIES = Object.freeze(EQUIPMENT_RARITIES.map((r) => r.toLowerCase()));
 
 function mapped(table, key, what) {
   const value = table[key];
@@ -35869,8 +35876,28 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   }
 
   // ---- armaments and armour ------------------------------------------------
+  // The three contract numbers an armament carries into the framework are
+  // validated HERE, at the import boundary, because the gate's schema checks
+  // never look inside explicitOverrides: a missing or non-numeric weight would
+  // otherwise pass the cutover clean and surface as NaN in the equip load.
+  const armamentInteger = (piece, field) => {
+    const value = piece[field];
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`importer: armament '${piece.id}' ${field} must be a non-negative integer, got ${JSON.stringify(value)}`);
+    }
+    return value;
+  };
   for (const piece of bundle.equipment.armaments) {
     const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
+    const weight = armamentInteger(piece, 'weight');
+    const attackRating = armamentInteger(piece, 'attackRating');
+    const defenseRating = armamentInteger(piece, 'defenseRating');
+    // The legacy identity (armamentIntrinsicStatProblems): an armament's
+    // weight IS its authored poise threshold. A row where they differ is a
+    // typo in one column, not a new rule.
+    if (piece.poiseThreshold !== weight) {
+      throw new Error(`importer: armament '${piece.id}' weight ${weight} must equal its poiseThreshold ${JSON.stringify(piece.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -35879,7 +35906,7 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       properties: [],
       explicitOverrides: {
         legacyId: piece.id,
-        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : 'WEAPON', `armament ${piece.id}`),
+        category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : piece.kind === 'staff' ? 'STAFF' : 'WEAPON', `armament ${piece.id}`),
         hand: piece.hand,
         rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
         tags: piece.tags,
@@ -35894,16 +35921,27 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
           guardCardId: piece.guardProfile ? key('profile', piece.guardProfile) : undefined,
           techniqueCardId: piece.techniqueProfile ? key('profile', piece.techniqueProfile) : undefined,
         },
-        // Contract fields the legacy tables do not author yet — imported as
-        // inert defaults, listed in the cutover report as open authoring work.
-        itemWeight: 0,
-        attackRatingBonus: 0,
-        defenseRating: 0,
+        // Contract fields, from the authored armament table (cutover ruling 2):
+        // weapons.csv authors weight / attackRating / defenseRating for every
+        // armament, and the legacy rule binds weight to the authored
+        // poiseThreshold (armamentIntrinsicStatProblems). Nothing in the
+        // running game reads these yet — the Weight Class service stays
+        // dormant until it is wired — so this is data flow, not behavior.
+        itemWeight: weight,
+        attackRatingBonus: attackRating,
+        defenseRating,
       },
     });
   }
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
+    // The outfit's poise threshold is its weight under the A-side rule, so it
+    // is validated here for the same reason the armament numbers are: nothing
+    // downstream inspects explicitOverrides, and a malformed value would ride
+    // into the equip load as NaN or as a silently weightless outfit.
+    if (!Number.isInteger(outfit.poiseThreshold) || outfit.poiseThreshold < 0) {
+      throw new Error(`importer: armour '${outfit.classId}.${outfit.id}' poiseThreshold must be a non-negative integer, got ${JSON.stringify(outfit.poiseThreshold)}`);
+    }
     addEntity({
       id,
       kind: 'EQUIPMENT',
@@ -35917,7 +35955,12 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         tags: outfit.tags,
         mods: outfit.mods,
         artKey: outfit.artKey,
-        itemWeight: 0,
+        // Outfits author no weight column; the legacy identity `weight ==
+        // poiseThreshold` (the armament rule) is adopted for armour as the
+        // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
+        // The B-side — armour weightless — is `itemWeight: 0` here. No
+        // defenseRating column exists for outfits; 0 remains inert.
+        itemWeight: outfit.poiseThreshold,
         defenseRating: 0,
       },
     });
@@ -35978,7 +36021,6 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       explicitOverrides: {
         legacyId: klass.id,
         maxHp: klass.maxHp,
-        hpPerConTier: klass.hpPerConTier,
         startingFlaskAllocation: klass.startingFlaskAllocation,
         startingRelic: klass.startingRelic,
         startingSignatureCard: klass.startingSignatureCard,
@@ -36879,7 +36921,7 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    classFields: ['maxHp', 'maxMana'],
     damageSchools: DAMAGE_SCHOOLS,
   };
 }
@@ -48846,7 +48888,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd72ef30ef9';
+const SOURCE = '5dc92641d5';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48880,7 +48922,7 @@ const SOURCE = 'd72ef30ef9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1914';
+const ORDINAL = '1916';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -48907,7 +48949,7 @@ const ORDINAL = '1914';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-09-01';
+const BUILT = '2026-09-02';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -49335,6 +49377,13 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
+  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
+  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
+  // Shrine open: Rest once, Smith while you have Stones, Level while you have
+  // cinders, and leave when you choose. Conservative default, as his own
+  // data-driven instruction for an unsettled 'maybe' asks.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -51128,8 +51177,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-01",
     "group": "2026-09-01",
     "summary": "Your equipment now has a weight, and the Armoury says what it costs you",
-    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, and every item card shows the same Weight number the total counts, smithed or not. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load, and a sheet that pulls its points out of Constitution and Strength can start Heavy — the readout shows it before the first fight.",
-    "build": "0.5.0-rc.1.1914",
+    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, and every item card shows the same Weight number the total counts, smithed or not. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.",
+    "build": "0.5.0-rc.1.1916",
     "pullRequest": 520,
     "url": "https://github.com/cehinds/AshenSpire/pull/520"
   },
@@ -67165,9 +67214,19 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+  // E13's multi-use Shrine: an action re-opens the same screen (with what was
+  // already taken recorded) instead of leaving; LEAVE is the one way out.
+  const remount = (extra = {}) => mountRest(app, {
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+  });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = relicNoRest || (multiUse && rested);
+  // The locked copy names the real reason: a relic that forbids rest, or a
+  // rest already taken at this Shrine under Multi-use — never a relic the
+  // player does not carry.
+  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
   const canInspectSmithing = smith.candidates.length > 0;
   const arm = beatArmer(meta, registries);
@@ -67205,7 +67264,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -67315,21 +67374,27 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           </div>
         </details>
       </div>
+      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
   ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  const leave = app.querySelector('#shrine-leave');
+  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      question: multiUse
+        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
+        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
       confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -67371,7 +67436,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      remount({ openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // The same allocation component used by character creation, with shrine
@@ -67413,7 +67478,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
+          remount({ openPanel: 'level' });
         },
       });
     };
@@ -67427,7 +67492,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
       let selectedItemRef = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef);
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
@@ -67440,6 +67505,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
+          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
           onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
@@ -67791,7 +67857,7 @@ function genericAffected(candidate) {
   })));
 }
 
-function smithSelectionModel(registries, plan, selectedItemRef = null) {
+function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false } = {}) {
   const items = plan.candidates.map((candidate) => {
     const itemKind = candidate.itemKind || 'armament';
     const itemId = candidate.itemId || candidate.armamentId;
@@ -67846,7 +67912,13 @@ function smithSelectionModel(registries, plan, selectedItemRef = null) {
       title: 'Upgrade an Item',
       eyebrow: 'Shrine action',
       instruction: 'Choose one owned item. Review its exact changes, requirements, and Stone cost.',
-      consequence: 'Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. The upgrade leaves the Shrine.',
+      // Every stay/leave sentence the modal shows is derived HERE (SPEC: the
+      // model owns the copy; the component renders it): the footer line, the
+      // header badge, and the tail of the decision message.
+      staysAtShrine: !!multiUse,
+      consequence: `Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. ${multiUse ? 'You stay at the Shrine.' : 'The upgrade leaves the Shrine.'}`,
+      consequenceBadge: multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE',
+      decisionConsequence: multiUse ? 'you stay at the Shrine' : 'and leaves the Shrine',
       purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`,
       candidates: freeze(items),
       selected,
@@ -67887,6 +67959,7 @@ const visibleFocusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
 function mountSmithUpgradeModal(host, initialModel, {
+
   registries,
   meta,
   onSelect,
@@ -67914,7 +67987,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
         <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
       </div>
-      <span class="smith-modal-consequence">LEAVES SHRINE</span>
+      <span class="smith-modal-consequence">${esc(initialModel.properties.consequenceBadge)}</span>
     </header>
     <div class="smith-modal-body">
       <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
@@ -68106,7 +68179,7 @@ function mountSmithUpgradeModal(host, initialModel, {
         registries,
         id: 'smithUpgrade',
         title: `Upgrade ${selected.name}?`,
-        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost and leaves the Shrine.`,
+        message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${model.properties.staysAtShrine ? '; ' : ' '}${model.properties.decisionConsequence}.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
         confirmLabel: `Upgrade (${selected.cost})`,
