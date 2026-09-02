@@ -884,6 +884,12 @@ export function createSession({ registries, seedString, endless = false, restore
   // the defeat the resolution below pronounces.
   function settleEvent() {
     if (session.scene.kind !== 'event') return { ok: true };
+    // A SAVE FROM BEFORE picks/done EXISTED may be settled by a presence
+    // change before any choice initialises them (a resume with one seat
+    // answered and another absent); they are empty maps here rather than a
+    // throw that aborts the resume (Codex on #549).
+    if (!session.scene.picks) session.scene.picks = {};
+    if (!session.scene.done) session.scene.done = {};
     if (!connectedMembers().length && livingMembers().length) return { ok: true, waiting: 0 };
     if (session.scene.next) {
       const ack = session.scene.ack || (session.scene.ack = {});

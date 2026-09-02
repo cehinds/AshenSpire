@@ -478,6 +478,21 @@ try {
           ok(r.ok && l2.alive === false && l2.run.hp === 0 && L.scene.kind === 'complete' && L.scene.victory === false,
             `a lethal replay fells the last living seat and ends the run (alive ${l2.alive}, hp ${l2.run.hp}, scene ${L.scene.kind}/${L.scene.victory})`);
         }
+        // A SAVE FROM BEFORE picks EXISTED, resumed with one seat answered and
+        // the other absent, is settled by the presence change without a throw
+        // (Codex on #549).
+        {
+          const K = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          K.addMember({ id: 'k1', name: 'Ash', classId: 'reaver' });
+          K.addMember({ id: 'k2', name: 'Bel', classId: 'starseer' });
+          K.start();
+          K.session.cursorId = K.session.reachableIds[0];
+          K.session.scene = { kind: 'event', eventId: 'ancientRuneStone', done: { k1: true } }; // no picks, no open: the old shape
+          K.setConnected('k2', false);
+          let threw = null;
+          try { K.setConnectedMany(['k1'], true); } catch (e) { threw = e.message; }
+          ok(!threw && (K.scene.kind !== 'event' || !!K.scene.next), `a legacy event save settles on a presence change without throwing (${threw || 'no throw'}; scene ${K.scene.kind}${K.scene.next ? '/' + K.scene.next.kind : ''})`);
+        }
         // A seat that chose and then dropped owes nothing.
         const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
         D.addMember({ id: 'd1', name: 'Ash', classId: 'reaver' });
