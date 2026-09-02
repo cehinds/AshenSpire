@@ -10605,7 +10605,7 @@ const cards = authoredCards.map((card) => {
 });
 
 const contentBundle = {
-  version: '0.5.0-rc.1',
+  version: '0.5.0-rc.2',
   balance,
   cards,
   relics,
@@ -49604,7 +49604,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '7cccc602b1';
+const SOURCE = '93b89f2553';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49638,7 +49638,7 @@ const SOURCE = '7cccc602b1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1934';
+const ORDINAL = '1935';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -51888,6 +51888,76 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-539",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The second 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.2.<build> from this build on: the candidate QA receives after rc.1 (promoted to test at build 1933), carrying the review fixes below. Nothing else a player sees changes. Tooling and docs riders since rc.1: the layout gate re-aimed at the combat action row (#532, #538), the owner asks ledger (#530), every branch's build published on Pages with the README naming them (#525).",
+    "build": "0.5.0-rc.2.1935",
+    "pullRequest": 539,
+    "url": "https://github.com/cehinds/AshenSpire/pull/539"
+  },
+  {
+    "id": "pr-536",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op: an event choice is a quest step, and the party's map follows its history",
+    "detail": "Choosing at an event in co-op now does what the choice says: its effects run on your seat, it is written into your history so the quest chain reaches you, a choice your history has not earned is not offered, a priced choice you cannot afford is shown disabled, an event that starts a fight opens it for the party, and a choice that leaves you at 0 HP fells your seat. A seat's upgraded Poise threshold now reaches the shared fight too.",
+    "build": "0.5.0-rc.1.1934",
+    "pullRequest": 536,
+    "url": "https://github.com/cehinds/AshenSpire/pull/536"
+  },
+  {
+    "id": "pr-537",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Every armed option control marks its beat; small title and modal fixes",
+    "detail": "The title screen's slot Delete no longer shows a hold hint it does not honour, a drag that ends on a confirmation's backdrop no longer cancels it (only a press that began there does), and every hold-or-tap option control now declares the action it is wired to, so the hold-harness census reads 139 checks with no findings.",
+    "build": "0.5.0-rc.1.1933",
+    "pullRequest": 537,
+    "url": "https://github.com/cehinds/AshenSpire/pull/537"
+  },
+  {
+    "id": "pr-535",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The Shrine smiths the armaments you carry, not only the ones in hand",
+    "detail": "An upgradeable armament left in storage is now offered at the Shrine with its authored cards previewed, and a random upgrade never lands on an armament with no live cards.",
+    "build": "0.5.0-rc.1.1932",
+    "pullRequest": 535,
+    "url": "https://github.com/cehinds/AshenSpire/pull/535"
+  },
+  {
+    "id": "pr-534",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op clients price an upgraded relic the way the host does",
+    "detail": "Each seat's upgrade tiers travel with the live combat snapshot, so an upgraded Ancestral Horn reduces a Power's cost on the client's screen exactly as it does on the host's.",
+    "build": "0.5.0-rc.1.1930",
+    "pullRequest": 534,
+    "url": "https://github.com/cehinds/AshenSpire/pull/534"
+  },
+  {
+    "id": "pr-533",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A blocked confirmation keeps the keyboard on Back",
+    "detail": "When Confirm is hidden because the option cannot be taken (an unaffordable upgrade, say), Tab and Shift+Tab stay on the visible Back button instead of landing on the hidden Confirm.",
+    "build": "0.5.0-rc.1.1930",
+    "pullRequest": 533,
+    "url": "https://github.com/cehinds/AshenSpire/pull/533"
+  },
+  {
+    "id": "pr-531",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A press you walk away from does nothing",
+    "detail": "Moving your finger or pointer off a hold-or-tap control before releasing now cancels the whole press: the hold timer stops, no review opens on release, and nothing commits. Before, a press that slid off could commit at full hold or open the review on release.",
+    "build": "0.5.0-rc.1.1929",
+    "pullRequest": 531,
+    "url": "https://github.com/cehinds/AshenSpire/pull/531"
+  },
   {
     "id": "pr-526",
     "date": "2026-09-02",
