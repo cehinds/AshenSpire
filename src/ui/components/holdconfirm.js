@@ -170,6 +170,13 @@ export function armHold(btn, {
   // press door already own this pointer? Rule 1 and off-mode deduplication both
   // live on this flag.
   let heldThisPress = false;
+  // THE POINTER MOVED PAST THE SLOP AND THE PRESS IS ABANDONED. Pointer capture
+  // keeps the trailing `click` aimed at this control even though the finger
+  // left it, so the click a scroll-away generates must die in onClick like the
+  // early-release click does — never become a tap (a review modal opening
+  // under a thumb that was trying to scroll) and never a commit. Both press
+  // forms set it; onClick consumes it; a press resets it.
+  let movedThisPress = false;
 
   const paint = (p) => {
     for (const target of [btn, ...activeFeedback]) {
@@ -271,6 +278,11 @@ export function armHold(btn, {
     // declining those sources here lets the ordinary focused-control click
     // keep its authored meaning. Safety beats leave pointerOnly false and
     // retain the three-input parity described at the top of this file.
+    // A NEW PRESS SUPERSEDES THE MOVED STATE BEFORE ANY REFUSAL. A key or pad
+    // press on a pointer-only control is declined below and input.js then
+    // activates it with a synthetic click; that click must not be eaten by a
+    // pointer press that ended in a scroll (pointercancel, no click) earlier.
+    movedThisPress = false;
     if (pointerOnly && origin.source !== 'pointer') return false;
     if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
@@ -298,6 +310,10 @@ export function armHold(btn, {
           if (cancelled || moved) {
             heldThisPress = false;
             committedThisPress = false;
+            // Only a press that ENDS with a pointerup owes a trailing click; a
+            // pointercancel (a touch scroll) ends with none, so nothing is
+            // left armed for the next activation to walk into.
+            movedThisPress = moved && !cancelled;
             return true;
           }
           committedThisPress = true;
@@ -343,7 +359,10 @@ export function armHold(btn, {
     track({
       onMove: (mv) => {
         if (!armed) return;
-        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
+        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) {
+          movedThisPress = origin.source === 'pointer';
+          stop('idle');
+        }
       },
       // However it ended — lift, cancel, palm, focus loss. If the fill never
       // reached the end, nothing happened, and that IS the feature.
@@ -357,7 +376,11 @@ export function armHold(btn, {
       // thing — rule 1, inverted, which is the failure that looks exactly like
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
-      onEnd: () => {
+      onEnd: (endEv, info) => {
+        // A cancelled end (pointercancel — a touch scroll) produces no click,
+        // so the moved state must not outlive this press: the next activation
+        // by key or pad would otherwise be swallowed as that press's click.
+        if (info && info.cancelled) movedThisPress = false;
         if (armed) {
           stop('idle');
           // Pointer taps finish through the browser's trailing click so the
@@ -393,6 +416,23 @@ export function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
+    // A PRESS THE POINTER WALKED AWAY FROM IS AN ABORT IN EVERY FORM OF THIS
+    // CONTROL — no tap meaning, no commit — AND IT IS CHECKED FIRST. The native
+    // click of such a press lands on the common ancestor (the pointer went up
+    // somewhere else), so what reaches this control is the SYNTHETIC click
+    // input.js dispatches to a pressed control that got no click of its own
+    // (`detail === 0`). Read as "activation outside the press door" that click
+    // committed a binding choice under a scrolling thumb — measured, not
+    // guessed: tools/holdconfirm.mjs case 4b. So the moved flag is consumed
+    // before the detail check, and the click is swallowed whole.
+    if (movedThisPress) {
+      movedThisPress = false;
+      heldThisPress = false;
+      committedThisPress = false;
+      ev.preventDefault();
+      ev.stopPropagation();
+      return;
+    }
     if (ev.detail === 0) {
       if ((pointerOnly || tapOnEarlyRelease) && onTap) onTap(ev);
       else onConfirm(ev);
@@ -433,6 +473,7 @@ export function armHold(btn, {
     offPointerPress = false;
     heldThisPress = false;
     committedThisPress = false;
+    movedThisPress = false;
     fired = true;
     disarmPress();
     btn.removeEventListener('click', onClick);
