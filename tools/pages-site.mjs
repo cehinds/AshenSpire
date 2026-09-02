@@ -434,11 +434,25 @@ try {
       check(dir);
       caught2 = process.exitCode === 1;
       process.exitCode = b2 || 0;
-      if (!caught2) { console.error(`MISS deleted page ${gone.path} was not caught`); process.exitCode = 1; }
-      else console.log(`CAUGHT deleted page ${gone.path}`);
+      if (caught2) console.log(`CAUGHT deleted page ${gone.path}`);
+      else console.error(`MISS deleted page ${gone.path} was not caught`);
     } else {
-      console.log('SKIP no discovered page to plant against — the tree offered none');
+      // AN EMPTY DISCOVERY IS THE FAILURE, NOT A REASON TO SKIP. This branch used
+      // to print SKIP and leave caught2 true, so a regression that discovered
+      // NOTHING — the total failure this plant exists to catch — sailed through
+      // reporting "2 known-bads, 2 caught". Fourth time in this one function that
+      // a check has been written with no path from its failure to the verdict;
+      // the pattern, not the instance, is what needed fixing.
+      console.error('MISS discovery returned no pages — the published tree always has some, so this is a regression, not an empty repo');
+      caught2 = false;
     }
+    // THE VERDICT READS caught2 HERE, OUTSIDE BOTH BRANCHES, and that placement
+    // is the fix rather than a tidy-up. It was consumed INSIDE the plant branch,
+    // so the empty-discovery branch could set it false and nothing ever looked —
+    // I wrote that dead assignment while fixing the fourth instance of this exact
+    // pattern in this function, and it became the fifth. A flag whose reader
+    // sits inside one arm of the branch that sets it is not a check.
+    if (!caught2) process.exitCode = 1;
     rmSync(dir, { recursive: true, force: true });
     if (!repairClean) process.exitCode = 1;
     if (!process.exitCode) console.log(`pages-site selftest: OK — 2 known-bads, 2 caught (${discovered.length} page(s) discovered)`);
