@@ -764,9 +764,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       for (const n of nodes) {
         const fixedType = plan.fixed[n.floor];
         if (fixedType) eq(n.type, fixedType, `seed ${s}: fixed ${fixedType} node ${n.id} on floor ${n.floor}`);
-        // No early elites/shrines; none on the barred floor (SPEC §6).
-        if (n.floor < plan.eliteShrineFrom && !plan.fixed[n.floor]) {
-          assert(n.type !== 'elite' && n.type !== 'shrine', `seed ${s}: early ${n.type} on floor ${n.floor}`);
+        // No early elites/shrines; none on the barred floor (SPEC §6). TWO
+        // gates since E13's split — a rest may open below the floor an Elite
+        // may, which is what lets a rest be promised BELOW the first Elite.
+        if (n.floor < plan.eliteFrom && !plan.fixed[n.floor]) {
+          assert(n.type !== 'elite', `seed ${s}: early elite on floor ${n.floor}`);
+        }
+        if (n.floor < plan.shrineFrom && !plan.fixed[n.floor]) {
+          assert(n.type !== 'shrine', `seed ${s}: early shrine on floor ${n.floor}`);
         }
         if (n.floor === plan.noShrineOn) {
           assert(n.type !== 'shrine', `seed ${s}: shrine on the barred floor ${plan.noShrineOn}`);
@@ -781,6 +786,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(map.columns, config.columns, `seed ${s}: graph carries its column count`);
       eq(map.nodes[map.shrineId].type, 'shrine', `seed ${s}: pre-boss shrine`);
       eq(map.nodes[map.bossId].type, 'boss', `seed ${s}: boss node`);
+
+      // E13: A REST BEFORE THE ELITES. His words were "so eletes, maybe shop,
+      // and definitely before a boss"; the boss half was always kept (the top
+      // floor is the lone Shrine) and this is the half that was not. Asserted
+      // on the GRAPH, which is exactly what the rule promises — the per-path
+      // number is measured and printed by tools/mapplan.mjs, never promised.
+      if (plan.restBeforeElite) {
+        const eliteFloors = nodes.filter((n) => n.type === 'elite').map((n) => n.floor);
+        if (eliteFloors.length) {
+          const firstElite = Math.min(...eliteFloors);
+          const rests = nodes.filter((n) => n.type === 'shrine' && n.floor < firstElite);
+          assert(rests.length > 0,
+            `seed ${s}: elite on floor ${firstElite} with no shrine on any earlier floor`);
+        }
+      }
 
       // Minimum counts (hard promise even via the relax path).
       // NOTE THE NAMES. These were `minReachableElites` / `minReachableMerchants`
@@ -4225,10 +4245,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!seeds.has(sweepSeed(0) + 1) || sweepSeed(0) !== 0, 'index 0 is not seed 0');
 
     // ---- the caps SHORTEN, and the shortened act still resolves its own rules
-    const capped = applyRunShape(base, { floors: 6, columns: 4 }, MAP_SHAPE_LIMITS);
-    eq(capped.errors.length, 0, `floors=6 columns=4 resolves — ${JSON.stringify(capped.errors)}`);
-    eq(capped.config.floors, 6, 'the floors cap binds');
+    //
+    // THE LENGTH IS ASKED FOR, NOT TYPED, and this line used to type it: a
+    // literal `floors: 6` that was true only while the act's own rules happened
+    // to resolve at 6. E13's rest-before-Elite promise moved the shortest
+    // viable act from 4 to 7 — floors 3 and 4 are where a 12-floor act's
+    // promised rest lands, and a 6-floor act has no floor free to hold one — so
+    // the literal went red for a reason that was not a defect. Asking
+    // `minViableFloors` keeps this a test of THE CAP BINDING, which is its
+    // subject, and the boundary itself stays gated three lines below.
+    const shortest = minViableFloors(base).floors;
+    const capped = applyRunShape(base, { floors: shortest, columns: 4 }, MAP_SHAPE_LIMITS);
+    eq(capped.errors.length, 0, `floors=${shortest} columns=4 resolves — ${JSON.stringify(capped.errors)}`);
+    eq(capped.config.floors, shortest, 'the floors cap binds');
     eq(capped.config.columns, 4, 'the columns cap binds');
+    // AND THE NUMBER ITSELF IS PINNED, because it is a COST the debug short-run
+    // feature pays for the promise and it must not move again in silence.
+    eq(shortest, 7, 'the shortest act these rules describe (was 4 before restBeforeElite)');
     const wide = sampleActShape(base, 60);
     const short = sampleActShape(capped.config, 60);
     assert(short.nodes.max < wide.nodes.min,
@@ -4320,13 +4353,64 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
     eq(MAP_SHAPE_KEYS.length, 3, 'three knobs, and the set is closed');
 
+    // ---- A HOSTILE SHAPE KEEPS BOTH PROMISES AT ONCE. Codex's repro on #562,
+    // and it went red before the fix: the shortest act with Event at 100 and
+    // every other weight 0 fills the one rest floor with Events, so a rest
+    // force-place that only ate Monsters could not run — and the code then
+    // returned without placing Elites, shipping a map with ZERO against an act
+    // promising 2, which applyRunShape PRINTS to the player as force-placed.
+    // Neither promise may break the other quietly, so both are asserted here.
+    const hostile = applyRunShape(
+      base,
+      { floors: shortest, typeWeights: { monster: 0, event: 100, shrine: 0, elite: 0, merchant: 0 } },
+      MAP_SHAPE_LIMITS,
+    );
+    eq(hostile.errors.length, 0, `the hostile shape is accepted — ${JSON.stringify(hostile.errors)}`);
+    const hostilePlan = resolveFloorPlan(hostile.config).plan;
+    for (let s2 = 0; s2 < 12; s2++) {
+      const g = generateActMap({ config: hostile.config, rng: createRng(sweepSeed(s2)) });
+      const all = Object.values(g.nodes);
+      const elites = all.filter((n) => n.type === 'elite');
+      assert(elites.length >= hostilePlan.minElites,
+        `hostile shape seed ${s2}: ${elites.length} elites against a promised ${hostilePlan.minElites}`);
+      const first = Math.min(...elites.map((n) => n.floor));
+      assert(all.some((n) => n.type === 'shrine' && n.floor < first),
+        `hostile shape seed ${s2}: elite on floor ${first} with no rest below it`);
+    }
+
+    // ---- AN ELITE THAT NEVER TOUCHES THE RELAX PATH STILL GETS ITS REST.
+    // The promise was enforced inside relaxPlace, which runs only when the
+    // rolls left the act short of minElites — so a FIXED Elite rank (typeOnce
+    // assigns it before any rule runs) that satisfies the count on its own
+    // meant the rest was never forced. Measured at 10 of 40 maps breaking the
+    // promise before the fix, 0 of 40 after, which is why the guarantee is now
+    // a final step on every exit rather than one branch of the generator.
+    const fixedElite = { ...base, floorRules: { ...base.floorRules, minElites: 1,
+      fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 6, type: 'elite' }] } };
+    const fePlan = resolveFloorPlan(fixedElite);
+    eq(fePlan.errors.length, 0, `a fixed Elite with rest floors beneath it resolves — ${JSON.stringify(fePlan.errors)}`);
+    for (let s2 = 0; s2 < 40; s2++) {
+      const all = Object.values(generateActMap({ config: fixedElite, rng: createRng(sweepSeed(s2)) }).nodes);
+      const firstElite = Math.min(...all.filter((n) => n.type === 'elite').map((n) => n.floor));
+      assert(all.some((n) => n.type === 'shrine' && n.floor < firstElite),
+        `fixed-elite act seed ${s2}: elite on floor ${firstElite} with no rest below it`);
+    }
+    // AND THE ONE ARRANGEMENT THE GENERATOR CANNOT FIX IS REFUSED BY NAME: a
+    // fixed Elite with no floor beneath it able to hold a rest.
+    const feBad = resolveFloorPlan({ ...base, floorRules: { ...base.floorRules,
+      fixed: [{ at: 'first', type: 'elite' }, { at: 'fraction', of: 0.64, type: 'treasure' }] } });
+    assert(feBad.errors.some((e) => e.key === 'floorRules.fixed' && /restBeforeElite/.test(e.msg)),
+      `a fixed Elite on floor 1 is refused and named — got ${JSON.stringify(feBad.errors)}`);
+
     // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.
     const reg = createRegistries(contentBundle);
     const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 1, shape));
     eq(graphOf(null), graphOf(undefined), 'no shape and an absent shape are the same run');
-    assert(graphOf(null) !== graphOf({ floors: 6 }), 'a shape reaches the generator through buildActMap');
+    // `shortest`, not a literal, for the same reason as above: this call really
+    // does build a map, so it must name a length this act's own rules resolve.
+    assert(graphOf(null) !== graphOf({ floors: shortest }), 'a shape reaches the generator through buildActMap');
     let threw = null;
     try { buildActMap(reg, createRng(1), 1, { columns: 1 }); } catch (e) { threw = e.message; }
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);

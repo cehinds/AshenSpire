@@ -143,11 +143,38 @@ function measure(config, seeds) {
       starts: starts.length,
       noElite: starts.filter((t) => !t.has('elite')).length,
       noMerchant: starts.filter((t) => !t.has('merchant')).length,
+      // E13, THE PER-PATH NUMBER THE PROMISE DOES NOT MAKE. `restBeforeElite`
+      // guarantees a rest on a floor BELOW the first Elite — a fact about the
+      // graph. A walker can still choose a route that reaches an Elite without
+      // stopping at one, and that count belongs somewhere a reader can see it
+      // rather than in a claim the rule cannot keep (the same split that
+      // renamed `minReachableElites` to `minElites`).
+      unrestedStarts: g.startIds.filter((id) => reachesEliteWithoutRest(g, id)).length,
       minFloorOf: (type) => { const f = all.filter((n) => n.type === type).map((n) => n.floor); return f.length ? Math.min(...f) : null; },
       floorsOf: (type) => all.filter((n) => n.type === type).map((n) => n.floor),
     });
   }
   return rows;
+}
+
+/**
+ * Can a walker leaving this node meet an Elite before any Shrine? Only
+ * shrine-free prefixes are traversed, so a node in `seen` was already reached
+ * without a rest and revisiting it can only repeat the answer.
+ */
+function reachesEliteWithoutRest(graph, startId) {
+  const seen = new Set();
+  const stack = [startId];
+  while (stack.length) {
+    const id = stack.pop();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const n = graph.nodes[id];
+    if (n.type === 'shrine') continue;
+    if (n.type === 'elite') return true;
+    for (const nx of n.next) stack.push(nx);
+  }
+  return false;
 }
 
 function dist(rows, pick) {
@@ -298,6 +325,10 @@ function runAct(label, config, seeds) {
   console.log(`    starts that can reach NO elite     ${noElite} of ${startsTotal} (${((noElite / startsTotal) * 100).toFixed(1)}%)`);
   console.log(`    starts that can reach NO merchant  ${noMerch} of ${startsTotal} (${((noMerch / startsTotal) * 100).toFixed(1)}%)`);
   console.log(`      ^ REPORTED, NOT GATED — 'minElites' counts the whole graph and says so now.`);
+  const unrested = rows.reduce((a, r) => a + r.unrestedStarts, 0);
+  console.log(`    starts with a route to an elite past no rest  ${unrested} of ${startsTotal} (${((unrested / startsTotal) * 100).toFixed(1)}%)`);
+  console.log(`      ^ REPORTED, NOT GATED, and it is the honest edge of 'restBeforeElite': the rule promises a rest`);
+  console.log(`        on a floor BELOW the first elite — a fact about the GRAPH. Which route a walker takes is theirs.`);
 
   // ---- the promises, checked across the distribution, not on a seed --------
   // STOPS PER RUN IS EXACTLY floors + 1, ALWAYS (Freja, 24 seeds; pathCount and
@@ -315,10 +346,24 @@ function runAct(label, config, seeds) {
     const d = dist(rows, (r) => r.byType[type] || 0);
     if (d.min === 0) findings.push(`${label}: '${type}' is absent entirely in at least one seed (range ${d.min}-${d.max})`);
   }
-  // THE GATE ACTUALLY GATES, at the tail and not just at the mean.
-  for (const type of ['elite', 'shrine']) {
-    const below = rows.filter((r) => r.floorsOf(type).some((f) => f < plan.eliteShrineFrom)).length;
-    if (below) findings.push(`${label}: '${type}' appears below floor ${plan.eliteShrineFrom} in ${below} of ${seeds} seeds`);
+  // THE GATES ACTUALLY GATE, at the tail and not just at the mean. Two of them
+  // since the split: a rest may open below the floor an Elite may.
+  for (const [type, from] of [['elite', plan.eliteFrom], ['shrine', plan.shrineFrom]]) {
+    const below = rows.filter((r) => r.floorsOf(type).some((f) => f < from)).length;
+    if (below) findings.push(`${label}: '${type}' appears below floor ${from} in ${below} of ${seeds} seeds`);
+  }
+  // E13's promise, gated because it IS a promise: a map holding an Elite holds
+  // a Shrine on some earlier floor. The pre-boss Shrine does not count for it —
+  // it is above every rollable floor, which is the whole reason the ask was
+  // still open with "definitely before a boss" already kept.
+  if (plan.restBeforeElite) {
+    const broken = rows.filter((r) => {
+      const elite = r.minFloorOf('elite');
+      if (elite == null) return false;
+      const shrine = r.minFloorOf('shrine');
+      return shrine == null || shrine >= elite;
+    }).length;
+    if (broken) findings.push(`${label}: an Elite stands with no Shrine on any earlier floor in ${broken} of ${seeds} seeds, against floorRules.restBeforeElite`);
   }
   if (plan.noShrineOn > 0) {
     const on = rows.filter((r) => r.floorsOf('shrine').includes(plan.noShrineOn)).length;
@@ -352,11 +397,42 @@ const KNOWN_BAD = [
   // not an empty object that generates a map nobody authored.
   ['floorRules missing entirely', { ...BASE, floorRules: undefined }],
   ['unknownWeights summing to zero', { ...BASE, unknownWeights: { event: 0, fight: 0 } }],
+  // E13'S TWO. The first is the split key itself: an act still authoring
+  // `noEliteOrShrineBefore` gets a named error, not a silent reading of it as
+  // both gates — the same standard `minReachableElites` is held to.
+  ['the pre-split `noEliteOrShrineBefore` key', { ...BASE, floorRules: { ...BASE.floorRules, noEliteOrShrineBefore: { at: 'fraction', of: 0.43 } } }],
+  // The second is the promise made impossible by the act's OWN other rules:
+  // rests and Elites opening on the same floor leaves nowhere for the rest to
+  // land, and force-placing it onto a floor another rule claims is exactly the
+  // quiet fallback this corpus exists to keep out.
+  ['restBeforeElite with no floor left to hold the rest', { ...BASE, floorRules: { ...BASE.floorRules, noShrineBefore: { at: 'fraction', of: 0.43 }, noEliteBefore: { at: 'fraction', of: 0.43 } } }],
+  // A FIXED ELITE OUTRANKS EVERY GATE. `typeOnce` assigns a fixed rank before
+  // any rule runs, so this one put an Elite on floor 1 with the first Shrine
+  // possible at 3 — measured at 2 of 2 seeds before the resolver refused it,
+  // against a promise SPEC §6 states without qualification. The generator
+  // cannot fix this one for itself, which is why it is a boot error.
+  ['a fixed Elite with no floor beneath it for the rest', { ...BASE, floorRules: { ...BASE.floorRules, fixed: [{ at: 'first', type: 'elite' }, { at: 'fraction', of: 0.64, type: 'treasure' }] } }],
   // VIKI'S WITHHOLD, #anchors branch: the schema said opt, the resolver said
   // nothing, and resolveUnknownNode THREW at act build — a clean boot and a
   // crash at runtime, on the key this branch itself moved. The corpus went
   // green on it, so it is a corpus gap too, and this row is its fixture.
   ['unknownWeights missing entirely', (() => { const { unknownWeights, ...rest } = BASE; return rest; })()],
+];
+
+// MUST-ACCEPT, the other face of the corpus above: a checker that reds
+// everything is not a checker. The shipped act was the only control here, and
+// one control cannot catch a refusal that fires on a LEGAL arrangement — which
+// is exactly what the first cut of `restBeforeElite` did to the row below.
+const FLOOR_MUST_ACCEPT = [
+  ['the shipped mapConfigs[1] (the control)', BASE],
+  // A FIXED SHRINE IS ALREADY THE REST. Gates at 3 and 4 leave one floor
+  // between them and a fixed Shrine rank claims it — which the first cut read
+  // as a COLLISION ("every floor between is claimed by a fixed rank") and
+  // refused, though that config keeps the promise on every seed before the
+  // generator rolls anything.
+  ['a fixed Shrine on the only floor between the gates', { ...BASE, floorRules: { ...BASE.floorRules,
+    noShrineBefore: { at: 'floor', index: 3 }, noEliteBefore: { at: 'floor', index: 4 },
+    fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 3, type: 'shrine' }] } }],
 ];
 
 // THE SECOND CORPUS, AND IT DID NOT EXIST — Vira, #107. Every row above
@@ -525,10 +601,18 @@ function selftest() {
     if (ok) red++;
     console.log(`  ${ok ? 'RED ' : 'GREEN'}  ${label.padEnd(42)} ${ok ? errors.map((e) => `${e.key}: ${e.msg}`)[0] : '<-- ACCEPTED, nothing named'}`);
   }
-  // A GREEN CONTROL, or "everything is red" proves only that the check is
-  // broken in the other direction. The shipped config must stay clean.
-  const clean = resolveFloorPlan(mapConfigs[1]).errors.length === 0;
-  console.log(`\n  ${clean ? 'CLEAN' : 'RED  '}  shipped mapConfigs[1] (the control — a checker that reds everything is not a checker)`);
+  // THE GREEN FACE, or "everything is red" proves only that the check is broken
+  // in the other direction. One of these is the shipped act; the other is a
+  // legal arrangement an over-eager refusal turned away.
+  let fclean = 0;
+  console.log('');
+  for (const [label, cfg] of FLOOR_MUST_ACCEPT) {
+    const errs = resolveFloorPlan(cfg).errors;
+    const ok = errs.length === 0;
+    if (ok) fclean++;
+    console.log(`  ${ok ? 'CLEAN' : 'RED  '}  ${label.padEnd(42)} ${ok ? '' : `<-- REFUSED, and it must not be: ${errs[0].key}: ${errs[0].msg.slice(0, 80)}`}`);
+  }
+  const clean = fclean === FLOOR_MUST_ACCEPT.length;
 
   console.log(`\n  --- viewRefusals: the view knobs, and BOTH faces of each edge ---\n`);
   let vred = 0;
@@ -630,10 +714,10 @@ function selftest() {
   console.log(`\n  ${pass ? `PASS — ${red}/${KNOWN_BAD.length} floor-rule known-bad red, ${vred}/${VIEW_KNOWN_BAD.length} view known-bad red, ${vclean}/${VIEW_MUST_ACCEPT.length} must-accept clean, `
     + `${ared}/${AIR_KNOWN_BAD.length} air known-bad red (+ the absent entry), ${aclean}/${AIR_MUST_ACCEPT.length} air must-accept clean, `
     + `${plants}/${PAIR_PLANTS.length} planted pairs behaved, `
-    + `${props}/${PROPERTIES.length} properties hold, the formula anchor holds, both validator doors wired, control clean`
+    + `${props}/${PROPERTIES.length} properties hold, the formula anchor holds, both validator doors wired, ${fclean}/${FLOOR_MUST_ACCEPT.length} floor must-accept clean`
     : `FAIL — floor ${red}/${KNOWN_BAD.length} · view ${vred}/${VIEW_KNOWN_BAD.length} · must-accept ${vclean}/${VIEW_MUST_ACCEPT.length} · `
     + `air ${ared}/${AIR_KNOWN_BAD.length} · air must-accept ${aclean}/${AIR_MUST_ACCEPT.length} · plants ${plants}/${PAIR_PLANTS.length} · properties ${props}/${PROPERTIES.length} · `
-    + `anchor ${anchor.ok ? 'holds' : 'BROKE'} · validators ${wired ? 'wired' : 'LOOSE'}/${airWired ? 'wired' : 'LOOSE'} · control ${clean ? 'clean' : 'DIRTY'}`}`);
+    + `anchor ${anchor.ok ? 'holds' : 'BROKE'} · validators ${wired ? 'wired' : 'LOOSE'}/${airWired ? 'wired' : 'LOOSE'} · floor must-accept ${fclean}/${FLOOR_MUST_ACCEPT.length}`}`);
   console.log(`\n  BOUNDARY — the horizontal rows all route through \`maxFanoutSpan\`, so a formula that`);
   console.log(`  UNDER-reports greens every one of them at once. The generative anchor above closes that`);
   console.log(`  on the shipped act shape only; \`node tools/mapplan.mjs --spans\` is the grid, and it is`);
