@@ -199,6 +199,36 @@ try {
         ok(q1.run.cinders === 0 && q1.run.relics.length === relicsBefore + 1,
           `the choice's authored effects ran before the record (cinders ${pilgrim.choices[priced].requires.cinders} -> ${q1.run.cinders}, relics ${relicsBefore} -> ${q1.run.relics.length})`);
       }
+      // AN EVENT THAT STARTS A FIGHT opens the shared combat on the named
+      // encounter (the Feral Shrine's keeper), and the flag is consumed.
+      {
+        const V = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        V.addMember({ id: 'v1', name: 'Ash', classId: 'reaver' });
+        V.start();
+        V.session.cursorId = V.session.reachableIds[0];
+        V.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const shrine = REG.events.get('feralShrine');
+        const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+        const wanted = shrine.choices[fightIdx].effects.find((e) => e.op === 'startCombat').encounterId;
+        const r = V.eventChoice('v1', fightIdx);
+        const enemyIds = V.scene.kind === 'combat' ? (V.scene.enemies || []).map((e) => e.enemyId || e.id) : [];
+        ok(r.ok && r.combat === wanted && V.scene.kind === 'combat' && V.session.members.get('v1').run.combatEntered == null,
+          `an event's startCombat opens the shared combat on its named encounter (${wanted}) and consumes the flag (scene ${V.scene.kind}, combat=${r.combat}, enemies ${JSON.stringify(enemyIds).slice(0, 80)})`);
+      }
+      // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
+      {
+        const W = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        W.addMember({ id: 'w1', name: 'Ash', classId: 'reaver' });
+        W.start();
+        W.session.cursorId = W.session.reachableIds[0];
+        W.session.scene = { kind: 'event', eventId: 'goldboughAvatar', done: {} };
+        const avatar = REG.events.get('goldboughAvatar');
+        const hurtIdx = avatar.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'damage' && e.target === 'self'));
+        const w1 = W.session.members.get('w1'); w1.run.hp = 1;
+        const r = W.eventChoice('w1', hurtIdx);
+        ok(r.ok && r.result === 'defeat' && w1.alive === false && w1.run.hp === 0 && W.scene.kind === 'complete' && W.scene.victory === false,
+          `a choice that kills fells the seat and ends a party with nobody left (alive=${w1.alive}, hp=${w1.run.hp}, scene ${W.scene.kind}/${W.scene.victory})`);
+      }
       ok(!fallen.ok && T.partyHistory().length === 0, `an absent seat's choice is refused (${JSON.stringify(fallen)})`);
       const r = T.eventChoice('p2', 0);
       const party = T.partyHistory();

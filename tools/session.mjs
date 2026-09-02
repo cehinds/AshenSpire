@@ -400,8 +400,10 @@ export function createSession({ registries, seedString, endless = false, restore
     };
   }
 
-  function enterCombat(pool) {
-    const encounterId = rollEncounter(registries, rng, { pool, act: contentAct() });
+  // `forcedEncounterId`: an event's startCombat names its encounter (the
+  // Feral Shrine's keeper, the Grave's wyrm); the pool still prices the reward.
+  function enterCombat(pool, forcedEncounterId = null) {
+    const encounterId = forcedEncounterId || rollEncounter(registries, rng, { pool, act: contentAct() });
     const enc = registries.encounters.get(encounterId);
     const loop = loopCount();
     const extraHpMult = 1 + registries.balance.endless.hpPerLoop * loop; // endless cycle scaling (headcount handled by the runner)
@@ -815,6 +817,10 @@ export function createSession({ registries, seedString, endless = false, restore
       // the party's history that never occurred (Codex, #536). The member's
       // own rng stream prices it, as their rewards are rolled.
       executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
+      // A CHOICE CAN KILL. An offering at 1 HP leaves the run at 0; the seat
+      // falls the way it falls in combat (m.alive), so it is broadcast fallen
+      // and enters no later node at 0 HP (Codex, #536).
+      if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; }
       // recordEventChoice reads the run's own act/floor/node for the record;
       // a member's run rides the session's cursor, so it is stamped from it.
       m.run.actNumber = session.actNumber;
@@ -831,11 +837,27 @@ export function createSession({ registries, seedString, endless = false, restore
       // PRESENT and chose (the seat fork-voting ties break toward), written to
       // the session's own history so the next map answers to it whoever was
       // in the room. Every member who answered keeps their own record above.
-      const picker = [...members.values()].filter((mm) => mm.connected && mm.alive && session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0];
+      // The picker is the earliest-joined seat that chose and is still in
+      // the room — a seat the choice itself just felled is recorded in its
+      // own run but does not speak for the party.
+      const picker = [...members.values()].filter((mm) => mm.connected && mm.alive && session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0]
+        || [...members.values()].filter((mm) => session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0];
       if (picker && def) {
         recordEventChoice({ history: session.history, actNumber: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null },
           { eventId: def.id, choiceId: session.scene.picks[picker.id] });
       }
+      // EVERYONE FELL TO THE CHOICE: the run is over, the same sentence the
+      // combat path says.
+      if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
+      // AN EVENT THAT STARTS A FIGHT (startCombat sets run.combatEntered, the
+      // door main.js and runsim.mjs consume) opens the SHARED combat on the
+      // named encounter before the party advances; the flag is consumed on
+      // every member so no save carries a stale one. The first present seat's
+      // encounter is the party's (one fight, one room).
+      const fighter = connectedMembers().find((mm) => mm.run.combatEntered);
+      const forced = fighter ? (typeof fighter.run.combatEntered === 'string' ? fighter.run.combatEntered : fighter.run.combatEntered.encounterId) : null;
+      for (const mm of members.values()) mm.run.combatEntered = null;
+      if (forced) { enterCombat('normal', forced); return { ok: true, combat: forced }; }
       advanceFromNode();
     }
     return { ok: true };
