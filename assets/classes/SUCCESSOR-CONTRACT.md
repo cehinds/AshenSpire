@@ -7,6 +7,13 @@ CHECK | `node assets/classes/verify-successor-packet.mjs` → `PACKET INTACT —
 KNOWN-BAD | `node assets/classes/verify-successor-packet.mjs --selftest` → `SELFTEST OK: all 20 negative plants correctly caught.`
 QA | Requested. Candidate frozen and handed to an independent non-maker reviewer; agenda in §7. No verdict exists yet.
 
+> **SUPERSEDED IN PART — owner ruling, 2026-09-02.** Only **rogue** carries the
+> approved look. **reaver, starseer and herald must be remodelled to match it.**
+> The hub status quoted in §2 (*Proof Accepted · 20/20 gates · findings 0*) must
+> not be read as approving the look of all four. AC6 below does not gate look —
+> see `LOOK-REFERENCE-ROGUE.md` §4. This contract's geometry, alpha and
+> provenance findings are unaffected; its "four approved crops" reading is not.
+
 ## 1. The clause this closes
 
 The 2026-08-28 preflight and r2 census gated the class facelift on a **full-class-silhouette
@@ -63,7 +70,7 @@ repaired, masked or reused. It cannot meet §3.
 | AC3 | Zero background/checker/matte residue | 0 transparent pixels carrying non-zero RGB, 4/4 |
 | AC4 | Figure never contacts a canvas edge | edge contact 0 px, 4/4 |
 | AC5 | Upper-body/torso framing: one shared deterministic bottom cut | all four end at y=359 (soft final row, max alpha 136–140; zero at y≥360); bottom margin 152 px |
-| AC6 | Every class silhouette distinct; Rogue must not reuse Reaver | no two alpha≥128 masks identical; pairwise IoU 0.6533–0.7990; **reaver vs rogue 0.7052** |
+| AC6 | Every class silhouette distinct; Rogue must not reuse Reaver | no two alpha≥128 masks identical; pairwise IoU 0.6533–0.7990; **reaver vs rogue 0.7052**. **Shape only — this is not a look gate.** All four are upper-body torsos, so IoU stays in a narrow band whatever the art direction. Look conformance is `check-look-conformance.mjs`. |
 | AC7 | Deterministic desktop and mobile context proofs | 1× 1440×900, 3× 390×844; each hash-unchanged, **decoded** to confirm the recorded viewport, and its `git_blob` agreeing with its path |
 | AC8 | Stays proof-only and disabled | hub records *Not Adopted*; no repository code path reads `assets/classes/**` |
 | AC9 | No rejected input substituted into the packet, and none silently altered | 5/5 resolve at the pin, hash-unchanged, still PNG color type 2 — none ever gained an alpha channel that would let it pass as a successor; none matches any packet hash |
@@ -75,6 +82,9 @@ AC5 is the evidence that these are the "upper-body/torso canvases" D1 names: a f
 figure would be grounded at or near the canvas floor, and these four are cut at a common
 baseline 152 px above it. AC6 is the evidence that supersession is a real fix and not a
 relabelling — the exact Rogue failure recorded against the full-body path does not recur here.
+**Corrected 2026-09-02:** that inference was overstated. The Rogue/Reaver rig reuse is
+genuinely gone, but silhouette IoU is not what demonstrates it — the two designs differing
+is. IoU 0.7052 sits mid-range for any two torso crops and evidences nothing about look.
 
 ## 4. What makes this fail
 
