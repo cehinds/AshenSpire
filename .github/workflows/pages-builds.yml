@@ -1,0 +1,68 @@
+# pages-builds — publish EVERY branch's builds to GitHub Pages, each at its own address.
+#
+#   /                      the build index across dev, test, release and main
+#   /<branch>/             that branch's builds, newest first
+#   /<branch>/<ordinal>/   that exact build, playable (byte-identical to the commit's AshenSpire.html)
+#   /<branch>/latest/      alias for the branch's newest build
+#
+# Everything the site served before (/AshenSpire.html, /hud/, /review-approval-hub/,
+# /docs/…) is still served: the whole `main` tree is the base of the artifact and the
+# only replaced file is the root index.html (main's own is kept at /index-game.html).
+#
+# ONE-TIME OWNER ACTION (publication is owner-exclusive): Settings → Pages → Build and
+# deployment → Source: "GitHub Actions". Until that is set, the deploy job fails with
+# GitHub's own message and nothing published changes. The legacy `main:/` source keeps
+# serving in the meantime.
+#
+# COST: one run per push to any of the four branches, cancelled if a newer push lands.
+# The site is rebuilt from git history each time (deterministic; nothing accumulates).
+name: pages-builds
+
+on:
+  push:
+    branches: [dev, test, release, main]
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: newest builds to publish per branch
+        default: '10'
+
+concurrency:
+  group: pages-builds
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch the four published branches so their history is readable
+        run: git fetch --no-tags origin dev test release main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Assemble the site from git history — every listed build proven byte-identical
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}"
+      - name: The generator's own drift plant is still caught
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: assemble
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
