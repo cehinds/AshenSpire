@@ -71,8 +71,9 @@ export function playerPoiseThresholdReceipt(registries, run) {
  *     Weight Class A/B (docs/framework-migration-checklist.md §C). The
  *     B-side treats armour as weightless.
  *   - talismans/relics: nothing authored; 0.
- * `active` stays false until a combat rule consumes the class (the dodge
- * roll) — today this is a readout on the Armoury, and nothing else.
+ * `active` is true when the composed deck holds a dodge roll — the rule that
+ * consumes the class (its check and the pure dodge's price); otherwise the
+ * Armoury shows the readout and says so.
  */
 export const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
 
@@ -106,6 +107,13 @@ export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
     bonuses: capacityBonus,
     weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
   });
+  // The class is CONSUMED the moment the composed deck holds a dodge roll
+  // (the unarmed package's Evasive Guard / Dodge Roll, or any card authored
+  // with the opcode): the roll's check and the pure dodge's price read it.
+  const active = (run.deck || []).some((card) => {
+    const def = card && registries.cards.has(card.cardId) ? registries.cards.get(card.cardId) : null;
+    return !!def && (def.effects || []).some((eff) => eff.op === 'dodgeRoll');
+  });
   return {
     id: 'equipLoad',
     label: 'Equip load',
@@ -117,8 +125,9 @@ export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
     percent: decided.percent,
     classId: decided.weightClass.id,
     word: decided.word,
-    active: false,
-    note: `Capacity ${decided.capacity} = base + Constitution and Strength; ${decided.percent}% loaded — ${decided.word}. Readout only until the dodge roll consumes the class.`,
+    active,
+    note: `Capacity ${decided.capacity} = base + Constitution and Strength; ${decided.percent}% loaded — ${decided.word}. `
+      + (active ? 'Your dodge roll is checked and priced by this class.' : 'Readout only until a dodge roll enters your deck.'),
   };
 }
 
@@ -151,7 +160,7 @@ export function statProjection(registries, run) {
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };

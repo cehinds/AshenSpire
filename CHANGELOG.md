@@ -27,6 +27,10 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
+## 2026-09-02
+
+- **Empty hands fight with the Dodge Roll, Stamina recovers, and your Weight Class prices the dodge** ([#523](https://github.com/cehinds/AshenSpire/pull/523), `0.5.0-rc.1.1922`). A run with both hands empty now composes Evasive Guard in every guard slot and Dodge Roll in every technique slot instead of the placeholder Defend and Footwork. The Dodge Roll checks Dexterity against a d20 and, on success, lands a temporary guard as Block; the pure dodge costs what your Weight Class says — Light 1 Stamina, Medium 2 Stamina and 1 action, Heavy 3 Stamina and 2 actions — and the card face, the tooltip and the engine quote the same price. A turn in which you spend no Stamina recovers some at its end. Armed play is unchanged. Co-op seats are priced from their own Dexterity and equipment.
+
 ## 2026-09-01
 
 - **Your equipment now has a weight, and the Armoury says what it costs you** ([#520](https://github.com/cehinds/AshenSpire/pull/520), `0.5.0-rc.1.1920`). Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, every item card shows the same Weight number the total counts, smithed or not, and comparing a piece shows the load and Weight Class the swap would leave you at. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.

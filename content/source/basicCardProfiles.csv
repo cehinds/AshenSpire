@@ -9,12 +9,12 @@ daggerPierceAttack,attack,strike,Piercing Flurry,†,physical,0,3,dexterity,5,fl
 bowPierceAttack,attack,strike,Piercing Shot,➶,physical,0,4,dexterity,5,floor,1,,pierce|ranged|precision,"Distance is presentation; the point still lands.",,attack-v1
 staffMagicAttack,attack,strike,Staff Magic Strike,✦,magic,1,2,intelligence,5,floor,1,,starstone,"Ash carries a small cold light.",,attack-v1
 sceptreArcaneAttack,attack,strike,Arcane Strike,◈,arcane,1,3,wisdom,5,floor,1,,ritual|blight,"The sceptre answers in a darker tongue.",,attack-v1
-unarmedGuard,guard,defend,Defend,🛡,physical,0,1,dexterity,5,floor,1,,guard,"Brace with what you have.",,guard-v1
+unarmedGuard,guard,evasiveGuard,Evasive Guard,🌀,physical,0,1,dexterity,5,floor,1,,guard,"Nothing in your hands but the ground under your feet.",,guard-v1
 weaponGuard,guard,defend,Weapon Guard,🛡,physical,0,2,dexterity,5,floor,1,,guard,"Turn the haft and weather the blow.",,guard-v1
 shieldGuard,guard,defend,Shield Defend,🛡,physical,0,3,dexterity,5,floor,1,,guard,"Meet the blow on carried iron.",,guard-v1
 staffGuard,guard,defend,Arcane Ward,✦,magic,0,1,dexterity,5,floor,1,,starstone,"A thin ward drawn through the focus.",,guard-v1
 sceptreGuard,guard,defend,Ritual Ward,◈,arcane,0,1,dexterity,5,floor,1,,ritual,"A ward held together by rite.",,guard-v1
-unarmedTechnique,technique,technique,Footwork,✧,physical,0,0,dexterity,5,floor,0,,flourish,"Position is an armament too.",,technique-v1
+unarmedTechnique,technique,dodgeRoll,Dodge Roll,💨,physical,0,0,dexterity,5,floor,0,,flourish,"The empty hand's art is not being there.",,technique-v1
 weaponTechnique,technique,technique,Weapon Technique,✧,physical,0,0,dexterity,5,floor,0,,blade|flourish,"Let the weapon teach the hand.",,technique-v1
 bowTechnique,technique,technique,Steady Aim,➶,physical,0,0,dexterity,5,floor,0,,ranged|precision,"Set the hand before loosing.",,technique-v1
 staffTechnique,technique,technique,Staff Channel,✦,magic,0,0,intelligence,5,floor,0,,ritual,"Set the breath behind the focus.",,technique-v1
