@@ -579,17 +579,18 @@ const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
 // restored: the pixels that CHANGE are the pixels the control paints that
 // reach the eye. A control whose box changes in almost none of its pixels is
 // painted over, whatever is drawn over it and whatever hit-tests there.
-// PAINT_FLOOR is the least share of a control's own box its paint must reach;
-// the shipped controls measure well above it (printed in every H3 ok line).
+// PAINT_FLOOR is the least share of a control's own box its paint must reach
+// against its own in-situ background; the shipped controls measure well above
+// it (printed in every H3 ok line).
 const PAINT_FLOOR = 0.25;
 // The most of a control's own paint that may fail to reach the eye in situ.
 // The floor above says the control paints; this says nothing is drawn over
-// it. The shipped controls lose 0-11% (their change in situ is against the
-// hand-area's background, their reference against the bare canvas; printed
-// in every H3 ok line), so the tolerance is not zero; a sheet over a quarter
-// of a control, or a sheet at a quarter of opacity over all of it, loses a
-// quarter and is red.
-const PAINT_LOST = 0.2;
+// it. With nothing drawn over a control its two capture pairs are the same
+// captures, so the shipped controls read 0-4% lost (END TURN's pulse and the
+// orb's glow move a little between captures; printed in every H3 ok line);
+// the tolerance is 10%, so a sheet over an eighth of a control, or a sheet at
+// an eighth of opacity over all of it, is red.
+const PAINT_LOST = 0.1;
 const decodePng = (buf) => {
   let p = 8, w = 0, h = 0, ct = 0, bd = 0; const idat = [];
   while (p < buf.length) { const len = buf.readUInt32BE(p); const type = buf.toString('ascii', p + 4, p + 8); const d = buf.subarray(p + 8, p + 8 + len);
@@ -605,39 +606,46 @@ const decodePng = (buf) => {
       out[dst + x] = v & 255; } }
   return { w, h, bpp, px: out };
 };
-// FOUR CAPTURES PER CONTROL, read as MAGNITUDES, not as a yes/no per pixel
-// (a translucent sheet still changes every covered pixel a little, so a
-// binary "did it change" mask would read it as fully seen — Codex, #540):
+// FOUR CAPTURES PER CONTROL, ALL IN SITU, read as MAGNITUDES, not as a
+// yes/no per pixel (a translucent sheet still changes every covered pixel a
+// little, so a binary "did it change" mask would read it as fully seen):
 //   inSitu       — the page as shipped;
 //   inSituHidden — the control hidden in place (visibility:hidden, no layout
 //                  moves), everything else as shipped;
-//   alone        — the page hidden (body visibility:hidden), the control alone
-//                  made visible: the colour the control paints by itself;
-//   blank        — the page hidden and the control hidden too.
-// `own` is the share of the box where alone differs from blank: the pixels
-// the control paints at all. Over those pixels the control's UNOBSCURED
-// contribution is |alone - blank| — what it adds over the bare canvas, a
-// reference no overlay can touch (the in-situ hidden capture already carries
-// the overlay being measured, so it cannot be the denominator: a light sheet
-// over a light control would shrink both sides alike — Codex, #540) — and it
-// DELIVERS a change of |inSitu - inSituHidden| in situ. What it delivers over
-// what it contributes alone is the paint reaching the eye; the LOST share is
-// the rest, summed by magnitude so a sheet at 90% opacity that leaves a tenth
-// of every covered pixel's change loses nine tenths, and a sheet over a fifth
-// of the control loses a fifth, whatever the rest still shows. An opaque
-// control's change in situ is its colour against the in-situ background,
-// which is not the bare canvas, so the shipped controls read a small loss
-// even with nothing over them; the tolerance below is set above it.
+//   uncovered    — the page as shipped with every element painted ABOVE the
+//                  control hidden: the control over its own in-situ
+//                  background, which is the reference an overlay cannot touch;
+//   uncoveredBg  — the same with the control hidden too: the in-situ
+//                  background itself.
+// WHAT IS ABOVE THE CONTROL is found by geometry, not by guessing:
+// document.elementsFromPoint at a grid of points over the control's box,
+// with pointer-events forced to auto on every element for the read (so a
+// pointer-events:none sheet is listed too), lists the paint order topmost
+// first — everything before the control (or a descendant) and not an
+// ancestor of it is drawn over it. Hiding a cover that paints nothing (the
+// shipped .fx-layer, an empty positioned wrapper) changes no pixel, so the
+// list needs no judgement of what paints.
+// `own` is the share of the box where uncovered differs from uncoveredBg: the
+// pixels the control paints against its own background. Over those pixels
+// the control's UNOBSCURED contribution is |uncovered - uncoveredBg| and it
+// DELIVERS |inSitu - inSituHidden| — the same background on both sides, so
+// background contrast can neither hide nor invent attenuation (Codex, #540).
+// The LOST share is what it fails to deliver, summed by magnitude: a sheet
+// at 90% opacity that leaves a tenth of every covered pixel's change loses
+// nine tenths, a sheet over a fifth of the control loses a fifth, and with
+// nothing painted over the control the two pairs are the same captures and
+// nothing is lost.
 const decode4 = (...bufs) => { const P = bufs.map(decodePng);
   if (P.some((p) => p.w !== P[0].w || p.h !== P[0].h)) throw new Error('the captures differ in size');
   return P; };
 const mag = (P, Q, o) => Math.abs(P.px[o] - Q.px[o]) + Math.abs(P.px[o + 1] - Q.px[o + 1]) + Math.abs(P.px[o + 2] - Q.px[o + 2]);
-const paintOfCaptures = (inSitu, inSituHidden, alone, blank) => {
-  const [A, B, D, E] = decode4(inSitu, inSituHidden, alone, blank);
+const paintOfCaptures = (inSitu, inSituHidden, uncovered, uncoveredBg) => {
+  const [A, B, C, G] = decode4(inSitu, inSituHidden, uncovered, uncoveredBg);
   const n = A.w * A.h; let ownPx = 0, owed = 0, delivered = 0;
   for (let i = 0; i < n; i++) { const o = i * A.bpp;
-    if (mag(D, E, o) <= 12) continue; // not a pixel the control paints (4 levels per channel of noise allowed)
-    ownPx++; const need = mag(D, E, o), got = mag(A, B, o);
+    const need = mag(C, G, o);
+    if (need <= 12) continue; // not a pixel the control paints (4 levels per channel of noise allowed)
+    ownPx++; const got = mag(A, B, o);
     owed += need; delivered += Math.min(got, need); }
   return { own: n ? ownPx / n : 0, lost: owed ? 1 - delivered / owed : 0 }; };
 const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-action-row'); if (!row) return [];
@@ -645,24 +653,43 @@ const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-acti
   if (document.querySelector('.combat-action-row .et-key')) list.push({ sel: '.combat-action-row .et-key', name: 'END TURN key label' });
   return list.map((t) => { const el = document.querySelector(t.sel); const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
     return { ...t, x: r.left, y: r.top, w: r.width, h: r.height, shown: cs.display !== 'none' && cs.visibility === 'visible' && r.width >= 1 && r.height >= 1 }; }); })()`;
+// Marks every element drawn above the control with data-hintstrip-cover and
+// returns their names (paint order, topmost first, deduplicated).
+const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const r = el.getBoundingClientRect();
+  const style = document.createElement('style'); style.textContent = '* { pointer-events: auto !important; }'; document.head.appendChild(style);
+  const found = [];
+  try {
+    const step = Math.max(2, Math.min(6, Math.floor(Math.min(r.width, r.height) / 8)));
+    for (let y = r.top + 1; y < r.bottom; y += step) for (let x = r.left + 1; x < r.right; x += step) {
+      for (const n of document.elementsFromPoint(x, y)) {
+        if (n === el || el.contains(n)) break;
+        if (n.contains(el)) continue;
+        if (!found.includes(n)) found.push(n);
+      }
+    }
+  } finally { style.remove(); }
+  return found.map((n, i) => { n.setAttribute('data-hintstrip-cover', String(i)); return (String(n.className).split(' ')[0] || n.tagName.toLowerCase()); }); })()`;
+const COVERS_HIDE = `(() => { for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { n.setAttribute('data-hintstrip-cover-vis', n.style.getPropertyValue('visibility') || ''); n.style.setProperty('visibility', 'hidden', 'important'); } return 1; })()`;
+const COVERS_RESTORE = `(() => { for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { const v = n.getAttribute('data-hintstrip-cover-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-cover'); n.removeAttribute('data-hintstrip-cover-vis'); } return 1; })()`;
 async function paintOf(ev, shot) {
   const out = [];
   for (const t of await ev(PAINT_TARGETS)) {
     if (!t.shown) { out.push({ name: t.name }); continue; }
     const clip = { x: Math.floor(t.x), y: Math.floor(t.y), width: Math.ceil(t.w), height: Math.ceil(t.h), scale: 1 };
     const vis = (v) => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.setProperty('visibility', ${JSON.stringify(v)}, 'important'); return 1; })()`);
-    const restore = () => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); document.body.style.removeProperty('visibility'); return 1; })()`);
-    const pageHidden = () => ev(`(() => { document.body.style.setProperty('visibility', 'hidden', 'important'); return 1; })()`);
+    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); return 1; })()`); await ev(COVERS_RESTORE); };
     try {
       const inSitu = await shot(clip);
       await vis('hidden');
       const inSituHidden = await shot(clip);
-      await pageHidden(); await vis('visible');
-      const alone = await shot(clip);
+      await vis('visible');
+      const covers = await ev(COVERS_OF(t.sel));
+      await ev(COVERS_HIDE);
+      const uncovered = await shot(clip);
       await vis('hidden');
-      const blank = await shot(clip);
+      const uncoveredBg = await shot(clip);
       await restore();
-      out.push({ name: t.name, ...paintOfCaptures(inSitu, inSituHidden, alone, blank) });
+      out.push({ name: t.name, covers, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg) });
     } catch (e) { await restore().catch(() => {}); throw e; }
   }
   return out;
@@ -736,7 +763,7 @@ function judge(r, cell, wide, pointer) {
   const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
   const paint = Array.isArray(r.paint) ? r.paint : [];
   const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST));
-  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% of that lost`).join('; ');
+  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost`).join('; ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -759,7 +786,7 @@ function judge(r, cell, wide, pointer) {
     bad('H3', cell, 'no paint-coverage reading reached the judge — the probe that photographs each control did not run, so nothing says a control is not painted over');
   } else if (obscured.length) {
     bad('H3', cell, `${obscured.length} control(s) painted over — `
-      + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box alone and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ`).join(', ')
+      + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box against its background and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ (drawn over it: ${(p.covers || []).join(', ') || 'nothing found by geometry'})`).join(', ')
       + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it; a layer over any part of the rail, pointer-events or not, is measured here rather than by the hit-test)`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
