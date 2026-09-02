@@ -235,6 +235,19 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
+        // THE KEY LABEL GOES QUIET THE SAME WAY. .et-key keeps its text and
+        // box under visibility:hidden, so H4 still reads the rebind and the
+        // containment still holds — only rendered() can say the player sees
+        // no key. Red by name on H3.
+        name: 'a stylesheet makes END TURN\'s key label visibility:hidden and the row still reads the binding',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.end-turn .et-key {\n  display: block; width: max-content;',
+          replace: '.end-turn .et-key {\n  visibility: hidden; display: block; width: max-content;',
+        }],
+        expectRed: /BAD\s+H3 /,
+      },
+      {
         // A DECLARED CELL STOPS BEING REACHED. The row never renders, and every
         // H-check has nothing to measure. A green here would be the same
         // confident nothing this gate printed over the retired strip.
@@ -342,7 +355,11 @@ const READ = (prop) => `(() => {
       .map((c) => c.className + ' (' + hiddenWhy(c) + ')') : [],
     // END TURN's key label, for H3 (inside its control) and H4 (the rebind took).
     endTurn: endTurn ? L(endTurn) : null,
-    key: key ? { text: key.textContent.trim(), box: L(key) } : null,
+    // The label goes through the same rendered() door as the controls: a
+    // visibility:hidden .et-key keeps its text and box and would otherwise
+    // satisfy H3's containment and H4's rebind read while the player sees no
+    // key at all.
+    key: key ? { text: key.textContent.trim(), box: L(key), rendered: rendered(key), why: hiddenWhy(key) } : null,
     cards: [...document.querySelectorAll('.hand .card')].map(L),
     hand: one('.hand'),
     handBox: hand ? { clientH: hand.clientHeight, scrollH: hand.scrollHeight, padTop: getComputedStyle(hand).paddingTop } : null,
@@ -440,6 +457,8 @@ function judge(r, cell, wide) {
       + (r.hiddenControls.length ? ` (not rendered: ${r.hiddenControls.map((m) => `"${m}"`).join(', ')})` : ' (absent from the row)'));
   } else if (!r.key) {
     bad('H3', cell, 'END TURN carries no key label (.et-key) — the label this gate measures the width of is gone');
+  } else if (!r.key.rendered) {
+    bad('H3', cell, `END TURN's key label "${r.key.text}" is not rendered (${r.key.why}) — the binding the row promises is invisible to the player`);
   } else if (outside.length || keyOut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (${JSON.stringify(r.key.box)} vs ${JSON.stringify(r.endTurn)})` : '')
