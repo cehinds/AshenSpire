@@ -120,5 +120,12 @@ export const cardTags = [
     "color": "7FAF63",
     "glyph": "☠",
     "blurb": "Poisons that punish enemies over time."
+  },
+  {
+    "id": "bound",
+    "label": "Bound",
+    "color": "C9A227",
+    "glyph": "⛓",
+    "blurb": "Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv."
   }
 ];

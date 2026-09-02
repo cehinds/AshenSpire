@@ -1161,6 +1161,7 @@ function startingDeckFindings(registries) {
   for (const cardId of ((cfg.global || {}).grants) || []) {
     if (!registries.cards.has(cardId)) problems.push(`startingDeck.global.grants names unknown card '${cardId}'`);
   }
+  problems.push(...boundGrantProblems(registries));
   if (cfg.enabled !== true || problems.length) return { problems, warnings };
 
   // The budget itself, per class, against the kit each one actually starts in.
@@ -1190,6 +1191,60 @@ function startingDeckConfig(registries) {
   return cfg;
 }
 
+/** The tag that says "this object carries its own cards"; payload in equipmentGrants.csv. */
+export const BOUND_GRANT_TAG = 'bound';
+
+/**
+ * The two halves of a bound grant, held together.
+ *
+ * Tagged with no row is a broken promise the player can see and the deck never
+ * honours; a row with no tag is a grant that lands with nothing declaring it.
+ * Both are authoring mistakes, and neither is visible from its own side — so
+ * they are checked from here, where both halves are in scope.
+ */
+export function boundGrantProblems(registries) {
+  const problems = [];
+  const eq = registries.equipment || {};
+  const rows = eq.equipmentGrants;
+  if (!Array.isArray(rows)) return ['equipmentGrants.csv: missing generated table'];
+  const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
+  const seen = new Set();
+
+  for (const row of rows) {
+    if (!row || typeof row.sourceId !== 'string' || !row.sourceId) { problems.push('equipmentGrants.csv: row missing sourceId'); continue; }
+    if (seen.has(row.sourceId)) problems.push(`equipmentGrants.csv: duplicate sourceId '${row.sourceId}'`);
+    seen.add(row.sourceId);
+    const owners = pieces.filter((piece) => piece.id === row.sourceId);
+    if (!owners.length) { problems.push(`equipmentGrants.csv: '${row.sourceId}' names no known piece`); continue; }
+    if (!owners.some((piece) => (piece.tags || []).includes(BOUND_GRANT_TAG))) {
+      problems.push(`equipmentGrants.csv: '${row.sourceId}' grants cards but is not tagged '${BOUND_GRANT_TAG}' — the grant would be silent`);
+    }
+    if (!(row.cards || []).length) problems.push(`equipmentGrants.csv: '${row.sourceId}' names no cards`);
+    for (const cardId of row.cards || []) {
+      if (!registries.cards.has(cardId)) problems.push(`equipmentGrants.csv: '${row.sourceId}' grants unknown card '${cardId}'`);
+    }
+  }
+
+  for (const piece of pieces) {
+    if (!(piece.tags || []).includes(BOUND_GRANT_TAG)) continue;
+    if (!seen.has(piece.id)) {
+      problems.push(`${piece.id}: tagged '${BOUND_GRANT_TAG}' but equipmentGrants.csv names no cards for it — the promise is empty`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * Cards an object carries, or [] — the tag GATES the table, so a row nobody
+ * tagged is inert rather than a silent grant. Works on anything with `tags`
+ * and an `id`; nothing here is equipment-specific.
+ */
+export function boundGrantCardIds(registries, object) {
+  if (!object || !(object.tags || []).includes(BOUND_GRANT_TAG)) return [];
+  const row = ((registries.equipment || {}).equipmentGrants || []).find((entry) => entry.sourceId === object.id);
+  return (row && row.cards) || [];
+}
+
 /** Cards a source hands over outright, one copy each, before any filler. */
 function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   const cls = registries.classes.get(classId);
@@ -1207,15 +1262,13 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
     });
   }
 
-  // Armour and relic — the seam is live, the data is not: no outfit or relic
-  // declares `grantsCards` today. Authoring the field is all it takes to light
-  // these up; nothing here invents a card that content has not registered.
-  for (const [source, piece] of [
-    ['armor', equippedIn(registries, loadout, classId, 'armor')],
-    ['relic', registries.relics && cls.startingRelic ? registries.relics.get(cls.startingRelic) : null],
-  ]) {
-    for (const cardId of (piece && piece.grantsCards) || []) {
-      grants.push({ source, cardId });
+  // Every equipped piece carrying the `bound` tag hands over the cards named
+  // for it in equipmentGrants.csv. The tag is the gate and the promise; the
+  // table is the payload. A piece with neither contributes nothing, which is
+  // every piece today — the seam is live and the data is empty by design.
+  for (const piece of equippedPieces(registries, loadout, classId)) {
+    for (const cardId of boundGrantCardIds(registries, piece)) {
+      grants.push({ source: piece.kind === 'armor' ? 'armor' : 'weapon', cardId, sourceId: piece.id });
     }
   }
 

@@ -26,6 +26,7 @@ import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
 import { cardTagging } from './generated/cardTagging.js';
+import { equipmentGrants } from './generated/equipmentGrants.js';
 import { armouryUi } from './generated/armouryUi.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
@@ -130,6 +131,9 @@ export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({
 
 /** Raw authored card tag ids, carried into registries for compatibility checks. */
 export const CARD_EQUIPMENT_TAGGING = cardTagging.map((row) => ({ ...row, tags: list(row.tags) }));
+
+/** The payload half of the `bound` tag: cards a piece carries with it. */
+export const EQUIPMENT_GRANTS = equipmentGrants.map((row) => ({ ...row, cards: list(row.cards) }));
 
 /** Armoury-only presentation choices authored in JSON. */
 export const ARMOURY_UI = { ...armouryUi };

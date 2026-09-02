@@ -31,7 +31,7 @@ import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
 import {
   ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
-  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI,
+  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, EQUIPMENT_GRANTS, ARMOURY_UI,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
@@ -85,6 +85,7 @@ export const contentBundle = {
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,
+    equipmentGrants: EQUIPMENT_GRANTS,
     armouryUi: ARMOURY_UI,
   },
   unlocks,
