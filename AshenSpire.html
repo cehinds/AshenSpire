@@ -42998,9 +42998,61 @@ function ensureRestBeforeElite(nodes, rules, rng) {
   const below = Object.values(nodes).filter(
     (n) => n.floor < firstElite && rules.restFloors.includes(n.floor)
   );
+  if (!below.length) return;
+
+  // THE REST MAY NOT BE PAID FOR OUT OF ANOTHER PROMISE. This step runs AFTER
+  // both relaxPlace calls, so a node it eats is never counted again — and the
+  // first cut ate any node on the rest floors, the act's last Merchant
+  // included. It is not a rare path: on a legal one-path act whose rest floors
+  // can hold no Monster (two non-Monster types alternate under the no-repeat
+  // ban, so the Monster fallback never fires) the non-Monster branch ran on
+  // 600 of 600 maps. Which node it took was then a coin flip, and one face of
+  // that coin shipped a map with fewer Merchants than the act promises.
+  //
+  // So the victim is chosen in order: a Monster (weakest constraint, and the
+  // only type carrying no promise); else a node whose type is not at its
+  // minimum; else any node, backed by the re-place below.
+  const counts = {};
+  for (const n of Object.values(nodes)) counts[n.type] = (counts[n.type] || 0) + 1;
+  const minima = rules.minima || {};
+  const spare = (t) => !(minima[t] > 0) || counts[t] > minima[t];
   const monsters = below.filter((n) => n.type === 'monster');
-  const pool = monsters.length ? monsters : below;
-  if (pool.length) pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
+  const spares = below.filter((n) => spare(n.type));
+  const pool = monsters.length ? monsters : (spares.length ? spares : below);
+  pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
+
+  // AND IF THE VICTIM WAS THE LAST OF A PROMISED TYPE, put that type back.
+  //
+  // `relaxPlace` alone is not enough, and believing it was is how the first cut
+  // of this shipped: it can only convert a MONSTER, and the acts that force the
+  // non-Monster branch above are exactly the acts with no Monster anywhere to
+  // convert. My own sweep said 0 maps lacked a Monster — because every fixture
+  // it used pinned a fixed Monster on floor 1. A differential scan over 12,600
+  // (config, seed) pairs, asking where this rule turns a SATISFIED minimum into
+  // a broken one, finds it: minMerchants 2 on a 7-floor one-path act with a
+  // fixed floor-1 Merchant loses a Merchant on seeds 1, 2, 4, 7 and 9.
+  //
+  // So the restore falls back to a donor: any node that is not the type we owe,
+  // not a fixed rank, not a Shrine (which would undo the rest this just placed
+  // or the pre-boss one) and not itself the last of a promised type.
+  for (const [type, min] of Object.entries(minima)) {
+    if (!(min > 0)) continue;
+    while (countType(nodes, type) < min) {
+      relaxPlace(nodes, type, min, rules, rng);
+      if (countType(nodes, type) >= min) break;
+      const held = {};
+      for (const n of Object.values(nodes)) held[n.type] = (held[n.type] || 0) + 1;
+      const donor = Object.values(nodes).find((n) =>
+        n.type !== type && n.type !== 'shrine' && n.type !== 'boss' &&
+        !rules.fixed[n.floor] &&
+        (!(minima[n.type] > 0) || held[n.type] > minima[n.type]));
+      // Nothing left to give: the act's own weights and minima cannot both be
+      // met on this graph, with or without a rest. Leaving it short is honest;
+      // eating another promise to pay this one is not.
+      if (!donor) break;
+      donor.type = type;
+    }
+  }
 }
 
 function lowestFloorOf(nodes, type) {
@@ -49854,7 +49906,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5c43f8da8c';
+const SOURCE = '0d239673da';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49888,7 +49940,7 @@ const SOURCE = '5c43f8da8c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1956';
+const ORDINAL = '1958';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

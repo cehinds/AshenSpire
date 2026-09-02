@@ -4402,6 +4402,60 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(feBad.errors.some((e) => e.key === 'floorRules.fixed' && /restBeforeElite/.test(e.msg)),
       `a fixed Elite on floor 1 is refused and named — got ${JSON.stringify(feBad.errors)}`);
 
+    // ---- THE REST IS NOT PAID FOR OUT OF ANOTHER PROMISE. Codex's P2 on #566.
+    // ensureRestBeforeElite runs AFTER both relaxPlace calls, so a node it eats
+    // is never counted again — and the first cut ate any node on the rest
+    // floors, the act's last Merchant included. This act's rest floors can hold
+    // no Monster (two non-Monster types alternate under the no-repeat ban, so
+    // the Monster fallback never fires there), which forces that branch on
+    // every seed. Both minima must survive it.
+    // minMerchants 2, not 1: at 1 the victim is only ever the act's LAST
+    // Merchant on a narrow conjunction and the case hides — this test passed
+    // against the unfixed code until the config was corrected. At 2 the
+    // pre-fix branch breaks the count in 19 of these 40 maps.
+    const restVictim = { ...base, pathCount: 1, columns: 2, floors: 8,
+      typeWeights: { monster: 0, event: 40, shrine: 0, elite: 0, merchant: 60 },
+      floorRules: { minElites: 1, minMerchants: 2, restBeforeElite: true,
+        noShrineBefore: { at: 'floor', index: 3 }, noEliteBefore: { at: 'floor', index: 4 },
+        noShrineOn: { at: 'last' },
+        fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 5, type: 'elite' }] } };
+    const rvPlan = resolveFloorPlan(restVictim).plan;
+    assert(rvPlan != null, 'the rest-victim act resolves');
+    for (let s2 = 0; s2 < 30; s2++) {
+      const all = Object.values(generateActMap({ config: restVictim, rng: createRng(sweepSeed(s2)) }).nodes);
+      assert(all.filter((n) => n.type === 'merchant').length >= rvPlan.minMerchants,
+        `rest-victim seed ${s2}: the forced rest ate the act's last Merchant`);
+      assert(all.filter((n) => n.type === 'elite').length >= rvPlan.minElites,
+        `rest-victim seed ${s2}: elites below the promised minimum`);
+      const elites = all.filter((n) => n.type === 'elite').map((n) => n.floor);
+      assert(all.some((n) => n.type === 'shrine' && n.floor < Math.min(...elites)),
+        `rest-victim seed ${s2}: no rest below the first elite`);
+    }
+
+    // ---- AND IT DOES NOT BREAK A MINIMUM THAT WOULD OTHERWISE HOLD. Codex's
+    // second P2. The differential is the assertion: the SAME act with the rule
+    // off keeps its Merchants, so any shortfall with it on is caused by the
+    // rest. This act has no Monster anywhere — every node is Event or Merchant
+    // under the no-repeat ban — so `relaxPlace` has nothing to convert and the
+    // restore has to find a donor. Before the donor fallback: seeds 1, 2, 4, 7
+    // and 9 lost a Merchant here.
+    const noMonster = (restBeforeElite) => ({ ...base, pathCount: 1, columns: 2, floors: 7,
+      typeWeights: { monster: 0, event: 20, shrine: 0, elite: 0, merchant: 80 },
+      floorRules: { minElites: 1, minMerchants: 2, restBeforeElite,
+        noShrineBefore: { at: 'floor', index: 3 }, noEliteBefore: { at: 'floor', index: 4 },
+        noShrineOn: { at: 'last' },
+        fixed: [{ at: 'first', type: 'merchant' }, { at: 'floor', index: 5, type: 'elite' }] } });
+    const nmOn = noMonster(true), nmOff = noMonster(false);
+    assert(resolveFloorPlan(nmOn).errors.length === 0, 'the no-monster act resolves');
+    for (let s2 = 0; s2 < 12; s2++) {
+      const count = (cfg) => Object.values(generateActMap({ config: cfg, rng: createRng(sweepSeed(s2)) }).nodes)
+        .filter((n) => n.type === 'merchant').length;
+      const off = count(nmOff);
+      if (off < 2) continue; // the act could not hold two either way — not this rule's doing
+      assert(count(nmOn) >= 2,
+        `no-monster act seed ${s2}: the forced rest cost a Merchant the same act keeps without it (off ${off})`);
+    }
+
     // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.
