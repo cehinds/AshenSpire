@@ -247,6 +247,17 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
+        // THE WHOLE GAME GOES TRANSPARENT AT THE ROOT. Descendants keep a
+        // nonzero computed opacity, so only a walk that reaches html can tell.
+        name: 'a stylesheet makes the root element opacity:0 and every control keeps its box',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat { --action-row-drop: 6.4rem; }',
+          replace: '.combat { --action-row-drop: 6.4rem; }\nhtml { opacity: 0; }',
+        }],
+        expectRed: /BAD\s+H3 /,
+      },
+      {
         // THE COARSE-POINTER PROMISE STOPS APPLYING: the phone rule that
         // withholds END TURN's key label loses its selector, and a thumb sees
         // a key it cannot press. Red by name on H3 at the phone cell — and
@@ -379,7 +390,9 @@ const READ = (prop) => `(() => {
   // Effective opacity walks the ancestors: opacity:0 on the control or on any
   // box above it leaves display, visibility and geometry intact and the
   // player sees nothing — the third way a control goes quiet.
-  const clear = (c) => { for (let n = c; n && n !== document.documentElement; n = n.parentElement) if (getComputedStyle(n).opacity === '0') return false; return true; };
+  // ROOT INCLUDED: opacity:0 on html itself leaves every descendant's computed
+  // opacity nonzero while the whole game is transparent (Codex, #532).
+  const clear = (c) => { for (let n = c; n; n = n.parentElement) if (getComputedStyle(n).opacity === '0') return false; return true; };
   const hiddenWhy = (c) => { const cs = getComputedStyle(c); const r = c.getBoundingClientRect();
     return cs.display === 'none' ? 'display:none' : cs.visibility !== 'visible' ? 'visibility:' + cs.visibility
       : !clear(c) ? 'opacity:0' : !(r.width > 0 && r.height > 0) ? 'no box' : 'rendered'; };
