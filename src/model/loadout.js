@@ -1292,6 +1292,27 @@ function desiredGrantInstances(registries, run) {
       cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
     });
   }
+  // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
+  // (the owner's rule, 2026-09-02) — not only when both are. With one hand
+  // armed, the technique slot is that armament's (its installed art, A-6)
+  // and the EMPTY hand contributes the unarmed technique as a weapon-art
+  // instance of its own, minted and dropped here as the hands change, so
+  // filling the hand takes the dodge away and emptying it brings it back.
+  // Both hands empty is the unarmed package (every technique slot is the
+  // Dodge Roll already); a two-handed armament fills both hands.
+  const armed = ['right', 'left'].filter((hand) => handSource(registries, run.loadout, run.class, hand).piece);
+  const twoHanded = sources.right?.package?.handsRequired === 2 || sources.left?.package?.handsRequired === 2;
+  if (armed.length === 1 && !twoHanded) {
+    const empty = armed[0] === 'right' ? 'left' : 'right';
+    const profile = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique);
+    const alreadyInstalled = profile && desired.some((d) => d.equipmentRole === 'weaponArt' && d.cardId === profile.baseCardId);
+    if (profile && profile.baseCardId && !alreadyInstalled) {
+      desired.push({
+        instanceId: `weaponArt:unarmed:${empty}:${profile.baseCardId}`,
+        cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${empty}`,
+      });
+    }
+  }
   return desired;
 }
 
