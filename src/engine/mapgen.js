@@ -189,25 +189,37 @@ export function generateActMap({ config, rng }) {
 function typeOnce(nodes, rollable, fixed, rules, weights, rng, floors) {
   // Roll floor-by-floor so the adjacency rule can see typed parents.
   const byFloor = [...rollable].sort((a, b) => a.floor - b.floor);
+  // THE REST-BEFORE-ELITE PROMISE, and the ascending sort is what makes it
+  // cheap: by the time this loop reaches floor F every Shrine below F is
+  // already typed, so the lowest one seen so far answers the question with no
+  // second pass. `< node.floor` and not `<=` on purpose — a rest on the SAME
+  // floor as the Elite is not a rest before it.
+  let lowestShrine = Infinity;
   for (const node of byFloor) {
     if (fixed[node.floor]) {
       node.type = fixed[node.floor];
-      continue;
+    } else {
+      const parents = Object.values(nodes).filter((p) => p.next.includes(node.id) && p.type);
+      node.type = rollType(node, parents, rules, weights, rng, lowestShrine < node.floor);
     }
-    const parents = Object.values(nodes).filter((p) => p.next.includes(node.id) && p.type);
-    node.type = rollType(node, parents, rules, weights, rng);
+    if (node.type === 'shrine' && node.floor < lowestShrine) lowestShrine = node.floor;
   }
 }
 
 // Weighted roll with per-node hard filters (floor rules + no same non-monster
 // type adjacent along an edge — SPEC §6).
-function rollType(node, typedParents, rules, weights, rng) {
+function rollType(node, typedParents, rules, weights, rng, restBelow) {
   const banned = new Set(typedParents.map((p) => p.type).filter((t) => t !== 'monster'));
   const entries = Object.entries(weights).filter(([type, w]) => {
     if (w <= 0) return false;
     if (banned.has(type)) return false;
-    if ((type === 'elite' || type === 'shrine') && node.floor < rules.eliteShrineFrom) return false;
+    if (type === 'elite' && node.floor < rules.eliteFrom) return false;
+    if (type === 'shrine' && node.floor < rules.shrineFrom) return false;
     if (type === 'shrine' && node.floor === rules.noShrineOn) return false;
+    // E13: no Elite until a rest exists below it. Barring the ROLL is what
+    // makes this a promise rather than a tendency — the relax path below keeps
+    // the same rule when it force-places, so there is no door left open.
+    if (type === 'elite' && rules.restBeforeElite && !restBelow) return false;
     return true;
   });
   if (entries.length === 0) return 'monster';
@@ -222,15 +234,47 @@ function rollType(node, typedParents, rules, weights, rng) {
 
 function relaxPlace(nodes, type, min, rules, rng) {
   let have = countType(nodes, type);
+  if (have >= min) return;
+  // THE REST COMES FIRST, and it is placed here rather than left to the rolls
+  // because the counts are a hard promise and so is this. If the act owes
+  // Elites and no Shrine sits below the Elite gate, the only way to keep BOTH
+  // promises is to open the rest, so that is what this does — and it does it
+  // before a single Elite lands, never after.
+  if (type === 'elite' && rules.restBeforeElite) {
+    const lowestShrine = lowestFloorOf(nodes, 'shrine');
+    if (!(lowestShrine < rules.eliteFrom)) {
+      const room = Object.values(nodes).filter(
+        (n) => n.type === 'monster' &&
+          n.floor >= rules.shrineFrom && n.floor < rules.eliteFrom &&
+          n.floor !== rules.noShrineOn
+      );
+      // resolveFloorPlan refuses at boot when no FLOOR could hold the rest, so
+      // an empty list here means this one graph has no monster node left on
+      // those floors. Placing no Elite is the honest outcome: the promise the
+      // player can see on the map outranks a count they cannot.
+      if (room.length === 0) return;
+      room[Math.floor(rng.float('map') * room.length)].type = 'shrine';
+    }
+  }
+  const restFloor = rules.restBeforeElite ? lowestFloorOf(nodes, 'shrine') : -Infinity;
   const eligible = Object.values(nodes).filter(
     (n) => n.type === 'monster' &&
-      !(type === 'elite' && n.floor < rules.eliteShrineFrom)
+      !(type === 'elite' && n.floor < rules.eliteFrom) &&
+      !(type === 'elite' && rules.restBeforeElite && n.floor <= restFloor)
   );
   while (have < min && eligible.length > 0) {
     const idx = Math.floor(rng.float('map') * eligible.length);
     eligible.splice(idx, 1)[0].type = type;
     have++;
   }
+}
+
+function lowestFloorOf(nodes, type) {
+  let lowest = Infinity;
+  for (const n of Object.values(nodes)) {
+    if (n.type === type && n.floor < lowest) lowest = n.floor;
+  }
+  return lowest;
 }
 
 function countType(nodes, type) {

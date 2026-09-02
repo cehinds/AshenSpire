@@ -171,15 +171,73 @@ export function resolveFloorPlan(config) {
     readout.push(`${key} -> floor ${r.floor} (${r.why})`);
     return r.floor;
   };
-  const eliteShrineFrom = anchorRule('noEliteOrShrineBefore', 1, 'elites and shrines allowed from floor 1');
+  // TWO GATES, AND THE SPLIT IS THE FIX. `noEliteOrShrineBefore` was ONE anchor
+  // holding both types, so the first floor that could carry a rest was also the
+  // first that could carry an Elite. Constantine asked for the opposite —
+  // "so eletes, maybe shop, and definitely before a boss" — and one anchor
+  // cannot express it: a shared floor cannot be both the earliest rest and
+  // later than the earliest Elite. Measured on the shipped act before the
+  // split, over the canonical seed stream (60 runs x 3 acts): 124 of 180 maps
+  // carried an Elite with NO Shrine on any earlier floor.
+  //
+  // The old key is an ERROR rather than a silent shorthand for both, exactly as
+  // `minReachableElites` is above: a name that conflates two rules keeps
+  // conflating them, and the reader who deletes the split hears about it at
+  // boot with the entry named (Law 1 clause 5).
+  if (rules.noEliteOrShrineBefore != null) {
+    errors.push({ key: 'floorRules.noEliteOrShrineBefore', msg: "split into 'noShrineBefore' and 'noEliteBefore' — one anchor could not put a rest earlier than the first Elite, which is what the rest-before-Elite promise needs" });
+  }
+  const shrineFrom = anchorRule('noShrineBefore', 1, 'shrines allowed from floor 1');
+  const eliteFrom = anchorRule('noEliteBefore', 1, 'elites allowed from floor 1');
   const noShrineOn = anchorRule('noShrineOn', 0, 'no floor bars shrines');
 
-  if (band > 0 && eliteShrineFrom > band) {
-    errors.push({ key: 'floorRules.noEliteOrShrineBefore', msg: `resolves to ${eliteShrineFrom}, past the last rollable floor ${band} — no floor could ever hold an Elite or Shrine` });
+  for (const [key, floor, label] of [
+    ['noShrineBefore', shrineFrom, 'Shrine'],
+    ['noEliteBefore', eliteFrom, 'an Elite'],
+  ]) {
+    if (band > 0 && floor > band) {
+      errors.push({ key: `floorRules.${key}`, msg: `resolves to ${floor}, past the last rollable floor ${band} — no floor could ever hold ${label}` });
+    }
   }
   if (band > 0) {
-    const gated = Math.max(0, eliteShrineFrom - 1);
-    readout.push(`  => ${gated} of ${band} rollable floors (${Math.round((gated / band) * 100)}%) bar Elite and Shrine`);
+    for (const [floor, label] of [[shrineFrom, 'Shrine'], [eliteFrom, 'Elite']]) {
+      const gated = Math.max(0, floor - 1);
+      readout.push(`  => ${gated} of ${band} rollable floors (${Math.round((gated / band) * 100)}%) bar ${label}`);
+    }
+  }
+
+  // ---- the rest-before-Elite promise -------------------------------------
+  // E13, his words: "so eletes, maybe shop, and definitely before a boss".
+  // Before-a-boss the generator has always kept (the top floor is the lone
+  // Shrine). This is the other half, and it is a HARD PROMISE in the same sense
+  // `minElites` is: mapgen bars the roll and then force-places rather than
+  // shipping a map that breaks it.
+  //
+  // WHAT IT PROMISES, STATED NARROWLY BECAUSE THE NAME COULD PROMISE MORE: some
+  // floor BELOW the first Elite's floor carries a Shrine. It is a property of
+  // the graph, not of a path — the same honesty `minElites` was renamed for.
+  // A walker can still climb past an Elite without meeting that rest if the
+  // route they chose does not touch it; tools/mapplan.mjs MEASURES the
+  // per-path number rather than this file promising it.
+  const restBeforeElite = rules.restBeforeElite === true;
+  if (rules.restBeforeElite != null && typeof rules.restBeforeElite !== 'boolean') {
+    errors.push({ key: 'floorRules.restBeforeElite', msg: `must be true or false, got ${JSON.stringify(rules.restBeforeElite)}` });
+  }
+  if (restBeforeElite && band > 0) {
+    // SATISFIABLE, OR REFUSED BY NAME. A promise the act's own other rules make
+    // impossible must fail at boot, not by force-placing a Shrine onto a floor
+    // some other rule already claimed.
+    const room = [];
+    for (let f = shrineFrom; f < eliteFrom && f <= band; f++) {
+      if (f !== noShrineOn && fixed[f] == null) room.push(f);
+    }
+    if (room.length === 0) {
+      errors.push({ key: 'floorRules.restBeforeElite', msg: `no floor can hold the promised rest: Shrines start at ${shrineFrom}, Elites at ${eliteFrom}, and every floor between is barred (noShrineOn ${noShrineOn || 'unset'}) or claimed by a fixed rank. Open noShrineBefore earlier, or push noEliteBefore later.` });
+    } else {
+      readout.push(`restBeforeElite: on — a Shrine is guaranteed on one of floors ${room.join(', ')} whenever the map holds an Elite (graph-level, not per-path)`);
+    }
+  } else {
+    readout.push('restBeforeElite: off — an Elite may appear with no rest below it');
   }
 
   // ---- counts ------------------------------------------------------------
@@ -239,7 +297,9 @@ export function resolveFloorPlan(config) {
     floors: config.floors,
     band,
     fixed,
-    eliteShrineFrom,
+    shrineFrom,
+    eliteFrom,
+    restBeforeElite,
     noShrineOn,
     minElites,
     minMerchants,

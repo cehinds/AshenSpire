@@ -143,11 +143,38 @@ function measure(config, seeds) {
       starts: starts.length,
       noElite: starts.filter((t) => !t.has('elite')).length,
       noMerchant: starts.filter((t) => !t.has('merchant')).length,
+      // E13, THE PER-PATH NUMBER THE PROMISE DOES NOT MAKE. `restBeforeElite`
+      // guarantees a rest on a floor BELOW the first Elite — a fact about the
+      // graph. A walker can still choose a route that reaches an Elite without
+      // stopping at one, and that count belongs somewhere a reader can see it
+      // rather than in a claim the rule cannot keep (the same split that
+      // renamed `minReachableElites` to `minElites`).
+      unrestedStarts: g.startIds.filter((id) => reachesEliteWithoutRest(g, id)).length,
       minFloorOf: (type) => { const f = all.filter((n) => n.type === type).map((n) => n.floor); return f.length ? Math.min(...f) : null; },
       floorsOf: (type) => all.filter((n) => n.type === type).map((n) => n.floor),
     });
   }
   return rows;
+}
+
+/**
+ * Can a walker leaving this node meet an Elite before any Shrine? Only
+ * shrine-free prefixes are traversed, so a node in `seen` was already reached
+ * without a rest and revisiting it can only repeat the answer.
+ */
+function reachesEliteWithoutRest(graph, startId) {
+  const seen = new Set();
+  const stack = [startId];
+  while (stack.length) {
+    const id = stack.pop();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const n = graph.nodes[id];
+    if (n.type === 'shrine') continue;
+    if (n.type === 'elite') return true;
+    for (const nx of n.next) stack.push(nx);
+  }
+  return false;
 }
 
 function dist(rows, pick) {
@@ -298,6 +325,10 @@ function runAct(label, config, seeds) {
   console.log(`    starts that can reach NO elite     ${noElite} of ${startsTotal} (${((noElite / startsTotal) * 100).toFixed(1)}%)`);
   console.log(`    starts that can reach NO merchant  ${noMerch} of ${startsTotal} (${((noMerch / startsTotal) * 100).toFixed(1)}%)`);
   console.log(`      ^ REPORTED, NOT GATED — 'minElites' counts the whole graph and says so now.`);
+  const unrested = rows.reduce((a, r) => a + r.unrestedStarts, 0);
+  console.log(`    starts with a route to an elite past no rest  ${unrested} of ${startsTotal} (${((unrested / startsTotal) * 100).toFixed(1)}%)`);
+  console.log(`      ^ REPORTED, NOT GATED, and it is the honest edge of 'restBeforeElite': the rule promises a rest`);
+  console.log(`        on a floor BELOW the first elite — a fact about the GRAPH. Which route a walker takes is theirs.`);
 
   // ---- the promises, checked across the distribution, not on a seed --------
   // STOPS PER RUN IS EXACTLY floors + 1, ALWAYS (Freja, 24 seeds; pathCount and
@@ -315,10 +346,24 @@ function runAct(label, config, seeds) {
     const d = dist(rows, (r) => r.byType[type] || 0);
     if (d.min === 0) findings.push(`${label}: '${type}' is absent entirely in at least one seed (range ${d.min}-${d.max})`);
   }
-  // THE GATE ACTUALLY GATES, at the tail and not just at the mean.
-  for (const type of ['elite', 'shrine']) {
-    const below = rows.filter((r) => r.floorsOf(type).some((f) => f < plan.eliteShrineFrom)).length;
-    if (below) findings.push(`${label}: '${type}' appears below floor ${plan.eliteShrineFrom} in ${below} of ${seeds} seeds`);
+  // THE GATES ACTUALLY GATE, at the tail and not just at the mean. Two of them
+  // since the split: a rest may open below the floor an Elite may.
+  for (const [type, from] of [['elite', plan.eliteFrom], ['shrine', plan.shrineFrom]]) {
+    const below = rows.filter((r) => r.floorsOf(type).some((f) => f < from)).length;
+    if (below) findings.push(`${label}: '${type}' appears below floor ${from} in ${below} of ${seeds} seeds`);
+  }
+  // E13's promise, gated because it IS a promise: a map holding an Elite holds
+  // a Shrine on some earlier floor. The pre-boss Shrine does not count for it —
+  // it is above every rollable floor, which is the whole reason the ask was
+  // still open with "definitely before a boss" already kept.
+  if (plan.restBeforeElite) {
+    const broken = rows.filter((r) => {
+      const elite = r.minFloorOf('elite');
+      if (elite == null) return false;
+      const shrine = r.minFloorOf('shrine');
+      return shrine == null || shrine >= elite;
+    }).length;
+    if (broken) findings.push(`${label}: an Elite stands with no Shrine on any earlier floor in ${broken} of ${seeds} seeds, against floorRules.restBeforeElite`);
   }
   if (plan.noShrineOn > 0) {
     const on = rows.filter((r) => r.floorsOf('shrine').includes(plan.noShrineOn)).length;
@@ -352,6 +397,15 @@ const KNOWN_BAD = [
   // not an empty object that generates a map nobody authored.
   ['floorRules missing entirely', { ...BASE, floorRules: undefined }],
   ['unknownWeights summing to zero', { ...BASE, unknownWeights: { event: 0, fight: 0 } }],
+  // E13'S TWO. The first is the split key itself: an act still authoring
+  // `noEliteOrShrineBefore` gets a named error, not a silent reading of it as
+  // both gates — the same standard `minReachableElites` is held to.
+  ['the pre-split `noEliteOrShrineBefore` key', { ...BASE, floorRules: { ...BASE.floorRules, noEliteOrShrineBefore: { at: 'fraction', of: 0.43 } } }],
+  // The second is the promise made impossible by the act's OWN other rules:
+  // rests and Elites opening on the same floor leaves nowhere for the rest to
+  // land, and force-placing it onto a floor another rule claims is exactly the
+  // quiet fallback this corpus exists to keep out.
+  ['restBeforeElite with no floor left to hold the rest', { ...BASE, floorRules: { ...BASE.floorRules, noShrineBefore: { at: 'fraction', of: 0.43 }, noEliteBefore: { at: 'fraction', of: 0.43 } } }],
   // VIKI'S WITHHOLD, #anchors branch: the schema said opt, the resolver said
   // nothing, and resolveUnknownNode THREW at act build — a clean boot and a
   // crash at runtime, on the key this branch itself moved. The corpus went

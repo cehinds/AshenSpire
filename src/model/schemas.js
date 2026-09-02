@@ -860,8 +860,14 @@ export const SCHEMAS = Object.freeze({
     floorRules: opt(
       obj({
         fixed: opt(arr(floorAnchor({ type: en(...NODE_TYPES) }))),
-        noEliteOrShrineBefore: opt(floorAnchor()),
+        noShrineBefore: opt(floorAnchor()),
+        noEliteBefore: opt(floorAnchor()),
         noShrineOn: opt(floorAnchor()),
+        // The split key is NOT declared here, so an act that still authors it
+        // is refused for an undeclared field by the shape layer AND named by
+        // resolveFloorPlan's meaning layer. Two refusals is not redundancy: the
+        // schema cannot say what to write instead, and the resolver can.
+        restBeforeElite: opt(bool),
         minElites: opt(int),
         minMerchants: opt(int),
       })
