@@ -49605,7 +49605,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '25a7f0b0c0';
+const SOURCE = 'cfc925803c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49639,7 +49639,7 @@ const SOURCE = '25a7f0b0c0';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1938';
+const ORDINAL = '1939';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -72323,7 +72323,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
         ${ev && ev.text ? `<p class="coop-event-result">${esc(ev.text)}</p>` : ''}
         <div class="coop-choices" style="margin-top:12px">${choices.map(({ c, i }) => {
           const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
-          const short = need != null && (mm.cinders ?? 0) < need;
+          const short = need != null && Math.min(mm.cinders ?? 0, typeof item.purse === 'number' ? item.purse : (mm.cinders ?? 0)) < need; // the purse the seat had when the party met the event, and the one in hand
           return `<button data-cu-ev="${i}"${short ? ' disabled data-requires="1" title="Needs ' + need + ' cinders"' : ''}>${esc(c.label || c.text || 'Choose')}</button>`;
         }).join('') || '<button data-cu-ev="-1">Continue</button>'}</div>`);
       app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {

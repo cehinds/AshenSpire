@@ -376,6 +376,7 @@ try {
           const cartIds = ['lootStrongbox', 'leave'], ghostIds = ['payInKind', 'stealRelic', 'leave'];
           E.session.scene = { kind: 'event', eventId: 'abandonedCart', done: {}, picks: {}, open: { e1: null, e2: [0, 1] } };
           E.eventChoice('e1', cartIds.indexOf('leave'));
+          e2.run.cinders = Math.max(e2.run.cinders, ((ghost.choices[ghostIds.indexOf('payInKind')].requires || {}).cinders) || 0); // the price in hand when the party meets the ghost, so the refusal under test is the history's, not the purse's
           E.session.scene = { kind: 'event', eventId: 'merchantsGhost', done: {}, picks: {}, open: { e1: [0, 1, 2], e2: [0, 1, 2] } };
           E.eventChoice('e1', ghostIds.indexOf('leave'));
           const queuedBoth = e2.catchup.filter((c) => c.type === 'event').map((c) => c.eventId);
@@ -385,7 +386,6 @@ try {
           e2.run.actNumber = 1; e2.run.floor = E.session.floor; e2.run.mapNodeId = E.session.cursorId ?? null;
           recordEventChoice(e2.run, { eventId: 'abandonedCart', choiceId: 'lootStrongbox' }); // the history the frozen list predates
           const liveWouldRefuse = !availableEventChoices(eventChoicesWithHistory(ghost), e2.run).some((row) => row.choice.id === 'payInKind');
-          e2.run.cinders = Math.max(e2.run.cinders, ((ghost.choices[ghostIds.indexOf('payInKind')].requires || {}).cinders) || 0); // the price, so the refusal under test is the history's, not the purse's
           const second = e2.catchup[0] && e2.catchup[0].eventId === 'merchantsGhost' ? E.resolveCatchup('e2', 0, { choiceIndex: ghostIds.indexOf('payInKind') }) : { ok: false, error: 'ghost not next' };
           ok(queuedBoth.join(',') === 'abandonedCart,merchantsGhost' && cartEntry && !cartEntry.open.includes(cartIds.indexOf('lootStrongbox')) && ghostEntry && ghostEntry.open.includes(ghostIds.indexOf('payInKind'))
             && first.ok && liveWouldRefuse && second.ok && e2.catchup.length === 0 && (cart.choices.length === 2 && ghost.choices.length === 3),
@@ -517,6 +517,63 @@ try {
           const entry = j2.catchup[j2.catchup.length - 1];
           ok(entry && Array.isArray(entry.open) && !entry.open.includes(fightIdx) && entry.open.includes(calmIdx),
             `a legacy save's entry is rebuilt from the seat's history and still withholds the fight (open ${JSON.stringify(entry && entry.open)})`);
+        }
+        // THE MOMENT IS FROZEN WITH THE ENTRY: a missed choice's random effect
+        // rolls what it would have rolled in the room, however the seat's
+        // stream was spent by later nodes before the replay; and a priced
+        // choice the seat could not afford then is not bought with cinders it
+        // earned later (Codex on #548).
+        {
+          const pilgrim = REG.events.get('weepingPilgrim');
+          const giveIdx = pilgrim.choices.findIndex((c) => c.requires && typeof c.requires.cinders === 'number');
+          const price = pilgrim.choices[giveIdx].requires.cinders;
+          const seatOf = (S, id) => S.session.members.get(id);
+          // Live: the seat is present and gives.
+          const A = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          A.addMember({ id: 'a1', name: 'Ash', classId: 'reaver' });
+          A.addMember({ id: 'a2', name: 'Bel', classId: 'starseer' });
+          A.start();
+          A.session.cursorId = A.session.reachableIds[0];
+          A.session.scene = { kind: 'event', eventId: 'weepingPilgrim', done: {} };
+          seatOf(A, 'a2').run.cinders = price;
+          A.eventChoice('a1', giveIdx === 0 ? 1 : 0);
+          const liveRelicsBefore = seatOf(A, 'a2').run.relics.slice();
+          A.eventChoice('a2', giveIdx);
+          const liveRelic = seatOf(A, 'a2').run.relics.find((r) => !liveRelicsBefore.includes(r));
+          // Away: the same seat misses the room, its stream is spent by a later node, then it replays.
+          const B = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          B.addMember({ id: 'a1', name: 'Ash', classId: 'reaver' });
+          B.addMember({ id: 'a2', name: 'Bel', classId: 'starseer' });
+          B.start();
+          B.session.cursorId = B.session.reachableIds[0];
+          B.session.scene = { kind: 'event', eventId: 'weepingPilgrim', done: {} };
+          const b2 = seatOf(B, 'a2'); b2.run.cinders = price;
+          B.setConnected('a2', false);
+          B.eventChoice('a1', giveIdx === 0 ? 1 : 0);
+          for (let i = 0; i < 5; i++) b2.rng.float('relicRewards'); // a later node spends the stream
+          B.setConnected('a2', true);
+          const awayRelicsBefore = b2.run.relics.slice();
+          const rr = B.resolveCatchup('a2', 0, { choiceIndex: giveIdx });
+          const awayRelic = b2.run.relics.find((r) => !awayRelicsBefore.includes(r));
+          ok(liveRelic && rr.ok && awayRelic === liveRelic,
+            `a missed choice's random relic is the one the room would have given (live ${liveRelic}, replayed after the stream was spent ${awayRelic})`);
+          // Priced: 0 cinders when the party met the ghost, 100 by the replay.
+          const ghost = REG.events.get('merchantsGhost');
+          const payIdx = ghost.choices.findIndex((c) => c.requires && typeof c.requires.cinders === 'number');
+          const M = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          M.addMember({ id: 'm1', name: 'Ash', classId: 'reaver' });
+          M.addMember({ id: 'm2', name: 'Bel', classId: 'starseer' });
+          M.start();
+          M.session.cursorId = M.session.reachableIds[0];
+          const m2 = seatOf(M, 'm2'); m2.run.cinders = 0;
+          M.setConnected('m2', false);
+          M.session.scene = { kind: 'event', eventId: 'merchantsGhost', done: {} };
+          M.eventChoice('m1', ghost.choices.length - 1);
+          m2.run.cinders = 100; // a later missed reward's cinders
+          M.setConnected('m2', true);
+          const refused = M.resolveCatchup('m2', 0, { choiceIndex: payIdx });
+          ok(payIdx >= 0 && !refused.ok && m2.run.cinders === 100 && m2.catchup.length === 1 && m2.catchup[0].purse === 0,
+            `a priced choice the seat could not afford when the party met the event is refused in the replay (purse then ${m2.catchup[0] && m2.catchup[0].purse}, now ${m2.run.cinders}: ${refused.error})`);
         }
         // A seat that chose and then dropped owes nothing.
         const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });

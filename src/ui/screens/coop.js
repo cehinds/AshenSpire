@@ -896,7 +896,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ${ev && ev.text ? `<p class="coop-event-result">${esc(ev.text)}</p>` : ''}
         <div class="coop-choices" style="margin-top:12px">${choices.map(({ c, i }) => {
           const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
-          const short = need != null && (mm.cinders ?? 0) < need;
+          const short = need != null && Math.min(mm.cinders ?? 0, typeof item.purse === 'number' ? item.purse : (mm.cinders ?? 0)) < need; // the purse the seat had when the party met the event, and the one in hand
           return `<button data-cu-ev="${i}"${short ? ' disabled data-requires="1" title="Needs ' + need + ' cinders"' : ''}>${esc(c.label || c.text || 'Choose')}</button>`;
         }).join('') || '<button data-cu-ev="-1">Continue</button>'}</div>`);
       app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {
