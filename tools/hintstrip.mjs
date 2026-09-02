@@ -109,7 +109,7 @@
 // Exit: 0 waived exactly · 1 a new finding OR a stale waiver · 2 unknown.
 
 import { resolve, dirname, join } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
@@ -339,6 +339,21 @@ if (process.argv.includes('--selftest')) {
           file: 'styles/combat.css',
           find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
           replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 3vh; background: #000; z-index: 300; overflow: hidden; }\n.combat .battlefield ~ .fx-layer, .combat .fx-layer { pointer-events: none !important; }',
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
+        // THE CONTROL'S OWN PAINT OVER ITS TEXT: the DRAW pile's ::after as an
+        // opaque sheet over its own box. No element is before the pile in the
+        // stack (the sheet hit-tests as the pile), the pile still hit-tests as
+        // itself, and hiding the pile hides the sheet too, so the whole-
+        // control read counts the sheet as the pile's own paint; the read of
+        // its text does not (Codex, #540).
+        name: "the DRAW pile's own ::after paints an opaque sheet over its count and label",
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
+          replace: ".combat-action-row > .pile.draw { grid-area: draw; position: relative; }\n.combat-action-row > .pile.draw::after { content: ''; position: absolute; inset: 0; background: #000; border-radius: 8px; }",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -651,7 +666,7 @@ const decodePng = (buf) => {
       out[dst + x] = v & 255; } }
   return { w, h, bpp, px: out };
 };
-// FOUR CAPTURES PER CONTROL, ALL IN SITU, read as MAGNITUDES, not as a
+// SIX CAPTURES PER CONTROL, ALL IN SITU, read as MAGNITUDES, not as a
 // yes/no per pixel (a translucent sheet still changes every covered pixel a
 // little, so a binary "did it change" mask would read it as fully seen):
 //   inSitu       — the page as shipped;
@@ -661,7 +676,11 @@ const decodePng = (buf) => {
 //                  control hidden: the control over its own in-situ
 //                  background, which is the reference an overlay cannot touch;
 //   uncoveredBg  — the same with the control hidden too: the in-situ
-//                  background itself.
+//                  background itself;
+//   inSituText, uncoveredText — the first and third with the control's text
+//                  made transparent: the text's own paint, in situ and
+//                  uncovered, read by the same arithmetic (a cover the
+//                  control itself draws over its text — Codex, #540).
 // WHAT IS ABOVE THE CONTROL is found by geometry, not by guessing:
 // document.elementsFromPoint at a grid of points over the control's box,
 // with pointer-events forced to auto on every element for the read (so a
@@ -722,7 +741,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
   const prior = new Map();
   for (const n of document.querySelectorAll('*')) { prior.set(n, [n.style.getPropertyValue('pointer-events'), n.style.getPropertyPriority('pointer-events')]); n.style.setProperty('pointer-events', 'auto', 'important'); }
   const style = document.createElement('style'); style.textContent = 'html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::before, html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::after { pointer-events: auto !important; }'; document.head.appendChild(style);
-  const found = [], above = new Map(); // ancestor -> the points it was above the control at
+  const found = [], above = new Map(), texts = [], ownPseudo = new Map(); // ancestor -> the points it was above the control at; the control's text rects; a text ancestor -> its pseudo-element hits
   const overAt = (x, y) => { const stack = document.elementsFromPoint(x, y); const at = stack.findIndex((n) => n === el || el.contains(n)); return at < 0 ? null : stack.slice(0, at); };
   try {
     // THE GRID IS DENSE ENOUGH THAT NO COVER WORTH THE TOLERANCE SLIPS
@@ -755,10 +774,61 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
         try { return pts.some(([x, y]) => (overAt(x, y) || []).includes(n)); } finally { st.remove(); n.removeAttribute('data-hintstrip-probe'); } };
       n.setAttribute('data-hintstrip-cover-anc', !stillAbove('after') ? 'after' : !stillAbove('before') ? 'before' : 'both');
     }
+    // THE CONTROL'S OWN PAINT OVER ITS TEXT. A cover the hit-test reports as
+    // the control itself — its own ::after with a background over its label,
+    // a positioned child drawn over the count — is no element before the
+    // control in the stack, and hiding the control hides it too, so the
+    // whole-control read counts it as the control's paint (Codex, #540). So
+    // the control's TEXT is read on its own: at a grid over each text node's
+    // rects, with the boxes of the text's own ancestors inside the control
+    // made non-hit-testable (their pseudo-elements stay hit-testable, so a
+    // hit reported as one of them IS one of its pseudo-elements), whatever
+    // the stack lists inside the control is a candidate, and it is a cover
+    // of the text when CSS paint order puts it above in-flow inline content
+    // (CSS 2.1 Appendix E): positioned with z-index auto or >= 0, or a
+    // stacking context of its own. An in-flow box — the pile's label under
+    // its count, an inline ::after — is laid out beside the text, not over
+    // it; a z-index:-1 glow paints below the text; both stay in both
+    // capture pairs.
+    { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim()) continue;
+      const rg = document.createRange(); rg.selectNodeContents(t);
+      for (const b of rg.getClientRects()) if (b.width >= 1 && b.height >= 1 && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) texts.push({ t, b }); } }
+    const stacks = (cs) => cs.transform !== 'none' || cs.opacity !== '1' || cs.filter !== 'none' || cs.isolation === 'isolate' || cs.mixBlendMode !== 'normal';
+    const aboveText = (n, which) => { const cs = getComputedStyle(n, which ? '::' + which : null);
+      if (cs.position !== 'static') return cs.zIndex === 'auto' || Number(cs.zIndex) >= 0;
+      return stacks(cs); };
+    for (const { t, b } of texts) {
+      const chain = []; for (let n = t.parentElement; n && (n === el || el.contains(n)); n = n.parentElement) chain.push(n);
+      for (const n of chain) n.style.setProperty('pointer-events', 'none', 'important');
+      try {
+        const ts = Math.max(1, Math.floor(Math.min(b.width, b.height) * ${PAINT_LOST} / 2));
+        for (let y = b.top + 0.5; y < b.bottom; y += ts) for (let x = b.left + 0.5; x < b.right; x += ts) {
+          for (const n of document.elementsFromPoint(x, y)) {
+            if (n !== el && n.contains(el)) continue; // an ancestor of the control: the box read above judged it
+            if (n === el || el.contains(n)) {
+              if (chain.includes(n)) { if (!ownPseudo.has(n)) ownPseudo.set(n, { t, pts: [] }); ownPseudo.get(n).pts.push([x, y]); }
+              else if (!n.contains(t) && aboveText(n, null) && !found.includes(n)) found.push(n);
+            } else if (!found.includes(n)) found.push(n); // an outer cover the box grid did not meet
+          }
+        }
+      } finally { for (const n of chain) n.style.setProperty('pointer-events', 'auto', 'important'); }
+    }
+    for (const [n, { pts }] of ownPseudo) {
+      // WHICH of its pseudo-elements was hit (hide ::after alone, look again),
+      // and is it above the text by paint order: only that one is hidden.
+      const hitStill = (which) => { const st = document.createElement('style'); st.textContent = '[data-hintstrip-probe]::' + which + ' { visibility: hidden !important; }';
+        n.setAttribute('data-hintstrip-probe', ''); document.head.appendChild(st); n.style.setProperty('pointer-events', 'none', 'important');
+        try { return pts.some(([x, y]) => document.elementsFromPoint(x, y).includes(n)); } finally { st.remove(); n.removeAttribute('data-hintstrip-probe'); n.style.setProperty('pointer-events', 'auto', 'important'); } };
+      const which = !hitStill('after') ? ['after'] : !hitStill('before') ? ['before'] : ['after', 'before'];
+      const hide = which.filter((w) => aboveText(n, w));
+      if (hide.length) { n.setAttribute('data-hintstrip-cover-anc', hide.length === 2 ? 'both' : hide[0]); n.setAttribute('data-hintstrip-cover-own', hide.map((w) => '::' + w).join(' and ')); }
+    }
   } finally { style.remove(); for (const [n, [v, p]] of prior) { if (v) n.style.setProperty('pointer-events', v, p); else n.style.removeProperty('pointer-events'); } }
   const name = (n) => (String(n.className).split(' ')[0] || n.tagName.toLowerCase());
   found.forEach((n, i) => n.setAttribute('data-hintstrip-cover', String(i)));
-  return found.map(name).concat([...above.keys()].map((n) => 'ancestor ' + name(n) + ' (its ::' + n.getAttribute('data-hintstrip-cover-anc') + ' above the control)')); })()`;
+  return { text: texts.length, names: found.map((n) => (el.contains(n) ? 'its ' + name(n) + ' over its text' : name(n)))
+    .concat([...above.keys()].map((n) => 'ancestor ' + name(n) + ' (its ::' + n.getAttribute('data-hintstrip-cover-anc') + ' above the control)'))
+    .concat([...ownPseudo.keys()].filter((n) => n.hasAttribute('data-hintstrip-cover-own')).map((n) => (n === el ? 'its own ' : 'its ' + name(n) + ' ') + n.getAttribute('data-hintstrip-cover-own') + ' over its text')) }; })()`;
 const COVERS_HIDE = `(() => {
   for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { n.setAttribute('data-hintstrip-cover-vis', n.style.getPropertyValue('visibility') || ''); n.style.setProperty('visibility', 'hidden', 'important'); }
   const st = document.createElement('style'); st.id = 'hintstrip-cover-style';
@@ -766,27 +836,62 @@ const COVERS_HIDE = `(() => {
   document.head.appendChild(st); return 1; })()`;
 const COVERS_RESTORE = `(() => {
   for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { const v = n.getAttribute('data-hintstrip-cover-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-cover'); n.removeAttribute('data-hintstrip-cover-vis'); }
-  for (const n of document.querySelectorAll('[data-hintstrip-cover-anc]')) n.removeAttribute('data-hintstrip-cover-anc');
+  for (const n of document.querySelectorAll('[data-hintstrip-cover-anc]')) { n.removeAttribute('data-hintstrip-cover-anc'); n.removeAttribute('data-hintstrip-cover-own'); }
   const st = document.getElementById('hintstrip-cover-style'); if (st) st.remove(); return 1; })()`;
+// THE TEXT MADE TRANSPARENT, in place: the fill, the shadow and the stroke of
+// every element in the control (inline, !important; priors put back), so the
+// captures with and without it differ in the text's paint alone — a
+// currentColor border is not the text and keeps its colour.
+const TEXT_PROPS = ['-webkit-text-fill-color', 'text-shadow', '-webkit-text-stroke-color'];
+const TEXT_HIDE = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const props = ${JSON.stringify(TEXT_PROPS)};
+  for (const n of [el, ...el.querySelectorAll('*')]) { n.setAttribute('data-hintstrip-text', JSON.stringify(props.map((p) => [n.style.getPropertyValue(p), n.style.getPropertyPriority(p)])));
+    n.style.setProperty(props[0], 'transparent', 'important'); n.style.setProperty(props[1], 'none', 'important'); n.style.setProperty(props[2], 'transparent', 'important'); }
+  return 1; })()`;
+const TEXT_RESTORE = `(() => { const props = ${JSON.stringify(TEXT_PROPS)};
+  for (const n of document.querySelectorAll('[data-hintstrip-text]')) { const prior = JSON.parse(n.getAttribute('data-hintstrip-text'));
+    props.forEach((p, i) => { const [v, pr] = prior[i]; if (v) n.style.setProperty(p, v, pr); else n.style.removeProperty(p); }); n.removeAttribute('data-hintstrip-text'); }
+  return 1; })()`;
+// ANIMATION IS FROZEN FOR THE READ (play-state paused, transitions off, in
+// place): END TURN's pulse moving between two captures is a change of the
+// background under its text, not paint over it, and the six captures of a
+// control must be of the same frame. Restored after the last control.
+const FREEZE = `(() => { const st = document.createElement('style'); st.id = 'hintstrip-freeze';
+  st.textContent = '*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }'; document.head.appendChild(st); return 1; })()`;
+const THAW = `(() => { const st = document.getElementById('hintstrip-freeze'); if (st) st.remove(); return 1; })()`;
 async function paintOf(ev, shot) {
+  await ev(FREEZE);
+  try { return await paintOfFrozen(ev, shot); } finally { await ev(THAW).catch(() => {}); }
+}
+async function paintOfFrozen(ev, shot) {
   const out = [];
   for (const t of await ev(PAINT_TARGETS)) {
     if (!t.shown) { out.push({ name: t.name }); continue; }
     const clip = { x: Math.floor(t.x), y: Math.floor(t.y), width: Math.ceil(t.w), height: Math.ceil(t.h), scale: 1 };
     const vis = (v) => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.setProperty('visibility', ${JSON.stringify(v)}, 'important'); return 1; })()`);
-    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); return 1; })()`); await ev(COVERS_RESTORE); };
+    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); return 1; })()`); await ev(TEXT_RESTORE); await ev(COVERS_RESTORE); };
     try {
       const inSitu = await shot(clip);
       await vis('hidden');
       const inSituHidden = await shot(clip);
       await vis('visible');
-      const covers = await ev(COVERS_OF(t.sel));
+      await ev(TEXT_HIDE(t.sel));
+      const inSituText = await shot(clip);
+      await ev(TEXT_RESTORE);
+      const { text, names: covers } = await ev(COVERS_OF(t.sel));
       await ev(COVERS_HIDE);
       const uncovered = await shot(clip);
+      await ev(TEXT_HIDE(t.sel));
+      const uncoveredText = await shot(clip);
+      await ev(TEXT_RESTORE);
       await vis('hidden');
       const uncoveredBg = await shot(clip);
       await restore();
-      out.push({ name: t.name, covers, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg) });
+      // THE TEXT'S OWN READ, the same arithmetic over the same pixels: what
+      // the text contributes with the covers hidden against what it delivers
+      // in situ; text that contributes nothing even uncovered is wholly lost.
+      const textRead = text ? paintOfCaptures(inSitu, inSituText, uncovered, uncoveredText) : null;
+      if (process.env.HINTSTRIP_DUMP) { const d = process.env.HINTSTRIP_DUMP; mkdirSync(d, { recursive: true }); const tag = (t.name + '-' + clip.width + 'x' + clip.height).replace(/[^A-Za-z0-9]+/g, '_'); [['inSitu', inSitu], ['inSituHidden', inSituHidden], ['inSituText', inSituText], ['uncovered', uncovered], ['uncoveredText', uncoveredText], ['uncoveredBg', uncoveredBg]].forEach(([k, b]) => writeFileSync(join(d, tag + '-' + k + '.png'), b)); }
+      out.push({ name: t.name, covers, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg), ...(textRead ? { textLost: textRead.own > 0 ? textRead.lost : 1 } : {}) });
     } catch (e) { await restore().catch(() => {}); throw e; }
   }
   return out;
@@ -859,8 +964,9 @@ function judge(r, cell, wide, pointer) {
   const keyOut = !r.coarse && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
   const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
   const paint = Array.isArray(r.paint) ? r.paint : [];
-  const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST));
-  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost${(p.covers && p.covers.length) ? ' (over it: ' + p.covers.join(', ') + ')' : ''}`).join('; ');
+  const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST || (p.textLost !== undefined && p.textLost > PAINT_LOST)));
+  const textOf = (p) => (p.textLost !== undefined ? `, its text ${(p.textLost * 100).toFixed(0)}% lost` : '');
+  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost${textOf(p)}${(p.covers && p.covers.length) ? ' (over it: ' + p.covers.join(', ') + ')' : ''}`).join('; ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -883,8 +989,8 @@ function judge(r, cell, wide, pointer) {
     bad('H3', cell, 'no paint-coverage reading reached the judge — the probe that photographs each control did not run, so nothing says a control is not painted over');
   } else if (obscured.length) {
     bad('H3', cell, `${obscured.length} control(s) painted over — `
-      + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box against its background and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ (drawn over it: ${(p.covers || []).join(', ') || 'nothing found by geometry'})`).join(', ')
-      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it; a layer over any part of the rail, pointer-events or not, is measured here rather than by the hit-test)`);
+      + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box against its background and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ${p.textLost !== undefined ? `, ${(p.textLost * 100).toFixed(0)}% of its text's paint does not` : ''} (drawn over it: ${(p.covers || []).join(', ') || 'nothing found by geometry'})`).join(', ')
+      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it, and of its text's paint; a layer over any part of the rail, pointer-events or not, or the control's own paint over its text, is measured here rather than by the hit-test)`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (box ${JSON.stringify(r.key.box)}, text ${JSON.stringify(r.key.textBox)} vs ${JSON.stringify(r.endTurn)})` : '')
@@ -983,8 +1089,13 @@ async function main() {
     process.exit(2);
   }
   console.log(`      browser: ${browserPath}`);
+  // TEXT IS RASTERISED ONE WAY for the paint read: Chromium draws glyphs with
+  // coloured subpixel (LCD) anti-aliasing on an opaque layer and grey on a
+  // composited one, so hiding a layer over a control for the uncovered
+  // captures changed the colour of its glyph edges — a fifth of a small
+  // label's paint — with nothing painted over it. Grey everywhere.
   const { wsUrl, close: dropBrowser } = await launchBrowser({
-    prefix: 'hintstrip-', browser: browserPath, timeoutMs: 15000,
+    prefix: 'hintstrip-', browser: browserPath, timeoutMs: 15000, args: ['--disable-lcd-text'],
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 
