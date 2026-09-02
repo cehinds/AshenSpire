@@ -153,10 +153,11 @@ This record does not choose between them.
 
 ### The promotion chain, as he stated it
 
-`feature/* → dev → test → release → main`, with `main` his.
+`local → origin feature/* → dev → test → release → main`, with `main` his.
 
 | Hop | Who | Status |
 |---|---|---|
+| local → `origin feature/*` | the seat doing the work | unchanged — AGENTS.md already holds "reversible, collision-free local work proceeds without approval", and push is a protected transition needing its own authority |
 | `feature/*` → `dev` | any seat, normal reviewable PR | unchanged |
 | `dev` → `test` | agent-mergeable under Gate C | **unchanged** — his standing directive, and 0009 delegates the exact fast-forward |
 | `test` → `release` | **Constantine alone** | 0009 Gate F. Note this differs from how `release` has actually been cut, which was `dev → release` (F-19, F-23) |
