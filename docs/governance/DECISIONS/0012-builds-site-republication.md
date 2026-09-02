@@ -110,6 +110,71 @@ down beside the publication rule so the two are never conflated again — a merg
 to `test` being automatic has never implied anything about publishing, and
 after this record it implies exactly one thing: the `test` view refreshes.
 
+### Two defects review found in the proposal above, and what they cost
+
+Codex raised both as P1 on #581. I checked each against the builder rather than
+taking them on trust. **Both hold.**
+
+**1. The site is one indivisible artifact, so the table's promise cannot be kept
+as written.** `tools/pages-site.mjs:160-163` archives **main's whole tree** as
+the base of `_site`; `BRANCHES` defaults to all four; `refFor()` resolves each
+branch's CURRENT head with no pinning. A deploy triggered by a `dev` push
+therefore republishes main's tree and release's index as they stand at that
+moment. **If Constantine has merged to `main` and not yet dispatched, the next
+`dev` push publishes that content for him.** The row promising `release` and
+`main` republish only on his dispatch is, against this builder, false — and it
+was the row that made his narrowing the safe option.
+
+**2. The artifact is built from the pushed branch's own code.** The assemble job
+checks out the pushed ref unpinned, so a push to `dev` that edits
+`tools/pages-site.mjs` or the workflow controls what `_site` contains, including
+the root, `main` and `release` paths. Moving the credential to a default-branch
+`workflow_run` protects the *token* and does nothing about *what gets deployed*.
+The listener must rebuild with default-branch code. The workflow I wrote and
+deleted did re-assemble that way; the prose did not say so, and prose is what a
+decision record is.
+
+### So the choice is narrower than it looked
+
+- **A — pin what the owner published.** Automatic republication builds `main`
+  and `release` from the SHAs he LAST PUBLISHED, recorded in-repo; only `dev`
+  and `test` track their heads. His dispatch advances the pins. Keeps the
+  promise exactly. Needs `pages-site.mjs` to accept explicit refs plus a small
+  published-state file — real work, not a config change.
+- **B — accept whole-site republication and say so.** Drop the promise.
+  Automatic republication re-renders the whole site including `main` and
+  `release` as they currently stand; what it never does is decide what goes on
+  those branches. Cheap, honest, and a genuine widening of what he agreed to —
+  which is why it is written here rather than assumed.
+- **C — decline.** As below.
+
+**A is what his narrowing actually asked for. B is what today's builder can do.**
+This record does not choose between them.
+
+### The promotion chain, as he stated it
+
+`feature/* → dev → test → release → main`, with `main` his.
+
+| Hop | Who | Status |
+|---|---|---|
+| `feature/*` → `dev` | any seat, normal reviewable PR | unchanged |
+| `dev` → `test` | agent-mergeable under Gate C | **unchanged** — his standing directive, and 0009 delegates the exact fast-forward |
+| `test` → `release` | **Constantine alone** | 0009 Gate F. Note this differs from how `release` has actually been cut, which was `dev → release` (F-19, F-23) |
+| `release` → `main` | **Constantine alone** | 0009 Gate F |
+
+Two things in that table need his eye rather than my assumption:
+
+- **`test → release` vs `dev → release`.** Every release cut recorded so far is
+  `dev → release`; F-19 and F-23 both name it that way. His chain puts `release`
+  downstream of `test`. That is a stricter and more coherent line — a release
+  would then only ever contain what QA accepted — but it is a change to how the
+  cut has been performed, not a restatement, and it is his to make.
+- **`feature/*` is not what the branches are called.** `git-ownership.json`
+  grants `claude/*` and `recovery/*`; today's work also lands on `codex/*`. If
+  `feature/*` is a rename he wants, it is a separate change to that contract and
+  to every seat's branch convention. If it is shorthand for "the feature
+  branches", nothing needs doing. Recorded rather than guessed.
+
 ### The contract amendment
 
 - Gate F keeps `authority_is_per_action: true` for every listed action.
@@ -121,7 +186,12 @@ after this record it implies exactly one thing: the `test` view refreshes.
 - Republication runs only after a successful assemble, so a site whose drift
   plant went unproven is never deployed.
 - The workflow holding the credential must be one a push cannot rewrite —
-  `workflow_run` from the default branch, never a `push` trigger.
+  `workflow_run` from the default branch, never a `push` trigger — **and it must
+  rebuild `_site` itself with default-branch code.** Deploying an artifact a
+  branch assembled would let a push to `dev` replace root, `main` and `release`
+  content whatever the credential arrangement. That is defect 2.
+- Under option A, `main` and `release` are built from the owner's last-published
+  SHAs rather than their heads.
 - **Everything else in Gate F is untouched:** `main` and `release` mutation,
   tags, release publication, Pages source, and final release-readiness stay
   the owner's, per act.
