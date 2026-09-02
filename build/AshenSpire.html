@@ -10606,7 +10606,7 @@ const cards = authoredCards.map((card) => {
 });
 
 const contentBundle = {
-  version: '0.5.0-rc.3',
+  version: '0.5.0-rc.4',
   balance,
   cards,
   relics,
@@ -17312,8 +17312,42 @@ const ACT_SHAPE = {
       { at: 'first', type: 'monster' },
       { at: 'fraction', of: 0.64, type: 'treasure' },
     ],
-    noEliteOrShrineBefore: { at: 'fraction', of: 0.43 },
+    // TWO GATES WHERE THERE WAS ONE, and the split is what E13 needed. The old
+    // `noEliteOrShrineBefore` opened rests and Elites on the SAME floor, so the
+    // earliest rest could never be below the earliest Elite. Constantine asked
+    // for a rest "so eletes, maybe shop, and definitely before a boss".
+    //
+    // THE ELITE GATE DOES NOT MOVE. 0.43 is the number that shipped, so Elites
+    // land exactly where they landed before this change; only the rest opens
+    // earlier. That is the smaller of the two edits available and it is
+    // deliberate — retuning where Elites appear is a separate decision from
+    // promising a rest below them.
+    //
+    //   0.27 x 11 -> floor 3      rests open here
+    //   0.43 x 11 -> floor 5      Elites open here, unchanged
+    //   => floors 3 and 4 are where the promised rest can land
+    noShrineBefore: { at: 'fraction', of: 0.27 },
+    noEliteBefore: { at: 'fraction', of: 0.43 },
     noShrineOn: { at: 'last' },
+    // E13's other half, and the generator keeps it the way it keeps `minElites`
+    // — by barring the roll and then force-placing, never by hoping. Measured
+    // on the canonical seed stream before it shipped: 124 of 180 maps carried
+    // an Elite with no Shrine on any earlier floor. `node tools/mapplan.mjs`
+    // prints the number now, including the per-path reachability this rule
+    // does NOT promise.
+    //
+    // WHAT IT COSTS, and it is not free: the shortest act these rules can
+    // describe moved from 4 floors to 7 (`minViableFloors`, and the run-shape
+    // test pins the number). A 6-floor act resolves `noShrineBefore` onto floor
+    // 1, which the fixed Monster already claims, so no floor is left to hold
+    // the promised rest and the resolver refuses rather than force-placing over
+    // another rule. That narrows Constantine's short-run slider, which is a
+    // real trade against "I only have the patience for 30 min runs".
+    // The other end of it, if he wants the range back: `noEliteBefore` at
+    // { fraction: 0.5 } takes the shortest act to 6 and moves Elites one floor
+    // later on the shipped act (5 -> 6). 0.43 is kept here because it is the
+    // number that shipped, so Elites land exactly where they always did.
+    restBeforeElite: true,
     minElites: 2,
     minMerchants: 1,
   },
@@ -24368,15 +24402,103 @@ function resolveFloorPlan(config) {
     readout.push(`${key} -> floor ${r.floor} (${r.why})`);
     return r.floor;
   };
-  const eliteShrineFrom = anchorRule('noEliteOrShrineBefore', 1, 'elites and shrines allowed from floor 1');
+  // TWO GATES, AND THE SPLIT IS THE FIX. `noEliteOrShrineBefore` was ONE anchor
+  // holding both types, so the first floor that could carry a rest was also the
+  // first that could carry an Elite. Constantine asked for the opposite —
+  // "so eletes, maybe shop, and definitely before a boss" — and one anchor
+  // cannot express it: a shared floor cannot be both the earliest rest and
+  // later than the earliest Elite. Measured on the shipped act before the
+  // split, over the canonical seed stream (60 runs x 3 acts): 124 of 180 maps
+  // carried an Elite with NO Shrine on any earlier floor.
+  //
+  // The old key is an ERROR rather than a silent shorthand for both, exactly as
+  // `minReachableElites` is above: a name that conflates two rules keeps
+  // conflating them, and the reader who deletes the split hears about it at
+  // boot with the entry named (Law 1 clause 5).
+  if (rules.noEliteOrShrineBefore != null) {
+    errors.push({ key: 'floorRules.noEliteOrShrineBefore', msg: "split into 'noShrineBefore' and 'noEliteBefore' — one anchor could not put a rest earlier than the first Elite, which is what the rest-before-Elite promise needs" });
+  }
+  const shrineFrom = anchorRule('noShrineBefore', 1, 'shrines allowed from floor 1');
+  const eliteFrom = anchorRule('noEliteBefore', 1, 'elites allowed from floor 1');
   const noShrineOn = anchorRule('noShrineOn', 0, 'no floor bars shrines');
 
-  if (band > 0 && eliteShrineFrom > band) {
-    errors.push({ key: 'floorRules.noEliteOrShrineBefore', msg: `resolves to ${eliteShrineFrom}, past the last rollable floor ${band} — no floor could ever hold an Elite or Shrine` });
+  for (const [key, floor, label] of [
+    ['noShrineBefore', shrineFrom, 'Shrine'],
+    ['noEliteBefore', eliteFrom, 'an Elite'],
+  ]) {
+    if (band > 0 && floor > band) {
+      errors.push({ key: `floorRules.${key}`, msg: `resolves to ${floor}, past the last rollable floor ${band} — no floor could ever hold ${label}` });
+    }
   }
   if (band > 0) {
-    const gated = Math.max(0, eliteShrineFrom - 1);
-    readout.push(`  => ${gated} of ${band} rollable floors (${Math.round((gated / band) * 100)}%) bar Elite and Shrine`);
+    for (const [floor, label] of [[shrineFrom, 'Shrine'], [eliteFrom, 'Elite']]) {
+      const gated = Math.max(0, floor - 1);
+      readout.push(`  => ${gated} of ${band} rollable floors (${Math.round((gated / band) * 100)}%) bar ${label}`);
+    }
+  }
+
+  // ---- the rest-before-Elite promise -------------------------------------
+  // E13, his words: "so eletes, maybe shop, and definitely before a boss".
+  // Before-a-boss the generator has always kept (the top floor is the lone
+  // Shrine). This is the other half, and it is a HARD PROMISE in the same sense
+  // `minElites` is: mapgen bars the roll and then force-places rather than
+  // shipping a map that breaks it.
+  //
+  // WHAT IT PROMISES, STATED NARROWLY BECAUSE THE NAME COULD PROMISE MORE: some
+  // floor BELOW the first Elite's floor carries a Shrine. It is a property of
+  // the graph, not of a path — the same honesty `minElites` was renamed for.
+  // A walker can still climb past an Elite without meeting that rest if the
+  // route they chose does not touch it; tools/mapplan.mjs MEASURES the
+  // per-path number rather than this file promising it.
+  const restBeforeElite = rules.restBeforeElite === true;
+  if (rules.restBeforeElite != null && typeof rules.restBeforeElite !== 'boolean') {
+    errors.push({ key: 'floorRules.restBeforeElite', msg: `must be true or false, got ${JSON.stringify(rules.restBeforeElite)}` });
+  }
+  // THE FLOORS THE PROMISED REST MAY LAND ON, resolved HERE and carried on the
+  // plan rather than recomputed in the generator. mapgen force-places onto one
+  // of these when the rolls produced none, and a second computation of "which
+  // floors are free" is a second answer to what the rules meant — the exact
+  // defect the anchors were built to end.
+  const restFloors = [];
+  // A FIXED SHRINE RANK IS ALREADY THE REST, not a floor competing with it. An
+  // act fixing a Shrine below the Elite gate keeps the promise on every seed
+  // before the generator rolls anything, so it needs no floor held free — the
+  // first cut counted it as a COLLISION and refused a config that satisfied
+  // the rule.
+  let fixedRest = null;
+  if (restBeforeElite && band > 0) {
+    for (const [f, t] of Object.entries(fixed)) {
+      const floor = Number(f);
+      if (t === 'shrine' && floor < eliteFrom && (fixedRest == null || floor < fixedRest)) fixedRest = floor;
+    }
+    for (let f = shrineFrom; f < eliteFrom && f <= band; f++) {
+      if (f !== noShrineOn && fixed[f] == null) restFloors.push(f);
+    }
+    // SATISFIABLE, OR REFUSED BY NAME. A promise the act's own other rules make
+    // impossible must fail at boot, not by force-placing a Shrine onto a floor
+    // some other rule already claimed.
+    if (restFloors.length === 0 && fixedRest == null) {
+      errors.push({ key: 'floorRules.restBeforeElite', msg: `no floor can hold the promised rest: Shrines start at ${shrineFrom}, Elites at ${eliteFrom}, and every floor between is barred (noShrineOn ${noShrineOn || 'unset'}) or claimed by a fixed rank that is not itself a Shrine. Open noShrineBefore earlier, push noEliteBefore later, or fix a Shrine rank below the Elite gate.` });
+    } else if (fixedRest != null) {
+      readout.push(`restBeforeElite: on — the fixed Shrine on floor ${fixedRest} keeps it on every seed${restFloors.length ? `, and floors ${restFloors.join(', ')} can hold another` : ''} (graph-level, not per-path)`);
+    } else {
+      readout.push(`restBeforeElite: on — a Shrine is guaranteed on one of floors ${restFloors.join(', ')} whenever the map holds an Elite (graph-level, not per-path)`);
+    }
+    // A FIXED ELITE RANK OUTRANKS EVERY GATE — `typeOnce` assigns it before any
+    // rule runs — so an act fixing an Elite where no rest can precede it would
+    // ship a map breaking the promise SPEC §6 states without qualification. It
+    // is the one case the generator cannot fix for itself, so it is refused
+    // here, by name, with the floors that would satisfy it.
+    for (const [f, t] of Object.entries(fixed)) {
+      if (t !== 'elite') continue;
+      const floor = Number(f);
+      const rest = (fixedRest != null && fixedRest < floor) || restFloors.some((r) => r < floor);
+      if (!rest) {
+        errors.push({ key: 'floorRules.fixed', msg: `a fixed Elite on floor ${floor} has no floor below it that can hold the promised rest (a fixed rank bypasses noEliteBefore, so restBeforeElite cannot be kept). Fix a Shrine rank below floor ${floor}, or open noShrineBefore above it.` });
+      }
+    }
+  } else {
+    readout.push('restBeforeElite: off — an Elite may appear with no rest below it');
   }
 
   // ---- counts ------------------------------------------------------------
@@ -24436,7 +24558,10 @@ function resolveFloorPlan(config) {
     floors: config.floors,
     band,
     fixed,
-    eliteShrineFrom,
+    shrineFrom,
+    eliteFrom,
+    restBeforeElite,
+    restFloors,
     noShrineOn,
     minElites,
     minMerchants,
@@ -27321,8 +27446,14 @@ const SCHEMAS = Object.freeze({
     floorRules: opt(
       obj({
         fixed: opt(arr(floorAnchor({ type: en(...NODE_TYPES) }))),
-        noEliteOrShrineBefore: opt(floorAnchor()),
+        noShrineBefore: opt(floorAnchor()),
+        noEliteBefore: opt(floorAnchor()),
         noShrineOn: opt(floorAnchor()),
+        // The split key is NOT declared here, so an act that still authors it
+        // is refused for an undeclared field by the shape layer AND named by
+        // resolveFloorPlan's meaning layer. Two refusals is not redundancy: the
+        // schema cannot say what to write instead, and the resolver can.
+        restBeforeElite: opt(bool),
         minElites: opt(int),
         minMerchants: opt(int),
       })
@@ -42731,6 +42862,7 @@ function generateActMap({ config, rng }) {
     typeOnce(nodes, rollable, fixed, rules, config.typeWeights, rng, floors);
     if (countType(nodes, 'elite') >= plan.minElites &&
         countType(nodes, 'merchant') >= plan.minMerchants) {
+      ensureRestBeforeElite(nodes, rules, rng);
       return finish(nodes, starts, shrine.id, boss.id, floors, cols);
     }
   }
@@ -42738,31 +42870,44 @@ function generateActMap({ config, rng }) {
   // monster nodes (weakest constraint gives way; counts are a hard promise).
   relaxPlace(nodes, 'elite', plan.minElites, plan, rng);
   relaxPlace(nodes, 'merchant', plan.minMerchants, plan, rng);
+  ensureRestBeforeElite(nodes, rules, rng);
   return finish(nodes, starts, shrine.id, boss.id, floors, cols);
 }
 
 function typeOnce(nodes, rollable, fixed, rules, weights, rng, floors) {
   // Roll floor-by-floor so the adjacency rule can see typed parents.
   const byFloor = [...rollable].sort((a, b) => a.floor - b.floor);
+  // THE REST-BEFORE-ELITE PROMISE, and the ascending sort is what makes it
+  // cheap: by the time this loop reaches floor F every Shrine below F is
+  // already typed, so the lowest one seen so far answers the question with no
+  // second pass. `< node.floor` and not `<=` on purpose — a rest on the SAME
+  // floor as the Elite is not a rest before it.
+  let lowestShrine = Infinity;
   for (const node of byFloor) {
     if (fixed[node.floor]) {
       node.type = fixed[node.floor];
-      continue;
+    } else {
+      const parents = Object.values(nodes).filter((p) => p.next.includes(node.id) && p.type);
+      node.type = rollType(node, parents, rules, weights, rng, lowestShrine < node.floor);
     }
-    const parents = Object.values(nodes).filter((p) => p.next.includes(node.id) && p.type);
-    node.type = rollType(node, parents, rules, weights, rng);
+    if (node.type === 'shrine' && node.floor < lowestShrine) lowestShrine = node.floor;
   }
 }
 
 // Weighted roll with per-node hard filters (floor rules + no same non-monster
 // type adjacent along an edge — SPEC §6).
-function rollType(node, typedParents, rules, weights, rng) {
+function rollType(node, typedParents, rules, weights, rng, restBelow) {
   const banned = new Set(typedParents.map((p) => p.type).filter((t) => t !== 'monster'));
   const entries = Object.entries(weights).filter(([type, w]) => {
     if (w <= 0) return false;
     if (banned.has(type)) return false;
-    if ((type === 'elite' || type === 'shrine') && node.floor < rules.eliteShrineFrom) return false;
+    if (type === 'elite' && node.floor < rules.eliteFrom) return false;
+    if (type === 'shrine' && node.floor < rules.shrineFrom) return false;
     if (type === 'shrine' && node.floor === rules.noShrineOn) return false;
+    // E13: no Elite until a rest exists below it. Barring the ROLL is what
+    // makes this a promise rather than a tendency — the relax path below keeps
+    // the same rule when it force-places, so there is no door left open.
+    if (type === 'elite' && rules.restBeforeElite && !restBelow) return false;
     return true;
   });
   if (entries.length === 0) return 'monster';
@@ -42777,15 +42922,162 @@ function rollType(node, typedParents, rules, weights, rng) {
 
 function relaxPlace(nodes, type, min, rules, rng) {
   let have = countType(nodes, type);
+  if (have >= min) return;
+  // THE REST COMES FIRST, and it is placed here rather than left to the rolls
+  // because the counts are a hard promise and so is this. If the act owes
+  // Elites and no Shrine sits below the Elite gate, the only way to keep BOTH
+  // promises is to open the rest, so that is what this does — and it does it
+  // before a single Elite lands, never after.
+  if (type === 'elite' && rules.restBeforeElite) {
+    const lowestShrine = lowestFloorOf(nodes, 'shrine');
+    if (!(lowestShrine < rules.eliteFrom)) {
+      // ANY node on the rest floors, not only a Monster — and that is the whole
+      // fix for a defect this branch shipped once already. Requiring a Monster
+      // made the rest unplaceable on a map whose rest floors rolled none, and
+      // the code then returned WITHOUT placing Elites, breaking `minElites` in
+      // silence. It is reachable, not theoretical: the Custom Climb shape
+      // floors=7 with Event at 100 and every other weight 0 fills the one rest
+      // floor with Events, and every seed came out with ZERO Elites against an
+      // act promising 2 — a promise applyRunShape PRINTS to the player as
+      // force-placed. Neither promise gets to break the other quietly.
+      //
+      // A Monster is still preferred: it is the weakest constraint, the same
+      // reason the Elite placement below only eats Monsters. Converting a
+      // typed node can seat two Shrines along one edge, which the roll forbids
+      // — the relax path has always been allowed to do that (it is what
+      // "relax the weakest constraint" means) and the counts are the promise
+      // it is allowed to break the adjacency rule for.
+      //
+      // `restFloors` comes from resolveFloorPlan so the floors this places on
+      // are the floors the resolver certified at boot, never a second reading.
+      const onRestFloors = Object.values(nodes).filter((n) => rules.restFloors.includes(n.floor));
+      const monsters = onRestFloors.filter((n) => n.type === 'monster');
+      const pool = monsters.length ? monsters : onRestFloors;
+      // Every floor 1..floors-1 carries at least one node (a walker passes
+      // through it), and resolveFloorPlan refuses at boot when restFloors is
+      // empty, so `pool` is empty only if this act has no rest floors at all —
+      // in which case the Elites below are placed exactly as they were before
+      // this rule existed rather than dropped.
+      if (pool.length) pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
+    }
+  }
+  const restFloor = rules.restBeforeElite ? lowestFloorOf(nodes, 'shrine') : -Infinity;
   const eligible = Object.values(nodes).filter(
     (n) => n.type === 'monster' &&
-      !(type === 'elite' && n.floor < rules.eliteShrineFrom)
+      !(type === 'elite' && n.floor < rules.eliteFrom) &&
+      !(type === 'elite' && rules.restBeforeElite && n.floor <= restFloor)
   );
   while (have < min && eligible.length > 0) {
     const idx = Math.floor(rng.float('map') * eligible.length);
     eligible.splice(idx, 1)[0].type = type;
     have++;
   }
+}
+
+/**
+ * THE PROMISE, KEPT ON EVERY EXIT PATH AND NOT ONLY THE RELAX ONE.
+ *
+ * The first cut opened the rest inside `relaxPlace`, which runs only when the
+ * rolls left the act short of `minElites` — so an Elite arriving any OTHER way
+ * got no rest. Two ways in, both real: a `fixed` Elite rank (typeOnce assigns
+ * it before any rule runs, so it bypasses the gate and the roll-time bar), and
+ * an act whose count is already met when the fixed Elite lands. A guarantee
+ * enforced on one branch of the generator is a tendency.
+ *
+ * So it runs last, on both returns, and asks the finished graph the same
+ * question `tools/mapplan.mjs` and the tests ask it: is there an Elite with no
+ * Shrine on any earlier floor? `resolveFloorPlan` refuses at boot the one
+ * arrangement this cannot fix — a fixed Elite with no floor beneath it able to
+ * hold a rest — so the pool below is empty only in an act that was refused.
+ */
+function ensureRestBeforeElite(nodes, rules, rng) {
+  if (!rules.restBeforeElite) return;
+  const firstElite = lowestFloorOf(nodes, 'elite');
+  if (!Number.isFinite(firstElite)) return;
+  if (lowestFloorOf(nodes, 'shrine') < firstElite) return;
+  const below = Object.values(nodes).filter(
+    (n) => n.floor < firstElite && rules.restFloors.includes(n.floor)
+  );
+  if (!below.length) return;
+
+  // THE REST MAY NOT BE PAID FOR OUT OF ANOTHER PROMISE. This step runs AFTER
+  // both relaxPlace calls, so a node it eats is never counted again — and the
+  // first cut ate any node on the rest floors, the act's last Merchant
+  // included. It is not a rare path: on a legal one-path act whose rest floors
+  // can hold no Monster (two non-Monster types alternate under the no-repeat
+  // ban, so the Monster fallback never fires) the non-Monster branch ran on
+  // 600 of 600 maps. Which node it took was then a coin flip, and one face of
+  // that coin shipped a map with fewer Merchants than the act promises.
+  //
+  // So the victim is chosen in order: a Monster (weakest constraint, and the
+  // only type carrying no promise); else a node whose type is not at its
+  // minimum; else any node, backed by the re-place below.
+  const counts = {};
+  for (const n of Object.values(nodes)) counts[n.type] = (counts[n.type] || 0) + 1;
+  const minima = rules.minima || {};
+  const spare = (t) => !(minima[t] > 0) || counts[t] > minima[t];
+  const monsters = below.filter((n) => n.type === 'monster');
+  const spares = below.filter((n) => spare(n.type));
+  const pool = monsters.length ? monsters : (spares.length ? spares : below);
+  pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
+
+  // AND IF THE VICTIM WAS THE LAST OF A PROMISED TYPE, put that type back.
+  //
+  // `relaxPlace` alone is not enough, and believing it was is how the first cut
+  // of this shipped: it can only convert a MONSTER, and the acts that force the
+  // non-Monster branch above are exactly the acts with no Monster anywhere to
+  // convert. My own sweep said 0 maps lacked a Monster — because every fixture
+  // it used pinned a fixed Monster on floor 1. A differential scan over 12,600
+  // (config, seed) pairs, asking where this rule turns a SATISFIED minimum into
+  // a broken one, finds it: minMerchants 2 on a 7-floor one-path act with a
+  // fixed floor-1 Merchant loses a Merchant on seeds 1, 2, 4, 7 and 9.
+  //
+  // So the restore falls back to a donor: any node that is not the type we owe,
+  // not a fixed rank, not a Shrine (which would undo the rest this just placed
+  // or the pre-boss one) and not itself the last of a promised type.
+  for (const [type, min] of Object.entries(minima)) {
+    if (!(min > 0)) continue;
+    while (countType(nodes, type) < min) {
+      relaxPlace(nodes, type, min, rules, rng);
+      if (countType(nodes, type) >= min) break;
+      const held = {};
+      for (const n of Object.values(nodes)) held[n.type] = (held[n.type] || 0) + 1;
+      // A SURPLUS SHRINE MAY DONATE; the two that carry promises may not. The
+      // first cut excluded every Shrine, which is the blunt version of this and
+      // took the deliberate short while a safe donor sat on the map: with
+      // Shrine and Merchant both rolling, seed 67 of an 8-floor one-path act
+      // came out 3 Merchants + 3 Shrines against 4 Merchants with the rule off,
+      // and the third Shrine was surplus to both promises.
+      //
+      // Protected: the pre-boss Shrine (SPEC §6 puts it on the top floor), and
+      // — while an Elite stands — the last Shrine below it, which is the rest
+      // this function exists to guarantee. Anything above the first Elite, or
+      // any Shrine with another still beneath it, is free.
+      const shrineSpare = (n) => {
+        if (n.floor === rules.floors) return false;
+        if (!Number.isFinite(firstElite) || n.floor >= firstElite) return true;
+        return Object.values(nodes).some((o) => o !== n && o.type === 'shrine' && o.floor < firstElite);
+      };
+      const donor = Object.values(nodes).find((n) =>
+        n.type !== type && n.type !== 'boss' &&
+        (n.type !== 'shrine' || shrineSpare(n)) &&
+        !rules.fixed[n.floor] &&
+        (!(minima[n.type] > 0) || held[n.type] > minima[n.type]));
+      // Nothing left to give: the act's own weights and minima cannot both be
+      // met on this graph, with or without a rest. Leaving it short is honest;
+      // eating another promise to pay this one is not.
+      if (!donor) break;
+      donor.type = type;
+    }
+  }
+}
+
+function lowestFloorOf(nodes, type) {
+  let lowest = Infinity;
+  for (const n of Object.values(nodes)) {
+    if (n.type === type && n.floor < lowest) lowest = n.floor;
+  }
+  return lowest;
 }
 
 function countType(nodes, type) {
@@ -49631,7 +49923,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b4a108c043';
+const SOURCE = '2c82819169';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49665,7 +49957,7 @@ const SOURCE = 'b4a108c043';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1948';
+const ORDINAL = '1959';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -51915,6 +52207,26 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-563",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The fourth 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.4.<build> from this build on: the candidate QA receives after rc.3, which was promoted to test at build 1948. Nothing else a player sees changes with the stamp itself. What the candidate carries over rc.3 is in the entries below, and the one a player will feel is the rest before the elites — a map that holds an elite now holds a Shrine on some floor beneath it, where most maps did not. The one rider is docs: the migration checklist's account of the owner's asks and the open issues, corrected where it had overstated what was shipped.",
+    "build": "0.5.0-rc.4.1956",
+    "pullRequest": 563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/563"
+  },
+  {
+    "id": "pr-562",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A rest before the elites",
+    "detail": "You asked for a rest site before the elites, maybe a shop, and definitely before a boss. Before a boss was always kept — the floor below every boss is a Shrine. Before the elites was not: on most maps an elite stood with no Shrine anywhere below it, because one rule opened rests and elites on the same floor and so a rest could never sit under the first elite. Rests now open earlier than elites do, and a map that holds an elite holds a Shrine on some floor beneath it — measured across the generated maps, from 124 of 180 breaking that to none. The floor elites begin from has not moved, but the maps have: rolling a rest earlier changes what every node above it rolls, so a seed you have played before now draws a different map, elites included. What a run gains is about one more Shrine on the map, and the levels you buy at them are unchanged, because cinders were always the limit rather than the number of Shrines. The route is still yours: a path can climb past a rest and meet the elite anyway. Debug riders on the Custom Climb screen: the shortest act the slider offers is now 7 floors rather than 4, because a shorter act has no floor free to hold the promised rest.",
+    "build": "0.5.0-rc.3.1953",
+    "pullRequest": 562,
+    "url": "https://github.com/cehinds/AshenSpire/pull/562"
+  },
   {
     "id": "pr-558",
     "date": "2026-09-02",

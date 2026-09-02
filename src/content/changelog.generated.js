@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-563",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The fourth 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.4.<build> from this build on: the candidate QA receives after rc.3, which was promoted to test at build 1948. Nothing else a player sees changes with the stamp itself. What the candidate carries over rc.3 is in the entries below, and the one a player will feel is the rest before the elites — a map that holds an elite now holds a Shrine on some floor beneath it, where most maps did not. The one rider is docs: the migration checklist's account of the owner's asks and the open issues, corrected where it had overstated what was shipped.",
+    "build": "0.5.0-rc.4.1956",
+    "pullRequest": 563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/563"
+  },
+  {
+    "id": "pr-562",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A rest before the elites",
+    "detail": "You asked for a rest site before the elites, maybe a shop, and definitely before a boss. Before a boss was always kept — the floor below every boss is a Shrine. Before the elites was not: on most maps an elite stood with no Shrine anywhere below it, because one rule opened rests and elites on the same floor and so a rest could never sit under the first elite. Rests now open earlier than elites do, and a map that holds an elite holds a Shrine on some floor beneath it — measured across the generated maps, from 124 of 180 breaking that to none. The floor elites begin from has not moved, but the maps have: rolling a rest earlier changes what every node above it rolls, so a seed you have played before now draws a different map, elites included. What a run gains is about one more Shrine on the map, and the levels you buy at them are unchanged, because cinders were always the limit rather than the number of Shrines. The route is still yours: a path can climb past a rest and meet the elite anyway. Debug riders on the Custom Climb screen: the shortest act the slider offers is now 7 floors rather than 4, because a shorter act has no floor free to hold the promised rest.",
+    "build": "0.5.0-rc.3.1953",
+    "pullRequest": 562,
+    "url": "https://github.com/cehinds/AshenSpire/pull/562"
+  },
+  {
     "id": "pr-558",
     "date": "2026-09-02",
     "group": "2026-09-02",

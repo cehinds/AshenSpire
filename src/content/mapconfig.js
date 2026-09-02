@@ -82,8 +82,42 @@ const ACT_SHAPE = {
       { at: 'first', type: 'monster' },
       { at: 'fraction', of: 0.64, type: 'treasure' },
     ],
-    noEliteOrShrineBefore: { at: 'fraction', of: 0.43 },
+    // TWO GATES WHERE THERE WAS ONE, and the split is what E13 needed. The old
+    // `noEliteOrShrineBefore` opened rests and Elites on the SAME floor, so the
+    // earliest rest could never be below the earliest Elite. Constantine asked
+    // for a rest "so eletes, maybe shop, and definitely before a boss".
+    //
+    // THE ELITE GATE DOES NOT MOVE. 0.43 is the number that shipped, so Elites
+    // land exactly where they landed before this change; only the rest opens
+    // earlier. That is the smaller of the two edits available and it is
+    // deliberate — retuning where Elites appear is a separate decision from
+    // promising a rest below them.
+    //
+    //   0.27 x 11 -> floor 3      rests open here
+    //   0.43 x 11 -> floor 5      Elites open here, unchanged
+    //   => floors 3 and 4 are where the promised rest can land
+    noShrineBefore: { at: 'fraction', of: 0.27 },
+    noEliteBefore: { at: 'fraction', of: 0.43 },
     noShrineOn: { at: 'last' },
+    // E13's other half, and the generator keeps it the way it keeps `minElites`
+    // — by barring the roll and then force-placing, never by hoping. Measured
+    // on the canonical seed stream before it shipped: 124 of 180 maps carried
+    // an Elite with no Shrine on any earlier floor. `node tools/mapplan.mjs`
+    // prints the number now, including the per-path reachability this rule
+    // does NOT promise.
+    //
+    // WHAT IT COSTS, and it is not free: the shortest act these rules can
+    // describe moved from 4 floors to 7 (`minViableFloors`, and the run-shape
+    // test pins the number). A 6-floor act resolves `noShrineBefore` onto floor
+    // 1, which the fixed Monster already claims, so no floor is left to hold
+    // the promised rest and the resolver refuses rather than force-placing over
+    // another rule. That narrows Constantine's short-run slider, which is a
+    // real trade against "I only have the patience for 30 min runs".
+    // The other end of it, if he wants the range back: `noEliteBefore` at
+    // { fraction: 0.5 } takes the shortest act to 6 and moves Elites one floor
+    // later on the shipped act (5 -> 6). 0.43 is kept here because it is the
+    // number that shipped, so Elites land exactly where they always did.
+    restBeforeElite: true,
     minElites: 2,
     minMerchants: 1,
   },
