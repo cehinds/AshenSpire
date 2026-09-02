@@ -79,7 +79,7 @@
 }
 .shared-hud .hud-mode-grip > span {
   width: calc(18px / var(--ui-zoom, 1)); height: calc(2px / var(--ui-zoom, 1));
-  border-radius: 999px; background: var(--line); box-shadow: 0 0 0 1px var(--bg-raise);
+  border-radius: var(--r-pill); background: var(--line); box-shadow: 0 0 0 1px var(--bg-raise);
   transform: translateY(calc(21px / var(--ui-zoom, 1)));
 }
 .shared-hud .hud-mode-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -9px; }
@@ -382,7 +382,7 @@
   box-sizing: border-box;
   height: var(--hud-quick-panel-size);
   border: 1px solid var(--line-soft);
-  border-radius: calc(8px / var(--ui-zoom, 1));
+  border-radius: var(--r-3-glass);
   background: color-mix(in srgb, var(--panel) var(--hud-component-background-opacity), transparent);
   padding: var(--hud-panel-pad);
 }
@@ -454,7 +454,7 @@
   width: var(--hud-control-visual);
   height: var(--hud-control-visual);
   border: 1px solid var(--line-soft);
-  border-radius: calc(7px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   background: var(--panel);
   display: flex;
   align-items: center;
@@ -499,7 +499,7 @@
   height: var(--hud-utility-visual-size);
   justify-content: center;
   border: 1px solid var(--gold);
-  border-radius: 6px;
+  border-radius: var(--r-2);
   background: var(--panel);
 }
 .topbar.combat-hud.shared-hud .hud-potions .flask-art {
@@ -510,7 +510,7 @@
 .topbar.combat-hud.shared-hud .flask-charge-count {
   position: absolute; top: 2px; right: 3px;
   min-width: 1.2em; padding-inline: 0.15em;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #120f0c; color: var(--parchment);
   font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1.2;
   font-variant-numeric: tabular-nums;
@@ -527,19 +527,19 @@
 .combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
 .combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
 .topbar .portrait {
-  width: calc(3.8rem * var(--hud-portrait-scale)); height: calc(3.8rem * var(--hud-portrait-scale)); border-radius: 50%; background: var(--panel);
+  width: calc(3.8rem * var(--hud-portrait-scale)); height: calc(3.8rem * var(--hud-portrait-scale)); border-radius: var(--r-round); background: var(--panel);
   border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: calc(2rem * var(--hud-portrait-scale));
   flex-shrink: 0;
 }
 .topbar .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
 .topbar .relics { display: flex; gap: 0.6rem; margin-left: 0.8rem; }
 .topbar .relic {
-  width: 2.6rem; height: 2.6rem; border-radius: 6px; background: var(--panel);
+  width: 2.6rem; height: 2.6rem; border-radius: var(--r-2); background: var(--panel);
   border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
 }
 .topbar .fight-label { margin-left: auto; color: var(--muted); font-size: 1.2rem; letter-spacing: 0.12em; }
 .topbar .topbar-btn {
-  margin-left: 1rem; width: 3rem; height: 3rem; border-radius: 8px; flex-shrink: 0;
+  margin-left: 1rem; width: 3rem; height: 3rem; border-radius: var(--r-3); flex-shrink: 0;
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
   font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: border-color 140ms, color 140ms;
@@ -598,7 +598,7 @@
   padding: 0 calc(7px / var(--ui-zoom, 1));
   background: transparent;
   border: 0;
-  border-radius: calc(6px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   /* The unit is the label's container: its width is set by flex, never by its
      own content, so "does the word fit" is answerable here (a query on the
      auto-sized plate would be circular). */
@@ -608,7 +608,7 @@
   position: absolute; z-index: 0; left: 0; top: 0; bottom: 0;
   background: #120f0c;            /* owner pixel, F1-resource-health.png */
   border: 1px solid #4c3b1f;      /* owner pixel, unit border */
-  border-radius: calc(6px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   pointer-events: none;
 }
 .resplate, .restrack { position: relative; z-index: 1; }
@@ -627,7 +627,7 @@
    its border), radius full pill; LENGTH stays the data (inline style %). */
 .resbars[data-surface='main'] .resbar {
   height: calc(11px / var(--ui-zoom, 1));
-  border-radius: calc(6px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   /* A physical border imposes a two-pixel border-box minimum, which overrides
      1-4 % troughs on narrow screens. Draw the same rim as an inset shadow so
      the element's measured width remains the requested percentage. */
@@ -644,7 +644,7 @@
    height against hp's, not this stylesheet's intention. */
 .resbars[data-surface='main'] .resbar-skinny {
   height: calc(5px / var(--ui-zoom, 1));
-  border-radius: calc(3px / var(--ui-zoom, 1));
+  border-radius: var(--r-1-glass);
 }
 
 /* ---- PLATE LABEL DEGRADATION, BY MEASURED FIT ----
@@ -793,7 +793,7 @@
 }
 .combatant-inspector-host > .folding-tray {
   pointer-events: auto; width: 100%; height: 100%; padding: 0.65rem 0.75rem;
-  border: 1px solid var(--line); border-radius: 0.65rem;
+  border: 1px solid var(--line); border-radius: var(--r-2);
   background: color-mix(in srgb, var(--panel) 96%, transparent);
   box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.45);
 }
@@ -806,7 +806,7 @@
 .combatant-inspector-resources { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.3rem; }
 .combatant-inspector-resource {
   display: flex; justify-content: space-between; gap: 0.4rem; min-width: 0;
-  padding: 0.35rem 0.45rem; border: 1px solid var(--line-soft); border-radius: 0.35rem;
+  padding: 0.35rem 0.45rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   font-size: 0.8rem;
 }
 .combatant-inspector-resource span { color: var(--muted); }
@@ -949,7 +949,7 @@
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }
-.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: 10px; }
+.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: var(--r-3); }
 .enemy.hover-target .sprite { outline-style: solid; }
 
 .block-badge {
@@ -961,24 +961,24 @@
 
 .statuses { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-height: 2.2rem; max-width: 15rem; }
 .status-icon {
-  position: relative; width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  position: relative; width: 2.2rem; height: 2.2rem; border-radius: var(--r-round);
   background: var(--panel); border: 1.5px solid var(--muted);
   display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: default;
 }
 .status-icon .stk {
   position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 0.9rem; font-weight: 700;
-  background: #14100c; border-radius: 6px; padding: 0 0.3rem; border: 1px solid var(--line);
+  background: #14100c; border-radius: var(--r-2); padding: 0 0.3rem; border: 1px solid var(--line);
 }
 .stance-chip {
   display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem; color: var(--ember);
-  border: 1px solid var(--ember); border-radius: 14px; padding: 0.3rem 1rem;
+  border: 1px solid var(--ember); border-radius: var(--r-4); padding: 0.3rem 1rem;
 }
 .stance-chip.bulwark { color: var(--frost); border-color: var(--frost); }
 
 /* ---------- intents ---------- */
 .intent {
   display: flex; align-items: center; gap: 0.6rem; margin: 0;
-  background: #1c1610; border: 1.5px solid var(--blood); border-radius: 9px;
+  background: #1c1610; border: 1.5px solid var(--blood); border-radius: var(--r-3);
   padding: 0.4rem 1rem; font-weight: 700; font-size: 1.4rem; cursor: default;
 }
 .intent.block { border-color: var(--frost); }
@@ -995,7 +995,7 @@
    gamepad drives (body.pad-mode, kept live by refreshHintBars). */
 .card .key-hint {
   position: absolute; top: -1rem; left: 50%; transform: translateX(-50%); z-index: 3;
-  min-width: 2rem; height: 2rem; padding: 0 0.4rem; border-radius: 4px;
+  min-width: 2rem; height: 2rem; padding: 0 0.4rem; border-radius: var(--r-2);
   display: flex; align-items: center; justify-content: center;
   background: #2b2b28; border: 1.5px solid #8d887c; color: #d8d3c4;
   font-family: var(--font-body); font-weight: 700; font-size: 1.1rem;
@@ -1027,15 +1027,15 @@ body.pad-mode .card .key-hint { display: none; }
      beside an unbadged charge slot at 36.9, so one row would hold two heights
      to spare an icon a corner. The corner is one line and costs no cell. */
   position: absolute; bottom: 2px; right: 2px;
-  min-width: 1.4rem; padding: 0 0.3rem; border-radius: 3px; text-align: center;
+  min-width: 1.4rem; padding: 0 0.3rem; border-radius: var(--r-1); text-align: center;
   background: #2b2b28; border: 1px solid #8d887c; color: #d8d3c4;
   font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; line-height: 1.3rem;
   pointer-events: none;
 }
-body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
+body.pad-mode .flask-slot .flask-key { border-radius: var(--r-pill); }
 .enemy-key {
   position: absolute; top: 0.2rem; left: 0.2rem; z-index: 3;
-  min-width: 1.7rem; height: 1.7rem; padding: 0 0.3rem; border-radius: 4px;
+  min-width: 1.7rem; height: 1.7rem; padding: 0 0.3rem; border-radius: var(--r-2);
   background: var(--gold); color: #1c1610; font-family: monospace; font-weight: 700; font-size: 1.1rem;
   display: flex; align-items: center; justify-content: center; pointer-events: none;
   box-shadow: 0 0 8px rgba(201, 162, 39, 0.5);
@@ -1103,7 +1103,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   height: var(--tap-floor); min-height: var(--tap-floor);
   display: grid; place-items: center; padding: 0;
   background: #120f0c; color: var(--parchment);
-  border: 1px solid var(--gold); border-radius: 8px;
+  border: 1px solid var(--gold); border-radius: var(--r-3);
   font: 700 2.4rem/1 var(--font-display); cursor: pointer;
 }
 .hand-page[hidden] { display: none; }
@@ -1128,7 +1128,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .card-drag-ghost .drop-verdict {
   position: absolute; left: 50%; top: -2.4rem; transform: translateX(-50%);
-  min-width: max-content; padding: 0.25rem 0.65rem; border-radius: 4px;
+  min-width: max-content; padding: 0.25rem 0.65rem; border-radius: var(--r-2);
   color: #120f0c; background: var(--gold); border: 1px solid #120f0c;
   font-size: 0.9rem; font-weight: 900; letter-spacing: 0.08em;
 }
@@ -1169,7 +1169,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   display: none;
 }
 .energy-orb {
-  position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
+  position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: var(--r-round);
   background: #1c1610; border: 3px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.9rem; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
@@ -1181,14 +1181,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
 .combat-action-row > .energy-orb::before {
-  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%;
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: var(--r-round);
   background: #1c1610; border: 3px solid var(--gold);
   box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
 .end-turn {
   position: absolute; right: 3.4rem; bottom: 7.6rem;
   min-height: var(--tap-floor); background: #120f0c;
-  border: 1px solid var(--gold); border-radius: 8px;
+  border: 1px solid var(--gold); border-radius: var(--r-3);
 }
 .combat-action-row > .end-turn {
   grid-area: end; position: static; right: auto; bottom: auto;
@@ -1198,13 +1198,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .end-turn .et-key {
   display: block; width: max-content; margin: 0.2rem auto 0; font-family: var(--font-body); font-size: 0.82rem;
-  padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
+  padding: 0.1rem 0.6rem; border-radius: var(--r-2); color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
 .end-turn.pulse { animation: pulse-gold 700ms infinite alternate; }
 
 .pile {
-  position: absolute; bottom: 1.2rem; width: 5.2rem; height: 4rem; border-radius: 8px;
+  position: absolute; bottom: 1.2rem; width: 5.2rem; height: 4rem; border-radius: var(--r-3);
   background: var(--panel); border: 1px solid var(--line);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-size: 1.3rem; cursor: pointer; z-index: 20;
@@ -1234,7 +1234,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .armament-radial-target {
   position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
-  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: 10px;
+  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: var(--r-3);
   background: rgba(18,15,12,.96); color: var(--parchment); display: grid; place-items: center;
   font-size: .78rem; font-weight: 800; line-height: 1.05;
 }
@@ -1248,7 +1248,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .armament-radial-picker {
   position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
   z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
-  border-radius: 9px; background: rgba(18,15,12,.98);
+  border-radius: var(--r-3); background: rgba(18,15,12,.98);
   inline-size: max-content; max-inline-size: calc(100vw - 1rem); max-block-size: min(45vh, 18rem); overflow: auto;
 }
 .armament-radial-picker button,
@@ -1405,7 +1405,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 /* Attack impact: a slashing arc sweeping across the victim. */
 .fx-slash {
   position: absolute; width: 6.4rem; height: 6.4rem; margin: -3.2rem 0 0 -3.2rem;
-  border-radius: 50%; border-top: 3px solid #f3e9cf; border-right: 3px solid transparent;
+  border-radius: var(--r-round); border-top: 3px solid #f3e9cf; border-right: 3px solid transparent;
   pointer-events: none; filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.8));
   animation: slash-sweep 260ms ease-out forwards;
 }
@@ -1463,7 +1463,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   transition: transform 220ms ease-in, opacity 220ms ease-in;
 }
 .stance-flare {
-  position: absolute; width: 18rem; height: 18rem; border-radius: 50%;
+  position: absolute; width: 18rem; height: 18rem; border-radius: var(--r-round);
   pointer-events: none; animation: flare 300ms ease-out forwards;
 }
 @keyframes flare {

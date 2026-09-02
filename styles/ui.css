@@ -26,7 +26,7 @@
 #tooltip {
   --place-gap: 14px;
   position: fixed; z-index: 1000; max-width: 28rem; pointer-events: none;
-  background: #14100c; border: 1px solid var(--gold); border-radius: 8px;
+  background: #14100c; border: 1px solid var(--gold); border-radius: var(--r-3);
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
 }
@@ -59,7 +59,7 @@
 
 /* ---------- card ---------- */
 .card {
-  position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, 10px);
+  position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, var(--r-3));
   background: linear-gradient(#241e15, #1a1510);
   border: 2px solid #5a5040; color: var(--parchment);
   display: flex; flex-direction: column; align-items: center;
@@ -71,19 +71,19 @@
 .card.rarity-special { border-color: #6a3a7a; }
 .card .cost {
   position: absolute; top: -1rem; left: -1rem; width: 3rem; height: 3rem;
-  border-radius: 50%; background: #1c1610; border: 2px solid var(--gold);
+  border-radius: var(--r-round); background: #1c1610; border: 2px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 1.4rem; color: var(--parchment);
 }
 .card .mana-cost {
   position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
-  border-radius: 999px; padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
+  border-radius: var(--r-pill); padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
   display: flex; align-items: center; justify-content: center; gap: 0.25rem;
   font-weight: 700; font-size: 1rem; color: #cfe1ff;
 }
 .card .stamina-cost {
   position: absolute; top: 1.9rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
-  border-radius: 999px; padding: 0 0.6rem; background: #142016; border: 2px solid #5f925d;
+  border-radius: var(--r-pill); padding: 0 0.6rem; background: #142016; border: 2px solid #5f925d;
   display: flex; align-items: center; justify-content: center; gap: 0.25rem;
   font-weight: 700; font-size: 1rem; color: var(--parchment); z-index: 3;
 }
@@ -91,12 +91,12 @@
 .card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
 .card.upgraded .cname { color: var(--green); }
 .card .art {
-  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: var(--card-art-radius, 6px);
+  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: var(--card-art-radius, var(--r-2));
   background: #14100c; border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
 }
 .card .ctype {
-  width: 11.6rem; border-radius: 4px; background: #2a241c; color: var(--gold);
+  width: 11.6rem; border-radius: var(--r-2); background: #2a241c; color: var(--gold);
   font-size: 0.9rem; letter-spacing: 3px; text-align: center; padding: 0.3rem 0;
   font-family: var(--font-display);
 }
@@ -144,9 +144,9 @@
   clip-path: polygon(0.5rem 0, 100% 0, calc(100% - 0.5rem) 100%, 0 100%);
 }
 /* Skill: the neutral middle — plain rounded banner. */
-.card.type-skill .ctype { border-radius: 4px; }
+.card.type-skill .ctype { border-radius: var(--r-2); }
 /* Power: fully rounded, with a keep-line inside the art to read as ongoing. */
-.card.type-power .ctype { border-radius: 999px; }
+.card.type-power .ctype { border-radius: var(--r-pill); }
 .card.type-power .art { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-type-color) 40%, transparent); }
 
 /* Card subtypes (content/source/cardTagging.csv). A quiet strip under the type
@@ -161,7 +161,7 @@
   color: var(--tag-color, var(--muted));
   border: 1px solid color-mix(in srgb, var(--tag-color, var(--muted)) 45%, transparent);
   background: color-mix(in srgb, var(--tag-color, var(--muted)) 12%, transparent);
-  border-radius: 3px; padding: 0.1rem 0.35rem;
+  border-radius: var(--r-1); padding: 0.1rem 0.35rem;
 }
 
 /* ---------- card colour motif (Settings → Display → Card motif) ------------ */
@@ -176,7 +176,7 @@
 
 /* wash — the class tints the card body; rarity keeps the border. */
 :root[data-card-motif='wash'] .card[style*='--card-tint']::before {
-  content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  content: ''; position: absolute; inset: 0; border-radius: var(--r-3); pointer-events: none;
   background: var(--card-tint); opacity: var(--card-motif-strength);
 }
 /* (The banner used to take the accent here. The card TYPE owns it now — see
@@ -188,7 +188,7 @@
 :root[data-card-motif='accent'] .card { border-color: var(--gold); }
 :root[data-card-motif='accent'] .card::after {
   content: ''; position: absolute; top: 5px; right: 5px; width: 9px; height: 9px;
-  border-radius: 50%; background: var(--line-soft); pointer-events: none;
+  border-radius: var(--r-round); background: var(--line-soft); pointer-events: none;
 }
 :root[data-card-motif='accent'] .card.rarity-uncommon::after { background: var(--frost); }
 :root[data-card-motif='accent'] .card.rarity-rare::after { background: var(--gold); }
@@ -213,7 +213,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 .modal {
-  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 12px;
+  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: var(--r-4);
   /* 80% NOT 80vh, and finding this is why the check measures the OUTCOME rather
      than grepping for `vh`. The in-run overlay panel is `class="modal
      overlay-modal"`, so this cap applies to it too. Fixing 74vh -> 74% on
@@ -249,10 +249,71 @@
    uses for the same job — one gutter, one number, and the two panels stop
    disagreeing about how much edge a phone owes. */
 .overlay-modal { width: 76rem; max-width: 96%; height: 74%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+/* ---- THE MODAL SHELL (src/ui/components/modalShell.js) --------------------
+   The chrome every modal wears: a head whose actions sit right, ONE close
+   control, and a foot whose way-out is left and way-forward is right. The four
+   doors each had their own; these are the rules they now share. Bodies are
+   still each modal's own — see the file header for why that line is drawn
+   there and not further in. */
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line);
+}
+.modal-head-actions { display: flex; gap: 0.8rem; align-items: center; }
+/* One hit box for the one way out. `min-*` and not `width` — a floor is not a
+   ceiling (base.css, --tap-floor), and this control must clear it on BOTH axes
+   at every UI size, which is the whole reason it is stated once. */
+.modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
+  border-radius: var(--r-2);
+}
+.modal-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto; padding: 1.2rem 1.6rem; border-top: 1px solid var(--line);
+}
+.modal-foot-note { color: var(--muted); font-size: 0.95rem; }
+/* `margin-left: auto` so a foot with no note still puts its actions right. */
+.modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.modal-foot-actions button { min-height: var(--tap-floor); }
+@media (max-width: 640px) {
+  .modal-foot { align-items: stretch; padding: 8px 10px; }
+  .modal-foot-note { display: none; }
+  .modal-foot-actions { width: 100%; }
+  .modal-foot-actions button { flex: 1 1 0; padding-inline: 8px; }
+}
+
+/* THE SCROLL OWNERS INSIDE A MODAL, AND WHY THEY LOOKED FOREIGN.
+   `.screen` and `.map-scroll` already carry the house scrollbar; nothing
+   reached a modal's panes, so Settings, the Armoury and the in-run body drew
+   Chromium's default grey bar against the parchment. Same tokens, one rule. */
+.modal .set-panel, .modal .set-body, .overlay-body, .overlay-body .set-panel,
+.armoury-content, .armoury-left, .armoury-right, .armoury-inventory {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-soft) transparent;
+}
+.modal .set-panel::-webkit-scrollbar, .overlay-body::-webkit-scrollbar,
+.armoury-content::-webkit-scrollbar, .armoury-left::-webkit-scrollbar,
+.armoury-right::-webkit-scrollbar, .armoury-inventory::-webkit-scrollbar {
+  width: 1.2rem; height: 1.2rem;
+}
+.modal .set-panel::-webkit-scrollbar-thumb, .overlay-body::-webkit-scrollbar-thumb,
+.armoury-content::-webkit-scrollbar-thumb, .armoury-left::-webkit-scrollbar-thumb,
+.armoury-right::-webkit-scrollbar-thumb, .armoury-inventory::-webkit-scrollbar-thumb {
+  background: var(--line-soft); border-radius: var(--r-2);
+  border: 3px solid transparent; background-clip: padding-box;
+}
+.modal .set-panel::-webkit-scrollbar-thumb:hover, .overlay-body::-webkit-scrollbar-thumb:hover,
+.armoury-content::-webkit-scrollbar-thumb:hover, .armoury-left::-webkit-scrollbar-thumb:hover,
+.armoury-right::-webkit-scrollbar-thumb:hover, .armoury-inventory::-webkit-scrollbar-thumb:hover {
+  background: var(--gold); background-clip: padding-box;
+}
+
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .overlay-tabs .ov-tab {
-  padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0;
+  padding: 0.7rem 1.4rem; border-radius: var(--r-3) var(--r-3) 0 0;
   font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
   background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
   /* Law 4 (#37) applied where this work touches, ratchet-style, NOT swept.
@@ -286,7 +347,7 @@
 .overlay-footer-actions button { min-height: var(--tap-floor); }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
-.ov-relic { display: flex; gap: 1rem; align-items: flex-start; padding: 0.8rem 1rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px; }
+.ov-relic { display: flex; gap: 1rem; align-items: flex-start; padding: 0.8rem 1rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3); }
 .ov-relic-ic { font-size: 2rem; flex-shrink: 0; }
 .ov-relic b { color: var(--parchment); font-size: 1.3rem; }
 .ov-relic p { color: var(--muted); font-size: 1.1rem; margin-top: 0.2rem; line-height: 1.4; }
@@ -353,7 +414,7 @@
 .debug-modal { width: 72rem; max-width: 94%; }
 .debug-log-body {
   margin-top: 1rem; max-height: 46%; overflow: auto; user-select: text;
-  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-3);
   padding: 1rem 1.2rem; font-family: Consolas, monospace; font-size: 1.1rem;
   line-height: 1.55; color: var(--parchment); white-space: pre-wrap; word-break: break-word;
 }
@@ -361,7 +422,7 @@
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {
   outline: 3px solid var(--gold) !important; outline-offset: 2px;
-  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: 6px;
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: var(--r-2);
 }
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }
@@ -377,7 +438,7 @@
 .hint-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 0.6rem; z-index: 40;
   display: flex; gap: 1.4rem; white-space: nowrap;
-  padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96%; overflow: hidden;
+  padding: 0.4rem 1.2rem; border-radius: var(--r-3); max-width: 96%; overflow: hidden;
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
@@ -417,7 +478,7 @@
 .hint-bar .hint {
   display: inline-flex; align-items: center; gap: 0.5rem;
   min-height: var(--tap-floor); height: auto;
-  padding: 2px 6px; margin: 0; border: 0; border-radius: 6px;
+  padding: 2px 6px; margin: 0; border: 0; border-radius: var(--r-2);
   background: none; color: inherit; font: inherit; letter-spacing: inherit;
   cursor: pointer; touch-action: manipulation;
 }
@@ -467,11 +528,11 @@
 }
 .hint-bar kbd {
   font-family: var(--font-body); font-size: 1rem; min-width: 1.5rem; text-align: center;
-  padding: 0.1rem 0.5rem; border-radius: 4px; color: var(--parchment);
+  padding: 0.1rem 0.5rem; border-radius: var(--r-2); color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
 /* Controller glyphs read as rounded buttons. */
-.hint-bar.hint-pad kbd { border-radius: 999px; padding: 0.1rem 0.7rem; }
+.hint-bar.hint-pad kbd { border-radius: var(--r-pill); padding: 0.1rem 0.7rem; }
 body.hide-hints .hint-bar { display: none; }
 
 /* EldenSpire#29 slice 0 — the hint bar is an affordance for hardware that is
@@ -503,7 +564,7 @@ body.hide-hints .hint-bar { display: none; }
 .confirmation-modal h2 { margin: 0; color: var(--parchment); }
 .confirmation-details {
   display: grid; gap: 0.65rem; max-height: min(46vh, 24rem); overflow: auto;
-  padding: 0.75rem; border: 1px solid var(--line-soft); border-radius: 8px;
+  padding: 0.75rem; border: 1px solid var(--line-soft); border-radius: var(--r-3);
   background: color-mix(in srgb, var(--panel) 82%, transparent);
 }
 .confirmation-cost { display: grid; gap: 0.45rem; color: var(--parchment); }
@@ -542,7 +603,7 @@ body.hide-hints .hint-bar { display: none; }
   height: auto;
 }
 .pad-btn {
-  min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: 6px;
+  min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: var(--r-2);
   background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
   font-size: 1.2rem; font-variant-numeric: tabular-nums;
 }
@@ -553,7 +614,7 @@ body.hide-hints .hint-bar { display: none; }
 /* ---------- custom climb ---------- */
 .mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
 .mod-chip {
-  text-align: left; padding: 0.8rem 1.2rem; border-radius: 8px; cursor: pointer;
+  text-align: left; padding: 0.8rem 1.2rem; border-radius: var(--r-3); cursor: pointer;
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--parchment);
   display: flex; flex-direction: column; gap: 0.2rem; transition: border-color 140ms, background 140ms;
 }
@@ -588,23 +649,23 @@ body.hide-hints .hint-bar { display: none; }
    LAW 4 — text metrics take the text unit; boxes do not. `font-size` and
    `line-height` are rem. The tap floor, the track and the thumb are px through
    `--tap-floor`, because a finger does not grow when Text size does. */
-.runshape { border: 1px solid var(--line); border-radius: 8px; background: rgba(0, 0, 0, 0.18); }
+.runshape { border: 1px solid var(--line); border-radius: var(--r-3); background: rgba(0, 0, 0, 0.18); }
 .runshape-toggle {
   display: flex; align-items: center; gap: 8px; width: 100%;
   min-height: var(--tap-floor); height: auto;
   padding: 6px 12px; text-align: left; cursor: pointer;
-  background: none; border: 0; border-radius: 8px; color: var(--muted);
+  background: none; border: 0; border-radius: var(--r-3); color: var(--muted);
 }
 .runshape-toggle:hover { color: var(--parchment); }
 .runshape .rs-title { font-size: 1.1rem; letter-spacing: 0.18em; flex: 1 1 auto; min-width: 0; }
 .runshape .rs-state {
   font-size: 0.95rem; letter-spacing: 0.12em; color: var(--muted);
-  border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 5px;
+  border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 1px 5px;
 }
 .runshape.shaped .rs-state { color: var(--gold); border-color: var(--gold); }
 .runshape.shaped .rs-title { color: var(--gold); }
 .runshape .rs-caret { transition: transform 140ms; flex: 0 0 auto; }
-.runshape.open .rs-caret { transform: rotate(180deg); }
+.runshape.open .rs-caret { transform: rotate(90deg); }
 /* THE GAP BETWEEN KNOBS IS BIGGER THAN THE AIR INSIDE ONE, and it has to be
    stated as a number rather than left to taste: a 44 px slider box carries ~20 px
    of empty track above and below its ink, so at the first draft's 14 px each
@@ -620,7 +681,7 @@ body.hide-hints .hint-bar { display: none; }
    `tabular-nums` so the figure does not jitter sideways while it is dragged. */
 .rs-readout {
   display: flex; flex-direction: column; gap: 2px;
-  padding: 10px 12px; border-radius: 6px;
+  padding: 10px 12px; border-radius: var(--r-2);
   background: var(--panel); border: 1px solid var(--line-soft);
 }
 .rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -671,16 +732,16 @@ body.hide-hints .hint-bar { display: none; }
   min-height: var(--tap-floor); height: var(--tap-floor);
   background: none; cursor: pointer;
 }
-.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
-.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
-.rs-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-2); }
+.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: var(--r-1); background: var(--line-soft); }
+.rs-slider::-moz-range-track { height: 4px; border-radius: var(--r-1); background: var(--line-soft); }
 .rs-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+  width: 18px; height: 18px; margin-top: -7px; border-radius: var(--r-round);
   background: var(--gold); border: 1px solid var(--bg);
 }
 .rs-slider::-moz-range-thumb {
-  width: 18px; height: 18px; border-radius: 50%;
+  width: 18px; height: 18px; border-radius: var(--r-round);
   background: var(--gold); border: 1px solid var(--bg);
 }
 
@@ -715,7 +776,7 @@ button.rs-reset {
   padding: 8px 20px;
 }
 .draft-grid { gap: 1.6rem; }
-.hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
+.hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: var(--r-2); font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 2.2rem; }
 .farewell .title-big { opacity: 0.9; }
 
@@ -774,7 +835,7 @@ button.rs-reset {
 }
 .screen::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
 .screen::-webkit-scrollbar-thumb {
-  background: var(--line); border-radius: 6px; border: 3px solid transparent;
+  background: var(--line); border-radius: var(--r-2); border: 3px solid transparent;
   background-clip: padding-box;
 }
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
@@ -798,7 +859,7 @@ button.rs-reset {
 .seed-line { color: var(--muted); font-size: 1.2rem; }
 .seed-line input {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
-  border-radius: 6px; padding: 0.4rem 0.8rem; width: 11rem; font-family: monospace; text-align: center;
+  border-radius: var(--r-2); padding: 0.4rem 0.8rem; width: 11rem; font-family: monospace; text-align: center;
 }
 
 /* The seed refusal — a typed seed the run cannot be generated from names the
@@ -837,7 +898,7 @@ button.rs-reset {
 .shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
 .shrine-option-grid { align-items: stretch; }
 .class-pick {
-  width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: 12px;
+  width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: var(--r-4);
   background: var(--panel); cursor: pointer; text-align: center; transition: border-color 150ms, transform 150ms;
 }
 .class-pick:hover { border-color: var(--gold); transform: translateY(-3px); }
@@ -847,7 +908,7 @@ button.rs-reset {
 .class-pick .cp-body { min-width: 0; }
 .class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
-.class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.2rem 0.8rem; }
+.class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-3); padding: 0.2rem 0.8rem; }
 .flask-allocation-controls {
   display: flex; flex-wrap: wrap; gap: 6px;
 }
@@ -911,7 +972,7 @@ button.rs-reset {
   color: var(--gold); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
 }
 .smith-modal-consequence {
-  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: 999px;
+  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: var(--r-pill);
   color: var(--parchment); font-size: 0.78rem; letter-spacing: 0.1em;
 }
 .smith-modal-body {
@@ -942,7 +1003,7 @@ button.rs-reset {
   position: relative; width: 100%; min-width: 0; min-height: 19rem;
   display: grid; grid-template-rows: auto minmax(9.5rem, 1fr) auto auto;
   gap: 0.55rem; padding: 1rem 0.75rem 0.75rem;
-  border: 2px solid #5a5040; border-radius: 10px;
+  border: 2px solid #5a5040; border-radius: var(--r-3);
   background: linear-gradient(#241e15, #1a1510); color: var(--parchment);
   box-sizing: border-box; transition: box-shadow 140ms, border-color 140ms;
 }
@@ -951,7 +1012,7 @@ button.rs-reset {
 .smith-weapon-count {
   position: absolute; z-index: 2; top: -0.8rem; left: -0.8rem;
   width: 2.8rem; height: 2.8rem; display: grid; place-items: center;
-  border: 2px solid var(--gold); border-radius: 50%; background: #1c1610;
+  border: 2px solid var(--gold); border-radius: var(--r-round); background: #1c1610;
   color: var(--parchment); font-size: 1.25rem; font-weight: 700;
 }
 .smith-weapon-name {
@@ -961,7 +1022,7 @@ button.rs-reset {
 }
 .smith-weapon-art {
   min-height: 9.5rem; display: grid; place-items: center; overflow: hidden;
-  border: 1px solid var(--line); border-radius: 6px; background: #14100c;
+  border: 1px solid var(--line); border-radius: var(--r-2); background: #14100c;
 }
 .smith-weapon-art img { width: 94%; height: 94%; display: block; object-fit: contain; }
 .smith-item-type-row {
@@ -970,7 +1031,7 @@ button.rs-reset {
 }
 .smith-item-type-row em {
   flex: 1 1 0; min-width: 0; display: grid; place-items: center; padding: 0.3rem 0.45rem;
-  border-radius: 4px; background: color-mix(in srgb, var(--gold) 15%, #2a241c);
+  border-radius: var(--r-2); background: color-mix(in srgb, var(--gold) 15%, #2a241c);
   color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
   font-style: normal; letter-spacing: 2px; text-align: center;
 }
@@ -979,7 +1040,7 @@ button.rs-reset {
   align-content: end; gap: 0.3rem;
 }
 .smith-weapon-tags em {
-  padding: 0.15rem 0.4rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  padding: 0.15rem 0.4rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   color: var(--muted); font-size: 0.78rem; font-style: normal; line-height: 1;
 }
 .smith-summary-grid {
@@ -1085,7 +1146,7 @@ button.rs-reset {
 .smith-upgrade-row.is-unused .smith-fold-values strong,
 .smith-upgrade-row.is-unused .smith-fold-values em { color: var(--muted); }
 .smith-upgrade-row[open] .smith-fold-caret { transform: rotate(90deg); }
-.smith-upgrade-fold { border: 1px solid var(--line-soft); border-radius: 7px; overflow: hidden; background: color-mix(in srgb, var(--panel) 86%, transparent); }
+.smith-upgrade-fold { border: 1px solid var(--line-soft); border-radius: var(--r-2); overflow: hidden; background: color-mix(in srgb, var(--panel) 86%, transparent); }
 .smith-upgrade-fold > summary { min-height: var(--tap-floor); display: grid; grid-template-columns: minmax(7rem, 1fr) auto auto; align-items: center; gap: 0.55rem; padding: 0.45rem 0.6rem; list-style: none; box-sizing: border-box; }
 .smith-upgrade-fold > summary { cursor: pointer; }
 .smith-upgrade-fold > summary::-webkit-details-marker { display: none; }
@@ -1111,10 +1172,10 @@ button.rs-reset {
 .smith-card-facts .smith-scaling { color: var(--muted); }
 .smith-card-facts .smith-scaling strong { color: var(--frost); }
 .smith-card-facts small { color: var(--muted); }
-.smith-preview-shortfall { padding: 8px; border: 1px solid var(--ember); border-radius: 6px; color: var(--ember); }
+.smith-preview-shortfall { padding: 8px; border: 1px solid var(--ember); border-radius: var(--r-2); color: var(--ember); }
 .armoury-smithing-receipt, .coop-smithing-receipts {
   display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--gold);
-  border-radius: 6px; background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border-radius: var(--r-2); background: color-mix(in srgb, var(--panel) 92%, transparent);
   color: var(--parchment);
 }
 .armoury-smithing-receipt b, .coop-smithing-receipts b { color: var(--gold); }
@@ -1241,7 +1302,7 @@ button.rs-reset {
 }
 .flask-increment .flask-step {
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
-  padding: 0 10px; border-radius: 8px;
+  padding: 0 10px; border-radius: var(--r-3);
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 1.8rem; line-height: 1;
 }
@@ -1265,7 +1326,7 @@ button.rs-reset {
 
 .deck-strip { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; max-width: 86rem; }
 .deck-strip .mini {
-  font-size: 1.1rem; border: 1px solid var(--line-soft); border-radius: 6px;
+  font-size: 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2);
   background: var(--panel); padding: 0.3rem 0.8rem;
 }
 .deck-strip .mini.upgraded { color: var(--green); }
@@ -1328,7 +1389,7 @@ button.rs-reset {
 .card .card-badge-new {
   position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
   font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
-  color: var(--gold); border: 1px solid var(--gold); border-radius: 8px;
+  color: var(--gold); border: 1px solid var(--gold); border-radius: var(--r-3);
   padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
   pointer-events: none; z-index: 2;
 }
@@ -1423,7 +1484,7 @@ button.rs-reset {
 .slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92%; animation: screenIn 500ms ease-out; }
 .slot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 1.1rem 1.6rem; border: 1.5px solid var(--line-soft); border-radius: 12px;
+  padding: 1.1rem 1.6rem; border: 1.5px solid var(--line-soft); border-radius: var(--r-4);
   background: var(--panel); transition: border-color 150ms, transform 150ms;
 }
 .slot.occupied:hover { border-color: var(--gold); transform: translateY(-1px); }
@@ -1454,7 +1515,7 @@ button.rs-reset {
 .save-toast {
   position: fixed; top: 2rem; left: 50%; transform: translateX(-50%); z-index: 60;
   background: var(--bg-raise); border: 1px solid var(--gold); color: var(--gold);
-  padding: 0.8rem 1.8rem; border-radius: 8px; font-size: 1.2rem; letter-spacing: 0.1em;
+  padding: 0.8rem 1.8rem; border-radius: var(--r-3); font-size: 1.2rem; letter-spacing: 0.1em;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6); animation: screenIn 200ms ease-out;
 }
 .map-buttons { display: flex; gap: 0.8rem; }
@@ -1489,7 +1550,7 @@ button.rs-reset {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: calc(7px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   background: transparent;
   color: var(--parchment);
   box-shadow: none;
@@ -1508,7 +1569,7 @@ button.rs-reset {
   display: grid;
   place-items: center;
   border: 1px solid var(--line-soft);
-  border-radius: calc(7px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   background: color-mix(in srgb, var(--bg-raise) 88%, transparent);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
   transition: border-color 120ms, background 120ms, color 120ms;
@@ -1550,7 +1611,7 @@ button.rs-reset {
   height: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
   padding: 0;
   border: 1px solid currentColor;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   overflow: hidden;
   color: var(--parchment);
   background: transparent;
@@ -1574,7 +1635,7 @@ button.rs-reset {
   margin: 0;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--gold);
-  border-radius: 7px;
+  border-radius: var(--r-2);
   background: color-mix(in srgb, var(--bg-raise) 96%, transparent);
   color: var(--parchment);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
@@ -1602,7 +1663,7 @@ button.rs-reset {
   to { text-shadow: 0 0 60px rgba(201, 162, 39, 0.6); }
 }
 .ember {
-  position: absolute; bottom: -1rem; width: 0.4rem; height: 0.4rem; border-radius: 50%;
+  position: absolute; bottom: -1rem; width: 0.4rem; height: 0.4rem; border-radius: var(--r-round);
   background: var(--ember); box-shadow: 0 0 8px var(--ember); opacity: 0;
   animation: emberFloat 9s linear infinite;
 }
@@ -1642,7 +1703,7 @@ button.rs-reset {
   bottom: -1rem;
   width: var(--ash-size);
   height: var(--ash-size);
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--ember);
   box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55);
   opacity: 0;
@@ -1833,19 +1894,19 @@ button.rs-reset {
 .preview-pane .cz-label { margin-bottom: 0; }
 .cz-name {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
-  border-radius: 8px; padding: 6px 10px; width: 150px; text-align: center;
+  border-radius: var(--r-3); padding: 6px 10px; width: 150px; text-align: center;
   font-family: var(--font-display); letter-spacing: 0.08em;
 }
 
 .cz-portrait {
-  width: 13rem; height: 16rem; border-radius: 12px; background: #2a2418;
+  width: 13rem; height: 16rem; border-radius: var(--r-4); background: #2a2418;
   border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center;
   font-size: 6.4rem; transition: border-color 200ms, box-shadow 300ms;
 }
 .cz-label { color: var(--muted); font-size: 1rem; letter-spacing: 0.3em; margin-bottom: 0.6rem; }
 .cz-opts { display: flex; gap: 0.8rem; }
 .cz-opt {
-  width: 4rem; height: 4rem; border-radius: 9px; background: var(--panel);
+  width: 4rem; height: 4rem; border-radius: var(--r-3); background: var(--panel);
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
@@ -1878,7 +1939,7 @@ button.rs-reset {
 .se-step {
   width: var(--tap-floor); height: var(--tap-floor);
   min-width: var(--tap-floor); min-height: var(--tap-floor);
-  border-radius: 9px; background: var(--panel); border: 2px solid var(--line-soft);
+  border-radius: var(--r-3); background: var(--panel); border: 2px solid var(--line-soft);
   color: var(--parchment); font-size: 1.4rem; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: transform 120ms, border-color 120ms;
@@ -1893,7 +1954,7 @@ button.rs-reset {
 .cz-keepsakes { display: flex; flex-direction: column; gap: 0.8rem; }
 .cz-keepsake {
   display: flex; gap: 1rem; align-items: center; background: var(--panel);
-  border: 1.5px solid var(--line-soft); border-radius: 10px; padding: 0.8rem 1.2rem;
+  border: 1.5px solid var(--line-soft); border-radius: var(--r-3); padding: 0.8rem 1.2rem;
   cursor: pointer; transition: border-color 120ms;
 }
 .cz-keepsake:hover { border-color: var(--muted); }
@@ -1923,16 +1984,16 @@ button.rs-reset {
 .cc-boolean-setting { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--muted); font-size: 1rem; }
 .cc-switch {
   position: relative; width: 2.6rem; height: 1.45rem; min-width: 2.6rem; padding: 0.15rem;
-  border: 1px solid var(--line-soft); border-radius: 999px; background: var(--panel); cursor: pointer;
+  border: 1px solid var(--line-soft); border-radius: var(--r-pill); background: var(--panel); cursor: pointer;
 }
 .cc-switch-knob {
-  display: block; width: 0.9rem; height: 0.9rem; border-radius: 50%; background: var(--muted);
+  display: block; width: 0.9rem; height: 0.9rem; border-radius: var(--r-round); background: var(--muted);
   transform: translateX(0); transition: transform 120ms, background 120ms;
 }
 .cc-switch[aria-checked='true'] .cc-switch-knob { transform: translateX(1.05rem); background: var(--gold); }
 .cc-view-toggle {
   display: inline-flex; align-items: stretch; border: 1px solid var(--line-soft);
-  border-radius: 9px; overflow: hidden; background: color-mix(in srgb, var(--panel) 84%, transparent);
+  border-radius: var(--r-3); overflow: hidden; background: color-mix(in srgb, var(--panel) 84%, transparent);
 }
 .cc-view-option {
   min-width: 4.8rem; min-height: calc(var(--tap-floor) - 0.35rem); padding: 0.35rem 0.9rem;
@@ -1950,7 +2011,7 @@ button.rs-reset {
   gap: 1.1rem; align-items: stretch; width: 100%;
 }
 .cc-class-preview-host, .cc-class-selection {
-  min-width: 0; border: 1px solid var(--line-soft); border-radius: 10px;
+  min-width: 0; border: 1px solid var(--line-soft); border-radius: var(--r-3);
   background: color-mix(in srgb, var(--panel) 84%, transparent);
 }
 .cc-class-preview-host { display: flex; }
@@ -1986,7 +2047,7 @@ button.rs-reset {
 .cc-class-art .class-sprite { transform: scale(1.28); transform-origin: 50% 70%; }
 .cc-class-resource-grid {
   display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0.55rem 0 1.1rem;
-  border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--r-3); overflow: hidden;
 }
 .cc-class-resource { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.65rem 0.25rem; border-right: 1px solid var(--line); }
 .cc-class-resource:last-child { border-right: 0; }
@@ -2070,7 +2131,7 @@ button.rs-reset {
   display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.25rem 0.75rem; align-items: center;
   min-height: var(--tap-floor); padding: 0.7rem 0.9rem; text-align: left;
   color: var(--parchment); background: var(--panel); border: 1px solid var(--line);
-  border-radius: 3px; cursor: pointer;
+  border-radius: var(--r-1); cursor: pointer;
 }
 .cc-relic-card > .cc-relic-art { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
 .cc-relic-card small { color: var(--muted); }
@@ -2150,7 +2211,7 @@ button.rs-reset {
   min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
   width: auto; max-width: 100%;
   padding: 0.4rem 0.9rem;
-  background: var(--panel); border: 1.5px solid var(--line-soft); border-radius: 9px;
+  background: var(--panel); border: 1.5px solid var(--line-soft); border-radius: var(--r-3);
   color: var(--parchment); font-family: var(--font-display); letter-spacing: 0.06em;
   cursor: pointer; text-align: left; overflow-wrap: anywhere;
 }
@@ -2203,7 +2264,7 @@ button.rs-reset {
    row-gap past the length it is measured against (Law 0 clause 4). */
 .disc-reveal {
   flex: 1 1 100%; width: 100%; padding: 0.8rem 1rem;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
 }
 .disc-reveal h4 { color: var(--gold); font-size: 1.15rem; letter-spacing: 0.14em; margin: 0 0 0.4rem; }
 .disc-reveal .disc-sense { margin: 0 0 0.4rem; font-size: 1.1rem; color: var(--parchment); }
@@ -2250,7 +2311,8 @@ button.rs-reset {
   flex: 1; min-height: 0; overflow: hidden;
 }
 .settings-modal .set-panel { min-width: 0; min-height: 0; overflow: auto; padding: 0 1rem; }
-.settings-modal .set-actions { flex: 0 0 auto; }
+.settings-modal .modal-head { flex: 0 0 auto; }
+.settings-modal .modal-head h2 { margin: 0; }
 .profile-archive-modal {
   width: min(64rem, 94vw); max-height: min(80vh, 52rem); padding: 0; overflow: hidden;
   display: flex; flex-direction: column;
@@ -2358,7 +2420,7 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  width: 100%; padding: 0; border: 0; border-radius: 6px;
+  width: 100%; padding: 0; border: 0; border-radius: var(--r-2);
   font-size: 1rem; letter-spacing: 0.05em;
   background: transparent; color: var(--muted);
   cursor: pointer;
@@ -2369,7 +2431,7 @@ button.rs-reset {
   box-sizing: border-box; width: 100%; min-height: calc(35px / var(--ui-zoom, 1));
   padding: calc(4px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
   display: inline-flex; align-items: center; justify-content: inherit;
-  border: 1px solid var(--line-soft); border-radius: calc(6px / var(--ui-zoom, 1));
+  border: 1px solid var(--line-soft); border-radius: var(--r-2-glass);
   background: var(--bg); color: inherit;
 }
 .set-tabs .set-tab:hover .set-tab-face { color: var(--parchment); }
@@ -2424,7 +2486,7 @@ button.rs-reset {
   padding-bottom: 10px; border-bottom: 1px solid var(--line-soft);
 }
 .set-subtab {
-  min-height: var(--tap-floor); padding: 6px 10px; border-radius: 6px;
+  min-height: var(--tap-floor); padding: 6px 10px; border-radius: var(--r-2);
   border: 1px solid var(--line-soft); background: var(--bg); color: var(--muted);
   cursor: pointer;
 }
@@ -2436,7 +2498,7 @@ button.rs-reset {
 .set-advanced-tip { margin: 0 0 8px; }
 .set-row {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 0.9rem 1rem; border: 1px solid var(--line-soft); border-radius: 8px;
+  padding: 0.9rem 1rem; border: 1px solid var(--line-soft); border-radius: var(--r-3);
   background: color-mix(in srgb, var(--panel) 74%, transparent);
 }
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
@@ -2469,12 +2531,12 @@ button.rs-reset {
 
 .set-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
 .toggle {
-  flex-shrink: 0; width: 4.6rem; height: 2.6rem; border-radius: 13px; background: var(--panel);
+  flex-shrink: 0; width: 4.6rem; height: 2.6rem; border-radius: var(--r-4); background: var(--panel);
   border: 1px solid var(--line-soft); position: relative; cursor: pointer; padding: 0;
   transition: background 160ms, border-color 160ms;
 }
 .toggle .knob {
-  position: absolute; top: 0.2rem; left: 0.2rem; width: 2rem; height: 2rem; border-radius: 50%;
+  position: absolute; top: 0.2rem; left: 0.2rem; width: 2rem; height: 2rem; border-radius: var(--r-round);
   background: var(--muted); transition: left 160ms, background 160ms;
 }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
@@ -2726,7 +2788,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   flex-basis: 100%;
   display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
   margin: 6px 0 2px; padding: 10px 12px;
-  border: 1px solid var(--gold); border-radius: 6px;
+  border: 1px solid var(--gold); border-radius: var(--r-2);
   background: var(--panel);
   max-width: 34rem;
 }
@@ -2746,7 +2808,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
 }
 .choice-group .choice {
-  padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: 6px;
+  padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: var(--r-2);
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
   cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms;
   /* Law 4 clause 4, ratchet-style — the SAME two lines .ov-tab above already
@@ -2794,7 +2856,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   background: var(--panel);
   color: var(--gold);
   border: 1px solid var(--map-structure);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   font: inherit;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -2813,7 +2875,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .set-row-wide { flex-wrap: wrap; }
 .set-text {
   flex: 1; min-width: 20rem; background: var(--panel); border: 1px solid var(--line);
-  color: var(--parchment); border-radius: 6px; padding: 0.6rem 1rem; font-size: 1.2rem; font-family: monospace;
+  color: var(--parchment); border-radius: var(--r-2); padding: 0.6rem 1rem; font-size: 1.2rem; font-family: monospace;
 }
 .set-text:focus { border-color: var(--gold); outline: none; }
 
@@ -2832,14 +2894,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    happens to be inset:0; changing that inset would have silently skewed every
    callout again. */
 .tut-spot {
-  position: absolute; border: 2px solid var(--gold); border-radius: 10px;
+  position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 22px rgba(201, 162, 39, 0.55);
   transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
   pointer-events: none;
 }
 .tut-bubble {
   position: absolute; width: 30rem; background: var(--bg-raise); border: 1px solid var(--gold);
-  border-radius: 12px; padding: 1.4rem 1.6rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
+  border-radius: var(--r-4); padding: 1.4rem 1.6rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
   animation: screenIn 200ms ease-out; pointer-events: auto;
 }
 .tut-bubble .tut-title { color: var(--gold); font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.6rem; }
@@ -2900,7 +2962,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .combat.coop .combatant.player.ended { opacity: .62; }
 .combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
 .combat.coop .combatant.player.away { opacity: .45; }
-.combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 8px; box-shadow: 0 0 12px rgba(200,160,70,.4); }
+.combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: var(--r-3); box-shadow: 0 0 12px rgba(200,160,70,.4); }
 .coop-seat-name {
   width: 13rem; max-width: 100%; min-width: 0; margin-top: 0.3rem;
   display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
@@ -2910,16 +2972,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-seat-vitals { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.2rem 0.7rem; }
 .coop-seat-vitals > span { white-space: nowrap; }
 .coop-turnflag { color: var(--gold); font-size: 1rem; letter-spacing: .06em; }
-.combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
+.combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: var(--r-3); }
 
 /* the party read-out in map/reward headers */
 .coop-partybar { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
-.coop-pc { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: 7px; padding: 0.3rem 0.9rem; font-size: 1.2rem; color: #ded1b6; }
+.coop-pc { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 0.3rem 0.9rem; font-size: 1.2rem; color: #ded1b6; }
 .coop-pc.me { border-color: var(--gold); }
 .coop-pc.away { opacity: .55; }
 .coop-pc.dead { opacity: .4; filter: grayscale(1); }
 .coop-pc-glyph { font-size: 1.5rem; }
-.coop-pc-hp { position: relative; display: inline-block; width: 7rem; height: 1.2rem; background: #24140f; border-radius: 3px; overflow: hidden; }
+.coop-pc-hp { position: relative; display: inline-block; width: 7rem; height: 1.2rem; background: #24140f; border-radius: var(--r-1); overflow: hidden; }
 .coop-pc-hp i { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, var(--blood), #b8432f); }
 .coop-pc-hp b { position: relative; font-size: 0.9rem; color: #f2e6cf; padding-left: 0.5rem; line-height: 1.2rem; font-weight: 600; }
 
@@ -2931,7 +2993,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
 .card-unavailable-reason {
   position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3;
-  padding: 0.2rem 0.35rem; border: 1px solid var(--blood); border-radius: 4px;
+  padding: 0.2rem 0.35rem; border: 1px solid var(--blood); border-radius: var(--r-2);
   background: rgba(24, 8, 7, 0.92); color: #ffd7cf; font-size: 0.75rem;
   line-height: 1.2; text-align: center;
 }
@@ -2939,7 +3001,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-height: var(--tap-floor); height: auto;
   display: flex; align-items: center; cursor: pointer;
 }
-.coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
+.coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: var(--r-2); padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
 /* co-op: fork voting on the shared map */
 .map-node.my-vote > circle { stroke: var(--gold); stroke-width: 3; }
@@ -2948,7 +3010,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 /* co-op lobby: accent swatches (tint applies to your sprite for everyone) */
 .lb-tints { display: flex; gap: 1rem; justify-content: center; }
-.tint-dot { width: 2.8rem; height: 2.8rem; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.tint-dot { width: 2.8rem; height: 2.8rem; border-radius: var(--r-round); border: 2px solid transparent; cursor: pointer; padding: 0; }
 .tint-dot.chosen { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255,255,255,.35); }
 
 /* co-op: turn banners + acting-enemy lunge (enemy-phase pacing) */
@@ -2980,12 +3042,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: flex; gap: 0.8rem; align-items: center; z-index: 620;
 }
 .seat-tab {
-  padding: 0.5rem 1.2rem; font-size: 1.2rem; border-radius: 7px;
+  padding: 0.5rem 1.2rem; font-size: 1.2rem; border-radius: var(--r-2);
   background: rgba(16,13,10,.9); border: 1.5px solid var(--line-soft); color: #ded1b6;
 }
 .seat-tab.on { background: #2a2418; color: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.35); }
 .seat-tab .pip { color: var(--gold); }
-.seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 0.1rem 0.6rem; }
+.seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 0.1rem 0.6rem; }
 
 /* ---- Armoury (equipment) --------------------------------------------------
    Three layouts over one loadout. Two attributes on .armoury do all the
@@ -3010,7 +3072,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      viewport units ignore that zoom — which is exactly what pushed this panel
      off the corner of the screen at Auto sizing. See base.css. */
   width: 108rem; max-width: 96%; height: 92%; display: flex; flex-direction: column;
-  background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-2);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
 }
 .armoury-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
@@ -3022,13 +3084,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-views { display: flex; gap: 0.4rem; margin-left: auto; }
 .armoury-views button {
   background: none; border: 1px solid var(--line); color: var(--muted);
-  padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
+  padding: 0.4rem 1.1rem; border-radius: var(--r-1); cursor: pointer;
   font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
 }
 .armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
-.armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
-.armoury-close:hover { color: var(--parchment); }
+/* Was `background: none; border: none` — a bare glyph where every other door
+   has a boxed control, and the smallest target in the modal. It keeps only its
+   place in the header now; the box is `.modal-close`. */
+.armoury-close { cursor: pointer; }
 
 .armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
 .armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
@@ -3085,13 +3149,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .armoury[data-slots='list'] .equip-slots { justify-content: flex-start; }
-.equip-slot { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; background: var(--panel); }
+.equip-slot { border: 1px solid var(--line); border-radius: var(--r-2); padding: 0.8rem; background: var(--panel); }
 .es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
 .es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
 .es-sealed { color: var(--muted); font-size: 1rem; font-style: italic; }
 .es-sets { display: flex; gap: 0.6rem; }
 .es-cell {
-  width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   background: var(--bg); color: var(--parchment); cursor: pointer; padding: 0.3rem;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
 }
@@ -3132,7 +3196,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-chip {
   display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
   gap: 0.2rem 0.9rem; align-items: center; text-align: left;
-  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--r-1); background: var(--panel);
   color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
   min-height: var(--tap-floor);
 }
@@ -3145,7 +3209,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .ec-tags em, .ef-tags em {
   font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
-  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px; padding: 0 0.4rem;
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: var(--r-1); padding: 0 0.4rem;
 }
 .ec-tags .ec-equipped {
   color: var(--equip-equipped-tag-color, var(--gold));
@@ -3168,10 +3232,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
 .ep-list .disc-face[data-reveal='open'] .equip-chip.as-face,
 .ep-list .disc-face[data-reveal='open'] .inventory-face {
-  border-color: var(--gold); border-bottom-color: transparent; border-radius: 3px 3px 0 0;
+  border-color: var(--gold); border-bottom-color: transparent; border-radius: var(--r-1) var(--r-1) 0 0;
 }
 .ep-list .disc-reveal {
-  width: 100%; border-color: var(--gold); border-top: 0; border-radius: 0 0 3px 3px;
+  width: 100%; border-color: var(--gold); border-top: 0; border-radius: 0 0 var(--r-1) var(--r-1);
 }
 .ep-body { display: flex; flex-direction: column; gap: 0.5rem; }
 
@@ -3181,7 +3245,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .inventory-face {
   display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
   align-items: center; gap: 0.7rem; width: 100%; min-height: var(--tap-floor);
-  padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   background: rgba(10, 8, 6, 0.32); color: var(--parchment);
 }
 /* Delegated card feedback is painted after the card's own background shorthand
@@ -3205,12 +3269,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .inventory-equipped {
   color: var(--equip-equipped-tag-color, var(--gold));
-  border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: 2px;
+  border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: var(--r-1);
   padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
 }
 .inventory-inline-action {
   justify-self: end; white-space: nowrap; color: var(--gold); border: 1px solid var(--gold);
-  border-radius: 3px; padding: 0.2rem 0.55rem; font-size: 0.82rem;
+  border-radius: var(--r-1); padding: 0.2rem 0.55rem; font-size: 0.82rem;
   letter-spacing: 0.06em; text-transform: uppercase;
 }
 .inventory-detail { display: grid; grid-template-columns: minmax(5rem, 18%) minmax(0, 1fr); gap: 1rem; align-items: start; }
@@ -3228,7 +3292,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .inventory-kind { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.95rem; }
 .inventory-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .inventory-tags em {
-  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px;
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: var(--r-1);
   padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
 }
 .inventory-information .equip-candidate-comparison { margin-left: 0; }
@@ -3325,7 +3389,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .tray-sort {
   flex: 0 0 var(--ui-tray-control-size); width: var(--ui-tray-control-size); height: var(--ui-tray-control-size);
   min-width: var(--ui-tray-control-size); min-height: var(--ui-tray-control-size); aspect-ratio: 1; padding: 0;
-  border: 1px solid var(--line-soft); border-radius: 0.65rem; background: transparent;
+  border: 1px solid var(--line-soft); border-radius: var(--r-2); background: transparent;
   color: var(--gold); cursor: pointer; font: inherit;
 }
 .tray-sort:hover, .tray-sort:focus-visible { border-color: var(--gold); color: var(--parchment); }
@@ -3371,7 +3435,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   position: absolute; z-index: 2; touch-action: none; user-select: none; outline: 0;
 }
 .tray-resize-handle::after {
-  content: ''; position: absolute; border-radius: 999px; background: color-mix(in srgb, var(--gold) 58%, transparent);
+  content: ''; position: absolute; border-radius: var(--r-pill); background: color-mix(in srgb, var(--gold) 58%, transparent);
   transition: background-color 120ms ease, transform 120ms ease;
 }
 .tray-resize-handle[data-ui-variant='top'], .tray-resize-handle[data-ui-variant='bottom'] {
@@ -3474,7 +3538,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .arcane-exposure-head strong { margin-left: auto; white-space: nowrap; color: var(--parchment); }
 .arcane-exposure-head em { color: var(--gold); font-style: normal; }
 .arcane-exposure-glyph { color: var(--frost); }
-.arcane-exposure-track { height: 0.35rem; background: var(--line); border-radius: 99px; overflow: hidden; }
+.arcane-exposure-track { height: 0.35rem; background: var(--line); border-radius: var(--r-pill); overflow: hidden; }
 .arcane-exposure-track > span { display: block; height: 100%; background: var(--frost); }
 .arcane-exposure-meter.locked .arcane-exposure-track > span { background: var(--gold); }
 .arcane-exposure-immune { display: flex; gap: 0.3rem; align-items: center; }
@@ -3558,7 +3622,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .card-view-glyph.grid { grid-template-columns: repeat(2, 1fr); }
 .card-view-glyph.grid i { display: block; border: 1px solid currentColor; }
 .card-view-glyph.list { grid-template-rows: repeat(3, 1fr); }
-.card-view-glyph.list i { position: relative; display: block; border: 1px solid currentColor; border-radius: 1px; }
+.card-view-glyph.list i { position: relative; display: block; border: 1px solid currentColor; border-radius: var(--r-1); }
 .card-view-glyph.list i::after { content: ''; position: absolute; left: 0.35rem; right: 0.02rem; top: 50%; border-top: 1px solid currentColor; }
 .region-fold {
   display: flex; align-items: center; gap: 0.6rem; width: 100%;
@@ -3651,7 +3715,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 /* What a run earned you, shown where you find out you lost. */
 .go-earned {
-  border: 1px solid var(--gold); border-radius: 4px; background: rgba(201, 162, 39, 0.07);
+  border: 1px solid var(--gold); border-radius: var(--r-2); background: rgba(201, 162, 39, 0.07);
   padding: 1rem 1.6rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 32rem;
 }
 .go-earned .subtitle { text-align: center; color: var(--gold); margin-bottom: 0.4rem; }
@@ -3842,7 +3906,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      `const gap = 6` in quicknav.js. */
   --place-gap: 6px;
   position: fixed; width: 26rem; max-width: 92%;
-  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   padding: 0.4rem 0; overflow-y: auto; color: var(--parchment);
 }
@@ -3933,7 +3997,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      full-bleed row would have its focus ring clipped at the padding box —
      the pad player's cursor, cut off on the surface it is navigating. */
   padding: 4px 5px;
-  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   color: var(--parchment);
   /* The Inspect row un-hides the description INSIDE the panel, so its height is
@@ -3975,7 +4039,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Variant B: the whole tab strip, folded into one control that names where you
    are. Same set, same order, same bumpers (Law 3 clause 1a). */
 .ov-switch {
-  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
+  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: var(--r-3); cursor: pointer;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--gold);
   font-size: 1.3rem; letter-spacing: 0.05em;
 }
@@ -4087,7 +4151,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .confirm-fresh .confirm-box {
   max-width: 26rem; background: var(--panel, #14110f); border: 2px solid var(--gold);
-  border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+  border-radius: var(--r-3); padding: 20px; display: flex; flex-direction: column; gap: 12px;
 }
 .confirm-fresh .confirm-box h2 { font-size: 1.3rem; color: var(--gold); }
 .confirm-fresh .confirm-box p { line-height: 1.5; }
@@ -4101,7 +4165,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .prof-state { font-weight: 600; }
 .prof-entry {
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start;
-  border: 1px solid var(--line, #33291f); border-radius: 6px; padding: 10px;
+  border: 1px solid var(--line, #33291f); border-radius: var(--r-2); padding: 10px;
 }
 .prof-entry-what { flex: 1 1 14rem; min-width: 0; }
 .prof-entry-what .prof-why { opacity: 0.75; word-break: break-word; }
@@ -4181,7 +4245,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .cp-cell {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   min-height: var(--tap-floor); padding: 8px 4px;
-  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--r-1); background: var(--panel);
   color: var(--parchment); font-family: var(--font-body); cursor: pointer;
   text-align: center;
 }
@@ -4316,7 +4380,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   justify-content: center;
   gap: 4px;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--r-2);
   background: var(--panel);
   border: 1px solid var(--gold);
   /* It opens the shared flask action menu on both screens. */
@@ -4421,7 +4485,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: 34px;
   height: 56px;
   border: 2px solid var(--gold);
-  border-radius: 5px;
+  border-radius: var(--r-2);
   transform-origin: 50% 50%;
   animation: upright-turn 2.6s ease-in-out infinite;
 }
@@ -4616,13 +4680,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: transparent;
   outline: 0;
   border: 1px solid var(--gold);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
   text-shadow: 0 0 16px rgba(var(--accent-rgb), 0.55);
 }
 .title-menu:not(:has(.title-menu-item:focus, .title-menu-item.gp-focus)) .title-menu-item.slot-continue:not(:disabled) {
   border: 1px solid var(--gold);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
 }
 .title-menu-item:hover::before,
@@ -4640,17 +4704,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   max-height: 88%;
   padding: 3.7rem 4rem 3.8rem;
   border: 1px solid var(--gold);
-  border-radius: 1.5rem;
+  border-radius: var(--r-4);
   background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 96%, #000), color-mix(in srgb, var(--bg-raise) 98%, #000));
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
 .title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
-.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
+/* Position is this modal's (it has no head bar to sit in); the SHAPE is the
+   shell's — this was the only round close control in the game. */
+.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; background: transparent; color: var(--parchment); }
 .title-modal-close:hover, .title-modal-close:focus-visible { border-color: var(--gold); outline: 2px solid color-mix(in srgb, var(--gold) 42%, transparent); outline-offset: 2px; }
 .title-modal-rule { width: min(38.3rem, 74%); margin-top: 1.7rem; }
 .title-slot-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
 .title-slot-row { display: flex; align-items: stretch; gap: 0.8rem; }
-.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
+.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: var(--r-4); background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
 .title-slot-pick:hover, .title-slot-pick:focus-visible, .title-slot-row.is-selected .title-slot-pick { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent); outline: none; }
 .title-slot-pick:disabled { cursor: default; opacity: 0.74; }
 .title-slot-copy { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
@@ -4670,12 +4736,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    selector. The fill still runs; the native tooltip carries the sentence. */
 .title-slot-delete .hold-hint { display: none; }
 .title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
-.title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
+.title-modal-actions button { min-height: 4.8rem; border-radius: var(--r-4); font-size: var(--t-3); }
 .title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
 .title-modal-continue { border-color: var(--gold); color: var(--gold); }
 .title-modal-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .title-load-review { width: min(52rem, 94%); }
-.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); }
+.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: var(--r-4); background: color-mix(in srgb, var(--bg) 84%, transparent); }
 .title-load-review-copy { margin: 1.2rem 0 0; color: var(--muted); font-size: 1.08rem; text-align: center; }
 .title-load-review-confirm { border-color: var(--green); color: var(--green); }
 .title-load-review-confirm:hover, .title-load-review-confirm:focus-visible { background: color-mix(in srgb, var(--green) 14%, transparent); border-color: var(--green); color: var(--green); }
@@ -4689,18 +4755,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .title-menu-item { min-height: var(--tap-floor); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.8rem / var(--ui-zoom, 1)) calc(1.1rem / var(--ui-zoom, 1)); font-size: calc(1.5rem / var(--ui-zoom, 1)); }
   .title-tagline { margin-top: calc(2.4rem / var(--ui-zoom, 1)); font-size: calc(0.8rem / var(--ui-zoom, 1)); letter-spacing: 0.12em; }
   .title-modal-veil { padding: 1.2rem 0.8rem; }
-  .title-menu-modal { width: 98%; padding: calc(3.8rem / var(--ui-zoom, 1)) calc(1.3rem / var(--ui-zoom, 1)) calc(2.2rem / var(--ui-zoom, 1)); border-radius: calc(1.3rem / var(--ui-zoom, 1)); }
+  .title-menu-modal { width: 98%; padding: calc(3.8rem / var(--ui-zoom, 1)) calc(1.3rem / var(--ui-zoom, 1)) calc(2.2rem / var(--ui-zoom, 1)); border-radius: var(--r-4-glass); }
   .title-menu-modal h2 { font-size: calc(2.7rem / var(--ui-zoom, 1)); }
   .title-modal-rule { width: 84%; }
   .title-slot-list { gap: calc(1.2rem / var(--ui-zoom, 1)); margin-top: calc(1.8rem / var(--ui-zoom, 1)); }
-  .title-slot-pick { min-height: calc(8.6rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.6rem / var(--ui-zoom, 1)); border-radius: calc(1.3rem / var(--ui-zoom, 1)); }
+  .title-slot-pick { min-height: calc(8.6rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.6rem / var(--ui-zoom, 1)); border-radius: var(--r-4-glass); }
   .title-slot-name, .title-slot-empty { font-size: calc(1.8rem / var(--ui-zoom, 1)); }
   .title-slot-tag, .title-slot-seed { font-size: calc(0.82rem / var(--ui-zoom, 1)); }
   .title-slot-meta { font-size: calc(1.1rem / var(--ui-zoom, 1)); }
   .title-slot-state { display: none; }
   .title-slot-pick > .hold-hint { display: block; right: calc(1.2rem / var(--ui-zoom, 1)); bottom: calc(0.55rem / var(--ui-zoom, 1)); }
   .title-modal-actions { gap: calc(1rem / var(--ui-zoom, 1)); margin: calc(2rem / var(--ui-zoom, 1)) 0 0; }
-  .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(1.2rem / var(--ui-zoom, 1)); }
+  .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(var(--t-2) / var(--ui-zoom, 1)); }
   .title-load-review-slot { margin-top: calc(1.8rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)); }
   .title-load-review-copy { font-size: calc(1rem / var(--ui-zoom, 1)); }
 }
@@ -4983,8 +5049,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   list-style: none;
 }
 .character-info-card > summary::-webkit-details-marker { display: none; }
-.character-info-card > summary::before { content: '▸'; color: var(--gold); }
-.character-info-card[open] > summary::before { content: '▾'; }
+/* The mark is authored in markup (equipment.js, from foldGlyph.js) like the
+   Shrine, Smith and card-row folds; this only turns it. It was a `content:`
+   pair here — the one fold in the tree whose glyph lived in the stylesheet. */
+.character-info-caret { display: inline-block; color: var(--gold); transition: transform 140ms; }
+.character-info-card[open] > summary .character-info-caret { transform: rotate(90deg); }
 .character-info-label {
   color: var(--gold);
   font-family: var(--font-display);
@@ -5069,7 +5138,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-height: 8rem;
   padding: 0.55rem;
   border: 1px solid var(--line-soft);
-  border-radius: 0.2rem;
+  border-radius: var(--r-1);
   background: rgba(24, 20, 15, 0.86);
   color: var(--parchment);
   cursor: pointer;
@@ -5093,7 +5162,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-width: 0;
   margin: 0;
   border: 1px solid var(--line-soft);
-  border-radius: 0.2rem;
+  border-radius: var(--r-1);
   background: rgba(24, 20, 15, 0.86);
   color: var(--parchment);
   container-type: inline-size;
@@ -5158,7 +5227,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   min-height: 1.5rem;
   padding: 0.12rem 0.38rem;
   border: 1px solid var(--gold);
-  border-radius: 0.18rem;
+  border-radius: var(--r-1);
   background: rgba(8, 7, 6, 0.6);
   color: var(--gold);
   font-size: 0.7rem;

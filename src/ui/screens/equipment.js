@@ -53,6 +53,7 @@ import { trayModel } from '../models/TrayModels.js';
 import { renderTray } from '../components/trayComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
+import { FOLD_GLYPH } from '../components/foldGlyph.js';
 
 const CFG = () => balance.equipment;
 const armouryTraySession = { folded: new Map(), heights: new Map() };
@@ -1368,7 +1369,7 @@ export function mountEquipment(host, {
       row.dataset.component = 'armoury.cardRow';
       const summary = document.createElement('summary');
       summary.className = 'armoury-card-row-summary';
-      summary.innerHTML = '<span class="armoury-card-row-caret" aria-hidden="true">▸</span>'
+      summary.innerHTML = `<span class="armoury-card-row-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
         + `<span class="armoury-card-row-icon" aria-hidden="true">${esc(art)}</span>`
         + `<strong class="armoury-card-row-name">${esc(def.name)}</strong>`
         + `<span class="armoury-card-row-type">${esc(type)}</span>`
@@ -1497,7 +1498,8 @@ export function mountEquipment(host, {
       card.dataset.component = `armoury.${id}`;
       card.open = expanded;
       const head = document.createElement('summary');
-      head.innerHTML = `<span class="character-info-label">${esc(label)}</span>`
+      head.innerHTML = `<span class="character-info-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
+        + `<span class="character-info-label">${esc(label)}</span>`
         + `<span class="character-info-summary">${esc(summary)}</span>`;
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
       card.append(head, body);
