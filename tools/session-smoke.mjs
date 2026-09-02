@@ -8,7 +8,7 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard, passiveSum } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
-import { createSession, coopHpMult } from './session.mjs';
+import { createSession, restoreSession, coopHpMult } from './session.mjs';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
@@ -219,6 +219,16 @@ try {
         ok(r.ok && r.pending === 'combat' && V.scene.kind === 'event' && V.scene.next && V.scene.next.encounterId === wanted
           && V.scene.results && V.scene.results.v1 === told && told.length > 0,
           `a fight-starting choice leaves the event open with its result to read (pending ${r.pending}, next ${V.scene.next && V.scene.next.encounterId}, result "${String(V.scene.results && V.scene.results.v1).slice(0, 40)}…")`);
+        // THE PENDING STATE IS A SAVE: the fighter's transient flag is consumed
+        // when the fight becomes scene.next, so a host restart here restores
+        // (Codex on #545).
+        {
+          const saved = V.serialize();
+          let restored = null, err = null;
+          try { restored = restoreSession(REG, saved); } catch (e) { err = e.message; }
+          ok(saved && V.session.members.get('v1').run.combatEntered == null && restored && restored.scene.kind === 'event' && restored.scene.next && restored.scene.next.encounterId === wanted,
+            `the pending fight is a restorable save (flag ${V.session.members.get('v1').run.combatEntered}, restored scene ${restored ? restored.scene.kind + '/' + (restored.scene.next && restored.scene.next.encounterId) : err})`);
+        }
         const rc = V.eventContinue('v1');
         const enemyIds = V.scene.kind === 'combat' ? (V.scene.enemies || []).map((e) => e.enemyId || e.id) : [];
         ok(rc.ok && rc.combat === wanted && V.scene.kind === 'combat' && V.session.members.get('v1').run.combatEntered == null,

@@ -907,8 +907,13 @@ export function createSession({ registries, seedString, endless = false, restore
       // read, and the solo screen asks for STEEL YOURSELF; opening the
       // shared combat here would broadcast every client straight into it
       // (Codex on #541). The scene stays an event with the fight pending
-      // until every present seat has acknowledged (eventContinue); the
-      // flags are consumed there.
+      // until every present seat has acknowledged (eventContinue). The
+      // encounter lives in scene.next ALONE from here: the transient
+      // run.combatEntered strings are consumed now, because this pending
+      // state is broadcast and saved, and a save whose run carries the
+      // effect's string where the schema wants an object cannot be restored
+      // (Codex on #545).
+      for (const mm of members.values()) mm.run.combatEntered = null;
       session.scene.next = { kind: 'combat', encounterId: forced };
       session.scene.ack = {};
       return { ok: true, pending: 'combat', combat: forced };
