@@ -500,9 +500,14 @@ try {
           l1.run.hp = 0; l1.alive = false; // the last present seat has since fallen
           l2.run.hp = 1;
           L.setConnected('l2', true);
+          // A second missed event stands behind the lethal one: it is forfeit.
+          const stone = REG.events.get('ancientRuneStone');
+          const smashIdx = stone.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'addCinders'));
+          l2.catchup.push({ type: 'event', eventId: 'ancientRuneStone', open: [0, 1, 2], act: 1, floor: L.session.floor, mapNodeId: L.session.cursorId ?? null });
           const r = L.resolveCatchup('l2', 0, { choiceIndex: hurtIdx });
-          ok(r.ok && l2.alive === false && l2.run.hp === 0 && L.scene.kind === 'complete' && L.scene.victory === false,
-            `a lethal replay fells the last living seat and ends the run (alive ${l2.alive}, hp ${l2.run.hp}, scene ${L.scene.kind}/${L.scene.victory})`);
+          const after = L.resolveCatchup('l2', 0, { choiceIndex: smashIdx });
+          ok(r.ok && l2.alive === false && l2.run.hp === 0 && L.scene.kind === 'complete' && L.scene.victory === false && l2.catchup.length === 0 && !after.ok,
+            `a lethal replay fells the last living seat and ends the run (alive ${l2.alive}, hp ${l2.run.hp}, scene ${L.scene.kind}/${L.scene.victory}); the rest of its queue is forfeit (${l2.catchup.length} left, further replay ${after.ok ? 'served' : 'refused'})`);
         }
         // A SAVE FROM BEFORE picks EXISTED, resumed with one seat answered and
         // the other absent, is settled by the presence change without a throw
