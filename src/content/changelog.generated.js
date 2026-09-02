@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-555",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The README names what the game now does",
+    "detail": "Nothing a player sees changes: the feature list had stopped at the M4 polish pass, and now names the four things that shipped after it — equip load and the Weight Class it lands you in, Stamina recovery with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain on event-level history, and Forsaken Together, the LAN co-op the launcher serves. The one-line description no longer calls the game single-player only. The in-game changelog is this file's projection, so the build moves with the receipt.",
+    "build": "0.5.0-rc.2.1944",
+    "pullRequest": 555,
+    "url": "https://github.com/cehinds/AshenSpire/pull/555"
+  },
+  {
     "id": "pr-554",
     "date": "2026-09-02",
     "group": "2026-09-02",
