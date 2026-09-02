@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-556",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The third 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.3.<build> from this build on: the candidate QA receives after rc.2, which was promoted to test at build 1935. Nothing else a player sees changes with the stamp itself. What the candidate carries over rc.2 is above — the Dodge Roll that rides on one empty hand (#554), the co-op catch-up queue a returning seat drains (#547, #548, #549, #552), and the README pass with the receipts owed since the second candidate (#555). Tooling rider: the layout gate judges a control covered by what its own text paints, and its known-bad corpus is 24 plants, 24 caught.",
+    "build": "0.5.0-rc.3.1946",
+    "pullRequest": 556,
+    "url": "https://github.com/cehinds/AshenSpire/pull/556"
+  },
+  {
     "id": "pr-555",
     "date": "2026-09-02",
     "group": "2026-09-02",
