@@ -170,6 +170,13 @@ export function armHold(btn, {
   // press door already own this pointer? Rule 1 and off-mode deduplication both
   // live on this flag.
   let heldThisPress = false;
+  // THE POINTER MOVED PAST THE SLOP AND THE PRESS IS ABANDONED. Pointer capture
+  // keeps the trailing `click` aimed at this control even though the finger
+  // left it, so the click a scroll-away generates must die in onClick like the
+  // early-release click does — never become a tap (a review modal opening
+  // under a thumb that was trying to scroll) and never a commit. Both press
+  // forms set it; onClick consumes it; a press resets it.
+  let movedThisPress = false;
 
   const paint = (p) => {
     for (const target of [btn, ...activeFeedback]) {
@@ -275,6 +282,7 @@ export function armHold(btn, {
     if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
     committedThisPress = false;
+    movedThisPress = false;
     offPointerPress = false;
     const ms0 = msOf();
     // A pointer activation normally ends in a click, but mobile browsers may
@@ -298,6 +306,7 @@ export function armHold(btn, {
           if (cancelled || moved) {
             heldThisPress = false;
             committedThisPress = false;
+            movedThisPress = moved;
             return true;
           }
           committedThisPress = true;
@@ -343,7 +352,10 @@ export function armHold(btn, {
     track({
       onMove: (mv) => {
         if (!armed) return;
-        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
+        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) {
+          movedThisPress = origin.source === 'pointer';
+          stop('idle');
+        }
       },
       // However it ended — lift, cancel, palm, focus loss. If the fill never
       // reached the end, nothing happened, and that IS the feature.
@@ -398,6 +410,16 @@ export function armHold(btn, {
       else onConfirm(ev);
       return;
     }
+    // A press the pointer walked away from is an abort in every form of this
+    // control — no tap meaning, no commit. The click is swallowed whole.
+    if (movedThisPress) {
+      movedThisPress = false;
+      heldThisPress = false;
+      committedThisPress = false;
+      ev.preventDefault();
+      ev.stopPropagation();
+      return;
+    }
     if (!heldThisPress) {
       if (pointerOnly && onTap) onTap(ev);
       else onConfirm(ev);
@@ -433,6 +455,7 @@ export function armHold(btn, {
     offPointerPress = false;
     heldThisPress = false;
     committedThisPress = false;
+    movedThisPress = false;
     fired = true;
     disarmPress();
     btn.removeEventListener('click', onClick);

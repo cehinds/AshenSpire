@@ -825,6 +825,38 @@ async function main() {
         await M('mouseMoved', 5, 5);
       }
     }
+
+    // ---- 4b. A PRESS THE POINTER WALKS AWAY FROM IS AN ABORT, NOT A TAP.
+    //
+    // Pointer capture keeps the trailing `click` aimed at the bar even though
+    // the finger has left it, so a thumb that pressed a choice bar and then
+    // tried to scroll must land NOTHING: no commit (rule 1) and no review
+    // modal either — the tap meaning belongs to a short press that stayed put.
+    // Found by review on the promotion of dev (#528): the slop cancel stopped
+    // the hold but left the press's tap state armed, so the click it generated
+    // opened the confirmation modal under a scrolling thumb.
+    {
+      const b = await pointOf('button.ev-choice.beat-hold');
+      if (!b) skip('the moved-away press', 'unasked', 'no held bar to press');
+      else {
+        const M = (t, x, y, extra = {}) => cdp.send('Input.dispatchMouseEvent', { type: t, x, y, button: t === 'mouseMoved' ? 'none' : 'left', clickCount: 1, ...extra }, sessionId);
+        const before = await ev(STATE);
+        await M('mousePressed', b.x, b.y, { buttons: 1 });
+        await wait(120);
+        // Well past HOLD_POINTER_SLOP (12 local px), in two steps like a real drag.
+        await M('mouseMoved', b.x + 30, b.y + 30, { buttons: 1 });
+        await M('mouseMoved', b.x + 60, b.y + 60, { buttons: 1 });
+        await wait(120);
+        await M('mouseReleased', b.x + 60, b.y + 60, { buttons: 0 });
+        await wait(400);
+        const after = await ev(STATE);
+        ok(`a press the pointer walked away from opens no review and commits nothing`,
+          !after.reviewing && !after.committed && after.bars === before.bars && after.holdState !== 'holding',
+          `reviewing=${after.reviewing} committed=${after.committed} bars ${before.bars} -> ${after.bars} holdState=${after.holdState}`);
+        if (after.reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(250); }
+        await M('mouseMoved', 5, 5);
+      }
+    }
   }
 
   // ---- 5. IT FAILS CLOSED (Viki's gate).
