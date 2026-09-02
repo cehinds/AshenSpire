@@ -213,7 +213,7 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    classFields: ['maxHp', 'maxMana'],
     damageSchools: DAMAGE_SCHOOLS,
   };
 }
