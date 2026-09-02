@@ -686,6 +686,12 @@ try {
           const d2 = Hd.session.members.get('d2');
           ok(heldOut && Hd.scene.kind === 'complete' && Hd.scene.victory === false && d2.alive === false,
             `a lost fight with no living fighter ends the run though a seat stood outside it (held out ${heldOut}; scene ${Hd.scene.kind}/${Hd.scene.victory}; the seat outside falls with the party: alive ${d2.alive})`);
+          // AND THE QUEUE FALLS WITH IT: coop.js draws catchupQueue before it
+          // reads the scene, so a queue left standing would keep the dead seat
+          // on the reward it was holding, over the run's own end.
+          const d2View = Hd.snapshot().party.find((p) => p.id === 'd2');
+          ok(d2.catchup.length === 0 && ((d2View && d2View.catchupQueue) || []).length === 0,
+            `the fallen seat's catch-up queue is forfeited with it, so its client draws the defeat and not the queue (queue ${d2.catchup.length}, snapshot ${((d2View && d2View.catchupQueue) || []).length})`);
         }
         // A LIVE REWARD OFFER IS WITHDRAWN when catch-up fells its seat: back
         // during the fight, the seat was present when it paid out; dead, it
