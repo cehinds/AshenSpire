@@ -223,6 +223,18 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
+        // THE SAME CONTROL GOES QUIET WITHOUT display:none. visibility:hidden
+        // keeps the pile's box and class; only "rendered" as the player sees it
+        // can tell. Red by name on H3, like the display:none plant.
+        name: 'a stylesheet makes the DISCARD pile visibility:hidden and the row still measures five boxes',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat-action-row > .pile.discard { grid-area: discard; }',
+          replace: '.combat-action-row > .pile.discard { grid-area: discard; visibility: hidden; }',
+        }],
+        expectRed: /BAD\s+H3 /,
+      },
+      {
         // A DECLARED CELL STOPS BEING REACHED. The row never renders, and every
         // H-check has nothing to measure. A green here would be the same
         // confident nothing this gate printed over the retired strip.
@@ -236,7 +248,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('hintstrip-selftest: OK — 7 checks passed');
+  if (selftestCode === 0) console.log('hintstrip-selftest: OK — 8 checks passed');
   process.exit(selftestCode);
 }
 
@@ -263,7 +275,10 @@ const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 // to or removed from the row changes this list in the same commit.
 const EXPECTED_CONTROLS = (() => {
   const src = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
-  const row = src.match(/<div class="combat-action-row"[\s\S]*?<\/div>\s*<!-- Context hints/);
+  // The row is found by its class PREFIX so the H0 plant (which renames the
+  // class to make the row vanish) still parses: that plant must reach H0's
+  // empty-population red, not a thrown "could not read the template".
+  const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<!-- Context hints/);
   if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
   const classes = [...row[0].matchAll(/<(?:div|button) class="([^"]+)"/g)].map((m) => m[1])
     .filter((cls) => cls !== 'combat-action-row');
@@ -301,6 +316,10 @@ const READ = (prop) => `(() => {
   // everything by accident.
   const one = (s) => { const el = document.querySelector(s); if (!el) return null;
     if (getComputedStyle(el).display === 'none') return null; return L(el); };
+  const hiddenWhy = (c) => { const cs = getComputedStyle(c); const r = c.getBoundingClientRect();
+    return cs.display === 'none' ? 'display:none' : cs.visibility !== 'visible' ? 'visibility:' + cs.visibility
+      : !(r.width > 0 && r.height > 0) ? 'no box' : 'rendered'; };
+  const rendered = (c) => hiddenWhy(c) === 'rendered';
   const strip = document.querySelector('.combat-action-row');
   const hand = document.querySelector('.hand');
   const endTurn = strip ? strip.querySelector('.end-turn') : null;
@@ -314,9 +333,13 @@ const READ = (prop) => `(() => {
     stripFlow: strip ? { pos: getComputedStyle(strip).position, overflow: getComputedStyle(strip).overflow,
       scrollW: strip.scrollWidth, clientW: strip.clientWidth, scrollH: strip.scrollHeight, clientH: strip.clientHeight } : null,
     // The row's controls, each a "chip" for H3: its rendered box and its text.
-    chips: strip ? [...strip.children].filter((c) => getComputedStyle(c).display !== 'none')
+    // RENDERED means the player can see it: display, visibility and a real
+    // box. A pile hidden with visibility:hidden keeps its geometry and class
+    // and would otherwise satisfy every check below.
+    chips: strip ? [...strip.children].filter((c) => rendered(c))
       .map((c) => ({ text: c.textContent.replace(/\s+/g, ' ').trim(), cls: c.className, box: L(c) })) : [],
-    hiddenControls: strip ? [...strip.children].filter((c) => getComputedStyle(c).display === 'none').map((c) => c.className) : [],
+    hiddenControls: strip ? [...strip.children].filter((c) => !rendered(c))
+      .map((c) => c.className + ' (' + hiddenWhy(c) + ')') : [],
     // END TURN's key label, for H3 (inside its control) and H4 (the rebind took).
     endTurn: endTurn ? L(endTurn) : null,
     key: key ? { text: key.textContent.trim(), box: L(key) } : null,
@@ -405,13 +428,16 @@ function judge(r, cell, wide) {
   const outside = r.chips.filter((c) => !inside(c.box, r.strip));
   const keyOut = r.key && r.endTurn ? !inside(r.key.box, r.endTurn) : false;
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
-  const missing = EXPECTED_CONTROLS.filter((cls) => !r.chips.some((c) => c.cls === cls));
+  // A control is matched by CONTAINING its declared classes (END TURN gains
+  // `pulse` while it hints, the piles gain state classes), not by equality.
+  const hasAll = (live, declared) => declared.split(/\s+/).every((k) => live.split(/\s+/).includes(k));
+  const missing = EXPECTED_CONTROLS.filter((cls) => !r.chips.some((c) => hasAll(c.cls, cls)));
   if (!r.chips.length) {
     bad('H3', cell, 'the row rendered with ZERO controls — nothing was measured for clipping');
   } else if (missing.length) {
     bad('H3', cell, `${missing.length} of the ${EXPECTED_CONTROLS.length} declared controls did not render: `
       + missing.map((m) => `"${m}"`).join(', ')
-      + (r.hiddenControls.length ? ` (display:none: ${r.hiddenControls.map((m) => `"${m}"`).join(', ')})` : ' (absent from the row)'));
+      + (r.hiddenControls.length ? ` (not rendered: ${r.hiddenControls.map((m) => `"${m}"`).join(', ')})` : ' (absent from the row)'));
   } else if (!r.key) {
     bad('H3', cell, 'END TURN carries no key label (.et-key) — the label this gate measures the width of is gone');
   } else if (outside.length || keyOut || over) {
@@ -570,22 +596,24 @@ async function main() {
     await cdp.send('Target.closeTarget', { targetId });
   }
 
+  // THE NUMBER OF CHECKS MADE IS ASSERTED, not only the cells reached: every
+  // reached cell owes H1, H2, H3, H5 and H6 (H5 may resolve to unknown, which
+  // blocks above), plus H4 once per WIDE cell. The count is taken HERE, before
+  // the two H0 rows below add to it, so one silently omitted per-cell check
+  // cannot hide behind an H0 row that was counted in its place.
+  const cellChecks = checks;
+  const owedChecks = expected * 5 + SHAPES.length;
   if (reached !== expected) {
     bad('H0', 'population', `${reached} of ${expected} declared cells were reached — a check that quietly measures `
       + 'fewer cells than it declares prints a confident green over a smaller world (my own B3 hole, watched here)');
   } else {
     ok('H0', 'population', `all ${expected} declared cells reached (${SHAPES.length} shapes x ${TEXTS.length} text sizes, plus one WIDE-label cell per shape)`);
   }
-  // THE NUMBER OF CHECKS MADE IS ASSERTED TOO, not only the cells reached: every
-  // reached cell owes H1, H2, H3, H5 and H6 (H5 may resolve to unknown, which
-  // blocks above), plus H4 once per WIDE cell. Fewer checks than that is a cell
-  // that went quiet without a finding — which is the regression H0 alone missed.
-  const owedChecks = expected * 5 + SHAPES.length;
-  if (checks + unknowns < owedChecks) {
-    bad('H0', 'checks', `${checks} check(s) and ${unknowns} unknown(s) over ${expected} cells — ${owedChecks} were owed; `
+  if (cellChecks + unknowns < owedChecks) {
+    bad('H0', 'checks', `${cellChecks} per-cell check(s) and ${unknowns} unknown(s) over ${expected} cells — ${owedChecks} were owed; `
       + 'a cell stopped being exercised without saying so');
   } else {
-    ok('H0', 'checks', `${checks} check(s) + ${unknowns} unknown(s) cover the ${owedChecks} owed`);
+    ok('H0', 'checks', `${cellChecks} per-cell check(s) + ${unknowns} unknown(s) cover the ${owedChecks} owed (the two H0 rows are counted apart)`);
   }
 
   cdp.close(); await dropBrowser(); await s.close?.();
