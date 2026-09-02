@@ -408,10 +408,14 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // `forcedEncounterId`: an event's startCombat names its encounter (the
-  // Feral Shrine's keeper, the Grave's wyrm); the pool still prices the reward.
+  // Feral Shrine's keeper, the Grave's wyrm). A forced encounter brings ITS
+  // OWN pool — the wyrm is an elite, and the pool prices the reward (the elite
+  // relic, the Smithing Stone), exactly as main.js's enterCombat reads
+  // `enc.pool` for the solo player; the caller's pool is only for the roll.
   function enterCombat(pool, forcedEncounterId = null) {
     const encounterId = forcedEncounterId || rollEncounter(registries, rng, { pool, act: contentAct() });
     const enc = registries.encounters.get(encounterId);
+    if (forcedEncounterId) pool = enc.pool;
     const loop = loopCount();
     const extraHpMult = 1 + registries.balance.endless.hpPerLoop * loop; // endless cycle scaling (headcount handled by the runner)
     const combat = createCoopCombat({
