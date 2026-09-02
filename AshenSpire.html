@@ -3156,6 +3156,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    rules only add the co-op-specific bits: a seat per player, turn flags, the
    party read-out, and the throw/mend affordances. */
 .coop-note { color: var(--muted); font-size: 1.3rem; padding: 1.8rem; text-align: center; }
+.coop-event-result { max-width: 56rem; margin: 0 auto; padding: 1.2rem 1.8rem; text-align: center; line-height: 1.7; color: var(--muted); font-style: italic; }
 .coop-choices { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; margin-top: 0.8rem; }
 .coop-take { border-color: var(--gold); }
 /* LAW 4 CLAUSE 4 ON EVERY REWARD CONTROL — Viki, 2026-08-14, measured before
@@ -49604,7 +49605,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '93b89f2553';
+const SOURCE = '6caddc188f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49638,7 +49639,7 @@ const SOURCE = '93b89f2553';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1935';
+const ORDINAL = '1936';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -71611,6 +71612,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
     if (sc.kind === 'map') return !!(sc.votes && !sc.votes[id]) || !sc.votes;
     if (sc.kind === 'combat') { const p = sc.players.find((x) => x.id === id); return !!(p && p.alive && p.connected && !p.ended); }
     if (sc.kind === 'reward') return !!(sc.offers[id] && !sc.chosen[id]);
+    if (sc.kind === 'event' && sc.next) return !(sc.ack && sc.ack[id]);
     if (sc.kind === 'shrine' || sc.kind === 'event') return !(sc.done && sc.done[id]);
     return false;
   }
@@ -72258,6 +72260,21 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
   function renderEvent() {
     const done = snap.scene.done && snap.scene.done[me];
     let ev = null; try { ev = registries.events.get(snap.scene.eventId); } catch { /* unknown */ }
+    // A FIGHT FOLLOWS THE CHOICE: every seat reads its own result first and
+    // asks for it (the solo screen's STEEL YOURSELF); the host opens the
+    // shared combat once every present seat has (DEVELOPER.md's event
+    // contract — control passes to combat after resultText shows).
+    if (snap.scene.next) {
+      const text = (snap.scene.results && snap.scene.results[me]) || '';
+      const acked = !!(snap.scene.ack && snap.scene.ack[me]);
+      app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
+        <p class="coop-event-result">${esc(text)}</p>
+        ${acked ? '<div class="coop-note">Waiting for the party…</div>' : '<div class="coop-choices"><button data-ev-continue="1">STEEL YOURSELF</button></div>'}`);
+      const go = app.querySelector('[data-ev-continue]');
+      if (go) go.addEventListener('click', () => send({ t: 'eventContinue' }));
+      renderPartyBar(); wireLeave();
+      return;
+    }
     app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">${(ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => ({ c, i }))
         // Only the choices this seat's history admits (scene.open, by authored
