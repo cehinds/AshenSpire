@@ -667,7 +667,44 @@ export function flattenInline(text, where, labels = new Set()) {
 // ordinal 1 (#517 review); the shape is pinned by the selftest corpus.
 const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
-export function parseChangelog(markdown, { currentOrdinal, projecting = false } = {}) {
+/**
+ * A stamp as a COMPARABLE TUPLE, because the ordinal alone stopped ordering on
+ * 2026-09-01.
+ *
+ * Until then every build carried one global, never-resetting ordinal, so two
+ * receipts could be ordered by that number alone. Constantine's scheme puts the
+ * CANDIDATE in the third component and restarts the tail inside each one, so
+ * `0.5.4.0` is newer than `0.5.3.2` while its ordinal is lower — comparing
+ * ordinals would report every candidate boundary as history running backwards.
+ *
+ * THE FOURTH ELEMENT IS THE SCHEME ITSELF, and it is here rather than in a
+ * migration that rewrote history. A stamp still wearing the retired `-rc.N`
+ * notation is a build numbered under the old global ordinal; one without it,
+ * inside a candidate line, is numbered under the new per-candidate counter. The
+ * two number spaces are not comparable — 1956 and 0 are not 1956 apart, they
+ * are one build apart — so within one candidate the legacy stamp sorts first
+ * and its ordinal is never weighed against a new one. That is exactly true of
+ * the boundary: `0.5.0-rc.4.1956` is rc.4's first build and `0.5.4.0` is its
+ * second, and this is the only place that fact has to be encoded.
+ */
+export function stampKey(release, ordinal) {
+  const rc = /^(\d+)\.(\d+)\.(\d+)-[A-Za-z]+\.(\d+)$/.exec(release);
+  if (rc) return [Number(rc[1]), Number(rc[2]), Number(rc[4]), 0, ordinal];
+  const triple = /^(\d+)\.(\d+)\.(\d+)$/.exec(release);
+  if (!triple) return null;
+  return [Number(triple[1]), Number(triple[2]), Number(triple[3]), 1, ordinal];
+}
+
+/** Component-wise numeric compare of two stampKey tuples. */
+export function compareStamps(a, b) {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const d = (a[i] ?? 0) - (b[i] ?? 0);
+    if (d !== 0) return d < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+export function parseChangelog(markdown, { currentOrdinal, currentRelease = null, projecting = false } = {}) {
   const entries = [];
   const receipts = [];
   const labels = linkDefinitionLabels(markdown);
@@ -688,7 +725,12 @@ export function parseChangelog(markdown, { currentOrdinal, projecting = false } 
     if (!stamp && /^\d/.test(build)) {
       throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`<release>.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
     }
-    receipts.push({ where, group, date, ordinal: stamp ? Number(stamp[2]) : null });
+    receipts.push({
+      where, group, date, build,
+      ordinal: stamp ? Number(stamp[2]) : null,
+      release: stamp ? stamp[1] : null,
+      key: stamp ? stampKey(stamp[1], Number(stamp[2])) : null,
+    });
     entries.push({
       id: `pr-${pullRequest}`,
       date,
@@ -708,21 +750,36 @@ export function parseChangelog(markdown, { currentOrdinal, projecting = false } 
   const groups = [];
   for (const r of receipts) {
     if (!groups.length || groups[groups.length - 1].group !== r.group) {
-      groups.push({ group: r.group, date: r.date, ordinals: [] });
+      groups.push({ group: r.group, date: r.date, stamps: [] });
     }
-    if (r.ordinal !== null) groups[groups.length - 1].ordinals.push(r.ordinal);
+    if (r.key !== null) groups[groups.length - 1].stamps.push(r);
   }
   for (let i = 1; i < groups.length; i++) {
     const newer = groups[i - 1], older = groups[i];
     if (older.date > newer.date) {
       throw new Error(`date group '${older.group}' sits below '${newer.group}' but is newer — this file runs newest first`);
     }
-    if (newer.ordinals.length && older.ordinals.length
-      && Math.max(...older.ordinals) > Math.min(...newer.ordinals)) {
-      throw new Error(`ordinal runs backward: group '${older.group}' cites build ${Math.max(...older.ordinals)}, newer group '${newer.group}' cites ${Math.min(...newer.ordinals)} — an older merge cannot ship a newer build`);
+    if (newer.stamps.length && older.stamps.length) {
+      // Compared as whole versions, not as bare ordinals: the tail restarts
+      // inside each candidate, so `0.5.4.0` is newer than `0.5.3.2` with the
+      // lower number. The pair is named in the message because "runs backward"
+      // with two ordinals that legitimately fall was the confusing half.
+      const highestOld = older.stamps.reduce((a, b) => (compareStamps(a.key, b.key) >= 0 ? a : b));
+      const lowestNew = newer.stamps.reduce((a, b) => (compareStamps(a.key, b.key) <= 0 ? a : b));
+      if (compareStamps(highestOld.key, lowestNew.key) > 0) {
+        throw new Error(`build runs backward: group '${older.group}' cites \`${highestOld.build}\`, newer group '${newer.group}' cites \`${lowestNew.build}\` — an older merge cannot ship a newer build`);
+      }
     }
   }
   if (typeof currentOrdinal === 'number') {
+    // THE CEILING IS SCOPED TO THE CURRENT RELEASE, and it has to be from
+    // 2026-09-01: the ordinal counts builds WITHIN a release, so `2` in
+    // `0.5.3.2` and `2` in `0.5.4.2` are different builds of different
+    // candidates. Weighed against one global ceiling every historical receipt
+    // would outrun a freshly-restarted counter and the row would refuse the
+    // whole file. A receipt from an older release names a build that already
+    // happened — that is what makes it history — so only the current line is
+    // bounded, which is the only line buildordinal.json can speak for.
     // A receipt shipped IN ITS OWN PR names the build its projection will
     // produce: `--write` projects it, the rebuild that must follow bumps the
     // ordinal by exactly one, and from then on the receipt is ≤ the ordinal
@@ -733,8 +790,13 @@ export function parseChangelog(markdown, { currentOrdinal, projecting = false } 
     // build behind it, which is exactly what #310 refuses.
     const ceiling = currentOrdinal + (projecting ? 1 : 0);
     for (const r of receipts) {
-      if (r.ordinal !== null && r.ordinal > ceiling) {
-        throw new Error(`${r.where}: cites build ${r.ordinal}, but buildordinal.json says only ${currentOrdinal} builds exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
+      if (r.ordinal === null) continue;
+      // A legacy `-rc.N` stamp is numbered in the retired global space and the
+      // current counter cannot speak for it at all.
+      if (r.key !== null && r.key[3] === 0) continue;
+      if (currentRelease !== null && r.release !== currentRelease) continue;
+      if (r.ordinal > ceiling) {
+        throw new Error(`${r.where}: cites build ${r.ordinal} of release ${r.release ?? '(unknown)'}, but buildordinal.json says only ${currentOrdinal + 1} build(s) of that release exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
       }
     }
   }
@@ -753,8 +815,14 @@ function currentOrdinal() {
   catch { return undefined; } // absent in a plant root; the other #310 checks still run
 }
 
+/** The release the current ordinal counts within — the ceiling's scope. */
+function currentRelease() {
+  try { return JSON.parse(readFileSync(resolve(ROOT, 'buildordinal.json'), 'utf8')).release ?? null; }
+  catch { return null; }
+}
+
 async function checkProjection() {
-  const expected = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
+  const expected = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() });
   const got = await generatedEntries();
   if (JSON.stringify(got) !== JSON.stringify(expected)) throw new Error('generated changelog drifted from CHANGELOG.md; run --write');
   return expected;
@@ -942,7 +1010,7 @@ async function browserCheck(entries, { sourceOnly = false, screenshotDir = null 
 }
 
 async function selftest() {
-  const good = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
+  const good = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() });
   const parserPlants = [
     ['malformed receipt', '- **No metadata**'],
     ['mismatched PR', '- **Mismatch** ([#1](https://github.com/cehinds/AshenSpire/pull/2), `0.4.0.1`).'],
@@ -1482,7 +1550,7 @@ async function selftest() {
 // a boundary they cannot is how a narrow check gets cited as a wide one.
 try {
   if (process.argv.includes('--write')) {
-    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), projecting: true });
+    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease(), projecting: true });
     writeFileSync(GENERATED, generatedText(entries));
     console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
   } else if (process.argv.includes('--selftest')) {
