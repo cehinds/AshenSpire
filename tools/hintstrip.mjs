@@ -210,6 +210,19 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H6 /,
       },
       {
+        // A CONTROL GOES QUIET. A stylesheet hides the DRAW pile; the row still
+        // renders, four controls are still whole, and a gate that measured
+        // "every rendered control" would stay green over a missing action. H3
+        // asserts the declared five, so this is red by name.
+        name: 'a stylesheet hides the DRAW pile and the row measures four controls where five are declared',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
+          replace: '.combat-action-row > .pile.draw { grid-area: draw; display: none; }',
+        }],
+        expectRed: /BAD\s+H3 /,
+      },
+      {
         // A DECLARED CELL STOPS BEING REACHED. The row never renders, and every
         // H-check has nothing to measure. A green here would be the same
         // confident nothing this gate printed over the retired strip.
@@ -223,7 +236,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('hintstrip-selftest: OK — 6 checks passed');
+  if (selftestCode === 0) console.log('hintstrip-selftest: OK — 7 checks passed');
   process.exit(selftestCode);
 }
 
@@ -240,6 +253,23 @@ const TEXTS = ['S', 'M', 'XL'];
 // The wide label for H4. Nine characters against `E`'s one, and it is a real
 // key name a player can actually bind, not a stress string.
 const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
+
+// THE ROW'S CONTROLS ARE DECLARED, not discovered: the five persistent combat
+// action destinations combat.js's template puts in the row (orb, DRAW, END
+// TURN, DISCARD, EXHAUSTED). H3 asserts every one of them is present AND
+// rendered, so a stylesheet that hides a pile does not shrink the population
+// into a smaller green — the same B3 hole H0 watches for cells, watched here
+// for controls. Read out of the template rather than typed: a control added
+// to or removed from the row changes this list in the same commit.
+const EXPECTED_CONTROLS = (() => {
+  const src = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  const row = src.match(/<div class="combat-action-row"[\s\S]*?<\/div>\s*<!-- Context hints/);
+  if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
+  const classes = [...row[0].matchAll(/<(?:div|button) class="([^"]+)"/g)].map((m) => m[1])
+    .filter((cls) => cls !== 'combat-action-row');
+  if (classes.length < 2) throw new Error('hintstrip: the action row template names fewer than two controls');
+  return classes;
+})();
 
 // The furniture the row may not touch. Named, so a fix that moves the row onto
 // something else is red instead of quiet. The retired hint strip is listed so
@@ -285,7 +315,8 @@ const READ = (prop) => `(() => {
       scrollW: strip.scrollWidth, clientW: strip.clientWidth, scrollH: strip.scrollHeight, clientH: strip.clientHeight } : null,
     // The row's controls, each a "chip" for H3: its rendered box and its text.
     chips: strip ? [...strip.children].filter((c) => getComputedStyle(c).display !== 'none')
-      .map((c) => ({ text: c.textContent.replace(/\s+/g, ' ').trim(), box: L(c) })) : [],
+      .map((c) => ({ text: c.textContent.replace(/\s+/g, ' ').trim(), cls: c.className, box: L(c) })) : [],
+    hiddenControls: strip ? [...strip.children].filter((c) => getComputedStyle(c).display === 'none').map((c) => c.className) : [],
     // END TURN's key label, for H3 (inside its control) and H4 (the rebind took).
     endTurn: endTurn ? L(endTurn) : null,
     key: key ? { text: key.textContent.trim(), box: L(key) } : null,
@@ -364,16 +395,23 @@ function judge(r, cell, wide) {
     ok('H2', cell, `the row touches none of the ${seen} furniture piece(s) measured (${r.furniture.filter(([, b]) => b).map(([n]) => n).join(', ')})`);
   }
 
-  // H3 WHOLE — no control clipped, the key label inside its control, nothing
-  // overflowing. The row is a grid with `align-items: end`, so a control taller
-  // than the row's box is the row growing, not a clip: containment is measured
-  // horizontally and at the bottom edge, where the grid places them.
-  const inside = (c, box) => c.left >= box.left - 0.5 && c.right <= box.right + 0.5 && c.bottom <= box.bottom + 0.5;
+  // H3 WHOLE — every declared control present and rendered, none clipped, the
+  // key label inside its control, nothing overflowing. Containment is all four
+  // edges: a child shifted up by a transform or a relative offset does not
+  // grow the row's scroll box and would otherwise protrude into the battlefield
+  // with H2 (which measures the row's box, not the child) still green.
+  const inside = (c, box) => c.left >= box.left - 0.5 && c.right <= box.right + 0.5
+    && c.top >= box.top - 0.5 && c.bottom <= box.bottom + 0.5;
   const outside = r.chips.filter((c) => !inside(c.box, r.strip));
-  const keyOut = r.key && r.endTurn ? !inside(r.key.box, r.endTurn) || r.key.box.top < r.endTurn.top - 0.5 : false;
+  const keyOut = r.key && r.endTurn ? !inside(r.key.box, r.endTurn) : false;
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
+  const missing = EXPECTED_CONTROLS.filter((cls) => !r.chips.some((c) => c.cls === cls));
   if (!r.chips.length) {
     bad('H3', cell, 'the row rendered with ZERO controls — nothing was measured for clipping');
+  } else if (missing.length) {
+    bad('H3', cell, `${missing.length} of the ${EXPECTED_CONTROLS.length} declared controls did not render: `
+      + missing.map((m) => `"${m}"`).join(', ')
+      + (r.hiddenControls.length ? ` (display:none: ${r.hiddenControls.map((m) => `"${m}"`).join(', ')})` : ' (absent from the row)'));
   } else if (!r.key) {
     bad('H3', cell, 'END TURN carries no key label (.et-key) — the label this gate measures the width of is gone');
   } else if (outside.length || keyOut || over) {
@@ -383,7 +421,7 @@ function judge(r, cell, wide) {
       + (outside.length ? ` — first: "${outside[0].text}" at ${JSON.stringify(outside[0].box)}` : '')
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   } else {
-    ok('H3', cell, `all ${r.chips.length} controls whole and inside the row (${r.chips.map((c) => c.text).join(' / ')}), `
+    ok('H3', cell, `all ${EXPECTED_CONTROLS.length} declared controls rendered, whole and inside the row (${r.chips.map((c) => c.text).join(' / ')}), `
       + `key label "${r.key.text}" inside END TURN [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   }
 
