@@ -21,11 +21,15 @@ import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { playerWeightClass } from '../src/engine/combat.js';
+import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
   commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap } from '../src/engine/actmap.js';
+import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { executeRunEffects } from '../src/engine/actions.js';
+import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward, shrineHealAmount, applyGraceRefill,
@@ -71,6 +75,11 @@ export function setCombatStartStateForTools(state = null) {
 // Re-export so tests/other tools share the one definition (no divergent copy).
 export { coopHpMult } from '../src/engine/coopCombat.js';
 
+// THE BLOCK OF EVERY STREAM A QUEUED EVENT KEEPS FOR ITSELF: the seat's live
+// rng is moved past it when the event is queued, so the rolls the entry will
+// replay at its frozen counters are never the rolls a later node makes live
+// (see settleEvent). No choice draws anything like this many.
+const CATCHUP_RNG_RESERVE = 256;
 /** A deterministic per-member RNG stream, independent of the shared map RNG. */
 function memberRng(seed, index, counters) {
   return createRng((seed ^ ((index + 1) * 0x9e3779b1)) >>> 0, counters || {});
@@ -114,6 +123,12 @@ export function createSession({ registries, seedString, endless = false, restore
     reachableIds: restore ? restore.reachableIds.slice() : [],
     scene: restore ? restore.scene : { kind: 'lobby' },
     started: restore ? restore.started : false,
+    // THE PARTY'S CHOICE HISTORY — the shared run's own, not any one member's.
+    // A member's run records what THEY chose (their save, their catch-up);
+    // this records what the PARTY resolved at each event, so the next act's
+    // map answers to the run the party actually walked even when the
+    // earliest-joined seat was absent or dead at the event (Codex, #536).
+    history: restore ? (Array.isArray(restore.history) ? restore.history.slice() : []) : [],
     members,
   };
 
@@ -232,14 +247,40 @@ export function createSession({ registries, seedString, endless = false, restore
     return m;
   }
 
-  function setConnected(id, connected) {
+  function setConnected(id, connected, { settle = true } = {}) {
     const m = members.get(id);
     if (m) {
       m.connected = !!connected;
-      if (live) combatPresence(id, !!connected); // rescale the live fight
-      if (!connected) maybeResolveVotes(); // a leaver may complete a map vote
+      // A RETURN INTO A LIVE FIGHT WAITS ON THE SEAT'S CATCH-UP: what the
+      // queue pays out or costs — a missed event's healing, damage or lost
+      // max HP, a relic — is written to the run, and a body already in the
+      // fight would carry the old numbers and write them back over the run
+      // when the fight settles (Codex on #548). The seat joins when its
+      // queue drains (resolveCatchup); a leave is always a leave.
+      if (live && (!connected || !m.catchup.length)) combatPresence(id, !!connected); // rescale the live fight
+      if (settle) settlePresence(!!connected);
     }
     return m;
+  }
+  // SEVERAL SEATS AT ONCE — a disk resume assigns every member to a client
+  // and reconnects them together. They are flipped first and the room asked
+  // to settle ONCE afterwards: settling after the first of them, with the
+  // rest still marked absent, would advance a half-answered event past the
+  // choices and acknowledgments the others were about to give (Codex on
+  // #547).
+  function setConnectedMany(ids, connected) {
+    const out = [];
+    for (const id of ids) out.push(setConnected(id, connected, { settle: false }));
+    settlePresence(!!connected);
+    return out;
+  }
+  function settlePresence(connected) {
+    if (!connected) maybeResolveVotes(); // a leaver may complete a map vote
+    // … or an event's choices or acknowledgments — and so may a RETURN: a
+    // room everyone left after one seat had chosen settles nothing while it
+    // is empty, and the seat that comes back alone must not wait on the
+    // absent (Codex on #541).
+    settleEvent();
   }
 
   function connectedMembers() {
@@ -251,10 +292,21 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- run flow ------------------------------------------------------------
+  // THE PARTY'S CHOICE HISTORY is the session's own record (session.history):
+  // what the party resolved at each event, written when the event advances.
+  // A quest step the party took admits its gated event into the next act's
+  // Unknown nodes exactly as it does solo (main.js passes run.history; this
+  // passed nothing, so every co-op act was built on an empty history and the
+  // chain after Grave of the Nameless could never open — Codex, #528). It is
+  // not any one member's history: the earliest-joined seat can be absent or
+  // dead at the event, and the party's run still happened (Codex, #536).
+  function partyHistory() {
+    return session.history.slice();
+  }
   function buildMap() {
     // The ONE boot path (#54) — same module main.js and runsim.mjs use;
     // unknowns come back pre-rolled, seed-determined at map birth.
-    session.mapGraph = buildActMap(registries, rng, contentAct());
+    session.mapGraph = buildActMap(registries, rng, contentAct(), null, { history: partyHistory() });
     session.floor = 0;
     session.cursorId = null;
     session.reachableIds = session.mapGraph.startIds.slice();
@@ -377,12 +429,24 @@ export function createSession({ registries, seedString, endless = false, restore
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
+      // THE SEAT'S POISE THRESHOLD, derived the way the solo engine derives it
+      // (combat.js: the armour rule over the loadout, relics and tiers). The
+      // co-op engine takes poiseMax as given and defaults it to ZERO, so an
+      // upgraded armour's threshold bought at the Shrine did nothing here
+      // while its weight still priced the seat's dodge (Codex, #528).
+      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {} }).value,
     };
   }
 
-  function enterCombat(pool) {
-    const encounterId = rollEncounter(registries, rng, { pool, act: contentAct() });
+  // `forcedEncounterId`: an event's startCombat names its encounter (the
+  // Feral Shrine's keeper, the Grave's wyrm). A forced encounter brings ITS
+  // OWN pool — the wyrm is an elite, and the pool prices the reward (the elite
+  // relic, the Smithing Stone), exactly as main.js's enterCombat reads
+  // `enc.pool` for the solo player; the caller's pool is only for the roll.
+  function enterCombat(pool, forcedEncounterId = null) {
+    const encounterId = forcedEncounterId || rollEncounter(registries, rng, { pool, act: contentAct() });
     const enc = registries.encounters.get(encounterId);
+    if (forcedEncounterId) pool = enc.pool;
     const loop = loopCount();
     const extraHpMult = 1 + registries.balance.endless.hpPerLoop * loop; // endless cycle scaling (headcount handled by the runner)
     const combat = createCoopCombat({
@@ -739,24 +803,237 @@ export function createSession({ registries, seedString, endless = false, restore
     return { ok: true };
   }
 
+  function openChoicesFor(eventId, m) {
+    let def = null;
+    try { def = registries.events.get(eventId); } catch { def = null; }
+    const authored = def ? eventChoicesWithHistory(def) : [];
+    if (!authored.length) return null; // an event with no history contract: every authored choice
+    return availableEventChoices(authored, m.run).map((row) => row.index);
+  }
   function enterEvent(eventId) {
-    session.scene = { kind: 'event', eventId, done: {} };
+    // EACH MEMBER'S OPEN CHOICES RIDE THE SCENE, by authored index, so the
+    // client draws only what this seat's history admits instead of a choice
+    // the host will refuse with no visible answer (Codex, #536). null = no
+    // history contract on this event, every authored choice is open.
+    const open = {};
+    for (const m of members.values()) open[m.id] = openChoicesFor(eventId, m);
+    session.scene = { kind: 'event', eventId, done: {}, picks: {}, open };
     return { ok: true };
   }
-  function eventChoice(memberId /*, choiceIndex */) {
+  function eventChoice(memberId, choiceIndex = 0) {
     if (session.scene.kind !== 'event') return { ok: false, error: 'no event open' };
+    const m = members.get(memberId);
+    if (!m) return { ok: false, error: 'unknown member' };
+    // ONLY A SEAT IN THE ROOM CHOOSES: a fallen or absent member's choice
+    // would otherwise be recorded, and an earlier join index could make it
+    // the party's canonical branch over the players keeping the run alive.
+    if (!m.connected || !m.alive) return { ok: false, error: 'you are not in this event' };
+    // A SAVE FROM BEFORE picks/open EXISTED resumes paused on an event with
+    // neither; they are initialised here rather than thrown on.
+    if (!session.scene.picks) session.scene.picks = {};
+    if (!session.scene.open) { session.scene.open = {}; for (const mm of members.values()) session.scene.open[mm.id] = openChoicesFor(session.scene.eventId, mm); }
+    if (session.scene.done[memberId]) return { ok: true, repeated: true };
+    // THE CHOICE IS RECORDED, by its stable id, in the member's own history —
+    // the same door the solo event screen walks (event.js → recordEventChoice)
+    // — so a quest step taken in co-op is a quest step. The index is against
+    // the event's authored choice list (what coop.js draws); a choice this
+    // member's history does not yet admit is refused rather than recorded.
+    let def = null;
+    try { def = registries.events.get(session.scene.eventId); } catch { def = null; }
+    const authored = def ? eventChoicesWithHistory(def) : [];
+    if (authored.length) {
+      const choice = authored[Number(choiceIndex)];
+      if (!choice) return { ok: false, error: 'bad choice index' };
+      // availableEventChoices answers { choice, index } rows over the authored list.
+      if (!availableEventChoices(authored, m.run).some((row) => row.choice.id === choice.id)) return { ok: false, error: 'that choice is not open to you yet' };
+      // AND AFFORDABLE: the authored `requires` (the solo event screen's
+      // `meets`) is checked before anything is recorded, or a member with no
+      // cinders could put "returned the cinders" into the party's history.
+      if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
+        return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
+      }
+      // THE TRANSACTION HAPPENS BEFORE THE FACT IS RECORDED — the same DSL
+      // and the same order as the solo event screen and runsim.mjs
+      // (executeRunEffects, then recordEventChoice). Recording "gave the
+      // cinders" with the purse untouched and no relic granted put a fact in
+      // the party's history that never occurred (Codex, #536). The member's
+      // own rng stream prices it, as their rewards are rolled.
+      executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
+      // A CHOICE CAN KILL. An offering at 1 HP leaves the run at 0; the seat
+      // falls the way it falls in combat (m.alive), so it is broadcast fallen
+      // and enters no later node at 0 HP (Codex, #536).
+      if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; }
+      // recordEventChoice reads the run's own act/floor/node for the record;
+      // a member's run rides the session's cursor, so it is stamped from it.
+      m.run.actNumber = session.actNumber;
+      m.run.floor = session.floor;
+      m.run.mapNodeId = session.cursorId ?? null;
+      recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
+      session.scene.picks[memberId] = choice.id;
+      // The choice's authored result, for this seat to read before the room
+      // moves on (shown by coop.js when a fight follows).
+      if (!session.scene.results) session.scene.results = {};
+      session.scene.results[memberId] = choice.resultText || '';
+    }
     // S5: apply the real event effects per member; S2 records participation.
     session.scene.done[memberId] = true;
+    return settleEvent();
+  }
+
+  // THE EVENT SETTLES WHEN EVERY PRESENT SEAT HAS SPOKEN — a choice, or the
+  // acknowledgment a pending fight waits on — and it is asked again whenever
+  // presence changes (setConnected), as the map vote is: a seat that leaves
+  // mid-room must not leave the others waiting on a button they have
+  // already pressed (Codex on #545). Nothing settles into an empty room —
+  // unless the room is empty because the choice felled everyone, which is
+  // the defeat the resolution below pronounces.
+  function settleEvent() {
+    if (session.scene.kind !== 'event') return { ok: true };
+    // A SAVE FROM BEFORE picks/done EXISTED may be settled by a presence
+    // change before any choice initialises them (a resume with one seat
+    // answered and another absent); they are empty maps here rather than a
+    // throw that aborts the resume (Codex on #549).
+    if (!session.scene.picks) session.scene.picks = {};
+    if (!session.scene.done) session.scene.done = {};
+    if (!connectedMembers().length && livingMembers().length) return { ok: true, waiting: 0 };
+    if (session.scene.next) {
+      const ack = session.scene.ack || (session.scene.ack = {});
+      const waiting = connectedMembers().filter((mm) => !ack[mm.id]);
+      if (waiting.length) return { ok: true, waiting: waiting.length };
+      const next = session.scene.next;
+      for (const mm of members.values()) mm.run.combatEntered = null;
+      if (next.kind === 'combat') { enterCombat('normal', next.encounterId); return { ok: true, combat: next.encounterId }; }
+      advanceFromNode();
+      return { ok: true };
+    }
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
-    if (!waiting.length) advanceFromNode();
-    return { ok: true };
+    if (waiting.length) return { ok: true, waiting: waiting.length };
+    let def = null;
+    try { def = registries.events.get(session.scene.eventId); } catch { def = null; }
+
+    // THE FIGHT THE PARTY BOUGHT, named first (startCombat sets
+    // run.combatEntered, the door main.js and runsim.mjs consume): the
+    // earliest-joined LIVING seat whose committed pick started a fight names
+    // the party's encounter (one fight, one room) — connected or not: a seat
+    // that chose the fight, kept the choice's reward and then dropped does
+    // not spare the party the encounter it bought (Codex on #541).
+    const fighter = livingMembers().sort((a, b) => a.index - b.index).find((mm) => mm.run.combatEntered);
+    const forced = fighter ? (typeof fighter.run.combatEntered === 'string' ? fighter.run.combatEntered : fighter.run.combatEntered.encounterId) : null;
+    // THE ABSENT KEEP THEIR TURN. A living seat away from the room while it
+    // settled chose nothing here; the node is logged into its catch-up queue
+    // with the choices its history admitted, to be made on return the way a
+    // missed reward is — MULTIPLAYER.md's "retroactive catch-up as a series"
+    // (Codex on #541). A seat that chose and then dropped keeps its choice
+    // and owes nothing; the queue is served by resolveCatchup. A CHOICE THAT
+    // STARTS A FIGHT is withheld from the entry unless the party fought that
+    // very encounter: replayed alone, the Feral Shrine's offering would pay
+    // its relic with no fight behind it — the free power the catch-up rule
+    // forbids (Codex on #548). Behind the party's fight it is open: the
+    // fight was fought, and the seat's combat reward rides its own entry.
+    const authoredNow = def ? eventChoicesWithHistory(def) : [];
+    const fightless = (idx) => { const c = authoredNow[idx]; return !c || !(c.effects || []).some((e) => e.op === 'startCombat' && e.encounterId !== forced); };
+    for (const mm of livingMembers()) {
+      if (mm.connected || session.scene.picks[mm.id] || session.scene.done[mm.id]) continue;
+      // A SAVE FROM BEFORE scene.open EXISTED carries no open list for the
+      // seat; it is rebuilt from the seat's history here (openChoicesFor,
+      // as enterEvent builds it) rather than stored as "every choice", which
+      // would let the fight filter be bypassed by the old save shape
+      // (Codex on #549). null is only an event with no history contract,
+      // whose replay applies nothing.
+      const openNow = session.scene.open && Array.isArray(session.scene.open[mm.id]) ? session.scene.open[mm.id] : openChoicesFor(session.scene.eventId, mm);
+      // THE MOMENT IS FROZEN WITH THE ENTRY: the seat's rng position, so the
+      // choice's random effects roll what they would have rolled here rather
+      // than after later nodes have spent the stream; and its purse, so a
+      // priced choice it could not afford here is not bought with cinders a
+      // later missed reward paid out (Codex on #548).
+      mm.catchup.push({
+        type: 'event', eventId: session.scene.eventId,
+        open: Array.isArray(openNow) ? openNow.filter(fightless) : null,
+        act: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null,
+        rng: mm.rng.getCounters(), purse: mm.run.cinders,
+      });
+      // AND THE LIVE STREAM MOVES PAST THE ENTRY'S BLOCK: rolled on the same
+      // counters, a later missed reward drew the very relic the event would,
+      // and the replay then lost one of the two to the duplicate (Codex on
+      // #548). The seat's rng is rebuilt on its own seed, every stream
+      // advanced by CATCHUP_RNG_RESERVE; nothing else holds the old object.
+      const reserved = {}; for (const [k, v] of Object.entries(mm.rng.getCounters())) reserved[k] = (v + CATCHUP_RNG_RESERVE) >>> 0;
+      mm.rng = memberRng(seed, mm.index, reserved);
+    }
+
+    // THE PARTY'S RECORD: the choice of the earliest-joined member who was
+    // PRESENT and chose (the seat fork-voting ties break toward), written to
+    // the session's own history so the next map answers to it whoever was
+    // in the room. Every member who answered keeps their own record above.
+    // The picker is the earliest-joined seat that chose and is still in
+    // the room — a seat the choice itself just felled is recorded in its
+    // own run but does not speak for the party.
+    const picker = [...members.values()].filter((mm) => mm.connected && mm.alive && session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0]
+      || [...members.values()].filter((mm) => session.scene.picks[mm.id]).sort((a, b) => a.index - b.index)[0];
+    if (picker && def) {
+      recordEventChoice({ history: session.history, actNumber: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null },
+        { eventId: def.id, choiceId: session.scene.picks[picker.id] });
+    }
+    // EVERYONE FELL TO THE CHOICE: the run is over, the same sentence the
+    // combat path says.
+    if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
+    // AN EVENT THAT STARTS A FIGHT opens the SHARED combat on the named
+    // encounter (`forced`, above) before the party advances; the flag is
+    // consumed on every member so no save carries a stale one.
+    if (forced) {
+      // THE RESULT SHOWS BEFORE THE FIGHT. DEVELOPER.md's event contract
+      // hands control to combat only after the choice's resultText has been
+      // read, and the solo screen asks for STEEL YOURSELF; opening the
+      // shared combat here would broadcast every client straight into it
+      // (Codex on #541). The scene stays an event with the fight pending
+      // until every present seat has acknowledged (eventContinue). The
+      // encounter lives in scene.next ALONE from here: the transient
+      // run.combatEntered strings are consumed now, because this pending
+      // state is broadcast and saved, and a save whose run carries the
+      // effect's string where the schema wants an object cannot be restored
+      // (Codex on #545).
+      for (const mm of members.values()) mm.run.combatEntered = null;
+      session.scene.next = { kind: 'combat', encounterId: forced };
+      session.scene.ack = {};
+      return { ok: true, pending: 'combat', combat: forced };
+    }
+    // AND BEFORE THE MAP, for every other choice: the solo event screen shows
+    // the choice's resultText and moves on when the player asks; advancing
+    // here broadcast the map in place of the outcome, so a co-op party never
+    // read what its choice did (Codex on #541). The scene stays an event
+    // with the advance pending until every present seat has continued.
+    for (const mm of members.values()) mm.run.combatEntered = null;
+    session.scene.next = { kind: 'advance' };
+    session.scene.ack = {};
+    return { ok: true, pending: 'advance' };
+  }
+
+  // A present seat has read its result; when every present seat has, the
+  // pending fight opens on the encounter the party bought, or the party
+  // advances from the node.
+  function eventContinue(memberId) {
+    if (session.scene.kind !== 'event' || !session.scene.next) return { ok: false, error: 'nothing to continue from' };
+    const m = members.get(memberId);
+    if (!m) return { ok: false, error: 'unknown member' };
+    if (!m.connected || !m.alive) return { ok: false, error: 'you are not in this event' };
+    if (!session.scene.ack) session.scene.ack = {};
+    session.scene.ack[memberId] = true;
+    return settleEvent();
   }
 
   // ---- catch-up replay (S4 foundation) -------------------------------------
   // On reconnect, hand back the member's queued missed choices as a series.
+  // THE QUEUE DRAINED INTO A LIVE FIGHT: the seat joins it now, with the run
+  // the replay wrote (its join was held back in setConnected).
+  function drained(m) {
+    if (!m.catchup.length && live && m.connected && m.alive) combatPresence(m.id, true);
+  }
   function resolveCatchup(memberId, index, pick) {
     const m = members.get(memberId);
     if (!m || !m.catchup.length) return { ok: false, error: 'nothing to catch up' };
+    // A FALLEN SEAT REPLAYS NOTHING: the live flow enters a dead seat into no
+    // later node, so its queue is owed nothing either (Codex on #548).
+    if (!m.alive) { m.catchup.length = 0; return { ok: false, error: 'a fallen seat has nothing to catch up' }; }
     const item = m.catchup[index];
     if (!item) return { ok: false, error: 'bad catch-up index' };
     if (item.type === 'reward') {
@@ -764,12 +1041,108 @@ export function createSession({ registries, seedString, endless = false, restore
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
-      if (pick && pick.takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) m.run.relics.push(offer.relicId);
+      // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
+      // entry can have granted the very relic the offer rolled (rolled against
+      // the relics the seat held then). The seat is owed a relic, not this
+      // one: a substitute is rolled against the relics in hand now (Codex on
+      // #548).
+      if (pick && pick.takeRelic && offer.relicId) {
+        const id = m.run.relics.includes(offer.relicId) ? rollRelicReward(registries, m.rng, m.run.relics, offer.pool === 'boss' ? { rarities: ['boss'] } : {}) : offer.relicId;
+        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+      }
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
     } else if (item.type === 'treasure') {
-      if (pick && pick.takeRelic && item.relicId && !m.run.relics.includes(item.relicId)) m.run.relics.push(item.relicId);
+      if (pick && pick.takeRelic && item.relicId) {
+        const id = m.run.relics.includes(item.relicId) ? rollRelicReward(registries, m.rng, m.run.relics) : item.relicId;
+        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+      }
+    } else if (item.type === 'event') {
+      // THE MISSED EVENT IS CHOSEN NOW, through the door a live choice walks
+      // (eventChoice), against THE OPTIONS FROZEN IN THE ENTRY: the choices
+      // the seat's history admitted when the party met the event are what
+      // the client offers, and what is honoured here — not the history as
+      // the earlier entries of this replay series have since rewritten it,
+      // which would refuse a button the entry itself put on screen (Codex on
+      // #548; MULTIPLAYER.md, "the exact options that were rolled"). Then
+      // affordable, and its effects run before the fact is recorded —
+      // stamped with the node where the party met it, so the record reads as
+      // the party's does. An event with no history contract, like a live
+      // one, applies nothing and is dropped.
+      let def = null;
+      try { def = registries.events.get(item.eventId); } catch { def = null; }
+      const authored = def ? eventChoicesWithHistory(def) : [];
+      // THE CHOICE IS COMMITTED HERE, THEN ITS RESULT IS READ: the entry stays
+      // at the head of the queue, marked done with the choice and its
+      // resultText, until the seat continues — the authoritative state the
+      // client draws, so a reload between the choice and CONTINUE shows the
+      // result again rather than the choices (Codex on #549). A second
+      // choice on a done entry is refused.
+      if (item.done) {
+        if (!(pick && pick.continue)) return { ok: false, error: 'read the result first' };
+        m.catchup.splice(index, 1);
+        drained(m);
+        return { ok: true, remaining: m.catchup.length };
+      }
+      if (authored.length) {
+        const idx = Number(pick && pick.choiceIndex);
+        const choice = authored[idx];
+        if (!choice) return { ok: false, error: 'bad choice index' };
+        if (Array.isArray(item.open) && !item.open.includes(idx)) return { ok: false, error: 'that choice was not open to you' };
+        // AFFORDABLE THEN AND NOW: the purse frozen with the entry and the
+        // purse in hand both meet the price (Codex on #548).
+        const purse = Math.min(m.run.cinders || 0, typeof item.purse === 'number' ? item.purse : (m.run.cinders || 0));
+        if (choice.requires && typeof choice.requires.cinders === 'number' && purse < choice.requires.cinders) {
+          return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
+        }
+        // ROLLED AT THE EVENT'S OWN POSITION: a detached rng on the seat's seed,
+        // set to the counters frozen with the entry, so the choice's random
+        // effects are those the seat would have met in the room; the seat's
+        // live stream is not moved (Codex on #548).
+        const eventRng = item.rng ? createRng(m.rng.seed, item.rng) : m.rng;
+        executeRunEffects({ run: m.run, registries, rng: eventRng }, choice.effects || []);
+        // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
+        // the party did not meet is not in the entry (settleEvent) — and was
+        // fought while this seat was away; a returning seat fights no room
+        // alone, so the flag is consumed here as settleEvent consumes it.
+        m.run.combatEntered = null;
+        // A CHOICE CAN KILL here too: the seat falls, the rest of its queue
+        // is forfeit (the live flow enters a dead seat into no later node),
+        // and a party with nobody left is over, as the live settlement says
+        // (Codex on #548).
+        if (m.run.hp <= 0) {
+          m.run.hp = 0; m.alive = false; m.catchup.length = 0;
+          if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; live = null; }
+          // A SEAT THAT FELL WHILE THE ROOM WAITED ON IT no longer holds the
+          // room: a returning seat is an outstanding acknowledgment (or
+          // choice) the moment it reconnects, and its death here must settle
+          // the event as a leave would, or the seats that have already
+          // continued wait on a button the dead cannot press (Codex on #549).
+          else if (session.scene.kind === 'event') settleEvent();
+          // AND ITS LIVE REWARD OFFER IS WITHDRAWN: a seat back during a fight
+          // with its queue standing is present when the fight pays out, so the
+          // reward scene holds an offer for it; dead, it can claim nothing and
+          // must hold nobody (Codex on #548).
+          else if (session.scene.kind === 'reward' && session.scene.offers && session.scene.offers[m.id]) {
+            delete session.scene.offers[m.id]; if (session.scene.chosen) delete session.scene.chosen[m.id];
+            const waiting = Object.keys(session.scene.offers).filter((id) => { const mm = members.get(id); return mm && mm.connected && !session.scene.chosen[id]; });
+            if (!waiting.length) closeReward();
+          }
+        }
+        m.run.actNumber = item.act;
+        m.run.floor = item.floor;
+        m.run.mapNodeId = item.mapNodeId ?? null;
+        recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
+        // Then the seat snaps back to the party's position.
+        m.run.actNumber = session.actNumber;
+        m.run.floor = session.floor;
+        m.run.mapNodeId = session.cursorId ?? null;
+        if (!m.alive) return { ok: true, remaining: m.catchup.length, resultText: choice.resultText || '' }; // the queue is forfeit; nothing to continue
+        item.done = { choiceIndex: idx, resultText: choice.resultText || '' };
+        return { ok: true, remaining: m.catchup.length, pending: true, resultText: item.done.resultText };
+      }
     }
     m.catchup.splice(index, 1);
+    drained(m);
     return { ok: true, remaining: m.catchup.length };
   }
 
@@ -821,6 +1194,7 @@ export function createSession({ registries, seedString, endless = false, restore
       reachableIds: session.reachableIds.slice(),
       scene: session.scene,
       started: session.started,
+      history: session.history.slice(),
       mapGraph: session.mapGraph,
       rng: rng.getCounters(),
       order,
@@ -881,10 +1255,10 @@ export function createSession({ registries, seedString, endless = false, restore
     session,
     /** The restore receipts: [{ id, name, index, reason }] — never the bytes. */
     refusedMembers: () => refused.map((r) => ({ id: r.id, name: r.name, index: r.index, reason: r.reason })),
-    addMember, setConnected, connectedMembers, livingMembers,
+    addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
-    chooseReward, shrineChoice, eventChoice, resolveCatchup,
+    chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },

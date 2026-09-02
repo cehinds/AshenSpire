@@ -49,7 +49,7 @@ const cards = authoredCards.map((card) => {
 });
 
 export const contentBundle = {
-  version: '0.5.0-rc.1',
+  version: '0.5.0-rc.2',
   balance,
   cards,
   relics,

@@ -1,7 +1,7 @@
 # Versioning — when each segment increments
 
 The in-game stamp is `BUILD <MAJOR>.<MINOR>.<PATCH>.<ordinal> · src <digest>`
-(currently `0.5.0-rc.1.<ordinal>`). This document is the decision workflow for the
+(currently `0.5.0-rc.2.<ordinal>`). This document is the decision workflow for the
 three authored segments. It changes no machinery: the one home for the string
 is `src/buildversion.js`, the release triple lives only in
 `src/content/index.js` (`contentBundle.version`), and
@@ -94,8 +94,8 @@ The answer is semver's own pre-release segment, not a bent ladder:
   milestone in flight; it moves only when that answer changes.
 
 The one home and the checks are unchanged: `contentBundle.version` holds
-`0.5.0-rc.1`, the stamp reads `BUILD 0.5.0-rc.1.<ordinal> · src <digest>`, the
-dist file is `AshenSpire-0.5.0-rc.1.<ordinal>.html`, and older CHANGELOG
+`0.5.0-rc.2`, the stamp reads `BUILD 0.5.0-rc.2.<ordinal> · src <digest>`, the
+dist file is `AshenSpire-0.5.0-rc.2.<ordinal>.html`, and older CHANGELOG
 receipts keep their `0.4.0.<ordinal>` stamps — the projector accepts any
 `<release>.<ordinal>` and enforces the ordinal column, because receipts are
 history and a bump must never make them unparseable.
