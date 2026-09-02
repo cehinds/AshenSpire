@@ -4378,6 +4378,30 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         `hostile shape seed ${s2}: elite on floor ${first} with no rest below it`);
     }
 
+    // ---- AN ELITE THAT NEVER TOUCHES THE RELAX PATH STILL GETS ITS REST.
+    // The promise was enforced inside relaxPlace, which runs only when the
+    // rolls left the act short of minElites — so a FIXED Elite rank (typeOnce
+    // assigns it before any rule runs) that satisfies the count on its own
+    // meant the rest was never forced. Measured at 10 of 40 maps breaking the
+    // promise before the fix, 0 of 40 after, which is why the guarantee is now
+    // a final step on every exit rather than one branch of the generator.
+    const fixedElite = { ...base, floorRules: { ...base.floorRules, minElites: 1,
+      fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 6, type: 'elite' }] } };
+    const fePlan = resolveFloorPlan(fixedElite);
+    eq(fePlan.errors.length, 0, `a fixed Elite with rest floors beneath it resolves — ${JSON.stringify(fePlan.errors)}`);
+    for (let s2 = 0; s2 < 40; s2++) {
+      const all = Object.values(generateActMap({ config: fixedElite, rng: createRng(sweepSeed(s2)) }).nodes);
+      const firstElite = Math.min(...all.filter((n) => n.type === 'elite').map((n) => n.floor));
+      assert(all.some((n) => n.type === 'shrine' && n.floor < firstElite),
+        `fixed-elite act seed ${s2}: elite on floor ${firstElite} with no rest below it`);
+    }
+    // AND THE ONE ARRANGEMENT THE GENERATOR CANNOT FIX IS REFUSED BY NAME: a
+    // fixed Elite with no floor beneath it able to hold a rest.
+    const feBad = resolveFloorPlan({ ...base, floorRules: { ...base.floorRules,
+      fixed: [{ at: 'first', type: 'elite' }, { at: 'fraction', of: 0.64, type: 'treasure' }] } });
+    assert(feBad.errors.some((e) => e.key === 'floorRules.fixed' && /restBeforeElite/.test(e.msg)),
+      `a fixed Elite on floor 1 is refused and named — got ${JSON.stringify(feBad.errors)}`);
+
     // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.

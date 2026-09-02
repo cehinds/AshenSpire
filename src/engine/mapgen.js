@@ -176,6 +176,7 @@ export function generateActMap({ config, rng }) {
     typeOnce(nodes, rollable, fixed, rules, config.typeWeights, rng, floors);
     if (countType(nodes, 'elite') >= plan.minElites &&
         countType(nodes, 'merchant') >= plan.minMerchants) {
+      ensureRestBeforeElite(nodes, rules, rng);
       return finish(nodes, starts, shrine.id, boss.id, floors, cols);
     }
   }
@@ -183,6 +184,7 @@ export function generateActMap({ config, rng }) {
   // monster nodes (weakest constraint gives way; counts are a hard promise).
   relaxPlace(nodes, 'elite', plan.minElites, plan, rng);
   relaxPlace(nodes, 'merchant', plan.minMerchants, plan, rng);
+  ensureRestBeforeElite(nodes, rules, rng);
   return finish(nodes, starts, shrine.id, boss.id, floors, cols);
 }
 
@@ -284,6 +286,35 @@ function relaxPlace(nodes, type, min, rules, rng) {
     eligible.splice(idx, 1)[0].type = type;
     have++;
   }
+}
+
+/**
+ * THE PROMISE, KEPT ON EVERY EXIT PATH AND NOT ONLY THE RELAX ONE.
+ *
+ * The first cut opened the rest inside `relaxPlace`, which runs only when the
+ * rolls left the act short of `minElites` — so an Elite arriving any OTHER way
+ * got no rest. Two ways in, both real: a `fixed` Elite rank (typeOnce assigns
+ * it before any rule runs, so it bypasses the gate and the roll-time bar), and
+ * an act whose count is already met when the fixed Elite lands. A guarantee
+ * enforced on one branch of the generator is a tendency.
+ *
+ * So it runs last, on both returns, and asks the finished graph the same
+ * question `tools/mapplan.mjs` and the tests ask it: is there an Elite with no
+ * Shrine on any earlier floor? `resolveFloorPlan` refuses at boot the one
+ * arrangement this cannot fix — a fixed Elite with no floor beneath it able to
+ * hold a rest — so the pool below is empty only in an act that was refused.
+ */
+function ensureRestBeforeElite(nodes, rules, rng) {
+  if (!rules.restBeforeElite) return;
+  const firstElite = lowestFloorOf(nodes, 'elite');
+  if (!Number.isFinite(firstElite)) return;
+  if (lowestFloorOf(nodes, 'shrine') < firstElite) return;
+  const below = Object.values(nodes).filter(
+    (n) => n.floor < firstElite && rules.restFloors.includes(n.floor)
+  );
+  const monsters = below.filter((n) => n.type === 'monster');
+  const pool = monsters.length ? monsters : below;
+  if (pool.length) pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
 }
 
 function lowestFloorOf(nodes, type) {

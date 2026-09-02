@@ -406,11 +406,33 @@ const KNOWN_BAD = [
   // land, and force-placing it onto a floor another rule claims is exactly the
   // quiet fallback this corpus exists to keep out.
   ['restBeforeElite with no floor left to hold the rest', { ...BASE, floorRules: { ...BASE.floorRules, noShrineBefore: { at: 'fraction', of: 0.43 }, noEliteBefore: { at: 'fraction', of: 0.43 } } }],
+  // A FIXED ELITE OUTRANKS EVERY GATE. `typeOnce` assigns a fixed rank before
+  // any rule runs, so this one put an Elite on floor 1 with the first Shrine
+  // possible at 3 — measured at 2 of 2 seeds before the resolver refused it,
+  // against a promise SPEC §6 states without qualification. The generator
+  // cannot fix this one for itself, which is why it is a boot error.
+  ['a fixed Elite with no floor beneath it for the rest', { ...BASE, floorRules: { ...BASE.floorRules, fixed: [{ at: 'first', type: 'elite' }, { at: 'fraction', of: 0.64, type: 'treasure' }] } }],
   // VIKI'S WITHHOLD, #anchors branch: the schema said opt, the resolver said
   // nothing, and resolveUnknownNode THREW at act build — a clean boot and a
   // crash at runtime, on the key this branch itself moved. The corpus went
   // green on it, so it is a corpus gap too, and this row is its fixture.
   ['unknownWeights missing entirely', (() => { const { unknownWeights, ...rest } = BASE; return rest; })()],
+];
+
+// MUST-ACCEPT, the other face of the corpus above: a checker that reds
+// everything is not a checker. The shipped act was the only control here, and
+// one control cannot catch a refusal that fires on a LEGAL arrangement — which
+// is exactly what the first cut of `restBeforeElite` did to the row below.
+const FLOOR_MUST_ACCEPT = [
+  ['the shipped mapConfigs[1] (the control)', BASE],
+  // A FIXED SHRINE IS ALREADY THE REST. Gates at 3 and 4 leave one floor
+  // between them and a fixed Shrine rank claims it — which the first cut read
+  // as a COLLISION ("every floor between is claimed by a fixed rank") and
+  // refused, though that config keeps the promise on every seed before the
+  // generator rolls anything.
+  ['a fixed Shrine on the only floor between the gates', { ...BASE, floorRules: { ...BASE.floorRules,
+    noShrineBefore: { at: 'floor', index: 3 }, noEliteBefore: { at: 'floor', index: 4 },
+    fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 3, type: 'shrine' }] } }],
 ];
 
 // THE SECOND CORPUS, AND IT DID NOT EXIST — Vira, #107. Every row above
@@ -579,10 +601,18 @@ function selftest() {
     if (ok) red++;
     console.log(`  ${ok ? 'RED ' : 'GREEN'}  ${label.padEnd(42)} ${ok ? errors.map((e) => `${e.key}: ${e.msg}`)[0] : '<-- ACCEPTED, nothing named'}`);
   }
-  // A GREEN CONTROL, or "everything is red" proves only that the check is
-  // broken in the other direction. The shipped config must stay clean.
-  const clean = resolveFloorPlan(mapConfigs[1]).errors.length === 0;
-  console.log(`\n  ${clean ? 'CLEAN' : 'RED  '}  shipped mapConfigs[1] (the control — a checker that reds everything is not a checker)`);
+  // THE GREEN FACE, or "everything is red" proves only that the check is broken
+  // in the other direction. One of these is the shipped act; the other is a
+  // legal arrangement an over-eager refusal turned away.
+  let fclean = 0;
+  console.log('');
+  for (const [label, cfg] of FLOOR_MUST_ACCEPT) {
+    const errs = resolveFloorPlan(cfg).errors;
+    const ok = errs.length === 0;
+    if (ok) fclean++;
+    console.log(`  ${ok ? 'CLEAN' : 'RED  '}  ${label.padEnd(42)} ${ok ? '' : `<-- REFUSED, and it must not be: ${errs[0].key}: ${errs[0].msg.slice(0, 80)}`}`);
+  }
+  const clean = fclean === FLOOR_MUST_ACCEPT.length;
 
   console.log(`\n  --- viewRefusals: the view knobs, and BOTH faces of each edge ---\n`);
   let vred = 0;
@@ -684,10 +714,10 @@ function selftest() {
   console.log(`\n  ${pass ? `PASS — ${red}/${KNOWN_BAD.length} floor-rule known-bad red, ${vred}/${VIEW_KNOWN_BAD.length} view known-bad red, ${vclean}/${VIEW_MUST_ACCEPT.length} must-accept clean, `
     + `${ared}/${AIR_KNOWN_BAD.length} air known-bad red (+ the absent entry), ${aclean}/${AIR_MUST_ACCEPT.length} air must-accept clean, `
     + `${plants}/${PAIR_PLANTS.length} planted pairs behaved, `
-    + `${props}/${PROPERTIES.length} properties hold, the formula anchor holds, both validator doors wired, control clean`
+    + `${props}/${PROPERTIES.length} properties hold, the formula anchor holds, both validator doors wired, ${fclean}/${FLOOR_MUST_ACCEPT.length} floor must-accept clean`
     : `FAIL — floor ${red}/${KNOWN_BAD.length} · view ${vred}/${VIEW_KNOWN_BAD.length} · must-accept ${vclean}/${VIEW_MUST_ACCEPT.length} · `
     + `air ${ared}/${AIR_KNOWN_BAD.length} · air must-accept ${aclean}/${AIR_MUST_ACCEPT.length} · plants ${plants}/${PAIR_PLANTS.length} · properties ${props}/${PROPERTIES.length} · `
-    + `anchor ${anchor.ok ? 'holds' : 'BROKE'} · validators ${wired ? 'wired' : 'LOOSE'}/${airWired ? 'wired' : 'LOOSE'} · control ${clean ? 'clean' : 'DIRTY'}`}`);
+    + `anchor ${anchor.ok ? 'holds' : 'BROKE'} · validators ${wired ? 'wired' : 'LOOSE'}/${airWired ? 'wired' : 'LOOSE'} · floor must-accept ${fclean}/${FLOOR_MUST_ACCEPT.length}`}`);
   console.log(`\n  BOUNDARY — the horizontal rows all route through \`maxFanoutSpan\`, so a formula that`);
   console.log(`  UNDER-reports greens every one of them at once. The generative anchor above closes that`);
   console.log(`  on the shipped act shape only; \`node tools/mapplan.mjs --spans\` is the grid, and it is`);
