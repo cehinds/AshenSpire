@@ -29,9 +29,12 @@ point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
 *Receipts for 2026-08-26 through 2026-08-31 were written later, from the merge
-log, in #569. They name the pull request and the ordinal committed at that merge
-like every other receipt; their prose stays inside what the merge subject states,
-so they are shorter than receipts written at delivery.*
+log, in #570. Their prose stays inside what the merge subject states, so they read
+shorter than receipts written at delivery. Their build stamps name the first build
+that CONTAINS the change rather than `buildordinal.json` as committed at that
+merge: several of these merges shipped source without rebuilding, so the ordinal
+standing at the merge belongs to an earlier bundle that cannot show the change. A
+receipt a player cannot open and see is not a receipt.*
 
 ## 2026-09-02
 
@@ -46,7 +49,7 @@ so they are shorter than receipts written at delivery.*
 - **Review riders on the second candidate** ([#543](https://github.com/cehinds/AshenSpire/pull/543), `0.5.0-rc.2.1936`). Nothing new a player asks for: a fight an event starts pays from that encounter's own reward pool and survives the disconnect of the seat that chose it, the result of an event is read before the fight it opens, the Pages deploy runs only on an explicit dispatch, and the layout gate reads a control's text where it used to read its box. Landed over #544, #545, #546 and #550; the migration checklist's account of what the 0.5.0 candidates asked and what was done landed in #551.
 - **The second 0.5.0 candidate** ([#539](https://github.com/cehinds/AshenSpire/pull/539), `0.5.0-rc.2.1935`). The in-game stamp reads `0.5.0-rc.2.<build>` from this build on: the candidate QA receives after `rc.1` (promoted to `test` at build 1933), carrying the review fixes below. Nothing else a player sees changes. Tooling and docs riders since `rc.1`: the layout gate re-aimed at the combat action row (#532, #538), the owner asks ledger (#530), every branch's build published on Pages with the README naming them (#525).
 - **Co-op: an event choice is a quest step, and the party's map follows its history** ([#536](https://github.com/cehinds/AshenSpire/pull/536), `0.5.0-rc.1.1934`). Choosing at an event in co-op now does what the choice says: its effects run on your seat, it is written into your history so the quest chain reaches you, a choice your history has not earned is not offered, a priced choice you cannot afford is shown disabled, an event that starts a fight opens it for the party, and a choice that leaves you at 0 HP fells your seat. A seat's upgraded Poise threshold now reaches the shared fight too.
-- **Every branch's builds are playable at their own address** ([#525](https://github.com/cehinds/AshenSpire/pull/525), `0.5.0-rc.1.1934`). The site now carries a build index across `dev`, `test`, `release` and `main`: each build sits under its own branch and ordinal, each branch keeps a `latest` alias, and every listed build is checked byte-for-byte against the file committed at that merge before it is published. The README shows each branch's current build number and links straight to it.
+- **Every branch's builds are playable at their own address** ([#525](https://github.com/cehinds/AshenSpire/pull/525), `0.5.0-rc.1.1934`). This merge builds the site and its addressing: a build index across `dev`, `test`, `release` and `main`, each build under its own branch and ordinal, a `latest` alias per branch, and every listed build checked byte-for-byte against the file committed at that merge before it may be published. The README shows each branch's current build number. Assembling is not publishing: the deploy is a separate transition that only the repository owner's explicit dispatch performs, so nothing here put a page in front of a player by itself.
 - **Every armed option control marks its beat; small title and modal fixes** ([#537](https://github.com/cehinds/AshenSpire/pull/537), `0.5.0-rc.1.1933`). The title screen's slot Delete no longer shows a hold hint it does not honour, a drag that ends on a confirmation's backdrop no longer cancels it (only a press that began there does), and every hold-or-tap option control now declares the action it is wired to, so the hold-harness census reads 139 checks with no findings.
 - **The Shrine smiths the armaments you carry, not only the ones in hand** ([#535](https://github.com/cehinds/AshenSpire/pull/535), `0.5.0-rc.1.1932`). An upgradeable armament left in storage is now offered at the Shrine with its authored cards previewed, and a random upgrade never lands on an armament with no live cards.
 - **Co-op clients price an upgraded relic the way the host does** ([#534](https://github.com/cehinds/AshenSpire/pull/534), `0.5.0-rc.1.1930`). Each seat's upgrade tiers travel with the live combat snapshot, so an upgraded Ancestral Horn reduces a Power's cost on the client's screen exactly as it does on the host's.
@@ -74,21 +77,21 @@ so they are shorter than receipts written at delivery.*
 
 ## 2026-08-31
 
+- **Earlier event choices influence later events** ([#491](https://github.com/cehinds/AshenSpire/pull/491), `0.4.0.1855`). What you chose at an event is remembered, and can change what a later event offers you.
+- **Equipment cards show their receipts** ([#495](https://github.com/cehinds/AshenSpire/pull/495), `0.4.0.1855`). What an equipment card does to your numbers is surfaced on the card instead of being left to infer.
 - **Smithing upgrades an armament and every basic card it owns** ([#502](https://github.com/cehinds/AshenSpire/pull/502), `0.4.0.1854`). Elite and boss victories award Smithing Stones; the Shrine spends one Stone to improve an owned armament for the run, with exact before-and-after card values shown before confirmation. The upgrade follows the armament through swaps, saves, active combats, legacy runs, rewards, and co-op host restoration. The picker uses the owned weapon or shield art, inventory quantity, WEAPON label, and equipment tags instead of borrowing one combat card's identity.
-- **Equipment cards show their receipts** ([#495](https://github.com/cehinds/AshenSpire/pull/495), `0.4.0.1760`). What an equipment card does to your numbers is surfaced on the card instead of being left to infer.
-- **Earlier event choices influence later events** ([#491](https://github.com/cehinds/AshenSpire/pull/491), `0.4.0.1760`). What you chose at an event is remembered, and can change what a later event offers you.
 - **Enemies are authored in level bands, and scale within them** ([#477](https://github.com/cehinds/AshenSpire/pull/477), `0.4.0.1760`). Enemy levels come from authored bands with scaling rather than a fixed level per encounter.
+- **The parry dagger is held in the shield hand** ([#462](https://github.com/cehinds/AshenSpire/pull/462), `0.4.0.1760`). The dagger routes through the shield socket, so it is worn and drawn where a parrying off-hand belongs.
 - **Combat controls stay inside the iPhone safe areas** ([#463](https://github.com/cehinds/AshenSpire/pull/463), `0.4.0.1719`). The controls no longer sit under the notch or the home indicator.
-- **The parry dagger is held in the shield hand** ([#462](https://github.com/cehinds/AshenSpire/pull/462), `0.4.0.1719`). The dagger routes through the shield socket, so it is worn and drawn where a parrying off-hand belongs.
 - **Confirming a self-target on a controller keeps its focus** ([#458](https://github.com/cehinds/AshenSpire/pull/458), `0.4.0.1708`). Choosing yourself as the target of a card no longer loses the controller's place in the confirmation.
 
 ## 2026-08-30
 
+- **Escape closes what is actually on top of Settings** ([#456](https://github.com/cehinds/AshenSpire/pull/456), `0.4.0.1708`). Escape now dismisses the frontmost dialog rather than the screen behind it, and focus returns to the control that opened it.
 - **The combat command bar's layout is refined** ([#459](https://github.com/cehinds/AshenSpire/pull/459), `0.4.0.1704`).
-- **Escape closes what is actually on top of Settings** ([#456](https://github.com/cehinds/AshenSpire/pull/456), `0.4.0.1704`). Escape now dismisses the frontmost dialog rather than the screen behind it, and focus returns to the control that opened it.
 - **Armaments get a command rail and radial shortcuts in combat** ([#447](https://github.com/cehinds/AshenSpire/pull/447), `0.4.0.1701`). The armaments you carry are reachable from a rail on the combat screen, with radial shortcuts to them.
 - **Levels gain canonical hidden semantics** ([#449](https://github.com/cehinds/AshenSpire/pull/449), `0.4.0.1688`).
-- **Save and Quit writes the camera state with the save** ([#437](https://github.com/cehinds/AshenSpire/pull/437), `0.4.0.1454`). Resuming puts the view back where you left it instead of at a default framing.
+- **Save and Quit writes the camera state with the save** ([#437](https://github.com/cehinds/AshenSpire/pull/437), `0.4.0.1688`). Resuming puts the view back where you left it instead of at a default framing.
 
 ## 2026-08-28
 

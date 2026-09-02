@@ -117,7 +117,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-02",
     "group": "2026-09-02",
     "summary": "Every branch's builds are playable at their own address",
-    "detail": "The site now carries a build index across dev, test, release and main: each build sits under its own branch and ordinal, each branch keeps a latest alias, and every listed build is checked byte-for-byte against the file committed at that merge before it is published. The README shows each branch's current build number and links straight to it.",
+    "detail": "This merge builds the site and its addressing: a build index across dev, test, release and main, each build under its own branch and ordinal, a latest alias per branch, and every listed build checked byte-for-byte against the file committed at that merge before it may be published. The README shows each branch's current build number. Assembling is not publishing: the deploy is a separate transition that only the repository owner's explicit dispatch performs, so nothing here put a page in front of a player by itself.",
     "build": "0.5.0-rc.1.1934",
     "pullRequest": 525,
     "url": "https://github.com/cehinds/AshenSpire/pull/525"
@@ -323,6 +323,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/507"
   },
   {
+    "id": "pr-491",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Earlier event choices influence later events",
+    "detail": "What you chose at an event is remembered, and can change what a later event offers you.",
+    "build": "0.4.0.1855",
+    "pullRequest": 491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/491"
+  },
+  {
+    "id": "pr-495",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Equipment cards show their receipts",
+    "detail": "What an equipment card does to your numbers is surfaced on the card instead of being left to infer.",
+    "build": "0.4.0.1855",
+    "pullRequest": 495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/495"
+  },
+  {
     "id": "pr-502",
     "date": "2026-08-31",
     "group": "2026-08-31",
@@ -331,26 +351,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.4.0.1854",
     "pullRequest": 502,
     "url": "https://github.com/cehinds/AshenSpire/pull/502"
-  },
-  {
-    "id": "pr-495",
-    "date": "2026-08-31",
-    "group": "2026-08-31",
-    "summary": "Equipment cards show their receipts",
-    "detail": "What an equipment card does to your numbers is surfaced on the card instead of being left to infer.",
-    "build": "0.4.0.1760",
-    "pullRequest": 495,
-    "url": "https://github.com/cehinds/AshenSpire/pull/495"
-  },
-  {
-    "id": "pr-491",
-    "date": "2026-08-31",
-    "group": "2026-08-31",
-    "summary": "Earlier event choices influence later events",
-    "detail": "What you chose at an event is remembered, and can change what a later event offers you.",
-    "build": "0.4.0.1760",
-    "pullRequest": 491,
-    "url": "https://github.com/cehinds/AshenSpire/pull/491"
   },
   {
     "id": "pr-477",
@@ -363,6 +363,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/477"
   },
   {
+    "id": "pr-462",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "The parry dagger is held in the shield hand",
+    "detail": "The dagger routes through the shield socket, so it is worn and drawn where a parrying off-hand belongs.",
+    "build": "0.4.0.1760",
+    "pullRequest": 462,
+    "url": "https://github.com/cehinds/AshenSpire/pull/462"
+  },
+  {
     "id": "pr-463",
     "date": "2026-08-31",
     "group": "2026-08-31",
@@ -371,16 +381,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.4.0.1719",
     "pullRequest": 463,
     "url": "https://github.com/cehinds/AshenSpire/pull/463"
-  },
-  {
-    "id": "pr-462",
-    "date": "2026-08-31",
-    "group": "2026-08-31",
-    "summary": "The parry dagger is held in the shield hand",
-    "detail": "The dagger routes through the shield socket, so it is worn and drawn where a parrying off-hand belongs.",
-    "build": "0.4.0.1719",
-    "pullRequest": 462,
-    "url": "https://github.com/cehinds/AshenSpire/pull/462"
   },
   {
     "id": "pr-458",
@@ -393,6 +393,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/458"
   },
   {
+    "id": "pr-456",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Escape closes what is actually on top of Settings",
+    "detail": "Escape now dismisses the frontmost dialog rather than the screen behind it, and focus returns to the control that opened it.",
+    "build": "0.4.0.1708",
+    "pullRequest": 456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/456"
+  },
+  {
     "id": "pr-459",
     "date": "2026-08-30",
     "group": "2026-08-30",
@@ -401,16 +411,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.4.0.1704",
     "pullRequest": 459,
     "url": "https://github.com/cehinds/AshenSpire/pull/459"
-  },
-  {
-    "id": "pr-456",
-    "date": "2026-08-30",
-    "group": "2026-08-30",
-    "summary": "Escape closes what is actually on top of Settings",
-    "detail": "Escape now dismisses the frontmost dialog rather than the screen behind it, and focus returns to the control that opened it.",
-    "build": "0.4.0.1704",
-    "pullRequest": 456,
-    "url": "https://github.com/cehinds/AshenSpire/pull/456"
   },
   {
     "id": "pr-447",
@@ -438,7 +438,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-30",
     "summary": "Save and Quit writes the camera state with the save",
     "detail": "Resuming puts the view back where you left it instead of at a default framing.",
-    "build": "0.4.0.1454",
+    "build": "0.4.0.1688",
     "pullRequest": 437,
     "url": "https://github.com/cehinds/AshenSpire/pull/437"
   },
