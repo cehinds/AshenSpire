@@ -134,7 +134,7 @@ if (process.argv.includes('--selftest')) {
   // corpus's. #295's layout half has landed: the clean copy is green on its own
   // merits now, which is the stronger state and needs no excuse. Every plant is
   // still red by its own named finding.
-  const selftestCode = await doorSelftest({
+  const SELFTEST = {
     tool: 'hintstrip.mjs',
     timeoutMs: 900000,
     plants: [
@@ -260,8 +260,10 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H0 /,
       },
     ],
-  });
-  if (selftestCode === 0) console.log('hintstrip-selftest: OK — 8 checks passed');
+  };
+  const selftestCode = await doorSelftest(SELFTEST);
+  // THE COUNT IS THE CORPUS'S, not a literal: a literal said 8 over nine plants.
+  if (selftestCode === 0) console.log(`hintstrip-selftest: OK — ${SELFTEST.plants.length} plant(s) CAUGHT by their own red, clean copy green`);
   process.exit(selftestCode);
 }
 
