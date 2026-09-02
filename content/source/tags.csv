@@ -1,0 +1,42 @@
+# content/source/tags.csv — THE tag registry (Ashen Spire)
+#
+# One vocabulary for the whole game. Every tag any object carries — a card, a
+# weapon, a relic, a creature — is a row here, and nothing may carry a tag that
+# is not. Adding a tag is a spreadsheet row; it never touches engine code.
+#
+# DOMAIN is what the tag DESCRIBES, and it is the reason one file can hold the
+# whole vocabulary without 'beast' becoming a legal card school. Each content
+# family declares which domains it may draw from in tagFamilies.csv, and the
+# validator refuses a tag from a domain that family does not carry. Add a
+# domain by naming it on a family row; a domain no family carries is dead and
+# fails loud rather than sitting here unused.
+#
+# NOT the same as the mechanical keywords (exhaust/ethereal/innate/retain/
+# unplayable) — those are a frozen engine set. Tags are content, and the
+# validator refuses a tag id that collides with one.
+#
+# columns: id, domain, label, color (hex, no '#'), glyph, blurb
+id,domain,label,color,glyph,blurb
+blade,card,Blade,C9502E,⚔,"Steel and edge — direct weapon work."
+guard,card,Guard,7FA8C9,🛡,"Bracing, blocking, holding the line."
+blood,card,Blood,8A1A1A,🩸,"Bleed, and the letting of it."
+gorefire,card,Gorefire,C9502E,🔥,"The blood-and-flame stance."
+starstone,card,Starstone,7FA8C9,✦,"Astral sorcery — charges and combos."
+ritual,card,Ritual,C9A227,◈,"Rites, offerings, and faith work."
+blight,card,Blight,B5541C,☣,"Creeping decay."
+oath,card,Oath,C9A227,✚,"Binding, lasting commitments."
+flourish,card,Flourish,9FC3E8,✧,"Finesse — footwork and multi-hit."
+ash,card,Ash,7A6F5A,•,"Spent once, then gone to ash."
+heavy,card,Heavy,C9A227,◆,"Slow, committed, and hard to stop."
+basic,card,Basic,7A6F5A,○,"Everybody's — on the shelf without being found."
+pierce,card,Pierce,9FC3E8,†,"A precise physical form; presentation only."
+ranged,card,Ranged,7FA8C9,➶,"Authored ranged presentation; no position system."
+precision,card,Precision,C9A227,◎,"Deliberate aim and finesse; presentation only."
+guile,card,Guile,647B73,◇,"Preparation, misdirection, and stolen openings."
+venom,card,Venom,7FAF63,☠,"Poisons that punish enemies over time."
+bound,item,Bound,C9A227,⛓,"Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv."
+beast,creature,Beast,7A6F5A,🐾,"Animal, unreasoning, driven by hunger."
+humanoid,creature,Humanoid,B8B0A0,👤,"Two arms, two legs, and a reason for being here."
+undead,creature,Undead,647B73,💀,"Died once and did not stay down."
+construct,creature,Construct,9FC3E8,⚙,"Built, not born — no blood to let."
+spirit,creature,Spirit,7FA8C9,👻,"Untethered from the body it used to wear."

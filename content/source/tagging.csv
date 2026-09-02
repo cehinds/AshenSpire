@@ -1,0 +1,87 @@
+# content/source/tagging.csv — who carries which tags (Ashen Spire)
+#
+# The association table for every content family whose home is `table` in
+# tagFamilies.csv — the families authored in JS/JSON, which have no spreadsheet
+# row of their own to hold a `tags` column. Families whose home is `inline`
+# (weapons, armour, slots, kits, unlocks, card profiles, enemies) carry their
+# tags on the object instead and must NOT appear here: one home per family,
+# checked, so a tag can never be authored in two places and drift.
+#
+# Tag a thing by adding a row — no code change. Multiple tags are pipe-
+# separated. Anything absent from this file simply has no tags.
+#
+# The validator refuses, BY NAME: an unknown family, a family that is not
+# `table`, an id no object in that family has, a tag not in tags.csv, a tag
+# from a domain that family may not carry, and a second row for the same
+# (family, id).
+#
+# columns: family, id, tags
+family,id,tags
+# ---- classes -----------------------------------------------------------------
+# A class's leaning, in the same vocabulary its cards use. Read by the composed
+# starting deck (balance.equipment.startingDeck) and open to any future
+# synergy that wants to ask what a class is ABOUT.
+class,reaver,blade|guard|blood
+class,starseer,starstone|ranged
+class,rogue,guile|flourish
+class,herald,ritual|oath
+# ---- cards -------------------------------------------------------------------
+card,ambush,guile|blade
+card,rogueShiv,blade|flourish
+card,smokePellet,guile|ash
+card,quickCut,blade|flourish
+card,feint,guile
+card,backstep,flourish|guard
+card,twinPrick,blade|flourish
+card,pocketSand,guile|ash
+card,hamstringRogue,blade|guile
+card,serratedShiv,blade|blood
+card,smokeVeil,guile|guard
+card,ricochet,pierce|ranged
+card,lowBlow,blade|guile
+card,pilfer,guile
+card,vanish,guile|ash
+card,cheapShot,blade|guile
+card,bladeDanceRogue,blade|flourish
+card,garrote,blade|blood
+card,fanOfKnives,pierce|ranged
+card,setupRogue,guile
+card,acrobaticsRogue,flourish
+card,disorient,guile
+card,coupDeGrace,blade|precision
+card,sap,guile
+card,shadowstep,flourish|guile
+card,afterimageCard,flourish|oath
+card,bloodletterRogue,blade|blood
+card,venomcoat,venom|oath
+card,misdirect,guile|guard
+card,assassinate,blade|precision
+card,thousandCutsRogue,blade|flourish
+card,deadlyTempoCard,flourish|oath
+card,opportunistCard,guile|oath
+card,envenomCard,venom|oath
+card,toxicVolley,venom|ranged
+card,smokeBomb,guile|ash
+card,executionWindow,blade|precision
+card,perfectHeist,guile
+card,deathblow,blade|precision
+card,strike,blade
+card,defend,guard
+card,gorefireSlash,blade|blood|gorefire
+card,crimsonCleave,blade|blood
+card,shieldBash,guard|blade
+card,quickstep,flourish
+card,guardCounter,guard|flourish
+card,ironResolve,guard
+card,serratedBlade,blade|blood
+card,enterGorefire,gorefire|oath
+card,enterBulwark,guard|oath
+card,riposte,guard|flourish
+card,starstonePebble,starstone
+card,cometFragment,starstone
+card,starbladePhalanx,starstone|guard
+card,frostNova,starstone
+card,gildedOath,ritual|oath
+card,urgentHeal,ritual
+card,bloodPact,blood|ritual
+card,blightTouch,blight|ritual

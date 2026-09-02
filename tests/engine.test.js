@@ -50,9 +50,8 @@ import { attributeAllocationProblems, classAttributePreset, allocationTotal, def
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
-import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
+import { TAGS, TAG_FAMILIES, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain } from '../src/content/tags.js';
 import { SFX_RECIPES, resolveRecipe } from '../src/content/sfx.js';
-import { cardTagging } from '../src/content/generated/cardTagging.js';
 import { weapons } from '../src/content/generated/weapons.js';
 import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
@@ -513,10 +512,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // These two falsifiers use SHIPPED cards whose tags exist only in the
-  // generated cardTagging.csv index. Neither damage effect carries a copied
+  // generated tagging.csv index. Neither damage effect carries a copied
   // `tags` field, so green here proves the real card door derives the hit's
   // identity rather than preserving the old test-only tagged-effect fixture.
-  test('7e2. Frost-Exposed changes a real Starstone hit through cardTagging.csv', () => {
+  test('7e2. Frost-Exposed changes a real Starstone hit through tagging.csv', () => {
     const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'] });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('starstonePebble');
@@ -529,7 +528,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
   });
 
-  test('7e3. Unraveled changes a real Blight hit through cardTagging.csv', () => {
+  test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
     const c = makeCombat({ deck: ['blightTouch'], enemies: ['tGiant'] });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('blightTouch');
@@ -1822,8 +1821,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(unlockIds.length, new Set(unlockIds).size, 'unlock ids are unique');
   });
 
-  // ---- 26. card subtype tags (CSV-authored) --------------------------------
-  test('26. card tags resolve, stay distinct from engine keywords, and index', () => {
+  // ---- 26. the tag system (CSV-authored, one registry) --------------------
+  test('26. tags resolve, stay distinct from engine keywords, and index', () => {
     // Subtypes live under the frozen attack/skill/power type. Tagging is a CSV
     // row, so these checks are what stops a spreadsheet typo from silently
     // dropping a chip or pointing at a card that does not exist.
@@ -1832,20 +1831,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const t of TAGS) {
       assert(/^[0-9A-Fa-f]{6}$/.test(t.color), `tag '${t.id}' colour is a 6-digit hex`);
       assert(String(t.label).length > 0 && String(t.glyph).length > 0, `tag '${t.id}' has a label + glyph`);
+      assert(String(t.domain).length > 0, `tag '${t.id}' names the domain it describes`);
       // Tags are CONTENT; keywords are a frozen engine set. Overlapping names
       // would make 'exhaust' ambiguous between flavour and mechanics.
       assert(!ENGINE_KEYWORDS.includes(t.id), `tag '${t.id}' does not collide with an engine keyword`);
     }
+    const cardRows = TAGGING.filter((row) => row.family === 'card');
     const seen = new Set();
-    for (const row of cardTagging) {
-      assert(REG.cards.has(row.cardId), `tagged card '${row.cardId}' exists`);
-      assert(!seen.has(row.cardId), `card '${row.cardId}' is tagged only once`);
-      seen.add(row.cardId);
-      const ids = tagIdsFor(row.cardId);
-      assert(ids.length > 0, `card '${row.cardId}' resolves to at least one tag`);
-      for (const id of ids) assert(tagIds.includes(id), `card '${row.cardId}' uses a registered tag ('${id}')`);
+    for (const row of cardRows) {
+      assert(REG.cards.has(row.id), `tagged card '${row.id}' exists`);
+      assert(!seen.has(row.id), `card '${row.id}' is tagged only once`);
+      seen.add(row.id);
+      const ids = tagIdsFor(row.id);
+      assert(ids.length > 0, `card '${row.id}' resolves to at least one tag`);
+      for (const id of ids) assert(tagIds.includes(id), `card '${row.id}' uses a registered tag ('${id}')`);
       // A single-value CSV cell must still come back as an array, not a string.
-      assert(Array.isArray(ids), `tags for '${row.cardId}' normalise to an array`);
+      assert(Array.isArray(ids), `tags for '${row.id}' normalise to an array`);
     }
     // The lookups the UI and any future synergy predicate depend on.
     eq(tagsFor('gorefireSlash').length, 3, 'gorefireSlash carries three tags');
@@ -1853,6 +1854,60 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
     assert(cardsWithTag('blade').includes('strike'), 'reverse lookup finds Blade cards');
     assert(cardsWithTag('nope').length === 0, 'reverse lookup on an unknown tag is empty');
+  });
+
+  // ---- 26b. ONE vocabulary, many carriers ---------------------------------
+  test('26b. every content family carries tags from the one registry', () => {
+    // The point of the tag system is that a card school, a creature kind and a
+    // weapon's identity are all rows in ONE file, kept apart by domain rather
+    // than by a second hard-coded array. These checks are what stop that from
+    // quietly becoming two vocabularies again.
+    const byId = new Map(TAGS.map((t) => [t.id, t]));
+    const families = new Map(TAG_FAMILIES.map((f) => [f.family, f]));
+    eq(families.size, TAG_FAMILIES.length, 'each family is declared once');
+    for (const f of TAG_FAMILIES) {
+      assert(['inline', 'table'].includes(f.home), `family '${f.family}' declares a known home`);
+      assert(f.domains.length > 0, `family '${f.family}' may carry at least one domain`);
+    }
+    // Every domain a tag claims is a domain some family actually carries — a
+    // tag nothing may wear is dead weight, and says so.
+    const carried = new Set(TAG_FAMILIES.flatMap((f) => f.domains));
+    for (const t of TAGS) assert(carried.has(t.domain), `some family carries domain '${t.domain}' (tag '${t.id}')`);
+    // Creature kinds are the registry's creature domain now, not a frozen
+    // array in schemas.js: every enemy's tags must resolve there.
+    const creature = tagsInDomain('creature').map((t) => t.id);
+    assert(creature.length >= 5, 'the creature domain holds the shipped kinds');
+    for (const enemy of REG.enemies.all()) {
+      assert(Array.isArray(enemy.tags), `enemy '${enemy.id}' carries a tags array`);
+      for (const id of enemy.tags) assert(creature.includes(id), `enemy '${enemy.id}' uses a creature tag ('${id}')`);
+    }
+    // One home per family: nothing authored inline may also hold a table row.
+    const inline = new Set(TAG_FAMILIES.filter((f) => f.home === 'inline').map((f) => f.family));
+    for (const row of TAGGING) {
+      assert(!inline.has(row.family), `'${row.family}' is not tagged in two places (row '${row.id}')`);
+      assert(families.has(row.family), `tagging row names a declared family ('${row.family}')`);
+      for (const id of row.tags) {
+        const tag = byId.get(id);
+        assert(tag, `tagging row '${row.family}/${row.id}' uses a registered tag ('${id}')`);
+        assert(families.get(row.family).domains.includes(tag.domain),
+          `'${row.family}' may carry ${id} (a ${tag.domain} tag)`);
+      }
+    }
+    // Registries STAMP a table family's tags onto the object, so a mechanic
+    // reads obj.tags whatever the authoring home was.
+    eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood', 'the Reaver carries its class tags');
+    eq(REG.cards.get('strike').tags.join('|'), 'blade', 'a card carries its tags on the def');
+    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged', 'the table resolves by family and id');
+    // tagIdsOf reads whichever home the family declares, so a caller never
+    // has to know where the author typed it.
+    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade', 'a table family resolves through the table');
+    eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
+      'blade|basic', 'an inline family resolves off the object');
+    eq(tagIdsOf('class', { id: 'nobody' }).length, 0, 'an untagged object resolves to no tags');
+    // Every carrier the families table names really does hand back an array.
+    for (const kit of REG.equipment.startingKits) assert(Array.isArray(kit.tags), `kit '${kit.id}' carries a tags array`);
+    for (const slot of REG.equipment.slots) assert(Array.isArray(slot.tags), `slot '${slot.id}' carries a tags array`);
+    for (const unlock of REG.unlocks || []) assert(Array.isArray(unlock.tags), `unlock '${unlock.id}' carries a tags array`);
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

@@ -125,7 +125,7 @@ export function renderCard(registries, ref, opts = {}) {
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
-    // Subtypes: authored in content/source/cardTagging.csv. Untagged cards
+    // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
       ? `<div class="ctags">${tags

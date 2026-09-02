@@ -1,0 +1,36 @@
+# content/source/tagFamilies.csv — which things carry tags, and from where
+#
+# The registry (tags.csv) says what every tag MEANS. This says who may carry
+# it. One row per content family; adding a family to the tag system is a row
+# here, not a code change.
+#
+# home    where that family's tags are AUTHORED — one home per family, never two:
+#           table   a row in tagging.csv  (families authored in JS/JSON, which
+#                   have no spreadsheet row of their own to hold a column)
+#           inline  a `tags` column/field on the object itself (families already
+#                   authored as a CSV row, plus enemies, whose tags the engine
+#                   reads at runtime)
+# domains '|'-separated tag domains this family may draw from. A tag from any
+#         other domain is refused BY NAME — this is what keeps 'beast' from
+#         becoming a legal card school while one registry holds both.
+# source  where the objects live in the content bundle, dotted. The validator
+#         walks it to check every tagged id is a real object; '' means the
+#         family is not a bundle collection (effects are carried BY cards).
+#
+# columns: family, home, domains, source, label, blurb
+family,home,domains,source,label,blurb
+card,table,card,cards,Card,"Every playable card, tagged in tagging.csv."
+class,table,card,classes,Class,"A class's identity in card terms — what it leans toward."
+relic,table,item,relics,Relic,"Permanent run pickups."
+flask,table,item,flasks,Flask,"Consumables, refilled at Grace."
+keepsake,table,item,characterCreation.keepsakes,Keepsake,"The boon you start the run holding."
+event,table,run,events,Event,"Unknown-node encounters."
+encounter,table,run,encounters,Encounter,"Authored fights."
+enemy,inline,creature,enemies,Enemy,"Creature identity; gates proc resistance at runtime."
+armament,inline,card|item,equipment.armaments,Armament,"Weapons, shields and staves."
+armour,inline,card|item,equipment.armour,Armour,"Armour sets."
+basicCardProfile,inline,card,equipment.basicCardProfiles,Card profile,"Equipment-bound core card profiles."
+slot,inline,item,equipment.slots,Slot,"What you can wear, and when you may swap."
+startingKit,inline,item,equipment.startingKits,Starting kit,"A class's listed opening loadout."
+unlock,inline,run,unlocks,Unlock,"What a run can earn."
+effect,inline,card,,Effect,"Damage effects carry card tags; a hit inherits the card's identity."

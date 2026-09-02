@@ -33,9 +33,9 @@ import {
   MUSIC_BED_SCHEMA,
   DAMAGE_SCHOOLS,
   RELIC_MODIFIER_TAGS,
-  CREATURE_TAGS,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
+import { tagContentProblems, tagIdsInDomain } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
@@ -85,7 +85,9 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'sfx',
   'music',
-  'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
+  'tags', // THE tag registry — one vocabulary for every carrier (#61)
+  'tagFamilies', // who may carry which tag domain, and where it is authored
+  'tagging', // family + id to tags, for the families authored in JS/JSON
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
@@ -272,9 +274,18 @@ export function validateContent(bundle) {
     }
   }
 
-  // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
-  // `tags` and taggedVulnerability lists validate against ONE home (#61).
-  const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
+  // The whole tag system in one pass: the registry, who may carry which
+  // domain, and every carrier's tags (model/tags.js states the rules).
+  for (const problem of tagContentProblems(b, (b.keywords || []).map((k) => k && k.id))) {
+    err(problem.path, problem.message);
+  }
+  // Effect-tag vocabulary: the ONE registry rides the bundle (#61), and effect
+  // `tags` / taggedVulnerability lists draw from its CARD domain — the same
+  // words a card carries, never a creature kind.
+  const tagIds = new Set(tagIdsInDomain(b, 'card'));
+  // Creature identity is the creature domain of that same registry, so adding
+  // a kind is a row in tags.csv rather than an edit to a frozen array.
+  const creatureTagIds = tagIdsInDomain(b, 'creature');
   const vctx = { ids, err, tagIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
@@ -1011,8 +1022,8 @@ export function validateContent(bundle) {
       }
       if (p.resistance) {
         for (const tag of p.resistance.tags || []) {
-          if (!CREATURE_TAGS.includes(tag)) {
-            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
+          if (!creatureTagIds.includes(tag)) {
+            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${creatureTagIds.join(', ')})`);
           }
         }
         // Empty tag list = a resistance the proc can never grant — same dead
@@ -1059,11 +1070,8 @@ export function validateContent(bundle) {
 
   for (const enemy of b.enemies || []) {
     const path = `enemies.${enemy.id}`;
-    for (const tag of enemy.tags || []) {
-      if (!CREATURE_TAGS.includes(tag)) {
-        err(`${path}.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
-      }
-    }
+    // An enemy's own tags are checked with every other carrier's, by
+    // tagContentProblems above — one rule, one message, for all of them.
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);

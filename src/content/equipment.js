@@ -25,7 +25,7 @@ import { cardExposure } from './generated/cardExposure.js';
 import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
-import { cardTagging } from './generated/cardTagging.js';
+import { TAGGING } from './tags.js';
 import { equipmentGrants } from './generated/equipmentGrants.js';
 import { armouryUi } from './generated/armouryUi.js';
 
@@ -56,7 +56,7 @@ export const ARMOUR = outfits.map((row) => ({ ...normPiece(row), kind: 'armor' }
 
 /** Slot definitions, ordered. */
 export const SLOTS = equipSlots
-  .map((row) => ({ ...row, kinds: list(row.kinds) }))
+  .map((row) => ({ ...row, kinds: list(row.kinds), tags: list(row.tags) }))
   .sort((a, b) => a.order - b.order);
 
 /** The registered modifier fields, keyed by field name. */
@@ -121,7 +121,7 @@ export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
 export const CARD_EXPOSURE = cardExposure.map((row) => ({ ...row }));
 
 /** Class-listed starting kits; hand ids stay explicit so validation can name them. */
-export const STARTING_KITS = startingKits.map((row) => ({ ...row }));
+export const STARTING_KITS = startingKits.map((row) => ({ ...row, tags: list(row.tags) }));
 
 /** Raw item/stat minima retained so validation can detect duplicate authored rows. */
 export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...row }));
@@ -129,8 +129,14 @@ export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...r
 /** Registered exceptional card→weapon bonds; ordinary fit is class/tag based. */
 export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({ ...row }));
 
-/** Raw authored card tag ids, carried into registries for compatibility checks. */
-export const CARD_EQUIPMENT_TAGGING = cardTagging.map((row) => ({ ...row, tags: list(row.tags) }));
+/**
+ * Raw authored card tag ids, carried into registries for compatibility checks.
+ * The card slice of the one association table (content/source/tagging.csv);
+ * `cardId` is kept as the column name equipment fit has always read.
+ */
+export const CARD_EQUIPMENT_TAGGING = TAGGING
+  .filter((row) => row.family === 'card')
+  .map((row) => ({ cardId: row.id, tags: [...row.tags] }));
 
 /** The payload half of the `bound` tag: cards a piece carries with it. */
 export const EQUIPMENT_GRANTS = equipmentGrants.map((row) => ({ ...row, cards: list(row.cards) }));

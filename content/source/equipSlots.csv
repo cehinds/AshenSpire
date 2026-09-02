@@ -20,8 +20,10 @@
 #          and neither is drawn in a hand.
 #          A slot that accepts pieces naming a hand must name one itself, or
 #          validateEquipment() fails by name at that row.
-id,label,positionLabel,positionCode,kinds,hand,sets,swap,storage,order,blurb
-rightHand,Right Hand,Right Hand Slot {n},RH{n},weapon|shield|staff,right,3,combat,true,1,"Your active right-hand armament. Rewrites Strike."
-leftHand,Left Hand,Left Hand Slot {n},LH{n},weapon|shield|staff,left,3,combat,true,2,"Your active left-hand armament. Rewrites Defend."
-armor,Armour,Armour Slot {n},BODY,armor,,1,outOfCombat,false,3,"Your set. Repaints you and steadies the numbers."
-talisman,Talisman,Talisman Slot {n},TAL{n},talisman,,3,outOfCombat,false,4,"Small charms. Empty until talismans are authored."
+# `tags` draws from the item domain (tagFamilies.csv). Empty until an item tag
+# is authored that a slot should carry; the column is the slot's tag home.
+id,label,positionLabel,positionCode,kinds,hand,sets,swap,storage,order,blurb,tags
+rightHand,Right Hand,Right Hand Slot {n},RH{n},weapon|shield|staff,right,3,combat,true,1,"Your active right-hand armament. Rewrites Strike.",
+leftHand,Left Hand,Left Hand Slot {n},LH{n},weapon|shield|staff,left,3,combat,true,2,"Your active left-hand armament. Rewrites Defend.",
+armor,Armour,Armour Slot {n},BODY,armor,,1,outOfCombat,false,3,"Your set. Repaints you and steadies the numbers.",
+talisman,Talisman,Talisman Slot {n},TAL{n},talisman,,3,outOfCombat,false,4,"Small charms. Empty until talismans are authored.",

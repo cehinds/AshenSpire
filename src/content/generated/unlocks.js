@@ -10,7 +10,8 @@ export const unlocks = [
     "condition": "winAsClass",
     "param": "reaver",
     "reveal": "listed",
-    "hint": "Win a run as the Reaver."
+    "hint": "Win a run as the Reaver.",
+    "tags": ""
   },
   {
     "id": "winAsStarseer",
@@ -20,7 +21,8 @@ export const unlocks = [
     "condition": "winAsClass",
     "param": "starseer",
     "reveal": "listed",
-    "hint": "Win a run as the Starseer."
+    "hint": "Win a run as the Starseer.",
+    "tags": ""
   },
   {
     "id": "beatStitchedKing",
@@ -30,7 +32,8 @@ export const unlocks = [
     "condition": "beatBoss",
     "param": "stitchedKing",
     "reveal": "listed",
-    "hint": "Defeat the Stitched King."
+    "hint": "Defeat the Stitched King.",
+    "tags": ""
   },
   {
     "id": "beatBlightedValkyrie",
@@ -40,7 +43,8 @@ export const unlocks = [
     "condition": "beatBoss",
     "param": "blightedValkyrie",
     "reveal": "listed",
-    "hint": "Defeat the Blighted Valkyrie."
+    "hint": "Defeat the Blighted Valkyrie.",
+    "tags": ""
   },
   {
     "id": "graveWardenUnlock",
@@ -50,7 +54,8 @@ export const unlocks = [
     "condition": "winRuns",
     "param": 3,
     "reveal": "teased",
-    "hint": "Win three runs."
+    "hint": "Win three runs.",
+    "tags": ""
   },
   {
     "id": "ashChildUnlock",
@@ -60,7 +65,8 @@ export const unlocks = [
     "condition": "beatBoss",
     "param": "blightedValkyrie",
     "reveal": "hidden",
-    "hint": ""
+    "hint": "",
+    "tags": ""
   },
   {
     "id": "reachAshenCrown",
@@ -70,7 +76,8 @@ export const unlocks = [
     "condition": "reachAct",
     "param": 3,
     "reveal": "listed",
-    "hint": "Reach the Ashen Crown."
+    "hint": "Reach the Ashen Crown.",
+    "tags": ""
   },
   {
     "id": "beatFellWarden",
@@ -80,7 +87,8 @@ export const unlocks = [
     "condition": "beatBoss",
     "param": "fellWarden",
     "reveal": "listed",
-    "hint": "Defeat the Fell Warden."
+    "hint": "Defeat the Fell Warden.",
+    "tags": ""
   },
   {
     "id": "winTwice",
@@ -90,7 +98,8 @@ export const unlocks = [
     "condition": "winRuns",
     "param": 2,
     "reveal": "listed",
-    "hint": "Win two runs."
+    "hint": "Win two runs.",
+    "tags": ""
   },
   {
     "id": "beatKingAsHerald",
@@ -100,7 +109,8 @@ export const unlocks = [
     "condition": "beatBoss",
     "param": "stitchedKing",
     "reveal": "listed",
-    "hint": "Defeat the Stitched King."
+    "hint": "Defeat the Stitched King.",
+    "tags": ""
   },
   {
     "id": "reachStitchedCourt",
@@ -110,7 +120,8 @@ export const unlocks = [
     "condition": "reachAct",
     "param": 2,
     "reveal": "listed",
-    "hint": "Reach the Stitched Court."
+    "hint": "Reach the Stitched Court.",
+    "tags": ""
   },
   {
     "id": "rack2Right",
@@ -120,7 +131,8 @@ export const unlocks = [
     "condition": "reachAct",
     "param": 2,
     "reveal": "listed",
-    "hint": "Reach the Stitched Court."
+    "hint": "Reach the Stitched Court.",
+    "tags": ""
   },
   {
     "id": "rack3Right",
@@ -130,7 +142,8 @@ export const unlocks = [
     "condition": "winRuns",
     "param": 1,
     "reveal": "listed",
-    "hint": "Win a run."
+    "hint": "Win a run.",
+    "tags": ""
   },
   {
     "id": "rack2Left",
@@ -140,7 +153,8 @@ export const unlocks = [
     "condition": "reachAct",
     "param": 3,
     "reveal": "listed",
-    "hint": "Reach the Ashen Crown."
+    "hint": "Reach the Ashen Crown.",
+    "tags": ""
   },
   {
     "id": "rack3Left",
@@ -150,7 +164,8 @@ export const unlocks = [
     "condition": "winRuns",
     "param": 2,
     "reveal": "listed",
-    "hint": "Win two runs."
+    "hint": "Win two runs.",
+    "tags": ""
   },
   {
     "id": "winAsRogue",
@@ -160,7 +175,8 @@ export const unlocks = [
     "condition": "winAsClass",
     "param": "rogue",
     "reveal": "listed",
-    "hint": "Win a run as the Rogue."
+    "hint": "Win a run as the Rogue.",
+    "tags": ""
   },
   {
     "id": "rogueBeatWarden",
@@ -170,7 +186,8 @@ export const unlocks = [
     "condition": "beatBoss",
     "param": "fellWarden",
     "reveal": "listed",
-    "hint": "Defeat the Fell Warden."
+    "hint": "Defeat the Fell Warden.",
+    "tags": ""
   },
   {
     "id": "rogueReachCrown",
@@ -180,6 +197,7 @@ export const unlocks = [
     "condition": "reachAct",
     "param": 3,
     "reveal": "listed",
-    "hint": "Reach the Ashen Crown."
+    "hint": "Reach the Ashen Crown.",
+    "tags": ""
   }
 ];

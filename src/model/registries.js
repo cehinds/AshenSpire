@@ -111,17 +111,60 @@ const TYPE_SINGULAR = {
  *   registries.scripts              — frozen { name: fn }
  *   registries.contentVersion       — string
  */
+/**
+ * Every object in a `table` family gets its authored tags stamped ONTO it, so
+ * `registries.relics.get(id).tags` is a real array for every family rather
+ * than something each caller has to remember to look up elsewhere. The
+ * association table is still the only home: this copies, it never merges with
+ * a second source, and an `inline` family is left exactly as authored.
+ */
+function stampTags(family, defs, tagging) {
+  const rows = (tagging || []).filter((row) => row && row.family === family);
+  if (!rows.length) return defs;
+  const byId = new Map(rows.map((row) => [row.id, row.tags || []]));
+  return (defs || []).map((def) => (
+    def && byId.has(def.id) ? { ...def, tags: [...byId.get(def.id)] } : def
+  ));
+}
+
 export function createRegistries(contentBundle) {
   const bundle = contentBundle || {};
   const registries = {};
 
+  // Bundle collection to tag family, read from the content's own
+  // tagFamilies.csv `source` column — a family joins by adding a row there.
+  const tagFamilies = [...(bundle.tagFamilies || [])];
+  const familyBySource = new Map(
+    tagFamilies.filter((f) => f && f.home === 'table' && f.source).map((f) => [f.source, f.family])
+  );
+  // Inline families author tags on the object, where absent means untagged.
+  // Absent is normalised to [] so `obj.tags` is an array for EVERY tagged
+  // family — a mechanic reading tags never has to guard for undefined.
+  const inlineSources = new Set(
+    tagFamilies.filter((f) => f && f.home === 'inline' && f.source).map((f) => f.source)
+  );
+
   for (const type of REGISTRY_TYPES) {
-    registries[type] = makeRegistry(TYPE_SINGULAR[type], bundle[type]);
+    const family = familyBySource.get(type);
+    let defs = bundle[type];
+    if (family) defs = stampTags(family, defs, bundle.tagging);
+    else if (inlineSources.has(type)) {
+      defs = (defs || []).map((def) => (def && !Array.isArray(def.tags) ? { ...def, tags: [] } : def));
+    }
+    registries[type] = makeRegistry(TYPE_SINGULAR[type], defs);
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
-  registries.characterCreation = deepFreeze({ ...(bundle.characterCreation || {}) });
+  // Keepsakes are the one `table` family that is not a top-level registry —
+  // they ride inside characterCreation — so they are stamped here rather than
+  // in the loop above. Everything else about them is untouched.
+  const creation = { ...(bundle.characterCreation || {}) };
+  const keepsakeFamily = familyBySource.get('characterCreation.keepsakes');
+  if (keepsakeFamily && Array.isArray(creation.keepsakes)) {
+    creation.keepsakes = stampTags(keepsakeFamily, creation.keepsakes, bundle.tagging);
+  }
+  registries.characterCreation = deepFreeze(creation);
   // One object, not a copied settings shadow. The run snapshots the resolved
   // result; authoring and validation still point at this exact content object.
   registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});
@@ -138,7 +181,12 @@ export function createRegistries(contentBundle) {
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
   registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+  // The one tag vocabulary, plus the two tables that say who may carry it and
+  // where it is authored (content/tags.js). Rules read these, never a second
+  // hard-coded list — that is what makes a new tag a spreadsheet row.
   registries.tags = deepFreeze([...(bundle.tags || [])]);
+  registries.tagFamilies = deepFreeze(tagFamilies.map((row) => ({ ...row })));
+  registries.tagging = deepFreeze((bundle.tagging || []).map((row) => ({ ...row })));
 
   // Visual scaling domains use the same derived-stat engine as run creation.
   // They are content potential (the largest legal creation allocation), not a

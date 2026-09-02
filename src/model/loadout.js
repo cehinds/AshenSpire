@@ -224,7 +224,7 @@ export function validateEquipment(registries) {
   if (profilesPresent) {
     if (!Array.isArray(eq.equipmentRequirements)) problems.push('equipmentRequirements.csv: missing generated table');
     if (!Array.isArray(eq.cardEquipmentExceptions)) problems.push('cardEquipmentExceptions.csv: missing generated table');
-    if (!Array.isArray(eq.cardTagging)) problems.push('cardTagging.csv: missing registered table');
+    if (!Array.isArray(eq.cardTagging)) problems.push('cardTagging: missing the registered card-tag table (content/source/tagging.csv)');
   }
   const requirementKeys = new Set();
   for (const row of eq.equipmentRequirements || []) {

@@ -8,7 +8,8 @@ export const startingKits = [
     "label": "Iron Vanguard",
     "baseline": true,
     "rightHand": "straightSword",
-    "leftHand": "roundShield"
+    "leftHand": "roundShield",
+    "tags": ""
   },
   {
     "id": "reaverGreatsword",
@@ -16,7 +17,8 @@ export const startingKits = [
     "label": "Greatsword Vanguard",
     "baseline": false,
     "rightHand": "greatsword",
-    "leftHand": ""
+    "leftHand": "",
+    "tags": ""
   },
   {
     "id": "starseerBaseline",
@@ -24,7 +26,8 @@ export const startingKits = [
     "label": "Ash Focus",
     "baseline": true,
     "rightHand": "ashStaff",
-    "leftHand": ""
+    "leftHand": "",
+    "tags": ""
   },
   {
     "id": "starseerStarstone",
@@ -32,7 +35,8 @@ export const startingKits = [
     "label": "Starstone Focus",
     "baseline": false,
     "rightHand": "starstoneStaff",
-    "leftHand": ""
+    "leftHand": "",
+    "tags": ""
   },
   {
     "id": "heraldBaseline",
@@ -40,7 +44,8 @@ export const startingKits = [
     "label": "Bone Rite",
     "baseline": true,
     "rightHand": "boneSceptre",
-    "leftHand": ""
+    "leftHand": "",
+    "tags": ""
   },
   {
     "id": "heraldEmberlight",
@@ -48,7 +53,8 @@ export const startingKits = [
     "label": "Emberlight Rite",
     "baseline": false,
     "rightHand": "emberlightSceptre",
-    "leftHand": ""
+    "leftHand": "",
+    "tags": ""
   },
   {
     "id": "rogueBaseline",
@@ -56,7 +62,8 @@ export const startingKits = [
     "label": "Knife and Buckler",
     "baseline": true,
     "rightHand": "dagger",
-    "leftHand": "buckler"
+    "leftHand": "buckler",
+    "tags": ""
   },
   {
     "id": "rogueBow",
@@ -64,6 +71,7 @@ export const startingKits = [
     "label": "Shortbow and Parrying Dagger",
     "baseline": false,
     "rightHand": "shortbow",
-    "leftHand": "parryDagger"
+    "leftHand": "parryDagger",
+    "tags": ""
   }
 ];

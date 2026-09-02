@@ -251,17 +251,13 @@ export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 //   additive       — (mult−1) sums across additive sources, applied once.
 export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 
-// Creature tags — the closed vocabulary proc resistance may gate on. An
-// enemy's `tags` and a proc row's `resistance.tags` must both draw from this
-// set. Distinct from card/effect tags (content/tags.js): creature identity vs
-// attack school — two concepts, deliberately two vocabularies.
-export const CREATURE_TAGS = Object.freeze([
-  'beast',
-  'humanoid',
-  'undead',
-  'construct',
-  'spirit',
-]);
+// Creature tags used to be a frozen array here. They are now rows in the one
+// tag registry (content/source/tags.csv) carrying domain 'creature', and
+// model/tags.js gates them: an enemy's `tags` and a proc row's
+// `resistance.tags` may draw from that domain and no other. Still deliberately
+// distinct from card/effect tags — creature identity vs attack school, two
+// concepts — but the distinction is now a column instead of a second array, so
+// adding a kind is a spreadsheet row.
 
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
@@ -647,7 +643,7 @@ export const SCHEMAS = Object.freeze({
         resistance: opt(
           obj({
             status: ref('statuses'), // the resist row applied post-proc
-            tags: arr(str), // creature-tag gate, ⊆ CREATURE_TAGS (validated)
+            tags: arr(str), // creature-tag gate; domain 'creature' of the tag registry
           })
         ),
       })
@@ -716,7 +712,7 @@ export const SCHEMAS = Object.freeze({
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
     levelProfile: opt(enemyLevelProfileSchema),
-    tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
+    tags: opt(arr(str)), // creature tags (registry domain) — gate proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
