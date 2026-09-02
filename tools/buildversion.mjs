@@ -423,6 +423,25 @@ export function padOrdinal(n) {
 }
 
 /**
+ * A build as a COMPARABLE TUPLE — the version's components, then the tail.
+ * `0.5.4` + 2 → [0, 5, 4, 2]. Non-numeric components sort as 0 rather than
+ * throwing, because this is a comparison and not a validator; row F is where a
+ * malformed release is refused.
+ */
+export function versionTuple(releaseString, ordinal) {
+  return [...versionPrefix(releaseString).split('.').map((n) => (Number.isFinite(Number(n)) ? Number(n) : 0)), ordinal];
+}
+
+/** Component-wise numeric compare of two versionTuple results. */
+export function compareVersions(a, b) {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const d = (a[i] ?? 0) - (b[i] ?? 0);
+    if (d !== 0) return d < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+/**
  * The candidate-bearing prefix of a release string: `0.5.0-rc.4` → `0.5.4`.
  *
  * Constantine's scheme puts the CANDIDATE NUMBER in the third component, so the
@@ -925,20 +944,36 @@ export function check(root = REPO_ROOT) {
         add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
       } else if (now === null) {
         add(false, 'H ORDINAL INCREASES', `HEAD changed ${BUNDLE} and has no readable ${ORDINAL_HOME} — a build shipped with no number`);
+      } else if (before.release === null) {
+        // The parent predates the release-scoped counter, so the two numbers
+        // are not in the same space at all: 2259 was a position in the retired
+        // global sequence and 2 is a count within a candidate. Nothing can be
+        // ruled on, and this row says n/a out loud rather than inventing a
+        // comparison — the same answer it already gives when the parent has no
+        // ordinal file. (Caught by review on #574 AFTER it merged: the earlier
+        // form demanded a 0 tail whenever the release field moved, which made
+        // the scheme's own boundary commit red.)
+        add(true, 'H ORDINAL INCREASES',
+          `${parent.slice(0, 7)} counted its ordinal before the release was recorded beside it — the retired global sequence and a per-candidate count are not comparable (n/a, stated)`);
       } else if (before.release !== now.release) {
-        // A RESET IS LEGITIMATE ONLY WHEN THE CANDIDATE MOVED, and this is the
-        // row that says so. The counter restarts at 0 on a new candidate —
-        // Constantine's rule — so a lower number is correct here and would be
-        // the defect anywhere else. What still has to hold is that the version
-        // as a whole went UP, and it does: the third component moved, so
-        // component-wise numeric comparison orders the two builds apart even
-        // though the tail fell. The check is that the reset landed where the
-        // rule says a candidate starts, rather than anywhere lower.
-        add(now.ordinal === 0, 'H ORDINAL INCREASES',
-          now.ordinal === 0
-            ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD, and the ordinal restarted at 0 as a new candidate must`
-            : `the release moved '${before.release}' → '${now.release}' and the ordinal went ${before.ordinal} → ${now.ordinal},`
-              + ` which is neither a continuation nor the 0 a new candidate starts at.`);
+        // WHAT MUST HOLD IS THAT THE VERSION WENT UP, NOT THAT THE TAIL IS 0.
+        // The counter restarts at 0 on a new candidate, so a lower tail is
+        // correct here and would be the defect anywhere else — but demanding
+        // EXACTLY 0 was wrong in both directions, and review on #574 named
+        // both. A candidate that advances after several builds on the branch
+        // lands on a non-zero tail and is perfectly ordered (`0.5.5.3` beats
+        // `0.5.4.9`), yet the old form called it red. And a candidate moving
+        // BACKWARD to a `.0` tail — `0.5.3.0` after `0.5.4.7` — passed, which
+        // is the one thing this row exists to refuse. Comparing the whole
+        // version answers both at once.
+        const beforeV = versionTuple(before.release, before.ordinal);
+        const nowV = versionTuple(now.release, now.ordinal);
+        const rose = compareVersions(nowV, beforeV) > 0;
+        add(rose, 'H ORDINAL INCREASES',
+          rose
+            ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`
+            : `the release moved '${before.release}' → '${now.release}' and the version went ${beforeV.join('.')} → ${nowV.join('.')},`
+              + ` which does not rise. A new candidate may restart the tail; it may not move the build backwards.`);
       } else {
         add(now.ordinal > before.ordinal, 'H ORDINAL INCREASES',
           now.ordinal > before.ordinal

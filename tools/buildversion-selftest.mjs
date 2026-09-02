@@ -352,31 +352,57 @@ function ordinalHistory() {
     console.log(`          ${detail}`);
   };
 
-  /** A committed tree, then a second commit that ships a new bundle. */
-  const build = (moveOrdinal) => {
+  /**
+   * A committed tree, then a second commit that ships a new bundle. `second`
+   * rewrites the ordinal record for that second commit, so one function reaches
+   * the continuation case AND the candidate-boundary cases review named on #574.
+   */
+  const build = (second, first = null) => {
     const dir = fresh();
     git(dir, 'init', '-q', '-b', 'main');
     git(dir, 'config', 'user.email', 'selftest@family.local');
     git(dir, 'config', 'user.name', 'selftest');
+    if (first) {
+      const p = resolve(dir, ORDINAL_HOME);
+      writeFileSync(p, `${JSON.stringify(first(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
+    }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'the build that shipped');
     // A REAL change to the shipped artifact — the same door a rebuild enters by.
     appendFileSync(resolve(dir, 'build/AshenSpire.html'), '<!-- a later build -->\n');
-    if (moveOrdinal) {
+    if (second) {
       const p = resolve(dir, ORDINAL_HOME);
-      const j = JSON.parse(readFileSync(p, 'utf8'));
-      writeFileSync(p, `${JSON.stringify({ ...j, ordinal: j.ordinal + 1 }, null, 2)}\n`, 'utf8');
+      writeFileSync(p, `${JSON.stringify(second(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
     }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'a second build');
     return dir;
   };
 
-  for (const [moved, label] of [[false, 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
-    [true, 'the control: the same commit with the ordinal moved must go GREEN']]) {
-    const dir = build(moved);
+  // `release` is written by the release home, not by hand — but these plants
+  // edit the RECORD to stage a parent/child pair the real repo would take a
+  // candidate cut to produce. Each names the version pair it stages.
+  const bump = (j) => ({ ...j, ordinal: j.ordinal + 1 });
+  const CASES = [
+    [null, false, 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
+    [bump, true, 'the control: the same commit with the ordinal moved must go GREEN'],
+    // #574 review, caught after that PR merged: demanding a 0 tail on a release
+    // change was wrong in BOTH directions, so both are watched here.
+    [(j) => ({ ...j, release: '0.5.5', ordinal: 3 }), true,
+      'the candidate ADVANCES after several branch builds (0.5.4.x → 0.5.5.3) — a non-zero tail is still a rise, and must go GREEN'],
+    [(j) => ({ ...j, release: '0.5.3', ordinal: 0 }), false,
+      'the candidate moves BACKWARD onto a 0 tail (0.5.4.x → 0.5.3.0) — the tail is what a new candidate starts at, and the build still went back'],
+    // The PARENT is the one that must predate the field, so it is the first
+    // commit that loses it — staged the other way round, this plant proved
+    // nothing and said so.
+    [bump, true,
+      'the PARENT predates the recorded release — the retired global sequence and a per-candidate count are not comparable, so n/a is the honest answer',
+      ({ release, ...rest }) => ({ ...rest, ordinal: 9999 })],
+  ];
+  for (const [second, wantGreen, label, first = null] of CASES) {
+    const dir = build(second, first);
     try {
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
-      if (!moved) say(row && row.ok === false, label, detail);
+      if (!wantGreen) say(row && row.ok === false, label, detail);
       else {
         const ok = row && row.ok === true;
         if (!ok) failures += 1;
