@@ -1,6 +1,7 @@
 import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
+import { tagService } from './tagService.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 // Recording only — `note` is a no-op unless a run door is open, so the
 // stampDeck calls that fire all climb long cost nothing.
@@ -217,7 +218,7 @@ export function validateEquipment(registries) {
   const profilesPresent = Array.isArray(eq.basicCardProfiles);
   const profiles = eq.basicCardProfiles || [];
   const profileIds = new Set();
-  const tagIds = new Set((registries.tags || []).map((t) => t.id));
+  const tags = tagService(registries);
   const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
   if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
 
@@ -280,7 +281,12 @@ export function validateEquipment(registries) {
     if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
     if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
     if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
-    for (const tag of profile.tags || []) if (!tagIds.has(tag)) problems.push(`${profile.id}: unknown profile tag '${tag}'`);
+    // The service owns what a family may carry, so this reads the same rule
+    // the boot door reads rather than a second copy of it.
+    for (const tag of profile.tags || []) {
+      try { tags.assertLegal('basicCardProfile', tag); }
+      catch (e) { problems.push(`${profile.id}: ${e.message}`); }
+    }
     for (const raw of profile.mods || []) if (!parseMod(`${profile.role}.${raw}`)) problems.push(`${profile.id}: unparseable profile mod '${raw}'`);
   }
 

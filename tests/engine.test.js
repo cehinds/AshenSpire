@@ -8,6 +8,7 @@ import { contentBundle } from '../src/content/index.js';
 import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { tagService } from '../src/model/tagService.js';
 import {
   validateContent,
   extractTemplateTokens,
@@ -1937,6 +1938,61 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const slot of REG.equipment.slots) assert(Array.isArray(slot.tags), `slot '${slot.id}' carries a tags array`);
     for (const unlock of REG.unlocks || []) assert(Array.isArray(unlock.tags), `unlock '${unlock.id}' carries a tags array`);
     for (const relic of REG.relics.all()) assert(Array.isArray(relic.tags), `relic '${relic.id}' carries a tags array`);
+  });
+
+  // ---- 26c. the query door -----------------------------------------------
+  test('26c. tagService answers every tag question from the junction', () => {
+    // One door for asking. `obj.tags` stays the resolved join a hot path reads;
+    // this is what answers the questions that field cannot — what a family is
+    // ALLOWED to carry, which objects wear a tag, and whether code just named
+    // one that does not exist.
+    const svc = tagService(REG);
+    eq(svc, tagService(REG), 'the service is memoised per registries');
+
+    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade', 'ids by family and id');
+    eq(svc.tagsOf('card', { id: 'strike' })[0].label, 'Blade', 'resolved to registry rows');
+    assert(svc.has('card', { id: 'strike' }, 'blade'), 'has() is true for a carried tag');
+    assert(!svc.has('card', { id: 'strike' }, 'venom'), 'has() is false for one it does not carry');
+    eq(svc.idsOf('card', null).length, 0, 'a missing object resolves to no tags');
+
+    // Scoped families need the whole parent key, and the service supplies it.
+    const armour = REG.equipment.armour.find((o) => o.id === 'default' && o.classId === 'starseer');
+    eq(svc.idsOf('armour', armour).join('|'), 'starstone', 'a scoped object resolves by (classId, id)');
+
+    // The junction is the authority: a doctored copy cannot answer for content.
+    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade',
+      'a hand-edited tags field does not override the rows');
+
+    // Reverse lookup hands back objects, not ids.
+    const heavy = svc.withTag('armament', 'heavy');
+    assert(heavy.length >= 4, 'withTag finds the heavy armaments');
+    assert(heavy.every((row) => row && row.id), 'withTag returns objects');
+    assert(heavy.some((row) => row.id === 'greatsword'), 'the greatsword is among them');
+    eq(svc.withTag('armament', 'nosuchtag').length, 0, 'withTag on an unknown tag is empty');
+    eq(svc.withTag('nosuchfamily', 'blade').length, 0, 'withTag on an unknown family is empty');
+
+    // Vocabulary questions.
+    eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
+      'inDomain lists one domain');
+    eq(svc.domainsFor('armament').join('|'), 'card|item', 'a family may carry two domains');
+    assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
+    assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
+    eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
+    eq(svc.tag('nope'), null, 'tag() on an unknown id is null');
+    eq(svc.resolve(['blade', 'nope', 'guard']).map((t) => t.id).join('|'), 'blade|guard',
+      'resolve drops unregistered ids');
+
+    // assertLegal is the code-time twin of the boot door: it names the offence
+    // and prints the legal set rather than failing quietly.
+    const throws = (fn, needle, why) => {
+      let said = '';
+      try { fn(); } catch (e) { said = e.message; }
+      assert(said.includes(needle), `${why} — said ${JSON.stringify(said)}`);
+    };
+    eq(svc.assertLegal('card', 'blade').id, 'blade', 'a legal tag passes through');
+    throws(() => svc.assertLegal('card', 'nosuchtag'), "unknown tag 'nosuchtag'", 'an unregistered tag throws by name');
+    throws(() => svc.assertLegal('card', 'beast'), 'is a creature tag', 'a wrong-domain tag throws by name');
+    throws(() => svc.assertLegal('card', 'beast'), 'legal:', 'the throw prints the legal set');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

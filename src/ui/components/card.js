@@ -11,6 +11,7 @@ import { attachTooltip, esc } from './tooltip.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagsFor } from '../../content/tags.js';
+import { tagService } from '../../model/tagService.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
 export function staticTokens(def) {
@@ -111,8 +112,11 @@ export function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
+  // Equipment-generated cards carry their profile's tags on `cardTags`;
+  // authored cards resolve through the junction. Both go through the service,
+  // so the chip strip never re-implements the id-to-row lookup.
   const tags = def.cardTags && def.cardTags.length
-    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
+    ? tagService(registries).resolve(def.cardTags)
     : tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
