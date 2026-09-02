@@ -69,6 +69,28 @@ const NO_ROLE = 'no role recorded in git-ownership.json';
 // "pages" would present the same artifact twice under a worse name. The tool is
 // naming its own subject, not curating what the site may show.
 const BUILD_PATHS = new Set(['AshenSpire.html', 'build', 'dist']);
+// THE ONE THING STILL TYPED HERE, AND WHY IT HAS TO BE.
+//
+// `tools/palette-probe.html` is a QA harness tools/palette-check.sh drives, and
+// `tests/index.html` is the browser test runner. Neither is a destination, and
+// Codex was right that path depth is no evidence either way.
+//
+// I tried to derive it from the LINK GRAPH — a page is offered if something in
+// the tree points at it — and measured the result before believing it: nothing
+// links `hud/`, `tests/` or `tools/palette-probe.html`. The rule would have
+// silently dropped the Owner HUD, a page that matters, and kept nothing extra.
+// (An earlier probe of mine said the hub linked them; it was matching bare
+// `href="index.html"` against every directory's index and was my own false
+// positive.) The pages in this repository are islands: there is no navigation
+// graph to read, so there is nothing to derive from.
+//
+// So this stays a typed rule and says so. It names DIRECTORIES that hold the
+// repository's own harness rather than pages the site offers — two of them, at
+// the top level, checked by the first path segment. That is a much smaller
+// thing to keep true than the six-link list this pass removed, and unlike that
+// list it does not go stale when a page is added: a new page under docs/ or a
+// new indexed section appears without an edit here.
+const HARNESS_DIRS = new Set(['tools', 'tests']);
 
 function git(args, opts = {}) {
   return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28, ...opts });
@@ -162,8 +184,13 @@ function rowsTable(builds, rel) {
  *  4. A DIRECTORY WITH AN index.html IS ONE ENTRY at its directory URL, and
  *     NOTHING BENEATH IT is listed separately. Nearest-ancestor, not
  *     immediate-parent: the hub's ten ticket pages are the hub's business.
- *  5. A STANDALONE .html IS AN ENTRY at depth 0 or 1 only. Deeper than that is
- *     a fixture or an internal probe, not a page the site offers.
+ *  5. SOMETHING IN THE TREE MUST LINK TO IT. Path depth was the first cut of
+ *     this rule and it was wrong: `tools/palette-probe.html` sits at depth 1 and
+ *     is a QA harness a shell script drives, not a destination. The link graph
+ *     says what depth cannot — the probe is pointed at by no page, so it leaves
+ *     on a fact rather than on a name. The one exception is `index-game.html`,
+ *     which this tool itself moves aside to free `/`, and naming what you just
+ *     created is not a typed list.
  *
  * THE LABEL IS THE PAGE'S OWN `<title>`, so a page renames itself here by
  * renaming itself. A page with no title is listed by path and SAID to have none,
@@ -171,45 +198,57 @@ function rowsTable(builds, rel) {
  */
 function discoverPages(outDir, generatedNames) {
   const files = [];
-  const indexed = new Set();   // every directory that carries its own index.html
+  const indexed = new Set();
   const walk = (rel, depth) => {
     if (depth > 4) return;
     let entries;
     try { entries = readdirSync(join(outDir, rel), { withFileTypes: true }); } catch { return; }
     if (rel && entries.some((e) => e.isFile() && e.name === 'index.html')) indexed.add(rel);
     for (const e of entries) {
-      if (e.name.startsWith('.')) continue;                              // rule 1
+      if (e.name.startsWith('.')) continue;
       const child = rel ? `${rel}/${e.name}` : e.name;
-      if (rel === '' && generatedNames.has(e.name)) continue;            // rule 2
-      if (BUILD_PATHS.has(child)) continue;                              // rule 3
+      if (rel === '' && generatedNames.has(e.name)) continue;
+      if (BUILD_PATHS.has(child)) continue;
       if (e.isDirectory()) walk(child, depth + 1);
-      else if (e.isFile() && e.name.endsWith('.html')) files.push({ rel, name: e.name, path: child, depth });
+      else if (e.isFile() && e.name.endsWith('.html')) {
+        files.push({ rel, name: e.name, path: child, depth });
+      }
     }
   };
   walk('', 0);
 
-  // Rule 4 needs the whole set first: a page is governed by the NEAREST ancestor
-  // index, not only by its own directory, or the hub's forty ticket pages each
-  // arrive here as a separate entry.
+  // NEAREST INDEXED ANCESTOR, SEARCHED FROM THE PARENT. Starting the search at
+  // the directory itself made every indexed directory its own governor, so a
+  // `section/sub/index.html` under an already-indexed `section/` came through as
+  // its own entry — the exact thing the rule says must not happen. The bug could
+  // not show on today's tree, which has no nested index; it would have appeared
+  // the first time one was added, which is when nobody would be looking.
+  const governedFrom = (dir) => {
+    let d = dir.includes('/') ? dir.slice(0, dir.lastIndexOf('/')) : '';
+    for (; d; d = d.includes('/') ? d.slice(0, d.lastIndexOf('/')) : '') if (indexed.has(d)) return d;
+    return null;
+  };
   const governed = (dir) => {
     for (let d = dir; d; d = d.includes('/') ? d.slice(0, d.lastIndexOf('/')) : '') if (indexed.has(d)) return d;
     return null;
   };
 
-  const seen = new Set();
   const pages = [];
   for (const f of files) {
-    if (f.name === 'index.html') {
-      if (!f.rel) continue;                       // the root index is ours
-      if (governed(f.rel) !== f.rel) continue;    // a nested index — its section already speaks
-      if (seen.has(f.rel)) continue;
-      seen.add(f.rel);
-      pages.push({ href: `${f.rel}/`, title: titleOf(join(outDir, f.path)), path: f.path });
-    } else {
-      if (governed(f.rel)) continue;              // rule 4
-      if (f.depth > 1) continue;                  // rule 5
-      pages.push({ href: f.path, title: titleOf(join(outDir, f.path)), path: f.path });
-    }
+    const isIndex = f.name === 'index.html';
+    if (isIndex && !f.rel) continue;                          // the root index is ours
+    if (isIndex && governedFrom(f.rel)) continue;             // an ancestor section speaks for it
+    if (!isIndex && governed(f.rel)) continue;                // its own section speaks for it
+    if (!isIndex && f.depth > 1) continue;                    // a fixture, not a page
+    if (HARNESS_DIRS.has(f.rel.split('/')[0])) continue;      // see HARNESS_DIRS
+    const href = isIndex ? `${f.rel}/` : f.path;
+    pages.push({ href, title: titleOf(join(outDir, f.path)), path: f.path });
+  }
+  // index-game.html is listed because THIS TOOL PUT IT THERE — main's own root
+  // page, moved aside so the build index can hold `/`. Naming a file the
+  // generator itself created is not the hand-typed list this pass removed.
+  if (existsSync(join(outDir, 'index-game.html')) && !pages.some((x) => x.path === 'index-game.html')) {
+    pages.push({ href: 'index-game.html', title: titleOf(join(outDir, 'index-game.html')), path: 'index-game.html' });
   }
   return pages.sort((a, b) => a.href.localeCompare(b.href));
 }
