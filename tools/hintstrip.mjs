@@ -288,6 +288,19 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // A TRANSLUCENT SHEET: the same layer over the whole viewport at 90%
+        // opacity. Every covered pixel still changes a little when the control
+        // is hidden, so a yes/no-per-pixel read would count all of it as seen;
+        // by magnitude nine tenths of the control's paint is gone (Codex, #540).
+        name: 'the effects layer paints a 90%-opaque sheet over the whole viewport, and every covered pixel still changes a little',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); pointer-events: none; z-index: 300; overflow: hidden; }',
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // A PARTIAL SHEET: the same layer as a thin black band along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
@@ -571,10 +584,11 @@ const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
 const PAINT_FLOOR = 0.25;
 // The most of a control's own paint that may fail to reach the eye in situ.
 // The floor above says the control paints; this says nothing is drawn over
-// it. A control's colour can coincide with what lies beneath at a few pixels
-// (an edge of shadow the same dark as the background), so the tolerance is
-// not zero; the shipped controls lose 0-N% (printed in every H3 ok line).
-const PAINT_LOST = 0.1;
+// it. The shipped controls lose 0-6% (anti-aliased edges and shadows whose
+// colour over the bare canvas is not their colour in situ; printed in every
+// H3 ok line), so the tolerance is not zero; a sheet over a fifth of a
+// control, or a sheet at a fifth of opacity over all of it, loses a fifth.
+const PAINT_LOST = 0.15;
 const decodePng = (buf) => {
   let p = 8, w = 0, h = 0, ct = 0, bd = 0; const idat = [];
   while (p < buf.length) { const len = buf.readUInt32BE(p); const type = buf.toString('ascii', p + 4, p + 8); const d = buf.subarray(p + 8, p + 8 + len);
@@ -590,23 +604,38 @@ const decodePng = (buf) => {
       out[dst + x] = v & 255; } }
   return { w, h, bpp, px: out };
 };
-// The pixels where two captures of the same clip differ (a Uint8Array mask).
-const diffMask = (a, b) => { const A = decodePng(a), B = decodePng(b);
-  if (A.w !== B.w || A.h !== B.h) throw new Error('the two captures differ in size');
-  const n = A.w * A.h, m = new Uint8Array(n);
-  for (let i = 0; i < n; i++) { const o = i * A.bpp; if (Math.abs(A.px[o] - B.px[o]) > 4 || Math.abs(A.px[o + 1] - B.px[o + 1]) > 4 || Math.abs(A.px[o + 2] - B.px[o + 2]) > 4) m[i] = 1; }
-  return m; };
-// TWO MASKS PER CONTROL. `own`: the pixels the control paints BY ITSELF — the
-// page hidden (body visibility:hidden), the control alone made visible,
-// against the control hidden too. `seen`: the pixels that change when the
-// control is hidden IN SITU, everything else drawn as shipped. A pixel the
-// control paints alone that does not change in situ is a pixel something
-// opaque is drawn over (or, rarely, one that happens to match what is
-// beneath) — the LOST share is own-and-not-seen over own, and it names a
-// partial overlay as surely as a full one: a sheet over a fifth of a control
-// loses a fifth of its paint, whatever the rest still shows (Codex, #538).
-const paintOfMasks = (own, seen) => { let o = 0, lost = 0; for (let i = 0; i < own.length; i++) if (own[i]) { o++; if (!seen[i]) lost++; }
-  return { own: own.length ? o / own.length : 0, lost: o ? lost / o : 0 }; };
+// FOUR CAPTURES PER CONTROL, read as MAGNITUDES, not as a yes/no per pixel
+// (a translucent sheet still changes every covered pixel a little, so a
+// binary "did it change" mask would read it as fully seen — Codex, #540):
+//   inSitu       — the page as shipped;
+//   inSituHidden — the control hidden in place (visibility:hidden, no layout
+//                  moves), everything else as shipped;
+//   alone        — the page hidden (body visibility:hidden), the control alone
+//                  made visible: the colour the control paints by itself;
+//   blank        — the page hidden and the control hidden too.
+// `own` is the share of the box where alone differs from blank: the pixels
+// the control paints at all. Over those pixels the control OWES a change of
+// |alone - inSituHidden| when it is drawn on top of what lies beneath it in
+// situ (an opaque control's own colour against the in-situ background), and
+// it DELIVERS a change of |inSitu - inSituHidden|. What it delivers over what
+// it owes is the paint reaching the eye; the LOST share is the rest, summed by
+// magnitude so a sheet at 90% opacity that leaves a tenth of every covered
+// pixel's change loses nine tenths, and a sheet over a fifth of the control
+// loses a fifth, whatever the rest still shows. Anti-aliased edge pixels,
+// whose alone colour over the bare canvas is not their in-situ colour, weigh
+// little because their owed magnitude is small.
+const decode4 = (...bufs) => { const P = bufs.map(decodePng);
+  if (P.some((p) => p.w !== P[0].w || p.h !== P[0].h)) throw new Error('the captures differ in size');
+  return P; };
+const mag = (P, Q, o) => Math.abs(P.px[o] - Q.px[o]) + Math.abs(P.px[o + 1] - Q.px[o + 1]) + Math.abs(P.px[o + 2] - Q.px[o + 2]);
+const paintOfCaptures = (inSitu, inSituHidden, alone, blank) => {
+  const [A, B, D, E] = decode4(inSitu, inSituHidden, alone, blank);
+  const n = A.w * A.h; let ownPx = 0, owed = 0, delivered = 0;
+  for (let i = 0; i < n; i++) { const o = i * A.bpp;
+    if (mag(D, E, o) <= 12) continue; // not a pixel the control paints (4 levels per channel of noise allowed)
+    ownPx++; const need = mag(D, B, o), got = mag(A, B, o);
+    owed += need; delivered += Math.min(got, need); }
+  return { own: n ? ownPx / n : 0, lost: owed ? 1 - delivered / owed : 0 }; };
 const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-action-row'); if (!row) return [];
   const list = [...row.children].map((c, i) => ({ sel: '.combat-action-row > :nth-child(' + (i + 1) + ')', name: (c.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) || c.className }));
   if (document.querySelector('.combat-action-row .et-key')) list.push({ sel: '.combat-action-row .et-key', name: 'END TURN key label' });
@@ -629,8 +658,7 @@ async function paintOf(ev, shot) {
       await vis('hidden');
       const blank = await shot(clip);
       await restore();
-      const seen = diffMask(inSitu, inSituHidden), own = diffMask(alone, blank);
-      out.push({ name: t.name, ...paintOfMasks(own, seen) });
+      out.push({ name: t.name, ...paintOfCaptures(inSitu, inSituHidden, alone, blank) });
     } catch (e) { await restore().catch(() => {}); throw e; }
   }
   return out;
