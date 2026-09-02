@@ -571,6 +571,13 @@ try {
           const awayRelicsBefore = b2.run.relics.slice();
           const rr = replay(B, 'a2', 0, { choiceIndex: giveIdx });
           const awayRelic = b2.run.relics.find((r) => !awayRelicsBefore.includes(r));
+          // A LATER OFFER THAT ROLLED THE SAME RELIC pays a substitute: the seat
+          // is owed a relic, not that one (Codex on #548).
+          b2.catchup.push({ type: 'reward', offer: { pool: 'elite', cardIds: [], cinders: 0, flaskId: null, relicId: liveRelic }, act: 1, floor: B.session.floor });
+          const relicsBeforeOffer = b2.run.relics.length;
+          const took = B.resolveCatchup('a2', 0, { takeRelic: true });
+          const substitute = b2.run.relics.length === relicsBeforeOffer + 1 && b2.run.relics[b2.run.relics.length - 1] !== liveRelic;
+          ok(took.ok && substitute, `a later offer that rolled the relic the replayed event granted pays a substitute instead (${b2.run.relics[b2.run.relics.length - 1]} for ${liveRelic})`);
           ok(liveRelic && rr.ok && awayRelic === liveRelic && movedPast && later && later !== liveRelic,
             `a missed choice's random relic is the one the room would have given (live ${liveRelic}, replayed after the stream was spent ${awayRelic}); the live stream moved past the entry's block (${movedPast}) and a later node's own draw (${later}) is not that relic`);
           // Priced: 0 cinders when the party met the ghost, 100 by the replay.
@@ -618,6 +625,29 @@ try {
           const rr = O.resolveCatchup('o2', 0, { choiceIndex: hurtIdx });
           ok(waitingOnO2 && rr.ok && o2.alive === false && O.scene.kind === 'combat',
             `a seat back during the acknowledgment holds the room (waiting on it: ${waitingOnO2}); its lethal replay fells it (alive ${o2.alive}) and settles the room for the seat that continued (scene ${O.scene.kind})`);
+        }
+        // A LIVE REWARD OFFER IS WITHDRAWN when catch-up fells its seat: back
+        // during the fight, the seat was present when it paid out; dead, it
+        // claims nothing and holds nobody (Codex on #548).
+        {
+          const avatar = REG.events.get('goldboughAvatar');
+          const hurtIdx = avatar.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'damage' && e.target === 'self'));
+          const leaveIdx = avatar.choices.findIndex((c) => !(c.effects || []).length);
+          const W2 = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          W2.addMember({ id: 'w1', name: 'Ash', classId: 'reaver' });
+          W2.addMember({ id: 'w2', name: 'Bel', classId: 'starseer' });
+          W2.start();
+          W2.session.cursorId = W2.session.reachableIds[0];
+          const w2 = W2.session.members.get('w2'); w2.run.hp = 1;
+          W2.setConnected('w2', false);
+          W2.session.scene = { kind: 'event', eventId: 'goldboughAvatar', done: {} };
+          W2.eventChoice('w1', leaveIdx); W2.eventContinue('w1'); // the avatar is queued for w2
+          W2.setConnected('w2', true);
+          const offer = { pool: 'normal', cardIds: [], cinders: 0, flaskId: null, relicId: null };
+          W2.session.scene = { kind: 'reward', pool: 'normal', offers: { w1: { ...offer }, w2: { ...offer } }, chosen: { w1: true }, afterReward: null };
+          const rr = W2.resolveCatchup('w2', 0, { choiceIndex: hurtIdx });
+          ok(rr.ok && w2.alive === false && W2.scene.kind !== 'reward',
+            `a live reward offer is withdrawn when catch-up fells its seat, and the scene closes for the seat that had chosen (alive ${w2.alive}, scene ${W2.scene.kind})`);
         }
         // A seat that chose and then dropped owes nothing.
         const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
