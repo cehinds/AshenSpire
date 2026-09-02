@@ -868,9 +868,46 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   // ---- catch-up + complete --------------------------------------------------
+  // A MISSED EVENT IS CHOSEN THE WAY A LIVE ONE IS: the choices the seat's
+  // history admitted when the party met it, priced ones disabled when short,
+  // and the choice's result read before the next debt (DEVELOPER.md's event
+  // contract) — the pick is sent once the result has been read, and held
+  // locally across snapshots until then.
+  let catchupRead = null; // { eventId, act, floor, choiceIndex } the seat has picked but not yet sent
   function renderCatchup(mm) {
     const item = mm.catchupQueue[0];
     const remaining = mm.catchupQueue.length;
+    if (item.type === 'event') {
+      let ev = null; try { ev = registries.events.get(item.eventId); } catch { ev = null; }
+      const choices = (ev && ev.choices ? ev.choices : []).map((c, i) => ({ c, i }))
+        .filter(({ i }) => !Array.isArray(item.open) || item.open.includes(i));
+      const held = catchupRead && catchupRead.eventId === item.eventId && catchupRead.act === item.act && catchupRead.floor === item.floor ? catchupRead : null;
+      if (held && ev && ev.choices[held.choiceIndex]) {
+        app.innerHTML = rewardShell(`${rTitle(`Ember Debt — ${remaining} missed`)}
+          <p class="coop-event-result">${esc(ev.choices[held.choiceIndex].resultText || '')}</p>
+          <div class="coop-choices"><button data-cu-go="1">CONTINUE</button></div>`);
+        const go = app.querySelector('[data-cu-go]');
+        if (go) go.addEventListener('click', () => { const pick = { choiceIndex: held.choiceIndex }; catchupRead = null; send({ t: 'catchupChoice', index: 0, pick }); });
+        renderPartyBar(); wireLeave();
+        return;
+      }
+      app.innerHTML = rewardShell(`${rTitle(`Ember Debt — ${remaining} missed`)}
+        <p class="coop-note">The party met ${esc(ev ? ev.name : 'a happening')} while you were away. Make the choice you would have made.</p>
+        ${ev && ev.text ? `<p class="coop-event-result">${esc(ev.text)}</p>` : ''}
+        <div class="coop-choices" style="margin-top:12px">${choices.map(({ c, i }) => {
+          const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
+          const short = need != null && (mm.cinders ?? 0) < need;
+          return `<button data-cu-ev="${i}"${short ? ' disabled data-requires="1" title="Needs ' + need + ' cinders"' : ''}>${esc(c.label || c.text || 'Choose')}</button>`;
+        }).join('') || '<button data-cu-ev="-1">Continue</button>'}</div>`);
+      app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {
+        const choiceIndex = Number(b.dataset.cuEv);
+        if (choiceIndex < 0) { send({ t: 'catchupChoice', index: 0, pick: {} }); return; }
+        catchupRead = { eventId: item.eventId, act: item.act, floor: item.floor, choiceIndex };
+        renderCatchup(mm);
+      }));
+      renderPartyBar(); wireLeave();
+      return;
+    }
     let inner = `${rTitle(`Ember Debt — ${remaining} missed`)}<p class="coop-note">Claim what you would have earned while away.</p>`;
     if (item.type === 'reward') inner += '<div class="reward-row"></div>';
     inner += `<div class="coop-choices" style="margin-top:12px">

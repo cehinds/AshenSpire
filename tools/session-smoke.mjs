@@ -325,6 +325,47 @@ try {
         ok(emptyStays && R.scene.kind !== 'event',
           `an emptied room stays put (scene event) and the chosen seat's return settles it (then scene ${R.scene.kind})`);
       }
+      // THE ABSENT KEEP THEIR TURN: an event the party settles while a living
+      // seat is away goes into that seat's catch-up queue with the choices its
+      // history admitted, and is chosen on return through the live choice's
+      // door — effects run, the fact recorded at the node the party met it,
+      // and the queue drains (MULTIPLAYER.md's catch-up series; Codex on #541).
+      {
+        const C = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        C.addMember({ id: 'c1', name: 'Ash', classId: 'reaver' });
+        C.addMember({ id: 'c2', name: 'Bel', classId: 'starseer' });
+        C.start();
+        C.session.cursorId = C.session.reachableIds[0];
+        C.session.scene = { kind: 'event', eventId: 'ancientRuneStone', done: {} };
+        const stone = REG.events.get('ancientRuneStone');
+        const smashIdx = stone.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'addCinders'));
+        const smash = stone.choices[smashIdx].effects.find((e) => e.op === 'addCinders').amount;
+        const c2 = C.session.members.get('c2');
+        C.setConnected('c2', false);
+        const q1 = C.eventChoice('c1', smashIdx);
+        const queued = c2.catchup[c2.catchup.length - 1];
+        ok(q1.ok && C.scene.kind !== 'event' && queued && queued.type === 'event' && queued.eventId === 'ancientRuneStone' && queued.act === 1,
+          `the room settles without the absent seat (scene ${C.scene.kind}) and the event is queued in its catch-up (${queued ? queued.type + ' ' + queued.eventId : 'nothing queued'})`);
+        const spentBefore = c2.run.cinders;
+        const histBefore = (c2.run.history || []).length;
+        const refused = C.resolveCatchup('c2', c2.catchup.length - 1, { choiceIndex: 99 });
+        C.setConnected('c2', true);
+        const replayed = C.resolveCatchup('c2', c2.catchup.length - 1, { choiceIndex: smashIdx });
+        const recorded = (c2.run.history || []).slice(histBefore).some((h) => h.eventId === 'ancientRuneStone' && h.choiceId === 'smashStone');
+        ok(!refused.ok && replayed.ok && c2.run.cinders === spentBefore + smash && recorded && c2.catchup.length === 0 && c2.run.floor === C.session.floor,
+          `a bad index is refused, the replayed choice pays out (+${c2.run.cinders - spentBefore} cinders, expected +${smash}), is recorded (${recorded}), drains the queue (${c2.catchup.length} left) and the seat snaps back to the party's floor`);
+        // A seat that chose and then dropped owes nothing.
+        const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        D.addMember({ id: 'd1', name: 'Ash', classId: 'reaver' });
+        D.addMember({ id: 'd2', name: 'Bel', classId: 'starseer' });
+        D.start();
+        D.session.cursorId = D.session.reachableIds[0];
+        D.session.scene = { kind: 'event', eventId: 'ancientRuneStone', done: {} };
+        D.eventChoice('d2', smashIdx);
+        D.setConnected('d2', false);
+        D.eventChoice('d1', smashIdx);
+        ok(D.scene.kind !== 'event' && D.session.members.get('d2').catchup.length === 0, 'a seat that chose and then dropped is not asked again');
+      }
       // A DISK RESUME RECONNECTS EVERYONE TOGETHER: a half-answered event
       // restored with two seats must wait on the second seat's choice, not
       // advance after the first seat back (Codex on #547).

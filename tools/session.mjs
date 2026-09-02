@@ -894,6 +894,21 @@ export function createSession({ registries, seedString, endless = false, restore
     let def = null;
     try { def = registries.events.get(session.scene.eventId); } catch { def = null; }
 
+    // THE ABSENT KEEP THEIR TURN. A living seat away from the room while it
+    // settled chose nothing here; the node is logged into its catch-up queue
+    // with the choices its history admitted, to be made on return the way a
+    // missed reward is — MULTIPLAYER.md's "retroactive catch-up as a series"
+    // (Codex on #541). A seat that chose and then dropped keeps its choice
+    // and owes nothing; the queue is served by resolveCatchup.
+    for (const mm of livingMembers()) {
+      if (mm.connected || session.scene.picks[mm.id] || session.scene.done[mm.id]) continue;
+      mm.catchup.push({
+        type: 'event', eventId: session.scene.eventId,
+        open: session.scene.open && Array.isArray(session.scene.open[mm.id]) ? [...session.scene.open[mm.id]] : null,
+        act: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null,
+      });
+    }
+
     // THE PARTY'S RECORD: the choice of the earliest-joined member who was
     // PRESENT and chose (the seat fork-voting ties break toward), written to
     // the session's own history so the next map answers to it whoever was
@@ -970,6 +985,42 @@ export function createSession({ registries, seedString, endless = false, restore
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
     } else if (item.type === 'treasure') {
       if (pick && pick.takeRelic && item.relicId && !m.run.relics.includes(item.relicId)) m.run.relics.push(item.relicId);
+    } else if (item.type === 'event') {
+      // THE MISSED EVENT IS CHOSEN NOW, through the same door a live choice
+      // walks (eventChoice): the choice must be one the seat's history admits
+      // (and was open when the party met it), affordable, and its effects run
+      // before the fact is recorded — stamped with the node where the party
+      // met it, so the record reads as the party's does. An event with no
+      // history contract, like a live one, applies nothing and is dropped.
+      let def = null;
+      try { def = registries.events.get(item.eventId); } catch { def = null; }
+      const authored = def ? eventChoicesWithHistory(def) : [];
+      if (authored.length) {
+        const idx = Number(pick && pick.choiceIndex);
+        const choice = authored[idx];
+        if (!choice) return { ok: false, error: 'bad choice index' };
+        if (Array.isArray(item.open) && !item.open.includes(idx)) return { ok: false, error: 'that choice was not open to you' };
+        if (!availableEventChoices(authored, m.run).some((row) => row.choice.id === choice.id)) return { ok: false, error: 'that choice is not open to you yet' };
+        if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
+          return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
+        }
+        executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
+        // THE FIGHT THE CHOICE WOULD HAVE STARTED was the party's, met (or
+        // not) while this seat was away; a returning seat fights no room
+        // alone, so the flag is consumed here as settleEvent consumes it.
+        m.run.combatEntered = null;
+        if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; }
+        m.run.actNumber = item.act;
+        m.run.floor = item.floor;
+        m.run.mapNodeId = item.mapNodeId ?? null;
+        recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
+        // Then the seat snaps back to the party's position.
+        m.run.actNumber = session.actNumber;
+        m.run.floor = session.floor;
+        m.run.mapNodeId = session.cursorId ?? null;
+        m.catchup.splice(index, 1);
+        return { ok: true, remaining: m.catchup.length, resultText: choice.resultText || '' };
+      }
     }
     m.catchup.splice(index, 1);
     return { ok: true, remaining: m.catchup.length };
