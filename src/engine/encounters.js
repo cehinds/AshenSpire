@@ -14,7 +14,7 @@
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
 import { relicInRewardPool } from '../model/schemas.js';
-import { eventChoiceRequirementMet } from '../model/quests.js';
+import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/quests.js';
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
@@ -272,9 +272,17 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [], act, hist
   // once the run's choices have earned it — and it never falls back in either,
   // because a step met before the step it answers is a broken chain, not a
   // repeat. Everything ungated behaves exactly as before.
+  // A gated step the run has already answered is COMPLETE, not re-earned: the
+  // keeper does not come twice for one grave, and the reward it carries is
+  // handed over once. Only gated events are consulted — an ungated event that
+  // appears in the history keeps its shipped behaviour (repeatable across
+  // acts; `seenEvents` de-duplicates within one map).
   const gates = registries.eventHistoryRequirements || {};
+  const completed = new Set(history
+    .filter((row) => row && row.kind === EVENT_CHOICE_HISTORY_KIND)
+    .map((row) => row.eventId));
   const earned = registries.events.ids()
-    .filter((id) => !gates[id] || eventChoiceRequirementMet(gates[id], { history }));
+    .filter((id) => !gates[id] || (!completed.has(id) && eventChoiceRequirementMet(gates[id], { history })));
   let pool = earned.filter((id) => !seenEvents.includes(id));
   if (!pool.length) pool = earned;
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back

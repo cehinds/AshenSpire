@@ -179,11 +179,18 @@ const rollEvents = (history, seeds = 400) => {
   return seen;
 };
 const ungatedRolls = rollEvents([]);
-const gatedRolls = rollEvents(mourner.history);
+const diggerRolls = rollEvents(digger.history);
+const mournerRolls = rollEvents(mourner.history);
 check('an Unknown node never rolls a chain step before it is earned',
   !ungatedRolls.has('namelessKeeper') && !ungatedRolls.has('namelessRest') && ungatedRolls.size >= 10);
 check('an Unknown node rolls the earned chain step',
-  gatedRolls.has('namelessRest') && gatedRolls.has('namelessKeeper'));
+  diggerRolls.has('namelessKeeper') && !diggerRolls.has('namelessRest') && mournerRolls.has('namelessRest'));
+// A gated step already answered is complete: a later act's map must not roll
+// it again (the keeper does not come twice; the Bell is handed over once). The
+// mourner's history holds a keeper choice, so the keeper is out of that pool,
+// while the grave — ungated — keeps its shipped repeatability across acts.
+check('a completed quest step never rolls again in a later act',
+  !mournerRolls.has('namelessKeeper') && mournerRolls.has('graveOfTheNameless'));
 
 // The reward is reserved: no generic pool may hand the Bell over first, or the
 // keeper's thanks would grant nothing (addRelic ignores a duplicate id). Every

@@ -42364,7 +42364,7 @@ Object.assign(module.exports, { sampleActShape, generateActMap });
 
 const { passiveMult, passiveFlag } = require("src/model/registries.js");
 const { relicInRewardPool } = require("src/model/schemas.js");
-const { eventChoiceRequirementMet } = require("src/model/quests.js");
+const { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } = require("src/model/quests.js");
 const { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } = require("src/model/gracerefill.js");
 
 // ---------------------------------------------------------------------------
@@ -42622,9 +42622,17 @@ function resolveUnknownNode(registries, rng, { seenEvents = [], act, history = [
   // once the run's choices have earned it — and it never falls back in either,
   // because a step met before the step it answers is a broken chain, not a
   // repeat. Everything ungated behaves exactly as before.
+  // A gated step the run has already answered is COMPLETE, not re-earned: the
+  // keeper does not come twice for one grave, and the reward it carries is
+  // handed over once. Only gated events are consulted — an ungated event that
+  // appears in the history keeps its shipped behaviour (repeatable across
+  // acts; `seenEvents` de-duplicates within one map).
   const gates = registries.eventHistoryRequirements || {};
+  const completed = new Set(history
+    .filter((row) => row && row.kind === EVENT_CHOICE_HISTORY_KIND)
+    .map((row) => row.eventId));
   const earned = registries.events.ids()
-    .filter((id) => !gates[id] || eventChoiceRequirementMet(gates[id], { history }));
+    .filter((id) => !gates[id] || (!completed.has(id) && eventChoiceRequirementMet(gates[id], { history })));
   let pool = earned.filter((id) => !seenEvents.includes(id));
   if (!pool.length) pool = earned;
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back
@@ -49080,7 +49088,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '42c2d94879';
+const SOURCE = 'cd715bbf84';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49114,7 +49122,7 @@ const SOURCE = '42c2d94879';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1914';
+const ORDINAL = '1915';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
