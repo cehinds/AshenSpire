@@ -1,0 +1,99 @@
+# pages-publish — the deploy half of pages-builds, so a merge republishes the site.
+#
+# WHY THIS FILE EXISTS. #543 split assembly from deployment for a real reason, and
+# that reason still holds: on a push, the workflow file THAT PUSH CARRIES is the one
+# that runs. A guard written inside it — `github.actor == github.repository_owner`,
+# anything — is a guard the pusher can delete in the same commit. So a push-triggered
+# job must never hold `pages: write` or an OIDC token, and in pages-builds it does
+# not. The cost of that correctness was #553: nothing republished after a merge or a
+# promotion, and /dev /test /release served builds from 2026-09-02 04:20Z onward.
+#
+# HOW THIS FILE IS DIFFERENT FROM A PUSH TRIGGER. `workflow_run` always runs the
+# DEFAULT BRANCH's copy of the workflow, whatever branch the run it followed was on.
+# A push to `test` cannot rewrite this file's guard, because this file is not read
+# from `test`. That is the whole reason the trigger is `workflow_run` and not `push`,
+# and it is why the write credential can live here when it could not live there.
+#
+# WHAT IS STILL THE OWNER'S. AGENTS.md holds publication as its own separate
+# authority, and an unattended deploy is exactly what that invariant refuses. This
+# workflow does NOT overrule it — it moves the owner's decision from "remember to
+# dispatch" to "approve or decline the publication that is waiting". The lever is a
+# repository setting, not a line in this file:
+#
+#   Settings → Environments → github-pages → Required reviewers: <owner>
+#
+# With it set, every run below pauses for the owner's approval and publishes nothing
+# until it is given; without it, a successful assemble publishes on its own. Both are
+# defensible and the choice is the owner's, which is why it lives where only the
+# owner can turn it.
+#
+# The manual `deploy` job in pages-builds.yml is untouched and remains the forced
+# republish for when nothing has been pushed.
+#
+# COST: this re-assembles rather than reusing the assemble run's artifact, because
+# actions/deploy-pages@v4 takes no run id and can only deploy an artifact its OWN run
+# uploaded. That is not a workaround: the site is a function of the four branches'
+# history, not of any one pushed tree, so building it again from that history is the
+# same site by construction — and it re-proves the generator's drift plant before
+# anything is published.
+name: pages-publish
+
+on:
+  workflow_run:
+    workflows: [pages-builds]
+    types: [completed]
+
+concurrency:
+  group: pages-publish
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    # Only a SUCCESSFUL assemble publishes, and only for the four published
+    # branches — a cancelled run (pages-builds cancels in-progress on a newer
+    # push) and a failed one both stop here rather than deploying a site whose
+    # drift plant was never proven.
+    #
+    # AND ONLY THE PUSH PATH. workflow_run fires whatever triggered the run it
+    # follows, so without this clause the owner's own dispatch would deploy twice
+    # — once from pages-builds' `deploy` job and once from here. The dispatch
+    # keeps its own job; this file is the push half and nothing else.
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+      && contains(fromJSON('["dev", "test", "release", "main"]'), github.event.workflow_run.head_branch)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Pinned to the default branch by name rather than left to the event's
+      # default, so the tooling that assembles the site is read from the branch
+      # this workflow's own guard lives on, and is never the followed run's tree.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - name: Fetch the four published branches so their history is readable
+        run: git fetch --no-tags origin dev test release main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Assemble the site from git history — every listed build proven byte-identical
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep 10
+      - name: The generator's own drift plant is still caught
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Publish the assembled site
+        id: deployment
+        uses: actions/deploy-pages@v4
