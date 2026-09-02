@@ -16,8 +16,9 @@
 # job holds no Pages or OIDC credential at all (contents: read only — the credentials
 # live on the deploy job alone, so branch-controlled code cannot call the Pages API
 # around the guard). The `deploy` job runs only from a manual dispatch BY THE
-# REPOSITORY OWNER (github.actor is checked against github.repository_owner; a write
-# collaborator's dispatch is skipped) whose `publish` input spells PUBLISH, on the
+# REPOSITORY OWNER (github.actor AND github.triggering_actor are checked against
+# github.repository_owner, so neither a write collaborator's dispatch nor their re-run
+# of the owner's dispatch deploys) whose `publish` input spells PUBLISH, on the
 # `github-pages` environment, which can additionally carry required reviewers.
 # ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
 # deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
@@ -76,8 +77,13 @@ jobs:
     needs: assemble
     # Only the owner's own explicit dispatch deploys: never a push, and never a
     # write collaborator's dispatch (anyone with write may run a workflow, so the
-    # typed PUBLISH alone is not authority; the actor is).
-    if: github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH' && github.actor == github.repository_owner
+    # typed PUBLISH alone is not authority; the actor is). A RE-RUN of the owner's
+    # dispatch by a collaborator keeps the owner as github.actor, so the actor who
+    # triggered THIS attempt (github.triggering_actor) must be the owner as well.
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
+      && github.actor == github.repository_owner
+      && github.triggering_actor == github.repository_owner
     runs-on: ubuntu-latest
     permissions:
       contents: read
