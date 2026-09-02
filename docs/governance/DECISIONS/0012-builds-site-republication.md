@@ -219,6 +219,23 @@ Two things in that table need his eye rather than my assumption:
   `it-manager-iii` governance lane it already fits and have that seat write it on
   the owner's dispatch, which keeps the ownership contract untouched but puts a
   deputy's hand on the record of what the owner published.
+- **The listener's own definition cannot be pinned, and option A has to say so
+  rather than imply otherwise.** Codex found the contradiction: a `workflow_run`
+  listener must live on the default branch to fire at all, and GitHub selects
+  the workflow file *as it stands there* before any step runs. Checking out a
+  pinned builder inside that run cannot roll back the YAML, the `permissions:`
+  block, or the steps already chosen. So a change to the listener landing on
+  `main` after the last dispatch takes effect on the very next `dev` push,
+  pinned content and pinned builder notwithstanding.
+
+  **This is a limit, not a gap I can close.** The two honest mitigations are
+  both outside this file: require the owner's review on the listener path
+  specifically — `.github/workflows/**` is `app-dev-iii`'s lane today, so that
+  is a branch-protection or CODEOWNERS change, not a contract edit — or accept
+  that changes to that one file publish on the next push and say so where a
+  reader will meet it. Option A is therefore "everything except the listener
+  itself is pinned", and pretending otherwise would be the same overclaim this
+  record has already had to withdraw twice.
 - Under option A, `main` and `release` are built from the owner's last-published
   SHAs rather than their heads — **and so is the generator.** Codex raised this
   as a second P1 and it closes a channel the content pins leave open: if `main`

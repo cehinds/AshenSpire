@@ -184,7 +184,7 @@ function rowsTable(builds, rel) {
  *  4. A DIRECTORY WITH AN index.html IS ONE ENTRY at its directory URL, and
  *     NOTHING BENEATH IT is listed separately. Nearest-ancestor, not
  *     immediate-parent: the hub's ten ticket pages are the hub's business.
- *  5. SOMETHING IN THE TREE MUST LINK TO IT. Path depth was the first cut of
+ *  5. NOT UNDER A HARNESS TREE. Depth was the first cut of
  *     this rule and it was wrong: `tools/palette-probe.html` sits at depth 1 and
  *     is a QA harness a shell script drives, not a destination. The link graph
  *     says what depth cannot — the probe is pointed at by no page, so it leaves
@@ -239,7 +239,11 @@ function discoverPages(outDir, generatedNames) {
     if (isIndex && !f.rel) continue;                          // the root index is ours
     if (isIndex && governedFrom(f.rel)) continue;             // an ancestor section speaks for it
     if (!isIndex && governed(f.rel)) continue;                // its own section speaks for it
-    if (!isIndex && f.depth > 1) continue;                    // a fixture, not a page
+    // NO DEPTH CAP. It used to stop at depth 1, which contradicted this pass's
+    // own promise: `docs/guides/setup.html` is a page and the cap dropped it
+    // silently, recreating the stale-list problem the typed row had. Exclusion
+    // belongs to HARNESS_DIRS, which names trees rather than guessing from how
+    // deep a file sits.
     if (HARNESS_DIRS.has(f.rel.split('/')[0])) continue;      // see HARNESS_DIRS
     const href = isIndex ? `${f.rel}/` : f.path;
     pages.push({ href, title: titleOf(join(outDir, f.path)), path: f.path });
