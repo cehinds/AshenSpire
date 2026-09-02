@@ -278,11 +278,15 @@ export function armHold(btn, {
     // declining those sources here lets the ordinary focused-control click
     // keep its authored meaning. Safety beats leave pointerOnly false and
     // retain the three-input parity described at the top of this file.
+    // A NEW PRESS SUPERSEDES THE MOVED STATE BEFORE ANY REFUSAL. A key or pad
+    // press on a pointer-only control is declined below and input.js then
+    // activates it with a synthetic click; that click must not be eaten by a
+    // pointer press that ended in a scroll (pointercancel, no click) earlier.
+    movedThisPress = false;
     if (pointerOnly && origin.source !== 'pointer') return false;
     if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
     committedThisPress = false;
-    movedThisPress = false;
     offPointerPress = false;
     const ms0 = msOf();
     // A pointer activation normally ends in a click, but mobile browsers may
@@ -306,7 +310,10 @@ export function armHold(btn, {
           if (cancelled || moved) {
             heldThisPress = false;
             committedThisPress = false;
-            movedThisPress = moved;
+            // Only a press that ENDS with a pointerup owes a trailing click; a
+            // pointercancel (a touch scroll) ends with none, so nothing is
+            // left armed for the next activation to walk into.
+            movedThisPress = moved && !cancelled;
             return true;
           }
           committedThisPress = true;
@@ -369,7 +376,11 @@ export function armHold(btn, {
       // thing — rule 1, inverted, which is the failure that looks exactly like
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
-      onEnd: () => {
+      onEnd: (endEv, info) => {
+        // A cancelled end (pointercancel — a touch scroll) produces no click,
+        // so the moved state must not outlive this press: the next activation
+        // by key or pad would otherwise be swallowed as that press's click.
+        if (info && info.cancelled) movedThisPress = false;
         if (armed) {
           stop('idle');
           // Pointer taps finish through the browser's trailing click so the
