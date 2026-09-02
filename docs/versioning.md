@@ -103,9 +103,22 @@ What this changes, each with the check that carries it:
 
 - **The ordinal no longer orders on its own, and nothing may read it as if it
   did.** `0.5.4.0` is newer than `0.5.3.2` with the lower tail. Comparison is
-  component-wise numeric over the whole version. `about-changelog` compares
-  stamp tuples; `buildversion` row H demands a strictly higher tail within one
-  release and a reset to exactly `0` when the release moves.
+  component-wise numeric over the whole version, and `about-changelog` compares
+  stamp tuples on that basis.
+
+  **`bumpOrdinal`'s reset and row H's comparison are two different rules, and
+  conflating them is a defect this document once carried.** The BUILD resets
+  the tail to `0` when the release string moves — that is where `0` comes from,
+  and it is the only place it is required. Row H asks a weaker and different
+  question: did the WHOLE VERSION rise? Within one release that reduces to a
+  strictly higher tail. Across a release change it does not, and must not: a
+  candidate branch that produced several builds before merging lands on a
+  non-zero tail, and `0.5.4.9 → 0.5.5.3` is a perfectly ordered advance. Row H
+  demanding `0` there was the defect #574 shipped and #579 removed; stating the
+  rule as a reset would invite its restoration. A parent whose era cannot be
+  established — an ordinal recorded with no release beside it — is UNKNOWN,
+  which blocks, because a missing field is not proof that the parent predates
+  the field.
 - **The `rc.9` ceiling is gone with the padding that motivated it.** Padding
   bought a naive STRING sort, which the candidate cannot survive in the third
   component: `0.5.10.0` string-sorts below `0.5.9.0` however the tail is
