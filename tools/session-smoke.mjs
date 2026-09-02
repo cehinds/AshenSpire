@@ -325,6 +325,26 @@ try {
         ok(emptyStays && R.scene.kind !== 'event',
           `an emptied room stays put (scene event) and the chosen seat's return settles it (then scene ${R.scene.kind})`);
       }
+      // A DISK RESUME RECONNECTS EVERYONE TOGETHER: a half-answered event
+      // restored with two seats must wait on the second seat's choice, not
+      // advance after the first seat back (Codex on #547).
+      {
+        const P = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        P.addMember({ id: 'p1', name: 'Ash', classId: 'reaver' });
+        P.addMember({ id: 'p2', name: 'Bel', classId: 'starseer' });
+        P.start();
+        P.session.cursorId = P.session.reachableIds[0];
+        P.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const shrine = REG.events.get('feralShrine');
+        const calmIdx = shrine.choices.findIndex((c) => !(c.effects || []).some((e) => e.op === 'startCombat'));
+        P.eventChoice('p1', calmIdx);
+        const Q = restoreSession(REG, P.serialize());
+        Q.setConnectedMany(['p1', 'p2'], true);
+        const held = Q.scene.kind === 'event' && !!Q.session.scene.done.p1 && !Q.session.scene.done.p2;
+        const r2 = Q.eventChoice('p2', calmIdx);
+        ok(held && r2.ok && Q.scene.kind !== 'event',
+          `a resumed party reconnects together and the half-answered event waits on the second seat (held ${held}, then scene ${Q.scene.kind})`);
+      }
       // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
       {
         const W = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
