@@ -384,6 +384,19 @@ test('the exception never admits a candidate that no independent seat verified',
   assert.equal(gateOf(config, selfVerified, pr([])).gates.independent_review, false, 'the maker verifying itself is not independence');
 });
 
+test('merge recovery keeps the verdict and the evidence apart', () => {
+  const { item, pr } = mergeGateFixture();
+  const merged = { ...pr([]), number: 434, url: 'https://github.com/cehinds/AshenSpire/pull/434', state: 'MERGED', baseRefName: config.development_branch, headRefName: item.branch, mergedAt: '2026-08-30T00:10:00Z', mergeCommit: { oid: 'a'.repeat(40) } };
+  const recovery = mergedPrRecovery(config, item, merged);
+  // The merge already existed, so this process permitted nothing — but the
+  // candidate's verification is still derivable and must not be thrown away.
+  assert.equal(recovery.gate.review_independence, 'recovered');
+  assert.equal(recovery.gate.review_independence_evidence, 'independent-qa-seat');
+  const unverified = { ...item, lease_history: item.lease_history.filter((lease) => lease.assignment_kind !== 'qa') };
+  assert.equal(mergedPrRecovery(config, unverified, merged).gate.review_independence_evidence, 'none',
+    'a hand merge of an unverified candidate must not inherit a verdict it never passed');
+});
+
 test('a distinct-account approval still outranks the exception and is labelled as such', () => {
   const { item, approval, pr } = mergeGateFixture();
   const gate = gateOf(config, item, pr([approval('someone-else', item.candidate_commit)]));
