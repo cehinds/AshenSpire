@@ -368,7 +368,10 @@ if (process.argv.includes('--selftest')) {
   };
   const selftestCode = await doorSelftest(SELFTEST);
   // THE COUNT IS THE CORPUS'S, not a literal: a literal said 8 over nine plants.
-  if (selftestCode === 0) console.log(`hintstrip-selftest: OK — ${SELFTEST.plants.length} plant(s) CAUGHT by their own red, clean copy green`);
+  // THE TERMINAL LINE IS IN A FORM tools/verdict.mjs ACCEPTS ("label: OK — N <words>, N caught"): the
+  // previous wording was refused as SILENCE on the hosted board (run 299) and the whole
+  // browser-guard job read red for a selftest that had caught every plant.
+  if (selftestCode === 0) console.log(`hintstrip-selftest: OK — ${SELFTEST.plants.length} plants, ${SELFTEST.plants.length} caught`);
   process.exit(selftestCode);
 }
 
