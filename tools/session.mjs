@@ -632,7 +632,13 @@ export function createSession({ registries, seedString, endless = false, restore
     live = null;
     if (c.result === 'defeat') {
       for (const m of livingMembers()) if (m.run.hp <= 0) m.alive = false;
-      if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
+      // A LOST FIGHT IS THE PARTY'S DEFEAT when no fighter lives: a seat
+      // standing outside the fight — held out while its catch-up queue
+      // stands, or away — was not in the room the party lost, and cannot
+      // turn its defeat into rewards (Codex on #549). The run ends; the seats
+      // outside it fall with the party.
+      const fighterLives = livingMembers().some((m) => c.players.has(m.id));
+      if (!fighterLives) { for (const m of livingMembers()) { m.run.hp = 0; m.alive = false; } session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
     for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
@@ -1032,8 +1038,15 @@ export function createSession({ registries, seedString, endless = false, restore
     const m = members.get(memberId);
     if (!m || !m.catchup.length) return { ok: false, error: 'nothing to catch up' };
     // A FALLEN SEAT REPLAYS NOTHING: the live flow enters a dead seat into no
-    // later node, so its queue is owed nothing either (Codex on #548).
-    if (!m.alive) { m.catchup.length = 0; return { ok: false, error: 'a fallen seat has nothing to catch up' }; }
+    // later node, so its queue is owed nothing either (Codex on #548) — save
+    // the result of the choice that felled it, held at the head of the queue
+    // until the seat has read it (Codex on #549).
+    if (!m.alive) {
+      const last = m.catchup[0];
+      if (last && last.done && pick && pick.continue) { m.catchup.length = 0; return { ok: true, remaining: 0 }; }
+      if (last && last.done) return { ok: false, error: 'read the result first' };
+      m.catchup.length = 0; return { ok: false, error: 'a fallen seat has nothing to catch up' };
+    }
     const item = m.catchup[index];
     if (!item) return { ok: false, error: 'bad catch-up index' };
     if (item.type === 'reward') {
@@ -1136,8 +1149,11 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.actNumber = session.actNumber;
         m.run.floor = session.floor;
         m.run.mapNodeId = session.cursorId ?? null;
-        if (!m.alive) return { ok: true, remaining: m.catchup.length, resultText: choice.resultText || '' }; // the queue is forfeit; nothing to continue
         item.done = { choiceIndex: idx, resultText: choice.resultText || '' };
+        // THE QUEUE IS FORFEIT AT A DEATH, but the felled seat reads what felled
+        // it: the done entry alone stays, until the seat continues (Codex on
+        // #549). The client draws it as it draws any done entry.
+        if (!m.alive) { m.catchup.length = 0; m.catchup.push(item); }
         return { ok: true, remaining: m.catchup.length, pending: true, resultText: item.done.resultText };
       }
     }
