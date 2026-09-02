@@ -13,6 +13,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
+import { relicInRewardPool } from '../model/schemas.js';
 import { eventChoiceRequirementMet } from '../model/quests.js';
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 
@@ -114,13 +115,13 @@ export function rollFlaskDrop(registries, rng, run) {
 
 /**
  * rollRelicReward(registries, rng, ownedIds, { rarities }) → relic id | null.
- * Excludes owned relics; default pool is common/uncommon/rare (elite drops);
- * pass ['boss'] for boss rewards.
+ * Excludes owned relics and quest-pool relics (RELIC_POOLS); default pool is
+ * common/uncommon/rare (elite drops); pass ['boss'] for boss rewards.
  */
 export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common', 'uncommon', 'rare'] } = {}) {
   const pool = registries.relics
     .all()
-    .filter((r) => rarities.includes(r.rarity) && !ownedIds.includes(r.id))
+    .filter((r) => relicInRewardPool(r) && rarities.includes(r.rarity) && !ownedIds.includes(r.id))
     .map((r) => r.id);
   return pool.length ? rng.pick('relicRewards', pool) : null;
 }
@@ -199,7 +200,7 @@ export function buildShopStock(registries, rng, run) {
 
   const relicPool = registries.relics
     .all()
-    .filter((r) => ['common', 'uncommon', 'rare'].includes(r.rarity) && !run.relics.includes(r.id))
+    .filter((r) => relicInRewardPool(r) && ['common', 'uncommon', 'rare'].includes(r.rarity) && !run.relics.includes(r.id))
     .map((r) => r.id);
   const relics = [];
   for (let i = 0; i < bal.relicStock && relicPool.length; i++) {

@@ -395,6 +395,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       explicitOverrides: {
         legacyId: relic.id,
         rarity: checkRarity(relic.rarity, `relic ${relic.id}`),
+        pool: relic.pool,
         passives: relic.passives,
         triggers: relic.triggers,
         icon: relic.icon,

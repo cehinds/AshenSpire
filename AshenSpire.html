@@ -15711,6 +15711,9 @@ const relics = [
     id: 'gravetendersBell',
     name: "Gravetender's Bell",
     rarity: 'uncommon',
+    // E12: the Keeper's thanks, and nothing else, hands this over — see
+    // RELIC_POOLS in model/schemas.js. Rarity still prices its buy-back.
+    pool: 'quest',
     icon: '🔔',
     triggers: [{ on: 'enemyDied', do: [{ op: 'draw', amount: 1 }] }],
     textTemplate: 'Whenever an enemy dies, draw {draw} card.',
@@ -22588,6 +22591,27 @@ function validateContent(bundle) {
     }
   }
 
+  // A quest-pool relic (RELIC_POOLS) is withheld from every generic reward
+  // pool, so the only road to it is an event choice that grants it by id. A
+  // quest-pool relic no choice names is unreachable content, and a class's
+  // starting relic is a starter, not a quest reward.
+  {
+    const granted = new Set();
+    for (const event of (Array.isArray(b.events) ? b.events : [])) {
+      for (const choice of (event && Array.isArray(event.choices) ? event.choices : [])) {
+        for (const eff of (choice && Array.isArray(choice.effects) ? choice.effects : [])) {
+          if (eff && eff.op === 'addRelic' && typeof eff.id === 'string') granted.add(eff.id);
+        }
+      }
+    }
+    const startingRelics = new Set((Array.isArray(b.classes) ? b.classes : []).map((row) => row && row.startingRelic));
+    for (const relic of (Array.isArray(b.relics) ? b.relics : [])) {
+      if (!relic || relic.pool !== 'quest') continue;
+      if (!granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
+      if (startingRelics.has(relic.id)) err(`relics.${relic.id}.pool`, 'a class starting relic cannot be quest-pool');
+    }
+  }
+
   for (const key of Object.keys(b)) {
     if (!KNOWN_BUNDLE_KEYS.has(key)) err(key, `Unknown content bundle key '${key}'`);
   }
@@ -26641,6 +26665,18 @@ const CREATURE_TAGS = Object.freeze([
 const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+// Where a relic COMES FROM, as opposed to how rare it is. `reward` (the
+// default when the field is absent) is every generic pool — elite and boss
+// drops, the shop's stock, an event's "random relic". `quest` reserves the
+// relic for the event choice that names it by id (E12): no generic pool may
+// draw it, so the quest's promise is never pre-empted by a shop or a drop
+// and then silently kept by `addRelic`'s duplicate-ignore. validate.js refuses
+// a quest-pool relic that no event choice grants, because it would then be
+// unreachable content.
+const RELIC_POOLS = Object.freeze(['reward', 'quest']);
+function relicInRewardPool(relic) {
+  return (relic.pool || 'reward') === 'reward';
+}
 const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 // What a flask IS, as opposed to how rare it is. The grace refill table
 // (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
@@ -26972,6 +27008,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...RELIC_RARITIES),
+    pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
     triggers: triggersNode,
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
@@ -27226,7 +27263,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { DAMAGE_SCHOOLS, RELIC_MODIFIER_TAGS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, FLASK_GROWTH_SOURCES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { DAMAGE_SCHOOLS, RELIC_MODIFIER_TAGS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, RELIC_POOLS, relicInRewardPool, FLASK_RARITIES, FLASK_KINDS, FLASK_GROWTH_SOURCES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/resources.js": function (module, exports, require) {
@@ -36315,6 +36352,7 @@ function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       explicitOverrides: {
         legacyId: relic.id,
         rarity: checkRarity(relic.rarity, `relic ${relic.id}`),
+        pool: relic.pool,
         passives: relic.passives,
         triggers: relic.triggers,
         icon: relic.icon,
@@ -40263,7 +40301,7 @@ Object.assign(module.exports, { createCombat, dispatch, getEntity, previewCard, 
 //
 // Headless: no document/window/localStorage/timers.
 
-const { COMBAT_OPCODES, RUN_OPCODES } = require("src/model/schemas.js");
+const { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } = require("src/model/schemas.js");
 const { evaluate, isFormula } = require("src/model/formulas.js");
 const statuses = require("src/framework/statusSemantics.js");
 const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
@@ -40875,7 +40913,10 @@ function runRunOpcode(ctx, action, eff) {
     case 'addRelic': {
       let relicId = eff.id || null;
       if (!relicId && eff.random) {
-        const pool = ctx.registries.relics.ids().filter((id) => !run.relics.includes(id));
+        // Quest-pool relics are never "a random relic" — they are the named
+        // reward of the choice that grants them (RELIC_POOLS, model/schemas.js).
+        const pool = ctx.registries.relics.ids()
+          .filter((id) => !run.relics.includes(id) && relicInRewardPool(ctx.registries.relics.get(id)));
         if (pool.length === 0) break;
         relicId = ctx.rng.pick('relicRewards', pool);
       }
@@ -42322,6 +42363,7 @@ Object.assign(module.exports, { sampleActShape, generateActMap });
 // Headless: no document/window/localStorage/timers.
 
 const { passiveMult, passiveFlag } = require("src/model/registries.js");
+const { relicInRewardPool } = require("src/model/schemas.js");
 const { eventChoiceRequirementMet } = require("src/model/quests.js");
 const { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } = require("src/model/gracerefill.js");
 
@@ -42423,13 +42465,13 @@ function rollFlaskDrop(registries, rng, run) {
 
 /**
  * rollRelicReward(registries, rng, ownedIds, { rarities }) → relic id | null.
- * Excludes owned relics; default pool is common/uncommon/rare (elite drops);
- * pass ['boss'] for boss rewards.
+ * Excludes owned relics and quest-pool relics (RELIC_POOLS); default pool is
+ * common/uncommon/rare (elite drops); pass ['boss'] for boss rewards.
  */
 function rollRelicReward(registries, rng, ownedIds, { rarities = ['common', 'uncommon', 'rare'] } = {}) {
   const pool = registries.relics
     .all()
-    .filter((r) => rarities.includes(r.rarity) && !ownedIds.includes(r.id))
+    .filter((r) => relicInRewardPool(r) && rarities.includes(r.rarity) && !ownedIds.includes(r.id))
     .map((r) => r.id);
   return pool.length ? rng.pick('relicRewards', pool) : null;
 }
@@ -42508,7 +42550,7 @@ function buildShopStock(registries, rng, run) {
 
   const relicPool = registries.relics
     .all()
-    .filter((r) => ['common', 'uncommon', 'rare'].includes(r.rarity) && !run.relics.includes(r.id))
+    .filter((r) => relicInRewardPool(r) && ['common', 'uncommon', 'rare'].includes(r.rarity) && !run.relics.includes(r.id))
     .map((r) => r.id);
   const relics = [];
   for (let i = 0; i < bal.relicStock && relicPool.length; i++) {
@@ -49038,7 +49080,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'dc559a6ef8';
+const SOURCE = '03935ee5cc';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49072,7 +49114,7 @@ const SOURCE = 'dc559a6ef8';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1912';
+const ORDINAL = '1913';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

@@ -100,6 +100,9 @@ keyword; a playable status card (cost + effects) simply omits it.
 ### Relic
 ```js
 { id, name, rarity,          // starter|common|uncommon|rare|boss
+  pool?,                     // reward (default) | quest — a quest relic is
+                             // never rolled by any generic pool; only the
+                             // event choice that names it grants it (E12)
   textTemplate, triggers: [ /* trigger DSL, §5 */ ], icon?, flavor?, script? }
 ```
 

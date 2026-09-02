@@ -15,7 +15,9 @@ import {
 import { eventChoiceIds, eventChoicesWithHistory, eventHistoryRequirements, events } from '../src/content/events.js';
 import { createRegistries } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
-import { resolveUnknownNode } from '../src/engine/encounters.js';
+import { resolveUnknownNode, rollRelicReward, buildShopStock } from '../src/engine/encounters.js';
+import { executeRunEffects } from '../src/engine/actions.js';
+import { validateContent } from '../src/model/validate.js';
 import { createRng } from '../src/engine/rng.js';
 
 let pass = 0;
@@ -182,6 +184,37 @@ check('an Unknown node never rolls a chain step before it is earned',
   !ungatedRolls.has('namelessKeeper') && !ungatedRolls.has('namelessRest') && ungatedRolls.size >= 10);
 check('an Unknown node rolls the earned chain step',
   gatedRolls.has('namelessRest') && gatedRolls.has('namelessKeeper'));
+
+// The reward is reserved: no generic pool may hand the Bell over first, or the
+// keeper's thanks would grant nothing (addRelic ignores a duplicate id). Every
+// generic roller is swept — elite and boss drops across every rarity, the
+// shop's stock, and an event's "random relic" — with nothing owned.
+const bell = REG.relics.get('gravetendersBell');
+check('the quest relic is authored quest-pool', bell.pool === 'quest');
+const allRarities = [...new Set(REG.relics.all().map((r) => r.rarity))];
+let drops = 0;
+for (let seed = 1; seed <= 600; seed++) {
+  if (rollRelicReward(REG, createRng(seed), [], { rarities: allRarities }) === 'gravetendersBell') drops++;
+}
+check('elite and boss drops never roll the quest relic', drops === 0, `${drops} drops`);
+let stocked = 0;
+for (let seed = 1; seed <= 300; seed++) {
+  const stock = buildShopStock(REG, createRng(seed), { class: 'reaver', relics: [], flasks: [], deck: [] });
+  if (stock.relics.some((row) => row.id === 'gravetendersBell')) stocked++;
+}
+check('the shop never stocks the quest relic', stocked === 0, `${stocked} stocks`);
+let randomed = 0;
+for (let seed = 1; seed <= 300; seed++) {
+  const run = { ...newRun(), relics: [], flasks: [], deck: [], cinders: 0 };
+  executeRunEffects({ registries: REG, rng: createRng(seed), run }, [{ op: 'addRelic', random: true }]);
+  if (run.relics.includes('gravetendersBell')) randomed++;
+}
+check('an event\'s random relic never hands over the quest relic', randomed === 0, `${randomed} grants`);
+const orphan = { ...contentBundle, relics: contentBundle.relics.map((r) => (r.id === 'feralEye' ? { ...r, pool: 'quest' } : r)) };
+const orphanResult = validateContent(orphan);
+check('validation refuses a quest-pool relic that no event choice grants',
+  !orphanResult.ok && orphanResult.errors.some((e) => /relics\.feralEye\.pool/.test(String(e.path || e))),
+  JSON.stringify(orphanResult.errors || []).slice(0, 200));
 
 if (process.argv.includes('--selftest')) {
   const malformedHistory = {

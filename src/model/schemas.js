@@ -267,6 +267,18 @@ export const CREATURE_TAGS = Object.freeze([
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 export const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+// Where a relic COMES FROM, as opposed to how rare it is. `reward` (the
+// default when the field is absent) is every generic pool — elite and boss
+// drops, the shop's stock, an event's "random relic". `quest` reserves the
+// relic for the event choice that names it by id (E12): no generic pool may
+// draw it, so the quest's promise is never pre-empted by a shop or a drop
+// and then silently kept by `addRelic`'s duplicate-ignore. validate.js refuses
+// a quest-pool relic that no event choice grants, because it would then be
+// unreachable content.
+export const RELIC_POOLS = Object.freeze(['reward', 'quest']);
+export function relicInRewardPool(relic) {
+  return (relic.pool || 'reward') === 'reward';
+}
 export const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 // What a flask IS, as opposed to how rare it is. The grace refill table
 // (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
@@ -598,6 +610,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...RELIC_RARITIES),
+    pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
     triggers: triggersNode,
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
