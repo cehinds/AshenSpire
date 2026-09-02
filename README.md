@@ -4,9 +4,9 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-> **README content updated:** 2026-09-01T15:37:00-08:00 (Alaska)
-> **Updated by:** Help Desk (AS-HD-053) on the owner's instruction — playable build numbers, their source branches, and the per-branch builds site
-> **Source change:** Pull request adding `tools/pages-site.mjs` and `.github/workflows/pages-builds.yml` alongside this README update
+> **README content updated:** 2026-09-02T00:45:00-08:00 (Alaska)
+> **Updated by:** Claude Code, on the owner's instruction — the feature list now names equip load and Weight Class, Stamina with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain, and Forsaken Together (the LAN co-op); the opening line no longer calls the game single-player only
+> **Source change:** Pull request #555, the README pass and its CHANGELOG receipt at `0.5.0-rc.2.1944`
 > **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
 ## Play a build
