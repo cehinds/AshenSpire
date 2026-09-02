@@ -247,6 +247,32 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
+        // THE ROW IS CLIPPED BY THE BOX IT HANGS BELOW. On the wide layout the
+        // row is absolutely positioned under .hand-area; overflow:hidden there
+        // cuts it off while every box and style stays intact. Red by name on
+        // H3 at the desk cells (the phone row is in flow and not clipped).
+        name: 'the hand-area clips its overflow and the row hangs invisible below it on the wide layout',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.hand-area {\n  height: 23rem; flex-shrink: 0; position: relative;',
+          replace: '.hand-area {\n  height: 23rem; flex-shrink: 0; position: relative; overflow: hidden;',
+        }],
+        expectRed: /BAD\s+H3 1200x730/,
+      },
+      {
+        // THE LABEL IS CUT OFF INSIDE ITS OWN BOX: a width cap with
+        // overflow:hidden keeps .et-key's box inside END TURN while most of
+        // "Backspace" is gone — the clipping H4 exists to catch, said of the
+        // label's scroll box. Red by name on H3 at the desk WIDE cell.
+        name: 'END TURN\'s key label is width-capped with overflow:hidden and the wide rebound label is cut off inside it',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.end-turn .et-key {\n  display: block; width: max-content;',
+          replace: '.end-turn .et-key {\n  display: block; width: max-content; max-width: 1rem; overflow: hidden;',
+        }],
+        expectRed: /BAD\s+H3 1200x730 WIDE/,
+      },
+      {
         // THE WHOLE GAME GOES TRANSPARENT AT THE ROOT. Descendants keep a
         // nonzero computed opacity, so only a walk that reaches html can tell.
         name: 'a stylesheet makes the root element opacity:0 and every control keeps its box',
@@ -393,10 +419,35 @@ const READ = (prop) => `(() => {
   // ROOT INCLUDED: opacity:0 on html itself leaves every descendant's computed
   // opacity nonzero while the whole game is transparent (Codex, #532).
   const clear = (c) => { for (let n = c; n; n = n.parentElement) if (getComputedStyle(n).opacity === '0') return false; return true; };
-  const hiddenWhy = (c) => { const cs = getComputedStyle(c); const r = c.getBoundingClientRect();
+  // CLIPPED BY AN ANCESTOR: an overflow:hidden/clip box above the control
+  // (the wide layout's .hand-area, which the row hangs below) can cut it off
+  // while every computed style and box stays intact — so the box is
+  // intersected with every clipping ancestor's. COVERED: the topmost element
+  // at the control's centre must be the control (or a descendant); a card, a
+  // veil or a sibling drawn over it is a control the player cannot reach.
+  // Both are the geometry the eye sees, not the geometry the DOM reports
+  // (Codex, #532).
+  const clippedBy = (c) => { let r = c.getBoundingClientRect();
+    for (let n = c.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      const clips = (v) => v !== 'visible';
+      if (!clips(cs.overflowX) && !clips(cs.overflowY)) continue;
+      const a = n.getBoundingClientRect();
+      const x1 = clips(cs.overflowX) ? Math.max(r.left, a.left) : r.left, x2 = clips(cs.overflowX) ? Math.min(r.right, a.right) : r.right;
+      const y1 = clips(cs.overflowY) ? Math.max(r.top, a.top) : r.top, y2 = clips(cs.overflowY) ? Math.min(r.bottom, a.bottom) : r.bottom;
+      if (x2 - x1 < r.width - 1 || y2 - y1 < r.height - 1) return (String(n.className).split(' ')[0] || n.tagName.toLowerCase()) + ' clips it to ' + Math.max(0, x2 - x1).toFixed(0) + 'x' + Math.max(0, y2 - y1).toFixed(0) + ' of ' + r.width.toFixed(0) + 'x' + r.height.toFixed(0);
+    }
+    return null; };
+  const coveredBy = (c, within = c) => { const r = c.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit) return 'nothing hit-tests at its centre';
+    if (within.contains(hit)) return null;
+    return (String(hit.className).split(' ')[0] || hit.tagName.toLowerCase()) + ' is drawn over its centre'; };
+  const hiddenWhy = (c, within = c) => { const cs = getComputedStyle(c); const r = c.getBoundingClientRect();
     return cs.display === 'none' ? 'display:none' : cs.visibility !== 'visible' ? 'visibility:' + cs.visibility
-      : !clear(c) ? 'opacity:0' : !(r.width > 0 && r.height > 0) ? 'no box' : 'rendered'; };
-  const rendered = (c) => hiddenWhy(c) === 'rendered';
+      : !clear(c) ? 'opacity:0' : !(r.width > 0 && r.height > 0) ? 'no box'
+      : clippedBy(c) ? ('clipped: ' + clippedBy(c)) : coveredBy(c, within) ? ('covered: ' + coveredBy(c, within)) : 'rendered'; };
+  const rendered = (c, within = c) => hiddenWhy(c, within) === 'rendered';
   const strip = document.querySelector('.combat-action-row');
   const hand = document.querySelector('.hand');
   const endTurn = strip ? strip.querySelector('.end-turn') : null;
@@ -426,7 +477,12 @@ const READ = (prop) => `(() => {
     // visibility:hidden .et-key keeps its text and box and would otherwise
     // satisfy H3's containment and H4's rebind read while the player sees no
     // key at all.
-    key: key ? { text: key.textContent.trim(), box: L(key), rendered: rendered(key), why: hiddenWhy(key) } : null,
+    // The label's hit-test is answered by END TURN (a kbd inside a button is
+    // the button's to the pointer); its own scroll box says whether the text
+    // fits inside it — a width-constrained overflow:hidden label keeps a box
+    // inside END TURN while most of "Backspace" is cut off.
+    key: key ? { text: key.textContent.trim(), box: L(key), rendered: rendered(key, endTurn), why: hiddenWhy(key, endTurn),
+      scrollW: key.scrollWidth, clientW: key.clientWidth } : null,
     cards: [...document.querySelectorAll('.hand .card')].map(L),
     hand: one('.hand'),
     handBox: hand ? { clientH: hand.clientHeight, scrollH: hand.scrollHeight, padTop: getComputedStyle(hand).paddingTop } : null,
@@ -524,6 +580,7 @@ function judge(r, cell, wide, pointer) {
   // stopped applying. Under a fine pointer the label must be drawn, inside
   // END TURN, whole.
   const keyOut = !r.coarse && r.key && r.endTurn ? !inside(r.key.box, r.endTurn) : false;
+  const keyCut = !r.coarse && r.key ? r.key.scrollW > r.key.clientW + 1 : false;
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -542,9 +599,10 @@ function judge(r, cell, wide, pointer) {
       + '(no key to press on a thumb); the @media (pointer: coarse) rule stopped applying');
   } else if (!r.coarse && !r.key.rendered) {
     bad('H3', cell, `END TURN's key label "${r.key.text}" is not rendered (${r.key.why}) — the binding the row promises is invisible to the player`);
-  } else if (outside.length || keyOut || over) {
+  } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (${JSON.stringify(r.key.box)} vs ${JSON.stringify(r.endTurn)})` : '')
+      + (keyCut ? ` and END TURN's key label "${r.key.text}" is cut off inside its own box (text ${r.key.scrollW}px in a ${r.key.clientW}px box)` : '')
       + (over ? ` and the row overflows its own box (scroll ${r.stripFlow.scrollW}x${r.stripFlow.scrollH} vs client ${r.stripFlow.clientW}x${r.stripFlow.clientH})` : '')
       + (outside.length ? ` — first: "${outside[0].text}" at ${JSON.stringify(outside[0].box)}` : '')
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
