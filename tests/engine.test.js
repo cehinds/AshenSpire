@@ -4353,6 +4353,31 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
     eq(MAP_SHAPE_KEYS.length, 3, 'three knobs, and the set is closed');
 
+    // ---- A HOSTILE SHAPE KEEPS BOTH PROMISES AT ONCE. Codex's repro on #562,
+    // and it went red before the fix: the shortest act with Event at 100 and
+    // every other weight 0 fills the one rest floor with Events, so a rest
+    // force-place that only ate Monsters could not run — and the code then
+    // returned without placing Elites, shipping a map with ZERO against an act
+    // promising 2, which applyRunShape PRINTS to the player as force-placed.
+    // Neither promise may break the other quietly, so both are asserted here.
+    const hostile = applyRunShape(
+      base,
+      { floors: shortest, typeWeights: { monster: 0, event: 100, shrine: 0, elite: 0, merchant: 0 } },
+      MAP_SHAPE_LIMITS,
+    );
+    eq(hostile.errors.length, 0, `the hostile shape is accepted — ${JSON.stringify(hostile.errors)}`);
+    const hostilePlan = resolveFloorPlan(hostile.config).plan;
+    for (let s2 = 0; s2 < 12; s2++) {
+      const g = generateActMap({ config: hostile.config, rng: createRng(sweepSeed(s2)) });
+      const all = Object.values(g.nodes);
+      const elites = all.filter((n) => n.type === 'elite');
+      assert(elites.length >= hostilePlan.minElites,
+        `hostile shape seed ${s2}: ${elites.length} elites against a promised ${hostilePlan.minElites}`);
+      const first = Math.min(...elites.map((n) => n.floor));
+      assert(all.some((n) => n.type === 'shrine' && n.floor < first),
+        `hostile shape seed ${s2}: elite on floor ${first} with no rest below it`);
+    }
+
     // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.

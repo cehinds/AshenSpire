@@ -243,17 +243,34 @@ function relaxPlace(nodes, type, min, rules, rng) {
   if (type === 'elite' && rules.restBeforeElite) {
     const lowestShrine = lowestFloorOf(nodes, 'shrine');
     if (!(lowestShrine < rules.eliteFrom)) {
-      const room = Object.values(nodes).filter(
-        (n) => n.type === 'monster' &&
-          n.floor >= rules.shrineFrom && n.floor < rules.eliteFrom &&
-          n.floor !== rules.noShrineOn
-      );
-      // resolveFloorPlan refuses at boot when no FLOOR could hold the rest, so
-      // an empty list here means this one graph has no monster node left on
-      // those floors. Placing no Elite is the honest outcome: the promise the
-      // player can see on the map outranks a count they cannot.
-      if (room.length === 0) return;
-      room[Math.floor(rng.float('map') * room.length)].type = 'shrine';
+      // ANY node on the rest floors, not only a Monster — and that is the whole
+      // fix for a defect this branch shipped once already. Requiring a Monster
+      // made the rest unplaceable on a map whose rest floors rolled none, and
+      // the code then returned WITHOUT placing Elites, breaking `minElites` in
+      // silence. It is reachable, not theoretical: the Custom Climb shape
+      // floors=7 with Event at 100 and every other weight 0 fills the one rest
+      // floor with Events, and every seed came out with ZERO Elites against an
+      // act promising 2 — a promise applyRunShape PRINTS to the player as
+      // force-placed. Neither promise gets to break the other quietly.
+      //
+      // A Monster is still preferred: it is the weakest constraint, the same
+      // reason the Elite placement below only eats Monsters. Converting a
+      // typed node can seat two Shrines along one edge, which the roll forbids
+      // — the relax path has always been allowed to do that (it is what
+      // "relax the weakest constraint" means) and the counts are the promise
+      // it is allowed to break the adjacency rule for.
+      //
+      // `restFloors` comes from resolveFloorPlan so the floors this places on
+      // are the floors the resolver certified at boot, never a second reading.
+      const onRestFloors = Object.values(nodes).filter((n) => rules.restFloors.includes(n.floor));
+      const monsters = onRestFloors.filter((n) => n.type === 'monster');
+      const pool = monsters.length ? monsters : onRestFloors;
+      // Every floor 1..floors-1 carries at least one node (a walker passes
+      // through it), and resolveFloorPlan refuses at boot when restFloors is
+      // empty, so `pool` is empty only if this act has no rest floors at all —
+      // in which case the Elites below are placed exactly as they were before
+      // this rule existed rather than dropped.
+      if (pool.length) pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
     }
   }
   const restFloor = rules.restBeforeElite ? lowestFloorOf(nodes, 'shrine') : -Infinity;

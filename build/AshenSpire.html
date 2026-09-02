@@ -24454,18 +24454,23 @@ function resolveFloorPlan(config) {
   if (rules.restBeforeElite != null && typeof rules.restBeforeElite !== 'boolean') {
     errors.push({ key: 'floorRules.restBeforeElite', msg: `must be true or false, got ${JSON.stringify(rules.restBeforeElite)}` });
   }
+  // THE FLOORS THE PROMISED REST MAY LAND ON, resolved HERE and carried on the
+  // plan rather than recomputed in the generator. mapgen force-places onto one
+  // of these when the rolls produced none, and a second computation of "which
+  // floors are free" is a second answer to what the rules meant — the exact
+  // defect the anchors were built to end.
+  const restFloors = [];
   if (restBeforeElite && band > 0) {
+    for (let f = shrineFrom; f < eliteFrom && f <= band; f++) {
+      if (f !== noShrineOn && fixed[f] == null) restFloors.push(f);
+    }
     // SATISFIABLE, OR REFUSED BY NAME. A promise the act's own other rules make
     // impossible must fail at boot, not by force-placing a Shrine onto a floor
     // some other rule already claimed.
-    const room = [];
-    for (let f = shrineFrom; f < eliteFrom && f <= band; f++) {
-      if (f !== noShrineOn && fixed[f] == null) room.push(f);
-    }
-    if (room.length === 0) {
+    if (restFloors.length === 0) {
       errors.push({ key: 'floorRules.restBeforeElite', msg: `no floor can hold the promised rest: Shrines start at ${shrineFrom}, Elites at ${eliteFrom}, and every floor between is barred (noShrineOn ${noShrineOn || 'unset'}) or claimed by a fixed rank. Open noShrineBefore earlier, or push noEliteBefore later.` });
     } else {
-      readout.push(`restBeforeElite: on — a Shrine is guaranteed on one of floors ${room.join(', ')} whenever the map holds an Elite (graph-level, not per-path)`);
+      readout.push(`restBeforeElite: on — a Shrine is guaranteed on one of floors ${restFloors.join(', ')} whenever the map holds an Elite (graph-level, not per-path)`);
     }
   } else {
     readout.push('restBeforeElite: off — an Elite may appear with no rest below it');
@@ -24531,6 +24536,7 @@ function resolveFloorPlan(config) {
     shrineFrom,
     eliteFrom,
     restBeforeElite,
+    restFloors,
     noShrineOn,
     minElites,
     minMerchants,
@@ -42898,17 +42904,34 @@ function relaxPlace(nodes, type, min, rules, rng) {
   if (type === 'elite' && rules.restBeforeElite) {
     const lowestShrine = lowestFloorOf(nodes, 'shrine');
     if (!(lowestShrine < rules.eliteFrom)) {
-      const room = Object.values(nodes).filter(
-        (n) => n.type === 'monster' &&
-          n.floor >= rules.shrineFrom && n.floor < rules.eliteFrom &&
-          n.floor !== rules.noShrineOn
-      );
-      // resolveFloorPlan refuses at boot when no FLOOR could hold the rest, so
-      // an empty list here means this one graph has no monster node left on
-      // those floors. Placing no Elite is the honest outcome: the promise the
-      // player can see on the map outranks a count they cannot.
-      if (room.length === 0) return;
-      room[Math.floor(rng.float('map') * room.length)].type = 'shrine';
+      // ANY node on the rest floors, not only a Monster — and that is the whole
+      // fix for a defect this branch shipped once already. Requiring a Monster
+      // made the rest unplaceable on a map whose rest floors rolled none, and
+      // the code then returned WITHOUT placing Elites, breaking `minElites` in
+      // silence. It is reachable, not theoretical: the Custom Climb shape
+      // floors=7 with Event at 100 and every other weight 0 fills the one rest
+      // floor with Events, and every seed came out with ZERO Elites against an
+      // act promising 2 — a promise applyRunShape PRINTS to the player as
+      // force-placed. Neither promise gets to break the other quietly.
+      //
+      // A Monster is still preferred: it is the weakest constraint, the same
+      // reason the Elite placement below only eats Monsters. Converting a
+      // typed node can seat two Shrines along one edge, which the roll forbids
+      // — the relax path has always been allowed to do that (it is what
+      // "relax the weakest constraint" means) and the counts are the promise
+      // it is allowed to break the adjacency rule for.
+      //
+      // `restFloors` comes from resolveFloorPlan so the floors this places on
+      // are the floors the resolver certified at boot, never a second reading.
+      const onRestFloors = Object.values(nodes).filter((n) => rules.restFloors.includes(n.floor));
+      const monsters = onRestFloors.filter((n) => n.type === 'monster');
+      const pool = monsters.length ? monsters : onRestFloors;
+      // Every floor 1..floors-1 carries at least one node (a walker passes
+      // through it), and resolveFloorPlan refuses at boot when restFloors is
+      // empty, so `pool` is empty only if this act has no rest floors at all —
+      // in which case the Elites below are placed exactly as they were before
+      // this rule existed rather than dropped.
+      if (pool.length) pool[Math.floor(rng.float('map') * pool.length)].type = 'shrine';
     }
   }
   const restFloor = rules.restBeforeElite ? lowestFloorOf(nodes, 'shrine') : -Infinity;
@@ -49775,7 +49798,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '6374d24303';
+const SOURCE = 'f4af602ce5';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49809,7 +49832,7 @@ const SOURCE = '6374d24303';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1950';
+const ORDINAL = '1951';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -52064,8 +52087,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-02",
     "group": "2026-09-02",
     "summary": "A rest before the elites",
-    "detail": "You asked for a rest site before the elites, maybe a shop, and definitely before a boss. Before a boss was always kept — the floor below every boss is a Shrine. Before the elites was not: on most maps an elite stood with no Shrine anywhere below it, because one rule opened rests and elites on the same floor and so a rest could never sit under the first elite. Rests now open earlier than elites do, and a map that holds an elite holds a Shrine on some floor beneath it — measured across the generated maps, from 124 of 180 breaking that to none. Elites appear exactly where they did before; only the rest moved down. What a run gains is about one more Shrine on the map, and the levels you buy at them are unchanged, because cinders were always the limit rather than the number of Shrines. The route is still yours: a path can climb past a rest and meet the elite anyway. Debug riders on the Custom Climb screen: the shortest act the slider offers is now 7 floors rather than 4, because a shorter act has no floor free to hold the promised rest.",
-    "build": "0.5.0-rc.3.1950",
+    "detail": "You asked for a rest site before the elites, maybe a shop, and definitely before a boss. Before a boss was always kept — the floor below every boss is a Shrine. Before the elites was not: on most maps an elite stood with no Shrine anywhere below it, because one rule opened rests and elites on the same floor and so a rest could never sit under the first elite. Rests now open earlier than elites do, and a map that holds an elite holds a Shrine on some floor beneath it — measured across the generated maps, from 124 of 180 breaking that to none. The floor elites begin from has not moved, but the maps have: rolling a rest earlier changes what every node above it rolls, so a seed you have played before now draws a different map, elites included. What a run gains is about one more Shrine on the map, and the levels you buy at them are unchanged, because cinders were always the limit rather than the number of Shrines. The route is still yours: a path can climb past a rest and meet the elite anyway. Debug riders on the Custom Climb screen: the shortest act the slider offers is now 7 floors rather than 4, because a shorter act has no floor free to hold the promised rest.",
+    "build": "0.5.0-rc.3.1951",
     "pullRequest": 562,
     "url": "https://github.com/cehinds/AshenSpire/pull/562"
   },

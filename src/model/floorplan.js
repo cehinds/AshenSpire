@@ -223,18 +223,23 @@ export function resolveFloorPlan(config) {
   if (rules.restBeforeElite != null && typeof rules.restBeforeElite !== 'boolean') {
     errors.push({ key: 'floorRules.restBeforeElite', msg: `must be true or false, got ${JSON.stringify(rules.restBeforeElite)}` });
   }
+  // THE FLOORS THE PROMISED REST MAY LAND ON, resolved HERE and carried on the
+  // plan rather than recomputed in the generator. mapgen force-places onto one
+  // of these when the rolls produced none, and a second computation of "which
+  // floors are free" is a second answer to what the rules meant — the exact
+  // defect the anchors were built to end.
+  const restFloors = [];
   if (restBeforeElite && band > 0) {
+    for (let f = shrineFrom; f < eliteFrom && f <= band; f++) {
+      if (f !== noShrineOn && fixed[f] == null) restFloors.push(f);
+    }
     // SATISFIABLE, OR REFUSED BY NAME. A promise the act's own other rules make
     // impossible must fail at boot, not by force-placing a Shrine onto a floor
     // some other rule already claimed.
-    const room = [];
-    for (let f = shrineFrom; f < eliteFrom && f <= band; f++) {
-      if (f !== noShrineOn && fixed[f] == null) room.push(f);
-    }
-    if (room.length === 0) {
+    if (restFloors.length === 0) {
       errors.push({ key: 'floorRules.restBeforeElite', msg: `no floor can hold the promised rest: Shrines start at ${shrineFrom}, Elites at ${eliteFrom}, and every floor between is barred (noShrineOn ${noShrineOn || 'unset'}) or claimed by a fixed rank. Open noShrineBefore earlier, or push noEliteBefore later.` });
     } else {
-      readout.push(`restBeforeElite: on — a Shrine is guaranteed on one of floors ${room.join(', ')} whenever the map holds an Elite (graph-level, not per-path)`);
+      readout.push(`restBeforeElite: on — a Shrine is guaranteed on one of floors ${restFloors.join(', ')} whenever the map holds an Elite (graph-level, not per-path)`);
     }
   } else {
     readout.push('restBeforeElite: off — an Elite may appear with no rest below it');
@@ -300,6 +305,7 @@ export function resolveFloorPlan(config) {
     shrineFrom,
     eliteFrom,
     restBeforeElite,
+    restFloors,
     noShrineOn,
     minElites,
     minMerchants,
