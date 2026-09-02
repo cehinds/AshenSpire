@@ -212,9 +212,17 @@ try {
         const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
         const wanted = shrine.choices[fightIdx].effects.find((e) => e.op === 'startCombat').encounterId;
         const r = V.eventChoice('v1', fightIdx);
+        // THE RESULT SHOWS FIRST: the scene stays an event, carrying this
+        // seat's resultText and the pending fight, until the seat asks for it
+        // (DEVELOPER.md's event contract; Codex on #541).
+        const told = shrine.choices[fightIdx].resultText || '';
+        ok(r.ok && r.pending === 'combat' && V.scene.kind === 'event' && V.scene.next && V.scene.next.encounterId === wanted
+          && V.scene.results && V.scene.results.v1 === told && told.length > 0,
+          `a fight-starting choice leaves the event open with its result to read (pending ${r.pending}, next ${V.scene.next && V.scene.next.encounterId}, result "${String(V.scene.results && V.scene.results.v1).slice(0, 40)}…")`);
+        const rc = V.eventContinue('v1');
         const enemyIds = V.scene.kind === 'combat' ? (V.scene.enemies || []).map((e) => e.enemyId || e.id) : [];
-        ok(r.ok && r.combat === wanted && V.scene.kind === 'combat' && V.session.members.get('v1').run.combatEntered == null,
-          `an event's startCombat opens the shared combat on its named encounter (${wanted}) and consumes the flag (scene ${V.scene.kind}, combat=${r.combat}, enemies ${JSON.stringify(enemyIds).slice(0, 80)})`);
+        ok(rc.ok && rc.combat === wanted && V.scene.kind === 'combat' && V.session.members.get('v1').run.combatEntered == null,
+          `STEEL YOURSELF opens the shared combat on the named encounter (${wanted}) and consumes the flag (scene ${V.scene.kind}, combat=${rc.combat}, enemies ${JSON.stringify(enemyIds).slice(0, 80)})`);
         // THE FORCED ENCOUNTER BRINGS ITS OWN POOL: the wyrm is an elite, so the
         // fight is priced as one and its victory pays the elite reward (relic,
         // Smithing Stone), as the solo player's does (Codex on #541).
@@ -249,8 +257,9 @@ try {
         const r1 = X.eventChoice('x1', fightIdx);
         X.setConnected('x1', false);
         const r2 = X.eventChoice('x2', calmIdx);
-        ok(r1.ok && r2.ok && r2.combat === wanted && X.scene.kind === 'combat' && X.session.members.get('x1').run.combatEntered == null,
-          `the fight a seat chose before dropping still opens for the party (r2.combat=${r2.combat}, scene ${X.scene.kind}; the flag is consumed)`);
+        const r3 = r2.ok && r2.pending === 'combat' ? X.eventContinue('x2') : { ok: false };
+        ok(r1.ok && r2.ok && r2.combat === wanted && r3.ok && r3.combat === wanted && X.scene.kind === 'combat' && X.session.members.get('x1').run.combatEntered == null,
+          `the fight a seat chose before dropping still opens for the party once the present seat has read its result (pending ${r2.combat}, opened ${r3.combat}, scene ${X.scene.kind}; the flag is consumed)`);
       }
       // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
       {
