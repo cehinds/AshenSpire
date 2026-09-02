@@ -601,6 +601,34 @@ try {
           ok(payIdx >= 0 && !refused.ok && m2.run.cinders === 100 && m2.catchup.length === 1 && m2.catchup[0].purse === 0,
             `a priced choice the seat could not afford when the party met the event is refused in the replay (purse then ${m2.catchup[0] && m2.catchup[0].purse}, now ${m2.run.cinders}: ${refused.error})`);
         }
+        // A SEAT THAT FALLS IN CATCH-UP WHILE THE ROOM WAITS ON IT settles the
+        // room: back during the acknowledgment of a pending fight, its lethal
+        // replay must not leave the seat that has already continued waiting
+        // (Codex on #549).
+        {
+          const shrine = REG.events.get('feralShrine');
+          const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+          const avatar = REG.events.get('goldboughAvatar');
+          const hurtIdx = avatar.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'damage' && e.target === 'self'));
+          const leaveIdx = avatar.choices.findIndex((c) => !(c.effects || []).length);
+          const O = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          O.addMember({ id: 'o1', name: 'Ash', classId: 'reaver' });
+          O.addMember({ id: 'o2', name: 'Bel', classId: 'starseer' });
+          O.start();
+          O.session.cursorId = O.session.reachableIds[0];
+          const o2 = O.session.members.get('o2'); o2.run.hp = 1;
+          O.setConnected('o2', false);
+          O.session.scene = { kind: 'event', eventId: 'goldboughAvatar', done: {} };
+          O.eventChoice('o1', leaveIdx); O.eventContinue('o1'); // the avatar is queued for o2
+          O.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+          O.eventChoice('o1', fightIdx); // pending fight, o1 yet to continue
+          O.setConnected('o2', true); // back during the acknowledgment
+          const r1 = O.eventContinue('o1');
+          const waitingOnO2 = O.scene.kind === 'event' && r1.waiting === 1;
+          const rr = O.resolveCatchup('o2', 0, { choiceIndex: hurtIdx });
+          ok(waitingOnO2 && rr.ok && o2.alive === false && O.scene.kind === 'combat',
+            `a seat back during the acknowledgment holds the room (waiting on it: ${waitingOnO2}); its lethal replay fells it (alive ${o2.alive}) and settles the room for the seat that continued (scene ${O.scene.kind})`);
+        }
         // A seat that chose and then dropped owes nothing.
         const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
         D.addMember({ id: 'd1', name: 'Ash', classId: 'reaver' });

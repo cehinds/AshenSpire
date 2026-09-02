@@ -1074,7 +1074,16 @@ export function createSession({ registries, seedString, endless = false, restore
         // is forfeit (the live flow enters a dead seat into no later node),
         // and a party with nobody left is over, as the live settlement says
         // (Codex on #548).
-        if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; m.catchup.length = 0; if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; live = null; } }
+        if (m.run.hp <= 0) {
+          m.run.hp = 0; m.alive = false; m.catchup.length = 0;
+          if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; live = null; }
+          // A SEAT THAT FELL WHILE THE ROOM WAITED ON IT no longer holds the
+          // room: a returning seat is an outstanding acknowledgment (or
+          // choice) the moment it reconnects, and its death here must settle
+          // the event as a leave would, or the seats that have already
+          // continued wait on a button the dead cannot press (Codex on #549).
+          else if (session.scene.kind === 'event') settleEvent();
+        }
         m.run.actNumber = item.act;
         m.run.floor = item.floor;
         m.run.mapNodeId = item.mapNodeId ?? null;
