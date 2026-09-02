@@ -493,6 +493,26 @@ try {
           try { K.setConnectedMany(['k1'], true); } catch (e) { threw = e.message; }
           ok(!threw && (K.scene.kind !== 'event' || !!K.scene.next), `a legacy event save settles on a presence change without throwing (${threw || 'no throw'}; scene ${K.scene.kind}${K.scene.next ? '/' + K.scene.next.kind : ''})`);
         }
+        // AND A LEGACY SAVE'S ENTRY IS REBUILT, NOT LEFT OPEN TO EVERYTHING: with
+        // no scene.open, the absent seat's entry at the Feral Shrine still
+        // withholds the fight the party did not meet (Codex on #549).
+        {
+          const shrine = REG.events.get('feralShrine');
+          const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+          const calmIdx = shrine.choices.findIndex((c) => !(c.effects || []).some((e) => e.op === 'startCombat'));
+          const J = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          J.addMember({ id: 'j1', name: 'Ash', classId: 'reaver' });
+          J.addMember({ id: 'j2', name: 'Bel', classId: 'starseer' });
+          J.start();
+          J.session.cursorId = J.session.reachableIds[0];
+          J.setConnected('j2', false);
+          J.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} }; // no open: the old shape
+          J.eventChoice('j1', calmIdx);
+          const j2 = J.session.members.get('j2');
+          const entry = j2.catchup[j2.catchup.length - 1];
+          ok(entry && Array.isArray(entry.open) && !entry.open.includes(fightIdx) && entry.open.includes(calmIdx),
+            `a legacy save's entry is rebuilt from the seat's history and still withholds the fight (open ${JSON.stringify(entry && entry.open)})`);
+        }
         // A seat that chose and then dropped owes nothing.
         const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
         D.addMember({ id: 'd1', name: 'Ash', classId: 'reaver' });

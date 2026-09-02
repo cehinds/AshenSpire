@@ -873,7 +873,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // and the choice's result read before the next debt (DEVELOPER.md's event
   // contract) — the pick is sent once the result has been read, and held
   // locally across snapshots until then.
-  let catchupRead = null; // { eventId, act, floor, choiceIndex } the seat has picked but not yet sent
+  let catchupRead = null; // { me, eventId, act, floor, choiceIndex } the seat has picked but not yet sent — bound to the seat, so a couch seat switched to before CONTINUE does not inherit another seat's pick (Codex on #549)
   function renderCatchup(mm) {
     const item = mm.catchupQueue[0];
     const remaining = mm.catchupQueue.length;
@@ -881,7 +881,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       let ev = null; try { ev = registries.events.get(item.eventId); } catch { ev = null; }
       const choices = (ev && ev.choices ? ev.choices : []).map((c, i) => ({ c, i }))
         .filter(({ i }) => !Array.isArray(item.open) || item.open.includes(i));
-      const held = catchupRead && catchupRead.eventId === item.eventId && catchupRead.act === item.act && catchupRead.floor === item.floor ? catchupRead : null;
+      const held = catchupRead && catchupRead.me === mm.id && catchupRead.eventId === item.eventId && catchupRead.act === item.act && catchupRead.floor === item.floor ? catchupRead : null;
       if (held && ev && ev.choices[held.choiceIndex]) {
         app.innerHTML = rewardShell(`${rTitle(`Ember Debt — ${remaining} missed`)}
           <p class="coop-event-result">${esc(ev.choices[held.choiceIndex].resultText || '')}</p>
@@ -902,7 +902,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {
         const choiceIndex = Number(b.dataset.cuEv);
         if (choiceIndex < 0) { send({ t: 'catchupChoice', index: 0, pick: {} }); return; }
-        catchupRead = { eventId: item.eventId, act: item.act, floor: item.floor, choiceIndex };
+        catchupRead = { me: mm.id, eventId: item.eventId, act: item.act, floor: item.floor, choiceIndex };
         renderCatchup(mm);
       }));
       renderPartyBar(); wireLeave();
