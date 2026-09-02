@@ -138,7 +138,7 @@ ONE OF THE THIRTEEN, AND NOT AN ITEM ON THE LIST — it is a lens on the list (M
 
 - Source: https://github.com/cehinds/AshenSpire/issues/257
 - Said: 2026-08-15
-- Body ledger state: `not-started`
+- Body ledger state: `in-flight` — the first quest chain is authored (Grave of the Nameless → The Keeper of the Nameless → The Nameless at Rest) on event-level history gates (`eventHistoryRequirements`, `resolveUnknownNode`) beside the choice-level gates that were already live; more chains are content work on the same doors
 - Current preserved issue-state label: `state:not-started`
 - Issue body SHA-256: `1a71fd514de14ddbbb2d6bcb5e6812ea8cf5e225d93bbbd9627a40386d00020e`
 - Legacy ledger fingerprint: `d4aaf1ea25eea1e4`

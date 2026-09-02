@@ -8758,7 +8758,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -8815,7 +8815,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -10552,7 +10552,7 @@ const { act3Enemies } = require("src/content/enemies/act3.js");
 const { act1Encounters } = require("src/content/encounters/act1.js");
 const { act2Encounters } = require("src/content/encounters/act2.js");
 const { act3Encounters } = require("src/content/encounters/act3.js");
-const { events } = require("src/content/events.js");
+const { events, eventHistoryRequirements } = require("src/content/events.js");
 const { classes, LOCKED_CLASSES } = require("src/content/classes.js");
 const { mapConfigs } = require("src/content/mapconfig.js");
 const { cardTags } = require("src/content/generated/cardTags.js");
@@ -10591,6 +10591,7 @@ const contentBundle = {
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
   encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
   events,
+  eventHistoryRequirements,
   flasks,
   classes,
   mapConfigs,
@@ -16425,7 +16426,8 @@ Object.assign(module.exports, { act3Encounters });
 
 },
 "src/content/events.js": function (module, exports, require) {
-// src/content/events.js — Unknown-node events (SPEC §5.6; grown to 10 in M3)
+// src/content/events.js — Unknown-node events (SPEC §5.6; grown to 10 in M3,
+// 22 with the first quest chain)
 //
 // Every choice is a real trade-off, StS-style. `requires` is checked by the
 // event screen (e.g. { cinders: 50 }); `effects` are run-level opcodes executed
@@ -16909,6 +16911,65 @@ const events = [
       { label: 'Leave', effects: [], resultText: 'The fingers tap on. You leave the riddle unanswered, which is its own kind of answer.' },
     ],
   },
+  // THE FIRST QUEST CHAIN (E12, #257: "questing and previous choices to
+  // influence other events"). Three steps over the run: the Grave of the
+  // Nameless above is step one; the two events below are gated by what was
+  // chosen there (eventHistoryRequirements) and branch on it (choice-level
+  // requiresHistory), so a later act answers an earlier act's choice. A gated
+  // event never enters an Unknown node's pool until its step is earned.
+  {
+    id: 'namelessKeeper',
+    name: 'The Keeper of the Nameless',
+    art: '🕯',
+    text:
+      'A figure in grave-clothes waits at a fork in the road, a lantern of cinder-light held low. ' +
+      'It knows the cairn of broken swords. It knows what you did there. It has been walking since.',
+    choices: [
+      {
+        label: 'Return what you took (lose 90 cinders; the keeper stands down)',
+        requires: { cinders: 90 },
+        effects: [{ op: 'addCinders', amount: -90 }],
+        resultText: 'The cinders go back into the lantern one by one. The keeper turns without a word and walks the way you came.',
+      },
+      {
+        label: 'Face the keeper (fight; keep what you took)',
+        effects: [{ op: 'startCombat', encounterId: 'patrol' }],
+        resultText: 'The lantern goes out. Things that were following the keeper are not so patient.',
+      },
+      {
+        label: "Accept the keeper's thanks (gain the Gravetender's Bell)",
+        effects: [{ op: 'addRelic', id: 'gravetendersBell' }],
+        resultText: 'A small bell, iron and cold, pressed into your palm. "One toll for each name," the keeper says. "You will know when."',
+      },
+      { label: 'Leave', effects: [], resultText: 'The keeper does not follow. It only needed to be seen.' },
+    ],
+  },
+  {
+    id: 'namelessRest',
+    name: 'The Nameless at Rest',
+    art: '🪦',
+    text:
+      'The road ends at a second cairn, newer than the first — every sword standing, every name struck ' +
+      'into the stone. The keeper is not here. Whatever it was walking toward, it arrived.',
+    choices: [
+      {
+        label: 'Keep the vigil (upgrade 2 random cards)',
+        effects: [{ op: 'upgradeCard', random: true }, { op: 'upgradeCard', random: true }],
+        resultText: 'You stand until the cinder-light gutters. The bell in your pack rings once, though nothing moved it.',
+      },
+      {
+        label: 'Rest among the stones (heal 30% max HP)',
+        effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 30 } }],
+        resultText: 'What you returned bought you this much: a night among the nameless, and no one waking you.',
+      },
+      {
+        label: 'Loot the barrow (gain 120 cinders, gain a Guilt curse)',
+        effects: [{ op: 'addCinders', amount: 120 }, { op: 'addCardToDeck', card: 'guilt' }],
+        resultText: 'Second time is easier. The names on the stone do not object. That is the part that follows you.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You leave the cairn as you found it, which is more than the first one got.' },
+    ],
+  },
 ];
 
 // Stable history ids live beside event content without widening the validated
@@ -16934,6 +16995,8 @@ const eventChoiceIds = Object.freeze({
   cinderbearDen: ['takeHoard', 'skimEdges', 'leave'],
   stakeOfTheMartyr: ['makeOffering', 'leave'],
   twoFingersRiddle: ['sharpen', 'mend', 'leave'],
+  namelessKeeper: ['returnCinders', 'faceKeeper', 'acceptThanks', 'leave'],
+  namelessRest: ['keepVigil', 'restAmongStones', 'lootBarrow', 'leave'],
 });
 
 // The merchant will not trade with a traveler who previously looted the
@@ -16945,6 +17008,43 @@ const eventChoiceHistoryRequirements = Object.freeze({
     undefined,
     undefined,
   ],
+  // The keeper answers what was done at the grave: the digger may pay or
+  // fight, the mourner is thanked; Leave stays free so no branch can trap.
+  namelessKeeper: [
+    { all: [{ eventId: 'graveOfTheNameless', choiceId: 'digForCinders' }] },
+    { all: [{ eventId: 'graveOfTheNameless', choiceId: 'digForCinders' }] },
+    { all: [{ eventId: 'graveOfTheNameless', choiceId: 'payRespects' }] },
+    undefined,
+  ],
+  // The second cairn answers the keeper: the thanked keep the vigil, the
+  // penitent rest, the one who fought loots again.
+  namelessRest: [
+    { all: [{ eventId: 'namelessKeeper', choiceId: 'acceptThanks' }] },
+    { all: [{ eventId: 'namelessKeeper', choiceId: 'returnCinders' }] },
+    { all: [{ eventId: 'namelessKeeper', choiceId: 'faceKeeper' }] },
+    undefined,
+  ],
+});
+
+// EVENT-LEVEL history gates (quest steps). An event listed here enters an
+// Unknown node's pool only once the run's history satisfies its requirement
+// (engine/encounters.js resolveUnknownNode via model/quests.js) — so a chain
+// step cannot be met before the step it answers. Events not listed are
+// ungated, exactly as before.
+const eventHistoryRequirements = Object.freeze({
+  namelessKeeper: {
+    any: [
+      { eventId: 'graveOfTheNameless', choiceId: 'digForCinders' },
+      { eventId: 'graveOfTheNameless', choiceId: 'payRespects' },
+    ],
+  },
+  namelessRest: {
+    any: [
+      { eventId: 'namelessKeeper', choiceId: 'returnCinders' },
+      { eventId: 'namelessKeeper', choiceId: 'faceKeeper' },
+      { eventId: 'namelessKeeper', choiceId: 'acceptThanks' },
+    ],
+  },
 });
 
 /** Enrich validated event choices with their durable history contract. */
@@ -16961,7 +17061,7 @@ function eventChoicesWithHistory(event) {
 }
 
 
-Object.assign(module.exports, { events, eventChoiceIds, eventChoiceHistoryRequirements, eventChoicesWithHistory });
+Object.assign(module.exports, { events, eventChoiceIds, eventChoiceHistoryRequirements, eventHistoryRequirements, eventChoicesWithHistory });
 
 },
 "src/content/classes.js": function (module, exports, require) {
@@ -22263,6 +22363,7 @@ const { attributeContentProblems } = require("src/model/attributes.js");
 const { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } = require("src/model/derivedStats.js");
 const { startingKitProblems } = require("src/model/startingKits.js");
 const { armouryUiProblems } = require("src/model/equipmentUi.js");
+const { eventChoiceRequirementProblems } = require("src/model/quests.js");
 const { characterCreationProblems } = require("src/model/characterCreation.js");
 const { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } = require("src/model/levels.js");
 const { itemRefIdentity, itemUpgradeTagMatchesKind, parseItemUpgradeTag, UPGRADE_COST_TAG } = require("src/model/itemUpgrades.js");
@@ -22318,6 +22419,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
+  'eventHistoryRequirements', // quest steps (E12): event-level history gates
 ]);
 
 /**
@@ -22460,6 +22562,29 @@ function validateContent(bundle) {
     for (const [school, multiplier] of Object.entries(schoolBuildup)) {
       if (!DAMAGE_SCHOOLS.includes(school)) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, `unknown damage school '${school}'`);
       if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
+    }
+  }
+
+  // Quest steps (E12): an event-level history gate must name a shipped event,
+  // carry a well-formed requirement (model/quests.js is the one grammar), and
+  // point only at shipped events. Choice ids are the events module's sidecar
+  // contract and are proven by tools/quest-choice-contract.mjs.
+  const eventGates = b.eventHistoryRequirements;
+  if (eventGates !== undefined) {
+    if (!eventGates || typeof eventGates !== 'object' || Array.isArray(eventGates)) {
+      err('eventHistoryRequirements', 'must be an object keyed by event id');
+    } else {
+      const eventIds = new Set((Array.isArray(b.events) ? b.events : []).map((e) => e && e.id));
+      for (const [eventId, requirement] of Object.entries(eventGates)) {
+        if (!eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
+        for (const problem of eventChoiceRequirementProblems(requirement)) err(`eventHistoryRequirements.${eventId}`, problem);
+        for (const group of ['all', 'any', 'none']) {
+          for (const ref of (requirement && Array.isArray(requirement[group]) ? requirement[group] : [])) {
+            if (ref && ref.eventId === eventId) err(`eventHistoryRequirements.${eventId}.${group}`, 'an event cannot be gated on its own choice');
+            if (ref && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
+          }
+        }
+      }
     }
   }
 
@@ -30055,6 +30180,168 @@ function equipmentPositionCardState({ slot, index, modelState, item, activeIndex
 Object.assign(module.exports, { normalizeArmouryLayout, trayPresentationState, inventorySelectionAction, orderArmourySlots, equipmentPositionCardState });
 
 },
+"src/model/quests.js": function (module, exports, require) {
+// src/model/quests.js — deterministic run-history facts for quest/event chains.
+//
+// This module is intentionally headless and content-agnostic. It records only
+// stable ids and derives later availability from those records. Narrative
+// content, effects, and UI remain in their existing homes.
+
+const EVENT_CHOICE_HISTORY_KIND = 'eventChoice';
+
+const ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,79}$/;
+
+function validId(value) {
+  return typeof value === 'string' && ID_PATTERN.test(value);
+}
+
+function historyArray(subject) {
+  if (Array.isArray(subject)) return subject;
+  if (subject && Array.isArray(subject.history)) return subject.history;
+  return null;
+}
+
+function choiceRefProblems(ref, at) {
+  const out = [];
+  if (!ref || typeof ref !== 'object' || Array.isArray(ref)) return [`${at}: must be an object`];
+  if (!validId(ref.eventId)) out.push(`${at}.eventId: stable id required`);
+  if (!validId(ref.choiceId)) out.push(`${at}.choiceId: stable id required`);
+  return out;
+}
+
+/** Validate only event-choice rows; older run-history row kinds remain valid. */
+function eventChoiceHistoryProblems(subject) {
+  const history = historyArray(subject);
+  if (!history) return ['history: array required'];
+  const out = [];
+  history.forEach((row, index) => {
+    if (!row || row.kind !== EVENT_CHOICE_HISTORY_KIND) return;
+    out.push(...choiceRefProblems(row, `history[${index}]`));
+    if (!Number.isInteger(row.actNumber) || row.actNumber < 1) {
+      out.push(`history[${index}].actNumber: positive integer required`);
+    }
+    if (!Number.isInteger(row.floor) || row.floor < 0) {
+      out.push(`history[${index}].floor: non-negative integer required`);
+    }
+    if (row.mapNodeId !== null && row.mapNodeId !== undefined && !validId(row.mapNodeId)) {
+      out.push(`history[${index}].mapNodeId: stable id or null required`);
+    }
+  });
+  return out;
+}
+
+/**
+ * Append one committed event choice to the run's existing history.
+ *
+ * No wall-clock value is recorded: the receipt must replay byte-for-byte from
+ * the same run state and player choice. Repeated events are allowed because a
+ * route may legitimately encounter the same event more than once.
+ */
+function recordEventChoice(run, { eventId, choiceId } = {}) {
+  if (!run || typeof run !== 'object' || !Array.isArray(run.history)) {
+    throw new Error('recordEventChoice requires run.history');
+  }
+  const refProblems = choiceRefProblems({ eventId, choiceId }, 'choice');
+  if (refProblems.length) throw new Error(refProblems.join('; '));
+  if (!Number.isInteger(run.actNumber) || run.actNumber < 1) {
+    throw new Error('recordEventChoice requires a positive integer run.actNumber');
+  }
+  if (!Number.isInteger(run.floor) || run.floor < 0) {
+    throw new Error('recordEventChoice requires a non-negative integer run.floor');
+  }
+  if (run.mapNodeId !== null && run.mapNodeId !== undefined && !validId(run.mapNodeId)) {
+    throw new Error('recordEventChoice requires a stable run.mapNodeId or null');
+  }
+  const record = {
+    kind: EVENT_CHOICE_HISTORY_KIND,
+    eventId,
+    choiceId,
+    actNumber: run.actNumber,
+    floor: run.floor,
+    mapNodeId: run.mapNodeId ?? null,
+  };
+  run.history.push(record);
+  return record;
+}
+
+/** Exact fact lookup. Malformed event-choice history fails closed. */
+function hasEventChoice(subject, ref) {
+  const history = historyArray(subject);
+  if (!history || choiceRefProblems(ref, 'choice').length || eventChoiceHistoryProblems(history).length) return false;
+  return history.some((row) => row?.kind === EVENT_CHOICE_HISTORY_KIND
+    && row.eventId === ref.eventId
+    && row.choiceId === ref.choiceId);
+}
+
+/**
+ * Requirement shape:
+ *   { all?: [{eventId, choiceId}], any?: [...], none?: [...] }
+ *
+ * Omitted groups are neutral. An explicitly empty `any` is invalid because it
+ * can never describe a satisfiable authored branch.
+ */
+function eventChoiceRequirementProblems(requirement) {
+  if (requirement === undefined || requirement === null) return [];
+  if (typeof requirement !== 'object' || Array.isArray(requirement)) {
+    return ['requirement: object required'];
+  }
+  const allowed = new Set(['all', 'any', 'none']);
+  const out = [];
+  for (const key of Object.keys(requirement)) {
+    if (!allowed.has(key)) out.push(`requirement.${key}: unknown group`);
+  }
+  for (const group of allowed) {
+    if (!(group in requirement)) continue;
+    const refs = requirement[group];
+    if (!Array.isArray(refs)) {
+      out.push(`requirement.${group}: array required`);
+      continue;
+    }
+    if (group === 'any' && refs.length === 0) out.push('requirement.any: at least one choice required');
+    refs.forEach((ref, index) => out.push(...choiceRefProblems(ref, `requirement.${group}[${index}]`)));
+  }
+  return out;
+}
+
+/** Derive later-step availability from exact earlier-choice facts. */
+function eventChoiceRequirementMet(requirement, subject) {
+  if (eventChoiceRequirementProblems(requirement).length) return false;
+  const history = historyArray(subject);
+  if (!history || eventChoiceHistoryProblems(history).length) return false;
+  const groups = requirement || {};
+  const matches = (ref) => hasEventChoice(history, ref);
+  if ((groups.all || []).some((ref) => !matches(ref))) return false;
+  if (groups.any && !groups.any.some(matches)) return false;
+  if ((groups.none || []).some(matches)) return false;
+  return true;
+}
+
+/** Filter authored steps without mutating or reordering them. */
+function availableQuestSteps(steps, subject) {
+  if (!Array.isArray(steps)) throw new Error('availableQuestSteps requires an array');
+  return steps.filter((step) => step && typeof step === 'object'
+    && validId(step.id)
+    && eventChoiceRequirementMet(step.requiresHistory, subject));
+}
+
+/**
+ * Return visible event choices together with their original authored index.
+ * Keeping that index lets input bindings and telemetry remain stable even
+ * when a history requirement hides an earlier choice in the array.
+ */
+function availableEventChoices(choices, subject) {
+  if (!Array.isArray(choices)) throw new Error('availableEventChoices requires an array');
+  return choices
+    .map((choice, index) => ({ choice, index }))
+    .filter(({ choice }) => choice && typeof choice === 'object'
+      && validId(choice.id)
+      && eventChoiceRequirementMet(choice.requiresHistory, subject));
+}
+
+
+Object.assign(module.exports, { EVENT_CHOICE_HISTORY_KIND, eventChoiceHistoryProblems, recordEventChoice, hasEventChoice, eventChoiceRequirementProblems, eventChoiceRequirementMet, availableQuestSteps, availableEventChoices });
+
+},
 "src/model/levels.js": function (module, exports, require) {
 // src/model/levels.js — canonical hidden player/enemy level semantics (#237)
 //
@@ -30787,6 +31074,9 @@ function createRegistries(contentBundle) {
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  // Quest steps (E12): which events an Unknown node may roll only once the
+  // run's history earns them. Keyed by event id; absent means ungated.
+  registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
   registries.characterCreation = deepFreeze({ ...(bundle.characterCreation || {}) });
   // One object, not a copied settings shadow. The run snapshots the resolved
@@ -41710,7 +42000,12 @@ const { applyRunShape } = require("src/model/floorplan.js");
 const { MAP_SHAPE_LIMITS } = require("src/content/mapconfig.js");
 
 /**
- * buildActMap(registries, rng, act, mapShape) → mapGraph
+ * buildActMap(registries, rng, act, mapShape, { history }) → mapGraph
+ *
+ * `history` is the run's choice history at map birth (quest steps, E12): an
+ * event gated on an earlier choice enters this act's Unknown nodes only once
+ * that choice was made — so an act answers the acts before it. Absent ⇒ the
+ * ungated pool, byte-for-byte today's act for every existing seed.
  *
  * `act` is the CONTENT act (the caller answers Endless looping — main.js and
  * the tools pass their contentAct), required for the same reason
@@ -41730,7 +42025,7 @@ const { MAP_SHAPE_LIMITS } = require("src/content/mapconfig.js");
  * means a shape arrived from somewhere the screen does not guard — a hand-edited
  * save, a future caller. That is precisely when a loud failure is worth its cost.
  */
-function buildActMap(registries, rng, act, mapShape = null) {
+function buildActMap(registries, rng, act, mapShape = null, { history = [] } = {}) {
   const authored = registries.mapConfig(act);
   const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
   if (shaped.errors.length) {
@@ -41741,7 +42036,7 @@ function buildActMap(registries, rng, act, mapShape = null) {
   const assigned = [];
   for (const node of Object.values(map.nodes)) {
     if (node.type === 'event') {
-      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act });
+      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act, history });
       if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
     }
   }
@@ -42027,6 +42322,7 @@ Object.assign(module.exports, { sampleActShape, generateActMap });
 // Headless: no document/window/localStorage/timers.
 
 const { passiveMult, passiveFlag } = require("src/model/registries.js");
+const { eventChoiceRequirementMet } = require("src/model/quests.js");
 const { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } = require("src/model/gracerefill.js");
 
 // ---------------------------------------------------------------------------
@@ -42256,7 +42552,7 @@ function rollShopCards(registries, rng, classId, count) {
 // ---------------------------------------------------------------------------
 
 /**
- * resolveUnknownNode(registries, rng, { seenEvents }) →
+ * resolveUnknownNode(registries, rng, { seenEvents, act, history }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
  * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
  * describe (they used to be `balance.unknownNode`, a flat global that could not
@@ -42265,7 +42561,7 @@ function rollShopCards(registries, rng, classId, count) {
  * Events avoid repeats within a run while unseen ones remain. Stream 'events'
  * (SPEC §5.6).
  */
-function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
+function resolveUnknownNode(registries, rng, { seenEvents = [], act, history = [] } = {}) {
   const cfg = registries.mapConfig(act);
   const odds = cfg && cfg.unknownWeights;
   if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
@@ -42280,8 +42576,15 @@ function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
     }
   }
   if (kind !== 'event') return { kind };
-  let pool = registries.events.ids().filter((id) => !seenEvents.includes(id));
-  if (!pool.length) pool = registries.events.ids();
+  // Quest steps (E12): an event with a history requirement is in the pool only
+  // once the run's choices have earned it — and it never falls back in either,
+  // because a step met before the step it answers is a broken chain, not a
+  // repeat. Everything ungated behaves exactly as before.
+  const gates = registries.eventHistoryRequirements || {};
+  const earned = registries.events.ids()
+    .filter((id) => !gates[id] || eventChoiceRequirementMet(gates[id], { history }));
+  let pool = earned.filter((id) => !seenEvents.includes(id));
+  if (!pool.length) pool = earned;
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back
   return { kind: 'event', eventId: rng.pick('events', pool) };
 }
@@ -48735,7 +49038,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'afbb96e012';
+const SOURCE = 'dc559a6ef8';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48769,7 +49072,7 @@ const SOURCE = 'afbb96e012';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1911';
+const ORDINAL = '1912';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -48796,7 +49099,7 @@ const ORDINAL = '1911';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-09-01';
+const BUILT = '2026-09-02';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -68795,168 +69098,6 @@ function isBindingChoice(choice, registries) {
 
 
 Object.assign(module.exports, { SAFE_OPS, BINDING_CARD_TYPES, failClosedOps, cinderPremise, bindingReasons, isBindingChoice });
-
-},
-"src/model/quests.js": function (module, exports, require) {
-// src/model/quests.js — deterministic run-history facts for quest/event chains.
-//
-// This module is intentionally headless and content-agnostic. It records only
-// stable ids and derives later availability from those records. Narrative
-// content, effects, and UI remain in their existing homes.
-
-const EVENT_CHOICE_HISTORY_KIND = 'eventChoice';
-
-const ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,79}$/;
-
-function validId(value) {
-  return typeof value === 'string' && ID_PATTERN.test(value);
-}
-
-function historyArray(subject) {
-  if (Array.isArray(subject)) return subject;
-  if (subject && Array.isArray(subject.history)) return subject.history;
-  return null;
-}
-
-function choiceRefProblems(ref, at) {
-  const out = [];
-  if (!ref || typeof ref !== 'object' || Array.isArray(ref)) return [`${at}: must be an object`];
-  if (!validId(ref.eventId)) out.push(`${at}.eventId: stable id required`);
-  if (!validId(ref.choiceId)) out.push(`${at}.choiceId: stable id required`);
-  return out;
-}
-
-/** Validate only event-choice rows; older run-history row kinds remain valid. */
-function eventChoiceHistoryProblems(subject) {
-  const history = historyArray(subject);
-  if (!history) return ['history: array required'];
-  const out = [];
-  history.forEach((row, index) => {
-    if (!row || row.kind !== EVENT_CHOICE_HISTORY_KIND) return;
-    out.push(...choiceRefProblems(row, `history[${index}]`));
-    if (!Number.isInteger(row.actNumber) || row.actNumber < 1) {
-      out.push(`history[${index}].actNumber: positive integer required`);
-    }
-    if (!Number.isInteger(row.floor) || row.floor < 0) {
-      out.push(`history[${index}].floor: non-negative integer required`);
-    }
-    if (row.mapNodeId !== null && row.mapNodeId !== undefined && !validId(row.mapNodeId)) {
-      out.push(`history[${index}].mapNodeId: stable id or null required`);
-    }
-  });
-  return out;
-}
-
-/**
- * Append one committed event choice to the run's existing history.
- *
- * No wall-clock value is recorded: the receipt must replay byte-for-byte from
- * the same run state and player choice. Repeated events are allowed because a
- * route may legitimately encounter the same event more than once.
- */
-function recordEventChoice(run, { eventId, choiceId } = {}) {
-  if (!run || typeof run !== 'object' || !Array.isArray(run.history)) {
-    throw new Error('recordEventChoice requires run.history');
-  }
-  const refProblems = choiceRefProblems({ eventId, choiceId }, 'choice');
-  if (refProblems.length) throw new Error(refProblems.join('; '));
-  if (!Number.isInteger(run.actNumber) || run.actNumber < 1) {
-    throw new Error('recordEventChoice requires a positive integer run.actNumber');
-  }
-  if (!Number.isInteger(run.floor) || run.floor < 0) {
-    throw new Error('recordEventChoice requires a non-negative integer run.floor');
-  }
-  if (run.mapNodeId !== null && run.mapNodeId !== undefined && !validId(run.mapNodeId)) {
-    throw new Error('recordEventChoice requires a stable run.mapNodeId or null');
-  }
-  const record = {
-    kind: EVENT_CHOICE_HISTORY_KIND,
-    eventId,
-    choiceId,
-    actNumber: run.actNumber,
-    floor: run.floor,
-    mapNodeId: run.mapNodeId ?? null,
-  };
-  run.history.push(record);
-  return record;
-}
-
-/** Exact fact lookup. Malformed event-choice history fails closed. */
-function hasEventChoice(subject, ref) {
-  const history = historyArray(subject);
-  if (!history || choiceRefProblems(ref, 'choice').length || eventChoiceHistoryProblems(history).length) return false;
-  return history.some((row) => row?.kind === EVENT_CHOICE_HISTORY_KIND
-    && row.eventId === ref.eventId
-    && row.choiceId === ref.choiceId);
-}
-
-/**
- * Requirement shape:
- *   { all?: [{eventId, choiceId}], any?: [...], none?: [...] }
- *
- * Omitted groups are neutral. An explicitly empty `any` is invalid because it
- * can never describe a satisfiable authored branch.
- */
-function eventChoiceRequirementProblems(requirement) {
-  if (requirement === undefined || requirement === null) return [];
-  if (typeof requirement !== 'object' || Array.isArray(requirement)) {
-    return ['requirement: object required'];
-  }
-  const allowed = new Set(['all', 'any', 'none']);
-  const out = [];
-  for (const key of Object.keys(requirement)) {
-    if (!allowed.has(key)) out.push(`requirement.${key}: unknown group`);
-  }
-  for (const group of allowed) {
-    if (!(group in requirement)) continue;
-    const refs = requirement[group];
-    if (!Array.isArray(refs)) {
-      out.push(`requirement.${group}: array required`);
-      continue;
-    }
-    if (group === 'any' && refs.length === 0) out.push('requirement.any: at least one choice required');
-    refs.forEach((ref, index) => out.push(...choiceRefProblems(ref, `requirement.${group}[${index}]`)));
-  }
-  return out;
-}
-
-/** Derive later-step availability from exact earlier-choice facts. */
-function eventChoiceRequirementMet(requirement, subject) {
-  if (eventChoiceRequirementProblems(requirement).length) return false;
-  const history = historyArray(subject);
-  if (!history || eventChoiceHistoryProblems(history).length) return false;
-  const groups = requirement || {};
-  const matches = (ref) => hasEventChoice(history, ref);
-  if ((groups.all || []).some((ref) => !matches(ref))) return false;
-  if (groups.any && !groups.any.some(matches)) return false;
-  if ((groups.none || []).some(matches)) return false;
-  return true;
-}
-
-/** Filter authored steps without mutating or reordering them. */
-function availableQuestSteps(steps, subject) {
-  if (!Array.isArray(steps)) throw new Error('availableQuestSteps requires an array');
-  return steps.filter((step) => step && typeof step === 'object'
-    && validId(step.id)
-    && eventChoiceRequirementMet(step.requiresHistory, subject));
-}
-
-/**
- * Return visible event choices together with their original authored index.
- * Keeping that index lets input bindings and telemetry remain stable even
- * when a history requirement hides an earlier choice in the array.
- */
-function availableEventChoices(choices, subject) {
-  if (!Array.isArray(choices)) throw new Error('availableEventChoices requires an array');
-  return choices
-    .map((choice, index) => ({ choice, index }))
-    .filter(({ choice }) => choice && typeof choice === 'object'
-      && validId(choice.id)
-      && eventChoiceRequirementMet(choice.requiresHistory, subject));
-}
-
-
-Object.assign(module.exports, { EVENT_CHOICE_HISTORY_KIND, eventChoiceHistoryProblems, recordEventChoice, hasEventChoice, eventChoiceRequirementProblems, eventChoiceRequirementMet, availableQuestSteps, availableEventChoices });
 
 },
 "src/ui/screens/gameover.js": function (module, exports, require) {

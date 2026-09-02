@@ -806,6 +806,13 @@ Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 
 
 Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
 
+**Quest chains (E12, #257).** Every committed choice is a run-history fact (`model/quests.js recordEventChoice`: `{ eventId, choiceId, actNumber, floor, mapNodeId }`, no wall clock). Two gates read those facts, both authored as sidecar data beside the events (`content/events.js`) so the validated event schema stays closed:
+
+- **Choice-level** — `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs; `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest. Leave stays requirement-free so a branch can never trap.
+- **Event-level (quest steps)** — `eventHistoryRequirements[eventId]`, the same grammar; `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback. `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves exactly as before.
+
+The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Nameless at Rest** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door.
+
 ---
 
 ## 6. Map generation

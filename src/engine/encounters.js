@@ -13,6 +13,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
+import { eventChoiceRequirementMet } from '../model/quests.js';
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
@@ -242,7 +243,7 @@ function rollShopCards(registries, rng, classId, count) {
 // ---------------------------------------------------------------------------
 
 /**
- * resolveUnknownNode(registries, rng, { seenEvents }) →
+ * resolveUnknownNode(registries, rng, { seenEvents, act, history }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
  * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
  * describe (they used to be `balance.unknownNode`, a flat global that could not
@@ -251,7 +252,7 @@ function rollShopCards(registries, rng, classId, count) {
  * Events avoid repeats within a run while unseen ones remain. Stream 'events'
  * (SPEC §5.6).
  */
-export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
+export function resolveUnknownNode(registries, rng, { seenEvents = [], act, history = [] } = {}) {
   const cfg = registries.mapConfig(act);
   const odds = cfg && cfg.unknownWeights;
   if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
@@ -266,8 +267,15 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {
     }
   }
   if (kind !== 'event') return { kind };
-  let pool = registries.events.ids().filter((id) => !seenEvents.includes(id));
-  if (!pool.length) pool = registries.events.ids();
+  // Quest steps (E12): an event with a history requirement is in the pool only
+  // once the run's choices have earned it — and it never falls back in either,
+  // because a step met before the step it answers is a broken chain, not a
+  // repeat. Everything ungated behaves exactly as before.
+  const gates = registries.eventHistoryRequirements || {};
+  const earned = registries.events.ids()
+    .filter((id) => !gates[id] || eventChoiceRequirementMet(gates[id], { history }));
+  let pool = earned.filter((id) => !seenEvents.includes(id));
+  if (!pool.length) pool = earned;
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back
   return { kind: 'event', eventId: rng.pick('events', pool) };
 }

@@ -300,7 +300,7 @@ function simulateRun(classId, seed, ds = null) {
       : {};
     // The ONE boot path (#54) — same module main.js and session.mjs use, so a
     // signature change lands on the game and the harnesses in the same act.
-    const map = buildActMap(REG, rng, contentAct);
+    const map = buildActMap(REG, rng, contentAct, null, { history: run.history });
 
     let currentId = null;
     let nextIds = map.startIds;
