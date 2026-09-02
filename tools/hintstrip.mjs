@@ -372,6 +372,18 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // AN INDIVIDUAL TRANSFORM ON THE LABEL: the same block over the count,
+        // but a stacking context by `scale: 1` alone — the transform
+        // shorthand stays "none" and the item has no z-index (Codex, #550).
+        name: "the DRAW pile's label, given scale: 1 and nothing else, paints an opaque block over its count",
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
+          replace: ".combat-action-row > .pile.draw { grid-area: draw; }\n.combat-action-row > .pile.draw > small { scale: 1; background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }",
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // A PARTIAL SHEET: the same layer as a thin black band (3vh) along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
@@ -802,16 +814,19 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
     // (CSS 2.1 Appendix E): positioned with z-index auto or >= 0, a flex or
     // grid item with a z-index >= 0 (which forms a stacking context and
     // paints in z-order as a positioned box does — Codex, #550), or a
-    // stacking context of its own (transform, opacity, filter, backdrop-
-    // filter, clip-path, mask, perspective, isolation, blend mode, contain,
-    // will-change naming one of these). An in-flow box with none of these —
+    // stacking context of its own (transform — the shorthand or an
+    // individual translate/rotate/scale, which leave the shorthand "none" —
+    // opacity, filter, backdrop-filter, clip-path, mask, perspective,
+    // isolation, blend mode, contain, will-change naming one of these). An
+    // in-flow box with none of these —
     // the pile's label under its count, an inline ::after — is laid out
     // beside the text, not over it; a z-index:-1 glow or item paints below
     // the text; both stay in both capture pairs.
     { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim()) continue;
       const rg = document.createRange(); rg.selectNodeContents(t);
       for (const b of rg.getClientRects()) if (b.width >= 1 && b.height >= 1 && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) texts.push({ t, b }); } }
-    const stacks = (cs) => cs.transform !== 'none' || cs.opacity !== '1' || cs.filter !== 'none' || (cs.backdropFilter || 'none') !== 'none'
+    const stacks = (cs) => cs.transform !== 'none' || (cs.translate || 'none') !== 'none' || (cs.rotate || 'none') !== 'none' || (cs.scale || 'none') !== 'none'
+      || cs.opacity !== '1' || cs.filter !== 'none' || (cs.backdropFilter || 'none') !== 'none'
       || cs.clipPath !== 'none' || (cs.maskImage || cs.webkitMaskImage || 'none') !== 'none' || cs.perspective !== 'none'
       || cs.isolation === 'isolate' || cs.mixBlendMode !== 'normal' || /paint|layout|strict|content/.test(cs.contain || '')
       || /transform|opacity|filter|perspective/.test(cs.willChange || '');
@@ -822,16 +837,22 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
       return stacks(cs); };
     for (const { t, b } of texts) {
       const chain = []; for (let n = t.parentElement; n && (n === el || el.contains(n)); n = n.parentElement) chain.push(n);
+      const ts = Math.max(1, Math.floor(Math.min(b.width, b.height) * ${PAINT_LOST} / 2));
+      const pts = []; for (let y = b.top + 0.5; y < b.bottom; y += ts) for (let x = b.left + 0.5; x < b.right; x += ts) pts.push([x, y]);
+      // OUTSIDE THE CONTROL, only what the paint stack lists ABOVE it at the
+      // text point is a cover — the same boundary the box read keeps — so a
+      // sibling painted beneath a translucent control (an underlay) stays in
+      // both capture pairs and cannot move the text's background (Codex,
+      // #550). Read before the text's ancestors are made non-hit-testable,
+      // which would drop that boundary from the stack.
+      for (const [x, y] of pts) for (const n of (overAt(x, y) || [])) { if (n.contains(el)) { if (!above.has(n)) above.set(n, []); above.get(n).push([x, y]); } else if (!found.includes(n)) found.push(n); }
       for (const n of chain) n.style.setProperty('pointer-events', 'none', 'important');
       try {
-        const ts = Math.max(1, Math.floor(Math.min(b.width, b.height) * ${PAINT_LOST} / 2));
-        for (let y = b.top + 0.5; y < b.bottom; y += ts) for (let x = b.left + 0.5; x < b.right; x += ts) {
+        for (const [x, y] of pts) {
           for (const n of document.elementsFromPoint(x, y)) {
-            if (n !== el && n.contains(el)) continue; // an ancestor of the control: the box read above judged it
-            if (n === el || el.contains(n)) {
-              if (chain.includes(n)) { if (!ownPseudo.has(n)) ownPseudo.set(n, { t, pts: [] }); ownPseudo.get(n).pts.push([x, y]); }
-              else if (!n.contains(t) && aboveText(n, null) && !found.includes(n)) found.push(n);
-            } else if (!found.includes(n)) found.push(n); // an outer cover the box grid did not meet
+            if (!(n === el || el.contains(n))) continue; // outside the control: judged above, by the paint stack
+            if (chain.includes(n)) { if (!ownPseudo.has(n)) ownPseudo.set(n, { t, pts: [] }); ownPseudo.get(n).pts.push([x, y]); }
+            else if (!n.contains(t) && aboveText(n, null) && !found.includes(n)) found.push(n);
           }
         }
       } finally { for (const n of chain) n.style.setProperty('pointer-events', 'auto', 'important'); }
