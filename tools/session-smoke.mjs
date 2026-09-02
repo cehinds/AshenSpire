@@ -232,6 +232,26 @@ try {
             `its victory pays the ${wantedPool} reward: relic ${offer && offer.relicId}, Smithing Stone ${offer && offer.smithingStoneReceipt && offer.smithingStoneReceipt.amount} (seat stones ${v1.run.smithingStones})`);
         }
       }
+      // A FORCED FIGHT SURVIVES ITS CHOOSER'S DISCONNECT: the seat that chose
+      // the fight drops before the room resolves; the other seat's peaceful
+      // choice still opens the fight the party bought (Codex on #541).
+      {
+        const X = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        X.addMember({ id: 'x1', name: 'Ash', classId: 'reaver' });
+        X.addMember({ id: 'x2', name: 'Bel', classId: 'starseer' });
+        X.start();
+        X.session.cursorId = X.session.reachableIds[0];
+        X.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const shrine = REG.events.get('feralShrine');
+        const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+        const calmIdx = shrine.choices.findIndex((c) => !(c.effects || []).some((e) => e.op === 'startCombat'));
+        const wanted = shrine.choices[fightIdx].effects.find((e) => e.op === 'startCombat').encounterId;
+        const r1 = X.eventChoice('x1', fightIdx);
+        X.setConnected('x1', false);
+        const r2 = X.eventChoice('x2', calmIdx);
+        ok(r1.ok && r2.ok && r2.combat === wanted && X.scene.kind === 'combat' && X.session.members.get('x1').run.combatEntered == null,
+          `the fight a seat chose before dropping still opens for the party (r2.combat=${r2.combat}, scene ${X.scene.kind}; the flag is consumed)`);
+      }
       // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
       {
         const W = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
