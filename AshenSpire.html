@@ -46342,6 +46342,13 @@ function armHold(btn, {
   // press door already own this pointer? Rule 1 and off-mode deduplication both
   // live on this flag.
   let heldThisPress = false;
+  // THE POINTER MOVED PAST THE SLOP AND THE PRESS IS ABANDONED. Pointer capture
+  // keeps the trailing `click` aimed at this control even though the finger
+  // left it, so the click a scroll-away generates must die in onClick like the
+  // early-release click does — never become a tap (a review modal opening
+  // under a thumb that was trying to scroll) and never a commit. Both press
+  // forms set it; onClick consumes it; a press resets it.
+  let movedThisPress = false;
 
   const paint = (p) => {
     for (const target of [btn, ...activeFeedback]) {
@@ -46443,6 +46450,11 @@ function armHold(btn, {
     // declining those sources here lets the ordinary focused-control click
     // keep its authored meaning. Safety beats leave pointerOnly false and
     // retain the three-input parity described at the top of this file.
+    // A NEW PRESS SUPERSEDES THE MOVED STATE BEFORE ANY REFUSAL. A key or pad
+    // press on a pointer-only control is declined below and input.js then
+    // activates it with a synthetic click; that click must not be eaten by a
+    // pointer press that ended in a scroll (pointercancel, no click) earlier.
+    movedThisPress = false;
     if (pointerOnly && origin.source !== 'pointer') return false;
     if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
@@ -46470,6 +46482,10 @@ function armHold(btn, {
           if (cancelled || moved) {
             heldThisPress = false;
             committedThisPress = false;
+            // Only a press that ENDS with a pointerup owes a trailing click; a
+            // pointercancel (a touch scroll) ends with none, so nothing is
+            // left armed for the next activation to walk into.
+            movedThisPress = moved && !cancelled;
             return true;
           }
           committedThisPress = true;
@@ -46515,7 +46531,10 @@ function armHold(btn, {
     track({
       onMove: (mv) => {
         if (!armed) return;
-        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
+        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) {
+          movedThisPress = origin.source === 'pointer';
+          stop('idle');
+        }
       },
       // However it ended — lift, cancel, palm, focus loss. If the fill never
       // reached the end, nothing happened, and that IS the feature.
@@ -46529,7 +46548,11 @@ function armHold(btn, {
       // thing — rule 1, inverted, which is the failure that looks exactly like
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
-      onEnd: () => {
+      onEnd: (endEv, info) => {
+        // A cancelled end (pointercancel — a touch scroll) produces no click,
+        // so the moved state must not outlive this press: the next activation
+        // by key or pad would otherwise be swallowed as that press's click.
+        if (info && info.cancelled) movedThisPress = false;
         if (armed) {
           stop('idle');
           // Pointer taps finish through the browser's trailing click so the
@@ -46565,6 +46588,23 @@ function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
+    // A PRESS THE POINTER WALKED AWAY FROM IS AN ABORT IN EVERY FORM OF THIS
+    // CONTROL — no tap meaning, no commit — AND IT IS CHECKED FIRST. The native
+    // click of such a press lands on the common ancestor (the pointer went up
+    // somewhere else), so what reaches this control is the SYNTHETIC click
+    // input.js dispatches to a pressed control that got no click of its own
+    // (`detail === 0`). Read as "activation outside the press door" that click
+    // committed a binding choice under a scrolling thumb — measured, not
+    // guessed: tools/holdconfirm.mjs case 4b. So the moved flag is consumed
+    // before the detail check, and the click is swallowed whole.
+    if (movedThisPress) {
+      movedThisPress = false;
+      heldThisPress = false;
+      committedThisPress = false;
+      ev.preventDefault();
+      ev.stopPropagation();
+      return;
+    }
     if (ev.detail === 0) {
       if ((pointerOnly || tapOnEarlyRelease) && onTap) onTap(ev);
       else onConfirm(ev);
@@ -46605,6 +46645,7 @@ function armHold(btn, {
     offPointerPress = false;
     heldThisPress = false;
     committedThisPress = false;
+    movedThisPress = false;
     fired = true;
     disarmPress();
     btn.removeEventListener('click', onClick);
@@ -47284,9 +47325,16 @@ function armPress(el, begin) {
 function trackGesture(startEv, { onMove, onEnd } = {}) {
   const id = startEv.pointerId;
   const el = startEv.currentTarget;
-  // Capture can throw on a detached node or an exotic target; a gesture that
-  // cannot capture still gets scoped listeners and still cleans up — weaker
-  // (off-element moves may not arrive), never leaky.
+  // Capture is asked for so a pointer that leaves the control keeps reporting
+  // to it, but the gesture is NOT trusting capture to hold: the listeners sit
+  // on the window, filtered by pointerId, so a move or a release that lands
+  // somewhere else — capture refused on an exotic target, a browser that did
+  // not honour it, a headless driver — still reaches this gesture. Measured
+  // (tools/holdconfirm.mjs case 4b): with the listeners on the element, a
+  // drag that left the bar never reported its moves or its release, the hold
+  // timer ran on unopposed, and a binding choice COMMITTED at full under a
+  // pointer that had walked away. A gesture that cannot see its own end is a
+  // hold nobody can abort.
   try { el.setPointerCapture(id); } catch { /* tracked without capture */ }
   let done = false;
   const move = (ev) => {
@@ -47296,17 +47344,17 @@ function trackGesture(startEv, { onMove, onEnd } = {}) {
   const finish = (cancelled) => (ev) => {
     if (ev.pointerId !== id || done) return;
     done = true;
-    el.removeEventListener('pointermove', move);
-    el.removeEventListener('pointerup', up);
-    el.removeEventListener('pointercancel', cancel);
+    window.removeEventListener('pointermove', move, true);
+    window.removeEventListener('pointerup', up, true);
+    window.removeEventListener('pointercancel', cancel, true);
     try { el.releasePointerCapture(id); } catch { /* already released */ }
     if (onEnd) onEnd(ev, { cancelled });
   };
   const up = finish(false);
   const cancel = finish(true);
-  el.addEventListener('pointermove', move);
-  el.addEventListener('pointerup', up);
-  el.addEventListener('pointercancel', cancel);
+  window.addEventListener('pointermove', move, true);
+  window.addEventListener('pointerup', up, true);
+  window.addEventListener('pointercancel', cancel, true);
 }
 
 
@@ -49476,7 +49524,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '0a55458972';
+const SOURCE = '357dbaa3b5';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49510,7 +49558,7 @@ const SOURCE = '0a55458972';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1927';
+const ORDINAL = '1930';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
