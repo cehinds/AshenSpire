@@ -11,6 +11,7 @@ import {
   createFrameworkRegistries, TermRegistry, AssetRegistry,
 } from '../src/framework/registries.js';
 import { compileEntity, CompileError, hasProperty, propertyParameters } from '../src/framework/compiler.js';
+import { mechanics as mechanicsData } from '../src/framework/data/mechanics.js';
 import {
   destinationAfterPlay, endTurnCleanup, forcedDiscardDestination, ZoneLedger,
 } from '../src/framework/lifecycle.js';
@@ -293,7 +294,8 @@ test('stamina: idle turns recover 1; a refund does not erase the spend', () => {
 // ---- weight and dodge -------------------------------------------------------
 
 test('weight class thresholds sit at 49/79 load percent', () => {
-  const at = (load, capacity) => computeWeightClass({ constitution: 0, strength: 0, bonuses: capacity - 50, weights: { armorWeight: load } }).weightClass.id;
+  // bonuses lifts the capacity to exactly `capacity` whatever the authored base is
+  const at = (load, capacity) => computeWeightClass({ constitution: 0, strength: 0, bonuses: capacity - mechanicsData.weight.capacityBase, weights: { armorWeight: load } }).weightClass.id;
   eq(at(49, 100), 'light', '49% light');
   eq(at(50, 100), 'medium', '50% medium');
   eq(at(79, 100), 'medium', '79% medium');
@@ -741,6 +743,7 @@ test('the router door serves the whole routed-interaction surface, identically',
 // ---- contract-new composition outputs (dormant until authored) --------------
 
 const { createRunState } = await import('../src/model/state.js');
+const mechanicsHome = await import('../src/framework/data/mechanics.js');
 const actionsHome = await import('../src/engine/actions.js');
 
 function grantFixtureRegistries(packagesById) {
@@ -874,6 +877,61 @@ test('a granted instance is never a removal candidate', () => {
   executeAction({ registries: REG2, run, rng: { float: () => 0.999 }, emit: () => {} }, { effect: { op: 'removeCardFromDeck', random: true } });
   eq(grantedCount(), 2, 'a random removal never takes an equipment-granted instance');
   eq(run.deck.length, before - 1, 'the random removal still removes an ordinary card');
+});
+
+const { playerLoadReceipt } = await import('../src/model/statProjection.js');
+const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
+const { renderCandidateComparison } = await import('../src/ui/components/equipmentReceipts.js');
+const weightHome = await import('../src/framework/weight.js');
+
+test('the bridge decides Weight Class through the framework service, with the TermRegistry word', () => {
+  const attributes = { strength: 13, dexterity: 11, constitution: 11, wisdom: 8, intelligence: 10 };
+  const weights = { mainHandWeight: 12, offHandWeight: 0, armorWeight: 8, otherCountedWeight: 0 };
+  const decided = LEGACY_REG.framework.weightClass({ attributes, weights });
+  const expected = weightHome.computeWeightClass({ constitution: 11, strength: 13, weights });
+  eq(decided.capacity, expected.capacity, 'capacity is the service\'s');
+  eq(decided.load, expected.load, 'load is the service\'s');
+  eq(decided.weightClass.id, expected.weightClass.id, 'class row is the service\'s');
+  eq(decided.word, decided.weightClass.id === 'medium' ? 'Medium' : decided.weightClass.id === 'heavy' ? 'Heavy' : 'Light', 'the class word comes from TermRegistry');
+  eq(decided.weightClass.id, 'medium', 'CON 11 / STR 13 carrying 20 stands Medium (capacity 5 + 22 + 13 = 40, 50%)');
+});
+
+test('the Armoury equip-load receipt counts authored armament weights and the armour rule, and is a readout only', () => {
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const r = playerLoadReceipt(LEGACY_REG, run);
+  // reaver start: straightSword 5 + roundShield 7 in hand, default armour poiseThreshold 8 (A-side rule)
+  eq(r.hands, 12, 'hands weigh their authored weight');
+  eq(r.armour, 8, 'armour weighs its poiseThreshold under the A-side rule');
+  eq(r.load, 20, 'load sums both');
+  eq(r.capacity, mechanicsHome.mechanics.weight.capacityBase + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
+  eq(r.classId, 'medium', 'the sword-and-shield reaver start stands Medium (20 of 40) — the class exists for the player');
+  eq(r.active, false, 'no combat rule consumes the class yet');
+});
+
+test('the Armoury comparison carries the swap\'s load and Weight Class before and after', () => {
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const before = playerLoadReceipt(LEGACY_REG, run);
+  const slot = LEGACY_REG.equipment.slots.find((row) => row.id === 'leftHand');
+  const towerShield = contentBundle.equipment.armaments.find((p) => p.id === 'towerShield');
+  if (!towerShield || !slot) throw new Error('fixture: towerShield / leftHand missing');
+  const compared = equipmentSurfaceReceipt(LEGACY_REG, run, {
+    candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'towerShield' },
+  }).candidate;
+  eq(compared.load.before, before.load, 'before is the standing readout');
+  eq(compared.load.capacity, before.capacity, 'capacity is the run\'s and does not move in a swap');
+  eq(compared.load.after, before.load - 7 + towerShield.weight, 'after swaps the round shield\'s weight for the tower shield\'s');
+  eq(compared.load.beforeClassId, before.classId, 'before class is the standing readout\'s');
+  eq(compared.load.changesClass, compared.load.beforeClassId !== compared.load.afterClassId, 'class-change flag agrees with the ids');
+  eq(typeof compared.load.afterWord, 'string', 'the after class resolves to a word');
+  eq(compared.load.active, false, 'readout only, like the standing receipt');
+  const bare = equipmentSurfaceReceipt(LEGACY_REG, run, {
+    candidate: { slotId: 'leftHand', setIndex: 0, pieceId: null },
+  }).candidate;
+  eq(bare.load.after, before.load - 7, 'unequipping the shield sheds exactly its weight');
+  const html = renderCandidateComparison(compared);
+  eq(html.includes(`${compared.load.before} (${compared.load.beforePercent}%) → <strong>${compared.load.after} (${compared.load.afterPercent}%)</strong> of ${compared.load.capacity}`), true,
+    'the rendered row shows both loads with their percents over the capacity');
+  eq(html.includes(`data-weight-class="${compared.load.afterClassId}"`), true, 'the row carries the after class');
 });
 
 test('grant and weapon-art authoring is validated by name', () => {

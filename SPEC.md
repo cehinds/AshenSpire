@@ -1053,6 +1053,17 @@ keeps the same state and focus contract without meaningful animation.
   **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
   **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
 
+  Equipment receipts are read models, never re-derived in a screen: the equipment receipt panel
+  (`.armoury-equipment-receipts`, mounted in the Character view's Equipment cards card and in the
+  Stats tray) renders the exact equipment card packages, the equip requirements, the Poise
+  threshold (`.player-poise-receipt`) and the **Equip load** (`.player-load-receipt`,
+  `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word
+  decided by the framework Weight Class service (`registries.framework.weightClass`, capacity from
+  Constitution and Strength plus `mechanics.weight.capacityBase`). Load counts each equipped
+  armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`), and the
+  item card's Weight label reads the same `pieceWeight` rule, so item and total agree by
+  construction.
+
   These ids and keys describe the existing data-driven Quick Menu and Armoury structures. Menu
   records are constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records
   are constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind

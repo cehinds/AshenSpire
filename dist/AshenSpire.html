@@ -3719,6 +3719,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+.player-load-receipt { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
+.player-load-receipt span, .player-load-receipt small { color: var(--muted); }
+.player-load-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
 #cz-equipment-receipts, .armoury-equipment-receipts { font-size: max(13px, 1em); }
 #cz-equipment-receipts small, .armoury-equipment-receipts small { font-size: max(13px, 0.84em); line-height: 1.35; }
@@ -33635,7 +33638,7 @@ const mechanics = {
     "refundErasesSpend": false
   },
   "weight": {
-    "capacityBase": 50,
+    "capacityBase": 0,
     "capacityPerConstitution": 2,
     "capacityPerStrength": 1,
     "classes": [
@@ -33672,7 +33675,8 @@ const mechanics = {
         "dodgeStaminaCost": 3,
         "dodgeActionCost": 2
       }
-    ]
+    ],
+    "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01). The census covers the creator's space: the two VISIBLE creation modes (standard, pointbuy), and for each not only the class preset but the two allocation boundaries that bracket capacity (Constitution and Strength at their legal minimum, and at their legal maximum), every armour choice, and each hand chosen independently (empty allowed, the same armament twice refused), with every pair passed through the creator's own requirement gate (startingHandsRequirementFailure — a sheet that cannot hold a Greatsword does not start with one; 100 pairs refused). Reachability is every ordered pair of distinct armaments through a real loadout with the outfit at its highest Smithing tier, at the standard preset. Base 50 left even the heaviest reachable kit Light: the class did not exist for the player. Base 5 (the first retune) leaves no class able to reach Heavy at the standard preset (Reaver 76%, Starseer 74%, Rogue 74%, Herald 71%). Bases 0 and 1 are the only ones at which every class reaches Heavy (base 0: Reaver 86%, Starseer 86%, Rogue 86%, Herald 82%; base 2 already loses the Herald at 77%); 0 is chosen because capacity is then exactly 2*CON + STR with no free constant. At 0 the preset starts are 200 Light and 24 Medium; the min-capacity boundary starts are 144 Light and 28 Medium and the max-capacity boundary 172 Light and 4 Medium — no creatable start is Heavy, because the same requirements that gate a heavy armament also demand the Strength that raises capacity."
   },
   "dodgeRoll": {
     "die": 20,
@@ -33825,6 +33829,7 @@ const { cardPropertyInstances, KEYWORD_PROPERTY } = require("src/framework/impor
 const { destinationAfterPlay, endTurnCleanup } = require("src/framework/lifecycle.js");
 const { compileCosts } = require("src/framework/costs.js");
 const { hasProperty, propertyParameters } = require("src/framework/compiler.js");
+const { computeWeightClass } = require("src/framework/weight.js");
 
 let sharedBridge = null;
 
@@ -33942,6 +33947,20 @@ function createFrameworkBridge() {
         name: terms.displayTerm(prop.playerTermId),
         tooltip: terms.displayTerm(prop.tooltipTermId),
       };
+    },
+
+    /**
+     * Weight Class (framework contract: Weight Class and Dodge Roll): capacity
+     * from Constitution/Strength, load from the equipped weights, the class
+     * row from mechanics.json, and the class WORD from TermRegistry. The
+     * caller supplies the weights — which items count, and what an armour
+     * piece weighs, is the model's ruling (statProjection.playerLoadReceipt).
+     */
+    weightClass({ attributes, weights, bonuses = 0 }) {
+      const result = computeWeightClass({
+        constitution: attributes.constitution, strength: attributes.strength, bonuses, weights,
+      });
+      return { ...result, word: terms.displayTerm(result.weightClass.termId) };
     },
   });
 }
@@ -36543,6 +36562,77 @@ function payAlternativeCost(card, option, wallet, { confirmTarget = () => true }
 
 
 Object.assign(module.exports, { CostError, repeatLimiters, compileCosts, payAlternativeCost });
+
+},
+"src/framework/weight.js": function (module, exports, require) {
+// src/framework/weight.js — Weight Class and Dodge Roll (framework contract:
+// Weight Class and Dodge Roll). Thresholds, modifiers and costs are data rows
+// in content/framework/mechanics.json, never constants here.
+
+const { mechanics } = require("src/framework/data/mechanics.js");
+
+function carryCapacity({ constitution, strength, bonuses = 0 }) {
+  return mechanics.weight.capacityBase
+    + mechanics.weight.capacityPerConstitution * constitution
+    + mechanics.weight.capacityPerStrength * strength
+    + bonuses;
+}
+
+function equipLoad({ mainHandWeight = 0, offHandWeight = 0, armorWeight = 0, otherCountedWeight = 0 }) {
+  return mainHandWeight + offHandWeight + armorWeight + otherCountedWeight;
+}
+
+function loadPercent(load, capacity) {
+  return Math.floor((100 * load) / Math.max(1, capacity));
+}
+
+function weightClassFor(percent) {
+  for (const cls of mechanics.weight.classes) {
+    if (percent <= cls.maxLoadPercent) return cls;
+  }
+  return mechanics.weight.classes[mechanics.weight.classes.length - 1];
+}
+
+function computeWeightClass({ constitution, strength, bonuses = 0, weights }) {
+  const capacity = carryCapacity({ constitution, strength, bonuses });
+  const load = equipLoad(weights);
+  const percent = loadPercent(load, capacity);
+  return { capacity, load, percent, weightClass: weightClassFor(percent) };
+}
+
+function attributeModifier(score) {
+  return Math.floor((score - 10) / 2);
+}
+
+/**
+ * dodgeRollCheck — d20 + DEX modifier + weight-class evasion + other evasion,
+ * against base difficulty + source/attack property modifiers. `roll` is the
+ * already-rolled d20 (the caller owns randomness; this stays deterministic).
+ */
+function dodgeRollCheck({
+  roll, dexterity, weightClass, otherEvasionModifiers = 0,
+  baseDifficulty = mechanics.dodgeRoll.baseDifficulty,
+  sourceCombatantModifier = 0, incomingAttackModifier = 0,
+}) {
+  if (!Number.isInteger(roll) || roll < 1 || roll > mechanics.dodgeRoll.die) {
+    throw new Error(`dodge roll: roll ${roll} is not a d${mechanics.dodgeRoll.die} result`);
+  }
+  const check = roll + attributeModifier(dexterity) + weightClass.evasionModifier + otherEvasionModifiers;
+  const difficulty = baseDifficulty + sourceCombatantModifier + incomingAttackModifier;
+  const success = check > difficulty;
+  return {
+    check,
+    difficulty,
+    success,
+    temporaryGuard: success
+      ? mechanics.dodgeRoll.temporaryGuardBase + attributeModifier(dexterity) + weightClass.temporaryGuardModifier
+      : 0,
+    cost: { stamina: weightClass.dodgeStaminaCost, actions: weightClass.dodgeActionCost },
+  };
+}
+
+
+Object.assign(module.exports, { carryCapacity, equipLoad, loadPercent, weightClassFor, computeWeightClass, attributeModifier, dodgeRollCheck });
 
 },
 "src/framework/termOverlay.js": function (module, exports, require) {
@@ -41489,6 +41579,69 @@ function playerPoiseThresholdReceipt(registries, run) {
   };
 }
 
+/**
+ * Pure equip-load projection (framework contract: Weight Class). The
+ * DECISION — capacity, load percent, class row and word — is the framework's
+ * (bridge.weightClass over framework/weight.js and mechanics.json). This
+ * model owns only WHICH weights count:
+ *   - armaments: the authored `weight` column (weapons.csv; bound to the
+ *     authored poiseThreshold by armamentIntrinsicStatProblems)
+ *   - armour: no weight column is authored. This branch adopts the same
+ *     identity for armour — weight = poiseThreshold — as the A-SIDE of the
+ *     Weight Class A/B (docs/framework-migration-checklist.md §C). The
+ *     B-side treats armour as weightless.
+ *   - talismans/relics: nothing authored; 0.
+ * `active` stays false until a combat rule consumes the class (the dodge
+ * roll) — today this is a readout on the Armoury, and nothing else.
+ */
+const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
+
+/**
+ * The weight ONE piece contributes to the equip load — the single home of the
+ * rule, so the Armoury's item card and the load total can never disagree:
+ * armour weighs its poise threshold (the A-side rule above), an armament its
+ * authored weight, anything else nothing.
+ */
+function pieceWeight(piece) {
+  if (!piece) return 0;
+  if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
+  return Number.isInteger(piece.weight) ? piece.weight : 0;
+}
+
+function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
+  if (!run || !run.loadout) throw new Error('playerLoadReceipt requires a run loadout');
+  if (!run.attributes) throw new Error('playerLoadReceipt requires run attributes');
+  const levels = run.itemUpgradeLevels || {};
+  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
+  const sources = pieces.map((piece) => ({
+    kind: 'equipment',
+    id: piece.id,
+    classId: piece.kind === 'armor' ? piece.classId : null,
+    value: pieceWeight(piece),
+  }));
+  const armour = sources.filter((s) => s.classId != null).reduce((sum, s) => sum + s.value, 0);
+  const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
+  const decided = registries.framework.weightClass({
+    attributes: run.attributes,
+    bonuses: capacityBonus,
+    weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
+  });
+  return {
+    id: 'equipLoad',
+    label: 'Equip load',
+    sources,
+    hands,
+    armour,
+    load: decided.load,
+    capacity: decided.capacity,
+    percent: decided.percent,
+    classId: decided.weightClass.id,
+    word: decided.word,
+    active: false,
+    note: `Capacity ${decided.capacity} = base + Constitution and Strength; ${decided.percent}% loaded — ${decided.word}. Readout only until the dodge roll consumes the class.`,
+  };
+}
+
 function statProjection(registries, run) {
   const snapshot = run && run.derivedStatRuleSnapshot;
   if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
@@ -41525,7 +41678,7 @@ function statProjection(registries, run) {
 }
 
 
-Object.assign(module.exports, { playerPoiseThresholdReceipt, statProjection });
+Object.assign(module.exports, { playerPoiseThresholdReceipt, ARMOUR_WEIGHT_RULE, pieceWeight, playerLoadReceipt, statProjection });
 
 },
 "src/framework/deckComposition.js": function (module, exports, require) {
@@ -48735,7 +48888,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'afbb96e012';
+const SOURCE = '0e6f7677d5';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -48769,7 +48922,7 @@ const SOURCE = 'afbb96e012';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1911';
+const ORDINAL = '1920';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -48796,7 +48949,7 @@ const ORDINAL = '1911';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-09-01';
+const BUILT = '2026-09-02';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -51019,6 +51172,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-520",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Your equipment now has a weight, and the Armoury says what it costs you",
+    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, every item card shows the same Weight number the total counts, smithed or not, and comparing a piece shows the load and Weight Class the swap would leave you at. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.",
+    "build": "0.5.0-rc.1.1920",
+    "pullRequest": 520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/520"
+  },
   {
     "id": "pr-516",
     "date": "2026-09-01",
@@ -56087,7 +56250,7 @@ const { armamentIntrinsicReceipt, equipmentSurfaceReceipt } = require("src/model
 const { inventoryRows, inventoryItemCount } = require("src/model/inventoryPresentation.js");
 const { equippedTagColor } = require("src/model/equipmentUi.js");
 const { renderCard, relicText } = require("src/ui/components/card.js");
-const { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } = require("src/ui/components/equipmentReceipts.js");
+const { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies } = require("src/ui/components/equipmentReceipts.js");
 
 
 const { esc, attachTooltip, showTooltipFor, stickTooltip } = require("src/ui/components/tooltip.js");
@@ -56096,7 +56259,8 @@ const { refuses } = require("src/ui/components/refusal.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
-const { statProjection } = require("src/model/statProjection.js");
+const { statProjection, pieceWeight } = require("src/model/statProjection.js");
+const { resolveUpgradedEquipment } = require("src/model/itemUpgrades.js");
 const { attributeCardModels } = require("src/model/creationBrief.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
@@ -57477,7 +57641,8 @@ function mountEquipment(host, {
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
-      + renderPlayerPoise(surface.poise);
+      + renderPlayerPoise(surface.poise)
+      + renderPlayerLoad(surface.load);
     return panel;
   }
 
@@ -57628,9 +57793,15 @@ function mountEquipment(host, {
 
   function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
     const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
-    const item = slot.kinds.includes('armor')
+    const authored = slot.kinds.includes('armor')
       ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
       : (eq.armaments || []).find((piece) => piece.id === itemId);
+    // The item AT ITS SMITHED TIER, the same resolution the load receipt
+    // uses (equippedPieces → resolveUpgradedEquipment): a tier that raises
+    // the poise threshold raises the armour's weight with it, and the card's
+    // Poise and Weight labels must say what the total counts.
+    const itemRef = authored ? (slot.kinds.includes('armor') ? `armor/${run.class}/${authored.id}` : `armament/${authored.id}`) : null;
+    const item = authored ? resolveUpgradedEquipment(registries, itemRef, (run.itemUpgradeLevels || {})[itemRef] || 0) : null;
     const surface = equipmentSurfaceReceipt(registries, run);
     const roleLabels = new Map(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const isActive = setIndex === (run.loadout.active?.[slot.id] || 0);
@@ -57644,7 +57815,10 @@ function mountEquipment(host, {
     const bonus = item
       ? [...roleBonuses, ...authoredBonuses, poise].filter(Boolean).slice(0, 2).join(' · ') || 'No combat bonus authored'
       : 'Empty socket';
-    const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
+    // One rule for the item and the total (model/statProjection.pieceWeight):
+    // an armour piece weighs its poise threshold, so its card can never say
+    // "Weight —" while the Equip load counts it.
+    const weight = item ? `Weight ${pieceWeight(item)}` : 'Weight —';
     return {
       item,
       intrinsic: item && !slot.kinds.includes('armor') ? armamentIntrinsicReceipt(item) : null,
@@ -58239,7 +58413,7 @@ const { equipmentKitReceipt, armamentIntrinsicStatProblems, equipmentRequirement
 // Deck composition goes through the framework's adopted door (owner ruling).
 const { buildEquippedWeaponCardPlan } = require("src/framework/deckComposition.js");
 const { passiveSum } = require("src/model/registries.js");
-const { playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
+const { playerPoiseThresholdReceipt, playerLoadReceipt } = require("src/model/statProjection.js");
 
 function pieceFor(registries, classId, pieceId, slot) {
   if (!pieceId) return null;
@@ -58559,6 +58733,13 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   resourceChanges.push(...swapPriceChanges(registries, run, run.loadout, loadout, meta, slot.id, setIndex));
   const beforePoise = playerPoiseThresholdReceipt(registries, run);
   const afterPoise = playerPoiseThresholdReceipt(registries, comparedRun);
+  // The compared run keeps `itemUpgradeLevels` (spread from `run`), so the
+  // candidate weighs at the tier it is actually forged to — the same tier the
+  // slot summary shows (ui/screens/equipment.js) and the same `pieceWeight`
+  // rule the Armoury readout uses. Capacity cannot move in a swap (attributes
+  // and bonuses are the run's), so only load, percent and the class word can.
+  const beforeLoad = playerLoadReceipt(registries, run);
+  const afterLoad = playerLoadReceipt(registries, comparedRun);
   return {
     slotId: slot.id,
     setIndex,
@@ -58598,6 +58779,20 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
       active: false,
       note: afterPoise.note,
     },
+    load: {
+      before: beforeLoad.load,
+      after: afterLoad.load,
+      capacity: afterLoad.capacity,
+      beforePercent: beforeLoad.percent,
+      afterPercent: afterLoad.percent,
+      beforeClassId: beforeLoad.classId,
+      afterClassId: afterLoad.classId,
+      beforeWord: beforeLoad.word,
+      afterWord: afterLoad.word,
+      changesClass: beforeLoad.classId !== afterLoad.classId,
+      active: false,
+      note: afterLoad.note,
+    },
   };
 }
 
@@ -58625,6 +58820,7 @@ function equipmentSurfaceReceipt(registries, run, { candidate = null, meta = nul
       .filter((piece) => piece.kind !== 'armor')
       .map(armamentIntrinsicReceipt),
     poise: playerPoiseThresholdReceipt(registries, run),
+    load: playerLoadReceipt(registries, run),
   };
   if (candidate) receipt.candidate = candidateReceipt(registries, run, candidate, roles, meta);
   return receipt;
@@ -58982,6 +59178,33 @@ function renderPlayerPoise(receipt) {
     + `<small>${esc(receipt.note)}</small></section>`;
 }
 
+function renderPlayerLoad(receipt) {
+  const sources = receipt.sources.length
+    ? `<ul>${receipt.sources.map((source) => `<li data-source-kind="${esc(source.kind)}">${esc(source.id)} <strong>${source.value}</strong></li>`).join('')}</ul>`
+    : '<p>Nothing equipped weighs anything.</p>';
+  return `<section class="player-load-receipt" data-weight-class="${esc(receipt.classId)}"><b>${esc(receipt.label)}</b>`
+    + sources
+    + `<span>Hands ${receipt.hands} + armour ${receipt.armour} = <strong>${receipt.load}</strong> of ${receipt.capacity} · <strong>${esc(receipt.word)}</strong></span>`
+    + `<small>${esc(receipt.note)}</small></section>`;
+}
+
+// The swap's load row: before → after out of the (unmoving) capacity, each
+// with its percent (the number the class thresholds are stated in — SPEC's
+// `.player-load-receipt` carries percent), and the Weight Class word on both
+// sides so a swap that crosses a boundary reads as the class change it is,
+// not as a number the player has to divide themselves.
+// `data-weight-class` carries the AFTER class, matching renderPlayerLoad's
+// attribute on the standing readout; `data-class-change` marks a crossing.
+function renderCandidateLoad(load) {
+  if (!load) return '';
+  const word = load.changesClass
+    ? `${esc(load.beforeWord)} → <strong>${esc(load.afterWord)}</strong>`
+    : `<strong>${esc(load.afterWord)}</strong>`;
+  return `<section class="player-load-receipt" data-weight-class="${esc(load.afterClassId)}" data-class-change="${load.changesClass ? 'yes' : 'no'}"><b>Equip load</b>`
+    + `<span>${load.before} (${load.beforePercent}%) → <strong>${load.after} (${load.afterPercent}%)</strong> of ${load.capacity} · ${word}</span>`
+    + `<small>${esc(load.note)}</small></section>`;
+}
+
 function renderRoleCopies(surface) {
   return surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
     + `<span>${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier}`
@@ -59008,11 +59231,12 @@ function renderCandidateComparison(candidate, { expanded = false } = {}) {
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`
     + `<section class="player-poise-receipt"><b>Poise threshold</b><span>${candidate.poise.before} → <strong>${candidate.poise.after}</strong></span><small>${esc(candidate.poise.note)}</small></section>`
+    + renderCandidateLoad(candidate.load)
     + '</details>';
 }
 
 
-Object.assign(module.exports, { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies, renderCandidateComparison });
+Object.assign(module.exports, { renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies, renderCandidateComparison });
 
 },
 "src/ui/components/flask.js": function (module, exports, require) {
