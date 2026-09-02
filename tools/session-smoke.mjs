@@ -114,6 +114,23 @@ try {
     else if (sc.kind === 'event') for (const m of S.connectedMembers()) S.eventChoice(m.id, 0);
   }
   ok(S.scene.kind === 'combat', 'party reaches a live shared combat');
+  // A CO-OP EVENT CHOICE IS A QUEST STEP: every member who chose has the
+  // record in their own run's history, by stable event and choice id, and the
+  // shared map is built on the host's (S.partyHistory()) — the door main.js
+  // walks with run.history, which this session never walked before.
+  {
+    const withEvents = S.connectedMembers().filter((m) => (m.run.history || []).some((h) => h.kind === 'event-choice' || h.eventId));
+    const p1h = S.session.members.get('p1').run.history || [];
+    // GOLDBOUGH's first stretch reaches an event before its first combat, so a
+    // walk that recorded nothing is the defect, not a vacuous green.
+    ok(p1h.length >= 1, `the walk answered an event before its first combat and the host recorded it (${p1h.length} record(s))`);
+    ok(S.partyHistory().length === p1h.length && S.partyHistory().every((h, i) => h.eventId === p1h[i].eventId && h.choiceId === p1h[i].choiceId),
+      `the party's choice history is the host's (${S.partyHistory().length} record(s) for p1)`);
+    ok(withEvents.length === (p1h.length ? S.connectedMembers().length : 0),
+      `every member who answered an event carries the record (${withEvents.length} of ${S.connectedMembers().length}; p1 has ${p1h.length})`);
+    if (p1h.length) ok(p1h.every((h) => typeof h.eventId === 'string' && typeof h.choiceId === 'string' && Number.isInteger(h.actNumber) && Number.isInteger(h.floor)),
+      `each record names its event, choice, act and floor (${JSON.stringify(p1h[0])})`);
+  }
   ok(S.scene.players.length === 2 && S.scene.enemies.length >= 1, 'combat scene exposes both players + shared enemies');
   ok(S.scene.players.every((p) => p.attributeMode && p.attributes), 'combat snapshot transports each seat\'s inert attributes');
   const hostEnemy = S.live.combat.enemies[0];

@@ -26,6 +26,8 @@ import {
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap } from '../src/engine/actmap.js';
+import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward, shrineHealAmount, applyGraceRefill,
@@ -251,10 +253,25 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- run flow ------------------------------------------------------------
+  // THE PARTY'S CHOICE HISTORY is the host's (earliest-joined member's) —
+  // the same seat fork-voting ties break toward — so a quest step the party
+  // took admits its gated event into the next act's Unknown nodes exactly as
+  // it does solo (main.js passes run.history; this passed nothing, so every
+  // co-op act was built on an empty history and the chain after Grave of the
+  // Nameless could never open — Codex, #528). Each member's own run still
+  // records what THEY chose (their save, their catch-up); the host's is the
+  // one the shared map answers to.
+  function hostMember() {
+    return [...members.values()].sort((a, b) => a.index - b.index)[0] || null;
+  }
+  function partyHistory() {
+    const host = hostMember();
+    return host && Array.isArray(host.run.history) ? host.run.history.slice() : [];
+  }
   function buildMap() {
     // The ONE boot path (#54) — same module main.js and runsim.mjs use;
     // unknowns come back pre-rolled, seed-determined at map birth.
-    session.mapGraph = buildActMap(registries, rng, contentAct());
+    session.mapGraph = buildActMap(registries, rng, contentAct(), null, { history: partyHistory() });
     session.floor = 0;
     session.cursorId = null;
     session.reachableIds = session.mapGraph.startIds.slice();
@@ -737,8 +754,31 @@ export function createSession({ registries, seedString, endless = false, restore
     session.scene = { kind: 'event', eventId, done: {} };
     return { ok: true };
   }
-  function eventChoice(memberId /*, choiceIndex */) {
+  function eventChoice(memberId, choiceIndex = 0) {
     if (session.scene.kind !== 'event') return { ok: false, error: 'no event open' };
+    const m = members.get(memberId);
+    if (!m) return { ok: false, error: 'unknown member' };
+    if (session.scene.done[memberId]) return { ok: true, repeated: true };
+    // THE CHOICE IS RECORDED, by its stable id, in the member's own history —
+    // the same door the solo event screen walks (event.js → recordEventChoice)
+    // — so a quest step taken in co-op is a quest step. The index is against
+    // the event's authored choice list (what coop.js draws); a choice this
+    // member's history does not yet admit is refused rather than recorded.
+    let def = null;
+    try { def = registries.events.get(session.scene.eventId); } catch { def = null; }
+    const authored = def ? eventChoicesWithHistory(def) : [];
+    if (authored.length) {
+      const choice = authored[Number(choiceIndex)];
+      if (!choice) return { ok: false, error: 'bad choice index' };
+      // availableEventChoices answers { choice, index } rows over the authored list.
+      if (!availableEventChoices(authored, m.run).some((row) => row.choice.id === choice.id)) return { ok: false, error: 'that choice is not open to you yet' };
+      // recordEventChoice reads the run's own act/floor/node for the record;
+      // a member's run rides the session's cursor, so it is stamped from it.
+      m.run.actNumber = session.actNumber;
+      m.run.floor = session.floor;
+      m.run.mapNodeId = session.cursorId ?? null;
+      recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
+    }
     // S5: apply the real event effects per member; S2 records participation.
     session.scene.done[memberId] = true;
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
@@ -878,7 +918,7 @@ export function createSession({ registries, seedString, endless = false, restore
     addMember, setConnected, connectedMembers, livingMembers,
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
-    chooseReward, shrineChoice, eventChoice, resolveCatchup,
+    chooseReward, shrineChoice, eventChoice, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },
