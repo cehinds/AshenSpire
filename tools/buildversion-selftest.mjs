@@ -183,6 +183,14 @@ const PLANTS = [
     // syntax check can fire. Review on #579 shipped exactly this through all
     // eight rows: F saw two equal strings and H ranked an invented `0.6.0.0`
     // over `0.5.4.4` because a non-numeric component was coerced to zero.
+    name: 'a pre-release tag the notation cannot represent, agreed by BOTH homes',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => {
+      editJson(root, (j) => ({ ...j, release: '0.5.0-beta.4' }));
+      edit(root, 'src/content/index.js', (t) => t.replace(/version: '[^']+'/, "version: '0.5.0-beta.4'"));
+    },
+  },
+  {
     name: 'a release with a component that is not a number, agreed by BOTH homes',
     row: 'F ORDINAL ON THE BOX',
     plant: (root) => {
@@ -445,6 +453,7 @@ function ordinalHistory() {
   if (BACKWARD === null) {
     console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);
   }
+
   // THREE VERDICTS, NOT TWO. `unknown` is its own expectation because it is its
   // own outcome: check() treats null as blocking exactly as false does, and a
   // case watched merely "not green" could not tell the two apart.
@@ -465,7 +474,15 @@ function ordinalHistory() {
       removeTempTree(dir);
     }
   }
-  return failures;
+  // THE CORPUS REPORTS ITS OWN SIZE. It was counted a second time at the call
+  // site as a literal `2`, which stopped being true the moment cases were added
+  // — the run printed 25/25 while executing more than that, and any failure
+  // would have been reported against the wrong denominator. The count is also
+  // not fixed: the backward case drops itself when no earlier release exists.
+  // DEVELOPER.md warns against a second copy of a corpus size for exactly this,
+  // and this repo has paid for it before (opsctl.test.mjs spelled its contract
+  // count into its own label).
+  return { failures, cases: CASES.length };
 }
 
 /** Returns the number of failures; prints one line per case. */
@@ -585,8 +602,9 @@ export async function selftest() {
   console.log('');
   console.log('  Row H is a claim about a commit AND ITS PARENT, so it has its own door too:');
   console.log('  the real tree, made a git repo, committed twice, entered at check(root).');
-  const HIST = 2;
-  failures += ordinalHistory();
+  const hist = ordinalHistory();
+  const HIST = hist.cases;
+  failures += hist.failures;
 
   console.log('');
   console.log(`  the digest this tree derives: ${sourceDigest().digest}`);
@@ -601,8 +619,10 @@ export async function selftest() {
   console.log('  each by the row or command that owns it,');
   console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
   console.log(`  git history and entered at whichCommits(), and ${HIST} planted as a real tree committed twice —`);
-  console.log('  the same three doors the real runs use. The last pair is watched RED and GREEN over');
-  console.log('  one variable, so a row that was red at every commit could not pass as a catch.');
+  console.log('  the same three doors the real runs use. That last group is watched across all three');
+  console.log('  verdicts — RED, GREEN and UNKNOWN — each case naming the one it expects, so a row');
+  console.log('  that was red at every commit could not pass as a catch, and a row that BLOCKED');
+  console.log('  could not pass as one that caught.');
   console.log('');
   console.log('BOUNDARY: this is a corpus, not a proof of completeness. It says these defects');
   console.log('  cannot pass; it says nothing about one nobody thought of, and nothing at all');

@@ -447,9 +447,17 @@ export function versionTuple(releaseString, ordinal) {
  */
 export function releaseSyntaxError(releaseString) {
   if (/^\d+\.\d+\.\d+$/.test(releaseString)) return null;
-  if (/^\d+\.\d+\.\d+-[A-Za-z]+\.\d+$/.test(releaseString)) return null;
+  // ONLY `rc`, AND THAT IS THE SCHEME RATHER THAN A NARROW REGEX. versionPrefix
+  // folds a candidate into the third component, so `0.5.0-rc.4` and a
+  // hypothetical `0.5.0-beta.4` would BOTH become `0.5.4` — two distinct
+  // pre-release lines colliding on one version. The compressed notation can
+  // represent exactly one candidate line, so a second tag is unrepresentable
+  // rather than merely unhandled. Admitting `[A-Za-z]+` here let
+  // `0.5.0-beta.4` pass row F while versionTuple returned null and row H went
+  // UNKNOWN — the two rows disagreeing about the same string (#579 review).
+  if (/^\d+\.\d+\.\d+-rc\.\d+$/.test(releaseString)) return null;
   return `'${releaseString}' is not a release: the scheme admits three numeric components`
-    + ` (0.5.4), optionally with a pre-release tag (0.5.0-rc.4). A component that is not a number`
+    + ` (0.5.4), optionally with an rc candidate tag (0.5.0-rc.4). A component that is not a number`
     + ` cannot be ordered against one that is, so nothing downstream can rank this build.`;
 }
 
