@@ -405,19 +405,26 @@ export function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
-    if (ev.detail === 0) {
-      if ((pointerOnly || tapOnEarlyRelease) && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
-    // A press the pointer walked away from is an abort in every form of this
-    // control — no tap meaning, no commit. The click is swallowed whole.
+    // A PRESS THE POINTER WALKED AWAY FROM IS AN ABORT IN EVERY FORM OF THIS
+    // CONTROL — no tap meaning, no commit — AND IT IS CHECKED FIRST. The native
+    // click of such a press lands on the common ancestor (the pointer went up
+    // somewhere else), so what reaches this control is the SYNTHETIC click
+    // input.js dispatches to a pressed control that got no click of its own
+    // (`detail === 0`). Read as "activation outside the press door" that click
+    // committed a binding choice under a scrolling thumb — measured, not
+    // guessed: tools/holdconfirm.mjs case 4b. So the moved flag is consumed
+    // before the detail check, and the click is swallowed whole.
     if (movedThisPress) {
       movedThisPress = false;
       heldThisPress = false;
       committedThisPress = false;
       ev.preventDefault();
       ev.stopPropagation();
+      return;
+    }
+    if (ev.detail === 0) {
+      if ((pointerOnly || tapOnEarlyRelease) && onTap) onTap(ev);
+      else onConfirm(ev);
       return;
     }
     if (!heldThisPress) {
