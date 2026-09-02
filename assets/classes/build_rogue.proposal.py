@@ -1,9 +1,11 @@
 # AS-HD-040 — proposed build_rogue for tools/sprites-blender.py
 #
 # WHY THIS FILE IS HERE AND NOT IN tools/
-# tools/** is held by lease-AS-HD-057-it-support. This seat holds
-# assets/classes/** only, so this is a bounded proposal under art.md §3, not an
-# edit. Whoever holds tools/** pastes the function in beside build_herald and
+# tools/** is assigned to owner_role it-support in git-ownership.json. No active
+# lease claims it (lease-AS-HD-057-it-support is revoked; its live replacement
+# -r2 holds only .agentops/work|events/AS-HD-057/**), but this seat is maker and
+# holds assets/classes/** only, so this is a bounded proposal under art.md §3,
+# not an edit. See TOOLS-ACCESS-REQUEST.md. Whoever holds tools/** pastes the function in beside build_herald and
 # adds "rogue": build_rogue to the builders map at the bottom, plus the two
 # materials below next to the other module-level materials.
 #

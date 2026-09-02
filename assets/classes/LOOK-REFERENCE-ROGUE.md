@@ -98,10 +98,23 @@ not cover the one that is correct.**
 
 ## 6. Scope note
 
-`tools/**` is held by `lease-AS-HD-057-it-support`. This lease holds
-`assets/classes/**` only. Editing the Blender builders — the natural way to
-remodel three procedural figures — is not this seat's to do; the assignment is
-the IT Manager III's.
+Checked against `origin/dev`, not a stale clone:
+
+- `.agentops/governance/git-ownership.json` assigns `tools/**` to
+  **`owner_role: it-support`**, lane `support-tooling`.
+- **No active writer lease claims `tools/**`.** `lease-AS-HD-057-it-support` is
+  `revoked: true`; the live replacement `lease-AS-HD-057-it-support-r2` holds only
+  `.agentops/work/AS-HD-057/**` and `.agentops/events/AS-HD-057/**`.
+- This lease (`lease-AS-HD-040-maker`) holds `assets/classes/**` only.
+
+So the path is unleased but role-owned, and this seat is `maker`, not
+`it-support`. The same ownership row also reads: *"Repo tooling and support
+scripts. Restores the ability to work; **product behaviour changes belong to
+maker**."* A class look remodel is a product behaviour change living in a
+support-owned path — the row points both ways at once.
+
+That is technical ambiguity over a shared path, which art.md §4 reserves to the
+IT Manager III. See `TOOLS-ACCESS-REQUEST.md`.
 
 What this seat can supply, and has: the measured target, the ranked deltas, a
 checker that gates any candidate against the approved look, and a drafted
