@@ -11,6 +11,8 @@ import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, restoreSession, coopHpMult } from './session.mjs';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
+import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { eventChoicesWithHistory } from '../src/content/events.js';
 
 const REG = createRegistries(contentBundle);
 const fails = [];
@@ -382,9 +384,12 @@ try {
           `a bad index is refused, the replayed choice pays out (+${c2.run.cinders - spentBefore} cinders, expected +${smash}), is recorded (${recorded}), drains the queue (${c2.catchup.length} left) and the seat snaps back to the party's floor`);
         // THE OPTIONS FROZEN IN EACH ENTRY ARE HONOURED: a seat away for the
         // Abandoned Cart and then the Merchant's Ghost has "pay in kind" frozen
-        // open at the ghost (its history had no strongbox then); looting the
-        // strongbox first in the replay must not turn that button inert
-        // (Codex on #548).
+        // open at the ghost (its history had no strongbox then), and the entry
+        // is served against that list, not against the history as the replay
+        // has since rewritten it — a strongbox in the history by then must not
+        // turn the button the entry put on screen inert (Codex on #548). The
+        // cart's strongbox itself is withheld from the entry (a 50% fight the
+        // party did not meet), so the rewritten history is written directly.
         {
           const E = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
           E.addMember({ id: 'e1', name: 'Ash', classId: 'reaver' });
@@ -401,10 +406,103 @@ try {
           E.eventChoice('e1', ghostIds.indexOf('leave'));
           const queuedBoth = e2.catchup.filter((c) => c.type === 'event').map((c) => c.eventId);
           E.setConnected('e2', true);
-          const first = E.resolveCatchup('e2', 0, { choiceIndex: cartIds.indexOf('lootStrongbox') });
+          const cartEntry = e2.catchup[0], ghostEntry = e2.catchup[1];
+          const first = E.resolveCatchup('e2', 0, { choiceIndex: cartIds.indexOf('leave') });
+          e2.run.actNumber = 1; e2.run.floor = E.session.floor; e2.run.mapNodeId = E.session.cursorId ?? null;
+          recordEventChoice(e2.run, { eventId: 'abandonedCart', choiceId: 'lootStrongbox' }); // the history the frozen list predates
+          const liveWouldRefuse = !availableEventChoices(eventChoicesWithHistory(ghost), e2.run).some((row) => row.choice.id === 'payInKind');
+          e2.run.cinders = Math.max(e2.run.cinders, ((ghost.choices[ghostIds.indexOf('payInKind')].requires || {}).cinders) || 0); // the price, so the refusal under test is the history's, not the purse's
           const second = e2.catchup[0] && e2.catchup[0].eventId === 'merchantsGhost' ? E.resolveCatchup('e2', 0, { choiceIndex: ghostIds.indexOf('payInKind') }) : { ok: false, error: 'ghost not next' };
-          ok(queuedBoth.join(',') === 'abandonedCart,merchantsGhost' && first.ok && second.ok && e2.catchup.length === 0 && (cart.choices.length === 2 && ghost.choices.length === 3),
-            `both missed events are queued (${queuedBoth.join(', ')}), the strongbox is looted (${first.ok}) and "pay in kind" frozen open at the ghost is still honoured after it (${second.ok ? 'ok' : second.error}); ${e2.catchup.length} left`);
+          ok(queuedBoth.join(',') === 'abandonedCart,merchantsGhost' && cartEntry && !cartEntry.open.includes(cartIds.indexOf('lootStrongbox')) && ghostEntry && ghostEntry.open.includes(ghostIds.indexOf('payInKind'))
+            && first.ok && liveWouldRefuse && second.ok && e2.catchup.length === 0 && (cart.choices.length === 2 && ghost.choices.length === 3),
+            `both missed events are queued (${queuedBoth.join(', ')}; the cart's strongbox withheld, "pay in kind" frozen open), and the ghost's entry is served against its frozen list — live history would refuse it (${liveWouldRefuse}), the replay honours it (${second.ok ? 'ok' : second.error}); ${e2.catchup.length} left`);
+        }
+        // A CHOICE THAT STARTS A FIGHT IS WITHHELD from the entry unless the
+        // party fought that encounter: the absent seat at the Feral Shrine
+        // cannot take the offering (its relic) behind a party that left; behind
+        // a party that fought the wyrm it can (Codex on #548).
+        {
+          const shrine = REG.events.get('feralShrine');
+          const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+          const calmIdx = shrine.choices.findIndex((c) => !(c.effects || []).some((e) => e.op === 'startCombat'));
+          const F = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          F.addMember({ id: 'f1', name: 'Ash', classId: 'reaver' });
+          F.addMember({ id: 'f2', name: 'Bel', classId: 'starseer' });
+          F.start();
+          F.session.cursorId = F.session.reachableIds[0];
+          F.setConnected('f2', false);
+          F.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+          F.eventChoice('f1', calmIdx);
+          const f2 = F.session.members.get('f2');
+          const left = f2.catchup[f2.catchup.length - 1];
+          const relicsBefore = f2.run.relics.length;
+          F.setConnected('f2', true);
+          const refused = F.resolveCatchup('f2', f2.catchup.length - 1, { choiceIndex: fightIdx });
+          const G = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          G.addMember({ id: 'g1', name: 'Ash', classId: 'reaver' });
+          G.addMember({ id: 'g2', name: 'Bel', classId: 'starseer' });
+          G.start();
+          G.session.cursorId = G.session.reachableIds[0];
+          G.setConnected('g2', false);
+          G.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+          G.eventChoice('g1', fightIdx);
+          const g2 = G.session.members.get('g2');
+          const fought = g2.catchup[g2.catchup.length - 1];
+          ok(left && Array.isArray(left.open) && !left.open.includes(fightIdx) && left.open.includes(calmIdx) && !refused.ok && f2.run.relics.length === relicsBefore
+            && fought && Array.isArray(fought.open) && fought.open.includes(fightIdx),
+            `the offering is withheld from the entry behind a party that left (open ${JSON.stringify(left && left.open)}, replay ${refused.ok ? 'taken' : 'refused'}, relics ${relicsBefore} -> ${f2.run.relics.length}) and open behind a party that fought the wyrm (open ${JSON.stringify(fought && fought.open)})`);
+        }
+        // A RETURN INTO A LIVE FIGHT WAITS ON THE CATCH-UP: the seat's body
+        // enters the fight only once its queue has drained, carrying what the
+        // replay wrote to the run (a lost tenth of max HP), so the fight
+        // cannot write the old numbers back over it (Codex on #548).
+        {
+          const stone = REG.events.get('ancientRuneStone');
+          const studyIdx = stone.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'maxHp' || (e.op === 'damage' && e.target === 'self') || /maxHp/i.test(JSON.stringify(e))));
+          const shrine = REG.events.get('feralShrine');
+          const fightIdx = shrine.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'startCombat'));
+          const H = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          H.addMember({ id: 'h1', name: 'Ash', classId: 'reaver' });
+          H.addMember({ id: 'h2', name: 'Bel', classId: 'starseer' });
+          H.start();
+          H.session.cursorId = H.session.reachableIds[0];
+          H.setConnected('h2', false);
+          H.session.scene = { kind: 'event', eventId: 'ancientRuneStone', done: {} };
+          H.eventChoice('h1', studyIdx);
+          const h2 = H.session.members.get('h2');
+          H.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+          H.eventChoice('h1', fightIdx);
+          H.eventContinue('h1');
+          const inFight = H.scene.kind === 'combat';
+          H.setConnected('h2', true);
+          const heldOut = inFight && !H.live.combat.players.has('h2') && H.connectedMembers().some((m) => m.id === 'h2');
+          const maxBefore = h2.run.maxHp;
+          const r1 = H.resolveCatchup('h2', 0, { choiceIndex: studyIdx });
+          const r2 = h2.catchup.length ? H.resolveCatchup('h2', 0, { choiceIndex: 0 }) : { ok: true };
+          const P2 = H.live && H.live.combat.players.get('h2');
+          ok(inFight && heldOut && r1.ok && r2.ok && h2.catchup.length === 0 && P2 && P2.entity.maxHp === h2.run.maxHp && h2.run.maxHp < maxBefore,
+            `a seat returning mid-fight is held out of it while its queue stands (held out ${heldOut}) and joins once it drains, with the replay's max HP (${maxBefore} -> ${h2.run.maxHp}; body ${P2 && P2.entity.maxHp})`);
+        }
+        // A LETHAL REPLAY ENDS A PARTY WITH NOBODY LEFT (Codex on #548).
+        {
+          const avatar = REG.events.get('goldboughAvatar');
+          const hurtIdx = avatar.choices.findIndex((c) => (c.effects || []).some((e) => e.op === 'damage' && e.target === 'self'));
+          const leaveIdx = avatar.choices.findIndex((c) => !(c.effects || []).length);
+          const L = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+          L.addMember({ id: 'l1', name: 'Ash', classId: 'reaver' });
+          L.addMember({ id: 'l2', name: 'Bel', classId: 'starseer' });
+          L.start();
+          L.session.cursorId = L.session.reachableIds[0];
+          L.setConnected('l2', false);
+          L.session.scene = { kind: 'event', eventId: 'goldboughAvatar', done: {} };
+          L.eventChoice('l1', leaveIdx);
+          const l1 = L.session.members.get('l1'), l2 = L.session.members.get('l2');
+          l1.run.hp = 0; l1.alive = false; // the last present seat has since fallen
+          l2.run.hp = 1;
+          L.setConnected('l2', true);
+          const r = L.resolveCatchup('l2', 0, { choiceIndex: hurtIdx });
+          ok(r.ok && l2.alive === false && l2.run.hp === 0 && L.scene.kind === 'complete' && L.scene.victory === false,
+            `a lethal replay fells the last living seat and ends the run (alive ${l2.alive}, hp ${l2.run.hp}, scene ${L.scene.kind}/${L.scene.victory})`);
         }
         // A seat that chose and then dropped owes nothing.
         const D = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
