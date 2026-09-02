@@ -55,16 +55,6 @@
       "tool": "tools/armoury-picked-up.mjs",
       "target": "src/ui/screens/equipment.js",
       "id": "ebb60d6e25b61c32"
-    },
-    {
-      "tool": "tools/hintstrip.mjs",
-      "target": "styles/combat.css",
-      "id": "e650bf9e7f606f81"
-    },
-    {
-      "tool": "tools/hintstrip.mjs",
-      "target": "styles/combat.css",
-      "id": "e650bf9e7f606f81"
     }
   ],
   "unreadable": {
@@ -165,7 +155,7 @@
     },
     "tools/hintstrip.mjs": {
       "count": 6,
-      "digest": "7e6cc607e0405887"
+      "digest": "22e63300a792cc0b"
     },
     "tools/hudbars.mjs": {
       "count": 2,

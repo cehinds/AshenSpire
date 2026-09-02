@@ -640,8 +640,9 @@ jobs:
           # and no cell list here — hintstrip declares its own population and
           # prints it, and a number typed beside the list that owns it is the
           # second-home defect this block has already been trimmed for twice.
-          echo "  · the combat hint strip is below every card, whole, on screen, and touching"
-          echo "    NO other combat control — at every cell hintstrip declares, including one"
+          echo "  · the combat action row (the controls and their key labels — the contextual"
+          echo "    strip is retired on combat, #527) is below every card, whole, on screen, and"
+          echo "    touching NO other combat furniture — at every cell hintstrip declares, including one"
           echo "    written through the game's own rebind store; its six known-bads are each"
           echo "    observed red through the same door. THIS IS RENDERED GEOMETRY."
           echo "  · every legal left/right armament slot reaches the correct rendered side"

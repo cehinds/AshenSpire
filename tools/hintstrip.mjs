@@ -1,6 +1,22 @@
 #!/usr/bin/env node
-// tools/hintstrip.mjs — THE CONTROL-HINT STRIP SITS UNDER THE CARDS, WHOLE, AND
-// STAYS THERE WHEN A LABEL GETS WIDER. The rendered check on combat's hint bar.
+// tools/hintstrip.mjs — THE COMBAT ACTION ROW SITS UNDER THE CARDS, WHOLE, AND
+// STAYS THERE WHEN A KEY LABEL GETS WIDER. The rendered check on the row that
+// carries combat's controls and their key labels.
+//
+// ── THE SUBJECT MOVED, AND THIS GATE FOLLOWED IT (#527, 2026-09-02) ─────────
+// The contextual hint strip this tool was written for is RETIRED on the combat
+// screen: 82adffc6 (2026-08-30, the five-cell command rail) made
+// `.hand-area > .hint-bar.hint-combat { display: none }` because the action row
+// (`.combat-action-row`, UI.combatActionRail) carries its own direct controls
+// and key labels — END TURN prints its binding as `<kbd class="et-key">`. The
+// element is still in the DOM, hidden by that rule, on purpose. The gate kept
+// asking for the strip and, the first time it ran hosted (run 297), reported an
+// EMPTY population at every wide cell and two of its six plants patched CSS
+// that no longer existed. Everything below now measures the ROW: the invariant
+// is the same sentence — under every card, whole, on screen, touching no other
+// combat furniture, surviving a wide rebound label — said of the element that
+// ships. The retired strip is treated as furniture: if it ever renders again on
+// combat, the row must not touch it, and that is measured rather than assumed.
 //
 // WHY IT EXISTS. His words, 2026-08-17, with a screenshot of the strip:
 //   "this should be at the bottom under the cards, not over lapped by the cards.
@@ -25,41 +41,39 @@
 // one window's accident. The cards were clipped at the bottom of the screen
 // before the strip ever moved.
 //
-// WHAT IT CHECKS, per shape, per text size:
-//   H1 BELOW      every card's rendered box is entirely ABOVE the strip's top.
-//                 Stated as containment, not as a gap: a number the strip could
+// WHAT IT CHECKS, per shape, per text size (the "row" is `.combat-action-row`;
+// the history below says "strip" where it records what was measured then):
+//   H1 BELOW      every card's rendered box is entirely ABOVE the row's top.
+//                 Stated as containment, not as a gap: a number the row could
 //                 be nudged by is a number the next hand change re-tunes.
-//   H2 CLEAR      the strip touches NO other combat furniture — the topbar, END
-//                 TURN, the energy orb, the DRAW/DISCARD piles. This is the check
-//                 that was red before the fix (topbar, 100%), and it is the one
-//                 that stops "fixed the cards" from meaning "sat on something
-//                 else". The count is ZERO, not a budget.
-//   H3 WHOLE      no chip is clipped and nothing overflows: every `.hint` box is
-//                 inside the strip's box, and the strip's scrollWidth/Height do
-//                 not exceed its client box. The base rule is `white-space:
-//                 nowrap; overflow: hidden`, so a chip wider than the strip used
-//                 to disappear SILENTLY.
-//   H4 WIDER      H1-H3 again with a REBOUND WIDE LABEL. This is the seam with
-//                 Sten's lane (item 1(b) — the chips derive their labels from the
-//                 live binding and the active device, so their WIDTH is his to
-//                 change and my layout has to survive it). The label is written
-//                 through the game's own rebind door — localStorage keybinds,
-//                 read by input.js keyLabel() — never by poking the DOM, so what
-//                 is measured is a layout under a real binding.
-//   H5 ONSCREEN   the strip is inside the viewport on every axis, and its own
-//                 height is REAL: a strip that reserves nothing is how "at the
+//   H2 CLEAR      the row touches NO other combat furniture — the topbar, the
+//                 battlefield, and the retired hint strip should it ever render
+//                 again. The count is ZERO, not a budget.
+//   H3 WHOLE      no control is clipped and nothing overflows: every direct
+//                 child of the row (orb, DRAW, END TURN, DISCARD, EXHAUSTED) is
+//                 inside the row's box, END TURN's key label is inside END TURN,
+//                 and the row's scrollWidth/Height do not exceed its client box.
+//   H4 WIDER      H1-H3 again with a REBOUND WIDE LABEL on END TURN. The label
+//                 is written through the game's own rebind door — localStorage
+//                 keybinds, read by input.js keyLabel() — never by poking the
+//                 DOM, so what is measured is a layout under a real binding.
+//   H5 ONSCREEN   the row is inside the viewport on every axis, and its own
+//                 height is REAL: a row that reserves nothing is how "at the
 //                 bottom" becomes "over whatever is at the bottom".
 //
-// AND ONE THING IT REPORTS AND REFUSES TO ASSERT, because it is a design call
-// somebody already made and not this tool's to re-decide: on the NARROW layout
-// the strip is `display: none` (styles/ui.css, EldenSpire#29 slice 0 — keys for
-// hardware a phone does not have). So "under the cards" has NO narrow answer at
-// all, and every H-check below is `unknown` there rather than green. It is
-// printed as a STATE with its reason, and it counts toward nothing. ⚠ THAT
-// BECOMES A LIVE QUESTION THE MOMENT STEN'S HALF LANDS: chips that are BUTTONS
-// are useful to a thumb, and the rule that hides them was written when they were
-// only key names. Not resolved here — named, and it belongs to whoever owns the
-// strip's interactivity.
+// THE NARROW LAYOUT IS MEASURED NOW. The strip was `display: none` there
+// (styles/ui.css, #29 slice 0 — keys for hardware a phone has not got) and every
+// H-check was `unknown` on narrow by design. The row renders on narrow
+// (`:root[data-layout='narrow'] .combat-action-row`, styles/combat.css), so the
+// eight declared cells are all measured and nothing is `unknown` by design.
+//
+// AND THE CARD THAT WAS OWED IS PAID: AN `unknown` BLOCKS. verdict.mjs's rule
+// for every other instrument — unknown is never a pass — is this tool's rule
+// too: a cell that resolves to `unknown` (the column-overflow branch of H5, or a
+// missing subject at a shape this tool did not declare exempt) exits 2. The
+// pre-existing column debt that branch was built to refuse to score is
+// measured at zero cells today (run 297 and locally), so nothing is painted
+// red by this rule that is not a live off-screen control.
 //
 // THE POPULATION IS DECLARED AND A MISSED CELL IS RED, NOT SILENT. This is my
 // own B3 hole from this morning, watched here on purpose: flaskbox printed a
@@ -125,79 +139,60 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 900000,
     plants: [
       {
-        // THE PILL GOES BACK ON THE TOPBAR — the state he complained about, and
-        // the one H2 exists for. H1 is GREEN under this plant (the cards are
+        // THE ROW GOES ON THE TOPBAR — the state he complained about for the
+        // strip, said of the row. H1 is GREEN under this plant (the cards are
         // nowhere near the topbar), which is exactly why H1 alone is not enough.
-        name: 'the strip is pinned back over the topbar, where he found it',
+        name: 'the row is pinned over the topbar',
         edits: [{
-          file: 'styles/ui.css',
-          find: '  position: static; top: auto; bottom: auto; transform: none;',
-          replace: '  position: fixed; top: 5.8rem; bottom: auto; transform: translateX(-50%);',
+          file: 'styles/combat.css',
+          find: '  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;',
+          replace: '  position: fixed; inset-inline: 1.6rem; top: 0; bottom: auto; z-index: 30;',
         }],
         expectRed: /BAD\s+H2 /,
       },
       {
-        // THE CARDS ARE ON THE STRIP. Same defect class as before — "at the
-        // bottom" satisfied while "not overlapped" is not, caught by H1 — but
-        // AIMED AT A DIFFERENT RULE, and the move is recorded rather than
-        // silently re-pointed.
-        //
-        // ⚠ THIS PLANT'S PREMISE MOVED WHEN #295's LAYOUT HALF LANDED, AND THE
-        // HARNESS SAID SO BEFORE I DID. It used to pin the strip to the viewport
-        // bottom so it reserved no height and the hand did not move. The strip no
-        // longer reserves that band at all — `--action-row-drop` does — so the
-        // old edit stopped producing H1 and produced H2 instead: the harness
-        // returned RED-FOR-WRONG-REASON, which is not a catch (SOP 14 §3). A red
-        // for the wrong reason would have read as a pass to anyone counting
-        // colours.
-        //
-        // What now decides whether a card lands on the strip is the strip's own
-        // block padding: with it, the strip is the tallest item in a
-        // bottom-anchored row and the row grows UPWARD into the hand. That is
-        // the live causal path, so that is where the plant points. 93.2 px2 of
-        // card on the strip at Text S.
-        name: 'the strip pads itself back into a pill and the row grows up into the hand, so a card lies on it',
+        // THE ROW RISES INTO THE HAND. `--action-row-drop` is the ONE home for
+        // how far the row hangs BELOW the hand and for the band the column
+        // reserves under it (styles/combat.css, #295) — the base rule's
+        // `bottom` is re-declared later against the safe-area insets, so the
+        // token, not the declaration, is where the plant points. A negative
+        // drop lifts the row into the hand-area and the controls sit under the
+        // fanned cards.
+        name: 'the row rises into the hand-area and the cards lie on it',
         edits: [{
           file: 'styles/combat.css',
-          find: '  margin: 0; max-width: 100%; padding-block: 0;',
-          replace: '  margin: 0; max-width: 100%;',
+          find: '.combat { --action-row-drop: 6.4rem; }',
+          replace: '.combat { --action-row-drop: -5rem; }',
         }],
         expectRed: /BAD\s+H1 /,
       },
       {
         // THE FAN GOES BACK TO PUSHING ITS OUTER CARDS DOWN. The exact
-        // expression that shipped, restored. 5.65 px of card onto the strip.
-        name: 'the fan hangs downward from its centre again and the outer cards reach past the hand',
+        // expression that shipped, restored — the outermost cards reach past
+        // the hand and onto the row's band.
+        // The magnitude is the plant's: the shipped 6 px step, hanging downward,
+        // put 5.65 px of card onto the old full-width strip; against a row whose
+        // controls sit under specific columns the outer cards must drop far
+        // enough to reach the piles, so the step is 40 px — the same defect
+        // class (the fan pushing cards down), sized to be seen.
+        name: 'the fan hangs downward from its centre again and the outer cards reach the piles',
         edits: [{
           file: 'src/ui/components/hand.js',
           find: 'translateY(${(Math.abs(i - mid) - mid) * 6}px)',
-          replace: 'translateY(${Math.abs(i - mid) * 6}px)',
+          replace: 'translateY(${Math.abs(i - mid) * 40}px)',
         }],
         expectRed: /BAD\s+H1 /,
       },
       {
-        // THE SILENT CLIP COMES BACK. nowrap + overflow:hidden, which is how a
-        // label wider than `E` used to vanish without a mark. H3 catches it
-        // ONLY under the wide label, which is why H4 is not a courtesy.
-        //
-        // ⚠ RE-AIMED FOR THE SAME REASON AS THE PLANT ABOVE, and it went UNCAUGHT
-        // first — the harness's word, not a guess. It used to edit ui.css's
-        // `.hint-bar.hint-combat`. #295's layout half added
-        // `.combat-action-row > .hint-bar.hint-combat`, which is one class more
-        // specific and re-declares `max-width`, so the planted narrow width was
-        // simply overridden and nothing clipped. The plant still armed, still
-        // ran, and tested a causal path the code no longer had.
-        //
-        // THIS IS MY OWN #314 LESSON ARRIVING A SECOND TIME, FROM THE OTHER SIDE:
-        // there I blinded a plant by adding a BRANCH around the line it watched;
-        // here I blinded one by adding a more specific RULE over the declaration
-        // it watched. Both are ways to make a check stop being exercised without
-        // touching the check. It does not fail — it goes quiet.
-        name: 'the strip clips instead of wrapping, so a wide rebound label disappears',
+        // THE SILENT CLIP. END TURN is squeezed to a width its key label cannot
+        // fit and told to hide the overflow, so a wide rebound label draws
+        // outside its control without a mark. H3 catches it ONLY under the wide
+        // label, which is why H4 is not a courtesy.
+        name: 'END TURN clips its key label, so a wide rebound label disappears',
         edits: [{
           file: 'styles/combat.css',
-          find: '  margin: 0; max-width: 100%; padding-block: 0;',
-          replace: '  margin: 0; max-width: 20rem; padding-block: 0; flex-wrap: nowrap !important; white-space: nowrap !important; overflow: hidden !important;',
+          find: '  box-sizing: border-box; width: var(--action-end-size); max-width: 100%; min-width: 0;',
+          replace: '  box-sizing: border-box; width: 4rem; max-width: 4rem; min-width: 0; overflow: hidden; white-space: nowrap;',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -215,14 +210,14 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H6 /,
       },
       {
-        // A DECLARED CELL STOPS BEING REACHED. My own B3 hole, aimed at this
-        // tool: the strip never renders, and every H-check has nothing to
-        // measure. A green here would be the same confident nothing.
-        name: 'the strip stops rendering and no H check may green on the empty population',
+        // A DECLARED CELL STOPS BEING REACHED. The row never renders, and every
+        // H-check has nothing to measure. A green here would be the same
+        // confident nothing this gate printed over the retired strip.
+        name: 'the row stops rendering and no H check may green on the empty population',
         edits: [{
-          file: 'src/ui/components/hints.js',
-          find: "  return `<div class=\"hint-bar hint-${context}",
-          replace: "  return `<div class=\"hint-bar-planted-away hint-${context}",
+          file: 'src/ui/screens/combat.js',
+          find: '<div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)}',
+          replace: '<div class="combat-action-row-planted-away" ${uiComponentAttrs(UI.combatActionRail)}',
         }],
         expectRed: /BAD\s+H0 /,
       },
@@ -246,14 +241,14 @@ const TEXTS = ['S', 'M', 'XL'];
 // key name a player can actually bind, not a stress string.
 const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 
-// The furniture the strip may not touch. Named, so a fix that moves the strip
-// onto something else is red instead of quiet.
+// The furniture the row may not touch. Named, so a fix that moves the row onto
+// something else is red instead of quiet. The retired hint strip is listed so
+// that if it ever renders on combat again the overlap is measured, not assumed
+// away; while it is `display: none` it has no box and is skipped.
 const FURNITURE = [
   ['topbar', '.combat .topbar'],
-  ['END TURN', '.combat .end-turn'],
-  ['energy orb', '.combat .energy-orb'],
-  ['DRAW pile', '.combat .pile.draw'],
-  ['DISCARD pile', '.combat .pile.discard'],
+  ['battlefield', '.combat .field'],
+  ['retired hint strip', '.combat .hand-area > .hint-bar.hint-combat'],
 ];
 
 const findings = [];
@@ -271,9 +266,15 @@ const READ = (prop) => `(() => {
   const L = (el) => { const r = el.getBoundingClientRect();
     return { left: +(r.left/z).toFixed(2), top: +(r.top/z).toFixed(2), right: +(r.right/z).toFixed(2),
              bottom: +(r.bottom/z).toFixed(2), w: +(r.width/z).toFixed(2), h: +(r.height/z).toFixed(2) }; };
-  const one = (s) => { const el = document.querySelector(s); return el ? L(el) : null; };
-  const strip = document.querySelector('.hint-bar.hint-combat');
+  // A furniture box counts only when the element renders: a display:none
+  // element has an empty rect at 0,0 and would otherwise overlap nothing or
+  // everything by accident.
+  const one = (s) => { const el = document.querySelector(s); if (!el) return null;
+    if (getComputedStyle(el).display === 'none') return null; return L(el); };
+  const strip = document.querySelector('.combat-action-row');
   const hand = document.querySelector('.hand');
+  const endTurn = strip ? strip.querySelector('.end-turn') : null;
+  const key = endTurn ? endTurn.querySelector('.et-key') : null;
   return {
     layout: document.documentElement.dataset.layout || null,
     vw: window.innerWidth / z, vh: window.innerHeight / z,
@@ -282,7 +283,12 @@ const READ = (prop) => `(() => {
     strip: strip ? L(strip) : null,
     stripFlow: strip ? { pos: getComputedStyle(strip).position, overflow: getComputedStyle(strip).overflow,
       scrollW: strip.scrollWidth, clientW: strip.clientWidth, scrollH: strip.scrollHeight, clientH: strip.clientHeight } : null,
-    chips: strip ? [...strip.querySelectorAll('.hint')].map((c) => ({ text: c.textContent.trim(), box: L(c) })) : [],
+    // The row's controls, each a "chip" for H3: its rendered box and its text.
+    chips: strip ? [...strip.children].filter((c) => getComputedStyle(c).display !== 'none')
+      .map((c) => ({ text: c.textContent.replace(/\s+/g, ' ').trim(), box: L(c) })) : [],
+    // END TURN's key label, for H3 (inside its control) and H4 (the rebind took).
+    endTurn: endTurn ? L(endTurn) : null,
+    key: key ? { text: key.textContent.trim(), box: L(key) } : null,
     cards: [...document.querySelectorAll('.hand .card')].map(L),
     hand: one('.hand'),
     handBox: hand ? { clientH: hand.clientHeight, scrollH: hand.scrollHeight, padTop: getComputedStyle(hand).paddingTop } : null,
@@ -317,58 +323,68 @@ const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
 // One cell: measure and judge. `label` says which binding the chips are under.
 function judge(r, cell, wide) {
   if (!r.present || r.display === 'none') {
-    // NOT A PASS AND NOT A FAILURE — a state, with its reason, counting nothing.
-    if (r.layout === 'narrow') {
-      unk('H*', cell, 'the strip is display:none on the narrow layout (styles/ui.css, #29 slice 0 — '
-        + 'keys for hardware a phone has not got). "Under the cards" has NO narrow answer, so nothing '
-        + 'here is measured. ⚠ this becomes a real question the moment the chips are buttons.');
-      return { counted: false };
-    }
-    bad('H0', cell, `no .hint-bar.hint-combat rendered on a ${r.layout} layout — the population is EMPTY and `
+    // The row renders on BOTH layouts (styles/combat.css has a narrow rule for
+    // it), so an absent row is an empty population everywhere: not a pass.
+    bad('H0', cell, `no .combat-action-row rendered on the ${r.layout} layout — the population is EMPTY and `
       + 'an empty population is not a pass; every check below would have had nothing to compare');
     return { counted: true };
   }
   if (!r.cards.length) {
-    bad('H0', cell, 'the strip rendered but the hand did not — nothing to be below, so H1 cannot mean anything here');
+    bad('H0', cell, 'the row rendered but the hand did not — nothing to be below, so H1 cannot mean anything here');
     return { counted: true };
   }
 
-  // H1 BELOW — containment, no gap constant.
-  const on = r.cards.map((c, i) => [i, overlap(r.strip, c)]).filter(([, o]) => o > 0);
+  // H1 BELOW — no card lies on any CONTROL of the row. The row itself is a
+  // full-width grid whose middle columns are empty gutters (`pointer-events:
+  // none` on the row, `auto` on its children — styles/combat.css), so its
+  // bounding box is not furniture: the outer fanned cards dip a few px into
+  // that empty band by design at 1200x730 and touch nothing. What a player
+  // must never see is a card drawn over the orb, a pile or END TURN, and that
+  // is what is measured — per control, zero overlap, no gap constant.
   const lowest = Math.max(...r.cards.map((c) => c.bottom));
-  if (on.length) {
-    const worst = Math.max(...on.map(([, o]) => o));
-    bad('H1', cell, `${on.length} of ${r.cards.length} cards lie ON the strip — worst ${worst.toFixed(1)} px2, `
-      + `${(100 * worst / area(r.strip)).toFixed(1)}% of the strip; lowest card bottom ${lowest} vs strip top ${r.strip.top}`);
+  const hits = [];
+  r.cards.forEach((c, i) => r.chips.forEach((k) => { const o = overlap(k.box, c); if (o > 0) hits.push([i, k.text, o]); }));
+  const intoRow = Math.max(0, lowest - r.strip.top);
+  if (hits.length) {
+    const worst = hits.reduce((a, b) => (b[2] > a[2] ? b : a));
+    bad('H1', cell, `${new Set(hits.map(([i]) => i)).size} of ${r.cards.length} cards lie ON a control — worst card ${worst[0]} on `
+      + `"${worst[1]}" ${worst[2].toFixed(1)} px2; lowest card bottom ${lowest} vs row top ${r.strip.top}`);
   } else {
-    ok('H1', cell, `all ${r.cards.length} cards are above the strip — lowest card bottom ${lowest}, `
-      + `strip top ${r.strip.top}, clear by ${(r.strip.top - lowest).toFixed(2)} px`);
+    ok('H1', cell, `no card touches any of the ${r.chips.length} controls — lowest card bottom ${lowest}, row top ${r.strip.top}`
+      + (intoRow > 0 ? ` (${intoRow.toFixed(2)} px into the row's empty gutter, touching nothing)` : `, clear by ${(r.strip.top - lowest).toFixed(2)} px`));
   }
 
   // H2 CLEAR — zero, not a budget.
   const touched = r.furniture.filter(([, b]) => b && overlap(r.strip, b) > 0);
   if (touched.length) {
-    bad('H2', cell, `the strip touches ${touched.length} control(s) it must not: `
-      + touched.map(([n, b]) => `${n} ${overlap(r.strip, b).toFixed(1)} px2 (${(100 * overlap(r.strip, b) / area(r.strip)).toFixed(1)}% of the strip)`).join(' · '));
+    bad('H2', cell, `the row touches ${touched.length} piece(s) of furniture it must not: `
+      + touched.map(([n, b]) => `${n} ${overlap(r.strip, b).toFixed(1)} px2 (${(100 * overlap(r.strip, b) / area(r.strip)).toFixed(1)}% of the row)`).join(' · '));
   } else {
     const seen = r.furniture.filter(([, b]) => b).length;
-    ok('H2', cell, `the strip touches none of the ${seen} combat controls measured (${r.furniture.filter(([, b]) => b).map(([n]) => n).join(', ')})`);
+    ok('H2', cell, `the row touches none of the ${seen} furniture piece(s) measured (${r.furniture.filter(([, b]) => b).map(([n]) => n).join(', ')})`);
   }
 
-  // H3 WHOLE — no chip clipped, nothing overflowing.
-  const outside = r.chips.filter((c) => c.box.left < r.strip.left - 0.5 || c.box.right > r.strip.right + 0.5
-    || c.box.top < r.strip.top - 0.5 || c.box.bottom > r.strip.bottom + 0.5);
+  // H3 WHOLE — no control clipped, the key label inside its control, nothing
+  // overflowing. The row is a grid with `align-items: end`, so a control taller
+  // than the row's box is the row growing, not a clip: containment is measured
+  // horizontally and at the bottom edge, where the grid places them.
+  const inside = (c, box) => c.left >= box.left - 0.5 && c.right <= box.right + 0.5 && c.bottom <= box.bottom + 0.5;
+  const outside = r.chips.filter((c) => !inside(c.box, r.strip));
+  const keyOut = r.key && r.endTurn ? !inside(r.key.box, r.endTurn) || r.key.box.top < r.endTurn.top - 0.5 : false;
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   if (!r.chips.length) {
-    bad('H3', cell, 'the strip rendered with ZERO chips — nothing was measured for clipping');
-  } else if (outside.length || over) {
-    bad('H3', cell, `${outside.length} of ${r.chips.length} chip(s) drawn outside the strip`
-      + (over ? ` and the strip overflows its own box (scroll ${r.stripFlow.scrollW}x${r.stripFlow.scrollH} vs client ${r.stripFlow.clientW}x${r.stripFlow.clientH})` : '')
+    bad('H3', cell, 'the row rendered with ZERO controls — nothing was measured for clipping');
+  } else if (!r.key) {
+    bad('H3', cell, 'END TURN carries no key label (.et-key) — the label this gate measures the width of is gone');
+  } else if (outside.length || keyOut || over) {
+    bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
+      + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (${JSON.stringify(r.key.box)} vs ${JSON.stringify(r.endTurn)})` : '')
+      + (over ? ` and the row overflows its own box (scroll ${r.stripFlow.scrollW}x${r.stripFlow.scrollH} vs client ${r.stripFlow.clientW}x${r.stripFlow.clientH})` : '')
       + (outside.length ? ` — first: "${outside[0].text}" at ${JSON.stringify(outside[0].box)}` : '')
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   } else {
-    ok('H3', cell, `all ${r.chips.length} chips whole and inside the strip (${r.chips.map((c) => c.text).join(' / ')}) `
-      + `[${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
+    ok('H3', cell, `all ${r.chips.length} controls whole and inside the row (${r.chips.map((c) => c.text).join(' / ')}), `
+      + `key label "${r.key.text}" inside END TURN [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   }
 
   // H5 ONSCREEN — and the height is real. WHEN THIS IS RED IT NAMES WHICH OF THE
@@ -386,7 +402,7 @@ function judge(r, cell, wide) {
     // verdict on this act. The house's own rule for a check that has not
     // distinguished its subject is `unknown`, and an unknown MAY NOT BE CITED AS
     // COVERAGE whatever it prints (Charter 2b clause 3).
-    unk('H5', cell, `the strip is off the viewport because THE WHOLE COLUMN does not fit: .combat overflows by `
+    unk('H5', cell, `the row is off the viewport because THE WHOLE COLUMN does not fit: .combat overflows by `
       + `${colOver} px (scrollH ${r.column.scrollH} vs clientH ${r.column.clientH}) and the strip is its LAST row, so it is `
       + `the passenger, not the cause. Column parts: ${r.column.parts.map(([n, h]) => `${n} ${h}`).join(' + ')}. `
       + `NOT VERIFIED HERE, THEREFORE NOT COVERAGE. `
@@ -397,10 +413,10 @@ function judge(r, cell, wide) {
       + `i.e. Law 4 clause 4's named 400-of-548 debt, which no arrangement of a hint strip can pay. NOT this lane's `
       + `to fix and NOT painted green.`);
   } else if (!inView) {
-    bad('H5', cell, `the strip is not wholly inside the viewport and the column DOES fit — this one is the strip's own `
+    bad('H5', cell, `the row is not wholly inside the viewport and the column DOES fit — this one is the row's own `
       + `placement: ${JSON.stringify(r.strip)} vs ${r.vw.toFixed(2)}x${r.vh.toFixed(2)}`);
   } else if (!(r.strip.h > 0)) {
-    bad('H5', cell, 'the strip has no height, so it reserves nothing and "under the cards" is a coincidence');
+    bad('H5', cell, 'the row has no height, so it reserves nothing and "under the cards" is a coincidence');
   } else {
     ok('H5', cell, `inside the viewport, ${r.strip.h} px tall, position:${r.stripFlow.pos}, column overflow ${colOver} px`);
   }
@@ -418,7 +434,7 @@ function judge(r, cell, wide) {
       + `${r.handBox.scrollH} vs ${r.handBox.clientH}) even though ${r.lift} is reserved as ${r.handBox.padTop}`);
   } else {
     ok('H6', cell, `${FAN_LIFT_PROP} = ${r.lift || '0px'} is reserved as padding-top ${r.handBox.padTop}; `
-      + `no card above .hand, no vertical travel in the strip`);
+      + `no card above .hand, no vertical travel in the hand`);
   }
   return { counted: true };
 }
@@ -503,15 +519,14 @@ async function main() {
     await wait(700);
     const rw = await ev(READ(FAN_LIFT_PROP));
     reached++;
-    const took = rw.chips.some((c) => c.text.includes(WIDE_KEY.label));
+    const took = !!(rw.key && rw.key.text.includes(WIDE_KEY.label));
     if (rw.present && rw.display !== 'none' && !took) {
-      bad('H4', `${vp.tag} WIDE`, `the rebind to "${WIDE_KEY.label}" did NOT reach the strip — chips read `
-        + `${JSON.stringify(rw.chips.map((c) => c.text))}. Nothing below is a measurement of a wider label, `
+      bad('H4', `${vp.tag} WIDE`, `the rebind to "${WIDE_KEY.label}" did NOT reach END TURN's key label — it reads `
+        + `${JSON.stringify(rw.key ? rw.key.text : null)}. Nothing below is a measurement of a wider label, `
         + `so this cell asserts nothing about one.`);
     } else if (rw.present && rw.display !== 'none') {
-      const w0 = rw.chips[0] ? rw.chips[0].box.w : 0;
-      ok('H4', `${vp.tag} WIDE`, `the strip is under a real rebind (${WIDE_KEY.action} -> ${WIDE_KEY.code}) — `
-        + `chips ${JSON.stringify(rw.chips.map((c) => c.text))}, first chip ${w0} px wide, strip ${rw.strip.w}x${rw.strip.h}`);
+      ok('H4', `${vp.tag} WIDE`, `the row is under a real rebind (${WIDE_KEY.action} -> ${WIDE_KEY.code}) — `
+        + `END TURN's key label "${rw.key.text}" is ${rw.key.box.w} px wide, END TURN ${rw.endTurn.w}x${rw.endTurn.h}, row ${rw.strip.w}x${rw.strip.h}`);
     }
     judge(rw, `${vp.tag} WIDE`, true);
     await cdp.send('Target.closeTarget', { targetId });
@@ -522,6 +537,17 @@ async function main() {
       + 'fewer cells than it declares prints a confident green over a smaller world (my own B3 hole, watched here)');
   } else {
     ok('H0', 'population', `all ${expected} declared cells reached (${SHAPES.length} shapes x ${TEXTS.length} text sizes, plus one WIDE-label cell per shape)`);
+  }
+  // THE NUMBER OF CHECKS MADE IS ASSERTED TOO, not only the cells reached: every
+  // reached cell owes H1, H2, H3, H5 and H6 (H5 may resolve to unknown, which
+  // blocks above), plus H4 once per WIDE cell. Fewer checks than that is a cell
+  // that went quiet without a finding — which is the regression H0 alone missed.
+  const owedChecks = expected * 5 + SHAPES.length;
+  if (checks + unknowns < owedChecks) {
+    bad('H0', 'checks', `${checks} check(s) and ${unknowns} unknown(s) over ${expected} cells — ${owedChecks} were owed; `
+      + 'a cell stopped being exercised without saying so');
+  } else {
+    ok('H0', 'checks', `${checks} check(s) + ${unknowns} unknown(s) cover the ${owedChecks} owed`);
   }
 
   cdp.close(); await dropBrowser(); await s.close?.();
@@ -545,37 +571,25 @@ async function main() {
     console.log('');
   }
 
-  // ⚠ WHAT THE EXIT STATUS ITSELF REFUSES TO CLAIM. UNCONDITIONAL, green or
-  // red, on the same ground as everything else this tool prints unprompted: a
-  // narrowed claim that is only narrow in a PR body is a general claim in
-  // practice (Marina, D104, applied to myself here rather than waiting to be
-  // told twice).
-  //
-  // FOUND BY MY OWN PLANT, AND REPRODUCED BY VIKI NON-AUTHOR. Remove the
-  // `--action-row-drop` reservation and the strip goes off the viewport at all
-  // four wide cells; H5 degrades from `ok` to `unknown`; the check count falls
-  // 22 -> 18; and THIS TOOL PRINTS `OK` AND EXITS 0. H0 asserts the cells it
-  // REACHED, which is still 8 of 8 — nothing asserts the number of checks
-  // actually MADE, so four assertions can become four non-assertions with no
-  // effect on `$?`. A regression that converts greens to unknowns is invisible
-  // to anyone reading the exit code, which is what a gate list reads.
-  //
-  // NOT CLOSED HERE, AND THE REASON IS A REAL CONFLICT RATHER THAN BUDGET. The
-  // obvious fix — a floor on `checks`, or making `unknown` block the way the
-  // no-browser path already does (exit 2) — would turn this gate RED on Law 4
-  // clause 4's pre-existing column debt, which is exactly what H5's `unknown`
-  // branch was built to refuse to score, and which is not this lane's to pay.
-  // Choosing between "an unknown blocks" and "an unknown is not this tool's
-  // verdict" is a design call with an owner, not a tidy-up. Stated instead, so
-  // the number is in front of a reader every run.
-  console.log(`⚠ ${unknowns} verdict(s) resolved to \`unknown\` this run and are counted in NEITHER`);
-  console.log(`  \`${checks} check(s)\` NOR the findings — so a cell that DEGRADES from a green to an`);
-  console.log('  `unknown` shrinks this tool\'s denominator and leaves its EXIT STATUS UNCHANGED.');
-  console.log('  4 of them are the narrow layout, where the strip does not render and nothing is');
-  console.log('  measurable by design. THE REST ARE NOT BY DESIGN. A check that stops being');
-  console.log('  EXERCISED does not fail — it goes quiet, and this tool cannot presently say so.');
-  console.log('  A card is OWED: does an `unknown` block, or is it not this tool\'s verdict?');
-  console.log('');
+  // AN `unknown` BLOCKS (#527 paid the card this tool used to print every run).
+  // The old text is history worth one paragraph: H0 asserted the cells REACHED,
+  // nothing asserted the number of checks MADE, so a regression that converted
+  // greens to `unknown` — remove the `--action-row-drop` reservation and the
+  // row goes off the viewport at every wide cell — shrank the denominator and
+  // left `$?` at 0. That was stated rather than closed because closing it would
+  // have painted Law 4 clause 4's column debt red. That debt is measured at zero
+  // cells now, the narrow layout is measured instead of exempt, and verdict.mjs
+  // already holds every other instrument to "unknown is never a pass". So: a
+  // run with any `unknown` exits 2 after its findings are printed — a red is
+  // still reported as red first — and an `unknown` is still not a finding,
+  // because it is not a verdict about the row; it is a verdict about this tool.
+  if (unknowns) {
+    console.log(`⚠ ${unknowns} verdict(s) resolved to \`unknown\` this run. An unknown BLOCKS (exit 2) and is`);
+    console.log('  never a pass: the cell was reached and the row was not distinguished from something');
+    console.log('  else (a column that does not fit, above). It is not counted as a finding either, because');
+    console.log('  it is not a verdict about the row.');
+    console.log('');
+  }
   // ── THE WAIVER ────────────────────────────────────────────────────────────
   // `--waive "<id>,<id>" --waive-card <n>` lands this gate in REPORTING mode for
   // findings that are already known and already carded. Every finding is still
@@ -638,26 +652,30 @@ async function main() {
     console.log('           is known and carded, and it will start blocking again the moment the finding');
     console.log('           changes in either direction — a new one appears, or this one is fixed.');
     console.log('BOUNDARY: measured on the SOURCE tree at two shapes and three text sizes. It has not seen a');
-    console.log('          gamepad, the co-op board, or the map strip, and it is silent about whether any chip');
-    console.log('          DOES anything when pressed — that is the strip\'s interactivity, not its layout.');
+    console.log('          gamepad, the co-op board, or the map strip, and it is silent about whether any control');
+    console.log('          DOES anything when pressed — that is the row\'s interactivity, not its layout.');
+    if (unknowns) { console.log(`hintstrip: UNKNOWN — ${unknowns} cell(s) could not be judged; exit 2, not a pass`); process.exit(2); }
     process.exit(0);
   }
 
   if (findings.length) {
     console.log(`hintstrip: ${findings.length} finding(s) over ${checks} check(s) — ${findings.join(', ')}`);
     console.log('BOUNDARY: measured on the SOURCE tree at two shapes and three text sizes. It has not seen a');
-    console.log('          gamepad, the co-op board, or the map strip, and it is silent about whether any chip');
-    console.log('          DOES anything when pressed — that is the strip\'s interactivity, not its layout.');
+    console.log('          gamepad, the co-op board, or the map strip, and it is silent about whether any control');
+    console.log('          DOES anything when pressed — that is the row\'s interactivity, not its layout.');
     process.exit(1);
+  }
+  if (unknowns) {
+    console.log(`hintstrip: UNKNOWN — ${unknowns} cell(s) could not be judged over ${checks} check(s); exit 2, not a pass`);
+    process.exit(2);
   }
   console.log(`hintstrip: OK — ${checks} checks passed`);
   console.log('BOUNDARY, and it is narrower than a green looks: measured on the SOURCE tree, two shapes x three');
-  console.log('          text sizes plus a rebound-wide-label cell per shape. NOT measured: a real gamepad (pad');
-  console.log('          glyphs go through padLabel and were not driven), the co-op board, the map strip, the');
-  console.log('          targeting chip swap, and whether any chip DOES anything when pressed — the strip is');
-  console.log('          still aria-hidden and pointer-events:none, and its interactivity is not this tool\'s');
-  console.log('          subject. On the NARROW layout the strip does not render at all and every check above');
-  console.log('          is `unknown` there, printed as a state and counted as nothing.');
+  console.log('          text sizes plus a rebound-wide-label cell per shape, on BOTH layouts. NOT measured: a real');
+  console.log('          gamepad (pad glyphs go through padLabel and were not driven), the co-op board, the map');
+  console.log('          strip, and whether any control DOES anything when pressed — the row\'s interactivity is');
+  console.log('          not this tool\'s subject. The retired combat hint strip is measured only as furniture the');
+  console.log('          row must not touch; while it is display:none it has no box and is skipped.');
   process.exit(0);
 }
 main().catch((e) => { console.error(e); process.exit(1); });
