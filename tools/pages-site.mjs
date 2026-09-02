@@ -200,12 +200,18 @@ function discoverPages(outDir, generatedNames) {
   const files = [];
   const indexed = new Set();
   const walk = (rel, depth) => {
-    if (depth > 4) return;
+    // NO CAP HERE EITHER. The per-file depth filter went in the last commit and
+    // this traversal guard stayed, so the comment below said "no depth cap"
+    // while `walk` still returned before reading anything five deep — the same
+    // silent drop, moved one function up. The tree is a `git archive` extract of
+    // one commit, so it is finite; symlinks are skipped rather than followed, so
+    // it cannot cycle.
     let entries;
     try { entries = readdirSync(join(outDir, rel), { withFileTypes: true }); } catch { return; }
     if (rel && entries.some((e) => e.isFile() && e.name === 'index.html')) indexed.add(rel);
     for (const e of entries) {
       if (e.name.startsWith('.')) continue;
+      if (e.isSymbolicLink()) continue;                       // cannot cycle
       const child = rel ? `${rel}/${e.name}` : e.name;
       if (rel === '' && generatedNames.has(e.name)) continue;
       if (BUILD_PATHS.has(child)) continue;

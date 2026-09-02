@@ -284,6 +284,28 @@ a branch waiting.
 
 ## Rollback
 
-Revert this record and the contract amendment, and delete the listener. The
-site returns to owner-dispatch republication with nothing else changed, because
-nothing else was changed.
+**Not by reverting this record.** Codex raised two things about the first
+draft of this section and both hold.
+
+`DECISIONS/README.md` opens with the rule: *"Decisions are append-only records.
+Correct an approved decision with a new record that names what it supersedes;
+do not silently rewrite history."* Reverting an Approved 0012 would delete the
+fact that it was approved, which is the one thing a decision record exists to
+preserve.
+
+And undoing it is itself a **Pages mechanism change** — removing the listener
+alters how the site is published, which is a Gate F action needing its own
+exact authority. Reverting a record does not carry that authority any more than
+approving one did.
+
+So rollback, once A or B is live, is two separate acts:
+
+1. **A new decision** appended after 0012, naming it as superseded and saying
+   what the mechanism returns to. 0012 stays in the index with its ruling
+   intact.
+2. **A separately owner-authorized Pages action** to remove the listener and
+   return the site to owner-dispatch republication.
+
+While 0012 is still **Proposed**, none of that applies: nothing is in force,
+nothing is deployed, and closing #581 unmerged leaves the repository exactly as
+it is today.
