@@ -857,6 +857,20 @@ test('a granted instance is never a per-copy upgrade candidate', () => {
     'an equipment-granted instance upgrades through its armament, never per copy — reconcile would silently drop the flag');
 });
 
+test('a random card upgrade never lands on an armament with no cards in the deck', () => {
+  const { executeAction } = actionsHome;
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  // A Greatsword carried in Inventory, and NO cards in the deck: the carried
+  // armaments (the equipped sword and shield, the stored Greatsword) are all
+  // Smithing candidates with no affected cards. A "random card" upgrade must
+  // find nothing here rather than spend the event on a tier.
+  run.loadout.storage.push('greatsword');
+  run.deck = [];
+  const before = JSON.stringify(run.itemUpgradeLevels);
+  executeAction({ registries: LEGACY_REG, run, rng: { float: () => 0.5, pick: (_s, list) => list[0] }, emit: () => {} }, { effect: { op: 'upgradeCard', random: true } });
+  eq(JSON.stringify(run.itemUpgradeLevels), before, 'a random card upgrade set an armament tier while upgrading no card the player holds');
+});
+
 test('a granted instance is never a removal candidate', () => {
   const { executeAction } = actionsHome;
   const REG2 = grantFixtureRegistries({ straightSword: {

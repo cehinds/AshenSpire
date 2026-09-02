@@ -524,6 +524,12 @@ export function createSession({ registries, seedString, endless = false, restore
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
+        // AND THEIR TIERS. A client prices a card from this snapshot
+        // (coop.js snapshotCosts → passiveSum with the seat's tier map); the
+        // relic ids alone priced every upgraded relic at tier zero, so an
+        // upgraded Ancestral Horn that the host charged 0 for read 1 on the
+        // client and the card went unplayable there (Codex, #528).
+        itemUpgradeLevels: { ...(P.itemUpgradeLevels || {}) },
         // The seat's live Weight Class row, so a client can price the pure
         // dodge (and read its Stamina cost) exactly as the host will charge it.
         weightClass: playerWeightClass({ registries, loadout: P.loadout, attributes: P.attributes, player: P.entity, itemUpgradeLevels: P.itemUpgradeLevels }).weightClass,

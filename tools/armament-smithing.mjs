@@ -234,6 +234,16 @@ async function main() {
     'SMITH-DISTINCT-ARMAMENTS', 'four attacks plus Technique collapse to one sword choice; four Guards to one shield choice');
   check(zero.candidates.every((row) => row.inventoryCount === 1),
     'SMITH-INVENTORY-COUNT', 'each Smithing candidate reports its exact single owned inventory instance');
+  // OWNED IS CARRIED, NOT COMPOSED: an armament held in Inventory supplies no
+  // deck cards and used to be invisible to the Smith. It is offered with its
+  // authored role previews as the change receipt (no live cards affected).
+  const storedRun = newReaver();
+  storedRun.loadout.storage.push('greatsword');
+  const storedPlan = smithingPlan(registries, storedRun);
+  const storedSword = storedPlan.candidates.find((row) => row.armamentId === 'greatsword');
+  check(!!storedSword && storedSword.affectedCards.length === 0 && storedSword.changes.length > 0
+      && storedSword.changes.some((row) => row.before !== row.after),
+    'SMITH-STORED-ARMAMENT', `a Greatsword in Inventory is a Smithing candidate previewed through its authored roles (offered=${!!storedSword}, affected=${storedSword?.affectedCards.length}, changes=${storedSword?.changes.length})`);
   const armour = zero.candidates.find((row) => row.itemRef === 'armor/reaver/default');
   check(armour?.itemKind === 'armor' && armour.changes.length === 1
       && armour.changes[0].before === 8 && armour.changes[0].after === 9,
