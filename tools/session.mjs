@@ -936,10 +936,16 @@ export function createSession({ registries, seedString, endless = false, restore
       // (Codex on #549). null is only an event with no history contract,
       // whose replay applies nothing.
       const openNow = session.scene.open && Array.isArray(session.scene.open[mm.id]) ? session.scene.open[mm.id] : openChoicesFor(session.scene.eventId, mm);
+      // THE MOMENT IS FROZEN WITH THE ENTRY: the seat's rng position, so the
+      // choice's random effects roll what they would have rolled here rather
+      // than after later nodes have spent the stream; and its purse, so a
+      // priced choice it could not afford here is not bought with cinders a
+      // later missed reward paid out (Codex on #548).
       mm.catchup.push({
         type: 'event', eventId: session.scene.eventId,
         open: Array.isArray(openNow) ? openNow.filter(fightless) : null,
         act: session.actNumber, floor: session.floor, mapNodeId: session.cursorId ?? null,
+        rng: mm.rng.getCounters(), purse: mm.run.cinders,
       });
     }
 
@@ -1047,10 +1053,18 @@ export function createSession({ registries, seedString, endless = false, restore
         const choice = authored[idx];
         if (!choice) return { ok: false, error: 'bad choice index' };
         if (Array.isArray(item.open) && !item.open.includes(idx)) return { ok: false, error: 'that choice was not open to you' };
-        if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
+        // AFFORDABLE THEN AND NOW: the purse frozen with the entry and the
+        // purse in hand both meet the price (Codex on #548).
+        const purse = Math.min(m.run.cinders || 0, typeof item.purse === 'number' ? item.purse : (m.run.cinders || 0));
+        if (choice.requires && typeof choice.requires.cinders === 'number' && purse < choice.requires.cinders) {
           return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
         }
-        executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
+        // ROLLED AT THE EVENT'S OWN POSITION: a detached rng on the seat's seed,
+        // set to the counters frozen with the entry, so the choice's random
+        // effects are those the seat would have met in the room; the seat's
+        // live stream is not moved (Codex on #548).
+        const eventRng = item.rng ? createRng(m.rng.seed, item.rng) : m.rng;
+        executeRunEffects({ run: m.run, registries, rng: eventRng }, choice.effects || []);
         // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
         // the party did not meet is not in the entry (settleEvent) — and was
         // fought while this seat was away; a returning seat fights no room
