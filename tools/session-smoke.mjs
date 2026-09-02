@@ -250,8 +250,11 @@ try {
   {
     const p1m = S.session.members.get('p1');
     const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {} }).value;
-    const stamped = S.live.combat.players.get('p1').entity.poiseMax;
-    ok(owed > 0 && stamped === owed, `the seat's Poise threshold is stamped on its combat entity (owed ${owed}, stamped ${stamped})`);
+    // The entity carries it as its poise METER's max (state.js stampPlayerPoiseMax);
+    // an absent meter is the engine's "no vessel" — the zero this fix removes.
+    const meter = S.live.combat.players.get('p1').entity.poiseMeter;
+    const stamped = meter ? meter.max : null;
+    ok(owed > 0 && stamped === owed, `the seat's Poise threshold is stamped on its combat entity (owed ${owed}, meter max ${stamped})`);
   }
   {
     const p2snap = S.scene.players.find((p) => p.id === 'p2');
