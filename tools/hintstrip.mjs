@@ -288,6 +288,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // A PARTIAL SHEET: the same layer as a thin black band along the
+        // bottom of the viewport, over the lower edge of every control. Most
+        // of each control still reaches the eye, its centre hit-tests as
+        // itself, and an absolute "enough paint remains" floor would green;
+        // the LOST share of its own paint does not (Codex, #538).
+        name: 'the effects layer paints a thin opaque band over the bottom edge of the rail, most of every control still showing',
+        edits: [{
+          file: 'styles/combat.css',
+          find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 2vh; background: #000; pointer-events: none; z-index: 300; overflow: hidden; }',
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // THE WHOLE GAME GOES TRANSPARENT AT THE ROOT. Descendants keep a
         // nonzero computed opacity, so only a walk that reaches html can tell.
         name: 'a stylesheet makes the root element opacity:0 and every control keeps its box',
@@ -554,7 +568,13 @@ const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
 // painted over, whatever is drawn over it and whatever hit-tests there.
 // PAINT_FLOOR is the least share of a control's own box its paint must reach;
 // the shipped controls measure well above it (printed in every H3 ok line).
-const PAINT_FLOOR = 0.5;
+const PAINT_FLOOR = 0.25;
+// The most of a control's own paint that may fail to reach the eye in situ.
+// The floor above says the control paints; this says nothing is drawn over
+// it. A control's colour can coincide with what lies beneath at a few pixels
+// (an edge of shadow the same dark as the background), so the tolerance is
+// not zero; the shipped controls lose 0-N% (printed in every H3 ok line).
+const PAINT_LOST = 0.1;
 const decodePng = (buf) => {
   let p = 8, w = 0, h = 0, ct = 0, bd = 0; const idat = [];
   while (p < buf.length) { const len = buf.readUInt32BE(p); const type = buf.toString('ascii', p + 4, p + 8); const d = buf.subarray(p + 8, p + 8 + len);
@@ -570,11 +590,23 @@ const decodePng = (buf) => {
       out[dst + x] = v & 255; } }
   return { w, h, bpp, px: out };
 };
-const paintShare = (a, b) => { const A = decodePng(a), B = decodePng(b);
+// The pixels where two captures of the same clip differ (a Uint8Array mask).
+const diffMask = (a, b) => { const A = decodePng(a), B = decodePng(b);
   if (A.w !== B.w || A.h !== B.h) throw new Error('the two captures differ in size');
-  let changed = 0; const n = A.w * A.h;
-  for (let i = 0; i < n; i++) { const o = i * A.bpp; if (Math.abs(A.px[o] - B.px[o]) > 4 || Math.abs(A.px[o + 1] - B.px[o + 1]) > 4 || Math.abs(A.px[o + 2] - B.px[o + 2]) > 4) changed++; }
-  return n ? changed / n : 0; };
+  const n = A.w * A.h, m = new Uint8Array(n);
+  for (let i = 0; i < n; i++) { const o = i * A.bpp; if (Math.abs(A.px[o] - B.px[o]) > 4 || Math.abs(A.px[o + 1] - B.px[o + 1]) > 4 || Math.abs(A.px[o + 2] - B.px[o + 2]) > 4) m[i] = 1; }
+  return m; };
+// TWO MASKS PER CONTROL. `own`: the pixels the control paints BY ITSELF — the
+// page hidden (body visibility:hidden), the control alone made visible,
+// against the control hidden too. `seen`: the pixels that change when the
+// control is hidden IN SITU, everything else drawn as shipped. A pixel the
+// control paints alone that does not change in situ is a pixel something
+// opaque is drawn over (or, rarely, one that happens to match what is
+// beneath) — the LOST share is own-and-not-seen over own, and it names a
+// partial overlay as surely as a full one: a sheet over a fifth of a control
+// loses a fifth of its paint, whatever the rest still shows (Codex, #538).
+const paintOfMasks = (own, seen) => { let o = 0, lost = 0; for (let i = 0; i < own.length; i++) if (own[i]) { o++; if (!seen[i]) lost++; }
+  return { own: own.length ? o / own.length : 0, lost: o ? lost / o : 0 }; };
 const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-action-row'); if (!row) return [];
   const list = [...row.children].map((c, i) => ({ sel: '.combat-action-row > :nth-child(' + (i + 1) + ')', name: (c.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) || c.className }));
   if (document.querySelector('.combat-action-row .et-key')) list.push({ sel: '.combat-action-row .et-key', name: 'END TURN key label' });
@@ -583,13 +615,23 @@ const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-acti
 async function paintOf(ev, shot) {
   const out = [];
   for (const t of await ev(PAINT_TARGETS)) {
-    if (!t.shown) { out.push({ name: t.name, share: null }); continue; }
+    if (!t.shown) { out.push({ name: t.name }); continue; }
     const clip = { x: Math.floor(t.x), y: Math.floor(t.y), width: Math.ceil(t.w), height: Math.ceil(t.h), scale: 1 };
-    const before = await shot(clip);
-    await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.setAttribute('data-hintstrip-vis', el.style.visibility || ''); el.style.visibility = 'hidden'; return 1; })()`);
-    const hidden = await shot(clip);
-    await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.visibility = el.getAttribute('data-hintstrip-vis'); el.removeAttribute('data-hintstrip-vis'); return 1; })()`);
-    out.push({ name: t.name, share: paintShare(before, hidden) });
+    const vis = (v) => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.setProperty('visibility', ${JSON.stringify(v)}, 'important'); return 1; })()`);
+    const restore = () => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); document.body.style.removeProperty('visibility'); return 1; })()`);
+    const pageHidden = () => ev(`(() => { document.body.style.setProperty('visibility', 'hidden', 'important'); return 1; })()`);
+    try {
+      const inSitu = await shot(clip);
+      await vis('hidden');
+      const inSituHidden = await shot(clip);
+      await pageHidden(); await vis('visible');
+      const alone = await shot(clip);
+      await vis('hidden');
+      const blank = await shot(clip);
+      await restore();
+      const seen = diffMask(inSitu, inSituHidden), own = diffMask(alone, blank);
+      out.push({ name: t.name, ...paintOfMasks(own, seen) });
+    } catch (e) { await restore().catch(() => {}); throw e; }
   }
   return out;
 }
@@ -661,8 +703,8 @@ function judge(r, cell, wide, pointer) {
   const keyOut = !r.coarse && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
   const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
   const paint = Array.isArray(r.paint) ? r.paint : [];
-  const obscured = paint.filter((p) => p.share !== null && p.share < PAINT_FLOOR);
-  const paintLine = paint.filter((p) => p.share !== null).map((p) => `${p.name} ${(p.share * 100).toFixed(0)}%`).join(', ');
+  const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST));
+  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% of that lost`).join('; ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -684,9 +726,9 @@ function judge(r, cell, wide, pointer) {
   } else if (!paint.length) {
     bad('H3', cell, 'no paint-coverage reading reached the judge — the probe that photographs each control did not run, so nothing says a control is not painted over');
   } else if (obscured.length) {
-    bad('H3', cell, `${obscured.length} control(s) painted over — hiding each changes almost none of its own pixels: `
-      + obscured.map((p) => `"${p.name}" ${(p.share * 100).toFixed(0)}% of its box`).join(', ')
-      + ` (floor ${PAINT_FLOOR * 100}%; an opaque layer over the rail, pointer-events or not, is measured here rather than by the hit-test)`);
+    bad('H3', cell, `${obscured.length} control(s) painted over — `
+      + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box alone and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ`).join(', ')
+      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it; a layer over any part of the rail, pointer-events or not, is measured here rather than by the hit-test)`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (box ${JSON.stringify(r.key.box)}, text ${JSON.stringify(r.key.textBox)} vs ${JSON.stringify(r.endTurn)})` : '')
