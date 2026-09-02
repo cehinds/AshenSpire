@@ -13,10 +13,10 @@
 
 ## The ask, in one sentence
 
-Let a merge to **`dev` or `test`** automatically republish the **builds site**.
-`release` and `main` keep republishing only on Constantine's dispatch, and
-every other Pages and release action stays exactly as it is: his, per
-individual act.
+**May a merge republish the builds site, and under which of three models?**
+Review showed that A and B are not variations on one ask — they differ in what
+`release` and `main` do — so this record asks the question and does not answer
+it. A ruling that does not name **A**, **B** or **C** approves nothing.
 
 ## Why this is being asked
 
@@ -192,22 +192,39 @@ Two things in that table need his eye rather than my assumption:
   branch assembled would let a push to `dev` replace root, `main` and `release`
   content whatever the credential arrangement. That is defect 2.
 - Under option A, `main` and `release` are built from the owner's last-published
-  SHAs rather than their heads.
+  SHAs rather than their heads — **and so is the generator.** Codex raised this
+  as a second P1 and it closes a channel the content pins leave open: if `main`
+  gains a change to `tools/pages-site.mjs` or to the listener after the last
+  dispatch, the next automatic `dev` push runs that NEW default-branch code and
+  publishes what it renders, pinned content or not. Option A therefore pins the
+  builder revision alongside the content refs, and the owner's dispatch is what
+  advances both. Pinning what is rendered while letting the renderer move is not
+  option A; it is option B with extra steps.
 - **Everything else in Gate F is untouched:** `main` and `release` mutation,
   tags, release publication, Pages source, and final release-readiness stay
   the owner's, per act.
 
-**Option C:** decline entirely. #553 stays open, the staleness report #578
+**Option C — decline entirely.** #553 stays open, the staleness report #578
 landed stands as the mitigation, and the site is current whenever Constantine
 chooses to make it so. This remains a legitimate outcome and the record should
 not read as though it is not.
 
 ## What happens on approval
 
-`.agentops/governance/promotion-gates.json` is amended, this record's status
-becomes Approved, and the workflow is written to match — in that order. No
-implementing code merges before the ruling; the two attempts that preceded this
-record were reverted in full and are not sitting on a branch waiting.
+**The ruling must name A, B or C.** Codex raised this as a P1 and it is right:
+A and B are mutually exclusive and differ precisely in what happens to `release`
+and `main`, so "approved" without a letter would leave the contract amendment
+and the workflow with nothing authoritative to match — and whole-site
+publication could then be *inferred* from an ambiguous approval. AGENTS.md is
+the standing rule here: protected Pages actions need their own exact authority,
+and `UNKNOWN` is never approval. A ruling that does not name a model is `WAIT`,
+not a pass.
+
+With a letter named: `.agentops/governance/promotion-gates.json` is amended to
+that model, this record's status becomes Approved **and records the letter**,
+and the workflow is written to match — in that order. No implementing code
+merges before the ruling; the two attempts that preceded this record were
+reverted in full and are not sitting on a branch waiting.
 
 ## Rollback
 
