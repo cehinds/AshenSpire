@@ -863,9 +863,12 @@ export function createSession({ registries, seedString, endless = false, restore
       // AN EVENT THAT STARTS A FIGHT (startCombat sets run.combatEntered, the
       // door main.js and runsim.mjs consume) opens the SHARED combat on the
       // named encounter before the party advances; the flag is consumed on
-      // every member so no save carries a stale one. The first present seat's
-      // encounter is the party's (one fight, one room).
-      const fighter = connectedMembers().find((mm) => mm.run.combatEntered);
+      // every member so no save carries a stale one. The earliest-joined LIVING
+      // seat whose committed pick started a fight names the party's encounter
+      // (one fight, one room) — connected or not: a seat that chose the fight,
+      // kept the choice's reward and then dropped does not spare the party
+      // the encounter it bought (Codex on #541).
+      const fighter = livingMembers().sort((a, b) => a.index - b.index).find((mm) => mm.run.combatEntered);
       const forced = fighter ? (typeof fighter.run.combatEntered === 'string' ? fighter.run.combatEntered : fighter.run.combatEntered.encounterId) : null;
       for (const mm of members.values()) mm.run.combatEntered = null;
       if (forced) { enterCombat('normal', forced); return { ok: true, combat: forced }; }
