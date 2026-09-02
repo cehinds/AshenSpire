@@ -248,7 +248,11 @@ export function createSession({ registries, seedString, endless = false, restore
       m.connected = !!connected;
       if (live) combatPresence(id, !!connected); // rescale the live fight
       if (!connected) maybeResolveVotes(); // a leaver may complete a map vote
-      if (!connected) settleEvent(); // … or an event's choices or acknowledgments
+      // … or an event's choices or acknowledgments — and so may a RETURN: a
+      // room everyone left after one seat had chosen settles nothing while it
+      // is empty, and the seat that comes back alone must not wait on the
+      // absent (Codex on #541).
+      settleEvent();
     }
     return m;
   }

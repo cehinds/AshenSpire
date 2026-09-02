@@ -304,6 +304,27 @@ try {
         ok(q1.ok && q1.waiting === 1 && Z.scene.kind !== 'event',
           `a seat leaving before choosing settles a room where every present seat has chosen (waited on 1, then scene ${Z.scene.kind})`);
       }
+      // A SEAT RETURNING TO A ROOM EVERYONE LEFT after it had chosen settles the
+      // room for itself, rather than waiting on the absent (Codex on #541).
+      // (r1 leaves FIRST, then r2: r2 leaving a room where every present seat
+      // had chosen would settle it, so the room must empty with r1's choice made.)
+      {
+        const R = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+        R.addMember({ id: 'r1', name: 'Ash', classId: 'reaver' });
+        R.addMember({ id: 'r2', name: 'Bel', classId: 'starseer' });
+        R.start();
+        R.session.cursorId = R.session.reachableIds[0];
+        R.session.scene = { kind: 'event', eventId: 'feralShrine', done: {} };
+        const shrine = REG.events.get('feralShrine');
+        const calmIdx = shrine.choices.findIndex((c) => !(c.effects || []).some((e) => e.op === 'startCombat'));
+        R.eventChoice('r1', calmIdx);
+        R.setConnected('r1', false);
+        R.setConnected('r2', false);
+        const emptyStays = R.scene.kind === 'event';
+        R.setConnected('r1', true);
+        ok(emptyStays && R.scene.kind !== 'event',
+          `an emptied room stays put (scene event) and the chosen seat's return settles it (then scene ${R.scene.kind})`);
+      }
       // A CHOICE THAT KILLS fells the seat, and a party with nobody left is over.
       {
         const W = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
