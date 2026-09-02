@@ -12,6 +12,7 @@
 // Usage:
 //   node assets/classes/check-look-conformance.mjs                 # score all four
 //   node assets/classes/check-look-conformance.mjs <file> ...      # score candidates
+//   node assets/classes/check-look-conformance.mjs --selftest      # replay known attacks
 //
 // Candidates may be PNG or WEBP. WEBP is converted with dwebp/ffmpeg/magick if
 // one is installed — the class renderer emits WEBP, so scoring its output
@@ -132,7 +133,74 @@ function toHsv(r, g, b) {
   return { h, s: mx ? d / mx : 0, v: mx };
 }
 
-// The five traits that separate the approved look from the three rejected ones.
+// WHERE the colours sit, not just how many there are.
+//
+// Every trait above this point is a histogram, and a histogram cannot see a
+// picture: shuffling the RGB among the opaque pixels while keeping the alpha
+// mask preserves all seven of them *bit for bit* — Δ0.0 on every row — for an
+// image that is visual noise. Two structural measures close that.
+const EDGE_BAND_PX = 6;
+
+function spatial(img) {
+  const { width: w, height: h, bpp, px } = img;
+  const on = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) on[i] = px[i * bpp + 3] >= OPAQUE ? 1 : 0;
+
+  // Local coherence: mean |Δvalue| between horizontally and vertically adjacent
+  // opaque pixels. Rendered art is locally smooth; noise is not.
+  let sumDelta = 0;
+  let pairs = 0;
+  const valueAt = (i) => Math.max(px[i * bpp], px[i * bpp + 1], px[i * bpp + 2]) / 255;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!on[i]) continue;
+      const v = valueAt(i);
+      if (x + 1 < w && on[i + 1]) { sumDelta += Math.abs(v - valueAt(i + 1)); pairs++; }
+      if (y + 1 < h && on[i + w]) { sumDelta += Math.abs(v - valueAt(i + w)); pairs++; }
+    }
+  }
+
+  // Edge band: mask pixels within EDGE_BAND_PX of the silhouette boundary,
+  // found by eroding the mask that many times.
+  let eroded = on;
+  for (let k = 0; k < EDGE_BAND_PX; k++) {
+    const next = new Uint8Array(w * h);
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x;
+        next[i] = eroded[i] && eroded[i - 1] && eroded[i + 1]
+          && eroded[i - w] && eroded[i + w] ? 1 : 0;
+      }
+    }
+    eroded = next;
+  }
+
+  let maskN = 0;
+  let edgeN = 0;
+  let rim = 0;
+  let rimEdge = 0;
+  for (let i = 0; i < w * h; i++) {
+    if (!on[i]) continue;
+    maskN++;
+    const inEdge = !eroded[i];
+    if (inEdge) edgeN++;
+    const c = toHsv(px[i * bpp], px[i * bpp + 1], px[i * bpp + 2]);
+    if (c.s > 0.15 && c.h >= 200 && c.h < 220) { rim++; if (inEdge) rimEdge++; }
+  }
+
+  // Rim light belongs on the silhouette edge. Enrichment normalises for figures
+  // of different bulk: 1.0 means the rim hue is spread as though placed at
+  // random, which is what a shuffle produces however much of it survives.
+  const edgeShare = maskN ? edgeN / maskN : 0;
+  const rimEdgeShare = rim ? rimEdge / rim : 0;
+  return {
+    neighbour_delta: pairs ? sumDelta / pairs : 0,
+    rim_edge_enrichment: edgeShare ? rimEdgeShare / edgeShare : 0,
+  };
+}
+
+// The traits that separate the approved look from the three rejected ones.
 function profile(img) {
   const { width: w, height: h, bpp, px } = img;
   let n = 0, sat = 0, val = 0, gold = 0, rim = 0;
@@ -151,6 +219,7 @@ function profile(img) {
   if (!n) throw new Error('no opaque pixels to profile');
   const warmEarth = (hb[1] + hb[2] + hb[3]) / n; // 20-80 degrees
   return {
+    ...spatial(img),
     n,
     mean_saturation: sat / n,
     mean_value: val / n,
@@ -183,6 +252,11 @@ const ref = profile(decodeImage(readBlob(crops[REFERENCE].git_blob), REFERENCE))
 // The bound is stated rather than tuned: a candidate may lose at most 20% of the
 // reference's mean chroma, which at 0.565 is 0.113.
 const CHROMA_LOSS_ALLOWED = 0.20;
+// A trait may carry its own comparator instead of a symmetric tolerance. The
+// structural rows are one-sided: they assert a floor or a ceiling on structure
+// rather than a resemblance to the reference's exact number.
+const NOISE_MULTIPLE_ALLOWED = 2.0; // local noise may not exceed 2x the reference's
+const RIM_ENRICHMENT_FLOOR = 1.8;   // measured 2.0-5.3 across all four real assets
 const TRAITS = [
   ['deep shadow (v<0.3)', 'deep_shadow', 0.12, (x) => `${(100 * x).toFixed(1)}%`],
   ['highlights (v>0.5)', 'highlight', 0.05, (x) => `${(100 * x).toFixed(1)}%`],
@@ -193,26 +267,94 @@ const TRAITS = [
   // (0.0% against the reference 0.6%) and still pass the accent trait.
   ['gold accent restraint', 'gold_fraction', 0.005, (x) => `${(100 * x).toFixed(1)}%`],
   ['cool rim light 200-220°', 'cool_rim_fraction', 0.030, (x) => `${(100 * x).toFixed(1)}%`],
+  ['local coherence', 'neighbour_delta', {
+    ok: (v, r) => v <= r * NOISE_MULTIPLE_ALLOWED,
+    bound: (r) => `<= ${(r * NOISE_MULTIPLE_ALLOWED).toFixed(4)}`,
+  }, (x) => x.toFixed(4)],
+  ['rim on the silhouette', 'rim_edge_enrichment', {
+    ok: (v) => v >= RIM_ENRICHMENT_FLOOR,
+    bound: () => `>= ${RIM_ENRICHMENT_FLOOR.toFixed(2)}`,
+  }, (x) => `${x.toFixed(2)}x`],
 ];
 
 function score(name, prof) {
   const rows = [];
   let fails = 0;
-  for (const [label, key, fixedTol, fmt] of TRAITS) {
+  for (const [label, key, rule, fmt] of TRAITS) {
+    const cell = `  ${'%s'}  ${label.padEnd(24)} ${fmt(prof[key]).padStart(8)}   ref ${fmt(ref[key]).padStart(8)}`;
+    if (rule && typeof rule === 'object') {
+      const ok = rule.ok(prof[key], ref[key]);
+      if (!ok) fails++;
+      rows.push(cell.replace('%s', ok ? 'PASS' : 'FAIL') + `   ${rule.bound(ref[key])}`);
+      continue;
+    }
     // A null tolerance is derived from the reference itself, so it tracks the
     // asset rather than a constant that can drift away from it.
-    const tol = fixedTol === null ? ref[key] * CHROMA_LOSS_ALLOWED : fixedTol;
+    const tol = rule === null ? ref[key] * CHROMA_LOSS_ALLOWED : rule;
     const delta = Math.abs(prof[key] - ref[key]);
     const ok = delta <= tol;
     if (!ok) fails++;
-    rows.push(`  ${ok ? 'PASS' : 'FAIL'}  ${label.padEnd(24)} ${fmt(prof[key]).padStart(7)}`
-      + `   ref ${fmt(ref[key]).padStart(7)}   Δ${fmt(delta)}`);
+    rows.push(cell.replace('%s', ok ? 'PASS' : 'FAIL') + `   Δ${fmt(delta)}`);
   }
   console.log(`\n${name}${name === REFERENCE ? '  (reference)' : ''}`);
   console.log(rows.join('\n'));
   console.log(`  => ${fails === 0 ? 'CONFORMS to the approved look' : `${fails} trait(s) off the approved look`}`);
   return fails;
 }
+
+// --selftest replays the two attacks that got past earlier versions of this
+// gate, synthesised in memory from the reference itself. Both once scored
+// ALL CONFORM. A gate nobody has seen fail is a gate nobody has tested.
+function selftest() {
+  const base = decodeImage(readBlob(crops[REFERENCE].git_blob), REFERENCE);
+  const plants = [];
+
+  // 1. Wash out: pull every pixel toward its own grey. Value buckets and hue
+  //    buckets survive exactly; chroma dies.
+  {
+    const px = Buffer.from(base.px);
+    for (let i = 0; i < base.width * base.height; i++) {
+      const o = i * base.bpp;
+      if (!px[o + 3]) continue;
+      const mx = Math.max(px[o], px[o + 1], px[o + 2]);
+      for (let c = 0; c < 3; c++) px[o + c] = Math.round(mx - (mx - px[o + c]) * 0.40);
+    }
+    plants.push(['washed out (chroma drained, value and hue intact)', { ...base, px }]);
+  }
+
+  // 2. Shuffle: permute RGB among opaque pixels, keeping the alpha mask. Every
+  //    histogram trait is preserved bit for bit; all structure is destroyed.
+  {
+    const px = Buffer.from(base.px);
+    const idx = [];
+    for (let i = 0; i < base.width * base.height; i++) {
+      if (px[i * base.bpp + 3] >= OPAQUE) idx.push(i);
+    }
+    let seed = 12345;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    for (let i = idx.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      for (let c = 0; c < 3; c++) {
+        const t = px[idx[i] * base.bpp + c];
+        px[idx[i] * base.bpp + c] = px[idx[j] * base.bpp + c];
+        px[idx[j] * base.bpp + c] = t;
+      }
+    }
+    plants.push(['pixel shuffle (every histogram identical, no structure)', { ...base, px }]);
+  }
+
+  let missed = 0;
+  for (const [label, img] of plants) {
+    const fails = score(label, profile(img));
+    if (fails === 0) { console.log(`  !! NOT CAUGHT: ${label}`); missed++; }
+  }
+  console.log(`\n${missed === 0
+    ? `SELFTEST OK: all ${plants.length} negative plants correctly caught.`
+    : `SELFTEST FAILED: ${missed} plant(s) scored as conforming.`}`);
+  process.exit(missed === 0 ? 0 : 1);
+}
+
+if (process.argv.includes('--selftest')) selftest();
 
 const targets = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 let total = 0;
