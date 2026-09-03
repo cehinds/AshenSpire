@@ -27,6 +27,8 @@
 //              refused so it cannot come back one CSV column at a time
 //   equipment  a weapon or outfit wearing no item-type tag — the guarantee
 //              content/equipment.js used to throw for, moved with the tags —
+//              a card profile wearing no tag at all, the guarantee the
+//              basicCardProfiles schema used to give by requiring the column —
 //              an itemType tag id missing the `item:` prefix the runtime
 //              classifies by, which would silently strip every piece's type,
 //              and an itemType label disagreeing with the one the runtime
@@ -328,6 +330,28 @@ export function tagContentProblems(bundle, keywordIds = []) {
         if (!worn.some((row) => itemTypeIds.has(row.tagId))) {
           err(`${spec.source}.${entry.id || '?'}`, `carries no item-type tag — every piece must declare at least one (legal: ${[...itemTypeIds].join(', ')}); add a tagging.csv row`);
         }
+      }
+    }
+  }
+
+  // ---- every card profile still declares at least one tag -------------------
+  // Same story as the item-type rule above, one family over. A profile's tags
+  // become the equipment card's `cardTags` — what the damage effect inherits
+  // and what the card/weapon fit check reads — and the basicCardProfiles schema
+  // used to guarantee they existed simply by requiring the column. The column
+  // moved into tagging.csv, so the guarantee moves with it rather than lapsing:
+  // a profile with no rows ships a card with no identity, quietly, and nothing
+  // else in the pass would say so.
+  const profileSpec = familyByName.get('basicCardProfile');
+  if (profileSpec && profileSpec.source) {
+    const profiles = atPath(b, profileSpec.source);
+    if (Array.isArray(profiles)) {
+      const tagged = new Set(tagging
+        .filter((row) => row && row.family === 'basicCardProfile')
+        .map((row) => row.objectId));
+      for (const profile of profiles) {
+        if (!profile || tagged.has(profile.id)) continue;
+        err(`${profileSpec.source}.${profile.id || '?'}`, 'carries no tag — a profile\'s tags become the equipment card\'s identity, so a profile with none ships a card the damage effect and the fit check cannot recognise; add a tagging.csv row');
       }
     }
   }

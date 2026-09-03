@@ -2308,6 +2308,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const id of ['item:blade', 'item:magic-focus', 'item:armor', 'item:', 'not-an-item']) {
       eq(itemTypeLabelFrom(id), itemTypeLabel(id) || '', `both derivations agree on '${id}'`);
     }
+
+    // A GUARANTEE THAT NEARLY LAPSED IN THE MOVE. `tags` was a required COLUMN
+    // on basicCardProfiles, so the schema alone guaranteed a profile had an
+    // identity — and a profile's tags are what the equipment card carries as
+    // `cardTags`, what its damage effect inherits, and what the fit check
+    // reads. Taking the column into tagging.csv took the guarantee with it and
+    // put nothing back; a profile stripped of its rows validated clean and
+    // shipped a card the engine could not recognise. Found because the tool
+    // that watched the old rule (tools/class-loadouts.mjs) crashed on the
+    // missing column rather than failing, quietly dropping 28 of its checks.
+    const untagged = JSON.parse(JSON.stringify(contentBundle));
+    untagged.tagging = untagged.tagging
+      .filter((r) => !(r.family === 'basicCardProfile' && r.objectId === 'staffMagicAttack'));
+    const profileSaid = tagContentProblems(untagged, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/basicCardProfiles\.staffMagicAttack: carries no tag/.test(profileSaid),
+      `a profile with no tag rows is refused by name — said ${JSON.stringify(profileSaid.slice(0, 160))}`);
+    eq(tagContentProblems(contentBundle, kw).length, 0, 'and every shipped profile satisfies it');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
