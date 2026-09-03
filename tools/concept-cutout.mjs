@@ -352,11 +352,22 @@ function resample(src, sx0, sy0, sw, sh, dw, dh) {
 // The accent rim: the pixels just inside the silhouette, lit in the tint. This
 // is what makes the player figure yours at a glance, and it is the one thing the
 // concept paintings cannot carry on their own.
-function withRim(img, rgb, depth = 3, strength = 0.85) {
+// bottomIsCrop: the source painting ends mid-torso, so the figure's lowest row
+// is where the CANVAS stopped, not where the character does. Lighting it as a
+// silhouette edge drew a bright horizontal stripe across the bottom of all
+// twenty sprites — measured at goldness 110.6 on the last row against 12-18
+// through the body. A rim marks an outline; a crop line is not one.
+function withRim(img, rgb, bottomIsCrop, depth = 3, strength = 0.85) {
   const { width: w, height: h, px } = img;
   const out = Buffer.from(px);
   const on = new Uint8Array(w * h);
   for (let i = 0; i < w * h; i++) on[i] = px[i * 4 + 3] >= 128 ? 1 : 0;
+  let lastRow = -1;
+  if (bottomIsCrop) {
+    for (let y = h - 1; y >= 0 && lastRow < 0; y--) {
+      for (let x = 0; x < w; x++) if (on[y * w + x]) { lastRow = y; break; }
+    }
+  }
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
@@ -373,6 +384,9 @@ function withRim(img, rgb, depth = 3, strength = 0.85) {
       for (let dy = -depth; dy <= depth && d > 1; dy++) {
         for (let dx = -depth; dx <= depth; dx++) {
           const nx = x + dx, ny = y + dy;
+          // Anything at or below the crop line counts as inside: the figure
+          // continues there in the original painting, it is simply not drawn.
+          if (lastRow >= 0 && ny > lastRow) continue;
           const outside = nx < 0 || ny < 0 || nx >= w || ny >= h || !on[ny * w + nx];
           if (outside) { d = Math.min(d, Math.max(Math.abs(dx), Math.abs(dy))); }
         }
@@ -426,7 +440,10 @@ for (const [cls, oid] of Object.entries(CONCEPTS)) {
   }));
   const cut = cutout(src);
   const box = contentBox(cut);
-  cuts[cls] = { cut, box };
+  // The painting runs off the bottom of its own canvas, so the lowest row of
+  // the cutout is a crop line rather than the character's outline.
+  const bottomIsCrop = box.y1 >= cut.height - 1;
+  cuts[cls] = { cut, box, bottomIsCrop };
   const kept = ((box.x1 - box.x0 + 1) * (box.y1 - box.y0 + 1)) / (src.width * src.height);
   console.log(`${cls.padEnd(9)} ${src.width}x${src.height} -> content `
     + `${box.x1 - box.x0 + 1}x${box.y1 - box.y0 + 1} (${(100 * kept).toFixed(1)}% of canvas)`);
@@ -445,7 +462,7 @@ const scale = Math.min(usableH / tallest, usableW / widest);
 
 let written = 0;
 const manifestRows = [];
-for (const [cls, { cut, box }] of Object.entries(cuts)) {
+for (const [cls, { cut, box, bottomIsCrop }] of Object.entries(cuts)) {
   const cw = box.x1 - box.x0 + 1;
   const ch = box.y1 - box.y0 + 1;
   const dw = Math.max(1, Math.round(cw * scale));
@@ -468,7 +485,7 @@ for (const [cls, { cut, box }] of Object.entries(cuts)) {
 
   for (const [tintId, rgb] of Object.entries(TINTS)) {
     const png = join(outDir, `${cls}_${tintId}.png`);
-    writeFileSync(png, encodePng(OUT_W, OUT_H, withRim(framed, rgb).px));
+    writeFileSync(png, encodePng(OUT_W, OUT_H, withRim(framed, rgb, bottomIsCrop).px));
     // -exact: without it cwebp rewrites the RGB under fully transparent pixels
     // to compress better, which leaves colour hiding in the invisible areas.
     // The packet's own AC3 requires zero transparent pixels carrying non-zero
