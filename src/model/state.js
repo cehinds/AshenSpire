@@ -9,7 +9,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
@@ -204,6 +204,11 @@ export function createRunState({
     preserveDeficits: false,
   });
   stampDeck(registries, run);
+  // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
+  // weapon arts onto the deck, so this is the first moment the whole opening
+  // deck exists — and "bound cards are dealt first, in sourceOrder" is a
+  // statement about the deck a run BEGINS with, not about later arrivals.
+  orderStartingDeck(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);

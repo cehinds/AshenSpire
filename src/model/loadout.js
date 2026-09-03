@@ -1689,15 +1689,27 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // DEALT IN THE AUTHORED ORDER. `sourceOrder` is a list of grantSource tag ids;
   // a source it does not name is dealt last, in the order it was pushed. Stable,
   // so two grants from the same source keep their authored sequence.
-  const order = Array.isArray(cfg.sourceOrder) ? cfg.sourceOrder : [];
-  const rank = (grant) => {
-    const at = order.indexOf(grant.source);
+  return sortBySourceOrder(cfg, grants, (grant) => grant.source);
+}
+
+/**
+ * sortBySourceOrder(cfg, rows, sourceOf) -> rows
+ *
+ * Stable sort by `startingDeck.sourceOrder`, a list of grantSource tag ids. A
+ * row whose source the list does not name sorts last, keeping its incoming
+ * position. Shared so the plan's grants and the assembled deck cannot disagree
+ * about what "in source order" means.
+ */
+export function sortBySourceOrder(cfg, rows, sourceOf) {
+  const order = Array.isArray(cfg && cfg.sourceOrder) ? cfg.sourceOrder : [];
+  const rank = (row) => {
+    const at = order.indexOf(sourceOf(row));
     return at === -1 ? order.length : at;
   };
-  return grants
-    .map((grant, index) => ({ grant, index }))
-    .sort((a, b) => (rank(a.grant) - rank(b.grant)) || (a.index - b.index))
-    .map((row) => row.grant);
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => (rank(a.row) - rank(b.row)) || (a.index - b.index))
+    .map((entry) => entry.row);
 }
 
 /**
@@ -1808,7 +1820,10 @@ export function startingDeckRefs(registries, loadout, classId) {
   }
   for (const grant of plan.grants) {
     const { source, ...ref } = grant;
-    refs.push(ref);
+    // The provenance rides ALONG. It used to be discarded here, which left the
+    // assembled deck with no way to answer "where did this card come from" —
+    // so `sourceOrder` could order the plan but never the deck it produced.
+    refs.push({ ...ref, grantSource: source });
   }
   return refs;
 }
@@ -1820,6 +1835,38 @@ export function startingDeckRefs(registries, loadout, classId) {
  * Deterministic instance ids make the reconcile idempotent and save-stable;
  * an instance whose armament left the hands leaves the deck with it.
  */
+/**
+ * orderStartingDeck(registries, run) -> run.deck
+ *
+ * SPEC says bound cards are dealt first, in `sourceOrder`. Until this ran, they
+ * were dealt LAST: startingDeckRefs emits the base attack and guard refs before
+ * it consumes the grants, and reconcileGrantedCards appends package grants and
+ * weapon arts after that again — so the shipped starseer opened with four
+ * strikes and three defends, then its technique, signature and art. The spec I
+ * wrote and the code I wrote disagreed, and the spec is the one the owner ruled.
+ *
+ * Ordered ONCE, at creation, because "dealt" is a creation word: instances that
+ * arrive later from a mid-run swap land where reconcile puts them.
+ *
+ * Base cards keep their relative order. That is not tidiness — the legacy
+ * attack-slot migration binds `attack:0..N-1` by deck order, so reshuffling the
+ * base cards among themselves would rebind them.
+ */
+export function orderStartingDeck(registries, run) {
+  const cfg = startingDeckConfig(registries);
+  if (!cfg || !Array.isArray(run.deck)) return run.deck;
+  // A card either CARRIES its provenance or is a base card. No shape-guessing:
+  // `grantSource` is written where the card is minted, in the same vocabulary
+  // `sourceOrder` names, so this reads one field instead of inferring from
+  // `grantedBy`/`sourceId`/role and drifting the day a fourth shape appears.
+  const sourceOf = (card) => (card && card.grantSource) || null;
+  const bound = [];
+  const base = [];
+  for (const card of run.deck) (sourceOf(card) === null ? base : bound).push(card);
+  run.deck = [...sortBySourceOrder(cfg, bound, sourceOf), ...base];
+  return run.deck;
+}
+
 export function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
   const desired = desiredGrantInstances(registries, run);
@@ -1861,6 +1908,7 @@ function desiredGrantInstances(registries, run) {
         desired.push({
           instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
           cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+          grantSource: 'from:weapon',
         });
       }
     }
@@ -1875,6 +1923,7 @@ function desiredGrantInstances(registries, run) {
     desired.push({
       instanceId: `weaponArt:${weaponId}:${art.id}`,
       cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
+      grantSource: 'from:weapon',
     });
   }
   // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
@@ -1895,6 +1944,7 @@ function desiredGrantInstances(registries, run) {
       desired.push({
         instanceId: `weaponArt:unarmed:${empty}:${profile.baseCardId}`,
         cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${empty}`,
+        grantSource: 'from:weapon',
       });
     }
   }

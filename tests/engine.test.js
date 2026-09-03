@@ -2992,6 +2992,31 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, run.equipmentAttackSlotCount,
       'while the attack count the run was born with is untouched — the other half of the SPEC sentence still holds');
 
+    // BOUND CARDS ARE DEALT FIRST, IN THE AUTHORED ORDER. SPEC says so; the code
+    // did the opposite until this was written — startingDeckRefs emits base
+    // cards before it consumes the grants, and reconcileGrantedCards appends
+    // package grants and arts after that again, so starseer opened with four
+    // strikes and three defends and its equipment cards trailed behind. The
+    // spec I wrote and the code I wrote disagreed, and the spec is the ruling.
+    const ordered = createRunState({ seed: 3, classId: 'starseer', registries: REG });
+    const provenance = ordered.deck.map((c) => c.grantSource || null);
+    const firstBase = provenance.indexOf(null);
+    assert(firstBase > 0, 'the deck opens with bound cards, not base cards');
+    assert(provenance.slice(firstBase).every((p) => p === null),
+      `and every base card follows them — ${JSON.stringify(provenance)}`);
+    const boundOrder = provenance.slice(0, firstBase);
+    const authored = contentBundle.balance.equipment.startingDeck.sourceOrder;
+    const ranks = boundOrder.map((p) => authored.indexOf(p));
+    assert(ranks.every((r, i) => i === 0 || r >= ranks[i - 1]),
+      `bound cards follow sourceOrder — ${JSON.stringify(boundOrder)} against ${JSON.stringify(authored)}`);
+    assert(boundOrder.includes('from:weapon') && boundOrder.includes('from:class'),
+      'with more than one source present, so the ordering is actually exercised');
+    // Base cards keep their RELATIVE order: the legacy attack-slot migration
+    // binds attack:0..N-1 by deck position, so reshuffling them would rebind.
+    const baseRoles = ordered.deck.slice(firstBase).map((c) => c.equipmentRole);
+    eq(baseRoles.join(' '), [...baseRoles].sort((a, b) => (a === 'attack' ? -1 : 1) - (b === 'attack' ? -1 : 1)).join(' '),
+      'attacks still precede guards among the base cards');
+
     // The odd-split winner is authored, not a rounding accident.
     const guardWins = JSON.parse(JSON.stringify(contentBundle));
     guardWins.balance.equipment.startingDeck.oddFillerGoesTo = 'guard';
