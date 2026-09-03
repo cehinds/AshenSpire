@@ -9,7 +9,8 @@
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -80,15 +81,18 @@ const SHOTS = [
   // Still uncovered, and named so the next reader does not have to diff it:
   // compendium, components, crisis, event, profile, rest, reward, shop — nine
   // states in main.js against twelve here before this line.
-  { name: 'customize', query: '?shot=customize' }, // character build — the class figure
+  // `stable: true` — see captureStable below. These screens hold still once
+  // they have settled, so two captures of one must come out byte-identical;
+  // the animated screens above cannot make that promise and are not asked to.
+  { name: 'customize', query: '?shot=customize', stable: true }, // character build — the class figure
   // One capture per class, and one off-default tint, because the class sprites
   // are four sources × five tints and a single default shot is evidence for one
   // of twenty. art.md §§145-150,189-192 wants every named variant.
-  { name: 'class-reaver', query: '?shot=customize&shotClass=reaver' },
-  { name: 'class-starseer', query: '?shot=customize&shotClass=starseer' },
-  { name: 'class-rogue', query: '?shot=customize&shotClass=rogue' },
-  { name: 'class-herald', query: '?shot=customize&shotClass=herald' },
-  { name: 'class-rogue-ember', query: '?shot=customize&shotClass=rogue&shotTint=ember' },
+  { name: 'class-reaver', query: '?shot=customize&shotClass=reaver', stable: true },
+  { name: 'class-starseer', query: '?shot=customize&shotClass=starseer', stable: true },
+  { name: 'class-rogue', query: '?shot=customize&shotClass=rogue', stable: true },
+  { name: 'class-herald', query: '?shot=customize&shotClass=herald', stable: true },
+  { name: 'class-rogue-ember', query: '?shot=customize&shotClass=rogue&shotTint=ember', stable: true },
 ];
 
 const args = process.argv.slice(2);
@@ -163,9 +167,56 @@ async function capture(shot) {
   });
 }
 
+// A CAPTURE THAT IS NOT REPRODUCIBLE IS NOT EVIDENCE, AND THIS RACE IS STILL OPEN.
+//
+// The bug: a one-shot `--screenshot` fires whenever virtual time expires, and
+// sometimes that is before the screen's content has finished coming up. The
+// result is a half-faded frame — full layout, everything dim — that looks like
+// a design choice rather than a fault. Nothing about it reads as wrong.
+//
+// I have already reported this fixed once, by raising --virtual-time-budget
+// from 8s to 20s. THAT WAS WRONG. Measured afterwards over five full runs, 3 of
+// 5 still produced one dim frame, in a DIFFERENT shot each time, and raising
+// the budget further does not converge it — the capture point is simply not
+// tied to the page being ready.
+//
+// So this does not try to out-wait the race. It requires the frame to be
+// REPRODUCIBLE: capture twice, keep it only if the two are byte-identical.
+// Measured across three clean runs, every `stable` shot here is byte-identical
+// run to run, so agreement is a real bar rather than a hopeful one; a frame
+// caught mid-fade disagrees with its own retake and is thrown away. After
+// MAX_TRIES the run FAILS rather than committing a frame it cannot reproduce.
+//
+// This is not "run it until it looks right" — the difference is that the
+// failure is now loud, and no capture reaches the folder unless the harness
+// produced it twice. The screens above with live animation (map, combat, fx,
+// the ambient embers) cannot pass this and are not marked `stable`; they are
+// still captured once, and still carry the race. Fixing it AT SOURCE means
+// waiting on a readiness signal from the app rather than on a timer, which is
+// a change to the shot states themselves and belongs in its own commit.
+const MAX_TRIES = 4;
+async function captureStable(shot) {
+  const out = resolve(outDir, `${shot.name}.png`);
+  const probe = resolve(outDir, `.${shot.name}.probe.png`);
+  for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
+    if (!(await capture(shot))) return false;
+    if (!(await capture({ ...shot, name: `.${shot.name}.probe` }))) return false;
+    const a = createHash('sha256').update(readFileSync(out)).digest('hex');
+    const b = createHash('sha256').update(readFileSync(probe)).digest('hex');
+    rmSync(probe, { force: true });
+    if (a === b) return true;
+    const more = attempt < MAX_TRIES ? ' — retaking' : '';
+    console.error(`    ${shot.name}: frame not reproducible (try ${attempt}/${MAX_TRIES})${more}`);
+  }
+  console.error(`  ✗ ${shot.name}: no reproducible frame in ${MAX_TRIES} tries; NOT evidence.`);
+  rmSync(out, { force: true });
+  return false;
+}
+
 let failed = 0;
 for (const shot of SHOTS) {
-  if (!(await capture(shot))) failed++;
+  const ok = shot.stable ? await captureStable(shot) : await capture(shot);
+  if (!ok) failed++;
 }
 
 server.close();

@@ -31,7 +31,8 @@
           "x": 9,
           "y": 130
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -67,7 +68,8 @@
           "x": 9,
           "y": 130
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -103,7 +105,8 @@
           "x": 9,
           "y": 130
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -139,7 +142,8 @@
           "x": 9,
           "y": 130
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -175,7 +179,8 @@
           "x": 9,
           "y": 130
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -211,7 +216,8 @@
           "x": 46,
           "y": 127
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -247,7 +253,8 @@
           "x": 46,
           "y": 127
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -283,7 +290,8 @@
           "x": 46,
           "y": 127
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -319,7 +327,8 @@
           "x": 46,
           "y": 127
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -355,7 +364,8 @@
           "x": 46,
           "y": 127
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -391,7 +401,8 @@
           "x": 40,
           "y": 129
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -427,7 +438,8 @@
           "x": 40,
           "y": 129
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -463,7 +475,8 @@
           "x": 40,
           "y": 129
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -499,7 +512,8 @@
           "x": 40,
           "y": 129
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -535,7 +549,8 @@
           "x": 40,
           "y": 129
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -571,7 +586,8 @@
           "x": 77,
           "y": 123
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
@@ -607,7 +623,8 @@
           "x": 77,
           "y": 123
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
@@ -643,7 +660,8 @@
           "x": 77,
           "y": 123
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
@@ -679,7 +697,8 @@
           "x": 77,
           "y": 123
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
@@ -715,7 +734,8 @@
           "x": 77,
           "y": 123
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes"
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",

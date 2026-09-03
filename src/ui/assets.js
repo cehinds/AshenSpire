@@ -6,6 +6,7 @@
 // with a CREDITS.md row — no game-code changes.
 
 import { balance } from '../content/balance.js';
+import { medallionPct } from '../content/classArtAnchors.js';
 import { assetUrl } from './assetmap.js';
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
@@ -168,8 +169,10 @@ function renderedSpriteUrl(classId, tintId) {
   return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
-// Player sprite styles: 'rendered' (Blender PNG), 'classic' (inline SVG
-// silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// Player sprite styles: 'rendered' (the painted class figure, WebP), 'classic'
+// (inline SVG silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// "Blender PNG" until 2026-09-03, which stopped being true when the class art
+// was replaced — the same stale description as the lobby tooltip one file over.
 export const SPRITE_STYLES = [
   { id: 'rendered', name: 'Rendered' },
   { id: 'classic', name: 'Classic' },
@@ -207,7 +210,17 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
   el.appendChild(img);
   // The chosen sigil rides the rendered art as a chest medallion overlay.
-  if (sigil) {
+  //
+  // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
+  // This was one shared `top:53%` for all four, which is a claim that every
+  // figure keeps its chest at the same height — true of the Blender builders,
+  // one rig in four palettes, and false of four separately painted figures. At
+  // 53% the disc landed on the Starseer's face under the hat brim and inside
+  // the Herald's hood opening. No anchor means NO OVERLAY: a default would be
+  // the same shared assumption, and it would cover an unmeasured figure's face
+  // in silence rather than showing up as a missing medallion.
+  const medTop = medallionPct(classId);
+  if (sigil && medTop != null) {
     const med = document.createElement('span');
     med.textContent = sigil;
     // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
@@ -215,7 +228,7 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
     // The medallion is centred on the chest, so flipping it back moves nothing.
     med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
+      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%) scaleX(-1);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);

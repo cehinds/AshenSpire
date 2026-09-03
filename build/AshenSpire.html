@@ -53573,7 +53573,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd44b6e1b88';
+const SOURCE = '110fecb92d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -53607,7 +53607,7 @@ const SOURCE = 'd44b6e1b88';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '13';
+const ORDINAL = '14';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -60213,6 +60213,7 @@ Object.assign(module.exports, { mountCustomize });
 // with a CREDITS.md row — no game-code changes.
 
 const { balance } = require("src/content/balance.js");
+const { medallionPct } = require("src/content/classArtAnchors.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
@@ -60375,8 +60376,10 @@ function renderedSpriteUrl(classId, tintId) {
   return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
-// Player sprite styles: 'rendered' (Blender PNG), 'classic' (inline SVG
-// silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// Player sprite styles: 'rendered' (the painted class figure, WebP), 'classic'
+// (inline SVG silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// "Blender PNG" until 2026-09-03, which stopped being true when the class art
+// was replaced — the same stale description as the lobby tooltip one file over.
 const SPRITE_STYLES = [
   { id: 'rendered', name: 'Rendered' },
   { id: 'classic', name: 'Classic' },
@@ -60414,7 +60417,17 @@ function classSprite(classId, tint, sigil, tintId, style) {
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
   el.appendChild(img);
   // The chosen sigil rides the rendered art as a chest medallion overlay.
-  if (sigil) {
+  //
+  // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
+  // This was one shared `top:53%` for all four, which is a claim that every
+  // figure keeps its chest at the same height — true of the Blender builders,
+  // one rig in four palettes, and false of four separately painted figures. At
+  // 53% the disc landed on the Starseer's face under the hat brim and inside
+  // the Herald's hood opening. No anchor means NO OVERLAY: a default would be
+  // the same shared assumption, and it would cover an unmeasured figure's face
+  // in silence rather than showing up as a missing medallion.
+  const medTop = medallionPct(classId);
+  if (sigil && medTop != null) {
     const med = document.createElement('span');
     med.textContent = sigil;
     // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
@@ -60422,7 +60435,7 @@ function classSprite(classId, tint, sigil, tintId, style) {
     // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
     // The medallion is centred on the chest, so flipping it back moves nothing.
     med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
+      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%) scaleX(-1);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
@@ -60518,6 +60531,77 @@ function classGlyph(classId) {
 
 
 Object.assign(module.exports, { enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, SPRITE_STYLES, classSprite, equippedFigure, playerSprite, tintCss, setClassGlyphs, classGlyph });
+
+},
+"src/content/classArtAnchors.js": function (module, exports, require) {
+// src/content/classArtAnchors.js — THE ONE HOME of where the sigil medallion
+// sits on each painted class figure.
+//
+// Two readers and neither retypes it:
+//   · runtime — src/ui/assets.js `classSprite()` positions the overlay
+//   · the manifest — tools/concept-cutout.mjs emits it per sprite as
+//     `anchor.medallion_center_pct`, so the inventory records the anchor the
+//     game actually uses rather than a number someone typed twice
+//
+// WHY IT IS DATA AND NOT A HEURISTIC. The overlay used to be a single
+// hardcoded `top:53%` for all four classes. That is a claim that every figure
+// keeps its chest at the same height, which was true of the Blender builders —
+// one rig, four palettes — and is false of four separately painted figures.
+// Shipped consequence, visible in docs/art-evidence/2026-09-03: 53% lands on
+// the Starseer's face under the hat brim and inside the Herald's hood opening.
+//
+// I did try to derive it. A silhouette-width scan finds the shoulder line on
+// the Reaver and the Rogue and is defeated by the Starseer's staff and the
+// Herald's halo, which widen the row profile far above the shoulders. A
+// detector that is wrong on two of four figures would re-ship the same defect
+// with more machinery behind it, so these are MEASURED, one per painting.
+//
+// HOW EACH NUMBER WAS TAKEN. The medallion disc was drawn at candidate heights
+// over each sprite and inspected: the accepted value puts the whole disc on
+// chest, clear of the face opening and of the collar edge above it. The disc is
+// 22px in a 190px frame, so it spans ±5.8 percentage points around the centre —
+// a value is only good if that whole band is chest.
+//
+// IF THE ART IS REPLACED these numbers are wrong until re-measured. They are
+// bound to the source paintings pinned in tools/concept-cutout.mjs `CONCEPTS`;
+// that tool fails rather than guessing when a class here has no anchor.
+//
+// Headless-safe: data only, no document, no storage, no timers.
+
+/**
+ * Medallion centre as a percentage of the sprite frame's height, per class.
+ * Measured on the 450x570 outputs of `node tools/concept-cutout.mjs`.
+ */
+const CLASS_MEDALLION_PCT = Object.freeze({
+  // Chest plate below the gorget. The helm ends well above; this is the value
+  // the old shared 53% happened to be right about.
+  reaver: 53,
+  // Robe collar. The hat brim is wide and sits low, and the face beneath it
+  // reaches ~54%, so the anchor clears both rather than splitting them.
+  starseer: 62,
+  // Chest strap, below the hood opening. Also right at the old shared value.
+  rogue: 53,
+  // Chest, between the two strands of prayer beads and below the hood opening,
+  // which the halo makes read higher in the frame than the other three hoods.
+  herald: 61,
+});
+
+/**
+ * The medallion centre for a class, or null when that class has no measurement.
+ *
+ * Null rather than a fallback percentage ON PURPOSE: a default here would be
+ * the shared-53% assumption smuggled back in, and it would put the overlay on
+ * an unmeasured figure's face exactly as before, silently. Callers decide —
+ * `classSprite()` omits the overlay, `concept-cutout.mjs` fails the run.
+ */
+function medallionPct(classId) {
+  return Object.prototype.hasOwnProperty.call(CLASS_MEDALLION_PCT, classId)
+    ? CLASS_MEDALLION_PCT[classId]
+    : null;
+}
+
+
+Object.assign(module.exports, { CLASS_MEDALLION_PCT, medallionPct });
 
 },
 "src/ui/components/disclosure.js": function (module, exports, require) {

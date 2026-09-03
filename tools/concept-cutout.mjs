@@ -41,6 +41,10 @@ import { execFileSync } from 'node:child_process';
 import { inflateSync, deflateSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+// The medallion anchors are the game's, not this tool's — one home, two
+// readers. classArtAnchors.js is data only and touches no document, which is
+// what makes it importable from a build tool at all.
+import { medallionPct } from '../src/content/classArtAnchors.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -428,6 +432,21 @@ const outDir = (() => {
 })();
 mkdirSync(outDir, { recursive: true });
 
+// FAIL RATHER THAN GUESS. Every class this tool paints needs a measured
+// medallion anchor, because the overlay is positioned from it at runtime and an
+// unmeasured figure gets no medallion at all. Caught here, at the top of the
+// run, so replacing a concept surfaces as "measure this" before any bytes are
+// written — not as a sigil silently missing from a shipped sprite.
+const unanchored = Object.keys(CONCEPTS).filter((c) => medallionPct(c) == null);
+if (unanchored.length) {
+  console.error(
+    `No medallion anchor for: ${unanchored.join(', ')}.\n`
+    + '  Measure the chest position on each new figure and add it to\n'
+    + '  src/content/classArtAnchors.js — see that file for how the others were taken.',
+  );
+  process.exit(1);
+}
+
 // One shared baseline across the four, so the classes line up in a row exactly
 // the way the frozen packet's four crops do.
 const MARGIN_TOP = 0.03;
@@ -525,6 +544,11 @@ for (const [cls, { cut, box, bottomIsCrop }] of Object.entries(cuts)) {
         content_box_px: { w: dw, h: dh },
         placed_at_px: { x: ox, y: oy },
         baseline: `bottom-aligned, ${MARGIN_BOTTOM * 100}% margin; shared scale across all four classes`,
+        // Imported from src/content/classArtAnchors.js rather than restated, so
+        // the inventory records the anchor the GAME uses. A number typed here
+        // as well would be a second copy of a measurement, and this PR has
+        // already produced three findings about derived records drifting.
+        medallion_center_pct: medallionPct(cls),
       },
       runtime_budget: 'embedded base64 in the single-file build; WebP chosen over '
         + 'PNG for that reason (see tools/sprites-blender.py header)',
