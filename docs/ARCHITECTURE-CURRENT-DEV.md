@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `dev`
-- Source commit: `f5ec3af39a6d97261d11218016d5e5e6586bcbb4`
+- Source branch: `codex/remove-agentops-office`
+- Source commit: `120f6607e22a1e7744c3d92690822a4ef54fee83`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -31,7 +31,7 @@
 | Authoritative JSON/CSV content | `content/source/` | 20 |
 | Transport | `src/net/` | 1 |
 | Tests | `tests/` | 21 |
-| Architecture/tooling | `tools/` | 251 |
+| Architecture/tooling | `tools/` | 250 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **1747**.
-Extensions: `.bat` 1, `.css` 4, `.csv` 18, `.gitattributes` 1, `.gitignore` 2, `.html` 42, `.jpg` 4, `.js` 249, `.json` 616, `.jsonl` 1, `.md` 164, `.mjs` 223, `.nojekyll` 1, `.png` 260, `.py` 5, `.sh` 4, `.svg` 11, `.txt` 23, `.webp` 106, `.yml` 11, `(none)` 1.
+Tracked files: **876**.
+Extensions: `.bat` 1, `.css` 4, `.csv` 18, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 249, `.json` 29, `.md` 60, `.mjs` 203, `.nojekyll` 1, `.png` 155, `.py` 5, `.sh` 4, `.svg` 11, `.txt` 12, `.webp` 106, `.yml` 4, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

@@ -4,8 +4,8 @@ How to run, test, and add content. The architecture contract lives in
 [SPEC.md §3](SPEC.md); exact engine signatures in
 [docs/ENGINE-API.md](docs/ENGINE-API.md). This file is the practical guide.
 
-For routine ownership, status receipts, cross-family handoffs, and release
-boundaries, use the [development coordination workflow](docs/COORDINATION-WORKFLOW.md).
+For how work is branched, reviewed, and merged, see the
+[working rules](AGENTS.md).
 
 ## Run & test
 
