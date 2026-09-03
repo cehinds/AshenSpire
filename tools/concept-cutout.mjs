@@ -35,7 +35,7 @@
 //
 // Usage: node tools/concept-cutout.mjs [--out <dir>]
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { inflateSync, deflateSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
@@ -464,7 +464,11 @@ for (const [cls, { cut, box }] of Object.entries(cuts)) {
     // RGB, and art shipped from this tool is held to the same bar.
     execFileSync('cwebp', ['-quiet', '-exact', '-q', '88', '-alpha_q', '100', png,
       '-o', join(outDir, `${cls}_${tintId}.webp`)]);
-    if (!process.argv.includes('--keep-png')) execFileSync('rm', ['-f', png]);
+    // rmSync, not a shelled-out `rm`: execFileSync launches an executable
+    // directly, and stock Windows has none by that name — PowerShell's `rm` is
+    // an alias the child-process lookup never sees. CI declares a three-OS
+    // matrix, so "works on my Linux" is not the bar.
+    if (!process.argv.includes('--keep-png')) rmSync(png, { force: true });
     written++;
   }
   console.log(`${cls.padEnd(9)} framed ${dw}x${dh} at (${ox},${oy}) -> 5 tints`);
