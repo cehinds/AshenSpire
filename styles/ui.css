@@ -230,7 +230,7 @@
 /* The pile viewer's body — a scrolling grid of small card faces. The panel,
    its head and its way out are the shell's (piles.js adopts openModal). */
 .pile-modal { width: 96rem; max-width: 94%; padding: 0; display: flex; flex-direction: column; }
-.pile-body { padding: 1.6rem; }
+.pile-body { padding: var(--modal-inset); }
 .pile-body .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 .pile-empty { margin: 0; padding: 2rem; color: var(--muted); }
 
@@ -266,11 +266,29 @@
    gap above a title did not match the gap beside it and the chrome read as
    two different insets on one panel. Constantine, 2026-09-03: "the padding
    should be about the same for all directions". One number, both bars. */
+/* ONE INSET FOR EVERY MODAL, EVERY SIDE. Constantine, 2026-09-03: "all modals
+   should have uniform padding and margins in all all directions (top, bottom,
+   left, and right)." So it is a TOKEN and not a number typed per bar: the head
+   was `1.2rem 1.6rem`, the flask body `1.8rem 1.6rem`, the pile body `1.6rem`
+   and `.modal` itself `2.2rem` — four insets on surfaces meant to read as one
+   system. Declared on `.modal` so a body that wants a different rhythm can
+   scope it rather than re-type it, and every bar below reads it. */
+.modal { --modal-inset: 1.6rem; }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 1.2rem; border-bottom: 1px solid var(--line);
+  padding: var(--modal-inset); border-bottom: 1px solid var(--line);
 }
-.modal-head-actions { display: flex; gap: 0.8rem; align-items: center; }
+/* THE WAY OUT SITS AT THE TOP-RIGHT WITH THE HEAD'S OWN INSET, and that needs
+   `align-self` on the ROW rather than `align-items` inside it. `.modal-head` is
+   `align-items: center`, so the actions row was centred against whatever height
+   the identity beside it happened to be — with an eyebrow + title pair the
+   identity is two lines tall, so the close control drifted DOWN and its top gap
+   became visibly larger than its right gap. Photographed 2026-09-03 across
+   bodies B, C and D. Aligning the row to the start makes the top inset the
+   head's padding, which is the same number as the right inset (one value, all
+   four sides, above) — so the control is square, in the corner, evenly inset,
+   on every door regardless of how tall its title is. */
+.modal-head-actions { display: flex; gap: 0.8rem; align-items: flex-start; align-self: flex-start; }
 /* One hit box for the one way out. `min-*` and not `width` — a floor is not a
    ceiling (base.css, --tap-floor), and this control must clear it on BOTH axes
    at every UI size, which is the whole reason it is stated once. */
@@ -368,7 +386,7 @@
 
 .modal-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  flex: 0 0 auto; padding: 1.2rem; border-top: 1px solid var(--line);
+  flex: 0 0 auto; padding: var(--modal-inset); border-top: 1px solid var(--line);
 }
 /* THE NOTE YIELDS BEFORE THE ACTIONS DO. `min-width: 0` so a long sentence
    wraps inside its own share instead of pushing the buttons out of the panel —
@@ -380,7 +398,11 @@
 .modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .modal-foot-actions button { min-height: var(--tap-floor); }
 @media (max-width: 640px) {
-  .modal-foot { align-items: stretch; padding: 10px; }
+  /* The inset shrinks on a phone, but it stays ONE number — the token moves,
+     not the individual declarations, so head, body and foot cannot drift
+     apart at one width and agree at another. */
+  .modal { --modal-inset: 0.8rem; }
+  .modal-foot { align-items: stretch; }
   .modal-foot-note { display: none; }
   .modal-foot-actions { width: 100%; }
   /* A PHONE IS THE `fill` CASE, WHATEVER STEP THE ROW ASKED FOR. The ladder's
@@ -4146,8 +4168,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    growing the shell. */
 .flask-inspect-body {
   display: flex; align-items: flex-start; gap: 1.6rem;
-  padding: 1.8rem 1.6rem;
-  min-height: calc(9.6rem + 3.6rem);
+  padding: var(--modal-inset);
+  min-height: calc(9.6rem + 2 * var(--modal-inset));
 }
 /* THE WHOLE POINT OF THE BIGGER DOOR IS THAT THE ART IS BIGGER. The HUD slot
    draws this same identity at tap size; here it gets room to be looked at.
@@ -4178,6 +4200,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: transparent; border: 0; border-radius: 0;
   color: inherit; font-family: inherit; font-size: 1.4rem; letter-spacing: normal;
 }
+/* The keycap rides at the END of a menu row, so labels stay left-aligned down
+   the column and the glyphs form their own column on the right. */
+.flask-action-key {
+  margin-left: auto;
+  display: inline-grid; place-items: center;
+  min-width: 2.2rem; padding: 0.1rem 0.4rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font-size: 1.1rem; letter-spacing: 0; color: var(--muted);
+}
+.flask-action[aria-disabled='true'] .flask-action-key { opacity: 0.5; }
 .flask-action:hover { background: var(--bg-raise); }
 .flask-action.gp-focus, .flask-action:focus-visible { background: var(--bg-raise); color: var(--gold); }
 /* AN UNAVAILABLE ROW HAS TO LOOK UNAVAILABLE. These rows are `aria-disabled`,

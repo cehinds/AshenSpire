@@ -103,7 +103,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     intent: { action: 'use', ...(slot != null ? { slot } : {}), ...(targetId ? { targetId } : {}), ...(chargeKind ? { chargeKind } : {}) },
   });
 
-  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1, charges = null } = {}) {
+  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
     const canUse = meP.alive && meP.connected && !meP.ended && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
       : !meP.connected ? 'This player is disconnected'
@@ -113,6 +113,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       def,
       plan,
       charges,
+      useActionId,
       onCancel: () => {},
       onAction: (actionId) => {
         if (actionId !== 'use') return;

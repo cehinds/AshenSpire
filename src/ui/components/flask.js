@@ -2,7 +2,7 @@ import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { openModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
-import { focusElement } from '../input.js';
+import { focusElement, matchAction, actionLabel } from '../input.js';
 
 let activeFlaskActionMenu = null;
 
@@ -139,7 +139,7 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
  *
  * The check is tools/placement.mjs P5, at both shapes, through the real tap.
  */
-export function mountFlaskActionMenu(anchor, { def, plan, charges = null, onAction, onCancel, wireAction } = {}) {
+export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useActionId = null, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
   // The same flask is a toggle, not a close-then-immediately-reopen sequence.
   if (activeFlaskActionMenu?.anchor === anchor) {
@@ -223,6 +223,19 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, onActi
     button.setAttribute('role', 'menuitem');
     button.setAttribute('aria-disabled', String(!row.enabled));
     button.textContent = row.label;
+    // THE KEYCAP IS DERIVED, NEVER TYPED. `actionLabel` reads the live binding
+    // and the connected device, so a rebind moves the glyph with the key and a
+    // pad shows its own button — the same rule the HUD's flask shortcuts obey.
+    // Only rows that HAVE a binding get one: `inspect` is one key for every
+    // inspectable thing, and `use` is per-slot, so its id is handed in by the
+    // surface that knows which slot this flask sits in.
+    const boundAction = row.id === 'inspect' ? 'inspect' : (row.id === 'use' ? useActionId : null);
+    if (boundAction) {
+      const cap = document.createElement('span');
+      cap.className = 'flask-action-key';
+      cap.textContent = actionLabel(boundAction);
+      button.appendChild(cap);
+    }
     if (!row.enabled) {
       button.dataset.unavailableReason = row.reason;
       button.title = row.reason;
@@ -255,6 +268,18 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, onActi
     focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
+    // ONE BINDING, ASKED THE WAY EVERY OTHER SURFACE ASKS IT. `matchAction` is
+    // the same question combat asks for End Turn, so a rebound Inspect works
+    // here for free and this file never learns which key it is.
+    if (matchAction(ev, 'inspect')) {
+      const inspectRow = buttons.find((candidate) => candidate.dataset.flaskAction === 'inspect');
+      if (inspectRow && inspectRow.getAttribute('aria-disabled') === 'false') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        inspectRow.click();
+        return;
+      }
+    }
     if (ev.key === 'Escape' || ev.key === 'Backspace') {
       ev.preventDefault();
       // The child owns Cancel. Do not let the same physical key continue to

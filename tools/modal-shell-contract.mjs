@@ -91,6 +91,11 @@ const css = read('styles/ui.css');
 // this stylesheet MENTION vh" — the first is the contract, the second was a
 // false positive this tool went red on before it stripped them.
 const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '');
+const chromeBlock = (selector) => {
+  const flat = stripComments(css);
+  const at = flat.indexOf(`${selector} {`);
+  return at < 0 ? '' : flat.slice(at, flat.indexOf('}', at));
+};
 const ladderBlock = stripComments(css.slice(css.indexOf('.modal-btnrow'), css.indexOf('.modal-body')));
 check('the ladder uses no viewport units',
   !/\d(?:vh|vw)\b/.test(ladderBlock),
@@ -124,13 +129,31 @@ check('the menu button follows the tab strip rather than defaulting either way',
 check('both header actions wear the square box',
   (shellSource.match(/dataset\.size = 'square'/g) || []).length >= 2);
 
+// The close control's top inset must be the head's padding, not half of
+// whatever the identity's height happens to be. `.modal-head` centres its
+// children, so the actions ROW needs `align-self: flex-start` — `align-items`
+// inside it cannot reach past its own box.
+const headActions = chromeBlock('.modal-head-actions');
+check('the header actions sit at the top, not centred against the title',
+  /align-self:\s*flex-start/.test(headActions),
+  'without align-self the close control drifts down beside a two-line identity');
+
 // ---- 5. head and foot are inset by ONE number, all four sides ------------
 const chrome = stripComments(css);
-for (const bar of ['.modal-head', '.modal-foot']) {
-  const block = chrome.slice(chrome.indexOf(`${bar} {`), chrome.indexOf('}', chrome.indexOf(`${bar} {`)));
+// ONE INSET, ONE TOKEN, EVERY PART OF EVERY MODAL. Four different insets were
+// in play (head 1.2/1.6, flask body 1.8/1.6, pile body 1.6, .modal 2.2) on
+// surfaces meant to read as one system. Two things are checked: the value is
+// single-component (so top matches left matches bottom matches right), and it
+// comes from the token rather than a number typed per bar — a typed number is
+// how they drifted in the first place.
+check('the shell declares one inset token', /\.modal\s*\{\s*--modal-inset:/.test(chrome));
+for (const part of ['.modal-head', '.modal-foot', '.flask-inspect-body', '.pile-body']) {
+  const block = chromeBlock(part);
   const padding = (block.match(/padding:\s*([^;]+);/) || [])[1] || '';
-  check(`${bar} is inset by one value on all four sides`,
+  check(`${part} is inset by one value on all four sides`,
     padding.trim().split(/\s+/).length === 1, `padding: ${padding.trim() || '(none)'}`);
+  check(`${part} reads the inset token rather than typing a number`,
+    padding.includes('--modal-inset'), `padding: ${padding.trim() || '(none)'}`);
 }
 
 console.log(`\nmodal-shell-contract: ${pass} passed, ${fail} failed`);
