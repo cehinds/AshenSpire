@@ -2,7 +2,7 @@ import { childModel, descendantModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { esc } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
-import { modalCloseButtonHtml } from './modalShell.js';
+import { modalHead } from './modalShell.js';
 
 export function renderArmouryOverlay(model) {
   const wrap = document.createElement('div');
@@ -19,16 +19,15 @@ export function renderArmouryPanel(model, wrap) {
   const inventory = descendantModel(model, UI.armouryInventory);
   const cards = descendantModel(model, UI.armouryCardStrip);
   const stats = descendantModel(model, UI.armouryStatsPanel);
+  // THE ARMOURY IS AN XL DOOR ON THE KIT'S SHELL: the views are the head's tab
+  // strip (a tab strip is what marks a door as a place), the close is the
+  // IconButton in the same corner as every other door, and everything under
+  // the hairline is the surface's own body. `.armoury-*` stays on the parts
+  // because the tools read them; the shape is the shell's.
   wrap.innerHTML = `
-    <div class="armoury${model.properties.picking ? ' picking' : ''}" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
-      <header class="armoury-head">
-        <h2>${esc(header.properties.title)}</h2>
-        <div class="armoury-views" data-surface="armouryView" role="tablist" aria-label="${esc(switcher.accessibility.label)}">
-          ${switcher.properties.views.map((view) => `<button type="button" role="tab" aria-selected="${view.active ? 'true' : 'false'}" data-member="${esc(view.id)}" class="${view.active ? 'on' : ''}">${esc(view.label)}</button>`).join('')}
-        </div>
-        ${modalCloseButtonHtml({ id: 'armoury-close', className: 'armoury-close', label: 'Close Armoury' })}
-      </header>
-      ${model.properties.notice ? `<p class="armoury-notice">${esc(model.properties.notice)}</p>` : ''}
+    <div class="modal armoury${model.properties.picking ? ' picking' : ''}" data-size="xl" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
+      <div class="modal-body armoury-shell-body">
+      ${model.properties.notice ? `<p class="as-status armoury-notice">${esc(model.properties.notice)}</p>` : ''}
       <div class="armoury-subject armoury-content">
         <div class="armoury-body">
           <div class="armoury-left"></div>
@@ -42,7 +41,28 @@ export function renderArmouryPanel(model, wrap) {
         <div class="armoury-strip"></div>
         <section class="armoury-stats-tray"></section>
       </div>
+      </div>
     </div>`;
+  const head = modalHead({
+    tabs: switcher.properties.views.map((view) => ({ id: view.id, label: view.label, selected: !!view.active })),
+    showMenuButton: false,
+    closeLabel: 'Close Armoury',
+  });
+  head.classList.add('armoury-head');
+  head.setAttribute('aria-label', header.properties.title);
+  const strip = head.querySelector('.modal-tabs');
+  strip.classList.add('armoury-views');
+  strip.dataset.surface = 'armouryView';
+  strip.setAttribute('aria-label', switcher.accessibility.label);
+  strip.querySelectorAll('.modal-tab').forEach((tabButton, index) => {
+    const view = switcher.properties.views[index];
+    tabButton.dataset.member = view.id;
+    if (view.active) tabButton.classList.add('on');
+  });
+  const close = head.querySelector('.modal-close');
+  close.id = 'armoury-close';
+  close.classList.add('armoury-close');
+  wrap.querySelector('.armoury').prepend(head);
   const panel = wrap.querySelector('.armoury');
   markUiComponent(panel, model.component, model.variant);
   markUiComponent(wrap.querySelector('.armoury-head'), header.component, header.variant);

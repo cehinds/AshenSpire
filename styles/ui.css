@@ -538,21 +538,6 @@ button.rs-reset {
 }
 .seed-line input[aria-invalid='true'] { border-color: var(--ember); }
 
-.shrine-option-list {
-  width: min(100%, var(--shrine-folded-card-width, 88vw), var(--shrine-folded-card-max-width, 44rem)); margin-inline: auto;
-  flex-direction: column; align-items: stretch; gap: 12px;
-}
-.shrine-option-list > .class-pick {
-  width: 100%; min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
-  box-sizing: border-box;
-}
-.shrine-option-list > #rest-opt,
-.shrine-option-list > #smith-opt {
-  display: grid; grid-template-columns: auto minmax(0, 1fr);
-  align-items: center; gap: 18px; padding: 12px 20px; text-align: left;
-}
-.shrine-option-list > #rest-opt .glyph,
-.shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
 .shrine-option-grid { align-items: stretch; }
 
 .flask-allocation-controls {
@@ -563,24 +548,12 @@ button.rs-reset {
   display: inline-flex; align-items: center; justify-content: center;
 }
 
-/* Shrine option disclosures: the summary is the folded card; the reveal keeps
-   the same component and expands downward without changing its width. */
-.shrine-fold { padding: 0; overflow: hidden; text-align: left; }
-.shrine-fold > summary {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center; gap: 10px;
-  min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
-  box-sizing: border-box; padding: 10px 14px;
-  cursor: pointer; list-style: none;
-}
-.shrine-fold > summary::-webkit-details-marker { display: none; }
 .shrine-fold-glyph { color: var(--gold); font-size: 1.65rem; }
 .shrine-fold-summary { display: flex; min-width: 0; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .shrine-fold-summary b { color: var(--gold); font-family: var(--font-display); font-size: 1.15rem; }
 .shrine-fold-summary small { min-width: 0; color: var(--muted); font-size: 0.95rem; }
 .shrine-fold-caret { color: var(--gold); font-size: 1.5rem; transform: rotate(0); }
-.shrine-fold[open] .shrine-fold-caret { transform: rotate(90deg); }
-.shrine-fold[open] > summary { border-bottom: 1px solid var(--line-soft); }
+
 .shrine-fold-content { display: grid; gap: 10px; padding: 12px 14px 14px; }
 .shrine-fold-content > h3 { margin: 0; color: var(--gold); text-align: center; }
 .shrine-fold-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
@@ -2333,51 +2306,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .seat-tab .pip { color: var(--gold); }
 .seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 0.1rem 0.6rem; }
 
-/* ---- Armoury (equipment) --------------------------------------------------
-   Three layouts over one loadout. Two attributes on .armoury do all the
-   rearranging — `data-figure` and `data-slots`, read straight off the view's
-   own row — so the screen builds nearly the same DOM every time and CSS
-   decides whether you are looking at a person or at a list. */
-/* This element also carries `.modal-veil` now (equipment.js — read the block
-   above the class assignment for why). Every declaration below is an OVERRIDE
-   of one `.modal-veil` sets, and it wins on source order alone: same
-   specificity, later in this file. THAT IS THE FRAGILE PART — move this block
-   above line 153 and the armoury silently paints at z-index 500 with the wrong
-   dim. Nothing errors. If this ever needs to move, the six lines below have to
-   become more specific in the same act. The two extra declarations are the
-   armoury's own look, overriding nothing: the warmer dim and the blur. */
-.armoury-overlay {
-  position: fixed; inset: 0; z-index: 60; display: flex;
-  align-items: center; justify-content: center;
-  background: rgba(6, 5, 4, 0.82); backdrop-filter: blur(2px);
-}
-.armoury {
-  /* PERCENT, not vw/vh: the whole app is zoomed by --ui-zoom on <body>, and
-     viewport units ignore that zoom — which is exactly what pushed this panel
-     off the corner of the screen at Auto sizing. See base.css. */
-  width: 108rem; max-width: 96%; height: 92%; display: flex; flex-direction: column;
-  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-2);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
-}
-.armoury-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.armoury-head {
-  display: flex; align-items: center; gap: 1.6rem; padding: 1.2rem 1.6rem;
-  border-bottom: 1px solid var(--line); background: var(--panel);
-}
-.armoury-head h2 { color: var(--gold); font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 2px; }
-.armoury-views { display: flex; gap: 0.4rem; margin-left: auto; }
-.armoury-views button {
-  background: none; border: 1px solid var(--line); color: var(--muted);
-  padding: 0.4rem 1.1rem; border-radius: var(--r-1); cursor: pointer;
-  font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
-  min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
-}
-.armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
-/* Was `background: none; border: none` — a bare glyph where every other door
-   has a boxed control, and the smallest target in the modal. It keeps only its
-   place in the header now; the box is `.modal-close`. */
-.armoury-close { cursor: pointer; }
-
 .armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
 .armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
 .armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
@@ -2433,10 +2361,9 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 
 .equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .armoury[data-slots='list'] .equip-slots { justify-content: flex-start; }
-.equip-slot { border: 1px solid var(--line); border-radius: var(--r-2); padding: 0.8rem; background: var(--panel); }
+
 .es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
-.es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
-.es-sealed { color: var(--muted); font-size: 1rem; font-style: italic; }
+
 .es-sets { display: flex; gap: 0.6rem; }
 .es-cell {
   width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
@@ -2450,8 +2377,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .es-cell.empty .es-empty { font-size: 2.2rem; color: var(--line-soft); }
 
 .equip-picker { border-top: 1px solid var(--line); padding-top: 1.2rem; }
-.equip-picker h4 { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.8rem; letter-spacing: 1px; }
-.ep-hint { color: var(--muted); font-size: 1.2rem; font-style: italic; }
+
 /* ---- THE EMPTY PICKER IS A STATE, NOT A CAPTION --------------------------
    Freja, out of #90. Folding the context pane hands its height to the subject,
    and the subject had nothing to do with it: measured on the shipped bundle,
@@ -2477,29 +2403,17 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 }
 .equip-picker[data-empty] .ep-hint { max-width: 34rem; }
 .ep-list { display: flex; flex-direction: column; gap: 0.5rem; }
-.equip-chip {
-  display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
-  gap: 0.2rem 0.9rem; align-items: center; text-align: left;
-  border: 1px solid var(--line); border-radius: var(--r-1); background: var(--panel);
-  color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
-  min-height: var(--tap-floor);
-}
-.equip-chip:hover { border-color: var(--line-soft); }
-.equip-chip.on { border-color: var(--gold); background: var(--bg); }
-.equip-chip.locked { opacity: 0.45; cursor: not-allowed; }
+
 .ec-art { grid-row: 1 / 3; width: 3.6rem; height: 3.6rem; object-fit: contain; }
-.ec-name { font-size: 1.3rem; }
+
 .ec-mods { grid-column: 2 / 4; font-size: 1.05rem; color: var(--muted); }
 .ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.ec-tags em, .ef-tags em {
-  font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
-  color: var(--gold); border: 1px solid var(--line-soft); border-radius: var(--r-1); padding: 0 0.4rem;
-}
+
 .ec-tags .ec-equipped {
   color: var(--equip-equipped-tag-color, var(--gold));
   border-color: var(--equip-equipped-tag-color, var(--line-soft));
 }
-.ef-tags em.none { color: var(--muted); border-color: var(--line); }
+
 .ec-lock { grid-column: 1 / 4; font-size: 1rem; color: var(--muted); font-style: italic; }
 .equip-chip.rarity-rare { border-left: 3px solid var(--gold); }
 .equip-chip.rarity-uncommon { border-left: 3px solid var(--frost); }
@@ -2571,16 +2485,13 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 }
 .inventory-model img { width: 100%; height: 7rem; object-fit: contain; }
 .inventory-information { display: flex; flex-direction: column; gap: 0.55rem; min-width: 0; }
-.inventory-information h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
+
 .inventory-information p { line-height: 1.45; }
-.inventory-kind { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.95rem; }
+
 .inventory-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.inventory-tags em {
-  color: var(--gold); border: 1px solid var(--line-soft); border-radius: var(--r-1);
-  padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
-}
+
 .inventory-information .equip-candidate-comparison { margin-left: 0; }
-.inventory-instruction { color: var(--muted); font-style: italic; }
+
 .inventory-face[draggable='true'] { cursor: grab; }
 .inventory-face.dragging { cursor: grabbing; opacity: 0.55; }
 .es-cell.drop-ready { border-color: var(--grace); box-shadow: 0 0 0 2px rgba(120, 210, 140, 0.28); }
@@ -2654,7 +2565,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .armoury-card-detail-text { color: var(--parchment); line-height: 1.35; }
 .armoury-card-detail-flavor { color: var(--muted); font-style: italic; }
 
-.armoury-trays { display: contents; }
 .armoury-subject { flex: 1 1 auto; display: flex; min-width: 0; min-height: 0; overflow: hidden; }
 .folding-tray {
   position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0;
@@ -2860,10 +2770,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
 .ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .ef-run { color: var(--grace); font-size: 1.15rem; }
-.armoury-notice {
-  padding: 0.7rem 1.6rem; background: rgba(201, 80, 46, 0.14);
-  border-bottom: 1px solid var(--ember); color: var(--parchment); font-size: 1.2rem;
-}
 
 /* ---------- EldenSpire#90 — the context pane folds, the subject never does ---
    Every rule here keys off `[data-role]` / `[data-collapsed]`, which equipment.js
@@ -4064,26 +3970,9 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   overflow: auto;
   padding: 0.2rem;
 }
-.character-summary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.25rem 0.8rem;
-  align-items: baseline;
-  padding-bottom: 0.6rem;
-  border-bottom: 1px solid var(--line-soft);
-}
-.character-summary .character-kicker {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: var(--gold);
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.character-summary h3 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
+
 .character-summary span { color: var(--muted); white-space: nowrap; }
-.character-summary p { grid-column: 1 / -1; color: var(--muted); font-size: 0.95rem; line-height: 1.25; }
+
 .character-info-card {
   width: 100%;
   min-width: 0;
@@ -4204,7 +4093,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .armoury-position-grid-card.is-selected { border-color: var(--gold); box-shadow: 0 0 0.55rem rgba(201, 162, 39, 0.6); }
 .armoury-position-grid-card.is-locked { color: var(--muted); }
 .armoury-position-grid-detail { display: grid; gap: 0.45rem; min-width: 0; padding-top: 0.7rem; border-top: 1px solid var(--line-soft); }
-.armoury-position-grid-detail > h4 { color: var(--gold); font-family: var(--font-display); letter-spacing: 0.07em; text-transform: uppercase; }
+
 .armoury-position-grid-detail .armoury-position-detail { border: 1px solid var(--line-soft); }
 .armoury[data-composition='character-equipment'] .equip-picker { margin-top: 0.8rem; }
 .armoury[data-composition='character-equipment'] .equip-picker[data-empty] { display: none; }
@@ -4308,7 +4197,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury-position-locked-pane small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .armoury-position-detail { padding: 0.8rem; border-top: 1px solid var(--line-soft); background: rgba(13, 11, 9, 0.36); }
 .armoury-armament-details { min-width: 0; }
-.armoury-armament-details h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.08rem; }
+
 .armoury-armament-lore { margin: 0.3rem 0 0.75rem; color: var(--muted); font-style: italic; line-height: 1.35; }
 .armoury-armament-details dl { display: grid; gap: 0.38rem; margin: 0; }
 .armoury-armament-details dl > div { display: grid; grid-template-columns: minmax(6rem, 0.34fr) minmax(0, 1fr); gap: 0.55rem; padding-bottom: 0.28rem; border-bottom: 1px solid rgba(133, 113, 69, 0.26); }

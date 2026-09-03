@@ -122,8 +122,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
 
   app.innerHTML = `
     <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
-      <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
-      <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
+      <h2>Shrine of Ember</h2>
+      <p class="subtitle">The gold light holds, for now</p>
       ${refillLineHtml(registries, refill)}
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
@@ -146,14 +146,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         </div>
         <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
-            <span class="shrine-fold-glyph">⚗</span>
-            <span class="shrine-fold-summary"><b>Reallocate Flask Charges</b><small>${charge.assigned}/${charge.capacity} assigned</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
+            <span class="glyph shrine-fold-glyph">⚗</span>
+            <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
+            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
-          <h3>Reallocate Flask Charges</h3>
           <div class="shrine-fold-detail">
-          <div class="glyph">⚗</div>
           <div class="cp-body">
           <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
                It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
@@ -218,14 +216,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              data-cost="${level.cost}"
              data-short="${level.short}">
           <summary>
-            <span class="shrine-fold-glyph">✦</span>
-            <span class="shrine-fold-summary"><b>Level up</b><small>${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
+            <span class="glyph shrine-fold-glyph">✦</span>
+            <span class="ob shrine-fold-summary"><b class="on">Level up</b><small class="om">${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
+            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
-          <h3>Level up</h3>
           <div class="shrine-fold-detail">
-            <div class="glyph">✦</div>
             <div class="cp-body">
             ${level.capped
             ? `<p>You have taken every level this climb allows (${level.levelsTaken}).</p>`
