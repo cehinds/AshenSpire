@@ -669,6 +669,16 @@ export function flattenInline(text, where, labels = new Set()) {
 // ordinal 1 (#517 review); the shape is pinned by the selftest corpus.
 const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
+// THE SCHEME ELEMENT — which numbering a stamp counts in. A legacy `-rc.N`
+// stamp is numbered in the retired GLOBAL space; everything since 2026-09-01
+// counts WITHIN a release. It sits between the candidate and the tail so a
+// legacy stamp sorts first within one candidate and its ordinal is never
+// weighed against a new one. Named here because the value and the slot are one
+// fact, and a caller that spells either inline is a second copy of it.
+const SCHEME_SLOT = 3;
+const LEGACY = '0';
+const RELEASE_SCOPED = '1';
+
 /**
  * A stamp as a COMPARABLE TUPLE, because the ordinal alone stopped ordering on
  * 2026-09-01.
@@ -718,8 +728,23 @@ export function stampKey(release, ordinal) {
   // changelog because nothing else has to read stamps written under both. It
   // sits between the candidate and the tail so the legacy stamp sorts first
   // WITHIN a candidate and its ordinal is never weighed against a new one.
-  const scheme = /-rc\.\d+$/.test(release) ? '0' : '1';
-  return [...version.slice(0, 3), scheme, version[3]];
+  return [...version.slice(0, 3), /-rc\.\d+$/.test(release) ? LEGACY : RELEASE_SCOPED, version[3]];
+}
+
+/**
+ * Which numbering a stamp was written under — the ONE reader of the scheme
+ * element, because the slot and its value are this function's private encoding
+ * and nowhere else should know either.
+ *
+ * The ceiling loop used to spell it `r.key[3] === 0`, a second copy of both
+ * facts, and consolidating stampKey onto buildversion's digit-string tuple
+ * turned that `0` into `'0'` — so the strict test silently went false, legacy
+ * receipts stopped being skipped, and a perfectly good `0.5.0-rc.4.1956` was
+ * refused as a build that has not happened (#579 review). The type is the
+ * caller's business no longer.
+ */
+export function isLegacyStamp(key) {
+  return key !== null && key[SCHEME_SLOT] === LEGACY;
 }
 
 /**
@@ -833,7 +858,7 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
       if (r.ordinal === null) continue;
       // A legacy `-rc.N` stamp is numbered in the retired global space and the
       // current counter cannot speak for it at all.
-      if (r.key !== null && r.key[3] === 0) continue;
+      if (isLegacyStamp(r.key)) continue;
       if (currentRelease !== null && r.release !== currentRelease) continue;
       if (r.ordinal > ceiling) {
         throw new Error(`${r.where}: cites build ${r.ordinal} of release ${r.release ?? '(unknown)'}, but buildordinal.json says only ${currentOrdinal + 1} build(s) of that release exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
@@ -1102,7 +1127,16 @@ async function selftest() {
     parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
     // The in-PR receipt shape: one build ahead is legal while projecting.
     parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.8')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n`, { currentOrdinal: 7, projecting: true });
-    caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse');
+    // A LEGACY STAMP FAR ABOVE THE RELEASE-SCOPED CEILING MUST PASS. Its 1956
+    // counts in the retired GLOBAL space, which the current counter cannot
+    // speak for at all, so the ceiling has to skip it. Nothing exercised that
+    // skip: the case above sits AT the ceiling, where the skip and its absence
+    // look identical. Consolidating stampKey turned the scheme element from
+    // numeric 0 into '0' and the strict test silently went false — legacy
+    // receipts stopped being skipped and this receipt was refused as a build
+    // that has not happened, with the whole corpus still green (#579 review).
+    parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.5.0-rc.4.1956')}\n`, { currentOrdinal: 5 });
+    caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse, legacy global ordinals included');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
   }
