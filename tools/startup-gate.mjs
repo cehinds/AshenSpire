@@ -156,10 +156,18 @@ if (args.includes('--selftest')) {
         expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
       },
       {
+        // THE FLOOR MOVED, SO THE PLANT DID. `.title-modal-close` used to state
+        // its own tap floor; the shared close control (src/ui/components/
+        // modalShell.js) states it once for all four modal doors and the
+        // save-slot rule keeps only its position. `.title-modal-close` still
+        // WEARS the floor — through `.modal-close` — so A8's assertion is
+        // unchanged and this mutation still reaches it. The find is anchored on
+        // the block opening because the two declarations alone appear ten times
+        // in this stylesheet.
         name: 'title modal Close drops below the authored tap floor',
         file: 'styles/ui.css',
-        find: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor);',
-        replace: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
+        find: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: var(--tap-floor); min-height: var(--tap-floor);',
+        replace: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
         expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
       },
       {
@@ -240,10 +248,14 @@ if (args.includes('--selftest')) {
         expectRed: /RED A10\.REDUCED-MOTION/,
       },
       {
+        // Escape is bound by the shared chrome now, and the plant severs it
+        // FOR THIS DOOR rather than in modalShell.js — a mutation there would
+        // take Escape off all four modals at once, which is a wider defect than
+        // the one A8 is asserting about.
         name: 'Settings stops owning Escape above the expanded title',
         file: 'src/ui/screens/settings.js',
-        find: "  document.addEventListener('keydown', onKeydown, true);",
-        replace: "  false; // startup-gate selftest plant",
+        find: '  release = bindModalDismiss({ veil, panel: modal, close, opener });',
+        replace: '  release = () => {}; // startup-gate selftest plant',
         expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
       },
     ],

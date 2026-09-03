@@ -1466,9 +1466,14 @@ async function selftest() {
       find: "Changelog: { mount: 'set-changelog-mount'", replace: "Changelog: { mount: 'set-changelog-missing'", expect: 'Changelog did not mount',
     },
     {
+      // The Done control is BUILT here now rather than found in a template —
+      // the settings modal wears the shared chrome (src/ui/components/
+      // modalShell.js), which puts the way forward in a footer instead of a
+      // `.set-actions` div. Same plant, same assertion: sever Done's click and
+      // the door stops returning to the title.
       name: 'broken Done navigation', file: 'src/ui/screens/settings.js',
-      find: "veil.querySelector('#set-close').addEventListener('click', close);",
-      replace: "veil.querySelector('#set-close').addEventListener('click', () => {});",
+      find: "  done.addEventListener('click', close);",
+      replace: "  done.addEventListener('click', () => {});",
       expect: 'Done did not return to title',
     },
     {

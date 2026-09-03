@@ -83,7 +83,7 @@
 }
 .mapscreen .map-scroll.grabbing { cursor: grabbing; }
 .mapscreen .map-scroll::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
-.mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
+.mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: var(--r-2); border: 3px solid transparent; background-clip: padding-box; }
 .mapscreen .map-scroll::-webkit-scrollbar-thumb:hover { background: var(--gold); background-clip: padding-box; }
 /* Canvas centers the (possibly smaller-than-viewport) svg horizontally. */
 .mapscreen .map-canvas { display: flex; justify-content: center; min-width: min-content; min-height: min-content; }
@@ -149,7 +149,7 @@
 .map-zoom .zbtn {
   min-width: var(--tap-floor); min-height: var(--tap-floor);
   width: auto; height: auto; padding: 0 0.4rem;
-  border-radius: 8px; font-size: 1.8rem; line-height: 1;
+  border-radius: var(--r-3); font-size: 1.8rem; line-height: 1;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
@@ -338,7 +338,7 @@
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
 .map-legend-pop {
   position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
-  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
+  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: var(--r-3);
   padding: 1rem 1.4rem; display: flex; flex-direction: column; gap: 0.4rem; font-size: 1.2rem;
   color: var(--parchment); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
 }

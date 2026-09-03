@@ -2,6 +2,7 @@
 // choices. The action is not committed until the primary button is pressed.
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { modalFooter } from './modalShell.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -100,7 +101,6 @@ export function openConfirmationModal({
   // consequences uniform rather than a collection of screen-owned dialogs.
   if (detailsHtml) details.innerHTML = detailsHtml;
 
-  const footer = document.createElement('footer');
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
   cancelButton.className = 'subtle confirmation-cancel';
@@ -108,11 +108,15 @@ export function openConfirmationModal({
   markUiComponent(cancelButton, UI.confirmationCancel, 'neutral');
   const confirmButton = document.createElement('button');
   confirmButton.type = 'button';
-  confirmButton.className = `subtle confirmation-confirm${tone === 'danger' ? ' danger' : ''}`;
+  // `.danger` still reads as danger and keeps the red; every other confirmation
+  // is a way FORWARD and now says so with the emphasis rather than by sitting
+  // second in a row of two identical buttons.
+  confirmButton.className = `confirmation-confirm${tone === 'danger' ? ' subtle danger' : ''}`;
   confirmButton.textContent = confirmLabel;
   confirmButton.hidden = !confirmEnabled;
   markUiComponent(confirmButton, UI.confirmationAction, tone);
-  footer.append(cancelButton, confirmButton);
+  // The house order, from the one home: way out left, way forward right.
+  const footer = modalFooter({ secondary: [cancelButton], primary: confirmButton, className: 'confirmation-footer' });
   dialog.append(header, copy, details, footer);
   veil.appendChild(dialog);
   document.body.appendChild(veil);

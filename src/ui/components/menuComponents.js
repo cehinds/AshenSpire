@@ -2,6 +2,7 @@ import { childModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
+import { modalCloseButtonHtml } from './modalShell.js';
 
 export function renderQuickMenu(model, { onActivate }) {
   const veil = document.createElement('div');
@@ -61,17 +62,17 @@ export function renderMenuOverlay(model) {
           ${stripModel.children.map((tab) => `<button class="ov-tab${tab.properties.active ? ' on' : ''}" data-member="${esc(tab.properties.id)}" role="tab" aria-selected="${tab.properties.active ? 'true' : 'false'}">${esc(tab.properties.label)}</button>`).join('')}
         </div>
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
-        <div class="overlay-actions">
-          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
-          <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
+        <div class="modal-head-actions overlay-actions">
+          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…" aria-label="Go to…">☰</button>' : ''}
+          ${modalCloseButtonHtml({ id: 'ov-close', label: 'Close menu' })}
         </div>
       </div>
       <div class="overlay-body" role="tabpanel"></div>
-      <footer class="overlay-footer">
-        <span class="overlay-footer-note">Progress saves to the active slot.</span>
-        <div class="overlay-footer-actions">
-          <button class="subtle" id="ov-save" type="button">Save Game</button>
-          <button class="subtle danger" id="ov-quit" type="button">Save and Quit</button>
+      <footer class="modal-foot overlay-footer">
+        <span class="modal-foot-note overlay-footer-note">Progress saves to the active slot.</span>
+        <div class="modal-foot-actions overlay-footer-actions">
+          <button class="subtle" id="ov-quit" type="button">Save and Quit</button>
+          <button class="primary" id="ov-save" type="button">Save Game</button>
         </div>
       </footer>
     </div>`;

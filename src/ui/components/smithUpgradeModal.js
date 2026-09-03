@@ -6,6 +6,7 @@ import { renderCard } from './card.js';
 // The interaction router goes through the framework's adopted door.
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { FOLD_GLYPH } from './foldGlyph.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -189,7 +190,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
           </div>
           <div class="smith-upgrade-folds">
             ${selected.affectedRows.map((row, index) => `<details class="smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}">
-              <summary><span><b>${esc(row.name)}</b><small>${esc(row.role)} · ${row.used === false ? 'not in active deck' : `${row.activeCopies || 1} active`}</small></span><span class="smith-fold-values">${changeSummary(row)}</span><i class="smith-fold-caret" aria-hidden="true">›</i></summary>
+              <summary><span><b>${esc(row.name)}</b><small>${esc(row.role)} · ${row.used === false ? 'not in active deck' : `${row.activeCopies || 1} active`}</small></span><span class="smith-fold-values">${changeSummary(row)}</span><i class="smith-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</i></summary>
               <div class="smith-fold-detail${row.reference ? '' : ' no-card'}">
                 ${row.reference ? `<div class="smith-card-sprite" data-smith-card-row="${index}"></div>` : ''}
                 <div class="smith-card-facts">

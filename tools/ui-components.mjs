@@ -67,6 +67,7 @@ export function receipt() {
     menuComponents: read('src/ui/components/menuComponents.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
     trayComponents: read('src/ui/components/trayComponents.js'),
+    foldGlyph: read('src/ui/components/foldGlyph.js'),
     traySizeService: read('src/ui/services/TraySizeService.js'),
     armouryUiSource: read('content/source/armouryUi.json'),
     creationCards: read('src/ui/components/creationCards.js'),
@@ -281,10 +282,21 @@ export function findings(r) {
       || !/renderArmouryPanel\([\s\S]*markUiComponent\(wrap\.querySelector\('\.armoury-inventory'\)/.test(r.armouryComponents)
       || !/renderTray\(trayModel\(/.test(r.equipment)
       || !/renderTray\([\s\S]*renderContent:/.test(r.equipment)
-      || !/right: Object\.freeze\(\{ closed: '<', open: '>' \}\)/.test(r.trayComponents)
-      || !/top: Object\.freeze\(\{ closed: 'v', open: '\^' \}\)/.test(r.trayComponents)
-      || !/bottom: Object\.freeze\(\{ closed: '\^', open: 'v' \}\)/.test(r.trayComponents)
-      || !/left: Object\.freeze\(\{ closed: '>', open: '<' \}\)/.test(r.trayComponents)
+      // THE EDGE TABLE MOVED, AND THE ASSERTION FOLLOWED IT RATHER THAN BEING
+      // DROPPED. What C15 has always guarded is that a tray's mark is EDGE-AWARE
+      // and frozen — four edges, each with a closed and an open answer — not
+      // which file holds it or which characters it spends. Both changed on
+      // 2026-09-02: the table is foldGlyph.js (one home for every disclosure
+      // mark in the tree, after a census found four families for one idea) and
+      // the ASCII letters `v ^ < >` became the triangle family `▾ ▴ ◂ ▸`. The
+      // shape of the guard is identical; a hand that deletes an edge, unfreezes
+      // the table, or lets trayComponents.js grow a second one still reds.
+      || !/right: Object\.freeze\(\{ closed: '◂', open: '▸' \}\)/.test(r.foldGlyph)
+      || !/top: Object\.freeze\(\{ closed: '▾', open: '▴' \}\)/.test(r.foldGlyph)
+      || !/bottom: Object\.freeze\(\{ closed: '▴', open: '▾' \}\)/.test(r.foldGlyph)
+      || !/left: Object\.freeze\(\{ closed: '▸', open: '◂' \}\)/.test(r.foldGlyph)
+      || !/export const TRAY_FOLD_GLYPH = Object\.freeze\(/.test(r.foldGlyph)
+      || !/TRAY_FOLD_GLYPH as GLYPHS/.test(r.trayComponents)
       || !/aria-expanded/.test(r.trayComponents)
       || !/aria-controls/.test(r.trayComponents)
       || !/content\.hidden = !tray\.expanded/.test(r.trayComponents)

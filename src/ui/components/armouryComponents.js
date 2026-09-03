@@ -2,6 +2,7 @@ import { childModel, descendantModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { esc } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
+import { modalCloseButtonHtml } from './modalShell.js';
 
 export function renderArmouryOverlay(model) {
   const wrap = document.createElement('div');
@@ -25,7 +26,7 @@ export function renderArmouryPanel(model, wrap) {
         <div class="armoury-views" data-surface="armouryView" role="tablist" aria-label="${esc(switcher.accessibility.label)}">
           ${switcher.properties.views.map((view) => `<button type="button" role="tab" aria-selected="${view.active ? 'true' : 'false'}" data-member="${esc(view.id)}" class="${view.active ? 'on' : ''}">${esc(view.label)}</button>`).join('')}
         </div>
-        <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
+        ${modalCloseButtonHtml({ id: 'armoury-close', className: 'armoury-close', label: 'Close Armoury' })}
       </header>
       ${model.properties.notice ? `<p class="armoury-notice">${esc(model.properties.notice)}</p>` : ''}
       <div class="armoury-subject armoury-content">
