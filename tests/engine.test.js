@@ -10,7 +10,7 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
 import { attackTagsFor } from '../src/engine/actions.js';
-import { tagContentProblems } from '../src/model/tags.js';
+import { tagContentProblems, itemTypeLabelFrom } from '../src/model/tags.js';
 import { boundGrantCardIds, boundGrantProblems } from '../src/model/loadout.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
 import {
@@ -2260,6 +2260,54 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // An instance carrying its own tags still wins — equipment-generated cards.
     eq(attackTagsFor({ card: { cardId: 'strike', tags: ['guard'] } }, {}, extReg).join('|'), 'guard',
       'a stamped instance still answers for itself');
+  });
+
+  // ---- 26i. the sixth round: an empty answer is an answer -----------------
+  test('26i. emptiness is content, and an item type is named once', () => {
+    // Round five stopped the module-global fold answering over a supplied
+    // bundle — but only when the bundle's answer was non-empty, which is the
+    // one case where the global's answer is guaranteed to be the stale one. An
+    // override that STRIPS a card read as "nothing here, ask the next source",
+    // and the next source handed back the shipped tags just removed.
+    const stripped = JSON.parse(JSON.stringify(contentBundle));
+    stripped.tagging = stripped.tagging.filter((r) => !(r.family === 'card' && r.objectId === 'strike'));
+    const strippedReg = createRegistries(stripped);
+    eq(strippedReg.cards.get('strike').tags.length, 0, 'the bundle removed every tag from Strike');
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, {}, strippedReg).length, 0,
+      'and the engine honours that instead of restoring the shipped fold');
+    // The effect is not the global: it came out of the same bundle, so it still
+    // speaks for a card the active content gives no rows of its own. That is
+    // what keeps isolated fixtures (7e) working through the same door.
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, { tags: ['venom'] }, strippedReg).join('|'), 'venom',
+      'an effect in the same bundle may still answer for an untagged card');
+    // Same rule one branch up: an equipment profile granting no tags is a
+    // profile that says so, not a profile to look past.
+    eq(attackTagsFor({ card: { cardId: 'strike', tags: [] } }, {}, REG).length, 0,
+      'an instance stamped with no tags answers for itself');
+    // The miss that keeps that branch honest: an ordinary card carries no
+    // `cardTags` at all, and absent is the only thing that falls through.
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, {}, REG).join('|'), REG.cards.get('strike').tags.join('|'),
+      'a card with no instance tags still reads the registry');
+
+    // An itemType tag is the only tag NAMED TWICE: by the author in tags.csv,
+    // and by registries.js, which derives the label from the id when it stamps
+    // a piece. The suite pinned the shipped rows; nothing stopped an edit — or
+    // a mod bundle — from disagreeing, and the same tag then read two ways.
+    const kw = contentBundle.keywords.map((k) => k.id);
+    const renamed = JSON.parse(JSON.stringify(contentBundle));
+    for (const t of renamed.tags) if (t.id === 'item:armor') t.label = 'Plate';
+    const said = tagContentProblems(renamed, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/disagrees with the label the runtime derives/.test(said),
+      `a relabelled item type is refused by name — said ${JSON.stringify(said.slice(0, 160))}`);
+    const piece = (createRegistries(renamed).equipment.armour || [])
+      .find((p) => (p.itemTypes || []).some((t) => t.tag === 'item:armor'));
+    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armor',
+      'and the stamp is what it was refused for disagreeing with');
+    // Two derivations of one label, held to each other directly rather than
+    // through the rows that happen to be shipped.
+    for (const id of ['item:blade', 'item:magic-focus', 'item:armor', 'item:', 'not-an-item']) {
+      eq(itemTypeLabelFrom(id), itemTypeLabel(id) || '', `both derivations agree on '${id}'`);
+    }
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

@@ -27,8 +27,10 @@
 //              refused so it cannot come back one CSV column at a time
 //   equipment  a weapon or outfit wearing no item-type tag — the guarantee
 //              content/equipment.js used to throw for, moved with the tags —
-//              and an itemType tag id missing the `item:` prefix the runtime
-//              classifies by, which would silently strip every piece's type
+//              an itemType tag id missing the `item:` prefix the runtime
+//              classifies by, which would silently strip every piece's type,
+//              and an itemType label disagreeing with the one the runtime
+//              derives from the same id, which would name one tag two ways
 //
 // The `legal:` list on a domain error is the point: the message tells the
 // author which words this family accepts instead of making them find out.
@@ -49,6 +51,25 @@ function atPath(bundle, path) {
  * runtime reader (ITEM_TYPE_TAG_PREFIX), and the suite asserts the two agree.
  */
 const ITEM_TYPE_PREFIX = 'item:';
+
+/**
+ * itemTypeLabelFrom(id) -> string
+ *
+ * The Armoury's label for an itemType tag, derived from its id. This mirrors
+ * content/equipment.js `itemTypeLabel` exactly (prefix off, split on '-', drop
+ * the empties, title-case, rejoin) and returns '' where that returns null, so
+ * one call answers both questions this pass asks: whether the id yields a label
+ * at all, and what that label must be. Exported so the suite can pin the two
+ * derivations to each other directly rather than only through shipped rows.
+ */
+export function itemTypeLabelFrom(id) {
+  if (typeof id !== 'string' || !id.startsWith(ITEM_TYPE_PREFIX)) return '';
+  return id.slice(ITEM_TYPE_PREFIX.length)
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 /** The whole parent key of one tagging row, as a string. */
 const SEP = '\u001f';
@@ -272,14 +293,24 @@ export function tagContentProblems(bundle, keywordIds = []) {
   for (const row of itemTypeRows) {
     // The prefix alone is not enough: the runtime treats an id whose label
     // comes out EMPTY as an ordinary tag too, so `item:` and `item:-` would
-    // both pass a prefix test and still strip the piece's type. This mirrors
-    // itemTypeLabel's own derivation — prefix off, split on '-', drop the
-    // empties — and the suite asserts every registered label equals what that
-    // function returns, so the two cannot drift apart in silence.
-    const derived = row.id.startsWith(ITEM_TYPE_PREFIX)
-      && row.id.slice(ITEM_TYPE_PREFIX.length).split('-').filter(Boolean).length > 0;
+    // both pass a prefix test and still strip the piece's type.
+    const derived = itemTypeLabelFrom(row.id);
     if (!derived) {
       err(`tags.${row.id}`, `an itemType tag id must be '${ITEM_TYPE_PREFIX}' followed by at least one word — the runtime reads the type off that prefix and derives the Armoury's label from it, so an id that yields no label is stamped as an ordinary tag and the piece loses its type`);
+      continue;
+    }
+    // ONE LABEL PER TAG. An itemType tag is the only kind whose display name is
+    // written twice: once by the author in tags.csv, and once by the runtime,
+    // which DERIVES it from the id when registries.js stamps `itemTypes` onto a
+    // piece. Two writers, so they can disagree — `{ id: 'item:armor',
+    // label: 'Plate' }` puts "Plate" in the tag registry and "Armor" on every
+    // piece wearing it, and the same tag then reads as two different things
+    // depending on which screen you are looking at. The derivation cannot bend
+    // to the author (the runtime has only the id to work from), so the author
+    // bends to the derivation, and the disagreement is named here instead of
+    // shipping as a cosmetic mystery.
+    if (row.label !== derived) {
+      err(`tags.${row.id}`, `label '${row.label}' disagrees with the label the runtime derives from the id ('${derived}') — an itemType tag is named twice, here and by model/registries.js when it stamps a piece's itemTypes, so the two must match; write '${derived}', or rename the id to the one that yields the label you want`);
     }
   }
   const itemTypeIds = new Set(itemTypeRows.map((t) => t.id));

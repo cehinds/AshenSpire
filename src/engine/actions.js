@@ -95,13 +95,29 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
  * would answer for the shipped rows instead — a custom tag never reaching the
  * tag-scoped vulnerabilities that consume this. The global stays the fallback
  * for callers with no registries to hand (isolated engine fixtures).
+ *
+ * AN EMPTY ANSWER IS STILL AN ANSWER, AND THE TEST IS WHOSE. Every source here
+ * belongs to the ACTIVE content except one — the module-global fold — and that
+ * is the only one an empty result may not fall through to. A bundle that
+ * removed a card's tagging rows, or a profile that grants no tags, said so on
+ * purpose; letting `[]` mean "nothing here, ask the next source" hands back the
+ * SHIPPED tags the author had just taken away. So once the active registries
+ * have answered for a card, the global is out of the question, while `effect`
+ * — which came out of that same bundle — may still speak for a hit whose card
+ * carries no rows of its own (isolated fixtures, and non-card effects, which
+ * reach the last line with no cardId at all).
+ *
+ * The first branch reads `cardTags`, which model/registries.js writes only onto
+ * an equipment-generated card. Absent means an ordinary card, and is the one
+ * genuine miss; `[]` there is a profile that grants nothing.
  */
 export function attackTagsFor(action, effect, registries) {
-  if (action.card && Array.isArray(action.card.tags) && action.card.tags.length) return action.card.tags;
+  if (action.card && Array.isArray(action.card.tags)) return action.card.tags;
   const cardId = action.card && action.card.cardId;
   if (cardId && registries && registries.cards && registries.cards.has(cardId)) {
     const stamped = registries.cards.get(cardId).tags;
     if (Array.isArray(stamped) && stamped.length) return stamped;
+    return Array.isArray(effect.tags) ? effect.tags : [];
   }
   return damageTagIds(cardId, effect.tags);
 }
