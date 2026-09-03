@@ -1,28 +1,39 @@
 # AS-HD-040 — runtime evidence for the class art swap
 
 Exact-head captures of the shipped class sprites in the real app, at the two
-sizes `RUNBOOKS/art.md` §§145-150, 181-192 asks for, covering **every class** and
-an off-default tint.
+sizes `RUNBOOKS/art.md` §§145-150, 181-192 asks for, covering **all twenty
+replaced files** — four classes × five tints — at both sizes.
 
 ```
-node tools/screenshot.mjs --out <dir>                      # desktop 1440x860
-node tools/screenshot.mjs --out <dir> --viewport 390x844   # phone
+node tools/screenshot.mjs --out <dir> --class-matrix                      # desktop 1440x860
+node tools/screenshot.mjs --out <dir> --class-matrix --viewport 390x844   # phone
 ```
 
 | file | shows |
 |---|---|
-| `*-class-reaver.png` | Reaver, gold tint |
-| `*-class-starseer.png` | Starseer, gold tint |
-| `*-class-rogue.png` | Rogue, gold tint |
-| `*-class-herald.png` | Herald, gold tint |
-| `*-class-rogue-ember.png` | Rogue on the **ember** tint — the accent rim is not gold |
+| `*-class-<class>-<tint>.png` | that exact sprite, in the character builder |
 | `*-combat.png` | a fight — see the finding below |
 
-Each exists at `desktop-1440x860-` and `phone-390x844-`. Twelve captures.
+`<class>` is reaver, starseer, rogue, herald; `<tint>` is gold, ember, frost,
+rot, grace. Each exists at `desktop-1440x860-` and `phone-390x844-`, so twenty
+sprites become **forty captures**, plus two of combat.
 
 Posed with `?shot=customize&shotClass=<id>&shotTint=<id>`, added in this change.
 Without it the screen could only ever photograph the first class in the first
 tint — evidence for one of the twenty replaced files.
+
+**The matrix is read from `assets/sprites/class-sprites.manifest.json`, not
+listed in the tool.** A hand-written list of twenty would be right the day it
+was typed and wrong the first time a class or a tint is added, and the coverage
+gap would reappear silently — which is how the first version of this folder,
+photographing one variant of twenty, came about. The evidence set is the
+inventory: add a sprite and the run that photographs it already asks for it.
+
+Two things this set is checked for, rather than assumed:
+
+* every capture is a **settled** frame (see the harness section below);
+* the five tints of a class are **byte-distinct** from one another, so a tint
+  that silently failed to apply would show up as two identical files.
 
 ## What capturing this actually found
 
@@ -77,10 +88,15 @@ So the harness no longer tries to out-wait it. Shots marked `stable` in
 byte-identical**; after four tries the run fails and deletes the frame rather
 than committing one it cannot reproduce. Byte-identity is a real bar here —
 measured across three clean runs, every `stable` shot is identical run to run.
-On the run that produced the captures in this folder the gate rejected and
-retook **three** desktop frames that would otherwise have shipped as evidence.
+**Across the two runs that produced this folder the gate rejected and retook
+seven frames** — four on desktop, three on phone — every one of which would
+otherwise have shipped as evidence.
 
-Settled values, for anyone re-measuring: desktop 30.9–31.1, phone 32.1–32.4 mean
+Every exit that is not "reproduced" deletes both files, including the path where
+the probe capture itself fails to launch or write. A nonzero exit does not undo
+an unverified PNG sitting in the evidence folder; the file is what people look at.
+
+Settled values, for anyone re-measuring: desktop 30.9–31.1, phone 32.1–32.5 mean
 brightness; a dim frame reads 16–18. *(An earlier revision of this file said 39–41.
 That number was wrong — it did not come from this measurement.)*
 
@@ -92,7 +108,11 @@ on a timer, which changes the shot states themselves and is not in this change.
 ## Boundary
 
 Captures of the working tree at this commit, on Linux/Chromium. They show the
-art in the real layout, at two sizes, for every class and one off-default tint.
-They are not a QA verdict, they do not prove the game plays, and the remaining
-sixteen class×tint combinations are covered by the rim being generated from one
-code path rather than by a photograph of each.
+art in the real layout, at two sizes, for **every one of the twenty shipped
+class sprites** — no variant is represented here by its generator rather than by
+a photograph.
+
+They are still not a QA verdict and they do not prove the game plays. What they
+do not cover: one browser engine, one platform, two viewport sizes, and the
+character-builder screen — the style picker and the LAN lobby also draw these
+sprites and are not photographed here.

@@ -99,6 +99,46 @@ const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const outDir = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'docs/preview');
 
+// --class-matrix — one capture per SHIPPED class sprite, read from the sprite
+// manifest rather than listed here.
+//
+// WHY IT IS DERIVED. art.md §§145-150,189-192 wants a preview of every named
+// variant, and the class art is four sources × five tints. A hand-written list
+// of twenty would be right the day it was typed and wrong the first time a
+// class or a tint is added — the coverage gap would reappear silently, which is
+// exactly how this one got here. Reading `class-sprites.manifest.json` means
+// the evidence set IS the inventory: add a sprite, and the run that photographs
+// it is already asking for it.
+//
+// NOT IN THE DEFAULT LIST, on purpose. This tool also generates docs/preview/,
+// and twenty near-identical class frames would swamp a folder whose job is to
+// show the game's screens. Full coverage is what an ART CHANGE has to prove, so
+// it is a flag the evidence run passes and the preview run does not.
+const CLASS_MATRIX = args.includes('--class-matrix');
+function classMatrixShots() {
+  const path = resolve(ROOT, 'assets/sprites/class-sprites.manifest.json');
+  if (!existsSync(path)) {
+    console.error(`screenshot: --class-matrix needs ${path}, which is missing.`);
+    process.exit(1);
+  }
+  const rows = JSON.parse(readFileSync(path, 'utf8')).assets || [];
+  const shots = rows.map((r) => {
+    // asset_id is `class.sprite.<class>.<tint>` — the manifest's own key, so the
+    // shot name and the file it is evidence FOR cannot drift apart.
+    const [, , cls, tint] = r.asset_id.split('.');
+    return {
+      name: `class-${cls}-${tint}`,
+      query: `?shot=customize&shotClass=${cls}&shotTint=${tint}`,
+      stable: true,
+    };
+  });
+  if (!shots.length) {
+    console.error('screenshot: --class-matrix found no assets in the sprite manifest.');
+    process.exit(1);
+  }
+  return shots;
+}
+
 // --viewport WxH. The window size was hardcoded to the desktop shape, so this
 // tool could only ever answer "how does it look on a desktop". RUNBOOKS/art.md
 // §§145-150,181-192 wants an art change previewed at a phone size too, and a
@@ -198,9 +238,20 @@ const MAX_TRIES = 4;
 async function captureStable(shot) {
   const out = resolve(outDir, `${shot.name}.png`);
   const probe = resolve(outDir, `.${shot.name}.probe.png`);
+  // EVERY exit that is not "reproduced" takes the files with it. A capture that
+  // failed its probe — the probe browser did not launch, or wrote nothing — is
+  // exactly as unverified as one that disagreed with it, and leaving the first
+  // frame on disk puts an unreproduced PNG in the evidence folder where it can
+  // be staged or read as evidence. A nonzero exit does not undo that; the file
+  // is the thing people look at.
+  const giveUp = () => {
+    rmSync(out, { force: true });
+    rmSync(probe, { force: true });
+    return false;
+  };
   for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
-    if (!(await capture(shot))) return false;
-    if (!(await capture({ ...shot, name: `.${shot.name}.probe` }))) return false;
+    if (!(await capture(shot))) return giveUp();
+    if (!(await capture({ ...shot, name: `.${shot.name}.probe` }))) return giveUp();
     const a = createHash('sha256').update(readFileSync(out)).digest('hex');
     const b = createHash('sha256').update(readFileSync(probe)).digest('hex');
     rmSync(probe, { force: true });
@@ -209,12 +260,22 @@ async function captureStable(shot) {
     console.error(`    ${shot.name}: frame not reproducible (try ${attempt}/${MAX_TRIES})${more}`);
   }
   console.error(`  ✗ ${shot.name}: no reproducible frame in ${MAX_TRIES} tries; NOT evidence.`);
-  rmSync(out, { force: true });
-  return false;
+  return giveUp();
 }
 
+// With --class-matrix the five sample class shots are REPLACED, not joined, by
+// the full twenty. Keeping both would photograph the same sprite twice under
+// two names (`class-rogue` and `class-rogue-gold`), and two names for one file
+// is how an evidence folder starts lying about what it covers.
+const SAMPLE_CLASS_SHOTS = new Set([
+  'class-reaver', 'class-starseer', 'class-rogue', 'class-herald', 'class-rogue-ember',
+]);
+const RUN = CLASS_MATRIX
+  ? [...SHOTS.filter((s) => !SAMPLE_CLASS_SHOTS.has(s.name)), ...classMatrixShots()]
+  : SHOTS;
+
 let failed = 0;
-for (const shot of SHOTS) {
+for (const shot of RUN) {
   const ok = shot.stable ? await captureStable(shot) : await capture(shot);
   if (!ok) failed++;
 }
