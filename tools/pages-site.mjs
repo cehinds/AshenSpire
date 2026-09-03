@@ -380,12 +380,91 @@ function check(outDir) {
   return checks;
 }
 
+/**
+ * THE ORACLE IS WRITTEN BY HAND HERE, NOT READ BACK FROM THE GENERATOR.
+ *
+ * Codex, on 2a607ca1: the selftest below took its expected page list from
+ * `builds.json` — which `discoverPages` had just written. So a regression that
+ * dropped SOME pages wrote a shorter manifest, `check()` verified that shorter
+ * manifest, both plants passed, and the run printed OK over an incomplete
+ * index. The empty-discovery guard added in the previous commit catches only
+ * the TOTAL failure; a partial one had nothing looking at it. A test whose
+ * expected value comes from the thing under test is not a test.
+ *
+ * This gives discovery a tree whose right answer is known because this
+ * function built it, and an expected list typed out below rather than derived
+ * from anything the tool produces. Every line of the fixture is a rule:
+ * a nested page is kept, a deeper one is kept (no depth cap), a section with an
+ * index is one entry, a page inside that section is not a second entry, a
+ * nested index under it is not a third, `tools/` and `tests/` are harness,
+ * `dist/` is build output, a dot directory is not a page, a branch directory is
+ * the generator's own, and the label is the page's own <title>.
+ *
+ * It is a fixture, not a second copy of the rule: it states OUTCOMES for one
+ * fixed input. A deliberate rule change rewrites this list; an accidental one
+ * fails it.
+ */
+function discoveryFixture() {
+  const dir = mkdtempSync(join(tmpdir(), 'pages-site-fixture-'));
+  // PLANTED IS COUNTED, NOT TYPED. The line that reports this fixture used to
+  // spell "8 files excluded" as a literal, which is the same second-copy shape
+  // that once had `opsctl.test.mjs` spelling its contract count into its own
+  // label: add a file below and the sentence starts lying with nothing to catch
+  // it. `planted` is incremented by the writer, so the arithmetic cannot drift.
+  let planted = 0;
+  const put = (rel, title) => {
+    mkdirSync(join(dir, dirname(rel)), { recursive: true });
+    writeFileSync(join(dir, rel), `<!doctype html><title>${title}</title>\n`, 'utf8');
+    planted++;
+  };
+  put('index.html', 'the build index — ours, never a page');
+  put('index-game.html', 'Play AshenSpire');
+  put('docs/component-catalog.html', 'Component catalog');
+  put('docs/guides/setup.html', 'Setup guide');
+  put('hud/index.html', 'Owner HUD');
+  put('hud/extra.html', 'a page the HUD section speaks for');
+  put('hud/panel/index.html', 'a nested section under an indexed one');
+  put('tools/palette-probe.html', 'a developer probe');
+  put('tests/index.html', 'the browser test runner');
+  put('dist/index.html', 'build output');
+  put('.private/secret.html', 'inside a dot directory');
+  put(`${BRANCHES[0]}/1/index.html`, 'a served build');
+
+  // THE ANSWER, IN ORDER, WITH LABELS. Order is part of the assertion: the
+  // generator sorts by href, so a comparison that ignored order would stop
+  // testing the sort. No count is written here — the counts in the OK line are
+  // derived from this list and from `planted`, for the reason above.
+  const expected = [
+    ['docs/component-catalog.html', 'Component catalog'],
+    ['docs/guides/setup.html', 'Setup guide'],
+    ['hud/', 'Owner HUD'],
+    ['index-game.html', 'Play AshenSpire'],
+  ];
+  const got = discoverPages(dir, new Set([...BRANCHES, 'index.html', 'builds.json'])).map((p) => [p.href, p.title]);
+  rmSync(dir, { recursive: true, force: true });
+
+  const same = got.length === expected.length && expected.every(([h, t], i) => got[i][0] === h && got[i][1] === t);
+  if (!same) {
+    console.error('MISS discovery does not match the hand-written fixture');
+    for (const [h, t] of expected) console.error(`  expect  ${h}  "${t}"`);
+    for (const [h, t] of got) console.error(`  got     ${h}  "${t}"`);
+  }
+  return { same, kept: expected.length, excluded: planted - expected.length };
+}
+
 function boundary() {
   console.log(`BOUNDARY: this proves each served build is byte-identical to the commit it names and that every index links every build it lists. It does not run any build, does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
 }
 
 try {
   if (has('--selftest')) {
+    // THE FIXTURE RUNS FIRST AND ITS ANSWER IS NOT THE GENERATOR'S. Everything
+    // below reads the manifest discovery wrote, so it can only ever check the
+    // pages discovery already found. This one line is the only part of the
+    // selftest that can say discovery found the WRONG SET.
+    const fixture = discoveryFixture();
+    const fixtureOk = fixture.same;
+    if (fixtureOk) console.log(`OK discovery matches the hand-written fixture: ${fixture.kept} page(s) kept, ${fixture.excluded} excluded, labels from each page's own <title>`);
     const dir = mkdtempSync(join(tmpdir(), 'pages-site-selftest-'));
     const { checks, branchData } = assemble(dir, 1);
     // Plant: corrupt one served build and prove --check goes red for it by name.
@@ -455,7 +534,8 @@ try {
     if (!caught2) process.exitCode = 1;
     rmSync(dir, { recursive: true, force: true });
     if (!repairClean) process.exitCode = 1;
-    if (!process.exitCode) console.log(`pages-site selftest: OK — 2 known-bads, 2 caught (${discovered.length} page(s) discovered)`);
+    if (!fixtureOk) process.exitCode = 1;
+    if (!process.exitCode) console.log(`pages-site selftest: OK — fixture exact, 2 known-bads, 2 caught (${discovered.length} page(s) discovered from the real tree)`);
   } else if (has('--check')) {
     const n = check(flag('--check', '_site'));
     if (!process.exitCode) console.log(`pages-site --check: OK — ${n} checks passed`);
