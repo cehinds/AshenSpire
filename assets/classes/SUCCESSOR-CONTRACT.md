@@ -13,6 +13,31 @@ QA | Requested. Candidate frozen and handed to an independent non-maker reviewer
 > not be read as approving the look of all four. AC6 below does not gate look —
 > see `LOOK-REFERENCE-ROGUE.md` §4. This contract's geometry, alpha and
 > provenance findings are unaffected; its "four approved crops" reading is not.
+>
+> **SUPERSEDED AGAIN — owner decision, 2026-09-03. Read this one first.**
+> The remodel direction above is **closed, not outstanding.** The owner directed
+> that the **class concept art itself be cut out and shipped for all four
+> classes**, which is what `assets/sprites/*.webp` now carries
+> (`tools/concept-cutout.mjs`).
+>
+> Two consequences, recorded so nothing downstream reads the 09-02 ruling as
+> still pending:
+>
+> 1. **"Remodel the other three to match rogue" no longer applies to shipped
+>    art.** It was a direction for the Blender builders. Rendering them proved
+>    the point moot: every class scored *worse* against the approved envelope,
+>    rogue included at 5 traits off its own reference. Stacked primitives cannot
+>    reach a painted target. The builders remain in `tools/sprites-blender.py`
+>    and still work; they no longer produce the shipped class art.
+> 2. **Starseer keeps its blue.** The concept is painted blue, and the concepts
+>    ship as painted. The warm-earth recolour in the builder is now dead code as
+>    far as shipped art is concerned.
+>
+> **Provenance is resolved.** §5.1 below records the per-file provenance gap as
+> a blocker. Owner statement, 2026-09-03: the concept art is **AI-generated,
+> produced with ChatGPT Codex for this project**. `CREDITS.md` carries it as
+> first-party CC0 with the AI origin disclosed, per `RUNBOOKS/art.md` §11. The
+> creator was unrecorded, not unknowable.
 
 ## 1. The clause this closes
 

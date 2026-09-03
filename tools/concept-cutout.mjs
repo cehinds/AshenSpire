@@ -337,6 +337,24 @@ function withRim(img, rgb, depth = 3, strength = 0.85) {
   return { width: w, height: h, px: out };
 }
 
+// cwebp is an external binary and this repo has no package manifest, so nothing
+// installs it for you. Fail here, once, naming it — rather than part-way through
+// the first class with `spawnSync cwebp ENOENT`, which says nothing about what
+// to install. CREDITS.md advertises this command as the way to regenerate the
+// sprites, so it has to be honest about what it needs on a clean clone.
+try {
+  execFileSync('cwebp', ['-version'], { stdio: 'ignore' });
+} catch {
+  console.error(
+    'cwebp not found. This tool encodes the sprites as WebP and cannot run without it.\n'
+    + '  Debian/Ubuntu : sudo apt-get install webp\n'
+    + '  macOS         : brew install webp\n'
+    + '  Fedora        : sudo dnf install libwebp-tools\n'
+    + 'It provides both cwebp (encode) and dwebp (decode, used to inspect output).',
+  );
+  process.exit(1);
+}
+
 const outDir = (() => {
   const i = process.argv.indexOf('--out');
   return i > -1 ? process.argv[i + 1] : join(root, 'assets', 'sprites');
