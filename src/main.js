@@ -1553,6 +1553,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       equipmentAttackSlotCount: run.equipmentAttackSlotCount,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
       itemUpgradeLevels: run.itemUpgradeLevels,
+      itemMounts: run.itemMounts,
       armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,

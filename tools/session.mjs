@@ -429,6 +429,7 @@ export function createSession({ registries, seedString, endless = false, restore
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
+      itemMounts: m.run.itemMounts ? structuredClone(m.run.itemMounts) : undefined,
       // THE SEAT'S POISE THRESHOLD, derived the way the solo engine derives it
       // (combat.js: the armour rule over the loadout, relics and tiers). The
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
@@ -1180,6 +1181,7 @@ export function createSession({ registries, seedString, endless = false, restore
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       smithingStones: m.run.smithingStones,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
+      itemMounts: m.run.itemMounts ? structuredClone(m.run.itemMounts) : undefined,
       ...(m.run.lastSmithingReceipt
         ? { lastSmithingReceipt: structuredClone(m.run.lastSmithingReceipt) }
         : {}),
