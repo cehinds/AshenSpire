@@ -86,10 +86,24 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   return dmg < 0 ? 0 : dmg;
 }
 
-/** One derivation for live actions and previews: card identity comes from CSV. */
-export function attackTagsFor(action, effect) {
+/**
+ * One derivation for live actions and previews: card identity comes from CSV.
+ *
+ * `registries` is the ACTIVE content, and it is read before the module-global
+ * fold in content/tags.js: a run built from an extended or overridden bundle
+ * stamps its cards from the rows it supplied, so resolving through the global
+ * would answer for the shipped rows instead — a custom tag never reaching the
+ * tag-scoped vulnerabilities that consume this. The global stays the fallback
+ * for callers with no registries to hand (isolated engine fixtures).
+ */
+export function attackTagsFor(action, effect, registries) {
   if (action.card && Array.isArray(action.card.tags) && action.card.tags.length) return action.card.tags;
-  return damageTagIds(action.card && action.card.cardId, effect.tags);
+  const cardId = action.card && action.card.cardId;
+  if (cardId && registries && registries.cards && registries.cards.has(cardId)) {
+    const stamped = registries.cards.get(cardId).tags;
+    if (Array.isArray(stamped) && stamped.length) return stamped;
+  }
+  return damageTagIds(cardId, effect.tags);
 }
 
 /**
@@ -437,7 +451,7 @@ function runOpcode(ctx, action, eff) {
     case 'damage': {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
-      const attackTags = attackTagsFor(action, eff);
+      const attackTags = attackTagsFor(action, eff, ctx.registries);
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.

@@ -2126,9 +2126,14 @@ export function stampDeck(registries, run, cards, {
   // ("attack instance count 3 does not match authored 4"). The authoritative
   // full-deck restamp therefore reads the count off the deck itself; a subset
   // restamp keeps the old behaviour, since a pile is not the whole truth.
-  const bornWith = cards == null
-    ? list.filter((card) => card.equipmentRole === 'attack').length
-    : undefined;
+  // `run.deck` — NOT `list`. A subset restamp is handed one pile, and combat
+  // calls this once per pile, so reading the count off the subset threw the
+  // quota away exactly when it was most needed: the pile holding attack:3
+  // failed with "unknown equipmentAttackSlotId 'attack:3'" mid-swap. The whole
+  // deck is on the run in both cases and is the record of what the run was born
+  // with, so both paths read the same number from the same place.
+  const attacksBorn = (run.deck || []).filter((card) => card && card.equipmentRole === 'attack').length;
+  const bornWith = attacksBorn || undefined;
   const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith });
   for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
     const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];

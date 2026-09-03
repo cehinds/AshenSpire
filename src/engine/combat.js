@@ -899,7 +899,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     const primary = firstResolvedTarget(combat, action, eff);
     switch (eff.op) {
       case 'damage': {
-        const attackTags = A.attackTagsFor(action, eff);
+        const attackTags = A.attackTagsFor(action, eff, combat.registries);
         const base = evalPreview(combat, action, eff.amount, primary);
         entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, action.card);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);

@@ -9,6 +9,7 @@ import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
+import { attackTagsFor } from '../src/engine/actions.js';
 import { tagContentProblems } from '../src/model/tags.js';
 import { boundGrantCardIds, boundGrantProblems } from '../src/model/loadout.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
@@ -2221,6 +2222,44 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
     assert(!kits.some((k) => k.rightHand === 'greatsword' && k.leftHand === 'buckler'),
       'and that pair is in no authored kit, which is why the kit table could not have found it');
+  });
+
+  // ---- 26h. the fifth round: both threads closed, not narrowed -------------
+  test('26h. every restamp path reads one quota, and the engine reads the active registries', () => {
+    // Round four fixed the FULL restamp by reading the count off the deck, and
+    // left the subset path recomputing. Combat calls stampDeck once per pile,
+    // so the pile holding attack:3 threw mid-swap. The whole deck is on the run
+    // in BOTH cases, so both read the same number from the same place.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'dagger', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries(granting);
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    const born = run.deck.filter((c) => c.equipmentRole === 'attack').length;
+    eq(born, 4, 'the straight sword grants nothing, so the run is born with four attacks');
+    run.loadout.sets.rightHand[0] = 'dagger'; // bound: two grants, so a replan would say three
+    stampDeck(reg, run, run.deck.filter((c) => c.equipmentRole === 'attack'));
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'a per-pile restamp keeps the birth quota');
+    stampDeck(reg, run);
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'and so does the whole-deck one');
+
+    // Round three routed the equipment fit index through the supplied bundle
+    // and left a second consumer of the module-global fold: the action engine's
+    // own tag read, which feeds tag-scoped vulnerabilities.
+    const extended = JSON.parse(JSON.stringify(contentBundle));
+    extended.tagging.push({ family: 'card', scope: '', objectId: 'strike', tagId: 'venom' });
+    const extReg = createRegistries(extended);
+    const action = { card: { cardId: 'strike' } };
+    eq(attackTagsFor(action, {}, extReg).join('|'), extReg.cards.get('strike').tags.join('|'),
+      'the engine answers from the registries it was given');
+    assert(attackTagsFor(action, {}, extReg).includes('venom'), 'including a tag only the supplied bundle carries');
+    eq(attackTagsFor(action, {}).join('|'), 'blade', 'and falls back to the shipped fold with no registries to hand');
+    // An instance carrying its own tags still wins — equipment-generated cards.
+    eq(attackTagsFor({ card: { cardId: 'strike', tags: ['guard'] } }, {}, extReg).join('|'), 'guard',
+      'a stamped instance still answers for itself');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
