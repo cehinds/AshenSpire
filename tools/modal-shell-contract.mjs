@@ -152,6 +152,16 @@ check('the header actions sit at the top, not centred against the title',
   /align-self:\s*flex-start/.test(headActions),
   'without align-self the close control drifts down beside a two-line identity');
 
+// ---- 4c. a label can never leave its control -----------------------------
+// The four declarations are ONE recipe; a control missing any of them can
+// bleed. Checked as a set on the shell's own text-bearing controls, because
+// the defect was found five times on five controls and fixed once.
+const contained = chromeBlock('.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note, .modal-head-id h2');
+for (const decl of ['min-width: 0', 'overflow: hidden', 'text-overflow: ellipsis', 'white-space: nowrap']) {
+  check(`shell labels declare ${decl}`, contained.includes(decl),
+    'a single-line label needs all four to be unable to bleed');
+}
+
 // ---- 5. head and foot are inset by ONE number, all four sides ------------
 const chrome = stripComments(css);
 // ONE INSET, ONE TOKEN, EVERY PART OF EVERY MODAL. Four different insets were

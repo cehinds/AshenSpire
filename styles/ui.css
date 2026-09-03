@@ -349,7 +349,27 @@
    exceed; `white-space: nowrap` so what yields under pressure is the PADDING
    and never the line count. */
 .modal-btnrow { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 8px; min-width: 0; }
-.modal-btnrow > button { white-space: nowrap; text-align: center; }
+/* UNIVERSAL CONTAINMENT FOR A SINGLE-LINE LABEL, every part load-bearing.
+   Constantine, 2026-09-03, after photographing five clips (Back to Shrine,
+   More details, Save and Quit twice, the cost badge): "all objects and
+   components of components should be contained in their parent container and
+   not bleed out of it." Five screenshots, one defect, one rule:
+     min-width: 0         a flex item defaults to `min-width: auto`, which
+                          REFUSES to shrink below its content. That refusal is
+                          what pushed labels out of their rows — the single
+                          most common cause of a bleed in a flex layout.
+     white-space: nowrap  a control's label is one line; a wrap grows the box
+                          and, in a modal foot, the whole shell.
+     overflow: hidden     the box clips instead of letting ink escape.
+     text-overflow:       and the clip is legible — `…`, not a severed glyph.
+       ellipsis
+   Together: a label can never leave its control. Padding yields first (the
+   ladder's basis), then it truncates — and a truncated label is exactly a
+   control that "has more to say", so its full text belongs on its tooltip. */
+.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note, .modal-head-id h2 {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.modal-btnrow > button { text-align: center; }
 /* THE STEP IS A BASIS, NOT A FLOOR — and that distinction is the whole bug.
    As `min-width` the step was a hard minimum: two `medium` buttons wanted
    30rem, a 36rem panel's foot had less than that after its note, `nowrap`
