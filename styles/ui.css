@@ -4000,7 +4000,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   color: var(--parchment);
-  /* The Inspect row un-hides the description INSIDE the panel, so its height is
+  /* The description is shown from the first paint, so this panel's height is
      content the player can author (Law 1: a long flask text is one table edit
      away). The cap is recomputed by flask.js against the room below the slot;
      `hidden auto` so the overflow can only ever be vertical (Law 5 clause 1). */
@@ -4010,10 +4010,52 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding: 8px 14px 6px; font-family: var(--font-display);
   font-size: 1.3rem; letter-spacing: 0.05em; color: var(--gold);
 }
+/* NOT a fold any more. This was `hidden` until Inspect was pressed; it is the
+   menu's opening state now, and the rule it always had is the rule it keeps —
+   one hairline under it separating what the flask IS from what you can DO with
+   it, which is the same grouping the quick menu draws between its row kinds. */
 .flask-action-detail {
   padding: 0 14px 8px; margin-bottom: 4px;
   border-bottom: 1px solid var(--line);
   font-size: 1.15rem; line-height: 1.5; color: var(--muted);
+}
+
+/* ---- the flask inspect door (flask.js openFlaskInspectModal) --------------
+   Inspect used to grow the 280 px action menu by one paragraph. It opens a
+   modal now, and that modal wears the house chrome: `.modal` for the panel,
+   `.modal-head` for the title row and its ONE close control, `.modal-foot` for
+   the way out. Everything below is BODY — the part modalShell.js deliberately
+   does not own — and nothing here restates a chrome number. */
+.flask-inspect-modal { width: 44rem; max-width: 92%; padding: 0; display: flex; flex-direction: column; }
+.flask-inspect-title { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+/* The uppercase muted eyebrow the confirmation modal and the class panes
+   already use to name WHAT KIND of thing the title below is. One idiom. */
+.flask-inspect-eyebrow {
+  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+}
+.flask-inspect-modal .modal-head h2 { margin: 0; font-size: 2rem; }
+.flask-inspect-body {
+  display: flex; align-items: flex-start; gap: 1.6rem;
+  padding: 1.8rem 1.6rem; overflow: hidden auto;
+}
+/* THE WHOLE POINT OF THE BIGGER DOOR IS THAT THE ART IS BIGGER. The HUD slot
+   draws this same identity at tap size; here it gets room to be looked at.
+   `flex: 0 0 auto` so a long description cannot squeeze the art thinner than
+   the square the tint ring is drawn against. */
+.flask-inspect-art { flex: 0 0 auto; }
+/* FONT SIZE, NOT WIDTH. `.flask-art` is `1.8em` square and its glyph fallback
+   is `1.35em` inside that, so overriding the width would have grown the box and
+   left an art-less flask drawing a thumbnail glyph in the middle of it. Scaling
+   the type scales both, and the box shape keeps its one home above. */
+.flask-inspect-art .flask-art { font-size: 5.3rem; }
+.flask-inspect-lines { min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+.flask-inspect-lines p { margin: 0; font-size: 1.35rem; line-height: 1.55; color: var(--parchment); }
+/* The charge count is a fact about this run, not part of what the flask does,
+   so it reads quieter than the effect above it. */
+.flask-inspect-lines p + p { color: var(--muted); font-size: 1.2rem; }
+@media (max-width: 640px) {
+  .flask-inspect-body { flex-direction: column; align-items: center; text-align: center; padding: 1.2rem; }
+  .flask-inspect-lines { align-items: center; }
 }
 /* A menu ROW, not a button-shaped button: the base `button` rule is a gold
    2 px pill with 26 px of side padding, which in a 150 px column reads as three
