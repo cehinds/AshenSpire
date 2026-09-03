@@ -569,8 +569,17 @@ async function selftest(doc, raw, schema) {
   ];
 
   let passed = 0;
-  // Rises where an inline check is MADE, so the denominator below follows the
-  // corpus instead of restating it.
+  // TWO NUMBERS, BECAUSE THEY ANSWER TWO QUESTIONS. `inlineChecks` rises where a
+  // check is MADE, so the printed denominator is what ran. EXPECTED_INLINE is a
+  // DECLARATION and stays a literal on purpose: derived from the same sites that
+  // feed `passed`, the denominator can never catch a check that was DELETED —
+  // both sides fall together and the run goes green one case lighter. Measured,
+  // not assumed: removing the markdown-link check below reports `OK — 23/23`
+  // with only the derived form, and `RED — 23/24` with this declaration.
+  //
+  // Deriving a count of what the corpus DID is right. Deriving the count of what
+  // it MUST DO deletes the check.
+  const EXPECTED_INLINE = 2;
   let inlineChecks = 0;
   const inline = (ok) => { inlineChecks += 1; if (ok) passed += 1; };
   for (const [name, plant, expected, plantNow = now] of plants) {
@@ -605,9 +614,11 @@ async function selftest(doc, raw, schema) {
   console.log(`  ${linkOk ? 'PASS' : 'FAIL'} missing Markdown target is caught`);
   inline(linkOk);
 
-  // THE TWO INLINE CHECKS COUNT THEMSELVES. This was `plants.length + 2`, a
-  // second copy of the pruning and markdown-link cases above: add a third and
-  // `passed` outruns a denominator that never moved, so a green run reports RED.
+  if (inlineChecks !== EXPECTED_INLINE) {
+    console.error(`continuity selftest: RED — ${inlineChecks} inline checks ran, ${EXPECTED_INLINE} declared.`
+      + ' One was added or removed and the declaration did not move. Update EXPECTED_INLINE in this file.');
+    return 1;
+  }
   const total = plants.length + inlineChecks;
   if (passed !== total) {
     console.error(`continuity selftest: RED — ${passed}/${total} clean/known-bad cases discriminated`);

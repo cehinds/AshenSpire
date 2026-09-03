@@ -571,7 +571,7 @@ function ordinalHistory() {
   return { failures, cases: CASES.length };
 }
 
-/** Returns the number of failures; prints one line per case. */
+/** Returns { failures, cases }; prints one line per case. `cases` is what RAN. */
 function traceability() {
   const dir = freshRepo();
   let failures = 0;
