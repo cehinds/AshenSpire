@@ -1114,6 +1114,15 @@ async function selftest() {
   // still PASS. The header said "Four" while the list held seven — a count
   // spelled beside a corpus instead of read from it, which is the defect #579
   // fixed in buildversion-selftest and which had a second copy right here.
+  // Rises where an inverted case is actually counted, so the census below reads
+  // the corpus instead of spelling it — and EXPECTED_INVERTED stays a literal
+  // beside it, because `inverted++` sits on the same statement as `caught++`.
+  // Derived alone, that term is a TAUTOLOGY: the census `caught !== grandTotal`
+  // can never fire for it, so an inverted case that stops running is invisible.
+  // Measured: stubbing that line reports `OK — 68 known-bads, 68 caught` at
+  // exit 0 without this declaration, and exit 1 with it.
+  const EXPECTED_INVERTED = 1;
+  let inverted = 0;
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
     ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
@@ -1178,7 +1187,7 @@ async function selftest() {
     // names 0.5.4, and a counter for 0.5.4 cannot speak for a 0.4.0 receipt.
     // Nothing exercised a retained 0.4 receipt against a ceiling at all.
     parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.4.0.1888')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' });
-    caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse, legacy global ordinals included');
+    caught++; inverted++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse, legacy global ordinals included');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
   }
@@ -1276,9 +1285,10 @@ async function selftest() {
     console.log('PASS escaped backticks stay literal instead of opening a code span');
   } catch (error) { console.error(`FAIL escaped backticks: ${error.message}`); process.exitCode = 1; }
   // Census over EVERY family that does caught++ — the ordinal plants and the
-  // inverted legitimate-shapes control (+1) count themselves too; omitting
-  // them made the selftest exit 1 with all plants caught and zero MISS (#498).
-  const total = parserPlants.length + ordinalPlants.length + 1 + modelPlants.length;
+  // inverted legitimate-shapes control count themselves too; omitting them made
+  // the selftest exit 1 with all plants caught and zero MISS (#498). `inverted`
+  // is checked against its declaration above, since this term alone cannot.
+  const total = parserPlants.length + ordinalPlants.length + inverted + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
   // the file rather than from a string handed to the parser. All three of these
@@ -1680,6 +1690,11 @@ async function selftest() {
     }
   }
   const grandTotal = total + treePlants.length;
+  if (inverted !== EXPECTED_INVERTED) {
+    console.error(`about-changelog selftest: RED — ${inverted} inverted case(s) ran, ${EXPECTED_INVERTED} declared.`
+      + ' Update EXPECTED_INVERTED in this file, or restore the case that stopped running.');
+    process.exitCode = 1;
+  }
   if (caught !== grandTotal || !good.length) process.exitCode = 1;
   // Terminal line in a verdict.mjs-accepted form ("label: OK — N <words>, N caught").
   else if (!process.exitCode) console.log(`about-changelog selftest: OK — ${caught} known-bads, ${caught} caught`);
