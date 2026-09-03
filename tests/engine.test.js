@@ -63,7 +63,7 @@ import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
+  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
@@ -2459,6 +2459,66 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const reservedSaid = tagContentProblems(reserved, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
     assert(/reserved for the itemType domain/.test(reservedSaid),
       `a card-domain '${'item:'}' id is refused by name — said ${JSON.stringify(reservedSaid.slice(0, 180))}`);
+  });
+
+  // ---- 26m. the ninth round: the budget counts every card that lands ------
+  test('26m. deck size is an integer, and the package layer is in the budget', () => {
+    // A HOLE I OPENED. The legacy roleCopies sum used to IMPLY that
+    // startingDeckSize was an integer — a fraction can never equal a sum of
+    // integer copies — and round four gated that check on the composed path
+    // being off. Nothing replaced the implication, so 10.5 validated clean and
+    // planned guardCount 4.5, which the copy loop turned into five guards.
+    const fractional = JSON.parse(JSON.stringify(contentBundle));
+    fractional.balance.startingDeckSize = 10.5;
+    const fracReg = createRegistries(fractional);
+    const fracSaid = validateEquipment(fracReg).join(' | ');
+    assert(/startingDeckSize must be a non-negative integer/.test(fracSaid),
+      `a fractional deck size is refused by name — said ${JSON.stringify(fracSaid.slice(0, 160))}`);
+    eq(createRunState({ seed: 1, classId: 'reaver', registries: fracReg }).deck.length, 11,
+      'and 11 is what it silently produced, which is why the door had to say so');
+
+    // THE PACKAGE LAYER ADDS REAL CARDS. `grantedCards` is a live-but-dormant
+    // seam: nothing ships one, the mechanism validates and composes, and
+    // reconcileGrantedCards installs the instances at run creation. The budget
+    // counted only bound-table grants, so a package granting three Defends
+    // reported a size-10 plan and then built a 13-card deck. It is counted from
+    // the SAME function that mints them, not a second list beside it.
+    const packaged = (count) => {
+      const b = JSON.parse(JSON.stringify(contentBundle));
+      const sword = b.equipment.armaments.find((p) => p.id === 'straightSword');
+      sword.weaponCardPackage = {
+        compatibility: 'attack-v1',
+        fillerAttackProfileId: sword.attackProfile,
+        grantedCards: [{ cardId: 'defend', count }],
+      };
+      return createRegistries(b);
+    };
+    const fits = packaged(3);
+    eq(validateEquipment(fits).length, 0, 'three package grants still fit a ten-card deck');
+    eq(createRunState({ seed: 1, classId: 'reaver', registries: fits }).deck.length,
+      contentBundle.balance.startingDeckSize,
+      'and the deck is the authored size, because the filler made room for them');
+
+    const busts = validateEquipment(packaged(8)).join(' | ');
+    assert(/from an equipped weapon package/.test(busts),
+      `an overrun names the package as the cause — said ${JSON.stringify(busts.slice(0, 200))}`);
+
+    // WEAPON ARTS ARE NAMED, NOT COUNTED, AND THAT IS DELIBERATE. Arts are
+    // minted by the same function and are equally real cards, but two SHIPPED
+    // classes already carry one, putting them at eleven against an authored
+    // ten. That predates this branch — tools/class-loadouts.mjs is red about
+    // exactly it on origin/dev — so counting it would fail the shipped bundle
+    // over a content question this branch cannot answer. Warned, not refused.
+    eq(validateEquipment(REG).length, 0, 'the shipped bundle still boots');
+    const warned = startingDeckWarnings(REG).join(' | ');
+    for (const classId of ['starseer', 'herald']) {
+      assert(new RegExp(`${classId}: the weapon-art layer adds`).test(warned),
+        `${classId}'s extra card is stated rather than swallowed — said ${JSON.stringify(warned.slice(0, 200))}`);
+    }
+    for (const classId of ['starseer', 'herald']) {
+      eq(createRunState({ seed: 3, classId, registries: REG }).deck.length, 11,
+        `and ${classId} does begin with 11, which is the discrepancy the warning names`);
+    }
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

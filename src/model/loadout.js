@@ -1265,6 +1265,16 @@ function startingDeckFindings(registries) {
   if (!Number.isInteger(cfg.minFiller) || cfg.minFiller < 0) {
     problems.push(`startingDeck.minFiller must be a non-negative integer (got ${cfg.minFiller})`);
   }
+  // The DECK SIZE, held here because the composed path is now the only reader of
+  // it. The legacy roleCopies sum used to imply this — a fractional size could
+  // never equal a sum of integer copies — and gating that check on the composed
+  // path being off (round four) removed the implication without replacing it.
+  // `10.5` then validated clean and planned `guardCount: 4.5`, which the copy
+  // loop turned into five guards and an eleven-card deck.
+  const authoredSize = (registries.balance || {}).startingDeckSize;
+  if (!Number.isInteger(authoredSize) || authoredSize < 0) {
+    problems.push(`startingDeckSize must be a non-negative integer (got ${JSON.stringify(authoredSize)}) — the composed plan divides it into role counts, and a fraction becomes a card that half exists`);
+  }
   // The DEFAULT bias, held to the same rule as an override. A class with no
   // override falls back to it, so a malformed default is not a cosmetic typo:
   // it reaches startingDeckPlan as NaN and run creation dies restamping against
@@ -1286,6 +1296,34 @@ function startingDeckFindings(registries) {
   problems.push(...boundGrantProblems(registries));
   if (cfg.enabled !== true || problems.length) return { problems, warnings };
 
+  // WEAPON ARTS, NAMED RATHER THAN COUNTED. The package layer mints art
+  // instances into the starting deck alongside its grants, and they are real
+  // cards — but two shipped classes already carry one, which puts their decks at
+  // eleven against an authored ten. That is older than this branch
+  // (tools/class-loadouts.mjs is red about exactly it on origin/dev) and it is a
+  // content question, not a validation bug: either the size is wrong or the art
+  // should not count toward it. Refusing here would fail the shipped bundle over
+  // a call this branch has no standing to make, and staying silent is how it
+  // went unnoticed. So it is stated, per class, and left to its owner.
+  for (const classId of registries.classes.ids()) {
+    // A validation pass never throws on bad content — a bundle whose slots or
+    // profiles are broken is named by the rules that own them, and this one has
+    // nothing useful to say about it.
+    let arts = 0;
+    let loadout = null;
+    let plan = null;
+    try {
+      loadout = createLoadout(registries, classId);
+      arts = desiredGrantInstances(registries, { loadout, class: classId })
+        .filter((inst) => inst.equipmentRole === 'weaponArt').length;
+      plan = arts ? startingDeckPlan(registries, loadout, classId) : null;
+    } catch { continue; }
+    if (!arts) continue;
+    if (plan && plan.size + arts > registries.balance.startingDeckSize) {
+      warnings.push(`${classId}: the weapon-art layer adds ${arts} card(s) on top of a ${plan.size}-card composed plan, so this class begins with ${plan.size + arts} against an authored startingDeckSize of ${registries.balance.startingDeckSize} — arts are not in the composed budget, and whether they should be is a content call`);
+    }
+  }
+
   // The budget itself, against EVERY loadout a player can actually begin in —
   // not just the baseline kit. An alternate kit is chosen at character creation
   // and can carry different grants, so checking only the baseline leaves the
@@ -1302,8 +1340,10 @@ function startingDeckFindings(registries) {
         continue;
       }
       if (!plan || !plan.overrun) continue;
-      const detail = `class '${classId}' ${label} grants ${plan.grants.length} card(s) and minFiller is `
-        + `${plan.minFiller}, needing ${plan.grants.length + plan.minFiller} of `
+      const granted = plan.grants.length + (plan.packageGrants || 0);
+      const fromPackage = plan.packageGrants ? ` (${plan.packageGrants} of them from an equipped weapon package)` : '';
+      const detail = `class '${classId}' ${label} grants ${granted} card(s)${fromPackage} and minFiller is `
+        + `${plan.minFiller}, needing ${granted + plan.minFiller} of `
         + `startingDeckSize ${registries.balance.startingDeckSize}`;
       // One line per distinct overrun. Without this an overrun that does not
       // depend on the armour repeats once per combination, burying the ones
@@ -1527,12 +1567,34 @@ export function startingDeckPlan(registries, loadout, classId) {
   const rows = equipmentKitPlan(registries, loadout, classId);
   const grants = grantRefsFor(registries, loadout, classId, cfg, rows.find((row) => row.role === 'technique'));
 
-  const needed = grants.length + minFiller;
+  // THE PACKAGE LAYER ADDS REAL CARDS TOO, so the budget counts them — from the
+  // SAME function that mints them (desiredGrantInstances), never a second list
+  // that could drift. They are counted but NOT pushed into `grants`: this plan
+  // is also the deal-out list, and reconcileGrantedCards installs these
+  // instances itself at run creation. Counting reserves the room; pushing would
+  // deal each card twice.
+  //
+  // Weapon ARTS are excluded on purpose, and the exclusion is the honest half of
+  // this. Arts are minted by the same function and are equally real cards — but
+  // two shipped classes (starseer, herald) already carry one, which puts them at
+  // eleven cards against an authored size of ten. That discrepancy predates this
+  // branch (tools/class-loadouts.mjs is red about it on origin/dev), and making
+  // it a boot refusal here would fail the shipped bundle over a content question
+  // this branch has no business answering. It is reported as a warning instead —
+  // visible, named, and someone's call rather than mine.
+  // A package that cannot be read is the WeaponCardPackageModel's own refusal to
+  // make, by name, wherever it is asked; counting is not the place to raise it,
+  // and swallowing it here would hide it — so the throw propagates exactly as it
+  // did before, and the caller that already wraps this reports it.
+  const packageGrants = desiredGrantInstances(registries, { loadout, class: classId })
+    .filter((inst) => inst.equipmentRole === 'granted').length;
+
+  const needed = grants.length + packageGrants + minFiller;
   const overrun = needed > authoredSize;
   // growToFit === true buys the shortfall with deck size; false keeps the size
   // and lets validateEquipment refuse the kit instead.
   const size = overrun && cfg.growToFit === true ? needed : authoredSize;
-  const filler = Math.max(0, size - grants.length);
+  const filler = Math.max(0, size - grants.length - packageGrants);
 
   const bias = Number(
     ((cfg.classes || {})[classId] || {}).strikeBias ?? cfg.defaultStrikeBias ?? 0.5
@@ -1547,6 +1609,10 @@ export function startingDeckPlan(registries, loadout, classId) {
     guardCount: filler - attackCount,
     bias,
     minFiller,
+    // Counted into the budget, dealt by reconcileGrantedCards rather than by
+    // this plan — so the overrun message can name them without `grants`
+    // pretending to be the deal-out list they are not on.
+    packageGrants,
     overrun,
     grewToFit: overrun && cfg.growToFit === true,
   });
