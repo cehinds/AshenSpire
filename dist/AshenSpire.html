@@ -53565,7 +53565,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e9da1f07e3';
+const SOURCE = 'f3f45f2871';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -53599,7 +53599,7 @@ const SOURCE = 'e9da1f07e3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '8';
+const ORDINAL = '9';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -75803,7 +75803,7 @@ function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onS
       b.className = `mod-chip lb-style${st.id === state.spriteStyle ? ' on' : ''}`;
       b.style.cssText = 'padding:5px 12px;font-size:12px;';
       b.innerHTML = `<b>${esc(st.name)}</b>`;
-      attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The rendered low-poly figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
+      attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The painted class figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
       b.addEventListener('click', () => {
         state.spriteStyle = st.id;
         localStorage.setItem('sote_lan_style', st.id);

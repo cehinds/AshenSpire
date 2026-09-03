@@ -35,7 +35,8 @@
 //
 // Usage: node tools/concept-cutout.mjs [--out <dir>]
 
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { inflateSync, deflateSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
@@ -385,8 +386,9 @@ function withRim(img, rgb, depth = 3, strength = 0.85) {
 // the first class with `spawnSync cwebp ENOENT`, which says nothing about what
 // to install. CREDITS.md advertises this command as the way to regenerate the
 // sprites, so it has to be honest about what it needs on a clean clone.
+let cwebpVersion = 'unknown';
 try {
-  execFileSync('cwebp', ['-version'], { stdio: 'ignore' });
+  cwebpVersion = `cwebp ${String(execFileSync('cwebp', ['-version'])).trim().split('\n')[0]}`;
 } catch {
   console.error(
     'cwebp not found. This tool encodes the sprites as WebP and cannot run without it.\n'
@@ -434,6 +436,7 @@ const usableW = OUT_W * (1 - 2 * MARGIN_SIDE);
 const scale = Math.min(usableH / tallest, usableW / widest);
 
 let written = 0;
+const manifestRows = [];
 for (const [cls, { cut, box }] of Object.entries(cuts)) {
   const cw = box.x1 - box.x0 + 1;
   const ch = box.y1 - box.y0 + 1;
@@ -469,8 +472,56 @@ for (const [cls, { cut, box }] of Object.entries(cuts)) {
     // an alias the child-process lookup never sees. CI declares a three-OS
     // matrix, so "works on my Linux" is not the bar.
     if (!process.argv.includes('--keep-png')) rmSync(png, { force: true });
+
+    // RUNBOOKS/art.md §3 requires an inventory row for every added, changed,
+    // replaced or removed binary. Emitted by the tool that writes the bytes,
+    // from the bytes themselves, so the record cannot drift from the file it
+    // describes — a hand-kept inventory of twenty binaries is wrong the first
+    // time anyone regenerates.
+    const webp = join(outDir, `${cls}_${tintId}.webp`);
+    const bytes = readFileSync(webp);
+    manifestRows.push({
+      asset_id: `class.sprite.${cls}.${tintId}`,
+      path: `assets/sprites/${cls}_${tintId}.webp`,
+      format: 'WebP, lossy q88, alpha_q 100, -exact (RGBA)',
+      dimensions: `${OUT_W}x${OUT_H}`,
+      bytes: bytes.length,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+      source_recipe: {
+        source_blob: CONCEPTS[cls],
+        source_path: `review-approval-hub/evidence/classes/${cls}-concept-v1.png`,
+        command: 'node tools/concept-cutout.mjs',
+        steps: 'edge flood-fill background removal, enclosed-pocket removal, '
+          + 'detached-speck removal, 3x3 feather, un-premultiply against white, '
+          + `box-filter downscale, bottom-align on ${OUT_W}x${OUT_H}, accent rim`,
+        tool_versions: { node: process.version, cwebp: cwebpVersion },
+      },
+      anchor: {
+        content_box_px: { w: dw, h: dh },
+        placed_at_px: { x: ox, y: oy },
+        baseline: `bottom-aligned, ${MARGIN_BOTTOM * 100}% margin; shared scale across all four classes`,
+      },
+      runtime_budget: 'embedded base64 in the single-file build; WebP chosen over '
+        + 'PNG for that reason (see tools/sprites-blender.py header)',
+      fallback_id: `CLASS_SVG.${cls} — inline SVG silhouette in src/ui/assets.js`,
+      provenance: 'AI-generated with ChatGPT Codex for this project (owner statement, '
+        + '2026-09-03); CC0. See CREDITS.md.',
+      consumers: ['src/ui/assets.js renderedSpriteUrl()', 'src/ui/assets.js classSprite()'],
+    });
     written++;
   }
   console.log(`${cls.padEnd(9)} framed ${dw}x${dh} at (${ox},${oy}) -> 5 tints`);
 }
-console.log(`\nWROTE ${written} sprites to ${outDir}`);
+
+const manifestPath = join(outDir, 'class-sprites.manifest.json');
+writeFileSync(manifestPath, `${JSON.stringify({
+  schema: 'ashenspire.binary-asset-manifest/1',
+  ticket: 'AS-HD-040',
+  covers: 'RUNBOOKS/art.md §3 — binary asset manifest',
+  generated_by: 'node tools/concept-cutout.mjs',
+  replaces: 'the previous Blender-rendered class sprites (tools/sprites-blender.py); '
+    + 'enemy_*.webp in the same folder are still Blender output and are not covered here',
+  assets: manifestRows,
+}, null, 2)}\n`);
+
+console.log(`\nWROTE ${written} sprites + manifest to ${outDir}`);
