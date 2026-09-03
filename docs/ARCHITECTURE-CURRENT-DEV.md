@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `codex/remove-agentops-office`
-- Source commit: `5e176127e315f0ba5ff83beae059b08360a1af85`
+- Source commit: `1886155e28897bcee61b8de782a7a892523c4d50`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -31,7 +31,7 @@
 | Authoritative JSON/CSV content | `content/source/` | 20 |
 | Transport | `src/net/` | 1 |
 | Tests | `tests/` | 21 |
-| Architecture/tooling | `tools/` | 250 |
+| Architecture/tooling | `tools/` | 252 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **876**.
-Extensions: `.bat` 1, `.css` 4, `.csv` 18, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 249, `.json` 29, `.md` 60, `.mjs` 203, `.nojekyll` 1, `.png` 155, `.py` 5, `.sh` 4, `.svg` 11, `.txt` 12, `.webp` 106, `.yml` 4, `(none)` 1.
+Tracked files: **882**.
+Extensions: `.bat` 1, `.css` 4, `.csv` 18, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 249, `.json` 31, `.md` 60, `.mjs` 205, `.nojekyll` 1, `.png` 155, `.py` 5, `.sh` 4, `.svg` 11, `.txt` 12, `.webp` 106, `.yml` 6, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

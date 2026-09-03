@@ -38,6 +38,39 @@ jobs:
       - name: No plant site has drifted beyond the recorded baseline
         run: node tools/plantsites.mjs --check
 
+      # THE ARTIFACT-IDENTITY GATES, AND WHY THEY BELONG HERE RATHER THAN IN
+      # THE DISPATCH-ONLY LANE.
+      #
+      # `dev` went red on these three times on 2026-09-03 — after #575, after
+      # #580's merge, and after the #588/#589/#591/#592 batch — and each time
+      # the artifact a player is handed was not this source. The third was the
+      # worst: build/AshenSpire.html carried two modules that no longer existed
+      # in the tree at all.
+      #
+      # EVERY ONE OF THOSE PULL REQUESTS WAS GREEN ON ITS OWN BRANCH, because
+      # the branch rebuilt. A `pull_request` run checks out `refs/pull/N/merge`,
+      # so it does test a merge — but the merge against the base AS IT STOOD
+      # THEN. Two PRs both green against base X, A merges, and B's green now
+      # describes a tree that no longer exists. The tree produced by merging
+      # them is the one nobody built, and until now nothing looked at it.
+      #
+      # The `push: branches: [dev]` half of this workflow is that missing look:
+      # it runs on the real post-merge result. It does not PREVENT the drift —
+      # preventing it means rebuilding as part of merging, which is a change to
+      # how merges are done and not this file's to make — but it turns "found a
+      # day later by a seat running a tool by hand" into "red within a minute,
+      # on dev, by name".
+      #
+      # Same reasoning as the plant-site detector above, and the same budget:
+      # both are pure reads, no execution and no browser, well under a second,
+      # on the runner this job already pays for. The 3-OS matrix in ci.yml stays
+      # dispatch-only; nothing here re-enables it or spends a Windows minute.
+      - name: The shipped artifact is this source, and the number on it is ours
+        run: node tools/buildversion.mjs --check
+
+      - name: The file a player is handed matches the tree that claims it
+        run: node tools/verify-shipped.mjs
+
       - name: Collect the playable build
         run: |
           set -euo pipefail
