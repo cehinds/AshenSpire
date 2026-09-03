@@ -95,7 +95,14 @@ function copiesByRole(registries, run) {
       if (!card || !card.equipmentRole) continue;
       counted[card.equipmentRole] = (counted[card.equipmentRole] || 0) + 1;
     }
-    return { ...legacy, ...counted };
+    // NOT `{ ...legacy, ...counted }`. The deck is the COMPLETE answer, so a
+    // role it does not contain has zero of that role — not "no information,
+    // ask the authored table". Merging restored `guard: 4` for a bias-1 run
+    // holding eight attacks and no guards, and would do it again the moment a
+    // player burned their last guard. This is the same absent-vs-zero mistake
+    // three earlier rounds were about, made inside the fix that closed them;
+    // returning the count alone is what makes it unwritable here.
+    return counted;
   }
   let plan = null;
   try { plan = startingDeckPlan(registries, run.loadout, run.class); } catch { plan = null; }
@@ -108,13 +115,14 @@ function copiesByRole(registries, run) {
 
 function rolesFor(registries, run) {
   const copies = copiesByRole(registries, run);
+  const countOf = (role) => (copies[role] === undefined ? 0 : copies[role]);
   return equipmentKitReceipt(
     registries,
     run.loadout,
     run.class,
     run.attributes,
     run.equipmentProfileRuleSnapshot,
-  ).map((row) => ({ ...row, copies: copies[row.role] }));
+  ).map((row) => ({ ...row, copies: countOf(row.role) }));
 }
 
 function attackPackageCounts(registries, run) {

@@ -4,7 +4,7 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { validateEquipment, stampDeck } from '../src/model/loadout.js';
+import { validateEquipment, stampDeck, startingDeckPlan } from '../src/model/loadout.js';
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
@@ -83,11 +83,23 @@ for (const [classId, want] of Object.entries(expected)) {
     `${classId} declares eligible starting kits`, JSON.stringify(cls.eligibleStartingKitIds));
   check(run.loadout.sets.rightHand[0] === want.rightHand, `${classId} equips authored right hand`, JSON.stringify(run.loadout.sets.rightHand));
   check(run.loadout.sets.leftHand[0] === want.leftHand, `${classId} equips authored left hand`, JSON.stringify(run.loadout.sets.leftHand));
-  check(run.deck.length === 10, `${classId} starts with exactly 10 cards`, String(run.deck.length));
-  for (const [role, count] of Object.entries(wantedCounts)) {
-    check(run.deck.filter((c) => c.equipmentRole === role).length === count,
-      `${classId} starts with ${count} ${role} instances`, JSON.stringify(run.deck));
-  }
+  // THE COMPOSED DECK IS DERIVED, SO THE EXPECTATION IS TOO. This used to assert
+  // a remembered snapshot — exactly 10 cards, 4/4/1 roles — which is the legacy
+  // roleCopies distribution and stopped being what the game builds the moment
+  // the cap started governing base cards only (owner ruling, 2026-09-03).
+  // Starseer and herald carry a weapon art, so their gear brings three cards and
+  // the cap leaves seven for strikes and defends: 4/3, not 4/4. Asserting the
+  // rule rather than the snapshot is also what caught nothing here for months
+  // while these two shipped at eleven cards.
+  const plan = startingDeckPlan(R, run.loadout, classId);
+  check(run.deck.length === plan.cap,
+    `${classId} starts at the ${plan.cap}-card cap`, `${run.deck.length} vs cap ${plan.cap}`);
+  check(run.deck.filter((c) => c.equipmentRole === 'attack').length === plan.attackCount,
+    `${classId} starts with the planned ${plan.attackCount} attack instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
+  check(run.deck.filter((c) => c.equipmentRole === 'guard').length === plan.guardCount,
+    `${classId} starts with the planned ${plan.guardCount} guard instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
+  check(plan.attackCount + plan.guardCount === plan.filler,
+    `${classId}: base cards fill exactly what the cap left (${plan.filler})`, `${plan.attackCount}+${plan.guardCount} vs ${plan.filler}`);
   const signatures = run.deck.filter((c) => !c.equipmentRole);
   check(signatures.length === 1 && signatures[0].cardId === want.signature,
     `${classId} preserves one fixed signature instance`, JSON.stringify(signatures));
