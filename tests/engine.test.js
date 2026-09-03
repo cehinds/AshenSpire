@@ -5763,8 +5763,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const sword = rows.find((row) => row.id === 'straightSword');
     const shield = rows.find((row) => row.id === 'roundShield');
     const armour = rows.find((row) => row.category === 'Armour');
-    assert(sword.equippedLabels.includes('Right Hand'), 'the sword reports its equipped hand');
-    assert(shield.equippedLabels.includes('Left Hand'), 'the shield reports its equipped hand');
+    // THE LABEL IS CONTENT, and this row asserts the value content currently
+    // holds: equipSlots.csv renamed Right/Left Hand to Main/Off Hand, so these
+    // strings moved with it. What did NOT move is what the assertion is really
+    // about — that the slot, not the armament, records which hand holds it
+    // (test 1944: every armament is side-neutral).
+    assert(sword.equippedLabels.includes('Main Hand'), 'the sword reports its equipped hand');
+    assert(shield.equippedLabels.includes('Off Hand'), 'the shield reports its equipped hand');
     assert(armour.equippedLabels.includes('Armour'), 'the worn set reports its equipped slot');
     assert(rows.find((row) => row.category === 'Relic').equippedLabels.includes('Equipped'), 'held relics are active equipment');
 
