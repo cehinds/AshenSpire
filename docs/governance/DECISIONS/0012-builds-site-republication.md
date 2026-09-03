@@ -237,11 +237,109 @@ Two things in that table need his eye rather than my assumption:
 
   - **A-review** — require the owner's review on the listener path
     specifically. `.github/workflows/**` is `app-dev-iii`'s lane today, so this
-    is a branch-protection or CODEOWNERS change, not a contract edit, and it is
-    a second act after the ruling rather than something the amendment performs.
-    Under it, a listener change reaches the default branch only with the owner's
-    sign-off, so the publication it carries was authorised at the point the
-    change landed.
+    is a repository-settings change, not a contract edit, and it is a second act
+    after the ruling rather than something the amendment performs.
+
+    **It takes two pieces, and an earlier draft of this record said "branch
+    protection *or* CODEOWNERS" as though either would do.** Codex raised it as
+    a P1 and it is right. A `CODEOWNERS` entry on its own only *requests* the
+    named reviewer; it does not stop the pull request merging without them. The
+    block comes from a branch-protection rule or ruleset on the default branch
+    that requires a pull request **and** requires review from Code Owners. So
+    CODEOWNERS is the routing and the rule is the enforcement, and A-review needs
+    both — or an equivalent that actually refuses the merge. With only the first,
+    the sentence below would have been false while reading as though the hole
+    were closed, which is worse than leaving it open and saying so.
+
+    **Neither piece exists today:** there is no `CODEOWNERS` file anywhere in
+    this repository, and this record does not assert what the default branch's
+    protection currently requires, because that is a repository setting and is
+    not readable from the tree.
+
+    **A-REVIEW IS NOT IMPLEMENTABLE ON TODAY'S SETUP, AND THIS RECORD HAD TO
+    BE TOLD SO TWICE.** Codex raised two further P1s, and the second is the
+    one that matters:
+
+    - **A shared account cannot approve its own pull request.**
+      `.agentops/scheduler/config.json` records that Constantine and every seat
+      authenticate as the single GitHub account `cehinds` (#434), and GitHub
+      refuses to let a pull request's author approve it. Requiring that
+      account's Code Owner approval on `.github/workflows/**` therefore does
+      not gate listener changes — it makes every agent-authored one
+      **permanently unmergeable**. The repository had already written this
+      trap down, in that same file: an exception "written in terms of one
+      [GitHub approval] would read as a relaxation while stalling every merge
+      exactly as before." A-review walked into it one level up.
+
+      So A-review needs a **distinct reviewing identity** — #434's fix 3,
+      which does not exist — or an owner gate that is not a pull-request
+      approval at all (a required status only the owner can satisfy, a
+      push restriction on the path, a ruleset bypass list). Naming which is
+      part of ruling A-review, and until one exists **A-review is blocked,
+      not merely unbuilt.**
+
+    - **The CODEOWNERS rule must own itself.** Assigning the owner to
+      `.github/workflows/**` alone leaves the entry itself unguarded: a
+      separate pull request can delete or weaken that line without touching
+      any owner-owned path, and the next listener change is then ungated.
+      GitHub's own Code Owners guidance recommends assigning ownership of the
+      `CODEOWNERS` file or its directory for exactly this reason. A-review must
+      therefore give the owner `/.github/CODEOWNERS` as well as the listener
+      path.
+
+    - **And that file cannot be created until the control plane owns its
+      path.** Codex raised this third, and it is a wall before the first step
+      rather than a gap in the design. `.agentops/governance/git-ownership.json`
+      carries `.github/workflows/**` (`app-dev-iii`) and
+      `.github/ISSUE_TEMPLATE/**` (`help-desk`); **`.github/CODEOWNERS` matches
+      neither glob and is owned by nobody.** Under the D5 path-grant rule an
+      unowned path cannot receive a legal writer lease, so no seat may create
+      the file, and the positive merge test is unreachable.
+
+      This repository has met that wall before at the same address — the note
+      on the `.github/workflows/**` entry records it being declared on
+      2026-08-30 "because it was owned by nobody: under the D5 path-grant rule
+      no lease could legally grant it."
+
+      So a ruling of A-review must **also** amend `git-ownership.json` with an
+      exact entry for `.github/CODEOWNERS` and a serialized lane, before the
+      file is written.
+
+      **A draft of this record went on to forbid `app-dev-iii` as that owner,
+      and that was wrong.** Codex: it conflates two independent layers.
+      `git-ownership.json` says who may *author* a change; the `CODEOWNERS`
+      entry and the branch rule say who must *approve* the merge. Since `dev`
+      is pr-only and `main` is protected, an `app-dev-iii` seat holding the
+      write lease still could not land a weakening without the owner's
+      approval — so the hinge is closed by CODEOWNERS covering itself, not by
+      withholding the lease. Requiring an `owner`-owned path invents a new
+      control-plane concept this gate does not need, and would block an
+      otherwise valid implementation.
+
+      The lane is therefore an ordinary assignment and `app-dev-iii` — which
+      already owns `.github/workflows/**` — is the natural one. **With one
+      condition, because it is the whole reason the layers can be separated:**
+      the separation holds only while the enforcing branch rule is actually in
+      place. Without it, nothing requires an approval and the write lease
+      becomes the only gate there is, at which point the writer of
+      `CODEOWNERS` is the writer of the rule. That is why the satisfaction
+      test's second arm — an unreviewed weakening of `CODEOWNERS` is refused —
+      is not a formality.
+
+      *(Option A's pin file is a separate question and still needs an answer:
+      that one has no GitHub-side gate standing behind it, so it does not get
+      this argument.)*
+
+    **Verification is two-sided, and an earlier draft of this record gave only
+    one side.** "An unreviewed merge is refused" passes just as happily against
+    a brick wall as against a working gate — it is the deadlock above wearing a
+    green tick. A-review is satisfied only when **both** hold: an unreviewed
+    listener change is refused, an unreviewed attempt to weaken `CODEOWNERS` is
+    refused, **and** an authorised listener change can actually merge.
+
+    With all of that in place, a listener change reaches the default branch
+    only with the owner's sign-off, so the publication it carries was
+    authorised at the point the change landed.
   - **A-accept** — accept that changes to that one file publish on the next
     `dev`/`test` push, and say so where a reader will meet it. Nothing outside
     this record changes; the exposure is written down instead of closed.
@@ -292,7 +390,10 @@ hat. So:
 
 | Ruling | What happens |
 |---|---|
-| **A-review** | Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review)**. The listener path `.github/workflows/**` gains an owner-review requirement (branch protection or CODEOWNERS) **before** the workflow is written; that requirement is a separate act and is not granted by this amendment. Then the workflow. |
+| **A-review** | **BLOCKED TODAY — see below; ruling it selects a model but cannot be executed yet.** Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review), pending its gate**. **Before** the workflow is written, an owner gate on the listener path must exist and be shown to work, by exactly one of the two arms below. `git-ownership.json` must gain an exact owner and serialized lane for `.github/CODEOWNERS` under the Code-Owner arm — that path is owned by nobody today and so is uncreatable under the D5 path-grant rule. Then the workflow. |
+| ↳ *arm 1: Code Owner review* | **Requires a distinct reviewing identity first (#434 fix 3, which does not exist) — as, it turns out, does arm 2; see below.** `CODEOWNERS` entries naming that identity for `.github/workflows/**` **and** `/.github/CODEOWNERS`, plus a branch-protection rule or ruleset on the default branch requiring a pull request and Code Owner review — CODEOWNERS alone only requests a reviewer. **Do not install this arm on the shared `cehinds` account:** GitHub will not let a pull request's author approve it, so the approval is unobtainable and every agent-authored listener change becomes permanently unmergeable. Satisfied when: an unreviewed listener change is refused, an unreviewed weakening of `CODEOWNERS` is refused, and an authorised listener change still merges. |
+| ↳ *arm 2: a non-approval owner gate* | A gate that does not route through pull-request approval — a required status check only the owner can satisfy, a push restriction on `.github/workflows/**`, or a ruleset bypass list. **This arm requires no `CODEOWNERS` file at all**, and an earlier draft of this table wrongly demanded one anyway, reimposing the very deadlock the arm exists to avoid. **It also does not escape the identity problem, which an earlier draft claimed it did.** Codex raised both. A bypass list, a push allowance and a status check all name an *actor*, and every seat authenticates as `cehinds` exactly as Constantine does — so naming him admits every agent too, and the gate passes for the pushes it exists to stop. Satisfied when: an unauthorised listener change is refused, the gate's own configuration cannot be weakened without tripping it, and an owner-authorised listener change still merges — **the first of which no shared-actor configuration can deliver.** |
+| ↳ **what both arms turn out to need** | **A credential the agents do not hold.** Arm 1 needs a distinct identity to approve; arm 2 needs one to be distinguishable from. GitHub decides both by actor, and the actor is the same. **So the two arms are not an alternative between a hard path and an easy one — they are two spellings of one prerequisite**, and A-review is blocked behind #434 fix 3 whichever is chosen. The choice between them is only how the gate is expressed once that identity exists. Recorded plainly because three review rounds were spent finding this at three different addresses, and a reader deciding between A-accept, B and C should not have to rediscover it a fourth time. |
 | **A-accept** | The same three amendments, plus one sentence in `promotion-gates.json` recording that a change to the listener file itself publishes on the next `dev`/`test` push with no further authority. Status becomes **Approved (A-accept)**. Then the workflow. |
 | **A**, bare | **`WAIT`, not a pass.** A names the model but not the listener treatment, and the two differ in whether a future listener change carries publication authority. Nothing is amended and no workflow is written until the treatment is named. |
 | **B** | Amend `promotion-gates.json` to model B — republication only, and the record states plainly that `main` and `release` republish with everything else. Status becomes **Approved (B)**. Then the workflow. |
