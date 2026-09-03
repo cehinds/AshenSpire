@@ -445,9 +445,22 @@ function check(name, cond, detail = '') {
   const support = computeDispatch(contracts, rtSupport).find((e) => e.ticket === 'AS-HD-057');
   check('an unblocked it-support seat wakes it-support, not maker', support && support.wake === 'it-support', support && support.wake);
   check('a qa seat wakes qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake === 'qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake);
+  // A capsule resting in a protected state is the one case this invariant was
+  // never about: every move out of pushed/pr-open/dev-integrated is protected,
+  // so dispatch routes it to the owner BY DESIGN rather than to its seat. The
+  // check was written when no capsule sat in one — AS-HD-040 is the first — and
+  // read that correct behaviour as a regression the moment one did. Excluding it
+  // is not enough on its own, because an exclusion can hide the maker-default
+  // bug this check exists for, so the excluded case is pinned positively below.
+  const protectedState = (t) => contracts.transitions.protected_states.includes(rt.capsules[t].lifecycle_state);
+  const seatDue = d.filter((e) => !e.escalation_class && !protectedState(e.ticket));
   check('every unblocked seat wakes its own capsule owner',
-    d.filter((e) => !e.escalation_class).every((e) => e.wake === rt.capsules[e.ticket].owner_actor),
-    JSON.stringify(d.filter((e) => !e.escalation_class && e.wake !== rt.capsules[e.ticket].owner_actor)));
+    seatDue.every((e) => e.wake === rt.capsules[e.ticket].owner_actor),
+    JSON.stringify(seatDue.filter((e) => e.wake !== rt.capsules[e.ticket].owner_actor)));
+  const ownerDue = d.filter((e) => !e.escalation_class && protectedState(e.ticket));
+  check('a capsule in a protected state wakes the owner, not its seat',
+    ownerDue.every((e) => e.kind === 'owner-decision' && e.wake === contracts['owner-intent'].owner.actor_id),
+    JSON.stringify(ownerDue.filter((e) => e.kind !== 'owner-decision' || e.wake !== contracts['owner-intent'].owner.actor_id)));
   // A dead lease is an ownership question, so it escalates rather than waking a
   // seat that would stop the moment it read its own capsule.
   const rtDead = loadRuntime();

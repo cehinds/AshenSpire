@@ -1,0 +1,12 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-040-0056",
+  "ticket": "AS-HD-040",
+  "seq": 56,
+  "parent_event": "AS-HD-040-0055",
+  "kind": "owner-decision",
+  "actor": "owner",
+  "action": "record-owner-override",
+  "at": "2026-09-03T22:41:37.250Z",
+  "summary": "Owner-command 'record-owner-override' by owner recorded: Owner override of the independent-QA requirement for AS-HD-040, given directly by Constantine in an owner-authenticated session on 2026-09-03 and recorded at his instruction. QA override is owner-reserved authority; this is his, not the deputy's. What it waives: the qa-independent verdict at an exact head that the qa-verdict-missing blocker required. What it does not claim: that such a verdict happened. It did not, and AS-HD-055 remains unstarted. What the head does carry, re-run by it-manager-iii at 7a4937d00a2de1b67dc1e58fcb454df9bd1c7bd9 rather than taken on report: rebuild-matches GREEN, verify-shipped OK 6/6, buildversion --check OK 8/8, opsctl verify OK, tests/run-node.mjs 133 passed 0 failed, git diff --check clean. The art-direction decision is separate and recorded as AS-HD-040-0054. Blocker cleared: the decision it was waiting on is now recorded."
+}

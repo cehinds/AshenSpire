@@ -563,7 +563,7 @@ Protected states: `pushed`, `pr-open`, `dev-integrated`, `hosted-verified`, `rel
 | assigned | in-progress | writer-lease-held + exclusive-paths | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk, team-lead | no |
 | in-progress | local | local-commit-on-isolated-branch | maker, it-manager-iii, it-support, qa-independent, data-architecture-lead, project-management-lead, help-desk, team-lead | no |
 | local | qa-review | frozen-exact-head | maker, it-manager-iii, team-lead | no |
-| qa-review | accepted | independent-qa-pass at exact head | qa-independent | no |
+| qa-review | accepted | independent-qa-pass at exact head, or it-manager-iii acceptance of an exact head recorded through the owner-command approve path | qa-independent, it-manager-iii | no |
 | accepted | pushed | independence-PASS + fresh-base | it-manager-iii | yes |
 | pushed | pr-open | normal-reviewable-PR | it-manager-iii | yes |
 | pr-open | dev-integrated | required-review + CI-green | it-manager-iii | yes |

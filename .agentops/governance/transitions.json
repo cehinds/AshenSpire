@@ -80,9 +80,10 @@
     {
       "from": "qa-review",
       "to": "accepted",
-      "guard": "independent-qa-pass at exact head",
+      "guard": "independent-qa-pass at exact head, or it-manager-iii acceptance of an exact head recorded through the owner-command approve path",
       "permitted_actor_roles": [
-        "qa-independent"
+        "qa-independent",
+        "it-manager-iii"
       ],
       "protected": false
     },

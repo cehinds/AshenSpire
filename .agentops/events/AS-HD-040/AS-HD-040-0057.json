@@ -1,0 +1,11 @@
+{
+  "schema": "agentops/event/v1",
+  "id": "AS-HD-040-0057",
+  "ticket": "AS-HD-040",
+  "seq": 57,
+  "parent_event": "AS-HD-040-0056",
+  "kind": "state-change",
+  "actor": "it-manager-iii",
+  "at": "2026-09-03T22:42:35.487Z",
+  "summary": "Move AS-HD-040 out of qa-review under the owner's QA override (AS-HD-040-0056). The qa-review to accepted transition now permits it-manager-iii as well as qa-independent, amended in this same change because the capsule's blocker text had offered an it-manager-iii acceptance the transitions contract did not permit — taking that offered path stranded the capsule, which is how the contradiction was found. Resealed as revision 54; parent_hash names sha256:1e4cd3e6ba1bc2b0eeba4071f485f459bcf78ef44a4dcc73dc2a543bd38702b7."
+}

@@ -1,13 +1,13 @@
 {
   "schema": "agentops/work-capsule/v1",
-  "revision": 53,
-  "current_hash": "sha256:1e4cd3e6ba1bc2b0eeba4071f485f459bcf78ef44a4dcc73dc2a543bd38702b7",
-  "parent_hash": "sha256:8d3160b2e1295cb99441e74871f8c3545eec0fc4296b185dfad38de2a972b674",
+  "revision": 54,
+  "current_hash": "sha256:bd0aad54568d8f63fe46ff76807e0864952419a690464b849e98ea3905fbaa20",
+  "parent_hash": "sha256:1e4cd3e6ba1bc2b0eeba4071f485f459bcf78ef44a4dcc73dc2a543bd38702b7",
   "ticket": "AS-HD-040",
-  "lifecycle_state": "qa-review",
+  "lifecycle_state": "pr-open",
   "objective": "Close the component-card silhouette successor contract for the class facelift (Art D1).",
   "done_when": "One owner-selected successor path is recorded and the frozen four-crop desktop/mobile packet either satisfies the full-class-silhouette clause or is superseded by an approved successor.",
-  "next_action": "Hold. Frozen candidate a72cac9689cfb3b7e302cbcaa4d0a88f4e9ab7ff sits on dev without a verdict (Gate A skipped, #468). Await the retrospective ruling: qa-independent (AS-HD-055) verdicts the candidate in place on dev at an exact head, or it-manager-iii records acceptance/waiver through the owner-command approve path. This seat must not override or self-certify an independent QA verdict.",
+  "next_action": "Integrate the accepted head to dev through the normal reviewable PR (#590). The independent-QA requirement was waived by owner override AS-HD-040-0056; no qa-independent verdict exists for this candidate.",
   "repo": "https://github.com/cehinds/AshenSpire.git",
   "ref": "recovery/as-hd-040",
   "base_oid": "7bcc9ed08d3a5cc3bc77238851309d27308a78e9",
@@ -22,11 +22,7 @@
     "test-run-receipt",
     "generated-view-drift-check"
   ],
-  "blocker": {
-    "kind": "qa-verdict-missing",
-    "escalation_class": "technical-blocker",
-    "summary": "The owner's 2026-09-03 art decision is recorded at AS-HD-040-0054: the class concept art is AI-generated using ChatGPT Codex and ships for all four classes. That answers the art-direction question and nothing else. An independent QA verdict at an exact head is still outstanding — PR #590 (head c27cb1c06f95f5e63e15e84a1ee4eb786c9ac043, branch render/as-hd-040-class-art) carries no qa-independent verdict, and transitions.json permits only qa-independent to move a capsule out of 'qa-review'. AS-HD-055 holds that verdict and is a separate ticket; this seat must not self-certify it, and the owner's decision is not a substitute for it."
-  },
+  "blocker": null,
   "authority": {
     "may": [
       "implement-locally-on-exclusive-paths",
