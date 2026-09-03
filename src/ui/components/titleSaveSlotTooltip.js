@@ -179,7 +179,35 @@ function mountFloat({ tip, root, owner, visual, natural }) {
   });
   const ownerRect = owner.getBoundingClientRect();
   const gap = GAP;
-  const candidates = sideCandidates(ownerRect, natural, visual.bounds, gap);
+  // THE DIALOG IS A BOUNDARY, NOT JUST THE VIEWPORT.
+  //
+  // hardExclusions lists CONTROLS — slots, the delete, the close, the heading.
+  // The modal itself was never in the containment test, so a placement outside
+  // the panel entirely satisfied every rule this function checked. Measured
+  // 2026-09-03 at 1440x900 with a filled slot 1: the owner (the pick button)
+  // ends at x=990 because the delete button takes the row's trailing gutter, so
+  // `inline-end` starts at 1002 and lands ON that delete — excluded. The next
+  // candidate, `inline-start`, sits at 125..377 against a modal that starts at
+  // 340. It broke no rule and was chosen, and the player saw a caption floating
+  // in the dark to the LEFT of the dialog, describing a slot inside it.
+  //
+  // Intersecting the visual bounds with the dialog's own rect is the whole fix.
+  // Every side is now judged against the panel a reader is actually looking at,
+  // and when no side fits inside it — which is the common case, because a slot
+  // fills the panel's width — plan() falls through to mountReserve and the
+  // caption lands under its own row. That is the placement the narrow layout
+  // has always used, and it was the better one at both sizes.
+  const dialog = owner.closest('.title-menu-modal');
+  const dialogRect = dialog ? dialog.getBoundingClientRect() : null;
+  const bounds = dialogRect
+    ? {
+      left: Math.max(visual.bounds.left, dialogRect.left),
+      top: Math.max(visual.bounds.top, dialogRect.top),
+      right: Math.min(visual.bounds.right, dialogRect.right),
+      bottom: Math.min(visual.bounds.bottom, dialogRect.bottom),
+    }
+    : visual.bounds;
+  const candidates = sideCandidates(ownerRect, natural, bounds, gap);
   const exclusions = hardExclusions(root, owner);
   const chosen = candidates.find((candidate) => {
     const rect = {
@@ -188,7 +216,7 @@ function mountFloat({ tip, root, owner, visual, natural }) {
       right: candidate.left + natural.width,
       bottom: candidate.top + natural.height,
     };
-    return inside(candidate, natural, visual.bounds)
+    return inside(candidate, natural, bounds)
       && !intersects(rect, ownerRect)
       && exclusions.every((element) => !intersects(rect, element.getBoundingClientRect()));
   });

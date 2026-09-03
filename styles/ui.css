@@ -4729,6 +4729,17 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-slot-row.is-selected .title-slot-state { color: var(--gold); }
 .title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
 .title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
+/* THE GUTTER IS HELD OPEN BY THE SAME BOX THAT WOULD FILL IT.
+   A delete exists only on a FILLED slot, so a list with one save and two empties
+   drew rows of two widths: measured 1440x900, slot 1's pick ended at x=990 and
+   the empty rows ran to 1051 — 61px of ragged right edge that nothing about the
+   slots explains. A `::after` spacer was the first attempt and it could not be
+   made exact: the real control is a `button.subtle` carrying that rule's border
+   and padding, and a pseudo-element copying those numbers is a second home for
+   them that drifts the day one changes. So an empty row renders the SAME button,
+   hidden — `visibility: hidden` also takes it out of the tab order, and it is
+   `disabled` and `aria-hidden` besides, so it is furniture to every reader. */
+.title-slot-delete[data-slot-spacer] { visibility: hidden; }
 /* THE WORD DOES NOT FIT ON AN ICON — the `.slot-delete .hold-hint` rule above
    said it for the old title slot, and the ✕ moved into the LOAD selector
    without it: HOLD was drawn beside the glyph again, measured by

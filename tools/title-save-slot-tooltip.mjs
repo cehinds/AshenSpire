@@ -96,7 +96,10 @@ if (process.argv.includes('--selftest')) {
         edits: [
           {
             file: 'src/ui/components/titleSaveSlotTooltip.js',
-            find: '  const candidates = sideCandidates(ownerRect, natural, visual.bounds, gap);',
+            // `visual.bounds` became `bounds` when the float was constrained to the
+            // dialog's own rect (the caption used to be placed OUTSIDE the modal).
+            // Same line, same plant, same assertion — one argument renamed.
+            find: '  const candidates = sideCandidates(ownerRect, natural, bounds, gap);',
             replace: "  const candidates = [{ side: 'plant-owner', left: ownerRect.left, top: ownerRect.top }]; // UI17 plant R4",
           },
           {
