@@ -569,6 +569,19 @@ async function selftest(doc, raw, schema) {
   ];
 
   let passed = 0;
+  // TWO NUMBERS, BECAUSE THEY ANSWER TWO QUESTIONS. `inlineChecks` rises where a
+  // check is MADE, so the printed denominator is what ran. EXPECTED_INLINE is a
+  // DECLARATION and stays a literal on purpose: derived from the same sites that
+  // feed `passed`, the denominator can never catch a check that was DELETED —
+  // both sides fall together and the run goes green one case lighter. Measured,
+  // not assumed: removing the markdown-link check below reports `OK — 23/23`
+  // with only the derived form, and `RED — 23/24` with this declaration.
+  //
+  // Deriving a count of what the corpus DID is right. Deriving the count of what
+  // it MUST DO deletes the check.
+  const EXPECTED_INLINE = 2;
+  let inlineChecks = 0;
+  const inline = (ok) => { inlineChecks += 1; if (ok) passed += 1; };
   for (const [name, plant, expected, plantNow = now] of plants) {
     const candidate = clone(doc);
     const world = cleanWorld();
@@ -594,14 +607,19 @@ async function selftest(doc, raw, schema) {
   const pruneOk = proposal.dryRun === true && proposal.mutationsPerformed === 0
     && proposal.candidateCount === 1 && proposal.candidates[0].deletionAuthorized === false;
   console.log(`  ${pruneOk ? 'PASS' : 'FAIL'} pruning stays proposal-only`);
-  if (pruneOk) passed++;
+  inline(pruneOk);
 
   const linkErrors = markdownLinkErrors('[missing](not-here.md)', DEFAULT_DOC, ROOT, () => false);
   const linkOk = linkErrors.some((error) => error.includes('missing local link'));
   console.log(`  ${linkOk ? 'PASS' : 'FAIL'} missing Markdown target is caught`);
-  if (linkOk) passed++;
+  inline(linkOk);
 
-  const total = plants.length + 2;
+  if (inlineChecks !== EXPECTED_INLINE) {
+    console.error(`continuity selftest: RED — ${inlineChecks} inline checks ran, ${EXPECTED_INLINE} declared.`
+      + ' One was added or removed and the declaration did not move. Update EXPECTED_INLINE in this file.');
+    return 1;
+  }
+  const total = plants.length + inlineChecks;
   if (passed !== total) {
     console.error(`continuity selftest: RED — ${passed}/${total} clean/known-bad cases discriminated`);
     return 1;

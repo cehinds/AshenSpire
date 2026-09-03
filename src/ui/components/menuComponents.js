@@ -63,14 +63,14 @@ export function renderMenuOverlay(model) {
         </div>
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="modal-head-actions overlay-actions">
-          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…" aria-label="Go to…">☰</button>' : ''}
+          ${model.properties.mirrored ? '<button class="subtle modal-iconbtn" id="ov-quicknav" title="Go to…" aria-label="Go to…">☰</button>' : ''}
           ${modalCloseButtonHtml({ id: 'ov-close', label: 'Close menu' })}
         </div>
       </div>
       <div class="overlay-body" role="tabpanel"></div>
       <footer class="modal-foot overlay-footer">
-        <span class="modal-foot-note overlay-footer-note">Progress saves to the active slot.</span>
-        <div class="modal-foot-actions overlay-footer-actions">
+        <span class="modal-foot-note overlay-footer-note"><span>Progress saves to the active slot.</span></span>
+        <div class="modal-foot-actions overlay-footer-actions modal-btnrow" data-size="medium">
           <button class="subtle" id="ov-quit" type="button">Save and Quit</button>
           <button class="primary" id="ov-save" type="button">Save Game</button>
         </div>
