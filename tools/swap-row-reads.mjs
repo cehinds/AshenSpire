@@ -917,10 +917,15 @@ async function main() {
     // Set 1 and not set 2: the set ladder (#90) opens one cell at a time, so
     // index 1 is `next` and its picker is empty. Learned by the cell going ERR
     // rather than by reading the ladder — which is the right way round.
-    { what: 'Right Hand set 1, weapon candidates', slot: 'Right Hand', setIndex: 0, rule: 'flat' },
-    { what: 'Right Hand set 1, weapon candidates', slot: 'Right Hand', setIndex: 0, rule: 'category' },
-    { what: 'Right Hand set 1, weapon candidates', slot: 'Right Hand', setIndex: 0, rule: 'gear' },
-    { what: 'Left Hand set 1, off-hand candidates', slot: 'Left Hand', setIndex: 0, rule: 'category' },
+    // THE SLOT IS REACHED BY ITS PLAYER-FACING LABEL (PICK matches the block's
+    // text), so these literals are content, not identifiers: they moved when
+    // equipSlots.csv renamed Right/Left Hand to Main/Off Hand. The ids
+    // (`rightHand`/`leftHand`) and the `hand` column did NOT move — which hand
+    // the figure draws a piece in is geometry, not vocabulary.
+    { what: 'Main Hand set 1, weapon candidates', slot: 'Main Hand', setIndex: 0, rule: 'flat' },
+    { what: 'Main Hand set 1, weapon candidates', slot: 'Main Hand', setIndex: 0, rule: 'category' },
+    { what: 'Main Hand set 1, weapon candidates', slot: 'Main Hand', setIndex: 0, rule: 'gear' },
+    { what: 'Off Hand set 1, off-hand candidates', slot: 'Off Hand', setIndex: 0, rule: 'category' },
     { what: 'Talisman set 1, the charm', slot: 'Talisman', setIndex: 0, rule: 'flat' },
   ]) {
     const why = await reach(cell.rule, cell.slot, cell.setIndex);

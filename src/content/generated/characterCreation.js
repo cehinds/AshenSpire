@@ -21,13 +21,13 @@ export const characterCreation = {
     },
     {
       "id": "rightHand",
-      "label": "RIGHT HAND",
+      "label": "MAIN HAND",
       "kind": "hand",
       "slot": "rightHand"
     },
     {
       "id": "leftHand",
-      "label": "LEFT HAND",
+      "label": "OFF HAND",
       "kind": "hand",
       "slot": "leftHand"
     },
