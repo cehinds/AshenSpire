@@ -1134,7 +1134,25 @@ function quotaRefs(registries, source, count) {
 
 /** Pure deterministic projection from active hand equipment to authored slots. */
 export function buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount = undefined } = {}) {
-  const configured = Number(((registries.balance || {}).equipment || {}).roleCopies?.attack);
+  // WHERE THE DEFAULT COMES FROM. Under the composed starting deck the attack
+  // quota is whatever the plan worked out — grants first, then filler split by
+  // the class's strikeBias — and roleCopies.attack is the LEGACY answer, right
+  // only while the composed path is off. Reading the legacy number here while
+  // state.js composed the deck from the other one is how a bias of anything but
+  // 0.5 died: six instances created, then restamped against an authored four
+  // ("attack instance count 6 does not match authored 4"). The default is the
+  // composed count whenever the composed path is live, so every caller —
+  // creation, restamp, the Armoury preview — agrees without threading it.
+  // Only when a class is actually named: the equip/swap probes call this with
+  // classId null to ask what a loadout projects in the abstract, and there is
+  // no class deck to plan for then — the legacy quota is the right answer, and
+  // asking for a plan without one is how this threw reading a missing class.
+  const composed = classId && startingDeckConfig(registries)
+    ? startingDeckPlan(registries, loadout, classId)
+    : null;
+  const configured = composed
+    ? composed.attackCount
+    : Number(((registries.balance || {}).equipment || {}).roleCopies?.attack);
   const count = attackSlotCount === undefined ? configured : Number(attackSlotCount);
   if (!Number.isInteger(count) || count < 0) throw new Error(`attackSlotCount must be a non-negative integer (got ${attackSlotCount})`);
   const right = handSource(registries, loadout, classId, 'right');
@@ -1295,27 +1313,43 @@ export function boundGrantProblems(registries) {
   const eq = registries.equipment || {};
   const rows = eq.equipmentGrants;
   if (!Array.isArray(rows)) return ['equipmentGrants.csv: missing generated table'];
-  const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
+  // Pieces carry their family with them here, because the KEY is (family,
+  // scope, sourceId) — an outfit id is unique only within its class, so
+  // `default` alone names four different outfits and the bare id could neither
+  // tell them apart nor let two of them grant different cards.
+  const pieces = [
+    ...(eq.armaments || []).map((piece) => ({ piece, family: 'armament' })),
+    ...(eq.armour || []).map((piece) => ({ piece, family: 'armour' })),
+  ];
+  const keyFor = (family, scope, sourceId) => `${family}\u001f${scope || ''}\u001f${sourceId}`;
+  const named = (row) => (row.scope ? `${row.family}/${row.scope}/${row.sourceId}` : `${row.family || '?'}/${row.sourceId}`);
   const seen = new Set();
 
   for (const row of rows) {
     if (!row || typeof row.sourceId !== 'string' || !row.sourceId) { problems.push('equipmentGrants.csv: row missing sourceId'); continue; }
-    if (seen.has(row.sourceId)) problems.push(`equipmentGrants.csv: duplicate sourceId '${row.sourceId}'`);
-    seen.add(row.sourceId);
-    const owners = pieces.filter((piece) => piece.id === row.sourceId);
-    if (!owners.length) { problems.push(`equipmentGrants.csv: '${row.sourceId}' names no known piece`); continue; }
-    if (!owners.some((piece) => (piece.tags || []).includes(BOUND_GRANT_TAG))) {
-      problems.push(`equipmentGrants.csv: '${row.sourceId}' grants cards but is not tagged '${BOUND_GRANT_TAG}' — the grant would be silent`);
+    if (row.family !== 'armament' && row.family !== 'armour') {
+      problems.push(`equipmentGrants.csv: '${row.sourceId}' names family '${row.family}' — must be 'armament' or 'armour'`);
+      continue;
     }
-    if (!(row.cards || []).length) problems.push(`equipmentGrants.csv: '${row.sourceId}' names no cards`);
+    const key = keyFor(row.family, row.scope, row.sourceId);
+    if (seen.has(key)) problems.push(`equipmentGrants.csv: duplicate row for ${named(row)}`);
+    seen.add(key);
+    const owners = pieces.filter((entry) => entry.family === row.family
+      && entry.piece.id === row.sourceId
+      && (entry.piece.classId || '') === (row.scope || ''));
+    if (!owners.length) { problems.push(`equipmentGrants.csv: ${named(row)} names no known piece`); continue; }
+    if (!owners.some((entry) => (entry.piece.tags || []).includes(BOUND_GRANT_TAG))) {
+      problems.push(`equipmentGrants.csv: ${named(row)} grants cards but is not tagged '${BOUND_GRANT_TAG}' — the grant would be silent`);
+    }
+    if (!(row.cards || []).length) problems.push(`equipmentGrants.csv: ${named(row)} names no cards`);
     for (const cardId of row.cards || []) {
-      if (!registries.cards.has(cardId)) problems.push(`equipmentGrants.csv: '${row.sourceId}' grants unknown card '${cardId}'`);
+      if (!registries.cards.has(cardId)) problems.push(`equipmentGrants.csv: ${named(row)} grants unknown card '${cardId}'`);
     }
   }
 
-  for (const piece of pieces) {
+  for (const { piece, family } of pieces) {
     if (!(piece.tags || []).includes(BOUND_GRANT_TAG)) continue;
-    if (!seen.has(piece.id)) {
+    if (!seen.has(keyFor(family, piece.classId || '', piece.id))) {
       problems.push(`${piece.id}: tagged '${BOUND_GRANT_TAG}' but equipmentGrants.csv names no cards for it — the promise is empty`);
     }
   }
@@ -1327,10 +1361,24 @@ export function boundGrantProblems(registries) {
  * tagged is inert rather than a silent grant. Works on anything with `tags`
  * and an `id`; nothing here is equipment-specific.
  */
-export function boundGrantCardIds(registries, object) {
+export function boundGrantCardIds(registries, object, family = null) {
   if (!object || !(object.tags || []).includes(BOUND_GRANT_TAG)) return [];
-  const row = ((registries.equipment || {}).equipmentGrants || []).find((entry) => entry.sourceId === object.id);
+  // The WHOLE piece identity, not the bare id: outfit ids repeat per class, so
+  // `default` alone names four different outfits. `family` narrows it when the
+  // caller knows which table the piece came from; the scope half is read off
+  // the object, so a scoped family matches only its own row.
+  const rows = (registries.equipment || {}).equipmentGrants || [];
+  const row = rows.find((entry) => entry.sourceId === object.id
+    && (!family || !entry.family || entry.family === family)
+    && (entry.scope || '') === scopeOfPiece(registries, entry.family || family, object));
   return (row && row.cards) || [];
+}
+
+/** The scope half of a piece's key, from its family's scopeField. */
+function scopeOfPiece(registries, family, object) {
+  const spec = (registries.tagFamilies || []).find((row) => row.family === family);
+  if (!spec || !spec.scopeField) return '';
+  return (object && object[spec.scopeField]) || '';
 }
 
 /** Cards a source hands over outright, one copy each, before any filler. */
@@ -1355,7 +1403,7 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // table is the payload. A piece with neither contributes nothing, which is
   // every piece today — the seam is live and the data is empty by design.
   for (const piece of equippedPieces(registries, loadout, classId)) {
-    for (const cardId of boundGrantCardIds(registries, piece)) {
+    for (const cardId of boundGrantCardIds(registries, piece, piece.kind === 'armor' ? 'armour' : 'armament')) {
       grants.push({ source: piece.kind === 'armor' ? 'armor' : 'weapon', cardId, sourceId: piece.id });
     }
   }

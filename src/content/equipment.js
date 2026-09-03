@@ -166,7 +166,7 @@ export const CARD_EQUIPMENT_TAGGING = (() => {
 })();
 
 /** The payload half of the `bound` tag: cards a piece carries with it. */
-export const EQUIPMENT_GRANTS = equipmentGrants.map((row) => ({ ...row, cards: list(row.cards) }));
+export const EQUIPMENT_GRANTS = equipmentGrants.map((row) => ({ ...row, scope: row.scope || '', cards: list(row.cards) }));
 
 /** Armoury-only presentation choices authored in JSON. */
 export const ARMOURY_UI = { ...armouryUi };

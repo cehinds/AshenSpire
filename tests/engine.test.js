@@ -9,6 +9,8 @@ import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
+import { tagContentProblems } from '../src/model/tags.js';
+import { boundGrantCardIds, boundGrantProblems } from '../src/model/loadout.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
 import {
   validateContent,
@@ -2042,6 +2044,60 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     throws(() => svc.assertLegal('card', 'nosuchtag'), "unknown tag 'nosuchtag'", 'an unregistered tag throws by name');
     throws(() => svc.assertLegal('card', 'beast'), 'is a creature tag', 'a wrong-domain tag throws by name');
     throws(() => svc.assertLegal('card', 'beast'), 'legal:', 'the throw prints the legal set');
+  });
+
+  // ---- 26d. the review's three findings, each with its own red ------------
+  test('26d. composed quota survives restamping, item types keep their prefix, grants key by identity', () => {
+    // P1. strikeBias is the composed deck's headline knob and every value but
+    // the default died: state.js composed N attacks, then stampDeck rebuilt the
+    // attack plan from the LEGACY roleCopies.attack and refused the mismatch.
+    // The quota now defaults to the composed plan wherever it is live.
+    for (const [bias, wantAttack, wantGuard] of [[0.5, 4, 4], [0.75, 6, 2], [0.25, 2, 6], [1, 8, 0], [0, 0, 8]]) {
+      const balance = JSON.parse(JSON.stringify(contentBundle.balance));
+      balance.equipment.startingDeck.classes.reaver.strikeBias = bias;
+      const reg = createRegistries({ ...testBundle(), balance });
+      const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+      eq(run.deck.length, 10, `bias ${bias} still starts a 10-card deck`);
+      eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, wantAttack, `bias ${bias} deals ${wantAttack} attacks`);
+      eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, wantGuard, `bias ${bias} deals ${wantGuard} guards`);
+    }
+
+    // P2a. Two classifiers rule on item types — this pass by domain, the
+    // runtime by the `item:` prefix. An itemType id without the prefix would
+    // pass here and be stamped as an ordinary tag, silently stripping every
+    // piece's type, so the prefix is a checked rule.
+    const renamed = JSON.parse(JSON.stringify(contentBundle));
+    for (const t of renamed.tags) if (t.id === 'item:armor') t.id = 'armor';
+    for (const r of renamed.tagging) if (r.tagId === 'item:armor') r.tagId = 'armor';
+    const said = tagContentProblems(renamed, contentBundle.keywords.map((k) => k.id))
+      .map((row) => `${row.path}: ${row.message}`).join(' | ');
+    assert(/must start with 'item:'/.test(said), `a prefix-less itemType id is refused by name — said ${JSON.stringify(said.slice(0, 120))}`);
+
+    // P2b. Outfit ids repeat per class, so a grant keyed on the bare id names
+    // four different outfits at once. The key is (family, scope, sourceId).
+    const armour = REG.equipment.armour.map((o) => (o.id === 'default' ? { ...o, tags: [...o.tags, 'bound'] } : o));
+    const scoped = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armour,
+        equipmentGrants: [
+          { family: 'armour', scope: 'reaver', sourceId: 'default', cards: ['strike'] },
+          { family: 'armour', scope: 'starseer', sourceId: 'default', cards: ['defend'] },
+        ],
+      },
+    };
+    const outfit = (classId) => armour.find((o) => o.id === 'default' && o.classId === classId);
+    eq(boundGrantCardIds(scoped, outfit('reaver'), 'armour').join('|'), 'strike', "the reaver's default outfit grants its own card");
+    eq(boundGrantCardIds(scoped, outfit('starseer'), 'armour').join('|'), 'defend', "the starseer's default outfit grants a different one");
+    eq(boundGrantCardIds(scoped, outfit('herald'), 'armour').length, 0, 'an untagged-for outfit of the same id grants nothing');
+    // Two rows sharing an id are no longer a duplicate; two sharing the whole key are.
+    const dupe = { ...scoped, equipment: { ...scoped.equipment, equipmentGrants: [
+      { family: 'armour', scope: 'reaver', sourceId: 'default', cards: ['strike'] },
+      { family: 'armour', scope: 'reaver', sourceId: 'default', cards: ['defend'] },
+    ] } };
+    assert(boundGrantProblems(dupe).some((row) => /duplicate row for armour\/reaver\/default/.test(row)),
+      'a second row for the same (family, scope, id) is refused by name');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

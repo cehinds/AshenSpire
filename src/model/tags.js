@@ -25,7 +25,9 @@
 //   leftovers  an object still carrying its own `tags` — the old second home,
 //              refused so it cannot come back one CSV column at a time
 //   equipment  a weapon or outfit wearing no item-type tag — the guarantee
-//              content/equipment.js used to throw for, moved with the tags
+//              content/equipment.js used to throw for, moved with the tags —
+//              and an itemType tag id missing the `item:` prefix the runtime
+//              classifies by, which would silently strip every piece's type
 //
 // The `legal:` list on a domain error is the point: the message tells the
 // author which words this family accepts instead of making them find out.
@@ -39,6 +41,13 @@ function atPath(bundle, path) {
   }
   return node;
 }
+
+/**
+ * The prefix an itemType tag id must carry. Typed here rather than imported so
+ * this pass stays free of content imports; content/equipment.js owns the
+ * runtime reader (ITEM_TYPE_TAG_PREFIX), and the suite asserts the two agree.
+ */
+const ITEM_TYPE_PREFIX = 'item:';
 
 /** The whole parent key of one tagging row, as a string. */
 const SEP = '\u001f';
@@ -238,7 +247,19 @@ export function tagContentProblems(bundle, keywordIds = []) {
   // content/equipment.js used to THROW at CSV-normalisation time when a piece
   // carried no `item:*` tag. The tags moved, so the guarantee moved with them:
   // same rule, one table later, and now named rather than thrown.
-  const itemTypeIds = new Set([...byId.values()].filter((t) => t.domain === 'itemType').map((t) => t.id));
+  // The runtime classifies an item type by its `item:` prefix
+  // (content/equipment.js itemTypeLabel), while this pass classifies by domain.
+  // Two classifiers, so they must agree by rule or a domain-itemType tag named
+  // without the prefix satisfies the check below and is then stamped as an
+  // ordinary gameplay tag — every piece silently losing its type. Hold the
+  // prefix here, where the author can see it.
+  const itemTypeRows = [...byId.values()].filter((t) => t.domain === 'itemType');
+  for (const row of itemTypeRows) {
+    if (!row.id.startsWith(ITEM_TYPE_PREFIX)) {
+      err(`tags.${row.id}`, `an itemType tag id must start with '${ITEM_TYPE_PREFIX}' — the runtime reads the type off that prefix and derives the Armoury's label from it, so an id without it is stamped as an ordinary tag and the piece loses its type`);
+    }
+  }
+  const itemTypeIds = new Set(itemTypeRows.map((t) => t.id));
   if (itemTypeIds.size) {
     for (const family of ['armament', 'armour']) {
       const spec = familyByName.get(family);

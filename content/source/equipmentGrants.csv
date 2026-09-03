@@ -19,9 +19,15 @@
 # before filler, never dropped (balance.equipment.startingDeck). Every id must
 # exist in the card registry.
 #
+# family    the tagFamilies.csv family the piece belongs to: armament | armour
+# scope     the value of that family's scopeField, or empty when it has none.
+#           Only `armour` uses it: outfit ids repeat per class, so classId is
+#           part of the parent key here exactly as it is in tagging.csv. Keying
+#           on the bare id would make one row apply to all four outfits called
+#           `default`, and make two of them impossible to grant differently.
 # sourceId  the piece id, exactly as written in weapons.csv or outfits.csv
 # cards     '|'-separated card ids
 #
 # Empty by design. The mechanism is live and inert until content authors a
 # piece into it — nothing here invents a grant to make the seam look used.
-sourceId,cards
+family,scope,sourceId,cards
