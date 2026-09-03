@@ -1,4 +1,7 @@
 import { tokenRe } from './validate.js';
+import {
+  applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
+} from './cardMounts.js';
 import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
@@ -1971,24 +1974,43 @@ export function pieceItemRef(piece) {
   return piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
 }
 
+/** The inverse read: the item an instance rides with. Lives in cardMounts.js; re-exported so readers of this module find both halves together. */
+export { ownerItemRef };
+
 /** The tagFamilies.csv family a piece belongs to, from its kind. */
 function pieceFamily(piece) {
   return piece && piece.kind === 'armor' ? 'armour' : 'armament';
 }
 
+/**
+ * The instance a pile should hold for a wanted mount: the one it has, unless
+ * the mount's CARD changed under the same key — a smith emptied it down to
+ * its fallback, or seated another card — in which case the fresh instance
+ * replaces it in place. Fresh, not patched: a stamped instance carries the
+ * old card's carrier fields (`damageSchool`, `mods`), and stampDeck treats a
+ * stamped non-equipment card as immutable, so patching `cardId` alone would
+ * leave a Dodge Roll wearing Crimson Cleave's stamp.
+ */
+function adoptWanted(inst, wanted) {
+  return inst.cardId === wanted.cardId && (inst.upgraded === true) === (wanted.upgraded === true) ? inst : wanted;
+}
+
 export function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
   const desired = desiredGrantInstances(registries, run);
-  const wanted = new Set(desired.map((d) => d.instanceId));
+  const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   // In place, not a reassignment: stampDeck captures its stamping list before
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
-  const kept = run.deck.filter((inst) => {
-    if (!isItemOwned(inst)) return true;
-    if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
-    return false;
-  });
+  const kept = [];
+  for (const inst of run.deck) {
+    if (!isItemOwned(inst)) { kept.push(inst); continue; }
+    const want = wanted.get(inst.instanceId);
+    if (!want) continue;
+    present.add(inst.instanceId);
+    kept.push(adoptWanted(inst, want));
+  }
   run.deck.length = 0;
   run.deck.push(...kept);
   for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
@@ -2008,28 +2030,13 @@ function desiredGrantInstances(registries, run) {
   // Stamped from the authored binding, not typed here — see grantSourceFor.
   const settings = startingDeckSettings(registries);
   const weaponSource = grantSourceFor(settings, 'weapon');
-  const desired = [];
+  let desired = [];
 
   // THE BOUND TABLE. Every worn piece carrying the `bound` tag lends the cards
   // equipmentGrants.csv names for it — armour as much as armaments, because
-  // the tag is the gate and it does not care what kind of thing wears it. The
-  // owner is written as the piece's namespaced ref, so an outfit id that
-  // repeats per class still names exactly one wearer. Copies of the same card
-  // are numbered, which is what keeps the id deterministic and the sweep
-  // idempotent when a row lists a card twice.
+  // the tag is the gate and it does not care what kind of thing wears it.
   for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
-    const family = pieceFamily(piece);
-    const owner = pieceItemRef(piece);
-    const copies = new Map();
-    for (const cardId of boundGrantCardIds(registries, piece, family)) {
-      const i = copies.get(cardId) || 0;
-      copies.set(cardId, i + 1);
-      desired.push({
-        instanceId: `bound:${owner}:${cardId}:${i}`,
-        cardId, upgraded: false, equipmentRole: 'granted', grantedBy: owner,
-        grantSource: grantSourceFor(settings, family === 'armour' ? 'armor' : 'weapon'),
-      });
-    }
+    desired.push(...boundMountInstances(registries, settings, piece));
   }
 
   const sources = { right: null, left: null };
@@ -2040,15 +2047,7 @@ function desiredGrantInstances(registries, run) {
   for (const hand of ['right', 'left']) {
     const source = sources[hand];
     if (!source) continue;
-    for (const grant of source.package.grantedCards) {
-      for (let i = 0; i < grant.count; i++) {
-        desired.push({
-          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
-          cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
-          grantSource: weaponSource,
-        });
-      }
-    }
+    desired.push(...packageGrantInstances(source.package, weaponSource));
   }
   const arts = sources.right && sources.left
     ? splitAuthoredWeaponArts(sources.right.package.weaponArtDefaults, sources.left.package.weaponArtDefaults)
@@ -2056,13 +2055,14 @@ function desiredGrantInstances(registries, run) {
       ? sources[hand].package.weaponArtDefaults.map((id) => ({ id, hand }))
       : []));
   for (const art of arts) {
-    const weaponId = sources[art.hand].package.weaponId;
-    desired.push({
-      instanceId: `weaponArt:${weaponId}:${art.id}`,
-      cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
-      grantSource: weaponSource,
-    });
+    desired.push(weaponArtInstance(sources[art.hand].package.weaponId, art.id, weaponSource));
   }
+
+  // WHAT A SMITH HAS DONE TO THOSE MOUNTS, applied before the empty-hand rule
+  // below so an art mount emptied down to its Dodge Roll fallback counts as a
+  // Dodge Roll already installed — one, not one per hand.
+  desired = applyMountOverrides(registries, run, desired);
+
   // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
   // (the owner's rule, 2026-09-02) — not only when both are. With one hand
   // armed, the technique slot is that armament's (its installed art, A-6)
@@ -2085,7 +2085,88 @@ function desiredGrantInstances(registries, run) {
       });
     }
   }
+
+  // EXTRA MOUNTS a smith has filled on worn pieces (the rune seam).
+  for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
+    desired.push(...extraMountInstances(registries, run, pieceItemRef(piece), {
+      grantSource: grantSourceFor(settings, pieceFamily(piece) === 'armour' ? 'armor' : 'weapon'),
+    }));
+  }
   return desired;
+}
+
+// ---- the three minters, one spelling each --------------------------------
+
+/** The `bound` table's cards for one piece, as item-owned instances. Copies of the same card are numbered. */
+function boundMountInstances(registries, settings, piece) {
+  const family = pieceFamily(piece);
+  const owner = pieceItemRef(piece);
+  const copies = new Map();
+  const out = [];
+  for (const cardId of boundGrantCardIds(registries, piece, family)) {
+    const i = copies.get(cardId) || 0;
+    copies.set(cardId, i + 1);
+    out.push({
+      instanceId: mountKey.bound(owner, cardId, i),
+      cardId, upgraded: false, equipmentRole: 'granted', grantedBy: owner,
+      grantSource: grantSourceFor(settings, family === 'armour' ? 'armor' : 'weapon'),
+    });
+  }
+  return out;
+}
+
+/** A package's grantedCards, as item-owned instances. */
+function packageGrantInstances(pkg, weaponSource) {
+  const out = [];
+  for (const grant of pkg.grantedCards) {
+    for (let i = 0; i < grant.count; i++) {
+      out.push({
+        instanceId: mountKey.granted(pkg.weaponId, grant.cardId, i),
+        cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: pkg.weaponId,
+        grantSource: weaponSource,
+      });
+    }
+  }
+  return out;
+}
+
+/** One authored weapon art, as an item-owned instance. */
+function weaponArtInstance(weaponId, artId, weaponSource) {
+  return {
+    instanceId: mountKey.weaponArt(weaponId, artId),
+    cardId: artId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
+    grantSource: weaponSource,
+  };
+}
+
+/**
+ * itemMountInstances(registries, run, piece, { authored }) -> [instance]
+ *
+ * Everything ONE piece lends, whether or not it is equipped — the bound table,
+ * the package's grants, ALL of its arts (the two-hand split that keeps a
+ * shared art to one copy is a question about a pair, not about this piece)
+ * and, unless `authored` is asked for, what a smith has done to those mounts
+ * plus any extra mounts filled. The smith services enumerate an item's mounts
+ * through this one door so a carried, unequipped sword can be worked on.
+ */
+export function itemMountInstances(registries, run, piece, { authored = false } = {}) {
+  if (!piece) return [];
+  const settings = startingDeckSettings(registries);
+  const weaponSource = grantSourceFor(settings, 'weapon');
+  const list = boundMountInstances(registries, settings, piece);
+  const pkg = piece.kind === 'armor' ? null : WeaponCardPackageModel.fromPiece(registries, piece);
+  if (pkg) {
+    list.push(...packageGrantInstances(pkg, weaponSource));
+    for (const artId of pkg.weaponArtDefaults) list.push(weaponArtInstance(pkg.weaponId, artId, weaponSource));
+  }
+  if (authored) return list;
+  const itemRef = pieceItemRef(piece);
+  return [
+    ...applyMountOverrides(registries, run, list),
+    ...extraMountInstances(registries, run, itemRef, {
+      grantSource: grantSourceFor(settings, pieceFamily(piece) === 'armour' ? 'armor' : 'weapon'),
+    }),
+  ];
 }
 
 /**
@@ -2098,14 +2179,17 @@ function desiredGrantInstances(registries, run) {
  */
 export function reconcileGrantedCardsInCombat(registries, run, piles) {
   const desired = desiredGrantInstances(registries, run);
-  const wanted = new Set(desired.map((d) => d.instanceId));
+  const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
-    const kept = pile.filter((inst) => {
-      if (!isItemOwned(inst)) return true;
-      if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
-      return false;
-    });
+    const kept = [];
+    for (const inst of pile) {
+      if (!isItemOwned(inst)) { kept.push(inst); continue; }
+      const want = wanted.get(inst.instanceId);
+      if (!want) continue;
+      present.add(inst.instanceId);
+      kept.push(adoptWanted(inst, want));
+    }
     pile.length = 0;
     pile.push(...kept);
   }
