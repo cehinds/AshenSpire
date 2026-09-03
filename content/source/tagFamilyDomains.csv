@@ -36,3 +36,4 @@ slot,item
 startingKit,item
 unlock,run
 effect,card
+grant,grantSource

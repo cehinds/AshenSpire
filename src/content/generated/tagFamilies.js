@@ -106,5 +106,12 @@ export const tagFamilies = [
     "scopeField": "",
     "label": "Effect",
     "blurb": "Damage effects carry card tags; a hit inherits the card's identity."
+  },
+  {
+    "family": "grant",
+    "source": "",
+    "scopeField": "",
+    "label": "Grant",
+    "blurb": "Where a starting card comes from. No collection: like `effect`, this family exists only to declare a vocabulary — the order bound cards are dealt in."
   }
 ];

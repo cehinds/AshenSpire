@@ -12,7 +12,7 @@ import { tagService } from '../src/model/tagService.js';
 import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
 import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
-import { boundGrantCardIds, boundGrantProblems } from '../src/model/loadout.js';
+import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat } from '../src/model/loadout.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
 import {
   validateContent,
@@ -64,7 +64,7 @@ import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan,
+  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan, WeaponCardPackageModel,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
@@ -2120,10 +2120,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // baseline: an alternate carries its own grants and is equally selectable.
     const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
     assert(kits.length > 1 && kits.some((k) => k.baseline !== true), 'the reaver ships a selectable alternate to check');
-    const greedy = JSON.parse(JSON.stringify(contentBundle.balance));
-    greedy.equipment.startingDeck.minFiller = contentBundle.balance.startingDeckSize;
-    const budget = validateEquipment(createRegistries({ ...contentBundle, balance: greedy })).join(' | ');
-    assert(/kit '/.test(budget), `an overrun names the kit it was planned for — said ${JSON.stringify(budget.slice(0, 140))}`);
+    // REPOINTED, NOT DROPPED. This proved the enumeration reaches every kit, by
+    // asserting a budget refusal — and the cap rule (owner, 2026-09-03) removed
+    // refusals entirely: bound cards are never capped, the cap only decides how
+    // many base cards are minted. The enumeration survives serving the warning
+    // that a kit deals no base cards at all, so the coverage this round bought
+    // is asserted through what replaced it.
+    const greedy = JSON.parse(JSON.stringify(contentBundle));
+    greedy.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    greedy.equipment = {
+      ...greedy.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: Array(10).fill('defend') }],
+    };
+    const greedyReg = createRegistries(greedy);
+    eq(validateEquipment(greedyReg).length, 0, 'gear that fills the cap is not an error');
+    const budget = startingDeckWarnings(greedyReg).join(' | ');
+    assert(/kit '/.test(budget), `the zero-filler warning names the kit it was planned for — said ${JSON.stringify(budget.slice(0, 160))}`);
+    assert(/no base strikes or defends/.test(budget), 'and says what the player actually gets');
 
     // Materialisation keys on the source, so a second family naming one
     // collection replaces the first rather than merging — every object in it
@@ -2153,10 +2166,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     greedy.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'vigil', tagId: 'bound' });
     greedy.equipment = {
       ...greedy.equipment,
-      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'vigil', cards: ['strike', 'defend', 'strike', 'defend', 'strike'] }],
+      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'vigil', cards: Array(10).fill('defend') }],
     };
-    const said = validateEquipment(createRegistries(greedy)).join(' | ');
-    assert(/armour 'vigil'/.test(said), `the overrun names the armour that caused it — said ${JSON.stringify(said.slice(0, 160))}`);
+    // Repointed at the warning for the same reason as 26e: what this round
+    // proved is that the enumeration crosses kit WITH armour, and it still does.
+    const said = startingDeckWarnings(createRegistries(greedy)).join(' | ');
+    assert(/armour 'vigil'/.test(said), `the armour axis is still enumerated — said ${JSON.stringify(said.slice(0, 160))}`);
     assert(/kit 'reaverBaseline'/.test(said), 'and the kit it was paired with');
     // The armour is behind an unlock, so it is only reachable later — which is
     // exactly why enumerating just the free one was not enough.
@@ -2194,7 +2209,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     run.loadout.sets.rightHand[0] = 'dagger';
     stampDeck(reg, run);
     eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'a swap re-skins the attacks, it does not re-count them');
-    eq(run.deck.length, 10, 'and the deck stays the size it was born');
+    // REPOINTED. This said "and the deck stays the size it was born" — ten —
+    // and it was true only because bound-table cards were minted as run-owned
+    // refs nothing ever swept. The owner ruled (2026-09-03): if the item is not
+    // equipped, its cards are gone. The sword took its two with it; 26v owns
+    // the full statement of that rule.
+    eq(run.deck.length, 8, 'and the unequipped sword took its two bound cards with it — the deck floats, by ruling');
 
     // roleCopies is the legacy distribution. Its hand-kept sum is exactly the
     // coupling the composed deck removes, so it is a rule only while it is the
@@ -2216,10 +2236,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const id of ['greatsword', 'buckler']) pair.tagging.push({ family: 'armament', scope: '', objectId: id, tagId: 'bound' });
     pair.equipment = {
       ...pair.equipment,
-      equipmentGrants: ['greatsword', 'buckler'].map((id) => ({ family: 'armament', scope: '', sourceId: id, cards: ['strike', 'defend', 'strike'] })),
+      equipmentGrants: ['greatsword', 'buckler'].map((id) => ({ family: 'armament', scope: '', sourceId: id, cards: Array(5).fill('defend') })),
     };
-    const said = validateEquipment(createRegistries(pair)).join(' | ');
-    assert(/hands greatsword\/buckler/.test(said), `the overrun names the hand pair — said ${JSON.stringify(said.slice(0, 160))}`);
+    // Five each: either hand alone leaves room, the PAIR does not. Repointed at
+    // the warning, so what this round proved — creation decides selectability,
+    // not the kit table — is still what fails if the enumeration narrows.
+    const said = startingDeckWarnings(createRegistries(pair)).join(' | ');
+    assert(/hands greatsword\/buckler/.test(said), `the hand pair is still enumerated — said ${JSON.stringify(said.slice(0, 160))}`);
     const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
     assert(!kits.some((k) => k.rightHand === 'greatsword' && k.leftHand === 'buckler'),
       'and that pair is in no authored kit, which is why the kit table could not have found it');
@@ -2389,10 +2412,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     unlockOnly.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'oathsworn', tagId: 'bound' });
     unlockOnly.equipment = {
       ...unlockOnly.equipment,
-      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'oathsworn', cards: ['strike', 'strike', 'strike', 'defend', 'defend'] }],
+      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'oathsworn', cards: Array(10).fill('defend') }],
     };
-    const said = validateEquipment(createRegistries(unlockOnly)).join(' | ');
-    assert(/oathsworn/.test(said), `an unlock-only outfit's grants are budgeted — said ${JSON.stringify(said.slice(0, 200))}`);
+    // Repointed at the warning like 26e/f/g: the budget refusal is gone, the
+    // enumeration that finds an unlock-only outfit is not, and that is what
+    // this round was about.
+    const said = startingDeckWarnings(createRegistries(unlockOnly)).join(' | ');
+    assert(/oathsworn/.test(said), `an unlock-only outfit is still enumerated — said ${JSON.stringify(said.slice(0, 200))}`);
 
     // AN EMPTY VOCABULARY IS NOT A REASON TO STOP ASKING. Guarding the per-piece
     // rule on `itemTypeIds.size` made deleting every itemType row the one edit
@@ -2494,31 +2520,35 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       };
       return createRegistries(b);
     };
+    // SETTLED BY THE OWNER, AND THE HISTORY IS THE POINT. This round made package
+    // grants count against the budget; round sixteen showed that counting them
+    // is what made the deck SHRINK when the weapon left; I gated the
+    // combination rather than pick a side. The ruling picked one: the cap
+    // governs how many BASE cards are minted, nothing is refused, and the deck
+    // floats with gear after creation. So this round's arithmetic was right —
+    // package grants count at creation — and the shrink is simply what happens.
     const fits = packaged(3);
-    eq(validateEquipment(fits).length, 0, 'three package grants still fit a ten-card deck');
+    eq(validateEquipment(fits).length, 0, 'package grants are legal under the cap rule');
     eq(createRunState({ seed: 1, classId: 'reaver', registries: fits }).deck.length,
       contentBundle.balance.startingDeckSize,
-      'and the deck is the authored size, because the filler made room for them');
+      'and creation lands on the cap, because the base cards made room for them');
 
-    const busts = validateEquipment(packaged(8)).join(' | ');
-    assert(/from an equipped weapon package/.test(busts),
-      `an overrun names the package as the cause — said ${JSON.stringify(busts.slice(0, 200))}`);
+    // Past the cap there is no error either — just no base cards left to mint.
+    const bustReg = packaged(12);
+    eq(validateEquipment(bustReg).length, 0, 'gear past the cap is a balance question, not a refusal');
+    assert(/no base strikes or defends/.test(startingDeckWarnings(bustReg).join(' | ')),
+      'and the shape is stated so an author can see it without starting a run');
 
-    // WEAPON ARTS ARE NAMED, NOT COUNTED, AND THAT IS DELIBERATE. Arts are
-    // minted by the same function and are equally real cards, but two SHIPPED
-    // classes already carry one, putting them at eleven against an authored
-    // ten. That predates this branch — tools/class-loadouts.mjs is red about
-    // exactly it on origin/dev — so counting it would fail the shipped bundle
-    // over a content question this branch cannot answer. Warned, not refused.
+    // AND THE DISCREPANCY THIS ROUND ONLY WARNED ABOUT IS GONE. Starseer and
+    // herald shipped at 11 against an authored 10 — red in class-loadouts since
+    // before this work, and something I refused to decide. The ruling decides
+    // it: a weapon art is a card the weapon brings, so it counts against the cap
+    // like any other, and the base cards make room. Both begin at the cap now.
     eq(validateEquipment(REG).length, 0, 'the shipped bundle still boots');
-    const warned = startingDeckWarnings(REG).join(' | ');
+    eq(startingDeckWarnings(REG).length, 0, 'with nothing left to warn about');
     for (const classId of ['starseer', 'herald']) {
-      assert(new RegExp(`${classId}: the weapon-art layer adds`).test(warned),
-        `${classId}'s extra card is stated rather than swallowed — said ${JSON.stringify(warned.slice(0, 200))}`);
-    }
-    for (const classId of ['starseer', 'herald']) {
-      eq(createRunState({ seed: 3, classId, registries: REG }).deck.length, 11,
-        `and ${classId} does begin with 11, which is the discrepancy the warning names`);
+      eq(createRunState({ seed: 3, classId, registries: REG }).deck.length, contentBundle.balance.startingDeckSize,
+        `${classId} begins at the cap, its weapon art counted like any other bound card`);
     }
   });
 
@@ -2621,7 +2651,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const powerSaid = validateEquipment(createRegistries(granting)).join(' | ');
     assert(/removed from play when played/.test(powerSaid),
       `granting a Power is refused by name — said ${JSON.stringify(powerSaid.slice(0, 200))}`);
-    // A skill grant is unaffected: this closes one lifecycle, not the seam.
+    // A skill grant is refused for a DIFFERENT reason (26u: the composed deck
+    // cannot yet carry package grants at all), so the lifecycle rule is checked
+    // where it is the only rule in play — at the model door, which knows nothing
+    // about the composed deck.
     const ordinary = JSON.parse(JSON.stringify(contentBundle));
     const ordinaryPiece = ordinary.equipment.armaments.find((p) => p.id === 'straightSword');
     ordinaryPiece.weaponCardPackage = {
@@ -2629,7 +2662,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       fillerAttackProfileId: ordinaryPiece.attackProfile,
       grantedCards: [{ cardId: 'defend', count: 1 }],
     };
-    eq(validateEquipment(createRegistries(ordinary)).length, 0, 'an ordinary grant still passes');
+    const ordinaryReg = createRegistries(ordinary);
+    const ordinarySaid = validateEquipment(ordinaryReg).join(' | ');
+    assert(!/removed from play when played/.test(ordinarySaid),
+      'an ordinary skill grant is not refused for its lifecycle');
+    assert(WeaponCardPackageModel.fromPiece(ordinaryReg, ordinaryReg.equipment.armaments
+      .find((p) => p.id === 'straightSword')).grantedCards.length === 1,
+      'and the package model accepts it — the lifecycle rule closes one card type, not the seam');
   });
 
   // ---- 26q. the twelfth round: depth, and the panel telling the truth ----
@@ -2679,7 +2718,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 26r. the thirteenth round: count the deck, and never throw at a door
-  test('26r. the panel counts every role off the deck, and a malformed dropOrder is named', () => {
+  test('26r. the panel counts every role off the deck, and a malformed sourceOrder is named', () => {
     // THE SAME MISTAKE ONE FIELD OVER, found the round after I made it. Round
     // twelve anchored ATTACK to the run and left guard on a fresh plan — but a
     // restamp PRESERVES the instances the run was born with and only re-skins
@@ -2713,20 +2752,68 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(shown.guard, after.guard, 'and the panel reports the guards the run has, not the ones a replan would give');
     eq(shown.attack, after.attack, 'attack too, from the same count rather than a separate anchor');
 
-    // A VALIDATION DOOR MAY NOT THROW. `dropOrder` is read only to name the
-    // sources in an overrun message, so a plausible typo — the bare string
-    // 'global' instead of a one-item list — reached `.join` and crashed
-    // validateEquipment instead of being answered by it.
+    // A VALIDATION DOOR MAY NOT THROW. `sourceOrder` (named `dropOrder` when
+    // this round found it, before the cap ruling left nothing to drop) is a
+    // list, and a plausible typo — the bare string instead of a one-item list —
+    // reached `.join` and crashed validateEquipment instead of being answered.
     const typo = JSON.parse(JSON.stringify(contentBundle));
-    typo.balance.equipment.startingDeck.dropOrder = 'global';
+    typo.balance.equipment.startingDeck.sourceOrder = 'from:global';
     const said = validateEquipment(createRegistries(typo)).join(' | ');
-    assert(/dropOrder must be an array of grant sources/.test(said),
-      `a non-array dropOrder is a named problem, not a crash — said ${JSON.stringify(said.slice(0, 160))}`);
-    // And the vocabulary is closed, so a misspelled source is caught too.
+    assert(/sourceOrder must be an array of grant-source tags/.test(said),
+      `a non-array sourceOrder is a named problem, not a crash — said ${JSON.stringify(said.slice(0, 160))}`);
+    // The vocabulary is closed AND it is the tag registry, not a list in code:
+    // a misspelling is caught because no such row exists, and adding a sixth
+    // source is a row in tags.csv rather than an edit to loadout.js.
     const unknown = JSON.parse(JSON.stringify(contentBundle));
-    unknown.balance.equipment.startingDeck.dropOrder = ['global', 'armour'];
-    assert(/unknown grant source 'armour'/.test(validateEquipment(createRegistries(unknown)).join(' | ')),
+    unknown.balance.equipment.startingDeck.sourceOrder = ['from:global', 'from:armour'];
+    assert(/unknown grant source 'from:armour'/.test(validateEquipment(createRegistries(unknown)).join(' | ')),
       "the 'armor'/'armour' spelling trap is named rather than silently ignored");
+    const registered = contentBundle.tags.filter((t) => t.domain === 'grantSource').map((t) => t.id);
+    assert(registered.length === 5 && registered.every((id) => id.startsWith('from:')),
+      `the grant sources are tag rows, not a constant (${registered.join(', ')})`);
+    assert(contentBundle.balance.equipment.startingDeck.sourceOrder.every((id) => registered.includes(id)),
+      'and the shipped order names only registered ones');
+
+    // ROUND TWENTY: the vocabulary was data, but the ids the ENGINE stamped
+    // were still typed at the minting seams. So a rename — the tag row and its
+    // sourceOrder entry moved together, exactly the edit the paragraph above
+    // promises is safe — validated clean and then dealt that source's cards
+    // LAST, because sortBySourceOrder no longer recognised what the seam
+    // stamped. Starseer opened with its class card ahead of its weapon cards.
+    // Two claims, because the fix has two halves: the rename works when the
+    // binding moves with it, and it is REFUSED when it does not.
+    const renamed = (moveBinding) => {
+      const b = JSON.parse(JSON.stringify(contentBundle));
+      for (const t of b.tags) if (t.id === 'from:weapon') t.id = 'from:armament';
+      const deck = b.balance.equipment.startingDeck;
+      deck.sourceOrder = deck.sourceOrder.map((id) => (id === 'from:weapon' ? 'from:armament' : id));
+      if (moveBinding) deck.sources.weapon = 'from:armament';
+      return createRegistries(b);
+    };
+    const halfDone = validateEquipment(renamed(false)).join(' | ');
+    assert(/sources\.weapon names unknown grant source 'from:weapon'/.test(halfDone),
+      `a rename that leaves the binding behind is named, not silently mis-ordered — said ${JSON.stringify(halfDone.slice(0, 200))}`);
+    const whole = renamed(true);
+    eq(validateEquipment(whole).length, 0, 'and a rename that moves the binding with it is clean');
+    const stamped = createRunState({ seed: 3, classId: 'starseer', registries: whole })
+      .deck.map((c) => c.grantSource || null).filter((id) => id !== null);
+    assert(stamped.every((id) => id !== 'from:weapon'),
+      `no seam stamps the old id after the rename — ${JSON.stringify(stamped)}`);
+    const stampedRanks = stamped.map((id) => whole.balance.equipment.startingDeck.sourceOrder.indexOf(id));
+    assert(stampedRanks.every((r, i) => r >= 0 && (i === 0 || r >= stampedRanks[i - 1])),
+      `and the renamed source is still ranked where it was — ${JSON.stringify(stamped)}`);
+
+    // The seam set is closed in both directions: a seam left unbound would
+    // stamp nothing, and a binding for a seam the engine does not have would
+    // never be read. Both are authoring mistakes with no visible symptom.
+    const unbound = JSON.parse(JSON.stringify(contentBundle));
+    delete unbound.balance.equipment.startingDeck.sources.class;
+    assert(/sources\.class must name a grant-source tag/.test(validateEquipment(createRegistries(unbound)).join(' | ')),
+      'an unbound minting seam is named');
+    const invented = JSON.parse(JSON.stringify(contentBundle));
+    invented.balance.equipment.startingDeck.sources.relic = 'from:relic';
+    assert(/unknown seam 'relic'/.test(validateEquipment(createRegistries(invented)).join(' | ')),
+      "a binding for a seam that mints nothing is named — it would never be stamped");
   });
 
   // ---- 26s. the fourteenth round: a door that cannot throw ----------------
@@ -2778,12 +2865,311 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(floored.errors.some((e) => e.path === '<bundle>' || e.path === 'enemies'),
       'and it is attributed — to the field if a rule names it, to the floor if none does');
 
+    // AND THE FLOOR ADDS RATHER THAN REPLACES. The first version created its
+    // result array in the catch, so a throw partway through DISCARDED every
+    // field-addressed problem found before it: content that correctly reported
+    // `grantedCards[0] must name cardId` came back saying only "cannot read
+    // properties of null". A backstop that erases the answers it stands behind
+    // is worse than none, so the accumulator is created outside the try and the
+    // floor message is appended to it.
+    const partial = clone();
+    const pkgPiece = partial.equipment.armaments.find((p) => p.id === 'straightSword');
+    pkgPiece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: pkgPiece.attackProfile,
+      grantedCards: [null],
+    };
+    const partialSaid = validateEquipment(createRegistries(partial));
+    assert(partialSaid.some((p) => /grantedCards\[0\] must name cardId/.test(p)),
+      `the field-addressed problem survives — said ${JSON.stringify(partialSaid.slice(0, 2))}`);
+    assert(!partialSaid.some((p) => /could not finish reading/.test(p)),
+      'and this particular one no longer reaches the floor at all, because the diagnostic that threw was made safe');
+
+    // The additive property itself, on a bundle that DOES still reach the floor:
+    // a named rule fires early, an unguarded read throws late, and the result
+    // must carry both. This is the assertion that would have caught the erasing
+    // floor; the case above only proves one diagnostic stopped throwing.
+    const bothKinds = clone();
+    bothKinds.tagFamilies.push({ family: 'oops', source: 7, scopeField: '', label: 'X', blurb: '' });
+    bothKinds.tagFamilyDomains.push({ family: 'oops', domain: 'card' });
+    bothKinds.enemies = 3; // throws late, in a sweep no rule covers
+    const both = validateContent(bothKinds);
+    assert(both.errors.some((e) => e.path === 'tagFamilies.oops.source'),
+      'the named rule that fired before the throw is kept');
+    assert(both.errors.some((e) => e.path === '<bundle>'),
+      'and the floor is appended rather than substituted');
+    assert(both.errors.length > 2, `both kinds survive together (${both.errors.length} problems)`);
+
     // The floor never fires on sound content — it is underneath the rules, not
     // in front of them.
     assert(validateContent(contentBundle).ok, 'the shipped bundle still validates clean');
     assert(!validateContent(contentBundle).errors.some((e) => e.path === '<bundle>'),
       'and never reports the floor');
     eq(validateEquipment(REG).length, 0, 'equipment likewise');
+  });
+
+  // ---- 26t. the fifteenth round: absent is not zero, a fourth time --------
+  test('26t. a legacy save recovers its birth quota, and an absent role counts zero', () => {
+    // I MADE THIS MISTAKE INSIDE THE FIX THAT CLOSED IT. Rounds six and seven
+    // were both "a legitimate empty/zero read as absence, so the next source
+    // answered over the author". Round thirteen replaced the Armoury's role
+    // counts with a count of the deck — and merged that count over the legacy
+    // table, so a role the deck does NOT contain fell through to the authored
+    // number. Bias 1 builds eight attacks and no guards; the panel said four.
+    const biased = JSON.parse(JSON.stringify(contentBundle));
+    biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 1 };
+    const biasedReg = createRegistries(biased);
+    const run = createRunState({ seed: 9, classId: 'reaver', registries: biasedReg });
+    eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, 0, 'this deck really has no guards');
+    const shown = Object.fromEntries(equipmentSurfaceReceipt(biasedReg, run).roles.map((r) => [r.role, r.copies]));
+    eq(shown.guard, 0, 'and the panel says zero rather than the authored four');
+    eq(shown.attack, 8, 'while the attacks it does have are counted');
+    // The deck is the COMPLETE answer when there is one — no merge to fall
+    // through, which is what makes the mistake unwritable here rather than
+    // guarded against.
+
+    // THE LEGACY SAVE. Every reader that falls back to counting a deck did so
+    // into a LOCAL, so a run saved before the field existed stayed `undefined`
+    // on the run itself — and createCombat then carried undefined onto the
+    // synthetic run, where the first mid-fight swap replans. The run's own deck
+    // is the record; the load door repairs it ONCE rather than every reader
+    // re-deriving it, which is the mistake four earlier rounds were about.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const fresh = createRunState({ seed: 21, classId: 'reaver', registries: REG });
+    const bornWith = fresh.equipmentAttackSlotCount;
+    assert(Number.isFinite(bornWith) && bornWith > 0, 'a new run records its quota');
+    delete fresh.equipmentAttackSlotCount; // exactly what a pre-field save holds
+    saves.saveRun(fresh, createRng(21));
+    const loaded = saves.loadRun(REG);
+    assert(loaded != null, 'the legacy-shaped save still loads');
+    eq(loaded.equipmentAttackSlotCount, bornWith, 'and its quota is recovered from its own deck');
+    eq(loaded.equipmentAttackSlotCount, loaded.deck.filter((c) => c.equipmentRole === 'attack').length,
+      'which is exactly what the deck holds');
+    // AND THE SNAPSHOT, NOT ONLY THE RUN. A pre-field save with a fight in
+    // progress healed its run and resumed a combat still holding `undefined`:
+    // restoreCombatSnapshot reads `saved.equipmentAttackSlotCount`, and the
+    // migration used the recovered number for its restamp and then dropped it.
+    // Healing the door and leaving the consumer is the half-fix this work keeps
+    // making, so the resolved value is written where the resume looks.
+    const midFight = createRunState({ seed: 31, classId: 'reaver', registries: REG });
+    const midBorn = midFight.equipmentAttackSlotCount;
+    const fight = createCombat({
+      registries: REG,
+      rng: createRng(31),
+      enemyIds: [contentBundle.enemies[0].id],
+      player: {
+        classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp,
+        maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina,
+        energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn,
+        damageBySchoolAdd: midFight.damageBySchoolAdd,
+        equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot,
+        equipmentAttackSlotCount: midFight.equipmentAttackSlotCount,
+        equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels,
+        deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks,
+        flaskCharges: midFight.flaskCharges, loadout: midFight.loadout,
+      },
+    });
+    commitCombatSnapshot({ run: midFight, combat: fight, nodeId: 'n1', encounterId: contentBundle.encounters[0].id });
+    delete midFight.combatEntered.snapshot.equipmentAttackSlotCount; // pre-field shape
+    delete midFight.equipmentAttackSlotCount;
+    const fightSaves = createSaveManager(createMemoryStorage());
+    fightSaves.saveRun(midFight, createRng(31));
+    const resumed = fightSaves.loadRun(REG);
+    assert(resumed != null, 'the mid-fight legacy save loads');
+    eq(resumed.equipmentAttackSlotCount, midBorn, 'the run is healed');
+    // The RESUME is what matters, and it reads the run's number when the
+    // snapshot has none. Healing the snapshot itself would make migration
+    // rewrite a snapshot it already understands — tools/weapon-card-packages
+    // asserts against exactly that, and caught the first version of this fix.
+    eq(resumed.combatEntered.snapshot.equipmentAttackSlotCount, undefined,
+      'the stored snapshot is left byte-identical, not rewritten by the load');
+    const restored = restoreCombatSnapshot({
+      registries: REG,
+      rng: createRng(31),
+      snapshot: resumed.combatEntered.snapshot,
+      fallbackAttackSlotCount: resumed.equipmentAttackSlotCount,
+    });
+    eq(restored.equipmentAttackSlotCount, midBorn,
+      'and the resumed combat still gets the birth quota, from the run that is its authority');
+
+    // Repaired at the door means every downstream reader gets it for free —
+    // combat, the snapshot, and the panel — with no second derivation.
+    stampDeck(REG, loaded);
+    eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, bornWith,
+      'so a restamp after loading plans the recovered quota');
+  });
+
+  // ---- 26u. the ruling: the cap is a creation rule, and only that ---------
+  test('26u. the cap governs base cards at creation, and the deck floats with gear after', () => {
+    // THE QUESTION I REFUSED, ANSWERED BY ITS OWNER (2026-09-03). Round nine
+    // said package grants must count against startingDeckSize or birth overruns
+    // it. Round sixteen said counting them is what makes the deck shrink when
+    // the weapon leaves. Both were right about the code; what was missing was a
+    // decision, and the decision is: the cap applies at CHARACTER CREATION and
+    // nowhere else. It governs how many BASE strikes and defends are minted.
+    // Bound cards are dealt first and are never capped, dropped or refused.
+    const packaged = JSON.parse(JSON.stringify(contentBundle));
+    const piece = packaged.equipment.armaments.find((p) => p.id === 'straightSword');
+    piece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: piece.attackProfile,
+      grantedCards: [{ cardId: 'defend', count: 3 }],
+    };
+    const reg = createRegistries(packaged);
+    eq(validateEquipment(reg).length, 0, 'the combination is legal — there is nothing left to gate');
+
+    const cap = contentBundle.balance.startingDeckSize;
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    eq(run.deck.length, cap, 'creation lands on the cap');
+    const bound = run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').length;
+    const base = run.deck.filter((c) => c.equipmentRole === 'attack' || c.equipmentRole === 'guard').length;
+    assert(bound > 0 && base > 0, `the deck is bound cards plus base cards (${bound} + ${base})`);
+
+    // AND THE FLOAT IS THE RULE, NOT A DEFECT. Swapping to gear that lends
+    // fewer cards leaves a smaller deck. This is the exact behaviour round
+    // sixteen reported as a bug and I gated the seam over; it is now what the
+    // game is specified to do, so it is asserted rather than prevented.
+    run.loadout.sets.rightHand[0] = 'dagger';
+    stampDeck(reg, run);
+    assert(run.deck.length < cap,
+      `swapping to gear that lends nothing leaves ${run.deck.length}, below the ${cap}-card creation cap — by design`);
+    eq(run.deck.filter((c) => c.equipmentRole === 'granted').length, 0, 'the sword took its cards with it');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, run.equipmentAttackSlotCount,
+      'while the attack count the run was born with is untouched — the other half of the SPEC sentence still holds');
+
+    // BOUND CARDS ARE DEALT FIRST, IN THE AUTHORED ORDER. SPEC says so; the code
+    // did the opposite until this was written — startingDeckRefs emits base
+    // cards before it consumes the grants, and reconcileGrantedCards appends
+    // package grants and arts after that again, so starseer opened with four
+    // strikes and three defends and its equipment cards trailed behind. The
+    // spec I wrote and the code I wrote disagreed, and the spec is the ruling.
+    const ordered = createRunState({ seed: 3, classId: 'starseer', registries: REG });
+    const provenance = ordered.deck.map((c) => c.grantSource || null);
+    const firstBase = provenance.indexOf(null);
+    assert(firstBase > 0, 'the deck opens with bound cards, not base cards');
+    assert(provenance.slice(firstBase).every((p) => p === null),
+      `and every base card follows them — ${JSON.stringify(provenance)}`);
+    const boundOrder = provenance.slice(0, firstBase);
+    const authored = contentBundle.balance.equipment.startingDeck.sourceOrder;
+    const ranks = boundOrder.map((p) => authored.indexOf(p));
+    assert(ranks.every((r, i) => i === 0 || r >= ranks[i - 1]),
+      `bound cards follow sourceOrder — ${JSON.stringify(boundOrder)} against ${JSON.stringify(authored)}`);
+    assert(boundOrder.includes('from:weapon') && boundOrder.includes('from:class'),
+      'with more than one source present, so the ordering is actually exercised');
+    // Base cards keep their RELATIVE order: the legacy attack-slot migration
+    // binds attack:0..N-1 by deck position, so reshuffling them would rebind.
+    const baseRoles = ordered.deck.slice(firstBase).map((c) => c.equipmentRole);
+    eq(baseRoles.join(' '), [...baseRoles].sort((a, b) => (a === 'attack' ? -1 : 1) - (b === 'attack' ? -1 : 1)).join(' '),
+      'attacks still precede guards among the base cards');
+
+    // The odd-split winner is authored, not a rounding accident.
+    const guardWins = JSON.parse(JSON.stringify(contentBundle));
+    guardWins.balance.equipment.startingDeck.oddFillerGoesTo = 'guard';
+    guardWins.balance.equipment.startingDeck.classes.starseer = { strikeBias: 0.5 };
+    const starseerDefault = startingDeckPlan(REG, createLoadout(REG, 'starseer'), 'starseer');
+    const guardReg = createRegistries(guardWins);
+    const starseerGuard = startingDeckPlan(guardReg, createLoadout(guardReg, 'starseer'), 'starseer');
+    eq(starseerDefault.filler % 2, 1, 'starseer has an odd number of base cards to split');
+    eq(starseerDefault.attackCount, starseerGuard.attackCount + 1,
+      'the remainder goes to attack by default and to guard when the field says so');
+    assert(!['attack', 'guard'].includes('either'), 'the field is a closed pair');
+    const badOdd = JSON.parse(JSON.stringify(contentBundle));
+    badOdd.balance.equipment.startingDeck.oddFillerGoesTo = 'either';
+    assert(/oddFillerGoesTo must be 'attack' or 'guard'/.test(validateEquipment(createRegistries(badOdd)).join(' | ')),
+      'and anything else is refused by name');
+  });
+
+  // ---- 26v. the owner's second ruling: bound cards ride with their item ----
+  test('26v. an item-owned card arrives with its item, leaves with it, and returns identical — armour included, in combat too', () => {
+    // ONE OWNER MODEL. A weapon package's grants and arts already rode with the
+    // weapon; the `bound` table's cards did not — they were minted as plain
+    // run-owned refs at creation and never looked at again, so they outlived
+    // the piece that promised them and a bound piece picked up mid-run brought
+    // nothing (round nineteen's finding). The owner ruled: if the item is not
+    // equipped, its cards are gone. So all three sources now mint item-owned
+    // instances through one door and one reconcile sweeps them.
+    const b = JSON.parse(JSON.stringify(contentBundle));
+    b.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    b.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
+    b.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'vigil', tagId: 'bound' });
+    b.equipment = {
+      ...b.equipment,
+      equipmentGrants: [
+        { family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'strike'] },
+        { family: 'armament', scope: '', sourceId: 'dagger', cards: ['defend'] },
+        { family: 'armour', scope: 'reaver', sourceId: 'vigil', cards: ['defend', 'strike'] },
+      ],
+    };
+    const reg = createRegistries(b);
+    const run = createRunState({ seed: 11, classId: 'reaver', registries: reg });
+    const owned = () => run.deck.filter(isItemOwned).map((c) => c.instanceId).sort();
+    const sword = pieceItemRef(reg.equipment.armaments.find((a) => a.id === 'straightSword'));
+    eq(sword, 'armament/straightSword', 'an owner is written as the namespaced item ref the rest of the model keys on');
+
+    // BORN WITH THEM, numbered, owned, and counted against the cap.
+    const bornOwned = owned();
+    eq(bornOwned.filter((id) => id.startsWith(`bound:${sword}:`)).join('|'),
+      `bound:${sword}:strike:0|bound:${sword}:strike:1`,
+      'two copies of one card are two numbered instances, so the ids are deterministic');
+    assert(run.deck.filter((c) => c.grantedBy === sword).every((c) => c.equipmentRole === 'granted' && c.grantSource === 'from:weapon'),
+      'a bound-table card is a granted instance with its provenance stamped');
+    eq(run.deck.length, contentBundle.balance.startingDeckSize, 'and it counts against the cap like any other bound card');
+
+    // UNEQUIP: gone. Not "still there with a stale sourceId" — gone.
+    run.loadout.sets.rightHand[0] = null;
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith(`bound:${sword}:`)).length, 0, "the sword's cards leave with the sword");
+    assert(!run.deck.some((c) => c.cardId === 'strike' && c.grantedBy === sword), 'nothing of it lingers under another role');
+
+    // A BOUND PIECE PICKED UP MID-RUN brings its cards — which never happened
+    // before, because only creation read the table.
+    run.loadout.sets.rightHand[0] = 'dagger';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith('bound:armament/dagger:')).join('|'), 'bound:armament/dagger:defend:0',
+      'equipping a bound piece mid-run deals its cards');
+
+    // RE-EQUIP: back, identical ids, and the sweep is idempotent.
+    run.loadout.sets.rightHand[0] = 'straightSword';
+    stampDeck(reg, run);
+    eq(owned().join('|'), bornOwned.join('|'), 're-equipping restores exactly the instances the run was born with');
+    const again = owned().join('|');
+    stampDeck(reg, run);
+    eq(owned().join('|'), again, 'and a second restamp changes nothing');
+
+    // ARMOUR TOO. The tag is the gate and it does not care what wears it; the
+    // owner ref carries the class, because outfit ids repeat per class.
+    const vigil = reg.equipment.armour.find((o) => o.id === 'vigil' && o.classId === 'reaver');
+    run.loadout.sets.armor[0] = 'vigil';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith(`bound:${pieceItemRef(vigil)}:`)).join('|'),
+      'bound:armor/reaver/vigil:defend:0|bound:armor/reaver/vigil:strike:0',
+      'an outfit lends its cards under a class-scoped owner');
+    assert(run.deck.filter((c) => c.grantedBy === pieceItemRef(vigil)).every((c) => c.grantSource === 'from:armor'),
+      'stamped from the armour seam');
+    run.loadout.sets.armor[0] = 'default';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith('bound:armor/')).length, 0, 'and taking it off takes them back');
+
+    // IN COMBAT the deck is the piles, and the same sweep runs on them: a
+    // stale bound card in HAND leaves, a wanted one already in DRAW stays put,
+    // the missing one lands in the discard pile like any mid-fight addition.
+    const piles = {
+      hand: [{ instanceId: 'bound:armament/dagger:defend:0', cardId: 'defend', equipmentRole: 'granted', grantedBy: 'armament/dagger' }],
+      draw: [{ instanceId: 'x', cardId: 'strike' }, { instanceId: `bound:${sword}:strike:0`, cardId: 'strike', equipmentRole: 'granted', grantedBy: sword }],
+      discard: [], exhaust: [],
+    };
+    reconcileGrantedCardsInCombat(reg, run, piles);
+    eq(piles.hand.length, 0, 'the unequipped dagger takes its card out of the hand');
+    eq(piles.draw.map((c) => c.instanceId).join('|'), `x|bound:${sword}:strike:0`, 'a present wanted card stays where it is');
+    assert(piles.discard.some((c) => c.instanceId === `bound:${sword}:strike:1`), 'the missing copy lands in the discard pile');
+
+    // THE PLAN COUNTS THEM THROUGH THE SAME DOOR, so they are neither dealt
+    // twice nor counted twice: `grants` is the deal-out list, `packageCards`
+    // is what the reconcile mints.
+    const plan = startingDeckPlan(reg, createLoadout(reg, 'reaver'), 'reaver');
+    assert(!plan.grants.some((g) => g.grantSource === undefined && g.sourceId), 'no bound-table ref rides in the deal-out list');
+    assert(plan.packageCards >= 2, `the sword's two cards are counted where the package cards are (${plan.packageCards})`);
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
