@@ -179,7 +179,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
 
-  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null } = {}) {
+  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
     const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
       : busy ? 'Wait for the current action to finish'
@@ -189,6 +189,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       def,
       plan,
       charges,
+      useActionId,
       onCancel: () => {},
       onAction: (actionId) => {
         if (actionId !== 'use') return;
@@ -680,7 +681,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       el.appendChild(count);
       appendFlaskHotkey(el, hotkeySlot);
       attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current }));
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current, useActionId: hotkeySlot < 3 ? `flask${hotkeySlot + 1}` : null }));
       chargeFlasks.appendChild(el);
     }
     p.flasks.forEach((f, slot) => {
@@ -702,7 +703,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // gesture the button actually wants cannot drift — and the icon is far too
       // small for the HOLD word the event bars carry (hidden in ui.css).
       attachTooltip(el, () => flaskTooltipHtml(def, { hint: 'Open actions to Use or Inspect.' }));
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot, useActionId: (CHARGE_FLASK_KINDS.length + slot) < 3 ? `flask${CHARGE_FLASK_KINDS.length + slot + 1}` : null }));
       potions.appendChild(el);
     });
     potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';

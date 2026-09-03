@@ -304,6 +304,8 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `content/**` | data-architecture-lead | product-content |
 | `tests/**` | qa-independent | qa-fixtures |
 | `docs/art/**` | maker | product-docs |
+| `docs/art-evidence/**` | maker | product-docs |
+| `docs/preview/**` | maker | product-docs |
 | `docs/hub/**` | maker | product-docs |
 | `docs/governance/**` | project-management-lead | governance-docs |
 | `game-design/docs/**` | help-desk | intake-docs |
@@ -312,8 +314,14 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `tools/**` | it-support | support-tooling |
 | `hud/**` | generator | generated-artifact |
 | `review-approval-hub/**` | generator | generated-artifact |
+| `build/**` | maker | generated-artifact |
+| `dist/**` | maker | generated-artifact |
 | `buildordinal.json` | maker | generated-artifact |
 | `*.html` | maker | generated-artifact |
+| `SPEC.md` | owner | project-records |
+| `CHANGELOG.md` | owner | project-records |
+| `CREDITS.md` | owner | project-records |
+| `docs/SPEC-RECONCILE.md` | owner | project-records |
 
 ### Branch hygiene
 
