@@ -12,6 +12,7 @@ import {
   parseMod,
   resolveSwapCostRule,
   runMods,
+  startingDeckPlan,
   swapCostFor,
 } from './loadout.js';
 // Deck composition goes through the framework's adopted door (owner ruling).
@@ -65,8 +66,33 @@ function requirementsFor(registries, run, pieces) {
     .filter((row) => row.requirements.length);
 }
 
+/**
+ * The copy count per role AS THE RUN ACTUALLY HAS IT.
+ *
+ * `roleCopies` is the LEGACY distribution, and under the composed starting deck
+ * it is no longer what the deck holds: a strikeBias of 0.75 builds six attacks
+ * and two guards while that table still reads 4/4. The Armoury panel renders
+ * these as "x{copies}", and the receipt contract is that the panel shows the
+ * exact equipment card package — so it reports the composed numbers when the
+ * composed path is live, and the authored table only when it is not.
+ *
+ * Attack prefers the run's BIRTH quota over a fresh plan for the same reason
+ * stampDeck does: the deck holds the number the run was born with, and a replan
+ * from the current loadout can differ from it after a grant-bearing swap.
+ */
+function copiesByRole(registries, run) {
+  const legacy = registries.balance.equipment.roleCopies || {};
+  let plan = null;
+  try { plan = startingDeckPlan(registries, run.loadout, run.class); } catch { plan = null; }
+  if (!plan) return legacy;
+  const attack = Number.isFinite(run.equipmentAttackSlotCount)
+    ? run.equipmentAttackSlotCount
+    : plan.attackCount;
+  return { ...legacy, attack, guard: plan.guardCount };
+}
+
 function rolesFor(registries, run) {
-  const copies = registries.balance.equipment.roleCopies;
+  const copies = copiesByRole(registries, run);
   return equipmentKitReceipt(
     registries,
     run.loadout,
@@ -77,7 +103,11 @@ function rolesFor(registries, run) {
 }
 
 function attackPackageCounts(registries, run) {
-  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
+  // Same rule one function over: the package the player HAS is the one planned
+  // against the birth quota, not a fresh count off the current loadout.
+  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, {
+    attackSlotCount: Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined,
+  });
   const groups = new Map();
   for (const slot of plan.slots) {
     const key = `${slot.cardId}|${slot.profileId}`;

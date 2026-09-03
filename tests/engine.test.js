@@ -2632,6 +2632,52 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(validateEquipment(createRegistries(ordinary)).length, 0, 'an ordinary grant still passes');
   });
 
+  // ---- 26q. the twelfth round: depth, and the panel telling the truth ----
+  test('26q. a deep source materialises where it was declared, and the Armoury reports the deck it has', () => {
+    // `source` IS A PATH, and stampTags resolves it to any depth — but writing
+    // the result back assumed depth two, so a family at
+    // `equipment.extras.charms` had its rows dropped onto `equipment.extras`,
+    // REPLACING the object that held `charms`. The bundle validated, the rows
+    // stamped, and every reader that walked the declared path found nothing.
+    const deep = JSON.parse(JSON.stringify(contentBundle));
+    deep.equipment.extras = { charms: [{ id: 'luckCharm', name: 'Luck Charm' }], note: 'a sibling' };
+    deep.tagFamilies.push({ family: 'charm', source: 'equipment.extras.charms', scopeField: '', label: 'Charm', blurb: '' });
+    deep.tagFamilyDomains.push({ family: 'charm', domain: 'item' });
+    deep.tagging.push({ family: 'charm', scope: '', objectId: 'luckCharm', tagId: 'bound' });
+    const deepReg = createRegistries(deep);
+    eq(deepReg.equipment.extras.note, 'a sibling', 'the sibling key survives — the parent is not replaced');
+    eq((deepReg.equipment.extras.charms || []).length, 1, 'and the rows land at the leaf the family declared');
+    eq(deepReg.equipment.extras.charms[0].tags.join('|'), 'bound', 'stamped, as any other family');
+    eq(tagService(deepReg).withTag('charm', 'bound').map((r) => r.id).join('|'), 'luckCharm',
+      'so a reader that walks the declared path finds them');
+
+    // THE PANEL RENDERS `x{copies}`, AND THEY WERE THE LEGACY NUMBERS. Under a
+    // composed deck the authored roleCopies table is no longer what the deck
+    // holds: bias 0.75 builds six attacks and two guards while that table still
+    // reads 4/4, so the Armoury told the player something the deck contradicted.
+    const biased = JSON.parse(JSON.stringify(contentBundle));
+    biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 0.75 };
+    const biasedReg = createRegistries(biased);
+    const run = createRunState({ seed: 2, classId: 'reaver', registries: biasedReg });
+    const actual = { attack: 0, guard: 0 };
+    for (const card of run.deck) if (actual[card.equipmentRole] !== undefined) actual[card.equipmentRole] += 1;
+    eq(actual.attack, 6, 'the deck really is six attacks at this bias');
+    eq(actual.guard, 2, 'and two guards');
+    const roles = equipmentSurfaceReceipt(biasedReg, run).roles;
+    const shown = Object.fromEntries(roles.map((r) => [r.role, r.copies]));
+    eq(shown.attack, actual.attack, 'the panel reports the attacks the run has');
+    eq(shown.guard, actual.guard, 'and the guards');
+    // Legacy path untouched: with the composed deck off, the authored table is
+    // still the answer, because then it is the one the deck was built from.
+    const legacy = JSON.parse(JSON.stringify(contentBundle));
+    legacy.balance.equipment.startingDeck.enabled = false;
+    const legacyReg = createRegistries(legacy);
+    const legacyRun = createRunState({ seed: 2, classId: 'reaver', registries: legacyReg });
+    const legacyShown = Object.fromEntries(equipmentSurfaceReceipt(legacyReg, legacyRun).roles.map((r) => [r.role, r.copies]));
+    eq(legacyShown.attack, legacy.balance.equipment.roleCopies.attack, 'the legacy path still reads the authored table');
+    eq(legacyShown.guard, legacy.balance.equipment.roleCopies.guard, 'for both roles');
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);

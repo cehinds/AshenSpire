@@ -213,8 +213,25 @@ export function createRegistries(contentBundle) {
   // row (equipment.armaments, equipment.armour, ...), so nothing here lists them.
   const equipment = { ...(bundle.equipment || {}) };
   for (const [source, rows] of stamped) {
-    const [head, tail] = source.split('.');
-    if (head === 'equipment' && tail) equipment[tail] = rows;
+    // THE WHOLE PATH, NOT THE FIRST TWO SEGMENTS. `tagFamilies.source` is a
+    // dotted path and stampTags already RESOLVES it to any depth; writing the
+    // result back with `equipment[tail] = rows` assumed depth two, so a family
+    // sourced at `equipment.extras.charms` had its rows dropped onto
+    // `equipment.extras` — replacing the object that held `charms` outright.
+    // The bundle validated, the rows were stamped, and every reader that walked
+    // the declared path (tagService.withTag among them) then found nothing.
+    // Clone down the path so siblings survive, and write at the leaf.
+    const parts = String(source).split('.');
+    if (parts[0] !== 'equipment' || parts.length < 2) continue;
+    let node = equipment;
+    for (let i = 1; i < parts.length - 1; i++) {
+      const key = parts[i];
+      node[key] = (node[key] && typeof node[key] === 'object' && !Array.isArray(node[key]))
+        ? { ...node[key] }
+        : {};
+      node = node[key];
+    }
+    node[parts[parts.length - 1]] = rows;
   }
   // The card-tag index equipment fit reads, folded from THIS bundle's tagging
   // rows rather than the module-global one content/equipment.js folded at
