@@ -16,6 +16,7 @@ export function serializeCombatSnapshot(combat) {
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
     equipmentChanged: !!combat.equipmentChanged,
@@ -48,6 +49,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot }) {
     registries,
     rng,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
+    equipmentAttackSlotCount: saved.equipmentAttackSlotCount,
     itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
       Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
     ),

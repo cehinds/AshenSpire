@@ -12,6 +12,7 @@ import {
   parseMod,
   resolveSwapCostRule,
   runMods,
+  startingDeckPlan,
   swapCostFor,
 } from './loadout.js';
 // Deck composition goes through the framework's adopted door (owner ruling).
@@ -65,8 +66,48 @@ function requirementsFor(registries, run, pieces) {
     .filter((row) => row.requirements.length);
 }
 
+/**
+ * The copy count per role AS THE RUN ACTUALLY HAS IT.
+ *
+ * COUNT THE DECK. `roleCopies` is the legacy distribution and under a composed
+ * deck it is not what the run holds (bias 0.75 builds six attacks and two
+ * guards while that table still reads 4/4); a fresh plan is not what the run
+ * holds either, because a restamp PRESERVES the instances the run was born with
+ * and only re-skins them, so after a grant-bearing swap the plan and the deck
+ * disagree. The deck is the equipment card package. The receipt contract says
+ * the panel shows that package, so the panel counts it.
+ *
+ * The first version of this anchored ATTACK to the run and left guard on the
+ * plan — the same mistake one field over, found immediately. Counting roles
+ * off the deck has no per-role list to be incomplete: a role added later is
+ * counted the day it exists.
+ *
+ * The fallbacks are for a run with no deck to count — a synthetic or candidate
+ * run in a fixture. Then the composed plan, and failing that the authored
+ * table, which is the right answer whenever the composed path is off.
+ */
+function copiesByRole(registries, run) {
+  const legacy = registries.balance.equipment.roleCopies || {};
+  const deck = Array.isArray(run.deck) && run.deck.length ? run.deck : null;
+  if (deck) {
+    const counted = {};
+    for (const card of deck) {
+      if (!card || !card.equipmentRole) continue;
+      counted[card.equipmentRole] = (counted[card.equipmentRole] || 0) + 1;
+    }
+    return { ...legacy, ...counted };
+  }
+  let plan = null;
+  try { plan = startingDeckPlan(registries, run.loadout, run.class); } catch { plan = null; }
+  if (!plan) return legacy;
+  const attack = Number.isFinite(run.equipmentAttackSlotCount)
+    ? run.equipmentAttackSlotCount
+    : plan.attackCount;
+  return { ...legacy, attack, guard: plan.guardCount };
+}
+
 function rolesFor(registries, run) {
-  const copies = registries.balance.equipment.roleCopies;
+  const copies = copiesByRole(registries, run);
   return equipmentKitReceipt(
     registries,
     run.loadout,
@@ -77,7 +118,11 @@ function rolesFor(registries, run) {
 }
 
 function attackPackageCounts(registries, run) {
-  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
+  // Same rule one function over: the package the player HAS is the one planned
+  // against the birth quota, not a fresh count off the current loadout.
+  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, {
+    attackSlotCount: Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined,
+  });
   const groups = new Map();
   for (const slot of plan.slots) {
     const key = `${slot.cardId}|${slot.profileId}`;

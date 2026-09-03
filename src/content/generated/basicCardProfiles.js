@@ -16,7 +16,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "basic",
     "flavor": "A last resort, still yours.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -35,7 +34,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "guard",
     "flavor": "A short iron answer when no main-hand weapon is ready.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -54,7 +52,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "blade",
     "flavor": "Steel gives the motion its name.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -73,10 +70,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": [
-      "pierce",
-      "flourish"
-    ],
     "flavor": "Two precise openings in one breath.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -95,11 +88,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": [
-      "pierce",
-      "ranged",
-      "precision"
-    ],
     "flavor": "Distance is presentation; the point still lands.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -118,7 +106,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "starstone",
     "flavor": "Ash carries a small cold light.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -137,10 +124,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": [
-      "ritual",
-      "blight"
-    ],
     "flavor": "The sceptre answers in a darker tongue.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -159,7 +142,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "guard",
     "flavor": "Nothing in your hands but the ground under your feet.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -178,7 +160,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "guard",
     "flavor": "Turn the haft and weather the blow.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -197,7 +178,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "guard",
     "flavor": "Meet the blow on carried iron.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -216,7 +196,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "starstone",
     "flavor": "A thin ward drawn through the focus.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -235,7 +214,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "ritual",
     "flavor": "A ward held together by rite.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -254,7 +232,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": "flourish",
     "flavor": "The empty hand's art is not being there.",
     "mods": "",
     "compatibility": "technique-v1"
@@ -273,10 +250,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": [
-      "blade",
-      "flourish"
-    ],
     "flavor": "Let the weapon teach the hand.",
     "mods": "",
     "compatibility": "technique-v1"
@@ -295,10 +268,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": [
-      "ranged",
-      "precision"
-    ],
     "flavor": "Set the hand before loosing.",
     "mods": "",
     "compatibility": "technique-v1"
@@ -317,7 +286,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": "ritual",
     "flavor": "Set the breath behind the focus.",
     "mods": "",
     "compatibility": "technique-v1"

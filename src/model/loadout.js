@@ -1,6 +1,8 @@
 import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
-import { startingKitProblems } from './startingKits.js';
+import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
+import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
+import { tagService } from './tagService.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 // Recording only — `note` is a no-op unless a run door is open, so the
 // stampDeck calls that fire all climb long cost nothing.
@@ -299,7 +301,21 @@ export function cardEquipmentCompatibility(registries, { cardId, classId, pieceI
  * nothing, a hand named on one side and not the other, a piece no slot can
  * hold, and armour that leaves a class with no starting set (or two).
  */
+/**
+ * The same floor as validateContent: a door that answers questions about
+ * content is structurally unable to throw on content. Named rules first; this
+ * catches what no rule names yet, so a malformed field is a reported problem
+ * rather than an exception before the banner can render.
+ */
 export function validateEquipment(registries) {
+  try {
+    return collectEquipmentProblems(registries);
+  } catch (error) {
+    return [`equipment validation could not finish reading this content: ${error && error.message} — a field is malformed in a way no rule names yet; the stack points at the field that threw`];
+  }
+}
+
+function collectEquipmentProblems(registries) {
   const eq = registries.equipment || {};
   const fields = eq.modFields || {};
   const problems = [];
@@ -307,7 +323,7 @@ export function validateEquipment(registries) {
   const profilesPresent = Array.isArray(eq.basicCardProfiles);
   const profiles = eq.basicCardProfiles || [];
   const profileIds = new Set();
-  const tagIds = new Set((registries.tags || []).map((t) => t.id));
+  const tags = tagService(registries);
   const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
   if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
 
@@ -316,7 +332,7 @@ export function validateEquipment(registries) {
   if (profilesPresent) {
     if (!Array.isArray(eq.equipmentRequirements)) problems.push('equipmentRequirements.csv: missing generated table');
     if (!Array.isArray(eq.cardEquipmentExceptions)) problems.push('cardEquipmentExceptions.csv: missing generated table');
-    if (!Array.isArray(eq.cardTagging)) problems.push('cardTagging.csv: missing registered table');
+    if (!Array.isArray(eq.cardTagging)) problems.push('cardTagging: missing the registered card-tag table (content/source/tagging.csv)');
   }
   const requirementKeys = new Set();
   for (const row of eq.equipmentRequirements || []) {
@@ -372,7 +388,12 @@ export function validateEquipment(registries) {
     if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
     if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
     if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
-    for (const tag of profile.tags || []) if (!tagIds.has(tag)) problems.push(`${profile.id}: unknown profile tag '${tag}'`);
+    // The service owns what a family may carry, so this reads the same rule
+    // the boot door reads rather than a second copy of it.
+    for (const tag of profile.tags || []) {
+      try { tags.assertLegal('basicCardProfile', tag); }
+      catch (e) { problems.push(`${profile.id}: ${e.message}`); }
+    }
     for (const raw of profile.mods || []) if (!parseMod(`${profile.role}.${raw}`)) problems.push(`${profile.id}: unparseable profile mod '${raw}'`);
   }
 
@@ -554,11 +575,19 @@ export function validateEquipment(registries) {
 
   if (eqBal) {
     const roleCopies = eqBal.roleCopies || {};
-    const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
-    if (total !== registries.balance.startingDeckSize) {
-      problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
+    // roleCopies is the LEGACY distribution, and the hand-kept sum is exactly
+    // the coupling the composed deck exists to remove: with the composed path
+    // live, raising startingDeckSize to 12 produces a valid twelve-card plan
+    // and these dormant counts would still reject it for summing to ten.
+    // They are rules only while they are the ones being read.
+    if (!startingDeckConfig(registries)) {
+      const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
+      if (total !== registries.balance.startingDeckSize) {
+        problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
+      }
+      if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
     }
-    if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
+    problems.push(...startingDeckProblems(registries));
     for (const role of EQUIPMENT_ROLES) {
       const sources = (eqBal.roleSources || {})[role];
       if (!Array.isArray(sources) || !sources.length) { problems.push(`roleSources.${role} must be non-empty`); continue; }
@@ -1074,6 +1103,26 @@ function attackProfileFor(registries, profileId, owner) {
 }
 
 /**
+ * isEquipmentComposedInstance(inst) -> boolean
+ *
+ * Whether a deck instance is MINTED BY EQUIPMENT rather than owned by the deck,
+ * and so is not a candidate for permanent removal. Both removal doors — the
+ * merchant's burn and the `removeCardFromDeck` opcode — already excluded package
+ * outputs (`grantedBy`) for the stated reason that "the next authoritative
+ * reconcile would recreate the same deterministic id, so a removal here could
+ * never persist". A generated attack slot has exactly that property and was
+ * never excluded: burning one re-minted it on the next restamp, so the merchant
+ * charged cinders for nothing and the event opcode did nothing. Persisting the
+ * birth quota turned that silent no-op into a loud throw, which is how it was
+ * finally noticed — the removal was already broken, it just failed quietly.
+ *
+ * One predicate, both doors, so the two cannot disagree about what a removal is.
+ */
+export function isEquipmentComposedInstance(inst) {
+  return Boolean(inst && (inst.grantedBy || inst.equipmentAttackSlotId));
+}
+
+/**
  * The authored weapon-package seam. Existing `attackProfile` rows adapt to an
  * empty priority list plus that profile as filler; explicit packages may add
  * ordered one-off card refs without changing the number of attack instances.
@@ -1103,6 +1152,26 @@ export const WeaponCardPackageModel = Object.freeze({
     // mechanism validates and composes, and stays dormant until data exists.
     const grantedCardsRaw = source.grantedCards == null ? [] : source.grantedCards;
     if (!Array.isArray(grantedCardsRaw)) throw new Error(`${piece.id}: grantedCards must be an array`);
+    // A CARD THE RECONCILE CANNOT FIND AGAIN IS NOT GRANTABLE. Reconciliation is
+    // a SCAN of the four piles: an instance the scan does not see is treated as
+    // a missing grant and re-pushed under the same deterministic id. That is
+    // correct for every destination but one — a Power is REMOVED FROM PLAY when
+    // played, so it sits in no pile, and the next swap or snapshot migration
+    // would hand it straight back to be played and stacked again.
+    //
+    // The alternative is a ledger of grants that left play — new run state, a
+    // new save field, and a new thing to keep in sync — for a seam no shipped
+    // armament uses. The rule is cheaper and honest: if the reconcile cannot
+    // track a card's lifecycle, the package may not grant it, said at the door.
+    const trackable = (cardId, what) => {
+      const def = registries.cards.get(cardId);
+      const destination = registries.framework && typeof registries.framework.afterPlayDestination === 'function'
+        ? registries.framework.afterPlayDestination(def)
+        : 'DISCARD_PILE';
+      if (destination === 'REMOVED_FROM_PLAY') {
+        throw new Error(`${piece.id}: ${what} '${cardId}' is removed from play when played (a ${def && def.type}), and grant reconciliation finds its instances by scanning the piles — it would be handed back and replayable after every equipment swap; a package may only grant cards that stay in a pile`);
+      }
+    };
     const grantedSeen = new Set();
     const grantedCards = grantedCardsRaw.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -1113,6 +1182,7 @@ export const WeaponCardPackageModel = Object.freeze({
       const count = ref.count == null ? 1 : ref.count;
       if (!Number.isInteger(count) || count < 1) throw new Error(`${piece.id}: grantedCards[${index}].count must be a positive integer`);
       if (grantedSeen.has(ref.cardId)) throw new Error(`${piece.id}: duplicate granted card '${ref.cardId}'`);
+      trackable(ref.cardId, 'granted card');
       grantedSeen.add(ref.cardId);
       return { cardId: ref.cardId, count };
     });
@@ -1125,6 +1195,7 @@ export const WeaponCardPackageModel = Object.freeze({
       if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: weaponArtDefaults[${index}] must name a card id`);
       if (!registries.cards.has(artId)) throw new Error(`${piece.id}: weapon art '${artId}' is unknown`);
       if (artSeen.has(artId)) throw new Error(`${piece.id}: duplicate weapon art '${artId}'`);
+      trackable(artId, 'weapon art');
       artSeen.add(artId);
       return artId;
     });
@@ -1175,7 +1246,25 @@ function quotaRefs(registries, source, count) {
 
 /** Pure deterministic projection from active hand equipment to authored slots. */
 export function buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount = undefined } = {}) {
-  const configured = Number(((registries.balance || {}).equipment || {}).roleCopies?.attack);
+  // WHERE THE DEFAULT COMES FROM. Under the composed starting deck the attack
+  // quota is whatever the plan worked out — grants first, then filler split by
+  // the class's strikeBias — and roleCopies.attack is the LEGACY answer, right
+  // only while the composed path is off. Reading the legacy number here while
+  // state.js composed the deck from the other one is how a bias of anything but
+  // 0.5 died: six instances created, then restamped against an authored four
+  // ("attack instance count 6 does not match authored 4"). The default is the
+  // composed count whenever the composed path is live, so every caller —
+  // creation, restamp, the Armoury preview — agrees without threading it.
+  // Only when a class is actually named: the equip/swap probes call this with
+  // classId null to ask what a loadout projects in the abstract, and there is
+  // no class deck to plan for then — the legacy quota is the right answer, and
+  // asking for a plan without one is how this threw reading a missing class.
+  const composed = classId && startingDeckConfig(registries)
+    ? startingDeckPlan(registries, loadout, classId)
+    : null;
+  const configured = composed
+    ? composed.attackCount
+    : Number(((registries.balance || {}).equipment || {}).roleCopies?.attack);
   const count = attackSlotCount === undefined ? configured : Number(attackSlotCount);
   if (!Number.isInteger(count) || count < 0) throw new Error(`attackSlotCount must be a non-negative integer (got ${attackSlotCount})`);
   const right = handSource(registries, loadout, classId, 'right');
@@ -1249,14 +1338,440 @@ export const WeaponDeckCompositionService = Object.freeze({
   applyEquippedWeaponCardPlan,
 });
 
-/** The ten-card role distribution, as instance-ready refs. */
+// ---------------------------------------------------------------------------
+// Composed starting deck
+// ---------------------------------------------------------------------------
+
+/**
+ * The composed-deck half of validateEquipment.
+ *
+ * The cap rule is evaluated whatever `growToFit` says, so flipping the toggle
+ * can never turn sound content unsound behind your back. When growToFit is on
+ * the overrun is reported through `startingDeckWarnings` instead of here — one
+ * validation truth, two severities.
+ */
+export function startingDeckProblems(registries) {
+  return startingDeckFindings(registries).problems;
+}
+
+/** Overruns a growing deck absorbed. Sound content, worth seeing. */
+export function startingDeckWarnings(registries) {
+  return startingDeckFindings(registries).warnings;
+}
+
+/**
+ * The grant sources a composed deck can draw from, in the order grantRefsFor
+ * pushes them. `dropOrder` names these and nothing else; it is the vocabulary
+ * an overrun message reads back to the author.
+ */
+const GRANT_SOURCES = ['global', 'relic', 'armor', 'weapon', 'class'];
+
+function startingDeckFindings(registries) {
+  const problems = [];
+  const warnings = [];
+  const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
+  if (!cfg) return { problems, warnings };
+  if (typeof cfg.enabled !== 'boolean') problems.push('startingDeck.enabled must be boolean');
+  if (typeof cfg.growToFit !== 'boolean') problems.push('startingDeck.growToFit must be boolean');
+  if (!Number.isInteger(cfg.minFiller) || cfg.minFiller < 0) {
+    problems.push(`startingDeck.minFiller must be a non-negative integer (got ${cfg.minFiller})`);
+  }
+  // The DECK SIZE, held here because the composed path is now the only reader of
+  // it. The legacy roleCopies sum used to imply this — a fractional size could
+  // never equal a sum of integer copies — and gating that check on the composed
+  // path being off (round four) removed the implication without replacing it.
+  // `10.5` then validated clean and planned `guardCount: 4.5`, which the copy
+  // loop turned into five guards and an eleven-card deck.
+  // dropOrder is only ever READ to name the sources in an overrun message, so a
+  // malformed one used to surface as a TypeError out of `.join` rather than as
+  // a content problem — validateEquipment crashed instead of answering. It is a
+  // list of grant sources; anything else is named here, and the message site is
+  // defensive besides, so a future reader cannot reintroduce the throw.
+  if (cfg.dropOrder !== undefined) {
+    if (!Array.isArray(cfg.dropOrder)) {
+      problems.push(`startingDeck.dropOrder must be an array of grant sources (got ${JSON.stringify(cfg.dropOrder)}) — it names the order an author should drop grants in when a kit overruns`);
+    } else {
+      for (const source of cfg.dropOrder) {
+        if (!GRANT_SOURCES.includes(source)) {
+          problems.push(`startingDeck.dropOrder names unknown grant source '${source}' (legal: ${GRANT_SOURCES.join(', ')})`);
+        }
+      }
+    }
+  }
+  const authoredSize = (registries.balance || {}).startingDeckSize;
+  if (!Number.isInteger(authoredSize) || authoredSize < 0) {
+    problems.push(`startingDeckSize must be a non-negative integer (got ${JSON.stringify(authoredSize)}) — the composed plan divides it into role counts, and a fraction becomes a card that half exists`);
+  }
+  // The DEFAULT bias, held to the same rule as an override. A class with no
+  // override falls back to it, so a malformed default is not a cosmetic typo:
+  // it reaches startingDeckPlan as NaN and run creation dies restamping against
+  // an authored NaN quota, with nothing said at the door.
+  const inBias = (v) => Number.isFinite(v) && v >= 0 && v <= 1;
+  if (cfg.defaultStrikeBias !== undefined && !inBias(cfg.defaultStrikeBias)) {
+    problems.push(`startingDeck.defaultStrikeBias must be between 0 and 1 (got ${JSON.stringify(cfg.defaultStrikeBias)})`);
+  }
+  for (const [classId, row] of Object.entries(cfg.classes || {})) {
+    if (!registries.classes.has(classId)) problems.push(`startingDeck.classes names unknown class '${classId}'`);
+    const bias = row && row.strikeBias;
+    if (!inBias(bias)) {
+      problems.push(`startingDeck.classes.${classId}.strikeBias must be between 0 and 1 (got ${bias})`);
+    }
+  }
+  const globalGrants = (cfg.global || {}).grants;
+  if (globalGrants !== undefined && !Array.isArray(globalGrants)) {
+    problems.push(`startingDeck.global.grants must be an array of card ids (got ${JSON.stringify(globalGrants)})`);
+  } else {
+    for (const cardId of globalGrants || []) {
+      if (!registries.cards.has(cardId)) problems.push(`startingDeck.global.grants names unknown card '${cardId}'`);
+    }
+  }
+  problems.push(...boundGrantProblems(registries));
+  if (cfg.enabled !== true || problems.length) return { problems, warnings };
+
+  // WEAPON ARTS, NAMED RATHER THAN COUNTED. The package layer mints art
+  // instances into the starting deck alongside its grants, and they are real
+  // cards — but two shipped classes already carry one, which puts their decks at
+  // eleven against an authored ten. That is older than this branch
+  // (tools/class-loadouts.mjs is red about exactly it on origin/dev) and it is a
+  // content question, not a validation bug: either the size is wrong or the art
+  // should not count toward it. Refusing here would fail the shipped bundle over
+  // a call this branch has no standing to make, and staying silent is how it
+  // went unnoticed. So it is stated, per class, and left to its owner.
+  for (const classId of registries.classes.ids()) {
+    // A validation pass never throws on bad content — a bundle whose slots or
+    // profiles are broken is named by the rules that own them, and this one has
+    // nothing useful to say about it.
+    let arts = 0;
+    let loadout = null;
+    let plan = null;
+    try {
+      loadout = createLoadout(registries, classId);
+      arts = desiredGrantInstances(registries, { loadout, class: classId })
+        .filter((inst) => inst.equipmentRole === 'weaponArt').length;
+      plan = arts ? startingDeckPlan(registries, loadout, classId) : null;
+    } catch { continue; }
+    if (!arts) continue;
+    if (plan && plan.size + arts > registries.balance.startingDeckSize) {
+      warnings.push(`${classId}: the weapon-art layer adds ${arts} card(s) on top of a ${plan.size}-card composed plan, so this class begins with ${plan.size + arts} against an authored startingDeckSize of ${registries.balance.startingDeckSize} — arts are not in the composed budget, and whether they should be is a content call`);
+    }
+  }
+
+  // The budget itself, against EVERY loadout a player can actually begin in —
+  // not just the baseline kit. An alternate kit is chosen at character creation
+  // and can carry different grants, so checking only the baseline leaves the
+  // one a player picks free to blow the budget and eat the promised minFiller.
+  const order = (Array.isArray(cfg.dropOrder) ? cfg.dropOrder : []).join(' → ');
+  const seenDetail = new Set();
+  for (const classId of registries.classes.ids()) {
+    for (const { label, loadout } of selectableStartingLoadouts(registries, classId)) {
+      let plan;
+      try {
+        plan = startingDeckPlan(registries, loadout, classId);
+      } catch (e) {
+        problems.push(`startingDeck: cannot plan '${classId}' ${label}: ${e.message}`);
+        continue;
+      }
+      if (!plan || !plan.overrun) continue;
+      const granted = plan.grants.length + (plan.packageGrants || 0);
+      const fromPackage = plan.packageGrants ? ` (${plan.packageGrants} of them from an equipped weapon package)` : '';
+      const detail = `class '${classId}' ${label} grants ${granted} card(s)${fromPackage} and minFiller is `
+        + `${plan.minFiller}, needing ${granted + plan.minFiller} of `
+        + `startingDeckSize ${registries.balance.startingDeckSize}`;
+      // One line per distinct overrun. Without this an overrun that does not
+      // depend on the armour repeats once per combination, burying the ones
+      // that do.
+      if (seenDetail.has(detail)) continue;
+      seenDetail.add(detail);
+      if (plan.grewToFit) warnings.push(`startingDeck: ${detail}; growToFit raised the deck to ${plan.size}`);
+      else problems.push(`startingDeck: ${detail}; raise startingDeckSize, lower minFiller, or drop a grant (${order})`);
+    }
+  }
+  return { problems, warnings };
+}
+
+/**
+ * selectableStartingLoadouts(registries, classId) -> [{ label, loadout }]
+ *
+ * Every loadout a player can actually BEGIN in. This asks character creation
+ * what it accepts rather than guessing the axes: three rounds of review found
+ * three of them in turn (the baseline kit, then the armour, then the hands,
+ * each chosen independently of the others), because the enumeration was built
+ * from the kit table while `resolveCreationHands`/`resolveStartingArmour` were
+ * the things actually deciding. So the candidates come from
+ * characterCreation's own `handIds` and `armourIds`, paired through creation's
+ * own resolver — an incompatible pair throws there and is skipped here, with no
+ * second copy of the compatibility rule to drift.
+ *
+ * The authored kits ride along as a floor, so a class whose kit names a piece
+ * outside handIds is still checked.
+ */
+function selectableStartingLoadouts(registries, classId) {
+  const armours = (registries.equipment || {}).armour || [];
+  const kits = ((registries.equipment || {}).startingKits || []).filter((kit) => kit.classId === classId);
+  let creation = null;
+  try { creation = classCreationConfig(registries, classId); } catch { creation = null; }
+  const handIds = [null, ...((creation && creation.handIds) || [])];
+  // ASK THE PREDICATE, DO NOT RE-LIST THE AXES. `armourIds` is one of THREE ways
+  // an outfit becomes startable — free (`unlock === ''`) and earned-by-unlock are
+  // the others — and enumerating the one I remembered is what three earlier
+  // rounds each caught one axis later. startingKits.js owns the real answer, and
+  // run creation asks it, so this asks the same function with the most permissive
+  // meta there is: every unlock the bundle can ever grant. Nothing a player can
+  // start in is outside this set, and nothing outside the bundle is inside it.
+  const everyUnlock = { unlocked: ((registries.unlocks || []).map((row) => row && row.id)).filter(Boolean) };
+  const armourRows = armours.filter((row) => row.classId === classId
+    && armourIsStartingEligible(row, everyUnlock, registries, classId));
+
+  const out = [];
+  const seen = new Set();
+  const add = (label, loadout, key) => {
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ label, loadout });
+  };
+
+  for (const armour of armourRows.length ? armourRows : [null]) {
+    const armourWhere = armour ? ` + armour '${armour.id}'` : '';
+    // The authored kits, whole.
+    for (const kit of kits) {
+      add(`kit '${kit.id}'${armourWhere}`, createLoadout(registries, classId, kit, armour),
+        `kit:${kit.id}:${armour ? armour.id : ''}`);
+    }
+    // And every hand pair creation would accept, which is where the kits stop
+    // being the whole story: two grant-bearing pieces that share no kit can
+    // still be picked together.
+    for (const rightHand of handIds) {
+      for (const leftHand of handIds) {
+        if (rightHand === null && leftHand === null) continue;
+        let hands;
+        try {
+          hands = resolveCreationHands(registries, classId, { rightHand, leftHand }, {});
+        } catch {
+          continue; // creation refuses this pair, so a player cannot reach it
+        }
+        const kit = { classId, rightHand: hands.rightHand || '', leftHand: hands.leftHand || '' };
+        const where = `hands ${hands.rightHand || '-'}/${hands.leftHand || '-'}${armourWhere}`;
+        add(where, createLoadout(registries, classId, kit, armour),
+          `hands:${hands.rightHand || ''}:${hands.leftHand || ''}:${armour ? armour.id : ''}`);
+      }
+    }
+  }
+  if (!out.length) out.push({ label: 'default loadout', loadout: createLoadout(registries, classId) });
+  return out;
+}
+
+/** The composed-deck config, or null when the legacy roleCopies path is live. */
+function startingDeckConfig(registries) {
+  const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
+  if (!cfg || cfg.enabled !== true) return null;
+  return cfg;
+}
+
+/** The tag that says "this object carries its own cards"; payload in equipmentGrants.csv. */
+export const BOUND_GRANT_TAG = 'bound';
+
+/**
+ * The two halves of a bound grant, held together.
+ *
+ * Tagged with no row is a broken promise the player can see and the deck never
+ * honours; a row with no tag is a grant that lands with nothing declaring it.
+ * Both are authoring mistakes, and neither is visible from its own side — so
+ * they are checked from here, where both halves are in scope.
+ */
+export function boundGrantProblems(registries) {
+  const problems = [];
+  const eq = registries.equipment || {};
+  const rows = eq.equipmentGrants;
+  if (!Array.isArray(rows)) return ['equipmentGrants.csv: missing generated table'];
+  // Pieces carry their family with them here, because the KEY is (family,
+  // scope, sourceId) — an outfit id is unique only within its class, so
+  // `default` alone names four different outfits and the bare id could neither
+  // tell them apart nor let two of them grant different cards.
+  const pieces = [
+    ...(eq.armaments || []).map((piece) => ({ piece, family: 'armament' })),
+    ...(eq.armour || []).map((piece) => ({ piece, family: 'armour' })),
+  ];
+  const keyFor = (family, scope, sourceId) => `${family}\u001f${scope || ''}\u001f${sourceId}`;
+  const named = (row) => (row.scope ? `${row.family}/${row.scope}/${row.sourceId}` : `${row.family || '?'}/${row.sourceId}`);
+  const seen = new Set();
+
+  for (const row of rows) {
+    if (!row || typeof row.sourceId !== 'string' || !row.sourceId) { problems.push('equipmentGrants.csv: row missing sourceId'); continue; }
+    if (row.family !== 'armament' && row.family !== 'armour') {
+      problems.push(`equipmentGrants.csv: '${row.sourceId}' names family '${row.family}' — must be 'armament' or 'armour'`);
+      continue;
+    }
+    const key = keyFor(row.family, row.scope, row.sourceId);
+    if (seen.has(key)) problems.push(`equipmentGrants.csv: duplicate row for ${named(row)}`);
+    seen.add(key);
+    const owners = pieces.filter((entry) => entry.family === row.family
+      && entry.piece.id === row.sourceId
+      && (entry.piece.classId || '') === (row.scope || ''));
+    if (!owners.length) { problems.push(`equipmentGrants.csv: ${named(row)} names no known piece`); continue; }
+    if (!owners.some((entry) => (entry.piece.tags || []).includes(BOUND_GRANT_TAG))) {
+      problems.push(`equipmentGrants.csv: ${named(row)} grants cards but is not tagged '${BOUND_GRANT_TAG}' — the grant would be silent`);
+    }
+    if (!(row.cards || []).length) problems.push(`equipmentGrants.csv: ${named(row)} names no cards`);
+    for (const cardId of row.cards || []) {
+      if (!registries.cards.has(cardId)) problems.push(`equipmentGrants.csv: ${named(row)} grants unknown card '${cardId}'`);
+    }
+  }
+
+  for (const { piece, family } of pieces) {
+    if (!(piece.tags || []).includes(BOUND_GRANT_TAG)) continue;
+    if (!seen.has(keyFor(family, piece.classId || '', piece.id))) {
+      problems.push(`${piece.id}: tagged '${BOUND_GRANT_TAG}' but equipmentGrants.csv names no cards for it — the promise is empty`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * Cards an object carries, or [] — the tag GATES the table, so a row nobody
+ * tagged is inert rather than a silent grant. Works on anything with `tags`
+ * and an `id`; nothing here is equipment-specific.
+ */
+export function boundGrantCardIds(registries, object, family = null) {
+  if (!object || !(object.tags || []).includes(BOUND_GRANT_TAG)) return [];
+  // The WHOLE piece identity, not the bare id: outfit ids repeat per class, so
+  // `default` alone names four different outfits. `family` narrows it when the
+  // caller knows which table the piece came from; the scope half is read off
+  // the object, so a scoped family matches only its own row.
+  const rows = (registries.equipment || {}).equipmentGrants || [];
+  const row = rows.find((entry) => entry.sourceId === object.id
+    && (!family || !entry.family || entry.family === family)
+    && (entry.scope || '') === scopeOfPiece(registries, entry.family || family, object));
+  return (row && row.cards) || [];
+}
+
+/** The scope half of a piece's key, from its family's scopeField. */
+function scopeOfPiece(registries, family, object) {
+  const spec = (registries.tagFamilies || []).find((row) => row.family === family);
+  if (!spec || !spec.scopeField) return '';
+  return (object && object[spec.scopeField]) || '';
+}
+
+/** Cards a source hands over outright, one copy each, before any filler. */
+function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
+  const cls = registries.classes.get(classId);
+  const grants = [];
+
+  // Weapon — the technique the equipped armament teaches. Weapon ATTACK grants
+  // (priorityAttackRefs) are not counted here: they are dealt inside the attack
+  // quota by quotaRefs, so counting them again would charge them twice.
+  if (techniqueRow && techniqueRow.profile) {
+    grants.push({
+      source: 'weapon',
+      cardId: techniqueRow.profile.baseCardId,
+      equipmentRole: 'technique',
+      profileId: techniqueRow.profile.id,
+    });
+  }
+
+  // Every equipped piece carrying the `bound` tag hands over the cards named
+  // for it in equipmentGrants.csv. The tag is the gate and the promise; the
+  // table is the payload. A piece with neither contributes nothing, which is
+  // every piece today — the seam is live and the data is empty by design.
+  for (const piece of equippedPieces(registries, loadout, classId)) {
+    for (const cardId of boundGrantCardIds(registries, piece, piece.kind === 'armor' ? 'armour' : 'armament')) {
+      grants.push({ source: piece.kind === 'armor' ? 'armor' : 'weapon', cardId, sourceId: piece.id });
+    }
+  }
+
+  // The validator names a non-array `global.grants`, so a bad bundle does not
+  // boot — but this is the PLANNER, reached by tools and fixtures with
+  // hand-built configs that never went through that door. It reads the shape it
+  // needs rather than trusting that someone else checked.
+  const globalGrants = (cfg.global || {}).grants;
+  if (Array.isArray(globalGrants)) {
+    for (const cardId of globalGrants) grants.push({ source: 'global', cardId });
+  }
+  if (cls.startingSignatureCard) grants.push({ source: 'class', cardId: cls.startingSignatureCard });
+  return grants;
+}
+
+/**
+ * startingDeckPlan(registries, loadout, classId) → the arithmetic, no cards.
+ *
+ * Grants are dealt first and are never dropped; filler is what the budget has
+ * left, split between attack and guard by the class bias. `minFiller` is the
+ * invariant in both branches of `growToFit` — the toggle only decides whether
+ * the deck size gives way (true) or the content author does (false).
+ */
+export function startingDeckPlan(registries, loadout, classId) {
+  const cfg = startingDeckConfig(registries);
+  if (!cfg) return null;
+  const authoredSize = Number(registries.balance.startingDeckSize);
+  const minFiller = Number(cfg.minFiller) || 0;
+  const rows = equipmentKitPlan(registries, loadout, classId);
+  const grants = grantRefsFor(registries, loadout, classId, cfg, rows.find((row) => row.role === 'technique'));
+
+  // THE PACKAGE LAYER ADDS REAL CARDS TOO, so the budget counts them — from the
+  // SAME function that mints them (desiredGrantInstances), never a second list
+  // that could drift. They are counted but NOT pushed into `grants`: this plan
+  // is also the deal-out list, and reconcileGrantedCards installs these
+  // instances itself at run creation. Counting reserves the room; pushing would
+  // deal each card twice.
+  //
+  // Weapon ARTS are excluded on purpose, and the exclusion is the honest half of
+  // this. Arts are minted by the same function and are equally real cards — but
+  // two shipped classes (starseer, herald) already carry one, which puts them at
+  // eleven cards against an authored size of ten. That discrepancy predates this
+  // branch (tools/class-loadouts.mjs is red about it on origin/dev), and making
+  // it a boot refusal here would fail the shipped bundle over a content question
+  // this branch has no business answering. It is reported as a warning instead —
+  // visible, named, and someone's call rather than mine.
+  // A package that cannot be read is the WeaponCardPackageModel's own refusal to
+  // make, by name, wherever it is asked; counting is not the place to raise it,
+  // and swallowing it here would hide it — so the throw propagates exactly as it
+  // did before, and the caller that already wraps this reports it.
+  const packageGrants = desiredGrantInstances(registries, { loadout, class: classId })
+    .filter((inst) => inst.equipmentRole === 'granted').length;
+
+  const needed = grants.length + packageGrants + minFiller;
+  const overrun = needed > authoredSize;
+  // growToFit === true buys the shortfall with deck size; false keeps the size
+  // and lets validateEquipment refuse the kit instead.
+  const size = overrun && cfg.growToFit === true ? needed : authoredSize;
+  const filler = Math.max(0, size - grants.length - packageGrants);
+
+  const bias = Number(
+    ((cfg.classes || {})[classId] || {}).strikeBias ?? cfg.defaultStrikeBias ?? 0.5
+  );
+  // Ties round toward attack; deterministic, and documented in balance.js.
+  const attackCount = Math.min(filler, Math.max(0, Math.round(filler * bias)));
+  return Object.freeze({
+    size,
+    grants: Object.freeze(grants.map(Object.freeze)),
+    filler,
+    attackCount,
+    guardCount: filler - attackCount,
+    bias,
+    minFiller,
+    // Counted into the budget, dealt by reconcileGrantedCards rather than by
+    // this plan — so the overrun message can name them without `grants`
+    // pretending to be the deal-out list they are not on.
+    packageGrants,
+    overrun,
+    grewToFit: overrun && cfg.growToFit === true,
+  });
+}
+
+/** The starting deck as instance-ready refs. */
 export function startingDeckRefs(registries, loadout, classId) {
   const cls = registries.classes.get(classId);
+  const plan = startingDeckPlan(registries, loadout, classId);
   const copies = ((registries.balance || {}).equipment || {}).roleCopies || {};
   const refs = [];
+
+  // Composed path: attack and guard counts come from the plan, everything else
+  // is a grant. Legacy path: the authored roleCopies distribution, verbatim.
+  const attackSlotCount = plan ? plan.attackCount : undefined;
+  const guardCopies = plan ? plan.guardCount : (copies.guard || 0);
+
   for (const row of equipmentKitPlan(registries, loadout, classId)) {
     if (row.role === 'attack') {
-      const attackPlan = buildEquippedWeaponCardPlan(registries, loadout, classId);
+      const attackPlan = buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount });
       refs.push(...attackPlan.slots.map((slot) => ({
         cardId: slot.cardId,
         equipmentRole: 'attack',
@@ -1268,11 +1783,26 @@ export function startingDeckRefs(registries, loadout, classId) {
       })));
       continue;
     }
+    if (row.role === 'guard') {
+      for (let i = 0; i < guardCopies; i++) {
+        refs.push({ cardId: row.profile.baseCardId, equipmentRole: 'guard', profileId: row.profile.id });
+      }
+      continue;
+    }
+    if (plan) continue; // technique is a grant under the composed path
     for (let i = 0; i < (copies[row.role] || 0); i++) {
       refs.push({ cardId: row.profile.baseCardId, equipmentRole: row.role, profileId: row.profile.id });
     }
   }
-  for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+
+  if (!plan) {
+    for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+    return refs;
+  }
+  for (const grant of plan.grants) {
+    const { source, ...ref } = grant;
+    refs.push(ref);
+  }
   return refs;
 }
 
@@ -1800,7 +2330,37 @@ export function stampDeck(registries, run, cards, {
   if (reconcileEquipmentPools) reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
-  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
+  // THE QUOTA IS THE RUN'S, NOT THE LOADOUT'S. A composed deck's attack count
+  // is decided once, at birth, from the grants the run started with — after
+  // that the deck HAS the instances it has, and swapping equipment re-skins
+  // them rather than changing how many there are. Recomputing from the current
+  // loadout made a swap between pieces with different grant counts throw
+  // ("attack instance count 3 does not match authored 4"). The authoritative
+  // full-deck restamp therefore reads the count off the deck itself; a subset
+  // restamp keeps the old behaviour, since a pile is not the whole truth.
+  // `run.deck` — NOT `list`. A subset restamp is handed one pile, and combat
+  // calls this once per pile, so reading the count off the subset threw the
+  // quota away exactly when it was most needed: the pile holding attack:3
+  // failed with "unknown equipmentAttackSlotId 'attack:3'" mid-swap. The whole
+  // deck is on the run in both cases and is the record of what the run was born
+  // with, so both paths read the same number from the same place.
+  // THE QUOTA IS READ, NOT DERIVED. Four rounds went into deriving it — from the
+  // plan, then from the loadout, then from `list`, then from `run.deck` — and
+  // every one of them was inert on the path that actually mattered: combat's
+  // swap builds a SYNTHETIC run with `deck: []` and calls this once per pile, so
+  // there was never a deck to count. state.js writes the number down at birth
+  // instead (`equipmentAttackSlotCount`), combat carries it onto the synthetic
+  // run like it carries the profile snapshot, and this reads it. `== null`, not
+  // falsy: zero is a quota, and a run born with no attacks says so.
+  //
+  // The count-the-deck path survives for one caller only — a run saved before
+  // the field existed, whose own deck is still the record of what it was born
+  // with. A synthetic run with neither has nothing to say, and replans.
+  let bornWith = Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined;
+  if (bornWith === undefined && Array.isArray(run.deck) && run.deck.length) {
+    bornWith = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
+  }
+  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith });
   for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
     const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
     const desired = attackPlan.slots.find((slot) => slot.equipmentAttackSlotId === inst.equipmentAttackSlotId);

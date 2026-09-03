@@ -28,7 +28,7 @@ import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { playerWeightClass } from './combat.js';
-import { damageTagIds } from '../content/tags.js';
+import { isEquipmentComposedInstance } from '../model/loadout.js';
 import { flaskSlotCap } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
@@ -86,10 +86,39 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   return dmg < 0 ? 0 : dmg;
 }
 
-/** One derivation for live actions and previews: card identity comes from CSV. */
-export function attackTagsFor(action, effect) {
-  if (action.card && Array.isArray(action.card.tags) && action.card.tags.length) return action.card.tags;
-  return damageTagIds(action.card && action.card.cardId, effect.tags);
+/**
+ * One derivation for live actions and previews: card identity comes from CSV.
+ *
+ * THERE IS NO MODULE-GLOBAL FALLBACK HERE, AND THAT IS THE POINT. Five review
+ * rounds found the same defect at five addresses: a reader that preferred the
+ * ACTIVE content but fell back to the shipped fold in content/tags.js whenever
+ * the active answer looked uninteresting — absent, then empty, then falsy. Each
+ * fix narrowed the condition and the next round found the next condition. The
+ * condition was never the bug; having two sources was. So the global is gone
+ * from this path: what answers is the active content, in the order the run
+ * itself layers it —
+ *
+ *   1. the card INSTANCE (`cardTags`), which model/registries.js writes only
+ *      onto an equipment-generated card. Absent means an ordinary card and is
+ *      the one genuine miss; `[]` is a profile that grants nothing, and says so.
+ *   2. the card ROW in the supplied registries, stamped from that bundle's own
+ *      tagging rows.
+ *   3. the EFFECT, which came out of that same bundle, and is what speaks for a
+ *      non-card effect (no cardId at all) and for isolated engine fixtures whose
+ *      cards carry no rows.
+ *
+ * A caller with no registries and no effect tags gets `[]` — the honest answer,
+ * because nothing it handed us said otherwise. It no longer gets the shipped
+ * game's tags for a bundle it never supplied.
+ */
+export function attackTagsFor(action, effect, registries) {
+  if (action.card && Array.isArray(action.card.tags)) return action.card.tags;
+  const cardId = action.card && action.card.cardId;
+  if (cardId && registries && registries.cards && registries.cards.has(cardId)) {
+    const stamped = registries.cards.get(cardId).tags;
+    if (Array.isArray(stamped) && stamped.length) return stamped;
+  }
+  return Array.isArray(effect.tags) ? effect.tags : [];
 }
 
 /**
@@ -437,7 +466,7 @@ function runOpcode(ctx, action, eff) {
     case 'damage': {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
-      const attackTags = attackTagsFor(action, eff);
+      const attackTags = attackTagsFor(action, eff, ctx.registries);
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -613,13 +642,15 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
-      // Equipment-granted instances (grantedBy) are package outputs: the next
-      // authoritative reconcile would recreate the same deterministic id, so
-      // a removal here could never persist — they are not candidates.
+      // Equipment-COMPOSED instances are not candidates: the next authoritative
+      // reconcile recreates them under the same deterministic id, so a removal
+      // here could never persist. That was already the rule for package outputs
+      // (grantedBy); it holds identically for a generated attack slot, which
+      // this opcode used to remove and the next restamp used to re-mint.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !c.grantedBy);
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !isEquipmentComposedInstance(c));
       else if (eff.random) {
-        const candidates = run.deck.map((c, i) => i).filter((i) => !run.deck[i].grantedBy);
+        const candidates = run.deck.map((c, i) => i).filter((i) => !isEquipmentComposedInstance(run.deck[i]));
         idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
       }
       if (idx >= 0) run.deck.splice(idx, 1);

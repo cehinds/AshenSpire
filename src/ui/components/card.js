@@ -11,7 +11,7 @@ import { attachTooltip, esc } from './tooltip.js';
 import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
-import { tagsFor } from '../../content/tags.js';
+import { tagService } from '../../model/tagService.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
 export function staticTokens(def) {
@@ -112,9 +112,15 @@ export function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
+  // Equipment-generated cards carry their profile's tags on `cardTags`; authored
+  // cards resolve through the junction. BOTH read the ACTIVE registries — the
+  // authored branch used to call the module-global `tagsFor`, so a bundle that
+  // changed a card's tags changed what combat did with them and not what the
+  // card showed, which is the chip strip lying about the run being played.
+  const service = tagService(registries);
   const tags = def.cardTags && def.cardTags.length
-    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
-    : tagsFor(def.id);
+    ? service.resolve(def.cardTags)
+    : service.tagsOf('card', def);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   // The badge numbers come from the framework cost profile (a preview's
@@ -133,7 +139,7 @@ export function renderCard(registries, ref, opts = {}) {
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
-    // Subtypes: authored in content/source/cardTagging.csv. Untagged cards
+    // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
       ? `<div class="ctags">${tags
