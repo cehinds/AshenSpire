@@ -569,6 +569,10 @@ async function selftest(doc, raw, schema) {
   ];
 
   let passed = 0;
+  // Rises where an inline check is MADE, so the denominator below follows the
+  // corpus instead of restating it.
+  let inlineChecks = 0;
+  const inline = (ok) => { inlineChecks += 1; if (ok) passed += 1; };
   for (const [name, plant, expected, plantNow = now] of plants) {
     const candidate = clone(doc);
     const world = cleanWorld();
@@ -594,14 +598,17 @@ async function selftest(doc, raw, schema) {
   const pruneOk = proposal.dryRun === true && proposal.mutationsPerformed === 0
     && proposal.candidateCount === 1 && proposal.candidates[0].deletionAuthorized === false;
   console.log(`  ${pruneOk ? 'PASS' : 'FAIL'} pruning stays proposal-only`);
-  if (pruneOk) passed++;
+  inline(pruneOk);
 
   const linkErrors = markdownLinkErrors('[missing](not-here.md)', DEFAULT_DOC, ROOT, () => false);
   const linkOk = linkErrors.some((error) => error.includes('missing local link'));
   console.log(`  ${linkOk ? 'PASS' : 'FAIL'} missing Markdown target is caught`);
-  if (linkOk) passed++;
+  inline(linkOk);
 
-  const total = plants.length + 2;
+  // THE TWO INLINE CHECKS COUNT THEMSELVES. This was `plants.length + 2`, a
+  // second copy of the pruning and markdown-link cases above: add a third and
+  // `passed` outruns a denominator that never moved, so a green run reports RED.
+  const total = plants.length + inlineChecks;
   if (passed !== total) {
     console.error(`continuity selftest: RED — ${passed}/${total} clean/known-bad cases discriminated`);
     return 1;

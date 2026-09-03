@@ -575,7 +575,15 @@ function ordinalHistory() {
 function traceability() {
   const dir = freshRepo();
   let failures = 0;
+  // THE CORPUS COUNTS ITSELF. `cases` rises where a case actually RUNS, so the
+  // number reported is the number executed rather than one spelled beside it.
+  // The call site used to add a literal `TRACE = 3` — the same second copy this
+  // file removed from the row-H group on #579, left standing next to it because
+  // these three cases are inline and had no CASES array to read. A count is not
+  // exempt from row B for being small.
+  let cases = 0;
   const say = (ok, label, detail) => {
+    cases += 1;
     if (!ok) failures += 1;
     console.log(`  ${ok ? 'RED  ' : 'FAIL '} [--which] ${ok ? 'caught' : 'NOT CAUGHT'} — ${label}`);
     console.log(`          ${detail}`);
@@ -605,7 +613,7 @@ function traceability() {
   } finally {
     removeTempTree(dir);
   }
-  return failures;
+  return { failures, cases };
 }
 
 export async function selftest() {
@@ -682,8 +690,9 @@ export async function selftest() {
   console.log('');
   console.log('  --which reads HISTORY, not files, so no plant above can reach it. These enter');
   console.log('  at whichCommits() over a real repo with a real merge in it.');
-  const TRACE = 3;
-  failures += traceability();
+  const trace = traceability();
+  const TRACE = trace.cases;
+  failures += trace.failures;
 
   console.log('');
   console.log('  Row H is a claim about a commit AND ITS PARENT, so it has its own door too:');

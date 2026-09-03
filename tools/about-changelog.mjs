@@ -1114,6 +1114,9 @@ async function selftest() {
   // still PASS. The header said "Four" while the list held seven — a count
   // spelled beside a corpus instead of read from it, which is the defect #579
   // fixed in buildversion-selftest and which had a second copy right here.
+  // Rises where an inverted case is actually counted, so the census below reads
+  // the corpus instead of spelling it. It was a literal `+ 1`.
+  let inverted = 0;
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
     ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
@@ -1178,7 +1181,7 @@ async function selftest() {
     // names 0.5.4, and a counter for 0.5.4 cannot speak for a 0.4.0 receipt.
     // Nothing exercised a retained 0.4 receipt against a ceiling at all.
     parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.4.0.1888')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' });
-    caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse, legacy global ordinals included');
+    caught++; inverted++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse, legacy global ordinals included');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
   }
@@ -1278,7 +1281,7 @@ async function selftest() {
   // Census over EVERY family that does caught++ — the ordinal plants and the
   // inverted legitimate-shapes control (+1) count themselves too; omitting
   // them made the selftest exit 1 with all plants caught and zero MISS (#498).
-  const total = parserPlants.length + ordinalPlants.length + 1 + modelPlants.length;
+  const total = parserPlants.length + ordinalPlants.length + inverted + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
   // the file rather than from a string handed to the parser. All three of these
