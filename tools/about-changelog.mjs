@@ -853,6 +853,27 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
     // that has not happened. The plain check never allows the extra one — a
     // merged tree whose receipt outruns its buildordinal is a receipt with no
     // build behind it, which is exactly what #310 refuses.
+    // A SCOPED CEILING NEEDS ITS SCOPE. Since 2026-09-01 the ordinal counts
+    // builds WITHIN a release, so `5` means five builds of THAT release and
+    // says nothing about any other. Given the count without the release this
+    // loop was weighing every non-`-rc` receipt against it, and CHANGELOG.md
+    // states plainly that the retained `0.4.0.<ordinal>` line "keeps its
+    // ordinals, which are that line's own receipts and were never
+    // candidate-scoped" — so `0.4.0.1888` came out as a build that has not
+    // happened (#579 review). The real run has always passed both, which is
+    // why the file itself has never been misjudged; the hazard was the API,
+    // and fixtures calling it that way were testing a configuration the tool
+    // does not have.
+    //
+    // It REFUSES rather than skipping the ceiling, because skipping is a check
+    // going quiet on the input it cannot judge — the failure this whole review
+    // has been about — and because a tree recording an ordinal with no release
+    // beside it is already refused by buildversion row F. Same rule, same era,
+    // stated in both places.
+    if (currentRelease === null) {
+      throw new Error('a release-scoped ceiling was given without its scope: currentOrdinal counts builds WITHIN a release,'
+        + ' so weighing a receipt against it requires currentRelease. Pass both, or neither.');
+    }
     const ceiling = currentOrdinal + (projecting ? 1 : 0);
     for (const r of receipts) {
       if (r.ordinal === null) continue;
@@ -1096,12 +1117,12 @@ async function selftest() {
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
     ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
-    ['pre-release stamp with no ordinal (the tag must not be read as one)', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1')}\n`, { currentOrdinal: 5 }],
-    ['pre-release stamp whose ordinal is missing after the tag', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1905')}\n`, { currentOrdinal: 5 }],
+    ['pre-release stamp with no ordinal (the tag must not be read as one)', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' }],
+    ['pre-release stamp whose ordinal is missing after the tag', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1905')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' }],
     ['ordinal rising into an older group', `## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.9')}\n`, {}],
     ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
-    ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
-    ['receipt two builds ahead even while projecting (one is the rebuild to come; two is not)', `## 2026-08-20\n\n${receipt(1, '0.4.0.102')}\n`, { currentOrdinal: 100, projecting: true }],
+    ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100, currentRelease: '0.4.0' }],
+    ['receipt two builds ahead even while projecting (one is the rebuild to come; two is not)', `## 2026-08-20\n\n${receipt(1, '0.4.0.102')}\n`, { currentOrdinal: 100, currentRelease: '0.4.0', projecting: true }],
     // THE THREE THE SECOND COPY USED TO LET THROUGH (#579 review). STAMP's
     // shape is looser than the scheme, so each of these matched it, keyed
     // cleanly under the old parallel implementation, and was ordered on a
@@ -1118,15 +1139,30 @@ async function selftest() {
     // one pair of stamps. It is caught here now because both read one rule.
     ['candidates one apart past the safe-integer ceiling, running backward across groups',
       `## 2026-08-21\n\n${receipt(1, '0.5.9007199254740992.3')}\n\n## 2026-08-20\n\n${receipt(2, '0.5.9007199254740993.2')}\n`, {}],
+    // A SCOPED CEILING WITH NO SCOPE. `5` means five builds of one release and
+    // says nothing about any other, so weighing a receipt against it without
+    // naming that release is a question with no referent. It used to answer
+    // anyway, and the retained `0.4.0.<ordinal>` line — global receipts that
+    // were never candidate-scoped — came out as builds that had not happened.
+    //
+    // THE ORDINAL HERE IS BELOW THE CEILING ON PURPOSE. The obvious plant uses
+    // `0.4.0.1888`, the receipt review named — but that throws either way, the
+    // old code for the wrong reason and the new code for the right one, so it
+    // proves nothing about this change. Drafted exactly that and caught it only
+    // because the pre-fix run came back clean. A receipt UNDER the ceiling is
+    // silently accepted by the old form and refused by the new, which is the
+    // difference this plant is for.
+    ['a release-scoped ceiling given without the release it counts within',
+      `## 2026-08-20\n\n${receipt(1, '0.4.0.3')}\n`, { currentOrdinal: 5 }],
   ];
   for (const [name, body, opts] of ordinalPlants) {
     try { parseChangelog(`# Test\n\n${body}`, opts); console.error(`MISS ${name}`); process.exitCode = 1; }
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
   try {
-    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7, currentRelease: '0.4.0' });
     // The in-PR receipt shape: one build ahead is legal while projecting.
-    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.8')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n`, { currentOrdinal: 7, projecting: true });
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.8')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n`, { currentOrdinal: 7, currentRelease: '0.4.0', projecting: true });
     // A LEGACY STAMP FAR ABOVE THE RELEASE-SCOPED CEILING MUST PASS. Its 1956
     // counts in the retired GLOBAL space, which the current counter cannot
     // speak for at all, so the ceiling has to skip it. Nothing exercised that
@@ -1135,7 +1171,13 @@ async function selftest() {
     // numeric 0 into '0' and the strict test silently went false — legacy
     // receipts stopped being skipped and this receipt was refused as a build
     // that has not happened, with the whole corpus still green (#579 review).
-    parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.5.0-rc.4.1956')}\n`, { currentOrdinal: 5 });
+    parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.5.0-rc.4.1956')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' });
+    // AND THE RETAINED 0.4 LINE, which CHANGELOG.md says "keeps its ordinals,
+    // which are that line's own receipts and were never candidate-scoped". Its
+    // 1888 dwarfs any release-scoped ceiling and must still pass: the scope
+    // names 0.5.4, and a counter for 0.5.4 cannot speak for a 0.4.0 receipt.
+    // Nothing exercised a retained 0.4 receipt against a ceiling at all.
+    parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.4.0.1888')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' });
     caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse, legacy global ordinals included');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
