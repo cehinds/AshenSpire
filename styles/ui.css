@@ -12,52 +12,6 @@
   --ui-tray-expanded-panel-max: 34%;
 }
 
-/* ---------- tooltip ---------- */
-/* --place-gap: THE DISTANCE FROM THE ANCHOR, AND THIS IS ITS ONE HOME.
-   src/ui/fx.js placeAnchored() reads it from here through getComputedStyle, and
-   so can any instrument — which is the point. It used to be `const pad = 14`
-   inside tooltip.js: a length no stylesheet and no harness could see, and the
-   reason Sunna refused to extract that placement twice (a shared placement
-   function that hard-codes a gap re-commits the second-copy defect while
-   claiming to remove one). Law 0 clause 4.
-   `px`, not `rem`: a hairline gap between two boxes is chrome, not read text, so
-   it must not answer the Text-size dial (Law 4 clause 3, Law 2 rule 3). Left
-   UNREGISTERED on purpose, so it computes to its own token and does not track
-   --ui-zoom either — which is exactly what the literal it replaces did. */
-#tooltip {
-  --place-gap: 14px;
-  position: fixed; z-index: 1000; max-width: 28rem; pointer-events: none;
-  background: #14100c; border: 1px solid var(--gold); border-radius: var(--r-3);
-  padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
-}
-#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
-.reduced-motion #tooltip { transition: none !important; }
-@media (prefers-reduced-motion: reduce) { #tooltip { transition: none !important; } }
-#tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
-#tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
-#tooltip .tt-kw b { color: var(--parchment); }
-#tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
-#tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
-#tooltip[data-tooltip-variant='enemy-context'] {
-  --place-gap: 6px;
-  max-width: 31.5rem;
-  padding: 0.3rem 0.75rem;
-  font-size: 1.5rem;
-  line-height: 1.1;
-  overflow-wrap: anywhere;
-}
-#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
-#tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
-#tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
-#tooltip .tt-combatant-focus {
-  display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
-  border-top: 1px solid var(--line-soft);
-}
-#tooltip .tt-combatant-focus b { color: var(--gold); }
-#tooltip .tt-combatant-focus span, #tooltip .tt-combatant-hint { color: var(--muted); }
-#tooltip .tt-combatant-hint { margin-top: 0.65rem; font-size: 0.82em; }
-
 /* ---------- card ---------- */
 .card {
   position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, var(--r-3));
@@ -432,22 +386,6 @@ body.hide-hints .hint-bar { display: none; }
   .confirmation-veil { padding: 3%; }
 
 }
-
-/* ---------- controls / rebinds ---------- */
-.rebind-list { display: flex; flex-direction: column; }
-.rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
-.rebind-btn {
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
-  height: auto;
-}
-.pad-btn {
-  min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: var(--r-2);
-  background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
-  font-size: 1.2rem; font-variant-numeric: tabular-nums;
-}
-.rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
-.pad-live { color: var(--green); font-size: 1.1rem; }
-.pad-off { color: var(--muted); font-size: 1.1rem; }
 
 /* ---------- custom climb ---------- */
 .mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
@@ -3072,8 +3010,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .arcane-refusal-receipt { color: var(--gold); }
 .equip-candidate-row { display: grid; gap: 0.35rem; min-width: 0; }
 .equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }
-#tooltip .equip-candidate-comparison { margin-left: 0; }
-#tooltip[data-tooltip-variant='equipment-comparison'] { overflow: auto; }
+
 .inventory-detail [data-ui-variant='inline'] .equip-candidate-comparison {
   margin-left: 0;
   border-left-color: var(--gold-dim);

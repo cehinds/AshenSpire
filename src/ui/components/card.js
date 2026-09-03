@@ -235,7 +235,10 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
     + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${costText}</div>`;
+  // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
+  // meta line as the same tag and value atoms the card face uses.
+  let html = `<div class="tt-title">${esc(def.name)}</div>`
+    + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;

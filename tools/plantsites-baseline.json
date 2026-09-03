@@ -92,6 +92,16 @@
       "id": "1bd723d53273b515"
     },
     {
+      "tool": "tools/placement.mjs",
+      "target": "styles/ui.css",
+      "id": "d6870f4a9cfa5e42"
+    },
+    {
+      "tool": "tools/placement.mjs",
+      "target": "styles/ui.css",
+      "id": "d6870f4a9cfa5e42"
+    },
+    {
       "tool": "tools/quicknav-reach.mjs",
       "target": "styles/ui.css",
       "id": "0aa79cd7b469d989"
@@ -102,9 +112,24 @@
       "id": "ffe6b4614dd92feb"
     },
     {
+      "tool": "tools/rebind-capture.mjs",
+      "target": "styles/ui.css",
+      "id": "fecde7a543a0e80c"
+    },
+    {
       "tool": "tools/startup-gate.mjs",
       "target": "src/ui/screens/settings.js",
       "id": "425f6cab7daee778"
+    },
+    {
+      "tool": "tools/text-geometry.mjs",
+      "target": "AshenSpire.html",
+      "id": "1353252b7cd6554a"
+    },
+    {
+      "tool": "tools/text-geometry.mjs",
+      "target": "AshenSpire.html",
+      "id": "c1dce040250e8564"
     }
   ],
   "unreadable": {

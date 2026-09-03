@@ -261,7 +261,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; outline: none; box-shadow: none; }
 .as-row:focus-visible { box-shadow: inset 0 0 0 1px var(--gold); }
-.as-row > .r-label { flex: 0 1 auto; }
+.as-row > .r-label { flex: 0 0 auto; }
 .as-row > .as-status, .as-row > .r-trail { margin-left: auto; }
 .as-row > .as-status + .r-trail { margin-left: 0; }
 .as-row > .as-status { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -377,8 +377,12 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* FOUR WIDTHS, a body picks the smallest that holds it. */
 .modal[data-size='sm'], .as-modal[data-size="sm"] { width: 43rem; max-width: 100%; }
 .modal[data-size='md'], .as-modal[data-size="md"] { width: 57rem; max-width: 100%; }
-.modal[data-size='lg'], .as-modal[data-size="lg"] { width: 76rem; max-width: 100%; }
-.modal[data-size='xl'], .as-modal[data-size="xl"] { width: 96rem; max-width: 100%; }
+.modal[data-size='lg'], .as-modal[data-size="lg"] { width: 76rem; max-width: 100%; height: 86%; }
+.modal[data-size='xl'], .as-modal[data-size="xl"] { width: 96rem; max-width: 100%; height: 88%; }
+/* A FIXED BOX AT THE RAILED RUNGS (Constantine, 2026-09-03: "modals should be
+   fixed size"): the height is the veil's share, so switching from a four-row
+   pane to a nine-row pane changes what scrolls, never the door. sm and md
+   follow their body — a question and a detail card have floors, not a share. */
 
 /* ModalHead = (Eyebrow + Title·S | Tab×n) + IconButton×n. Identity left,
    actions right, hairline under; the actions row sits at the TOP. */
@@ -443,7 +447,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 @container (max-width: 51rem) { .as-splitbody { grid-template-columns: 1fr; } .as-splitbody > * + * { border-left: 0; border-top: 1px solid var(--line); } }
 
 /* ═══ MENUS — three widths, one Row atom ════════════════════════════════════ */
-.as-pop { width: 31.5rem; max-width: 100%; background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6); overflow: hidden auto; }
+.as-pop { --place-gap: 6px; width: 31.5rem; max-width: 100%; background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6); overflow: hidden auto; }
 .as-pop-cap { padding: 0.9rem 1.35rem; border-bottom: 1px solid var(--line); }
 .as-group { padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
 .as-group:last-child { border-bottom: 0; }
@@ -452,8 +456,8 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-actions .am-detail { padding: 0 1.35rem 0.9rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
 
 /* TitleMenu — the one menu with no panel around it. */
-.as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; }
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+.as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1 var(--font-display); font-size: clamp(3.2rem, 13.5cqi, 5.4rem); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -530,3 +534,84 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .modal-body::-webkit-scrollbar, .as-pane::-webkit-scrollbar, .as-rail::-webkit-scrollbar, .as-pop::-webkit-scrollbar { width: 8px; height: 8px; }
 .modal-body::-webkit-scrollbar-thumb, .as-pane::-webkit-scrollbar-thumb, .as-rail::-webkit-scrollbar-thumb, .as-pop::-webkit-scrollbar-thumb { background: var(--line-soft); border-radius: 4px; }
 .modal-body::-webkit-scrollbar-track, .as-pane::-webkit-scrollbar-track, .as-rail::-webkit-scrollbar-track, .as-pop::-webkit-scrollbar-track { background: transparent; }
+
+/* ═══ THE LIVE TOOLTIP — one panel per level, four rungs by height ═════════ */
+/* `--place-gap` stays the ONE home fx.js placeGap() reads (tools/placement.mjs
+   P2); px because a hairline gap is chrome, not read text. */
+#tooltip, #tooltip-2 {
+  --place-gap: 14px;
+  position: fixed; z-index: 1000; left: 0; top: 0;
+  width: var(--tip-w, 30rem); max-width: calc(100% - 16px);
+  max-height: var(--tip-h, 19.5rem); overflow: hidden;
+  padding: 1.1rem 1.35rem;
+  background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  font-size: 1.35rem; line-height: 1.45; color: var(--parchment);
+  display: none; opacity: 0; visibility: hidden;
+  transition: opacity 140ms ease-out;
+  pointer-events: none;
+}
+#tooltip-2 { z-index: 1001; }
+/* THE RUNGS DIFFER BY HEIGHT: small a value and a line; medium prose and a
+   short list; large an effect and a glossary; expanded is large extended
+   down. A tooltip never scrolls and never clips: it steps up, and past
+   `expanded` the answer is a modal. */
+#tooltip[data-size="small"],    #tooltip-2[data-size="small"]    { --tip-w: 25.5rem; --tip-h: 12rem; }
+#tooltip[data-size="medium"],   #tooltip-2[data-size="medium"]   { --tip-w: 31.5rem; --tip-h: 19.5rem; }
+#tooltip[data-size="large"],    #tooltip-2[data-size="large"]    { --tip-w: 37.5rem; --tip-h: 27rem; }
+#tooltip[data-size="expanded"], #tooltip-2[data-size="expanded"] { --tip-w: 37.5rem; --tip-h: 42rem; }
+#tooltip[data-overflow="true"], #tooltip-2[data-overflow="true"] { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+#tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; }
+#tooltip[data-stuck="true"] { pointer-events: none; }
+#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+.reduced-motion #tooltip, .reduced-motion #tooltip-2 { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #tooltip, #tooltip-2 { transition: none !important; } }
+/* The content grammar: title, meta (type + cost), effect, tags, then under
+   the one divider the glossary and the flavour. `.tt-*` are the same parts
+   under the names the surfaces already write. */
+#tooltip .ti-title, #tooltip-2 .ti-title, #tooltip .tt-title, #tooltip-2 .tt-title { margin-bottom: 0.45rem; font: 600 1.58rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+#tooltip .ti-meta, #tooltip-2 .ti-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 0.9rem; margin-bottom: 0.75rem; }
+#tooltip .ti-meta .as-tag { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.9rem; }
+#tooltip .ti-cost, #tooltip-2 .ti-cost { font-size: 1.2rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+#tooltip .ti-cost b { color: var(--parchment); font-weight: 600; }
+#tooltip .ti-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+#tooltip .ti-detail, #tooltip-2 .ti-detail, #tooltip .tt-kw, #tooltip-2 .tt-kw { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; }
+#tooltip .ti-detail b, #tooltip .tt-kw b, #tooltip-2 .tt-kw b { color: var(--parchment); }
+#tooltip .ti-list { margin: 0.75rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; }
+#tooltip .ti-flavor, #tooltip .as-flavor { display: block; margin-top: 0.75rem; color: var(--muted); font-style: italic; font-size: 1.28rem; }
+#tooltip .mk-val, #tooltip .val { color: var(--parchment); font-weight: 600; }
+/* A term inside a tooltip that has its own entry says so with the dotted mark. */
+#tooltip [data-tip], #tooltip [title] { border-bottom: 1px dotted var(--line-soft); cursor: help; }
+#tooltip [data-tip]:hover, #tooltip [title]:hover { border-bottom-color: var(--gold); }
+/* A target being read says so, quietly. */
+[data-tip-open="true"] { outline: 1px solid rgba(var(--accent-rgb), 0.45); outline-offset: 2px; }
+/* Variants a surface may still pin (widths in the surface's own terms). */
+#tooltip[data-tooltip-variant='combatant-folded'] { --tip-w: 28.5rem; padding: 0.9rem 1.2rem; }
+#tooltip[data-tooltip-variant='combatant-expanded'] { --tip-w: 36rem; }
+#tooltip[data-tooltip-variant='enemy-context'] { --place-gap: 6px; --tip-w: 31.5rem; padding: 0.5rem 0.9rem; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
+#tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
+#tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
+#tooltip .tt-combatant-focus { display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--line-soft); }
+#tooltip .tt-combatant-focus b { color: var(--gold); }
+#tooltip .tt-combatant-focus span, #tooltip .tt-combatant-hint { color: var(--muted); }
+#tooltip .tt-combatant-hint { margin-top: 0.65rem; font-size: 0.82em; }
+#tooltip[data-tooltip-variant='equipment-comparison'] { --tip-w: 42rem; overflow: auto; }
+#tooltip .equip-candidate-comparison { margin-left: 0; }
+
+/* ═══ CONTROLS — bindings are Keycaps, rebinds are short buttons ═══════════ */
+.rebind-ctl { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+.rebind-ctl .as-keycap { min-width: 4.4rem; min-height: var(--tap-floor); padding-inline: 0.8rem; font-size: 1.2rem; color: var(--gold); }
+.rebind-ctl .rebind-btn { padding-inline: 1.2rem; }
+.rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.9s ease-in-out infinite alternate; }
+.pad-live { color: var(--green); }
+.pad-off { color: var(--muted); }
+.controls-pane { padding: 0; }
+.overlay-body > .controls-pane { padding: var(--modal-inset); }
+
+/* ═══ THE QUICK MENU HANGS OFF ITS BUTTON ══════════════════════════════════ */
+/* The popover is PLACED (quicknav.js → fx.placeAnchored: under the ☰,
+   right-aligned) — so its veil is a plain scrim, not a centring flex box,
+   and the panel is fixed-position so left/top mean what the placer wrote. */
+.modal-veil.qn-veil { display: block; padding: 0; background: rgba(0, 0, 0, 0.35); }
+.qn-panel { position: fixed; left: 0; top: 0; }

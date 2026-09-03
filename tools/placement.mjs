@@ -515,7 +515,7 @@ async function main() {
       await ev(`(() => { const c = document.querySelectorAll('.hand .card')[${i}];
         c.scrollIntoView({ inline: 'center', block: 'nearest' });
         c.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false })); return true; })()`);
-      await wait(260);
+      await wait(700); // the kit's open delay is 500ms (tooltip.js TOOLTIP_TIMING)
       const cov = await ev(COVER);
       if (!cov.shown) { bad('P3', shape, `card #${i}: hovering it showed no tooltip — nothing measured`); continue; }
       const others = cov.hit.filter((h) => h.i !== i);
@@ -548,7 +548,10 @@ async function main() {
         // TWO STATES, because Inspect grows the panel INSIDE itself and
         // placement is a one-shot. The second reading is the one that catches a
         // menu re-placed as if it were still collapsed.
-        for (const state of ['as it opens', 'with Inspect expanded']) {
+        // Inspect no longer expands the menu: it opens body B (the flask's detail
+        // door) through the shell and the menu leaves — measured below, after
+        // the opening state. (Kit §07 ActionMenu; Constantine, 2026-09-03.)
+        for (const state of ['as it opens']) {
           if (state !== 'as it opens') {
             const clicked = await ev(`(() => { const b = [...document.querySelectorAll('.flask-action')]
               .find((x) => /Inspect/i.test(x.textContent)); if (!b) return false; b.click(); return true; })()`);
@@ -570,6 +573,17 @@ async function main() {
           const softest = c.soft.length ? ` (over the field: ${c.soft.map((p) => `${p}% of a combatant`).join(', ')} — reported, not asserted)` : '';
           if (!c.hits.length) ok('P5', shape, `${at}: touches none of ${FURNITURE.length} combat controls${softest}`);
           else bad('P5', shape, `${at}: sits on ${c.hits.map((h) => `${h.sel} ${h.pct}%`).join(', ')}. A flask menu may not cover a control the player still has to tap${softest}`);
+        }
+        const inspected = await ev(`(() => { const b = [...document.querySelectorAll('.flask-action')]
+          .find((x) => /Inspect/i.test(x.textContent)); if (!b) return false; b.click(); return true; })()`);
+        if (!inspected) bad('P5', shape, 'the menu has no Inspect row — the detail door was not measured');
+        else {
+          await wait(300);
+          const door = await ev(`(() => { const m = document.querySelector('.modal .flask-inspect-body'); const menu = document.querySelector('.flask-action-menu');
+            return { door: !!m, menuGone: !menu, size: m?.closest('.modal')?.dataset.size || '' }; })()`);
+          if (door.door && door.menuGone) ok('P5', shape, `Inspect opens the detail door (body B, ${door.size} rung) and the menu leaves`);
+          else bad('P5', shape, `Inspect: door ${door.door ? 'open' : 'MISSING'}, menu ${door.menuGone ? 'gone' : 'STILL UP'} — the action menu's Inspect must hand over to body B`);
+          await ev(`document.querySelector('.modal-veil .modal-close')?.click(); true`);
         }
         await ev(`document.querySelector('.flask-action-menu')?.remove(); true`);
       }

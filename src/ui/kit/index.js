@@ -280,3 +280,16 @@ export function titleMenu({ name, subtitle: sub = '', entries = [], foot = null,
     foot,
   ]);
 }
+
+// ---- the tooltip's `full` tier ----------------------------------------------
+// A tooltip that outgrows `expanded`, or a click on an expandable target,
+// opens the same content as body B at the md rung — through the one
+// door-opener, so it has a head, a foot, a way out and a scroll container.
+import { registerTooltipExpander } from '../components/tooltip.js';
+registerTooltipExpander((markup, { title = '', eyebrow = 'Detail' } = {}) => {
+  const body = el('div', { class: 'as-detailbody' }, el('div', { class: 'lines', html: markup }));
+  const done = button({ label: 'Close', weight: 'primary' });
+  const door = openModal({ size: 'md', eyebrow, title: title || 'Detail', body, primary: done, footSize: 'short' });
+  done.addEventListener('click', door.close);
+  return door;
+});
