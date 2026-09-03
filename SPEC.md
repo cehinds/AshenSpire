@@ -308,9 +308,19 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
 
-**Equipped weapon card packages.** The authored attack-slot count is fixed by
-`balance.equipment.roleCopies.attack`; changing equipment never changes that count or the total
-deck size. `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
+**Equipped weapon card packages.** The attack-slot count is the one the run was **composed
+with at birth**, recorded on the run as `equipmentAttackSlotCount` and read — never re-derived —
+by every restamp. Under the composed starting deck
+(`balance.equipment.startingDeck.enabled`) that number comes from the plan: fixed grants are
+dealt first and the remaining budget splits between attack and guard by the class `strikeBias`,
+so it is **not** `balance.equipment.roleCopies.attack`, which describes the legacy fixed
+distribution and is read only when the composed path is off. Deck size is likewise
+`balance.startingDeckSize` unless `growToFit` is on and grants overrun it, in which case the
+deck grows to fit and `validateEquipment` reports the overrun as a warning; with `growToFit`
+off an overrun is refused at the boot door instead. What has not changed is the invariant that
+matters at runtime: **changing equipment mid-run never changes the attack count or the deck
+size** — a swap re-skins the slots the run was born with, and the birth quota is what makes
+that true. `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
 priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
 `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
 weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;

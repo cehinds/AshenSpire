@@ -1,0 +1,38 @@
+# content/source/tagFamilyDomains.csv — which domains each family may carry
+#
+# The join between tagFamilies.csv and tagDomains.csv. One row per pair, because
+# "an armament carries card tags AND item tags" is two facts and a pipe-separated
+# cell would be a 1NF break in the exact place the rest of this refactor removed
+# one.
+#
+# This is the constraint the validator enforces on every tagging row and on every
+# effect tag list: a tag whose domain is not paired with the carrier's family is
+# refused BY NAME, with the legal set printed. It is what keeps one registry from
+# making `beast` a legal card school.
+#
+# A family with no row here can carry nothing and is refused — a family that may
+# wear no tag is not in the tag system, and should be deleted rather than left
+# inert. A domain with no row here can be worn by nothing, and every tag naming
+# it is refused as dead.
+#
+# columns: family, domain
+family,domain
+card,card
+class,card
+relic,item
+flask,item
+keepsake,item
+event,run
+encounter,run
+enemy,creature
+armament,card
+armament,item
+armament,itemType
+armour,card
+armour,item
+armour,itemType
+basicCardProfile,card
+slot,item
+startingKit,item
+unlock,run
+effect,card

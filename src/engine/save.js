@@ -148,7 +148,17 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // swap goes through.
   reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
   const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
-  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
+  // THE BIRTH QUOTA REACHES THE MIGRATION TOO. Persisting it on the run and the
+  // combat snapshot is only half the job: this door builds its own plan and
+  // hands stampDeck its own synthetic run, so without it a fight saved after a
+  // grant-bearing swap replans from the CURRENT loadout and the load is
+  // rejected — the run archived for a mismatch it did not have when saved. The
+  // snapshot's own number wins; a fight saved before the field existed falls
+  // back to the run's, and a run older than both replans as it always did.
+  const bornWith = Number.isFinite(snapshot.equipmentAttackSlotCount)
+    ? snapshot.equipmentAttackSlotCount
+    : (Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined);
+  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId, { attackSlotCount: bornWith });
   // Full-pile order is the one legacy assignment door: draw, hand, discard,
   // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
   // even when zero attacks were recognized keeps the authored count fail closed.
@@ -160,6 +170,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     itemUpgradeLevels: runLevels,
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
+    equipmentAttackSlotCount: bornWith,
     deck: cards,
   }, cards, {
     adoptEquipmentBonuses: false,

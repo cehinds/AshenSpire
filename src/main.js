@@ -1550,6 +1550,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       drawPerTurn: run.drawPerTurn,
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
       itemUpgradeLevels: run.itemUpgradeLevels,
       armamentLevels: run.armamentLevels,

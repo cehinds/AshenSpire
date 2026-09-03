@@ -35,7 +35,7 @@ import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
@@ -218,7 +218,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     count.className = 'flask-charge-count';
     count.textContent = String(current);
     el.appendChild(count);
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
+    attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
     el.addEventListener('click', () => {
       const plan = flaskActionPlan({
         context: 'run',
@@ -227,7 +227,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         canDrop: false,
         dropReason: 'Charge flasks stay with the run',
       });
-      mountFlaskActionMenu(el, { def, plan, onCancel: () => {}, onAction: () => {} });
+      mountFlaskActionMenu(el, { def, plan, charges: current, onCancel: () => {}, onAction: () => {} });
     });
     chargeWrap.appendChild(el);
   }
@@ -243,7 +243,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     el.className = 'mh-flask flask-slot';
     markUiComponent(el, UI.potionControl);
     el.appendChild(flaskPresentation(def, { showName: false }));
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
+    attachTooltip(el, () => flaskTooltipHtml(def));
     el.addEventListener('click', () => {
       const plan = flaskActionPlan({
         context: 'run',

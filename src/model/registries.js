@@ -7,6 +7,8 @@
 // Headless: no document/window/localStorage/timers.
 
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
+import { tagIndex } from './tags.js';
+import { itemTypeLabel } from '../content/equipment.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
@@ -114,12 +116,74 @@ const TYPE_SINGULAR = {
  *   registries.scripts              — frozen { name: fn }
  *   registries.contentVersion       — string
  */
+/**
+ * stampTags(bundle) -> Map of source path to a copy of that collection with
+ * every object carrying its `tags` array.
+ *
+ * This is the join, resolved eagerly, exactly once, at boot — the ORM's
+ * navigation property, made concrete. content/source/tagging.csv stays the ONLY
+ * home a tag is authored in (an object arriving with its own `tags` is refused
+ * by model/tags.js), and every object comes out of here with a real array, so a
+ * mechanic reading `obj.tags` never guards for undefined and never has to know
+ * which table the tag came from.
+ *
+ * Which collections get stamped is read from the content's own tagFamilies.csv
+ * `source` column — a family joins by adding a row there, including a nested
+ * one like `equipment.armaments`. `scopeField` supplies the second half of the
+ * parent key for families whose ids repeat (armour, per class).
+ */
+// The families whose pieces carry an item TYPE. Named here rather than derived,
+// because the four-field split below is equipment's contract with the Armoury,
+// not a property of the tag schema.
+const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
+
+function stampTags(bundle) {
+  const { families, index, keyOf } = tagIndex(bundle);
+  const stamped = new Map();
+  for (const spec of families.values()) {
+    // A non-string source is refused BY NAME in model/tags.js. Skipping it here
+    // rather than splitting it keeps the order of events right: the validator
+    // gets to speak, instead of boot throwing before it can.
+    if (!spec.source || typeof spec.source !== 'string') continue;
+    let node = bundle;
+    for (const part of spec.source.split('.')) node = node && typeof node === 'object' ? node[part] : undefined;
+    if (!Array.isArray(node)) continue;
+    stamped.set(spec.source, node.map((def) => {
+      if (!def) return def;
+      const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
+      const entityTags = [...(index.get(keyOf(spec.family, scope, def.id)) || [])];
+      // Equipment splits its stamped tags four ways, exactly as content's
+      // normPiece used to before the tags moved into tagging.csv: the complete
+      // authored vocabulary, the item-type half the Armoury and the smith name
+      // the piece by, and the gameplay/presentation half that stays `tags`. An
+      // item card never infers its type from `kind` or a UI call site.
+      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags };
+      const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
+      return {
+        ...def,
+        entityTags,
+        itemTypeTags,
+        itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
+        tags: entityTags.filter((tag) => !itemTypeLabel(tag)),
+      };
+    }));
+  }
+  return stamped;
+}
+
 export function createRegistries(contentBundle) {
   const bundle = contentBundle || {};
   const registries = {};
 
+  // The tag join, resolved once for every collection tagFamilies.csv names.
+  // Everything below reads a stamped collection where one exists, so `.tags` is
+  // present and correct on every tagged object no matter which door it came in.
+  const tagFamilies = [...(bundle.tagFamilies || [])];
+  const stamped = stampTags(bundle);
+  const collection = (source, fallback) => stamped.get(source) || fallback;
+
   for (const type of REGISTRY_TYPES) {
-    registries[type] = makeRegistry(TYPE_SINGULAR[type], bundle[type]);
+    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
@@ -127,7 +191,12 @@ export function createRegistries(contentBundle) {
   // run's history earns them. Keyed by event id; absent means ungated.
   registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
-  registries.characterCreation = deepFreeze({ ...(bundle.characterCreation || {}) });
+  // Keepsakes are tagged like everything else; they just live one level down.
+  const creation = { ...(bundle.characterCreation || {}) };
+  if (stamped.has('characterCreation.keepsakes')) {
+    creation.keepsakes = stamped.get('characterCreation.keepsakes');
+  }
+  registries.characterCreation = deepFreeze(creation);
   // One object, not a copied settings shadow. The run snapshots the resolved
   // result; authoring and validation still point at this exact content object.
   registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});
@@ -143,8 +212,62 @@ export function createRegistries(contentBundle) {
   // Armaments/armour are tables, not id→def registries: pieces are looked up
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
-  registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+  // Equipment tables are stamped the same way; each is named by its own family
+  // row (equipment.armaments, equipment.armour, ...), so nothing here lists them.
+  const equipment = { ...(bundle.equipment || {}) };
+  for (const [source, rows] of stamped) {
+    // THE WHOLE PATH, NOT THE FIRST TWO SEGMENTS. `tagFamilies.source` is a
+    // dotted path and stampTags already RESOLVES it to any depth; writing the
+    // result back with `equipment[tail] = rows` assumed depth two, so a family
+    // sourced at `equipment.extras.charms` had its rows dropped onto
+    // `equipment.extras` — replacing the object that held `charms` outright.
+    // The bundle validated, the rows were stamped, and every reader that walked
+    // the declared path (tagService.withTag among them) then found nothing.
+    // Clone down the path so siblings survive, and write at the leaf.
+    const parts = String(source).split('.');
+    if (parts[0] !== 'equipment' || parts.length < 2) continue;
+    let node = equipment;
+    for (let i = 1; i < parts.length - 1; i++) {
+      const key = parts[i];
+      node[key] = (node[key] && typeof node[key] === 'object' && !Array.isArray(node[key]))
+        ? { ...node[key] }
+        : {};
+      node = node[key];
+    }
+    node[parts[parts.length - 1]] = rows;
+  }
+  // The card-tag index equipment fit reads, folded from THIS bundle's tagging
+  // rows rather than the module-global one content/equipment.js folded at
+  // import time. A caller handing us an extended bundle (a test fixture, a
+  // mutant, a modded content set) stamps its cards from the rows it supplied,
+  // so an index built from the shipped rows would answer a different question
+  // than `card.tags` does — two answers, one question, and the fit check
+  // quietly using the stale one.
+  const cardTagging = new Map();
+  for (const row of bundle.tagging || []) {
+    if (!row || row.family !== 'card') continue;
+    const tags = cardTagging.get(row.objectId);
+    if (tags) tags.push(row.tagId);
+    else cardTagging.set(row.objectId, [row.tagId]);
+  }
+  // Derived UNCONDITIONALLY, so `equipment.cardTagging` cannot disagree with
+  // what was stamped. No tagging table at all means no index either — the
+  // missing-table guard in validateEquipment then fires, rather than the fit
+  // check quietly reading a shipped fold that no longer describes this bundle.
+  if (Array.isArray(bundle.tagging)) {
+    equipment.cardTagging = [...cardTagging].map(([cardId, tags]) => ({ cardId, tags }));
+  } else {
+    delete equipment.cardTagging;
+  }
+  registries.equipment = deepFreeze(equipment);
+  // The one tag vocabulary, plus the two tables that say who may carry it and
+  // where it is authored (content/tags.js). Rules read these, never a second
+  // hard-coded list — that is what makes a new tag a spreadsheet row.
   registries.tags = deepFreeze([...(bundle.tags || [])]);
+  registries.tagDomains = deepFreeze([...(bundle.tagDomains || [])]);
+  registries.tagFamilies = deepFreeze(tagFamilies.map((row) => ({ ...row })));
+  registries.tagFamilyDomains = deepFreeze((bundle.tagFamilyDomains || []).map((row) => ({ ...row })));
+  registries.tagging = deepFreeze((bundle.tagging || []).map((row) => ({ ...row })));
 
   // Visual scaling domains use the same derived-stat engine as run creation.
   // They are content potential (the largest legal creation allocation), not a
@@ -202,7 +325,7 @@ export function createRegistries(contentBundle) {
 
   // What can be earned. A table, like equipment — evaluated against saved
   // progress by model/unlocks.js, never by anything in here.
-  registries.unlocks = deepFreeze([...(bundle.unlocks || [])]);
+  registries.unlocks = deepFreeze([...collection('unlocks', bundle.unlocks || [])]);
 
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');

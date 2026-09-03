@@ -29,7 +29,7 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -180,7 +180,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
 
-  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1 } = {}) {
+  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null } = {}) {
     const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
       : busy ? 'Wait for the current action to finish'
@@ -189,6 +189,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     mountFlaskActionMenu(anchor, {
       def,
       plan,
+      charges,
       onCancel: () => {},
       onAction: (actionId) => {
         if (actionId !== 'use') return;
@@ -679,8 +680,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       count.textContent = String(current);
       el.appendChild(count);
       appendFlaskHotkey(el, hotkeySlot);
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current }));
+      attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current }));
       chargeFlasks.appendChild(el);
     }
     p.flasks.forEach((f, slot) => {
@@ -701,8 +702,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // by the machinery from the table, so the sentence a player reads and the
       // gesture the button actually wants cannot drift — and the icon is far too
       // small for the HOLD word the event bars carry (hidden in ui.css).
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`
-        + '<br><i>Open actions to Use or Inspect.</i>');
+      attachTooltip(el, () => flaskTooltipHtml(def, { hint: 'Open actions to Use or Inspect.' }));
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
       potions.appendChild(el);
     });

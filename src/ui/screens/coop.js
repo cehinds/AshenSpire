@@ -48,7 +48,7 @@ import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
@@ -103,7 +103,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     intent: { action: 'use', ...(slot != null ? { slot } : {}), ...(targetId ? { targetId } : {}), ...(chargeKind ? { chargeKind } : {}) },
   });
 
-  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1 } = {}) {
+  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1, charges = null } = {}) {
     const canUse = meP.alive && meP.connected && !meP.ended && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
       : !meP.connected ? 'This player is disconnected'
@@ -112,6 +112,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     mountFlaskActionMenu(anchor, {
       def,
       plan,
+      charges,
       onCancel: () => {},
       onAction: (actionId) => {
         if (actionId !== 'use') return;
@@ -608,8 +609,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         b.setAttribute('aria-disabled', String(current <= 0));
         b.innerHTML = `${flaskIdentityHtml(fd)} <b>${current}</b>`;
         b.setAttribute('aria-label', `${fd.name}: ${current} charges remaining`);
-        attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
-        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { chargeKind: kind, remaining: current }));
+        attachTooltip(b, () => flaskTooltipHtml(fd, { charges: current }));
+        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { chargeKind: kind, remaining: current, charges: current }));
         fwrap.appendChild(b);
       }
       meP.flasks.forEach((f, i) => {
@@ -618,7 +619,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         b.className = `coop-flask${armedFlask === i ? ' armed' : ''}`;
         b.dataset.coopFlaskSlot = String(i);
         b.innerHTML = `${flaskIdentityHtml(fd)}${fd.targeted ? '' : ' ▾'}`;
-        attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
+        attachTooltip(b, () => flaskTooltipHtml(fd));
         b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { slot: i }));
         fwrap.appendChild(b);
       });

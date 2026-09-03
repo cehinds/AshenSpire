@@ -97,7 +97,12 @@ export function openSaveSlotSelector({
           <span class="title-slot-copy" data-component="title-save-slot-copy">${saveSlotCopyHtml({ slot, summary })}</span>
           <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
         </button>
-        ${summary && onDelete ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>` : ''}
+        ${onDelete ? (summary
+          ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>`
+          // An empty slot has nothing to delete and still holds the gutter open,
+          // so every row in the list ends on the same edge. Hidden, disabled and
+          // aria-hidden: furniture, not a control (styles/ui.css).
+          : '<button class="subtle title-slot-delete" data-slot-spacer type="button" tabindex="-1" disabled aria-hidden="true">✕</button>') : ''}
       </div>`;
     }).join('');
 
