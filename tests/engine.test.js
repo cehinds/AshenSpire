@@ -2404,6 +2404,63 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `an empty item-type vocabulary is refused, not skipped — said ${JSON.stringify(vocabSaid.slice(0, 200))}`);
   });
 
+  // ---- 26k. the eighth round: the quota is written down, not derived ------
+  test('26k. a real in-combat swap keeps the birth quota, and the item prefix is reserved', () => {
+    // THE PATH FOUR ROUNDS OF QUOTA FIXES NEVER TOUCHED. Rounds four to seven
+    // each derived the birth quota somewhere new — from the plan, the loadout,
+    // `list`, then `run.deck` — and every one of them was INERT here, because
+    // combat's swap builds a synthetic run with `deck: []` and calls stampDeck
+    // once per pile. There was never a deck to count. 26h passed because it
+    // handed stampDeck a real run; production does not. So the number is
+    // written down at birth and carried, and this drives the actual dispatch.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'dagger', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries(granting);
+    const run = createRunState({ seed: 7, classId: 'reaver', registries: reg });
+    const born = run.deck.filter((c) => c.equipmentRole === 'attack').length;
+    eq(run.equipmentAttackSlotCount, born, 'the run records the quota it was born with');
+    eq(born, 4, 'the unbound straight sword grants nothing, so four attacks');
+    run.loadout.sets.rightHand[1] = 'dagger'; // bound: a replan would say three
+
+    const combat = createCombat({
+      registries: reg,
+      rng: createRng(7),
+      enemyIds: [contentBundle.enemies[0].id],
+      player: {
+        classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
+        maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
+        energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, damageBySchoolAdd: run.damageBySchoolAdd,
+        equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+        equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+        equipmentPoolDeficits: run.equipmentPoolDeficits, itemUpgradeLevels: run.itemUpgradeLevels,
+        deck: run.deck, relicIds: run.relics, flasks: run.flasks, flaskCharges: run.flaskCharges,
+        loadout: run.loadout,
+      },
+    });
+    eq(combat.equipmentAttackSlotCount, born, 'and combat carries it, like the profile snapshot beside it');
+    // Without the carried quota this throws "unknown equipmentAttackSlotId
+    // 'attack:3'" — the pile holding the slot the replan dropped.
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    const attacksAfter = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]
+      .flat().filter((c) => c && c.equipmentRole === 'attack').length;
+    eq(attacksAfter, born, 'the swap re-skins the attacks across every pile, it does not re-count them');
+
+    // THE PREFIX, CHECKED FROM BOTH SIDES. stampTags classifies by prefix while
+    // the validator classifies by domain, so a NON-itemType id wearing `item:`
+    // is filed as a type and dropped from the piece's gameplay tags — the fit
+    // check then says noMatch for a pairing the author wrote on purpose.
+    const kw = contentBundle.keywords.map((k) => k.id);
+    const reserved = JSON.parse(JSON.stringify(contentBundle));
+    reserved.tags.push({ id: 'item:venomous', domain: 'card', label: 'Venomous', color: '#888', glyph: '*', blurb: '' });
+    const reservedSaid = tagContentProblems(reserved, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/reserved for the itemType domain/.test(reservedSaid),
+      `a card-domain '${'item:'}' id is refused by name — said ${JSON.stringify(reservedSaid.slice(0, 180))}`);
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);

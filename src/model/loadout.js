@@ -2139,16 +2139,22 @@ export function stampDeck(registries, run, cards, {
   // failed with "unknown equipmentAttackSlotId 'attack:3'" mid-swap. The whole
   // deck is on the run in both cases and is the record of what the run was born
   // with, so both paths read the same number from the same place.
-  // ZERO IS A COUNT, NOT A MISSING ONE. `attacksBorn || undefined` said "recompute
-  // from the current loadout" for a deck legitimately born with no attacks (minFiller
-  // 0, a bound piece supplying the whole budget), and a later swap then replanned a
-  // positive quota against a deck that had none. What distinguishes "nothing to say"
-  // from "zero" is not the count — it is whether there is a DECK yet, which is false
-  // only while run creation is still building one.
-  const deck = Array.isArray(run.deck) && run.deck.length ? run.deck : null;
-  const bornWith = deck
-    ? deck.filter((card) => card && card.equipmentRole === 'attack').length
-    : undefined;
+  // THE QUOTA IS READ, NOT DERIVED. Four rounds went into deriving it — from the
+  // plan, then from the loadout, then from `list`, then from `run.deck` — and
+  // every one of them was inert on the path that actually mattered: combat's
+  // swap builds a SYNTHETIC run with `deck: []` and calls this once per pile, so
+  // there was never a deck to count. state.js writes the number down at birth
+  // instead (`equipmentAttackSlotCount`), combat carries it onto the synthetic
+  // run like it carries the profile snapshot, and this reads it. `== null`, not
+  // falsy: zero is a quota, and a run born with no attacks says so.
+  //
+  // The count-the-deck path survives for one caller only — a run saved before
+  // the field existed, whose own deck is still the record of what it was born
+  // with. A synthetic run with neither has nothing to say, and replans.
+  let bornWith = Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined;
+  if (bornWith === undefined && Array.isArray(run.deck) && run.deck.length) {
+    bornWith = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
+  }
   const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith });
   for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
     const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];

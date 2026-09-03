@@ -150,6 +150,14 @@ export function createRunState({
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
+    // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
+    // with is a fact about the run, not something to re-derive from whatever
+    // cards happen to be in hand — four review rounds went into deriving it, and
+    // the derivation was still inert on the path that mattered, because combat's
+    // swap builds a synthetic run with `deck: []` and there was nothing to
+    // derive it from. So it is recorded here, once, and carried like the
+    // profile snapshot beside it.
+    equipmentAttackSlotCount: null, // filled in below, from the deck just built
     relics: [startingRelic.id],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
@@ -160,6 +168,9 @@ export function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // The quota, from the deck that was just composed — before anything else can
+  // touch it. Recorded even when it is zero, because zero is a quota.
+  run.equipmentAttackSlotCount = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
   // THE DOOR OPENS HERE. Everything below this line writes to a run that
   // already exists, and until today none of it said so. `hp`/`maxHp` above are
   // the FIRST of three writers; initializeRunDerivedStats is the second and
@@ -507,6 +518,9 @@ export const RUN_SHAPE = [
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
+  // Optional only for runs saved before the quota was written down; stampDeck
+  // falls back to counting a run's own deck for exactly those.
+  { key: 'equipmentAttackSlotCount', type: 'number', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },

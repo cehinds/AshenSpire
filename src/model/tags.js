@@ -31,8 +31,10 @@
 //              basicCardProfiles schema used to give by requiring the column —
 //              an itemType tag id missing the `item:` prefix the runtime
 //              classifies by, which would silently strip every piece's type,
-//              and an itemType label disagreeing with the one the runtime
-//              derives from the same id, which would name one tag two ways
+//              an itemType label disagreeing with the one the runtime derives
+//              from the same id, which would name one tag two ways, and the
+//              mirror of the prefix rule — a NON-itemType id wearing `item:`,
+//              which the runtime would file as a type and drop from gameplay
 //
 // The `legal:` list on a domain error is the point: the message tells the
 // author which words this family accepts instead of making them find out.
@@ -291,6 +293,19 @@ export function tagContentProblems(bundle, keywordIds = []) {
   // without the prefix satisfies the check below and is then stamped as an
   // ordinary gameplay tag — every piece silently losing its type. Hold the
   // prefix here, where the author can see it.
+  // THE PREFIX IS RESERVED, IN BOTH DIRECTIONS. stampTags classifies by PREFIX
+  // (itemTypeLabel) while this pass classifies by DOMAIN, so a tag that is one
+  // and not the other is silently miscarried. The rule below catches an itemType
+  // row without the prefix; this catches the mirror — a card- or gameplay-domain
+  // id that HAS it. Such a tag on an armament is moved into `itemTypeTags` and
+  // out of the gameplay `tags` set, so the piece gains a bogus type and loses a
+  // real tag, and the card/weapon fit check then says noMatch for a pairing the
+  // author wrote on purpose. One prefix, one domain, checked from both sides.
+  for (const row of byId.values()) {
+    if (row.domain === 'itemType' || !String(row.id || '').startsWith(ITEM_TYPE_PREFIX)) continue;
+    err(`tags.${row.id}`, `a '${ITEM_TYPE_PREFIX}' id is reserved for the itemType domain, and this row is a ${row.domain} tag — the runtime classifies by that prefix alone, so an equipment piece carrying this would file it as an item type and drop it from its gameplay tags; rename the id or move the row to domain 'itemType'`);
+  }
+
   const itemTypeRows = [...byId.values()].filter((t) => t.domain === 'itemType');
   for (const row of itemTypeRows) {
     // The prefix alone is not enough: the runtime treats an id whose label
