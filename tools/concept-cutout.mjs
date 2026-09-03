@@ -40,7 +40,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { inflateSync, deflateSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 // The medallion anchors are the game's, not this tool's — one home, two
 // readers. classArtAnchors.js is data only and touches no document, which is
 // what makes it importable from a build tool at all.
@@ -56,7 +56,7 @@ const CONCEPTS = {
 };
 
 // Same five as PORTRAIT_TINTS in src/ui/assets.js and TINTS in sprites-blender.py.
-const TINTS = {
+export const TINTS = {
   gold: [0xC9, 0xA2, 0x27],
   ember: [0xC9, 0x50, 0x2E],
   frost: [0x7F, 0xA8, 0xC9],
@@ -64,15 +64,15 @@ const TINTS = {
   grace: [0x9F, 0xC3, 0xE8],
 };
 
-const OUT_W = 450;
-const OUT_H = 570;
+export const OUT_W = 450;
+export const OUT_H = 570;
 const BG_SURE = 248;   // at or above this, and edge-connected: background
 const FG_SURE = 224;   // at or below this: figure, never removed
 const CHROMA_MAX = 14; // background is grey; coloured pixels are never background
 
 const CHANNELS = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
 
-function decodePng(bytes) {
+export function decodePng(bytes) {
   let pos = 8;
   let width, height, depth, colorType;
   const idat = [];
@@ -131,7 +131,7 @@ const CRC = (() => {
   };
 })();
 
-function encodePng(w, h, rgba) {
+export function encodePng(w, h, rgba) {
   const stride = w * 4;
   const raw = Buffer.alloc(h * (stride + 1));
   for (let y = 0; y < h; y++) {
@@ -159,7 +159,7 @@ function encodePng(w, h, rgba) {
 
 // Background alpha by edge-connected flood fill, with a soft band so the cut
 // keeps the painting's own anti-aliasing instead of stair-stepping it.
-function cutout(img) {
+export function cutout(img) {
   const { width: w, height: h, bpp, px } = img;
   const lum = new Uint8Array(w * h);
   const grey = new Uint8Array(w * h);
@@ -304,7 +304,7 @@ function cutout(img) {
   return { width: w, height: h, px: out };
 }
 
-function contentBox(img) {
+export function contentBox(img) {
   const { width: w, height: h, px } = img;
   let x0 = w, x1 = -1, y0 = h, y1 = -1;
   for (let y = 0; y < h; y++) {
@@ -320,7 +320,7 @@ function contentBox(img) {
 
 // Box-filtered scale: these are large downscales, so a box average is both
 // correct and cheap, and it keeps the painting's soft edges soft.
-function resample(src, sx0, sy0, sw, sh, dw, dh) {
+export function resample(src, sx0, sy0, sw, sh, dw, dh) {
   const out = Buffer.alloc(dw * dh * 4);
   const fx = sw / dw, fy = sh / dh;
   for (let y = 0; y < dh; y++) {
@@ -414,7 +414,7 @@ function hsvToRgb(h, s, v) {
   return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
 
-function tintOutfit(img, rgb) {
+export function tintOutfit(img, rgb) {
   const { width: w, height: h, px } = img;
   const out = Buffer.from(px);
   const [th, ts] = rgbToHsv(rgb[0], rgb[1], rgb[2]);
@@ -437,7 +437,7 @@ function tintOutfit(img, rgb) {
   return { width: w, height: h, px: out };
 }
 
-function withRim(img, rgb, bottomIsCrop, depth = 3, strength = 0.85) {
+export function withRim(img, rgb, bottomIsCrop, depth = 3, strength = 0.85) {
   const { width: w, height: h, px } = img;
   const out = Buffer.from(px);
   const on = new Uint8Array(w * h);
@@ -488,6 +488,12 @@ function withRim(img, rgb, bottomIsCrop, depth = 3, strength = 0.85) {
 // the first class with `spawnSync cwebp ENOENT`, which says nothing about what
 // to install. CREDITS.md advertises this command as the way to regenerate the
 // sprites, so it has to be honest about what it needs on a clean clone.
+// RUN ONLY WHEN INVOKED DIRECTLY. tools/pose-cutout.mjs imports the matte,
+// the dye and the rim from this file so the generated combat poses go through
+// the SAME cut as the class sprites — one matte, two readers, no second copy
+// to drift. An import must therefore not fire the class-sprite run.
+const IS_MAIN = !!process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (IS_MAIN) {
 let cwebpVersion = 'unknown';
 try {
   cwebpVersion = `cwebp ${String(execFileSync('cwebp', ['-version'])).trim().split('\n')[0]}`;
@@ -663,3 +669,4 @@ writeFileSync(manifestPath, `${JSON.stringify({
 }, null, 2)}\n`);
 
 console.log(`\nWROTE ${written} sprites + manifest to ${outDir}`);
+}
