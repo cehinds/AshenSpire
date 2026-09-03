@@ -254,13 +254,49 @@ Two things in that table need his eye rather than my assumption:
     **Neither piece exists today:** there is no `CODEOWNERS` file anywhere in
     this repository, and this record does not assert what the default branch's
     protection currently requires, because that is a repository setting and is
-    not readable from the tree. A ruling of A-review is therefore an
-    instruction to create both and to verify the rule refuses an unreviewed
-    merge, not to add a file and assume.
+    not readable from the tree.
 
-    With both in place, a listener change reaches the default branch only with
-    the owner's sign-off, so the publication it carries was authorised at the
-    point the change landed.
+    **A-REVIEW IS NOT IMPLEMENTABLE ON TODAY'S SETUP, AND THIS RECORD HAD TO
+    BE TOLD SO TWICE.** Codex raised two further P1s, and the second is the
+    one that matters:
+
+    - **A shared account cannot approve its own pull request.**
+      `.agentops/scheduler/config.json` records that Constantine and every seat
+      authenticate as the single GitHub account `cehinds` (#434), and GitHub
+      refuses to let a pull request's author approve it. Requiring that
+      account's Code Owner approval on `.github/workflows/**` therefore does
+      not gate listener changes — it makes every agent-authored one
+      **permanently unmergeable**. The repository had already written this
+      trap down, in that same file: an exception "written in terms of one
+      [GitHub approval] would read as a relaxation while stalling every merge
+      exactly as before." A-review walked into it one level up.
+
+      So A-review needs a **distinct reviewing identity** — #434's fix 3,
+      which does not exist — or an owner gate that is not a pull-request
+      approval at all (a required status only the owner can satisfy, a
+      push restriction on the path, a ruleset bypass list). Naming which is
+      part of ruling A-review, and until one exists **A-review is blocked,
+      not merely unbuilt.**
+
+    - **The CODEOWNERS rule must own itself.** Assigning the owner to
+      `.github/workflows/**` alone leaves the entry itself unguarded: a
+      separate pull request can delete or weaken that line without touching
+      any owner-owned path, and the next listener change is then ungated.
+      GitHub's own Code Owners guidance recommends assigning ownership of the
+      `CODEOWNERS` file or its directory for exactly this reason. A-review must
+      therefore give the owner `/.github/CODEOWNERS` as well as the listener
+      path.
+
+    **Verification is two-sided, and an earlier draft of this record gave only
+    one side.** "An unreviewed merge is refused" passes just as happily against
+    a brick wall as against a working gate — it is the deadlock above wearing a
+    green tick. A-review is satisfied only when **both** hold: an unreviewed
+    listener change is refused, an unreviewed attempt to weaken `CODEOWNERS` is
+    refused, **and** an authorised listener change can actually merge.
+
+    With all of that in place, a listener change reaches the default branch
+    only with the owner's sign-off, so the publication it carries was
+    authorised at the point the change landed.
   - **A-accept** — accept that changes to that one file publish on the next
     `dev`/`test` push, and say so where a reader will meet it. Nothing outside
     this record changes; the exposure is written down instead of closed.
@@ -311,7 +347,7 @@ hat. So:
 
 | Ruling | What happens |
 |---|---|
-| **A-review** | Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review)**. **Before** the workflow is written, `.github/workflows/**` gains an enforced owner-review requirement: a `CODEOWNERS` entry naming the owner **and** a branch-protection rule or ruleset on the default branch requiring a pull request and requiring Code Owner review — CODEOWNERS alone only requests a reviewer and does not block the merge. Neither exists today. That requirement is a separate act, is not granted by this amendment, and is not satisfied until an unreviewed merge is actually refused. Then the workflow. |
+| **A-review** | **BLOCKED TODAY — see below; ruling it selects a model but cannot be executed yet.** Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review), pending its gate**. **Before** the workflow is written, `.github/workflows/**` **and** `/.github/CODEOWNERS` gain an enforced owner-review requirement: `CODEOWNERS` entries naming the owner for both paths **and** a branch-protection rule or ruleset on the default branch requiring a pull request and Code Owner review — CODEOWNERS alone only requests a reviewer. None of it exists today, and it cannot be built on the single shared `cehinds` account, which GitHub will not let approve its own pull requests: a distinct reviewing identity (#434 fix 3) or a non-approval owner gate must be named and stood up first. The gate is satisfied only when an unreviewed listener change is refused, an unreviewed weakening of `CODEOWNERS` is refused, **and** an authorised listener change can still merge. Then the workflow. |
 | **A-accept** | The same three amendments, plus one sentence in `promotion-gates.json` recording that a change to the listener file itself publishes on the next `dev`/`test` push with no further authority. Status becomes **Approved (A-accept)**. Then the workflow. |
 | **A**, bare | **`WAIT`, not a pass.** A names the model but not the listener treatment, and the two differ in whether a future listener change carries publication authority. Nothing is amended and no workflow is written until the treatment is named. |
 | **B** | Amend `promotion-gates.json` to model B — republication only, and the record states plainly that `main` and `release` republish with everything else. Status becomes **Approved (B)**. Then the workflow. |
