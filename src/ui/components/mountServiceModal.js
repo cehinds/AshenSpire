@@ -1,17 +1,21 @@
 // The smith's card-service overlay: extract a card from an item's mount, or
 // seat a deck card in one. Same dialog contract as smithUpgradeModal.js —
-// the component owns dialog semantics, focus containment and rendering; the
-// screen owns run mutation. Three columns of choice at most (item, mount,
-// card), every one reversible until the explicit Confirm.
+// the component owns rendering and the confirm decision; the screen owns run
+// mutation. Three columns of choice at most (item, mount, card), every one
+// reversible until the explicit Confirm.
+//
+// THE CHROME IS THE SHELL'S. This door opens through modalShell.js, so the
+// head (eyebrow, title, one ✕), the foot (the way out left, the way forward
+// right), Escape, the veil click and focus return are the same here as on
+// every other door — none of it is assembled in this file. What this file
+// owns is the BODY: the item chooser, the mount list and (seating) the deck
+// cards the chosen mount takes.
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { renderCard } from './card.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-
-const visibleFocusable = (root) => [...root.querySelectorAll(
-  'button:not([disabled]), [role="button"][tabindex="0"], [role="option"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-)].filter((element) => !element.hidden && element.getClientRects().length);
+import { openModal } from './modalShell.js';
 
 export function mountMountServiceModal(host, initialModel, {
   registries,
@@ -23,56 +27,73 @@ export function mountMountServiceModal(host, initialModel, {
   onConfirm,
   returnFocusElement,
 }) {
-  const returnFocus = returnFocusElement instanceof HTMLElement
+  const opener = returnFocusElement instanceof HTMLElement
     ? returnFocusElement
     : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil smith-modal-veil';
-  const modal = document.createElement('section');
-  modal.className = 'modal smith-upgrade-modal mount-service-modal';
-  modal.setAttribute('role', 'dialog');
-  modal.setAttribute('aria-modal', 'true');
-  modal.setAttribute('aria-labelledby', 'mount-modal-title');
-  modal.setAttribute('aria-describedby', 'mount-modal-instruction');
-  modal.tabIndex = -1;
-  markUiComponent(modal, UI.mountServiceModal, initialModel.variant);
-  modal.innerHTML = `
-    <header class="smith-modal-head">
-      <div>
-        <span class="smith-modal-eyebrow">${esc(initialModel.properties.eyebrow)}</span>
-        <h2 id="mount-modal-title">${esc(initialModel.properties.title)}</h2>
-        <p id="mount-modal-instruction">${esc(initialModel.properties.instruction)}</p>
-      </div>
-      <span class="smith-modal-consequence">${esc(initialModel.properties.consequenceBadge)}</span>
-    </header>
-    <div class="smith-modal-body">
-      <section class="smith-candidate-region" aria-labelledby="mount-candidate-title">
-        <div class="smith-region-head">
-          <h3 id="mount-candidate-title">Choose an item</h3>
-          <span data-mount-count></span>
-        </div>
-        <div class="smith-card-list" role="listbox" aria-label="Items with a mount to work on"></div>
-      </section>
-      <section class="smith-preview-region" aria-live="polite" aria-label="Selected item's mounts"></section>
-    </div>
-    <footer class="smith-modal-footer">
-      <p>${esc(initialModel.properties.consequence)}</p>
-      <div class="smith-modal-actions">
-        <button type="button" class="subtle smith-back">${esc(initialModel.properties.backLabel)}</button>
-        <button type="button" class="smith-confirm mount-confirm"></button>
-      </div>
-    </footer>`;
-  veil.appendChild(modal);
-  host.appendChild(veil);
+  const p0 = initialModel.properties;
 
-  const cardsHost = modal.querySelector('.smith-card-list');
-  const previewHost = modal.querySelector('.smith-preview-region');
-  const count = modal.querySelector('[data-mount-count]');
-  const back = modal.querySelector('.smith-back');
-  const confirm = modal.querySelector('.mount-confirm');
+  const badge = document.createElement('span');
+  badge.className = 'smith-modal-consequence';
+  badge.textContent = p0.consequenceBadge;
+
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'subtle smith-back';
+  back.textContent = p0.backLabel;
+
+  const confirm = document.createElement('button');
+  confirm.type = 'button';
+  confirm.className = 'smith-confirm mount-confirm';
+
   let currentModel = initialModel;
   let closed = false;
+  // Why the door closed: the ✕, Escape and the veil are all "back"; Confirm is
+  // not, and a programmatic close from the screen is neither.
+  let leaving = 'back';
   let disarmDecision = null;
+
+  const shell = openModal({
+    size: 'xl',
+    className: 'smith-upgrade-modal mount-service-modal',
+    eyebrow: p0.eyebrow,
+    title: p0.title,
+    headExtras: badge,
+    bodyClassName: 'smith-modal-body',
+    body: (bodyHost) => {
+      bodyHost.innerHTML = `
+        <p class="mount-modal-instruction" id="mount-modal-instruction">${esc(p0.instruction)}</p>
+        <section class="smith-candidate-region" aria-labelledby="mount-candidate-title">
+          <div class="smith-region-head">
+            <h3 id="mount-candidate-title">Choose an item</h3>
+            <span data-mount-count></span>
+          </div>
+          <div class="smith-card-list" role="listbox" aria-label="Items with a mount to work on"></div>
+        </section>
+        <section class="smith-preview-region" aria-live="polite" aria-label="Selected item's mounts"></section>`;
+    },
+    note: p0.consequence,
+    secondary: [back],
+    primary: confirm,
+    onClose: () => {
+      if (closed) return;
+      closed = true;
+      disarmDecision?.();
+      disarmDecision = null;
+      if (leaving === 'back') onBack();
+    },
+    opener,
+    host,
+  });
+  // The shrine pane sits above the rest screen's own veil; same stacking the
+  // upgrade door uses.
+  shell.veil.classList.add('smith-modal-veil');
+  shell.panel.setAttribute('aria-describedby', 'mount-modal-instruction');
+  const modal = shell.panel;
+  markUiComponent(modal, UI.mountServiceModal, initialModel.variant);
+
+  const cardsHost = shell.body.querySelector('.smith-card-list');
+  const previewHost = shell.body.querySelector('.smith-preview-region');
+  const count = shell.body.querySelector('[data-mount-count]');
 
   const costPairHtml = (selected) => `<span class="smith-cost-pair">
       <em>REQ</em><i aria-hidden="true">/</i><em>AVAIL</em>
@@ -101,7 +122,8 @@ export function mountMountServiceModal(host, initialModel, {
     const p = currentModel.properties;
     if (!p.canConfirm) return;
     const selection = { itemRef: p.selected.itemRef, mountKey: p.selectedMount.mountKey, instanceId: p.selectedCard ? p.selectedCard.instanceId : undefined };
-    close({ restoreFocus: false });
+    leaving = 'confirm';
+    shell.close();
     onConfirm(selection);
   }
 
@@ -232,52 +254,17 @@ export function mountMountServiceModal(host, initialModel, {
     }
   }
 
-  function close({ restoreFocus = true } = {}) {
-    if (closed) return;
-    closed = true;
-    disarmDecision?.();
-    disarmDecision = null;
-    window.removeEventListener('keydown', onKeydown, true);
-    veil.remove();
-    if (restoreFocus && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
-  }
-
-  function backOut() {
-    close();
-    onBack();
-  }
-
-  function onKeydown(event) {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      backOut();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    const focusable = visibleFocusable(modal);
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    } else if (!modal.contains(document.activeElement)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    }
-  }
-
-  back.addEventListener('click', backOut);
-  window.addEventListener('keydown', onKeydown, true);
+  // Back is a way out, and the shell's ✕, Escape and veil click are the same
+  // way out — all four land on onBack through onClose.
+  back.addEventListener('click', shell.close);
   draw(initialModel);
   queueMicrotask(() => modal.focus({ preventScroll: true }));
 
   return {
     update(model) { draw(model, { focusSelection: true }); },
-    close,
+    close() {
+      leaving = 'screen';
+      shell.close();
+    },
   };
 }

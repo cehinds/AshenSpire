@@ -5696,6 +5696,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 /* ---- the smith's card services (mount-service-modal) -------------------
    Same frame as the upgrade modal; only the preview differs: a list of the
    item's mounts, then (seating) the deck cards that mount takes. */
+/* The instruction used to sit in a hand-built head; the shell's head has no slot
+   for a sentence, so it is the body grid's first, full-width row. The rows are
+   NAMED because the body grid stretches auto rows to fill the pane: left implicit,
+   the instruction row took half the height and the chooser sat at the bottom. */
+.mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 1fr); }
+.mount-service-modal .mount-modal-instruction { grid-column: 1 / -1; margin: 0; padding: 8px 20px 0; color: var(--muted); line-height: 1.35; }
+@media (max-width: 720px) {
+  .mount-service-modal .smith-modal-body { grid-template-rows: auto auto minmax(0, 1fr); }
+}
 .mount-row-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
 .mount-row {
   display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px;
