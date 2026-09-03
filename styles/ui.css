@@ -5,7 +5,8 @@
   --ui-section-label-size: 1.2rem;
   --ui-section-letter-spacing: 0.08em;
   --ui-tray-side-margin: 0.4rem;
-  --ui-tray-control-size: calc(var(--tap-target, 44px) / var(--ui-zoom, 1));
+  /* The tray control is the same box as every close and ☰ (base.css). */
+  --ui-tray-control-size: var(--iconbtn-size);
   --ui-tray-resize-surface: 44px;
   --ui-tray-expanded-block-max: 36rem;
   --ui-tray-expanded-panel-max: 34%;
@@ -310,9 +311,14 @@
 /* One hit box for the one way out. `min-*` and not `width` — a floor is not a
    ceiling (base.css, --tap-floor), and this control must clear it on BOTH axes
    at every UI size, which is the whole reason it is stated once. */
+/* ONE BOX, EVERY DOOR. The floor stays (tools/startup-gate.mjs plants its
+   removal); the LENGTH on both axes is base.css --iconbtn-size, so a taller
+   title, a stretched row or a phone inset cannot change the control's shape,
+   and `flex: 0 0 auto` so no row can shrink it. */
 .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: var(--tap-floor); min-height: var(--tap-floor);
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
   padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
   border-radius: var(--r-2);
 }
@@ -348,7 +354,28 @@
    the shell. `min-width` and not `width`, so the step is a floor the label can
    exceed; `white-space: nowrap` so what yields under pressure is the PADDING
    and never the line count. */
-.modal-btnrow { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 8px; min-width: 0; }
+/* A BUTTON ROW IS A GRID OF EQUAL TRACKS. Constantine, 2026-09-03: "make
+   primary and secondary buttons at the bottom uniform in size". Under flex
+   they were uniform only while nothing was squeezed: three medium buttons in
+   a foot beside a note shrank to 83px each and rendered as "B…", "S…", "S…",
+   because base padding is 2.6rem a side and equal shrink ignores the label.
+   `grid-auto-columns: minmax(0, 1fr)` makes every button in a row the SAME
+   width whatever its label — that is the uniformity — and the row's width is
+   the smaller of its box and n × step, so when there is room every button IS
+   the step, and when there is not they share the box equally. Truncation is
+   the last rung, reached only when an equal share is narrower than a label;
+   the padding yields first (below), and the foot's note yields before the row
+   does (.modal-foot-note). n is counted by :has, so no caller counts. */
+.modal-btnrow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch; gap: 8px; min-width: 0;
+  --n: 1; --step: 15rem;
+  width: min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px));
+}
+.modal-btnrow:has(> :nth-child(2):last-child) { --n: 2; }
+.modal-btnrow:has(> :nth-child(3):last-child) { --n: 3; }
+.modal-btnrow:has(> :nth-child(4):last-child) { --n: 4; }
+.modal-btnrow:has(> :nth-child(5):last-child) { --n: 5; }
 /* UNIVERSAL CONTAINMENT FOR A SINGLE-LINE LABEL, every part load-bearing.
    Constantine, 2026-09-03, after photographing five clips (Back to Shrine,
    More details, Save and Quit twice, the cost badge): "all objects and
@@ -370,49 +397,42 @@
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .modal-btnrow > button { text-align: center; }
-/* THE STEP IS A BASIS, NOT A FLOOR — and that distinction is the whole bug.
-   As `min-width` the step was a hard minimum: two `medium` buttons wanted
-   30rem, a 36rem panel's foot had less than that after its note, `nowrap`
-   refused to wrap, and the row simply OVERFLOWED — clipped by `.modal`'s own
-   `overflow: hidden`. Measured 2026-09-03 on the flask/shield pair: the
-   primary sat flush to the border on one door and a third button was cut off
-   the panel entirely on the other. A player cannot press a button that is not
-   on the screen.
-   `flex: 0 1 <step>` keeps the step as the PREFERRED width and lets the button
-   shrink under pressure. It never shrinks past its own text, because a flex
-   item's `min-width` is `auto` by default and these labels are `nowrap` — so
-   the sequence under narrowing is: step -> label width -> (only then) the
-   `fill` behaviour below. Do NOT add `min-width: 0` here; that is what would
-   let a label clip. */
-.modal-btnrow[data-size='short']  > button { flex: 0 1 10rem; }
-.modal-btnrow[data-size='medium'] > button { flex: 0 1 15rem; }
-.modal-btnrow[data-size='long']   > button { flex: 0 1 21rem; }
-/* `fill` divides the container equally instead of letting the longest label
-   win — for a rail or a wizard step, where the row must span its box. */
-.modal-btnrow[data-size='fill'] > button { flex: 1 1 0; min-width: 0; }
-/* A SQUARE OPTS OUT OF THE STEP AND TAKES THE ROW'S HEIGHT. `aspect-ratio`
-   with `height: auto` under `align-items: stretch`, so it grows to exactly the
-   height its siblings agreed on and stays square at every zoom and text size —
-   NO length is typed, which is the only way to express this that survives
-   --ui-zoom. NOT vh: see the .overlay-modal block above for the 74vh
-   measurement that cost the smallest phone the smallest menu. */
-.modal-btnrow > button[data-size='square'],
-.modal-iconbtn[data-size='square'],
-.modal-close[data-size='square'] {
-  aspect-ratio: 1;
-  width: auto; height: auto;
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
-  padding-inline: 0;
-  /* `0 0 auto` and not the step's `0 1`: a square opts out of the ladder in
-     both directions. It must not shrink out of square to buy a text button
-     room, because the tap floor is a floor. */
-  flex: 0 0 auto;
+/* THE STEP IS A CAP ON THE TRACK, NOT A FLOOR — the row above widens to n ×
+   step when it can and no further, so a step can never overflow the panel
+   (the bug the flex basis was introduced to fix, measured 2026-09-03: a third
+   button clipped off the panel). Four steps for the whole game; nothing types
+   a fifth. */
+.modal-btnrow[data-size='short']  { --step: 10rem; }
+.modal-btnrow[data-size='medium'] { --step: 15rem; }
+.modal-btnrow[data-size='long']   { --step: 21rem; }
+/* `fill` spans its box whatever n is — a rail, a wizard step, a phone foot. */
+.modal-btnrow[data-size='fill'] { width: 100%; }
+/* THE CONCESSION LADDER, IN ORDER: padding yields, then the box steps up
+   (the door's rung, a caller's choice), then TYPE SHRINKS, then — only then —
+   the label truncates. Padding is a share of the track capped at the house
+   padding; type is a share of the button's own inline size (the button is its
+   own container) with a floor the eye can still read. Both are per-track and
+   tracks are equal, so every button in a row yields by the same amount. */
+.modal-btnrow > button {
+  container-type: inline-size;
+  padding-inline: clamp(0.5rem, 8%, 1.4rem);
 }
-.modal-btnrow[data-size='fill'] > button[data-size='square'] { flex: 0 0 auto; }
+.modal-btnrow > button { font-size: clamp(0.78rem, 9cqi, 1rem); }
+/* A SQUARE IN A ROW TAKES THE ROW'S HEIGHT and stays square by ratio, with
+   `justify-self: start` so the track's width does not stretch it out of
+   square. NO length is typed — the height is the row's, which survives
+   --ui-zoom; NOT vh (see .overlay-modal above). Close and ☰ are NOT this
+   rule: they wear one fixed box everywhere (--iconbtn-size, base.css). */
+.modal-btnrow > button[data-size='square'] {
+  aspect-ratio: 1; width: auto; height: auto; justify-self: start;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
+}
 /* ☰ shares the close control's box exactly, so a player who learns the shape
    learns it once. Same rule, two glyphs. */
 .modal-iconbtn {
   display: inline-flex; align-items: center; justify-content: center;
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
   padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
   border-radius: var(--r-2);
 }
@@ -432,8 +452,22 @@
    active slot." held the foot wide enough that `Save and Quit` sat flush to
    the border with no right padding left. */
 .modal-foot-note { flex: 0 1 auto; min-width: 0; color: var(--muted); font-size: 0.95rem; }
-/* `margin-left: auto` so a foot with no note still puts its actions right. */
-.modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* `margin-left: auto` so a foot with no note still puts its actions right.
+   `stretch`, not `center`: primary and secondary are ONE height in the foot
+   (the row's), and their widths come off the ladder because the row is also
+   a `.modal-btnrow` (modalShell.js modalFooter). */
+.modal-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
+/* THE NOTE YIELDS BEFORE THE ROW DOES: a high shrink weight, and it may go to
+   nothing (min-width: 0 in the containment set) before a button loses width.
+   WHOLE OR ABSENT: a note squeezed to "P…" is not a note. The span is its
+   own size container, so when the flex algorithm leaves it narrower than a
+   short sentence its text hides rather than stubs — the note may never carry
+   the only copy of a fact, so losing it costs nothing. */
+/* A size container has NO intrinsic width, so the basis is stated: 20rem is
+   room for one short sentence, and the note may never be longer than one. */
+.modal-foot-note { flex: 0 12 20rem; container-type: inline-size; }
+.modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } }
 .modal-foot-actions button { min-height: var(--tap-floor); }
 @media (max-width: 640px) {
   /* The inset shrinks on a phone, but it stays ONE number — the token moves,
@@ -448,9 +482,8 @@
      row divides its box — the one place a declared size is overridden, and the
      reason is that the box is now narrower than the smallest step. A square
      still keeps its ratio. */
-  .modal-foot-actions button { flex: 1 1 0; padding-inline: 8px; }
-  .modal-btnrow[data-size] > button { flex: 1 1 0; min-width: 0; }
-  .modal-btnrow[data-size] > button[data-size='square'] { flex: 0 0 auto; min-width: var(--tap-floor); }
+  .modal-btnrow[data-size] { width: 100%; }
+  .modal-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
 }
 
 /* THE SCROLL OWNERS INSIDE A MODAL, AND WHY THEY LOOKED FOREIGN.
@@ -512,7 +545,8 @@
   padding: 10px 16px; border-top: 1px solid var(--line); background: var(--panel);
 }
 .overlay-footer-note { color: var(--muted); font-size: 0.95rem; }
-.overlay-footer-actions { display: flex; align-items: center; gap: 8px; }
+/* The in-run foot is a button row (modalShell's ladder): the two classes on
+   the div in menuComponents.js are the whole rule. */
 .overlay-footer-actions button { min-height: var(--tap-floor); }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
@@ -4301,7 +4335,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .overlay-footer { align-items: stretch; padding: 8px 10px; }
   .overlay-footer-note { display: none; }
   .overlay-footer-actions { width: 100%; }
-  .overlay-footer-actions button { flex: 1 1 0; padding-inline: 8px; }
+  .overlay-footer-actions button { padding-inline: 8px; }
   .overlay-settings-actions { gap: 3px; }
   .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
   .ov-qa-label { display: none; }

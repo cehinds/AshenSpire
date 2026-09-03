@@ -166,8 +166,11 @@ if (args.includes('--selftest')) {
         // in this stylesheet.
         name: 'title modal Close drops below the authored tap floor',
         file: 'styles/ui.css',
-        find: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: var(--tap-floor); min-height: var(--tap-floor);',
-        replace: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
+        // The box is a fixed LENGTH as well as a floor now (--iconbtn-size), so the
+        // plant must remove both: a floor planted away under a 44px length is
+        // still 44px, and this plant went UNCAUGHT the day the length landed.
+        find: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: var(--tap-floor); min-height: var(--tap-floor);\n  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;',
+        replace: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: 3rem; min-height: 3rem;\n  width: 3rem; height: 3rem; flex: 0 0 auto; /* startup-gate selftest plant */',
         expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
       },
       {

@@ -116,21 +116,34 @@ check('the ladder uses no viewport units',
   'the app is zoomed by --ui-zoom and viewport units ignore that zoom');
 check('a square button takes its height from the row, by ratio',
   ladderBlock.includes('aspect-ratio: 1'));
-// THE REGRESSION THIS PINS. The ladder's steps were `min-width`, which is a
-// HARD minimum: two `medium` buttons wanted 30rem, a foot with a note had
-// less, `nowrap` refused to wrap, and the row overflowed — clipped by
-// `.modal`'s own `overflow: hidden`, so a third button was cut off the panel
-// and could not be pressed at all. A basis shrinks; a floor overflows.
-const stepDecls = ladderBlock.match(/\.modal-btnrow\[data-size='(?:short|medium|long)'\][^{]*\{[^}]*\}/g) || [];
+// THE ROW IS A GRID OF EQUAL TRACKS. Under flex the buttons were uniform only
+// while nothing squeezed them: three medium buttons beside a foot note shrank
+// to 83px each and rendered as "B…", "S…", "S…" (measured 2026-09-03). Equal
+// tracks make every button in a row the same width whatever its label; the
+// row's width is the smaller of its box and n × step, so a step can never
+// overflow the panel (the clipped-third-button bug) and, given room, every
+// button IS the step.
+check('a button row is a grid of equal tracks',
+  /\.modal-btnrow\s*\{[^}]*grid-auto-columns:\s*minmax\(0,\s*1fr\)/.test(ladderBlock),
+  'equal tracks are what makes primary and secondary the same size');
+check('the row widens to n × step and no further',
+  /width:\s*min\(100%,\s*calc\(var\(--n\)\s*\*\s*var\(--step\)/.test(ladderBlock),
+  'a row that could exceed its box would clip its last button off the panel');
+check('the row counts its own buttons', (ladderBlock.match(/\.modal-btnrow:has\(> :nth-child\(\d\):last-child\)\s*\{\s*--n:\s*\d;\s*\}/g) || []).length >= 4,
+  'a caller that had to pass n would forget to');
+const stepDecls = ladderBlock.match(/\.modal-btnrow\[data-size='(?:short|medium|long)'\]\s*\{[^}]*\}/g) || [];
 check('the ladder has a step for short, medium and long', stepDecls.length === 3, `${stepDecls.length} found`);
-check('each ladder step is a flex BASIS, never a min-width floor',
-  stepDecls.every((decl) => /flex:\s*0\s+1\s/.test(decl) && !/min-width/.test(decl)),
+check('each ladder step is a track CAP, never a min-width floor',
+  stepDecls.every((decl) => /--step:\s*\d+rem/.test(decl) && !/min-width/.test(decl)),
   'a min-width step cannot shrink, so the row overflows the panel and clips its own buttons');
-// A flex item's min-width is `auto` by default, which is what stops a shrink
-// from eating the label. Setting it to 0 on a text button would clip text.
-check('the ladder does not zero a text button\'s min-width',
-  !/\.modal-btnrow\s*>\s*button\s*\{[^}]*min-width:\s*0/.test(ladderBlock),
-  'min-width: 0 lets a nowrap label clip instead of stopping the shrink at its text');
+check('fill spans its box', /\.modal-btnrow\[data-size='fill'\]\s*\{\s*width:\s*100%/.test(ladderBlock));
+// PADDING YIELDS BEFORE LETTERS DO. Base padding is 2.6rem a side; on a
+// squeezed track that left 31px for "Save and Quit".
+check('a row button\'s padding is a share of its track, capped',
+  /\.modal-btnrow\s*>\s*button\s*\{[^}]*padding-inline:\s*clamp\(/.test(ladderBlock),
+  'fixed 2.6rem padding is what ate the label');
+check('no step is a flex basis any more', !/flex:\s*0\s+1\s+\d+rem/.test(ladderBlock),
+  'a basis with min-width: 0 shrinks past the label; a track shares the box');
 
 // ---- 4b. the head's actions are a property of the door, not a caller's memo
 const shellSource = read('src/ui/components/modalShell.js');
@@ -142,6 +155,40 @@ check('the menu button follows the tab strip rather than defaulting either way',
   'a door with tabs is a place and wants the quick menu; a door that asks a question does not');
 check('both header actions wear the square box',
   (shellSource.match(/dataset\.size = 'square'/g) || []).length >= 2);
+// ONE BOX, EVERY COMPONENT. Close and ☰ used to take their size from a floor
+// plus whatever their row stretched them to, so a tall row made a bigger
+// close. Both read one fixed length on both axes now, and the row-height
+// square rule no longer names them.
+for (const sel of ['.modal-close', '.modal-iconbtn']) {
+  const block = chromeBlock(sel);
+  check(`${sel} is a fixed box on both axes`,
+    /width:\s*var\(--iconbtn-size\)/.test(block) && /height:\s*var\(--iconbtn-size\)/.test(block) && /flex:\s*0 0 auto/.test(block),
+    'close and ☰ are the same dimensions on every component, so their size is a length, not a floor');
+}
+check('the row-height square rule does not reach close or ☰',
+  !/\.modal-(?:close|iconbtn)\[data-size='square'\]/.test(css),
+  'a width: auto there would let a stretched row resize the one control that must never change shape');
+check('the icon-button box has one home', /--iconbtn-size:\s*var\(--tap-floor\)/.test(read('styles/base.css')) && /--ui-tray-control-size:\s*var\(--iconbtn-size\)/.test(css));
+// THE FOOT IS ON THE LADDER. It carried a data-size the ladder never read
+// (the steps are written for .modal-btnrow), so primary and secondary hugged
+// their own labels. Now the actions row wears both classes and stretches.
+check('the footer actions row is a button row',
+  /actions\.className = 'modal-foot-actions modal-btnrow'/.test(shellSource) && /actions\.dataset\.size = size/.test(shellSource),
+  'a foot that is not a .modal-btnrow gets no step, so its buttons hug their labels');
+check('openModal hands its footSize to the footer', /modalFooter\(\{[^}]*size: footSize/.test(shellSource));
+check('footer buttons share one height', /\.modal-btnrow\s*\{[^}]*align-items:\s*stretch/.test(css) && !/\.modal-foot-actions\s*\{[^}]*align-items:\s*center/.test(css),
+  'the foot is a button row; a centred row lets a two-line secondary sit taller than its primary');
+check('the foot note is whole or absent, never a stub',
+  /\.modal-foot-note\s*\{[^}]*container-type:\s*inline-size/.test(css) && /@container\s*\(max-width:[^)]*\)\s*\{\s*\.modal-foot-note\s*>\s*span\s*\{\s*visibility:\s*hidden/.test(css)
+    && /const text = document\.createElement\('span'\);\s*text\.textContent = note;/.test(shellSource),
+  'a note squeezed to one letter and an ellipsis is not a note');
+check('type shrinks before a label truncates', /\.modal-btnrow\s*>\s*button\s*\{[^}]*container-type:\s*inline-size/.test(css) && /font-size:\s*clamp\([^)]*cqi/.test(css),
+  'the ladder is padding -> box -> type -> truncate; without a type rung a long label goes straight to …');
+check('the in-run menu\'s ☰ and foot wear the shared box and ladder',
+  /class="subtle modal-iconbtn" id="ov-quicknav"/.test(read('src/ui/components/menuComponents.js')) && /modal-foot-actions overlay-footer-actions modal-btnrow" data-size=/.test(read('src/ui/components/menuComponents.js')),
+  'the quick menu was the screenshot the directive came from');
+check('the title door\'s close wears the shared box',
+  /class="subtle modal-close title-modal-close"/.test(read('src/ui/screens/title.js')));
 
 // The close control's top inset must be the head's padding, not half of
 // whatever the identity's height happens to be. `.modal-head` centres its

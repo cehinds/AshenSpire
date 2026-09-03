@@ -74,17 +74,30 @@ export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' 
  * primaries is not prevented here — nothing in a stylesheet can count buttons —
  * but it is visible in one line of a caller's diff, which is the whole gain.
  */
-export function modalFooter({ note = '', secondary = [], primary = null, className = '' } = {}) {
+export function modalFooter({ note = '', secondary = [], primary = null, className = '', size = 'medium' } = {}) {
+  if (!BUTTON_ROW_SIZES.includes(size)) throw new Error(`Unknown footer size '${size}'`);
   const footer = document.createElement('footer');
   footer.className = `modal-foot${className ? ` ${className}` : ''}`;
   if (note) {
+    // The text sits in an inner span so the note can be whole or absent (ui.css
+    // .modal-foot-note's container query), never a one-letter stub.
     const span = document.createElement('span');
     span.className = 'modal-foot-note';
-    span.textContent = note;
+    const text = document.createElement('span');
+    text.textContent = note;
+    span.appendChild(text);
     footer.appendChild(span);
   }
+  // THE FOOT IS A BUTTON ROW. Constantine, 2026-09-03: "make primary and
+  // secondary buttons at the bottom uniform in size". They were not: the foot
+  // carried a data-size the ladder never read, because the ladder's rules
+  // are written for `.modal-btnrow` and this row was only `.modal-foot-actions`
+  // — so each button hugged its own label. Wearing both classes puts every
+  // foot on the same ladder as every other row: one step for all its buttons,
+  // and `stretch` (ui.css) gives them one height.
   const actions = document.createElement('div');
-  actions.className = 'modal-foot-actions';
+  actions.className = 'modal-foot-actions modal-btnrow';
+  actions.dataset.size = size;
   for (const button of secondary) if (button) actions.appendChild(button);
   if (primary) {
     // `className` and not `classList` — this component is mounted by tests that
@@ -390,9 +403,8 @@ export function openModal({
   const ways = Array.isArray(secondary) ? secondary.filter(Boolean) : [secondary].filter(Boolean);
   let foot = null;
   if (note || ways.length || primary) {
-    foot = modalFooter({ note, secondary: ways, primary });
+    foot = modalFooter({ note, secondary: ways, primary, size: footSize });
     // The ladder owns the actions row, so no caller can produce a ragged foot.
-    foot.querySelector('.modal-foot-actions')?.setAttribute('data-size', footSize);
     foot.querySelector('.modal-foot-actions')?.classList.add('modal-btnrow');
     panel.appendChild(foot);
   }
