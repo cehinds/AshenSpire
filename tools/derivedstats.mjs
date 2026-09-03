@@ -376,108 +376,60 @@ check('the integrated dependency seam has one rules owner and value-only consume
   assert(!/content\/attributes|model\/attributes/.test(model), 'reader imports Phase 1 instead of accepting its allocation seam');
 });
 
-// SEGMENTS A JS SOURCE INTO code / comment / string, BY WALKING IT.
+// NO PARSER. THREE ROUNDS OF REVIEW KILLED THREE TEXT SCANNERS HERE.
 //
-// A regex cannot do this and has now twice pretended to. The blanket-strip
-// version erased the smuggling it was hunting; its replacement stripped
-// comments with /\/\/[^\n]*/, which reads `const url = 'https://x'` as a comment
-// opener and deletes the rest of that line — including anything after it. Codex
-// found both. A scanner that decides what is prose has to know where strings
-// start and end, so it lexes.
+//   a blanket quote strip     erased the smuggling it was hunting
+//   a comment regex           read `const url = 'https://x'` as a comment opener
+//   a hand-written lexer      took `/[/*]/` for a block comment and swallowed
+//                             the rest of the file
 //
-// `key` on a string segment is the object key the literal is the value of, when
-// it is one, which is what lets exactly three presentation keys hold prose while
-// every other string stays code.
-function segments(source) {
-  const out = [];
-  let code = '';
-  const flushCode = () => { if (code) { out.push({ kind: 'code', text: code }); code = ''; } };
-  const keyBefore = () => (code.match(/([A-Za-z_$][\w$]*)\s*:\s*$/) || [])[1] || null;
-  let i = 0; const n = source.length;
-  while (i < n) {
-    const c = source[i]; const d = source[i + 1];
-    if (c === '/' && d === '/') {
-      const j = source.indexOf('\n', i); const e = j < 0 ? n : j;
-      flushCode(); out.push({ kind: 'comment', text: source.slice(i, e) }); i = e; continue;
-    }
-    if (c === '/' && d === '*') {
-      const j = source.indexOf('*/', i + 2); const e = j < 0 ? n : j + 2;
-      flushCode(); out.push({ kind: 'comment', text: source.slice(i, e) }); i = e; continue;
-    }
-    if (c === "'" || c === '"') {
-      const key = keyBefore(); let j = i + 1;
-      while (j < n && source[j] !== c) j += source[j] === '\\' ? 2 : 1;
-      flushCode(); out.push({ kind: 'string', text: source.slice(i + 1, j), key }); i = j + 1; continue;
-    }
-    if (c === '`') {
-      const key = keyBefore(); flushCode();
-      let j = i + 1; let chunk = '';
-      while (j < n && source[j] !== '`') {
-        if (source[j] === '\\') { chunk += source.slice(j, j + 2); j += 2; continue; }
-        if (source[j] === '$' && source[j + 1] === '{') {
-          out.push({ kind: 'string', text: chunk, key }); chunk = '';
-          // AN INTERPOLATED EXPRESSION IS CODE, not part of the sentence around it.
-          let depth = 1; let k = j + 2; let expr = '';
-          while (k < n && depth > 0) {
-            if (source[k] === '{') depth++;
-            else if (source[k] === '}') { depth--; if (!depth) break; }
-            expr += source[k]; k++;
-          }
-          out.push({ kind: 'code', text: expr }); j = k + 1; continue;
-        }
-        chunk += source[j]; j++;
-      }
-      out.push({ kind: 'string', text: chunk, key }); i = j + 1; continue;
-    }
-    code += c; i++;
-  }
-  flushCode();
-  return out;
-}
-
-// THIS ONE WAS NOT STALE — IT WAS OVER-BROAD, AND #584 CALLED IT STALE.
+// Every one was a correct fix for the previous defect and wrong in a new way,
+// because each needed to know JavaScript's grammar and none of them did. A
+// scanner that must decide "is this word prose or is it logic" is a parser, and
+// a hand-rolled parser guarding one word is a bigger liability than the word.
 //
-// The original grepped both files for the WORD and went red the day Stamina's
-// player-facing sentence named what spends it: "Spent by cards that ask for it
-// — the dodge roll among them." That is prose describing a stat, in a `sense`
-// string a player reads. No behaviour was smuggled anywhere. A guard whose text
-// does not match its own stated intent — "behavior ... policy" — reports the
-// wrong thing, and this one had been doing so since 02a91ff4.
+// So this does not parse. Two arms, neither able to be confused by syntax:
 //
-// Deleting it was the wrong fix: what it guards is real. It is narrowed to the
-// three things smuggling would actually look like, and it took three rounds of
-// review to get the narrowing itself to stop lying.
+//   THE DATA is walked as data — keys and values off the imported table, so no
+//   text is involved at all, and a row, a key or a non-prose value carrying the
+//   vocabulary is caught by structure rather than by spelling.
+//
+//   THE TEXT is checked by exact-string subtraction: the prose values the table
+//   itself declares are removed literally (split/join, no pattern), and the word
+//   may not survive anywhere else.
+//
+// COMMENTS ARE NOT EXEMPT, and that is the deliberate price. Exempting them
+// means locating them, locating them means a parser, and the parser was the
+// problem. One comment in src/content/derivedStats.js was reworded to pay it;
+// the player-facing `sense` line directly beneath still names the roll, which is
+// where a reader looks anyway.
+//
+// If a declared prose value were ever built by concatenation rather than
+// written as a literal, the subtraction would not find it and this check would
+// go RED, not quiet. It fails closed.
+const BANNED = /dodge|reaction|handMax/i;
 const PROSE_KEYS = new Set(['label', 'faceLabel', 'sense']);
 
 check('no Dodge/reaction behavior or handMax policy is smuggled into the contract', () => {
-  const sources = ['src/content/derivedStats.js', 'src/model/derivedStats.js']
-    .map((rel) => readFileSync(resolve(ROOT, rel), 'utf8'));
-
-  // 1. No derived-stat row is named for a behaviour. Read off the table itself,
-  //    so this arm does not depend on any text scanning at all.
-  const named = Object.keys(derivedStatRules.rules).filter((id) => /^(dodge|reaction|handMax)$/i.test(id));
-  equal(named.join(','), '', 'a derived-stat row is named for a behaviour');
-
-  for (const source of sources) {
-    const segs = segments(source);
-    // THE LEXER MUST HAVE CONSUMED THE FILE. A scanner that silently gave up
-    // half way would report a clean file for the same reason the stripped
-    // versions did, so its own coverage is asserted rather than assumed.
-    const covered = segs.reduce((sum, seg) => sum + seg.text.length, 0);
-    assert(covered >= source.length * 0.9, `the scanner consumed only ${covered} of ${source.length} characters`);
-
-    for (const seg of segs) {
-      // 2. `handMax` and `reaction` have no legitimate reason to appear in
-      //    either file at all, in prose or otherwise, so they stay a flat ban.
-      assert(!/\bhandMax\b|\breaction\b/i.test(seg.text), `handMax or reaction vocabulary in ${seg.kind}`);
-      // 3. `dodge` is allowed in a comment, and in a string that is the value of
-      //    one of the three documented presentation keys. Nowhere else — not in
-      //    code, not in any other string, not in an interpolated expression.
-      if (!/dodge/i.test(seg.text)) continue;
-      if (seg.kind === 'comment') continue;
-      if (seg.kind === 'string' && PROSE_KEYS.has(seg.key)) continue;
-      throw new Error(`dodge appears in ${seg.kind}${seg.key ? ` under key '${seg.key}'` : ''}, not as player-facing prose`);
+  const prose = [];
+  const walk = (node, path) => {
+    if (node === null || typeof node !== 'object') return;
+    for (const [key, value] of Object.entries(node)) {
+      assert(!BANNED.test(key), `banned vocabulary in key ${path}${key}`);
+      if (typeof value === 'string') {
+        if (PROSE_KEYS.has(key)) { prose.push(value); continue; }
+        assert(!BANNED.test(value), `banned vocabulary in value ${path}${key}: ${JSON.stringify(value)}`);
+      } else walk(value, `${path}${key}.`);
     }
+  };
+  walk(derivedStatRules, '');
+  assert(prose.length > 0, 'no declared prose found — the walk is not reaching the presentation table');
+
+  for (const rel of ['src/content/derivedStats.js', 'src/model/derivedStats.js']) {
+    let residue = readFileSync(resolve(ROOT, rel), 'utf8');
+    for (const line of prose) residue = residue.split(line).join(' ');
+    const hit = residue.match(BANNED);
+    assert(!hit, `${rel}: '${hit && hit[0]}' appears outside a declared presentation string`);
   }
 });
 
