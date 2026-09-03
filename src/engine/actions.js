@@ -28,6 +28,7 @@ import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { playerWeightClass } from './combat.js';
+import { isEquipmentComposedInstance } from '../model/loadout.js';
 import { flaskSlotCap } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
@@ -641,13 +642,15 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
-      // Equipment-granted instances (grantedBy) are package outputs: the next
-      // authoritative reconcile would recreate the same deterministic id, so
-      // a removal here could never persist — they are not candidates.
+      // Equipment-COMPOSED instances are not candidates: the next authoritative
+      // reconcile recreates them under the same deterministic id, so a removal
+      // here could never persist. That was already the rule for package outputs
+      // (grantedBy); it holds identically for a generated attack slot, which
+      // this opcode used to remove and the next restamp used to re-mint.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !c.grantedBy);
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !isEquipmentComposedInstance(c));
       else if (eff.random) {
-        const candidates = run.deck.map((c, i) => i).filter((i) => !run.deck[i].grantedBy);
+        const candidates = run.deck.map((c, i) => i).filter((i) => !isEquipmentComposedInstance(run.deck[i]));
         idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
       }
       if (idx >= 0) run.deck.splice(idx, 1);

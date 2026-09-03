@@ -1041,6 +1041,26 @@ function attackProfileFor(registries, profileId, owner) {
 }
 
 /**
+ * isEquipmentComposedInstance(inst) -> boolean
+ *
+ * Whether a deck instance is MINTED BY EQUIPMENT rather than owned by the deck,
+ * and so is not a candidate for permanent removal. Both removal doors — the
+ * merchant's burn and the `removeCardFromDeck` opcode — already excluded package
+ * outputs (`grantedBy`) for the stated reason that "the next authoritative
+ * reconcile would recreate the same deterministic id, so a removal here could
+ * never persist". A generated attack slot has exactly that property and was
+ * never excluded: burning one re-minted it on the next restamp, so the merchant
+ * charged cinders for nothing and the event opcode did nothing. Persisting the
+ * birth quota turned that silent no-op into a loud throw, which is how it was
+ * finally noticed — the removal was already broken, it just failed quietly.
+ *
+ * One predicate, both doors, so the two cannot disagree about what a removal is.
+ */
+export function isEquipmentComposedInstance(inst) {
+  return Boolean(inst && (inst.grantedBy || inst.equipmentAttackSlotId));
+}
+
+/**
  * The authored weapon-package seam. Existing `attackProfile` rows adapt to an
  * empty priority list plus that profile as filler; explicit packages may add
  * ordered one-off card refs without changing the number of attack instances.

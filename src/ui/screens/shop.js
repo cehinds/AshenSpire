@@ -49,6 +49,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
+import { isEquipmentComposedInstance } from '../../model/loadout.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { settingOn } from './settings.js';
@@ -202,10 +203,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
         run.deck.forEach((inst, idx) => {
-          // An equipment-granted instance (grantedBy) is a package output the
-          // next authoritative reconcile would recreate under the same id —
-          // selling its removal would charge cinders for nothing.
-          if (inst.grantedBy) return;
+          // An equipment-COMPOSED instance is one the next authoritative
+          // reconcile recreates under the same id — a package output
+          // (grantedBy) or a generated attack slot. Offering either would
+          // charge cinders for a card that comes straight back.
+          if (isEquipmentComposedInstance(inst)) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
           arm(el, 'shopRemove', {

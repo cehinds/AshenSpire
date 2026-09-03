@@ -63,7 +63,7 @@ import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings,
+  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
@@ -2519,6 +2519,55 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(createRunState({ seed: 3, classId, registries: REG }).deck.length, 11,
         `and ${classId} does begin with 11, which is the discrepancy the warning names`);
     }
+  });
+
+  // ---- 26n. the tenth round: what stored state obliges ---------------------
+  test('26n. a generated slot is not removable, and the quota survives save and load', () => {
+    // THE COST OF STORING A FACT is that everything which could contradict it
+    // now has to be reconciled with it. Both findings here are consequences of
+    // round eight persisting the birth quota, and both are fair.
+
+    // The merchant's burn and the removeCardFromDeck opcode already refused
+    // package outputs, in both cases for the SAME stated reason: "the next
+    // authoritative reconcile would recreate the same deterministic id, so a
+    // removal here could never persist". A generated attack slot has exactly
+    // that property and was never excluded — burning one re-minted it, so the
+    // merchant charged cinders for nothing. Persisting the quota turned that
+    // silent no-op into a throw, which is how it was noticed at all.
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    const composed = run.deck.filter(isEquipmentComposedInstance);
+    assert(composed.length === 4 && composed.every((c) => c.equipmentAttackSlotId),
+      'the four attack slots are equipment-composed, and the predicate says so');
+    eq(run.equipmentAttackSlotCount, 4, 'and the run recorded that as its quota');
+
+    const before = run.deck.length;
+    executeRunEffects({ run, registries: REG, rng: { float: () => 0 } },
+      [{ op: 'removeCardFromDeck', card: 'strike' }]);
+    eq(run.deck.length, before, 'the opcode does not remove a card the next restamp would re-mint');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'the slots are intact');
+    stampDeck(REG, run); // threw "attack instance count 3 does not match authored 4" before
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'and the restamp agrees with the quota');
+
+    // A random removal still has real candidates — this closes a door on cards
+    // equipment owns, it does not close the mechanic.
+    const candidates = run.deck.filter((c) => !isEquipmentComposedInstance(c));
+    assert(candidates.length >= 5, `ordinary cards remain removable (${candidates.length} of ${run.deck.length})`);
+
+    // AND THE NUMBER SURVIVES THE ROUND TRIP. A stored fact that does not
+    // persist is worse than a derived one: the run loads, disagrees with
+    // itself, and is archived for a mismatch it did not have when saved.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const rng = createRng(0xfeed);
+    const saved = createRunState({ seed: 0xfeed, classId: 'reaver', registries: REG });
+    saves.saveRun(saved, rng);
+    const loaded = saves.loadRun(REG);
+    assert(loaded != null, 'the run loads');
+    eq(loaded.equipmentAttackSlotCount, saved.equipmentAttackSlotCount,
+      'and carries the quota it was born with across save and load');
+    stampDeck(REG, loaded);
+    eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, saved.equipmentAttackSlotCount,
+      'so a restamp after loading still plans the born quota');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
