@@ -188,7 +188,7 @@ export function modalHead({
   tabs = null,
   onTab = null,
   extras = null,
-  showMenuButton = false,
+  showMenuButton = null,
   onMenu = null,
   menuLabel = 'Menu',
   closeLabel = 'Close',
@@ -237,7 +237,26 @@ export function modalHead({
   const actions = document.createElement('div');
   actions.className = 'modal-head-actions';
   if (extras) actions.appendChild(extras);
-  if (showMenuButton) {
+  // ☰ IS NOT A DEFAULT, IT IS A PROPERTY OF WHAT THE DOOR IS.
+  //
+  // Constantine, 2026-09-03: the menu and close buttons "should come by
+  // default to all modal shells, I think, but improve on this if you think
+  // otherwise". Close: yes, unconditionally, and it already did — one way out,
+  // same corner, every door. ☰: no, and the reason is what it opens. The
+  // hamburger opens the quick menu, which is a way to LEAVE for somewhere
+  // else. On a door that asks a question — "Load slot 1?", "Quit without
+  // saving?" — that is a third answer to a two-answer question, and it can
+  // navigate away mid-decision. On a door that IS a place, it is the obvious
+  // control and its absence is the defect.
+  //
+  // So the caller does not decide and does not have to remember: a TAB STRIP
+  // is what marks a door as a place rather than a question (Settings, the
+  // Armoury, the in-run overlay all carry one; the flask door, the confirm
+  // door and the inspector do not), so ☰ follows the tabs. `showMenuButton`
+  // stays overridable in both directions for the surface that is genuinely an
+  // exception, but nothing has to pass it to be right.
+  const wantsMenu = showMenuButton == null ? tabList.length > 0 : !!showMenuButton;
+  if (wantsMenu) {
     const menu = document.createElement('button');
     menu.type = 'button';
     menu.className = 'subtle modal-iconbtn';
@@ -285,7 +304,7 @@ export function openModal({
   tabs = null,
   onTab = null,
   headExtras = null,
-  showMenuButton = false,
+  showMenuButton = null,
   onMenu = null,
   closeLabel = '',
   body = null,

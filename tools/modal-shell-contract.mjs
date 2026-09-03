@@ -97,6 +97,41 @@ check('the ladder uses no viewport units',
   'the app is zoomed by --ui-zoom and viewport units ignore that zoom');
 check('a square button takes its height from the row, by ratio',
   ladderBlock.includes('aspect-ratio: 1'));
+// THE REGRESSION THIS PINS. The ladder's steps were `min-width`, which is a
+// HARD minimum: two `medium` buttons wanted 30rem, a foot with a note had
+// less, `nowrap` refused to wrap, and the row overflowed — clipped by
+// `.modal`'s own `overflow: hidden`, so a third button was cut off the panel
+// and could not be pressed at all. A basis shrinks; a floor overflows.
+const stepDecls = ladderBlock.match(/\.modal-btnrow\[data-size='(?:short|medium|long)'\][^{]*\{[^}]*\}/g) || [];
+check('the ladder has a step for short, medium and long', stepDecls.length === 3, `${stepDecls.length} found`);
+check('each ladder step is a flex BASIS, never a min-width floor',
+  stepDecls.every((decl) => /flex:\s*0\s+1\s/.test(decl) && !/min-width/.test(decl)),
+  'a min-width step cannot shrink, so the row overflows the panel and clips its own buttons');
+// A flex item's min-width is `auto` by default, which is what stops a shrink
+// from eating the label. Setting it to 0 on a text button would clip text.
+check('the ladder does not zero a text button\'s min-width',
+  !/\.modal-btnrow\s*>\s*button\s*\{[^}]*min-width:\s*0/.test(ladderBlock),
+  'min-width: 0 lets a nowrap label clip instead of stopping the shrink at its text');
+
+// ---- 4b. the head's actions are a property of the door, not a caller's memo
+const shellSource = read('src/ui/components/modalShell.js');
+check('the close control is unconditional',
+  /const close = modalCloseButton\(/.test(shellSource) && !/if \([^)]*\)\s*\{?\s*const close = modalCloseButton/.test(shellSource),
+  'one way out, same corner, every door');
+check('the menu button follows the tab strip rather than defaulting either way',
+  shellSource.includes('showMenuButton == null ? tabList.length > 0'),
+  'a door with tabs is a place and wants the quick menu; a door that asks a question does not');
+check('both header actions wear the square box',
+  (shellSource.match(/dataset\.size = 'square'/g) || []).length >= 2);
+
+// ---- 5. head and foot are inset by ONE number, all four sides ------------
+const chrome = stripComments(css);
+for (const bar of ['.modal-head', '.modal-foot']) {
+  const block = chrome.slice(chrome.indexOf(`${bar} {`), chrome.indexOf('}', chrome.indexOf(`${bar} {`)));
+  const padding = (block.match(/padding:\s*([^;]+);/) || [])[1] || '';
+  check(`${bar} is inset by one value on all four sides`,
+    padding.trim().split(/\s+/).length === 1, `padding: ${padding.trim() || '(none)'}`);
+}
 
 console.log(`\nmodal-shell-contract: ${pass} passed, ${fail} failed`);
 console.log('BOUNDARY: source and pure-function checks only. Escape/topmost, focus return,');

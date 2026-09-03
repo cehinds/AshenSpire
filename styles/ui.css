@@ -262,9 +262,13 @@
    doors each had their own; these are the rules they now share. Bodies are
    still each modal's own — see the file header for why that line is drawn
    there and not further in. */
+/* ONE PADDING, ALL FOUR SIDES. Head and foot were `1.2rem 1.6rem`, so the
+   gap above a title did not match the gap beside it and the chrome read as
+   two different insets on one panel. Constantine, 2026-09-03: "the padding
+   should be about the same for all directions". One number, both bars. */
 .modal-head {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line);
+  padding: 1.2rem; border-bottom: 1px solid var(--line);
 }
 .modal-head-actions { display: flex; gap: 0.8rem; align-items: center; }
 /* One hit box for the one way out. `min-*` and not `width` — a floor is not a
@@ -309,10 +313,24 @@
    exceed; `white-space: nowrap` so what yields under pressure is the PADDING
    and never the line count. */
 .modal-btnrow { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 8px; min-width: 0; }
-.modal-btnrow > button { flex: 0 0 auto; white-space: nowrap; text-align: center; }
-.modal-btnrow[data-size='short']  > button { min-width: 10rem; }
-.modal-btnrow[data-size='medium'] > button { min-width: 15rem; }
-.modal-btnrow[data-size='long']   > button { min-width: 21rem; }
+.modal-btnrow > button { white-space: nowrap; text-align: center; }
+/* THE STEP IS A BASIS, NOT A FLOOR — and that distinction is the whole bug.
+   As `min-width` the step was a hard minimum: two `medium` buttons wanted
+   30rem, a 36rem panel's foot had less than that after its note, `nowrap`
+   refused to wrap, and the row simply OVERFLOWED — clipped by `.modal`'s own
+   `overflow: hidden`. Measured 2026-09-03 on the flask/shield pair: the
+   primary sat flush to the border on one door and a third button was cut off
+   the panel entirely on the other. A player cannot press a button that is not
+   on the screen.
+   `flex: 0 1 <step>` keeps the step as the PREFERRED width and lets the button
+   shrink under pressure. It never shrinks past its own text, because a flex
+   item's `min-width` is `auto` by default and these labels are `nowrap` — so
+   the sequence under narrowing is: step -> label width -> (only then) the
+   `fill` behaviour below. Do NOT add `min-width: 0` here; that is what would
+   let a label clip. */
+.modal-btnrow[data-size='short']  > button { flex: 0 1 10rem; }
+.modal-btnrow[data-size='medium'] > button { flex: 0 1 15rem; }
+.modal-btnrow[data-size='long']   > button { flex: 0 1 21rem; }
 /* `fill` divides the container equally instead of letting the longest label
    win — for a rail or a wizard step, where the row must span its box. */
 .modal-btnrow[data-size='fill'] > button { flex: 1 1 0; min-width: 0; }
@@ -329,6 +347,9 @@
   width: auto; height: auto;
   min-width: var(--tap-floor); min-height: var(--tap-floor);
   padding-inline: 0;
+  /* `0 0 auto` and not the step's `0 1`: a square opts out of the ladder in
+     both directions. It must not shrink out of square to buy a text button
+     room, because the tap floor is a floor. */
   flex: 0 0 auto;
 }
 .modal-btnrow[data-size='fill'] > button[data-size='square'] { flex: 0 0 auto; }
@@ -347,14 +368,19 @@
 
 .modal-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  flex: 0 0 auto; padding: 1.2rem 1.6rem; border-top: 1px solid var(--line);
+  flex: 0 0 auto; padding: 1.2rem; border-top: 1px solid var(--line);
 }
-.modal-foot-note { color: var(--muted); font-size: 0.95rem; }
+/* THE NOTE YIELDS BEFORE THE ACTIONS DO. `min-width: 0` so a long sentence
+   wraps inside its own share instead of pushing the buttons out of the panel —
+   which is exactly what it did: measured 2026-09-03, "Progress saves to the
+   active slot." held the foot wide enough that `Save and Quit` sat flush to
+   the border with no right padding left. */
+.modal-foot-note { flex: 0 1 auto; min-width: 0; color: var(--muted); font-size: 0.95rem; }
 /* `margin-left: auto` so a foot with no note still puts its actions right. */
 .modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .modal-foot-actions button { min-height: var(--tap-floor); }
 @media (max-width: 640px) {
-  .modal-foot { align-items: stretch; padding: 8px 10px; }
+  .modal-foot { align-items: stretch; padding: 10px; }
   .modal-foot-note { display: none; }
   .modal-foot-actions { width: 100%; }
   /* A PHONE IS THE `fill` CASE, WHATEVER STEP THE ROW ASKED FOR. The ladder's
@@ -363,7 +389,7 @@
      reason is that the box is now narrower than the smallest step. A square
      still keeps its ratio. */
   .modal-foot-actions button { flex: 1 1 0; padding-inline: 8px; }
-  .modal-btnrow[data-size] > button { min-width: 0; }
+  .modal-btnrow[data-size] > button { flex: 1 1 0; min-width: 0; }
   .modal-btnrow[data-size] > button[data-size='square'] { flex: 0 0 auto; min-width: var(--tap-floor); }
 }
 
