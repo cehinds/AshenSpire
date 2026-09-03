@@ -11,7 +11,7 @@ as the class sprites (`tools/concept-cutout.mjs` exports them).
 - Model: `gemini-3-pro-image` (Google Nano Banana Pro) via the ElevenLabs
   image service, flow `BVqsBGDnFY84dS2vSBOE`, 2026-09-03.
 - Reference: the class's own approved concept
-  (`review-approval-hub/evidence/classes/<class>-concept-v1.png`), fetched
+  (`docs/art-evidence/2026-09-03/concepts/<class>-concept-v1.png`), fetched
   by the service straight from this repository — no file was uploaded.
 - Cost: ~1827 credits (≈ 18¢) per image.
 - Licence: as the concepts — AI-generated for this project, CC0 (CREDITS.md).

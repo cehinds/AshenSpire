@@ -3,7 +3,7 @@
 // transparent, tinted class sprites the game loads.
 //
 // WHY THIS EXISTS
-// The concept art (review-approval-hub/evidence/classes/*-concept-v1.png) is the
+// The concept art (docs/art-evidence/2026-09-03/concepts/*-concept-v1.png) is the
 // design the owner approved by eye. It was recorded as "rejected/ineligible" for
 // one purely technical reason: PNG colour type 2, no alpha, so it cannot be cut
 // out of its background. That is a solvable problem, and this solves it. The
@@ -619,7 +619,7 @@ for (const [cls, { cut, box, bottomIsCrop }] of Object.entries(cuts)) {
       sha256: createHash('sha256').update(bytes).digest('hex'),
       source_recipe: {
         source_blob: CONCEPTS[cls],
-        source_path: `review-approval-hub/evidence/classes/${cls}-concept-v1.png`,
+        source_path: `docs/art-evidence/2026-09-03/concepts/${cls}-concept-v1.png`,
         command: 'node tools/concept-cutout.mjs',
         // The recipe has to name EVERY stage that moves a pixel, or the
         // inventory describes a file nobody can reproduce. The dye is listed
