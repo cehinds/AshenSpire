@@ -69,11 +69,21 @@
 .card.rarity-uncommon { border-color: var(--frost); }
 .card.rarity-rare { border-color: var(--gold); }
 .card.rarity-special { border-color: #6a3a7a; }
+/* A NUMERAL IS NOT CENTRED BY `justify-content: center` ALONE, and the badge
+   showed it: with a `1` in it the cost read high and left, with an `8` it read
+   fine. Two causes, both here rather than nudged per instance.
+     PROPORTIONAL FIGURES give each digit its own advance width, so the ink
+     inside the centred box moves as the number changes — and a row of badges
+     stops agreeing with itself. `tabular-nums` gives every digit the same
+     width, which fixes the shift AND keeps sibling badges aligned.
+     LEADING is centred, not the glyph, whenever line-height exceeds the em
+     box; `1` makes that visible because its ink is short and narrow. */
 .card .cost {
   position: absolute; top: -1rem; left: -1rem; width: 3rem; height: 3rem;
   border-radius: var(--r-round); background: #1c1610; border: 2px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 1.4rem; color: var(--parchment);
+  font-weight: 700; font-size: 1.4rem; line-height: 1; color: var(--parchment);
+  font-variant-numeric: tabular-nums;
 }
 .card .mana-cost {
   position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
@@ -95,11 +105,11 @@
   background: #14100c; border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
 }
-.card .ctype {
+.card .ctype { --track: 3px;
   width: 11.6rem; border-radius: var(--r-2); background: #2a241c; color: var(--gold);
-  font-size: 0.9rem; letter-spacing: 3px; text-align: center; padding: 0.3rem 0;
+  font-size: 0.9rem; letter-spacing: var(--track); text-align: center; padding: 0.3rem 0;
   font-family: var(--font-display);
-}
+ text-indent: var(--track);}
 /* Two facts were tangled in one selector, and the tangle is what broke the
    Smith preview. `.card .ctext` is HOW THE CARD FACE LAYS OUT ITS TEXT BLOCK —
    it belongs to the card and stays keyed to it. The five rules below are HOW
@@ -1160,12 +1170,12 @@ button.rs-reset {
   min-height: 2.2rem; display: flex; align-items: stretch; justify-content: center;
   gap: 0.35rem;
 }
-.smith-item-type-row em {
+.smith-item-type-row em { --track: 2px;
   flex: 1 1 0; min-width: 0; display: grid; place-items: center; padding: 0.3rem 0.45rem;
   border-radius: var(--r-2); background: color-mix(in srgb, var(--gold) 15%, #2a241c);
   color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
-  font-style: normal; letter-spacing: 2px; text-align: center;
-}
+  font-style: normal; letter-spacing: var(--track); text-align: center;
+ text-indent: var(--track);}
 .smith-weapon-tags {
   min-height: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center;
   align-content: end; gap: 0.3rem;
@@ -1446,10 +1456,10 @@ button.rs-reset {
 .flask-increment .flask-step[aria-disabled='true']:hover {
   background: var(--panel); transform: none;
 }
-.flask-increment-total {
+.flask-increment-total { --track: 0.04em;
   margin-top: 2px; text-align: center;
-  font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
-}
+  font-size: 1.1rem; color: var(--muted); letter-spacing: var(--track);
+ text-indent: var(--track);}
 
 .stats-table { border-collapse: collapse; font-size: 1.3rem; }
 .stats-table td { padding: 0.4rem 1.4rem; }
@@ -2023,11 +2033,11 @@ button.rs-reset {
    the label is a real <label for>, not a styled <p>, because the gap it closes
    is a screen reader announcing an unlabelled text field. */
 .preview-pane .cz-label { margin-bottom: 0; }
-.cz-name {
+.cz-name { --track: 0.08em;
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
   border-radius: var(--r-3); padding: 6px 10px; width: 150px; text-align: center;
-  font-family: var(--font-display); letter-spacing: 0.08em;
-}
+  font-family: var(--font-display); letter-spacing: var(--track);
+ text-indent: var(--track);}
 
 .cz-portrait {
   width: 13rem; height: 16rem; border-radius: var(--r-4); background: #2a2418;
@@ -2157,12 +2167,12 @@ button.rs-reset {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
   background: var(--line-soft);
 }
-.cc-class-divider::after {
+.cc-class-divider::after { --track: 0.12em;
   content: '‹\00a0›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   min-width: 2rem; padding: 0.4rem 0.18rem; color: var(--muted); background: var(--panel);
-  font-family: var(--font-display); letter-spacing: 0.12em;
+  font-family: var(--font-display); letter-spacing: var(--track);
   text-align: center; white-space: nowrap;
-}
+ text-indent: var(--track);}
 .cc-class-divider:hover::after, .cc-class-divider:focus-visible::after { color: var(--gold); }
 .cc-class-preview {
   display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: stretch;
@@ -4792,7 +4802,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
-  text-indent: 0.02em;
+  text-indent: 0.04em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -4831,7 +4841,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   margin: 2.5rem auto 0;
   gap: 0;
 }
-.title-menu-item {
+.title-menu-item { --track: 0.12em;
   position: relative;
   display: grid;
   place-items: center;
@@ -4844,10 +4854,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   color: var(--parchment);
   font-size: 2rem;
   line-height: 1.15;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--track);
   text-align: center;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
-}
+ text-indent: var(--track);}
 .title-menu-item::before {
   content: '';
   position: absolute;
@@ -4879,7 +4889,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-menu-item.gp-focus::before { opacity: 1; }
 .title-menu-item:disabled { border-color: var(--line); background: transparent; color: var(--muted); opacity: 0.58; }
 .title-menu-gem { position: absolute; bottom: -0.65rem; padding: 0 0.65rem; color: var(--gold); background: var(--bg); font-size: 1.1rem; line-height: 1; }
-.title-tagline { margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: 0.18em; text-align: center; }
+.title-tagline { --track: 0.18em; margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
 
 .title-modal-veil { position: absolute; inset: 0; z-index: 900; padding: 2rem; background: rgba(4, 3, 2, 0.76); backdrop-filter: blur(2px); }
 .title-menu-modal {
@@ -4893,7 +4903,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 96%, #000), color-mix(in srgb, var(--bg-raise) 98%, #000));
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
-.title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
+.title-menu-modal h2 { --track: 0.08em; margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
 /* Position is this modal's (it has no head bar to sit in); the SHAPE is the
    shell's — this was the only round close control in the game. */
 .title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; background: transparent; color: var(--parchment); }
@@ -4944,7 +4954,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.0075em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.015em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
@@ -4997,10 +5007,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   line-height: 0.95;
   letter-spacing: 0.04em;
   text-align: center;
-  text-indent: 0.02em;
+  text-indent: 0.04em;
   white-space: nowrap;
 }
-.startup-subtitle { width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; text-align: center; text-indent: 0.16em; white-space: nowrap; }
+.startup-subtitle { --track: 0.32em; width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: var(--track); text-align: center; text-indent: var(--track); white-space: nowrap; }
 .startup-rule { position: relative; width: min(46rem, 86%); height: 1px; margin-top: 1.6rem; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .startup-rule span { position: absolute; left: 50%; top: 50%; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%) rotate(45deg); border: 1px solid var(--gold); background: var(--bg); }
 .startup-prompt { margin-top: 3.2rem; }
@@ -5617,3 +5627,25 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
+
+/* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
+   `letter-spacing` adds its space after the LAST glyph as well as between the
+   others, so a centred tracked string sits left of true centre by half its
+   tracking. THE STARTUP SCREEN LEARNED THIS FIRST and compensates with
+   `text-indent` — which is exact, and here is why, because the file had two
+   different answers to it and only one can be right:
+
+     available width  = W - t   (the indent is taken off the line's room)
+     line placed at   = t + (W - t - L) / 2      L includes the trailing t
+     ink centre       = t + (W-t-L)/2 + (L-t)/2  =  W/2      ✔ exact
+
+   So `text-indent: <the full tracking>` centres the INK. Some rules used HALF
+   the tracking instead, and half under-corrects — the same arithmetic gives
+   `W/2 - t/4`, so `.startup-subtitle` at 0.32em/0.16em sat 0.08em left of
+   centre UNDER a wordmark that was corrected in full. That disagreement
+   between two lines of one logo is what reads as "the logo is off centre"
+   (Constantine, 2026-09-03) — neither line looks wrong alone.
+
+   ONE MECHANISM, ONE MAGNITUDE: declare the tracking once as `--track`, use it
+   for `letter-spacing`, and indent by the SAME token. A rule that is centred
+   and tracked and does not do this is the bug this block exists to prevent. */
