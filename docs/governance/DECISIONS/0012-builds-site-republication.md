@@ -16,7 +16,10 @@
 **May a merge republish the builds site, and under which of three models?**
 Review showed that A and B are not variations on one ask — they differ in what
 `release` and `main` do — so this record asks the question and does not answer
-it. A ruling that does not name **A**, **B** or **C** approves nothing.
+it. A ruling that does not name **A**, **B** or **C** approves nothing — and a
+ruling of A must also name its listener treatment, **A-review** or
+**A-accept**, because those two differ in whether a future change to the
+publishing workflow itself carries publication authority.
 
 ## Why this is being asked
 
@@ -229,13 +232,27 @@ Two things in that table need his eye rather than my assumption:
   pinned content and pinned builder notwithstanding.
 
   **This is a limit, not a gap I can close.** The two honest mitigations are
-  both outside this file: require the owner's review on the listener path
-  specifically — `.github/workflows/**` is `app-dev-iii`'s lane today, so that
-  is a branch-protection or CODEOWNERS change, not a contract edit — or accept
-  that changes to that one file publish on the next push and say so where a
-  reader will meet it. Option A is therefore "everything except the listener
-  itself is pinned", and pretending otherwise would be the same overclaim this
-  record has already had to withdraw twice.
+  both outside this file, they are **materially different**, and a ruling of A
+  must name which one it means:
+
+  - **A-review** — require the owner's review on the listener path
+    specifically. `.github/workflows/**` is `app-dev-iii`'s lane today, so this
+    is a branch-protection or CODEOWNERS change, not a contract edit, and it is
+    a second act after the ruling rather than something the amendment performs.
+    Under it, a listener change reaches the default branch only with the owner's
+    sign-off, so the publication it carries was authorised at the point the
+    change landed.
+  - **A-accept** — accept that changes to that one file publish on the next
+    `dev`/`test` push, and say so where a reader will meet it. Nothing outside
+    this record changes; the exposure is written down instead of closed.
+
+  Option A is therefore "everything except the listener itself is pinned", and
+  pretending otherwise would be the same overclaim this record has already had
+  to withdraw twice. **Neither treatment is the default.** Codex raised this as
+  a further P1: an approval row that says only "A" leaves an implementer to
+  infer whether future listener changes carry publication authority, and
+  inferred Pages authority is the substitution this whole record exists to
+  refuse.
 - Under option A, `main` and `release` are built from the owner's last-published
   SHAs rather than their heads — **and so is the generator.** Codex raised this
   as a second P1 and it closes a channel the content pins leave open: if `main`
@@ -256,7 +273,8 @@ not read as though it is not.
 
 ## What happens on approval
 
-**The ruling must name A, B or C.** Codex raised this as a P1 and it is right:
+**The ruling must name A, B or C — and, for A, the listener treatment too.**
+Codex raised this as a P1 and it is right:
 A and B are mutually exclusive and differ precisely in what happens to `release`
 and `main`, so "approved" without a letter would leave the contract amendment
 and the workflow with nothing authoritative to match — and whole-site
@@ -274,7 +292,9 @@ hat. So:
 
 | Ruling | What happens |
 |---|---|
-| **A** | Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A)**. Then the workflow is written to match, in that order. |
+| **A-review** | Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review)**. The listener path `.github/workflows/**` gains an owner-review requirement (branch protection or CODEOWNERS) **before** the workflow is written; that requirement is a separate act and is not granted by this amendment. Then the workflow. |
+| **A-accept** | The same three amendments, plus one sentence in `promotion-gates.json` recording that a change to the listener file itself publishes on the next `dev`/`test` push with no further authority. Status becomes **Approved (A-accept)**. Then the workflow. |
+| **A**, bare | **`WAIT`, not a pass.** A names the model but not the listener treatment, and the two differ in whether a future listener change carries publication authority. Nothing is amended and no workflow is written until the treatment is named. |
 | **B** | Amend `promotion-gates.json` to model B — republication only, and the record states plainly that `main` and `release` republish with everything else. Status becomes **Approved (B)**. Then the workflow. |
 | **C** | **Nothing is amended and no workflow is written.** Status becomes **Declined**, #553 stays open, and #578's staleness report remains the mitigation. The contract is untouched, because C is the ruling that it should be. |
 
