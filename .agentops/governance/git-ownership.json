@@ -127,7 +127,7 @@
       "glob": "docs/art-evidence/**",
       "owner_role": "maker",
       "serialized_lane": "product-docs",
-      "note": "Rendered art evidence packets — the screenshots an art change is judged on — authored alongside the assets they prove. Declared 2026-09-03 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet the class-art lane writes its evidence here."
+      "note": "Rendered art evidence packets \u2014 the screenshots an art change is judged on \u2014 authored alongside the assets they prove. Declared 2026-09-03 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet the class-art lane writes its evidence here."
     },
     {
       "glob": "docs/preview/**",
@@ -202,6 +202,30 @@
       "glob": "*.html",
       "owner_role": "maker",
       "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "SPEC.md",
+      "owner_role": "owner",
+      "serialized_lane": "project-records",
+      "note": "The product specification: what the game is meant to be Declared 2026-09-03 on the owner's own decision (issue #599): it was owned by nobody, so under the D5 path-grant rule no lease could legally grant it, and PR #600 needed a recorded exception to touch it. The owner claimed it directly rather than delegate it \u2014 these are the documents that state what the project is, what it shipped and who made it, so they answer to him."
+    },
+    {
+      "glob": "CHANGELOG.md",
+      "owner_role": "owner",
+      "serialized_lane": "project-records",
+      "note": "The release record: what shipped and when Declared 2026-09-03 on the owner's own decision (issue #599): it was owned by nobody, so under the D5 path-grant rule no lease could legally grant it, and PR #600 needed a recorded exception to touch it. The owner claimed it directly rather than delegate it \u2014 these are the documents that state what the project is, what it shipped and who made it, so they answer to him."
+    },
+    {
+      "glob": "CREDITS.md",
+      "owner_role": "owner",
+      "serialized_lane": "project-records",
+      "note": "Attribution, including who and what made the work Declared 2026-09-03 on the owner's own decision (issue #599): it was owned by nobody, so under the D5 path-grant rule no lease could legally grant it, and PR #600 needed a recorded exception to touch it. The owner claimed it directly rather than delegate it \u2014 these are the documents that state what the project is, what it shipped and who made it, so they answer to him."
+    },
+    {
+      "glob": "docs/SPEC-RECONCILE.md",
+      "owner_role": "owner",
+      "serialized_lane": "project-records",
+      "note": "The reconciliation between the specification and what was built Declared 2026-09-03 on the owner's own decision (issue #599): it was owned by nobody, so under the D5 path-grant rule no lease could legally grant it, and PR #600 needed a recorded exception to touch it. The owner claimed it directly rather than delegate it \u2014 these are the documents that state what the project is, what it shipped and who made it, so they answer to him."
     }
   ],
   "generated_serialization": {
