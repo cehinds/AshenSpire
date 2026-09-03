@@ -115,7 +115,7 @@ export function mountTitle(app, {
     const title = 'NEW GAME';
     return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
       <section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-        <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
+        <button class="subtle modal-close title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
         <h2 id="title-modal-heading" data-component="title-modal-heading">${title}</h2>
         <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
         <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${modalSlotHtml(model)}</div>

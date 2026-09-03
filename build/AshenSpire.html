@@ -91,6 +91,14 @@
      A quietly-correct-looking 44 is the failure Law 0 clause 5 names; a
      missing floor is not quiet. */
   --tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));
+  /* THE ICON-BUTTON BOX. Close and ☰ are the same size on every component —
+     Constantine, 2026-09-03: "keep the close and menu buttons the same
+     dimensions for all components". So their box is a LENGTH, not a floor:
+     a floor lets a tall row or a big title stretch the control, and then the
+     shape a player learned on one door is a different shape on the next.
+     Width AND height read this; nothing else sizes them. It is the tap floor
+     by value, so it still clears the floor at every UI size and zoom. */
+  --iconbtn-size: var(--tap-floor);
   /* THE FLOOR, FROZEN AT THE DEFAULT — for the one control that is exempt from
      the floor it sets. Marina's ruling: Minimum tap size is the only control in
      the game whose resizing happens WHILE IT IS BEING PRESSED, so its own four
@@ -414,7 +422,8 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
   --ui-section-label-size: 1.2rem;
   --ui-section-letter-spacing: 0.08em;
   --ui-tray-side-margin: 0.4rem;
-  --ui-tray-control-size: calc(var(--tap-target, 44px) / var(--ui-zoom, 1));
+  /* The tray control is the same box as every close and ☰ (base.css). */
+  --ui-tray-control-size: var(--iconbtn-size);
   --ui-tray-resize-surface: 44px;
   --ui-tray-expanded-block-max: 36rem;
   --ui-tray-expanded-panel-max: 34%;
@@ -478,11 +487,21 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 .card.rarity-uncommon { border-color: var(--frost); }
 .card.rarity-rare { border-color: var(--gold); }
 .card.rarity-special { border-color: #6a3a7a; }
+/* A NUMERAL IS NOT CENTRED BY `justify-content: center` ALONE, and the badge
+   showed it: with a `1` in it the cost read high and left, with an `8` it read
+   fine. Two causes, both here rather than nudged per instance.
+     PROPORTIONAL FIGURES give each digit its own advance width, so the ink
+     inside the centred box moves as the number changes — and a row of badges
+     stops agreeing with itself. `tabular-nums` gives every digit the same
+     width, which fixes the shift AND keeps sibling badges aligned.
+     LEADING is centred, not the glyph, whenever line-height exceeds the em
+     box; `1` makes that visible because its ink is short and narrow. */
 .card .cost {
   position: absolute; top: -1rem; left: -1rem; width: 3rem; height: 3rem;
   border-radius: var(--r-round); background: #1c1610; border: 2px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 1.4rem; color: var(--parchment);
+  font-weight: 700; font-size: 1.4rem; line-height: 1; color: var(--parchment);
+  font-variant-numeric: tabular-nums;
 }
 .card .mana-cost {
   position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
@@ -504,11 +523,11 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
   background: #14100c; border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
 }
-.card .ctype {
+.card .ctype { --track: 3px;
   width: 11.6rem; border-radius: var(--r-2); background: #2a241c; color: var(--gold);
-  font-size: 0.9rem; letter-spacing: 3px; text-align: center; padding: 0.3rem 0;
+  font-size: 0.9rem; letter-spacing: var(--track); text-align: center; padding: 0.3rem 0;
   font-family: var(--font-display);
-}
+ text-indent: var(--track);}
 /* Two facts were tangled in one selector, and the tangle is what broke the
    Smith preview. `.card .ctext` is HOW THE CARD FACE LAYS OUT ITS TEXT BLOCK —
    it belongs to the card and stays keyed to it. The five rules below are HOW
@@ -636,6 +655,13 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 .modal h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 1.4rem; }
 .modal .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 
+/* The pile viewer's body — a scrolling grid of small card faces. The panel,
+   its head and its way out are the shell's (piles.js adopts openModal). */
+.pile-modal { padding: 0; display: flex; flex-direction: column; }
+.pile-body { padding: var(--modal-inset); }
+.pile-body .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+.pile-empty { margin: 0; padding: 2rem; color: var(--muted); }
+
 /* ---------- in-run tabbed overlay ---------- */
 /* PERCENT, not vw/vh — and the reason was already written in this file, on the
    .armoury panel forty lines down, which learned it first:
@@ -664,33 +690,217 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
    doors each had their own; these are the rules they now share. Bodies are
    still each modal's own — see the file header for why that line is drawn
    there and not further in. */
+/* ONE PADDING, ALL FOUR SIDES. Head and foot were `1.2rem 1.6rem`, so the
+   gap above a title did not match the gap beside it and the chrome read as
+   two different insets on one panel. Constantine, 2026-09-03: "the padding
+   should be about the same for all directions". One number, both bars. */
+/* ONE INSET FOR EVERY MODAL, EVERY SIDE. Constantine, 2026-09-03: "all modals
+   should have uniform padding and margins in all all directions (top, bottom,
+   left, and right)." So it is a TOKEN and not a number typed per bar: the head
+   was `1.2rem 1.6rem`, the flask body `1.8rem 1.6rem`, the pile body `1.6rem`
+   and `.modal` itself `2.2rem` — four insets on surfaces meant to read as one
+   system. Declared on `.modal` so a body that wants a different rhythm can
+   scope it rather than re-type it, and every bar below reads it. */
+.modal { --modal-inset: 1.6rem; }
+/* THE WIDTH LADDER (modalShell.js MODAL_SIZES). A rung is a name a body picks,
+   not a length a caller types — see that file for why the detail door was on
+   the wrong rung and what it cost its prose. `max-width` so the phone rule
+   below still wins without restating any of these. */
+.modal[data-size='sm'] { width: 34rem; max-width: 94%; }
+.modal[data-size='md'] { width: 46rem; max-width: 94%; }
+.modal[data-size='lg'] { width: 76rem; max-width: 96%; }
+.modal[data-size='xl'] { width: 96rem; max-width: 96%; }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line);
+  padding: var(--modal-inset); border-bottom: 1px solid var(--line);
 }
-.modal-head-actions { display: flex; gap: 0.8rem; align-items: center; }
+/* THE WAY OUT SITS AT THE TOP-RIGHT WITH THE HEAD'S OWN INSET, and that needs
+   `align-self` on the ROW rather than `align-items` inside it. `.modal-head` is
+   `align-items: center`, so the actions row was centred against whatever height
+   the identity beside it happened to be — with an eyebrow + title pair the
+   identity is two lines tall, so the close control drifted DOWN and its top gap
+   became visibly larger than its right gap. Photographed 2026-09-03 across
+   bodies B, C and D. Aligning the row to the start makes the top inset the
+   head's padding, which is the same number as the right inset (one value, all
+   four sides, above) — so the control is square, in the corner, evenly inset,
+   on every door regardless of how tall its title is. */
+.modal-head-actions { display: flex; gap: 0.8rem; align-items: flex-start; align-self: flex-start; }
 /* One hit box for the one way out. `min-*` and not `width` — a floor is not a
    ceiling (base.css, --tap-floor), and this control must clear it on BOTH axes
    at every UI size, which is the whole reason it is stated once. */
+/* ONE BOX, EVERY DOOR. The floor stays (tools/startup-gate.mjs plants its
+   removal); the LENGTH on both axes is base.css --iconbtn-size, so a taller
+   title, a stretched row or a phone inset cannot change the control's shape,
+   and `flex: 0 0 auto` so no row can shrink it. */
 .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
+  padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
+  border-radius: var(--r-2);
+}
+/* The head's two identity forms (modalShell.js modalHead): an eyebrow + title
+   pair, or a tab strip that replaces it. No third form, and never both. */
+.modal-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.modal-eyebrow {
+  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+}
+.modal-head-id h2 { margin: 0; }
+.modal-tabs { display: flex; gap: 0.2rem; }
+/* A COUNT IS STATUS, NOT PART OF A NAME. The pile viewer used to bake `(5)`
+   into its <h2>, so the thing a player reads as the name of the surface
+   changed every time a card moved. It rides in the head's actions row now,
+   quiet, left of the way out. */
+.modal-head-status { color: var(--muted); font-size: 0.95rem; white-space: nowrap; }
+/* A TAB IS NOT A BUTTON-SHAPED BUTTON. base.css's generic `button` is a gold
+   2 px pill with 2.6rem of side padding; a strip of those reads as a row of
+   call-to-actions rather than a place you are. Underline, no box. */
+.modal-tab {
+  padding: 0.6rem 1.2rem; min-height: var(--tap-floor);
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: var(--r-2) var(--r-2) 0 0;
+  color: var(--parchment); font-family: var(--font-body); font-size: var(--t-2); letter-spacing: normal;
+}
+.modal-tab[aria-selected='true'] { color: var(--gold); border-bottom-color: var(--gold); }
+.modal-tab:hover, .modal-tab.gp-focus, .modal-tab:focus-visible { color: var(--gold); }
+
+/* THE BUTTON LADDER (modalShell.js buttonRow, and every .modal-foot-actions).
+   FOUR WIDTHS FOR THE WHOLE GAME, and the widest label in a row picks the step
+   for all of its buttons — measured 2026-09-03: a three-button footer produced
+   three widths and wrapped onto two lines at 390 px, which then made two
+   sibling doors different HEIGHTS, because a foot that grows by a line grows
+   the shell. `min-width` and not `width`, so the step is a floor the label can
+   exceed; `white-space: nowrap` so what yields under pressure is the PADDING
+   and never the line count. */
+/* A BUTTON ROW IS A GRID OF EQUAL TRACKS. Constantine, 2026-09-03: "make
+   primary and secondary buttons at the bottom uniform in size". Under flex
+   they were uniform only while nothing was squeezed: three medium buttons in
+   a foot beside a note shrank to 83px each and rendered as "B…", "S…", "S…",
+   because base padding is 2.6rem a side and equal shrink ignores the label.
+   `grid-auto-columns: minmax(0, 1fr)` makes every button in a row the SAME
+   width whatever its label — that is the uniformity — and the row's width is
+   the smaller of its box and n × step, so when there is room every button IS
+   the step, and when there is not they share the box equally. Truncation is
+   the last rung, reached only when an equal share is narrower than a label;
+   the padding yields first (below), and the foot's note yields before the row
+   does (.modal-foot-note). n is counted by :has, so no caller counts. */
+.modal-btnrow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch; gap: 8px; min-width: 0;
+  --n: 1; --step: 15rem;
+  width: min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px));
+}
+.modal-btnrow:has(> :nth-child(2):last-child) { --n: 2; }
+.modal-btnrow:has(> :nth-child(3):last-child) { --n: 3; }
+.modal-btnrow:has(> :nth-child(4):last-child) { --n: 4; }
+.modal-btnrow:has(> :nth-child(5):last-child) { --n: 5; }
+/* UNIVERSAL CONTAINMENT FOR A SINGLE-LINE LABEL, every part load-bearing.
+   Constantine, 2026-09-03, after photographing five clips (Back to Shrine,
+   More details, Save and Quit twice, the cost badge): "all objects and
+   components of components should be contained in their parent container and
+   not bleed out of it." Five screenshots, one defect, one rule:
+     min-width: 0         a flex item defaults to `min-width: auto`, which
+                          REFUSES to shrink below its content. That refusal is
+                          what pushed labels out of their rows — the single
+                          most common cause of a bleed in a flex layout.
+     white-space: nowrap  a control's label is one line; a wrap grows the box
+                          and, in a modal foot, the whole shell.
+     overflow: hidden     the box clips instead of letting ink escape.
+     text-overflow:       and the clip is legible — `…`, not a severed glyph.
+       ellipsis
+   Together: a label can never leave its control. Padding yields first (the
+   ladder's basis), then it truncates — and a truncated label is exactly a
+   control that "has more to say", so its full text belongs on its tooltip. */
+.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note, .modal-head-id h2 {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.modal-btnrow > button { text-align: center; }
+/* THE STEP IS A CAP ON THE TRACK, NOT A FLOOR — the row above widens to n ×
+   step when it can and no further, so a step can never overflow the panel
+   (the bug the flex basis was introduced to fix, measured 2026-09-03: a third
+   button clipped off the panel). Four steps for the whole game; nothing types
+   a fifth. */
+.modal-btnrow[data-size='short']  { --step: 10rem; }
+.modal-btnrow[data-size='medium'] { --step: 15rem; }
+.modal-btnrow[data-size='long']   { --step: 21rem; }
+/* `fill` spans its box whatever n is — a rail, a wizard step, a phone foot. */
+.modal-btnrow[data-size='fill'] { width: 100%; }
+/* THE CONCESSION LADDER, IN ORDER: padding yields, then the box steps up
+   (the door's rung, a caller's choice), then TYPE SHRINKS, then — only then —
+   the label truncates. Padding is a share of the track capped at the house
+   padding; type is a share of the button's own inline size (the button is its
+   own container) with a floor the eye can still read. Both are per-track and
+   tracks are equal, so every button in a row yields by the same amount. */
+.modal-btnrow > button {
+  container-type: inline-size;
+  padding-inline: clamp(0.5rem, 8%, 1.4rem);
+}
+.modal-btnrow > button { font-size: clamp(0.78rem, 9cqi, 1rem); }
+/* A SQUARE IN A ROW TAKES THE ROW'S HEIGHT and stays square by ratio, with
+   `justify-self: start` so the track's width does not stretch it out of
+   square. NO length is typed — the height is the row's, which survives
+   --ui-zoom; NOT vh (see .overlay-modal above). Close and ☰ are NOT this
+   rule: they wear one fixed box everywhere (--iconbtn-size, base.css). */
+.modal-btnrow > button[data-size='square'] {
+  aspect-ratio: 1; width: auto; height: auto; justify-self: start;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
+}
+/* ☰ shares the close control's box exactly, so a player who learns the shape
+   learns it once. Same rule, two glyphs. */
+.modal-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
   min-width: var(--tap-floor); min-height: var(--tap-floor);
   padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
   border-radius: var(--r-2);
 }
+
+/* The body owns its own layout and its own scrolling; the shell never reaches
+   in. It DOES own the fact that the body is what flexes, so head and foot stay
+   put and a long body scrolls rather than pushing them off. */
+.modal-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
 .modal-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  flex: 0 0 auto; padding: 1.2rem 1.6rem; border-top: 1px solid var(--line);
+  flex: 0 0 auto; padding: var(--modal-inset); border-top: 1px solid var(--line);
 }
-.modal-foot-note { color: var(--muted); font-size: 0.95rem; }
-/* `margin-left: auto` so a foot with no note still puts its actions right. */
-.modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* THE NOTE YIELDS BEFORE THE ACTIONS DO. `min-width: 0` so a long sentence
+   wraps inside its own share instead of pushing the buttons out of the panel —
+   which is exactly what it did: measured 2026-09-03, "Progress saves to the
+   active slot." held the foot wide enough that `Save and Quit` sat flush to
+   the border with no right padding left. */
+.modal-foot-note { flex: 0 1 auto; min-width: 0; color: var(--muted); font-size: 0.95rem; }
+/* `margin-left: auto` so a foot with no note still puts its actions right.
+   `stretch`, not `center`: primary and secondary are ONE height in the foot
+   (the row's), and their widths come off the ladder because the row is also
+   a `.modal-btnrow` (modalShell.js modalFooter). */
+.modal-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
+/* THE NOTE YIELDS BEFORE THE ROW DOES: a high shrink weight, and it may go to
+   nothing (min-width: 0 in the containment set) before a button loses width.
+   WHOLE OR ABSENT: a note squeezed to "P…" is not a note. The span is its
+   own size container, so when the flex algorithm leaves it narrower than a
+   short sentence its text hides rather than stubs — the note may never carry
+   the only copy of a fact, so losing it costs nothing. */
+/* A size container has NO intrinsic width, so the basis is stated: 20rem is
+   room for one short sentence, and the note may never be longer than one. */
+.modal-foot-note { flex: 0 12 20rem; container-type: inline-size; }
+.modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } }
 .modal-foot-actions button { min-height: var(--tap-floor); }
 @media (max-width: 640px) {
-  .modal-foot { align-items: stretch; padding: 8px 10px; }
+  /* The inset shrinks on a phone, but it stays ONE number — the token moves,
+     not the individual declarations, so head, body and foot cannot drift
+     apart at one width and agree at another. */
+  .modal { --modal-inset: 0.8rem; }
+  .modal-foot { align-items: stretch; }
   .modal-foot-note { display: none; }
   .modal-foot-actions { width: 100%; }
-  .modal-foot-actions button { flex: 1 1 0; padding-inline: 8px; }
+  /* A PHONE IS THE `fill` CASE, WHATEVER STEP THE ROW ASKED FOR. The ladder's
+     min-widths would overflow a 390 px foot, so here the step yields and the
+     row divides its box — the one place a declared size is overridden, and the
+     reason is that the box is now narrower than the smallest step. A square
+     still keeps its ratio. */
+  .modal-btnrow[data-size] { width: 100%; }
+  .modal-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
 }
 
 /* THE SCROLL OWNERS INSIDE A MODAL, AND WHY THEY LOOKED FOREIGN.
@@ -752,7 +962,8 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
   padding: 10px 16px; border-top: 1px solid var(--line); background: var(--panel);
 }
 .overlay-footer-note { color: var(--muted); font-size: 0.95rem; }
-.overlay-footer-actions { display: flex; align-items: center; gap: 8px; }
+/* The in-run foot is a button row (modalShell's ladder): the two classes on
+   the div in menuComponents.js are the whole rule. */
 .overlay-footer-actions button { min-height: var(--tap-floor); }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
@@ -1438,12 +1649,12 @@ button.rs-reset {
   min-height: 2.2rem; display: flex; align-items: stretch; justify-content: center;
   gap: 0.35rem;
 }
-.smith-item-type-row em {
+.smith-item-type-row em { --track: 2px;
   flex: 1 1 0; min-width: 0; display: grid; place-items: center; padding: 0.3rem 0.45rem;
   border-radius: var(--r-2); background: color-mix(in srgb, var(--gold) 15%, #2a241c);
   color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
-  font-style: normal; letter-spacing: 2px; text-align: center;
-}
+  font-style: normal; letter-spacing: var(--track); text-align: center;
+ text-indent: var(--track);}
 .smith-weapon-tags {
   min-height: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center;
   align-content: end; gap: 0.3rem;
@@ -1724,10 +1935,10 @@ button.rs-reset {
 .flask-increment .flask-step[aria-disabled='true']:hover {
   background: var(--panel); transform: none;
 }
-.flask-increment-total {
+.flask-increment-total { --track: 0.04em;
   margin-top: 2px; text-align: center;
-  font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
-}
+  font-size: 1.1rem; color: var(--muted); letter-spacing: var(--track);
+ text-indent: var(--track);}
 
 .stats-table { border-collapse: collapse; font-size: 1.3rem; }
 .stats-table td { padding: 0.4rem 1.4rem; }
@@ -2301,11 +2512,11 @@ button.rs-reset {
    the label is a real <label for>, not a styled <p>, because the gap it closes
    is a screen reader announcing an unlabelled text field. */
 .preview-pane .cz-label { margin-bottom: 0; }
-.cz-name {
+.cz-name { --track: 0.08em;
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
   border-radius: var(--r-3); padding: 6px 10px; width: 150px; text-align: center;
-  font-family: var(--font-display); letter-spacing: 0.08em;
-}
+  font-family: var(--font-display); letter-spacing: var(--track);
+ text-indent: var(--track);}
 
 .cz-portrait {
   width: 13rem; height: 16rem; border-radius: var(--r-4); background: #2a2418;
@@ -2435,12 +2646,12 @@ button.rs-reset {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
   background: var(--line-soft);
 }
-.cc-class-divider::after {
+.cc-class-divider::after { --track: 0.12em;
   content: '‹\00a0›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   min-width: 2rem; padding: 0.4rem 0.18rem; color: var(--muted); background: var(--panel);
-  font-family: var(--font-display); letter-spacing: 0.12em;
+  font-family: var(--font-display); letter-spacing: var(--track);
   text-align: center; white-space: nowrap;
-}
+ text-indent: var(--track);}
 .cc-class-divider:hover::after, .cc-class-divider:focus-visible::after { color: var(--gold); }
 .cc-class-preview {
   display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: stretch;
@@ -4435,17 +4646,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    `.modal-head` for the title row and its ONE close control, `.modal-foot` for
    the way out. Everything below is BODY — the part modalShell.js deliberately
    does not own — and nothing here restates a chrome number. */
-.flask-inspect-modal { width: 44rem; max-width: 92%; padding: 0; display: flex; flex-direction: column; }
-.flask-inspect-title { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-/* The uppercase muted eyebrow the confirmation modal and the class panes
-   already use to name WHAT KIND of thing the title below is. One idiom. */
-.flask-inspect-eyebrow {
-  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
-}
-.flask-inspect-modal .modal-head h2 { margin: 0; font-size: 2rem; }
+.flask-inspect-modal { padding: 0; display: flex; flex-direction: column; }
+.flask-inspect-modal .modal-head h2 { font-size: 2rem; }
+/* THE DOOR'S HEIGHT IS ITS ART'S, NOT ITS PROSE'S. Two flasks, or a flask and
+   a shield, are the same kind of door and must be the same size — measured
+   2026-09-03 on the Crimson Flask / Round Shield pair, where a one-line effect
+   and a two-line effect produced two visibly different modals and a player
+   reads that difference as meaning. The floor is the art (9.6rem, below) plus
+   this padding, stated once; longer prose scrolls in the body rather than
+   growing the shell. */
 .flask-inspect-body {
   display: flex; align-items: flex-start; gap: 1.6rem;
-  padding: 1.8rem 1.6rem; overflow: hidden auto;
+  padding: var(--modal-inset);
+  min-height: calc(9.6rem + 2 * var(--modal-inset));
 }
 /* THE WHOLE POINT OF THE BIGGER DOOR IS THAT THE ART IS BIGGER. The HUD slot
    draws this same identity at tap size; here it gets room to be looked at.
@@ -4457,7 +4670,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    left an art-less flask drawing a thumbnail glyph in the middle of it. Scaling
    the type scales both, and the box shape keeps its one home above. */
 .flask-inspect-art .flask-art { font-size: 5.3rem; }
-.flask-inspect-lines { min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+/* THE PROSE COLUMN'S FLOOR IS WHAT PICKS THE RUNG: about 18rem beside the art
+   sets two short sentences on one line each. Below it the door is on the wrong
+   rung and steps up, rather than wrapping a sentence mid-clause. */
+.flask-inspect-lines { flex: 1 1 18rem; min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; }
 .flask-inspect-lines p { margin: 0; font-size: 1.35rem; line-height: 1.55; color: var(--parchment); }
 /* The charge count is a fact about this run, not part of what the flask does,
    so it reads quieter than the effect above it. */
@@ -4476,6 +4692,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: transparent; border: 0; border-radius: 0;
   color: inherit; font-family: inherit; font-size: 1.4rem; letter-spacing: normal;
 }
+/* The keycap rides at the END of a menu row, so labels stay left-aligned down
+   the column and the glyphs form their own column on the right. */
+.flask-action-key {
+  margin-left: auto;
+  display: inline-grid; place-items: center;
+  min-width: 2.2rem; padding: 0.1rem 0.4rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font-size: 1.1rem; letter-spacing: 0; color: var(--muted);
+}
+.flask-action[aria-disabled='true'] .flask-action-key { opacity: 0.5; }
 .flask-action:hover { background: var(--bg-raise); }
 .flask-action.gp-focus, .flask-action:focus-visible { background: var(--bg-raise); color: var(--gold); }
 /* AN UNAVAILABLE ROW HAS TO LOOK UNAVAILABLE. These rows are `aria-disabled`,
@@ -4526,7 +4752,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .overlay-footer { align-items: stretch; padding: 8px 10px; }
   .overlay-footer-note { display: none; }
   .overlay-footer-actions { width: 100%; }
-  .overlay-footer-actions button { flex: 1 1 0; padding-inline: 8px; }
+  .overlay-footer-actions button { padding-inline: 8px; }
   .overlay-settings-actions { gap: 3px; }
   .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
   .ov-qa-label { display: none; }
@@ -5058,7 +5284,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
-  text-indent: 0.02em;
+  text-indent: 0.04em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -5097,7 +5323,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   margin: 2.5rem auto 0;
   gap: 0;
 }
-.title-menu-item {
+.title-menu-item { --track: 0.12em;
   position: relative;
   display: grid;
   place-items: center;
@@ -5110,10 +5336,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   color: var(--parchment);
   font-size: 2rem;
   line-height: 1.15;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--track);
   text-align: center;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
-}
+ text-indent: var(--track);}
 .title-menu-item::before {
   content: '';
   position: absolute;
@@ -5145,7 +5371,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-menu-item.gp-focus::before { opacity: 1; }
 .title-menu-item:disabled { border-color: var(--line); background: transparent; color: var(--muted); opacity: 0.58; }
 .title-menu-gem { position: absolute; bottom: -0.65rem; padding: 0 0.65rem; color: var(--gold); background: var(--bg); font-size: 1.1rem; line-height: 1; }
-.title-tagline { margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: 0.18em; text-align: center; }
+.title-tagline { --track: 0.18em; margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
 
 .title-modal-veil { position: absolute; inset: 0; z-index: 900; padding: 2rem; background: rgba(4, 3, 2, 0.76); backdrop-filter: blur(2px); }
 .title-menu-modal {
@@ -5159,7 +5385,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 96%, #000), color-mix(in srgb, var(--bg-raise) 98%, #000));
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
-.title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
+.title-menu-modal h2 { --track: 0.08em; margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
 /* Position is this modal's (it has no head bar to sit in); the SHAPE is the
    shell's — this was the only round close control in the game. */
 .title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; background: transparent; color: var(--parchment); }
@@ -5210,7 +5436,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.0075em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.015em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
@@ -5263,10 +5489,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   line-height: 0.95;
   letter-spacing: 0.04em;
   text-align: center;
-  text-indent: 0.02em;
+  text-indent: 0.04em;
   white-space: nowrap;
 }
-.startup-subtitle { width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; text-align: center; text-indent: 0.16em; white-space: nowrap; }
+.startup-subtitle { --track: 0.32em; width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: var(--track); text-align: center; text-indent: var(--track); white-space: nowrap; }
 .startup-rule { position: relative; width: min(46rem, 86%); height: 1px; margin-top: 1.6rem; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .startup-rule span { position: absolute; left: 50%; top: 50%; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%) rotate(45deg); border: 1px solid var(--gold); background: var(--bg); }
 .startup-prompt { margin-top: 3.2rem; }
@@ -5883,6 +6109,28 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
+
+/* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
+   `letter-spacing` adds its space after the LAST glyph as well as between the
+   others, so a centred tracked string sits left of true centre by half its
+   tracking. THE STARTUP SCREEN LEARNED THIS FIRST and compensates with
+   `text-indent` — which is exact, and here is why, because the file had two
+   different answers to it and only one can be right:
+
+     available width  = W - t   (the indent is taken off the line's room)
+     line placed at   = t + (W - t - L) / 2      L includes the trailing t
+     ink centre       = t + (W-t-L)/2 + (L-t)/2  =  W/2      ✔ exact
+
+   So `text-indent: <the full tracking>` centres the INK. Some rules used HALF
+   the tracking instead, and half under-corrects — the same arithmetic gives
+   `W/2 - t/4`, so `.startup-subtitle` at 0.32em/0.16em sat 0.08em left of
+   centre UNDER a wordmark that was corrected in full. That disagreement
+   between two lines of one logo is what reads as "the logo is off centre"
+   (Constantine, 2026-09-03) — neither line looks wrong alone.
+
+   ONE MECHANISM, ONE MAGNITUDE: declare the tracking once as `--track`, use it
+   for `letter-spacing`, and indent by the SAME token. A rule that is centred
+   and tracked and does not do this is the bug this block exists to prevent. */
 
   </style>
   <style data-src="styles/combat.css">
@@ -9762,7 +10010,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot }) : createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount }) : createCombat({
     registries,
     rng,
     player: {
@@ -11831,29 +12079,50 @@ const balance = {
     startingDeck: {
       enabled: true,
 
-      // WHO YIELDS WHEN GRANTS GET GREEDY. false → deck size is hard and the
-      // content author yields (validateEquipment refuses the kit). true → deck
-      // size is soft and the deck grows, so no authored grant is ever dropped;
-      // the player pays in draw consistency instead. `minFiller` holds in BOTH
-      // branches — the toggle only picks which side gives way.
-      growToFit: false,
-
-      // The floor a deck must keep in basic attacks and guards, however many
-      // cards get granted. 4 → at least 2 attack and 2 guard at bias 0.5.
-      minFiller: 4,
+      // `growToFit` and `minFiller` lived here. Both decided who yields when
+      // grants got greedy — the deck size, or the content author. Under the cap
+      // rule (SPEC, "The starting deck") nobody yields: the cap governs how many
+      // BASE strikes and defends are minted, bound cards are never capped or
+      // dropped, and a floor of basic cards is simply what the cap leaves over.
 
       // Card ids every class starts with, whatever it wears. Cards named here
       // must exist in the card registry; each is granted exactly one copy.
       global: { grants: [] },
 
-      // Diagnostic only — nothing is ever deleted at runtime. When grants
-      // overrun the budget, the refusal names these sources in this order so
-      // the author knows what to reconsider first.
-      dropOrder: ['global', 'relic', 'armor', 'weapon', 'class'],
+      // The order bound cards are DEALT in at creation. Was `dropOrder`, which
+      // named a behaviour that no longer exists — nothing is ever dropped. Each
+      // entry is a tag id in the `grantSource` domain, so adding a source is a
+      // row in tags.csv rather than an edit to loadout.js.
+      sourceOrder: ['from:global', 'from:relic', 'from:armor', 'from:weapon', 'from:class'],
 
-      // Per-class filler split. `strikeBias` is the share of filler that goes
-      // to attacks; the rest are guards. Ties round toward attack. Classes
-      // absent here use `defaultStrikeBias`.
+      // WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's
+      // order; this is the binding between that vocabulary and the four places
+      // in loadout.js that actually mint a bound card. It exists because the
+      // ids used to be typed at those seams: renaming `from:weapon` here and in
+      // `sourceOrder` validated clean and then silently dealt the weapon's
+      // cards last, because the minting site still stamped the old id. Now the
+      // seam READS its id from this map, so a rename is a data edit and an
+      // unbound or misspelt role is refused by name.
+      //
+      // The KEYS are the engine's seams, not content vocabulary — there is a
+      // weapon seam whatever an author calls its source. `from:relic` has no
+      // key because nothing mints it yet; it is declared vocabulary waiting for
+      // a minter, and ranking it early costs nothing until one exists.
+      sources: {
+        global: 'from:global',
+        armor: 'from:armor',
+        weapon: 'from:weapon',
+        class: 'from:class',
+      },
+
+      // Which role wins the remainder when the cap leaves an odd number of base
+      // cards. Authored rather than assumed — it used to be a rounding rule
+      // buried in the arithmetic.
+      oddFillerGoesTo: 'attack',
+
+      // Per-class filler split. `strikeBias` is the share of base cards that go
+      // to attacks; the rest are guards. Classes absent here use
+      // `defaultStrikeBias`.
       defaultStrikeBias: 0.5,
       classes: {
         reaver: { strikeBias: 0.5 },
@@ -18193,6 +18462,46 @@ const tags = [
     "color": "B8B0A0",
     "glyph": "▣",
     "blurb": "What this piece IS: the Armoury and the smith name it Armor."
+  },
+  {
+    "id": "from:global",
+    "domain": "grantSource",
+    "label": "Global",
+    "color": "B8B0A0",
+    "glyph": "🌐",
+    "blurb": "Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants."
+  },
+  {
+    "id": "from:relic",
+    "domain": "grantSource",
+    "label": "Relic",
+    "color": "C9A227",
+    "glyph": "◈",
+    "blurb": "Carried in by the starting relic."
+  },
+  {
+    "id": "from:armor",
+    "domain": "grantSource",
+    "label": "Armor",
+    "color": "7FA8C9",
+    "glyph": "▣",
+    "blurb": "Bound to the outfit the run begins wearing."
+  },
+  {
+    "id": "from:weapon",
+    "domain": "grantSource",
+    "label": "Weapon",
+    "color": "C9502E",
+    "glyph": "⚔",
+    "blurb": "Bound to an armament in hand at creation."
+  },
+  {
+    "id": "from:class",
+    "domain": "grantSource",
+    "label": "Class",
+    "color": "9FC3E8",
+    "glyph": "✦",
+    "blurb": "The class signature card."
   }
 ];
 
@@ -18229,6 +18538,11 @@ const tagDomains = [
     "id": "itemType",
     "label": "Item type",
     "blurb": "What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword."
+  },
+  {
+    "id": "grantSource",
+    "label": "Grant source",
+    "blurb": "Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
   }
 ];
 
@@ -18345,6 +18659,13 @@ const tagFamilies = [
     "scopeField": "",
     "label": "Effect",
     "blurb": "Damage effects carry card tags; a hit inherits the card's identity."
+  },
+  {
+    "family": "grant",
+    "source": "",
+    "scopeField": "",
+    "label": "Grant",
+    "blurb": "Where a starting card comes from. No collection: like `effect`, this family exists only to declare a vocabulary — the order bound cards are dealt in."
   }
 ];
 
@@ -18432,6 +18753,10 @@ const tagFamilyDomains = [
   {
     "family": "effect",
     "domain": "card"
+  },
+  {
+    "family": "grant",
+    "domain": "grantSource"
   }
 ];
 
@@ -24641,7 +24966,7 @@ function extractTemplateTokens(template) {
  *
  * Four rounds of review found the same shape at four addresses: a pass that
  * exists to ANSWER questions about content, crashing on content instead
- * (`dropOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
+ * (`sourceOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
  * tag `source`). Each was a real gap and each got a named rule, but fixing them
  * one at a time is how the fifth arrives. Malformed content is infinite and this
  * pass reads hundreds of fields, so the guarantee cannot rest on having guarded
@@ -24653,22 +24978,22 @@ function extractTemplateTokens(template) {
  * them, not a substitute for them.
  */
 function validateContent(bundle) {
+  // The accumulator is created HERE and handed in, so a throw partway through
+  // KEEPS every field-addressed error found before it. A floor that returns a
+  // fresh list erases the diagnosis it was meant to stand behind.
+  const errors = [];
   try {
-    return collectContentProblems(bundle);
+    return collectContentProblems(bundle, errors);
   } catch (error) {
-    return {
-      ok: false,
-      errors: [{
-        path: '<bundle>',
-        msg: `content validation could not finish reading this bundle: ${error && error.message} — a field is malformed in a way no rule names yet, so this is the floor rather than a diagnosis; the stack points at the field that threw`,
-      }],
-      scriptReport: null,
-    };
+    errors.push({
+      path: '<bundle>',
+      msg: `content validation could not finish reading this bundle: ${error && error.message} — a field is malformed in a way no rule names yet; any errors listed above were found before it, and the stack points at the field that threw`,
+    });
+    return { ok: false, errors, scriptReport: null };
   }
 }
 
-function collectContentProblems(bundle) {
-  const errors = [];
+function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 
@@ -34542,17 +34867,25 @@ function cardEquipmentCompatibility(registries, { cardId, classId, pieceId } = {
  * rather than an exception before the banner can render.
  */
 function validateEquipment(registries) {
+  // THE FLOOR ADDS, IT NEVER REPLACES. The accumulator is created HERE and
+  // handed in, so a throw partway through keeps every field-addressed problem
+  // found before it. Returning a fresh array from the catch — which is what
+  // this did — turned a good diagnosis into a generic one: content that
+  // correctly reported `grantedCards[0] must name cardId` came back saying only
+  // "cannot read properties of null". A backstop that erases the answers it is
+  // standing behind is worse than no backstop.
+  const problems = [];
   try {
-    return collectEquipmentProblems(registries);
+    return collectEquipmentProblems(registries, problems);
   } catch (error) {
-    return [`equipment validation could not finish reading this content: ${error && error.message} — a field is malformed in a way no rule names yet; the stack points at the field that threw`];
+    problems.push(`equipment validation could not finish reading this content: ${error && error.message} — a field is malformed in a way no rule names yet; any problems listed above were found before it, and the stack points at the field that threw`);
+    return problems;
   }
 }
 
-function collectEquipmentProblems(registries) {
+function collectEquipmentProblems(registries, problems = []) {
   const eq = registries.equipment || {};
   const fields = eq.modFields || {};
-  const problems = [];
   const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
   const profilesPresent = Array.isArray(eq.basicCardProfiles);
   const profiles = eq.basicCardProfiles || [];
@@ -35594,11 +35927,51 @@ function startingDeckWarnings(registries) {
 }
 
 /**
- * The grant sources a composed deck can draw from, in the order grantRefsFor
- * pushes them. `dropOrder` names these and nothing else; it is the vocabulary
- * an overrun message reads back to the author.
+ * grantSourceIds(registries) -> [tagId]
+ *
+ * The vocabulary of "where a starting card came from", READ FROM THE TAG
+ * TABLES rather than typed here. It used to be a frozen array in this file,
+ * which is the shape the owner ruled against: adding a sixth source meant
+ * editing code. It is now a domain (`grantSource`) with a row per source, so a
+ * new one is a spreadsheet line like every other word in the game.
+ *
+ * Authoring order is the vocabulary's order, and that is the order bound cards
+ * are dealt in — `sourceOrder` in balance may re-rank them, but the legal set
+ * is whatever the registry holds.
  */
-const GRANT_SOURCES = ['global', 'relic', 'armor', 'weapon', 'class'];
+function grantSourceIds(registries) {
+  return ((registries || {}).tags || [])
+    .filter((tag) => tag && tag.domain === 'grantSource')
+    .map((tag) => tag.id);
+}
+
+/**
+ * The seams in THIS FILE that mint a bound card. These are engine structure,
+ * not content vocabulary: there is a weapon seam and an armour seam whatever an
+ * author names their sources. Each is bound to a grantSource tag by
+ * `startingDeck.sources`, and every one of them must be bound — an unbound seam
+ * would stamp `undefined` and sort its cards last in silence.
+ *
+ * A source with no seam (today: `from:relic`) is legal and needs no entry; it
+ * is declared vocabulary waiting for a minter.
+ */
+const MINTED_GRANT_ROLES = ['global', 'armor', 'weapon', 'class'];
+
+/**
+ * grantSourceFor(cfg, role) -> tagId
+ *
+ * The grantSource tag a minting seam stamps, READ FROM THE AUTHORED MAP rather
+ * than typed at the seam. Round twenty's finding: with the ids typed inline,
+ * renaming a grantSource tag and its `sourceOrder` entry validated clean and
+ * then dealt that source's cards last, because `sortBySourceOrder` no longer
+ * recognised what the seam stamped. Validation guarantees every role in
+ * MINTED_GRANT_ROLES is bound, so the fallback here is for hand-built configs
+ * that never went through that door, not for shipped content.
+ */
+function grantSourceFor(cfg, role) {
+  const bound = ((cfg || {}).sources || {})[role];
+  return typeof bound === 'string' && bound ? bound : null;
+}
 
 function startingDeckFindings(registries) {
   const problems = [];
@@ -35606,9 +35979,8 @@ function startingDeckFindings(registries) {
   const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
   if (!cfg) return { problems, warnings };
   if (typeof cfg.enabled !== 'boolean') problems.push('startingDeck.enabled must be boolean');
-  if (typeof cfg.growToFit !== 'boolean') problems.push('startingDeck.growToFit must be boolean');
-  if (!Number.isInteger(cfg.minFiller) || cfg.minFiller < 0) {
-    problems.push(`startingDeck.minFiller must be a non-negative integer (got ${cfg.minFiller})`);
+  if (cfg.oddFillerGoesTo !== undefined && !['attack', 'guard'].includes(cfg.oddFillerGoesTo)) {
+    problems.push(`startingDeck.oddFillerGoesTo must be 'attack' or 'guard' (got ${JSON.stringify(cfg.oddFillerGoesTo)}) — it names which role wins the remainder when the cap leaves an odd number of base cards`);
   }
   // The DECK SIZE, held here because the composed path is now the only reader of
   // it. The legacy roleCopies sum used to imply this — a fractional size could
@@ -35616,18 +35988,49 @@ function startingDeckFindings(registries) {
   // path being off (round four) removed the implication without replacing it.
   // `10.5` then validated clean and planned `guardCount: 4.5`, which the copy
   // loop turned into five guards and an eleven-card deck.
-  // dropOrder is only ever READ to name the sources in an overrun message, so a
-  // malformed one used to surface as a TypeError out of `.join` rather than as
-  // a content problem — validateEquipment crashed instead of answering. It is a
-  // list of grant sources; anything else is named here, and the message site is
-  // defensive besides, so a future reader cannot reintroduce the throw.
-  if (cfg.dropOrder !== undefined) {
-    if (!Array.isArray(cfg.dropOrder)) {
-      problems.push(`startingDeck.dropOrder must be an array of grant sources (got ${JSON.stringify(cfg.dropOrder)}) — it names the order an author should drop grants in when a kit overruns`);
+  // sourceOrder is read by grantRefsFor to order the bound cards it deals, and a
+  // malformed one used to surface as a TypeError rather than a content problem.
+  // The vocabulary is the grantSource tag domain, so this validates against the
+  // registry rather than a list typed in this file.
+  if (cfg.sourceOrder !== undefined) {
+    const legal = grantSourceIds(registries);
+    if (!Array.isArray(cfg.sourceOrder)) {
+      problems.push(`startingDeck.sourceOrder must be an array of grant-source tags (got ${JSON.stringify(cfg.sourceOrder)}) — it names the order bound cards are dealt in`);
     } else {
-      for (const source of cfg.dropOrder) {
-        if (!GRANT_SOURCES.includes(source)) {
-          problems.push(`startingDeck.dropOrder names unknown grant source '${source}' (legal: ${GRANT_SOURCES.join(', ')})`);
+      for (const source of cfg.sourceOrder) {
+        if (!legal.includes(source)) {
+          problems.push(`startingDeck.sourceOrder names unknown grant source '${source}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+        }
+      }
+    }
+  }
+
+  // `sources` binds each minting seam to one of those tags. Without it the ids
+  // were typed at the seams, so renaming a grantSource tag AND its sourceOrder
+  // entry passed everything above and then dealt that source's cards last —
+  // clean validation, wrong deck. Checked here so the rename fails at the door
+  // instead of at the table: every seam bound, to a registered source.
+  {
+    const legal = grantSourceIds(registries);
+    const map = cfg.sources;
+    if (map === undefined || map === null || typeof map !== 'object' || Array.isArray(map)) {
+      problems.push(`startingDeck.sources must be an object binding each minting seam (${MINTED_GRANT_ROLES.join(', ')}) to a grant-source tag (got ${JSON.stringify(map)}) — it is what each seam stamps on the cards it mints`);
+    } else {
+      for (const role of MINTED_GRANT_ROLES) {
+        const bound = map[role];
+        if (typeof bound !== 'string' || !bound) {
+          problems.push(`startingDeck.sources.${role} must name a grant-source tag (got ${JSON.stringify(bound)}) — the '${role}' seam mints cards and would stamp nothing, sorting them last in silence`);
+        } else if (!legal.includes(bound)) {
+          problems.push(`startingDeck.sources.${role} names unknown grant source '${bound}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+        } else if (Array.isArray(cfg.sourceOrder) && !cfg.sourceOrder.includes(bound)) {
+          // Legal — an unranked source is dealt last by contract — but almost
+          // never what an author meant, so it is SEEN rather than refused.
+          warnings.push(`startingDeck.sources.${role} names '${bound}', which sourceOrder does not rank — the '${role}' seam's cards are dealt after every ranked source`);
+        }
+      }
+      for (const role of Object.keys(map)) {
+        if (!MINTED_GRANT_ROLES.includes(role)) {
+          problems.push(`startingDeck.sources names unknown seam '${role}' (the engine mints: ${MINTED_GRANT_ROLES.join(', ')}) — nothing reads this binding, so the tag it names would never be stamped`);
         }
       }
     }
@@ -35660,66 +36063,45 @@ function startingDeckFindings(registries) {
     }
   }
   problems.push(...boundGrantProblems(registries));
+
   if (cfg.enabled !== true || problems.length) return { problems, warnings };
 
-  // WEAPON ARTS, NAMED RATHER THAN COUNTED. The package layer mints art
-  // instances into the starting deck alongside its grants, and they are real
-  // cards — but two shipped classes already carry one, which puts their decks at
-  // eleven against an authored ten. That is older than this branch
-  // (tools/class-loadouts.mjs is red about exactly it on origin/dev) and it is a
-  // content question, not a validation bug: either the size is wrong or the art
-  // should not count toward it. Refusing here would fail the shipped bundle over
-  // a call this branch has no standing to make, and staying silent is how it
-  // went unnoticed. So it is stated, per class, and left to its owner.
+  // NO BUDGET REFUSAL, AND NO WEAPON-ART WARNING. Both existed to police a cap
+  // that no longer works that way: the cap governs how many BASE cards are
+  // minted, not how many cards a run may begin with. Equipment that fills or
+  // exceeds it simply leaves no room for strikes and defends, which is a
+  // balance question for whoever authors the weapons rather than something
+  // validation can answer. The starseer and herald decks that read 11 against
+  // an authored 10 were never wrong — they are 10 base cards' worth of cap with
+  // one weapon art on top.
+  //
+  // What remains worth saying is what the composed deck WILL be, per class, so
+  // an author can see the shape their content produces without starting a run.
+  // Reported over EVERY loadout a player can begin in, not just the baseline —
+  // the enumeration that four review rounds went into building for the budget
+  // check. The budget is gone; the enumeration is not, because the question it
+  // answers ("what can a player actually start in") is the same one, and a kit
+  // that deals no base cards is worth seeing whichever kit it is.
+  const seenShape = new Set();
   for (const classId of registries.classes.ids()) {
+    let candidates = [];
     // A validation pass never throws on bad content — a bundle whose slots or
-    // profiles are broken is named by the rules that own them, and this one has
-    // nothing useful to say about it.
-    let arts = 0;
-    let loadout = null;
-    let plan = null;
-    try {
-      loadout = createLoadout(registries, classId);
-      arts = desiredGrantInstances(registries, { loadout, class: classId })
-        .filter((inst) => inst.equipmentRole === 'weaponArt').length;
-      plan = arts ? startingDeckPlan(registries, loadout, classId) : null;
-    } catch { continue; }
-    if (!arts) continue;
-    if (plan && plan.size + arts > registries.balance.startingDeckSize) {
-      warnings.push(`${classId}: the weapon-art layer adds ${arts} card(s) on top of a ${plan.size}-card composed plan, so this class begins with ${plan.size + arts} against an authored startingDeckSize of ${registries.balance.startingDeckSize} — arts are not in the composed budget, and whether they should be is a content call`);
-    }
-  }
-
-  // The budget itself, against EVERY loadout a player can actually begin in —
-  // not just the baseline kit. An alternate kit is chosen at character creation
-  // and can carry different grants, so checking only the baseline leaves the
-  // one a player picks free to blow the budget and eat the promised minFiller.
-  const order = (Array.isArray(cfg.dropOrder) ? cfg.dropOrder : []).join(' → ');
-  const seenDetail = new Set();
-  for (const classId of registries.classes.ids()) {
-    for (const { label, loadout } of selectableStartingLoadouts(registries, classId)) {
-      let plan;
-      try {
-        plan = startingDeckPlan(registries, loadout, classId);
-      } catch (e) {
+    // profiles are broken is named by the rules that own them.
+    try { candidates = selectableStartingLoadouts(registries, classId); } catch { continue; }
+    for (const { label, loadout } of candidates) {
+      let plan = null;
+      try { plan = startingDeckPlan(registries, loadout, classId); } catch (e) {
         problems.push(`startingDeck: cannot plan '${classId}' ${label}: ${e.message}`);
         continue;
       }
-      if (!plan || !plan.overrun) continue;
-      const granted = plan.grants.length + (plan.packageGrants || 0);
-      const fromPackage = plan.packageGrants ? ` (${plan.packageGrants} of them from an equipped weapon package)` : '';
-      const detail = `class '${classId}' ${label} grants ${granted} card(s)${fromPackage} and minFiller is `
-        + `${plan.minFiller}, needing ${granted + plan.minFiller} of `
-        + `startingDeckSize ${registries.balance.startingDeckSize}`;
-      // One line per distinct overrun. Without this an overrun that does not
-      // depend on the armour repeats once per combination, burying the ones
-      // that do.
-      if (seenDetail.has(detail)) continue;
-      seenDetail.add(detail);
-      if (plan.grewToFit) warnings.push(`startingDeck: ${detail}; growToFit raised the deck to ${plan.size}`);
-      else problems.push(`startingDeck: ${detail}; raise startingDeckSize, lower minFiller, or drop a grant (${order})`);
+      if (!plan || plan.filler > 0) continue;
+      const detail = `startingDeck: class '${classId}' ${label} begins with ${plan.size} card(s), all equipment-bound — its gear meets the ${plan.cap}-card cap on its own, so no base strikes or defends are dealt`;
+      if (seenShape.has(detail)) continue;
+      seenShape.add(detail);
+      warnings.push(detail);
     }
   }
+
   return { problems, warnings };
 }
 
@@ -35796,9 +36178,19 @@ function selectableStartingLoadouts(registries, classId) {
 
 /** The composed-deck config, or null when the legacy roleCopies path is live. */
 function startingDeckConfig(registries) {
-  const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
+  const cfg = startingDeckSettings(registries);
   if (!cfg || cfg.enabled !== true) return null;
   return cfg;
+}
+
+/**
+ * The same block, WITHOUT the enabled gate. Provenance is not a planner
+ * feature: a granted card carries the id of the source that minted it whether
+ * or not the composed plan is switched on, so the stamp reads this and the
+ * planner reads startingDeckConfig.
+ */
+function startingDeckSettings(registries) {
+  return ((registries.balance || {}).equipment || {}).startingDeck;
 }
 
 /** The tag that says "this object carries its own cards"; payload in equipmentGrants.csv. */
@@ -35895,22 +36287,21 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // quota by quotaRefs, so counting them again would charge them twice.
   if (techniqueRow && techniqueRow.profile) {
     grants.push({
-      source: 'weapon',
+      source: grantSourceFor(cfg, 'weapon'),
       cardId: techniqueRow.profile.baseCardId,
       equipmentRole: 'technique',
       profileId: techniqueRow.profile.id,
     });
   }
 
-  // Every equipped piece carrying the `bound` tag hands over the cards named
-  // for it in equipmentGrants.csv. The tag is the gate and the promise; the
-  // table is the payload. A piece with neither contributes nothing, which is
-  // every piece today — the seam is live and the data is empty by design.
-  for (const piece of equippedPieces(registries, loadout, classId)) {
-    for (const cardId of boundGrantCardIds(registries, piece, piece.kind === 'armor' ? 'armour' : 'armament')) {
-      grants.push({ source: piece.kind === 'armor' ? 'armor' : 'weapon', cardId, sourceId: piece.id });
-    }
-  }
+  // NOT HERE: the cards a `bound` piece carries (equipmentGrants.csv). They
+  // used to be pushed as plain run-owned refs, which is why they stayed in the
+  // deck after the piece was unequipped and why a bound piece equipped mid-run
+  // brought nothing — round nineteen's finding, and the owner's ruling
+  // (2026-09-03): if the item is not equipped, its cards are gone. So they are
+  // ITEM-OWNED instances, minted by desiredGrantInstances alongside package
+  // grants and weapon arts, and swept by the same reconcile. startingDeckPlan
+  // counts them against the cap through that door, never through this list.
 
   // The validator names a non-array `global.grants`, so a bad bundle does not
   // boot — but this is the PLANNER, reached by tools and fixtures with
@@ -35918,10 +36309,34 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // needs rather than trusting that someone else checked.
   const globalGrants = (cfg.global || {}).grants;
   if (Array.isArray(globalGrants)) {
-    for (const cardId of globalGrants) grants.push({ source: 'global', cardId });
+    for (const cardId of globalGrants) grants.push({ source: grantSourceFor(cfg, 'global'), cardId });
   }
-  if (cls.startingSignatureCard) grants.push({ source: 'class', cardId: cls.startingSignatureCard });
-  return grants;
+  if (cls.startingSignatureCard) grants.push({ source: grantSourceFor(cfg, 'class'), cardId: cls.startingSignatureCard });
+
+  // DEALT IN THE AUTHORED ORDER. `sourceOrder` is a list of grantSource tag ids;
+  // a source it does not name is dealt last, in the order it was pushed. Stable,
+  // so two grants from the same source keep their authored sequence.
+  return sortBySourceOrder(cfg, grants, (grant) => grant.source);
+}
+
+/**
+ * sortBySourceOrder(cfg, rows, sourceOf) -> rows
+ *
+ * Stable sort by `startingDeck.sourceOrder`, a list of grantSource tag ids. A
+ * row whose source the list does not name sorts last, keeping its incoming
+ * position. Shared so the plan's grants and the assembled deck cannot disagree
+ * about what "in source order" means.
+ */
+function sortBySourceOrder(cfg, rows, sourceOf) {
+  const order = Array.isArray(cfg && cfg.sourceOrder) ? cfg.sourceOrder : [];
+  const rank = (row) => {
+    const at = order.indexOf(sourceOf(row));
+    return at === -1 ? order.length : at;
+  };
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => (rank(a.row) - rank(b.row)) || (a.index - b.index))
+    .map((entry) => entry.row);
 }
 
 /**
@@ -35935,59 +36350,56 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
 function startingDeckPlan(registries, loadout, classId) {
   const cfg = startingDeckConfig(registries);
   if (!cfg) return null;
-  const authoredSize = Number(registries.balance.startingDeckSize);
-  const minFiller = Number(cfg.minFiller) || 0;
+  const cap = Number(registries.balance.startingDeckSize);
   const rows = equipmentKitPlan(registries, loadout, classId);
   const grants = grantRefsFor(registries, loadout, classId, cfg, rows.find((row) => row.role === 'technique'));
 
-  // THE PACKAGE LAYER ADDS REAL CARDS TOO, so the budget counts them — from the
-  // SAME function that mints them (desiredGrantInstances), never a second list
-  // that could drift. They are counted but NOT pushed into `grants`: this plan
-  // is also the deal-out list, and reconcileGrantedCards installs these
-  // instances itself at run creation. Counting reserves the room; pushing would
-  // deal each card twice.
-  //
-  // Weapon ARTS are excluded on purpose, and the exclusion is the honest half of
-  // this. Arts are minted by the same function and are equally real cards — but
-  // two shipped classes (starseer, herald) already carry one, which puts them at
-  // eleven cards against an authored size of ten. That discrepancy predates this
-  // branch (tools/class-loadouts.mjs is red about it on origin/dev), and making
-  // it a boot refusal here would fail the shipped bundle over a content question
-  // this branch has no business answering. It is reported as a warning instead —
-  // visible, named, and someone's call rather than mine.
-  // A package that cannot be read is the WeaponCardPackageModel's own refusal to
-  // make, by name, wherever it is asked; counting is not the place to raise it,
-  // and swallowing it here would hide it — so the throw propagates exactly as it
-  // did before, and the caller that already wraps this reports it.
-  const packageGrants = desiredGrantInstances(registries, { loadout, class: classId })
-    .filter((inst) => inst.equipmentRole === 'granted').length;
+  // Cards the package layer mints (reconcileGrantedCards installs them itself at
+  // run creation, so they are COUNTED here and never pushed into `grants` —
+  // pushing would deal each card twice). Weapon ARTS are counted the same way:
+  // they are equally real cards in the opening hand, and under the cap rule
+  // below there is nothing to refuse, so there is no longer any reason to treat
+  // them differently from grants. That asymmetry existed only to avoid failing
+  // the shipped bundle, and the rule that made it fail is gone.
+  const packageCards = desiredGrantInstances(registries, { loadout, class: classId }).length;
 
-  const needed = grants.length + packageGrants + minFiller;
-  const overrun = needed > authoredSize;
-  // growToFit === true buys the shortfall with deck size; false keeps the size
-  // and lets validateEquipment refuse the kit instead.
-  const size = overrun && cfg.growToFit === true ? needed : authoredSize;
-  const filler = Math.max(0, size - grants.length - packageGrants);
+  // THE CAP APPLIES TO THE BASE CARDS, AND ONLY AT CREATION (owner ruling,
+  // 2026-09-03). Bound cards are dealt first and are never capped, dropped or
+  // refused; the cap decides how many base strikes and defends are minted on
+  // top of them, and nothing else. If equipment alone meets or exceeds the cap,
+  // no base cards are minted and the run begins with only its unique cards —
+  // that is a balance question for whoever authors the weapons, not an error.
+  //
+  // Which is why `growToFit` and `minFiller` are gone. Both existed to decide
+  // who yields when grants got greedy: the deck size, or the content author.
+  // Nobody yields now. A floor of basic cards is not a rule either — it is
+  // simply what the cap leaves over, and the unarmed profiles are what those
+  // cards LOOK like when a hand is bare.
+  const bound = grants.length + packageCards;
+  const filler = Math.max(0, cap - bound);
 
   const bias = Number(
     ((cfg.classes || {})[classId] || {}).strikeBias ?? cfg.defaultStrikeBias ?? 0.5
   );
-  // Ties round toward attack; deterministic, and documented in balance.js.
-  const attackCount = Math.min(filler, Math.max(0, Math.round(filler * bias)));
+  // An odd filler count cannot split evenly, so one role wins the remainder.
+  // Authored, not assumed: `oddFillerGoesTo` names it and defaults to attack.
+  const oddGoesToAttack = (cfg.oddFillerGoesTo ?? 'attack') !== 'guard';
+  const exact = filler * bias;
+  const attackCount = Math.min(filler, Math.max(0, oddGoesToAttack
+    ? Math.round(exact)
+    : Math.ceil(exact - 0.5)));
   return Object.freeze({
-    size,
+    size: bound + filler,
     grants: Object.freeze(grants.map(Object.freeze)),
     filler,
     attackCount,
     guardCount: filler - attackCount,
     bias,
-    minFiller,
-    // Counted into the budget, dealt by reconcileGrantedCards rather than by
-    // this plan — so the overrun message can name them without `grants`
-    // pretending to be the deal-out list they are not on.
-    packageGrants,
-    overrun,
-    grewToFit: overrun && cfg.growToFit === true,
+    oddGoesToAttack,
+    cap,
+    // Counted against the cap, dealt by reconcileGrantedCards rather than by
+    // this plan, so `grants` stays the deal-out list it is used as.
+    packageCards,
   });
 }
 
@@ -36035,7 +36447,10 @@ function startingDeckRefs(registries, loadout, classId) {
   }
   for (const grant of plan.grants) {
     const { source, ...ref } = grant;
-    refs.push(ref);
+    // The provenance rides ALONG. It used to be discarded here, which left the
+    // assembled deck with no way to answer "where did this card come from" —
+    // so `sourceOrder` could order the plan but never the deck it produced.
+    refs.push({ ...ref, grantSource: source });
   }
   return refs;
 }
@@ -36047,6 +36462,79 @@ function startingDeckRefs(registries, loadout, classId) {
  * Deterministic instance ids make the reconcile idempotent and save-stable;
  * an instance whose armament left the hands leaves the deck with it.
  */
+/**
+ * orderStartingDeck(registries, run) -> run.deck
+ *
+ * SPEC says bound cards are dealt first, in `sourceOrder`. Until this ran, they
+ * were dealt LAST: startingDeckRefs emits the base attack and guard refs before
+ * it consumes the grants, and reconcileGrantedCards appends package grants and
+ * weapon arts after that again — so the shipped starseer opened with four
+ * strikes and three defends, then its technique, signature and art. The spec I
+ * wrote and the code I wrote disagreed, and the spec is the one the owner ruled.
+ *
+ * Ordered ONCE, at creation, because "dealt" is a creation word: instances that
+ * arrive later from a mid-run swap land where reconcile puts them.
+ *
+ * Base cards keep their relative order. That is not tidiness — the legacy
+ * attack-slot migration binds `attack:0..N-1` by deck order, so reshuffling the
+ * base cards among themselves would rebind them.
+ */
+function orderStartingDeck(registries, run) {
+  const cfg = startingDeckConfig(registries);
+  if (!cfg || !Array.isArray(run.deck)) return run.deck;
+  // A card either CARRIES its provenance or is a base card. No shape-guessing:
+  // `grantSource` is written where the card is minted, in the same vocabulary
+  // `sourceOrder` names, so this reads one field instead of inferring from
+  // `grantedBy`/`sourceId`/role and drifting the day a fourth shape appears.
+  const sourceOf = (card) => (card && card.grantSource) || null;
+  const bound = [];
+  const base = [];
+  for (const card of run.deck) (sourceOf(card) === null ? base : bound).push(card);
+  run.deck = [...sortBySourceOrder(cfg, bound, sourceOf), ...base];
+  return run.deck;
+}
+
+// ---------------------------------------------------------------------------
+// Card ownership
+// ---------------------------------------------------------------------------
+//
+// EVERY CARD IN THE DECK HAS AN OWNER: the run, or one item. Run-owned cards
+// are the run's for good — base strikes and defends (an item only re-skins
+// them), the class signature, global grants, rewards, and anything extracted
+// at a smith. Item-owned cards RIDE WITH THE ITEM: equip it and they arrive,
+// unequip it and they leave, equip it again and they are back, identical.
+//
+// One rule, three authoring sources feeding it — a package's `grantedCards`,
+// its `weaponArtDefaults`, and the `bound` table (equipmentGrants.csv). Until
+// the owner's ruling (2026-09-03) the third was the odd one out: its cards
+// were minted as plain run-owned refs at creation and never looked at again,
+// so they outlived the piece that promised them. Now all three are minted by
+// desiredGrantInstances and swept by the reconciles below, keyed on the one
+// predicate here rather than on a role list copied into each sweep.
+
+/** The roles an item-owned instance may carry. */
+const ITEM_OWNED_ROLES = Object.freeze(['granted', 'weaponArt']);
+
+/** True when the instance rides with an item rather than belonging to the run. */
+function isItemOwned(inst) {
+  return Boolean(inst) && ITEM_OWNED_ROLES.includes(inst.equipmentRole);
+}
+
+/**
+ * The namespaced ref of the piece — `armament/<id>` or `armor/<class>/<id>`,
+ * the same spelling itemUpgrades and smithing already key on, so an owner
+ * written on a card instance can be resolved by every model that speaks it.
+ */
+function pieceItemRef(piece) {
+  if (!piece || !piece.id) return null;
+  return piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
+}
+
+/** The tagFamilies.csv family a piece belongs to, from its kind. */
+function pieceFamily(piece) {
+  return piece && piece.kind === 'armor' ? 'armour' : 'armament';
+}
+
 function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
   const desired = desiredGrantInstances(registries, run);
@@ -36056,7 +36544,7 @@ function reconcileGrantedCards(registries, run) {
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
   const kept = run.deck.filter((inst) => {
-    if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+    if (!isItemOwned(inst)) return true;
     if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
     return false;
   });
@@ -36067,19 +36555,47 @@ function reconcileGrantedCards(registries, run) {
 }
 
 /**
- * The desired granted/weaponArt instances for the CURRENTLY equipped hands.
- * Grants concatenate right then left (the contract model authors no dedup for
- * them); weapon arts with both hands armed go through the framework's
+ * EVERY item-owned instance the CURRENTLY worn equipment lends — the one list
+ * both reconciles and the creation plan read, so "what does my gear give me"
+ * has one answer. Bound-table cards first, for every worn piece; then package
+ * grants, right hand then left (the contract model authors no dedup for them);
+ * then weapon arts, which with both hands armed go through the framework's
  * splitAuthoredWeaponArts — quota split, unique preference RIGHT_THEN_LEFT —
  * so an art both weapons author installs once, attributed to the winning hand.
  */
 function desiredGrantInstances(registries, run) {
+  // Stamped from the authored binding, not typed here — see grantSourceFor.
+  const settings = startingDeckSettings(registries);
+  const weaponSource = grantSourceFor(settings, 'weapon');
+  const desired = [];
+
+  // THE BOUND TABLE. Every worn piece carrying the `bound` tag lends the cards
+  // equipmentGrants.csv names for it — armour as much as armaments, because
+  // the tag is the gate and it does not care what kind of thing wears it. The
+  // owner is written as the piece's namespaced ref, so an outfit id that
+  // repeats per class still names exactly one wearer. Copies of the same card
+  // are numbered, which is what keeps the id deterministic and the sweep
+  // idempotent when a row lists a card twice.
+  for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
+    const family = pieceFamily(piece);
+    const owner = pieceItemRef(piece);
+    const copies = new Map();
+    for (const cardId of boundGrantCardIds(registries, piece, family)) {
+      const i = copies.get(cardId) || 0;
+      copies.set(cardId, i + 1);
+      desired.push({
+        instanceId: `bound:${owner}:${cardId}:${i}`,
+        cardId, upgraded: false, equipmentRole: 'granted', grantedBy: owner,
+        grantSource: grantSourceFor(settings, family === 'armour' ? 'armor' : 'weapon'),
+      });
+    }
+  }
+
   const sources = { right: null, left: null };
   for (const hand of ['right', 'left']) {
     const source = handSource(registries, run.loadout, run.class, hand);
     if (source.package) sources[hand] = source;
   }
-  const desired = [];
   for (const hand of ['right', 'left']) {
     const source = sources[hand];
     if (!source) continue;
@@ -36088,6 +36604,7 @@ function desiredGrantInstances(registries, run) {
         desired.push({
           instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
           cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
+          grantSource: weaponSource,
         });
       }
     }
@@ -36102,6 +36619,7 @@ function desiredGrantInstances(registries, run) {
     desired.push({
       instanceId: `weaponArt:${weaponId}:${art.id}`,
       cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
+      grantSource: weaponSource,
     });
   }
   // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
@@ -36122,6 +36640,7 @@ function desiredGrantInstances(registries, run) {
       desired.push({
         instanceId: `weaponArt:unarmed:${empty}:${profile.baseCardId}`,
         cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${empty}`,
+        grantSource: weaponSource,
       });
     }
   }
@@ -36142,7 +36661,7 @@ function reconcileGrantedCardsInCombat(registries, run, piles) {
   const present = new Set();
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
     const kept = pile.filter((inst) => {
-      if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+      if (!isItemOwned(inst)) return true;
       if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
       return false;
     });
@@ -37277,7 +37796,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, modEffectLines, modEffectLine, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, isEquipmentComposedInstance, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckProblems, startingDeckWarnings, BOUND_GRANT_TAG, boundGrantProblems, boundGrantCardIds, startingDeckPlan, startingDeckRefs, reconcileGrantedCards, reconcileGrantedCardsInCombat, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+Object.assign(module.exports, { parseMod, modEffectLines, modEffectLine, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, isEquipmentComposedInstance, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckProblems, startingDeckWarnings, BOUND_GRANT_TAG, boundGrantProblems, boundGrantCardIds, sortBySourceOrder, startingDeckPlan, startingDeckRefs, orderStartingDeck, ITEM_OWNED_ROLES, isItemOwned, pieceItemRef, reconcileGrantedCards, reconcileGrantedCardsInCombat, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
 
 },
 "src/model/tagService.js": function (module, exports, require) {
@@ -40882,7 +41401,7 @@ Object.assign(module.exports, { createEntityTermOverlay });
 //
 // Headless: no document/window/localStorage/timers.
 
-const { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } = require("src/model/loadout.js");
+const { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } = require("src/model/loadout.js");
 const { chargeKindForFlask, createFlaskCharges, flaskCapacity } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } = require("src/model/attributes.js");
@@ -41077,6 +41596,11 @@ function createRunState({
     preserveDeficits: false,
   });
   stampDeck(registries, run);
+  // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
+  // weapon arts onto the deck, so this is the first moment the whole opening
+  // deck exists — and "bound cards are dealt first, in sourceOrder" is a
+  // statement about the deck a run BEGINS with, not about later arrivals.
+  orderStartingDeck(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -46023,14 +46547,25 @@ function serializeCombatSnapshot(combat) {
 }
 
 /** Restore a snapshot without replaying combat start, draws, or enemy rolls. */
-function restoreCombatSnapshot({ registries, rng, snapshot }) {
+/**
+ * `fallbackAttackSlotCount` is the RUN's birth quota, for a snapshot written
+ * before that field existed. The run is the authority — save.js recovers it at
+ * the load door from the run's own deck — and the snapshot carrying a copy is
+ * an optimisation, so the read falls back rather than the migration writing
+ * into stored data. Healing the snapshot instead would make migration
+ * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
+ * right to assert against: a load must not rewrite a snapshot it understands.
+ */
+function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   const combat = {
     registries,
     rng,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
-    equipmentAttackSlotCount: saved.equipmentAttackSlotCount,
+    equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
+      ? saved.equipmentAttackSlotCount
+      : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),
     itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
       Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
     ),
@@ -47514,6 +48049,30 @@ function createSaveManager(storage) {
         // clears redundant flags and before an active-combat snapshot is
         // rebound. The snapshot restamp must consume the promoted tier; doing
         // this afterward would leave the resumed piles at tier zero.
+        // THE BIRTH QUOTA, RECOVERED FOR A RUN SAVED BEFORE IT EXISTED. A
+        // legacy save has no `equipmentAttackSlotCount`, and every reader that
+        // falls back to counting a deck only ever did so into a LOCAL — the run
+        // stayed undefined, so createCombat carried undefined onto the
+        // synthetic run and the first mid-fight swap replanned from the current
+        // loadout. Content that lowered strikeBias since the save then threw on
+        // a slot the replan had dropped.
+        //
+        // The run's own deck IS the record of what it was born with, and this
+        // is the migration door, so the number is recovered ONCE here rather
+        // than re-derived at each combat — a second derivation is what four
+        // earlier rounds were about. Runs saved with the field keep theirs.
+        if (!Number.isFinite(run.equipmentAttackSlotCount) && Array.isArray(run.deck)) {
+          const recovered = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
+          run.equipmentAttackSlotCount = recovered;
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:recoverEquipmentAttackSlotCount',
+            field: 'equipmentAttackSlotCount',
+            was: undefined,
+            now: recovered,
+            why: 'run saved before the birth attack quota was recorded; its own deck is the record of what it was born with',
+          });
+        }
         const smithingReceipt = initializeRunSmithing(registries, run);
         const hydratedRunProfiles = hydrateMissingEquipmentProfiles(registries, run.equipmentProfileRuleSnapshot);
         const hydratedCombatProfiles = hydrateMissingEquipmentProfiles(registries, run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot);
@@ -47999,7 +48558,7 @@ function mountTitle(app, {
     const title = 'NEW GAME';
     return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
       <section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-        <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
+        <button class="subtle modal-close title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
         <h2 id="title-modal-heading" data-component="title-modal-heading">${title}</h2>
         <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
         <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${modalSlotHtml(model)}</div>
@@ -51353,6 +51912,16 @@ const ACTIONS = [
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
   { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
   { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
+  // INSPECT IS ONE BINDING FOR EVERY INSPECTABLE THING. Constantine,
+  // 2026-09-03: "add a hot key for inspect as well that is uniform for all
+  // things selected (i'm thinking i)". It goes in the registry rather than
+  // into the surfaces because that is what makes it uniform: a row here gets
+  // rebinding, a line in the Controls screen, a pad button, and a keycap that
+  // `actionLabel()` derives from the LIVE binding — so no surface types the
+  // letter `I` and none of them can drift from the others.
+  // `i` was free (taken: Enter, Esc, e, m, d, r, t, f, g, h); pad 11 is the
+  // right stick click, free, and the usual seat for inspect.
+  { id: 'inspect', label: 'Inspect Selected', short: 'Inspect', kind: 'key', defKey: 'i', defBtn: 11 },
 ];
 
 const ACTION_DESTINATIONS = new Set(['cards', 'equipment', 'character']);
@@ -53275,17 +53844,30 @@ function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {})
  * primaries is not prevented here — nothing in a stylesheet can count buttons —
  * but it is visible in one line of a caller's diff, which is the whole gain.
  */
-function modalFooter({ note = '', secondary = [], primary = null, className = '' } = {}) {
+function modalFooter({ note = '', secondary = [], primary = null, className = '', size = 'medium' } = {}) {
+  if (!BUTTON_ROW_SIZES.includes(size)) throw new Error(`Unknown footer size '${size}'`);
   const footer = document.createElement('footer');
   footer.className = `modal-foot${className ? ` ${className}` : ''}`;
   if (note) {
+    // The text sits in an inner span so the note can be whole or absent (ui.css
+    // .modal-foot-note's container query), never a one-letter stub.
     const span = document.createElement('span');
     span.className = 'modal-foot-note';
-    span.textContent = note;
+    const text = document.createElement('span');
+    text.textContent = note;
+    span.appendChild(text);
     footer.appendChild(span);
   }
+  // THE FOOT IS A BUTTON ROW. Constantine, 2026-09-03: "make primary and
+  // secondary buttons at the bottom uniform in size". They were not: the foot
+  // carried a data-size the ladder never read, because the ladder's rules
+  // are written for `.modal-btnrow` and this row was only `.modal-foot-actions`
+  // — so each button hugged its own label. Wearing both classes puts every
+  // foot on the same ladder as every other row: one step for all its buttons,
+  // and `stretch` (ui.css) gives them one height.
   const actions = document.createElement('div');
-  actions.className = 'modal-foot-actions';
+  actions.className = 'modal-foot-actions modal-btnrow';
+  actions.dataset.size = size;
   for (const button of secondary) if (button) actions.appendChild(button);
   if (primary) {
     // `className` and not `classList` — this component is mounted by tests that
@@ -53338,8 +53920,280 @@ function bindModalDismiss({ veil, panel, close, opener = document.activeElement 
   };
 }
 
+/**
+ * BUTTON WIDTHS COME OFF A LADDER, NOT OFF THE LABELS.
+ *
+ * Measured 2026-09-03 across the doors: a footer of three buttons produced
+ * three widths and, at 390 px, wrapped onto two lines — which then made two
+ * sibling doors different HEIGHTS, because a foot that grew by a line grows
+ * the shell. Two rules close both halves of that:
+ *
+ *   THE WIDEST LABEL IN A ROW PICKS THE STEP FOR EVERY BUTTON IN IT. Four
+ *   steps for the whole game (`short`, `medium`, `long`, `fill`), so siblings
+ *   land on one width and rows across the game land on one of four.
+ *
+ *   A LABEL NEVER WRAPS. When the row runs out of room the PADDING yields
+ *   (ui.css), never the line count.
+ *
+ * `square` is per-button and opts out of the step: an icon control is a glyph
+ * in a box, it takes the ROW's height, and it stays square by `aspect-ratio`.
+ * Not `vh` — the whole app is zoomed by `--ui-zoom` and viewport units ignore
+ * that zoom, which ui.css records the cost of twice.
+ */
+const BUTTON_ROW_SIZES = Object.freeze(['short', 'medium', 'long', 'fill']);
 
-Object.assign(module.exports, { MODAL_CLOSE_GLYPH, modalCloseButton, modalCloseButtonHtml, modalFooter, bindModalDismiss });
+function buttonRow({ size = 'medium', buttons = [], className = '' } = {}) {
+  if (!BUTTON_ROW_SIZES.includes(size)) throw new Error(`Unknown button row size '${size}'`);
+  const row = document.createElement('div');
+  row.className = `modal-btnrow${className ? ` ${className}` : ''}`;
+  row.dataset.size = size;
+  for (const button of buttons) if (button) row.appendChild(button);
+  return row;
+}
+
+/**
+ * modalHead({ eyebrow, title, tabs, ... }) → a <header class="modal-head">
+ *
+ * IDENTITY LEFT, ACTIONS RIGHT, AND IDENTITY HAS EXACTLY TWO FORMS: an
+ * eyebrow + title pair, or a tab strip. There is no third, and there is no
+ * both — `tabs` REPLACES the pair when supplied. That is a decision and not a
+ * discovery: it is what lets Settings (tabs) and the flask door (eyebrow +
+ * title) be the same component rather than two. If the house later wants tabs
+ * UNDER a persistent title, this is the one function that changes.
+ *
+ * The close control is not optional and is not the caller's. Every door keeps
+ * its way out in the same corner, in the same box, wearing the same glyph.
+ */
+function modalHead({
+  eyebrow = '',
+  title = '',
+  titleId = '',
+  tabs = null,
+  onTab = null,
+  extras = null,
+  showMenuButton = null,
+  onMenu = null,
+  menuLabel = 'Menu',
+  closeLabel = 'Close',
+  onClose = null,
+} = {}) {
+  const tabList = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
+  if (!tabList.length && !title) {
+    throw new Error('modalHead requires a title, or tabs to stand in for one');
+  }
+  const head = document.createElement('header');
+  head.className = 'modal-head';
+
+  if (tabList.length) {
+    const strip = document.createElement('div');
+    strip.className = 'modal-tabs';
+    strip.setAttribute('role', 'tablist');
+    for (const tab of tabList) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'modal-tab';
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-selected', String(!!tab.selected));
+      button.dataset.modalTab = tab.id || tab.label;
+      button.dataset.focusable = 'true';
+      button.textContent = tab.label;
+      if (onTab) button.addEventListener('click', () => onTab(tab.id || tab.label));
+      strip.appendChild(button);
+    }
+    head.appendChild(strip);
+  } else {
+    const identity = document.createElement('div');
+    identity.className = 'modal-head-id';
+    if (eyebrow) {
+      const kind = document.createElement('span');
+      kind.className = 'modal-eyebrow';
+      kind.textContent = eyebrow;
+      identity.appendChild(kind);
+    }
+    const heading = document.createElement('h2');
+    if (titleId) heading.id = titleId;
+    heading.textContent = title;
+    identity.appendChild(heading);
+    head.appendChild(identity);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'modal-head-actions';
+  if (extras) actions.appendChild(extras);
+  // ☰ IS NOT A DEFAULT, IT IS A PROPERTY OF WHAT THE DOOR IS.
+  //
+  // Constantine, 2026-09-03: the menu and close buttons "should come by
+  // default to all modal shells, I think, but improve on this if you think
+  // otherwise". Close: yes, unconditionally, and it already did — one way out,
+  // same corner, every door. ☰: no, and the reason is what it opens. The
+  // hamburger opens the quick menu, which is a way to LEAVE for somewhere
+  // else. On a door that asks a question — "Load slot 1?", "Quit without
+  // saving?" — that is a third answer to a two-answer question, and it can
+  // navigate away mid-decision. On a door that IS a place, it is the obvious
+  // control and its absence is the defect.
+  //
+  // So the caller does not decide and does not have to remember: a TAB STRIP
+  // is what marks a door as a place rather than a question (Settings, the
+  // Armoury, the in-run overlay all carry one; the flask door, the confirm
+  // door and the inspector do not), so ☰ follows the tabs. `showMenuButton`
+  // stays overridable in both directions for the surface that is genuinely an
+  // exception, but nothing has to pass it to be right.
+  const wantsMenu = showMenuButton == null ? tabList.length > 0 : !!showMenuButton;
+  if (wantsMenu) {
+    const menu = document.createElement('button');
+    menu.type = 'button';
+    menu.className = 'subtle modal-iconbtn';
+    menu.dataset.size = 'square';
+    menu.dataset.focusable = 'true';
+    menu.title = menuLabel;
+    menu.setAttribute('aria-label', menuLabel);
+    menu.textContent = '☰';
+    if (onMenu) menu.addEventListener('click', onMenu);
+    actions.appendChild(menu);
+  }
+  const close = modalCloseButton({ label: closeLabel, onClick: onClose });
+  close.dataset.size = 'square';
+  close.dataset.focusable = 'true';
+  actions.appendChild(close);
+  head.appendChild(actions);
+  return head;
+}
+
+/**
+ * openModal(spec) → { veil, panel, head, body, foot, close }
+ *
+ * THE ONE DOOR-OPENER. Before this, every surface assembled its own veil,
+ * panel, head and dismissal, and the audit found what that always finds: of
+ * the surfaces carrying their own chrome, `piles.js` had NO Escape handler and
+ * NO close control at all — the pile viewer could only be dismissed by
+ * clicking the veil, which is not reachable from a keyboard or a pad. That is
+ * not a styling divergence, it is a surface a player can get stuck in.
+ *
+ * What the caller supplies is CONTENT and INTENT. What it never supplies again
+ * is chrome: the head (above), the footer's order and emphasis (modalFooter),
+ * and Escape / veil-click / focus-return (bindModalDismiss) all come from
+ * here, once.
+ *
+ * `body` is an element or a function that receives the body element — the
+ * second form so a caller can fill a scroll container it does not have to
+ * create. The body remains entirely the surface's own, for the reason at the
+ * top of this file: a shell that also claimed the body would be five
+ * components in a trench coat.
+ */
+/**
+ * FOUR MODAL WIDTHS, AND A BODY PICKS THE SMALLEST THAT HOLDS IT.
+ *
+ * Every door used to type its own width (`44rem` here, `96rem` there, `76rem`
+ * on the overlay), so "how wide is a modal" had as many answers as there were
+ * modals — and the detail door's answer was too small: measured 2026-09-03, it
+ * broke "Defend Block +2. Weight 7." across two lines and its flavour across
+ * two more, beside an ArtWell that had taken a third of the width. Nothing was
+ * CLIPPED, so no overflow rule fired; cramped is the same defect one step
+ * earlier, and the fix is a wider box, not a smaller font.
+ *
+ *   sm  one short question, two answers            a confirmation
+ *   md  one thing described, art beside prose      the flask/armament door
+ *   lg  a rail and a pane, or two panes            settings, the armoury
+ *   xl  a chooser beside an inspector              the shrine's upgrade door
+ *
+ * The rung is a NAME, so a body that cramps takes the next one and a body that
+ * rattles takes the one below — and neither edits a length. `max-width` in the
+ * stylesheet keeps the phone case working without a second declaration here.
+ */
+const MODAL_SIZES = Object.freeze(['sm', 'md', 'lg', 'xl']);
+
+function openModal({
+  size = 'md',
+  className = '',
+  eyebrow = '',
+  title = '',
+  tabs = null,
+  onTab = null,
+  headExtras = null,
+  showMenuButton = null,
+  onMenu = null,
+  closeLabel = '',
+  body = null,
+  bodyClassName = '',
+  note = '',
+  secondary = [],
+  primary = null,
+  footSize = 'medium',
+  onClose = null,
+  opener = document.activeElement,
+  host = document.body,
+  role = 'dialog',
+} = {}) {
+  const titleId = `modal-title-${Math.random().toString(36).slice(2, 8)}`;
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil';
+
+  if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
+  const panel = document.createElement('section');
+  panel.className = `modal${className ? ` ${className}` : ''}`;
+  panel.dataset.size = size;
+  panel.setAttribute('role', role);
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', titleId);
+  panel.tabIndex = -1;
+
+  let release = null;
+  const close = () => {
+    if (!veil.isConnected) return;
+    release?.();
+    release = null;
+    veil.remove();
+    onClose?.();
+  };
+
+  const head = modalHead({
+    eyebrow,
+    title,
+    titleId,
+    tabs,
+    onTab,
+    extras: headExtras,
+    showMenuButton,
+    onMenu,
+    closeLabel: closeLabel || (title ? `Close ${title}` : 'Close'),
+    onClose: close,
+  });
+  // A tab strip carries no <h2>, so the label the dialog is named by has to be
+  // the strip itself — otherwise `aria-labelledby` points at nothing and the
+  // door announces as an unnamed dialog.
+  if (!head.querySelector(`#${titleId}`)) head.querySelector('.modal-tabs')?.setAttribute('id', titleId);
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = `modal-body${bodyClassName ? ` ${bodyClassName}` : ''}`;
+  if (typeof body === 'function') body(bodyEl);
+  else if (body) bodyEl.appendChild(body);
+
+  panel.append(head, bodyEl);
+
+  const ways = Array.isArray(secondary) ? secondary.filter(Boolean) : [secondary].filter(Boolean);
+  let foot = null;
+  if (note || ways.length || primary) {
+    foot = modalFooter({ note, secondary: ways, primary, size: footSize });
+    // The ladder owns the actions row, so no caller can produce a ragged foot.
+    foot.querySelector('.modal-foot-actions')?.classList.add('modal-btnrow');
+    panel.appendChild(foot);
+  }
+
+  veil.appendChild(panel);
+  host.appendChild(veil);
+  release = bindModalDismiss({ veil, panel, close, opener });
+
+  // Focus the way FORWARD when there is one, else the way out. Never the veil.
+  const first = panel.querySelector('.modal-foot-actions .primary')
+    || panel.querySelector('[data-focusable="true"]')
+    || panel.querySelector('.modal-close');
+  first?.focus?.({ preventScroll: true });
+
+  return Object.freeze({ veil, panel, head, body: bodyEl, foot, close });
+}
+
+
+Object.assign(module.exports, { MODAL_CLOSE_GLYPH, modalCloseButton, modalCloseButtonHtml, modalFooter, bindModalDismiss, BUTTON_ROW_SIZES, buttonRow, modalHead, MODAL_SIZES, openModal });
 
 },
 "src/ui/components/buildstamp.js": function (module, exports, require) {
@@ -53565,7 +54419,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '7ba57cb0c3';
+const SOURCE = '3b1b52a08b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -53599,7 +54453,7 @@ const SOURCE = '7ba57cb0c3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '13';
+const ORDINAL = '14';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -63635,7 +64489,14 @@ function copiesByRole(registries, run) {
       if (!card || !card.equipmentRole) continue;
       counted[card.equipmentRole] = (counted[card.equipmentRole] || 0) + 1;
     }
-    return { ...legacy, ...counted };
+    // NOT `{ ...legacy, ...counted }`. The deck is the COMPLETE answer, so a
+    // role it does not contain has zero of that role — not "no information,
+    // ask the authored table". Merging restored `guard: 4` for a bias-1 run
+    // holding eight attacks and no guards, and would do it again the moment a
+    // player burned their last guard. This is the same absent-vs-zero mistake
+    // three earlier rounds were about, made inside the fix that closed them;
+    // returning the count alone is what makes it unwritable here.
+    return counted;
   }
   let plan = null;
   try { plan = startingDeckPlan(registries, run.loadout, run.class); } catch { plan = null; }
@@ -63648,13 +64509,14 @@ function copiesByRole(registries, run) {
 
 function rolesFor(registries, run) {
   const copies = copiesByRole(registries, run);
+  const countOf = (role) => (copies[role] === undefined ? 0 : copies[role]);
   return equipmentKitReceipt(
     registries,
     run.loadout,
     run.class,
     run.attributes,
     run.equipmentProfileRuleSnapshot,
-  ).map((row) => ({ ...row, copies: copies[row.role] }));
+  ).map((row) => ({ ...row, copies: countOf(row.role) }));
 }
 
 function attackPackageCounts(registries, run) {
@@ -64483,9 +65345,9 @@ Object.assign(module.exports, { renderEquipmentRequirements, renderPlayerPoise, 
 "src/ui/components/flask.js": function (module, exports, require) {
 const { esc } = require("src/ui/components/tooltip.js");
 const { assetUrl } = require("src/ui/assetmap.js");
-const { modalCloseButtonHtml, modalFooter, bindModalDismiss } = require("src/ui/components/modalShell.js");
+const { openModal } = require("src/ui/components/modalShell.js");
 const { placeAnchored, viewportLocalBox } = require("src/ui/fx.js");
-const { focusElement } = require("src/ui/input.js");
+const { focusElement, matchAction, actionLabel } = require("src/ui/input.js");
 
 let activeFlaskActionMenu = null;
 
@@ -64575,44 +65437,29 @@ function flaskTooltipHtml(def, { charges = null, hint = '' } = {}) {
 function openFlaskInspectModal({ def, charges = null, opener = document.activeElement } = {}) {
   if (!def) throw new Error('openFlaskInspectModal requires a flask definition');
   const lines = flaskDetailLines(def, { charges });
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil flask-inspect-veil';
-  veil.innerHTML = `
-    <section class="modal flask-inspect-modal" role="dialog" aria-modal="true" aria-labelledby="flask-inspect-title">
-      <header class="modal-head">
-        <div class="flask-inspect-title">
-          <span class="flask-inspect-eyebrow">Flask</span>
-          <h2 id="flask-inspect-title">${esc(def.name)}</h2>
-        </div>
-        <div class="modal-head-actions">${modalCloseButtonHtml({ label: `Close ${def.name}` })}</div>
-      </header>
-      <div class="flask-inspect-body">
-        ${flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })}
-        <div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>
-      </div>
-    </section>`;
-  document.body.appendChild(veil);
 
-  const panel = veil.querySelector('.flask-inspect-modal');
   const done = document.createElement('button');
   done.type = 'button';
   done.className = 'flask-inspect-done';
   done.dataset.focusable = 'true';
   done.textContent = 'Close';
-  panel.appendChild(modalFooter({ primary: done }));
 
-  let release = null;
-  const close = () => {
-    if (!veil.isConnected) return;
-    release?.();
-    release = null;
-    veil.remove();
-  };
-  release = bindModalDismiss({ veil, panel, close, opener });
-  done.addEventListener('click', close);
-  panel.querySelector('.modal-close').addEventListener('click', close);
-  done.focus?.({ preventScroll: true });
-  return Object.freeze({ root: veil, close });
+  const shell = openModal({
+    size: 'md',
+    className: 'flask-inspect-modal',
+    eyebrow: 'Flask',
+    title: def.name,
+    bodyClassName: 'flask-inspect-body',
+    body: (host) => {
+      host.innerHTML = flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })
+        + `<div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>`;
+    },
+    primary: done,
+    footSize: 'short',
+    opener,
+  });
+  done.addEventListener('click', shell.close);
+  return Object.freeze({ root: shell.veil, close: shell.close });
 }
 
 /**
@@ -64638,7 +65485,7 @@ function openFlaskInspectModal({ def, charges = null, opener = document.activeEl
  *
  * The check is tools/placement.mjs P5, at both shapes, through the real tap.
  */
-function mountFlaskActionMenu(anchor, { def, plan, charges = null, onAction, onCancel, wireAction } = {}) {
+function mountFlaskActionMenu(anchor, { def, plan, charges = null, useActionId = null, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
   // The same flask is a toggle, not a close-then-immediately-reopen sequence.
   if (activeFlaskActionMenu?.anchor === anchor) {
@@ -64722,6 +65569,19 @@ function mountFlaskActionMenu(anchor, { def, plan, charges = null, onAction, onC
     button.setAttribute('role', 'menuitem');
     button.setAttribute('aria-disabled', String(!row.enabled));
     button.textContent = row.label;
+    // THE KEYCAP IS DERIVED, NEVER TYPED. `actionLabel` reads the live binding
+    // and the connected device, so a rebind moves the glyph with the key and a
+    // pad shows its own button — the same rule the HUD's flask shortcuts obey.
+    // Only rows that HAVE a binding get one: `inspect` is one key for every
+    // inspectable thing, and `use` is per-slot, so its id is handed in by the
+    // surface that knows which slot this flask sits in.
+    const boundAction = row.id === 'inspect' ? 'inspect' : (row.id === 'use' ? useActionId : null);
+    if (boundAction) {
+      const cap = document.createElement('span');
+      cap.className = 'flask-action-key';
+      cap.textContent = actionLabel(boundAction);
+      button.appendChild(cap);
+    }
     if (!row.enabled) {
       button.dataset.unavailableReason = row.reason;
       button.title = row.reason;
@@ -64754,6 +65614,18 @@ function mountFlaskActionMenu(anchor, { def, plan, charges = null, onAction, onC
     focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
+    // ONE BINDING, ASKED THE WAY EVERY OTHER SURFACE ASKS IT. `matchAction` is
+    // the same question combat asks for End Turn, so a rebound Inspect works
+    // here for free and this file never learns which key it is.
+    if (matchAction(ev, 'inspect')) {
+      const inspectRow = buttons.find((candidate) => candidate.dataset.flaskAction === 'inspect');
+      if (inspectRow && inspectRow.getAttribute('aria-disabled') === 'false') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        inspectRow.click();
+        return;
+      }
+    }
     if (ev.key === 'Escape' || ev.key === 'Backspace') {
       ev.preventDefault();
       // The child owns Cancel. Do not let the same physical key continue to
@@ -67389,14 +68261,14 @@ function renderMenuOverlay(model) {
         </div>
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="modal-head-actions overlay-actions">
-          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…" aria-label="Go to…">☰</button>' : ''}
+          ${model.properties.mirrored ? '<button class="subtle modal-iconbtn" id="ov-quicknav" title="Go to…" aria-label="Go to…">☰</button>' : ''}
           ${modalCloseButtonHtml({ id: 'ov-close', label: 'Close menu' })}
         </div>
       </div>
       <div class="overlay-body" role="tabpanel"></div>
       <footer class="modal-foot overlay-footer">
-        <span class="modal-foot-note overlay-footer-note">Progress saves to the active slot.</span>
-        <div class="modal-foot-actions overlay-footer-actions">
+        <span class="modal-foot-note overlay-footer-note"><span>Progress saves to the active slot.</span></span>
+        <div class="modal-foot-actions overlay-footer-actions modal-btnrow" data-size="medium">
           <button class="subtle" id="ov-quit" type="button">Save and Quit</button>
           <button class="primary" id="ov-save" type="button">Save Game</button>
         </div>
@@ -69525,7 +70397,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
 
-  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null } = {}) {
+  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
     const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
       : busy ? 'Wait for the current action to finish'
@@ -69535,6 +70407,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       def,
       plan,
       charges,
+      useActionId,
       onCancel: () => {},
       onAction: (actionId) => {
         if (actionId !== 'use') return;
@@ -70026,7 +70899,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       el.appendChild(count);
       appendFlaskHotkey(el, hotkeySlot);
       attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current }));
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current, useActionId: hotkeySlot < 3 ? `flask${hotkeySlot + 1}` : null }));
       chargeFlasks.appendChild(el);
     }
     p.flasks.forEach((f, slot) => {
@@ -70048,7 +70921,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       // gesture the button actually wants cannot drift — and the icon is far too
       // small for the HOLD word the event bars carry (hidden in ui.css).
       attachTooltip(el, () => flaskTooltipHtml(def, { hint: 'Open actions to Use or Inspect.' }));
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot, useActionId: (CHARGE_FLASK_KINDS.length + slot) < 3 ? `flask${CHARGE_FLASK_KINDS.length + slot + 1}` : null }));
       potions.appendChild(el);
     });
     potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
@@ -71117,18 +71990,21 @@ Object.assign(module.exports, { mountCombat });
 // Draw-pile views are display-shuffled (Math.random is fine here — pure
 // presentation, never game state) so pile inspection leaks no order info,
 // like StS.
+//
+// THIS DOOR HAD NO WAY OUT THAT A KEYBOARD COULD REACH. Before adopting the
+// shell it built its own veil and panel, listened for a click on the veil, and
+// stopped there: no close control, no Escape, no `aria-modal`, no focus
+// return. A player on a pad or a keyboard who opened the draw pile was stuck
+// in it. That is not a styling divergence — it is the reason modalShell.js
+// owns dismissal rather than advising about it.
+//
+// What is left here is the BODY, which is all this file ever should have been:
+// a grid of card faces, display-shuffled where the pile is hidden.
 
 const { renderCard } = require("src/ui/components/card.js");
+const { openModal } = require("src/ui/components/modalShell.js");
 
 function openPileModal(registries, title, cards, { shuffleForDisplay = false } = {}) {
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.innerHTML = `<h2>${title} (${cards.length})</h2>`;
-  const grid = document.createElement('div');
-  grid.className = 'grid';
-
   let list = [...cards];
   if (shuffleForDisplay) {
     for (let i = list.length - 1; i > 0; i--) {
@@ -71136,22 +72012,45 @@ function openPileModal(registries, title, cards, { shuffleForDisplay = false } =
       [list[i], list[j]] = [list[j], list[i]];
     }
   }
-  for (const inst of list) {
-    grid.appendChild(renderCard(registries, inst, { small: true }));
-  }
-  if (!list.length) {
-    const empty = document.createElement('div');
-    empty.style.cssText = 'color:var(--muted);padding:20px;';
-    empty.textContent = 'Empty.';
-    grid.appendChild(empty);
-  }
-  modal.appendChild(grid);
-  veil.appendChild(modal);
-  veil.addEventListener('click', (ev) => {
-    if (ev.target === veil) veil.remove();
+
+  const done = document.createElement('button');
+  done.type = 'button';
+  done.className = 'pile-done';
+  done.dataset.focusable = 'true';
+  done.textContent = 'Close';
+
+  // The COUNT is the head's status, not part of the title: "Draw pile" names
+  // the door and stays put while `(5)` changes underneath it. The old markup
+  // baked the number into the <h2>, so the thing a player reads as the name
+  // of the surface changed every time a card moved.
+  const status = document.createElement('span');
+  status.className = 'modal-head-status';
+  status.textContent = `${list.length} ${list.length === 1 ? 'card' : 'cards'}`;
+
+  const shell = openModal({
+    size: 'xl',
+    className: 'pile-modal',
+    eyebrow: 'Pile',
+    title,
+    headExtras: status,
+    bodyClassName: 'pile-body',
+    body: (host) => {
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      for (const inst of list) grid.appendChild(renderCard(registries, inst, { small: true }));
+      if (!list.length) {
+        const empty = document.createElement('p');
+        empty.className = 'pile-empty';
+        empty.textContent = 'Empty.';
+        grid.appendChild(empty);
+      }
+      host.appendChild(grid);
+    },
+    primary: done,
+    footSize: 'short',
   });
-  document.body.appendChild(veil);
-  return veil;
+  done.addEventListener('click', shell.close);
+  return shell.veil;
 }
 
 
@@ -76086,7 +76985,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
     intent: { action: 'use', ...(slot != null ? { slot } : {}), ...(targetId ? { targetId } : {}), ...(chargeKind ? { chargeKind } : {}) },
   });
 
-  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1, charges = null } = {}) {
+  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
     const canUse = meP.alive && meP.connected && !meP.ended && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
       : !meP.connected ? 'This player is disconnected'
@@ -76096,6 +76995,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       def,
       plan,
       charges,
+      useActionId,
       onCancel: () => {},
       onAction: (actionId) => {
         if (actionId !== 'use') return;

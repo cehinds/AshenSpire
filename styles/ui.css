@@ -5,7 +5,8 @@
   --ui-section-label-size: 1.2rem;
   --ui-section-letter-spacing: 0.08em;
   --ui-tray-side-margin: 0.4rem;
-  --ui-tray-control-size: calc(var(--tap-target, 44px) / var(--ui-zoom, 1));
+  /* The tray control is the same box as every close and ☰ (base.css). */
+  --ui-tray-control-size: var(--iconbtn-size);
   --ui-tray-resize-surface: 44px;
   --ui-tray-expanded-block-max: 36rem;
   --ui-tray-expanded-panel-max: 34%;
@@ -69,11 +70,21 @@
 .card.rarity-uncommon { border-color: var(--frost); }
 .card.rarity-rare { border-color: var(--gold); }
 .card.rarity-special { border-color: #6a3a7a; }
+/* A NUMERAL IS NOT CENTRED BY `justify-content: center` ALONE, and the badge
+   showed it: with a `1` in it the cost read high and left, with an `8` it read
+   fine. Two causes, both here rather than nudged per instance.
+     PROPORTIONAL FIGURES give each digit its own advance width, so the ink
+     inside the centred box moves as the number changes — and a row of badges
+     stops agreeing with itself. `tabular-nums` gives every digit the same
+     width, which fixes the shift AND keeps sibling badges aligned.
+     LEADING is centred, not the glyph, whenever line-height exceeds the em
+     box; `1` makes that visible because its ink is short and narrow. */
 .card .cost {
   position: absolute; top: -1rem; left: -1rem; width: 3rem; height: 3rem;
   border-radius: var(--r-round); background: #1c1610; border: 2px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 1.4rem; color: var(--parchment);
+  font-weight: 700; font-size: 1.4rem; line-height: 1; color: var(--parchment);
+  font-variant-numeric: tabular-nums;
 }
 .card .mana-cost {
   position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
@@ -95,11 +106,11 @@
   background: #14100c; border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
 }
-.card .ctype {
+.card .ctype { --track: 3px;
   width: 11.6rem; border-radius: var(--r-2); background: #2a241c; color: var(--gold);
-  font-size: 0.9rem; letter-spacing: 3px; text-align: center; padding: 0.3rem 0;
+  font-size: 0.9rem; letter-spacing: var(--track); text-align: center; padding: 0.3rem 0;
   font-family: var(--font-display);
-}
+ text-indent: var(--track);}
 /* Two facts were tangled in one selector, and the tangle is what broke the
    Smith preview. `.card .ctext` is HOW THE CARD FACE LAYS OUT ITS TEXT BLOCK —
    it belongs to the card and stays keyed to it. The five rules below are HOW
@@ -227,6 +238,13 @@
 .modal h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 1.4rem; }
 .modal .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 
+/* The pile viewer's body — a scrolling grid of small card faces. The panel,
+   its head and its way out are the shell's (piles.js adopts openModal). */
+.pile-modal { padding: 0; display: flex; flex-direction: column; }
+.pile-body { padding: var(--modal-inset); }
+.pile-body .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+.pile-empty { margin: 0; padding: 2rem; color: var(--muted); }
+
 /* ---------- in-run tabbed overlay ---------- */
 /* PERCENT, not vw/vh — and the reason was already written in this file, on the
    .armoury panel forty lines down, which learned it first:
@@ -255,33 +273,217 @@
    doors each had their own; these are the rules they now share. Bodies are
    still each modal's own — see the file header for why that line is drawn
    there and not further in. */
+/* ONE PADDING, ALL FOUR SIDES. Head and foot were `1.2rem 1.6rem`, so the
+   gap above a title did not match the gap beside it and the chrome read as
+   two different insets on one panel. Constantine, 2026-09-03: "the padding
+   should be about the same for all directions". One number, both bars. */
+/* ONE INSET FOR EVERY MODAL, EVERY SIDE. Constantine, 2026-09-03: "all modals
+   should have uniform padding and margins in all all directions (top, bottom,
+   left, and right)." So it is a TOKEN and not a number typed per bar: the head
+   was `1.2rem 1.6rem`, the flask body `1.8rem 1.6rem`, the pile body `1.6rem`
+   and `.modal` itself `2.2rem` — four insets on surfaces meant to read as one
+   system. Declared on `.modal` so a body that wants a different rhythm can
+   scope it rather than re-type it, and every bar below reads it. */
+.modal { --modal-inset: 1.6rem; }
+/* THE WIDTH LADDER (modalShell.js MODAL_SIZES). A rung is a name a body picks,
+   not a length a caller types — see that file for why the detail door was on
+   the wrong rung and what it cost its prose. `max-width` so the phone rule
+   below still wins without restating any of these. */
+.modal[data-size='sm'] { width: 34rem; max-width: 94%; }
+.modal[data-size='md'] { width: 46rem; max-width: 94%; }
+.modal[data-size='lg'] { width: 76rem; max-width: 96%; }
+.modal[data-size='xl'] { width: 96rem; max-width: 96%; }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line);
+  padding: var(--modal-inset); border-bottom: 1px solid var(--line);
 }
-.modal-head-actions { display: flex; gap: 0.8rem; align-items: center; }
+/* THE WAY OUT SITS AT THE TOP-RIGHT WITH THE HEAD'S OWN INSET, and that needs
+   `align-self` on the ROW rather than `align-items` inside it. `.modal-head` is
+   `align-items: center`, so the actions row was centred against whatever height
+   the identity beside it happened to be — with an eyebrow + title pair the
+   identity is two lines tall, so the close control drifted DOWN and its top gap
+   became visibly larger than its right gap. Photographed 2026-09-03 across
+   bodies B, C and D. Aligning the row to the start makes the top inset the
+   head's padding, which is the same number as the right inset (one value, all
+   four sides, above) — so the control is square, in the corner, evenly inset,
+   on every door regardless of how tall its title is. */
+.modal-head-actions { display: flex; gap: 0.8rem; align-items: flex-start; align-self: flex-start; }
 /* One hit box for the one way out. `min-*` and not `width` — a floor is not a
    ceiling (base.css, --tap-floor), and this control must clear it on BOTH axes
    at every UI size, which is the whole reason it is stated once. */
+/* ONE BOX, EVERY DOOR. The floor stays (tools/startup-gate.mjs plants its
+   removal); the LENGTH on both axes is base.css --iconbtn-size, so a taller
+   title, a stretched row or a phone inset cannot change the control's shape,
+   and `flex: 0 0 auto` so no row can shrink it. */
 .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
+  padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
+  border-radius: var(--r-2);
+}
+/* The head's two identity forms (modalShell.js modalHead): an eyebrow + title
+   pair, or a tab strip that replaces it. No third form, and never both. */
+.modal-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.modal-eyebrow {
+  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+}
+.modal-head-id h2 { margin: 0; }
+.modal-tabs { display: flex; gap: 0.2rem; }
+/* A COUNT IS STATUS, NOT PART OF A NAME. The pile viewer used to bake `(5)`
+   into its <h2>, so the thing a player reads as the name of the surface
+   changed every time a card moved. It rides in the head's actions row now,
+   quiet, left of the way out. */
+.modal-head-status { color: var(--muted); font-size: 0.95rem; white-space: nowrap; }
+/* A TAB IS NOT A BUTTON-SHAPED BUTTON. base.css's generic `button` is a gold
+   2 px pill with 2.6rem of side padding; a strip of those reads as a row of
+   call-to-actions rather than a place you are. Underline, no box. */
+.modal-tab {
+  padding: 0.6rem 1.2rem; min-height: var(--tap-floor);
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: var(--r-2) var(--r-2) 0 0;
+  color: var(--parchment); font-family: var(--font-body); font-size: var(--t-2); letter-spacing: normal;
+}
+.modal-tab[aria-selected='true'] { color: var(--gold); border-bottom-color: var(--gold); }
+.modal-tab:hover, .modal-tab.gp-focus, .modal-tab:focus-visible { color: var(--gold); }
+
+/* THE BUTTON LADDER (modalShell.js buttonRow, and every .modal-foot-actions).
+   FOUR WIDTHS FOR THE WHOLE GAME, and the widest label in a row picks the step
+   for all of its buttons — measured 2026-09-03: a three-button footer produced
+   three widths and wrapped onto two lines at 390 px, which then made two
+   sibling doors different HEIGHTS, because a foot that grows by a line grows
+   the shell. `min-width` and not `width`, so the step is a floor the label can
+   exceed; `white-space: nowrap` so what yields under pressure is the PADDING
+   and never the line count. */
+/* A BUTTON ROW IS A GRID OF EQUAL TRACKS. Constantine, 2026-09-03: "make
+   primary and secondary buttons at the bottom uniform in size". Under flex
+   they were uniform only while nothing was squeezed: three medium buttons in
+   a foot beside a note shrank to 83px each and rendered as "B…", "S…", "S…",
+   because base padding is 2.6rem a side and equal shrink ignores the label.
+   `grid-auto-columns: minmax(0, 1fr)` makes every button in a row the SAME
+   width whatever its label — that is the uniformity — and the row's width is
+   the smaller of its box and n × step, so when there is room every button IS
+   the step, and when there is not they share the box equally. Truncation is
+   the last rung, reached only when an equal share is narrower than a label;
+   the padding yields first (below), and the foot's note yields before the row
+   does (.modal-foot-note). n is counted by :has, so no caller counts. */
+.modal-btnrow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch; gap: 8px; min-width: 0;
+  --n: 1; --step: 15rem;
+  width: min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px));
+}
+.modal-btnrow:has(> :nth-child(2):last-child) { --n: 2; }
+.modal-btnrow:has(> :nth-child(3):last-child) { --n: 3; }
+.modal-btnrow:has(> :nth-child(4):last-child) { --n: 4; }
+.modal-btnrow:has(> :nth-child(5):last-child) { --n: 5; }
+/* UNIVERSAL CONTAINMENT FOR A SINGLE-LINE LABEL, every part load-bearing.
+   Constantine, 2026-09-03, after photographing five clips (Back to Shrine,
+   More details, Save and Quit twice, the cost badge): "all objects and
+   components of components should be contained in their parent container and
+   not bleed out of it." Five screenshots, one defect, one rule:
+     min-width: 0         a flex item defaults to `min-width: auto`, which
+                          REFUSES to shrink below its content. That refusal is
+                          what pushed labels out of their rows — the single
+                          most common cause of a bleed in a flex layout.
+     white-space: nowrap  a control's label is one line; a wrap grows the box
+                          and, in a modal foot, the whole shell.
+     overflow: hidden     the box clips instead of letting ink escape.
+     text-overflow:       and the clip is legible — `…`, not a severed glyph.
+       ellipsis
+   Together: a label can never leave its control. Padding yields first (the
+   ladder's basis), then it truncates — and a truncated label is exactly a
+   control that "has more to say", so its full text belongs on its tooltip. */
+.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note, .modal-head-id h2 {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.modal-btnrow > button { text-align: center; }
+/* THE STEP IS A CAP ON THE TRACK, NOT A FLOOR — the row above widens to n ×
+   step when it can and no further, so a step can never overflow the panel
+   (the bug the flex basis was introduced to fix, measured 2026-09-03: a third
+   button clipped off the panel). Four steps for the whole game; nothing types
+   a fifth. */
+.modal-btnrow[data-size='short']  { --step: 10rem; }
+.modal-btnrow[data-size='medium'] { --step: 15rem; }
+.modal-btnrow[data-size='long']   { --step: 21rem; }
+/* `fill` spans its box whatever n is — a rail, a wizard step, a phone foot. */
+.modal-btnrow[data-size='fill'] { width: 100%; }
+/* THE CONCESSION LADDER, IN ORDER: padding yields, then the box steps up
+   (the door's rung, a caller's choice), then TYPE SHRINKS, then — only then —
+   the label truncates. Padding is a share of the track capped at the house
+   padding; type is a share of the button's own inline size (the button is its
+   own container) with a floor the eye can still read. Both are per-track and
+   tracks are equal, so every button in a row yields by the same amount. */
+.modal-btnrow > button {
+  container-type: inline-size;
+  padding-inline: clamp(0.5rem, 8%, 1.4rem);
+}
+.modal-btnrow > button { font-size: clamp(0.78rem, 9cqi, 1rem); }
+/* A SQUARE IN A ROW TAKES THE ROW'S HEIGHT and stays square by ratio, with
+   `justify-self: start` so the track's width does not stretch it out of
+   square. NO length is typed — the height is the row's, which survives
+   --ui-zoom; NOT vh (see .overlay-modal above). Close and ☰ are NOT this
+   rule: they wear one fixed box everywhere (--iconbtn-size, base.css). */
+.modal-btnrow > button[data-size='square'] {
+  aspect-ratio: 1; width: auto; height: auto; justify-self: start;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
+}
+/* ☰ shares the close control's box exactly, so a player who learns the shape
+   learns it once. Same rule, two glyphs. */
+.modal-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
   min-width: var(--tap-floor); min-height: var(--tap-floor);
   padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
   border-radius: var(--r-2);
 }
+
+/* The body owns its own layout and its own scrolling; the shell never reaches
+   in. It DOES own the fact that the body is what flexes, so head and foot stay
+   put and a long body scrolls rather than pushing them off. */
+.modal-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
 .modal-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  flex: 0 0 auto; padding: 1.2rem 1.6rem; border-top: 1px solid var(--line);
+  flex: 0 0 auto; padding: var(--modal-inset); border-top: 1px solid var(--line);
 }
-.modal-foot-note { color: var(--muted); font-size: 0.95rem; }
-/* `margin-left: auto` so a foot with no note still puts its actions right. */
-.modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* THE NOTE YIELDS BEFORE THE ACTIONS DO. `min-width: 0` so a long sentence
+   wraps inside its own share instead of pushing the buttons out of the panel —
+   which is exactly what it did: measured 2026-09-03, "Progress saves to the
+   active slot." held the foot wide enough that `Save and Quit` sat flush to
+   the border with no right padding left. */
+.modal-foot-note { flex: 0 1 auto; min-width: 0; color: var(--muted); font-size: 0.95rem; }
+/* `margin-left: auto` so a foot with no note still puts its actions right.
+   `stretch`, not `center`: primary and secondary are ONE height in the foot
+   (the row's), and their widths come off the ladder because the row is also
+   a `.modal-btnrow` (modalShell.js modalFooter). */
+.modal-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
+/* THE NOTE YIELDS BEFORE THE ROW DOES: a high shrink weight, and it may go to
+   nothing (min-width: 0 in the containment set) before a button loses width.
+   WHOLE OR ABSENT: a note squeezed to "P…" is not a note. The span is its
+   own size container, so when the flex algorithm leaves it narrower than a
+   short sentence its text hides rather than stubs — the note may never carry
+   the only copy of a fact, so losing it costs nothing. */
+/* A size container has NO intrinsic width, so the basis is stated: 20rem is
+   room for one short sentence, and the note may never be longer than one. */
+.modal-foot-note { flex: 0 12 20rem; container-type: inline-size; }
+.modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } }
 .modal-foot-actions button { min-height: var(--tap-floor); }
 @media (max-width: 640px) {
-  .modal-foot { align-items: stretch; padding: 8px 10px; }
+  /* The inset shrinks on a phone, but it stays ONE number — the token moves,
+     not the individual declarations, so head, body and foot cannot drift
+     apart at one width and agree at another. */
+  .modal { --modal-inset: 0.8rem; }
+  .modal-foot { align-items: stretch; }
   .modal-foot-note { display: none; }
   .modal-foot-actions { width: 100%; }
-  .modal-foot-actions button { flex: 1 1 0; padding-inline: 8px; }
+  /* A PHONE IS THE `fill` CASE, WHATEVER STEP THE ROW ASKED FOR. The ladder's
+     min-widths would overflow a 390 px foot, so here the step yields and the
+     row divides its box — the one place a declared size is overridden, and the
+     reason is that the box is now narrower than the smallest step. A square
+     still keeps its ratio. */
+  .modal-btnrow[data-size] { width: 100%; }
+  .modal-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
 }
 
 /* THE SCROLL OWNERS INSIDE A MODAL, AND WHY THEY LOOKED FOREIGN.
@@ -343,7 +545,8 @@
   padding: 10px 16px; border-top: 1px solid var(--line); background: var(--panel);
 }
 .overlay-footer-note { color: var(--muted); font-size: 0.95rem; }
-.overlay-footer-actions { display: flex; align-items: center; gap: 8px; }
+/* The in-run foot is a button row (modalShell's ladder): the two classes on
+   the div in menuComponents.js are the whole rule. */
 .overlay-footer-actions button { min-height: var(--tap-floor); }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
@@ -1029,12 +1232,12 @@ button.rs-reset {
   min-height: 2.2rem; display: flex; align-items: stretch; justify-content: center;
   gap: 0.35rem;
 }
-.smith-item-type-row em {
+.smith-item-type-row em { --track: 2px;
   flex: 1 1 0; min-width: 0; display: grid; place-items: center; padding: 0.3rem 0.45rem;
   border-radius: var(--r-2); background: color-mix(in srgb, var(--gold) 15%, #2a241c);
   color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
-  font-style: normal; letter-spacing: 2px; text-align: center;
-}
+  font-style: normal; letter-spacing: var(--track); text-align: center;
+ text-indent: var(--track);}
 .smith-weapon-tags {
   min-height: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center;
   align-content: end; gap: 0.3rem;
@@ -1315,10 +1518,10 @@ button.rs-reset {
 .flask-increment .flask-step[aria-disabled='true']:hover {
   background: var(--panel); transform: none;
 }
-.flask-increment-total {
+.flask-increment-total { --track: 0.04em;
   margin-top: 2px; text-align: center;
-  font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
-}
+  font-size: 1.1rem; color: var(--muted); letter-spacing: var(--track);
+ text-indent: var(--track);}
 
 .stats-table { border-collapse: collapse; font-size: 1.3rem; }
 .stats-table td { padding: 0.4rem 1.4rem; }
@@ -1892,11 +2095,11 @@ button.rs-reset {
    the label is a real <label for>, not a styled <p>, because the gap it closes
    is a screen reader announcing an unlabelled text field. */
 .preview-pane .cz-label { margin-bottom: 0; }
-.cz-name {
+.cz-name { --track: 0.08em;
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
   border-radius: var(--r-3); padding: 6px 10px; width: 150px; text-align: center;
-  font-family: var(--font-display); letter-spacing: 0.08em;
-}
+  font-family: var(--font-display); letter-spacing: var(--track);
+ text-indent: var(--track);}
 
 .cz-portrait {
   width: 13rem; height: 16rem; border-radius: var(--r-4); background: #2a2418;
@@ -2026,12 +2229,12 @@ button.rs-reset {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
   background: var(--line-soft);
 }
-.cc-class-divider::after {
+.cc-class-divider::after { --track: 0.12em;
   content: '‹\00a0›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   min-width: 2rem; padding: 0.4rem 0.18rem; color: var(--muted); background: var(--panel);
-  font-family: var(--font-display); letter-spacing: 0.12em;
+  font-family: var(--font-display); letter-spacing: var(--track);
   text-align: center; white-space: nowrap;
-}
+ text-indent: var(--track);}
 .cc-class-divider:hover::after, .cc-class-divider:focus-visible::after { color: var(--gold); }
 .cc-class-preview {
   display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: stretch;
@@ -4026,17 +4229,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    `.modal-head` for the title row and its ONE close control, `.modal-foot` for
    the way out. Everything below is BODY — the part modalShell.js deliberately
    does not own — and nothing here restates a chrome number. */
-.flask-inspect-modal { width: 44rem; max-width: 92%; padding: 0; display: flex; flex-direction: column; }
-.flask-inspect-title { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-/* The uppercase muted eyebrow the confirmation modal and the class panes
-   already use to name WHAT KIND of thing the title below is. One idiom. */
-.flask-inspect-eyebrow {
-  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
-}
-.flask-inspect-modal .modal-head h2 { margin: 0; font-size: 2rem; }
+.flask-inspect-modal { padding: 0; display: flex; flex-direction: column; }
+.flask-inspect-modal .modal-head h2 { font-size: 2rem; }
+/* THE DOOR'S HEIGHT IS ITS ART'S, NOT ITS PROSE'S. Two flasks, or a flask and
+   a shield, are the same kind of door and must be the same size — measured
+   2026-09-03 on the Crimson Flask / Round Shield pair, where a one-line effect
+   and a two-line effect produced two visibly different modals and a player
+   reads that difference as meaning. The floor is the art (9.6rem, below) plus
+   this padding, stated once; longer prose scrolls in the body rather than
+   growing the shell. */
 .flask-inspect-body {
   display: flex; align-items: flex-start; gap: 1.6rem;
-  padding: 1.8rem 1.6rem; overflow: hidden auto;
+  padding: var(--modal-inset);
+  min-height: calc(9.6rem + 2 * var(--modal-inset));
 }
 /* THE WHOLE POINT OF THE BIGGER DOOR IS THAT THE ART IS BIGGER. The HUD slot
    draws this same identity at tap size; here it gets room to be looked at.
@@ -4048,7 +4253,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    left an art-less flask drawing a thumbnail glyph in the middle of it. Scaling
    the type scales both, and the box shape keeps its one home above. */
 .flask-inspect-art .flask-art { font-size: 5.3rem; }
-.flask-inspect-lines { min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+/* THE PROSE COLUMN'S FLOOR IS WHAT PICKS THE RUNG: about 18rem beside the art
+   sets two short sentences on one line each. Below it the door is on the wrong
+   rung and steps up, rather than wrapping a sentence mid-clause. */
+.flask-inspect-lines { flex: 1 1 18rem; min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; }
 .flask-inspect-lines p { margin: 0; font-size: 1.35rem; line-height: 1.55; color: var(--parchment); }
 /* The charge count is a fact about this run, not part of what the flask does,
    so it reads quieter than the effect above it. */
@@ -4067,6 +4275,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: transparent; border: 0; border-radius: 0;
   color: inherit; font-family: inherit; font-size: 1.4rem; letter-spacing: normal;
 }
+/* The keycap rides at the END of a menu row, so labels stay left-aligned down
+   the column and the glyphs form their own column on the right. */
+.flask-action-key {
+  margin-left: auto;
+  display: inline-grid; place-items: center;
+  min-width: 2.2rem; padding: 0.1rem 0.4rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font-size: 1.1rem; letter-spacing: 0; color: var(--muted);
+}
+.flask-action[aria-disabled='true'] .flask-action-key { opacity: 0.5; }
 .flask-action:hover { background: var(--bg-raise); }
 .flask-action.gp-focus, .flask-action:focus-visible { background: var(--bg-raise); color: var(--gold); }
 /* AN UNAVAILABLE ROW HAS TO LOOK UNAVAILABLE. These rows are `aria-disabled`,
@@ -4117,7 +4335,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .overlay-footer { align-items: stretch; padding: 8px 10px; }
   .overlay-footer-note { display: none; }
   .overlay-footer-actions { width: 100%; }
-  .overlay-footer-actions button { flex: 1 1 0; padding-inline: 8px; }
+  .overlay-footer-actions button { padding-inline: 8px; }
   .overlay-settings-actions { gap: 3px; }
   .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
   .ov-qa-label { display: none; }
@@ -4649,7 +4867,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
-  text-indent: 0.02em;
+  text-indent: 0.04em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -4688,7 +4906,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   margin: 2.5rem auto 0;
   gap: 0;
 }
-.title-menu-item {
+.title-menu-item { --track: 0.12em;
   position: relative;
   display: grid;
   place-items: center;
@@ -4701,10 +4919,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   color: var(--parchment);
   font-size: 2rem;
   line-height: 1.15;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--track);
   text-align: center;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
-}
+ text-indent: var(--track);}
 .title-menu-item::before {
   content: '';
   position: absolute;
@@ -4736,7 +4954,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-menu-item.gp-focus::before { opacity: 1; }
 .title-menu-item:disabled { border-color: var(--line); background: transparent; color: var(--muted); opacity: 0.58; }
 .title-menu-gem { position: absolute; bottom: -0.65rem; padding: 0 0.65rem; color: var(--gold); background: var(--bg); font-size: 1.1rem; line-height: 1; }
-.title-tagline { margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: 0.18em; text-align: center; }
+.title-tagline { --track: 0.18em; margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
 
 .title-modal-veil { position: absolute; inset: 0; z-index: 900; padding: 2rem; background: rgba(4, 3, 2, 0.76); backdrop-filter: blur(2px); }
 .title-menu-modal {
@@ -4750,7 +4968,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 96%, #000), color-mix(in srgb, var(--bg-raise) 98%, #000));
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
-.title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
+.title-menu-modal h2 { --track: 0.08em; margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
 /* Position is this modal's (it has no head bar to sit in); the SHAPE is the
    shell's — this was the only round close control in the game. */
 .title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; background: transparent; color: var(--parchment); }
@@ -4801,7 +5019,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.0075em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.015em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
@@ -4854,10 +5072,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   line-height: 0.95;
   letter-spacing: 0.04em;
   text-align: center;
-  text-indent: 0.02em;
+  text-indent: 0.04em;
   white-space: nowrap;
 }
-.startup-subtitle { width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; text-align: center; text-indent: 0.16em; white-space: nowrap; }
+.startup-subtitle { --track: 0.32em; width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: var(--track); text-align: center; text-indent: var(--track); white-space: nowrap; }
 .startup-rule { position: relative; width: min(46rem, 86%); height: 1px; margin-top: 1.6rem; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .startup-rule span { position: absolute; left: 50%; top: 50%; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%) rotate(45deg); border: 1px solid var(--gold); background: var(--bg); }
 .startup-prompt { margin-top: 3.2rem; }
@@ -5474,3 +5692,25 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
+
+/* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
+   `letter-spacing` adds its space after the LAST glyph as well as between the
+   others, so a centred tracked string sits left of true centre by half its
+   tracking. THE STARTUP SCREEN LEARNED THIS FIRST and compensates with
+   `text-indent` — which is exact, and here is why, because the file had two
+   different answers to it and only one can be right:
+
+     available width  = W - t   (the indent is taken off the line's room)
+     line placed at   = t + (W - t - L) / 2      L includes the trailing t
+     ink centre       = t + (W-t-L)/2 + (L-t)/2  =  W/2      ✔ exact
+
+   So `text-indent: <the full tracking>` centres the INK. Some rules used HALF
+   the tracking instead, and half under-corrects — the same arithmetic gives
+   `W/2 - t/4`, so `.startup-subtitle` at 0.32em/0.16em sat 0.08em left of
+   centre UNDER a wordmark that was corrected in full. That disagreement
+   between two lines of one logo is what reads as "the logo is off centre"
+   (Constantine, 2026-09-03) — neither line looks wrong alone.
+
+   ONE MECHANISM, ONE MAGNITUDE: declare the tracking once as `--track`, use it
+   for `letter-spacing`, and indent by the SAME token. A rule that is centred
+   and tracked and does not do this is the bug this block exists to prevent. */

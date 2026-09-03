@@ -1,8 +1,8 @@
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
-import { modalCloseButtonHtml, modalFooter, bindModalDismiss } from './modalShell.js';
+import { openModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
-import { focusElement } from '../input.js';
+import { focusElement, matchAction, actionLabel } from '../input.js';
 
 let activeFlaskActionMenu = null;
 
@@ -92,44 +92,29 @@ export function flaskTooltipHtml(def, { charges = null, hint = '' } = {}) {
 export function openFlaskInspectModal({ def, charges = null, opener = document.activeElement } = {}) {
   if (!def) throw new Error('openFlaskInspectModal requires a flask definition');
   const lines = flaskDetailLines(def, { charges });
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil flask-inspect-veil';
-  veil.innerHTML = `
-    <section class="modal flask-inspect-modal" role="dialog" aria-modal="true" aria-labelledby="flask-inspect-title">
-      <header class="modal-head">
-        <div class="flask-inspect-title">
-          <span class="flask-inspect-eyebrow">Flask</span>
-          <h2 id="flask-inspect-title">${esc(def.name)}</h2>
-        </div>
-        <div class="modal-head-actions">${modalCloseButtonHtml({ label: `Close ${def.name}` })}</div>
-      </header>
-      <div class="flask-inspect-body">
-        ${flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })}
-        <div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>
-      </div>
-    </section>`;
-  document.body.appendChild(veil);
 
-  const panel = veil.querySelector('.flask-inspect-modal');
   const done = document.createElement('button');
   done.type = 'button';
   done.className = 'flask-inspect-done';
   done.dataset.focusable = 'true';
   done.textContent = 'Close';
-  panel.appendChild(modalFooter({ primary: done }));
 
-  let release = null;
-  const close = () => {
-    if (!veil.isConnected) return;
-    release?.();
-    release = null;
-    veil.remove();
-  };
-  release = bindModalDismiss({ veil, panel, close, opener });
-  done.addEventListener('click', close);
-  panel.querySelector('.modal-close').addEventListener('click', close);
-  done.focus?.({ preventScroll: true });
-  return Object.freeze({ root: veil, close });
+  const shell = openModal({
+    size: 'md',
+    className: 'flask-inspect-modal',
+    eyebrow: 'Flask',
+    title: def.name,
+    bodyClassName: 'flask-inspect-body',
+    body: (host) => {
+      host.innerHTML = flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })
+        + `<div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>`;
+    },
+    primary: done,
+    footSize: 'short',
+    opener,
+  });
+  done.addEventListener('click', shell.close);
+  return Object.freeze({ root: shell.veil, close: shell.close });
 }
 
 /**
@@ -155,7 +140,7 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
  *
  * The check is tools/placement.mjs P5, at both shapes, through the real tap.
  */
-export function mountFlaskActionMenu(anchor, { def, plan, charges = null, onAction, onCancel, wireAction } = {}) {
+export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useActionId = null, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
   // The same flask is a toggle, not a close-then-immediately-reopen sequence.
   if (activeFlaskActionMenu?.anchor === anchor) {
@@ -239,6 +224,19 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, onActi
     button.setAttribute('role', 'menuitem');
     button.setAttribute('aria-disabled', String(!row.enabled));
     button.textContent = row.label;
+    // THE KEYCAP IS DERIVED, NEVER TYPED. `actionLabel` reads the live binding
+    // and the connected device, so a rebind moves the glyph with the key and a
+    // pad shows its own button — the same rule the HUD's flask shortcuts obey.
+    // Only rows that HAVE a binding get one: `inspect` is one key for every
+    // inspectable thing, and `use` is per-slot, so its id is handed in by the
+    // surface that knows which slot this flask sits in.
+    const boundAction = row.id === 'inspect' ? 'inspect' : (row.id === 'use' ? useActionId : null);
+    if (boundAction) {
+      const cap = document.createElement('span');
+      cap.className = 'flask-action-key';
+      cap.textContent = actionLabel(boundAction);
+      button.appendChild(cap);
+    }
     if (!row.enabled) {
       button.dataset.unavailableReason = row.reason;
       button.title = row.reason;
@@ -271,6 +269,18 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, onActi
     focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
+    // ONE BINDING, ASKED THE WAY EVERY OTHER SURFACE ASKS IT. `matchAction` is
+    // the same question combat asks for End Turn, so a rebound Inspect works
+    // here for free and this file never learns which key it is.
+    if (matchAction(ev, 'inspect')) {
+      const inspectRow = buttons.find((candidate) => candidate.dataset.flaskAction === 'inspect');
+      if (inspectRow && inspectRow.getAttribute('aria-disabled') === 'false') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        inspectRow.click();
+        return;
+      }
+    }
     if (ev.key === 'Escape' || ev.key === 'Backspace') {
       ev.preventDefault();
       // The child owns Cancel. Do not let the same physical key continue to

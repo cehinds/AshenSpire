@@ -110,6 +110,16 @@ export const ACTIONS = [
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
   { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
   { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
+  // INSPECT IS ONE BINDING FOR EVERY INSPECTABLE THING. Constantine,
+  // 2026-09-03: "add a hot key for inspect as well that is uniform for all
+  // things selected (i'm thinking i)". It goes in the registry rather than
+  // into the surfaces because that is what makes it uniform: a row here gets
+  // rebinding, a line in the Controls screen, a pad button, and a keycap that
+  // `actionLabel()` derives from the LIVE binding — so no surface types the
+  // letter `I` and none of them can drift from the others.
+  // `i` was free (taken: Enter, Esc, e, m, d, r, t, f, g, h); pad 11 is the
+  // right stick click, free, and the usual seat for inspect.
+  { id: 'inspect', label: 'Inspect Selected', short: 'Inspect', kind: 'key', defKey: 'i', defBtn: 11 },
 ];
 
 const ACTION_DESTINATIONS = new Set(['cards', 'equipment', 'character']);
