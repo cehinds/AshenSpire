@@ -550,6 +550,13 @@ function check(name, cond, detail = '') {
       && page.text.includes(`<meta name="ashenspire-owner-layout" content="${OWNER_PAGE_LAYOUT_ID}">`)
       && page.text.includes('<header class="hero">')),
     pages.filter((page) => !page.text.includes(`data-owner-layout="${OWNER_PAGE_LAYOUT_ID}"`)).map((page) => page.rel).join(','));
+  // The hero title was authored already-escaped and then escaped again, so the
+  // page displayed the entity itself: "Review &amp; Approval Hub" in 48px serif.
+  // Escaping belongs to the renderer and happens exactly once; a doubled entity
+  // is the shape that mistake always takes, on any page and any character.
+  check('no hub page double-escapes an entity',
+    pages.every((page) => !/&amp;(amp|lt|gt|quot);/.test(page.text)),
+    pages.filter((page) => /&amp;(amp|lt|gt|quot);/.test(page.text)).map((page) => page.rel).join(','));
   const ticketPage = byRel['generated/hub/tickets/AS-HD-057.html'];
   check('a ticket page carries its live seal', ticketPage.includes(rt.capsules['AS-HD-057'].current_hash.slice(0, 23)));
   check('a ticket page replays its event chain',
