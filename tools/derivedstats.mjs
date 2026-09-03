@@ -376,9 +376,68 @@ check('the integrated dependency seam has one rules owner and value-only consume
   assert(!/content\/attributes|model\/attributes/.test(model), 'reader imports Phase 1 instead of accepting its allocation seam');
 });
 
+// SEGMENTS A JS SOURCE INTO code / comment / string, BY WALKING IT.
+//
+// A regex cannot do this and has now twice pretended to. The blanket-strip
+// version erased the smuggling it was hunting; its replacement stripped
+// comments with /\/\/[^\n]*/, which reads `const url = 'https://x'` as a comment
+// opener and deletes the rest of that line — including anything after it. Codex
+// found both. A scanner that decides what is prose has to know where strings
+// start and end, so it lexes.
+//
+// `key` on a string segment is the object key the literal is the value of, when
+// it is one, which is what lets exactly three presentation keys hold prose while
+// every other string stays code.
+function segments(source) {
+  const out = [];
+  let code = '';
+  const flushCode = () => { if (code) { out.push({ kind: 'code', text: code }); code = ''; } };
+  const keyBefore = () => (code.match(/([A-Za-z_$][\w$]*)\s*:\s*$/) || [])[1] || null;
+  let i = 0; const n = source.length;
+  while (i < n) {
+    const c = source[i]; const d = source[i + 1];
+    if (c === '/' && d === '/') {
+      const j = source.indexOf('\n', i); const e = j < 0 ? n : j;
+      flushCode(); out.push({ kind: 'comment', text: source.slice(i, e) }); i = e; continue;
+    }
+    if (c === '/' && d === '*') {
+      const j = source.indexOf('*/', i + 2); const e = j < 0 ? n : j + 2;
+      flushCode(); out.push({ kind: 'comment', text: source.slice(i, e) }); i = e; continue;
+    }
+    if (c === "'" || c === '"') {
+      const key = keyBefore(); let j = i + 1;
+      while (j < n && source[j] !== c) j += source[j] === '\\' ? 2 : 1;
+      flushCode(); out.push({ kind: 'string', text: source.slice(i + 1, j), key }); i = j + 1; continue;
+    }
+    if (c === '`') {
+      const key = keyBefore(); flushCode();
+      let j = i + 1; let chunk = '';
+      while (j < n && source[j] !== '`') {
+        if (source[j] === '\\') { chunk += source.slice(j, j + 2); j += 2; continue; }
+        if (source[j] === '$' && source[j + 1] === '{') {
+          out.push({ kind: 'string', text: chunk, key }); chunk = '';
+          // AN INTERPOLATED EXPRESSION IS CODE, not part of the sentence around it.
+          let depth = 1; let k = j + 2; let expr = '';
+          while (k < n && depth > 0) {
+            if (source[k] === '{') depth++;
+            else if (source[k] === '}') { depth--; if (!depth) break; }
+            expr += source[k]; k++;
+          }
+          out.push({ kind: 'code', text: expr }); j = k + 1; continue;
+        }
+        chunk += source[j]; j++;
+      }
+      out.push({ kind: 'string', text: chunk, key }); i = j + 1; continue;
+    }
+    code += c; i++;
+  }
+  flushCode();
+  return out;
+}
+
 // THIS ONE WAS NOT STALE — IT WAS OVER-BROAD, AND #584 CALLED IT STALE.
 //
-// The old form grepped both files for the WORD and went red the day Stamina's
+// The original grepped both files for the WORD and went red the day Stamina's
 // player-facing sentence named what spends it: "Spent by cards that ask for it
 // — the dodge roll among them." That is prose describing a stat, in a `sense`
 // string a player reads. No behaviour was smuggled anywhere. A guard whose text
@@ -386,40 +445,40 @@ check('the integrated dependency seam has one rules owner and value-only consume
 // wrong thing, and this one had been doing so since 02a91ff4.
 //
 // Deleting it was the wrong fix: what it guards is real. It is narrowed to the
-// three things smuggling would actually look like.
-check('no Dodge/reaction behavior or handMax policy is smuggled into the contract', () => {
-  const text = readFileSync(resolve(ROOT, 'src/content/derivedStats.js'), 'utf8')
-    + readFileSync(resolve(ROOT, 'src/model/derivedStats.js'), 'utf8');
+// three things smuggling would actually look like, and it took three rounds of
+// review to get the narrowing itself to stop lying.
+const PROSE_KEYS = new Set(['label', 'faceLabel', 'sense']);
 
-  // 1. No derived-stat row is named for a behaviour.
+check('no Dodge/reaction behavior or handMax policy is smuggled into the contract', () => {
+  const sources = ['src/content/derivedStats.js', 'src/model/derivedStats.js']
+    .map((rel) => readFileSync(resolve(ROOT, rel), 'utf8'));
+
+  // 1. No derived-stat row is named for a behaviour. Read off the table itself,
+  //    so this arm does not depend on any text scanning at all.
   const named = Object.keys(derivedStatRules.rules).filter((id) => /^(dodge|reaction|handMax)$/i.test(id));
   equal(named.join(','), '', 'a derived-stat row is named for a behaviour');
 
-  // 2. `handMax` and `reaction` have no legitimate reason to appear in either
-  //    file at all, in prose or otherwise, so they stay a flat ban.
-  assert(!/\bhandMax\b|\breaction\b/i.test(text), 'handMax or reaction vocabulary present');
+  for (const source of sources) {
+    const segs = segments(source);
+    // THE LEXER MUST HAVE CONSUMED THE FILE. A scanner that silently gave up
+    // half way would report a clean file for the same reason the stripped
+    // versions did, so its own coverage is asserted rather than assumed.
+    const covered = segs.reduce((sum, seg) => sum + seg.text.length, 0);
+    assert(covered >= source.length * 0.9, `the scanner consumed only ${covered} of ${source.length} characters`);
 
-  // 3. `dodge` may appear ONLY as the value of a presentation key.
-  //
-  //    THE FIRST NARROWING STRIPPED EVERY QUOTED STRING, WHICH IS HOW A CHECK
-  //    STOPS CHECKING. Codex: `if (statId === 'dodge')` and `handlers['dodge']()`
-  //    are behaviour written in ordinary string syntax, and blanket-stripping
-  //    quotes erased exactly those before the assertion ran — as did stripping
-  //    template literals whole, which swallows `${dodge()}`. The guard would have
-  //    reported PASS over the thing it exists to refuse. That is the same
-  //    can't-fail shape this session has now produced repeatedly, arriving here
-  //    inside the fix for a DIFFERENT defect in the same check.
-  //
-  //    So the exemption is not "a string" — it is the three keys this file
-  //    documents as player-facing prose, and nothing else. An exact allowance
-  //    beats a broad strip: a bare token, a comparison, a computed key and a
-  //    template expression all survive it and fail.
-  const PROSE_KEYS = /\b(?:label|faceLabel|sense)\s*:\s*(?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\$]|\\.)*`)/g;
-  const code = text
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')   // comments are prose by construction
-    .replace(/\/\/[^\n]*/g, ' ')
-    .replace(PROSE_KEYS, 'label: \'\'');  // …and so are these three values
-  assert(!/dodge/i.test(code), 'dodge appears outside a comment or a presentation string — as code');
+    for (const seg of segs) {
+      // 2. `handMax` and `reaction` have no legitimate reason to appear in
+      //    either file at all, in prose or otherwise, so they stay a flat ban.
+      assert(!/\bhandMax\b|\breaction\b/i.test(seg.text), `handMax or reaction vocabulary in ${seg.kind}`);
+      // 3. `dodge` is allowed in a comment, and in a string that is the value of
+      //    one of the three documented presentation keys. Nowhere else — not in
+      //    code, not in any other string, not in an interpolated expression.
+      if (!/dodge/i.test(seg.text)) continue;
+      if (seg.kind === 'comment') continue;
+      if (seg.kind === 'string' && PROSE_KEYS.has(seg.key)) continue;
+      throw new Error(`dodge appears in ${seg.kind}${seg.key ? ` under key '${seg.key}'` : ''}, not as player-facing prose`);
+    }
+  }
 });
 
 console.log(`\n${failures ? 'FAIL' : 'PASS'} — ${checks - failures}/${checks} contract checks held, ${failures} failed.`);
