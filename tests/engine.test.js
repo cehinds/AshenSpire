@@ -2768,6 +2768,47 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `the grant sources are tag rows, not a constant (${registered.join(', ')})`);
     assert(contentBundle.balance.equipment.startingDeck.sourceOrder.every((id) => registered.includes(id)),
       'and the shipped order names only registered ones');
+
+    // ROUND TWENTY: the vocabulary was data, but the ids the ENGINE stamped
+    // were still typed at the minting seams. So a rename — the tag row and its
+    // sourceOrder entry moved together, exactly the edit the paragraph above
+    // promises is safe — validated clean and then dealt that source's cards
+    // LAST, because sortBySourceOrder no longer recognised what the seam
+    // stamped. Starseer opened with its class card ahead of its weapon cards.
+    // Two claims, because the fix has two halves: the rename works when the
+    // binding moves with it, and it is REFUSED when it does not.
+    const renamed = (moveBinding) => {
+      const b = JSON.parse(JSON.stringify(contentBundle));
+      for (const t of b.tags) if (t.id === 'from:weapon') t.id = 'from:armament';
+      const deck = b.balance.equipment.startingDeck;
+      deck.sourceOrder = deck.sourceOrder.map((id) => (id === 'from:weapon' ? 'from:armament' : id));
+      if (moveBinding) deck.sources.weapon = 'from:armament';
+      return createRegistries(b);
+    };
+    const halfDone = validateEquipment(renamed(false)).join(' | ');
+    assert(/sources\.weapon names unknown grant source 'from:weapon'/.test(halfDone),
+      `a rename that leaves the binding behind is named, not silently mis-ordered — said ${JSON.stringify(halfDone.slice(0, 200))}`);
+    const whole = renamed(true);
+    eq(validateEquipment(whole).length, 0, 'and a rename that moves the binding with it is clean');
+    const stamped = createRunState({ seed: 3, classId: 'starseer', registries: whole })
+      .deck.map((c) => c.grantSource || null).filter((id) => id !== null);
+    assert(stamped.every((id) => id !== 'from:weapon'),
+      `no seam stamps the old id after the rename — ${JSON.stringify(stamped)}`);
+    const stampedRanks = stamped.map((id) => whole.balance.equipment.startingDeck.sourceOrder.indexOf(id));
+    assert(stampedRanks.every((r, i) => r >= 0 && (i === 0 || r >= stampedRanks[i - 1])),
+      `and the renamed source is still ranked where it was — ${JSON.stringify(stamped)}`);
+
+    // The seam set is closed in both directions: a seam left unbound would
+    // stamp nothing, and a binding for a seam the engine does not have would
+    // never be read. Both are authoring mistakes with no visible symptom.
+    const unbound = JSON.parse(JSON.stringify(contentBundle));
+    delete unbound.balance.equipment.startingDeck.sources.class;
+    assert(/sources\.class must name a grant-source tag/.test(validateEquipment(createRegistries(unbound)).join(' | ')),
+      'an unbound minting seam is named');
+    const invented = JSON.parse(JSON.stringify(contentBundle));
+    invented.balance.equipment.startingDeck.sources.relic = 'from:relic';
+    assert(/unknown seam 'relic'/.test(validateEquipment(createRegistries(invented)).join(' | ')),
+      "a binding for a seam that mints nothing is named — it would never be stamped");
   });
 
   // ---- 26s. the fourteenth round: a door that cannot throw ----------------

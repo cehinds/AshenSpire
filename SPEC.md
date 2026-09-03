@@ -338,6 +338,11 @@ read, never re-derived), so equipment never changes how many attacks you hold.
 Everything above is data. The cap, the per-class bias and its default, the odd-split
 winner, and the grant-source vocabulary are all authored — the sources are rows in the
 `grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
+The engine mints bound cards at four seams (global, armor, weapon, class) and reads the
+tag each one stamps from `startingDeck.sources`, so RENAMING a source is a data edit too:
+the map, the tag row and `sourceOrder` move together, and a binding that names no
+registered source — or a seam left unbound — is refused by name rather than silently
+dealing that source's cards last.
 
 **Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
 priority list plus that profile as filler. `WeaponDeckCompositionService` builds an

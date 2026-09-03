@@ -858,6 +858,26 @@ export const balance = {
       // row in tags.csv rather than an edit to loadout.js.
       sourceOrder: ['from:global', 'from:relic', 'from:armor', 'from:weapon', 'from:class'],
 
+      // WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's
+      // order; this is the binding between that vocabulary and the four places
+      // in loadout.js that actually mint a bound card. It exists because the
+      // ids used to be typed at those seams: renaming `from:weapon` here and in
+      // `sourceOrder` validated clean and then silently dealt the weapon's
+      // cards last, because the minting site still stamped the old id. Now the
+      // seam READS its id from this map, so a rename is a data edit and an
+      // unbound or misspelt role is refused by name.
+      //
+      // The KEYS are the engine's seams, not content vocabulary — there is a
+      // weapon seam whatever an author calls its source. `from:relic` has no
+      // key because nothing mints it yet; it is declared vocabulary waiting for
+      // a minter, and ranking it early costs nothing until one exists.
+      sources: {
+        global: 'from:global',
+        armor: 'from:armor',
+        weapon: 'from:weapon',
+        class: 'from:class',
+      },
+
       // Which role wins the remainder when the cap leaves an odd number of base
       // cards. Authored rather than assumed — it used to be a rounding rule
       // buried in the arithmetic.

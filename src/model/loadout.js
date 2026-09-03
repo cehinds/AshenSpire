@@ -1386,6 +1386,34 @@ function grantSourceIds(registries) {
     .map((tag) => tag.id);
 }
 
+/**
+ * The seams in THIS FILE that mint a bound card. These are engine structure,
+ * not content vocabulary: there is a weapon seam and an armour seam whatever an
+ * author names their sources. Each is bound to a grantSource tag by
+ * `startingDeck.sources`, and every one of them must be bound — an unbound seam
+ * would stamp `undefined` and sort its cards last in silence.
+ *
+ * A source with no seam (today: `from:relic`) is legal and needs no entry; it
+ * is declared vocabulary waiting for a minter.
+ */
+const MINTED_GRANT_ROLES = ['global', 'armor', 'weapon', 'class'];
+
+/**
+ * grantSourceFor(cfg, role) -> tagId
+ *
+ * The grantSource tag a minting seam stamps, READ FROM THE AUTHORED MAP rather
+ * than typed at the seam. Round twenty's finding: with the ids typed inline,
+ * renaming a grantSource tag and its `sourceOrder` entry validated clean and
+ * then dealt that source's cards last, because `sortBySourceOrder` no longer
+ * recognised what the seam stamped. Validation guarantees every role in
+ * MINTED_GRANT_ROLES is bound, so the fallback here is for hand-built configs
+ * that never went through that door, not for shipped content.
+ */
+function grantSourceFor(cfg, role) {
+  const bound = ((cfg || {}).sources || {})[role];
+  return typeof bound === 'string' && bound ? bound : null;
+}
+
 function startingDeckFindings(registries) {
   const problems = [];
   const warnings = [];
@@ -1413,6 +1441,37 @@ function startingDeckFindings(registries) {
       for (const source of cfg.sourceOrder) {
         if (!legal.includes(source)) {
           problems.push(`startingDeck.sourceOrder names unknown grant source '${source}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+        }
+      }
+    }
+  }
+
+  // `sources` binds each minting seam to one of those tags. Without it the ids
+  // were typed at the seams, so renaming a grantSource tag AND its sourceOrder
+  // entry passed everything above and then dealt that source's cards last —
+  // clean validation, wrong deck. Checked here so the rename fails at the door
+  // instead of at the table: every seam bound, to a registered source.
+  {
+    const legal = grantSourceIds(registries);
+    const map = cfg.sources;
+    if (map === undefined || map === null || typeof map !== 'object' || Array.isArray(map)) {
+      problems.push(`startingDeck.sources must be an object binding each minting seam (${MINTED_GRANT_ROLES.join(', ')}) to a grant-source tag (got ${JSON.stringify(map)}) — it is what each seam stamps on the cards it mints`);
+    } else {
+      for (const role of MINTED_GRANT_ROLES) {
+        const bound = map[role];
+        if (typeof bound !== 'string' || !bound) {
+          problems.push(`startingDeck.sources.${role} must name a grant-source tag (got ${JSON.stringify(bound)}) — the '${role}' seam mints cards and would stamp nothing, sorting them last in silence`);
+        } else if (!legal.includes(bound)) {
+          problems.push(`startingDeck.sources.${role} names unknown grant source '${bound}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+        } else if (Array.isArray(cfg.sourceOrder) && !cfg.sourceOrder.includes(bound)) {
+          // Legal — an unranked source is dealt last by contract — but almost
+          // never what an author meant, so it is SEEN rather than refused.
+          warnings.push(`startingDeck.sources.${role} names '${bound}', which sourceOrder does not rank — the '${role}' seam's cards are dealt after every ranked source`);
+        }
+      }
+      for (const role of Object.keys(map)) {
+        if (!MINTED_GRANT_ROLES.includes(role)) {
+          problems.push(`startingDeck.sources names unknown seam '${role}' (the engine mints: ${MINTED_GRANT_ROLES.join(', ')}) — nothing reads this binding, so the tag it names would never be stamped`);
         }
       }
     }
@@ -1560,9 +1619,19 @@ function selectableStartingLoadouts(registries, classId) {
 
 /** The composed-deck config, or null when the legacy roleCopies path is live. */
 function startingDeckConfig(registries) {
-  const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
+  const cfg = startingDeckSettings(registries);
   if (!cfg || cfg.enabled !== true) return null;
   return cfg;
+}
+
+/**
+ * The same block, WITHOUT the enabled gate. Provenance is not a planner
+ * feature: a granted card carries the id of the source that minted it whether
+ * or not the composed plan is switched on, so the stamp reads this and the
+ * planner reads startingDeckConfig.
+ */
+function startingDeckSettings(registries) {
+  return ((registries.balance || {}).equipment || {}).startingDeck;
 }
 
 /** The tag that says "this object carries its own cards"; payload in equipmentGrants.csv. */
@@ -1659,7 +1728,7 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // quota by quotaRefs, so counting them again would charge them twice.
   if (techniqueRow && techniqueRow.profile) {
     grants.push({
-      source: 'from:weapon',
+      source: grantSourceFor(cfg, 'weapon'),
       cardId: techniqueRow.profile.baseCardId,
       equipmentRole: 'technique',
       profileId: techniqueRow.profile.id,
@@ -1672,7 +1741,7 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // every piece today — the seam is live and the data is empty by design.
   for (const piece of equippedPieces(registries, loadout, classId)) {
     for (const cardId of boundGrantCardIds(registries, piece, piece.kind === 'armor' ? 'armour' : 'armament')) {
-      grants.push({ source: piece.kind === 'armor' ? 'from:armor' : 'from:weapon', cardId, sourceId: piece.id });
+      grants.push({ source: grantSourceFor(cfg, piece.kind === 'armor' ? 'armor' : 'weapon'), cardId, sourceId: piece.id });
     }
   }
 
@@ -1682,9 +1751,9 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // needs rather than trusting that someone else checked.
   const globalGrants = (cfg.global || {}).grants;
   if (Array.isArray(globalGrants)) {
-    for (const cardId of globalGrants) grants.push({ source: 'from:global', cardId });
+    for (const cardId of globalGrants) grants.push({ source: grantSourceFor(cfg, 'global'), cardId });
   }
-  if (cls.startingSignatureCard) grants.push({ source: 'from:class', cardId: cls.startingSignatureCard });
+  if (cls.startingSignatureCard) grants.push({ source: grantSourceFor(cfg, 'class'), cardId: cls.startingSignatureCard });
 
   // DEALT IN THE AUTHORED ORDER. `sourceOrder` is a list of grantSource tag ids;
   // a source it does not name is dealt last, in the order it was pushed. Stable,
@@ -1894,6 +1963,8 @@ export function reconcileGrantedCards(registries, run) {
  * so an art both weapons author installs once, attributed to the winning hand.
  */
 function desiredGrantInstances(registries, run) {
+  // Stamped from the authored binding, not typed here — see grantSourceFor.
+  const weaponSource = grantSourceFor(startingDeckSettings(registries), 'weapon');
   const sources = { right: null, left: null };
   for (const hand of ['right', 'left']) {
     const source = handSource(registries, run.loadout, run.class, hand);
@@ -1908,7 +1979,7 @@ function desiredGrantInstances(registries, run) {
         desired.push({
           instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
           cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
-          grantSource: 'from:weapon',
+          grantSource: weaponSource,
         });
       }
     }
@@ -1923,7 +1994,7 @@ function desiredGrantInstances(registries, run) {
     desired.push({
       instanceId: `weaponArt:${weaponId}:${art.id}`,
       cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
-      grantSource: 'from:weapon',
+      grantSource: weaponSource,
     });
   }
   // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
@@ -1944,7 +2015,7 @@ function desiredGrantInstances(registries, run) {
       desired.push({
         instanceId: `weaponArt:unarmed:${empty}:${profile.baseCardId}`,
         cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${empty}`,
-        grantSource: 'from:weapon',
+        grantSource: weaponSource,
       });
     }
   }
