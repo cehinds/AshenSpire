@@ -237,11 +237,30 @@ Two things in that table need his eye rather than my assumption:
 
   - **A-review** — require the owner's review on the listener path
     specifically. `.github/workflows/**` is `app-dev-iii`'s lane today, so this
-    is a branch-protection or CODEOWNERS change, not a contract edit, and it is
-    a second act after the ruling rather than something the amendment performs.
-    Under it, a listener change reaches the default branch only with the owner's
-    sign-off, so the publication it carries was authorised at the point the
-    change landed.
+    is a repository-settings change, not a contract edit, and it is a second act
+    after the ruling rather than something the amendment performs.
+
+    **It takes two pieces, and an earlier draft of this record said "branch
+    protection *or* CODEOWNERS" as though either would do.** Codex raised it as
+    a P1 and it is right. A `CODEOWNERS` entry on its own only *requests* the
+    named reviewer; it does not stop the pull request merging without them. The
+    block comes from a branch-protection rule or ruleset on the default branch
+    that requires a pull request **and** requires review from Code Owners. So
+    CODEOWNERS is the routing and the rule is the enforcement, and A-review needs
+    both — or an equivalent that actually refuses the merge. With only the first,
+    the sentence below would have been false while reading as though the hole
+    were closed, which is worse than leaving it open and saying so.
+
+    **Neither piece exists today:** there is no `CODEOWNERS` file anywhere in
+    this repository, and this record does not assert what the default branch's
+    protection currently requires, because that is a repository setting and is
+    not readable from the tree. A ruling of A-review is therefore an
+    instruction to create both and to verify the rule refuses an unreviewed
+    merge, not to add a file and assume.
+
+    With both in place, a listener change reaches the default branch only with
+    the owner's sign-off, so the publication it carries was authorised at the
+    point the change landed.
   - **A-accept** — accept that changes to that one file publish on the next
     `dev`/`test` push, and say so where a reader will meet it. Nothing outside
     this record changes; the exposure is written down instead of closed.
@@ -292,7 +311,7 @@ hat. So:
 
 | Ruling | What happens |
 |---|---|
-| **A-review** | Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review)**. The listener path `.github/workflows/**` gains an owner-review requirement (branch protection or CODEOWNERS) **before** the workflow is written; that requirement is a separate act and is not granted by this amendment. Then the workflow. |
+| **A-review** | Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review)**. **Before** the workflow is written, `.github/workflows/**` gains an enforced owner-review requirement: a `CODEOWNERS` entry naming the owner **and** a branch-protection rule or ruleset on the default branch requiring a pull request and requiring Code Owner review — CODEOWNERS alone only requests a reviewer and does not block the merge. Neither exists today. That requirement is a separate act, is not granted by this amendment, and is not satisfied until an unreviewed merge is actually refused. Then the workflow. |
 | **A-accept** | The same three amendments, plus one sentence in `promotion-gates.json` recording that a change to the listener file itself publishes on the next `dev`/`test` push with no further authority. Status becomes **Approved (A-accept)**. Then the workflow. |
 | **A**, bare | **`WAIT`, not a pass.** A names the model but not the listener treatment, and the two differ in whether a future listener change carries publication authority. Nothing is amended and no workflow is written until the treatment is named. |
 | **B** | Amend `promotion-gates.json` to model B — republication only, and the record states plainly that `main` and `release` republish with everything else. Status becomes **Approved (B)**. Then the workflow. |
