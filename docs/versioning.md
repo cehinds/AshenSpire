@@ -150,6 +150,20 @@ What this changes, each with the check that carries it:
   one. So a tail outside the safe integer range is UNKNOWN. Bounding is the
   honest answer exactly where the digits are already gone, and the wrong one
   everywhere they survive.
+
+  **AND ORDERING HAS ONE HOME: `tools/buildversion.mjs`.** `versionTuple` and
+  `compareVersions` answer "which of these two builds is newer" for everything
+  that asks — row H whether or not the release moved, and
+  `about-changelog`'s `stampKey`, which keeps only the one fact that is its own
+  (the legacy/new *scheme* element separating `0.5.0-rc.4.1956` from `0.5.4.0`
+  within one candidate). Nothing else re-parses a release or re-coerces a
+  component. This is row B's rule — NO SECOND COPY — applied to a rule rather
+  than a value, and it was learned the expensive way: the changelog carried a
+  parallel implementation, and four consecutive review rounds fixed the gate
+  while the same defects stayed live in the copy, until the two tools certified
+  opposite answers about one pair of stamps. A stamp the shared grammar cannot
+  order is REFUSED by the changelog, never skipped — a check that goes quiet on
+  the input it cannot judge is the failure this whole section is about.
 - **The ordinal is no longer the commit count.** `bumpOrdinal` was
   `max(recorded + 1, rev-list --count)`; a per-candidate counter cannot be the
   commit count because it resets, so it is `recorded + 1` and nothing should

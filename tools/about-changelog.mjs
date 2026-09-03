@@ -11,6 +11,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+// THE ORDERING RULE HAS ONE HOME, AND IT IS NOT HERE. See stampKey below.
+import { versionTuple, compareVersions } from './buildversion.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const SCRIPT_ROOT = resolve(dirname(SCRIPT), '..');
@@ -688,21 +690,45 @@ const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
  * second, and this is the only place that fact has to be encoded.
  */
 export function stampKey(release, ordinal) {
-  const rc = /^(\d+)\.(\d+)\.(\d+)-[A-Za-z]+\.(\d+)$/.exec(release);
-  if (rc) return [Number(rc[1]), Number(rc[2]), Number(rc[4]), 0, ordinal];
-  const triple = /^(\d+)\.(\d+)\.(\d+)$/.exec(release);
-  if (!triple) return null;
-  return [Number(triple[1]), Number(triple[2]), Number(triple[3]), 1, ordinal];
+  // ONE HOME FOR "ORDER TWO BUILDS", AND IT IS tools/buildversion.mjs. This
+  // used to be a PARALLEL IMPLEMENTATION of that rule — its own release regex,
+  // its own Number() coercion, its own padded comparison — and it carried the
+  // defects of four review rounds on #579 that were fixed only in the gate:
+  //
+  //   round 6  '0.5.0-beta.4'  accepted here, folded to 0.5.4 — the very
+  //            collision the gate refuses as unrepresentable, since rc.4 folds
+  //            there too and two pre-release lines cannot share one version
+  //   round 7  compareStamps padded the shorter side with `(a[i] ?? 0)`
+  //   round 8  an ordinal past 2^53 keyed as `1e+21`, five characters that a
+  //            length-first comparison ranks BELOW a twenty-one digit tail
+  //   round 9  release components through Number(), so this tool called a
+  //            transition a RISE that the gate called a FALL
+  //
+  // Two tools certifying opposite answers about one pair of stamps is row B's
+  // defect — NO SECOND COPY — applied to a rule rather than a value, and it is
+  // why each fix kept drawing the next finding: the reviewer kept meeting the
+  // same defect class alive in the copy that had not been consolidated. So the
+  // version and the tail come from versionTuple, whole, and nothing is re-read
+  // or re-coerced here.
+  const version = versionTuple(release, ordinal);
+  if (version === null) return null;
+  // THE ONE FACT THAT IS GENUINELY THIS TOOL'S. Legacy `0.5.0-rc.4.1956` and
+  // new `0.5.4.0` are the same candidate under two spellings, so the version
+  // alone cannot separate them; the scheme element does, and it belongs to the
+  // changelog because nothing else has to read stamps written under both. It
+  // sits between the candidate and the tail so the legacy stamp sorts first
+  // WITHIN a candidate and its ordinal is never weighed against a new one.
+  const scheme = /-rc\.\d+$/.test(release) ? '0' : '1';
+  return [...version.slice(0, 3), scheme, version[3]];
 }
 
-/** Component-wise numeric compare of two stampKey tuples. */
-export function compareStamps(a, b) {
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    const d = (a[i] ?? 0) - (b[i] ?? 0);
-    if (d !== 0) return d < 0 ? -1 : 1;
-  }
-  return 0;
-}
+/**
+ * Order two stampKey tuples. The comparison itself is buildversion's — this
+ * name is kept because it is what this file's ordering means, not because the
+ * rule is different. Null when the pair cannot be ordered, which stampKey's
+ * own output can never be: it always returns five components or null.
+ */
+export const compareStamps = compareVersions;
 
 export function parseChangelog(markdown, { currentOrdinal, currentRelease = null, projecting = false } = {}) {
   const entries = [];
@@ -725,11 +751,25 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
     if (!stamp && /^\d/.test(build)) {
       throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`<release>.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
     }
+    const key = stamp ? stampKey(stamp[1], Number(stamp[2])) : null;
+    // A STAMP THIS TOOL CANNOT ORDER IS REFUSED, NOT SKIPPED. STAMP's shape is
+    // looser than the scheme — it admits any alphabetic pre-release tag and any
+    // length of ordinal — so consolidating stampKey onto buildversion's grammar
+    // made it return null for stamps this regex still matches. Left as `key:
+    // null` those receipts drop silently out of the ordering loop below, and a
+    // row that goes quiet on the input it cannot judge is the defect this whole
+    // review has been about. It throws instead: the ordering check either ranks
+    // a receipt or refuses it, and there is no third door.
+    if (stamp && key === null) {
+      throw new Error(`${where}: build stamp \`${build}\` cannot be ordered — the scheme admits three numeric components`
+        + ` (0.5.4), optionally with an rc candidate tag (0.5.0-rc.4), over a counting ordinal no larger than`
+        + ` Number.MAX_SAFE_INTEGER. tools/buildversion.mjs owns that grammar and this file does not keep a second copy of it.`);
+    }
     receipts.push({
       where, group, date, build,
       ordinal: stamp ? Number(stamp[2]) : null,
       release: stamp ? stamp[1] : null,
-      key: stamp ? stampKey(stamp[1], Number(stamp[2])) : null,
+      key,
     });
     entries.push({
       id: `pr-${pullRequest}`,
@@ -1022,9 +1062,12 @@ async function selftest() {
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
 
-  // #310 plants: the ordinal column can refuse. Four must be CAUGHT; the fifth,
-  // inverted, proves the shapes the real file uses (within-group ascent, a
-  // shared ordinal across groups, a prose stamp) still PASS.
+  // #310 plants: the ordinal column can refuse. EVERY entry below must be
+  // CAUGHT; the inverted case after the loop proves the shapes the real file
+  // uses (within-group ascent, a shared ordinal across groups, a prose stamp)
+  // still PASS. The header said "Four" while the list held seven — a count
+  // spelled beside a corpus instead of read from it, which is the defect #579
+  // fixed in buildversion-selftest and which had a second copy right here.
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
     ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
@@ -1034,6 +1077,22 @@ async function selftest() {
     ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
     ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
     ['receipt two builds ahead even while projecting (one is the rebuild to come; two is not)', `## 2026-08-20\n\n${receipt(1, '0.4.0.102')}\n`, { currentOrdinal: 100, projecting: true }],
+    // THE THREE THE SECOND COPY USED TO LET THROUGH (#579 review). STAMP's
+    // shape is looser than the scheme, so each of these matched it, keyed
+    // cleanly under the old parallel implementation, and was ordered on a
+    // value nobody could defend. Delegating to buildversion refuses them —
+    // and they are refused rather than dropped, which is why they are plants
+    // and not a quiet gap.
+    ['pre-release tag the notation cannot represent (rc.4 and beta.4 would fold to one version)',
+      `## 2026-08-20\n\n${receipt(1, '0.5.0-beta.4.1')}\n`, {}],
+    ['ordinal past the point a JSON number keeps its digits',
+      `## 2026-08-20\n\n${receipt(1, '0.5.4.9007199254740993')}\n`, {}],
+    // The pair from the round-9 report: two candidates one apart across the
+    // double's integer ceiling. The gate called this transition BACKWARD while
+    // this tool called it a rise — two checks certifying opposite answers about
+    // one pair of stamps. It is caught here now because both read one rule.
+    ['candidates one apart past the safe-integer ceiling, running backward across groups',
+      `## 2026-08-21\n\n${receipt(1, '0.5.9007199254740992.3')}\n\n## 2026-08-20\n\n${receipt(2, '0.5.9007199254740993.2')}\n`, {}],
   ];
   for (const [name, body, opts] of ordinalPlants) {
     try { parseChangelog(`# Test\n\n${body}`, opts); console.error(`MISS ${name}`); process.exitCode = 1; }

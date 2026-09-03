@@ -1063,17 +1063,31 @@ export function check(root = REPO_ROOT) {
           `UNKNOWN — ${parent.slice(0, 7)} records an ordinal with no release beside it, so its era cannot be established:`
           + ` a parent that predates the release-scoped counter and one that had the field removed look identical from here,`
           + ` and only the first is harmless. Merge a base that records its release rather than reading this as a pass.`);
-      } else if (before.release !== now.release) {
+      } else {
+        // ONE RULE, ONE PATH — the release moving or not decides the WORDING
+        // and nothing else. It used to decide the comparison too: a release
+        // change went through the version tuple while a same-release build
+        // used a bare `now.ordinal > before.ordinal`, so every guard added to
+        // the tuple protected one branch of a row that has one rule. Review on
+        // #579 walked in through the unprotected one: a tail advancing from
+        // MAX_SAFE_INTEGER to the value it rounds to is `>` its predecessor, so
+        // the row said the build ROSE — and `bumpOrdinal` then recomputes that
+        // same value forever, wedging the counter, so a defect waved through
+        // once turns every later build in the release red.
+        //
         // WHAT MUST HOLD IS THAT THE VERSION WENT UP, NOT THAT THE TAIL IS 0.
         // The counter restarts at 0 on a new candidate, so a lower tail is
-        // correct here and would be the defect anywhere else — but demanding
+        // correct there and would be the defect anywhere else — but demanding
         // EXACTLY 0 was wrong in both directions, and review on #574 named
         // both. A candidate that advances after several builds on the branch
         // lands on a non-zero tail and is perfectly ordered (`0.5.5.3` beats
         // `0.5.4.9`), yet the old form called it red. And a candidate moving
         // BACKWARD to a `.0` tail — `0.5.3.0` after `0.5.4.7` — passed, which
-        // is the one thing this row exists to refuse. Comparing the whole
-        // version answers both at once.
+        // is the one thing this row exists to refuse. Within one release the
+        // whole-version comparison reduces to the tail on its own, because the
+        // first three components are equal by construction; it does not need a
+        // second form to say so.
+        const moved = before.release !== now.release;
         const beforeV = versionTuple(before.release, before.ordinal);
         const nowV = versionTuple(now.release, now.ordinal);
         // ONE NULL CHANNEL, NOT TWO. compareVersions can also decline, so the
@@ -1095,22 +1109,22 @@ export function check(root = REPO_ROOT) {
               : `${parent.slice(0, 7)} and HEAD record versions of different shapes`;
           add(null, 'H ORDINAL INCREASES',
             `UNKNOWN — ${unreadable}, which the scheme cannot order: it admits three numeric components (0.5.4),`
-            + ` optionally with an rc candidate tag (0.5.0-rc.4), over a counting tail. Row F names the malformation`
-            + ` when it is on the CURRENT record; when it is on the parent's, this is the only row that can see it.`);
+            + ` optionally with an rc candidate tag (0.5.0-rc.4), over a counting tail no larger than`
+            + ` Number.MAX_SAFE_INTEGER. Row F names the malformation when it is on the CURRENT record;`
+            + ` when it is on the parent's, this is the only row that can see it.`);
           return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
         }
         const rose = order > 0;
+        const where = moved
+          ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD`
+          : `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
         add(rose, 'H ORDINAL INCREASES',
           rose
-            ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`
-            : `the release moved '${before.release}' → '${now.release}' and the version went ${beforeV.join('.')} → ${nowV.join('.')},`
-              + ` which does not rise. A new candidate may restart the tail; it may not move the build backwards.`);
-      } else {
-        add(now.ordinal > before.ordinal, 'H ORDINAL INCREASES',
-          now.ordinal > before.ordinal
-            ? `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD, and the ordinal went ${before.ordinal} → ${now.ordinal} within release '${now.release}'`
-            : `${BUNDLE} CHANGED between ${parent.slice(0, 7)} and HEAD and the ordinal went ${before.ordinal} → ${now.ordinal} within one release '${now.release}'.`
-              + ` Two different builds that do not sort apart is the whole defect this scheme replaced.`);
+            ? `${where}, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`
+            : `${where}, and the version went ${beforeV.join('.')} → ${nowV.join('.')}, which does not rise.`
+              + (moved
+                ? ` A new candidate may restart the tail; it may not move the build backwards.`
+                : ` Two different builds that do not sort apart is the whole defect this scheme replaced.`));
       }
     }
   } catch (e) {

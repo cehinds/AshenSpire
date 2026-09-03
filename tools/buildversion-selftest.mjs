@@ -502,6 +502,17 @@ function ordinalHistory() {
     [(j) => ({ ...j, release: FOLDED, ordinal: PLAIN_BUT_SMALLER }), 'unknown',
       `the PARENT records a tail past the point Number stops rendering digits ('${String(EXPONENTIAL)}' → '${String(PLAIN_BUT_SMALLER)}', a DROP) while the release changes spelling only (${RC_FORM} → ${FOLDED}) — the verdict falls entirely to a tail that can no longer be read`,
       (j) => ({ ...j, release: RC_FORM, ordinal: EXPONENTIAL })],
+    // THE BRANCH THE GUARDS NEVER REACHED. Every case above changes the
+    // release, and until #579's last round only that path built a tuple — a
+    // same-release build was compared with a bare `now.ordinal >
+    // before.ordinal`, so each bound added to versionTuple protected one branch
+    // of a row that has one rule. A tail advancing to the value it rounds to is
+    // `>` its predecessor, so the row said the build ROSE; worse, bumpOrdinal
+    // then recomputes that same value forever, so one wave-through wedges the
+    // counter and turns every later build in the release red.
+    [(j) => ({ ...j, ordinal: Number.MAX_SAFE_INTEGER + 1 }), 'unknown',
+      `the tail advances WITHIN one release to a value it cannot be counted past (${Number.MAX_SAFE_INTEGER} → ${Number.MAX_SAFE_INTEGER + 1}, which is where +1 stops moving) — the release never changes, so this is the branch that used to skip the tuple entirely`,
+      (j) => ({ ...j, ordinal: Number.MAX_SAFE_INTEGER })],
   ];
   if (BACKWARD === null) {
     console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);
