@@ -2872,6 +2872,53 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(loaded.equipmentAttackSlotCount, bornWith, 'and its quota is recovered from its own deck');
     eq(loaded.equipmentAttackSlotCount, loaded.deck.filter((c) => c.equipmentRole === 'attack').length,
       'which is exactly what the deck holds');
+    // AND THE SNAPSHOT, NOT ONLY THE RUN. A pre-field save with a fight in
+    // progress healed its run and resumed a combat still holding `undefined`:
+    // restoreCombatSnapshot reads `saved.equipmentAttackSlotCount`, and the
+    // migration used the recovered number for its restamp and then dropped it.
+    // Healing the door and leaving the consumer is the half-fix this work keeps
+    // making, so the resolved value is written where the resume looks.
+    const midFight = createRunState({ seed: 31, classId: 'reaver', registries: REG });
+    const midBorn = midFight.equipmentAttackSlotCount;
+    const fight = createCombat({
+      registries: REG,
+      rng: createRng(31),
+      enemyIds: [contentBundle.enemies[0].id],
+      player: {
+        classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp,
+        maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina,
+        energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn,
+        damageBySchoolAdd: midFight.damageBySchoolAdd,
+        equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot,
+        equipmentAttackSlotCount: midFight.equipmentAttackSlotCount,
+        equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels,
+        deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks,
+        flaskCharges: midFight.flaskCharges, loadout: midFight.loadout,
+      },
+    });
+    commitCombatSnapshot({ run: midFight, combat: fight, nodeId: 'n1', encounterId: contentBundle.encounters[0].id });
+    delete midFight.combatEntered.snapshot.equipmentAttackSlotCount; // pre-field shape
+    delete midFight.equipmentAttackSlotCount;
+    const fightSaves = createSaveManager(createMemoryStorage());
+    fightSaves.saveRun(midFight, createRng(31));
+    const resumed = fightSaves.loadRun(REG);
+    assert(resumed != null, 'the mid-fight legacy save loads');
+    eq(resumed.equipmentAttackSlotCount, midBorn, 'the run is healed');
+    // The RESUME is what matters, and it reads the run's number when the
+    // snapshot has none. Healing the snapshot itself would make migration
+    // rewrite a snapshot it already understands — tools/weapon-card-packages
+    // asserts against exactly that, and caught the first version of this fix.
+    eq(resumed.combatEntered.snapshot.equipmentAttackSlotCount, undefined,
+      'the stored snapshot is left byte-identical, not rewritten by the load');
+    const restored = restoreCombatSnapshot({
+      registries: REG,
+      rng: createRng(31),
+      snapshot: resumed.combatEntered.snapshot,
+      fallbackAttackSlotCount: resumed.equipmentAttackSlotCount,
+    });
+    eq(restored.equipmentAttackSlotCount, midBorn,
+      'and the resumed combat still gets the birth quota, from the run that is its authority');
+
     // Repaired at the door means every downstream reader gets it for free —
     // combat, the snapshot, and the panel — with no second derivation.
     stampDeck(REG, loaded);
