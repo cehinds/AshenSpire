@@ -1426,6 +1426,36 @@ function startingDeckFindings(registries) {
     }
   }
   problems.push(...boundGrantProblems(registries));
+
+  // A DESIGN QUESTION, REFUSED RATHER THAN DECIDED. Package `grantedCards` are
+  // the only grants that BOTH count against the starting budget AND leave with
+  // the equipment: reconcileGrantedCards sweeps them out on a swap, while the
+  // bound-table grants dealt at birth stay. That combination has no consistent
+  // answer available to me:
+  //
+  //   · counted against the budget, they displace filler at birth, so removing
+  //     the weapon leaves a deck SMALLER than startingDeckSize (10 → 7);
+  //   · not counted, birth exceeds startingDeckSize with growToFit off.
+  //
+  // Both have been reported as defects, and both readings are right — what is
+  // missing is a decision about what a package grant IS: a card the run owns,
+  // or a card the weapon lends. Restoring filler on removal is not a free fix
+  // either, since the replacement would have to be attack or guard and that
+  // moves the attack count SPEC pins as invariant.
+  //
+  // No shipped armament authors grantedCards; the seam is dormant. So the
+  // combination is refused by name, with the question stated, rather than
+  // silently resolved one way by whoever last touched this file.
+  if (cfg.enabled === true) {
+    for (const piece of (registries.equipment || {}).armaments || []) {
+      const pkg = piece && piece.weaponCardPackage;
+      const granted = pkg && pkg.grantedCards;
+      if (Array.isArray(granted) && granted.length) {
+        problems.push(`equipment.armaments.${piece.id}: weaponCardPackage.grantedCards is not yet supported alongside the composed starting deck — these cards count against startingDeckSize at birth but leave with the weapon on a swap, so the deck would end up ${granted.reduce((n, g) => n + (g.count || 1), 0)} card(s) short of the authored ${registries.balance.startingDeckSize}; whether a package grant is a card the RUN owns or one the WEAPON lends is a design decision, and the composed deck needs it answered before this seam can carry data`);
+      }
+    }
+  }
+
   if (cfg.enabled !== true || problems.length) return { problems, warnings };
 
   // WEAPON ARTS, NAMED RATHER THAN COUNTED. The package layer mints art

@@ -64,7 +64,7 @@ import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan,
+  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan, WeaponCardPackageModel,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
@@ -2494,15 +2494,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       };
       return createRegistries(b);
     };
+    // SUPERSEDED BY 26u, AND THE HISTORY IS THE POINT. This round made package
+    // grants count against the budget so birth hit the authored size — and
+    // round sixteen showed that counting them is exactly what makes the deck
+    // SHRINK when the weapon leaves, because they are the only grants that both
+    // count and depart. The budget arithmetic below is still live and still
+    // right; what changed is that the composed deck now refuses the seam
+    // outright rather than shipping either half of the contradiction.
     const fits = packaged(3);
-    eq(validateEquipment(fits).length, 0, 'three package grants still fit a ten-card deck');
-    eq(createRunState({ seed: 1, classId: 'reaver', registries: fits }).deck.length,
-      contentBundle.balance.startingDeckSize,
-      'and the deck is the authored size, because the filler made room for them');
-
-    const busts = validateEquipment(packaged(8)).join(' | ');
-    assert(/from an equipped weapon package/.test(busts),
-      `an overrun names the package as the cause — said ${JSON.stringify(busts.slice(0, 200))}`);
+    const fitsSaid = validateEquipment(fits).join(' | ');
+    assert(/grantedCards is not yet supported alongside the composed starting deck/.test(fitsSaid),
+      `the composed deck refuses package grants by name — said ${JSON.stringify(fitsSaid.slice(0, 200))}`);
+    assert(/3 card\(s\) short of the authored 10/.test(fitsSaid),
+      'and the message does the arithmetic, so the size that would be lost is stated rather than implied');
 
     // WEAPON ARTS ARE NAMED, NOT COUNTED, AND THAT IS DELIBERATE. Arts are
     // minted by the same function and are equally real cards, but two SHIPPED
@@ -2621,7 +2625,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const powerSaid = validateEquipment(createRegistries(granting)).join(' | ');
     assert(/removed from play when played/.test(powerSaid),
       `granting a Power is refused by name — said ${JSON.stringify(powerSaid.slice(0, 200))}`);
-    // A skill grant is unaffected: this closes one lifecycle, not the seam.
+    // A skill grant is refused for a DIFFERENT reason (26u: the composed deck
+    // cannot yet carry package grants at all), so the lifecycle rule is checked
+    // where it is the only rule in play — at the model door, which knows nothing
+    // about the composed deck.
     const ordinary = JSON.parse(JSON.stringify(contentBundle));
     const ordinaryPiece = ordinary.equipment.armaments.find((p) => p.id === 'straightSword');
     ordinaryPiece.weaponCardPackage = {
@@ -2629,7 +2636,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       fillerAttackProfileId: ordinaryPiece.attackProfile,
       grantedCards: [{ cardId: 'defend', count: 1 }],
     };
-    eq(validateEquipment(createRegistries(ordinary)).length, 0, 'an ordinary grant still passes');
+    const ordinaryReg = createRegistries(ordinary);
+    const ordinarySaid = validateEquipment(ordinaryReg).join(' | ');
+    assert(!/removed from play when played/.test(ordinarySaid),
+      'an ordinary skill grant is not refused for its lifecycle');
+    assert(WeaponCardPackageModel.fromPiece(ordinaryReg, ordinaryReg.equipment.armaments
+      .find((p) => p.id === 'straightSword')).grantedCards.length === 1,
+      'and the package model accepts it — the lifecycle rule closes one card type, not the seam');
   });
 
   // ---- 26q. the twelfth round: depth, and the panel telling the truth ----
@@ -2829,6 +2842,52 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(REG, loaded);
     eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, bornWith,
       'so a restamp after loading plans the recovered quota');
+  });
+
+  // ---- 26u. the sixteenth round: a question refused, not answered ---------
+  test('26u. package grants and the composed deck are refused together, with the reason stated', () => {
+    // TWO REVIEW FINDINGS THAT CANNOT BOTH BE SATISFIED. Round nine: package
+    // grants must count against startingDeckSize, or birth overruns it. Round
+    // sixteen: counting them is exactly what makes the deck SHRINK when the
+    // weapon leaves, because they are the only grants that both count at birth
+    // AND depart on a swap — bound-table grants are dealt as ordinary cards and
+    // stay. Both readings are correct. What is missing is a decision about what
+    // a package grant IS, and that is not mine to make, so it is refused with
+    // the question written down.
+    const packaged = JSON.parse(JSON.stringify(contentBundle));
+    const piece = packaged.equipment.armaments.find((p) => p.id === 'straightSword');
+    piece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: piece.attackProfile,
+      grantedCards: [{ cardId: 'defend', count: 3 }],
+    };
+    const said = validateEquipment(createRegistries(packaged)).join(' | ');
+    assert(/grantedCards is not yet supported alongside the composed starting deck/.test(said),
+      `the combination is refused by name — said ${JSON.stringify(said.slice(0, 200))}`);
+    assert(/design decision/.test(said), 'and the message says why, rather than reading as a bug');
+
+    // THE DEFECT IT PREVENTS, still demonstrable one layer down: with the rule
+    // off, this content builds a ten-card deck that becomes seven on a swap —
+    // below the authored size, and against the SPEC sentence this branch kept.
+    const legacyPath = JSON.parse(JSON.stringify(packaged));
+    legacyPath.balance.equipment.startingDeck.enabled = false;
+    const legacyReg = createRegistries(legacyPath);
+    assert(!validateEquipment(legacyReg).some((p) => /grantedCards is not yet supported/.test(p)),
+      'the refusal is scoped to the composed path — the legacy deck is unaffected by it');
+
+    // And the seam itself is intact: the package model still reads the grants,
+    // so nothing here deletes the contract, it gates one combination.
+    const model = WeaponCardPackageModel.fromPiece(legacyReg,
+      legacyReg.equipment.armaments.find((p) => p.id === 'straightSword'));
+    eq(model.grantedCards.length, 1, 'the package still declares its grants');
+    eq(model.grantedCards[0].count, 3, 'with the authored count');
+
+    // The shipped bundle authors none, which is why this costs nothing today.
+    assert(!(REG.equipment.armaments || []).some((p) => {
+      const pkg = p && p.weaponCardPackage;
+      return pkg && Array.isArray(pkg.grantedCards) && pkg.grantedCards.length;
+    }), 'no shipped armament authors package grants, so the gate is dormant');
+    eq(validateEquipment(REG).length, 0, 'and the shipped bundle still validates clean');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
