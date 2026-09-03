@@ -237,7 +237,7 @@ export function extractTemplateTokens(template) {
  *
  * Four rounds of review found the same shape at four addresses: a pass that
  * exists to ANSWER questions about content, crashing on content instead
- * (`dropOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
+ * (`sourceOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
  * tag `source`). Each was a real gap and each got a named rule, but fixing them
  * one at a time is how the fifth arrives. Malformed content is infinite and this
  * pass reads hundreds of fields, so the guarantee cannot rest on having guarded

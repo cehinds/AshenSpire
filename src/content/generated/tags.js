@@ -217,5 +217,45 @@ export const tags = [
     "color": "B8B0A0",
     "glyph": "▣",
     "blurb": "What this piece IS: the Armoury and the smith name it Armor."
+  },
+  {
+    "id": "from:global",
+    "domain": "grantSource",
+    "label": "Global",
+    "color": "B8B0A0",
+    "glyph": "🌐",
+    "blurb": "Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants."
+  },
+  {
+    "id": "from:relic",
+    "domain": "grantSource",
+    "label": "Relic",
+    "color": "C9A227",
+    "glyph": "◈",
+    "blurb": "Carried in by the starting relic."
+  },
+  {
+    "id": "from:armor",
+    "domain": "grantSource",
+    "label": "Armor",
+    "color": "7FA8C9",
+    "glyph": "▣",
+    "blurb": "Bound to the outfit the run begins wearing."
+  },
+  {
+    "id": "from:weapon",
+    "domain": "grantSource",
+    "label": "Weapon",
+    "color": "C9502E",
+    "glyph": "⚔",
+    "blurb": "Bound to an armament in hand at creation."
+  },
+  {
+    "id": "from:class",
+    "domain": "grantSource",
+    "label": "Class",
+    "color": "9FC3E8",
+    "glyph": "✦",
+    "blurb": "The class signature card."
   }
 ];

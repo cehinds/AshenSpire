@@ -1368,11 +1368,23 @@ export function startingDeckWarnings(registries) {
 }
 
 /**
- * The grant sources a composed deck can draw from, in the order grantRefsFor
- * pushes them. `dropOrder` names these and nothing else; it is the vocabulary
- * an overrun message reads back to the author.
+ * grantSourceIds(registries) -> [tagId]
+ *
+ * The vocabulary of "where a starting card came from", READ FROM THE TAG
+ * TABLES rather than typed here. It used to be a frozen array in this file,
+ * which is the shape the owner ruled against: adding a sixth source meant
+ * editing code. It is now a domain (`grantSource`) with a row per source, so a
+ * new one is a spreadsheet line like every other word in the game.
+ *
+ * Authoring order is the vocabulary's order, and that is the order bound cards
+ * are dealt in — `sourceOrder` in balance may re-rank them, but the legal set
+ * is whatever the registry holds.
  */
-const GRANT_SOURCES = ['global', 'relic', 'armor', 'weapon', 'class'];
+function grantSourceIds(registries) {
+  return ((registries || {}).tags || [])
+    .filter((tag) => tag && tag.domain === 'grantSource')
+    .map((tag) => tag.id);
+}
 
 function startingDeckFindings(registries) {
   const problems = [];
@@ -1380,9 +1392,8 @@ function startingDeckFindings(registries) {
   const cfg = ((registries.balance || {}).equipment || {}).startingDeck;
   if (!cfg) return { problems, warnings };
   if (typeof cfg.enabled !== 'boolean') problems.push('startingDeck.enabled must be boolean');
-  if (typeof cfg.growToFit !== 'boolean') problems.push('startingDeck.growToFit must be boolean');
-  if (!Number.isInteger(cfg.minFiller) || cfg.minFiller < 0) {
-    problems.push(`startingDeck.minFiller must be a non-negative integer (got ${cfg.minFiller})`);
+  if (cfg.oddFillerGoesTo !== undefined && !['attack', 'guard'].includes(cfg.oddFillerGoesTo)) {
+    problems.push(`startingDeck.oddFillerGoesTo must be 'attack' or 'guard' (got ${JSON.stringify(cfg.oddFillerGoesTo)}) — it names which role wins the remainder when the cap leaves an odd number of base cards`);
   }
   // The DECK SIZE, held here because the composed path is now the only reader of
   // it. The legacy roleCopies sum used to imply this — a fractional size could
@@ -1390,18 +1401,18 @@ function startingDeckFindings(registries) {
   // path being off (round four) removed the implication without replacing it.
   // `10.5` then validated clean and planned `guardCount: 4.5`, which the copy
   // loop turned into five guards and an eleven-card deck.
-  // dropOrder is only ever READ to name the sources in an overrun message, so a
-  // malformed one used to surface as a TypeError out of `.join` rather than as
-  // a content problem — validateEquipment crashed instead of answering. It is a
-  // list of grant sources; anything else is named here, and the message site is
-  // defensive besides, so a future reader cannot reintroduce the throw.
-  if (cfg.dropOrder !== undefined) {
-    if (!Array.isArray(cfg.dropOrder)) {
-      problems.push(`startingDeck.dropOrder must be an array of grant sources (got ${JSON.stringify(cfg.dropOrder)}) — it names the order an author should drop grants in when a kit overruns`);
+  // sourceOrder is read by grantRefsFor to order the bound cards it deals, and a
+  // malformed one used to surface as a TypeError rather than a content problem.
+  // The vocabulary is the grantSource tag domain, so this validates against the
+  // registry rather than a list typed in this file.
+  if (cfg.sourceOrder !== undefined) {
+    const legal = grantSourceIds(registries);
+    if (!Array.isArray(cfg.sourceOrder)) {
+      problems.push(`startingDeck.sourceOrder must be an array of grant-source tags (got ${JSON.stringify(cfg.sourceOrder)}) — it names the order bound cards are dealt in`);
     } else {
-      for (const source of cfg.dropOrder) {
-        if (!GRANT_SOURCES.includes(source)) {
-          problems.push(`startingDeck.dropOrder names unknown grant source '${source}' (legal: ${GRANT_SOURCES.join(', ')})`);
+      for (const source of cfg.sourceOrder) {
+        if (!legal.includes(source)) {
+          problems.push(`startingDeck.sourceOrder names unknown grant source '${source}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
         }
       }
     }
@@ -1435,99 +1446,44 @@ function startingDeckFindings(registries) {
   }
   problems.push(...boundGrantProblems(registries));
 
-  // A DESIGN QUESTION, REFUSED RATHER THAN DECIDED. Package `grantedCards` are
-  // the only grants that BOTH count against the starting budget AND leave with
-  // the equipment: reconcileGrantedCards sweeps them out on a swap, while the
-  // bound-table grants dealt at birth stay. That combination has no consistent
-  // answer available to me:
-  //
-  //   · counted against the budget, they displace filler at birth, so removing
-  //     the weapon leaves a deck SMALLER than startingDeckSize (10 → 7);
-  //   · not counted, birth exceeds startingDeckSize with growToFit off.
-  //
-  // Both have been reported as defects, and both readings are right — what is
-  // missing is a decision about what a package grant IS: a card the run owns,
-  // or a card the weapon lends. Restoring filler on removal is not a free fix
-  // either, since the replacement would have to be attack or guard and that
-  // moves the attack count SPEC pins as invariant.
-  //
-  // No shipped armament authors grantedCards; the seam is dormant. So the
-  // combination is refused by name, with the question stated, rather than
-  // silently resolved one way by whoever last touched this file.
-  if (cfg.enabled === true) {
-    for (const piece of (registries.equipment || {}).armaments || []) {
-      const pkg = piece && piece.weaponCardPackage;
-      const granted = pkg && pkg.grantedCards;
-      if (Array.isArray(granted) && granted.length) {
-        // Count only entries shaped like grants. A malformed one (`[null]`, a
-        // missing cardId) is WeaponCardPackageModel's to name, and this
-        // diagnostic must not throw on its way to saying something else.
-        const shortfall = granted.reduce((n, g) => n + (g && Number.isInteger(g.count) ? g.count : 1), 0);
-        problems.push(`equipment.armaments.${piece.id}: weaponCardPackage.grantedCards is not yet supported alongside the composed starting deck — these cards count against startingDeckSize at birth but leave with the weapon on a swap, so the deck would end up ${shortfall} card(s) short of the authored ${registries.balance.startingDeckSize}; whether a package grant is a card the RUN owns or one the WEAPON lends is a design decision, and the composed deck needs it answered before this seam can carry data`);
-      }
-    }
-  }
-
   if (cfg.enabled !== true || problems.length) return { problems, warnings };
 
-  // WEAPON ARTS, NAMED RATHER THAN COUNTED. The package layer mints art
-  // instances into the starting deck alongside its grants, and they are real
-  // cards — but two shipped classes already carry one, which puts their decks at
-  // eleven against an authored ten. That is older than this branch
-  // (tools/class-loadouts.mjs is red about exactly it on origin/dev) and it is a
-  // content question, not a validation bug: either the size is wrong or the art
-  // should not count toward it. Refusing here would fail the shipped bundle over
-  // a call this branch has no standing to make, and staying silent is how it
-  // went unnoticed. So it is stated, per class, and left to its owner.
+  // NO BUDGET REFUSAL, AND NO WEAPON-ART WARNING. Both existed to police a cap
+  // that no longer works that way: the cap governs how many BASE cards are
+  // minted, not how many cards a run may begin with. Equipment that fills or
+  // exceeds it simply leaves no room for strikes and defends, which is a
+  // balance question for whoever authors the weapons rather than something
+  // validation can answer. The starseer and herald decks that read 11 against
+  // an authored 10 were never wrong — they are 10 base cards' worth of cap with
+  // one weapon art on top.
+  //
+  // What remains worth saying is what the composed deck WILL be, per class, so
+  // an author can see the shape their content produces without starting a run.
+  // Reported over EVERY loadout a player can begin in, not just the baseline —
+  // the enumeration that four review rounds went into building for the budget
+  // check. The budget is gone; the enumeration is not, because the question it
+  // answers ("what can a player actually start in") is the same one, and a kit
+  // that deals no base cards is worth seeing whichever kit it is.
+  const seenShape = new Set();
   for (const classId of registries.classes.ids()) {
+    let candidates = [];
     // A validation pass never throws on bad content — a bundle whose slots or
-    // profiles are broken is named by the rules that own them, and this one has
-    // nothing useful to say about it.
-    let arts = 0;
-    let loadout = null;
-    let plan = null;
-    try {
-      loadout = createLoadout(registries, classId);
-      arts = desiredGrantInstances(registries, { loadout, class: classId })
-        .filter((inst) => inst.equipmentRole === 'weaponArt').length;
-      plan = arts ? startingDeckPlan(registries, loadout, classId) : null;
-    } catch { continue; }
-    if (!arts) continue;
-    if (plan && plan.size + arts > registries.balance.startingDeckSize) {
-      warnings.push(`${classId}: the weapon-art layer adds ${arts} card(s) on top of a ${plan.size}-card composed plan, so this class begins with ${plan.size + arts} against an authored startingDeckSize of ${registries.balance.startingDeckSize} — arts are not in the composed budget, and whether they should be is a content call`);
-    }
-  }
-
-  // The budget itself, against EVERY loadout a player can actually begin in —
-  // not just the baseline kit. An alternate kit is chosen at character creation
-  // and can carry different grants, so checking only the baseline leaves the
-  // one a player picks free to blow the budget and eat the promised minFiller.
-  const order = (Array.isArray(cfg.dropOrder) ? cfg.dropOrder : []).join(' → ');
-  const seenDetail = new Set();
-  for (const classId of registries.classes.ids()) {
-    for (const { label, loadout } of selectableStartingLoadouts(registries, classId)) {
-      let plan;
-      try {
-        plan = startingDeckPlan(registries, loadout, classId);
-      } catch (e) {
+    // profiles are broken is named by the rules that own them.
+    try { candidates = selectableStartingLoadouts(registries, classId); } catch { continue; }
+    for (const { label, loadout } of candidates) {
+      let plan = null;
+      try { plan = startingDeckPlan(registries, loadout, classId); } catch (e) {
         problems.push(`startingDeck: cannot plan '${classId}' ${label}: ${e.message}`);
         continue;
       }
-      if (!plan || !plan.overrun) continue;
-      const granted = plan.grants.length + (plan.packageGrants || 0);
-      const fromPackage = plan.packageGrants ? ` (${plan.packageGrants} of them from an equipped weapon package)` : '';
-      const detail = `class '${classId}' ${label} grants ${granted} card(s)${fromPackage} and minFiller is `
-        + `${plan.minFiller}, needing ${granted + plan.minFiller} of `
-        + `startingDeckSize ${registries.balance.startingDeckSize}`;
-      // One line per distinct overrun. Without this an overrun that does not
-      // depend on the armour repeats once per combination, burying the ones
-      // that do.
-      if (seenDetail.has(detail)) continue;
-      seenDetail.add(detail);
-      if (plan.grewToFit) warnings.push(`startingDeck: ${detail}; growToFit raised the deck to ${plan.size}`);
-      else problems.push(`startingDeck: ${detail}; raise startingDeckSize, lower minFiller, or drop a grant (${order})`);
+      if (!plan || plan.filler > 0) continue;
+      const detail = `startingDeck: class '${classId}' ${label} begins with ${plan.size} card(s), all equipment-bound — its gear meets the ${plan.cap}-card cap on its own, so no base strikes or defends are dealt`;
+      if (seenShape.has(detail)) continue;
+      seenShape.add(detail);
+      warnings.push(detail);
     }
   }
+
   return { problems, warnings };
 }
 
@@ -1703,7 +1659,7 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // quota by quotaRefs, so counting them again would charge them twice.
   if (techniqueRow && techniqueRow.profile) {
     grants.push({
-      source: 'weapon',
+      source: 'from:weapon',
       cardId: techniqueRow.profile.baseCardId,
       equipmentRole: 'technique',
       profileId: techniqueRow.profile.id,
@@ -1716,7 +1672,7 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // every piece today — the seam is live and the data is empty by design.
   for (const piece of equippedPieces(registries, loadout, classId)) {
     for (const cardId of boundGrantCardIds(registries, piece, piece.kind === 'armor' ? 'armour' : 'armament')) {
-      grants.push({ source: piece.kind === 'armor' ? 'armor' : 'weapon', cardId, sourceId: piece.id });
+      grants.push({ source: piece.kind === 'armor' ? 'from:armor' : 'from:weapon', cardId, sourceId: piece.id });
     }
   }
 
@@ -1726,10 +1682,22 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // needs rather than trusting that someone else checked.
   const globalGrants = (cfg.global || {}).grants;
   if (Array.isArray(globalGrants)) {
-    for (const cardId of globalGrants) grants.push({ source: 'global', cardId });
+    for (const cardId of globalGrants) grants.push({ source: 'from:global', cardId });
   }
-  if (cls.startingSignatureCard) grants.push({ source: 'class', cardId: cls.startingSignatureCard });
-  return grants;
+  if (cls.startingSignatureCard) grants.push({ source: 'from:class', cardId: cls.startingSignatureCard });
+
+  // DEALT IN THE AUTHORED ORDER. `sourceOrder` is a list of grantSource tag ids;
+  // a source it does not name is dealt last, in the order it was pushed. Stable,
+  // so two grants from the same source keep their authored sequence.
+  const order = Array.isArray(cfg.sourceOrder) ? cfg.sourceOrder : [];
+  const rank = (grant) => {
+    const at = order.indexOf(grant.source);
+    return at === -1 ? order.length : at;
+  };
+  return grants
+    .map((grant, index) => ({ grant, index }))
+    .sort((a, b) => (rank(a.grant) - rank(b.grant)) || (a.index - b.index))
+    .map((row) => row.grant);
 }
 
 /**
@@ -1743,59 +1711,56 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
 export function startingDeckPlan(registries, loadout, classId) {
   const cfg = startingDeckConfig(registries);
   if (!cfg) return null;
-  const authoredSize = Number(registries.balance.startingDeckSize);
-  const minFiller = Number(cfg.minFiller) || 0;
+  const cap = Number(registries.balance.startingDeckSize);
   const rows = equipmentKitPlan(registries, loadout, classId);
   const grants = grantRefsFor(registries, loadout, classId, cfg, rows.find((row) => row.role === 'technique'));
 
-  // THE PACKAGE LAYER ADDS REAL CARDS TOO, so the budget counts them — from the
-  // SAME function that mints them (desiredGrantInstances), never a second list
-  // that could drift. They are counted but NOT pushed into `grants`: this plan
-  // is also the deal-out list, and reconcileGrantedCards installs these
-  // instances itself at run creation. Counting reserves the room; pushing would
-  // deal each card twice.
-  //
-  // Weapon ARTS are excluded on purpose, and the exclusion is the honest half of
-  // this. Arts are minted by the same function and are equally real cards — but
-  // two shipped classes (starseer, herald) already carry one, which puts them at
-  // eleven cards against an authored size of ten. That discrepancy predates this
-  // branch (tools/class-loadouts.mjs is red about it on origin/dev), and making
-  // it a boot refusal here would fail the shipped bundle over a content question
-  // this branch has no business answering. It is reported as a warning instead —
-  // visible, named, and someone's call rather than mine.
-  // A package that cannot be read is the WeaponCardPackageModel's own refusal to
-  // make, by name, wherever it is asked; counting is not the place to raise it,
-  // and swallowing it here would hide it — so the throw propagates exactly as it
-  // did before, and the caller that already wraps this reports it.
-  const packageGrants = desiredGrantInstances(registries, { loadout, class: classId })
-    .filter((inst) => inst.equipmentRole === 'granted').length;
+  // Cards the package layer mints (reconcileGrantedCards installs them itself at
+  // run creation, so they are COUNTED here and never pushed into `grants` —
+  // pushing would deal each card twice). Weapon ARTS are counted the same way:
+  // they are equally real cards in the opening hand, and under the cap rule
+  // below there is nothing to refuse, so there is no longer any reason to treat
+  // them differently from grants. That asymmetry existed only to avoid failing
+  // the shipped bundle, and the rule that made it fail is gone.
+  const packageCards = desiredGrantInstances(registries, { loadout, class: classId }).length;
 
-  const needed = grants.length + packageGrants + minFiller;
-  const overrun = needed > authoredSize;
-  // growToFit === true buys the shortfall with deck size; false keeps the size
-  // and lets validateEquipment refuse the kit instead.
-  const size = overrun && cfg.growToFit === true ? needed : authoredSize;
-  const filler = Math.max(0, size - grants.length - packageGrants);
+  // THE CAP APPLIES TO THE BASE CARDS, AND ONLY AT CREATION (owner ruling,
+  // 2026-09-03). Bound cards are dealt first and are never capped, dropped or
+  // refused; the cap decides how many base strikes and defends are minted on
+  // top of them, and nothing else. If equipment alone meets or exceeds the cap,
+  // no base cards are minted and the run begins with only its unique cards —
+  // that is a balance question for whoever authors the weapons, not an error.
+  //
+  // Which is why `growToFit` and `minFiller` are gone. Both existed to decide
+  // who yields when grants got greedy: the deck size, or the content author.
+  // Nobody yields now. A floor of basic cards is not a rule either — it is
+  // simply what the cap leaves over, and the unarmed profiles are what those
+  // cards LOOK like when a hand is bare.
+  const bound = grants.length + packageCards;
+  const filler = Math.max(0, cap - bound);
 
   const bias = Number(
     ((cfg.classes || {})[classId] || {}).strikeBias ?? cfg.defaultStrikeBias ?? 0.5
   );
-  // Ties round toward attack; deterministic, and documented in balance.js.
-  const attackCount = Math.min(filler, Math.max(0, Math.round(filler * bias)));
+  // An odd filler count cannot split evenly, so one role wins the remainder.
+  // Authored, not assumed: `oddFillerGoesTo` names it and defaults to attack.
+  const oddGoesToAttack = (cfg.oddFillerGoesTo ?? 'attack') !== 'guard';
+  const exact = filler * bias;
+  const attackCount = Math.min(filler, Math.max(0, oddGoesToAttack
+    ? Math.round(exact)
+    : Math.ceil(exact - 0.5)));
   return Object.freeze({
-    size,
+    size: bound + filler,
     grants: Object.freeze(grants.map(Object.freeze)),
     filler,
     attackCount,
     guardCount: filler - attackCount,
     bias,
-    minFiller,
-    // Counted into the budget, dealt by reconcileGrantedCards rather than by
-    // this plan — so the overrun message can name them without `grants`
-    // pretending to be the deal-out list they are not on.
-    packageGrants,
-    overrun,
-    grewToFit: overrun && cfg.growToFit === true,
+    oddGoesToAttack,
+    cap,
+    // Counted against the cap, dealt by reconcileGrantedCards rather than by
+    // this plan, so `grants` stays the deal-out list it is used as.
+    packageCards,
   });
 }
 

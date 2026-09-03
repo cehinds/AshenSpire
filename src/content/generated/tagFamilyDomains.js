@@ -77,5 +77,9 @@ export const tagFamilyDomains = [
   {
     "family": "effect",
     "domain": "card"
+  },
+  {
+    "family": "grant",
+    "domain": "grantSource"
   }
 ];

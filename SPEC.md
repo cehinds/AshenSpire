@@ -308,19 +308,38 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
 
-**Equipped weapon card packages.** The attack-slot count is the one the run was **composed
-with at birth**, recorded on the run as `equipmentAttackSlotCount` and read — never re-derived —
-by every restamp. Under the composed starting deck
-(`balance.equipment.startingDeck.enabled`) that number comes from the plan: fixed grants are
-dealt first and the remaining budget splits between attack and guard by the class `strikeBias`,
-so it is **not** `balance.equipment.roleCopies.attack`, which describes the legacy fixed
-distribution and is read only when the composed path is off. Deck size is likewise
-`balance.startingDeckSize` unless `growToFit` is on and grants overrun it, in which case the
-deck grows to fit and `validateEquipment` reports the overrun as a warning; with `growToFit`
-off an overrun is refused at the boot door instead. What has not changed is the invariant that
-matters at runtime: **changing equipment mid-run never changes the attack count or the deck
-size** — a swap re-skins the slots the run was born with, and the birth quota is what makes
-that true. `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
+**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
+strikes and defends the game mints for you — and it applies at **character creation and
+nowhere else**. The order is fixed:
+
+1. **Bound cards are dealt first.** Anything equipment brings: cards from a piece carrying
+   the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its
+   `weaponArtDefaults`, the class signature, and `startingDeck.global.grants`. These are
+   never capped, never dropped and never refused. They belong to the equipment, not the run.
+2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between
+   attack and guard by the class's `strikeBias`. An odd remainder goes to whichever role
+   `startingDeck.oddFillerGoesTo` names — `attack` by default.
+3. **What those base cards ARE comes from the equipped profile** — a sword-wielder's base
+   attacks are Slashing Strikes, and a bare hand's are the `unarmedProfiles` set. That is
+   the whole of "unarmed fills in": it supplies the identity of base cards, it does not top
+   up a floor.
+
+If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
+with only its equipment cards. That is a **balance question for whoever authors the gear**,
+not a validation failure — `validateEquipment` says so as a warning, naming the class and
+the loadout, and refuses nothing.
+
+**After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
+smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
+attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
+attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
+read, never re-derived), so equipment never changes how many attacks you hold.
+
+Everything above is data. The cap, the per-class bias and its default, the odd-split
+winner, and the grant-source vocabulary are all authored — the sources are rows in the
+`grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
+
+**Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
 priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
 `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
 weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;
