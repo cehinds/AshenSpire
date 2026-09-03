@@ -214,6 +214,49 @@ function cutout(img) {
   }
   if (pockets) console.log(`  (removed ${pockets} enclosed background pocket(s), ${pocketPx} px)`);
 
+  // Specks. Treating everything the fill did not reach as figure kept two
+  // isolated bright pixels near the rogue's upper-left corner — 4 px and 2 px
+  // beside a 90,117 px figure — and they shipped, scaled up with the class art.
+  // Source-canvas noise, not paint.
+  //
+  // Gated against the LARGEST component rather than an absolute count, so this
+  // cannot quietly eat a genuinely detached part of a design: the herald's halo
+  // is orders of magnitude above the line, a stray pixel is orders below.
+  {
+    const fgSeen = new Uint8Array(w * h);
+    const comps = [];
+    for (let start = 0; start < w * h; start++) {
+      if (bg[start] || fgSeen[start]) continue;
+      const region = [];
+      fgSeen[start] = 1;
+      const q = [start];
+      while (q.length) {
+        const i = q.pop();
+        region.push(i);
+        const x = i % w, y = (i / w) | 0;
+        const step = (j) => { if (!fgSeen[j] && !bg[j]) { fgSeen[j] = 1; q.push(j); } };
+        if (x > 0) step(i - 1);
+        if (x < w - 1) step(i + 1);
+        if (y > 0) step(i - w);
+        if (y < h - 1) step(i + w);
+      }
+      comps.push(region);
+    }
+    if (comps.length > 1) {
+      const largest = comps.reduce((a, b) => (b.length > a.length ? b : a));
+      const floor = Math.max(16, largest.length * 0.0005);
+      let dropped = 0;
+      let droppedPx = 0;
+      for (const region of comps) {
+        if (region === largest || region.length >= floor) continue;
+        for (const i of region) bg[i] = 1;
+        dropped++;
+        droppedPx += region.length;
+      }
+      if (dropped) console.log(`  (dropped ${dropped} detached speck(s), ${droppedPx} px)`);
+    }
+  }
+
   // Coverage is binary first. An earlier version graded alpha by luminance for
   // every filled pixel, which was wrong: this background sits at 243-247, under
   // the "certainly background" line, so the whole field came back faintly opaque
