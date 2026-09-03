@@ -3329,6 +3329,86 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(refused(), '', 'and the fixture itself is clean');
   });
 
+  // ---- 26x. the mounts travel: through the swap door and the save door ----
+  test('26x. an extracted art stays extracted through a mid-fight swap and a saved fight', () => {
+    // Both doors build a synthetic run with no deck; both used to build it
+    // with no mounts. Driven end to end here — the real dispatch, the real
+    // save manager — rather than by calling the reconcile with a hand-made
+    // run, because that is exactly the kind of proof that let the birth
+    // quota go undelivered for four rounds.
+    const b = JSON.parse(JSON.stringify(contentBundle));
+    b.equipment.armaments = b.equipment.armaments.map((piece) => (piece.id === 'straightSword'
+      ? { ...piece, weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', weaponArtDefaults: ['crimsonCleave'] } }
+      : piece));
+    b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
+    b.scripts = contentBundle.scripts;
+    const reg = createRegistries(b);
+    const run = createRunState({ seed: 23, classId: 'reaver', registries: reg });
+    const sword = 'armament/straightSword';
+    const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
+    const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
+    run.loadout.sets.rightHand[1] = 'dagger'; // a second set to swap to, mid-fight
+    stampDeck(reg, run);
+    const lifted = commitExtraction(reg, run, sword, artKey);
+    const cleaves = (cards) => cards.filter((c) => c && c.cardId === 'crimsonCleave');
+    const allPiles = (combat) => [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust].flat();
+
+    const player = () => ({
+      classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
+      maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, damageBySchoolAdd: run.damageBySchoolAdd,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+      equipmentPoolDeficits: run.equipmentPoolDeficits, itemUpgradeLevels: run.itemUpgradeLevels,
+      itemMounts: run.itemMounts,
+      deck: run.deck, relicIds: run.relics, flasks: run.flasks, flaskCharges: run.flaskCharges,
+      loadout: run.loadout,
+    });
+    const combat = createCombat({ registries: reg, rng: createRng(23), enemyIds: [contentBundle.enemies[0].id], player: player() });
+    eq(JSON.stringify(combat.itemMounts), JSON.stringify(run.itemMounts), 'combat carries the mounts, like the quota beside them');
+    eq(cleaves(allPiles(combat)).length, 1, 'the fight opens with one Crimson Cleave — the run\'s own');
+
+    // SWAP TO THE DAGGER AND BACK. The sword's art mount comes back as the
+    // Dodge Roll, not as a second Crimson Cleave.
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    eq(cleaves(allPiles(combat)).length, 1, 'swapping the sword out leaves the extracted card where it is');
+    assert(!allPiles(combat).some((c) => c.instanceId === artKey), 'and the sword\'s mount left with the sword');
+    combat.player.energy = combat.player.energyMax; // the swap is priced; pay for the second one
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
+    const mountBack = allPiles(combat).find((c) => c.instanceId === artKey);
+    assert(mountBack && mountBack.cardId === dodge, `swapping the sword back seats the fallback in its mount, not the extracted art (${mountBack && mountBack.cardId})`);
+    eq(cleaves(allPiles(combat)).length, 1, 'still exactly one Crimson Cleave, and it is the run\'s');
+    eq(cleaves(allPiles(combat))[0].instanceId, lifted.instanceId);
+
+    // SAVE THE FIGHT, LOAD IT. The migration door rebuilds its own synthetic
+    // run; with the mounts on the snapshot the loaded piles say the same.
+    run.combatEntered = { nodeId: 'n1', encounterId: 'e1', snapshot: serializeCombatSnapshot(combat) };
+    assert(run.combatEntered.snapshot.itemMounts && run.combatEntered.snapshot.itemMounts[sword], 'the snapshot carries the mounts');
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    storage.setItem(RUN_KEY, serializeRun(run));
+    const loaded = saves.loadRun(reg);
+    assert(loaded, `the save loads — ${saves.runStatus().reason || ''}`);
+    const loadedPiles = ['hand', 'draw', 'discard', 'exhaust'].flatMap((p) => loaded.combatEntered.snapshot.piles[p]);
+    eq(cleaves(loadedPiles).length, 1, 'one Crimson Cleave after the load');
+    const loadedMount = loadedPiles.find((c) => c.instanceId === artKey);
+    assert(loadedMount && loadedMount.cardId === dodge, 'the mount still shows the Dodge Roll in the resumed fight');
+    eq(JSON.stringify(loaded.itemMounts), JSON.stringify(run.itemMounts), 'and the run\'s record of the mounts came through whole');
+
+    // A FIGHT SAVED BEFORE MOUNTS EXISTED reads the run's record at the door,
+    // and the door does not write it back into the stored snapshot.
+    const legacy = JSON.parse(serializeRun(run));
+    delete legacy.combatEntered.snapshot.itemMounts;
+    const storage2 = createMemoryStorage();
+    const saves2 = createSaveManager(storage2);
+    storage2.setItem(RUN_KEY, JSON.stringify(legacy));
+    const loaded2 = saves2.loadRun(reg);
+    assert(loaded2, `the legacy fight loads — ${saves2.runStatus().reason || ''}`);
+    const legacyPiles = ['hand', 'draw', 'discard', 'exhaust'].flatMap((p) => loaded2.combatEntered.snapshot.piles[p]);
+    assert(legacyPiles.find((c) => c.instanceId === artKey)?.cardId === dodge, 'the run\'s mounts stand in for the snapshot\'s');
+    eq(loaded2.combatEntered.snapshot.itemMounts, undefined, 'and the snapshot is not rewritten to carry them');
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);
