@@ -399,17 +399,27 @@ check('no Dodge/reaction behavior or handMax policy is smuggled into the contrac
   //    file at all, in prose or otherwise, so they stay a flat ban.
   assert(!/\bhandMax\b|\breaction\b/i.test(text), 'handMax or reaction vocabulary present');
 
-  // 3. `dodge` may appear ONLY inside a comment or a quoted string. Stripping
-  //    both leaves the code, and the word surviving there means an identifier, a
-  //    key or a member access — which is what smuggling is. Prose keeps naming
-  //    what Stamina buys, and this check stops caring.
+  // 3. `dodge` may appear ONLY as the value of a presentation key.
+  //
+  //    THE FIRST NARROWING STRIPPED EVERY QUOTED STRING, WHICH IS HOW A CHECK
+  //    STOPS CHECKING. Codex: `if (statId === 'dodge')` and `handlers['dodge']()`
+  //    are behaviour written in ordinary string syntax, and blanket-stripping
+  //    quotes erased exactly those before the assertion ran — as did stripping
+  //    template literals whole, which swallows `${dodge()}`. The guard would have
+  //    reported PASS over the thing it exists to refuse. That is the same
+  //    can't-fail shape this session has now produced repeatedly, arriving here
+  //    inside the fix for a DIFFERENT defect in the same check.
+  //
+  //    So the exemption is not "a string" — it is the three keys this file
+  //    documents as player-facing prose, and nothing else. An exact allowance
+  //    beats a broad strip: a bare token, a comparison, a computed key and a
+  //    template expression all survive it and fail.
+  const PROSE_KEYS = /\b(?:label|faceLabel|sense)\s*:\s*(?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\$]|\\.)*`)/g;
   const code = text
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')   // comments are prose by construction
     .replace(/\/\/[^\n]*/g, ' ')
-    .replace(/'(?:[^'\\]|\\.)*'/g, "''")
-    .replace(/"(?:[^"\\]|\\.)*"/g, '""')
-    .replace(/`(?:[^`\\]|\\.)*`/g, '``');
-  assert(!/dodge/i.test(code), 'dodge appears as code rather than as prose');
+    .replace(PROSE_KEYS, 'label: \'\'');  // …and so are these three values
+  assert(!/dodge/i.test(code), 'dodge appears outside a comment or a presentation string — as code');
 });
 
 console.log(`\n${failures ? 'FAIL' : 'PASS'} — ${checks - failures}/${checks} contract checks held, ${failures} failed.`);
