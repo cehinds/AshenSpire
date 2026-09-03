@@ -287,6 +287,30 @@ Two things in that table need his eye rather than my assumption:
       therefore give the owner `/.github/CODEOWNERS` as well as the listener
       path.
 
+    - **And that file cannot be created until the control plane owns its
+      path.** Codex raised this third, and it is a wall before the first step
+      rather than a gap in the design. `.agentops/governance/git-ownership.json`
+      carries `.github/workflows/**` (`app-dev-iii`) and
+      `.github/ISSUE_TEMPLATE/**` (`help-desk`); **`.github/CODEOWNERS` matches
+      neither glob and is owned by nobody.** Under the D5 path-grant rule an
+      unowned path cannot receive a legal writer lease, so no seat may create
+      the file, and the positive merge test is unreachable.
+
+      This repository has met that wall before at the same address — the note
+      on the `.github/workflows/**` entry records it being declared on
+      2026-08-30 "because it was owned by nobody: under the D5 path-grant rule
+      no lease could legally grant it."
+
+      So a ruling of A-review must **also** amend `git-ownership.json` with an
+      exact entry for `.github/CODEOWNERS` and a serialized lane, before the
+      file is written. **It must not be `app-dev-iii`**, the lane that owns the
+      listener: giving the listener's writer ownership of the file that says who
+      must approve listener changes rebuilds the hinge this bullet just fixed.
+      That points at `owner` — which, as recorded under option A's state file,
+      would be **the first owner-owned path in the contract**. A and A-review
+      arrive at the same missing concept from two directions, and that is worth
+      seeing before either is chosen.
+
     **Verification is two-sided, and an earlier draft of this record gave only
     one side.** "An unreviewed merge is refused" passes just as happily against
     a brick wall as against a working gate — it is the deadlock above wearing a
@@ -347,7 +371,7 @@ hat. So:
 
 | Ruling | What happens |
 |---|---|
-| **A-review** | **BLOCKED TODAY — see below; ruling it selects a model but cannot be executed yet.** Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review), pending its gate**. **Before** the workflow is written, `.github/workflows/**` **and** `/.github/CODEOWNERS` gain an enforced owner-review requirement: `CODEOWNERS` entries naming the owner for both paths **and** a branch-protection rule or ruleset on the default branch requiring a pull request and Code Owner review — CODEOWNERS alone only requests a reviewer. None of it exists today, and it cannot be built on the single shared `cehinds` account, which GitHub will not let approve its own pull requests: a distinct reviewing identity (#434 fix 3) or a non-approval owner gate must be named and stood up first. The gate is satisfied only when an unreviewed listener change is refused, an unreviewed weakening of `CODEOWNERS` is refused, **and** an authorised listener change can still merge. Then the workflow. |
+| **A-review** | **BLOCKED TODAY — see below; ruling it selects a model but cannot be executed yet.** Amend `promotion-gates.json` to model A — the republication grant, the pinned builder revision, and the named state ref with its write authority, all three. Status becomes **Approved (A-review), pending its gate**. **Before** the workflow is written, `.github/workflows/**` **and** `/.github/CODEOWNERS` gain an enforced owner-review requirement: `CODEOWNERS` entries naming the owner for both paths **and** a branch-protection rule or ruleset on the default branch requiring a pull request and Code Owner review — CODEOWNERS alone only requests a reviewer. None of it exists today, and it cannot be built on the single shared `cehinds` account, which GitHub will not let approve its own pull requests: a distinct reviewing identity (#434 fix 3) or a non-approval owner gate must be named and stood up first. `git-ownership.json` must also gain an exact owner and serialized lane for `.github/CODEOWNERS` — owned by nobody today, and so uncreatable under the D5 path-grant rule — and that owner must not be `app-dev-iii`. The gate is satisfied only when an unreviewed listener change is refused, an unreviewed weakening of `CODEOWNERS` is refused, **and** an authorised listener change can still merge. Then the workflow. |
 | **A-accept** | The same three amendments, plus one sentence in `promotion-gates.json` recording that a change to the listener file itself publishes on the next `dev`/`test` push with no further authority. Status becomes **Approved (A-accept)**. Then the workflow. |
 | **A**, bare | **`WAIT`, not a pass.** A names the model but not the listener treatment, and the two differ in whether a future listener change carries publication authority. Nothing is amended and no workflow is written until the treatment is named. |
 | **B** | Amend `promotion-gates.json` to model B — republication only, and the record states plainly that `main` and `release` republish with everything else. Status becomes **Approved (B)**. Then the workflow. |
