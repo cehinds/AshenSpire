@@ -100,6 +100,7 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
   done.textContent = 'Close';
 
   const shell = openModal({
+    size: 'md',
     className: 'flask-inspect-modal',
     eyebrow: 'Flask',
     title: def.name,

@@ -297,7 +297,30 @@ export function modalHead({
  * top of this file: a shell that also claimed the body would be five
  * components in a trench coat.
  */
+/**
+ * FOUR MODAL WIDTHS, AND A BODY PICKS THE SMALLEST THAT HOLDS IT.
+ *
+ * Every door used to type its own width (`44rem` here, `96rem` there, `76rem`
+ * on the overlay), so "how wide is a modal" had as many answers as there were
+ * modals — and the detail door's answer was too small: measured 2026-09-03, it
+ * broke "Defend Block +2. Weight 7." across two lines and its flavour across
+ * two more, beside an ArtWell that had taken a third of the width. Nothing was
+ * CLIPPED, so no overflow rule fired; cramped is the same defect one step
+ * earlier, and the fix is a wider box, not a smaller font.
+ *
+ *   sm  one short question, two answers            a confirmation
+ *   md  one thing described, art beside prose      the flask/armament door
+ *   lg  a rail and a pane, or two panes            settings, the armoury
+ *   xl  a chooser beside an inspector              the shrine's upgrade door
+ *
+ * The rung is a NAME, so a body that cramps takes the next one and a body that
+ * rattles takes the one below — and neither edits a length. `max-width` in the
+ * stylesheet keeps the phone case working without a second declaration here.
+ */
+export const MODAL_SIZES = Object.freeze(['sm', 'md', 'lg', 'xl']);
+
 export function openModal({
+  size = 'md',
   className = '',
   eyebrow = '',
   title = '',
@@ -322,8 +345,10 @@ export function openModal({
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
 
+  if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
   const panel = document.createElement('section');
   panel.className = `modal${className ? ` ${className}` : ''}`;
+  panel.dataset.size = size;
   panel.setAttribute('role', role);
   panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-labelledby', titleId);

@@ -31,6 +31,20 @@ function check(name, ok, detail = '') {
   else { fail += 1; console.error(`FAIL ${name}${detail ? ` — ${detail}` : ''}`); }
 }
 
+const css = read('styles/ui.css');
+// COMMENTS OUT FIRST. The ladder's own block explains why `vh` is banned by
+// quoting the measurement that banned it ("74vh x zoom"), so a check that
+// greps the raw text fails on the sentence that documents the rule. Stripping
+// comments is the difference between "does this stylesheet USE vh" and "does
+// this stylesheet MENTION vh" — the first is the contract, the second was a
+// false positive this tool went red on before it stripped them.
+const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '');
+const chromeBlock = (selector) => {
+  const flat = stripComments(css);
+  const at = flat.indexOf(`${selector} {`);
+  return at < 0 ? '' : flat.slice(at, flat.indexOf('}', at));
+};
+
 // ---- 1. one opener, and the ladder is closed ------------------------------
 const shell = await import('../src/ui/components/modalShell.js');
 check('the shell exports one door-opener', typeof shell.openModal === 'function');
@@ -42,6 +56,19 @@ check('the ladder has exactly four steps',
 let ladderRejected = false;
 try { shell.buttonRow({ size: 'enormous' }); } catch { ladderRejected = true; }
 check('a width the ladder does not have is rejected', ladderRejected);
+
+// ---- 1b. the width ladder ------------------------------------------------
+check('the shell names four widths', shell.MODAL_SIZES.join(',') === 'sm,md,lg,xl',
+  shell.MODAL_SIZES.join(','));
+for (const rung of shell.MODAL_SIZES) {
+  check(`the ${rung} rung has a width`, /width:/.test(chromeBlock(`.modal[data-size='${rung}']`)));
+}
+// A door that still types its own width is a door outside the ladder, which is
+// how "how wide is a modal" got as many answers as there were modals.
+for (const door of ['.flask-inspect-modal', '.pile-modal']) {
+  check(`${door} takes its width from a rung, not a literal`,
+    !/width:\s*\d/.test(chromeBlock(door)), chromeBlock(door).slice(0, 60));
+}
 
 // ---- 2. a surface that adopts the shell owns no chrome of its own ---------
 const ADOPTERS = ['src/ui/components/piles.js', 'src/ui/components/flask.js'];
@@ -83,19 +110,6 @@ check(`no more than ${RATCHET} surfaces still carry their own chrome`,
 console.log(`      holdouts (${holdouts.length}/${RATCHET}): ${holdouts.join(', ') || 'none'}`);
 
 // ---- 4. the ladder types no length that --ui-zoom ignores ----------------
-const css = read('styles/ui.css');
-// COMMENTS OUT FIRST. The ladder's own block explains why `vh` is banned by
-// quoting the measurement that banned it ("74vh x zoom"), so a check that
-// greps the raw text fails on the sentence that documents the rule. Stripping
-// comments is the difference between "does this stylesheet USE vh" and "does
-// this stylesheet MENTION vh" — the first is the contract, the second was a
-// false positive this tool went red on before it stripped them.
-const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '');
-const chromeBlock = (selector) => {
-  const flat = stripComments(css);
-  const at = flat.indexOf(`${selector} {`);
-  return at < 0 ? '' : flat.slice(at, flat.indexOf('}', at));
-};
 const ladderBlock = stripComments(css.slice(css.indexOf('.modal-btnrow'), css.indexOf('.modal-body')));
 check('the ladder uses no viewport units',
   !/\d(?:vh|vw)\b/.test(ladderBlock),

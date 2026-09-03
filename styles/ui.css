@@ -239,7 +239,7 @@
 
 /* The pile viewer's body — a scrolling grid of small card faces. The panel,
    its head and its way out are the shell's (piles.js adopts openModal). */
-.pile-modal { width: 96rem; max-width: 94%; padding: 0; display: flex; flex-direction: column; }
+.pile-modal { padding: 0; display: flex; flex-direction: column; }
 .pile-body { padding: var(--modal-inset); }
 .pile-body .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 .pile-empty { margin: 0; padding: 2rem; color: var(--muted); }
@@ -284,6 +284,14 @@
    system. Declared on `.modal` so a body that wants a different rhythm can
    scope it rather than re-type it, and every bar below reads it. */
 .modal { --modal-inset: 1.6rem; }
+/* THE WIDTH LADDER (modalShell.js MODAL_SIZES). A rung is a name a body picks,
+   not a length a caller types — see that file for why the detail door was on
+   the wrong rung and what it cost its prose. `max-width` so the phone rule
+   below still wins without restating any of these. */
+.modal[data-size='sm'] { width: 34rem; max-width: 94%; }
+.modal[data-size='md'] { width: 46rem; max-width: 94%; }
+.modal[data-size='lg'] { width: 76rem; max-width: 96%; }
+.modal[data-size='xl'] { width: 96rem; max-width: 96%; }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
   padding: var(--modal-inset); border-bottom: 1px solid var(--line);
@@ -4167,7 +4175,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    `.modal-head` for the title row and its ONE close control, `.modal-foot` for
    the way out. Everything below is BODY — the part modalShell.js deliberately
    does not own — and nothing here restates a chrome number. */
-.flask-inspect-modal { width: 44rem; max-width: 92%; padding: 0; display: flex; flex-direction: column; }
+.flask-inspect-modal { padding: 0; display: flex; flex-direction: column; }
 .flask-inspect-modal .modal-head h2 { font-size: 2rem; }
 /* THE DOOR'S HEIGHT IS ITS ART'S, NOT ITS PROSE'S. Two flasks, or a flask and
    a shield, are the same kind of door and must be the same size — measured
@@ -4191,7 +4199,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    left an art-less flask drawing a thumbnail glyph in the middle of it. Scaling
    the type scales both, and the box shape keeps its one home above. */
 .flask-inspect-art .flask-art { font-size: 5.3rem; }
-.flask-inspect-lines { min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+/* THE PROSE COLUMN'S FLOOR IS WHAT PICKS THE RUNG: about 18rem beside the art
+   sets two short sentences on one line each. Below it the door is on the wrong
+   rung and steps up, rather than wrapping a sentence mid-clause. */
+.flask-inspect-lines { flex: 1 1 18rem; min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; }
 .flask-inspect-lines p { margin: 0; font-size: 1.35rem; line-height: 1.55; color: var(--parchment); }
 /* The charge count is a fact about this run, not part of what the flask does,
    so it reads quieter than the effect above it. */

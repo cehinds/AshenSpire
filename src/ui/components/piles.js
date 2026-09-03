@@ -41,6 +41,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
   status.textContent = `${list.length} ${list.length === 1 ? 'card' : 'cards'}`;
 
   const shell = openModal({
+    size: 'xl',
     className: 'pile-modal',
     eyebrow: 'Pile',
     title,
