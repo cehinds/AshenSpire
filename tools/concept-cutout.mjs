@@ -361,6 +361,82 @@ function resample(src, sx0, sy0, sw, sh, dw, dh) {
 // silhouette edge drew a bright horizontal stripe across the bottom of all
 // twenty sprites — measured at goldness 110.6 on the last row against 12-18
 // through the body. A rim marks an outline; a crop line is not one.
+// ---- outfit tint ----------------------------------------------------------
+//
+// THE RIM ALONE WAS NOT THE TINT. Until now a tint only lit a 3px accent edge,
+// so all five variants of a class were the same painting with a different glow
+// on the outline — at sprite size, five nearly identical figures. The tint is
+// supposed to be the character's colour, so it has to reach the CLOTH.
+//
+// HOW, AND WHY NOT A SIMPLE BLEND. Mixing the tint colour into the pixels
+// straight would wash the painting flat: it lightens the shadows and drags the
+// highlights toward one value, and the modelling that makes the figure read as
+// fabric and metal is exactly that range of values. So value is left ALONE and
+// only the colour is moved:
+//
+//   · hue      rotated the short way round toward the tint's hue
+//   · saturation blended toward the tint's, weighted so near-greys stay grey
+//   · value    untouched, every time
+//
+// Keeping value means every fold, seam and specular the painter put there
+// survives intact; the garment changes colour the way cloth does under a dye,
+// not the way a photo does under a filter.
+//
+// Near-greys are held back on purpose (`SAT_FLOOR` ramp): steel, bone and the
+// blacks of a hood are not dyed by a tint, and colouring them turns armour into
+// plastic. A pixel with no colour of its own keeps almost none.
+const HUE_MIX = 0.88;   // how far round to the tint's hue
+const SAT_MIX = 0.42;   // how much of the tint's saturation to take on
+const SAT_FLOOR = 0.10; // below this source saturation, treat as grey and mostly spare it
+
+function rgbToHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) {
+    if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0));
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return [h, mx ? d / mx : 0, mx];
+}
+
+function hsvToRgb(h, s, v) {
+  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
+function tintOutfit(img, rgb) {
+  const { width: w, height: h, px } = img;
+  const out = Buffer.from(px);
+  const [th, ts] = rgbToHsv(rgb[0], rgb[1], rgb[2]);
+  for (let i = 0; i < w * h; i++) {
+    const q = i * 4;
+    if (px[q + 3] === 0) continue; // colour nothing nobody can see
+    const [sh, ss, sv] = rgbToHsv(px[q], px[q + 1], px[q + 2]);
+    // A pixel with no colour of its own is steel or shadow, not cloth: ramp the
+    // whole effect in with the source's own saturation so it keeps its nature.
+    const grip = Math.min(1, Math.max(0, (ss - SAT_FLOOR) / (0.45 - SAT_FLOOR)));
+    // Rotate the SHORT way round the wheel. Going the long way passes through
+    // hues in neither the painting nor the tint — a warm figure turning blue
+    // through green is a different garment, not a dyed one.
+    let delta = ((th - sh + 540) % 360) - 180;
+    const nh = (sh + delta * HUE_MIX * grip + 360) % 360;
+    const ns = Math.min(1, ss * (1 - SAT_MIX * grip) + ts * SAT_MIX * grip);
+    const [r, g, b] = hsvToRgb(nh, ns, sv); // sv passed through untouched
+    out[q] = r; out[q + 1] = g; out[q + 2] = b;
+  }
+  return { width: w, height: h, px: out };
+}
+
 function withRim(img, rgb, bottomIsCrop, depth = 3, strength = 0.85) {
   const { width: w, height: h, px } = img;
   const out = Buffer.from(px);
@@ -504,7 +580,11 @@ for (const [cls, { cut, box, bottomIsCrop }] of Object.entries(cuts)) {
 
   for (const [tintId, rgb] of Object.entries(TINTS)) {
     const png = join(outDir, `${cls}_${tintId}.png`);
-    writeFileSync(png, encodePng(OUT_W, OUT_H, withRim(framed, rgb, bottomIsCrop).px));
+    // Cloth first, then the accent edge ON TOP of it — the rim marks the
+    // silhouette and must stay the tint's own colour at full strength, so it
+    // cannot be run through the hue rotation that dyes the garment.
+    const dyed = tintOutfit(framed, rgb);
+    writeFileSync(png, encodePng(OUT_W, OUT_H, withRim(dyed, rgb, bottomIsCrop).px));
     // -exact: without it cwebp rewrites the RGB under fully transparent pixels
     // to compress better, which leaves colour hiding in the invisible areas.
     // The packet's own AC3 requires zero transparent pixels carrying non-zero

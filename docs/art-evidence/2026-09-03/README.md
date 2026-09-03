@@ -50,6 +50,27 @@ Two things this set is checked for, rather than assumed:
 * the five tints of a class are **byte-distinct** from one another, so a tint
   that silently failed to apply would show up as two identical files.
 
+## The tint now dyes the garment
+
+Until 2026-09-03 a tint lit a 3px accent on the silhouette and **nothing else**, so
+the five variants of a class were one painting with a different glow on its
+outline — at sprite size, five nearly identical figures. The tint is meant to be
+the character's colour, so it now reaches the cloth.
+
+Hue rotates the short way round toward the tint and saturation blends part-way;
+**value is passed through untouched**, which is why every fold, seam and specular
+in the painting survives. A straight blend toward the tint colour would lighten
+the shadows and pull the highlights together, and that range of values is the
+only thing making the figure read as fabric rather than a flat shape.
+
+Near-greys are held back deliberately: steel, bone and the black inside a hood
+are not dyed by a tint, and colouring them turns armour into plastic. A pixel
+with no colour of its own keeps almost none.
+
+These captures are of that art. The earlier set showed the rim-only tints and
+was replaced wholesale rather than left standing beside sprites it no longer
+depicts.
+
 ## What capturing this actually found
 
 **The class figure is not what you fight as.** `playerSprite()` in
