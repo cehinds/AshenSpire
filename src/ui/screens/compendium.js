@@ -121,22 +121,15 @@
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { pieceReveal } from '../../model/unlocks.js';
-import { ownership } from '../../model/loadout.js';
+import { ownership, modEffectLine } from '../../model/loadout.js';
 import { LOCK_COPY, armamentKindLabel } from '../uiContent.js';
 
-/** A piece's mods, written the way a player reads them. */
+/** A piece's mods, written the way a player reads them. The second regex over
+ *  the mod vocabulary lived here; the sentence is loadout.js's now, so this is
+ *  the walk over the piece and nothing else. An unknown field no longer
+ *  disappears — see modEffectLine for why that direction is the safe one. */
 function modSummary(modFields, piece) {
-  const parts = [];
-  for (const raw of piece.mods || []) {
-    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
-    if (!m) continue;
-    const spec = (modFields || {})[m[2]];
-    if (!spec) continue;
-    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
-    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
-    parts.push(`${where}${spec.label} ${sign}`);
-  }
-  return parts;
+  return (piece.mods || []).map((raw) => modEffectLine(modFields, raw));
 }
 
 /**

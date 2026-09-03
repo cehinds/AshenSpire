@@ -1,5 +1,6 @@
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
+import { modalCloseButtonHtml, modalFooter, bindModalDismiss } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { focusElement } from '../input.js';
 
@@ -34,6 +35,104 @@ export function flaskPresentation(def, options = {}) {
 }
 
 /**
+ * WHAT A FLASK SAYS ABOUT ITSELF, ONCE. Six surfaces were each hand-typing the
+ * same two sentences — `map.js` twice, `combat.js` twice, `coop.js` twice —
+ * with the charge line spelled `${current} charge${current === 1 ? '' : 's'}
+ * remaining.` at two of them and simply omitted at the other four. So the same
+ * flask described itself differently depending on which HUD you were looking
+ * at, and the plural agreement was a copy that only two of the six could get
+ * wrong. This returns the LINES, as text; every caller escapes and joins them
+ * with the separator its own surface wants.
+ *
+ * `charges` is `null` when the surface does not track charges (a utility flask
+ * has none), and a number when it does — including 0, which is a sentence the
+ * player needs, so the test is `Number.isFinite` and not truthiness.
+ *
+ * An unresolved `{token}` renders WITH its braces here, deliberately: card.js's
+ * relicText() block has the reason — a visible brace is a bug report and a bare
+ * key is a sentence that looks fine and lies. Flask templates carry no tokens
+ * today (src/content/flasks.js); the day one does, it reports itself.
+ */
+export function flaskDetailLines(def, { charges = null } = {}) {
+  const lines = [];
+  const effect = String(def?.textTemplate || '').trim();
+  if (effect) lines.push(effect);
+  if (Number.isFinite(charges)) lines.push(`${charges} charge${charges === 1 ? '' : 's'} remaining.`);
+  return lines;
+}
+
+/**
+ * The tooltip form of the same lines. Returns HTML and escapes its own
+ * content — the six call sites this replaces each escaped by hand, and the
+ * charge count at two of them was interpolated UNESCAPED because it "is a
+ * number", which is true of the value and not of the type the caller had.
+ */
+export function flaskTooltipHtml(def, { charges = null, hint = '' } = {}) {
+  const body = flaskDetailLines(def, { charges }).map(esc).join('<br>');
+  return `<div class="tt-title">${esc(def?.name || '')}</div>${body}`
+    + (hint ? `${body ? '<br>' : ''}<i>${esc(hint)}</i>` : '');
+}
+
+/**
+ * openFlaskInspectModal({ def, charges }) — INSPECT IS A DOOR NOW, NOT A FOLD.
+ *
+ * It used to un-hide a paragraph inside the 280 px action menu, which made
+ * Inspect the row that changed the size of the thing you were pointing at and
+ * gave the player a second, smaller copy of a sentence the menu can simply
+ * show. The menu now carries the sentence from the start (Constantine,
+ * 2026-09-03: "I like this to be the default look for the flask instead of
+ * having to click inspect"), so Inspect is free to be what its label always
+ * promised: a bigger surface with the art at a size worth looking at.
+ *
+ * The chrome is the shell's (modalShell.js) — one close glyph in the corner
+ * every other modal keeps it in, one way forward in the footer, and ONE
+ * Escape/veil-click/focus-return implementation. A seventh hand-rolled
+ * dismissal was the alternative and is the thing that file exists to prevent.
+ */
+export function openFlaskInspectModal({ def, charges = null, opener = document.activeElement } = {}) {
+  if (!def) throw new Error('openFlaskInspectModal requires a flask definition');
+  const lines = flaskDetailLines(def, { charges });
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil flask-inspect-veil';
+  veil.innerHTML = `
+    <section class="modal flask-inspect-modal" role="dialog" aria-modal="true" aria-labelledby="flask-inspect-title">
+      <header class="modal-head">
+        <div class="flask-inspect-title">
+          <span class="flask-inspect-eyebrow">Flask</span>
+          <h2 id="flask-inspect-title">${esc(def.name)}</h2>
+        </div>
+        <div class="modal-head-actions">${modalCloseButtonHtml({ label: `Close ${def.name}` })}</div>
+      </header>
+      <div class="flask-inspect-body">
+        ${flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })}
+        <div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>
+      </div>
+    </section>`;
+  document.body.appendChild(veil);
+
+  const panel = veil.querySelector('.flask-inspect-modal');
+  const done = document.createElement('button');
+  done.type = 'button';
+  done.className = 'flask-inspect-done';
+  done.dataset.focusable = 'true';
+  done.textContent = 'Close';
+  panel.appendChild(modalFooter({ primary: done }));
+
+  let release = null;
+  const close = () => {
+    if (!veil.isConnected) return;
+    release?.();
+    release = null;
+    veil.remove();
+  };
+  release = bindModalDismiss({ veil, panel, close, opener });
+  done.addEventListener('click', close);
+  panel.querySelector('.modal-close').addEventListener('click', close);
+  done.focus?.({ preventScroll: true });
+  return Object.freeze({ root: veil, close });
+}
+
+/**
  * Shared flask action menu. The caller supplies the plan and owns mutations;
  * selection and inspection are inert here.
  *
@@ -56,7 +155,7 @@ export function flaskPresentation(def, options = {}) {
  *
  * The check is tools/placement.mjs P5, at both shapes, through the real tap.
  */
-export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireAction } = {}) {
+export function mountFlaskActionMenu(anchor, { def, plan, charges = null, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
   // The same flask is a toggle, not a close-then-immediately-reopen sequence.
   if (activeFlaskActionMenu?.anchor === anchor) {
@@ -70,8 +169,15 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   root.className = 'flask-action-menu';
   root.setAttribute('role', 'menu');
   root.setAttribute('aria-label', `${def.name} actions`);
+  // THE DESCRIPTION IS THE DEFAULT, NOT A REWARD FOR FINDING A ROW. This block
+  // was `hidden` until the player clicked Inspect, so the menu's whole job on
+  // first paint was to name a flask the player had just pointed at and could
+  // already see. The sentence a tooltip has always shown on hover is the
+  // sentence the menu opens with now, charge count included where the surface
+  // knows it, and Inspect opens a real modal instead (openFlaskInspectModal).
+  const detail = flaskDetailLines(def, { charges });
   root.innerHTML = `<strong>${esc(def.name)}</strong>`
-    + `<div class="flask-action-detail" hidden>${esc(def.textTemplate || '')}</div>`;
+    + (detail.length ? `<div class="flask-action-detail">${detail.map(esc).join('<br>')}</div>` : '');
   const buttons = [];
   let closed = false;
   let disconnectObserver = null;
@@ -90,9 +196,10 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   const place = () => {
     const view = viewportLocalBox();
     const at = placeAnchored(root, anchor, { intent: 'under', align: 'start', view, pad: PAD });
-    // The panel's height is CONTENT — Inspect un-hides a description a designer
-    // authors in a table. Cap it at the room below the slot so a long flask text
-    // scrolls inside the panel instead of hanging its last row off the screen.
+    // The panel's height is CONTENT — the description is authored in a table
+    // (src/content/flasks.js) and a designer may make it long. Cap it at the
+    // room below the slot so a long flask text scrolls inside the panel instead
+    // of hanging its last row off the screen.
     root.style.maxHeight = `${Math.max(0, view.height - at.top - PAD * 2)}px`;
   };
   const close = ({ cancelled = false, restoreFocus = false } = {}) => {
@@ -139,12 +246,14 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
     const invoke = () => {
       if (!row.enabled) return;
       if (row.id === 'inspect') {
-        root.querySelector('.flask-action-detail').hidden = false;
-        // THE PANEL JUST GREW, AND PLACEMENT IS A ONE-SHOT. Re-run it: the
-        // top-left corner is pinned to the slot so nothing jumps under the
-        // finger, but the bound and the cap are recomputed against the taller
-        // box. Without this the expanded menu is placed as the collapsed one.
-        place();
+        // Inspect is the one row that leaves this menu WITHOUT reporting an
+        // action: it is reading, not committing, so `onAction` stays unrung and
+        // every caller's mutation path is untouched. Close first, then open —
+        // the modal takes focus, and it must not be handed back to a slot that
+        // is about to lose its menu underneath it. `restoreFocus: false` for
+        // the same reason; the modal's own dismissal returns focus to `anchor`.
+        close({ cancelled: false, restoreFocus: false });
+        openFlaskInspectModal({ def, charges, opener: anchor });
         return;
       }
       if (onAction) onAction(row.id);

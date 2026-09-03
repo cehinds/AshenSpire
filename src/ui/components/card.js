@@ -8,9 +8,10 @@ import { resolveCard } from '../../model/registries.js';
 import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
-import { tagsFor } from '../../content/tags.js';
+import { tagService } from '../../model/tagService.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
 export function staticTokens(def) {
@@ -111,9 +112,15 @@ export function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
+  // Equipment-generated cards carry their profile's tags on `cardTags`; authored
+  // cards resolve through the junction. BOTH read the ACTIVE registries — the
+  // authored branch used to call the module-global `tagsFor`, so a bundle that
+  // changed a card's tags changed what combat did with them and not what the
+  // card showed, which is the chip strip lying about the run being played.
+  const service = tagService(registries);
   const tags = def.cardTags && def.cardTags.length
-    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
-    : tagsFor(def.id);
+    ? service.resolve(def.cardTags)
+    : service.tagsOf('card', def);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   // The badge numbers come from the framework cost profile (a preview's
@@ -132,7 +139,7 @@ export function renderCard(registries, ref, opts = {}) {
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
-    // Subtypes: authored in content/source/cardTagging.csv. Untagged cards
+    // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
       ? `<div class="ctags">${tags
@@ -195,6 +202,29 @@ export function upgradePreviewHtml(registries, ref) {
   return html;
 }
 
+/**
+ * ONE GLOSSARY ROW, WORDS AND NUMBERS BOTH. Returns `null` for an unknown id or
+ * a row that authored no tooltip — the two skips this loop always had.
+ *
+ * The registry lookup is optional on purpose: probe registries and minimal
+ * fixtures hand card.js a `registries` with the framework overlay but no
+ * `statuses`/`stances` map, and those callers must keep working. When the row
+ * is reachable we substitute against it; when it is not, we fall back to the
+ * words-only display, which is exactly the behavior this file had before.
+ */
+function glossaryEntry(registries, kind, id) {
+  const source = kind === 'status' ? registries.statuses : registries.stances;
+  const row = source?.get?.(id) || null;
+  const withWords = kind === 'status'
+    ? registries.frameworkTerms.withStatusWords
+    : registries.frameworkTerms.withStanceWords;
+  const display = row && typeof withWords === 'function'
+    ? withWords(row)
+    : (kind === 'status' ? registries.frameworkTerms.statusDisplay(id) : registries.frameworkTerms.stanceDisplay(id));
+  if (!display || !display.tooltip) return null;
+  return { name: display.name, tooltip: statusTooltipText(display) };
+}
+
 function cardTooltip(registries, def, tokens, liveCosts = null) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
@@ -221,13 +251,28 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     // Status/stance WORDS resolve through the per-bundle framework term
     // overlay — verbatim text, framework authority. Unknown ids and
     // tooltip-less entities keep their existing skip behavior.
+    //
+    // AND THE NUMBERS RESOLVE TOO, WHICH THEY DID NOT. `statusDisplay(id)`
+    // returns the WORDS only — `{ name, tooltip }` and nothing of the row's
+    // mechanics — so a status whose prose carries the row's own knobs printed
+    // them at the player: a Gorefire Slash tooltip read "At {proc.threshold},
+    // burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max
+    // {proc.burstMax}), plus {proc.poiseDamage} Poise damage" — five visible
+    // braces in one tooltip (screenshotted by Constantine 2026-09-03). The
+    // same prose reads correctly on the combat meter, which goes through
+    // statusTooltipText; nothing was reading it here.
+    //
+    // The seam already existed for exactly this: termOverlay.js's
+    // `withStatusWords(def)` takes the WHOLE row, replaces the words, and lets
+    // the mechanics ride through, "for a display site that needs the whole def
+    // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
-      const s = registries.frameworkTerms.statusDisplay(eff.status);
-      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+      const s = glossaryEntry(registries, 'status', eff.status);
+      if (s) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
     if (eff.op === 'enterStance') {
-      const s = registries.frameworkTerms.stanceDisplay(eff.stance);
-      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+      const s = glossaryEntry(registries, 'stance', eff.stance);
+      if (s) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
   }
   if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);

@@ -9,8 +9,8 @@
   },
   "equipmentSections": [
     { "id": "armour", "label": "STARTING ARMOUR", "kind": "armour" },
-    { "id": "rightHand", "label": "RIGHT HAND", "kind": "hand", "slot": "rightHand" },
-    { "id": "leftHand", "label": "LEFT HAND", "kind": "hand", "slot": "leftHand" },
+    { "id": "rightHand", "label": "MAIN HAND", "kind": "hand", "slot": "rightHand" },
+    { "id": "leftHand", "label": "OFF HAND", "kind": "hand", "slot": "leftHand" },
     { "id": "equipSlot", "label": "EQUIP SLOT", "kind": "slot", "slot": "talisman" },
     { "id": "relic", "label": "RELIC", "kind": "relic" }
   ],

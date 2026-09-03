@@ -71,8 +71,8 @@ export const derivedStatRules = {
   //   sense       ONE player sentence, no numbers in it (Law 1 clause 2).
   //
   // STAMINA IS 'reveal' ON PURPOSE and it is the honest half of this table:
-  // the dodge roll (and any Stamina-cost card) spends it and an idle turn
-  // recovers some (framework Mana & Stamina rule). The old panel once said
+  // a Stamina-cost card spends it — the sense line below names which — and an
+  // idle turn recovers some (framework Mana & Stamina rule). The old panel once said
   // "No current consumer" in engine words on the first screen of the game; the
   // sense line below is the player's words, one tap down.
   presentation: {

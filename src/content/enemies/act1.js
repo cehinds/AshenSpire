@@ -1,4 +1,10 @@
 // src/content/enemies/act1.js — Act 1 roster (SPEC §5.3, exact numbers)
+//
+// Creature tags (beast / humanoid / undead / construct / spirit) are NOT a field
+// here any more. They are rows in content/source/tagging.csv, family `enemy`,
+// against the one tag registry, and model/registries.js stamps them onto the
+// def at boot — so `enemy.tags` still reads the same at runtime, and the proc
+// resistance gate is unchanged. Retagging a creature is a spreadsheet row.
 
 export const act1Enemies = [
   {
@@ -17,7 +23,6 @@ export const act1Enemies = [
       lockPolicy: 'whileMagicVulnerable',
       onBreak: { status: 'magicVulnerable', value: 25, duration: 2 }, // PROVISIONAL
     },
-    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚔',
     moves: {
       slash: { intent: 'attack', damage: 7, weight: 45, maxConsecutive: 2 },
@@ -36,7 +41,6 @@ export const act1Enemies = [
     hp: [12, 15],
     poiseMax: 6,
     levelProfile: { min: 1, max: 3 },
-    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐕',
     moves: {
       bite: { intent: 'attack', damage: 6, weight: 60 },
@@ -50,7 +54,6 @@ export const act1Enemies = [
     hp: [30, 34],
     poiseMax: 16,
     levelProfile: { min: 2, max: 5 },
-    tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪨',
     moves: {
       club: { intent: 'attack', damage: 9, weight: 50 },
@@ -69,7 +72,6 @@ export const act1Enemies = [
     hp: [10, 12],
     poiseMax: 4,
     levelProfile: { min: 1, max: 4 },
-    tags: ['spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👻',
     moves: {
       curse: {
@@ -92,7 +94,6 @@ export const act1Enemies = [
     hp: [68, 72],
     poiseMax: 24,
     levelProfile: { min: 4, max: 6 },
-    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐲',
     firstMove: 'consecrate',
     moves: {
@@ -121,7 +122,6 @@ export const act1Enemies = [
     hp: [120, 120],
     poiseMax: 30,
     levelProfile: { min: 5, max: 7 },
-    tags: ['humanoid', 'undead'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👁',
     firstMove: 'caneStrike',
     moves: {

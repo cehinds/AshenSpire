@@ -51,24 +51,14 @@
 
 import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
-import { equipmentRequirementReceipt, equippedPieces, parseMod } from './loadout.js';
+import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
 
-/** `mods` → player-readable effect lines, through the modFields vocabulary. */
-function pieceEffects(registries, piece) {
-  const fields = (registries.equipment || {}).modFields || {};
-  return (piece.mods || []).map((raw) => {
-    const mod = parseMod(raw);
-    const spec = mod && fields[mod.field];
-    // A mod the vocabulary does not know is refused at the content door, so
-    // reaching here means the tables disagree — say the raw row rather than
-    // drop it silently. A visible oddity is a bug report; a dropped line is a
-    // screen that quietly under-describes a weapon.
-    if (!spec) return raw;
-    const sign = mod.mode === 'add' && mod.value >= 0 ? '+' : '';
-    return `${spec.label} ${sign}${mod.value}`;
-  });
-}
+/** `mods` → player-readable effect lines, through the modFields vocabulary.
+ *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
+ *  the two copies that made a third site print the raw row. The reasoning about
+ *  an unknown field, which was written here, moved with it. */
+const pieceEffects = (registries, piece) => modEffectLines(registries, piece);
 
 function requirementLines(registries, piece, attributes) {
   const receipt = equipmentRequirementReceipt(registries, piece, attributes);

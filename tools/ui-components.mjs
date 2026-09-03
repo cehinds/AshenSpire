@@ -231,10 +231,21 @@ export function findings(r) {
       || !/gap:\s*calc\(var\(--hud-primary-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
       || !/gap:\s*calc\(var\(--hud-resource-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
       || !/grid-template-columns:\s*minmax\(0, 1fr\) fit-content\(var\(--hud-cinders-max-width\)\) minmax\(0, 1fr\)/.test(r.css)
-      || !/width:\s*min\(100%, var\(--hud-metadata-max-width\)\)/.test(r.css)
+      // THE METADATA BOX HUGS ITS CONTENT NOW, and the cap it once wrote as
+      // `width` it writes as `max-width`. The token is what C12 guards — that
+      // the row is bounded by --hud-metadata-max-width rather than by a number
+      // — and it still is. The change is the box's SIZING: a fixed-width box
+      // right-aligning its contents spilled its overflow off the left edge and
+      // ate the Act and Floor fields (styles/combat.css has the sweep).
+      || !/max-width:\s*min\(100%, var\(--hud-metadata-max-width\)\)/.test(r.css)
+      || !/\.hud-run-meta\s*\{[\s\S]*?width:\s*fit-content;/.test(r.css)
       || !/data-hud-metadata-show-totals='false'/.test(r.css)
       || !/\.hud-potions \.flask-slot\s*\{[^}]*width:\s*var\(--hud-utility-visual-size\);[^}]*min-width:\s*var\(--hud-utility-visual-size\);/.test(r.css)
-      || !/@media \(max-width:\s*350px\)[\s\S]*hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)
+      // The totals' yield moved from a 350px MEDIA query into the container
+      // ladder with every other rung, so this asserts the rule exists inside a
+      // `@container run-header` block rather than naming the old viewport
+      // number. What it guards is unchanged: the totals have somewhere to yield.
+      || !/@container run-header \(max-width: 520px\)[\s\S]*?hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)
       || !/\.hud-quick-settings\s*\{[\s\S]*flex-direction:\s*column;/.test(r.uiCss)
       || !/\.hud-quick-setting\s*\{[\s\S]*border:\s*0;[\s\S]*background:\s*transparent;/.test(r.uiCss)
       || !/\.hud-quick-setting-face\s*\{[\s\S]*--hud-quick-card-size[\s\S]*border:\s*1px solid var\(--line-soft\);/.test(r.uiCss)

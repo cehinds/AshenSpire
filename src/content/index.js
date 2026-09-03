@@ -25,13 +25,13 @@ import { act3Encounters } from './encounters/act3.js';
 import { events, eventHistoryRequirements } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
-import { cardTags } from './generated/cardTags.js';
+import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
 import {
   ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
-  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI,
+  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, EQUIPMENT_GRANTS, ARMOURY_UI,
   ITEM_UPGRADE_CHANGES,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
@@ -102,12 +102,20 @@ export const contentBundle = {
     itemUpgradeChanges: ITEM_UPGRADE_CHANGES,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,
+    equipmentGrants: EQUIPMENT_GRANTS,
     armouryUi: ARMOURY_UI,
   },
   unlocks,
-  // The card-tag registry rides the bundle so effect `tags` and
-  // taggedVulnerability lists validate against ONE vocabulary home (#61).
-  tags: cardTags,
+  // The tag schema rides the bundle so every carrier — effect `tags`,
+  // taggedVulnerability lists, creature kinds, equipment, relics — validates
+  // against ONE vocabulary home (#61). Five normalised tables: the domain
+  // lookup, the registry, what can be tagged, who may carry which domain, and
+  // the association rows themselves (content/tags.js says why five).
+  tagDomains: TAG_DOMAINS,
+  tags: TAGS,
+  tagFamilies: TAG_FAMILIES,
+  tagFamilyDomains: TAG_FAMILY_DOMAINS,
+  tagging: TAGGING,
   attributes,
   creationModes,
   // `retired` is composed HERE, from its own file, so that reverting

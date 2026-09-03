@@ -211,7 +211,7 @@ const KNOWN_BELOW = [
     label: 'Blood card tag (label only)', profile: 'default', render: 1.71, floor: 4.5,
     why: 'The worst contrast in the game, on the Reaver\'s staple card, and NO accessibility '
        + 'toggle can reach it: the tag colour is not --blood. It is the literal string '
-       + '8A1A1A in the `color` column of content/source/cardTags.csv, applied inline as '
+       + '8A1A1A in the `color` column of content/source/tags.csv, applied inline as '
        + '--tag-color by src/ui/components/card.js. A second copy of the blood hex, living '
        + 'in content, invisible to every CSS override in styles/base.css. `body.cb-safe` '
        + 'remaps --blood and leaves this tag at 1.71 — the two look linked and are not.',
