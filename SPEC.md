@@ -355,6 +355,36 @@ the map, the tag row and `sourceOrder` move together, and a binding that names n
 registered source — or a seam left unbound — is refused by name rather than silently
 dealing that source's cards last.
 
+**Card mounts: the smith's other two services.** Every card an item lends sits in a **mount**
+on that item, keyed by the instance id the composer mints for it, so "the sword's art" is the
+same mount on every restamp, save and fight. A smith — the Shrine's, or one a merchant rolls —
+does three things: **upgrade** an item (the tier promotion), **extract** a card out of one of
+its mounts, and **seat** a run-owned card in an emptied or open mount.
+
+- **Extract.** The card becomes the run's own — a run-owned instance joins the deck and stays
+  whatever the item does — and the mount it left is never dead: it shows its kind's **fallback**
+  until something is seated. A weapon-art mount falls back to the unarmed technique (the Dodge
+  Roll), read from `unarmedProfiles`; a granted mount falls back to nothing; any item may
+  override its fallback under `cardMounts.fallbackByItem`. A fallback is the mount's, not the
+  item's, and is never itself extractable.
+- **What is extractable is a tag on the card** (`cardMounts.extractableTag`, `extractable`
+  today). Strikes and defends do not carry it; the day the game changes its mind, that is a
+  spreadsheet edit. A mount accepts a card carrying any tag in its kind's `accepts` list.
+- **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
+  and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
+  per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
+- **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
+  the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
+  and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
+  once per visit on the smith's own RNG stream and rides with the stock, so a reload does not
+  roll again and the roll shifts no later reward in an existing seed.
+
+What a smith did is `run.itemMounts` — per item, per mount: emptied, or the card seated —
+read by the composer on every restamp and carried into combat and into a saved fight the way
+the birth quota is, so a mid-fight swap or a load cannot re-mint an extracted card from the
+item's authoring. Nothing here touches an item's authoring, and absent means untouched, so no
+migration invents the field.
+
 **Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
 priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
 `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
