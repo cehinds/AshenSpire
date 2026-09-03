@@ -31,6 +31,7 @@ import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { FOLD_GLYPH } from '../components/foldGlyph.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -147,7 +148,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <summary>
             <span class="shrine-fold-glyph">⚗</span>
             <span class="shrine-fold-summary"><b>Reallocate Flask Charges</b><small>${charge.assigned}/${charge.capacity} assigned</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
           <h3>Reallocate Flask Charges</h3>
@@ -219,7 +220,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <summary>
             <span class="shrine-fold-glyph">✦</span>
             <span class="shrine-fold-summary"><b>Level up</b><small>${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
           <h3>Level up</h3>

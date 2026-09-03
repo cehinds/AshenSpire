@@ -16,6 +16,7 @@ record that names what it supersedes; do not silently rewrite history.
 | [0009](0009-promotion-gates-a-through-f.md) | Promotion Gates A–F | Approved | Active under the same branch-containment rule; conditionally delegates exact `test` fast-forward while retaining Constantine-only main/release authority |
 | [0010](0010-self-certification-withdrawn-pending-authenticated-approval.md) | Maker self-certification: directive accepted, mechanism withdrawn | Approved | Owner directive stands; the self-certification mechanism is withdrawn and `qa.rules.independence_is_not_self_recorded` recorded, pending a separately authenticated approval path |
 | [0011](0011-it-support-plane-reconciliation.md) | `it-support` two-plane reconciliation | Approved | Active under the same branch-containment rule; keeps the `it-support` delivery seat and adds its AUTHORITY.md matrix row + TEAM-CHARTERS.md disambiguation (Option A of #422) |
+| [0012](0012-builds-site-republication.md) | Republishing the builds site is not a release publication | **Proposed — awaiting Constantine** | Nothing in force. ASKS whether Gate F's "Pages source or deployment" should be split, and offers three models (A pins what the owner published, B accepts whole-site republication, C declines). A ruling that does not name a letter approves nothing, and A must name a listener treatment (A-review or A-accept) as well |
 
 Approval, local preparation, canonical merge, policy activation, and release
 are separate facts. Decision status remains historical; policy activation is

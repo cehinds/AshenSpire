@@ -98,6 +98,79 @@
      for the reason --tap-floor is: an exempt control a small phone shrinks
      anyway is an exemption in name only. */
   --tap-floor-default: calc(var(--tap-floor-default-target) / var(--ui-zoom, 1));
+  /* THE CORNER SCALE, AND WHY IT IS A CLOSED SET.
+     Measured 2026-09-02 by driving 78 surfaces (every ?shot= state, every
+     settings category, the quick menu, all three Armoury views) at 1440x900 and
+     390x844 and reading computed style off every rendered button: TWENTY
+     distinct border-radius values on one control layer — 0, 1.8, 2, 3, 4, 5.83,
+     6, 6.5, 7.78, 8, 9, 10, 11, 12, 13, 14, 14.44, 50%, 999px and a
+     two-corner pair. A player cannot read twenty roundnesses as meaning
+     anything, so they mean nothing, and every new rule had twenty precedents to
+     copy. This is the set instead. Snapping is BOUNDED: no declaration moved
+     more than 2px, which is why the sweep could be mechanical and reviewed as a
+     diff rather than re-judged surface by surface.
+
+     FOUR STEPS, NAMED BY WHAT WEARS THEM, not by size — a rule should be able to
+     ask "what am I?" rather than "how round?":
+       --r-1  tags, keycaps, inline pills — the small stuff inside a row
+       --r-2  small controls — segmented chips, inputs, icon buttons
+       --r-3  buttons, cards, list rows, tiles — the things a finger presses
+       --r-4  panels and modal shells — the things that hold the above
+
+     THE ROLES ARE READ OFF THE TREE, NOT IMPOSED ON IT. Every step is a value
+     the app already used most often for that job, which is what let the sweep
+     stay inside 2px; a scale that argued with the design would have cost a
+     re-judgement of all 168 declarations instead of a diff.
+
+     REM RADII WERE A BUG THIS SET RETIRES, and it is the same defect Law 4
+     already names in the Text size block below: a radius written in rem grows
+     when the player raises Text size, so the title modal's corners were a
+     function of the font. Non-text geometry is px here for that reason.
+
+     THE `-glass` VARIANTS ARE NOT A FIFTH STEP. `zoom: var(--ui-zoom)` on
+     <body> scales every length below it, so a control that must hold the SAME
+     roundness on the screen at every UI size divides by the zoom — the same
+     conversion --tap-floor makes above, for the same reason. Combat's HUD
+     already did this by hand in five places; these are those five, named.
+
+     NOT IN THE SET, deliberately: `45% 45% 55% 55%` on the refusal blob, which
+     is a drawn shape rather than a corner, and `border-radius: 0`, which is a
+     rule saying "square on purpose" and stays legible as a literal. */
+  --r-1: 3px;
+  --r-2: 6px;
+  --r-3: 8px;
+  --r-4: 12px;
+  --r-pill: 999px;
+  --r-round: 50%;
+  --r-1-glass: calc(var(--r-1) / var(--ui-zoom, 1));
+  --r-2-glass: calc(var(--r-2) / var(--ui-zoom, 1));
+  --r-3-glass: calc(var(--r-3) / var(--ui-zoom, 1));
+  --r-4-glass: calc(var(--r-4) / var(--ui-zoom, 1));
+  /* CONTROL TYPE — FOUR STEPS, AND AN HONEST BOUNDARY ON HOW FAR THEY REACH.
+     The same census that found twenty corner values found TWENTY-ONE font
+     size/family pairs on buttons: Cinzel at 5.8, 7, 9, 10, 10.5, 11.5, 12, 13,
+     13.5, 14, 15, 16, 17, 18 and 20px, and Inter at 9, 11, 12, 14 and 15 —
+     across ONE control layer, with two typefaces sharing it. Some of those are
+     one rule read at two UI zooms (16.67 and 20 are the title menu; 13.33 and
+     13.5 are BACK/CONTINUE), which is honest scaling. The rest is drift.
+
+     THESE FOUR ARE THE SCALE. `button` and `button.subtle` — the two rules every
+     other control inherits from — now name a step instead of a number, and so
+     do the modal action buttons, whose 1.35rem was an arbitrary point between
+     two steps that already existed.
+
+     WHAT IS NOT DONE, SAID HERE RATHER THAN DISCOVERED LATER: the ~40 component
+     rules that override button type for their own geometry are UNSWEPT. A
+     corner can be snapped mechanically because it changes nothing else; a font
+     size reflows the box it is in, and those rules are entangled with grid
+     templates and min-heights that were tuned around the current values. Each
+     is a judgement against its own surface, not a find-and-replace, and doing
+     them blind is how a type scale ships a regression. The scale is here so
+     that work has somewhere to land. */
+  --t-1: 1rem;
+  --t-2: 1.2rem;
+  --t-3: 1.5rem;
+  --t-4: 1.8rem;
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
@@ -243,21 +316,57 @@ button {
   background: var(--panel);
   color: var(--gold);
   border: 2px solid var(--gold);
-  border-radius: 10px;
+  border-radius: var(--r-3);
   padding: 1rem 2.6rem;
-  font-size: 1.5rem;
+  font-size: var(--t-3);
   cursor: pointer;
   transition: background 120ms, transform 120ms;
 }
 button:hover { background: #2e2517; }
 button:disabled { border-color: var(--line); color: var(--muted); cursor: default; }
-button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.2rem; padding: 0.6rem 1.4rem; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: var(--t-2); padding: 0.6rem 1.4rem; }
+
+/* THE THREE EMPHASES, AND THE ONE THAT WAS MISSING.
+   Measured with the corner census above: the tree had `button` (gold outline),
+   `.subtle` (quiet outline) and `.danger` (red outline) — three ways to say
+   "not the main thing" and NO way to say "this one". So a modal footer said it
+   by accident instead: Load Game leaves BACK and CONTINUE the same size and
+   weight and asks the border colour to carry the difference, and the in-run
+   Settings footer paints Save and Quit in DANGER RED for an act that saves.
+   `.primary` is the missing word. Red is now spent only on loss.
+
+   ONE PER SURFACE is the rule this enables and does not enforce: nothing here
+   can count the buttons in a footer. What it can do is make the emphasis a
+   NAME a reviewer can see in the markup rather than a set of overrides they
+   have to compare pixel by pixel. */
+button.primary {
+  background: color-mix(in srgb, var(--gold) 22%, var(--panel));
+  border-color: var(--gold);
+  color: var(--parchment);
+}
+button.primary:hover { background: color-mix(in srgb, var(--gold) 32%, var(--panel)); }
+button.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
+
+/* THE FOCUS RING, ONCE, IN THE HOUSE COLOUR.
+   There was no app-wide rule, so anything without its own `:focus-visible`
+   wore CHROME'S DEFAULT — a thick white double outline on a gold-on-brown
+   panel. It is not hypothetical: settings.js:1591 focuses `.set-tab.on` on
+   open, so opening Settings on a phone PAINTS it every time, and the census
+   caught it on the 390x844 capture.
+
+   `:where()` on purpose — specificity ZERO, so the fourteen rules that already
+   style their own focus keep winning without being touched or re-listed here.
+   This is the floor under them, not a competitor to them. */
+:where(a, button, input, select, summary, textarea, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
 .bar {
   position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   overflow: hidden;
 }
 .bar > .fill { position: absolute; inset: 0; right: auto; transition: width 200ms; }

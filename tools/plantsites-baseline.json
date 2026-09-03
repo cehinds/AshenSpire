@@ -71,7 +71,7 @@
   "sites": {
     "tools/about-changelog.mjs": {
       "count": 52,
-      "digest": "f0880ab6cd60b326"
+      "digest": "ed0188fe2a36cb46"
     },
     "tools/armoury-picked-up.mjs": {
       "count": 14,
@@ -243,7 +243,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "37545e8f2e23a208"
+      "digest": "b5cbde0bab5edc7c"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
@@ -267,7 +267,7 @@
     },
     "tools/text-geometry.mjs": {
       "count": 10,
-      "digest": "fa6d147626555108"
+      "digest": "d39a91b04ac9376c"
     },
     "tools/title-new-slot.mjs": {
       "count": 4,

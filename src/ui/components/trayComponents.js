@@ -3,13 +3,8 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { esc } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
 import { traySizeService } from '../services/TraySizeService.js';
+import { TRAY_FOLD_GLYPH as GLYPHS } from './foldGlyph.js';
 
-const GLYPHS = Object.freeze({
-  top: Object.freeze({ closed: 'v', open: '^' }),
-  right: Object.freeze({ closed: '<', open: '>' }),
-  bottom: Object.freeze({ closed: '^', open: 'v' }),
-  left: Object.freeze({ closed: '>', open: '<' }),
-});
 
 export function renderTray(model, { onToggle = null, onSort = null, onResize = null, renderContent = null, sizeService = traySizeService } = {}) {
   const headerModel = childModel(model, UI.trayHeader);

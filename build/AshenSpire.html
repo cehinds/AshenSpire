@@ -105,6 +105,79 @@
      for the reason --tap-floor is: an exempt control a small phone shrinks
      anyway is an exemption in name only. */
   --tap-floor-default: calc(var(--tap-floor-default-target) / var(--ui-zoom, 1));
+  /* THE CORNER SCALE, AND WHY IT IS A CLOSED SET.
+     Measured 2026-09-02 by driving 78 surfaces (every ?shot= state, every
+     settings category, the quick menu, all three Armoury views) at 1440x900 and
+     390x844 and reading computed style off every rendered button: TWENTY
+     distinct border-radius values on one control layer — 0, 1.8, 2, 3, 4, 5.83,
+     6, 6.5, 7.78, 8, 9, 10, 11, 12, 13, 14, 14.44, 50%, 999px and a
+     two-corner pair. A player cannot read twenty roundnesses as meaning
+     anything, so they mean nothing, and every new rule had twenty precedents to
+     copy. This is the set instead. Snapping is BOUNDED: no declaration moved
+     more than 2px, which is why the sweep could be mechanical and reviewed as a
+     diff rather than re-judged surface by surface.
+
+     FOUR STEPS, NAMED BY WHAT WEARS THEM, not by size — a rule should be able to
+     ask "what am I?" rather than "how round?":
+       --r-1  tags, keycaps, inline pills — the small stuff inside a row
+       --r-2  small controls — segmented chips, inputs, icon buttons
+       --r-3  buttons, cards, list rows, tiles — the things a finger presses
+       --r-4  panels and modal shells — the things that hold the above
+
+     THE ROLES ARE READ OFF THE TREE, NOT IMPOSED ON IT. Every step is a value
+     the app already used most often for that job, which is what let the sweep
+     stay inside 2px; a scale that argued with the design would have cost a
+     re-judgement of all 168 declarations instead of a diff.
+
+     REM RADII WERE A BUG THIS SET RETIRES, and it is the same defect Law 4
+     already names in the Text size block below: a radius written in rem grows
+     when the player raises Text size, so the title modal's corners were a
+     function of the font. Non-text geometry is px here for that reason.
+
+     THE `-glass` VARIANTS ARE NOT A FIFTH STEP. `zoom: var(--ui-zoom)` on
+     <body> scales every length below it, so a control that must hold the SAME
+     roundness on the screen at every UI size divides by the zoom — the same
+     conversion --tap-floor makes above, for the same reason. Combat's HUD
+     already did this by hand in five places; these are those five, named.
+
+     NOT IN THE SET, deliberately: `45% 45% 55% 55%` on the refusal blob, which
+     is a drawn shape rather than a corner, and `border-radius: 0`, which is a
+     rule saying "square on purpose" and stays legible as a literal. */
+  --r-1: 3px;
+  --r-2: 6px;
+  --r-3: 8px;
+  --r-4: 12px;
+  --r-pill: 999px;
+  --r-round: 50%;
+  --r-1-glass: calc(var(--r-1) / var(--ui-zoom, 1));
+  --r-2-glass: calc(var(--r-2) / var(--ui-zoom, 1));
+  --r-3-glass: calc(var(--r-3) / var(--ui-zoom, 1));
+  --r-4-glass: calc(var(--r-4) / var(--ui-zoom, 1));
+  /* CONTROL TYPE — FOUR STEPS, AND AN HONEST BOUNDARY ON HOW FAR THEY REACH.
+     The same census that found twenty corner values found TWENTY-ONE font
+     size/family pairs on buttons: Cinzel at 5.8, 7, 9, 10, 10.5, 11.5, 12, 13,
+     13.5, 14, 15, 16, 17, 18 and 20px, and Inter at 9, 11, 12, 14 and 15 —
+     across ONE control layer, with two typefaces sharing it. Some of those are
+     one rule read at two UI zooms (16.67 and 20 are the title menu; 13.33 and
+     13.5 are BACK/CONTINUE), which is honest scaling. The rest is drift.
+
+     THESE FOUR ARE THE SCALE. `button` and `button.subtle` — the two rules every
+     other control inherits from — now name a step instead of a number, and so
+     do the modal action buttons, whose 1.35rem was an arbitrary point between
+     two steps that already existed.
+
+     WHAT IS NOT DONE, SAID HERE RATHER THAN DISCOVERED LATER: the ~40 component
+     rules that override button type for their own geometry are UNSWEPT. A
+     corner can be snapped mechanically because it changes nothing else; a font
+     size reflows the box it is in, and those rules are entangled with grid
+     templates and min-heights that were tuned around the current values. Each
+     is a judgement against its own surface, not a find-and-replace, and doing
+     them blind is how a type scale ships a regression. The scale is here so
+     that work has somewhere to land. */
+  --t-1: 1rem;
+  --t-2: 1.2rem;
+  --t-3: 1.5rem;
+  --t-4: 1.8rem;
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
@@ -250,21 +323,57 @@ button {
   background: var(--panel);
   color: var(--gold);
   border: 2px solid var(--gold);
-  border-radius: 10px;
+  border-radius: var(--r-3);
   padding: 1rem 2.6rem;
-  font-size: 1.5rem;
+  font-size: var(--t-3);
   cursor: pointer;
   transition: background 120ms, transform 120ms;
 }
 button:hover { background: #2e2517; }
 button:disabled { border-color: var(--line); color: var(--muted); cursor: default; }
-button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.2rem; padding: 0.6rem 1.4rem; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: var(--t-2); padding: 0.6rem 1.4rem; }
+
+/* THE THREE EMPHASES, AND THE ONE THAT WAS MISSING.
+   Measured with the corner census above: the tree had `button` (gold outline),
+   `.subtle` (quiet outline) and `.danger` (red outline) — three ways to say
+   "not the main thing" and NO way to say "this one". So a modal footer said it
+   by accident instead: Load Game leaves BACK and CONTINUE the same size and
+   weight and asks the border colour to carry the difference, and the in-run
+   Settings footer paints Save and Quit in DANGER RED for an act that saves.
+   `.primary` is the missing word. Red is now spent only on loss.
+
+   ONE PER SURFACE is the rule this enables and does not enforce: nothing here
+   can count the buttons in a footer. What it can do is make the emphasis a
+   NAME a reviewer can see in the markup rather than a set of overrides they
+   have to compare pixel by pixel. */
+button.primary {
+  background: color-mix(in srgb, var(--gold) 22%, var(--panel));
+  border-color: var(--gold);
+  color: var(--parchment);
+}
+button.primary:hover { background: color-mix(in srgb, var(--gold) 32%, var(--panel)); }
+button.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
+
+/* THE FOCUS RING, ONCE, IN THE HOUSE COLOUR.
+   There was no app-wide rule, so anything without its own `:focus-visible`
+   wore CHROME'S DEFAULT — a thick white double outline on a gold-on-brown
+   panel. It is not hypothetical: settings.js:1591 focuses `.set-tab.on` on
+   open, so opening Settings on a phone PAINTS it every time, and the census
+   caught it on the 390x844 capture.
+
+   `:where()` on purpose — specificity ZERO, so the fourteen rules that already
+   style their own focus keep winning without being touched or re-listed here.
+   This is the floor under them, not a competitor to them. */
+:where(a, button, input, select, summary, textarea, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
 .bar {
   position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   overflow: hidden;
 }
 .bar > .fill { position: absolute; inset: 0; right: auto; transition: width 200ms; }
@@ -326,7 +435,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 #tooltip {
   --place-gap: 14px;
   position: fixed; z-index: 1000; max-width: 28rem; pointer-events: none;
-  background: #14100c; border: 1px solid var(--gold); border-radius: 8px;
+  background: #14100c; border: 1px solid var(--gold); border-radius: var(--r-3);
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
 }
@@ -359,7 +468,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 
 /* ---------- card ---------- */
 .card {
-  position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, 10px);
+  position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, var(--r-3));
   background: linear-gradient(#241e15, #1a1510);
   border: 2px solid #5a5040; color: var(--parchment);
   display: flex; flex-direction: column; align-items: center;
@@ -371,19 +480,19 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .card.rarity-special { border-color: #6a3a7a; }
 .card .cost {
   position: absolute; top: -1rem; left: -1rem; width: 3rem; height: 3rem;
-  border-radius: 50%; background: #1c1610; border: 2px solid var(--gold);
+  border-radius: var(--r-round); background: #1c1610; border: 2px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 1.4rem; color: var(--parchment);
 }
 .card .mana-cost {
   position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
-  border-radius: 999px; padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
+  border-radius: var(--r-pill); padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
   display: flex; align-items: center; justify-content: center; gap: 0.25rem;
   font-weight: 700; font-size: 1rem; color: #cfe1ff;
 }
 .card .stamina-cost {
   position: absolute; top: 1.9rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
-  border-radius: 999px; padding: 0 0.6rem; background: #142016; border: 2px solid #5f925d;
+  border-radius: var(--r-pill); padding: 0 0.6rem; background: #142016; border: 2px solid #5f925d;
   display: flex; align-items: center; justify-content: center; gap: 0.25rem;
   font-weight: 700; font-size: 1rem; color: var(--parchment); z-index: 3;
 }
@@ -391,12 +500,12 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
 .card.upgraded .cname { color: var(--green); }
 .card .art {
-  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: var(--card-art-radius, 6px);
+  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: var(--card-art-radius, var(--r-2));
   background: #14100c; border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
 }
 .card .ctype {
-  width: 11.6rem; border-radius: 4px; background: #2a241c; color: var(--gold);
+  width: 11.6rem; border-radius: var(--r-2); background: #2a241c; color: var(--gold);
   font-size: 0.9rem; letter-spacing: 3px; text-align: center; padding: 0.3rem 0;
   font-family: var(--font-display);
 }
@@ -444,9 +553,9 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   clip-path: polygon(0.5rem 0, 100% 0, calc(100% - 0.5rem) 100%, 0 100%);
 }
 /* Skill: the neutral middle — plain rounded banner. */
-.card.type-skill .ctype { border-radius: 4px; }
+.card.type-skill .ctype { border-radius: var(--r-2); }
 /* Power: fully rounded, with a keep-line inside the art to read as ongoing. */
-.card.type-power .ctype { border-radius: 999px; }
+.card.type-power .ctype { border-radius: var(--r-pill); }
 .card.type-power .art { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-type-color) 40%, transparent); }
 
 /* Card subtypes (content/source/cardTagging.csv). A quiet strip under the type
@@ -461,7 +570,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   color: var(--tag-color, var(--muted));
   border: 1px solid color-mix(in srgb, var(--tag-color, var(--muted)) 45%, transparent);
   background: color-mix(in srgb, var(--tag-color, var(--muted)) 12%, transparent);
-  border-radius: 3px; padding: 0.1rem 0.35rem;
+  border-radius: var(--r-1); padding: 0.1rem 0.35rem;
 }
 
 /* ---------- card colour motif (Settings → Display → Card motif) ------------ */
@@ -476,7 +585,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 
 /* wash — the class tints the card body; rarity keeps the border. */
 :root[data-card-motif='wash'] .card[style*='--card-tint']::before {
-  content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  content: ''; position: absolute; inset: 0; border-radius: var(--r-3); pointer-events: none;
   background: var(--card-tint); opacity: var(--card-motif-strength);
 }
 /* (The banner used to take the accent here. The card TYPE owns it now — see
@@ -488,7 +597,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 :root[data-card-motif='accent'] .card { border-color: var(--gold); }
 :root[data-card-motif='accent'] .card::after {
   content: ''; position: absolute; top: 5px; right: 5px; width: 9px; height: 9px;
-  border-radius: 50%; background: var(--line-soft); pointer-events: none;
+  border-radius: var(--r-round); background: var(--line-soft); pointer-events: none;
 }
 :root[data-card-motif='accent'] .card.rarity-uncommon::after { background: var(--frost); }
 :root[data-card-motif='accent'] .card.rarity-rare::after { background: var(--gold); }
@@ -513,7 +622,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   display: flex; align-items: center; justify-content: center;
 }
 .modal {
-  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 12px;
+  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: var(--r-4);
   /* 80% NOT 80vh, and finding this is why the check measures the OUTCOME rather
      than grepping for `vh`. The in-run overlay panel is `class="modal
      overlay-modal"`, so this cap applies to it too. Fixing 74vh -> 74% on
@@ -549,10 +658,71 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
    uses for the same job — one gutter, one number, and the two panels stop
    disagreeing about how much edge a phone owes. */
 .overlay-modal { width: 76rem; max-width: 96%; height: 74%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+/* ---- THE MODAL SHELL (src/ui/components/modalShell.js) --------------------
+   The chrome every modal wears: a head whose actions sit right, ONE close
+   control, and a foot whose way-out is left and way-forward is right. The four
+   doors each had their own; these are the rules they now share. Bodies are
+   still each modal's own — see the file header for why that line is drawn
+   there and not further in. */
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line);
+}
+.modal-head-actions { display: flex; gap: 0.8rem; align-items: center; }
+/* One hit box for the one way out. `min-*` and not `width` — a floor is not a
+   ceiling (base.css, --tap-floor), and this control must clear it on BOTH axes
+   at every UI size, which is the whole reason it is stated once. */
+.modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
+  border-radius: var(--r-2);
+}
+.modal-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto; padding: 1.2rem 1.6rem; border-top: 1px solid var(--line);
+}
+.modal-foot-note { color: var(--muted); font-size: 0.95rem; }
+/* `margin-left: auto` so a foot with no note still puts its actions right. */
+.modal-foot-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.modal-foot-actions button { min-height: var(--tap-floor); }
+@media (max-width: 640px) {
+  .modal-foot { align-items: stretch; padding: 8px 10px; }
+  .modal-foot-note { display: none; }
+  .modal-foot-actions { width: 100%; }
+  .modal-foot-actions button { flex: 1 1 0; padding-inline: 8px; }
+}
+
+/* THE SCROLL OWNERS INSIDE A MODAL, AND WHY THEY LOOKED FOREIGN.
+   `.screen` and `.map-scroll` already carry the house scrollbar; nothing
+   reached a modal's panes, so Settings, the Armoury and the in-run body drew
+   Chromium's default grey bar against the parchment. Same tokens, one rule. */
+.modal .set-panel, .modal .set-body, .overlay-body, .overlay-body .set-panel,
+.armoury-content, .armoury-left, .armoury-right, .armoury-inventory {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-soft) transparent;
+}
+.modal .set-panel::-webkit-scrollbar, .overlay-body::-webkit-scrollbar,
+.armoury-content::-webkit-scrollbar, .armoury-left::-webkit-scrollbar,
+.armoury-right::-webkit-scrollbar, .armoury-inventory::-webkit-scrollbar {
+  width: 1.2rem; height: 1.2rem;
+}
+.modal .set-panel::-webkit-scrollbar-thumb, .overlay-body::-webkit-scrollbar-thumb,
+.armoury-content::-webkit-scrollbar-thumb, .armoury-left::-webkit-scrollbar-thumb,
+.armoury-right::-webkit-scrollbar-thumb, .armoury-inventory::-webkit-scrollbar-thumb {
+  background: var(--line-soft); border-radius: var(--r-2);
+  border: 3px solid transparent; background-clip: padding-box;
+}
+.modal .set-panel::-webkit-scrollbar-thumb:hover, .overlay-body::-webkit-scrollbar-thumb:hover,
+.armoury-content::-webkit-scrollbar-thumb:hover, .armoury-left::-webkit-scrollbar-thumb:hover,
+.armoury-right::-webkit-scrollbar-thumb:hover, .armoury-inventory::-webkit-scrollbar-thumb:hover {
+  background: var(--gold); background-clip: padding-box;
+}
+
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .overlay-tabs .ov-tab {
-  padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0;
+  padding: 0.7rem 1.4rem; border-radius: var(--r-3) var(--r-3) 0 0;
   font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
   background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
   /* Law 4 (#37) applied where this work touches, ratchet-style, NOT swept.
@@ -586,7 +756,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .overlay-footer-actions button { min-height: var(--tap-floor); }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
-.ov-relic { display: flex; gap: 1rem; align-items: flex-start; padding: 0.8rem 1rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px; }
+.ov-relic { display: flex; gap: 1rem; align-items: flex-start; padding: 0.8rem 1rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3); }
 .ov-relic-ic { font-size: 2rem; flex-shrink: 0; }
 .ov-relic b { color: var(--parchment); font-size: 1.3rem; }
 .ov-relic p { color: var(--muted); font-size: 1.1rem; margin-top: 0.2rem; line-height: 1.4; }
@@ -653,7 +823,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .debug-modal { width: 72rem; max-width: 94%; }
 .debug-log-body {
   margin-top: 1rem; max-height: 46%; overflow: auto; user-select: text;
-  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-3);
   padding: 1rem 1.2rem; font-family: Consolas, monospace; font-size: 1.1rem;
   line-height: 1.55; color: var(--parchment); white-space: pre-wrap; word-break: break-word;
 }
@@ -661,7 +831,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {
   outline: 3px solid var(--gold) !important; outline-offset: 2px;
-  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: 6px;
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: var(--r-2);
 }
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }
@@ -677,7 +847,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .hint-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 0.6rem; z-index: 40;
   display: flex; gap: 1.4rem; white-space: nowrap;
-  padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96%; overflow: hidden;
+  padding: 0.4rem 1.2rem; border-radius: var(--r-3); max-width: 96%; overflow: hidden;
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
@@ -717,7 +887,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .hint-bar .hint {
   display: inline-flex; align-items: center; gap: 0.5rem;
   min-height: var(--tap-floor); height: auto;
-  padding: 2px 6px; margin: 0; border: 0; border-radius: 6px;
+  padding: 2px 6px; margin: 0; border: 0; border-radius: var(--r-2);
   background: none; color: inherit; font: inherit; letter-spacing: inherit;
   cursor: pointer; touch-action: manipulation;
 }
@@ -767,11 +937,11 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 }
 .hint-bar kbd {
   font-family: var(--font-body); font-size: 1rem; min-width: 1.5rem; text-align: center;
-  padding: 0.1rem 0.5rem; border-radius: 4px; color: var(--parchment);
+  padding: 0.1rem 0.5rem; border-radius: var(--r-2); color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
 /* Controller glyphs read as rounded buttons. */
-.hint-bar.hint-pad kbd { border-radius: 999px; padding: 0.1rem 0.7rem; }
+.hint-bar.hint-pad kbd { border-radius: var(--r-pill); padding: 0.1rem 0.7rem; }
 body.hide-hints .hint-bar { display: none; }
 
 /* EldenSpire#29 slice 0 — the hint bar is an affordance for hardware that is
@@ -803,7 +973,7 @@ body.hide-hints .hint-bar { display: none; }
 .confirmation-modal h2 { margin: 0; color: var(--parchment); }
 .confirmation-details {
   display: grid; gap: 0.65rem; max-height: min(46vh, 24rem); overflow: auto;
-  padding: 0.75rem; border: 1px solid var(--line-soft); border-radius: 8px;
+  padding: 0.75rem; border: 1px solid var(--line-soft); border-radius: var(--r-3);
   background: color-mix(in srgb, var(--panel) 82%, transparent);
 }
 .confirmation-cost { display: grid; gap: 0.45rem; color: var(--parchment); }
@@ -842,7 +1012,7 @@ body.hide-hints .hint-bar { display: none; }
   height: auto;
 }
 .pad-btn {
-  min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: 6px;
+  min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: var(--r-2);
   background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
   font-size: 1.2rem; font-variant-numeric: tabular-nums;
 }
@@ -853,7 +1023,7 @@ body.hide-hints .hint-bar { display: none; }
 /* ---------- custom climb ---------- */
 .mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
 .mod-chip {
-  text-align: left; padding: 0.8rem 1.2rem; border-radius: 8px; cursor: pointer;
+  text-align: left; padding: 0.8rem 1.2rem; border-radius: var(--r-3); cursor: pointer;
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--parchment);
   display: flex; flex-direction: column; gap: 0.2rem; transition: border-color 140ms, background 140ms;
 }
@@ -888,23 +1058,23 @@ body.hide-hints .hint-bar { display: none; }
    LAW 4 — text metrics take the text unit; boxes do not. `font-size` and
    `line-height` are rem. The tap floor, the track and the thumb are px through
    `--tap-floor`, because a finger does not grow when Text size does. */
-.runshape { border: 1px solid var(--line); border-radius: 8px; background: rgba(0, 0, 0, 0.18); }
+.runshape { border: 1px solid var(--line); border-radius: var(--r-3); background: rgba(0, 0, 0, 0.18); }
 .runshape-toggle {
   display: flex; align-items: center; gap: 8px; width: 100%;
   min-height: var(--tap-floor); height: auto;
   padding: 6px 12px; text-align: left; cursor: pointer;
-  background: none; border: 0; border-radius: 8px; color: var(--muted);
+  background: none; border: 0; border-radius: var(--r-3); color: var(--muted);
 }
 .runshape-toggle:hover { color: var(--parchment); }
 .runshape .rs-title { font-size: 1.1rem; letter-spacing: 0.18em; flex: 1 1 auto; min-width: 0; }
 .runshape .rs-state {
   font-size: 0.95rem; letter-spacing: 0.12em; color: var(--muted);
-  border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 5px;
+  border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 1px 5px;
 }
 .runshape.shaped .rs-state { color: var(--gold); border-color: var(--gold); }
 .runshape.shaped .rs-title { color: var(--gold); }
 .runshape .rs-caret { transition: transform 140ms; flex: 0 0 auto; }
-.runshape.open .rs-caret { transform: rotate(180deg); }
+.runshape.open .rs-caret { transform: rotate(90deg); }
 /* THE GAP BETWEEN KNOBS IS BIGGER THAN THE AIR INSIDE ONE, and it has to be
    stated as a number rather than left to taste: a 44 px slider box carries ~20 px
    of empty track above and below its ink, so at the first draft's 14 px each
@@ -920,7 +1090,7 @@ body.hide-hints .hint-bar { display: none; }
    `tabular-nums` so the figure does not jitter sideways while it is dragged. */
 .rs-readout {
   display: flex; flex-direction: column; gap: 2px;
-  padding: 10px 12px; border-radius: 6px;
+  padding: 10px 12px; border-radius: var(--r-2);
   background: var(--panel); border: 1px solid var(--line-soft);
 }
 .rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -971,16 +1141,16 @@ body.hide-hints .hint-bar { display: none; }
   min-height: var(--tap-floor); height: var(--tap-floor);
   background: none; cursor: pointer;
 }
-.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
-.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
-.rs-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-2); }
+.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: var(--r-1); background: var(--line-soft); }
+.rs-slider::-moz-range-track { height: 4px; border-radius: var(--r-1); background: var(--line-soft); }
 .rs-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+  width: 18px; height: 18px; margin-top: -7px; border-radius: var(--r-round);
   background: var(--gold); border: 1px solid var(--bg);
 }
 .rs-slider::-moz-range-thumb {
-  width: 18px; height: 18px; border-radius: 50%;
+  width: 18px; height: 18px; border-radius: var(--r-round);
   background: var(--gold); border: 1px solid var(--bg);
 }
 
@@ -1015,7 +1185,7 @@ button.rs-reset {
   padding: 8px 20px;
 }
 .draft-grid { gap: 1.6rem; }
-.hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
+.hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: var(--r-2); font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 2.2rem; }
 .farewell .title-big { opacity: 0.9; }
 
@@ -1074,7 +1244,7 @@ button.rs-reset {
 }
 .screen::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
 .screen::-webkit-scrollbar-thumb {
-  background: var(--line); border-radius: 6px; border: 3px solid transparent;
+  background: var(--line); border-radius: var(--r-2); border: 3px solid transparent;
   background-clip: padding-box;
 }
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
@@ -1098,7 +1268,7 @@ button.rs-reset {
 .seed-line { color: var(--muted); font-size: 1.2rem; }
 .seed-line input {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
-  border-radius: 6px; padding: 0.4rem 0.8rem; width: 11rem; font-family: monospace; text-align: center;
+  border-radius: var(--r-2); padding: 0.4rem 0.8rem; width: 11rem; font-family: monospace; text-align: center;
 }
 
 /* The seed refusal — a typed seed the run cannot be generated from names the
@@ -1137,7 +1307,7 @@ button.rs-reset {
 .shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
 .shrine-option-grid { align-items: stretch; }
 .class-pick {
-  width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: 12px;
+  width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: var(--r-4);
   background: var(--panel); cursor: pointer; text-align: center; transition: border-color 150ms, transform 150ms;
 }
 .class-pick:hover { border-color: var(--gold); transform: translateY(-3px); }
@@ -1147,7 +1317,7 @@ button.rs-reset {
 .class-pick .cp-body { min-width: 0; }
 .class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
-.class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.2rem 0.8rem; }
+.class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-3); padding: 0.2rem 0.8rem; }
 .flask-allocation-controls {
   display: flex; flex-wrap: wrap; gap: 6px;
 }
@@ -1211,7 +1381,7 @@ button.rs-reset {
   color: var(--gold); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
 }
 .smith-modal-consequence {
-  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: 999px;
+  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: var(--r-pill);
   color: var(--parchment); font-size: 0.78rem; letter-spacing: 0.1em;
 }
 .smith-modal-body {
@@ -1242,7 +1412,7 @@ button.rs-reset {
   position: relative; width: 100%; min-width: 0; min-height: 19rem;
   display: grid; grid-template-rows: auto minmax(9.5rem, 1fr) auto auto;
   gap: 0.55rem; padding: 1rem 0.75rem 0.75rem;
-  border: 2px solid #5a5040; border-radius: 10px;
+  border: 2px solid #5a5040; border-radius: var(--r-3);
   background: linear-gradient(#241e15, #1a1510); color: var(--parchment);
   box-sizing: border-box; transition: box-shadow 140ms, border-color 140ms;
 }
@@ -1251,7 +1421,7 @@ button.rs-reset {
 .smith-weapon-count {
   position: absolute; z-index: 2; top: -0.8rem; left: -0.8rem;
   width: 2.8rem; height: 2.8rem; display: grid; place-items: center;
-  border: 2px solid var(--gold); border-radius: 50%; background: #1c1610;
+  border: 2px solid var(--gold); border-radius: var(--r-round); background: #1c1610;
   color: var(--parchment); font-size: 1.25rem; font-weight: 700;
 }
 .smith-weapon-name {
@@ -1261,7 +1431,7 @@ button.rs-reset {
 }
 .smith-weapon-art {
   min-height: 9.5rem; display: grid; place-items: center; overflow: hidden;
-  border: 1px solid var(--line); border-radius: 6px; background: #14100c;
+  border: 1px solid var(--line); border-radius: var(--r-2); background: #14100c;
 }
 .smith-weapon-art img { width: 94%; height: 94%; display: block; object-fit: contain; }
 .smith-item-type-row {
@@ -1270,7 +1440,7 @@ button.rs-reset {
 }
 .smith-item-type-row em {
   flex: 1 1 0; min-width: 0; display: grid; place-items: center; padding: 0.3rem 0.45rem;
-  border-radius: 4px; background: color-mix(in srgb, var(--gold) 15%, #2a241c);
+  border-radius: var(--r-2); background: color-mix(in srgb, var(--gold) 15%, #2a241c);
   color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
   font-style: normal; letter-spacing: 2px; text-align: center;
 }
@@ -1279,7 +1449,7 @@ button.rs-reset {
   align-content: end; gap: 0.3rem;
 }
 .smith-weapon-tags em {
-  padding: 0.15rem 0.4rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  padding: 0.15rem 0.4rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   color: var(--muted); font-size: 0.78rem; font-style: normal; line-height: 1;
 }
 .smith-summary-grid {
@@ -1385,7 +1555,7 @@ button.rs-reset {
 .smith-upgrade-row.is-unused .smith-fold-values strong,
 .smith-upgrade-row.is-unused .smith-fold-values em { color: var(--muted); }
 .smith-upgrade-row[open] .smith-fold-caret { transform: rotate(90deg); }
-.smith-upgrade-fold { border: 1px solid var(--line-soft); border-radius: 7px; overflow: hidden; background: color-mix(in srgb, var(--panel) 86%, transparent); }
+.smith-upgrade-fold { border: 1px solid var(--line-soft); border-radius: var(--r-2); overflow: hidden; background: color-mix(in srgb, var(--panel) 86%, transparent); }
 .smith-upgrade-fold > summary { min-height: var(--tap-floor); display: grid; grid-template-columns: minmax(7rem, 1fr) auto auto; align-items: center; gap: 0.55rem; padding: 0.45rem 0.6rem; list-style: none; box-sizing: border-box; }
 .smith-upgrade-fold > summary { cursor: pointer; }
 .smith-upgrade-fold > summary::-webkit-details-marker { display: none; }
@@ -1411,10 +1581,10 @@ button.rs-reset {
 .smith-card-facts .smith-scaling { color: var(--muted); }
 .smith-card-facts .smith-scaling strong { color: var(--frost); }
 .smith-card-facts small { color: var(--muted); }
-.smith-preview-shortfall { padding: 8px; border: 1px solid var(--ember); border-radius: 6px; color: var(--ember); }
+.smith-preview-shortfall { padding: 8px; border: 1px solid var(--ember); border-radius: var(--r-2); color: var(--ember); }
 .armoury-smithing-receipt, .coop-smithing-receipts {
   display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--gold);
-  border-radius: 6px; background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border-radius: var(--r-2); background: color-mix(in srgb, var(--panel) 92%, transparent);
   color: var(--parchment);
 }
 .armoury-smithing-receipt b, .coop-smithing-receipts b { color: var(--gold); }
@@ -1541,7 +1711,7 @@ button.rs-reset {
 }
 .flask-increment .flask-step {
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
-  padding: 0 10px; border-radius: 8px;
+  padding: 0 10px; border-radius: var(--r-3);
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 1.8rem; line-height: 1;
 }
@@ -1565,7 +1735,7 @@ button.rs-reset {
 
 .deck-strip { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; max-width: 86rem; }
 .deck-strip .mini {
-  font-size: 1.1rem; border: 1px solid var(--line-soft); border-radius: 6px;
+  font-size: 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2);
   background: var(--panel); padding: 0.3rem 0.8rem;
 }
 .deck-strip .mini.upgraded { color: var(--green); }
@@ -1628,7 +1798,7 @@ button.rs-reset {
 .card .card-badge-new {
   position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
   font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
-  color: var(--gold); border: 1px solid var(--gold); border-radius: 8px;
+  color: var(--gold); border: 1px solid var(--gold); border-radius: var(--r-3);
   padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
   pointer-events: none; z-index: 2;
 }
@@ -1723,7 +1893,7 @@ button.rs-reset {
 .slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92%; animation: screenIn 500ms ease-out; }
 .slot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 1.1rem 1.6rem; border: 1.5px solid var(--line-soft); border-radius: 12px;
+  padding: 1.1rem 1.6rem; border: 1.5px solid var(--line-soft); border-radius: var(--r-4);
   background: var(--panel); transition: border-color 150ms, transform 150ms;
 }
 .slot.occupied:hover { border-color: var(--gold); transform: translateY(-1px); }
@@ -1754,7 +1924,7 @@ button.rs-reset {
 .save-toast {
   position: fixed; top: 2rem; left: 50%; transform: translateX(-50%); z-index: 60;
   background: var(--bg-raise); border: 1px solid var(--gold); color: var(--gold);
-  padding: 0.8rem 1.8rem; border-radius: 8px; font-size: 1.2rem; letter-spacing: 0.1em;
+  padding: 0.8rem 1.8rem; border-radius: var(--r-3); font-size: 1.2rem; letter-spacing: 0.1em;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6); animation: screenIn 200ms ease-out;
 }
 .map-buttons { display: flex; gap: 0.8rem; }
@@ -1789,7 +1959,7 @@ button.rs-reset {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: calc(7px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   background: transparent;
   color: var(--parchment);
   box-shadow: none;
@@ -1808,7 +1978,7 @@ button.rs-reset {
   display: grid;
   place-items: center;
   border: 1px solid var(--line-soft);
-  border-radius: calc(7px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   background: color-mix(in srgb, var(--bg-raise) 88%, transparent);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
   transition: border-color 120ms, background 120ms, color 120ms;
@@ -1850,7 +2020,7 @@ button.rs-reset {
   height: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
   padding: 0;
   border: 1px solid currentColor;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   overflow: hidden;
   color: var(--parchment);
   background: transparent;
@@ -1874,7 +2044,7 @@ button.rs-reset {
   margin: 0;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--gold);
-  border-radius: 7px;
+  border-radius: var(--r-2);
   background: color-mix(in srgb, var(--bg-raise) 96%, transparent);
   color: var(--parchment);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
@@ -1902,7 +2072,7 @@ button.rs-reset {
   to { text-shadow: 0 0 60px rgba(201, 162, 39, 0.6); }
 }
 .ember {
-  position: absolute; bottom: -1rem; width: 0.4rem; height: 0.4rem; border-radius: 50%;
+  position: absolute; bottom: -1rem; width: 0.4rem; height: 0.4rem; border-radius: var(--r-round);
   background: var(--ember); box-shadow: 0 0 8px var(--ember); opacity: 0;
   animation: emberFloat 9s linear infinite;
 }
@@ -1942,7 +2112,7 @@ button.rs-reset {
   bottom: -1rem;
   width: var(--ash-size);
   height: var(--ash-size);
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--ember);
   box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55);
   opacity: 0;
@@ -2133,19 +2303,19 @@ button.rs-reset {
 .preview-pane .cz-label { margin-bottom: 0; }
 .cz-name {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
-  border-radius: 8px; padding: 6px 10px; width: 150px; text-align: center;
+  border-radius: var(--r-3); padding: 6px 10px; width: 150px; text-align: center;
   font-family: var(--font-display); letter-spacing: 0.08em;
 }
 
 .cz-portrait {
-  width: 13rem; height: 16rem; border-radius: 12px; background: #2a2418;
+  width: 13rem; height: 16rem; border-radius: var(--r-4); background: #2a2418;
   border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center;
   font-size: 6.4rem; transition: border-color 200ms, box-shadow 300ms;
 }
 .cz-label { color: var(--muted); font-size: 1rem; letter-spacing: 0.3em; margin-bottom: 0.6rem; }
 .cz-opts { display: flex; gap: 0.8rem; }
 .cz-opt {
-  width: 4rem; height: 4rem; border-radius: 9px; background: var(--panel);
+  width: 4rem; height: 4rem; border-radius: var(--r-3); background: var(--panel);
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
@@ -2178,7 +2348,7 @@ button.rs-reset {
 .se-step {
   width: var(--tap-floor); height: var(--tap-floor);
   min-width: var(--tap-floor); min-height: var(--tap-floor);
-  border-radius: 9px; background: var(--panel); border: 2px solid var(--line-soft);
+  border-radius: var(--r-3); background: var(--panel); border: 2px solid var(--line-soft);
   color: var(--parchment); font-size: 1.4rem; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: transform 120ms, border-color 120ms;
@@ -2193,7 +2363,7 @@ button.rs-reset {
 .cz-keepsakes { display: flex; flex-direction: column; gap: 0.8rem; }
 .cz-keepsake {
   display: flex; gap: 1rem; align-items: center; background: var(--panel);
-  border: 1.5px solid var(--line-soft); border-radius: 10px; padding: 0.8rem 1.2rem;
+  border: 1.5px solid var(--line-soft); border-radius: var(--r-3); padding: 0.8rem 1.2rem;
   cursor: pointer; transition: border-color 120ms;
 }
 .cz-keepsake:hover { border-color: var(--muted); }
@@ -2223,16 +2393,16 @@ button.rs-reset {
 .cc-boolean-setting { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--muted); font-size: 1rem; }
 .cc-switch {
   position: relative; width: 2.6rem; height: 1.45rem; min-width: 2.6rem; padding: 0.15rem;
-  border: 1px solid var(--line-soft); border-radius: 999px; background: var(--panel); cursor: pointer;
+  border: 1px solid var(--line-soft); border-radius: var(--r-pill); background: var(--panel); cursor: pointer;
 }
 .cc-switch-knob {
-  display: block; width: 0.9rem; height: 0.9rem; border-radius: 50%; background: var(--muted);
+  display: block; width: 0.9rem; height: 0.9rem; border-radius: var(--r-round); background: var(--muted);
   transform: translateX(0); transition: transform 120ms, background 120ms;
 }
 .cc-switch[aria-checked='true'] .cc-switch-knob { transform: translateX(1.05rem); background: var(--gold); }
 .cc-view-toggle {
   display: inline-flex; align-items: stretch; border: 1px solid var(--line-soft);
-  border-radius: 9px; overflow: hidden; background: color-mix(in srgb, var(--panel) 84%, transparent);
+  border-radius: var(--r-3); overflow: hidden; background: color-mix(in srgb, var(--panel) 84%, transparent);
 }
 .cc-view-option {
   min-width: 4.8rem; min-height: calc(var(--tap-floor) - 0.35rem); padding: 0.35rem 0.9rem;
@@ -2250,7 +2420,7 @@ button.rs-reset {
   gap: 1.1rem; align-items: stretch; width: 100%;
 }
 .cc-class-preview-host, .cc-class-selection {
-  min-width: 0; border: 1px solid var(--line-soft); border-radius: 10px;
+  min-width: 0; border: 1px solid var(--line-soft); border-radius: var(--r-3);
   background: color-mix(in srgb, var(--panel) 84%, transparent);
 }
 .cc-class-preview-host { display: flex; }
@@ -2286,7 +2456,7 @@ button.rs-reset {
 .cc-class-art .class-sprite { transform: scale(1.28); transform-origin: 50% 70%; }
 .cc-class-resource-grid {
   display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0.55rem 0 1.1rem;
-  border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--r-3); overflow: hidden;
 }
 .cc-class-resource { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.65rem 0.25rem; border-right: 1px solid var(--line); }
 .cc-class-resource:last-child { border-right: 0; }
@@ -2370,7 +2540,7 @@ button.rs-reset {
   display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.25rem 0.75rem; align-items: center;
   min-height: var(--tap-floor); padding: 0.7rem 0.9rem; text-align: left;
   color: var(--parchment); background: var(--panel); border: 1px solid var(--line);
-  border-radius: 3px; cursor: pointer;
+  border-radius: var(--r-1); cursor: pointer;
 }
 .cc-relic-card > .cc-relic-art { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
 .cc-relic-card small { color: var(--muted); }
@@ -2450,7 +2620,7 @@ button.rs-reset {
   min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
   width: auto; max-width: 100%;
   padding: 0.4rem 0.9rem;
-  background: var(--panel); border: 1.5px solid var(--line-soft); border-radius: 9px;
+  background: var(--panel); border: 1.5px solid var(--line-soft); border-radius: var(--r-3);
   color: var(--parchment); font-family: var(--font-display); letter-spacing: 0.06em;
   cursor: pointer; text-align: left; overflow-wrap: anywhere;
 }
@@ -2503,7 +2673,7 @@ button.rs-reset {
    row-gap past the length it is measured against (Law 0 clause 4). */
 .disc-reveal {
   flex: 1 1 100%; width: 100%; padding: 0.8rem 1rem;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
 }
 .disc-reveal h4 { color: var(--gold); font-size: 1.15rem; letter-spacing: 0.14em; margin: 0 0 0.4rem; }
 .disc-reveal .disc-sense { margin: 0 0 0.4rem; font-size: 1.1rem; color: var(--parchment); }
@@ -2550,7 +2720,8 @@ button.rs-reset {
   flex: 1; min-height: 0; overflow: hidden;
 }
 .settings-modal .set-panel { min-width: 0; min-height: 0; overflow: auto; padding: 0 1rem; }
-.settings-modal .set-actions { flex: 0 0 auto; }
+.settings-modal .modal-head { flex: 0 0 auto; }
+.settings-modal .modal-head h2 { margin: 0; }
 .profile-archive-modal {
   width: min(64rem, 94vw); max-height: min(80vh, 52rem); padding: 0; overflow: hidden;
   display: flex; flex-direction: column;
@@ -2658,7 +2829,7 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  width: 100%; padding: 0; border: 0; border-radius: 6px;
+  width: 100%; padding: 0; border: 0; border-radius: var(--r-2);
   font-size: 1rem; letter-spacing: 0.05em;
   background: transparent; color: var(--muted);
   cursor: pointer;
@@ -2669,7 +2840,7 @@ button.rs-reset {
   box-sizing: border-box; width: 100%; min-height: calc(35px / var(--ui-zoom, 1));
   padding: calc(4px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
   display: inline-flex; align-items: center; justify-content: inherit;
-  border: 1px solid var(--line-soft); border-radius: calc(6px / var(--ui-zoom, 1));
+  border: 1px solid var(--line-soft); border-radius: var(--r-2-glass);
   background: var(--bg); color: inherit;
 }
 .set-tabs .set-tab:hover .set-tab-face { color: var(--parchment); }
@@ -2724,7 +2895,7 @@ button.rs-reset {
   padding-bottom: 10px; border-bottom: 1px solid var(--line-soft);
 }
 .set-subtab {
-  min-height: var(--tap-floor); padding: 6px 10px; border-radius: 6px;
+  min-height: var(--tap-floor); padding: 6px 10px; border-radius: var(--r-2);
   border: 1px solid var(--line-soft); background: var(--bg); color: var(--muted);
   cursor: pointer;
 }
@@ -2736,7 +2907,7 @@ button.rs-reset {
 .set-advanced-tip { margin: 0 0 8px; }
 .set-row {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 0.9rem 1rem; border: 1px solid var(--line-soft); border-radius: 8px;
+  padding: 0.9rem 1rem; border: 1px solid var(--line-soft); border-radius: var(--r-3);
   background: color-mix(in srgb, var(--panel) 74%, transparent);
 }
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
@@ -2769,12 +2940,12 @@ button.rs-reset {
 
 .set-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
 .toggle {
-  flex-shrink: 0; width: 4.6rem; height: 2.6rem; border-radius: 13px; background: var(--panel);
+  flex-shrink: 0; width: 4.6rem; height: 2.6rem; border-radius: var(--r-4); background: var(--panel);
   border: 1px solid var(--line-soft); position: relative; cursor: pointer; padding: 0;
   transition: background 160ms, border-color 160ms;
 }
 .toggle .knob {
-  position: absolute; top: 0.2rem; left: 0.2rem; width: 2rem; height: 2rem; border-radius: 50%;
+  position: absolute; top: 0.2rem; left: 0.2rem; width: 2rem; height: 2rem; border-radius: var(--r-round);
   background: var(--muted); transition: left 160ms, background 160ms;
 }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
@@ -3026,7 +3197,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   flex-basis: 100%;
   display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
   margin: 6px 0 2px; padding: 10px 12px;
-  border: 1px solid var(--gold); border-radius: 6px;
+  border: 1px solid var(--gold); border-radius: var(--r-2);
   background: var(--panel);
   max-width: 34rem;
 }
@@ -3046,7 +3217,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
 }
 .choice-group .choice {
-  padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: 6px;
+  padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: var(--r-2);
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
   cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms;
   /* Law 4 clause 4, ratchet-style — the SAME two lines .ov-tab above already
@@ -3094,7 +3265,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   background: var(--panel);
   color: var(--gold);
   border: 1px solid var(--map-structure);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   font: inherit;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -3113,7 +3284,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .set-row-wide { flex-wrap: wrap; }
 .set-text {
   flex: 1; min-width: 20rem; background: var(--panel); border: 1px solid var(--line);
-  color: var(--parchment); border-radius: 6px; padding: 0.6rem 1rem; font-size: 1.2rem; font-family: monospace;
+  color: var(--parchment); border-radius: var(--r-2); padding: 0.6rem 1rem; font-size: 1.2rem; font-family: monospace;
 }
 .set-text:focus { border-color: var(--gold); outline: none; }
 
@@ -3132,14 +3303,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    happens to be inset:0; changing that inset would have silently skewed every
    callout again. */
 .tut-spot {
-  position: absolute; border: 2px solid var(--gold); border-radius: 10px;
+  position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 22px rgba(201, 162, 39, 0.55);
   transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
   pointer-events: none;
 }
 .tut-bubble {
   position: absolute; width: 30rem; background: var(--bg-raise); border: 1px solid var(--gold);
-  border-radius: 12px; padding: 1.4rem 1.6rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
+  border-radius: var(--r-4); padding: 1.4rem 1.6rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
   animation: screenIn 200ms ease-out; pointer-events: auto;
 }
 .tut-bubble .tut-title { color: var(--gold); font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.6rem; }
@@ -3200,7 +3371,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .combat.coop .combatant.player.ended { opacity: .62; }
 .combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
 .combat.coop .combatant.player.away { opacity: .45; }
-.combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 8px; box-shadow: 0 0 12px rgba(200,160,70,.4); }
+.combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: var(--r-3); box-shadow: 0 0 12px rgba(200,160,70,.4); }
 .coop-seat-name {
   width: 13rem; max-width: 100%; min-width: 0; margin-top: 0.3rem;
   display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
@@ -3210,16 +3381,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-seat-vitals { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.2rem 0.7rem; }
 .coop-seat-vitals > span { white-space: nowrap; }
 .coop-turnflag { color: var(--gold); font-size: 1rem; letter-spacing: .06em; }
-.combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
+.combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: var(--r-3); }
 
 /* the party read-out in map/reward headers */
 .coop-partybar { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
-.coop-pc { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: 7px; padding: 0.3rem 0.9rem; font-size: 1.2rem; color: #ded1b6; }
+.coop-pc { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 0.3rem 0.9rem; font-size: 1.2rem; color: #ded1b6; }
 .coop-pc.me { border-color: var(--gold); }
 .coop-pc.away { opacity: .55; }
 .coop-pc.dead { opacity: .4; filter: grayscale(1); }
 .coop-pc-glyph { font-size: 1.5rem; }
-.coop-pc-hp { position: relative; display: inline-block; width: 7rem; height: 1.2rem; background: #24140f; border-radius: 3px; overflow: hidden; }
+.coop-pc-hp { position: relative; display: inline-block; width: 7rem; height: 1.2rem; background: #24140f; border-radius: var(--r-1); overflow: hidden; }
 .coop-pc-hp i { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, var(--blood), #b8432f); }
 .coop-pc-hp b { position: relative; font-size: 0.9rem; color: #f2e6cf; padding-left: 0.5rem; line-height: 1.2rem; font-weight: 600; }
 
@@ -3231,7 +3402,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
 .card-unavailable-reason {
   position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3;
-  padding: 0.2rem 0.35rem; border: 1px solid var(--blood); border-radius: 4px;
+  padding: 0.2rem 0.35rem; border: 1px solid var(--blood); border-radius: var(--r-2);
   background: rgba(24, 8, 7, 0.92); color: #ffd7cf; font-size: 0.75rem;
   line-height: 1.2; text-align: center;
 }
@@ -3239,7 +3410,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-height: var(--tap-floor); height: auto;
   display: flex; align-items: center; cursor: pointer;
 }
-.coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
+.coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: var(--r-2); padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
 /* co-op: fork voting on the shared map */
 .map-node.my-vote > circle { stroke: var(--gold); stroke-width: 3; }
@@ -3248,7 +3419,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 /* co-op lobby: accent swatches (tint applies to your sprite for everyone) */
 .lb-tints { display: flex; gap: 1rem; justify-content: center; }
-.tint-dot { width: 2.8rem; height: 2.8rem; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.tint-dot { width: 2.8rem; height: 2.8rem; border-radius: var(--r-round); border: 2px solid transparent; cursor: pointer; padding: 0; }
 .tint-dot.chosen { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255,255,255,.35); }
 
 /* co-op: turn banners + acting-enemy lunge (enemy-phase pacing) */
@@ -3280,12 +3451,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: flex; gap: 0.8rem; align-items: center; z-index: 620;
 }
 .seat-tab {
-  padding: 0.5rem 1.2rem; font-size: 1.2rem; border-radius: 7px;
+  padding: 0.5rem 1.2rem; font-size: 1.2rem; border-radius: var(--r-2);
   background: rgba(16,13,10,.9); border: 1.5px solid var(--line-soft); color: #ded1b6;
 }
 .seat-tab.on { background: #2a2418; color: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.35); }
 .seat-tab .pip { color: var(--gold); }
-.seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 0.1rem 0.6rem; }
+.seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 0.1rem 0.6rem; }
 
 /* ---- Armoury (equipment) --------------------------------------------------
    Three layouts over one loadout. Two attributes on .armoury do all the
@@ -3310,7 +3481,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      viewport units ignore that zoom — which is exactly what pushed this panel
      off the corner of the screen at Auto sizing. See base.css. */
   width: 108rem; max-width: 96%; height: 92%; display: flex; flex-direction: column;
-  background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-2);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
 }
 .armoury-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
@@ -3322,13 +3493,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-views { display: flex; gap: 0.4rem; margin-left: auto; }
 .armoury-views button {
   background: none; border: 1px solid var(--line); color: var(--muted);
-  padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
+  padding: 0.4rem 1.1rem; border-radius: var(--r-1); cursor: pointer;
   font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
 }
 .armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
-.armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
-.armoury-close:hover { color: var(--parchment); }
+/* Was `background: none; border: none` — a bare glyph where every other door
+   has a boxed control, and the smallest target in the modal. It keeps only its
+   place in the header now; the box is `.modal-close`. */
+.armoury-close { cursor: pointer; }
 
 .armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
 .armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
@@ -3385,13 +3558,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .armoury[data-slots='list'] .equip-slots { justify-content: flex-start; }
-.equip-slot { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; background: var(--panel); }
+.equip-slot { border: 1px solid var(--line); border-radius: var(--r-2); padding: 0.8rem; background: var(--panel); }
 .es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
 .es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
 .es-sealed { color: var(--muted); font-size: 1rem; font-style: italic; }
 .es-sets { display: flex; gap: 0.6rem; }
 .es-cell {
-  width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   background: var(--bg); color: var(--parchment); cursor: pointer; padding: 0.3rem;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
 }
@@ -3432,7 +3605,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-chip {
   display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
   gap: 0.2rem 0.9rem; align-items: center; text-align: left;
-  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--r-1); background: var(--panel);
   color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
   min-height: var(--tap-floor);
 }
@@ -3445,7 +3618,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .ec-tags em, .ef-tags em {
   font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
-  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px; padding: 0 0.4rem;
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: var(--r-1); padding: 0 0.4rem;
 }
 .ec-tags .ec-equipped {
   color: var(--equip-equipped-tag-color, var(--gold));
@@ -3468,10 +3641,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
 .ep-list .disc-face[data-reveal='open'] .equip-chip.as-face,
 .ep-list .disc-face[data-reveal='open'] .inventory-face {
-  border-color: var(--gold); border-bottom-color: transparent; border-radius: 3px 3px 0 0;
+  border-color: var(--gold); border-bottom-color: transparent; border-radius: var(--r-1) var(--r-1) 0 0;
 }
 .ep-list .disc-reveal {
-  width: 100%; border-color: var(--gold); border-top: 0; border-radius: 0 0 3px 3px;
+  width: 100%; border-color: var(--gold); border-top: 0; border-radius: 0 0 var(--r-1) var(--r-1);
 }
 .ep-body { display: flex; flex-direction: column; gap: 0.5rem; }
 
@@ -3481,7 +3654,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .inventory-face {
   display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
   align-items: center; gap: 0.7rem; width: 100%; min-height: var(--tap-floor);
-  padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   background: rgba(10, 8, 6, 0.32); color: var(--parchment);
 }
 /* Delegated card feedback is painted after the card's own background shorthand
@@ -3505,12 +3678,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .inventory-equipped {
   color: var(--equip-equipped-tag-color, var(--gold));
-  border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: 2px;
+  border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: var(--r-1);
   padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
 }
 .inventory-inline-action {
   justify-self: end; white-space: nowrap; color: var(--gold); border: 1px solid var(--gold);
-  border-radius: 3px; padding: 0.2rem 0.55rem; font-size: 0.82rem;
+  border-radius: var(--r-1); padding: 0.2rem 0.55rem; font-size: 0.82rem;
   letter-spacing: 0.06em; text-transform: uppercase;
 }
 .inventory-detail { display: grid; grid-template-columns: minmax(5rem, 18%) minmax(0, 1fr); gap: 1rem; align-items: start; }
@@ -3528,7 +3701,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .inventory-kind { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.95rem; }
 .inventory-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .inventory-tags em {
-  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px;
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: var(--r-1);
   padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
 }
 .inventory-information .equip-candidate-comparison { margin-left: 0; }
@@ -3625,7 +3798,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .tray-sort {
   flex: 0 0 var(--ui-tray-control-size); width: var(--ui-tray-control-size); height: var(--ui-tray-control-size);
   min-width: var(--ui-tray-control-size); min-height: var(--ui-tray-control-size); aspect-ratio: 1; padding: 0;
-  border: 1px solid var(--line-soft); border-radius: 0.65rem; background: transparent;
+  border: 1px solid var(--line-soft); border-radius: var(--r-2); background: transparent;
   color: var(--gold); cursor: pointer; font: inherit;
 }
 .tray-sort:hover, .tray-sort:focus-visible { border-color: var(--gold); color: var(--parchment); }
@@ -3671,7 +3844,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   position: absolute; z-index: 2; touch-action: none; user-select: none; outline: 0;
 }
 .tray-resize-handle::after {
-  content: ''; position: absolute; border-radius: 999px; background: color-mix(in srgb, var(--gold) 58%, transparent);
+  content: ''; position: absolute; border-radius: var(--r-pill); background: color-mix(in srgb, var(--gold) 58%, transparent);
   transition: background-color 120ms ease, transform 120ms ease;
 }
 .tray-resize-handle[data-ui-variant='top'], .tray-resize-handle[data-ui-variant='bottom'] {
@@ -3774,7 +3947,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .arcane-exposure-head strong { margin-left: auto; white-space: nowrap; color: var(--parchment); }
 .arcane-exposure-head em { color: var(--gold); font-style: normal; }
 .arcane-exposure-glyph { color: var(--frost); }
-.arcane-exposure-track { height: 0.35rem; background: var(--line); border-radius: 99px; overflow: hidden; }
+.arcane-exposure-track { height: 0.35rem; background: var(--line); border-radius: var(--r-pill); overflow: hidden; }
 .arcane-exposure-track > span { display: block; height: 100%; background: var(--frost); }
 .arcane-exposure-meter.locked .arcane-exposure-track > span { background: var(--gold); }
 .arcane-exposure-immune { display: flex; gap: 0.3rem; align-items: center; }
@@ -3858,7 +4031,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .card-view-glyph.grid { grid-template-columns: repeat(2, 1fr); }
 .card-view-glyph.grid i { display: block; border: 1px solid currentColor; }
 .card-view-glyph.list { grid-template-rows: repeat(3, 1fr); }
-.card-view-glyph.list i { position: relative; display: block; border: 1px solid currentColor; border-radius: 1px; }
+.card-view-glyph.list i { position: relative; display: block; border: 1px solid currentColor; border-radius: var(--r-1); }
 .card-view-glyph.list i::after { content: ''; position: absolute; left: 0.35rem; right: 0.02rem; top: 50%; border-top: 1px solid currentColor; }
 .region-fold {
   display: flex; align-items: center; gap: 0.6rem; width: 100%;
@@ -3951,7 +4124,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 /* What a run earned you, shown where you find out you lost. */
 .go-earned {
-  border: 1px solid var(--gold); border-radius: 4px; background: rgba(201, 162, 39, 0.07);
+  border: 1px solid var(--gold); border-radius: var(--r-2); background: rgba(201, 162, 39, 0.07);
   padding: 1rem 1.6rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 32rem;
 }
 .go-earned .subtitle { text-align: center; color: var(--gold); margin-bottom: 0.4rem; }
@@ -4142,7 +4315,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      `const gap = 6` in quicknav.js. */
   --place-gap: 6px;
   position: fixed; width: 26rem; max-width: 92%;
-  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   padding: 0.4rem 0; overflow-y: auto; color: var(--parchment);
 }
@@ -4233,7 +4406,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      full-bleed row would have its focus ring clipped at the padding box —
      the pad player's cursor, cut off on the surface it is navigating. */
   padding: 4px 5px;
-  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   color: var(--parchment);
   /* The Inspect row un-hides the description INSIDE the panel, so its height is
@@ -4275,7 +4448,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Variant B: the whole tab strip, folded into one control that names where you
    are. Same set, same order, same bumpers (Law 3 clause 1a). */
 .ov-switch {
-  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
+  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: var(--r-3); cursor: pointer;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--gold);
   font-size: 1.3rem; letter-spacing: 0.05em;
 }
@@ -4387,7 +4560,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .confirm-fresh .confirm-box {
   max-width: 26rem; background: var(--panel, #14110f); border: 2px solid var(--gold);
-  border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+  border-radius: var(--r-3); padding: 20px; display: flex; flex-direction: column; gap: 12px;
 }
 .confirm-fresh .confirm-box h2 { font-size: 1.3rem; color: var(--gold); }
 .confirm-fresh .confirm-box p { line-height: 1.5; }
@@ -4401,7 +4574,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .prof-state { font-weight: 600; }
 .prof-entry {
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start;
-  border: 1px solid var(--line, #33291f); border-radius: 6px; padding: 10px;
+  border: 1px solid var(--line, #33291f); border-radius: var(--r-2); padding: 10px;
 }
 .prof-entry-what { flex: 1 1 14rem; min-width: 0; }
 .prof-entry-what .prof-why { opacity: 0.75; word-break: break-word; }
@@ -4481,7 +4654,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .cp-cell {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   min-height: var(--tap-floor); padding: 8px 4px;
-  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--r-1); background: var(--panel);
   color: var(--parchment); font-family: var(--font-body); cursor: pointer;
   text-align: center;
 }
@@ -4616,7 +4789,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   justify-content: center;
   gap: 4px;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--r-2);
   background: var(--panel);
   border: 1px solid var(--gold);
   /* It opens the shared flask action menu on both screens. */
@@ -4721,7 +4894,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: 34px;
   height: 56px;
   border: 2px solid var(--gold);
-  border-radius: 5px;
+  border-radius: var(--r-2);
   transform-origin: 50% 50%;
   animation: upright-turn 2.6s ease-in-out infinite;
 }
@@ -4916,13 +5089,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: transparent;
   outline: 0;
   border: 1px solid var(--gold);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
   text-shadow: 0 0 16px rgba(var(--accent-rgb), 0.55);
 }
 .title-menu:not(:has(.title-menu-item:focus, .title-menu-item.gp-focus)) .title-menu-item.slot-continue:not(:disabled) {
   border: 1px solid var(--gold);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
 }
 .title-menu-item:hover::before,
@@ -4940,17 +5113,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   max-height: 88%;
   padding: 3.7rem 4rem 3.8rem;
   border: 1px solid var(--gold);
-  border-radius: 1.5rem;
+  border-radius: var(--r-4);
   background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 96%, #000), color-mix(in srgb, var(--bg-raise) 98%, #000));
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
 .title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
-.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
+/* Position is this modal's (it has no head bar to sit in); the SHAPE is the
+   shell's — this was the only round close control in the game. */
+.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; background: transparent; color: var(--parchment); }
 .title-modal-close:hover, .title-modal-close:focus-visible { border-color: var(--gold); outline: 2px solid color-mix(in srgb, var(--gold) 42%, transparent); outline-offset: 2px; }
 .title-modal-rule { width: min(38.3rem, 74%); margin-top: 1.7rem; }
 .title-slot-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
 .title-slot-row { display: flex; align-items: stretch; gap: 0.8rem; }
-.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
+.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: var(--r-4); background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
 .title-slot-pick:hover, .title-slot-pick:focus-visible, .title-slot-row.is-selected .title-slot-pick { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent); outline: none; }
 .title-slot-pick:disabled { cursor: default; opacity: 0.74; }
 .title-slot-copy { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
@@ -4970,12 +5145,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    selector. The fill still runs; the native tooltip carries the sentence. */
 .title-slot-delete .hold-hint { display: none; }
 .title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
-.title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
+.title-modal-actions button { min-height: 4.8rem; border-radius: var(--r-4); font-size: var(--t-3); }
 .title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
 .title-modal-continue { border-color: var(--gold); color: var(--gold); }
 .title-modal-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .title-load-review { width: min(52rem, 94%); }
-.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); }
+.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: var(--r-4); background: color-mix(in srgb, var(--bg) 84%, transparent); }
 .title-load-review-copy { margin: 1.2rem 0 0; color: var(--muted); font-size: 1.08rem; text-align: center; }
 .title-load-review-confirm { border-color: var(--green); color: var(--green); }
 .title-load-review-confirm:hover, .title-load-review-confirm:focus-visible { background: color-mix(in srgb, var(--green) 14%, transparent); border-color: var(--green); color: var(--green); }
@@ -4989,18 +5164,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .title-menu-item { min-height: var(--tap-floor); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.8rem / var(--ui-zoom, 1)) calc(1.1rem / var(--ui-zoom, 1)); font-size: calc(1.5rem / var(--ui-zoom, 1)); }
   .title-tagline { margin-top: calc(2.4rem / var(--ui-zoom, 1)); font-size: calc(0.8rem / var(--ui-zoom, 1)); letter-spacing: 0.12em; }
   .title-modal-veil { padding: 1.2rem 0.8rem; }
-  .title-menu-modal { width: 98%; padding: calc(3.8rem / var(--ui-zoom, 1)) calc(1.3rem / var(--ui-zoom, 1)) calc(2.2rem / var(--ui-zoom, 1)); border-radius: calc(1.3rem / var(--ui-zoom, 1)); }
+  .title-menu-modal { width: 98%; padding: calc(3.8rem / var(--ui-zoom, 1)) calc(1.3rem / var(--ui-zoom, 1)) calc(2.2rem / var(--ui-zoom, 1)); border-radius: var(--r-4-glass); }
   .title-menu-modal h2 { font-size: calc(2.7rem / var(--ui-zoom, 1)); }
   .title-modal-rule { width: 84%; }
   .title-slot-list { gap: calc(1.2rem / var(--ui-zoom, 1)); margin-top: calc(1.8rem / var(--ui-zoom, 1)); }
-  .title-slot-pick { min-height: calc(8.6rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.6rem / var(--ui-zoom, 1)); border-radius: calc(1.3rem / var(--ui-zoom, 1)); }
+  .title-slot-pick { min-height: calc(8.6rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.6rem / var(--ui-zoom, 1)); border-radius: var(--r-4-glass); }
   .title-slot-name, .title-slot-empty { font-size: calc(1.8rem / var(--ui-zoom, 1)); }
   .title-slot-tag, .title-slot-seed { font-size: calc(0.82rem / var(--ui-zoom, 1)); }
   .title-slot-meta { font-size: calc(1.1rem / var(--ui-zoom, 1)); }
   .title-slot-state { display: none; }
   .title-slot-pick > .hold-hint { display: block; right: calc(1.2rem / var(--ui-zoom, 1)); bottom: calc(0.55rem / var(--ui-zoom, 1)); }
   .title-modal-actions { gap: calc(1rem / var(--ui-zoom, 1)); margin: calc(2rem / var(--ui-zoom, 1)) 0 0; }
-  .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(1.2rem / var(--ui-zoom, 1)); }
+  .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(var(--t-2) / var(--ui-zoom, 1)); }
   .title-load-review-slot { margin-top: calc(1.8rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)); }
   .title-load-review-copy { font-size: calc(1rem / var(--ui-zoom, 1)); }
 }
@@ -5283,8 +5458,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   list-style: none;
 }
 .character-info-card > summary::-webkit-details-marker { display: none; }
-.character-info-card > summary::before { content: '▸'; color: var(--gold); }
-.character-info-card[open] > summary::before { content: '▾'; }
+/* The mark is authored in markup (equipment.js, from foldGlyph.js) like the
+   Shrine, Smith and card-row folds; this only turns it. It was a `content:`
+   pair here — the one fold in the tree whose glyph lived in the stylesheet. */
+.character-info-caret { display: inline-block; color: var(--gold); transition: transform 140ms; }
+.character-info-card[open] > summary .character-info-caret { transform: rotate(90deg); }
 .character-info-label {
   color: var(--gold);
   font-family: var(--font-display);
@@ -5369,7 +5547,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-height: 8rem;
   padding: 0.55rem;
   border: 1px solid var(--line-soft);
-  border-radius: 0.2rem;
+  border-radius: var(--r-1);
   background: rgba(24, 20, 15, 0.86);
   color: var(--parchment);
   cursor: pointer;
@@ -5393,7 +5571,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-width: 0;
   margin: 0;
   border: 1px solid var(--line-soft);
-  border-radius: 0.2rem;
+  border-radius: var(--r-1);
   background: rgba(24, 20, 15, 0.86);
   color: var(--parchment);
   container-type: inline-size;
@@ -5458,7 +5636,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   min-height: 1.5rem;
   padding: 0.12rem 0.38rem;
   border: 1px solid var(--gold);
-  border-radius: 0.18rem;
+  border-radius: var(--r-1);
   background: rgba(8, 7, 6, 0.6);
   color: var(--gold);
   font-size: 0.7rem;
@@ -5736,7 +5914,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .shared-hud .hud-mode-grip > span {
   width: calc(18px / var(--ui-zoom, 1)); height: calc(2px / var(--ui-zoom, 1));
-  border-radius: 999px; background: var(--line); box-shadow: 0 0 0 1px var(--bg-raise);
+  border-radius: var(--r-pill); background: var(--line); box-shadow: 0 0 0 1px var(--bg-raise);
   transform: translateY(calc(21px / var(--ui-zoom, 1)));
 }
 .shared-hud .hud-mode-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -9px; }
@@ -6039,7 +6217,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   box-sizing: border-box;
   height: var(--hud-quick-panel-size);
   border: 1px solid var(--line-soft);
-  border-radius: calc(8px / var(--ui-zoom, 1));
+  border-radius: var(--r-3-glass);
   background: color-mix(in srgb, var(--panel) var(--hud-component-background-opacity), transparent);
   padding: var(--hud-panel-pad);
 }
@@ -6111,7 +6289,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   width: var(--hud-control-visual);
   height: var(--hud-control-visual);
   border: 1px solid var(--line-soft);
-  border-radius: calc(7px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   background: var(--panel);
   display: flex;
   align-items: center;
@@ -6156,7 +6334,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   height: var(--hud-utility-visual-size);
   justify-content: center;
   border: 1px solid var(--gold);
-  border-radius: 6px;
+  border-radius: var(--r-2);
   background: var(--panel);
 }
 .topbar.combat-hud.shared-hud .hud-potions .flask-art {
@@ -6167,7 +6345,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .topbar.combat-hud.shared-hud .flask-charge-count {
   position: absolute; top: 2px; right: 3px;
   min-width: 1.2em; padding-inline: 0.15em;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #120f0c; color: var(--parchment);
   font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1.2;
   font-variant-numeric: tabular-nums;
@@ -6184,19 +6362,19 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
 .combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
 .topbar .portrait {
-  width: calc(3.8rem * var(--hud-portrait-scale)); height: calc(3.8rem * var(--hud-portrait-scale)); border-radius: 50%; background: var(--panel);
+  width: calc(3.8rem * var(--hud-portrait-scale)); height: calc(3.8rem * var(--hud-portrait-scale)); border-radius: var(--r-round); background: var(--panel);
   border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: calc(2rem * var(--hud-portrait-scale));
   flex-shrink: 0;
 }
 .topbar .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
 .topbar .relics { display: flex; gap: 0.6rem; margin-left: 0.8rem; }
 .topbar .relic {
-  width: 2.6rem; height: 2.6rem; border-radius: 6px; background: var(--panel);
+  width: 2.6rem; height: 2.6rem; border-radius: var(--r-2); background: var(--panel);
   border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
 }
 .topbar .fight-label { margin-left: auto; color: var(--muted); font-size: 1.2rem; letter-spacing: 0.12em; }
 .topbar .topbar-btn {
-  margin-left: 1rem; width: 3rem; height: 3rem; border-radius: 8px; flex-shrink: 0;
+  margin-left: 1rem; width: 3rem; height: 3rem; border-radius: var(--r-3); flex-shrink: 0;
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
   font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: border-color 140ms, color 140ms;
@@ -6255,7 +6433,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   padding: 0 calc(7px / var(--ui-zoom, 1));
   background: transparent;
   border: 0;
-  border-radius: calc(6px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   /* The unit is the label's container: its width is set by flex, never by its
      own content, so "does the word fit" is answerable here (a query on the
      auto-sized plate would be circular). */
@@ -6265,7 +6443,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   position: absolute; z-index: 0; left: 0; top: 0; bottom: 0;
   background: #120f0c;            /* owner pixel, F1-resource-health.png */
   border: 1px solid #4c3b1f;      /* owner pixel, unit border */
-  border-radius: calc(6px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   pointer-events: none;
 }
 .resplate, .restrack { position: relative; z-index: 1; }
@@ -6284,7 +6462,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    its border), radius full pill; LENGTH stays the data (inline style %). */
 .resbars[data-surface='main'] .resbar {
   height: calc(11px / var(--ui-zoom, 1));
-  border-radius: calc(6px / var(--ui-zoom, 1));
+  border-radius: var(--r-2-glass);
   /* A physical border imposes a two-pixel border-box minimum, which overrides
      1-4 % troughs on narrow screens. Draw the same rim as an inset shadow so
      the element's measured width remains the requested percentage. */
@@ -6301,7 +6479,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    height against hp's, not this stylesheet's intention. */
 .resbars[data-surface='main'] .resbar-skinny {
   height: calc(5px / var(--ui-zoom, 1));
-  border-radius: calc(3px / var(--ui-zoom, 1));
+  border-radius: var(--r-1-glass);
 }
 
 /* ---- PLATE LABEL DEGRADATION, BY MEASURED FIT ----
@@ -6450,7 +6628,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .combatant-inspector-host > .folding-tray {
   pointer-events: auto; width: 100%; height: 100%; padding: 0.65rem 0.75rem;
-  border: 1px solid var(--line); border-radius: 0.65rem;
+  border: 1px solid var(--line); border-radius: var(--r-2);
   background: color-mix(in srgb, var(--panel) 96%, transparent);
   box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.45);
 }
@@ -6463,7 +6641,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .combatant-inspector-resources { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.3rem; }
 .combatant-inspector-resource {
   display: flex; justify-content: space-between; gap: 0.4rem; min-width: 0;
-  padding: 0.35rem 0.45rem; border: 1px solid var(--line-soft); border-radius: 0.35rem;
+  padding: 0.35rem 0.45rem; border: 1px solid var(--line-soft); border-radius: var(--r-1);
   font-size: 0.8rem;
 }
 .combatant-inspector-resource span { color: var(--muted); }
@@ -6606,7 +6784,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }
-.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: 10px; }
+.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: var(--r-3); }
 .enemy.hover-target .sprite { outline-style: solid; }
 
 .block-badge {
@@ -6618,24 +6796,24 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 
 .statuses { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-height: 2.2rem; max-width: 15rem; }
 .status-icon {
-  position: relative; width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  position: relative; width: 2.2rem; height: 2.2rem; border-radius: var(--r-round);
   background: var(--panel); border: 1.5px solid var(--muted);
   display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: default;
 }
 .status-icon .stk {
   position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 0.9rem; font-weight: 700;
-  background: #14100c; border-radius: 6px; padding: 0 0.3rem; border: 1px solid var(--line);
+  background: #14100c; border-radius: var(--r-2); padding: 0 0.3rem; border: 1px solid var(--line);
 }
 .stance-chip {
   display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem; color: var(--ember);
-  border: 1px solid var(--ember); border-radius: 14px; padding: 0.3rem 1rem;
+  border: 1px solid var(--ember); border-radius: var(--r-4); padding: 0.3rem 1rem;
 }
 .stance-chip.bulwark { color: var(--frost); border-color: var(--frost); }
 
 /* ---------- intents ---------- */
 .intent {
   display: flex; align-items: center; gap: 0.6rem; margin: 0;
-  background: #1c1610; border: 1.5px solid var(--blood); border-radius: 9px;
+  background: #1c1610; border: 1.5px solid var(--blood); border-radius: var(--r-3);
   padding: 0.4rem 1rem; font-weight: 700; font-size: 1.4rem; cursor: default;
 }
 .intent.block { border-color: var(--frost); }
@@ -6652,7 +6830,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    gamepad drives (body.pad-mode, kept live by refreshHintBars). */
 .card .key-hint {
   position: absolute; top: -1rem; left: 50%; transform: translateX(-50%); z-index: 3;
-  min-width: 2rem; height: 2rem; padding: 0 0.4rem; border-radius: 4px;
+  min-width: 2rem; height: 2rem; padding: 0 0.4rem; border-radius: var(--r-2);
   display: flex; align-items: center; justify-content: center;
   background: #2b2b28; border: 1.5px solid #8d887c; color: #d8d3c4;
   font-family: var(--font-body); font-weight: 700; font-size: 1.1rem;
@@ -6684,15 +6862,15 @@ body.pad-mode .card .key-hint { display: none; }
      beside an unbadged charge slot at 36.9, so one row would hold two heights
      to spare an icon a corner. The corner is one line and costs no cell. */
   position: absolute; bottom: 2px; right: 2px;
-  min-width: 1.4rem; padding: 0 0.3rem; border-radius: 3px; text-align: center;
+  min-width: 1.4rem; padding: 0 0.3rem; border-radius: var(--r-1); text-align: center;
   background: #2b2b28; border: 1px solid #8d887c; color: #d8d3c4;
   font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; line-height: 1.3rem;
   pointer-events: none;
 }
-body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
+body.pad-mode .flask-slot .flask-key { border-radius: var(--r-pill); }
 .enemy-key {
   position: absolute; top: 0.2rem; left: 0.2rem; z-index: 3;
-  min-width: 1.7rem; height: 1.7rem; padding: 0 0.3rem; border-radius: 4px;
+  min-width: 1.7rem; height: 1.7rem; padding: 0 0.3rem; border-radius: var(--r-2);
   background: var(--gold); color: #1c1610; font-family: monospace; font-weight: 700; font-size: 1.1rem;
   display: flex; align-items: center; justify-content: center; pointer-events: none;
   box-shadow: 0 0 8px rgba(201, 162, 39, 0.5);
@@ -6760,7 +6938,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   height: var(--tap-floor); min-height: var(--tap-floor);
   display: grid; place-items: center; padding: 0;
   background: #120f0c; color: var(--parchment);
-  border: 1px solid var(--gold); border-radius: 8px;
+  border: 1px solid var(--gold); border-radius: var(--r-3);
   font: 700 2.4rem/1 var(--font-display); cursor: pointer;
 }
 .hand-page[hidden] { display: none; }
@@ -6785,7 +6963,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .card-drag-ghost .drop-verdict {
   position: absolute; left: 50%; top: -2.4rem; transform: translateX(-50%);
-  min-width: max-content; padding: 0.25rem 0.65rem; border-radius: 4px;
+  min-width: max-content; padding: 0.25rem 0.65rem; border-radius: var(--r-2);
   color: #120f0c; background: var(--gold); border: 1px solid #120f0c;
   font-size: 0.9rem; font-weight: 900; letter-spacing: 0.08em;
 }
@@ -6826,7 +7004,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   display: none;
 }
 .energy-orb {
-  position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
+  position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: var(--r-round);
   background: #1c1610; border: 3px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.9rem; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
@@ -6838,14 +7016,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
 .combat-action-row > .energy-orb::before {
-  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%;
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: var(--r-round);
   background: #1c1610; border: 3px solid var(--gold);
   box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
 .end-turn {
   position: absolute; right: 3.4rem; bottom: 7.6rem;
   min-height: var(--tap-floor); background: #120f0c;
-  border: 1px solid var(--gold); border-radius: 8px;
+  border: 1px solid var(--gold); border-radius: var(--r-3);
 }
 .combat-action-row > .end-turn {
   grid-area: end; position: static; right: auto; bottom: auto;
@@ -6855,13 +7033,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .end-turn .et-key {
   display: block; width: max-content; margin: 0.2rem auto 0; font-family: var(--font-body); font-size: 0.82rem;
-  padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
+  padding: 0.1rem 0.6rem; border-radius: var(--r-2); color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
 .end-turn.pulse { animation: pulse-gold 700ms infinite alternate; }
 
 .pile {
-  position: absolute; bottom: 1.2rem; width: 5.2rem; height: 4rem; border-radius: 8px;
+  position: absolute; bottom: 1.2rem; width: 5.2rem; height: 4rem; border-radius: var(--r-3);
   background: var(--panel); border: 1px solid var(--line);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-size: 1.3rem; cursor: pointer; z-index: 20;
@@ -6891,7 +7069,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .armament-radial-target {
   position: absolute; min-width: var(--tap-floor); min-height: var(--tap-floor);
-  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: 10px;
+  padding: 0.35rem 0.55rem; border: 1px solid var(--gold); border-radius: var(--r-3);
   background: rgba(18,15,12,.96); color: var(--parchment); display: grid; place-items: center;
   font-size: .78rem; font-weight: 800; line-height: 1.05;
 }
@@ -6905,7 +7083,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .armament-radial-picker {
   position: absolute; left: 50%; bottom: calc(var(--tap-floor) + .35rem); transform: translateX(-50%);
   z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; padding: .35rem; border: 1px solid var(--line);
-  border-radius: 9px; background: rgba(18,15,12,.98);
+  border-radius: var(--r-3); background: rgba(18,15,12,.98);
   inline-size: max-content; max-inline-size: calc(100vw - 1rem); max-block-size: min(45vh, 18rem); overflow: auto;
 }
 .armament-radial-picker button,
@@ -7062,7 +7240,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 /* Attack impact: a slashing arc sweeping across the victim. */
 .fx-slash {
   position: absolute; width: 6.4rem; height: 6.4rem; margin: -3.2rem 0 0 -3.2rem;
-  border-radius: 50%; border-top: 3px solid #f3e9cf; border-right: 3px solid transparent;
+  border-radius: var(--r-round); border-top: 3px solid #f3e9cf; border-right: 3px solid transparent;
   pointer-events: none; filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.8));
   animation: slash-sweep 260ms ease-out forwards;
 }
@@ -7120,7 +7298,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   transition: transform 220ms ease-in, opacity 220ms ease-in;
 }
 .stance-flare {
-  position: absolute; width: 18rem; height: 18rem; border-radius: 50%;
+  position: absolute; width: 18rem; height: 18rem; border-radius: var(--r-round);
   pointer-events: none; animation: flare 300ms ease-out forwards;
 }
 @keyframes flare {
@@ -7610,7 +7788,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .mapscreen .map-scroll.grabbing { cursor: grabbing; }
 .mapscreen .map-scroll::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
-.mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
+.mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: var(--r-2); border: 3px solid transparent; background-clip: padding-box; }
 .mapscreen .map-scroll::-webkit-scrollbar-thumb:hover { background: var(--gold); background-clip: padding-box; }
 /* Canvas centers the (possibly smaller-than-viewport) svg horizontally. */
 .mapscreen .map-canvas { display: flex; justify-content: center; min-width: min-content; min-height: min-content; }
@@ -7676,7 +7854,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .map-zoom .zbtn {
   min-width: var(--tap-floor); min-height: var(--tap-floor);
   width: auto; height: auto; padding: 0 0.4rem;
-  border-radius: 8px; font-size: 1.8rem; line-height: 1;
+  border-radius: var(--r-3); font-size: 1.8rem; line-height: 1;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
@@ -7865,7 +8043,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
 .map-legend-pop {
   position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
-  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
+  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: var(--r-3);
   padding: 1rem 1.4rem; display: flex; flex-direction: column; gap: 0.4rem; font-size: 1.2rem;
   color: var(--parchment); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
 }
@@ -49505,6 +49683,7 @@ Object.assign(module.exports, { topVeil, veilIsOpen });
 // choices. The action is not committed until the primary button is pressed.
 
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { modalFooter } = require("src/ui/components/modalShell.js");
 
 let activeClose = null;
 const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -49603,7 +49782,6 @@ function openConfirmationModal({
   // consequences uniform rather than a collection of screen-owned dialogs.
   if (detailsHtml) details.innerHTML = detailsHtml;
 
-  const footer = document.createElement('footer');
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
   cancelButton.className = 'subtle confirmation-cancel';
@@ -49611,11 +49789,15 @@ function openConfirmationModal({
   markUiComponent(cancelButton, UI.confirmationCancel, 'neutral');
   const confirmButton = document.createElement('button');
   confirmButton.type = 'button';
-  confirmButton.className = `subtle confirmation-confirm${tone === 'danger' ? ' danger' : ''}`;
+  // `.danger` still reads as danger and keeps the red; every other confirmation
+  // is a way FORWARD and now says so with the emphasis rather than by sitting
+  // second in a row of two identical buttons.
+  confirmButton.className = `confirmation-confirm${tone === 'danger' ? ' subtle danger' : ''}`;
   confirmButton.textContent = confirmLabel;
   confirmButton.hidden = !confirmEnabled;
   markUiComponent(confirmButton, UI.confirmationAction, tone);
-  footer.append(cancelButton, confirmButton);
+  // The house order, from the one home: way out left, way forward right.
+  const footer = modalFooter({ secondary: [cancelButton], primary: confirmButton, className: 'confirmation-footer' });
   dialog.append(header, copy, details, footer);
   veil.appendChild(dialog);
   document.body.appendChild(veil);
@@ -49712,6 +49894,150 @@ function openConfirmationModal({
 
 
 Object.assign(module.exports, { CONFIRMATION_COMMIT_EVENT, CONFIRMATION_INPUT_SHIELD_MS, closeConfirmationModal, openConfirmationModal });
+
+},
+"src/ui/components/modalShell.js": function (module, exports, require) {
+// src/ui/components/modalShell.js — THE CHROME EVERY MODAL WEARS.
+//
+// Measured 2026-09-02 by driving all four doors in a headless browser at
+// 1440x900 and 390x844. FOUR modals, FOUR chromes, no two agreeing on the two
+// things a player actually needs from a modal — how do I read it, and how do I
+// get out:
+//
+//   Settings (title)   left title, NO close control at all, one `Done` footer
+//   Settings (in-run)  tab strip left, boxed ☰ and ✕ right, a two-button
+//                      footer whose "Save and Quit" is painted DANGER RED
+//   Armoury            gold uppercase title, segmented tabs right, a BARE ✕
+//                      glyph with no button chrome, no footer
+//   Load Game          centred display title with an ornament rule, a ROUND
+//                      `×` (U+00D7, a different character), BACK / CONTINUE
+//
+// A player who learns "the way out is the boxed ✕ on the right" learns it four
+// times. And each of the four had grown its own Escape handler, its own
+// veil-click test and its own focus restore — four chances for three of them to
+// be subtly wrong, which is exactly what an audit finds and a player meets.
+//
+// WHAT THIS FILE OWNS, AND WHAT IT DELIBERATELY DOES NOT.
+//   OWNS   the close control (one glyph, one label, one hit box), the footer's
+//          ORDER and EMPHASIS, and dismissal (Escape, veil click, focus return).
+//   DOES NOT OWN the body. Settings scrolls a category pane, the Armoury runs a
+//          three-pane splitter, Load Game lists slots. A shell that also claimed
+//          the body would have to be right about all three, and would be the
+//          kind of "shared component" that is really four components in a
+//          trench coat. The chrome is the part that is genuinely one thing.
+//
+// THE FOOTER ORDER IS A RULE, NOT A SUGGESTION: the way OUT is left, the way
+// FORWARD is right, and the forward one wears `.primary` (base.css). Load Game
+// had BACK and CONTINUE the same weight and asked a border colour to carry the
+// difference; the in-run footer spent DANGER RED on an act that saves. Red is
+// for loss. `tone: 'danger'` is available and is meant to be rare.
+
+const { esc } = require("src/ui/components/tooltip.js");
+
+/** The one glyph. U+2715; the save-slot modal used U+00D7 and now does not. */
+const MODAL_CLOSE_GLYPH = '✕';
+
+/**
+ * The close control. One markup, one accessible name, one hit box — the tap
+ * floor on both axes, because it is the control a player reaches for fastest.
+ */
+function modalCloseButton({ label = 'Close', onClick = null, className = '', id = '' } = {}) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  if (id) button.id = id;
+  button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
+  button.title = `${label} (Esc)`;
+  button.setAttribute('aria-label', label);
+  button.textContent = MODAL_CLOSE_GLYPH;
+  if (onClick) button.addEventListener('click', onClick);
+  return button;
+}
+
+/**
+ * modalCloseButtonHtml() — the same control for a host that builds its chrome
+ * as a string. Kept beside the element form on purpose: two shapes of ONE
+ * answer is the point of this file, and a caller that had to hand-write the
+ * markup would be a fifth chrome by the end of the week.
+ */
+function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
+  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}"`
+    + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}">${MODAL_CLOSE_GLYPH}</button>`;
+}
+
+/**
+ * modalFooter({ note, secondary, primary }) → a <footer> in the house order.
+ *
+ * `note` is the quiet sentence some footers carry ("Progress saves to the
+ * active slot."). `secondary` is any number of ways back; `primary` is the one
+ * way forward and is the only button that gets the emphasis. Passing two
+ * primaries is not prevented here — nothing in a stylesheet can count buttons —
+ * but it is visible in one line of a caller's diff, which is the whole gain.
+ */
+function modalFooter({ note = '', secondary = [], primary = null, className = '' } = {}) {
+  const footer = document.createElement('footer');
+  footer.className = `modal-foot${className ? ` ${className}` : ''}`;
+  if (note) {
+    const span = document.createElement('span');
+    span.className = 'modal-foot-note';
+    span.textContent = note;
+    footer.appendChild(span);
+  }
+  const actions = document.createElement('div');
+  actions.className = 'modal-foot-actions';
+  for (const button of secondary) if (button) actions.appendChild(button);
+  if (primary) {
+    // `className` and not `classList` — this component is mounted by tests that
+    // drive it in a minimal DOM (tests/confirmation-modal.test.mjs), and a
+    // shared piece of chrome must not need more of the platform than the
+    // surfaces that share it.
+    if (!` ${primary.className} `.includes(' primary ')) {
+      primary.className = `${primary.className} primary`.trim();
+    }
+    actions.appendChild(primary);
+  }
+  footer.appendChild(actions);
+  return footer;
+}
+
+/**
+ * bindModalDismiss({ veil, panel, close }) → release()
+ *
+ * Escape, a click on the veil itself, and focus return, once. Two details that
+ * were NOT the same in all four copies and are the reason this is shared:
+ *
+ *   TOPMOST WINS. Escape closes the modal that is on top, not every modal that
+ *   is listening. The test is the LAST `[aria-modal="true"]` in the document —
+ *   the same answer veil.js gives for input ownership, asked the cheap way.
+ *   A copy that skipped it closed the Armoury underneath a confirmation.
+ *
+ *   THE CLICK MUST BE ON THE VEIL, not merely inside it. `e.target === veil`
+ *   and not `!panel.contains(e.target)`: the second form closes the modal when
+ *   a drag that began on a slider ends outside the panel, which is a real way
+ *   to lose a settings change mid-gesture.
+ */
+function bindModalDismiss({ veil, panel, close, opener = document.activeElement } = {}) {
+  const onKeydown = (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+    const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+    if (top !== panel) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  };
+  const onClick = (event) => { if (event.target === veil) close(); };
+  document.addEventListener('keydown', onKeydown, true);
+  veil.addEventListener('click', onClick);
+  return function release({ restoreFocus = true } = {}) {
+    document.removeEventListener('keydown', onKeydown, true);
+    veil.removeEventListener('click', onClick);
+    if (restoreFocus && opener?.isConnected && typeof opener.focus === 'function') {
+      opener.focus({ preventScroll: true });
+    }
+  };
+}
+
+
+Object.assign(module.exports, { MODAL_CLOSE_GLYPH, modalCloseButton, modalCloseButtonHtml, modalFooter, bindModalDismiss });
 
 },
 "src/ui/components/buildstamp.js": function (module, exports, require) {
@@ -49937,7 +50263,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a03b3e01de';
+const SOURCE = '078b4e7e16';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -49971,7 +50297,7 @@ const SOURCE = 'a03b3e01de';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '9';
+const ORDINAL = '10';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -50298,6 +50624,7 @@ const { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT } = r
 
 const { flasks } = require("src/content/flasks.js");
 const { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } = require("src/model/gracerefill.js");
+const { modalCloseButtonHtml, modalFooter, bindModalDismiss } = require("src/ui/components/modalShell.js");
 
 const UI_DEFAULTS = balance.ui;
 const EQ_DEFAULTS = balance.equipment;
@@ -51836,37 +52163,38 @@ function openSettings({ meta, onChange, saves = null }) {
   const opener = document.activeElement;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
+  // The chrome is the shell's (modalShell.js): a title, ONE close control in
+  // the corner every other modal keeps it in, and a footer whose forward button
+  // is the emphasised one. This door had no close control at all — `Done` was
+  // the only way out, and the in-run twin of this same panel has no `Done`.
   veil.innerHTML = `
     <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
-      <h2 id="settings-modal-title">Settings</h2>
+      <header class="modal-head">
+        <h2 id="settings-modal-title">Settings</h2>
+        <div class="modal-head-actions">${modalCloseButtonHtml({ label: 'Close Settings' })}</div>
+      </header>
       <div class="set-body"></div>
-      <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
   renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
   const modal = veil.querySelector('.settings-modal');
-  const onKeydown = (event) => {
-    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
-    const topModal = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
-    if (topModal !== modal) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    close();
-  };
+  const done = document.createElement('button');
+  done.type = 'button';
+  done.id = 'set-close';
+  done.textContent = 'Done';
+  modal.appendChild(modalFooter({ primary: done }));
+
+  let release = null;
   const close = () => {
     if (!veil.isConnected) return;
-    document.removeEventListener('keydown', onKeydown, true);
+    release?.();
+    release = null;
     veil.remove();
-    if (opener?.isConnected && typeof opener.focus === 'function') {
-      opener.focus({ preventScroll: true });
-    }
   };
-  veil.addEventListener('click', (e) => {
-    if (e.target === veil) close();
-  });
-  veil.querySelector('#set-close').addEventListener('click', close);
-  document.addEventListener('keydown', onKeydown, true);
+  release = bindModalDismiss({ veil, panel: modal, close, opener });
+  done.addEventListener('click', close);
+  modal.querySelector('.modal-close').addEventListener('click', close);
   veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }
 
@@ -54609,7 +54937,7 @@ function openSaveSlotSelector({
       const record = slots.find(({ slot }) => slot === loadReviewSlot);
       if (record?.summary) {
         veil.innerHTML = `<section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
+          <button class="subtle modal-close title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game" title="Close Load Game (Esc)">✕</button>
           <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
           <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
           <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
@@ -54618,7 +54946,7 @@ function openSaveSlotSelector({
           <p class="title-load-review-copy">Load this saved climb now?</p>
           <div class="title-modal-actions" data-component="title-modal-actions">
             <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
-            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
+            <button class="primary title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
           </div>
         </section>`;
         return;
@@ -54628,13 +54956,13 @@ function openSaveSlotSelector({
 
     const selection = model();
     veil.innerHTML = `<section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-      <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
+      <button class="subtle modal-close title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game" title="Close Load Game (Esc)">✕</button>
       <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD GAME</h2>
       <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
       <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${slotRows(selection)}</div>
       <div class="title-modal-actions" data-component="title-modal-actions">
         <button class="title-modal-back" data-component="title-modal-back-control" type="button" data-title-action="back">BACK</button>
-        <button class="title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue" data-action-slot="${selection.properties.actionSlot ?? ''}"${selection.properties.canContinue ? '' : ' disabled'}>CONTINUE</button>
+        <button class="primary title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue" data-action-slot="${selection.properties.actionSlot ?? ''}"${selection.properties.canContinue ? '' : ' disabled'}>CONTINUE</button>
       </div>
     </section>`;
 
@@ -57770,6 +58098,7 @@ const { trayModel } = require("src/ui/models/TrayModels.js");
 const { renderTray } = require("src/ui/components/trayComponents.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { traySizeService } = require("src/ui/services/TraySizeService.js");
+const { FOLD_GLYPH } = require("src/ui/components/foldGlyph.js");
 
 const CFG = () => balance.equipment;
 const armouryTraySession = { folded: new Map(), heights: new Map() };
@@ -59085,7 +59414,7 @@ function mountEquipment(host, {
       row.dataset.component = 'armoury.cardRow';
       const summary = document.createElement('summary');
       summary.className = 'armoury-card-row-summary';
-      summary.innerHTML = '<span class="armoury-card-row-caret" aria-hidden="true">▸</span>'
+      summary.innerHTML = `<span class="armoury-card-row-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
         + `<span class="armoury-card-row-icon" aria-hidden="true">${esc(art)}</span>`
         + `<strong class="armoury-card-row-name">${esc(def.name)}</strong>`
         + `<span class="armoury-card-row-type">${esc(type)}</span>`
@@ -59214,7 +59543,8 @@ function mountEquipment(host, {
       card.dataset.component = `armoury.${id}`;
       card.open = expanded;
       const head = document.createElement('summary');
-      head.innerHTML = `<span class="character-info-label">${esc(label)}</span>`
+      head.innerHTML = `<span class="character-info-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
+        + `<span class="character-info-label">${esc(label)}</span>`
         + `<span class="character-info-summary">${esc(summary)}</span>`;
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
       card.append(head, body);
@@ -61115,6 +61445,7 @@ const { childModel, descendantModel } = require("src/ui/models/ComponentModel.js
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { markUiComponent } = require("src/ui/components/uiComponents.js");
+const { modalCloseButtonHtml } = require("src/ui/components/modalShell.js");
 
 function renderArmouryOverlay(model) {
   const wrap = document.createElement('div');
@@ -61138,7 +61469,7 @@ function renderArmouryPanel(model, wrap) {
         <div class="armoury-views" data-surface="armouryView" role="tablist" aria-label="${esc(switcher.accessibility.label)}">
           ${switcher.properties.views.map((view) => `<button type="button" role="tab" aria-selected="${view.active ? 'true' : 'false'}" data-member="${esc(view.id)}" class="${view.active ? 'on' : ''}">${esc(view.label)}</button>`).join('')}
         </div>
-        <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
+        ${modalCloseButtonHtml({ id: 'armoury-close', className: 'armoury-close', label: 'Close Armoury' })}
       </header>
       ${model.properties.notice ? `<p class="armoury-notice">${esc(model.properties.notice)}</p>` : ''}
       <div class="armoury-subject armoury-content">
@@ -61375,13 +61706,8 @@ const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { markUiComponent } = require("src/ui/components/uiComponents.js");
 const { traySizeService } = require("src/ui/services/TraySizeService.js");
+const { TRAY_FOLD_GLYPH: GLYPHS } = require("src/ui/components/foldGlyph.js");
 
-const GLYPHS = Object.freeze({
-  top: Object.freeze({ closed: 'v', open: '^' }),
-  right: Object.freeze({ closed: '<', open: '>' }),
-  bottom: Object.freeze({ closed: '^', open: 'v' }),
-  left: Object.freeze({ closed: '>', open: '<' }),
-});
 
 function renderTray(model, { onToggle = null, onSort = null, onResize = null, renderContent = null, sizeService = traySizeService } = {}) {
   const headerModel = childModel(model, UI.trayHeader);
@@ -61568,6 +61894,65 @@ const traySizeService = createTraySizeService();
 
 
 Object.assign(module.exports, { createTraySizeService, traySizeService });
+
+},
+"src/ui/components/foldGlyph.js": function (module, exports, require) {
+// src/ui/components/foldGlyph.js — THE MARKS THAT SAY WHAT A CONTROL DOES.
+//
+// Measured 2026-09-02 across 78 driven surfaces: the Armoury Character view
+// alone drew THREE disclosure marks at once — `▾` on Combat Power (authored in
+// CSS as a `::before`), `^` and `v` on the Inventory and Cards trays (ASCII
+// letters), and `▸` on each card row — while the Shrine and the Smith modal
+// both used `›`. Four marks, three families (small triangle, ASCII letter,
+// angle quote) for ONE idea, and they were authored in three places: a CSS
+// `content:`, a frozen table in trayComponents.js, and literals inline in four
+// templates. A player cannot learn four marks for one idea; they learn none.
+//
+// So this is the home, and it is a JS constant rather than a CSS custom
+// property because three of the four call sites were already writing the glyph
+// into markup. The fourth (Combat Power) moved to markup to join them — one
+// home beats one mechanism.
+//
+// THE AUTHORED GLYPH IS ALWAYS THE COLLAPSED ONE, and that is not a style note
+// — it is why this table has two members and not four. Every fold in the tree
+// already rotates its mark in CSS on `[open]`, so the markup states one glyph
+// and the open state is drawn, never re-rendered. Three of the four rotated 90
+// degrees and Custom Run rotated 180 from a down-pointing mark; that fourth is
+// now 90 from `▸` like its siblings, so there is one rotation grammar as well
+// as one family.
+//
+// `FOLD_GLYPH.expanded` exists for a fold that CANNOT rotate — a mark rendered
+// into a canvas, or one whose host is already transformed. Nothing needs it
+// today. It is here because a table with only the collapsed half invites the
+// next hand to invent the other one.
+//
+// WHY TRAYS GET THEIR OWN ROW AND NOT THEIR OWN FILE. A tray is docked to an
+// edge and travels when it opens, so its mark answers "which way does this
+// move?" — a bottom tray opens UPWARD and a top tray opens DOWNWARD, and one
+// glyph cannot be right for both. That is a real distinction, and it was
+// already encoded (trayComponents.js, as `v`/`^`/`<`/`>`); what it lacked was a
+// family. It borrows this one instead of minting a second.
+//
+// ONE FAMILY: the small triangles ▸ ▾ ▴ ◂. Not `▶`/`▼` — those are the heavy
+// pair, they read as filled blocks at HUD sizes, and the tree already leaned
+// small everywhere except the one place that leaned heavy.
+
+/** A fold in place: collapsed points AT the content, expanded points ALONG it. */
+const FOLD_GLYPH = Object.freeze({ collapsed: '▸', expanded: '▾' });
+
+/**
+ * A docked tray's mark, by the edge it is docked to: the direction the panel
+ * TRAVELS when the control is pressed.
+ */
+const TRAY_FOLD_GLYPH = Object.freeze({
+  top: Object.freeze({ closed: '▾', open: '▴' }),
+  right: Object.freeze({ closed: '◂', open: '▸' }),
+  bottom: Object.freeze({ closed: '▴', open: '▾' }),
+  left: Object.freeze({ closed: '▸', open: '◂' }),
+});
+
+
+Object.assign(module.exports, { FOLD_GLYPH, TRAY_FOLD_GLYPH });
 
 },
 "src/ui/components/statAllocationCard.js": function (module, exports, require) {
@@ -61950,6 +62335,7 @@ const { esc } = require("src/ui/components/tooltip.js");
 const { createRunState } = require("src/model/state.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
+const { FOLD_GLYPH } = require("src/ui/components/foldGlyph.js");
 
 /** How many seeds the live estimate averages. Named, because it is printed. */
 const ESTIMATE_SEEDS = 24;
@@ -62050,7 +62436,7 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
           <button class="runshape-toggle" id="cr-shape-toggle" aria-expanded="false" aria-controls="cr-shape-body">
             <span class="rs-title">ADVANCED · DEBUG — RUN SHAPE</span>
             <span class="rs-state" id="cr-shape-state">off</span>
-            <span class="rs-caret" aria-hidden="true">▾</span>
+            <span class="rs-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </button>
           <div class="runshape-body" id="cr-shape-body" hidden>
             <p class="set-note rs-intro">Shorten the climb. Caps the act, and biases what the map rolls — for testing a full run in one sitting.</p>
@@ -63418,6 +63804,7 @@ const { childModel } = require("src/ui/models/ComponentModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { markUiComponent } = require("src/ui/components/uiComponents.js");
+const { modalCloseButtonHtml } = require("src/ui/components/modalShell.js");
 
 function renderQuickMenu(model, { onActivate }) {
   const veil = document.createElement('div');
@@ -63477,17 +63864,17 @@ function renderMenuOverlay(model) {
           ${stripModel.children.map((tab) => `<button class="ov-tab${tab.properties.active ? ' on' : ''}" data-member="${esc(tab.properties.id)}" role="tab" aria-selected="${tab.properties.active ? 'true' : 'false'}">${esc(tab.properties.label)}</button>`).join('')}
         </div>
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
-        <div class="overlay-actions">
-          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
-          <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
+        <div class="modal-head-actions overlay-actions">
+          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…" aria-label="Go to…">☰</button>' : ''}
+          ${modalCloseButtonHtml({ id: 'ov-close', label: 'Close menu' })}
         </div>
       </div>
       <div class="overlay-body" role="tabpanel"></div>
-      <footer class="overlay-footer">
-        <span class="overlay-footer-note">Progress saves to the active slot.</span>
-        <div class="overlay-footer-actions">
-          <button class="subtle" id="ov-save" type="button">Save Game</button>
-          <button class="subtle danger" id="ov-quit" type="button">Save and Quit</button>
+      <footer class="modal-foot overlay-footer">
+        <span class="modal-foot-note overlay-footer-note">Progress saves to the active slot.</span>
+        <div class="modal-foot-actions overlay-footer-actions">
+          <button class="subtle" id="ov-quit" type="button">Save and Quit</button>
+          <button class="primary" id="ov-save" type="button">Save Game</button>
         </div>
       </footer>
     </div>`;
@@ -68707,6 +69094,7 @@ const { renderStatAllocationCard } = require("src/ui/components/statAllocationCa
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { smithSelectionModel } = require("src/ui/models/SmithSelectionModel.js");
 const { mountSmithUpgradeModal } = require("src/ui/components/smithUpgradeModal.js");
+const { FOLD_GLYPH } = require("src/ui/components/foldGlyph.js");
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -68823,7 +69211,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <summary>
             <span class="shrine-fold-glyph">⚗</span>
             <span class="shrine-fold-summary"><b>Reallocate Flask Charges</b><small>${charge.assigned}/${charge.capacity} assigned</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
           <h3>Reallocate Flask Charges</h3>
@@ -68895,7 +69283,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <summary>
             <span class="shrine-fold-glyph">✦</span>
             <span class="shrine-fold-summary"><b>Level up</b><small>${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
           <h3>Level up</h3>
@@ -69494,6 +69882,7 @@ const { renderCard } = require("src/ui/components/card.js");
 // The interaction router goes through the framework's adopted door.
 const { armOptionDecision } = require("src/framework/optionDecision.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { FOLD_GLYPH } = require("src/ui/components/foldGlyph.js");
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -69677,7 +70066,7 @@ function mountSmithUpgradeModal(host, initialModel, {
           </div>
           <div class="smith-upgrade-folds">
             ${selected.affectedRows.map((row, index) => `<details class="smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}">
-              <summary><span><b>${esc(row.name)}</b><small>${esc(row.role)} · ${row.used === false ? 'not in active deck' : `${row.activeCopies || 1} active`}</small></span><span class="smith-fold-values">${changeSummary(row)}</span><i class="smith-fold-caret" aria-hidden="true">›</i></summary>
+              <summary><span><b>${esc(row.name)}</b><small>${esc(row.role)} · ${row.used === false ? 'not in active deck' : `${row.activeCopies || 1} active`}</small></span><span class="smith-fold-values">${changeSummary(row)}</span><i class="smith-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</i></summary>
               <div class="smith-fold-detail${row.reference ? '' : ' no-card'}">
                 ${row.reference ? `<div class="smith-card-sprite" data-smith-card-row="${index}"></div>` : ''}
                 <div class="smith-card-facts">
