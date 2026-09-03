@@ -81,6 +81,14 @@ const SHOTS = [
   // compendium, components, crisis, event, profile, rest, reward, shop — nine
   // states in main.js against twelve here before this line.
   { name: 'customize', query: '?shot=customize' }, // character build — the class figure
+  // One capture per class, and one off-default tint, because the class sprites
+  // are four sources × five tints and a single default shot is evidence for one
+  // of twenty. art.md §§145-150,189-192 wants every named variant.
+  { name: 'class-reaver', query: '?shot=customize&shotClass=reaver' },
+  { name: 'class-starseer', query: '?shot=customize&shotClass=starseer' },
+  { name: 'class-rogue', query: '?shot=customize&shotClass=rogue' },
+  { name: 'class-herald', query: '?shot=customize&shotClass=herald' },
+  { name: 'class-rogue-ember', query: '?shot=customize&shotClass=rogue&shotTint=ember' },
 ];
 
 const args = process.argv.slice(2);
@@ -124,7 +132,12 @@ async function capture(shot) {
   const out = resolve(outDir, `${shot.name}.png`);
   const { child, close: dropBrowser } = await launchBrowser({
     prefix: 'shot-', browser, headless: '--headless=new', awaitEndpoint: false,
-    args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=8000', `--screenshot=${out}`],
+    // 8000 was not enough and failed at random: successive runs caught a
+    // DIFFERENT screen mid fade-in each time (class-rogue-ember at mean
+    // brightness 24, then class-starseer at 21, against 39.6 for a settled
+    // frame). A capture that is sometimes a half-faded frame is not evidence,
+    // and the flake is invisible unless you measure the brightness.
+    args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=20000', `--screenshot=${out}`],
     urlArg: `http://localhost:${port}/${shot.query}`,
   });
   return new Promise((done) => {
