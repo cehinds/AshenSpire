@@ -16,7 +16,8 @@
         "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
         "source_path": "review-approval-hub/evidence/classes/reaver-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -53,7 +54,8 @@
         "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
         "source_path": "review-approval-hub/evidence/classes/reaver-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -90,7 +92,8 @@
         "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
         "source_path": "review-approval-hub/evidence/classes/reaver-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -127,7 +130,8 @@
         "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
         "source_path": "review-approval-hub/evidence/classes/reaver-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -164,7 +168,8 @@
         "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
         "source_path": "review-approval-hub/evidence/classes/reaver-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -201,7 +206,8 @@
         "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
         "source_path": "review-approval-hub/evidence/classes/starseer-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -238,7 +244,8 @@
         "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
         "source_path": "review-approval-hub/evidence/classes/starseer-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -275,7 +282,8 @@
         "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
         "source_path": "review-approval-hub/evidence/classes/starseer-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -312,7 +320,8 @@
         "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
         "source_path": "review-approval-hub/evidence/classes/starseer-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -349,7 +358,8 @@
         "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
         "source_path": "review-approval-hub/evidence/classes/starseer-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -386,7 +396,8 @@
         "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
         "source_path": "review-approval-hub/evidence/classes/rogue-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -423,7 +434,8 @@
         "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
         "source_path": "review-approval-hub/evidence/classes/rogue-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -460,7 +472,8 @@
         "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
         "source_path": "review-approval-hub/evidence/classes/rogue-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -497,7 +510,8 @@
         "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
         "source_path": "review-approval-hub/evidence/classes/rogue-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -534,7 +548,8 @@
         "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
         "source_path": "review-approval-hub/evidence/classes/rogue-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -571,7 +586,8 @@
         "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
         "source_path": "review-approval-hub/evidence/classes/herald-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -608,7 +624,8 @@
         "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
         "source_path": "review-approval-hub/evidence/classes/herald-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -645,7 +662,8 @@
         "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
         "source_path": "review-approval-hub/evidence/classes/herald-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -682,7 +700,8 @@
         "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
         "source_path": "review-approval-hub/evidence/classes/herald-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"
@@ -719,7 +738,8 @@
         "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
         "source_path": "review-approval-hub/evidence/classes/herald-concept-v1.png",
         "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, accent rim",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
           "cwebp": "cwebp 1.3.2"

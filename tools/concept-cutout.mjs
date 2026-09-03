@@ -615,9 +615,18 @@ for (const [cls, { cut, box, bottomIsCrop }] of Object.entries(cuts)) {
         source_blob: CONCEPTS[cls],
         source_path: `review-approval-hub/evidence/classes/${cls}-concept-v1.png`,
         command: 'node tools/concept-cutout.mjs',
+        // The recipe has to name EVERY stage that moves a pixel, or the
+        // inventory describes a file nobody can reproduce. The dye is listed
+        // with its three constants because they are the whole result: the same
+        // source and the same tint at different HUE_MIX give different bytes.
         steps: 'edge flood-fill background removal, enclosed-pocket removal, '
           + 'detached-speck removal, 3x3 feather, un-premultiply against white, '
-          + `box-filter downscale, bottom-align on ${OUT_W}x${OUT_H}, accent rim`,
+          + `box-filter downscale, bottom-align on ${OUT_W}x${OUT_H}, `
+          + `garment dye (HSV hue rotated toward tint by ${HUE_MIX} along the short arc, `
+          + `saturation blended ${SAT_MIX} toward the tint, both ramped in above `
+          + `source saturation ${SAT_FLOOR}; value passed through unchanged), `
+          + 'accent rim',
+        tint_rgb: `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`,
         tool_versions: { node: process.version, cwebp: cwebpVersion },
       },
       anchor: {

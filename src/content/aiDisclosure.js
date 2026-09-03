@@ -81,6 +81,25 @@ export const AI_DISCLOSURE = Object.freeze({
   // on 2026-09-03. Approving it was his call and not the maker seat's; the flag
   // is set here on his instruction, not on this seat's judgement.
   //
+  // WHAT BACKS IT, EXACTLY. His instruction in the working session, and nothing
+  // else. There is no `.agentops` event recording it — and there never has been
+  // for this flag: a search of the whole event tree returns ZERO events
+  // mentioning this disclosure, including the 2026-08-07 approval that this one
+  // replaces. The flag has been prose-authorised for its entire life. That is
+  // stated here rather than left for a reader to discover, because "approved"
+  // with no visible provenance is exactly the kind of marker that gets trusted
+  // for more than it can carry.
+  //
+  // A request to record the decision through the control plane has gone to
+  // it-manager-iii along with the ticket's other two governance items. If it is
+  // recorded, cite the event here. Until then this line means "the owner said
+  // yes", which is what it has always meant — no more.
+  //
+  // Scope, so it is not over-read: nothing in `src/` reads this flag, and
+  // `tools/ai-disclosure.mjs` only PRINTS a note when it is false — it exits 0
+  // either way. It gates a release by informing the person cutting one; it does
+  // not gate a build, and this branch releases nothing.
+  //
   // Nothing in the game reads this flag to decide whether to render — the
   // acknowledgement always shows. It marks whose words these are. Edit the text
   // below and it returns to `false`, same rule, no exceptions.
