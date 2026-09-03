@@ -21,6 +21,27 @@ import {
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ATTRIBUTE_IDS = phase1Attributes.slice().sort((a, b) => a.order - b.order).map((row) => row.id);
+// THE MODEL EVERY PINNED NUMBER BELOW DESCRIBES.
+//
+// #584: this file sat red on `dev` with eleven failures because the shipped
+// rules moved to version 4 (9434b7c5, "save-safe tuned attribute formulas") and
+// nothing here followed. Energy and Draw went to a ten-point tier, HP became a
+// flat 30 + 2 x CON that no longer reads class data at all, and the numbers here
+// still described version 3.
+//
+// THE TICKET ASKED FOR THE EXPECTATIONS TO BE DERIVED FROM THE LIVE RULESET.
+// THEY ARE DELIBERATELY NOT. A contract file that computes its expectations from
+// the table it is checking agrees with every possible table and asserts nothing —
+// it would have gone green the moment the model changed, which is the opposite of
+// the job. The numbers are the contract, so they stay pinned and the VERSION is
+// tied instead: change the model without bumping `rulesetVersion` and the row
+// corpora below catch it; bump the version without revisiting this file and the
+// single check below fails and says exactly what to do.
+const CONTRACT_RULESET_VERSION = 4;
+
+// `maxHp: 84` is deliberately NOT the HP base any row uses. Under ruleset 4 the
+// HP row is a flat 30 and ignores class data, so a fixture carrying a different
+// number is what makes that provable rather than assumed.
 const CLASS = { id: 'reaver', maxHp: 84 };
 let failures = 0;
 let checks = 0;
@@ -45,6 +66,14 @@ function resolved(options = {}) {
 
 console.log('derivedstats — inert post-Phase-1 rules contract\n');
 
+check('this file is written against the shipped ruleset version', () => {
+  equal(derivedStatRules.rulesetVersion, CONTRACT_RULESET_VERSION,
+    'the shipped ruleset version moved. Every pinned number in this file describes ruleset '
+    + `${CONTRACT_RULESET_VERSION}. Re-derive them by hand against the new model and bump `
+    + 'CONTRACT_RULESET_VERSION. Do NOT compute them from derivedStatRules — that makes this '
+    + 'file agree with any model and assert nothing (#584)');
+});
+
 check('one authoritative object carries the global defaults', () => {
   equal(derivedStatRules.defaults.pointsPerTier, 5, 'pointsPerTier');
   equal(derivedStatRules.defaults.rounding, 'floor', 'rounding');
@@ -61,14 +90,17 @@ check('the shipped table passes the closed schema', () => {
   assert(Array.isArray(problems) && problems.length === 0, problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
 });
 
-check('DEX 10 gives Energy raw 1 + tier 2 = 3', () => {
+// Energy and Draw each override the global five-point tier with ten (ruleset 4),
+// so DEX/INT 10 buys ONE tier, not two. The titles said two and the values said
+// three and five, which were the version-3 answers for a different arithmetic.
+check('DEX 10 gives Energy base 2 + one ten-point tier = 3', () => {
   const out = deriveStat(resolved(), 'energy', { attributes: { dexterity: 10 }, classDef: CLASS });
-  equal(out.tier, 2, 'tier'); equal(out.raw, 3, 'raw'); equal(out.value, 3, 'value');
+  equal(out.tier, 1, 'tier'); equal(out.raw, 3, 'raw'); equal(out.value, 3, 'value');
 });
 
-check('INT 10 gives Draw raw 3 + tier 2 = 5', () => {
+check('INT 10 gives Draw base 4 + one ten-point tier = 5', () => {
   const out = deriveStat(resolved(), 'draw', { attributes: { intelligence: 10 }, classDef: CLASS });
-  equal(out.tier, 2, 'tier'); equal(out.raw, 5, 'raw');
+  equal(out.tier, 1, 'tier'); equal(out.raw, 5, 'raw');
 });
 
 check('CON 10 gives at least 2 Stamina', () => {
@@ -80,9 +112,16 @@ check('WIS 10 is the only Mana authority and yields 2', () => {
   equal(out.base, 0, 'Mana base'); equal(out.value, 2, 'Mana');
 });
 
-check('CON HP starts from class data and pays the class coefficient per five-point tier (D22)', () => {
+// THE ROW STOPPED READING CLASS DATA AND THIS CHECK STILL SAID IT DID. Under
+// ruleset 4 the HP row is `base: 30, pointsPerTier: 1, gainPerTier: 2` — a flat
+// 30 plus two per CON point, with no `base.field` at all. The class base moved
+// into the "other bonuses" slot (c9b31970) and #484 then removed the per-tier
+// class coefficient outright. The old assertion expected 84 from the fixture
+// class and got 30, which read as a broken product and was a stale contract.
+check('CON HP is a flat base plus two per point, and reads no class field (D22, #484)', () => {
   const out = deriveStat(resolved(), 'hp', { attributes: { constitution: 10 }, classDef: CLASS });
-  equal(out.base, 84, 'class HP base'); equal(out.value, 92, 'derived HP: 84 + two class tiers of four');
+  equal(out.base, 30, 'HP base is the row, not the class'); equal(out.tier, 10, 'one tier per CON point');
+  equal(out.value, 50, 'derived HP: 30 + 10 x 2');
 });
 
 check('a row may override pointsPerTier and rounding', () => {
@@ -91,7 +130,7 @@ check('a row may override pointsPerTier and rounding', () => {
   source.rules.energy.rounding = 'ceil';
   const rules = resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
   const out = deriveStat(rules, 'energy', { attributes: { dexterity: 9 }, classDef: CLASS });
-  equal(out.tier, 3, 'ceil(9/4)'); equal(out.value, 4, 'Energy');
+  equal(out.tier, 3, 'ceil(9/4)'); equal(out.value, 5, 'Energy: base 2 + 3');
 });
 
 check('an authored row override outranks the authored global defaults', () => {
@@ -132,17 +171,23 @@ check('shipped Energy and Draw both declare cap null and grow unbounded at high 
   const rules = resolved();
   const energy = deriveStat(rules, 'energy', { attributes: { dexterity: 5000 }, classDef: CLASS });
   const draw = deriveStat(rules, 'draw', { attributes: { intelligence: 5000 }, classDef: CLASS });
-  equal(energy.tier, 1000, 'high-stat Energy tier');
-  equal(energy.value, 1001, 'uncapped high-stat Energy');
-  equal(draw.tier, 1000, 'high-stat Draw tier');
-  equal(draw.value, 1003, 'uncapped high-stat Draw');
+  // 5000 over a TEN-point tier is 500, not 1000. The point of the check is that
+  // nothing clamps, so the numbers move with the tier width and were not re-read.
+  equal(energy.tier, 500, 'high-stat Energy tier');
+  equal(energy.value, 502, 'uncapped high-stat Energy: base 2 + 500');
+  equal(draw.tier, 500, 'high-stat Draw tier');
+  equal(draw.value, 504, 'uncapped high-stat Draw: base 4 + 500');
 });
 
-check('HP class-field base is live while Mana remains independent of class data', () => {
+// THE PREMISE INVERTED, SO THE CHECK DID TOO. This asserted HP was live to class
+// data; under ruleset 4 neither HP nor Mana reads it. The fixture deliberately
+// carries a maxHp and a maxMana that are BOTH wrong answers, so a row that
+// started reading class data again would be caught rather than merely un-asserted.
+check('neither HP nor Mana reads class data, and deriving mutates no input', () => {
   const attributes = { constitution: 10, wisdom: 10 };
   const classDef = { id: 'newClass', maxHp: 137, maxMana: 23 };
   const before = JSON.stringify({ attributes, classDef });
-  equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 137, 'HP reads changed class data');
+  equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 30, 'HP ignores class data');
   equal(deriveStat(resolved(), 'mana', { attributes, classDef }).base, 0, 'Mana ignores class data');
   equal(JSON.stringify({ attributes, classDef }), before, 'inputs unchanged');
 });
@@ -166,7 +211,7 @@ check('run modifiers apply in listed order before the explicit/debug override', 
     explicitOverride: { rules: { draw: { gainPerTier: 4 } } },
   });
   const out = deriveStat(rules, 'draw', { attributes: { intelligence: 10 }, classDef: CLASS });
-  equal(out.raw, 14, 'later run base 6 + explicit gain 4 × tier 2');
+  equal(out.raw, 10, 'later run base 6 + explicit gain 4 x tier 1');
 });
 
 check('a mode-level defaults override reaches every row until a row patch replaces it', () => {
@@ -184,7 +229,12 @@ const badCases = [
   ['non-numeric cap', (x) => { x.rules.energy.cap = 'three'; }, 'rules.energy.cap'],
   ['missing required base', (x) => { delete x.rules.stamina.base; }, 'rules.stamina.base'],
   ['unknown source attribute', (x) => { x.rules.mana.sourceStat = 'luck'; }, 'rules.mana.sourceStat'],
-  ['unknown class base field', (x) => { x.rules.hp.base.field = 'hitPoints'; }, 'rules.hp.base.field'],
+  // ASSIGNS THE OBJECT INSTEAD OF REACHING INTO IT. `hp.base` is a NUMBER under
+  // ruleset 4, so `x.rules.hp.base.field = ...` threw TypeError and the plant
+  // reported a crash rather than a verdict. Replacing the whole base keeps the
+  // class-base schema path covered without depending on the shipped table still
+  // using that shape — and nothing does now, so this is its only coverage.
+  ['unknown class base field', (x) => { x.rules.hp.base = { field: 'hitPoints' }; }, 'rules.hp.base.field'],
   ['unknown rule field', (x) => { x.rules.energy.diminishing = true; }, 'rules.energy.diminishing'],
   ['missing required row', (x) => { delete x.rules.draw; }, 'rules.draw'],
   ['extra derived row', (x) => { x.rules.dodge = clone(x.rules.energy); }, 'rules.dodge'],
@@ -199,7 +249,12 @@ const rootNumericMutants = [
   ['rulesetVersion zero', (x) => { x.rulesetVersion = 0; }, 'rulesetVersion'],
   ['rulesetVersion fractional', (x) => { x.rulesetVersion = 1.5; }, 'rulesetVersion'],
   ['rulesetVersion NaN', (x) => { x.rulesetVersion = Number.NaN; }, 'rulesetVersion'],
-  ['unsupported positive rulesetVersion', (x) => { x.rulesetVersion = 4; }, 'rulesetVersion'],
+  // ONE PAST WHATEVER SHIPS, not the literal 4. Pinning 4 was right while 3
+  // shipped; 4 then BECAME the shipped version and this known-bad quietly stopped
+  // being bad. The property is "a version the resolver does not support", and
+  // that is the only thing here derived from the live table — deriving a number
+  // this file is asserting would be the tautology the header refuses.
+  ['unsupported positive rulesetVersion', (x) => { x.rulesetVersion = derivedStatRules.rulesetVersion + 1; }, 'rulesetVersion'],
   ['default pointsPerTier NaN', (x) => { x.defaults.pointsPerTier = Number.NaN; }, 'defaults.pointsPerTier'],
   ['default cap negative', (x) => { x.defaults.cap = -1; }, 'defaults.cap'],
   ['default cap infinite', (x) => { x.defaults.cap = Infinity; }, 'defaults.cap'],
@@ -282,7 +337,7 @@ check('a host snapshot records the ruleset version and resolved overrides', () =
     authority: 'host', attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'], classDef: CLASS,
     explicitOverride: { rules: { energy: { base: 9 } } },
   });
-  equal(snap.rulesetVersion, 3, 'rulesetVersion');
+  equal(snap.rulesetVersion, CONTRACT_RULESET_VERSION, 'rulesetVersion');
   equal(snap.rules.rules.energy.base, 9, 'snapshotted explicit override');
 });
 
@@ -321,10 +376,40 @@ check('the integrated dependency seam has one rules owner and value-only consume
   assert(!/content\/attributes|model\/attributes/.test(model), 'reader imports Phase 1 instead of accepting its allocation seam');
 });
 
+// THIS ONE WAS NOT STALE — IT WAS OVER-BROAD, AND #584 CALLED IT STALE.
+//
+// The old form grepped both files for the WORD and went red the day Stamina's
+// player-facing sentence named what spends it: "Spent by cards that ask for it
+// — the dodge roll among them." That is prose describing a stat, in a `sense`
+// string a player reads. No behaviour was smuggled anywhere. A guard whose text
+// does not match its own stated intent — "behavior ... policy" — reports the
+// wrong thing, and this one had been doing so since 02a91ff4.
+//
+// Deleting it was the wrong fix: what it guards is real. It is narrowed to the
+// three things smuggling would actually look like.
 check('no Dodge/reaction behavior or handMax policy is smuggled into the contract', () => {
   const text = readFileSync(resolve(ROOT, 'src/content/derivedStats.js'), 'utf8')
     + readFileSync(resolve(ROOT, 'src/model/derivedStats.js'), 'utf8');
-  assert(!/\bdodge\b|\breaction\b|\bhandMax\b/i.test(text), 'post-contract behavior vocabulary present');
+
+  // 1. No derived-stat row is named for a behaviour.
+  const named = Object.keys(derivedStatRules.rules).filter((id) => /^(dodge|reaction|handMax)$/i.test(id));
+  equal(named.join(','), '', 'a derived-stat row is named for a behaviour');
+
+  // 2. `handMax` and `reaction` have no legitimate reason to appear in either
+  //    file at all, in prose or otherwise, so they stay a flat ban.
+  assert(!/\bhandMax\b|\breaction\b/i.test(text), 'handMax or reaction vocabulary present');
+
+  // 3. `dodge` may appear ONLY inside a comment or a quoted string. Stripping
+  //    both leaves the code, and the word surviving there means an identifier, a
+  //    key or a member access — which is what smuggling is. Prose keeps naming
+  //    what Stamina buys, and this check stops caring.
+  const code = text
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/[^\n]*/g, ' ')
+    .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+    .replace(/`(?:[^`\\]|\\.)*`/g, '``');
+  assert(!/dodge/i.test(code), 'dodge appears as code rather than as prose');
 });
 
 console.log(`\n${failures ? 'FAIL' : 'PASS'} — ${checks - failures}/${checks} contract checks held, ${failures} failed.`);
