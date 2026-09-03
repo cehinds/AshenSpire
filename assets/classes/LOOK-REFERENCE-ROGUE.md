@@ -147,6 +147,7 @@ approved look is an IT Manager III call.
 ```
 node assets/classes/check-look-conformance.mjs                # all four vs rogue
 node assets/classes/check-look-conformance.mjs cand.png       # score a candidate
+node assets/classes/check-look-conformance.mjs --selftest     # replay known attacks
 ```
 After landing `build_rogue` in `tools/sprites-blender.py`:
 ```
@@ -157,12 +158,46 @@ The renderer emits **WEBP**, so the checker converts it before profiling, using
 whichever of `dwebp`, `ffmpeg`, `magick` or `convert` is installed. With none of
 them it stops and names the conversion command rather than failing obscurely.
 
-### The seven traits
+### The nine traits
 
-Six are fixed tolerances. **Mean saturation is derived from the reference** —
-a candidate may lose at most 20 % of its chroma — because the approved look is
-high chroma held at low value, and value plus hue alone do not pin that. Pulling
-every pixel toward its own grey preserves each value bucket and each hue bucket
-exactly, so without this trait a candidate at 0.205 saturation against 0.565,
-with every gold pixel gone, scored `ALL CONFORM`.
+**Seven are colour statistics.** Five are fixed tolerances; **mean saturation is
+derived from the reference** — a candidate may lose at most 20 % of its chroma —
+because the approved look is high chroma held at low value, and value plus hue
+alone do not pin that. Pulling every pixel toward its own grey preserves each
+value bucket and each hue bucket exactly, so without that trait a candidate at
+0.205 saturation against 0.565, with every gold pixel gone, scored `ALL CONFORM`.
+
+**Two are structural**, because a histogram cannot see a picture. Shuffling the
+RGB among the opaque pixels while keeping the alpha mask preserves all seven
+colour traits *bit for bit* — Δ0.0 on every row — for an image that is visual
+noise.
+
+| trait | rule | rogue | reaver | starseer | herald | shuffled |
+|---|---|---|---|---|---|---|
+| local coherence | ≤ 2× the reference | 0.0279 | 0.0291 | 0.0224 | 0.0312 | **0.1521** |
+| rim on the silhouette | ≥ 1.80× enrichment | 5.31× | 2.93× | 1.99× | 2.63× | **1.08×** |
+
+*Local coherence* is the mean value difference between adjacent opaque pixels:
+rendered art is locally smooth, noise is not. *Rim enrichment* is how much more
+often the 200–220° rim hue falls in the 6 px band along the silhouette than a
+random placement would put it; 1.0× means no structure at all, which is what a
+shuffle produces however much rim hue survives.
+
+Both are one-sided — a floor and a ceiling on structure, not a resemblance to
+the reference's exact number — and all four real assets clear both, so they
+discriminate art from corruption without adding failures to the ruling.
+
+### Self-test
+
+`--selftest` synthesises both attacks in memory from the reference and asserts
+each is caught:
+
+```
+node assets/classes/check-look-conformance.mjs --selftest
+  → SELFTEST OK: all 2 negative plants correctly caught.
+```
+
+Both once scored `ALL CONFORM`. They are kept as tests so those holes cannot
+silently reopen — verified by weakening the two structural bounds, which turns
+the run into `SELFTEST FAILED: 1 plant(s) scored as conforming.`
 Exit code is 0 only when every scored asset conforms.
