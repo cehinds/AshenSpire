@@ -318,6 +318,10 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `dist/**` | maker | generated-artifact |
 | `buildordinal.json` | maker | generated-artifact |
 | `*.html` | maker | generated-artifact |
+| `SPEC.md` | owner | project-records |
+| `CHANGELOG.md` | owner | project-records |
+| `CREDITS.md` | owner | project-records |
+| `docs/SPEC-RECONCILE.md` | owner | project-records |
 
 ### Branch hygiene
 

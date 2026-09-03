@@ -988,6 +988,29 @@ export function semanticChecks(c) {
     // one-writer rule unable to express a root-level owner at all, which is
     // exactly what the generated build output needs.
     const overlaps = (ga, gb) => {
+      // A concrete file collides only with a declaration that actually matches
+      // it. Directory-prefix comparison cannot say that: it reads 'docs/hub/**'
+      // as a claim over everything under docs/, so a file sitting directly in
+      // docs/ was reported as colliding with every subdirectory owner, and the
+      // one-writer rule could not express a file-level owner beside them. That
+      // is the same defect the root-level case below already fixes, one level
+      // down — found declaring docs/SPEC-RECONCILE.md, which no docs/<sub>/**
+      // glob can match. Exact rather than looser: a glob that genuinely covers
+      // the file (docs/**, or the identical path twice) still collides.
+      //
+      // globCovers is deliberately NOT used here. It answers a different
+      // question — whether one declaration's directory contains another's — and
+      // for subdirectory globs it is a prefix test, so it reports a file in
+      // docs/ as covering docs/hub/**. That semantic is right where it is used
+      // and wrong here, so this asks the narrower question directly.
+      const concrete = (g) => !/[*?]/.test(g);
+      const matches = (pattern, file) => new RegExp('^' + pattern
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*\*/g, ' ').replace(/\*/g, '[^/]*').replace(/ /g, '.*')
+        .replace(/\?/g, '[^/]') + '$').test(file);
+      if (concrete(ga) && concrete(gb)) return ga === gb;
+      if (concrete(ga)) return matches(gb, ga);
+      if (concrete(gb)) return matches(ga, gb);
       const dirA = literalPrefix(ga), dirB = literalPrefix(gb);
       const rootA = dirA === '', rootB = dirB === '';
       // Root-level globs never reach into a subdirectory, and a subdirectory
