@@ -362,7 +362,15 @@ function withRim(img, rgb, depth = 3, strength = 0.85) {
       const i = y * w + x;
       if (!on[i]) continue;
       let d = Infinity;
-      for (let dy = -depth; dy <= depth && d > depth; dy++) {
+      // Stop at `d > 1`, not `d > depth`. The earlier guard exited the scan as
+      // soon as ANY transparent neighbour was found, so a pixel that first saw
+      // transparency at the far row (dy === -depth) kept d = depth and never
+      // looked at the adjacent one that would have given d = 1. Pixels along the
+      // top and sides of a silhouette hit that case constantly and came out with
+      // the WEAKEST rim where they should have had the strongest — an
+      // asymmetric accent in every generated variant. 1 is the true minimum, so
+      // stopping there is the only safe early exit.
+      for (let dy = -depth; dy <= depth && d > 1; dy++) {
         for (let dx = -depth; dx <= depth; dx++) {
           const nx = x + dx, ny = y + dy;
           const outside = nx < 0 || ny < 0 || nx >= w || ny >= h || !on[ny * w + nx];
