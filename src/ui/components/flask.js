@@ -1,6 +1,6 @@
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
-import { modalCloseButtonHtml, modalFooter, bindModalDismiss } from './modalShell.js';
+import { openModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { focusElement } from '../input.js';
 
@@ -92,44 +92,28 @@ export function flaskTooltipHtml(def, { charges = null, hint = '' } = {}) {
 export function openFlaskInspectModal({ def, charges = null, opener = document.activeElement } = {}) {
   if (!def) throw new Error('openFlaskInspectModal requires a flask definition');
   const lines = flaskDetailLines(def, { charges });
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil flask-inspect-veil';
-  veil.innerHTML = `
-    <section class="modal flask-inspect-modal" role="dialog" aria-modal="true" aria-labelledby="flask-inspect-title">
-      <header class="modal-head">
-        <div class="flask-inspect-title">
-          <span class="flask-inspect-eyebrow">Flask</span>
-          <h2 id="flask-inspect-title">${esc(def.name)}</h2>
-        </div>
-        <div class="modal-head-actions">${modalCloseButtonHtml({ label: `Close ${def.name}` })}</div>
-      </header>
-      <div class="flask-inspect-body">
-        ${flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })}
-        <div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>
-      </div>
-    </section>`;
-  document.body.appendChild(veil);
 
-  const panel = veil.querySelector('.flask-inspect-modal');
   const done = document.createElement('button');
   done.type = 'button';
   done.className = 'flask-inspect-done';
   done.dataset.focusable = 'true';
   done.textContent = 'Close';
-  panel.appendChild(modalFooter({ primary: done }));
 
-  let release = null;
-  const close = () => {
-    if (!veil.isConnected) return;
-    release?.();
-    release = null;
-    veil.remove();
-  };
-  release = bindModalDismiss({ veil, panel, close, opener });
-  done.addEventListener('click', close);
-  panel.querySelector('.modal-close').addEventListener('click', close);
-  done.focus?.({ preventScroll: true });
-  return Object.freeze({ root: veil, close });
+  const shell = openModal({
+    className: 'flask-inspect-modal',
+    eyebrow: 'Flask',
+    title: def.name,
+    bodyClassName: 'flask-inspect-body',
+    body: (host) => {
+      host.innerHTML = flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })
+        + `<div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>`;
+    },
+    primary: done,
+    footSize: 'short',
+    opener,
+  });
+  done.addEventListener('click', shell.close);
+  return Object.freeze({ root: shell.veil, close: shell.close });
 }
 
 /**

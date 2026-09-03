@@ -227,6 +227,13 @@
 .modal h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 1.4rem; }
 .modal .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 
+/* The pile viewer's body — a scrolling grid of small card faces. The panel,
+   its head and its way out are the shell's (piles.js adopts openModal). */
+.pile-modal { width: 96rem; max-width: 94%; padding: 0; display: flex; flex-direction: column; }
+.pile-body { padding: 1.6rem; }
+.pile-body .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+.pile-empty { margin: 0; padding: 2rem; color: var(--muted); }
+
 /* ---------- in-run tabbed overlay ---------- */
 /* PERCENT, not vw/vh — and the reason was already written in this file, on the
    .armoury panel forty lines down, which learned it first:
@@ -269,6 +276,75 @@
   padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
   border-radius: var(--r-2);
 }
+/* The head's two identity forms (modalShell.js modalHead): an eyebrow + title
+   pair, or a tab strip that replaces it. No third form, and never both. */
+.modal-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.modal-eyebrow {
+  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+}
+.modal-head-id h2 { margin: 0; }
+.modal-tabs { display: flex; gap: 0.2rem; }
+/* A COUNT IS STATUS, NOT PART OF A NAME. The pile viewer used to bake `(5)`
+   into its <h2>, so the thing a player reads as the name of the surface
+   changed every time a card moved. It rides in the head's actions row now,
+   quiet, left of the way out. */
+.modal-head-status { color: var(--muted); font-size: 0.95rem; white-space: nowrap; }
+/* A TAB IS NOT A BUTTON-SHAPED BUTTON. base.css's generic `button` is a gold
+   2 px pill with 2.6rem of side padding; a strip of those reads as a row of
+   call-to-actions rather than a place you are. Underline, no box. */
+.modal-tab {
+  padding: 0.6rem 1.2rem; min-height: var(--tap-floor);
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: var(--r-2) var(--r-2) 0 0;
+  color: var(--parchment); font-family: var(--font-body); font-size: var(--t-2); letter-spacing: normal;
+}
+.modal-tab[aria-selected='true'] { color: var(--gold); border-bottom-color: var(--gold); }
+.modal-tab:hover, .modal-tab.gp-focus, .modal-tab:focus-visible { color: var(--gold); }
+
+/* THE BUTTON LADDER (modalShell.js buttonRow, and every .modal-foot-actions).
+   FOUR WIDTHS FOR THE WHOLE GAME, and the widest label in a row picks the step
+   for all of its buttons — measured 2026-09-03: a three-button footer produced
+   three widths and wrapped onto two lines at 390 px, which then made two
+   sibling doors different HEIGHTS, because a foot that grows by a line grows
+   the shell. `min-width` and not `width`, so the step is a floor the label can
+   exceed; `white-space: nowrap` so what yields under pressure is the PADDING
+   and never the line count. */
+.modal-btnrow { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 8px; min-width: 0; }
+.modal-btnrow > button { flex: 0 0 auto; white-space: nowrap; text-align: center; }
+.modal-btnrow[data-size='short']  > button { min-width: 10rem; }
+.modal-btnrow[data-size='medium'] > button { min-width: 15rem; }
+.modal-btnrow[data-size='long']   > button { min-width: 21rem; }
+/* `fill` divides the container equally instead of letting the longest label
+   win — for a rail or a wizard step, where the row must span its box. */
+.modal-btnrow[data-size='fill'] > button { flex: 1 1 0; min-width: 0; }
+/* A SQUARE OPTS OUT OF THE STEP AND TAKES THE ROW'S HEIGHT. `aspect-ratio`
+   with `height: auto` under `align-items: stretch`, so it grows to exactly the
+   height its siblings agreed on and stays square at every zoom and text size —
+   NO length is typed, which is the only way to express this that survives
+   --ui-zoom. NOT vh: see the .overlay-modal block above for the 74vh
+   measurement that cost the smallest phone the smallest menu. */
+.modal-btnrow > button[data-size='square'],
+.modal-iconbtn[data-size='square'],
+.modal-close[data-size='square'] {
+  aspect-ratio: 1;
+  width: auto; height: auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding-inline: 0;
+  flex: 0 0 auto;
+}
+.modal-btnrow[data-size='fill'] > button[data-size='square'] { flex: 0 0 auto; }
+/* ☰ shares the close control's box exactly, so a player who learns the shape
+   learns it once. Same rule, two glyphs. */
+.modal-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
+  border-radius: var(--r-2);
+}
+
+/* The body owns its own layout and its own scrolling; the shell never reaches
+   in. It DOES own the fact that the body is what flexes, so head and foot stay
+   put and a long body scrolls rather than pushing them off. */
+.modal-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
 .modal-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
   flex: 0 0 auto; padding: 1.2rem 1.6rem; border-top: 1px solid var(--line);
@@ -281,7 +357,14 @@
   .modal-foot { align-items: stretch; padding: 8px 10px; }
   .modal-foot-note { display: none; }
   .modal-foot-actions { width: 100%; }
+  /* A PHONE IS THE `fill` CASE, WHATEVER STEP THE ROW ASKED FOR. The ladder's
+     min-widths would overflow a 390 px foot, so here the step yields and the
+     row divides its box — the one place a declared size is overridden, and the
+     reason is that the box is now narrower than the smallest step. A square
+     still keeps its ratio. */
   .modal-foot-actions button { flex: 1 1 0; padding-inline: 8px; }
+  .modal-btnrow[data-size] > button { min-width: 0; }
+  .modal-btnrow[data-size] > button[data-size='square'] { flex: 0 0 auto; min-width: var(--tap-floor); }
 }
 
 /* THE SCROLL OWNERS INSIDE A MODAL, AND WHY THEY LOOKED FOREIGN.
@@ -4027,16 +4110,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    the way out. Everything below is BODY — the part modalShell.js deliberately
    does not own — and nothing here restates a chrome number. */
 .flask-inspect-modal { width: 44rem; max-width: 92%; padding: 0; display: flex; flex-direction: column; }
-.flask-inspect-title { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-/* The uppercase muted eyebrow the confirmation modal and the class panes
-   already use to name WHAT KIND of thing the title below is. One idiom. */
-.flask-inspect-eyebrow {
-  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
-}
-.flask-inspect-modal .modal-head h2 { margin: 0; font-size: 2rem; }
+.flask-inspect-modal .modal-head h2 { font-size: 2rem; }
+/* THE DOOR'S HEIGHT IS ITS ART'S, NOT ITS PROSE'S. Two flasks, or a flask and
+   a shield, are the same kind of door and must be the same size — measured
+   2026-09-03 on the Crimson Flask / Round Shield pair, where a one-line effect
+   and a two-line effect produced two visibly different modals and a player
+   reads that difference as meaning. The floor is the art (9.6rem, below) plus
+   this padding, stated once; longer prose scrolls in the body rather than
+   growing the shell. */
 .flask-inspect-body {
   display: flex; align-items: flex-start; gap: 1.6rem;
-  padding: 1.8rem 1.6rem; overflow: hidden auto;
+  padding: 1.8rem 1.6rem;
+  min-height: calc(9.6rem + 3.6rem);
 }
 /* THE WHOLE POINT OF THE BIGGER DOOR IS THAT THE ART IS BIGGER. The HUD slot
    draws this same identity at tap size; here it gets room to be looked at.
