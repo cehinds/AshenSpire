@@ -53573,7 +53573,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '110fecb92d';
+const SOURCE = '6c4f7dd17b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -53607,7 +53607,7 @@ const SOURCE = '110fecb92d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '14';
+const ORDINAL = '15';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -55721,25 +55721,32 @@ const STORE_LEAD = `Ashen Spire was built by AI under human direction. The game�
 const AI_DISCLOSURE = Object.freeze({
   updated: '2026-09-03',
 
-  // FALSE since 2026-09-03, and back to Constantine.
+  // TRUE again since 2026-09-03, on the CORRECTED wording below.
   //
-  // It was true from 2026-08-07 — "I approve the ai disclosure." The rule stated
-  // here is that any edit to the text below returns this to `false`, and the text
-  // below has been edited, so it does.
+  // The history, because the flag means nothing without it:
   //
-  // WHY IT HAD TO CHANGE: the approved wording said "no AI image-generation
-  // models were used" and "No image-generation model was used at any point".
-  // Both became FALSE when the four class figures were replaced with art
-  // produced by ChatGPT Codex (AS-HD-040, owner statement 2026-09-03). A
-  // disclosure that is wrong about the one thing it exists to disclose is worse
-  // than no disclosure, so the wording was corrected rather than left standing
-  // on its approval.
+  // Approved 2026-08-07 — "I approve the ai disclosure." That wording said "no
+  // AI image-generation models were used" and "No image-generation model was
+  // used at any point". Both became FALSE when the four class figures were
+  // replaced with art produced by ChatGPT Codex (AS-HD-040, owner statement
+  // 2026-09-03). A disclosure that is wrong about the one thing it exists to
+  // disclose is worse than no disclosure, so the wording was corrected and this
+  // flag went to `false` — the rule stated here being that any edit returns it.
+  //
+  // It went to false a second time within the day: the first correction
+  // attributed all art to Claude and then named ChatGPT Codex two sentences
+  // later, which replaced a false claim with an inconsistent one. Narrowed to
+  // "art PIPELINES" (Claude wrote the pipelines; the pipelines generate most of
+  // the art; the four figures came from elsewhere).
+  //
+  // Constantine read and approved THAT wording — the text as it stands below —
+  // on 2026-09-03. Approving it was his call and not the maker seat's; the flag
+  // is set here on his instruction, not on this seat's judgement.
   //
   // Nothing in the game reads this flag to decide whether to render — the
-  // acknowledgement always shows. It marks whose words these are, and right now
-  // the corrected sentences are ours alone. It returns to `true` when he has
-  // read and approved THIS wording.
-  approved: false,
+  // acknowledgement always shows. It marks whose words these are. Edit the text
+  // below and it returns to `false`, same rule, no exceptions.
+  approved: true,
 
   /**
    * storeForm — the text pasted into Steam's AI-disclosure field, and the lead
