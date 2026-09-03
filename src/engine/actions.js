@@ -28,7 +28,6 @@ import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { playerWeightClass } from './combat.js';
-import { damageTagIds } from '../content/tags.js';
 import { flaskSlotCap } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
@@ -89,27 +88,27 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
 /**
  * One derivation for live actions and previews: card identity comes from CSV.
  *
- * `registries` is the ACTIVE content, and it is read before the module-global
- * fold in content/tags.js: a run built from an extended or overridden bundle
- * stamps its cards from the rows it supplied, so resolving through the global
- * would answer for the shipped rows instead — a custom tag never reaching the
- * tag-scoped vulnerabilities that consume this. The global stays the fallback
- * for callers with no registries to hand (isolated engine fixtures).
+ * THERE IS NO MODULE-GLOBAL FALLBACK HERE, AND THAT IS THE POINT. Five review
+ * rounds found the same defect at five addresses: a reader that preferred the
+ * ACTIVE content but fell back to the shipped fold in content/tags.js whenever
+ * the active answer looked uninteresting — absent, then empty, then falsy. Each
+ * fix narrowed the condition and the next round found the next condition. The
+ * condition was never the bug; having two sources was. So the global is gone
+ * from this path: what answers is the active content, in the order the run
+ * itself layers it —
  *
- * AN EMPTY ANSWER IS STILL AN ANSWER, AND THE TEST IS WHOSE. Every source here
- * belongs to the ACTIVE content except one — the module-global fold — and that
- * is the only one an empty result may not fall through to. A bundle that
- * removed a card's tagging rows, or a profile that grants no tags, said so on
- * purpose; letting `[]` mean "nothing here, ask the next source" hands back the
- * SHIPPED tags the author had just taken away. So once the active registries
- * have answered for a card, the global is out of the question, while `effect`
- * — which came out of that same bundle — may still speak for a hit whose card
- * carries no rows of its own (isolated fixtures, and non-card effects, which
- * reach the last line with no cardId at all).
+ *   1. the card INSTANCE (`cardTags`), which model/registries.js writes only
+ *      onto an equipment-generated card. Absent means an ordinary card and is
+ *      the one genuine miss; `[]` is a profile that grants nothing, and says so.
+ *   2. the card ROW in the supplied registries, stamped from that bundle's own
+ *      tagging rows.
+ *   3. the EFFECT, which came out of that same bundle, and is what speaks for a
+ *      non-card effect (no cardId at all) and for isolated engine fixtures whose
+ *      cards carry no rows.
  *
- * The first branch reads `cardTags`, which model/registries.js writes only onto
- * an equipment-generated card. Absent means an ordinary card, and is the one
- * genuine miss; `[]` there is a profile that grants nothing.
+ * A caller with no registries and no effect tags gets `[]` — the honest answer,
+ * because nothing it handed us said otherwise. It no longer gets the shipped
+ * game's tags for a bundle it never supplied.
  */
 export function attackTagsFor(action, effect, registries) {
   if (action.card && Array.isArray(action.card.tags)) return action.card.tags;
@@ -117,9 +116,8 @@ export function attackTagsFor(action, effect, registries) {
   if (cardId && registries && registries.cards && registries.cards.has(cardId)) {
     const stamped = registries.cards.get(cardId).tags;
     if (Array.isArray(stamped) && stamped.length) return stamped;
-    return Array.isArray(effect.tags) ? effect.tags : [];
   }
-  return damageTagIds(cardId, effect.tags);
+  return Array.isArray(effect.tags) ? effect.tags : [];
 }
 
 /**

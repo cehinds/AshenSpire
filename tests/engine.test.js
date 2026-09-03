@@ -2256,7 +2256,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(attackTagsFor(action, {}, extReg).join('|'), extReg.cards.get('strike').tags.join('|'),
       'the engine answers from the registries it was given');
     assert(attackTagsFor(action, {}, extReg).includes('venom'), 'including a tag only the supplied bundle carries');
-    eq(attackTagsFor(action, {}).join('|'), 'blade', 'and falls back to the shipped fold with no registries to hand');
+    // NO LONGER the shipped fold: round seven removed the module-global fallback
+    // from this path entirely (see 26j). A caller with no registries and no
+    // effect tags handed us nothing, and gets nothing back.
+    eq(attackTagsFor(action, {}).length, 0, 'and with no registries and no effect tags there is no answer to give');
+    eq(attackTagsFor(action, { tags: ['blade'] }).join('|'), 'blade', 'while an effect still speaks for itself');
     // An instance carrying its own tags still wins — equipment-generated cards.
     eq(attackTagsFor({ card: { cardId: 'strike', tags: ['guard'] } }, {}, extReg).join('|'), 'guard',
       'a stamped instance still answers for itself');
@@ -2325,6 +2329,79 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/basicCardProfiles\.staffMagicAttack: carries no tag/.test(profileSaid),
       `a profile with no tag rows is refused by name — said ${JSON.stringify(profileSaid.slice(0, 160))}`);
     eq(tagContentProblems(contentBundle, kw).length, 0, 'and every shipped profile satisfies it');
+  });
+
+  // ---- 26j. the seventh round: one source, one question -------------------
+  test('26j. the global fold is gone from the runtime, and eligibility is asked not re-listed', () => {
+    const kw = contentBundle.keywords.map((k) => k.id);
+
+    // THE DESIGN CHANGE. Five rounds found one defect at five addresses: a
+    // reader preferring the active content but falling back to the shipped fold
+    // whenever the active answer looked uninteresting — absent, then empty, then
+    // falsy. Each fix narrowed the condition; the condition was never the bug.
+    // Two runtime readers held the global, and neither does now, so the class of
+    // defect is unwritable rather than newly guarded.
+    const swapped = JSON.parse(JSON.stringify(contentBundle));
+    swapped.tagging = swapped.tagging.map((r) => (r.family === 'card' && r.objectId === 'strike'
+      ? { ...r, tagId: 'venom' } : r));
+    const swapReg = createRegistries(swapped);
+    // The engine's reader: answers from the supplied bundle, with nothing behind it.
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, {}, swapReg).join('|'), 'venom',
+      'the engine reads the bundle it was given');
+    assert(tagIdsFor('strike').includes('blade'), 'while the shipped fold still says blade — two different answers');
+    // The card component's reader, exercised through the same door it now uses,
+    // so the chip strip cannot disagree with what combat just did.
+    eq(tagService(swapReg).tagsOf('card', swapReg.cards.get('strike')).map((t) => t.id).join('|'), 'venom',
+      'and the chip strip resolves through the active registries too');
+
+    // ZERO IS A COUNT. A deck born with no attacks said "recompute from the
+    // current loadout", and the next swap replanned a positive quota against a
+    // deck that had none. What separates "nothing to say" from "zero" is whether
+    // there is a deck at all, not whether the number is truthy.
+    const zeroed = JSON.parse(JSON.stringify(contentBundle));
+    zeroed.balance.equipment.startingDeck.minFiller = 0;
+    zeroed.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    zeroed.equipment = {
+      ...zeroed.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: Array(9).fill('defend') }],
+    };
+    const zReg = createRegistries(zeroed);
+    const zRun = createRunState({ seed: 5, classId: 'reaver', registries: zReg });
+    eq(zRun.deck.filter((c) => c.equipmentRole === 'attack').length, 0,
+      'the bound piece supplies the whole budget, so the run is born with no attacks at all');
+    zRun.loadout.sets.rightHand[0] = 'dagger'; // unbound: a replan would say four
+    stampDeck(zReg, zRun);
+    eq(zRun.deck.filter((c) => c.equipmentRole === 'attack').length, 0,
+      'and the swap keeps that quota — zero is the number it was born with, not the absence of one');
+
+    // ELIGIBILITY IS ASKED, NOT RE-LISTED. `armourIds` is one of three ways an
+    // outfit becomes startable; free and earned-by-unlock are the others, and
+    // three rounds each caught one axis later. The budget check now asks the
+    // same predicate run creation asks, so a set reachable only by unlock is in
+    // the enumeration without anyone having remembered it.
+    const unlockOnly = JSON.parse(JSON.stringify(contentBundle));
+    const oathsworn = unlockOnly.equipment.armour.find((a) => a.classId === 'reaver' && a.id === 'oathsworn');
+    assert(oathsworn && oathsworn.unlock, 'oathsworn is reached by unlock, not by the creation list');
+    const listed = unlockOnly.characterCreation.classes.reaver;
+    assert(!((listed && listed.armourIds) || []).includes('oathsworn'),
+      'and it is NOT in armourIds — which is exactly why re-listing that axis missed it');
+    unlockOnly.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'oathsworn', tagId: 'bound' });
+    unlockOnly.equipment = {
+      ...unlockOnly.equipment,
+      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'oathsworn', cards: ['strike', 'strike', 'strike', 'defend', 'defend'] }],
+    };
+    const said = validateEquipment(createRegistries(unlockOnly)).join(' | ');
+    assert(/oathsworn/.test(said), `an unlock-only outfit's grants are budgeted — said ${JSON.stringify(said.slice(0, 200))}`);
+
+    // AN EMPTY VOCABULARY IS NOT A REASON TO STOP ASKING. Guarding the per-piece
+    // rule on `itemTypeIds.size` made deleting every itemType row the one edit
+    // that turned the rule OFF rather than failing it.
+    const noVocab = JSON.parse(JSON.stringify(contentBundle));
+    noVocab.tags = noVocab.tags.filter((t) => t.domain !== 'itemType');
+    noVocab.tagging = noVocab.tagging.filter((r) => !String(r.tagId).startsWith('item:'));
+    const vocabSaid = tagContentProblems(noVocab, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/no itemType tag is registered at all/.test(vocabSaid),
+      `an empty item-type vocabulary is refused, not skipped — said ${JSON.stringify(vocabSaid.slice(0, 200))}`);
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

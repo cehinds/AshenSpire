@@ -316,20 +316,27 @@ export function tagContentProblems(bundle, keywordIds = []) {
     }
   }
   const itemTypeIds = new Set(itemTypeRows.map((t) => t.id));
-  if (itemTypeIds.size) {
-    for (const family of ['armament', 'armour']) {
-      const spec = familyByName.get(family);
-      if (!spec || !spec.source) continue;
-      const collection = atPath(b, spec.source);
-      if (!Array.isArray(collection)) continue;
-      for (const entry of collection) {
-        if (!entry) continue;
-        const scope = spec.scopeField ? (entry[spec.scopeField] || '') : '';
-        const worn = tagging.filter((row) => row && row.family === family
-          && (row.scope || '') === scope && row.objectId === entry.id);
-        if (!worn.some((row) => itemTypeIds.has(row.tagId))) {
-          err(`${spec.source}.${entry.id || '?'}`, `carries no item-type tag — every piece must declare at least one (legal: ${[...itemTypeIds].join(', ')}); add a tagging.csv row`);
-        }
+  // AN EMPTY VOCABULARY IS NOT A REASON TO STOP ASKING. Guarding the loop on
+  // `itemTypeIds.size` made deleting every itemType row the one edit that turned
+  // the rule off instead of failing it — a bundle with no item types at all
+  // validated clean and stamped every piece with empty `itemTypeTags`. The rule
+  // is "every piece declares a type", and a bundle that cannot satisfy it fails
+  // it. The message changes rather than the check, so the author is told which
+  // of the two things is missing.
+  for (const family of ['armament', 'armour']) {
+    const spec = familyByName.get(family);
+    if (!spec || !spec.source) continue;
+    const collection = atPath(b, spec.source);
+    if (!Array.isArray(collection)) continue;
+    for (const entry of collection) {
+      if (!entry) continue;
+      const scope = spec.scopeField ? (entry[spec.scopeField] || '') : '';
+      const worn = tagging.filter((row) => row && row.family === family
+        && (row.scope || '') === scope && row.objectId === entry.id);
+      if (!worn.some((row) => itemTypeIds.has(row.tagId))) {
+        err(`${spec.source}.${entry.id || '?'}`, itemTypeIds.size
+          ? `carries no item-type tag — every piece must declare at least one (legal: ${[...itemTypeIds].join(', ')}); add a tagging.csv row`
+          : `carries no item-type tag, and no itemType tag is registered at all — every piece must declare one, so register the vocabulary in tags.csv (domain '${'itemType'}') before this bundle can boot`);
       }
     }
   }

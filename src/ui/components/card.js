@@ -10,7 +10,6 @@ import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
-import { tagsFor } from '../../content/tags.js';
 import { tagService } from '../../model/tagService.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
@@ -112,12 +111,15 @@ export function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
-  // Equipment-generated cards carry their profile's tags on `cardTags`;
-  // authored cards resolve through the junction. Both go through the service,
-  // so the chip strip never re-implements the id-to-row lookup.
+  // Equipment-generated cards carry their profile's tags on `cardTags`; authored
+  // cards resolve through the junction. BOTH read the ACTIVE registries — the
+  // authored branch used to call the module-global `tagsFor`, so a bundle that
+  // changed a card's tags changed what combat did with them and not what the
+  // card showed, which is the chip strip lying about the run being played.
+  const service = tagService(registries);
   const tags = def.cardTags && def.cardTags.length
-    ? tagService(registries).resolve(def.cardTags)
-    : tagsFor(def.id);
+    ? service.resolve(def.cardTags)
+    : service.tagsOf('card', def);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   // The badge numbers come from the framework cost profile (a preview's

@@ -1,6 +1,6 @@
 import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
-import { startingKitProblems } from './startingKits.js';
+import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
@@ -1339,9 +1339,16 @@ function selectableStartingLoadouts(registries, classId) {
   let creation = null;
   try { creation = classCreationConfig(registries, classId); } catch { creation = null; }
   const handIds = [null, ...((creation && creation.handIds) || [])];
-  const armourRows = ((creation && creation.armourIds) || []).length
-    ? (creation.armourIds || []).map((id) => armours.find((row) => row.classId === classId && row.id === id)).filter(Boolean)
-    : armours.filter((row) => row.classId === classId);
+  // ASK THE PREDICATE, DO NOT RE-LIST THE AXES. `armourIds` is one of THREE ways
+  // an outfit becomes startable — free (`unlock === ''`) and earned-by-unlock are
+  // the others — and enumerating the one I remembered is what three earlier
+  // rounds each caught one axis later. startingKits.js owns the real answer, and
+  // run creation asks it, so this asks the same function with the most permissive
+  // meta there is: every unlock the bundle can ever grant. Nothing a player can
+  // start in is outside this set, and nothing outside the bundle is inside it.
+  const everyUnlock = { unlocked: ((registries.unlocks || []).map((row) => row && row.id)).filter(Boolean) };
+  const armourRows = armours.filter((row) => row.classId === classId
+    && armourIsStartingEligible(row, everyUnlock, registries, classId));
 
   const out = [];
   const seen = new Set();
@@ -2132,8 +2139,16 @@ export function stampDeck(registries, run, cards, {
   // failed with "unknown equipmentAttackSlotId 'attack:3'" mid-swap. The whole
   // deck is on the run in both cases and is the record of what the run was born
   // with, so both paths read the same number from the same place.
-  const attacksBorn = (run.deck || []).filter((card) => card && card.equipmentRole === 'attack').length;
-  const bornWith = attacksBorn || undefined;
+  // ZERO IS A COUNT, NOT A MISSING ONE. `attacksBorn || undefined` said "recompute
+  // from the current loadout" for a deck legitimately born with no attacks (minFiller
+  // 0, a bound piece supplying the whole budget), and a later swap then replanned a
+  // positive quota against a deck that had none. What distinguishes "nothing to say"
+  // from "zero" is not the count — it is whether there is a DECK yet, which is false
+  // only while run creation is still building one.
+  const deck = Array.isArray(run.deck) && run.deck.length ? run.deck : null;
+  const bornWith = deck
+    ? deck.filter((card) => card && card.equipmentRole === 'attack').length
+    : undefined;
   const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith });
   for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
     const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
