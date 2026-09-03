@@ -9,7 +9,7 @@
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -23,8 +23,32 @@ const BROWSERS = [
   'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
   '/usr/bin/google-chrome',
   '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  // Playwright's managed Chromium, which CI images and dev containers often
+  // have when no system Chrome is installed. $PLAYWRIGHT_BROWSERS_PATH names
+  // the root; the glob is resolved below because the build number moves.
 ];
+
+// Resolve a Playwright-managed Chromium if none of the fixed paths exist. This
+// is the only browser present in some environments, and "no Chrome found" there
+// is a false negative that silently costs the run its screenshots.
+function playwrightChromium() {
+  const root = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
+  if (!existsSync(root)) return null;
+  const dirs = readdirSync(root)
+    .filter((d) => d.startsWith('chromium'))
+    .sort()
+    .reverse();
+  for (const d of dirs) {
+    for (const rel of ['chrome-linux/chrome', 'chrome-linux/headless_shell',
+      'chrome-mac/Chromium.app/Contents/MacOS/Chromium']) {
+      const p = resolve(root, d, rel);
+      if (existsSync(p)) return p;
+    }
+  }
+  return null;
+}
 
 const SHOTS = [
   { name: 'startup', query: '?shot=startup' },
@@ -46,13 +70,39 @@ const SHOTS = [
   { name: 'coop-reward', query: '?shot=coopreward' }, // per-member reward pick
   { name: 'coop-shrine', query: '?shot=coopshrine' }, // rest / smith / Mend an ally
   { name: 'coop-catchup', query: '?shot=coopcatchup' }, // reconnect catch-up series
+  // Added 2026-09-03 (AS-HD-040). ?shot=customize has existed in src/main.js all
+  // along and was never captured — so the ONE screen that draws the class figure
+  // at full size had no photographic coverage at all. The class sprites were
+  // replaced wholesale in #590 and not a single shot in this list would have
+  // shown it, which is exactly how art changes ship unseen. Same defect Vira
+  // recorded above for ?shot=death, one screen over.
+  //
+  // Still uncovered, and named so the next reader does not have to diff it:
+  // compendium, components, crisis, event, profile, rest, reward, shop — nine
+  // states in main.js against twelve here before this line.
+  { name: 'customize', query: '?shot=customize' }, // character build — the class figure
 ];
 
 const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const outDir = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'docs/preview');
 
-const browser = BROWSERS.find((p) => existsSync(p));
+// --viewport WxH. The window size was hardcoded to the desktop shape, so this
+// tool could only ever answer "how does it look on a desktop". RUNBOOKS/art.md
+// §§145-150,181-192 wants an art change previewed at a phone size too, and a
+// preview at the wrong shape is not evidence about the right one.
+const vi = args.indexOf('--viewport');
+const VIEWPORT = (() => {
+  const raw = vi >= 0 ? args[vi + 1] : '1440x860';
+  const m = /^(\d{2,5})x(\d{2,5})$/.exec(raw || '');
+  if (!m) {
+    console.error(`screenshot: --viewport wants WxH (e.g. 390x844), got "${raw}"`);
+    process.exit(1);
+  }
+  return `${m[1]},${m[2]}`;
+})();
+
+const browser = BROWSERS.find((p) => existsSync(p)) || playwrightChromium();
 if (!browser) {
   console.error('screenshot: no Chrome/Edge found — install one or add its path to BROWSERS.');
   process.exit(1);
@@ -74,7 +124,7 @@ async function capture(shot) {
   const out = resolve(outDir, `${shot.name}.png`);
   const { child, close: dropBrowser } = await launchBrowser({
     prefix: 'shot-', browser, headless: '--headless=new', awaitEndpoint: false,
-    args: ['--window-size=1440,860', '--virtual-time-budget=8000', `--screenshot=${out}`],
+    args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=8000', `--screenshot=${out}`],
     urlArg: `http://localhost:${port}/${shot.query}`,
   });
   return new Promise((done) => {

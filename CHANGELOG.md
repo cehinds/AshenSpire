@@ -63,6 +63,10 @@ gaps. All three are player-visible. A receipt here names the pull request that
 landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
+## 2026-09-03
+
+- **The four classes wear their concept art** ([#590](https://github.com/cehinds/AshenSpire/pull/590), `0.5.4.12`). The class figure shown when you build a character, pick a style, or sit in the LAN lobby is now the painted concept design for that class, in place of the low-poly figure the Blender pipeline rendered. The Rogue changes most: its art was byte-for-byte the Reaver's, so the two classes looked identical and now do not. Each figure keeps an accent rim in your chosen tint, so the silhouette that glows is still yours. Settings and the LAN lobby call this style Rendered, as before; its description now says "The painted class figure". **In a fight you are still drawn by the equipment renderer** — the body that wears your armour set is composited from the Blender art and is unchanged here, so the figure you fight as does not change with this entry. Enemy figures and act backdrops are unchanged too. **These four figures were made with an AI image-generation model (ChatGPT Codex)** — the game's AI disclosure and CREDITS say so, and the disclosure wording is back with the developer for approval because the previous text said no image model had been used.
+
 ## 2026-09-02
 
 - **The rest below the elites is not taken out of another promise** ([#567](https://github.com/cehinds/AshenSpire/pull/567), `0.5.0-rc.4.1958`). #562 guaranteed a Shrine on some floor below every elite. Meeting that guarantee must not consume a rest the map had already promised somewhere else, and now it does not.
