@@ -1,6 +1,7 @@
 import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
+import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 // Recording only — `note` is a no-op unless a run door is open, so the
@@ -512,12 +513,19 @@ export function validateEquipment(registries) {
 
   if (eqBal) {
     const roleCopies = eqBal.roleCopies || {};
-    const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
-    if (total !== registries.balance.startingDeckSize) {
-      problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
+    // roleCopies is the LEGACY distribution, and the hand-kept sum is exactly
+    // the coupling the composed deck exists to remove: with the composed path
+    // live, raising startingDeckSize to 12 produces a valid twelve-card plan
+    // and these dormant counts would still reject it for summing to ten.
+    // They are rules only while they are the ones being read.
+    if (!startingDeckConfig(registries)) {
+      const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
+      if (total !== registries.balance.startingDeckSize) {
+        problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
+      }
+      if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
     }
     problems.push(...startingDeckProblems(registries));
-    if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
     for (const role of EQUIPMENT_ROLES) {
       const sources = (eqBal.roleSources || {})[role];
       if (!Array.isArray(sources) || !sources.length) { problems.push(`roleSources.${role} must be non-empty`); continue; }
@@ -1283,29 +1291,9 @@ function startingDeckFindings(registries) {
   // and can carry different grants, so checking only the baseline leaves the
   // one a player picks free to blow the budget and eat the promised minFiller.
   const order = (cfg.dropOrder || []).join(' → ');
-  const kits = (registries.equipment || {}).startingKits || [];
-  const armours = (registries.equipment || {}).armour || [];
   const seenDetail = new Set();
   for (const classId of registries.classes.ids()) {
-    // Character creation picks a kit AND a starting armour, independently, and
-    // either can carry grants — so the budget is checked against the PRODUCT,
-    // not one axis. Every armour row the class owns is enumerated, not just the
-    // free one: the others are behind unlocks, and an unlock is a thing that
-    // happens. `null` stands in for each axis a class does not author, so no
-    // class goes unchecked.
-    const selectable = kits.filter((kit) => kit.classId === classId);
-    const wearable = armours.filter((row) => row.classId === classId);
-    const candidates = [];
-    for (const kit of selectable.length ? selectable : [null]) {
-      for (const armour of wearable.length ? wearable : [null]) {
-        const where = [kit && `kit '${kit.id}'`, armour && `armour '${armour.id}'`].filter(Boolean).join(' + ');
-        candidates.push({
-          label: where || 'default loadout',
-          loadout: createLoadout(registries, classId, kit, armour),
-        });
-      }
-    }
-    for (const { label, loadout } of candidates) {
+    for (const { label, loadout } of selectableStartingLoadouts(registries, classId)) {
       let plan;
       try {
         plan = startingDeckPlan(registries, loadout, classId);
@@ -1327,6 +1315,70 @@ function startingDeckFindings(registries) {
     }
   }
   return { problems, warnings };
+}
+
+/**
+ * selectableStartingLoadouts(registries, classId) -> [{ label, loadout }]
+ *
+ * Every loadout a player can actually BEGIN in. This asks character creation
+ * what it accepts rather than guessing the axes: three rounds of review found
+ * three of them in turn (the baseline kit, then the armour, then the hands,
+ * each chosen independently of the others), because the enumeration was built
+ * from the kit table while `resolveCreationHands`/`resolveStartingArmour` were
+ * the things actually deciding. So the candidates come from
+ * characterCreation's own `handIds` and `armourIds`, paired through creation's
+ * own resolver — an incompatible pair throws there and is skipped here, with no
+ * second copy of the compatibility rule to drift.
+ *
+ * The authored kits ride along as a floor, so a class whose kit names a piece
+ * outside handIds is still checked.
+ */
+function selectableStartingLoadouts(registries, classId) {
+  const armours = (registries.equipment || {}).armour || [];
+  const kits = ((registries.equipment || {}).startingKits || []).filter((kit) => kit.classId === classId);
+  let creation = null;
+  try { creation = classCreationConfig(registries, classId); } catch { creation = null; }
+  const handIds = [null, ...((creation && creation.handIds) || [])];
+  const armourRows = ((creation && creation.armourIds) || []).length
+    ? (creation.armourIds || []).map((id) => armours.find((row) => row.classId === classId && row.id === id)).filter(Boolean)
+    : armours.filter((row) => row.classId === classId);
+
+  const out = [];
+  const seen = new Set();
+  const add = (label, loadout, key) => {
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ label, loadout });
+  };
+
+  for (const armour of armourRows.length ? armourRows : [null]) {
+    const armourWhere = armour ? ` + armour '${armour.id}'` : '';
+    // The authored kits, whole.
+    for (const kit of kits) {
+      add(`kit '${kit.id}'${armourWhere}`, createLoadout(registries, classId, kit, armour),
+        `kit:${kit.id}:${armour ? armour.id : ''}`);
+    }
+    // And every hand pair creation would accept, which is where the kits stop
+    // being the whole story: two grant-bearing pieces that share no kit can
+    // still be picked together.
+    for (const rightHand of handIds) {
+      for (const leftHand of handIds) {
+        if (rightHand === null && leftHand === null) continue;
+        let hands;
+        try {
+          hands = resolveCreationHands(registries, classId, { rightHand, leftHand }, {});
+        } catch {
+          continue; // creation refuses this pair, so a player cannot reach it
+        }
+        const kit = { classId, rightHand: hands.rightHand || '', leftHand: hands.leftHand || '' };
+        const where = `hands ${hands.rightHand || '-'}/${hands.leftHand || '-'}${armourWhere}`;
+        add(where, createLoadout(registries, classId, kit, armour),
+          `hands:${hands.rightHand || ''}:${hands.leftHand || ''}:${armour ? armour.id : ''}`);
+      }
+    }
+  }
+  if (!out.length) out.push({ label: 'default loadout', loadout: createLoadout(registries, classId) });
+  return out;
 }
 
 /** The composed-deck config, or null when the legacy roleCopies path is live. */
@@ -2066,7 +2118,18 @@ export function stampDeck(registries, run, cards, {
   if (reconcileEquipmentPools) reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
-  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
+  // THE QUOTA IS THE RUN'S, NOT THE LOADOUT'S. A composed deck's attack count
+  // is decided once, at birth, from the grants the run started with — after
+  // that the deck HAS the instances it has, and swapping equipment re-skins
+  // them rather than changing how many there are. Recomputing from the current
+  // loadout made a swap between pieces with different grant counts throw
+  // ("attack instance count 3 does not match authored 4"). The authoritative
+  // full-deck restamp therefore reads the count off the deck itself; a subset
+  // restamp keeps the old behaviour, since a pile is not the whole truth.
+  const bornWith = cards == null
+    ? list.filter((card) => card.equipmentRole === 'attack').length
+    : undefined;
+  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith });
   for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
     const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
     const desired = attackPlan.slots.find((slot) => slot.equipmentAttackSlotId === inst.equipmentAttackSlotId);

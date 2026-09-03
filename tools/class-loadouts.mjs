@@ -179,8 +179,19 @@ refuses('mutant: unknown damage school is refused by name', /magick/, { profileP
 refuses('mutant: duplicate precedence slot is refused by name', /rightHand|duplicate/i, {
   balancePatch: { equipment: { ...contentBundle.balance.equipment, roleSources: { attack: [{ slot: 'rightHand' }, { slot: 'rightHand' }], guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }], technique: [{ slot: 'rightHand' }] } } },
 });
+// The roleCopies sum is the LEGACY distribution's rule, and it is enforced only
+// while the legacy path is the one being read — holding it under the composed
+// deck would re-impose the hand-kept coupling that feature removes. So the
+// plant disables the composed path, which is where the rule still lives.
 refuses('mutant: role counts must sum to startingDeckSize', /10|sum|startingDeckSize/i, {
-  balancePatch: { startingDeckSize: 10, equipment: { ...contentBundle.balance.equipment, roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 } } },
+  balancePatch: {
+    startingDeckSize: 10,
+    equipment: {
+      ...contentBundle.balance.equipment,
+      startingDeck: { ...contentBundle.balance.equipment.startingDeck, enabled: false },
+      roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 },
+    },
+  },
 });
 
 // Host-resolved equipment scaling must be snapshotted, not recomputed from

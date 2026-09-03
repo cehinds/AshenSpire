@@ -2174,6 +2174,55 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(stamped.includes('blade'), 'and both carry the tag the bundle supplied');
   });
 
+  // ---- 26g. the fourth review round: three root causes --------------------
+  test('26g. the quota is the run\'s, the legacy sum is dormant, and creation decides what is selectable', () => {
+    // A composed deck's attack count is decided ONCE, at birth, from the grants
+    // the run started with. Recomputing it from the current loadout meant
+    // swapping between pieces with different grant counts threw mid-run.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries({ ...granting, cards: contentBundle.cards, statuses: contentBundle.statuses });
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    const born = run.deck.filter((c) => c.equipmentRole === 'attack').length;
+    eq(born, 3, 'two granted cards shift the composed attack quota to three');
+    run.loadout.sets.rightHand[0] = 'dagger';
+    stampDeck(reg, run);
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'a swap re-skins the attacks, it does not re-count them');
+    eq(run.deck.length, 10, 'and the deck stays the size it was born');
+
+    // roleCopies is the legacy distribution. Its hand-kept sum is exactly the
+    // coupling the composed deck removes, so it is a rule only while it is the
+    // one being read — otherwise a valid twelve-card plan is rejected for
+    // summing to ten.
+    const bigger = JSON.parse(JSON.stringify(contentBundle));
+    bigger.balance.startingDeckSize = 12;
+    eq(validateEquipment(createRegistries(bigger)).length, 0, 'raising startingDeckSize alone is now a legal edit');
+    const legacy = JSON.parse(JSON.stringify(contentBundle));
+    legacy.balance.equipment.startingDeck.enabled = false;
+    legacy.balance.startingDeckSize = 12;
+    assert(validateEquipment(createRegistries(legacy)).some((p) => /roleCopies sum/.test(p)),
+      'and with the composed path off the legacy sum is still enforced');
+
+    // Character creation decides what is selectable — not the kit table. Two
+    // grant-bearing pieces that share no authored kit can still be picked
+    // together, which three rounds of axis-by-axis enumeration kept missing.
+    const pair = JSON.parse(JSON.stringify(contentBundle));
+    for (const id of ['greatsword', 'buckler']) pair.tagging.push({ family: 'armament', scope: '', objectId: id, tagId: 'bound' });
+    pair.equipment = {
+      ...pair.equipment,
+      equipmentGrants: ['greatsword', 'buckler'].map((id) => ({ family: 'armament', scope: '', sourceId: id, cards: ['strike', 'defend', 'strike'] })),
+    };
+    const said = validateEquipment(createRegistries(pair)).join(' | ');
+    assert(/hands greatsword\/buckler/.test(said), `the overrun names the hand pair — said ${JSON.stringify(said.slice(0, 160))}`);
+    const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
+    assert(!kits.some((k) => k.rightHand === 'greatsword' && k.leftHand === 'buckler'),
+      'and that pair is in no authored kit, which is why the kit table could not have found it');
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);
