@@ -69,19 +69,34 @@ function requirementsFor(registries, run, pieces) {
 /**
  * The copy count per role AS THE RUN ACTUALLY HAS IT.
  *
- * `roleCopies` is the LEGACY distribution, and under the composed starting deck
- * it is no longer what the deck holds: a strikeBias of 0.75 builds six attacks
- * and two guards while that table still reads 4/4. The Armoury panel renders
- * these as "x{copies}", and the receipt contract is that the panel shows the
- * exact equipment card package — so it reports the composed numbers when the
- * composed path is live, and the authored table only when it is not.
+ * COUNT THE DECK. `roleCopies` is the legacy distribution and under a composed
+ * deck it is not what the run holds (bias 0.75 builds six attacks and two
+ * guards while that table still reads 4/4); a fresh plan is not what the run
+ * holds either, because a restamp PRESERVES the instances the run was born with
+ * and only re-skins them, so after a grant-bearing swap the plan and the deck
+ * disagree. The deck is the equipment card package. The receipt contract says
+ * the panel shows that package, so the panel counts it.
  *
- * Attack prefers the run's BIRTH quota over a fresh plan for the same reason
- * stampDeck does: the deck holds the number the run was born with, and a replan
- * from the current loadout can differ from it after a grant-bearing swap.
+ * The first version of this anchored ATTACK to the run and left guard on the
+ * plan — the same mistake one field over, found immediately. Counting roles
+ * off the deck has no per-role list to be incomplete: a role added later is
+ * counted the day it exists.
+ *
+ * The fallbacks are for a run with no deck to count — a synthetic or candidate
+ * run in a fixture. Then the composed plan, and failing that the authored
+ * table, which is the right answer whenever the composed path is off.
  */
 function copiesByRole(registries, run) {
   const legacy = registries.balance.equipment.roleCopies || {};
+  const deck = Array.isArray(run.deck) && run.deck.length ? run.deck : null;
+  if (deck) {
+    const counted = {};
+    for (const card of deck) {
+      if (!card || !card.equipmentRole) continue;
+      counted[card.equipmentRole] = (counted[card.equipmentRole] || 0) + 1;
+    }
+    return { ...legacy, ...counted };
+  }
   let plan = null;
   try { plan = startingDeckPlan(registries, run.loadout, run.class); } catch { plan = null; }
   if (!plan) return legacy;

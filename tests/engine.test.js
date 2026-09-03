@@ -2678,6 +2678,57 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(legacyShown.guard, legacy.balance.equipment.roleCopies.guard, 'for both roles');
   });
 
+  // ---- 26r. the thirteenth round: count the deck, and never throw at a door
+  test('26r. the panel counts every role off the deck, and a malformed dropOrder is named', () => {
+    // THE SAME MISTAKE ONE FIELD OVER, found the round after I made it. Round
+    // twelve anchored ATTACK to the run and left guard on a fresh plan — but a
+    // restamp PRESERVES the instances the run was born with and only re-skins
+    // them, so after a grant-bearing swap the plan and the deck disagree for
+    // guard exactly as they did for attack. Counting roles off the deck has no
+    // per-role list to be incomplete: a role added later is counted the day it
+    // exists, without anyone remembering to add it here.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries(granting);
+    const run = createRunState({ seed: 4, classId: 'reaver', registries: reg });
+    const roleCount = (deck) => {
+      const out = {};
+      for (const card of deck) if (card && card.equipmentRole) out[card.equipmentRole] = (out[card.equipmentRole] || 0) + 1;
+      return out;
+    };
+    const born = roleCount(run.deck);
+    eq(born.guard, 3, 'two grants shift the composed guard count to three');
+    assert(born.guard !== contentBundle.balance.equipment.roleCopies.guard,
+      'and that differs from the authored table, which is what makes this checkable');
+
+    run.loadout.sets.rightHand[0] = 'dagger'; // unbound: a fresh plan would say four
+    stampDeck(reg, run);
+    const after = roleCount(run.deck);
+    eq(after.guard, born.guard, 'the swap re-skins the guards, it does not re-count them');
+    const shown = Object.fromEntries(equipmentSurfaceReceipt(reg, run).roles.map((r) => [r.role, r.copies]));
+    eq(shown.guard, after.guard, 'and the panel reports the guards the run has, not the ones a replan would give');
+    eq(shown.attack, after.attack, 'attack too, from the same count rather than a separate anchor');
+
+    // A VALIDATION DOOR MAY NOT THROW. `dropOrder` is read only to name the
+    // sources in an overrun message, so a plausible typo — the bare string
+    // 'global' instead of a one-item list — reached `.join` and crashed
+    // validateEquipment instead of being answered by it.
+    const typo = JSON.parse(JSON.stringify(contentBundle));
+    typo.balance.equipment.startingDeck.dropOrder = 'global';
+    const said = validateEquipment(createRegistries(typo)).join(' | ');
+    assert(/dropOrder must be an array of grant sources/.test(said),
+      `a non-array dropOrder is a named problem, not a crash — said ${JSON.stringify(said.slice(0, 160))}`);
+    // And the vocabulary is closed, so a misspelled source is caught too.
+    const unknown = JSON.parse(JSON.stringify(contentBundle));
+    unknown.balance.equipment.startingDeck.dropOrder = ['global', 'armour'];
+    assert(/unknown grant source 'armour'/.test(validateEquipment(createRegistries(unknown)).join(' | ')),
+      "the 'armor'/'armour' spelling trap is named rather than silently ignored");
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);

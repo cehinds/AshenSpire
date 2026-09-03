@@ -1297,6 +1297,13 @@ export function startingDeckWarnings(registries) {
   return startingDeckFindings(registries).warnings;
 }
 
+/**
+ * The grant sources a composed deck can draw from, in the order grantRefsFor
+ * pushes them. `dropOrder` names these and nothing else; it is the vocabulary
+ * an overrun message reads back to the author.
+ */
+const GRANT_SOURCES = ['global', 'relic', 'armor', 'weapon', 'class'];
+
 function startingDeckFindings(registries) {
   const problems = [];
   const warnings = [];
@@ -1313,6 +1320,22 @@ function startingDeckFindings(registries) {
   // path being off (round four) removed the implication without replacing it.
   // `10.5` then validated clean and planned `guardCount: 4.5`, which the copy
   // loop turned into five guards and an eleven-card deck.
+  // dropOrder is only ever READ to name the sources in an overrun message, so a
+  // malformed one used to surface as a TypeError out of `.join` rather than as
+  // a content problem — validateEquipment crashed instead of answering. It is a
+  // list of grant sources; anything else is named here, and the message site is
+  // defensive besides, so a future reader cannot reintroduce the throw.
+  if (cfg.dropOrder !== undefined) {
+    if (!Array.isArray(cfg.dropOrder)) {
+      problems.push(`startingDeck.dropOrder must be an array of grant sources (got ${JSON.stringify(cfg.dropOrder)}) — it names the order an author should drop grants in when a kit overruns`);
+    } else {
+      for (const source of cfg.dropOrder) {
+        if (!GRANT_SOURCES.includes(source)) {
+          problems.push(`startingDeck.dropOrder names unknown grant source '${source}' (legal: ${GRANT_SOURCES.join(', ')})`);
+        }
+      }
+    }
+  }
   const authoredSize = (registries.balance || {}).startingDeckSize;
   if (!Number.isInteger(authoredSize) || authoredSize < 0) {
     problems.push(`startingDeckSize must be a non-negative integer (got ${JSON.stringify(authoredSize)}) — the composed plan divides it into role counts, and a fraction becomes a card that half exists`);
@@ -1370,7 +1393,7 @@ function startingDeckFindings(registries) {
   // not just the baseline kit. An alternate kit is chosen at character creation
   // and can carry different grants, so checking only the baseline leaves the
   // one a player picks free to blow the budget and eat the promised minFiller.
-  const order = (cfg.dropOrder || []).join(' → ');
+  const order = (Array.isArray(cfg.dropOrder) ? cfg.dropOrder : []).join(' → ');
   const seenDetail = new Set();
   for (const classId of registries.classes.ids()) {
     for (const { label, loadout } of selectableStartingLoadouts(registries, classId)) {
