@@ -73,7 +73,7 @@ depicts.
 
 ## What capturing this actually found
 
-**The class figure is not what you fight as.** `playerSprite()` in
+**The class figure was not what you fought as** *(true when first captured; changed later the same day — see below)*. `playerSprite()` in
 `src/ui/assets.js:276` routes to `equippedFigure()` whenever the player has
 equipment and the style is `rendered` — a different pipeline that composites
 `assets/equipment/body_<class>_<set>.webp`. The combat captures show the
@@ -84,11 +84,20 @@ This corrected a claim already written into `CHANGELOG.md` — that the figure
 "you pick and fight as" had changed. Half of that was wrong, and only
 photographing it showed so.
 
-**Rogue's combat body is still built on the Reaver rig.** `tools/equipment-blender.py`
+**Rogue's combat body was built on the Reaver rig.** *(No longer drawn in a fight as of the change below; the Armoury preview still composites it.)* `tools/equipment-blender.py`
 maps `rogue → build_rogue` since #580, but `assets/equipment/*.webp` has not been
 regenerated since, so the shipped bodies predate the fix. Closing it:
 `blender --background --factory-startup --python tools/equipment-blender.py -- assets/equipment`.
 Separate pipeline, deliberately not folded into this change.
+
+**Combat now draws the painted figure.** Later on 2026-09-03 the owner directed
+that a fight use the class sprites rather than the equipment composite, so
+`playerSprite()` no longer routes to `equippedFigure()` when the player has
+gear. The two `*-combat.png` captures were retaken after that change and show
+the painted figure on the player's side, mirrored to face the enemies, with the
+sigil medallion on the chest. What this gave up, stated rather than hidden: the
+armour-set palette and the held-weapon overlay no longer show on the fighter.
+The equipment composite is not dead — the Armoury preview still uses it.
 
 **No shot state covered this screen.** `?shot=customize` had existed in
 `src/main.js` for a long time and was never in `tools/screenshot.mjs`'s list, so

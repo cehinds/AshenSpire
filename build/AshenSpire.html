@@ -53573,7 +53573,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '2f70e38123';
+const SOURCE = '11c6166801';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -53607,7 +53607,7 @@ const SOURCE = '2f70e38123';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '18';
+const ORDINAL = '20';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -55903,8 +55903,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-03",
     "group": "2026-09-03",
     "summary": "The four classes wear their concept art",
-    "detail": "The class figure shown when you build a character, pick a style, or sit in the LAN lobby is now the painted concept design for that class, in place of the low-poly figure the Blender pipeline rendered. The Rogue changes most: its art was byte-for-byte the Reaver's, so the two classes looked identical and now do not. Your tint now colours the outfit, not just the outline. The garment takes the hue of the tint you chose while keeping the painting's own light and shadow, so the cloth changes colour without going flat; steel, bone and the dark inside a hood keep their own colour, because a dye does not touch those. The accent rim on the silhouette stays, so the figure that glows is still yours. Settings and the LAN lobby call this style Rendered, as before; its description now says \"The painted class figure\". In a fight you are still drawn by the equipment renderer — the body that wears your armour set is composited from the Blender art and is unchanged here, so the figure you fight as does not change with this entry. Enemy figures and act backdrops are unchanged too. These four figures were made with an AI image-generation model (ChatGPT Codex) — the game's AI disclosure and CREDITS say so, and the disclosure was rewritten and re-approved because the previous text said no image model had been used.",
-    "build": "0.5.4.18",
+    "detail": "The class figure shown when you build a character, pick a style, or sit in the LAN lobby is now the painted concept design for that class, in place of the low-poly figure the Blender pipeline rendered. The Rogue changes most: its art was byte-for-byte the Reaver's, so the two classes looked identical and now do not. Your tint now colours the outfit, not just the outline. The garment takes the hue of the tint you chose while keeping the painting's own light and shadow, so the cloth changes colour without going flat; steel, bone and the dark inside a hood keep their own colour, because a dye does not touch those. The accent rim on the silhouette stays, so the figure that glows is still yours. Settings and the LAN lobby call this style Rendered, as before; its description now says \"The painted class figure\". In a fight you are now drawn as that same painted figure. Combat used to composite a low-poly Blender body in your armour set's colours, so the character builder showed one figure and the fight drew another in a different style — and the Rogue fought as the Reaver's shape repainted. The armour-set palette and the held-weapon overlay no longer show on the fighter; your weapons still show on your cards and in the Armoury. Enemy figures and act backdrops are unchanged too. These four figures were made with an AI image-generation model (ChatGPT Codex) — the game's AI disclosure and CREDITS say so, and the disclosure was rewritten and re-approved because the previous text said no image model had been used.",
+    "build": "0.5.4.20",
     "pullRequest": 590,
     "url": "https://github.com/cehinds/AshenSpire/pull/590"
   },
@@ -60516,16 +60516,23 @@ function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = fals
  * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
  * equipment figure; without it, the single rendered class PNG as before.
  */
-function playerSprite(customization = {}, classId, equip = null) {
+// THE FIGURE YOU FIGHT AS IS THE FIGURE YOU PICKED. Until 2026-09-03 this took
+// a third argument — the equipment spec — and, whenever the player had gear and
+// the style was `rendered`, drew equippedFigure() instead: the low-poly Blender
+// body in the armour set's palette with the held weapons composited on. That
+// was the right call while the class art was ALSO Blender output. Once the
+// class figures became paintings (#590) it meant the character builder showed
+// one figure and the fight drew a different one, in a different style — and the
+// Rogue's combat body was the Reaver's rig repainted, so two classes fought as
+// the same shape. Owner's instruction: combat uses the class sprites.
+//
+// What this gives up, stated rather than hidden: the armour-set palette and the
+// held-weapon overlay no longer show on the fighter. equippedFigure() still
+// exists and the Armoury preview (screens/equipment.js) still calls it, so the
+// composite is not dead — it is just no longer the combat figure.
+function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || 'rendered';
-  if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
-    const el = document.createElement('div');
-    el.className = 'class-sprite';
-    el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
-    el.appendChild(equippedFigure({ classId, ...equip }));
-    return el;
-  }
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }
@@ -69528,7 +69535,6 @@ const { friendlyTargetMode, friendlyTargetPlan } = require("src/model/friendlyTa
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
-const { figureSpec } = require("src/model/loadout.js");
 const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
@@ -70391,7 +70397,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
-      sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
+      sprite: playerSprite(run.customization || {}, run.class),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
       trailing,

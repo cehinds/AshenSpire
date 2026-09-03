@@ -22,7 +22,6 @@ import { friendlyTargetMode, friendlyTargetPlan } from '../../model/friendlyTarg
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
-import { figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -885,7 +884,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
-      sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
+      sprite: playerSprite(run.customization || {}, run.class),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
       trailing,
