@@ -2071,7 +2071,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const r of renamed.tagging) if (r.tagId === 'item:armor') r.tagId = 'armor';
     const said = tagContentProblems(renamed, contentBundle.keywords.map((k) => k.id))
       .map((row) => `${row.path}: ${row.message}`).join(' | ');
-    assert(/must start with 'item:'/.test(said), `a prefix-less itemType id is refused by name — said ${JSON.stringify(said.slice(0, 120))}`);
+    assert(/must be 'item:' followed by at least one word/.test(said), `a prefix-less itemType id is refused by name — said ${JSON.stringify(said.slice(0, 120))}`);
 
     // P2b. Outfit ids repeat per class, so a grant keyed on the bare id names
     // four different outfits at once. The key is (family, scope, sourceId).
@@ -2098,6 +2098,48 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     ] } };
     assert(boundGrantProblems(dupe).some((row) => /duplicate row for armour\/reaver\/default/.test(row)),
       'a second row for the same (family, scope, id) is refused by name');
+  });
+
+  // ---- 26e. the second review round's four findings -----------------------
+  test('26e. bias default, per-kit budget, one source per family, and item types that name something', () => {
+    const kw = contentBundle.keywords.map((k) => k.id);
+    const tagSaid = (bundle) => tagContentProblems(bundle, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+
+    // The default bias is what a class with no override falls back to, so it is
+    // held to the same rule. Malformed, it reached the plan as NaN and killed
+    // run creation with nothing said at the door.
+    const balance = JSON.parse(JSON.stringify(contentBundle.balance));
+    balance.equipment.startingDeck.defaultStrikeBias = 'oops';
+    delete balance.equipment.startingDeck.classes.reaver;
+    const said = validateEquipment(createRegistries({ ...contentBundle, balance })).join(' | ');
+    assert(/defaultStrikeBias must be between 0 and 1/.test(said), `a malformed default bias is refused by name — said ${JSON.stringify(said.slice(0, 120))}`);
+
+    // The budget is checked against every kit a player can pick, not only the
+    // baseline: an alternate carries its own grants and is equally selectable.
+    const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
+    assert(kits.length > 1 && kits.some((k) => k.baseline !== true), 'the reaver ships a selectable alternate to check');
+    const greedy = JSON.parse(JSON.stringify(contentBundle.balance));
+    greedy.equipment.startingDeck.minFiller = contentBundle.balance.startingDeckSize;
+    const budget = validateEquipment(createRegistries({ ...contentBundle, balance: greedy })).join(' | ');
+    assert(/kit '/.test(budget), `an overrun names the kit it was planned for — said ${JSON.stringify(budget.slice(0, 140))}`);
+
+    // Materialisation keys on the source, so a second family naming one
+    // collection replaces the first rather than merging — every object in it
+    // silently losing the tags the first family gave it.
+    const dupeSource = JSON.parse(JSON.stringify(contentBundle));
+    dupeSource.tagFamilies.push({ family: 'card2', source: 'cards', scopeField: '', label: 'C2', blurb: '' });
+    dupeSource.tagFamilyDomains.push({ family: 'card2', domain: 'card' });
+    assert(/already claimed by family 'card'/.test(tagSaid(dupeSource)), 'two families claiming one source is refused by name');
+
+    // The prefix alone is not enough: an id that derives an EMPTY label is
+    // stamped as an ordinary tag, so the piece loses its type just the same.
+    for (const id of ['item:', 'item:-']) {
+      const c = JSON.parse(JSON.stringify(contentBundle));
+      for (const t of c.tags) if (t.id === 'item:armor') t.id = id;
+      for (const r of c.tagging) if (r.tagId === 'item:armor') r.tagId = id;
+      assert(/at least one word/.test(tagSaid(c)), `an itemType id of '${id}' yields no label and is refused`);
+      eq(itemTypeLabel(id), '', `and the runtime agrees '${id}' names nothing`);
+    }
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

@@ -1257,10 +1257,18 @@ function startingDeckFindings(registries) {
   if (!Number.isInteger(cfg.minFiller) || cfg.minFiller < 0) {
     problems.push(`startingDeck.minFiller must be a non-negative integer (got ${cfg.minFiller})`);
   }
+  // The DEFAULT bias, held to the same rule as an override. A class with no
+  // override falls back to it, so a malformed default is not a cosmetic typo:
+  // it reaches startingDeckPlan as NaN and run creation dies restamping against
+  // an authored NaN quota, with nothing said at the door.
+  const inBias = (v) => Number.isFinite(v) && v >= 0 && v <= 1;
+  if (cfg.defaultStrikeBias !== undefined && !inBias(cfg.defaultStrikeBias)) {
+    problems.push(`startingDeck.defaultStrikeBias must be between 0 and 1 (got ${JSON.stringify(cfg.defaultStrikeBias)})`);
+  }
   for (const [classId, row] of Object.entries(cfg.classes || {})) {
     if (!registries.classes.has(classId)) problems.push(`startingDeck.classes names unknown class '${classId}'`);
     const bias = row && row.strikeBias;
-    if (!(Number.isFinite(bias) && bias >= 0 && bias <= 1)) {
+    if (!inBias(bias)) {
       problems.push(`startingDeck.classes.${classId}.strikeBias must be between 0 and 1 (got ${bias})`);
     }
   }
@@ -1270,22 +1278,34 @@ function startingDeckFindings(registries) {
   problems.push(...boundGrantProblems(registries));
   if (cfg.enabled !== true || problems.length) return { problems, warnings };
 
-  // The budget itself, per class, against the kit each one actually starts in.
+  // The budget itself, against EVERY loadout a player can actually begin in —
+  // not just the baseline kit. An alternate kit is chosen at character creation
+  // and can carry different grants, so checking only the baseline leaves the
+  // one a player picks free to blow the budget and eat the promised minFiller.
   const order = (cfg.dropOrder || []).join(' → ');
+  const kits = (registries.equipment || {}).startingKits || [];
   for (const classId of registries.classes.ids()) {
-    let plan;
-    try {
-      plan = startingDeckPlan(registries, createLoadout(registries, classId), classId);
-    } catch (e) {
-      problems.push(`startingDeck: cannot plan '${classId}': ${e.message}`);
-      continue;
+    const selectable = kits.filter((kit) => kit.classId === classId);
+    // Every class has at least its baseline; the bare loadout stands in for a
+    // class that authors no kit at all, so no class goes unchecked.
+    const candidates = selectable.length
+      ? selectable.map((kit) => ({ label: `kit '${kit.id}'`, loadout: createLoadout(registries, classId, kit) }))
+      : [{ label: 'default loadout', loadout: createLoadout(registries, classId) }];
+    for (const { label, loadout } of candidates) {
+      let plan;
+      try {
+        plan = startingDeckPlan(registries, loadout, classId);
+      } catch (e) {
+        problems.push(`startingDeck: cannot plan '${classId}' ${label}: ${e.message}`);
+        continue;
+      }
+      if (!plan || !plan.overrun) continue;
+      const detail = `class '${classId}' ${label} grants ${plan.grants.length} card(s) and minFiller is `
+        + `${plan.minFiller}, needing ${plan.grants.length + plan.minFiller} of `
+        + `startingDeckSize ${registries.balance.startingDeckSize}`;
+      if (plan.grewToFit) warnings.push(`startingDeck: ${detail}; growToFit raised the deck to ${plan.size}`);
+      else problems.push(`startingDeck: ${detail}; raise startingDeckSize, lower minFiller, or drop a grant (${order})`);
     }
-    if (!plan || !plan.overrun) continue;
-    const detail = `class '${classId}' grants ${plan.grants.length} card(s) and minFiller is `
-      + `${plan.minFiller}, needing ${plan.grants.length + plan.minFiller} of `
-      + `startingDeckSize ${registries.balance.startingDeckSize}`;
-    if (plan.grewToFit) warnings.push(`startingDeck: ${detail}; growToFit raised the deck to ${plan.size}`);
-    else problems.push(`startingDeck: ${detail}; raise startingDeckSize, lower minFiller, or drop a grant (${order})`);
   }
   return { problems, warnings };
 }

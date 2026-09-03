@@ -16,7 +16,8 @@
 //              tagDomains, an id colliding with a frozen engine keyword
 //   families   a duplicate family, a family paired with no domain, a `source`
 //              that cannot be read while rows depend on it, a `scopeField` no
-//              object in the family carries
+//              object in the family carries, and two families claiming one
+//              source (the second would replace the first at materialisation)
 //   pairs      an unknown family, an unknown domain, a duplicate pair
 //   tagging    an unknown family, an unregistered tag, a tag from a domain the
 //              family may not carry, an objectId no object has, a scope given
@@ -107,6 +108,20 @@ export function tagContentProblems(bundle, keywordIds = []) {
       continue;
     }
     familyByName.set(row.family, row);
+  }
+  // One source, one family. model/registries.js stamps per family into a map
+  // KEYED BY SOURCE, so a second family naming the same collection does not
+  // merge with the first — it replaces it, and every object in that collection
+  // silently loses the tags the first family gave it.
+  const familyBySource = new Map();
+  for (const row of familyByName.values()) {
+    if (!row.source) continue;
+    const first = familyBySource.get(row.source);
+    if (first) {
+      err(`tagFamilies.${row.family}.source`, `source '${row.source}' is already claimed by family '${first}' — two families cannot tag one collection, because materialisation keys on the source and the second would replace the first`);
+      continue;
+    }
+    familyBySource.set(row.source, row.family);
   }
 
   // ---- the family/domain join ------------------------------------------------
@@ -255,8 +270,16 @@ export function tagContentProblems(bundle, keywordIds = []) {
   // prefix here, where the author can see it.
   const itemTypeRows = [...byId.values()].filter((t) => t.domain === 'itemType');
   for (const row of itemTypeRows) {
-    if (!row.id.startsWith(ITEM_TYPE_PREFIX)) {
-      err(`tags.${row.id}`, `an itemType tag id must start with '${ITEM_TYPE_PREFIX}' — the runtime reads the type off that prefix and derives the Armoury's label from it, so an id without it is stamped as an ordinary tag and the piece loses its type`);
+    // The prefix alone is not enough: the runtime treats an id whose label
+    // comes out EMPTY as an ordinary tag too, so `item:` and `item:-` would
+    // both pass a prefix test and still strip the piece's type. This mirrors
+    // itemTypeLabel's own derivation — prefix off, split on '-', drop the
+    // empties — and the suite asserts every registered label equals what that
+    // function returns, so the two cannot drift apart in silence.
+    const derived = row.id.startsWith(ITEM_TYPE_PREFIX)
+      && row.id.slice(ITEM_TYPE_PREFIX.length).split('-').filter(Boolean).length > 0;
+    if (!derived) {
+      err(`tags.${row.id}`, `an itemType tag id must be '${ITEM_TYPE_PREFIX}' followed by at least one word — the runtime reads the type off that prefix and derives the Armoury's label from it, so an id that yields no label is stamped as an ordinary tag and the piece loses its type`);
     }
   }
   const itemTypeIds = new Set(itemTypeRows.map((t) => t.id));
